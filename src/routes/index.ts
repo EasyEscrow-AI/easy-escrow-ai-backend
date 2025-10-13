@@ -5,5 +5,7 @@
  * Export routes here to make them available to the main application.
  */
 
-export {};
+import agreementRoutes from './agreement.routes';
+
+export { agreementRoutes };
 
