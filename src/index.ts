@@ -3,6 +3,12 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { connectDatabase, checkDatabaseHealth } from './config/database';
 import { agreementRoutes } from './routes';
+import {
+  corsOptions,
+  helmetConfig,
+  sanitizeInput,
+  securityHeaders,
+} from './middleware';
 
 // Load environment variables
 dotenv.config();
@@ -11,10 +17,19 @@ dotenv.config();
 const app: Application = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Security Middleware (apply first)
+app.use(helmetConfig);
+app.use(securityHeaders);
+
+// CORS Configuration
+app.use(cors(corsOptions));
+
+// Request parsing middleware with size limits
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Input sanitization
+app.use(sanitizeInput);
 
 // Request logging middleware
 app.use((req: Request, _res: Response, next: NextFunction) => {

@@ -695,7 +695,7 @@
         "id": 32,
         "title": "Implement Security Middleware",
         "description": "Add rate limiting, CORS configuration for easyescrow.ai domain, input validation, USDC mint allowlist, authentication for protected endpoints",
-        "status": "pending",
+        "status": "done",
         "priority": "high",
         "dependencies": [
           "21"
@@ -707,7 +707,7 @@
             "id": 1,
             "title": "Implement Rate Limiting Middleware",
             "description": "Create rate limiting middleware to prevent API abuse and ensure fair usage across all endpoints",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "details": "Implement rate limiting using a sliding window or token bucket algorithm. Configure different limits for different endpoint types (e.g., 100 requests/minute for general endpoints, 10 requests/minute for settlement operations). Store rate limit counters in Redis or in-memory cache. Return appropriate HTTP 429 status codes when limits are exceeded."
           },
@@ -715,7 +715,7 @@
             "id": 2,
             "title": "Configure CORS for easyescrow.ai Domain",
             "description": "Set up Cross-Origin Resource Sharing (CORS) configuration to allow requests from easyescrow.ai domain",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "details": "Configure CORS middleware to allow requests from easyescrow.ai and its subdomains. Set appropriate allowed methods (GET, POST, PUT, DELETE), headers (Content-Type, Authorization, X-API-Key), and credentials handling. Ensure preflight requests are handled correctly for complex requests."
           },
@@ -723,7 +723,7 @@
             "id": 3,
             "title": "Implement Input Validation Middleware",
             "description": "Create comprehensive input validation middleware to sanitize and validate all incoming request data",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "details": "Implement validation for all API endpoints using schema validation (e.g., Joi, Yup, or similar). Validate data types, required fields, string lengths, numeric ranges, and format constraints. Sanitize inputs to prevent injection attacks. Return detailed validation error messages with HTTP 400 status codes."
           },
@@ -731,7 +731,7 @@
             "id": 4,
             "title": "Implement USDC Mint Allowlist Validation",
             "description": "Create middleware to validate that only approved USDC mint addresses are accepted in transactions",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "details": "Maintain a configurable allowlist of approved USDC mint addresses. Create middleware that validates incoming requests containing USDC mint addresses against this allowlist. Support for updating the allowlist through admin endpoints or configuration. Reject transactions with non-approved mint addresses with appropriate error messages."
           },
@@ -739,7 +739,7 @@
             "id": 5,
             "title": "Implement Authentication Middleware for Protected Endpoints",
             "description": "Create authentication middleware to secure protected API endpoints and validate user credentials",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "32.1",
               "32.2",
@@ -1439,7 +1439,7 @@
     ],
     "metadata": {
       "created": "2025-10-13T01:02:36.190Z",
-      "updated": "2025-10-13T05:49:31.534Z",
+      "updated": "2025-10-13T06:16:45.915Z",
       "description": "Tasks for master context"
     }
   }
