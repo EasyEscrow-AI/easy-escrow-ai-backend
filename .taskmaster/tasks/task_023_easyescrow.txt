@@ -1,0 +1,43 @@
+# Task ID: 23
+# Title: Setup Database Schema and Migrations
+# Status: pending
+# Dependencies: 21
+# Priority: high
+# Description: Design and implement PostgreSQL schema for agreements, deposits, settlements, receipts, and webhooks tables. Set up Prisma/TypeORM with migrations
+# Details:
+
+
+# Test Strategy:
+
+
+# Subtasks:
+## 1. Design PostgreSQL Database Schema [pending]
+### Dependencies: None
+### Description: Create comprehensive database schema design for all required tables including agreements, deposits, settlements, receipts, and webhooks with proper relationships and constraints
+### Details:
+Design tables with primary keys, foreign keys, indexes, and constraints. Define relationships between agreements and deposits, settlements and receipts. Include fields for timestamps, status tracking, transaction IDs, and hash signatures. Consider data types for Solana addresses, USDC amounts, and NFT metadata.
+
+## 2. Initialize Prisma/TypeORM Configuration [pending]
+### Dependencies: 23.1
+### Description: Set up ORM configuration files, database connection settings, and project structure for database operations
+### Details:
+Install and configure Prisma or TypeORM with PostgreSQL driver. Set up database connection string, environment variables, and configuration files. Create project structure for models, migrations, and database utilities.
+
+## 3. Create Database Models and Entities [pending]
+### Dependencies: 23.2
+### Description: Implement ORM models/entities for agreements, deposits, settlements, receipts, and webhooks tables based on the designed schema
+### Details:
+Create model classes with proper field types, decorators, and relationships. Define enums for status fields, validation rules, and default values. Implement model methods for common operations and data transformations.
+
+## 4. Generate and Execute Initial Migration [pending]
+### Dependencies: 23.3
+### Description: Create initial database migration files to set up all tables with proper structure, indexes, and constraints in PostgreSQL
+### Details:
+Generate migration files using ORM tools to create all tables with correct column types, primary keys, foreign keys, and indexes. Include proper constraints for data integrity and performance optimization. Execute migration against development database.
+
+## 5. Setup Migration Management System [pending]
+### Dependencies: 23.4
+### Description: Configure migration tracking, versioning, and deployment processes for database schema changes across environments
+### Details:
+Set up migration tracking table, configure migration commands for different environments, create scripts for automated deployment. Document migration procedures and establish rollback strategies for production deployments.
+

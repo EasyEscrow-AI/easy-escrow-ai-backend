@@ -1,0 +1,43 @@
+# Task ID: 22
+# Title: Deploy Solana Program for Escrow
+# Status: pending
+# Dependencies: 21
+# Priority: high
+# Description: Create Solana program with EscrowState PDA accounts, implement instructions (init_agreement, deposit_usdc, deposit_nft, settle, cancel_if_expired, admin_cancel), deploy to devnet
+# Details:
+
+
+# Test Strategy:
+
+
+# Subtasks:
+## 1. Setup Solana Program Project Structure [pending]
+### Dependencies: None
+### Description: Initialize Solana program project with proper directory structure and dependencies
+### Details:
+Create new Anchor project using 'anchor init', configure Cargo.toml with required dependencies (anchor-lang, anchor-spl, spl-token), setup lib.rs with program module structure
+
+## 2. Define EscrowState PDA Account Structure [pending]
+### Dependencies: 22.1
+### Description: Create the EscrowState account structure with all required fields for escrow management
+### Details:
+Define EscrowState struct with fields: escrow_id, buyer, seller, usdc_amount, nft_mint, nft_token_account, status (pending/completed/cancelled), expiry_timestamp, bump seed. Implement Account trait and space calculation
+
+## 3. Implement Core Escrow Instructions [pending]
+### Dependencies: 22.2
+### Description: Implement init_agreement, deposit_usdc, and deposit_nft instruction handlers
+### Details:
+Create instruction handlers: init_agreement (creates PDA with escrow terms), deposit_usdc (transfers USDC to escrow PDA), deposit_nft (transfers NFT to escrow PDA). Include proper validation, CPI calls to token program, and state updates
+
+## 4. Implement Settlement and Cancellation Instructions [pending]
+### Dependencies: 22.3
+### Description: Implement settle, cancel_if_expired, and admin_cancel instruction handlers
+### Details:
+Create instruction handlers: settle (transfers USDC to seller, NFT to buyer), cancel_if_expired (returns assets if past expiry), admin_cancel (emergency cancellation with admin authority). Include proper authorization checks and asset return logic
+
+## 5. Deploy Program to Solana Devnet [pending]
+### Dependencies: 22.4
+### Description: Build, deploy and verify the escrow program on Solana devnet
+### Details:
+Configure Anchor.toml for devnet deployment, build program with 'anchor build', deploy using 'anchor deploy', verify deployment with program ID, test all instructions on devnet with actual SOL/USDC/NFT transactions
+

@@ -1,0 +1,43 @@
+# Task ID: 34
+# Title: Setup DigitalOcean App Platform Deployment
+# Status: pending
+# Dependencies: None
+# Priority: medium
+# Description: Configure App Platform deployment from GitHub, add managed PostgreSQL and Redis via VPC, configure secrets, set up api.easyescrow.ai domain with HTTPS, enable health checks and autoscaling
+# Details:
+
+
+# Test Strategy:
+
+
+# Subtasks:
+## 1. Configure GitHub Repository Connection [pending]
+### Dependencies: None
+### Description: Connect DigitalOcean App Platform to GitHub repository for automated deployments
+### Details:
+Set up GitHub integration in DigitalOcean App Platform, configure repository access, set up branch-based deployment triggers, and configure build settings for the backend application
+
+## 2. Create Managed PostgreSQL Database [pending]
+### Dependencies: None
+### Description: Set up managed PostgreSQL database instance with VPC configuration
+### Details:
+Create PostgreSQL database cluster in DigitalOcean, configure VPC networking for secure access, set up database credentials, and configure connection pooling and backup settings
+
+## 3. Create Managed Redis Instance [pending]
+### Dependencies: None
+### Description: Set up managed Redis instance for caching and job queues with VPC access
+### Details:
+Create Redis cluster in DigitalOcean, configure VPC networking to match PostgreSQL setup, set up Redis authentication, and configure memory limits and eviction policies
+
+## 4. Configure App Secrets and Environment Variables [pending]
+### Dependencies: 34.2, 34.3
+### Description: Set up all required environment variables and secrets for the application
+### Details:
+Configure database connection strings, Redis URLs, JWT secrets, blockchain RPC endpoints, and other sensitive configuration in App Platform's encrypted environment variables
+
+## 5. Setup Custom Domain with HTTPS and Health Checks [pending]
+### Dependencies: 34.1, 34.4
+### Description: Configure api.easyescrow.ai domain with SSL certificate and enable monitoring
+### Details:
+Add custom domain api.easyescrow.ai to App Platform, configure automatic SSL certificate, set up health check endpoints, configure autoscaling rules based on CPU/memory usage, and test domain resolution
+

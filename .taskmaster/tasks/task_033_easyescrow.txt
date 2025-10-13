@@ -1,0 +1,43 @@
+# Task ID: 33
+# Title: Create Docker Configuration
+# Status: pending
+# Dependencies: 21
+# Priority: medium
+# Description: Create Dockerfile for containerized backend, optimize for production, configure environment variables, health check endpoint
+# Details:
+
+
+# Test Strategy:
+
+
+# Subtasks:
+## 1. Create base Dockerfile with multi-stage build [pending]
+### Dependencies: None
+### Description: Create a Dockerfile with multi-stage build pattern to optimize image size and security for production deployment
+### Details:
+Set up multi-stage Dockerfile with builder stage for dependencies and lean production stage. Use official Node.js Alpine image as base, copy package files, install dependencies, and build application. Create final stage with minimal runtime dependencies.
+
+## 2. Configure environment variables and secrets management [pending]
+### Dependencies: 33.1
+### Description: Set up environment variable configuration with proper defaults and secrets handling for containerized deployment
+### Details:
+Define environment variables for database connections, API keys, JWT secrets, and other configuration. Use Docker secrets or environment files for sensitive data. Set up proper variable validation and fallback values.
+
+## 3. Implement health check endpoint [pending]
+### Dependencies: 33.1
+### Description: Create a dedicated health check endpoint that validates application and database connectivity for container orchestration
+### Details:
+Implement /health endpoint that checks database connectivity, external service availability, and application readiness. Return appropriate HTTP status codes and health information. Configure endpoint to be lightweight and fast.
+
+## 4. Optimize Docker image for production [pending]
+### Dependencies: 33.1, 33.2
+### Description: Apply production optimizations including security hardening, performance tuning, and minimal attack surface
+### Details:
+Remove development dependencies, set non-root user, configure proper file permissions, minimize installed packages. Add security scanning, optimize layer caching, and configure proper logging. Set resource limits and startup parameters.
+
+## 5. Configure Docker health check and startup probes [pending]
+### Dependencies: 33.3, 33.4
+### Description: Set up Docker HEALTHCHECK instruction and configure container orchestration probes for reliable deployments
+### Details:
+Add HEALTHCHECK instruction to Dockerfile using the health endpoint. Configure appropriate intervals, timeouts, and retry counts. Document probe configuration for Kubernetes readiness and liveness probes.
+

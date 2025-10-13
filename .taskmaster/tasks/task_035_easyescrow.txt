@@ -1,0 +1,55 @@
+# Task ID: 35
+# Title: Write Comprehensive Tests
+# Status: pending
+# Dependencies: 24, 26, 27, 28, 29, 30, 38
+# Priority: high
+# Description: Create comprehensive test suite including on-chain Rust/Anchor tests for smart contract functionality, off-chain API integration tests, unit tests for all services, and detailed test matrix covering happy path scenarios, edge cases, security vulnerabilities, and system invariants
+# Details:
+Implement a complete testing strategy covering both on-chain smart contract testing using Rust/Anchor with local validator, and off-chain API testing for integration scenarios. Include detailed test matrix for settlement flows, security edge cases, fee calculations, authorization checks, and system reliability patterns.
+
+# Test Strategy:
+Multi-layered testing approach: on-chain tests using Rust/Anchor framework with local Solana validator for smart contract logic, integration tests for API endpoints with real database interactions, unit tests with mocking for isolated component testing, and comprehensive edge case coverage including security attack vectors
+
+# Subtasks:
+## 1. Create Unit Tests for Core Services [pending]
+### Dependencies: None
+### Description: Write comprehensive unit tests for all core services including payment processing, user management, and business logic components
+### Details:
+Implement unit tests using a testing framework like Jest or Mocha. Cover all public methods, mock external dependencies, test error handling, and achieve high code coverage for services developed in tasks 24, 26, 27, 29, 30
+
+## 2. Develop Integration Tests for API Endpoints [pending]
+### Dependencies: 35.1
+### Description: Create integration tests for all REST API endpoints to verify end-to-end functionality and proper request/response handling
+### Details:
+Set up test database, create test fixtures, write integration tests for all API endpoints from task 28. Test authentication, authorization, request validation, and response formats using tools like Supertest or similar
+
+## 3. Implement On-Chain Smart Contract Tests [pending]
+### Dependencies: None
+### Description: Create comprehensive Rust/Anchor tests for all smart contract functionality using local Solana validator environment
+### Details:
+Set up local Solana validator testing environment and implement comprehensive on-chain tests covering: happy path settlements (USDC first then NFT, and vice versa), wrong mint rejection (invalid USDC or NFT mints), under/over-funding protection (price-1, price+1 scenarios), double-settle and double-deposit no-ops, expiry refund functionality (only depositor withdrawal), precise fee collection and optional royalties distribution, unauthorized cancel blocking with admin-cancel multisig requirements, PDA/account spoofing prevention with account metadata permutation tests, rent-exempt vault management with proper rent release on closing, and event field validation matching state for receipt generation
+
+## 4. Implement Off-Chain API Integration Tests [pending]
+### Dependencies: 35.2
+### Description: Create comprehensive integration tests for off-chain API functionality focusing on reliability, idempotency, and data consistency
+### Details:
+Implement integration tests covering: deterministic agreement_id generation and validation, idempotency key handling for duplicate request prevention, exact-once webhook delivery guarantees, RPC failure retry logic with exponential backoff, partial success recovery mechanisms, and database invariant enforcement (no negative balances, monotonic status transitions only)
+
+## 5. Implement Happy Path Test Scenarios [pending]
+### Dependencies: 35.3, 35.4
+### Description: Create comprehensive test cases covering all successful user journeys and normal system operations
+### Details:
+Write test scenarios for successful payment flows, user registration, deposit processing, settlement completion, and normal cancellation processes. Ensure all positive paths work correctly from start to finish including both on-chain and off-chain components
+
+## 6. Test Edge Cases and Security Scenarios [pending]
+### Dependencies: 35.5
+### Description: Develop comprehensive tests for edge cases, security vulnerabilities, and attack vector prevention
+### Details:
+Create specific test cases for: early cancellation before deposit, late cancellation after settlement, partial deposit scenarios, double-settlement prevention, automatic expiry refunds, network failures, timeout handling, account spoofing attempts, unauthorized access patterns, and fee calculation precision to the lamport level
+
+## 7. Set Up Test Infrastructure and CI Integration [pending]
+### Dependencies: 35.6
+### Description: Configure comprehensive test environment including local Solana validator, test databases, and automated CI/CD pipeline integration
+### Details:
+Set up local Solana validator for on-chain testing, configure test databases, implement CI/CD pipeline to run all test suites automatically, create test reporting and coverage analysis for both Rust and JavaScript/TypeScript code, develop test data seeding scripts, and establish comprehensive testing best practices documentation covering both on-chain and off-chain testing methodologies
+

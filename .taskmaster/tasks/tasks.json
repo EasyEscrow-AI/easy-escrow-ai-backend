@@ -1,0 +1,1366 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": 21,
+        "title": "Setup Backend Project Structure",
+        "description": "Initialize Node.js/TypeScript backend with Express, configure package.json, setup ESLint/Prettier, and create basic folder structure (routes, services, models, utils, config)",
+        "status": "done",
+        "priority": "high",
+        "dependencies": [],
+        "details": "",
+        "testStrategy": "",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Initialize Node.js project with TypeScript",
+            "description": "Create new Node.js project and configure TypeScript compilation settings",
+            "status": "done",
+            "dependencies": [],
+            "details": "Run npm init to create package.json, install TypeScript as dev dependency, create tsconfig.json with strict mode, target ES2020, and output to dist folder. Configure build and dev scripts."
+          },
+          {
+            "id": 2,
+            "title": "Install and configure Express framework",
+            "description": "Set up Express server with TypeScript types and basic middleware",
+            "status": "done",
+            "dependencies": [
+              "21.1"
+            ],
+            "details": "Install express and @types/express, create basic server.ts with Express app, configure JSON parsing middleware, CORS, and basic error handling. Set up port configuration from environment variables."
+          },
+          {
+            "id": 3,
+            "title": "Setup ESLint and Prettier configuration",
+            "description": "Configure code linting and formatting tools for consistent code quality",
+            "status": "done",
+            "dependencies": [
+              "21.1"
+            ],
+            "details": "Install ESLint with TypeScript parser, Prettier, and related plugins. Create .eslintrc.js with TypeScript rules, .prettierrc for formatting config. Add lint and format scripts to package.json with pre-commit hooks."
+          },
+          {
+            "id": 4,
+            "title": "Create basic folder structure",
+            "description": "Establish organized directory structure for backend components",
+            "status": "done",
+            "dependencies": [
+              "21.2"
+            ],
+            "details": "Create src folder with subdirectories: routes (API endpoints), services (business logic), models (data structures), utils (helper functions), config (environment settings), middleware (custom middleware). Add index files for exports."
+          },
+          {
+            "id": 5,
+            "title": "Configure environment and build setup",
+            "description": "Setup environment configuration and production build process",
+            "status": "done",
+            "dependencies": [
+              "21.3",
+              "21.4"
+            ],
+            "details": "Create .env.example with required environment variables, install dotenv for environment loading, configure nodemon for development, setup build script with TypeScript compilation, and create basic Dockerfile for containerization."
+          }
+        ]
+      },
+      {
+        "id": 22,
+        "title": "Deploy Solana Program for Escrow",
+        "description": "Create Solana program with EscrowState PDA accounts, implement instructions (init_agreement, deposit_usdc, deposit_nft, settle, cancel_if_expired, admin_cancel), deploy to devnet",
+        "status": "pending",
+        "priority": "high",
+        "dependencies": [
+          "21"
+        ],
+        "details": "",
+        "testStrategy": "",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Setup Solana Program Project Structure",
+            "description": "Initialize Solana program project with proper directory structure and dependencies",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Create new Anchor project using 'anchor init', configure Cargo.toml with required dependencies (anchor-lang, anchor-spl, spl-token), setup lib.rs with program module structure"
+          },
+          {
+            "id": 2,
+            "title": "Define EscrowState PDA Account Structure",
+            "description": "Create the EscrowState account structure with all required fields for escrow management",
+            "status": "pending",
+            "dependencies": [
+              "22.1"
+            ],
+            "details": "Define EscrowState struct with fields: escrow_id, buyer, seller, usdc_amount, nft_mint, nft_token_account, status (pending/completed/cancelled), expiry_timestamp, bump seed. Implement Account trait and space calculation"
+          },
+          {
+            "id": 3,
+            "title": "Implement Core Escrow Instructions",
+            "description": "Implement init_agreement, deposit_usdc, and deposit_nft instruction handlers",
+            "status": "pending",
+            "dependencies": [
+              "22.2"
+            ],
+            "details": "Create instruction handlers: init_agreement (creates PDA with escrow terms), deposit_usdc (transfers USDC to escrow PDA), deposit_nft (transfers NFT to escrow PDA). Include proper validation, CPI calls to token program, and state updates"
+          },
+          {
+            "id": 4,
+            "title": "Implement Settlement and Cancellation Instructions",
+            "description": "Implement settle, cancel_if_expired, and admin_cancel instruction handlers",
+            "status": "pending",
+            "dependencies": [
+              "22.3"
+            ],
+            "details": "Create instruction handlers: settle (transfers USDC to seller, NFT to buyer), cancel_if_expired (returns assets if past expiry), admin_cancel (emergency cancellation with admin authority). Include proper authorization checks and asset return logic"
+          },
+          {
+            "id": 5,
+            "title": "Deploy Program to Solana Devnet",
+            "description": "Build, deploy and verify the escrow program on Solana devnet",
+            "status": "pending",
+            "dependencies": [
+              "22.4"
+            ],
+            "details": "Configure Anchor.toml for devnet deployment, build program with 'anchor build', deploy using 'anchor deploy', verify deployment with program ID, test all instructions on devnet with actual SOL/USDC/NFT transactions"
+          }
+        ]
+      },
+      {
+        "id": 23,
+        "title": "Setup Database Schema and Migrations",
+        "description": "Design and implement PostgreSQL schema for agreements, deposits, settlements, receipts, and webhooks tables. Set up Prisma/TypeORM with migrations",
+        "status": "pending",
+        "priority": "high",
+        "dependencies": [
+          "21"
+        ],
+        "details": "",
+        "testStrategy": "",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Design PostgreSQL Database Schema",
+            "description": "Create comprehensive database schema design for all required tables including agreements, deposits, settlements, receipts, and webhooks with proper relationships and constraints",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Design tables with primary keys, foreign keys, indexes, and constraints. Define relationships between agreements and deposits, settlements and receipts. Include fields for timestamps, status tracking, transaction IDs, and hash signatures. Consider data types for Solana addresses, USDC amounts, and NFT metadata."
+          },
+          {
+            "id": 2,
+            "title": "Initialize Prisma/TypeORM Configuration",
+            "description": "Set up ORM configuration files, database connection settings, and project structure for database operations",
+            "status": "pending",
+            "dependencies": [
+              "23.1"
+            ],
+            "details": "Install and configure Prisma or TypeORM with PostgreSQL driver. Set up database connection string, environment variables, and configuration files. Create project structure for models, migrations, and database utilities."
+          },
+          {
+            "id": 3,
+            "title": "Create Database Models and Entities",
+            "description": "Implement ORM models/entities for agreements, deposits, settlements, receipts, and webhooks tables based on the designed schema",
+            "status": "pending",
+            "dependencies": [
+              "23.2"
+            ],
+            "details": "Create model classes with proper field types, decorators, and relationships. Define enums for status fields, validation rules, and default values. Implement model methods for common operations and data transformations."
+          },
+          {
+            "id": 4,
+            "title": "Generate and Execute Initial Migration",
+            "description": "Create initial database migration files to set up all tables with proper structure, indexes, and constraints in PostgreSQL",
+            "status": "pending",
+            "dependencies": [
+              "23.3"
+            ],
+            "details": "Generate migration files using ORM tools to create all tables with correct column types, primary keys, foreign keys, and indexes. Include proper constraints for data integrity and performance optimization. Execute migration against development database."
+          },
+          {
+            "id": 5,
+            "title": "Setup Migration Management System",
+            "description": "Configure migration tracking, versioning, and deployment processes for database schema changes across environments",
+            "status": "pending",
+            "dependencies": [
+              "23.4"
+            ],
+            "details": "Set up migration tracking table, configure migration commands for different environments, create scripts for automated deployment. Document migration procedures and establish rollback strategies for production deployments."
+          }
+        ]
+      },
+      {
+        "id": 24,
+        "title": "Implement Agreement Creation API",
+        "description": "Create POST /v1/agreements endpoint that accepts nft_mint, price, seller, optional buyer, expiry, fee_bps, honor_royalties. Calls on-chain program to init escrow PDA and returns agreement_id with deposit addresses",
+        "status": "pending",
+        "priority": "high",
+        "dependencies": [
+          "22",
+          "23"
+        ],
+        "details": "",
+        "testStrategy": "",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Design API endpoint structure and request/response schemas",
+            "description": "Define the POST /v1/agreements endpoint structure with request validation schemas and response format",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Create OpenAPI specification for POST /v1/agreements endpoint. Define request schema with required fields (nft_mint, price, seller, expiry, fee_bps, honor_royalties) and optional buyer field. Define response schema with agreement_id and deposit addresses. Include proper HTTP status codes and error responses."
+          },
+          {
+            "id": 2,
+            "title": "Implement request validation middleware",
+            "description": "Create middleware to validate incoming request parameters and data types",
+            "status": "pending",
+            "dependencies": [
+              "24.1"
+            ],
+            "details": "Implement validation for nft_mint (valid Solana public key), price (positive number), seller (valid public key), buyer (optional valid public key), expiry (future timestamp), fee_bps (0-10000 range), honor_royalties (boolean). Return appropriate error messages for invalid inputs."
+          },
+          {
+            "id": 3,
+            "title": "Integrate on-chain program escrow PDA initialization",
+            "description": "Implement service layer to call on-chain program for escrow PDA creation",
+            "status": "pending",
+            "dependencies": [
+              "24.2"
+            ],
+            "details": "Create service function to interact with Solana on-chain program. Generate escrow PDA using agreement parameters. Call init_escrow instruction with validated parameters. Handle transaction confirmation and error cases. Extract PDA address and deposit addresses from transaction result."
+          },
+          {
+            "id": 4,
+            "title": "Implement database storage for agreement records",
+            "description": "Create database schema and service to store agreement data with generated agreement_id",
+            "status": "pending",
+            "dependencies": [
+              "24.3"
+            ],
+            "details": "Design database table for agreements with fields: agreement_id (UUID), nft_mint, price, seller, buyer, expiry, fee_bps, honor_royalties, escrow_pda, deposit_addresses, created_at, status. Implement database service with create agreement function. Generate unique agreement_id and store all parameters."
+          },
+          {
+            "id": 5,
+            "title": "Implement complete API endpoint handler",
+            "description": "Create the final POST /v1/agreements endpoint handler that orchestrates all components",
+            "status": "pending",
+            "dependencies": [
+              "24.4"
+            ],
+            "details": "Implement Express.js route handler that combines validation, on-chain interaction, and database storage. Handle success response with agreement_id and deposit addresses. Implement proper error handling with rollback mechanisms. Add logging for monitoring and debugging. Return structured JSON response matching API specification."
+          }
+        ]
+      },
+      {
+        "id": 25,
+        "title": "Implement Solana Blockchain Monitoring Service",
+        "description": "Create service to monitor escrow vault accounts for USDC and NFT deposits. Validate NFT mint, metadata, and amount. Update database with deposit status",
+        "status": "pending",
+        "priority": "high",
+        "dependencies": [
+          "22",
+          "23"
+        ],
+        "details": "",
+        "testStrategy": "",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Set up Solana RPC connection and account monitoring infrastructure",
+            "description": "Establish connection to Solana RPC nodes and implement account subscription mechanism for monitoring escrow vault accounts",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Configure Solana web3.js client with RPC endpoints, implement WebSocket connections for real-time account monitoring, set up connection pooling and failover mechanisms for reliability"
+          },
+          {
+            "id": 2,
+            "title": "Implement USDC deposit detection and validation",
+            "description": "Create service to detect USDC token transfers to escrow vault accounts and validate deposit amounts",
+            "status": "pending",
+            "dependencies": [
+              "25.1"
+            ],
+            "details": "Monitor SPL token account changes for USDC mint, parse transaction logs to extract transfer amounts, validate against expected deposit amounts from database, handle decimal precision correctly"
+          },
+          {
+            "id": 3,
+            "title": "Implement NFT deposit detection and metadata validation",
+            "description": "Create service to detect NFT transfers to escrow accounts and validate NFT mint addresses and metadata",
+            "status": "pending",
+            "dependencies": [
+              "25.1"
+            ],
+            "details": "Monitor NFT token account changes, fetch and validate NFT metadata from on-chain and off-chain sources, verify mint address matches expected NFT, validate collection membership if required"
+          },
+          {
+            "id": 4,
+            "title": "Implement database update service for deposit status",
+            "description": "Create service to update database records with deposit confirmation status and transaction details",
+            "status": "pending",
+            "dependencies": [
+              "25.2",
+              "25.3"
+            ],
+            "details": "Update escrow agreement records with deposit status, store transaction signatures and block confirmations, implement atomic database operations to prevent race conditions, add logging for audit trail"
+          },
+          {
+            "id": 5,
+            "title": "Implement monitoring service orchestration and error handling",
+            "description": "Create main monitoring service that coordinates deposit detection, handles errors, and manages service lifecycle",
+            "status": "pending",
+            "dependencies": [
+              "25.4"
+            ],
+            "details": "Implement service startup/shutdown procedures, add comprehensive error handling and retry logic, implement health checks and monitoring metrics, add configuration management for RPC endpoints and monitoring intervals"
+          }
+        ]
+      },
+      {
+        "id": 26,
+        "title": "Implement Atomic Settlement Engine",
+        "description": "Create service that detects when both NFT and USDC are locked, validates not expired, calls on-chain settle instruction to swap assets, calculates and deducts platform fee, optionally honors creator royalties",
+        "status": "pending",
+        "priority": "high",
+        "dependencies": [
+          "22",
+          "25"
+        ],
+        "details": "",
+        "testStrategy": "",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Implement Lock Detection Service",
+            "description": "Create service to monitor and detect when both NFT and USDC assets are locked in escrow",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Build a monitoring service that polls blockchain state to detect when both parties have locked their assets (NFT and USDC) in the escrow contract. Include event listeners for lock confirmations and maintain state tracking."
+          },
+          {
+            "id": 2,
+            "title": "Implement Expiration Validation",
+            "description": "Create validation logic to check if escrow agreements have not expired before settlement",
+            "status": "pending",
+            "dependencies": [
+              "26.1"
+            ],
+            "details": "Implement timestamp validation against current block time to ensure the escrow agreement is still within its valid time window. Include buffer time considerations and proper error handling for expired agreements."
+          },
+          {
+            "id": 3,
+            "title": "Implement On-Chain Settlement Caller",
+            "description": "Create service to call the on-chain settle instruction to execute the asset swap",
+            "status": "pending",
+            "dependencies": [
+              "26.2"
+            ],
+            "details": "Build the interface to interact with the blockchain settlement contract, including proper transaction construction, signing, and submission. Handle transaction failures and implement retry logic with exponential backoff."
+          },
+          {
+            "id": 4,
+            "title": "Implement Platform Fee Calculator",
+            "description": "Create fee calculation and deduction system for platform fees from settlements",
+            "status": "pending",
+            "dependencies": [
+              "26.3"
+            ],
+            "details": "Implement configurable fee calculation logic that computes platform fees as percentage of transaction value. Include fee deduction from settlement amounts and proper accounting for fee collection wallet."
+          },
+          {
+            "id": 5,
+            "title": "Implement Creator Royalty Handler",
+            "description": "Create optional creator royalty calculation and distribution system",
+            "status": "pending",
+            "dependencies": [
+              "26.4"
+            ],
+            "details": "Build system to detect NFT creator royalty requirements from metadata, calculate royalty amounts, and distribute payments to creators during settlement. Make royalty handling configurable and optional per agreement."
+          }
+        ]
+      },
+      {
+        "id": 27,
+        "title": "Implement Expiry and Cancellation Logic",
+        "description": "Create service to check expiry timestamps, allow refunds for partial deposits, implement admin cancel with multisig, update agreement status accordingly",
+        "status": "pending",
+        "priority": "medium",
+        "dependencies": [
+          "22",
+          "25"
+        ],
+        "details": "",
+        "testStrategy": "",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create Expiry Timestamp Checking Service",
+            "description": "Implement a service that continuously monitors and checks expiry timestamps for active escrow agreements",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Create a background service that periodically queries the database for active agreements and checks their expiry timestamps against current time. Service should identify expired agreements and trigger appropriate actions."
+          },
+          {
+            "id": 2,
+            "title": "Implement Partial Deposit Refund Logic",
+            "description": "Create functionality to calculate and process refunds for agreements with partial deposits when cancellation occurs",
+            "status": "pending",
+            "dependencies": [
+              "27.1"
+            ],
+            "details": "Implement logic to determine refund amounts based on current deposit status, handle USDC transfers back to depositors, and update agreement balances accordingly. Include validation for refund eligibility."
+          },
+          {
+            "id": 3,
+            "title": "Implement Admin Multisig Cancellation",
+            "description": "Create admin cancellation functionality that requires multisig approval for cancelling active agreements",
+            "status": "pending",
+            "dependencies": [
+              "27.2"
+            ],
+            "details": "Implement multisig workflow for admin-initiated cancellations, including proposal creation, signature collection, and execution. Ensure proper authorization checks and audit logging for all admin actions."
+          },
+          {
+            "id": 4,
+            "title": "Implement Agreement Status Update Engine",
+            "description": "Create service to automatically update agreement status based on expiry checks and cancellation events",
+            "status": "pending",
+            "dependencies": [
+              "27.3"
+            ],
+            "details": "Implement status transition logic that updates agreement status from active to expired, cancelled, or refunded based on various triggers. Include database updates and event emission for status changes."
+          },
+          {
+            "id": 5,
+            "title": "Integrate Expiry and Cancellation Services",
+            "description": "Integrate all expiry and cancellation components into a cohesive system with proper error handling and monitoring",
+            "status": "pending",
+            "dependencies": [
+              "27.4"
+            ],
+            "details": "Combine all services into a unified expiry and cancellation system, implement comprehensive error handling, add monitoring and alerting for failed operations, and ensure proper cleanup of resources."
+          }
+        ]
+      },
+      {
+        "id": 28,
+        "title": "Implement Agreement Query and Cancel Endpoints",
+        "description": "Create GET /v1/agreements/{id} to return status, balances, deadlines. Create POST /v1/agreements/{id}/cancel to trigger cancellation for expired agreements",
+        "status": "pending",
+        "priority": "medium",
+        "dependencies": [
+          "24"
+        ],
+        "details": "",
+        "testStrategy": "",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Design Agreement Data Model and Database Schema",
+            "description": "Define the database schema and data structures for storing agreement information including status, balances, and deadlines",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Create database tables/collections to store agreement data with fields for agreement_id, status (active/expired/cancelled), buyer_balance, seller_balance, nft_locked_status, usdc_locked_status, expiry_deadline, created_at, updated_at. Define TypeScript interfaces and validation schemas."
+          },
+          {
+            "id": 2,
+            "title": "Implement Agreement Repository Layer",
+            "description": "Create database access layer with methods to query and update agreement records",
+            "status": "pending",
+            "dependencies": [
+              "28.1"
+            ],
+            "details": "Implement repository class with methods: findAgreementById(), updateAgreementStatus(), getAgreementBalances(), checkExpiryStatus(). Include proper error handling for not found cases and database connection issues."
+          },
+          {
+            "id": 3,
+            "title": "Create GET /v1/agreements/{id} Endpoint",
+            "description": "Implement REST endpoint to retrieve agreement details including status, balances, and deadlines",
+            "status": "pending",
+            "dependencies": [
+              "28.2"
+            ],
+            "details": "Create Express.js route handler that validates agreement ID parameter, calls repository to fetch agreement data, formats response with status, buyer/seller balances, NFT/USDC lock status, expiry deadline. Return 404 for non-existent agreements."
+          },
+          {
+            "id": 4,
+            "title": "Implement Agreement Expiry Detection Logic",
+            "description": "Create service to detect expired agreements and validate cancellation eligibility",
+            "status": "pending",
+            "dependencies": [
+              "28.2"
+            ],
+            "details": "Implement service methods to check if agreement has passed expiry deadline, validate that agreement is in cancellable state (not already settled/cancelled), and determine if cancellation is authorized. Include timezone handling for deadline comparisons."
+          },
+          {
+            "id": 5,
+            "title": "Create POST /v1/agreements/{id}/cancel Endpoint",
+            "description": "Implement REST endpoint to trigger cancellation of expired agreements",
+            "status": "pending",
+            "dependencies": [
+              "28.3",
+              "28.4"
+            ],
+            "details": "Create Express.js route handler that validates agreement ID, checks expiry status using detection service, updates agreement status to cancelled, triggers any necessary cleanup operations (unlock assets, notify parties). Return appropriate HTTP status codes and error messages."
+          }
+        ]
+      },
+      {
+        "id": 29,
+        "title": "Implement Webhook System",
+        "description": "Create webhook service with events (escrow.funded, escrow.asset_locked, escrow.settled, escrow.expired, escrow.refunded). Implement retry logic, signature verification, and configurable webhook URLs",
+        "status": "pending",
+        "priority": "medium",
+        "dependencies": [
+          "23"
+        ],
+        "details": "",
+        "testStrategy": "",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Design webhook event system architecture",
+            "description": "Design the webhook event system to handle escrow lifecycle events with proper event definitions and payload structures",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Define event types (escrow.funded, escrow.asset_locked, escrow.settled, escrow.expired, escrow.refunded), create event payload schemas with relevant data fields like agreement ID, timestamps, amounts, and transaction hashes. Design event publishing interface and webhook configuration storage."
+          },
+          {
+            "id": 2,
+            "title": "Implement webhook URL management and configuration",
+            "description": "Create system to manage and configure webhook URLs for different events with validation and storage",
+            "status": "pending",
+            "dependencies": [
+              "29.1"
+            ],
+            "details": "Build webhook URL registration API endpoints, implement URL validation (format, reachability), create database schema for storing webhook configurations per user/organization, add CRUD operations for webhook management with proper authentication."
+          },
+          {
+            "id": 3,
+            "title": "Implement signature verification system",
+            "description": "Create cryptographic signature system to verify webhook authenticity and prevent tampering",
+            "status": "pending",
+            "dependencies": [
+              "29.1"
+            ],
+            "details": "Implement HMAC-SHA256 signature generation using secret keys, add signature headers to webhook requests, create signature verification utilities for webhook consumers, manage webhook secrets securely with rotation capabilities."
+          },
+          {
+            "id": 4,
+            "title": "Build webhook delivery service with retry logic",
+            "description": "Create reliable webhook delivery system with exponential backoff retry mechanism and failure handling",
+            "status": "pending",
+            "dependencies": [
+              "29.2",
+              "29.3"
+            ],
+            "details": "Implement webhook HTTP client with timeout configuration, build exponential backoff retry logic (max 5 retries), add dead letter queue for failed deliveries, implement delivery status tracking and logging, create webhook delivery queue system."
+          },
+          {
+            "id": 5,
+            "title": "Integrate webhook system with escrow lifecycle events",
+            "description": "Connect webhook system to escrow state changes to automatically trigger webhook deliveries",
+            "status": "pending",
+            "dependencies": [
+              "29.4"
+            ],
+            "details": "Add webhook triggers to escrow funding, asset locking, settlement, expiration, and refund processes. Implement event publishing from escrow state machines, ensure webhook delivery doesn't block main escrow operations using async processing, add webhook delivery monitoring and alerting."
+          }
+        ]
+      },
+      {
+        "id": 30,
+        "title": "Implement Settlement Receipt Generation",
+        "description": "Create service to generate hash-signed settlement receipts with nft_mint, price, fees, timestamps, transaction IDs. Store in database and make available via API",
+        "status": "pending",
+        "priority": "medium",
+        "dependencies": [
+          "26",
+          "23"
+        ],
+        "details": "",
+        "testStrategy": "",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Design Settlement Receipt Data Structure",
+            "description": "Define the complete data structure for settlement receipts including all required fields and validation rules",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Create TypeScript interfaces/types for settlement receipt containing nft_mint, price, fees breakdown, timestamps (created, settled), transaction IDs (escrow, settlement), buyer/seller addresses, agreement ID, and hash signature field. Define validation schemas for each field including format requirements and constraints."
+          },
+          {
+            "id": 2,
+            "title": "Implement Hash Signing Service",
+            "description": "Create cryptographic service to generate secure hash signatures for settlement receipts",
+            "status": "pending",
+            "dependencies": [
+              "30.1"
+            ],
+            "details": "Implement hash signing functionality using SHA-256 or similar algorithm to create tamper-proof signatures for receipt data. Include private key management for signing and public key verification. Create utility functions to generate deterministic hashes from receipt data and sign with server private key."
+          },
+          {
+            "id": 3,
+            "title": "Create Database Schema and Models",
+            "description": "Design and implement database table structure for storing settlement receipts with proper indexing",
+            "status": "pending",
+            "dependencies": [
+              "30.1"
+            ],
+            "details": "Create settlement_receipts table with columns for all receipt fields including indexed fields like agreement_id, nft_mint, buyer_address, seller_address, created_at. Implement database model/entity classes with proper relationships to agreements table. Add database migrations and ensure proper constraints and foreign keys."
+          },
+          {
+            "id": 4,
+            "title": "Build Receipt Generation Service",
+            "description": "Implement core service logic to generate settlement receipts from completed escrow transactions",
+            "status": "pending",
+            "dependencies": [
+              "30.2",
+              "30.3"
+            ],
+            "details": "Create SettlementReceiptService class that takes settlement transaction data, populates receipt structure, generates hash signature, and stores in database. Include methods to extract transaction details, calculate fee breakdowns, format timestamps, and handle error cases. Integrate with atomic settlement engine to trigger receipt generation."
+          },
+          {
+            "id": 5,
+            "title": "Implement Receipt API Endpoints",
+            "description": "Create REST API endpoints to retrieve settlement receipts with proper authentication and filtering",
+            "status": "pending",
+            "dependencies": [
+              "30.4"
+            ],
+            "details": "Implement GET /v1/receipts/{id} and GET /v1/receipts endpoints with query parameters for filtering by agreement_id, nft_mint, date range, buyer/seller addresses. Add proper authentication, input validation, pagination, and response formatting. Include receipt verification endpoint to validate hash signatures."
+          }
+        ]
+      },
+      {
+        "id": 31,
+        "title": "Setup Redis for Caching and Queues",
+        "description": "Configure Redis client, implement caching for agreement lookups, set up job queues for blockchain monitoring and settlement processing",
+        "status": "pending",
+        "priority": "medium",
+        "dependencies": [
+          "21"
+        ],
+        "details": "",
+        "testStrategy": "",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Install and Configure Redis Client",
+            "description": "Set up Redis client library and establish connection configuration for the application",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Install redis-py library, create Redis connection class with connection pooling, configure connection parameters (host, port, password, SSL), implement connection health checks and retry logic"
+          },
+          {
+            "id": 2,
+            "title": "Implement Agreement Caching System",
+            "description": "Create caching layer for agreement data to improve lookup performance and reduce database load",
+            "status": "pending",
+            "dependencies": [
+              "31.1"
+            ],
+            "details": "Design cache key structure for agreements, implement cache-aside pattern with TTL configuration, create methods for get/set/delete operations, handle cache invalidation on agreement updates"
+          },
+          {
+            "id": 3,
+            "title": "Setup Job Queue Infrastructure",
+            "description": "Configure Redis-based job queue system for asynchronous task processing",
+            "status": "pending",
+            "dependencies": [
+              "31.1"
+            ],
+            "details": "Implement job queue using Redis lists or streams, create job serialization/deserialization, add job priority handling, implement dead letter queue for failed jobs, configure job retry mechanisms"
+          },
+          {
+            "id": 4,
+            "title": "Implement Blockchain Monitoring Queue",
+            "description": "Create specialized job queue for blockchain event monitoring and processing tasks",
+            "status": "pending",
+            "dependencies": [
+              "31.3"
+            ],
+            "details": "Design job structure for blockchain monitoring tasks, implement periodic blockchain scanning jobs, create event processing workflows, add block confirmation tracking, handle blockchain reorganization scenarios"
+          },
+          {
+            "id": 5,
+            "title": "Setup Settlement Processing Queue",
+            "description": "Implement job queue system for handling escrow settlement and payment processing tasks",
+            "status": "pending",
+            "dependencies": [
+              "31.3"
+            ],
+            "details": "Create settlement job types (release funds, refund, dispute resolution), implement job scheduling for time-based settlements, add transaction validation workflows, integrate with payment processing systems"
+          }
+        ]
+      },
+      {
+        "id": 32,
+        "title": "Implement Security Middleware",
+        "description": "Add rate limiting, CORS configuration for easyescrow.ai domain, input validation, USDC mint allowlist, authentication for protected endpoints",
+        "status": "pending",
+        "priority": "high",
+        "dependencies": [
+          "21"
+        ],
+        "details": "",
+        "testStrategy": "",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Implement Rate Limiting Middleware",
+            "description": "Create rate limiting middleware to prevent API abuse and ensure fair usage across all endpoints",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Implement rate limiting using a sliding window or token bucket algorithm. Configure different limits for different endpoint types (e.g., 100 requests/minute for general endpoints, 10 requests/minute for settlement operations). Store rate limit counters in Redis or in-memory cache. Return appropriate HTTP 429 status codes when limits are exceeded."
+          },
+          {
+            "id": 2,
+            "title": "Configure CORS for easyescrow.ai Domain",
+            "description": "Set up Cross-Origin Resource Sharing (CORS) configuration to allow requests from easyescrow.ai domain",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Configure CORS middleware to allow requests from easyescrow.ai and its subdomains. Set appropriate allowed methods (GET, POST, PUT, DELETE), headers (Content-Type, Authorization, X-API-Key), and credentials handling. Ensure preflight requests are handled correctly for complex requests."
+          },
+          {
+            "id": 3,
+            "title": "Implement Input Validation Middleware",
+            "description": "Create comprehensive input validation middleware to sanitize and validate all incoming request data",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Implement validation for all API endpoints using schema validation (e.g., Joi, Yup, or similar). Validate data types, required fields, string lengths, numeric ranges, and format constraints. Sanitize inputs to prevent injection attacks. Return detailed validation error messages with HTTP 400 status codes."
+          },
+          {
+            "id": 4,
+            "title": "Implement USDC Mint Allowlist Validation",
+            "description": "Create middleware to validate that only approved USDC mint addresses are accepted in transactions",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Maintain a configurable allowlist of approved USDC mint addresses. Create middleware that validates incoming requests containing USDC mint addresses against this allowlist. Support for updating the allowlist through admin endpoints or configuration. Reject transactions with non-approved mint addresses with appropriate error messages."
+          },
+          {
+            "id": 5,
+            "title": "Implement Authentication Middleware for Protected Endpoints",
+            "description": "Create authentication middleware to secure protected API endpoints and validate user credentials",
+            "status": "pending",
+            "dependencies": [
+              "32.1",
+              "32.2",
+              "32.3"
+            ],
+            "details": "Implement JWT-based authentication middleware for protected endpoints. Validate JWT tokens, check expiration, and extract user information. Support for API key authentication for service-to-service communication. Implement role-based access control if needed. Return HTTP 401 for invalid tokens and HTTP 403 for insufficient permissions."
+          }
+        ]
+      },
+      {
+        "id": 33,
+        "title": "Create Docker Configuration",
+        "description": "Create Dockerfile for containerized backend, optimize for production, configure environment variables, health check endpoint",
+        "status": "pending",
+        "priority": "medium",
+        "dependencies": [
+          "21"
+        ],
+        "details": "",
+        "testStrategy": "",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create base Dockerfile with multi-stage build",
+            "description": "Create a Dockerfile with multi-stage build pattern to optimize image size and security for production deployment",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Set up multi-stage Dockerfile with builder stage for dependencies and lean production stage. Use official Node.js Alpine image as base, copy package files, install dependencies, and build application. Create final stage with minimal runtime dependencies."
+          },
+          {
+            "id": 2,
+            "title": "Configure environment variables and secrets management",
+            "description": "Set up environment variable configuration with proper defaults and secrets handling for containerized deployment",
+            "status": "pending",
+            "dependencies": [
+              "33.1"
+            ],
+            "details": "Define environment variables for database connections, API keys, JWT secrets, and other configuration. Use Docker secrets or environment files for sensitive data. Set up proper variable validation and fallback values."
+          },
+          {
+            "id": 3,
+            "title": "Implement health check endpoint",
+            "description": "Create a dedicated health check endpoint that validates application and database connectivity for container orchestration",
+            "status": "pending",
+            "dependencies": [
+              "33.1"
+            ],
+            "details": "Implement /health endpoint that checks database connectivity, external service availability, and application readiness. Return appropriate HTTP status codes and health information. Configure endpoint to be lightweight and fast."
+          },
+          {
+            "id": 4,
+            "title": "Optimize Docker image for production",
+            "description": "Apply production optimizations including security hardening, performance tuning, and minimal attack surface",
+            "status": "pending",
+            "dependencies": [
+              "33.1",
+              "33.2"
+            ],
+            "details": "Remove development dependencies, set non-root user, configure proper file permissions, minimize installed packages. Add security scanning, optimize layer caching, and configure proper logging. Set resource limits and startup parameters."
+          },
+          {
+            "id": 5,
+            "title": "Configure Docker health check and startup probes",
+            "description": "Set up Docker HEALTHCHECK instruction and configure container orchestration probes for reliable deployments",
+            "status": "pending",
+            "dependencies": [
+              "33.3",
+              "33.4"
+            ],
+            "details": "Add HEALTHCHECK instruction to Dockerfile using the health endpoint. Configure appropriate intervals, timeouts, and retry counts. Document probe configuration for Kubernetes readiness and liveness probes."
+          }
+        ]
+      },
+      {
+        "id": 34,
+        "title": "Setup DigitalOcean App Platform Deployment",
+        "description": "Configure App Platform deployment from GitHub, add managed PostgreSQL and Redis via VPC, configure secrets, set up api.easyescrow.ai domain with HTTPS, enable health checks and autoscaling",
+        "status": "pending",
+        "priority": "medium",
+        "dependencies": [],
+        "details": "",
+        "testStrategy": "",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Configure GitHub Repository Connection",
+            "description": "Connect DigitalOcean App Platform to GitHub repository for automated deployments",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Set up GitHub integration in DigitalOcean App Platform, configure repository access, set up branch-based deployment triggers, and configure build settings for the backend application"
+          },
+          {
+            "id": 2,
+            "title": "Create Managed PostgreSQL Database",
+            "description": "Set up managed PostgreSQL database instance with VPC configuration",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Create PostgreSQL database cluster in DigitalOcean, configure VPC networking for secure access, set up database credentials, and configure connection pooling and backup settings"
+          },
+          {
+            "id": 3,
+            "title": "Create Managed Redis Instance",
+            "description": "Set up managed Redis instance for caching and job queues with VPC access",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Create Redis cluster in DigitalOcean, configure VPC networking to match PostgreSQL setup, set up Redis authentication, and configure memory limits and eviction policies"
+          },
+          {
+            "id": 4,
+            "title": "Configure App Secrets and Environment Variables",
+            "description": "Set up all required environment variables and secrets for the application",
+            "status": "pending",
+            "dependencies": [
+              "34.2",
+              "34.3"
+            ],
+            "details": "Configure database connection strings, Redis URLs, JWT secrets, blockchain RPC endpoints, and other sensitive configuration in App Platform's encrypted environment variables"
+          },
+          {
+            "id": 5,
+            "title": "Setup Custom Domain with HTTPS and Health Checks",
+            "description": "Configure api.easyescrow.ai domain with SSL certificate and enable monitoring",
+            "status": "pending",
+            "dependencies": [
+              "34.1",
+              "34.4"
+            ],
+            "details": "Add custom domain api.easyescrow.ai to App Platform, configure automatic SSL certificate, set up health check endpoints, configure autoscaling rules based on CPU/memory usage, and test domain resolution"
+          }
+        ]
+      },
+      {
+        "id": 35,
+        "title": "Write Comprehensive Tests",
+        "description": "Create comprehensive test suite including on-chain Rust/Anchor tests for smart contract functionality, off-chain API integration tests, unit tests for all services, and detailed test matrix covering happy path scenarios, edge cases, security vulnerabilities, and system invariants",
+        "status": "pending",
+        "priority": "high",
+        "dependencies": [
+          "24",
+          "26",
+          "27",
+          "28",
+          "29",
+          "30",
+          "38"
+        ],
+        "details": "Implement a complete testing strategy covering both on-chain smart contract testing using Rust/Anchor with local validator, and off-chain API testing for integration scenarios. Include detailed test matrix for settlement flows, security edge cases, fee calculations, authorization checks, and system reliability patterns.",
+        "testStrategy": "Multi-layered testing approach: on-chain tests using Rust/Anchor framework with local Solana validator for smart contract logic, integration tests for API endpoints with real database interactions, unit tests with mocking for isolated component testing, and comprehensive edge case coverage including security attack vectors",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create Unit Tests for Core Services",
+            "description": "Write comprehensive unit tests for all core services including payment processing, user management, and business logic components",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Implement unit tests using a testing framework like Jest or Mocha. Cover all public methods, mock external dependencies, test error handling, and achieve high code coverage for services developed in tasks 24, 26, 27, 29, 30"
+          },
+          {
+            "id": 2,
+            "title": "Develop Integration Tests for API Endpoints",
+            "description": "Create integration tests for all REST API endpoints to verify end-to-end functionality and proper request/response handling",
+            "status": "pending",
+            "dependencies": [
+              "35.1"
+            ],
+            "details": "Set up test database, create test fixtures, write integration tests for all API endpoints from task 28. Test authentication, authorization, request validation, and response formats using tools like Supertest or similar"
+          },
+          {
+            "id": 3,
+            "title": "Implement On-Chain Smart Contract Tests",
+            "description": "Create comprehensive Rust/Anchor tests for all smart contract functionality using local Solana validator environment",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Set up local Solana validator testing environment and implement comprehensive on-chain tests covering: happy path settlements (USDC first then NFT, and vice versa), wrong mint rejection (invalid USDC or NFT mints), under/over-funding protection (price-1, price+1 scenarios), double-settle and double-deposit no-ops, expiry refund functionality (only depositor withdrawal), precise fee collection and optional royalties distribution, unauthorized cancel blocking with admin-cancel multisig requirements, PDA/account spoofing prevention with account metadata permutation tests, rent-exempt vault management with proper rent release on closing, and event field validation matching state for receipt generation"
+          },
+          {
+            "id": 4,
+            "title": "Implement Off-Chain API Integration Tests",
+            "description": "Create comprehensive integration tests for off-chain API functionality focusing on reliability, idempotency, and data consistency",
+            "status": "pending",
+            "dependencies": [
+              "35.2"
+            ],
+            "details": "Implement integration tests covering: deterministic agreement_id generation and validation, idempotency key handling for duplicate request prevention, exact-once webhook delivery guarantees, RPC failure retry logic with exponential backoff, partial success recovery mechanisms, and database invariant enforcement (no negative balances, monotonic status transitions only)"
+          },
+          {
+            "id": 5,
+            "title": "Implement Happy Path Test Scenarios",
+            "description": "Create comprehensive test cases covering all successful user journeys and normal system operations",
+            "status": "pending",
+            "dependencies": [
+              "35.3",
+              "35.4"
+            ],
+            "details": "Write test scenarios for successful payment flows, user registration, deposit processing, settlement completion, and normal cancellation processes. Ensure all positive paths work correctly from start to finish including both on-chain and off-chain components"
+          },
+          {
+            "id": 6,
+            "title": "Test Edge Cases and Security Scenarios",
+            "description": "Develop comprehensive tests for edge cases, security vulnerabilities, and attack vector prevention",
+            "status": "pending",
+            "dependencies": [
+              "35.5"
+            ],
+            "details": "Create specific test cases for: early cancellation before deposit, late cancellation after settlement, partial deposit scenarios, double-settlement prevention, automatic expiry refunds, network failures, timeout handling, account spoofing attempts, unauthorized access patterns, and fee calculation precision to the lamport level"
+          },
+          {
+            "id": 7,
+            "title": "Set Up Test Infrastructure and CI Integration",
+            "description": "Configure comprehensive test environment including local Solana validator, test databases, and automated CI/CD pipeline integration",
+            "status": "pending",
+            "dependencies": [
+              "35.6"
+            ],
+            "details": "Set up local Solana validator for on-chain testing, configure test databases, implement CI/CD pipeline to run all test suites automatically, create test reporting and coverage analysis for both Rust and JavaScript/TypeScript code, develop test data seeding scripts, and establish comprehensive testing best practices documentation covering both on-chain and off-chain testing methodologies"
+          }
+        ]
+      },
+      {
+        "id": 36,
+        "title": "Create API Documentation",
+        "description": "Generate OpenAPI/Swagger documentation for all API endpoints, webhook events, error codes, and integration guide",
+        "status": "pending",
+        "priority": "low",
+        "dependencies": [
+          "24",
+          "28"
+        ],
+        "details": "",
+        "testStrategy": "",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Set up OpenAPI/Swagger specification structure",
+            "description": "Initialize the OpenAPI 3.0 specification file with basic metadata, server configurations, and security schemes",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Create openapi.yaml file with API version, title, description, contact info, license, and server URLs. Define common security schemes like API keys or JWT authentication that will be used across endpoints."
+          },
+          {
+            "id": 2,
+            "title": "Document all API endpoints with request/response schemas",
+            "description": "Create comprehensive documentation for all REST API endpoints including paths, methods, parameters, request bodies, and response schemas",
+            "status": "pending",
+            "dependencies": [
+              "36.1"
+            ],
+            "details": "Document each endpoint with HTTP methods, URL paths, query parameters, request body schemas, response codes, and response body schemas. Include examples for common use cases and edge cases."
+          },
+          {
+            "id": 3,
+            "title": "Document webhook events and payload structures",
+            "description": "Create detailed documentation for all webhook events including event types, payload schemas, and delivery mechanisms",
+            "status": "pending",
+            "dependencies": [
+              "36.1"
+            ],
+            "details": "Document webhook event types, payload structures, headers, retry policies, and signature verification. Include examples of webhook payloads and handling instructions for different event types."
+          },
+          {
+            "id": 4,
+            "title": "Document error codes and response formats",
+            "description": "Create comprehensive documentation for all API error codes, error response formats, and troubleshooting guidance",
+            "status": "pending",
+            "dependencies": [
+              "36.2"
+            ],
+            "details": "Document HTTP status codes, custom error codes, error response structure, error messages, and common troubleshooting steps. Include examples of error responses and resolution strategies."
+          },
+          {
+            "id": 5,
+            "title": "Create integration guide and code examples",
+            "description": "Develop comprehensive integration guide with step-by-step instructions, code examples, and best practices for API consumers",
+            "status": "pending",
+            "dependencies": [
+              "36.2",
+              "36.3",
+              "36.4"
+            ],
+            "details": "Create getting started guide, authentication setup, common integration patterns, code examples in multiple languages, SDK usage instructions, and best practices for rate limiting and error handling."
+          }
+        ]
+      },
+      {
+        "id": 37,
+        "title": "End-to-End Devnet Testing",
+        "description": "Perform comprehensive end-to-end testing on devnet with specific test scenarios: happy path (create → deposit USDC → deposit NFT → settle → receipt), expiry path (create → partial deposit → expire → refund), and concurrency testing (race condition handling for multiple buyers)",
+        "status": "pending",
+        "priority": "high",
+        "dependencies": [
+          "35",
+          "36",
+          "38"
+        ],
+        "details": "Execute three critical test scenarios on actual Solana devnet with real wallets to validate complete system functionality before mainnet deployment. Tests must cover the full transaction lifecycle, error handling, and edge cases including race conditions.",
+        "testStrategy": "Run tests on actual Solana devnet using real wallets and transactions. Validate blockchain state changes, transaction confirmations, and system behavior under various conditions including network delays and concurrent operations.",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Setup Devnet Testing Environment",
+            "description": "Configure and prepare the devnet environment for comprehensive end-to-end testing",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Set up devnet RPC endpoints, configure wallet with sufficient SOL for transaction fees, prepare test USDC tokens and NFT collections, verify Solana program deployment on devnet, configure environment variables for testing"
+          },
+          {
+            "id": 2,
+            "title": "Execute Happy Path End-to-End Test",
+            "description": "Test the complete happy path scenario: create agreement → deposit USDC → deposit NFT → atomic settle → receipt JSON published",
+            "status": "pending",
+            "dependencies": [
+              "37.1"
+            ],
+            "details": "Create new escrow agreement with test parameters, perform USDC deposit from buyer wallet, deposit NFT from seller wallet, execute atomic settlement, verify receipt JSON is published with complete transaction details. Validate all state transitions and final balances."
+          },
+          {
+            "id": 3,
+            "title": "Execute Expiry Path Test Scenario",
+            "description": "Test expiry and refund functionality: create agreement → deposit one side only → wait for expiry → execute refund",
+            "status": "pending",
+            "dependencies": [
+              "37.1"
+            ],
+            "details": "Create escrow agreement, deposit either USDC or NFT (but not both), allow agreement to expire, execute expiry refund instruction, verify correct refund to original depositor and proper cleanup of escrow account."
+          },
+          {
+            "id": 4,
+            "title": "Execute Concurrency Race Condition Test",
+            "description": "Test race condition handling when multiple buyers attempt to fund the same open offer simultaneously",
+            "status": "pending",
+            "dependencies": [
+              "37.1"
+            ],
+            "details": "Set up scenario with one open offer and two buyer wallets attempting to deposit USDC simultaneously. Execute concurrent transactions and verify only one succeeds while the other fails gracefully. Test system's ability to handle race conditions properly."
+          },
+          {
+            "id": 5,
+            "title": "Validate Fee Collection and Receipt Generation",
+            "description": "Test fee collection mechanism and receipt validation for completed transactions across all test scenarios",
+            "status": "pending",
+            "dependencies": [
+              "37.2",
+              "37.3",
+              "37.4"
+            ],
+            "details": "Verify platform fees are correctly deducted and transferred to fee collection account across all test scenarios, validate receipt generation with accurate transaction details, test receipt retrieval and verification endpoints for each completed transaction type."
+          }
+        ]
+      },
+      {
+        "id": 38,
+        "title": "Setup Localnet for Program Testing",
+        "description": "Configure local Solana validator as the foundation for running the complete on-chain test matrix including happy path, wrong mint rejection, under/over-funding, double-settle, expiry refund, fee calculations, unauthorized cancel, PDA spoofing, rent-exempt vaults, and event validation. Localnet provides fast, free, deterministic testing environment for TDD of all state machine logic.",
+        "status": "pending",
+        "priority": "high",
+        "dependencies": [
+          "22"
+        ],
+        "details": "This localnet setup serves as the critical foundation for comprehensive test-driven development of the escrow program's state machine. The local validator environment enables rapid iteration through all test scenarios without devnet costs or network delays, supporting deterministic testing of complex edge cases and error conditions that are essential for robust smart contract development.",
+        "testStrategy": "Validate localnet setup by running a subset of the complete test matrix to ensure all testing infrastructure is properly configured. Test should include basic program deployment, account creation, token operations, and state transitions to confirm the environment supports the full range of planned test scenarios.",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Install and Configure Solana CLI for Local Development",
+            "description": "Install Solana CLI tools and configure for local development environment",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Download and install Solana CLI from official sources. Configure solana config set --url localhost to point to local validator. Verify installation with solana --version and solana config get commands."
+          },
+          {
+            "id": 2,
+            "title": "Start Local Solana Validator with Custom Configuration",
+            "description": "Launch local Solana validator with optimized settings for fast testing",
+            "status": "pending",
+            "dependencies": [
+              "38.1"
+            ],
+            "details": "Start validator using solana-test-validator with custom flags: --reset for clean state, --quiet for minimal logging, --bpf-program for preloaded programs, and --slots-per-epoch 32 for faster epoch transitions. Configure validator to run on default localhost:8899."
+          },
+          {
+            "id": 3,
+            "title": "Setup Test Keypairs and SOL Airdrops",
+            "description": "Generate test keypairs and fund them with SOL for transaction fees",
+            "status": "pending",
+            "dependencies": [
+              "38.2"
+            ],
+            "details": "Generate multiple test keypairs using solana-keygen new command. Create keypairs for buyer, seller, admin, and fee collector accounts. Fund each account with 10 SOL using solana airdrop command for transaction fees during testing."
+          },
+          {
+            "id": 4,
+            "title": "Deploy Test USDC Token Mint and Distribution",
+            "description": "Create local USDC token mint and distribute test tokens to accounts",
+            "status": "pending",
+            "dependencies": [
+              "38.3"
+            ],
+            "details": "Use spl-token CLI to create a new token mint representing USDC. Set mint authority and create associated token accounts for test keypairs. Mint 1000 test USDC tokens to buyer and seller accounts for escrow testing scenarios."
+          },
+          {
+            "id": 5,
+            "title": "Create Test NFT Collection and Mint Sample NFTs",
+            "description": "Setup test NFT collection and mint sample NFTs for escrow testing",
+            "status": "pending",
+            "dependencies": [
+              "38.3"
+            ],
+            "details": "Deploy Metaplex Token Metadata program if not available. Create NFT collection with metadata including name, symbol, and URI. Mint 5-10 test NFTs with unique metadata to seller accounts for use in escrow agreement testing scenarios."
+          },
+          {
+            "id": 6,
+            "title": "Setup Test Matrix Infrastructure for Comprehensive State Machine Testing",
+            "description": "Configure additional test accounts and scenarios to support the complete on-chain test matrix",
+            "status": "pending",
+            "dependencies": [
+              "38.4",
+              "38.5"
+            ],
+            "details": "Create specialized test accounts for edge case scenarios: accounts with insufficient funds for under-funding tests, multiple buyer accounts for double-settle prevention testing, expired agreement scenarios for refund testing, unauthorized accounts for cancel testing, and malicious accounts for PDA spoofing attempts. Setup test data structures to track all test scenarios and their expected outcomes."
+          }
+        ]
+      },
+      {
+        "id": 39,
+        "title": "Implement Keypair and Secrets Management",
+        "description": "Setup secure keypair storage in App Platform/DO secrets, mount via environment variables, ensure no keypairs committed to repository. Create .gitignore rules, document secret management process",
+        "status": "pending",
+        "priority": "high",
+        "dependencies": [
+          "21",
+          "34"
+        ],
+        "details": "",
+        "testStrategy": "",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Configure DigitalOcean App Platform Secrets Storage",
+            "description": "Set up secure keypair storage using DigitalOcean App Platform secrets management system for production environment",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Create secrets in DO App Platform dashboard for private keys, API keys, and other sensitive data. Configure environment variable mapping from secrets to application runtime. Ensure secrets are encrypted at rest and in transit."
+          },
+          {
+            "id": 2,
+            "title": "Implement Environment Variable Mounting System",
+            "description": "Create secure system to mount keypairs and secrets from environment variables into application runtime",
+            "status": "pending",
+            "dependencies": [
+              "39.1"
+            ],
+            "details": "Develop service layer to safely load private keys and secrets from environment variables. Implement validation to ensure required secrets are present. Add error handling for missing or malformed secrets. Create secure in-memory storage for runtime access."
+          },
+          {
+            "id": 3,
+            "title": "Create Comprehensive .gitignore Rules",
+            "description": "Establish .gitignore patterns to prevent any keypairs, private keys, or sensitive configuration from being committed to repository",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Add patterns for common secret file extensions (.key, .pem, .env, .secret), wallet files, configuration files with secrets. Include patterns for IDE-specific files and temporary files that might contain sensitive data. Test with sample secret files to ensure exclusion works."
+          },
+          {
+            "id": 4,
+            "title": "Implement Repository Security Scanning",
+            "description": "Add automated scanning to detect and prevent accidental commits of keypairs or sensitive data to the repository",
+            "status": "pending",
+            "dependencies": [
+              "39.3"
+            ],
+            "details": "Integrate pre-commit hooks to scan for potential secrets using tools like git-secrets or similar. Configure CI/CD pipeline to scan commits for sensitive patterns. Set up alerts for any detected secrets. Create remediation process for accidental commits."
+          },
+          {
+            "id": 5,
+            "title": "Document Secret Management Process",
+            "description": "Create comprehensive documentation for secret management workflow, deployment procedures, and security best practices",
+            "status": "pending",
+            "dependencies": [
+              "39.1",
+              "39.2",
+              "39.3",
+              "39.4"
+            ],
+            "details": "Write detailed documentation covering: secret creation and rotation procedures, environment variable configuration, deployment checklist, troubleshooting guide, security best practices, and incident response procedures. Include examples and step-by-step instructions for team members."
+          }
+        ]
+      },
+      {
+        "id": 40,
+        "title": "Implement Idempotency Keys for Critical Endpoints",
+        "description": "Add idempotency key support for create agreement and settle endpoints. Implement idempotency key validation, storage, and duplicate request handling to prevent double-processing",
+        "status": "pending",
+        "priority": "high",
+        "dependencies": [
+          "24",
+          "26"
+        ],
+        "details": "",
+        "testStrategy": "",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Design Idempotency Key Schema and Storage",
+            "description": "Design database schema for storing idempotency keys with metadata including endpoint, request hash, response data, and expiration timestamps",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Create database table with fields: idempotency_key (unique), endpoint_path, request_hash, response_status, response_body, created_at, expires_at. Define TTL for key expiration (24-48 hours). Design indexes for efficient lookups."
+          },
+          {
+            "id": 2,
+            "title": "Implement Idempotency Key Validation Middleware",
+            "description": "Create middleware to extract, validate, and process idempotency keys from request headers for critical endpoints",
+            "status": "pending",
+            "dependencies": [
+              "40.1"
+            ],
+            "details": "Extract Idempotency-Key header, validate format (UUID v4), check for required endpoints (/v1/agreements, /v1/agreements/{id}/settle). Return 400 for missing/invalid keys on protected endpoints."
+          },
+          {
+            "id": 3,
+            "title": "Implement Duplicate Request Detection Logic",
+            "description": "Build service to detect duplicate requests by comparing idempotency keys and request content hashes",
+            "status": "pending",
+            "dependencies": [
+              "40.1",
+              "40.2"
+            ],
+            "details": "Generate SHA-256 hash of request body and parameters. Check database for existing idempotency key. If found with same hash, return cached response. If found with different hash, return 409 Conflict."
+          },
+          {
+            "id": 4,
+            "title": "Integrate Idempotency with Create Agreement Endpoint",
+            "description": "Add idempotency key processing to the create agreement endpoint to prevent duplicate agreement creation",
+            "status": "pending",
+            "dependencies": [
+              "40.2",
+              "40.3"
+            ],
+            "details": "Wrap agreement creation logic with idempotency checks. Store successful responses with 201 status. Handle race conditions with database constraints. Ensure atomic operations between agreement creation and idempotency key storage."
+          },
+          {
+            "id": 5,
+            "title": "Integrate Idempotency with Settlement Endpoint",
+            "description": "Add idempotency key processing to the settlement endpoint to prevent double-settlement of agreements",
+            "status": "pending",
+            "dependencies": [
+              "40.2",
+              "40.3"
+            ],
+            "details": "Wrap settlement logic with idempotency checks. Store successful settlement responses. Handle edge cases where settlement fails after idempotency key is stored. Implement cleanup for failed settlements."
+          }
+        ]
+      },
+      {
+        "id": 41,
+        "title": "Implement Transaction ID Logging and Debugging System",
+        "description": "Create comprehensive transaction logging system that captures and surfaces txids for each step (init, deposits, settle, cancel). Store txids for receipts and debugging, implement log aggregation and search",
+        "status": "pending",
+        "priority": "medium",
+        "dependencies": [
+          "24",
+          "26",
+          "27"
+        ],
+        "details": "",
+        "testStrategy": "",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Design Transaction ID Data Model and Storage Schema",
+            "description": "Create database schema and data models for storing transaction IDs across all escrow lifecycle stages",
+            "status": "pending",
+            "dependencies": [],
+            "details": "Design tables/collections to store txids for init, deposits, settle, cancel operations. Include fields for agreement_id, operation_type, txid, timestamp, status, block_height. Create indexes for efficient querying by agreement and operation type."
+          },
+          {
+            "id": 2,
+            "title": "Implement Transaction ID Capture Service",
+            "description": "Create service to capture and store transaction IDs from blockchain operations during escrow lifecycle",
+            "status": "pending",
+            "dependencies": [
+              "41.1"
+            ],
+            "details": "Build service that intercepts blockchain transaction responses and extracts txids. Implement hooks in existing escrow operations (init, deposit, settle, cancel) to automatically capture and store txids with proper error handling and retry logic."
+          },
+          {
+            "id": 3,
+            "title": "Build Transaction Log Aggregation System",
+            "description": "Implement log aggregation system to collect and organize transaction logs from multiple sources",
+            "status": "pending",
+            "dependencies": [
+              "41.2"
+            ],
+            "details": "Create log aggregation service that collects txid logs from database, application logs, and blockchain events. Implement log parsing, normalization, and correlation by agreement ID. Add structured logging with consistent format across all transaction operations."
+          },
+          {
+            "id": 4,
+            "title": "Develop Transaction Search and Query API",
+            "description": "Create API endpoints for searching and retrieving transaction logs with filtering capabilities",
+            "status": "pending",
+            "dependencies": [
+              "41.3"
+            ],
+            "details": "Build REST API endpoints for querying transaction logs by agreement ID, operation type, date range, and txid. Implement pagination, sorting, and filtering. Add endpoints like GET /v1/transactions/logs and GET /v1/agreements/{id}/transactions with proper authentication and rate limiting."
+          },
+          {
+            "id": 5,
+            "title": "Create Transaction Debugging Dashboard and Tools",
+            "description": "Build debugging interface and tools for viewing transaction flows and troubleshooting issues",
+            "status": "pending",
+            "dependencies": [
+              "41.4"
+            ],
+            "details": "Create web-based debugging dashboard showing transaction timeline for each agreement. Implement transaction flow visualization, error highlighting, and export functionality. Add debugging tools for transaction replay and status verification with blockchain explorers integration."
+          }
+        ]
+      }
+    ],
+    "metadata": {
+      "created": "2025-10-13T01:02:36.190Z",
+      "updated": "2025-10-13T01:11:42.227Z",
+      "description": "Tasks for master context"
+    }
+  }
+}

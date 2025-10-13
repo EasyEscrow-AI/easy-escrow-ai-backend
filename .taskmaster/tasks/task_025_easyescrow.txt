@@ -1,0 +1,43 @@
+# Task ID: 25
+# Title: Implement Solana Blockchain Monitoring Service
+# Status: pending
+# Dependencies: 22, 23
+# Priority: high
+# Description: Create service to monitor escrow vault accounts for USDC and NFT deposits. Validate NFT mint, metadata, and amount. Update database with deposit status
+# Details:
+
+
+# Test Strategy:
+
+
+# Subtasks:
+## 1. Set up Solana RPC connection and account monitoring infrastructure [pending]
+### Dependencies: None
+### Description: Establish connection to Solana RPC nodes and implement account subscription mechanism for monitoring escrow vault accounts
+### Details:
+Configure Solana web3.js client with RPC endpoints, implement WebSocket connections for real-time account monitoring, set up connection pooling and failover mechanisms for reliability
+
+## 2. Implement USDC deposit detection and validation [pending]
+### Dependencies: 25.1
+### Description: Create service to detect USDC token transfers to escrow vault accounts and validate deposit amounts
+### Details:
+Monitor SPL token account changes for USDC mint, parse transaction logs to extract transfer amounts, validate against expected deposit amounts from database, handle decimal precision correctly
+
+## 3. Implement NFT deposit detection and metadata validation [pending]
+### Dependencies: 25.1
+### Description: Create service to detect NFT transfers to escrow accounts and validate NFT mint addresses and metadata
+### Details:
+Monitor NFT token account changes, fetch and validate NFT metadata from on-chain and off-chain sources, verify mint address matches expected NFT, validate collection membership if required
+
+## 4. Implement database update service for deposit status [pending]
+### Dependencies: 25.2, 25.3
+### Description: Create service to update database records with deposit confirmation status and transaction details
+### Details:
+Update escrow agreement records with deposit status, store transaction signatures and block confirmations, implement atomic database operations to prevent race conditions, add logging for audit trail
+
+## 5. Implement monitoring service orchestration and error handling [pending]
+### Dependencies: 25.4
+### Description: Create main monitoring service that coordinates deposit detection, handles errors, and manages service lifecycle
+### Details:
+Implement service startup/shutdown procedures, add comprehensive error handling and retry logic, implement health checks and monitoring metrics, add configuration management for RPC endpoints and monitoring intervals
+
