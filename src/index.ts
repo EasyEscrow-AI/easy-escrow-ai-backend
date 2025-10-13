@@ -9,6 +9,7 @@ import {
   sanitizeInput,
   securityHeaders,
 } from './middleware';
+import { getMonitoringOrchestrator } from './services';
 
 // Load environment variables
 dotenv.config();
@@ -16,6 +17,15 @@ dotenv.config();
 // Initialize Express app
 const app: Application = express();
 const PORT = process.env.PORT || 3000;
+
+// Initialize monitoring orchestrator instance (before route handlers)
+const monitoringOrchestrator = getMonitoringOrchestrator({
+  autoRestart: true,
+  maxRestarts: 5,
+  restartDelayMs: 5000,
+  healthCheckIntervalMs: 30000,
+  metricsIntervalMs: 60000,
+});
 
 // Security Middleware (apply first)
 app.use(helmetConfig);
@@ -41,14 +51,43 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
 app.get('/health', async (_req: Request, res: Response) => {
   const dbHealthy = await checkDatabaseHealth();
   
-  const status = dbHealthy ? 'healthy' : 'unhealthy';
-  const statusCode = dbHealthy ? 200 : 503;
+  // Get monitoring orchestrator health with error handling
+  let monitoringHealth;
+  let monitoringError = null;
+  
+  try {
+    // Use the module-level orchestrator instance to ensure consistency
+    monitoringHealth = monitoringOrchestrator.getHealth();
+  } catch (error) {
+    // If getHealth() throws, log it and return a safe default
+    console.error('[Health Check] Failed to get monitoring health:', error);
+    monitoringError = error instanceof Error ? error.message : 'Unknown error';
+    monitoringHealth = {
+      healthy: false,
+      uptime: 0,
+      monitoredAccounts: 0,
+      solanaHealthy: false,
+      restartCount: 0,
+    };
+  }
+  
+  const allHealthy = dbHealthy && monitoringHealth.healthy;
+  const status = allHealthy ? 'healthy' : 'unhealthy';
+  const statusCode = allHealthy ? 200 : 503;
   
   res.status(statusCode).json({
     status,
     timestamp: new Date().toISOString(),
     service: 'easy-escrow-ai-backend',
-    database: dbHealthy ? 'connected' : 'disconnected'
+    database: dbHealthy ? 'connected' : 'disconnected',
+    monitoring: {
+      status: monitoringHealth.healthy ? 'running' : 'stopped',
+      monitoredAccounts: monitoringHealth.monitoredAccounts,
+      uptime: `${Math.floor(monitoringHealth.uptime / 1000 / 60)} minutes`,
+      restartCount: monitoringHealth.restartCount,
+      solanaHealthy: monitoringHealth.solanaHealthy,
+      ...(monitoringError && { error: monitoringError }),
+    }
   });
 });
 
@@ -86,17 +125,45 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   });
 });
 
-// Start server with database connection
+// Graceful shutdown handler
+const gracefulShutdown = async (signal: string) => {
+  console.log(`\n${signal} received. Starting graceful shutdown...`);
+  
+  try {
+    // Stop monitoring orchestrator
+    console.log('Stopping monitoring orchestrator...');
+    await monitoringOrchestrator.stop();
+    
+    console.log('Graceful shutdown completed');
+    process.exit(0);
+  } catch (error) {
+    console.error('Error during graceful shutdown:', error);
+    process.exit(1);
+  }
+};
+
+// Register shutdown handlers
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
+// Start server with database connection and monitoring
 const startServer = async () => {
   try {
     // Connect to database
     await connectDatabase();
+    console.log('✅ Database connected');
+    
+    // Start monitoring orchestrator
+    console.log('Starting monitoring orchestrator...');
+    await monitoringOrchestrator.start();
+    console.log('✅ Monitoring orchestrator started');
     
     // Start Express server
     app.listen(PORT, () => {
-      console.log(`🚀 Server is running on port ${PORT}`);
+      console.log(`\n🚀 Server is running on port ${PORT}`);
       console.log(`📍 Health check: http://localhost:${PORT}/health`);
       console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`👁️  Deposit monitoring: ACTIVE\n`);
     });
   } catch (error) {
     console.error('Failed to start server:', error);

@@ -1,6 +1,7 @@
 import { PrismaClient, Agreement, AgreementStatus } from '../generated/prisma';
 import { CreateAgreementDTO, CreateAgreementResponseDTO, AgreementResponseDTO, AgreementQueryDTO } from '../models/dto/agreement.dto';
 import { initializeEscrow } from './solana.service';
+import { getMonitoringOrchestrator } from './monitoring-orchestrator.service';
 import { Decimal } from '@prisma/client/runtime/library';
 
 const prisma = new PrismaClient();
@@ -47,7 +48,19 @@ export const createAgreement = async (
       },
     });
 
-    // 3. Return response
+    // 3. Trigger monitoring reload to start monitoring this agreement
+    try {
+      const orchestrator = getMonitoringOrchestrator();
+      if (orchestrator.isServiceRunning()) {
+        await orchestrator.reloadAgreements();
+        console.log(`Started monitoring for agreement: ${agreement.agreementId}`);
+      }
+    } catch (monitoringError) {
+      // Log error but don't fail the agreement creation
+      console.error('Failed to trigger monitoring reload:', monitoringError);
+    }
+
+    // 4. Return response
     return {
       agreementId: agreement.agreementId,
       escrowPda: agreement.escrowPda,
