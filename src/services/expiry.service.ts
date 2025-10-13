@@ -5,7 +5,7 @@
  * Runs as a background service to identify and trigger actions on expired agreements.
  */
 
-import { PrismaClient, AgreementStatus } from '../generated/prisma';
+import { PrismaClient, AgreementStatus, DepositType } from '../generated/prisma';
 
 const prisma = new PrismaClient();
 
@@ -181,8 +181,8 @@ export class ExpiryService {
 
       // Check if agreement has any confirmed deposits
       const hasDeposits = agreement.deposits.length > 0;
-      const hasUsdcDeposit = agreement.deposits.some(d => d.type === 'USDC');
-      const hasNftDeposit = agreement.deposits.some(d => d.type === 'NFT');
+      const hasUsdcDeposit = agreement.deposits.some(d => d.type === DepositType.USDC);
+      const hasNftDeposit = agreement.deposits.some(d => d.type === DepositType.NFT);
 
       // Determine appropriate status based on deposit state
       let newStatus: AgreementStatus;
