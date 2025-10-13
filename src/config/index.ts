@@ -43,6 +43,7 @@ export const config = {
   // Platform
   platform: {
     feeBps: parseInt(process.env.PLATFORM_FEE_BPS || '250', 10),
+    feeCollectorAddress: process.env.PLATFORM_FEE_COLLECTOR_ADDRESS || '',
   },
   
   // Webhooks

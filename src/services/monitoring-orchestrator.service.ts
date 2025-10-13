@@ -7,6 +7,7 @@
 
 import { getMonitoringService, MonitoringService } from './monitoring.service';
 import { getSolanaService, SolanaService } from './solana.service';
+import { getSettlementService, SettlementService } from './settlement.service';
 
 /**
  * Service health status
@@ -52,6 +53,7 @@ interface OrchestratorConfig {
 export class MonitoringOrchestratorService {
   private monitoringService: MonitoringService;
   private solanaService: SolanaService;
+  private settlementService: SettlementService;
   
   private isRunning: boolean = false;
   private startTime?: Date;
@@ -75,6 +77,7 @@ export class MonitoringOrchestratorService {
   constructor(config?: OrchestratorConfig) {
     this.monitoringService = getMonitoringService();
     this.solanaService = getSolanaService();
+    this.settlementService = getSettlementService();
     
     this.config = {
       autoRestart: config?.autoRestart ?? true,
@@ -84,7 +87,7 @@ export class MonitoringOrchestratorService {
       metricsIntervalMs: config?.metricsIntervalMs ?? 60000, // 1 minute
     };
     
-    console.log('[MonitoringOrchestrator] Initialized');
+    console.log('[MonitoringOrchestrator] Initialized with deposit monitoring and settlement services');
   }
 
   /**
@@ -101,6 +104,10 @@ export class MonitoringOrchestratorService {
     try {
       // Start monitoring service
       await this.startMonitoringWithRetry();
+      
+      // Start settlement service
+      await this.settlementService.start();
+      console.log('[MonitoringOrchestrator] Settlement service started');
       
       // Start health checks
       this.startHealthChecks();
@@ -142,6 +149,10 @@ export class MonitoringOrchestratorService {
         clearInterval(this.metricsTimer);
         this.metricsTimer = undefined;
       }
+      
+      // Stop settlement service
+      await this.settlementService.stop();
+      console.log('[MonitoringOrchestrator] Settlement service stopped');
       
       // Stop monitoring service
       await this.monitoringService.stop();
