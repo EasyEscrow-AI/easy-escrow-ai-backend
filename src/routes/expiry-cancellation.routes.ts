@@ -105,7 +105,7 @@ router.get(
   ],
   async (req: Request, res: Response) => {
     try {
-      const withinMinutes = (req.query.withinMinutes as number) || 60;
+      const withinMinutes = req.query.withinMinutes ? parseInt(req.query.withinMinutes as string) : 60;
       const services = orchestrator.getServices();
       const agreements = await services.expiry.getExpiringAgreements(withinMinutes);
       
@@ -485,7 +485,7 @@ router.get(
   ],
   async (req: Request, res: Response) => {
     try {
-      const limit = (req.query.limit as number) || 10;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
       const errors = orchestrator.getErrors(limit);
       
       res.json({
