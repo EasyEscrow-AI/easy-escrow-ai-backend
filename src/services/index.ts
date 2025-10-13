@@ -13,4 +13,9 @@ export * from './deposit-database.service';
 export * from './usdc-deposit.service';
 export * from './nft-deposit.service';
 export * from './settlement.service';
+export * from './expiry.service';
+export * from './refund.service';
+export * from './cancellation.service';
+export * from './status-update.service';
+export * from './expiry-cancellation-orchestrator.service';
 

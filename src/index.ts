@@ -2,14 +2,14 @@ import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { connectDatabase, checkDatabaseHealth } from './config/database';
-import { agreementRoutes } from './routes';
+import { agreementRoutes, expiryCancellationRoutes } from './routes';
 import {
   corsOptions,
   helmetConfig,
   sanitizeInput,
   securityHeaders,
 } from './middleware';
-import { getMonitoringOrchestrator } from './services';
+import { getMonitoringOrchestrator, getExpiryCancellationOrchestrator } from './services';
 
 // Load environment variables
 dotenv.config();
@@ -18,13 +18,20 @@ dotenv.config();
 const app: Application = express();
 const PORT = process.env.PORT || 3000;
 
-// Initialize monitoring orchestrator instance (before route handlers)
+// Initialize orchestrator instances (before route handlers)
 const monitoringOrchestrator = getMonitoringOrchestrator({
   autoRestart: true,
   maxRestarts: 5,
   restartDelayMs: 5000,
   healthCheckIntervalMs: 30000,
   metricsIntervalMs: 60000,
+});
+
+const expiryCancellationOrchestrator = getExpiryCancellationOrchestrator({
+  expiryCheckIntervalMs: 60000, // Check every minute
+  autoProcessRefunds: true,
+  refundProcessingBatchSize: 10,
+  enableMonitoring: true,
 });
 
 // Security Middleware (apply first)
@@ -71,7 +78,10 @@ app.get('/health', async (_req: Request, res: Response) => {
     };
   }
   
-  const allHealthy = dbHealthy && monitoringHealth.healthy;
+  // Get expiry-cancellation orchestrator health
+  const expiryCancellationHealth = await expiryCancellationOrchestrator.healthCheck();
+  
+  const allHealthy = dbHealthy && monitoringHealth.healthy && expiryCancellationHealth.healthy;
   const status = allHealthy ? 'healthy' : 'unhealthy';
   const statusCode = allHealthy ? 200 : 503;
   
@@ -87,6 +97,11 @@ app.get('/health', async (_req: Request, res: Response) => {
       restartCount: monitoringHealth.restartCount,
       solanaHealthy: monitoringHealth.solanaHealthy,
       ...(monitoringError && { error: monitoringError }),
+    },
+    expiryCancellation: {
+      status: expiryCancellationHealth.healthy ? 'running' : 'stopped',
+      services: expiryCancellationHealth.services,
+      recentErrors: expiryCancellationHealth.recentErrors,
     }
   });
 });
@@ -98,13 +113,15 @@ app.get('/', (_req: Request, res: Response) => {
     version: '1.0.0',
     endpoints: {
       health: '/health',
-      agreements: '/v1/agreements'
+      agreements: '/v1/agreements',
+      expiryCancellation: '/api/expiry-cancellation'
     }
   });
 });
 
 // API Routes
 app.use(agreementRoutes);
+app.use('/api/expiry-cancellation', expiryCancellationRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {
@@ -134,6 +151,10 @@ const gracefulShutdown = async (signal: string) => {
     console.log('Stopping monitoring orchestrator...');
     await monitoringOrchestrator.stop();
     
+    // Stop expiry-cancellation orchestrator
+    console.log('Stopping expiry-cancellation orchestrator...');
+    await expiryCancellationOrchestrator.stop();
+    
     console.log('Graceful shutdown completed');
     process.exit(0);
   } catch (error) {
@@ -146,7 +167,7 @@ const gracefulShutdown = async (signal: string) => {
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
-// Start server with database connection and monitoring
+// Start server with database connection and orchestrators
 const startServer = async () => {
   try {
     // Connect to database
@@ -158,12 +179,18 @@ const startServer = async () => {
     await monitoringOrchestrator.start();
     console.log('✅ Monitoring orchestrator started');
     
+    // Start expiry-cancellation orchestrator
+    console.log('Starting expiry-cancellation orchestrator...');
+    await expiryCancellationOrchestrator.start();
+    console.log('✅ Expiry-cancellation orchestrator started');
+    
     // Start Express server
     app.listen(PORT, () => {
       console.log(`\n🚀 Server is running on port ${PORT}`);
       console.log(`📍 Health check: http://localhost:${PORT}/health`);
       console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`👁️  Deposit monitoring: ACTIVE\n`);
+      console.log(`👁️  Deposit monitoring: ACTIVE`);
+      console.log(`⏰ Expiry checking: ACTIVE\n`);
     });
   } catch (error) {
     console.error('Failed to start server:', error);
@@ -174,4 +201,3 @@ const startServer = async () => {
 startServer();
 
 export default app;
-

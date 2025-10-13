@@ -6,6 +6,7 @@
  */
 
 import agreementRoutes from './agreement.routes';
+import expiryCancellationRoutes from './expiry-cancellation.routes';
 
-export { agreementRoutes };
+export { agreementRoutes, expiryCancellationRoutes };
 
