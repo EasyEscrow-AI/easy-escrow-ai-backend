@@ -1,24 +1,23 @@
 /**
  * Monitoring Service
- * 
+ *
  * Orchestrates monitoring of Solana escrow accounts for deposits.
  * Coordinates USDC and NFT deposit detection, validation, and database updates.
  */
 
-import { PublicKey, AccountInfo, Context } from '@solana/web3.js';
-import { getSolanaService, SolanaService } from './solana.service';
-import { getUsdcDepositService, UsdcDepositService } from './usdc-deposit.service';
-import { getNftDepositService, NftDepositService } from './nft-deposit.service';
+import { AccountInfo, Context } from '@solana/web3.js';
+import { getSolanaService } from './solana.service';
+import { getUsdcDepositService } from './usdc-deposit.service';
+import { getNftDepositService } from './nft-deposit.service';
 import { prisma } from '../config/database';
-import { config } from '../config';
 
 /**
  * Monitoring configuration
  */
 interface MonitoringConfig {
-  pollingInterval?: number; // Fallback polling interval in ms
-  maxRetries?: number;
-  retryDelayMs?: number;
+  pollingInterval?: number; // Milliseconds between fallback polls
+  maxRetries?: number; // Max retries for failed operations
+  retryDelayMs?: number; // Delay between retries
 }
 
 /**
@@ -33,14 +32,14 @@ interface MonitoredAccount {
 
 /**
  * Monitoring Service Class
- * 
+ *
  * Main service for monitoring escrow vault accounts.
  * Handles service lifecycle, error handling, and coordination.
  */
 export class MonitoringService {
-  private solanaService: SolanaService;
-  private usdcDepositService: UsdcDepositService;
-  private nftDepositService: NftDepositService;
+  private solanaService: ReturnType<typeof getSolanaService>;
+  private usdcDepositService: ReturnType<typeof getUsdcDepositService>;
+  private nftDepositService: ReturnType<typeof getNftDepositService>;
   private monitoredAccounts: Map<string, MonitoredAccount> = new Map();
   private isRunning: boolean = false;
   private config: Required<MonitoringConfig>;
@@ -50,36 +49,37 @@ export class MonitoringService {
     this.solanaService = getSolanaService();
     this.usdcDepositService = getUsdcDepositService();
     this.nftDepositService = getNftDepositService();
+
     this.config = {
       pollingInterval: monitoringConfig?.pollingInterval || 10000, // 10 seconds
       maxRetries: monitoringConfig?.maxRetries || 3,
       retryDelayMs: monitoringConfig?.retryDelayMs || 1000,
     };
-    
+
     console.log('[MonitoringService] Initialized');
   }
 
   /**
    * Start the monitoring service
    */
-  public async start(): Promise<void> {
+  async start(): Promise<void> {
     if (this.isRunning) {
       console.log('[MonitoringService] Service already running');
       return;
     }
 
     console.log('[MonitoringService] Starting monitoring service...');
-    
+
     try {
       // Start Solana service
       await this.solanaService.start();
-      
+
       // Load pending agreements and start monitoring
       await this.loadPendingAgreements();
-      
+
       // Start fallback polling for reliability
       this.startPolling();
-      
+
       this.isRunning = true;
       console.log('[MonitoringService] Monitoring service started successfully');
     } catch (error) {
@@ -91,27 +91,27 @@ export class MonitoringService {
   /**
    * Stop the monitoring service
    */
-  public async stop(): Promise<void> {
+  async stop(): Promise<void> {
     if (!this.isRunning) {
       console.log('[MonitoringService] Service not running');
       return;
     }
 
     console.log('[MonitoringService] Stopping monitoring service...');
-    
+
     try {
       // Stop polling
       if (this.pollingTimer) {
         clearInterval(this.pollingTimer);
         this.pollingTimer = undefined;
       }
-      
+
       // Unsubscribe from all accounts
       await this.unsubscribeAll();
-      
+
       // Stop Solana service
       await this.solanaService.stop();
-      
+
       this.isRunning = false;
       console.log('[MonitoringService] Monitoring service stopped');
     } catch (error) {
@@ -126,7 +126,7 @@ export class MonitoringService {
   private async loadPendingAgreements(): Promise<void> {
     try {
       console.log('[MonitoringService] Loading pending agreements...');
-      
+
       // Get agreements that need monitoring (PENDING, FUNDED, or partially locked)
       const agreements = await prisma.agreement.findMany({
         where: {
@@ -145,33 +145,31 @@ export class MonitoringService {
           status: true,
         },
       });
-      
+
       console.log(`[MonitoringService] Found ${agreements.length} agreements to monitor`);
-      
+
       // Start monitoring each agreement
       for (const agreement of agreements) {
         // Monitor USDC deposit address if not yet locked
-        if (agreement.usdcDepositAddr && 
-            !['USDC_LOCKED', 'BOTH_LOCKED'].includes(agreement.status)) {
-          await this.monitorAccount(
-            agreement.usdcDepositAddr,
-            agreement.id,
-            'usdc'
-          );
+        if (
+          agreement.usdcDepositAddr &&
+          !['USDC_LOCKED', 'BOTH_LOCKED'].includes(agreement.status)
+        ) {
+          await this.monitorAccount(agreement.usdcDepositAddr, agreement.id, 'usdc');
         }
-        
+
         // Monitor NFT deposit address if not yet locked
-        if (agreement.nftDepositAddr && 
-            !['NFT_LOCKED', 'BOTH_LOCKED'].includes(agreement.status)) {
-          await this.monitorAccount(
-            agreement.nftDepositAddr,
-            agreement.id,
-            'nft'
-          );
+        if (
+          agreement.nftDepositAddr &&
+          !['NFT_LOCKED', 'BOTH_LOCKED'].includes(agreement.status)
+        ) {
+          await this.monitorAccount(agreement.nftDepositAddr, agreement.id, 'nft');
         }
       }
-      
-      console.log(`[MonitoringService] Now monitoring ${this.monitoredAccounts.size} accounts`);
+
+      console.log(
+        `[MonitoringService] Now monitoring ${this.monitoredAccounts.size} accounts`
+      );
     } catch (error) {
       console.error('[MonitoringService] Error loading pending agreements:', error);
       throw error;
@@ -181,7 +179,7 @@ export class MonitoringService {
   /**
    * Start monitoring a specific account
    */
-  public async monitorAccount(
+  async monitorAccount(
     publicKey: string,
     agreementId: string,
     accountType: 'usdc' | 'nft'
@@ -193,16 +191,24 @@ export class MonitoringService {
     }
 
     try {
-      console.log(`[MonitoringService] Starting to monitor ${accountType} account: ${publicKey}`);
-      
+      console.log(
+        `[MonitoringService] Starting to monitor ${accountType} account: ${publicKey}`
+      );
+
       // Subscribe to account changes
       const subscriptionId = await this.solanaService.subscribeToAccount(
         publicKey,
         async (accountInfo, context) => {
-          await this.handleAccountChange(publicKey, accountInfo, context, accountType, agreementId);
+          await this.handleAccountChange(
+            publicKey,
+            accountInfo,
+            context,
+            accountType,
+            agreementId
+          );
         }
       );
-      
+
       // Store monitored account info
       this.monitoredAccounts.set(publicKey, {
         publicKey,
@@ -210,8 +216,10 @@ export class MonitoringService {
         accountType,
         subscriptionId,
       });
-      
-      console.log(`[MonitoringService] Successfully monitoring ${accountType} account: ${publicKey}`);
+
+      console.log(
+        `[MonitoringService] Successfully monitoring ${accountType} account: ${publicKey}`
+      );
     } catch (error) {
       console.error(`[MonitoringService] Failed to monitor account ${publicKey}:`, error);
       throw error;
@@ -221,7 +229,7 @@ export class MonitoringService {
   /**
    * Stop monitoring a specific account
    */
-  public async stopMonitoringAccount(publicKey: string): Promise<void> {
+  async stopMonitoringAccount(publicKey: string): Promise<void> {
     const monitoredAccount = this.monitoredAccounts.get(publicKey);
     if (!monitoredAccount) {
       console.log(`[MonitoringService] Account not being monitored: ${publicKey}`);
@@ -230,16 +238,19 @@ export class MonitoringService {
 
     try {
       console.log(`[MonitoringService] Stopping monitoring of account: ${publicKey}`);
-      
+
       // Unsubscribe from account changes
       await this.solanaService.unsubscribeFromAccount(publicKey);
-      
+
       // Remove from monitored accounts
       this.monitoredAccounts.delete(publicKey);
-      
+
       console.log(`[MonitoringService] Stopped monitoring account: ${publicKey}`);
     } catch (error) {
-      console.error(`[MonitoringService] Error stopping monitoring of account ${publicKey}:`, error);
+      console.error(
+        `[MonitoringService] Error stopping monitoring of account ${publicKey}:`,
+        error
+      );
       throw error;
     }
   }
@@ -248,14 +259,16 @@ export class MonitoringService {
    * Unsubscribe from all monitored accounts
    */
   private async unsubscribeAll(): Promise<void> {
-    console.log(`[MonitoringService] Unsubscribing from ${this.monitoredAccounts.size} accounts...`);
-    
-    const promises = Array.from(this.monitoredAccounts.keys()).map(pubKey =>
-      this.stopMonitoringAccount(pubKey).catch(error =>
+    console.log(
+      `[MonitoringService] Unsubscribing from ${this.monitoredAccounts.size} accounts...`
+    );
+
+    const promises = Array.from(this.monitoredAccounts.keys()).map((pubKey) =>
+      this.stopMonitoringAccount(pubKey).catch((error) =>
         console.error(`[MonitoringService] Failed to stop monitoring ${pubKey}:`, error)
       )
     );
-    
+
     await Promise.all(promises);
     console.log('[MonitoringService] All accounts unsubscribed');
   }
@@ -271,14 +284,16 @@ export class MonitoringService {
     agreementId: string
   ): Promise<void> {
     try {
-      console.log(`[MonitoringService] Account change detected for ${accountType} account: ${publicKey}`);
+      console.log(
+        `[MonitoringService] Account change detected for ${accountType} account: ${publicKey}`
+      );
       console.log(`[MonitoringService] Slot: ${context.slot}`);
-      
+
       if (!accountInfo) {
         console.log(`[MonitoringService] Account ${publicKey} has no data (possibly closed)`);
         return;
       }
-      
+
       // Process the account change based on type
       if (accountType === 'usdc') {
         await this.handleUsdcAccountChange(publicKey, accountInfo, context, agreementId);
@@ -286,7 +301,10 @@ export class MonitoringService {
         await this.handleNftAccountChange(publicKey, accountInfo, context, agreementId);
       }
     } catch (error) {
-      console.error(`[MonitoringService] Error handling account change for ${publicKey}:`, error);
+      console.error(
+        `[MonitoringService] Error handling account change for ${publicKey}:`,
+        error
+      );
       // Don't throw - we want to continue monitoring other accounts
     }
   }
@@ -302,7 +320,7 @@ export class MonitoringService {
   ): Promise<void> {
     console.log(`[MonitoringService] Processing USDC account change`);
     console.log(`[MonitoringService] Account: ${publicKey}, Agreement: ${agreementId}`);
-    
+
     try {
       const result = await this.usdcDepositService.handleUsdcAccountChange(
         publicKey,
@@ -310,13 +328,23 @@ export class MonitoringService {
         context,
         agreementId
       );
-      
+
       if (result.success) {
-        console.log(`[MonitoringService] Successfully processed USDC deposit: ${result.amount} USDC`);
-        
-        // Stop monitoring this account if deposit is confirmed
-        if (result.depositId) {
+        console.log(
+          `[MonitoringService] Successfully processed USDC deposit: ${result.amount} USDC`
+        );
+
+        // BUG FIX: Only stop monitoring when deposit is CONFIRMED, not just when depositId exists
+        // This ensures we continue tracking pending deposits until they are fully confirmed
+        if (result.depositId && result.status === 'CONFIRMED') {
+          console.log(
+            `[MonitoringService] Deposit confirmed, stopping monitoring of account: ${publicKey}`
+          );
           await this.stopMonitoringAccount(publicKey);
+        } else if (result.depositId && result.status === 'PENDING') {
+          console.log(
+            `[MonitoringService] Deposit pending, continuing to monitor account: ${publicKey}`
+          );
         }
       } else {
         console.error(`[MonitoringService] Failed to process USDC deposit: ${result.error}`);
@@ -337,7 +365,7 @@ export class MonitoringService {
   ): Promise<void> {
     console.log(`[MonitoringService] Processing NFT account change`);
     console.log(`[MonitoringService] Account: ${publicKey}, Agreement: ${agreementId}`);
-    
+
     try {
       const result = await this.nftDepositService.handleNftAccountChange(
         publicKey,
@@ -345,13 +373,21 @@ export class MonitoringService {
         context,
         agreementId
       );
-      
+
       if (result.success) {
         console.log(`[MonitoringService] Successfully processed NFT deposit: ${result.mint}`);
-        
-        // Stop monitoring this account if deposit is confirmed
-        if (result.depositId) {
+
+        // BUG FIX: Only stop monitoring when deposit is CONFIRMED, not just when depositId exists
+        // This ensures we continue tracking pending deposits until they are fully confirmed
+        if (result.depositId && result.status === 'CONFIRMED') {
+          console.log(
+            `[MonitoringService] Deposit confirmed, stopping monitoring of account: ${publicKey}`
+          );
           await this.stopMonitoringAccount(publicKey);
+        } else if (result.depositId && result.status === 'PENDING') {
+          console.log(
+            `[MonitoringService] Deposit pending, continuing to monitor account: ${publicKey}`
+          );
         }
       } else {
         console.error(`[MonitoringService] Failed to process NFT deposit: ${result.error}`);
@@ -365,8 +401,10 @@ export class MonitoringService {
    * Start fallback polling for reliability
    */
   private startPolling(): void {
-    console.log(`[MonitoringService] Starting fallback polling (interval: ${this.config.pollingInterval}ms)`);
-    
+    console.log(
+      `[MonitoringService] Starting fallback polling (interval: ${this.config.pollingInterval}ms)`
+    );
+
     this.pollingTimer = setInterval(async () => {
       await this.pollAccounts();
     }, this.config.pollingInterval);
@@ -383,16 +421,16 @@ export class MonitoringService {
     try {
       const accounts = Array.from(this.monitoredAccounts.values());
       console.log(`[MonitoringService] Polling ${accounts.length} accounts...`);
-      
+
       // Get account info for all monitored accounts
-      const publicKeys = accounts.map(acc => acc.publicKey);
+      const publicKeys = accounts.map((acc) => acc.publicKey);
       const accountInfos = await this.solanaService.getMultipleAccountsInfo(publicKeys);
-      
+
       // Process each account
       for (let i = 0; i < accounts.length; i++) {
         const account = accounts[i];
         const accountInfo = accountInfos[i];
-        
+
         if (accountInfo) {
           // Check if account has been updated since last poll
           // This is a simple fallback - WebSocket subscriptions are more reliable
@@ -407,11 +445,7 @@ export class MonitoringService {
   /**
    * Get service status
    */
-  public getStatus(): {
-    isRunning: boolean;
-    monitoredAccountsCount: number;
-    solanaHealthy: boolean;
-  } {
+  getStatus(): { isRunning: boolean; monitoredAccountsCount: number; solanaHealthy: boolean } {
     return {
       isRunning: this.isRunning,
       monitoredAccountsCount: this.monitoredAccounts.size,
@@ -422,14 +456,14 @@ export class MonitoringService {
   /**
    * Get monitored accounts
    */
-  public getMonitoredAccounts(): MonitoredAccount[] {
+  getMonitoredAccounts(): MonitoredAccount[] {
     return Array.from(this.monitoredAccounts.values());
   }
 
   /**
    * Reload agreements (useful after new agreements are created)
    */
-  public async reloadAgreements(): Promise<void> {
+  async reloadAgreements(): Promise<void> {
     console.log('[MonitoringService] Reloading agreements...');
     await this.loadPendingAgreements();
   }
