@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="media/easyescrow-logo.png" alt="EasyEscrow.ai Logo" width="400">
+</div>
+
 # EasyEscrow.ai Backend
 
 Backend service for EasyEscrow.ai - an AI-powered escrow platform with Solana blockchain integration.
