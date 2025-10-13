@@ -116,7 +116,7 @@
             "id": 5,
             "title": "Deploy Program to Solana Devnet",
             "description": "Build, deploy and verify the escrow program on Solana devnet",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "22.4"
             ],
@@ -1439,7 +1439,7 @@
     ],
     "metadata": {
       "created": "2025-10-13T01:02:36.190Z",
-      "updated": "2025-10-13T06:16:45.915Z",
+      "updated": "2025-10-13T08:54:08.274Z",
       "description": "Tasks for master context"
     }
   }

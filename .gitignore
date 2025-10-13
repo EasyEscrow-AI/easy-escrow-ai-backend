@@ -50,4 +50,9 @@ Thumbs.db
 coverage/
 .nyc_output/
 
+# Installers
+*.exe
+solana-install.sh
+deployment-info.txt
+
 /src/generated/prisma

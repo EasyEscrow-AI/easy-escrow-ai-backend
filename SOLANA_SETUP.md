@@ -19,11 +19,11 @@ This guide walks through setting up the complete Solana development environment 
 
 **Option A: Using PowerShell (Recommended for Windows)**
 ```powershell
-# Download Solana installer
-Invoke-WebRequest -Uri https://release.solana.com/v1.17.0/solana-install-init-x86_64-pc-windows-msvc.exe -OutFile solana-install-init.exe
+# Download Agave (Solana 2.x) installer
+Invoke-WebRequest -Uri https://release.anza.xyz/v2.1.13/agave-install-init-x86_64-pc-windows-msvc.exe -OutFile agave-install.exe
 
 # Run installer
-.\solana-install-init.exe v1.17.0
+.\agave-install.exe v2.1.13
 
 # Add to PATH (restart terminal after this)
 $env:PATH += ";$env:USERPROFILE\.local\share\solana\install\active_release\bin"
@@ -31,13 +31,15 @@ $env:PATH += ";$env:USERPROFILE\.local\share\solana\install\active_release\bin"
 
 **Option B: Using Windows Subsystem for Linux (WSL)**
 ```bash
-sh -c "$(curl -sSfL https://release.solana.com/stable/install)"
+# Install Agave (Solana 2.x)
+sh -c "$(curl -sSfL https://release.anza.xyz/stable/install)"
 export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
 ```
 
 Verify installation:
 ```powershell
 solana --version
+# Should show: solana-cli 2.1.13 (src:...; feat:..., client:Agave)
 ```
 
 ### 3. Install Anchor Framework

@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "programs/*"
+    "programs/escrow"
 ]
 resolver = "2"
 
