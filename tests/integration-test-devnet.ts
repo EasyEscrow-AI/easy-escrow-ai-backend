@@ -10,10 +10,12 @@ describe("escrow - devnet integration test", () => {
 
   // Use the deployed program ID on devnet
   const programId = new PublicKey("7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV");
-  const program = new Program(
-    require("../target/idl/escrow.json"),
-    provider
-  ) as Program<Escrow>;
+  
+  // Load IDL and override the program ID to match deployed version
+  const idl = require("../target/idl/escrow.json");
+  idl.address = programId.toString();
+  
+  const program = new Program(idl, provider) as Program<Escrow>;
 
   it("Program is deployed and accessible", async () => {
     console.log("✅ Program ID:", program.programId.toString());
