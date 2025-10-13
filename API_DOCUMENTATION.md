@@ -263,15 +263,17 @@ Invoke-RestMethod -Uri "http://localhost:3000/v1/agreements?status=PENDING&page=
 - ✅ Request validation and error handling
 - ✅ Database storage with PostgreSQL
 - ✅ Escrow PDA derivation (mock implementation)
+- ✅ Deposit monitoring service (Task 25 completed)
+- ✅ Automatic monitoring of USDC and NFT deposits
+- ✅ Health checks and metrics for monitoring service
 - ⏳ Actual on-chain program integration (pending Task 22 completion)
 
 ### Next Steps
 
 1. Complete Task 22 (Deploy Solana Program)
 2. Update `initializeEscrow` function to call actual on-chain program
-3. Implement deposit monitoring (Task 25)
-4. Implement settlement API (Task 26)
-5. Add webhook notifications
+3. Implement settlement API (Task 26)
+4. Add webhook notifications
 
 ---
 
@@ -285,7 +287,23 @@ Invoke-RestMethod -Uri "http://localhost:3000/v1/agreements?status=PENDING&page=
   "status": "healthy",
   "timestamp": "2025-10-13T10:45:00.000Z",
   "service": "easy-escrow-ai-backend",
-  "database": "connected"
+  "database": "connected",
+  "monitoring": {
+    "status": "running",
+    "monitoredAccounts": 5,
+    "uptime": "120 minutes",
+    "restartCount": 0,
+    "solanaHealthy": true
+  }
 }
 ```
+
+**Response Fields:**
+- `status`: Overall system health (healthy/unhealthy)
+- `database`: Database connection status
+- `monitoring.status`: Monitoring service status (running/stopped)
+- `monitoring.monitoredAccounts`: Number of accounts currently being monitored for deposits
+- `monitoring.uptime`: How long the monitoring service has been running
+- `monitoring.restartCount`: Number of times the monitoring service has restarted
+- `monitoring.solanaHealthy`: Solana connection health status
 

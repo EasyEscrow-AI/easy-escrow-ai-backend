@@ -9,6 +9,7 @@ import {
   sanitizeInput,
   securityHeaders,
 } from './middleware';
+import { getMonitoringOrchestrator } from './services';
 
 // Load environment variables
 dotenv.config();
@@ -41,14 +42,26 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
 app.get('/health', async (_req: Request, res: Response) => {
   const dbHealthy = await checkDatabaseHealth();
   
-  const status = dbHealthy ? 'healthy' : 'unhealthy';
-  const statusCode = dbHealthy ? 200 : 503;
+  // Get monitoring orchestrator health
+  const orchestrator = getMonitoringOrchestrator();
+  const monitoringHealth = orchestrator.getHealth();
+  
+  const allHealthy = dbHealthy && monitoringHealth.healthy;
+  const status = allHealthy ? 'healthy' : 'unhealthy';
+  const statusCode = allHealthy ? 200 : 503;
   
   res.status(statusCode).json({
     status,
     timestamp: new Date().toISOString(),
     service: 'easy-escrow-ai-backend',
-    database: dbHealthy ? 'connected' : 'disconnected'
+    database: dbHealthy ? 'connected' : 'disconnected',
+    monitoring: {
+      status: monitoringHealth.healthy ? 'running' : 'stopped',
+      monitoredAccounts: monitoringHealth.monitoredAccounts,
+      uptime: `${Math.floor(monitoringHealth.uptime / 1000 / 60)} minutes`,
+      restartCount: monitoringHealth.restartCount,
+      solanaHealthy: monitoringHealth.solanaHealthy,
+    }
   });
 });
 
@@ -86,17 +99,54 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   });
 });
 
-// Start server with database connection
+// Get monitoring orchestrator instance
+const monitoringOrchestrator = getMonitoringOrchestrator({
+  autoRestart: true,
+  maxRestarts: 5,
+  restartDelayMs: 5000,
+  healthCheckIntervalMs: 30000,
+  metricsIntervalMs: 60000,
+});
+
+// Graceful shutdown handler
+const gracefulShutdown = async (signal: string) => {
+  console.log(`\n${signal} received. Starting graceful shutdown...`);
+  
+  try {
+    // Stop monitoring orchestrator
+    console.log('Stopping monitoring orchestrator...');
+    await monitoringOrchestrator.stop();
+    
+    console.log('Graceful shutdown completed');
+    process.exit(0);
+  } catch (error) {
+    console.error('Error during graceful shutdown:', error);
+    process.exit(1);
+  }
+};
+
+// Register shutdown handlers
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
+// Start server with database connection and monitoring
 const startServer = async () => {
   try {
     // Connect to database
     await connectDatabase();
+    console.log('✅ Database connected');
+    
+    // Start monitoring orchestrator
+    console.log('Starting monitoring orchestrator...');
+    await monitoringOrchestrator.start();
+    console.log('✅ Monitoring orchestrator started');
     
     // Start Express server
     app.listen(PORT, () => {
-      console.log(`🚀 Server is running on port ${PORT}`);
+      console.log(`\n🚀 Server is running on port ${PORT}`);
       console.log(`📍 Health check: http://localhost:${PORT}/health`);
       console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`👁️  Deposit monitoring: ACTIVE\n`);
     });
   } catch (error) {
     console.error('Failed to start server:', error);
