@@ -79,15 +79,13 @@ export class SolanaService {
       confirmTransactionInitialTimeout: connectionConfig?.confirmTransactionInitialTimeout || 60000,
     };
     
+    console.log(`[SolanaService] Creating connection with URL: ${rpcUrl}`);
     this.connection = new Connection(rpcUrl, httpConnectionConfig);
     
-    // WebSocket connection for account subscriptions
-    if (connectionConfig?.wsUrl || this.deriveWsUrl(rpcUrl)) {
-      const wsUrl = connectionConfig?.wsUrl || this.deriveWsUrl(rpcUrl);
-      if (wsUrl) {
-        this.wsConnection = new Connection(wsUrl, httpConnectionConfig);
-      }
-    }
+    // Note: Solana's Connection class handles WebSocket subscriptions internally.
+    // The same HTTP/HTTPS connection is used for both RPC calls and WebSocket subscriptions.
+    // We don't need a separate WebSocket connection.
+    this.wsConnection = this.connection;
     
     console.log(`[SolanaService] Initialized with RPC: ${rpcUrl}`);
     console.log(`[SolanaService] Commitment: ${commitment}`);
