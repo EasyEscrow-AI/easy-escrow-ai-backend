@@ -18,6 +18,15 @@ dotenv.config();
 const app: Application = express();
 const PORT = process.env.PORT || 3000;
 
+// Initialize monitoring orchestrator instance (before route handlers)
+const monitoringOrchestrator = getMonitoringOrchestrator({
+  autoRestart: true,
+  maxRestarts: 5,
+  restartDelayMs: 5000,
+  healthCheckIntervalMs: 30000,
+  metricsIntervalMs: 60000,
+});
+
 // Security Middleware (apply first)
 app.use(helmetConfig);
 app.use(securityHeaders);
@@ -42,9 +51,25 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
 app.get('/health', async (_req: Request, res: Response) => {
   const dbHealthy = await checkDatabaseHealth();
   
-  // Get monitoring orchestrator health
-  const orchestrator = getMonitoringOrchestrator();
-  const monitoringHealth = orchestrator.getHealth();
+  // Get monitoring orchestrator health with error handling
+  let monitoringHealth;
+  let monitoringError = null;
+  
+  try {
+    // Use the module-level orchestrator instance to ensure consistency
+    monitoringHealth = monitoringOrchestrator.getHealth();
+  } catch (error) {
+    // If getHealth() throws, log it and return a safe default
+    console.error('[Health Check] Failed to get monitoring health:', error);
+    monitoringError = error instanceof Error ? error.message : 'Unknown error';
+    monitoringHealth = {
+      healthy: false,
+      uptime: 0,
+      monitoredAccounts: 0,
+      solanaHealthy: false,
+      restartCount: 0,
+    };
+  }
   
   const allHealthy = dbHealthy && monitoringHealth.healthy;
   const status = allHealthy ? 'healthy' : 'unhealthy';
@@ -61,6 +86,7 @@ app.get('/health', async (_req: Request, res: Response) => {
       uptime: `${Math.floor(monitoringHealth.uptime / 1000 / 60)} minutes`,
       restartCount: monitoringHealth.restartCount,
       solanaHealthy: monitoringHealth.solanaHealthy,
+      ...(monitoringError && { error: monitoringError }),
     }
   });
 });
@@ -97,15 +123,6 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
     message: process.env.NODE_ENV === 'production' ? 'An error occurred' : err.message,
     timestamp: new Date().toISOString()
   });
-});
-
-// Get monitoring orchestrator instance
-const monitoringOrchestrator = getMonitoringOrchestrator({
-  autoRestart: true,
-  maxRestarts: 5,
-  restartDelayMs: 5000,
-  healthCheckIntervalMs: 30000,
-  metricsIntervalMs: 60000,
 });
 
 // Graceful shutdown handler
