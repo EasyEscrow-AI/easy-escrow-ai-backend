@@ -1,0 +1,311 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enum for agreement status
+enum AgreementStatus {
+  PENDING
+  FUNDED
+  USDC_LOCKED
+  NFT_LOCKED
+  BOTH_LOCKED
+  SETTLED
+  EXPIRED
+  CANCELLED
+  REFUNDED
+}
+
+// Enum for deposit type
+enum DepositType {
+  USDC
+  NFT
+}
+
+// Enum for deposit status
+enum DepositStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+}
+
+// Enum for webhook event type
+enum WebhookEventType {
+  ESCROW_FUNDED
+  ESCROW_ASSET_LOCKED
+  ESCROW_SETTLED
+  ESCROW_EXPIRED
+  ESCROW_REFUNDED
+}
+
+// Enum for webhook delivery status
+enum WebhookDeliveryStatus {
+  PENDING
+  DELIVERED
+  FAILED
+  RETRYING
+}
+
+// Main Agreements table
+model Agreement {
+  id                String           @id @default(uuid())
+  agreementId       String           @unique @map("agreement_id")
+  
+  // Solana addresses
+  escrowPda         String           @map("escrow_pda")
+  nftMint           String           @map("nft_mint")
+  seller            String
+  buyer             String?
+  
+  // Financial details
+  price             Decimal          @db.Decimal(20, 9) // USDC amount with 9 decimals for Solana
+  feeBps            Int              @map("fee_bps") // Fee in basis points (0-10000)
+  honorRoyalties    Boolean          @default(false) @map("honor_royalties")
+  
+  // Status and timing
+  status            AgreementStatus  @default(PENDING)
+  expiry            DateTime
+  
+  // Deposit addresses
+  usdcDepositAddr   String?          @map("usdc_deposit_addr")
+  nftDepositAddr    String?          @map("nft_deposit_addr")
+  
+  // Transaction IDs
+  initTxId          String?          @map("init_tx_id")
+  settleTxId        String?          @map("settle_tx_id")
+  cancelTxId        String?          @map("cancel_tx_id")
+  
+  // Timestamps
+  createdAt         DateTime         @default(now()) @map("created_at")
+  updatedAt         DateTime         @updatedAt @map("updated_at")
+  settledAt         DateTime?        @map("settled_at")
+  cancelledAt       DateTime?        @map("cancelled_at")
+  
+  // Relations
+  deposits          Deposit[]
+  settlement        Settlement?
+  receipt           Receipt?
+  webhooks          Webhook[]
+  
+  @@index([agreementId])
+  @@index([seller])
+  @@index([buyer])
+  @@index([status])
+  @@index([expiry])
+  @@index([createdAt])
+  @@map("agreements")
+}
+
+// Deposits table - tracks individual deposits
+model Deposit {
+  id              String         @id @default(uuid())
+  
+  // Agreement relation
+  agreementId     String         @map("agreement_id")
+  agreement       Agreement      @relation(fields: [agreementId], references: [id], onDelete: Cascade)
+  
+  // Deposit details
+  type            DepositType
+  depositor       String         // Solana address
+  amount          Decimal?       @db.Decimal(20, 9) // For USDC deposits
+  tokenAccount    String?        @map("token_account") // Token account address
+  
+  // Status and tracking
+  status          DepositStatus  @default(PENDING)
+  txId            String?        @map("tx_id") // Transaction ID
+  blockHeight     BigInt?        @map("block_height")
+  
+  // Metadata
+  nftMetadata     Json?          @map("nft_metadata") // NFT metadata if applicable
+  
+  // Timestamps
+  detectedAt      DateTime       @default(now()) @map("detected_at")
+  confirmedAt     DateTime?      @map("confirmed_at")
+  
+  @@index([agreementId])
+  @@index([type])
+  @@index([status])
+  @@index([depositor])
+  @@index([detectedAt])
+  @@map("deposits")
+}
+
+// Settlements table - records completed settlements
+model Settlement {
+  id                  String    @id @default(uuid())
+  
+  // Agreement relation (one-to-one)
+  agreementId         String    @unique @map("agreement_id")
+  agreement           Agreement @relation(fields: [agreementId], references: [id], onDelete: Cascade)
+  
+  // Settlement details
+  nftMint             String    @map("nft_mint")
+  price               Decimal   @db.Decimal(20, 9)
+  platformFee         Decimal   @db.Decimal(20, 9) @map("platform_fee")
+  creatorRoyalty      Decimal?  @db.Decimal(20, 9) @map("creator_royalty")
+  sellerReceived      Decimal   @db.Decimal(20, 9) @map("seller_received")
+  
+  // Transaction details
+  settleTxId          String    @map("settle_tx_id")
+  blockHeight         BigInt    @map("block_height")
+  
+  // Participants
+  buyer               String
+  seller              String
+  feeCollector        String?   @map("fee_collector")
+  royaltyRecipient    String?   @map("royalty_recipient")
+  
+  // Timestamps
+  settledAt           DateTime  @default(now()) @map("settled_at")
+  
+  @@index([agreementId])
+  @@index([buyer])
+  @@index([seller])
+  @@index([nftMint])
+  @@index([settledAt])
+  @@map("settlements")
+}
+
+// Receipts table - hash-signed settlement receipts
+model Receipt {
+  id                String    @id @default(uuid())
+  
+  // Agreement relation (one-to-one)
+  agreementId       String    @unique @map("agreement_id")
+  agreement         Agreement @relation(fields: [agreementId], references: [id], onDelete: Cascade)
+  
+  // Receipt data
+  nftMint           String    @map("nft_mint")
+  price             Decimal   @db.Decimal(20, 9)
+  platformFee       Decimal   @db.Decimal(20, 9) @map("platform_fee")
+  creatorRoyalty    Decimal?  @db.Decimal(20, 9) @map("creator_royalty")
+  
+  // Participants
+  buyer             String
+  seller            String
+  
+  // Transaction IDs
+  escrowTxId        String    @map("escrow_tx_id") // Initial escrow creation tx
+  settlementTxId    String    @map("settlement_tx_id") // Settlement tx
+  
+  // Hash signature
+  receiptHash       String    @unique @map("receipt_hash")
+  signature         String    // Cryptographic signature
+  
+  // Timestamps
+  createdAt         DateTime  @map("created_at")
+  settledAt         DateTime  @map("settled_at")
+  generatedAt       DateTime  @default(now()) @map("generated_at")
+  
+  @@index([agreementId])
+  @@index([buyer])
+  @@index([seller])
+  @@index([nftMint])
+  @@index([receiptHash])
+  @@index([generatedAt])
+  @@map("receipts")
+}
+
+// Webhooks table - webhook delivery tracking
+model Webhook {
+  id                String                @id @default(uuid())
+  
+  // Agreement relation
+  agreementId       String                @map("agreement_id")
+  agreement         Agreement             @relation(fields: [agreementId], references: [id], onDelete: Cascade)
+  
+  // Webhook details
+  eventType         WebhookEventType      @map("event_type")
+  targetUrl         String                @map("target_url")
+  
+  // Payload
+  payload           Json                  // Event payload
+  
+  // Delivery tracking
+  status            WebhookDeliveryStatus @default(PENDING)
+  attempts          Int                   @default(0)
+  maxAttempts       Int                   @default(5) @map("max_attempts")
+  
+  // Response tracking
+  lastAttemptAt     DateTime?             @map("last_attempt_at")
+  lastResponseCode  Int?                  @map("last_response_code")
+  lastResponseBody  String?               @map("last_response_body")
+  deliveredAt       DateTime?             @map("delivered_at")
+  
+  // Signature for verification
+  signature         String?               // HMAC signature
+  
+  // Timestamps
+  createdAt         DateTime              @default(now()) @map("created_at")
+  scheduledFor      DateTime              @default(now()) @map("scheduled_for")
+  
+  @@index([agreementId])
+  @@index([eventType])
+  @@index([status])
+  @@index([scheduledFor])
+  @@index([createdAt])
+  @@map("webhooks")
+}
+
+// Idempotency keys table - prevents duplicate operations
+model IdempotencyKey {
+  id                String    @id @default(uuid())
+  
+  // Key and endpoint
+  key               String    @unique
+  endpoint          String
+  
+  // Request details
+  requestHash       String    @map("request_hash")
+  
+  // Response cache
+  responseStatus    Int       @map("response_status")
+  responseBody      Json      @map("response_body")
+  
+  // Timestamps
+  createdAt         DateTime  @default(now()) @map("created_at")
+  expiresAt         DateTime  @map("expires_at")
+  
+  @@index([key])
+  @@index([endpoint])
+  @@index([expiresAt])
+  @@map("idempotency_keys")
+}
+
+// Transaction logs table - comprehensive transaction tracking
+model TransactionLog {
+  id                String    @id @default(uuid())
+  
+  // Agreement reference
+  agreementId       String?   @map("agreement_id")
+  
+  // Transaction details
+  txId              String    @unique @map("tx_id")
+  operationType     String    @map("operation_type") // init, deposit, settle, cancel
+  
+  // Blockchain data
+  blockHeight       BigInt?   @map("block_height")
+  slot              BigInt?
+  
+  // Status
+  status            String    // success, failed, pending
+  errorMessage      String?   @map("error_message")
+  
+  // Timestamp
+  timestamp         DateTime  @default(now())
+  
+  @@index([agreementId])
+  @@index([txId])
+  @@index([operationType])
+  @@index([status])
+  @@index([timestamp])
+  @@map("transaction_logs")
+}
