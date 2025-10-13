@@ -40,6 +40,9 @@ Thumbs.db
 *.swo
 *~
 
+# GitHub PR documentation (temporary)
+.github/
+
 # TypeScript
 *.tsbuildinfo
 
