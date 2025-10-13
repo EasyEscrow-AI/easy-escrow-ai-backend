@@ -1,0 +1,16 @@
+---
+alwaysApply: true
+description: "Keep agent work off master; sync before push; open PRs"
+---
+
+You are working ONLY on a non-default branch (never on master).
+
+Before each push:
+1) Run:
+   - git fetch origin
+   - git rebase origin/master    # use merge instead if rebase is risky
+2) If a conflict occurs:
+   - Stop and show a minimal diff with the files/lines in conflict
+   - Ask for human guidance (do NOT guess)
+3) Never force-push.
+4) Open or update a PR targeting master with a concise changelog.
