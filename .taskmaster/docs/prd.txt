@@ -1,0 +1,204 @@
+# Product Requirements Document: EasyEscrow.ai Backend
+
+## Project Overview
+EasyEscrow.ai is a trust-minimized atomic swap platform for Solana NFTs and USDC. The backend API manages escrow agreements, monitors on-chain activity, and provides webhooks for settlement events.
+
+## Goals
+- Enable atomic, trustless swaps of Solana NFTs for USDC
+- Provide RESTful API for agreement creation and management
+- Monitor on-chain escrow state and trigger settlements
+- Support optional creator royalty payments
+- Deliver settlement receipts and webhook notifications
+
+## Technical Stack
+- Solana blockchain (devnet → mainnet)
+- Backend: Node.js/TypeScript (or Python FastAPI)
+- Database: PostgreSQL (managed)
+- Cache/Queue: Redis
+- Deployment: DigitalOcean App Platform (Docker)
+- Assets: SPL NFTs (Metaplex Token Metadata), USDC (SPL token)
+
+## Core Features
+
+### 1. Escrow Agreement Management
+- Create agreements with NFT mint, price, seller, optional buyer, expiry
+- Generate unique agreement IDs
+- Store agreement metadata in database
+- Return deposit addresses for NFT and USDC vaults
+
+### 2. On-Chain Program Integration
+- Deploy Solana program with instructions: init_agreement, deposit_usdc, deposit_nft, settle, cancel_if_expired, admin_cancel
+- Implement PDA-based escrow state accounts
+- Create PDA-owned vault ATAs for NFT and USDC
+- Validate exact NFT mint match and metadata presence
+- Enforce atomic settlement: both assets present → swap executes
+- Handle expiry-based cancellations and refunds
+
+### 3. Asset Deposit Monitoring
+- Monitor USDC deposits to escrow USDC vault
+- Monitor NFT transfers to escrow NFT vault
+- Validate NFT supply=1, correct mint, metadata exists
+- Optional: verify collection membership
+- Track deposit status per agreement
+
+### 4. Settlement Engine
+- Detect when both NFT and full USDC are locked
+- Verify not expired
+- Trigger atomic swap: NFT → Buyer, USDC → Seller
+- Deduct platform fee (1% default) to fee vault
+- Optional: honor creator royalties from Token Metadata
+- Mark agreement as SETTLED
+- Emit settlement events
+
+### 5. Cancellation & Refunds
+- Check expiry timestamp
+- If expired and one asset missing: allow withdrawal
+- Refund USDC to buyer if NFT not deposited
+- Refund NFT to seller if USDC not deposited
+- Admin cancel path with multisig guard for emergencies
+
+### 6. RESTful API Endpoints
+- POST /v1/agreements - Create new escrow agreement
+- GET /v1/agreements/{id} - Get agreement status, balances, deadlines
+- POST /v1/agreements/{id}/cancel - Cancel expired agreement
+- GET /v1/health - Health check endpoint
+- Rate limiting and CORS for easyescrow.ai domain
+
+### 7. Webhook System
+- Event types: escrow.funded, escrow.asset_locked, escrow.settled, escrow.expired, escrow.refunded
+- Configurable webhook URLs per agreement or global
+- Retry logic with exponential backoff
+- Webhook signature verification
+
+### 8. Settlement Receipts
+- Generate hash-signed settlement receipts
+- Include: nft_mint, price, fees, timestamps, transaction IDs
+- Store receipts in database
+- Make available via API
+- Support TrustPass reputation integration
+
+### 9. Fee Management
+- Configure platform fee in basis points (default 100 = 1%)
+- Collect fees to designated fee vault ATA
+- Optional creator royalty splits from Token Metadata
+- Fee reporting and analytics
+
+### 10. Security & Compliance
+- Start on Solana devnet
+- Cap order sizes and rate-limit agreement creation
+- Allowlist USDC mint addresses
+- Jurisdictional disclaimers
+- Optional KYC flag for higher limits
+- Program unit tests: happy path, cancellations, partial deposits, double-settle guards
+- Client integration tests
+
+### 11. Database Schema
+- Agreements table: id, nft_mint, usdc_mint, seller, buyer, price, fee_bps, honor_royalties, expiry_ts, status, created_at, updated_at
+- Deposits table: agreement_id, asset_type, amount, depositor, tx_signature, timestamp
+- Settlements table: agreement_id, buyer_tx, seller_tx, fee_amount, royalty_amounts, settled_at
+- Receipts table: agreement_id, receipt_hash, receipt_data, created_at
+- Webhooks table: event_type, agreement_id, payload, status, retry_count, sent_at
+
+### 12. Deployment Infrastructure
+- Dockerize backend application
+- GitHub integration for CI/CD
+- DigitalOcean App Platform deployment
+- Managed PostgreSQL database with VPC
+- Managed Redis instance
+- Environment secrets management
+- Custom domain: api.easyescrow.ai with HTTPS
+- Health checks and autoscaling
+- Logging and monitoring
+
+### 13. Dashboard UI Support
+- API endpoints for agreement listing
+- Real-time status updates
+- Copy-friendly deposit addresses
+- Transaction history
+- Cancel/refund triggers
+
+## User Flows
+
+### Flow 1: Successful Swap
+1. Seller creates agreement via API with NFT mint and price
+2. API calls on-chain program to initialize escrow PDA
+3. Buyer deposits USDC to vault ATA
+4. Seller transfers NFT to vault ATA
+5. Backend detects both assets locked
+6. Settlement engine triggers atomic swap instruction
+7. NFT transferred to buyer, USDC (minus fee) to seller
+8. Webhooks fired, receipt generated
+9. Agreement marked SETTLED
+
+### Flow 2: Expiry and Refund
+1. Agreement created, only buyer deposits USDC
+2. Seller never deposits NFT
+3. Expiry timestamp reached
+4. Buyer calls cancel endpoint
+5. Backend verifies expiry and missing NFT
+6. Refund USDC to buyer
+7. Agreement marked EXPIRED/REFUNDED
+8. Webhook fired
+
+### Flow 3: Admin Cancel
+1. Agreement in stuck state
+2. Admin multisig calls admin_cancel
+3. Assets returned to depositors
+4. Agreement marked CANCELLED
+5. Audit trail recorded
+
+## Success Metrics (MVP)
+- Create agreement on devnet with real wallets
+- Deposit USDC successfully
+- Deposit NFT successfully
+- Atomic settlement executes correctly
+- Expiry refund works
+- Fee collected to vault
+- Receipt generated with transaction IDs
+- Dashboard shows live status and deposit addresses
+- Cancel functionality works
+
+## Future Enhancements (Post-MVP)
+- Open-offer order book (any buyer can fund)
+- Batch settlement for market makers
+- Permit/delegate flow (token delegate vs transfer)
+- Mainnet deployment with external audit
+- Multi-NFT bundles
+- Partial fills
+- Advanced analytics dashboard
+
+## Technical Constraints
+- Solana transaction size limits
+- Compute unit limits per transaction
+- Network congestion handling
+- Transaction confirmation times
+- Rate limiting on RPC nodes
+
+## Security Considerations
+- Reentrancy protection in program
+- PDA seed collision prevention
+- Exact mint validation
+- Amount verification
+- Status transition guards
+- Multisig admin controls
+- API authentication and authorization
+- Webhook signature verification
+- Input validation and sanitization
+
+## Testing Requirements
+- Unit tests for all program instructions
+- Integration tests for full flows
+- Load testing for API endpoints
+- Devnet end-to-end testing
+- Security audit before mainnet
+- Webhook delivery testing
+- Database transaction rollback tests
+
+## Documentation Needs
+- API documentation (OpenAPI/Swagger)
+- Program instruction documentation
+- Integration guide for frontends
+- Webhook event catalog
+- Error code reference
+- Deployment runbook
+
