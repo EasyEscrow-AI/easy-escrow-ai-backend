@@ -1,0 +1,84 @@
+{
+  "tasks": [
+    {
+      "id": "setup-project-structure",
+      "title": "Set up initial Node.js/TypeScript project structure",
+      "description": "Create package.json, tsconfig.json, and basic project structure with dependencies for Solana development",
+      "status": "in_progress",
+      "priority": 1,
+      "dependencies": [],
+      "estimated_hours": 2,
+      "tags": ["setup", "infrastructure"]
+    },
+    {
+      "id": "create-database-schema",
+      "title": "Create PostgreSQL database schema",
+      "description": "Design and implement database tables for agreements, deposits, settlements, receipts, and webhooks",
+      "status": "pending",
+      "priority": 2,
+      "dependencies": ["setup-project-structure"],
+      "estimated_hours": 3,
+      "tags": ["database", "schema"]
+    },
+    {
+      "id": "develop-solana-program",
+      "title": "Develop Solana escrow program",
+      "description": "Create the Solana program with instructions: init_agreement, deposit_usdc, deposit_nft, settle, cancel_if_expired, admin_cancel",
+      "status": "pending",
+      "priority": 3,
+      "dependencies": ["setup-project-structure"],
+      "estimated_hours": 8,
+      "tags": ["solana", "program", "blockchain"]
+    },
+    {
+      "id": "build-api-endpoints",
+      "title": "Build RESTful API endpoints",
+      "description": "Create Express.js API with endpoints for agreement management, health checks, and cancellation",
+      "status": "pending",
+      "priority": 4,
+      "dependencies": ["setup-project-structure", "create-database-schema"],
+      "estimated_hours": 4,
+      "tags": ["api", "express", "rest"]
+    },
+    {
+      "id": "implement-monitoring",
+      "title": "Implement on-chain monitoring and settlement engine",
+      "description": "Create monitoring system for USDC and NFT deposits, settlement detection, and atomic swap execution",
+      "status": "pending",
+      "priority": 5,
+      "dependencies": ["develop-solana-program", "create-database-schema"],
+      "estimated_hours": 6,
+      "tags": ["monitoring", "settlement", "blockchain"]
+    },
+    {
+      "id": "setup-webhooks",
+      "title": "Create webhook system",
+      "description": "Implement webhook delivery system with retry logic and signature verification",
+      "status": "pending",
+      "priority": 6,
+      "dependencies": ["build-api-endpoints"],
+      "estimated_hours": 3,
+      "tags": ["webhooks", "notifications"]
+    },
+    {
+      "id": "create-tests",
+      "title": "Create comprehensive test suite",
+      "description": "Write unit tests, integration tests, and end-to-end tests for all components",
+      "status": "pending",
+      "priority": 7,
+      "dependencies": ["build-api-endpoints", "implement-monitoring"],
+      "estimated_hours": 5,
+      "tags": ["testing", "quality"]
+    },
+    {
+      "id": "setup-deployment",
+      "title": "Setup deployment infrastructure",
+      "description": "Create Docker configuration, CI/CD pipeline, and DigitalOcean deployment setup",
+      "status": "pending",
+      "priority": 8,
+      "dependencies": ["create-tests"],
+      "estimated_hours": 4,
+      "tags": ["deployment", "docker", "ci-cd"]
+    }
+  ]
+}
