@@ -74,3 +74,44 @@ export interface AgreementBalanceDTO {
   deadline: string;
 }
 
+/**
+ * DTO for deposit information
+ */
+export interface DepositInfoDTO {
+  id: string;
+  type: 'USDC' | 'NFT';
+  depositor: string;
+  amount?: string;
+  status: 'PENDING' | 'CONFIRMED' | 'FAILED';
+  txId?: string;
+  detectedAt: string;
+  confirmedAt?: string;
+}
+
+/**
+ * Enhanced DTO for detailed agreement response with balances and deposits
+ */
+export interface AgreementDetailResponseDTO extends AgreementResponseDTO {
+  deposits: DepositInfoDTO[];
+  balances: {
+    usdcLocked: boolean;
+    nftLocked: boolean;
+    actualUsdcAmount?: string;
+  };
+  isExpired: boolean;
+  canBeCancelled: boolean;
+  cancelledAt?: string;
+  settledAt?: string;
+}
+
+/**
+ * DTO for agreement cancellation response
+ */
+export interface CancelAgreementResponseDTO {
+  agreementId: string;
+  status: AgreementStatus;
+  cancelledAt: string;
+  transactionId?: string;
+  message: string;
+}
+

@@ -1,7 +1,13 @@
 import { Router, Request, Response } from 'express';
 import { validateAgreementCreation } from '../middleware/validation.middleware';
 import { standardRateLimiter, strictRateLimiter, validateUSDCMintMiddleware } from '../middleware';
-import { createAgreement, getAgreementById, listAgreements } from '../services/agreement.service';
+import { 
+  createAgreement, 
+  getAgreementById, 
+  getAgreementDetailById,
+  cancelAgreement,
+  listAgreements 
+} from '../services/agreement.service';
 import { CreateAgreementDTO, AgreementQueryDTO } from '../models/dto/agreement.dto';
 import { AgreementStatus } from '../generated/prisma';
 
@@ -42,13 +48,13 @@ router.post(
 
 /**
  * GET /v1/agreements/:agreementId
- * Get agreement by ID
+ * Get agreement by ID with detailed balances and deposit information
  */
 router.get('/v1/agreements/:agreementId', standardRateLimiter, async (req: Request, res: Response): Promise<void> => {
   try {
     const { agreementId } = req.params;
 
-    const agreement = await getAgreementById(agreementId);
+    const agreement = await getAgreementDetailById(agreementId);
 
     if (!agreement) {
       res.status(404).json({
@@ -114,6 +120,53 @@ router.get('/v1/agreements', standardRateLimiter, async (req: Request, res: Resp
     });
   }
 });
+
+/**
+ * POST /v1/agreements/:agreementId/cancel
+ * Cancel an expired agreement
+ * Only allows cancellation of expired agreements that haven't been settled
+ */
+router.post(
+  '/v1/agreements/:agreementId/cancel', 
+  standardRateLimiter, 
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { agreementId } = req.params;
+
+      const result = await cancelAgreement(agreementId);
+
+      res.status(200).json({
+        success: true,
+        data: result,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Error cancelling agreement:', error);
+      
+      // Handle specific error messages
+      const errorMessage = error instanceof Error ? error.message : 'Failed to cancel agreement';
+      
+      let statusCode = 500;
+      if (errorMessage.includes('not found')) {
+        statusCode = 404;
+      } else if (
+        errorMessage.includes('already cancelled') || 
+        errorMessage.includes('already settled') ||
+        errorMessage.includes('already refunded') ||
+        errorMessage.includes('not expired')
+      ) {
+        statusCode = 400;
+      }
+
+      res.status(statusCode).json({
+        success: false,
+        error: statusCode === 404 ? 'Not Found' : statusCode === 400 ? 'Bad Request' : 'Internal Server Error',
+        message: errorMessage,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
 
 export default router;
 
