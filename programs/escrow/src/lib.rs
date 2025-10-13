@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount, Transfer, Mint};
 use anchor_spl::associated_token::AssociatedToken;
 
-declare_id!("2Yih3CWZsPyLkRvJBQQnbHCfpoce2qKzzckD71kuEmkf");
+declare_id!("7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV");
 
 #[program]
 pub mod escrow {

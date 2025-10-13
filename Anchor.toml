@@ -6,7 +6,7 @@ resolution = true
 skip-lint = false
 
 [programs.devnet]
-escrow = "2Yih3CWZsPyLkRvJBQQnbHCfpoce2qKzzckD71kuEmkf"
+escrow = "7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV"
 
 [programs.localnet]
 escrow = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
@@ -22,18 +22,14 @@ wallet = "~/.config/solana/id.json"
 members = ["programs/escrow"]
 
 [scripts]
-test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+test = "npx ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
 
 [test]
-startup_wait = 5000
+startup_wait = 10000
 shutdown_wait = 2000
 upgradeable = false
 
 [test.validator]
-bind_address = "0.0.0.0"
+bind_address = "127.0.0.1"
 ledger = '.anchor\test-ledger'
 rpc_port = 8899
-
-[[test.validator.account]]
-address = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
-filename = "usdc-mint.json"
