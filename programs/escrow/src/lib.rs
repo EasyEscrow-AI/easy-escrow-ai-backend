@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount, Transfer, Mint};
 use anchor_spl::associated_token::AssociatedToken;
 
-declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
+declare_id!("2Yih3CWZsPyLkRvJBQQnbHCfpoce2qKzzckD71kuEmkf");
 
 #[program]
 pub mod escrow {
@@ -109,9 +109,10 @@ pub mod escrow {
         // Transfer USDC to seller
         let escrow_id = escrow.escrow_id;
         let bump = escrow.bump;
+        let escrow_id_bytes = escrow_id.to_le_bytes();
         let seeds = &[
             b"escrow",
-            escrow_id.to_le_bytes().as_ref(),
+            escrow_id_bytes.as_ref(),
             &[bump],
         ];
         let signer = &[&seeds[..]];
@@ -162,9 +163,10 @@ pub mod escrow {
         
         let escrow_id = escrow.escrow_id;
         let bump = escrow.bump;
+        let escrow_id_bytes = escrow_id.to_le_bytes();
         let seeds = &[
             b"escrow",
-            escrow_id.to_le_bytes().as_ref(),
+            escrow_id_bytes.as_ref(),
             &[bump],
         ];
         let signer = &[&seeds[..]];
@@ -220,9 +222,10 @@ pub mod escrow {
         
         let escrow_id = escrow.escrow_id;
         let bump = escrow.bump;
+        let escrow_id_bytes = escrow_id.to_le_bytes();
         let seeds = &[
             b"escrow",
-            escrow_id.to_le_bytes().as_ref(),
+            escrow_id_bytes.as_ref(),
             &[bump],
         ];
         let signer = &[&seeds[..]];
