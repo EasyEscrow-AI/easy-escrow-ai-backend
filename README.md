@@ -1,6 +1,4 @@
-<div align="center">
-  <img src="media/easyescrow-logo.png" alt="EasyEscrow.ai Logo" width="400">
-</div>
+<img src="media/easyescrow-logo.png" alt="EasyEscrow.ai Logo" width="400">
 
 # EasyEscrow.ai Backend
 
