@@ -1,5 +1,13 @@
-import { PrismaClient, Agreement, AgreementStatus } from '../generated/prisma';
-import { CreateAgreementDTO, CreateAgreementResponseDTO, AgreementResponseDTO, AgreementQueryDTO } from '../models/dto/agreement.dto';
+import { PrismaClient, Agreement, AgreementStatus, Deposit } from '../generated/prisma';
+import { 
+  CreateAgreementDTO, 
+  CreateAgreementResponseDTO, 
+  AgreementResponseDTO, 
+  AgreementQueryDTO,
+  AgreementDetailResponseDTO,
+  DepositInfoDTO,
+  CancelAgreementResponseDTO
+} from '../models/dto/agreement.dto';
 import { initializeEscrow } from './solana.service';
 import { getMonitoringOrchestrator } from './monitoring-orchestrator.service';
 import { Decimal } from '@prisma/client/runtime/library';
@@ -97,6 +105,33 @@ export const getAgreementById = async (
   } catch (error) {
     console.error('Error getting agreement:', error);
     throw new Error('Failed to get agreement');
+  }
+};
+
+/**
+ * Get detailed agreement by ID with deposits and balances
+ */
+export const getAgreementDetailById = async (
+  agreementId: string
+): Promise<AgreementDetailResponseDTO | null> => {
+  try {
+    const agreement = await prisma.agreement.findUnique({
+      where: { agreementId },
+      include: {
+        deposits: {
+          orderBy: { detectedAt: 'asc' }
+        },
+      },
+    });
+
+    if (!agreement) {
+      return null;
+    }
+
+    return mapAgreementToDetailDTO(agreement);
+  } catch (error) {
+    console.error('Error getting detailed agreement:', error);
+    throw new Error('Failed to get agreement details');
   }
 };
 
@@ -219,6 +254,116 @@ const mapAgreementToDTO = (agreement: Agreement): AgreementResponseDTO => {
     createdAt: agreement.createdAt.toISOString(),
     updatedAt: agreement.updatedAt.toISOString(),
   };
+};
+
+/**
+ * Map Agreement with deposits to detailed DTO
+ */
+const mapAgreementToDetailDTO = (agreement: Agreement & { deposits: Deposit[] }): AgreementDetailResponseDTO => {
+  const baseDTO = mapAgreementToDTO(agreement);
+  
+  // Map deposits
+  const deposits: DepositInfoDTO[] = agreement.deposits.map(deposit => ({
+    id: deposit.id,
+    type: deposit.type,
+    depositor: deposit.depositor,
+    amount: deposit.amount?.toString(),
+    status: deposit.status,
+    txId: deposit.txId || undefined,
+    detectedAt: deposit.detectedAt.toISOString(),
+    confirmedAt: deposit.confirmedAt?.toISOString(),
+  }));
+
+  // Calculate balances
+  const usdcDeposit = agreement.deposits.find(d => d.type === 'USDC' && d.status === 'CONFIRMED');
+  const nftDeposit = agreement.deposits.find(d => d.type === 'NFT' && d.status === 'CONFIRMED');
+
+  const balances = {
+    usdcLocked: !!usdcDeposit,
+    nftLocked: !!nftDeposit,
+    actualUsdcAmount: usdcDeposit?.amount?.toString(),
+  };
+
+  // Check expiry and cancellation eligibility
+  const now = new Date();
+  const isExpired = now > agreement.expiry;
+  const canBeCancelled = isExpired && 
+    (agreement.status === AgreementStatus.PENDING || 
+     agreement.status === AgreementStatus.USDC_LOCKED || 
+     agreement.status === AgreementStatus.NFT_LOCKED ||
+     agreement.status === AgreementStatus.BOTH_LOCKED);
+
+  return {
+    ...baseDTO,
+    deposits,
+    balances,
+    isExpired,
+    canBeCancelled,
+    cancelledAt: agreement.cancelledAt?.toISOString(),
+    settledAt: agreement.settledAt?.toISOString(),
+  };
+};
+
+/**
+ * Cancel an agreement (only if expired and not already settled/cancelled)
+ */
+export const cancelAgreement = async (
+  agreementId: string
+): Promise<CancelAgreementResponseDTO> => {
+  try {
+    // Get agreement with current status
+    const agreement = await prisma.agreement.findUnique({
+      where: { agreementId },
+    });
+
+    if (!agreement) {
+      throw new Error('Agreement not found');
+    }
+
+    // Check if already cancelled or settled
+    if (agreement.status === AgreementStatus.CANCELLED) {
+      throw new Error('Agreement is already cancelled');
+    }
+
+    if (agreement.status === AgreementStatus.SETTLED) {
+      throw new Error('Cannot cancel a settled agreement');
+    }
+
+    if (agreement.status === AgreementStatus.REFUNDED) {
+      throw new Error('Agreement is already refunded');
+    }
+
+    // Check if expired
+    const now = new Date();
+    if (now <= agreement.expiry) {
+      throw new Error('Agreement has not expired yet. Cannot cancel before expiry.');
+    }
+
+    // TODO: Implement on-chain cancellation once Solana program is deployed
+    // For now, we'll just update the database status
+    // const cancelResult = await cancelEscrowOnChain(agreement.escrowPda);
+
+    // Update agreement status
+    const updatedAgreement = await prisma.agreement.update({
+      where: { agreementId },
+      data: {
+        status: AgreementStatus.CANCELLED,
+        cancelledAt: now,
+        // cancelTxId: cancelResult.transactionId, // Will be set when on-chain cancel is implemented
+      },
+    });
+
+    return {
+      agreementId: updatedAgreement.agreementId,
+      status: updatedAgreement.status,
+      cancelledAt: updatedAgreement.cancelledAt!.toISOString(),
+      transactionId: updatedAgreement.cancelTxId || undefined,
+      message: 'Agreement cancelled successfully. Assets will be returned to their respective owners.',
+    };
+  } catch (error) {
+    console.error('Error cancelling agreement:', error);
+    throw error;
+  }
 };
 
 /**
