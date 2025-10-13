@@ -1,0 +1,11 @@
+{
+  "require": ["ts-node/register"],
+  "extensions": ["ts"],
+  "spec": ["tests/**/*.test.ts"],
+  "timeout": 30000,
+  "recursive": true,
+  "exit": true,
+  "colors": true,
+  "reporter": "spec"
+}
+
