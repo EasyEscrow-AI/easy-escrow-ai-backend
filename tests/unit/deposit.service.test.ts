@@ -10,12 +10,13 @@ describe('Deposit Service - Unit Tests', () => {
       const statuses = [
         DepositStatus.PENDING,
         DepositStatus.CONFIRMED,
-        DepositStatus.REFUNDED,
+        DepositStatus.FAILED,
       ];
 
       expect(statuses).to.have.lengthOf(3);
       expect(statuses).to.include(DepositStatus.PENDING);
       expect(statuses).to.include(DepositStatus.CONFIRMED);
+      expect(statuses).to.include(DepositStatus.FAILED);
     });
   });
 
