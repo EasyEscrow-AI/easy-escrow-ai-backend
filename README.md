@@ -15,14 +15,26 @@ This repository contains:
 /
 ├── README.md
 ├── SOLANA_SETUP.md           # Solana development environment setup guide
+├── DATABASE_SETUP.md         # Database setup and migration guide
+├── MIGRATION_GUIDE.md        # Database migration management guide
 ├── .gitignore
 ├── src/                       # Backend TypeScript/Node.js source
-│   ├── config/
+│   ├── config/               # Configuration and database
+│   │   ├── database.ts       # Prisma client setup
+│   │   └── index.ts          # Environment config
+│   ├── generated/            # Generated Prisma client
+│   │   └── prisma/
 │   ├── middleware/
-│   ├── models/
+│   ├── models/               # Data models and DTOs
+│   │   ├── dto/              # Data Transfer Objects
+│   │   └── validators/       # Input validators
 │   ├── routes/
 │   ├── services/
 │   └── utils/
+├── prisma/                    # Database schema and migrations
+│   ├── schema.prisma         # Database schema definition
+│   ├── migrations/           # Migration files
+│   └── seed.ts               # Database seed script
 ├── programs/                  # Solana programs
 │   └── escrow/               # Escrow smart contract
 │       ├── src/
@@ -31,6 +43,9 @@ This repository contains:
 │       └── README.md         # Program documentation
 ├── tests/                     # Anchor tests
 │   └── escrow.ts             # Test suite
+├── scripts/                   # Utility scripts
+│   ├── setup-database.sh     # Database setup (Unix)
+│   └── setup-database.ps1    # Database setup (Windows)
 ├── Anchor.toml               # Anchor configuration
 ├── Cargo.toml                # Rust workspace config
 └── package.json              # Node.js dependencies
@@ -44,15 +59,17 @@ This repository contains:
 # Install dependencies
 npm install
 
+# Setup database
+npm run db:setup
+
 # Run in development mode
 npm run dev
 
 # Build
 npm run build
-
-# Type check
-npm run type-check
 ```
+
+For detailed database setup instructions, see [DATABASE_SETUP.md](DATABASE_SETUP.md).
 
 ### Solana Program Development
 
@@ -154,21 +171,41 @@ Coming soon...
 
 ## Environment Variables
 
+Create a `.env` file based on `.env.example`:
+
 ```env
-# Backend
+# Server Configuration
 PORT=3000
 NODE_ENV=development
+
+# Database
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/easyescrow_dev?schema=public"
 
 # Solana
 SOLANA_NETWORK=devnet
 SOLANA_RPC_URL=https://api.devnet.solana.com
-ESCROW_PROGRAM_ID=Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS
+ESCROW_PROGRAM_ID=
+
+# Security
+JWT_SECRET=your_jwt_secret
+API_KEY_SECRET=your_api_key_secret
+
+# Redis
+REDIS_URL=redis://localhost:6379
+
+# Platform
+PLATFORM_FEE_BPS=250
 ```
+
+See `.env.example` for complete configuration options.
 
 ## Current Status
 
 - ✅ Solana escrow program implemented
 - ✅ Program structure and tests created
+- ✅ Backend project structure setup
+- ✅ Database schema and migrations configured
+- ✅ Models, DTOs, and validators implemented
 - ✅ Documentation completed
 - ⏳ Environment setup required for deployment
 - ⏳ Backend API integration pending

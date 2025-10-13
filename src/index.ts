@@ -1,6 +1,7 @@
 import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { connectDatabase, checkDatabaseHealth } from './config/database';
 
 // Load environment variables
 dotenv.config();
@@ -21,11 +22,17 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
 });
 
 // Health check endpoint
-app.get('/health', (_req: Request, res: Response) => {
-  res.status(200).json({
-    status: 'healthy',
+app.get('/health', async (_req: Request, res: Response) => {
+  const dbHealthy = await checkDatabaseHealth();
+  
+  const status = dbHealthy ? 'healthy' : 'unhealthy';
+  const statusCode = dbHealthy ? 200 : 503;
+  
+  res.status(statusCode).json({
+    status,
     timestamp: new Date().toISOString(),
-    service: 'easy-escrow-ai-backend'
+    service: 'easy-escrow-ai-backend',
+    database: dbHealthy ? 'connected' : 'disconnected'
   });
 });
 
@@ -59,12 +66,25 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Server is running on port ${PORT}`);
-  console.log(`📍 Health check: http://localhost:${PORT}/health`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-});
+// Start server with database connection
+const startServer = async () => {
+  try {
+    // Connect to database
+    await connectDatabase();
+    
+    // Start Express server
+    app.listen(PORT, () => {
+      console.log(`🚀 Server is running on port ${PORT}`);
+      console.log(`📍 Health check: http://localhost:${PORT}/health`);
+      console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+};
+
+startServer();
 
 export default app;
 

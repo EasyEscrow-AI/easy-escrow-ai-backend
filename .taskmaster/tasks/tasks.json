@@ -128,7 +128,7 @@
         "id": 23,
         "title": "Setup Database Schema and Migrations",
         "description": "Design and implement PostgreSQL schema for agreements, deposits, settlements, receipts, and webhooks tables. Set up Prisma/TypeORM with migrations",
-        "status": "in-progress",
+        "status": "done",
         "priority": "high",
         "dependencies": [
           "21"
@@ -140,7 +140,7 @@
             "id": 1,
             "title": "Design PostgreSQL Database Schema",
             "description": "Create comprehensive database schema design for all required tables including agreements, deposits, settlements, receipts, and webhooks with proper relationships and constraints",
-            "status": "in-progress",
+            "status": "done",
             "dependencies": [],
             "details": "Design tables with primary keys, foreign keys, indexes, and constraints. Define relationships between agreements and deposits, settlements and receipts. Include fields for timestamps, status tracking, transaction IDs, and hash signatures. Consider data types for Solana addresses, USDC amounts, and NFT metadata."
           },
@@ -148,7 +148,7 @@
             "id": 2,
             "title": "Initialize Prisma/TypeORM Configuration",
             "description": "Set up ORM configuration files, database connection settings, and project structure for database operations",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "23.1"
             ],
@@ -158,7 +158,7 @@
             "id": 3,
             "title": "Create Database Models and Entities",
             "description": "Implement ORM models/entities for agreements, deposits, settlements, receipts, and webhooks tables based on the designed schema",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "23.2"
             ],
@@ -168,7 +168,7 @@
             "id": 4,
             "title": "Generate and Execute Initial Migration",
             "description": "Create initial database migration files to set up all tables with proper structure, indexes, and constraints in PostgreSQL",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "23.3"
             ],
@@ -178,7 +178,7 @@
             "id": 5,
             "title": "Setup Migration Management System",
             "description": "Configure migration tracking, versioning, and deployment processes for database schema changes across environments",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "23.4"
             ],
@@ -1359,7 +1359,7 @@
     ],
     "metadata": {
       "created": "2025-10-13T01:02:36.190Z",
-      "updated": "2025-10-13T01:48:03.503Z",
+      "updated": "2025-10-13T03:49:38.791Z",
       "description": "Tasks for master context"
     }
   }
