@@ -90,53 +90,14 @@ const sanitizeString = (str: string): string => {
 };
 
 /**
- * Request size limiter middleware
- * Prevents large payload attacks
+ * Note: Request size limiting is handled by Express body parsers
+ * 
+ * Express's express.json() and express.urlencoded() already enforce
+ * the 'limit' option (e.g., { limit: '10mb' }), which rejects oversized
+ * requests with 413 Payload Too Large before any custom middleware runs.
+ * 
+ * A custom requestSizeLimiter would be redundant and is therefore not implemented.
  */
-export const requestSizeLimiter = (maxSize: string = '10mb') => {
-  return (req: Request, res: Response, next: NextFunction): void => {
-    const contentLength = req.headers['content-length'];
-    
-    if (contentLength) {
-      const sizeInBytes = parseInt(contentLength, 10);
-      const maxSizeInBytes = parseSize(maxSize);
-      
-      if (sizeInBytes > maxSizeInBytes) {
-        res.status(413).json({
-          error: 'Payload Too Large',
-          message: `Request body exceeds maximum size of ${maxSize}`,
-          timestamp: new Date().toISOString(),
-        });
-        return;
-      }
-    }
-    
-    next();
-  };
-};
-
-/**
- * Parse size string to bytes (e.g., '10mb' -> 10485760)
- */
-const parseSize = (size: string): number => {
-  const units: { [key: string]: number } = {
-    b: 1,
-    kb: 1024,
-    mb: 1024 * 1024,
-    gb: 1024 * 1024 * 1024,
-  };
-  
-  const match = size.toLowerCase().match(/^(\d+(?:\.\d+)?)\s*(b|kb|mb|gb)?$/);
-  
-  if (!match) {
-    return 10 * 1024 * 1024; // Default to 10MB
-  }
-  
-  const value = parseFloat(match[1]);
-  const unit = match[2] || 'b';
-  
-  return Math.floor(value * units[unit]);
-};
 
 /**
  * Security headers middleware

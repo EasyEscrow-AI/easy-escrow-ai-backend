@@ -4,11 +4,9 @@ import dotenv from 'dotenv';
 import { connectDatabase, checkDatabaseHealth } from './config/database';
 import { agreementRoutes } from './routes';
 import {
-  standardRateLimiter,
   corsOptions,
   helmetConfig,
   sanitizeInput,
-  requestSizeLimiter,
   securityHeaders,
 } from './middleware';
 
@@ -29,13 +27,9 @@ app.use(cors(corsOptions));
 // Request parsing middleware with size limits
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-app.use(requestSizeLimiter('10mb'));
 
 // Input sanitization
 app.use(sanitizeInput);
-
-// Rate limiting (apply to all routes except health check)
-app.use('/v1', standardRateLimiter);
 
 // Request logging middleware
 app.use((req: Request, _res: Response, next: NextFunction) => {

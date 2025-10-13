@@ -49,6 +49,14 @@ Rate limit information is exposed in response headers:
 - `RateLimit-Remaining`: Requests remaining in window
 - `RateLimit-Reset`: Time when limit resets (Unix timestamp)
 
+### Applied Per-Route
+Rate limiting is applied individually to each route to provide fine-grained control:
+- `POST /v1/agreements` → `strictRateLimiter` (20 req/15min)
+- `GET /v1/agreements/:id` → `standardRateLimiter` (100 req/15min)
+- `GET /v1/agreements` → `standardRateLimiter` (100 req/15min)
+
+This approach prevents double-limiting issues where a single request would consume quota in multiple limiters.
+
 ---
 
 ## 2. CORS Configuration
@@ -107,7 +115,7 @@ Located in: `src/middleware/security.middleware.ts`
 
 ### Request Size Limiting
 - **Default Maximum**: 10MB
-- **Configurable**: Via `requestSizeLimiter()` function
+- **Enforced by**: Express body parsers (`express.json()` and `express.urlencoded()`)
 - **Response**: 413 Payload Too Large
 
 ---
@@ -143,8 +151,10 @@ ALLOWED_USDC_MINTS=mint1,mint2,mint3
 Located in: `src/middleware/usdc-allowlist.middleware.ts`
 
 ### Applied To
-- Agreement creation endpoint
-- Any endpoint accepting USDC mint addresses
+- Agreement creation endpoint (`POST /v1/agreements`)
+- Any future endpoint accepting USDC mint addresses
+
+**Note**: Applied per-endpoint to avoid validation on endpoints that don't need it.
 
 ---
 
@@ -259,13 +269,14 @@ The middleware is applied in the following order (important for security):
 1. **Helmet** - Security headers
 2. **Custom Security Headers** - Additional headers
 3. **CORS** - Cross-origin configuration
-4. **Body Parsers** - With size limits
-5. **Request Size Limiter** - Payload validation
-6. **Input Sanitization** - XSS prevention
-7. **Rate Limiting** - DDoS protection (per-route)
-8. **USDC Allowlist** - Token validation (per-route)
-9. **Authentication** - Access control (per-route)
-10. **Request Validation** - Business logic validation (per-route)
+4. **Body Parsers** - With 10MB size limits
+5. **Input Sanitization** - XSS prevention
+6. **Rate Limiting** - DDoS protection (applied per-route, not globally)
+7. **USDC Allowlist** - Token validation (per-route)
+8. **Authentication** - Access control (per-route)
+9. **Request Validation** - Business logic validation (per-route)
+
+**Important**: Rate limiting is applied individually to each route to avoid double-limiting. Sensitive endpoints like agreement creation use `strictRateLimiter`, while query endpoints use `standardRateLimiter`.
 
 ---
 

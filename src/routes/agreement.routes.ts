@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { validateAgreementCreation } from '../middleware/validation.middleware';
-import { strictRateLimiter, validateUSDCMintMiddleware } from '../middleware';
+import { standardRateLimiter, strictRateLimiter, validateUSDCMintMiddleware } from '../middleware';
 import { createAgreement, getAgreementById, listAgreements } from '../services/agreement.service';
 import { CreateAgreementDTO, AgreementQueryDTO } from '../models/dto/agreement.dto';
 import { AgreementStatus } from '../generated/prisma';
@@ -44,7 +44,7 @@ router.post(
  * GET /v1/agreements/:agreementId
  * Get agreement by ID
  */
-router.get('/v1/agreements/:agreementId', async (req: Request, res: Response): Promise<void> => {
+router.get('/v1/agreements/:agreementId', standardRateLimiter, async (req: Request, res: Response): Promise<void> => {
   try {
     const { agreementId } = req.params;
 
@@ -80,7 +80,7 @@ router.get('/v1/agreements/:agreementId', async (req: Request, res: Response): P
  * GET /v1/agreements
  * List agreements with filters
  */
-router.get('/v1/agreements', async (req: Request, res: Response): Promise<void> => {
+router.get('/v1/agreements', standardRateLimiter, async (req: Request, res: Response): Promise<void> => {
   try {
     const filters: AgreementQueryDTO = {
       status: req.query.status as AgreementStatus | undefined,
