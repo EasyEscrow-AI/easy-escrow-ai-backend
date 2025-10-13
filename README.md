@@ -10,6 +10,8 @@ This repository contains:
 - Backend API and services for EasyEscrow.ai
 - Solana smart contract (Anchor program) for secure NFT and USDC escrow transactions
 - Integration layer between backend services and Solana blockchain
+- Real-time deposit monitoring and agreement lifecycle management
+- Automated expiry checking and refund processing
 
 ## Project Structure
 
@@ -114,6 +116,60 @@ The escrow program facilitates trustless transactions between buyers and sellers
 
 For detailed program documentation, see [programs/escrow/README.md](programs/escrow/README.md).
 
+## Backend API Features
+
+### Agreement Management (Task 28)
+Complete CRUD operations for escrow agreements:
+- **Create Agreement**: Initialize new escrow with NFT and USDC terms
+- **Get Agreement**: Retrieve agreement details by ID
+- **List Agreements**: Query agreements with filters (status, buyer, seller, NFT)
+- **Update Status**: Modify agreement status through lifecycle
+- **Delete Agreement**: Remove agreements (admin only)
+
+**Endpoints:**
+- `POST /v1/agreements` - Create new agreement
+- `GET /v1/agreements/:id` - Get agreement details
+- `GET /v1/agreements` - List agreements with filters
+- `PUT /v1/agreements/:id/status` - Update agreement status
+- `DELETE /v1/agreements/:id` - Delete agreement
+
+See [TASK_28_COMPLETION.md](TASK_28_COMPLETION.md) for detailed API documentation.
+
+### Real-Time Deposit Monitoring (Task 25)
+Automatic monitoring and processing of deposits:
+- **USDC Deposit Monitoring**: Real-time detection of USDC transfers
+- **NFT Deposit Monitoring**: Automatic NFT ownership verification
+- **WebSocket Subscriptions**: Live monitoring of deposit addresses
+- **Status Updates**: Automatic agreement status transitions
+- **Event Emission**: Webhooks for deposit events
+
+**Features:**
+- Background service monitoring all active agreements
+- Automatic restart on failures with exponential backoff
+- Health checks and metrics collection
+- Comprehensive error handling and logging
+
+See [TASK_25_COMPLETION.md](TASK_25_COMPLETION.md) and [DEPOSIT_MONITORING.md](DEPOSIT_MONITORING.md) for details.
+
+### Expiry & Cancellation Management (Task 27)
+Automated lifecycle management for agreements:
+- **Expiry Checking**: Background service monitoring agreement deadlines
+- **Refund Processing**: Automatic refund calculation and execution for partial deposits
+- **Admin Cancellation**: Multisig approval workflow for emergency cancellations
+- **Status Engine**: Rule-based automatic status transitions
+- **Orchestration**: Unified service coordinating all expiry/cancellation operations
+
+**API Endpoints:**
+- `GET /api/expiry-cancellation/status` - Get orchestrator status
+- `POST /api/expiry-cancellation/check-expired` - Manual expiry check
+- `GET /api/expiry-cancellation/expiring-soon` - Get agreements about to expire
+- `POST /api/expiry-cancellation/refund/process/:id` - Process refunds
+- `POST /api/expiry-cancellation/cancellation/propose` - Create cancellation proposal
+- `POST /api/expiry-cancellation/cancellation/sign/:id` - Sign proposal
+- `POST /api/expiry-cancellation/cancellation/execute/:id` - Execute cancellation
+
+See [TASK_27_COMPLETION.md](TASK_27_COMPLETION.md) for complete documentation.
+
 ## Development Workflow
 
 ### Setting Up Solana Environment (First Time)
@@ -141,8 +197,15 @@ The backend will integrate with the deployed Solana program via:
 
 ### Backend Tests
 ```bash
-npm test
+npm test              # Run all tests
+npm run test:watch    # Watch mode
+npm run lint          # Run linter
+npm run type-check    # TypeScript type checking
+npm run validate      # Run all checks (types, lint, tests)
 ```
+
+### API Testing
+See [TASK_28_TESTS.md](TASK_28_TESTS.md) for comprehensive API test scenarios and examples.
 
 ### Solana Program Tests
 ```bash
@@ -203,28 +266,54 @@ See `.env.example` for complete configuration options.
 
 ## Current Status
 
+### Completed ✅
 - ✅ Solana escrow program implemented
 - ✅ Program structure and tests created
 - ✅ Backend project structure setup
 - ✅ Database schema and migrations configured
 - ✅ Models, DTOs, and validators implemented
-- ✅ Documentation completed
-- ⏳ Environment setup required for deployment
-- ⏳ Backend API integration pending
-- ⏳ Frontend integration pending
+- ✅ **Agreement API endpoints** (Task 28)
+- ✅ **Real-time deposit monitoring** (Task 25)
+- ✅ **Expiry and cancellation logic** (Task 27)
+- ✅ Security middleware (CORS, Helmet, rate limiting)
+- ✅ Comprehensive documentation
+
+### In Progress ⏳
+- ⏳ Settlement processing integration
+- ⏳ Webhook delivery system
+- ⏳ On-chain transaction integration
+- ⏳ Frontend development
+- ⏳ Production deployment setup
 
 ## Next Steps
 
-1. Install Solana development tools (see SOLANA_SETUP.md)
-2. Build and test the escrow program
-3. Deploy to Solana devnet
-4. Integrate backend with deployed program
-5. Build frontend interface
-6. Test end-to-end flow
-7. Security audit before mainnet
+1. ~~Install Solana development tools~~ ✅ (see SOLANA_SETUP.md)
+2. ~~Build and test the escrow program~~ ✅
+3. ~~Deploy to Solana devnet~~ ✅
+4. ~~Implement backend API and services~~ ✅
+5. Replace mock on-chain transactions with actual Solana program calls
+6. Complete settlement processing integration
+7. Implement webhook delivery system
+8. Build frontend interface
+9. End-to-end testing with real blockchain transactions
+10. Security audit before mainnet
 
-## Resources
+## Documentation
 
+### Project Documentation
+- [SOLANA_SETUP.md](SOLANA_SETUP.md) - Solana development setup
+- [DATABASE_SETUP.md](DATABASE_SETUP.md) - Database configuration
+- [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) - Database migrations
+- [API_DOCUMENTATION.md](API_DOCUMENTATION.md) - REST API reference
+- [DEPOSIT_MONITORING.md](DEPOSIT_MONITORING.md) - Deposit monitoring system
+
+### Task Completion Reports
+- [TASK_25_COMPLETION.md](TASK_25_COMPLETION.md) - Deposit Monitoring Implementation
+- [TASK_27_COMPLETION.md](TASK_27_COMPLETION.md) - Expiry & Cancellation Logic
+- [TASK_28_COMPLETION.md](TASK_28_COMPLETION.md) - Agreement API Endpoints
+- [TASK_28_TESTS.md](TASK_28_TESTS.md) - API Testing Guide
+
+### External Resources
 - [Anchor Documentation](https://www.anchor-lang.com/)
 - [Solana Documentation](https://docs.solana.com/)
 - [Solana Cookbook](https://solanacookbook.com/)
