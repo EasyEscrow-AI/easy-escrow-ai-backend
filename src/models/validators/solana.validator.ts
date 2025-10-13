@@ -1,4 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
+import { Decimal } from '@prisma/client/runtime/library';
 
 /**
  * Validate if a string is a valid Solana public key
@@ -24,8 +25,17 @@ export const isValidTransactionSignature = (signature: string): boolean => {
 /**
  * Validate USDC amount (must be positive and within reasonable bounds)
  */
-export const isValidUSDCAmount = (amount: number | string): boolean => {
-  const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+export const isValidUSDCAmount = (amount: number | string | Decimal): boolean => {
+  let numAmount: number;
+  
+  if (amount instanceof Decimal) {
+    numAmount = amount.toNumber();
+  } else if (typeof amount === 'string') {
+    numAmount = parseFloat(amount);
+  } else {
+    numAmount = amount;
+  }
+  
   return !isNaN(numAmount) && numAmount > 0 && numAmount < 1e15; // Max 1 quadrillion USDC
 };
 
