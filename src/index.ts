@@ -2,6 +2,7 @@ import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { connectDatabase, checkDatabaseHealth } from './config/database';
+import { agreementRoutes } from './routes';
 
 // Load environment variables
 dotenv.config();
@@ -42,10 +43,14 @@ app.get('/', (_req: Request, res: Response) => {
     message: 'EasyEscrow.ai Backend API',
     version: '1.0.0',
     endpoints: {
-      health: '/health'
+      health: '/health',
+      agreements: '/v1/agreements'
     }
   });
 });
+
+// API Routes
+app.use(agreementRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {

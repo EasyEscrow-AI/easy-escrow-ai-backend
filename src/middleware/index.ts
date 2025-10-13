@@ -5,5 +5,5 @@
  * Authentication, validation, error handling, etc.
  */
 
-export {};
+export * from './validation.middleware';
 
