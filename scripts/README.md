@@ -54,7 +54,34 @@ Automated deployment script for deploying the escrow program to Solana devnet.
 - Link to Solana Explorer
 - Deployment info saved to file
 
-### 3. `setup-database.ps1` / `setup-database.sh`
+### 3. `setup-devnet-e2e.ps1` / `setup-devnet-e2e.sh`
+Setup scripts for E2E devnet testing environment (Task 37).
+
+**Features:**
+- Verifies Solana CLI installation
+- Configures devnet RPC endpoints
+- Checks program deployment
+- Requests SOL airdrops for testing
+- Validates USDC availability
+- Creates output directories
+- Sets up environment variables
+
+**Usage:**
+```powershell
+# Windows
+.\scripts\setup-devnet-e2e.ps1
+
+# Skip airdrop (if rate limited)
+.\scripts\setup-devnet-e2e.ps1 -SkipAirdrop
+```
+
+```bash
+# Linux/Mac
+chmod +x scripts/setup-devnet-e2e.sh
+./scripts/setup-devnet-e2e.sh
+```
+
+### 4. `setup-database.ps1` / `setup-database.sh`
 Database setup scripts (already existing).
 
 ## Quick Start Guide

@@ -23,6 +23,9 @@ npm run test:on-chain
 # Comprehensive on-chain tests
 npm run test:on-chain:comprehensive
 
+# End-to-end devnet tests
+npm run test:e2e:devnet
+
 # Watch mode (auto-rerun)
 npm run test:watch
 
@@ -62,6 +65,21 @@ Test Solana smart contract functionality with local validator.
   - Edge cases and attack vectors
 
 **Run:** `npm run test:on-chain:comprehensive`
+
+### End-to-End Tests (`e2e/`)
+Test complete system on actual Solana devnet with real transactions.
+
+**Files:**
+- `devnet-e2e.test.ts` - Comprehensive E2E tests covering:
+  - Happy path (complete escrow flow)
+  - Expiry and refund scenarios
+  - Race condition handling
+  - Fee collection validation
+  - Receipt generation
+
+**Run:** `npm run test:e2e:devnet`
+
+**See:** [E2E Testing Documentation](e2e/README.md)
 
 ### Test Helpers (`helpers/`)
 Reusable utilities for test setup and execution.
