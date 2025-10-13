@@ -59,7 +59,18 @@ export class SolanaService {
   private healthCheckTimer?: NodeJS.Timeout;
 
   constructor(connectionConfig?: SolanaConnectionConfig) {
-    const rpcUrl = connectionConfig?.rpcUrl || config.solana.rpcUrl;
+    // Validate config.solana exists
+    if (!config?.solana) {
+      throw new Error('[SolanaService] Configuration error: config.solana is undefined');
+    }
+
+    const rpcUrl = connectionConfig?.rpcUrl || config.solana?.rpcUrl;
+    
+    // Validate RPC URL is provided
+    if (!rpcUrl) {
+      throw new Error('[SolanaService] Configuration error: Solana RPC URL is not configured');
+    }
+
     const commitment = connectionConfig?.commitment || 'confirmed';
     
     // HTTP/HTTPS connection for transactions
@@ -414,14 +425,24 @@ export const initializeEscrow = async (
   params: InitEscrowParams
 ): Promise<EscrowPDAResult> => {
   try {
+    // Validate config.solana exists
+    if (!config?.solana) {
+      throw new Error('[SolanaService] Configuration error: config.solana is undefined');
+    }
+
+    // Validate config.usdc exists
+    if (!config?.usdc) {
+      throw new Error('[SolanaService] Configuration error: config.usdc is undefined');
+    }
+
     console.log('[SolanaService] Initializing escrow with config:', {
-      rpcUrl: config.solana.rpcUrl,
-      network: config.solana.network,
-      programId: config.solana.escrowProgramId,
+      rpcUrl: config.solana?.rpcUrl,
+      network: config.solana?.network,
+      programId: config.solana?.escrowProgramId,
     });
 
     // Use default devnet if RPC URL is not configured properly
-    const rpcUrl = config.solana.rpcUrl && config.solana.rpcUrl.startsWith('http') 
+    const rpcUrl = config.solana?.rpcUrl && config.solana.rpcUrl.startsWith('http') 
       ? config.solana.rpcUrl 
       : 'https://api.devnet.solana.com';
     
@@ -433,7 +454,7 @@ export const initializeEscrow = async (
     const buyerPubkey = params.buyer ? new PublicKey(params.buyer) : undefined;
     
     // Get program ID (use a default for testing if not set)
-    const programIdStr = config.solana.escrowProgramId || '11111111111111111111111111111111';
+    const programIdStr = config.solana?.escrowProgramId || '11111111111111111111111111111111';
     const programId = new PublicKey(programIdStr);
     
     // Derive escrow PDA
@@ -445,7 +466,7 @@ export const initializeEscrow = async (
     );
 
     // Get USDC mint address (use devnet USDC for testing)
-    const usdcMintStr = config.usdc.mintAddress || 'Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr'; // Devnet USDC
+    const usdcMintStr = config.usdc?.mintAddress || 'Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr'; // Devnet USDC
     const usdcMint = new PublicKey(usdcMintStr);
 
     // Derive deposit addresses
