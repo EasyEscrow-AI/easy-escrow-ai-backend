@@ -151,9 +151,11 @@ router.post(
         statusCode = 404;
       } else if (
         errorMessage.includes('already cancelled') || 
-        errorMessage.includes('settled') ||
+        errorMessage.includes('Cannot cancel a settled') ||
+        errorMessage.includes('already settled') ||
         errorMessage.includes('already refunded') ||
-        errorMessage.includes('not expired')
+        errorMessage.includes('not expired') ||
+        errorMessage.includes('has not expired')
       ) {
         statusCode = 400;
       }
