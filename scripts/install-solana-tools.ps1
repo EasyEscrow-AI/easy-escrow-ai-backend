@@ -63,20 +63,20 @@ if (-not $skipSolana) {
     
     switch ($choice) {
         "1" {
-            Write-Host "Downloading Solana installer from GitHub..." -ForegroundColor Yellow
+            Write-Host "Downloading Agave (Solana 2.x) installer..." -ForegroundColor Yellow
             
             # Try with TLS 1.2
             [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
             
             try {
-                $version = "1.18.26"
-                $url = "https://github.com/solana-labs/solana/releases/download/v$version/solana-install-init-x86_64-pc-windows-msvc.exe"
+                $version = "2.1.13"
+                $url = "https://release.anza.xyz/v$version/agave-install-init-x86_64-pc-windows-msvc.exe"
                 
                 Write-Host "Downloading from: $url" -ForegroundColor Gray
-                Invoke-WebRequest -Uri $url -OutFile "solana-install.exe" -UseBasicParsing
+                Invoke-WebRequest -Uri $url -OutFile "agave-install.exe" -UseBasicParsing
                 
                 Write-Host "Running installer..." -ForegroundColor Yellow
-                .\solana-install.exe v$version
+                .\agave-install.exe v$version
                 
                 # Add to PATH
                 $solanaPath = "$env:USERPROFILE\.local\share\solana\install\active_release\bin"
@@ -98,7 +98,7 @@ if (-not $skipSolana) {
                 Write-Host "✗ Download failed: $_" -ForegroundColor Red
                 Write-Host ""
                 Write-Host "Please try one of these alternatives:" -ForegroundColor Yellow
-                Write-Host "1. Manual download from: https://github.com/solana-labs/solana/releases/latest" -ForegroundColor White
+                Write-Host "1. Manual download from: https://github.com/anza-xyz/agave/releases/latest" -ForegroundColor White
                 Write-Host "2. Run this script again and choose option 2 (Cargo)" -ForegroundColor White
                 Write-Host "3. Check your internet connection and firewall settings" -ForegroundColor White
                 exit 1
@@ -122,11 +122,11 @@ if (-not $skipSolana) {
         "3" {
             Write-Host ""
             Write-Host "Manual Installation Instructions:" -ForegroundColor Yellow
-            Write-Host "1. Visit: https://github.com/solana-labs/solana/releases/latest" -ForegroundColor White
-            Write-Host "2. Download: solana-install-init-x86_64-pc-windows-msvc.exe" -ForegroundColor White
+            Write-Host "1. Visit: https://github.com/anza-xyz/agave/releases/latest" -ForegroundColor White
+            Write-Host "2. Download: agave-install-init-x86_64-pc-windows-msvc.exe" -ForegroundColor White
             Write-Host "3. Run the downloaded installer" -ForegroundColor White
             Write-Host "4. Restart PowerShell" -ForegroundColor White
-            Write-Host "5. Verify with: solana --version" -ForegroundColor White
+            Write-Host "5. Verify with: solana --version (should show 2.x with client:Agave)" -ForegroundColor White
             Write-Host ""
             Write-Host "After installation, run this script again to install Anchor" -ForegroundColor Yellow
             exit 0
