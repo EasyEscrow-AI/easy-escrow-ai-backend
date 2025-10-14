@@ -23,9 +23,15 @@
     "test:on-chain": "anchor test --skip-local-validator",
     "test:on-chain:comprehensive": "mocha --require ts-node/register 'tests/on-chain/**/*.test.ts' --timeout 60000",
     "test:e2e:devnet": "mocha --require ts-node/register 'tests/e2e/**/*.test.ts' --timeout 120000",
+    "test:localnet": "mocha --require ts-node/register 'tests/localnet/**/*.test.ts' --timeout 60000",
+    "test:localnet:comprehensive": "mocha --require ts-node/register 'tests/localnet/localnet-comprehensive.test.ts' --timeout 60000",
     "test:coverage": "echo 'Coverage reporting not yet configured'",
     "test:watch": "mocha --require ts-node/register 'tests/**/*.test.ts' --watch --watch-files 'src/**/*.ts,tests/**/*.ts'",
-    "test:ci": "npm run test:unit && npm run test:integration"
+    "test:ci": "npm run test:unit && npm run test:integration",
+    "localnet:start": "powershell -ExecutionPolicy Bypass -File ./scripts/start-localnet-validator.ps1",
+    "localnet:setup": "powershell -ExecutionPolicy Bypass -File ./scripts/setup-localnet.ps1",
+    "localnet:setup-nfts": "powershell -ExecutionPolicy Bypass -File ./scripts/setup-nft-collection.ps1",
+    "localnet:reset": "powershell -ExecutionPolicy Bypass -File ./scripts/reset-localnet.ps1"
   },
   "keywords": [
     "escrow",
