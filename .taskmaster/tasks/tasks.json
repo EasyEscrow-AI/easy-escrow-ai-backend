@@ -1232,7 +1232,7 @@
         "id": 40,
         "title": "Implement Idempotency Keys for Critical Endpoints",
         "description": "Add idempotency key support for create agreement and settle endpoints. Implement idempotency key validation, storage, and duplicate request handling to prevent double-processing",
-        "status": "pending",
+        "status": "done",
         "priority": "high",
         "dependencies": [
           "24",
@@ -1245,7 +1245,7 @@
             "id": 1,
             "title": "Design Idempotency Key Schema and Storage",
             "description": "Design database schema for storing idempotency keys with metadata including endpoint, request hash, response data, and expiration timestamps",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "details": "Create database table with fields: idempotency_key (unique), endpoint_path, request_hash, response_status, response_body, created_at, expires_at. Define TTL for key expiration (24-48 hours). Design indexes for efficient lookups."
           },
@@ -1253,7 +1253,7 @@
             "id": 2,
             "title": "Implement Idempotency Key Validation Middleware",
             "description": "Create middleware to extract, validate, and process idempotency keys from request headers for critical endpoints",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "40.1"
             ],
@@ -1263,7 +1263,7 @@
             "id": 3,
             "title": "Implement Duplicate Request Detection Logic",
             "description": "Build service to detect duplicate requests by comparing idempotency keys and request content hashes",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "40.1",
               "40.2"
@@ -1274,7 +1274,7 @@
             "id": 4,
             "title": "Integrate Idempotency with Create Agreement Endpoint",
             "description": "Add idempotency key processing to the create agreement endpoint to prevent duplicate agreement creation",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "40.2",
               "40.3"
@@ -1285,7 +1285,7 @@
             "id": 5,
             "title": "Integrate Idempotency with Settlement Endpoint",
             "description": "Add idempotency key processing to the settlement endpoint to prevent double-settlement of agreements",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "40.2",
               "40.3"
@@ -1439,7 +1439,7 @@
     ],
     "metadata": {
       "created": "2025-10-13T01:02:36.190Z",
-      "updated": "2025-10-13T23:15:28.997Z",
+      "updated": "2025-10-14T00:39:16.697Z",
       "description": "Tasks for master context"
     }
   }

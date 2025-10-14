@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { validateAgreementCreation } from '../middleware/validation.middleware';
-import { standardRateLimiter, strictRateLimiter, validateUSDCMintMiddleware } from '../middleware';
+import { standardRateLimiter, strictRateLimiter, validateUSDCMintMiddleware, requiredIdempotency } from '../middleware';
 import { 
   createAgreement, 
   getAgreementById, 
@@ -16,11 +16,12 @@ const router = Router();
 /**
  * POST /v1/agreements
  * Create a new agreement
- * Protected with strict rate limiting and USDC mint validation
+ * Protected with strict rate limiting, USDC mint validation, and required idempotency
  */
 router.post(
   '/v1/agreements',
   strictRateLimiter,
+  requiredIdempotency,
   validateUSDCMintMiddleware,
   validateAgreementCreation,
   async (req: Request, res: Response): Promise<void> => {
