@@ -10,6 +10,7 @@ import {
 } from '../models/dto/agreement.dto';
 import { initializeEscrow } from './solana.service';
 import { getMonitoringOrchestrator } from './monitoring-orchestrator.service';
+import { getTransactionLogService, TransactionOperationType, TransactionStatusType } from './transaction-log.service';
 import { Decimal } from '@prisma/client/runtime/library';
 
 const prisma = new PrismaClient();
@@ -55,6 +56,20 @@ export const createAgreement = async (
         initTxId: escrowResult.transactionId,
       },
     });
+
+    // 2a. Log the initialization transaction
+    try {
+      const transactionLogService = getTransactionLogService();
+      await transactionLogService.captureTransaction({
+        txId: escrowResult.transactionId,
+        operationType: TransactionOperationType.INIT_ESCROW,
+        agreementId: agreement.agreementId,
+        status: TransactionStatusType.CONFIRMED,
+      });
+    } catch (logError) {
+      // Log error but don't fail the agreement creation
+      console.error('Failed to log init transaction:', logError);
+    }
 
     // 3. Trigger monitoring reload to start monitoring this agreement
     try {

@@ -9,6 +9,13 @@ import agreementRoutes from './agreement.routes';
 import expiryCancellationRoutes from './expiry-cancellation.routes';
 import webhookRoutes from './webhook.routes';
 import receiptRoutes from './receipt.routes';
+import transactionLogRoutes from './transaction-log.routes';
 
-export { agreementRoutes, expiryCancellationRoutes, webhookRoutes, receiptRoutes };
+export { 
+  agreementRoutes, 
+  expiryCancellationRoutes, 
+  webhookRoutes, 
+  receiptRoutes,
+  transactionLogRoutes 
+};
 

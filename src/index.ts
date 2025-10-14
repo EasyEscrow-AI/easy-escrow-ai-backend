@@ -3,7 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { connectDatabase, checkDatabaseHealth } from './config/database';
 import { connectRedis, checkRedisHealth, disconnectRedis } from './config/redis';
-import { agreementRoutes, expiryCancellationRoutes, webhookRoutes, receiptRoutes } from './routes';
+import { agreementRoutes, expiryCancellationRoutes, webhookRoutes, receiptRoutes, transactionLogRoutes } from './routes';
 import {
   corsOptions,
   helmetConfig,
@@ -135,6 +135,7 @@ app.get('/', (_req: Request, res: Response) => {
       health: '/health',
       agreements: '/v1/agreements',
       receipts: '/v1/receipts',
+      transactions: '/v1/transactions',
       expiryCancellation: '/api/expiry-cancellation',
       webhooks: '/api/webhooks'
     }
@@ -144,6 +145,7 @@ app.get('/', (_req: Request, res: Response) => {
 // API Routes
 app.use(agreementRoutes);
 app.use(receiptRoutes);
+app.use('/v1/transactions', transactionLogRoutes);
 app.use('/api/expiry-cancellation', expiryCancellationRoutes);
 app.use('/api', webhookRoutes);
 
