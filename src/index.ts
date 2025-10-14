@@ -2,6 +2,7 @@ import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { connectDatabase, checkDatabaseHealth } from './config/database';
+import { connectRedis, checkRedisHealth, disconnectRedis } from './config/redis';
 import { agreementRoutes, expiryCancellationRoutes, webhookRoutes, receiptRoutes } from './routes';
 import {
   corsOptions,
@@ -66,6 +67,7 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
 // Health check endpoint
 app.get('/health', async (_req: Request, res: Response) => {
   const dbHealthy = await checkDatabaseHealth();
+  const redisHealthy = await checkRedisHealth();
   
   // Get monitoring orchestrator health with error handling
   let monitoringHealth;
@@ -93,7 +95,7 @@ app.get('/health', async (_req: Request, res: Response) => {
   // Get idempotency service status
   const idempotencyStatus = idempotencyService.getStatus();
   
-  const allHealthy = dbHealthy && monitoringHealth.healthy && expiryCancellationHealth.healthy && idempotencyStatus.isRunning;
+  const allHealthy = dbHealthy && redisHealthy && monitoringHealth.healthy && expiryCancellationHealth.healthy && idempotencyStatus.isRunning;
   const status = allHealthy ? 'healthy' : 'unhealthy';
   const statusCode = allHealthy ? 200 : 503;
   
@@ -102,6 +104,7 @@ app.get('/health', async (_req: Request, res: Response) => {
     timestamp: new Date().toISOString(),
     service: 'easy-escrow-ai-backend',
     database: dbHealthy ? 'connected' : 'disconnected',
+    redis: redisHealthy ? 'connected' : 'disconnected',
     monitoring: {
       status: monitoringHealth.healthy ? 'running' : 'stopped',
       monitoredAccounts: monitoringHealth.monitoredAccounts,
@@ -180,6 +183,10 @@ const gracefulShutdown = async (signal: string) => {
     console.log('Stopping idempotency service...');
     await idempotencyService.stop();
     
+    // Disconnect Redis
+    console.log('Disconnecting Redis...');
+    await disconnectRedis();
+    
     console.log('Graceful shutdown completed');
     process.exit(0);
   } catch (error) {
@@ -198,6 +205,10 @@ const startServer = async () => {
     // Connect to database
     await connectDatabase();
     console.log('✅ Database connected');
+    
+    // Connect to Redis
+    await connectRedis();
+    console.log('✅ Redis connected');
     
     // Start monitoring orchestrator
     console.log('Starting monitoring orchestrator...');
@@ -219,6 +230,8 @@ const startServer = async () => {
       console.log(`\n🚀 Server is running on port ${PORT}`);
       console.log(`📍 Health check: http://localhost:${PORT}/health`);
       console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`💾 Redis caching: ACTIVE`);
+      console.log(`📋 Job queues: ACTIVE`);
       console.log(`👁️  Deposit monitoring: ACTIVE`);
       console.log(`⏰ Expiry checking: ACTIVE`);
       console.log(`🔑 Idempotency protection: ACTIVE\n`);

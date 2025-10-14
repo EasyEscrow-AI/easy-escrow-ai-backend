@@ -6,6 +6,7 @@
  */
 
 export * from './database';
+export * from './redis';
 
 // Environment configuration
 export const config = {

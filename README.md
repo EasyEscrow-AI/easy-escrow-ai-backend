@@ -330,6 +330,7 @@ See `.env.example` for complete configuration options.
 - [TASK_28_TESTS.md](docs/tasks/TASK_28_TESTS.md) - API Testing Guide
 - [TASK_30_COMPLETION.md](docs/tasks/TASK_30_COMPLETION.md) - Settlement Receipt Generation
 - [TASK_30_TEST_RESULTS.md](docs/tasks/TASK_30_TEST_RESULTS.md) - Task 30 Test Results
+- [TASK_31_COMPLETION.md](docs/tasks/TASK_31_COMPLETION.md) - Redis Caching and Job Queues
 - [TASK_35_COMPLETION.md](docs/tasks/TASK_35_COMPLETION.md) - Task 35 Completion
 - [TASK_37_COMPLETION.md](docs/tasks/TASK_37_COMPLETION.md) - Task 37 Completion
 - [TASK_37_SUMMARY.md](docs/tasks/TASK_37_SUMMARY.md) - Task 37 Summary
