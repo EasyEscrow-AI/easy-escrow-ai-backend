@@ -274,11 +274,31 @@ export class SettlementService {
           return idempotencyCheck.existingResponse.body as SettlementResult;
         }
         
-        // If no cached result, return success with minimal info
+        // If no cached result, query the database for the actual settlement
+        const existingSettlement = await prisma.settlement.findUnique({
+          where: { agreementId: agreement.id },
+        });
+
+        if (existingSettlement) {
+          // Return success with settlement details from database
+          return {
+            success: true,
+            agreementId: agreement.agreementId,
+            transactionId: existingSettlement.settleTxId,
+            platformFee: existingSettlement.platformFee.toString(),
+            creatorRoyalty: existingSettlement.creatorRoyalty?.toString() || '0',
+            sellerReceived: existingSettlement.sellerReceived.toString(),
+          };
+        }
+
+        // If settlement doesn't exist in database, this shouldn't happen
+        // but return a clear success response
+        console.warn(
+          `[SettlementService] Idempotency key exists but no settlement found in database for ${agreement.agreementId}`
+        );
         return {
           success: true,
           agreementId: agreement.agreementId,
-          error: 'Settlement already processed (idempotent request)',
         };
       }
 
