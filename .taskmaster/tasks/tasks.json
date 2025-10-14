@@ -380,7 +380,7 @@
         "id": 27,
         "title": "Implement Expiry and Cancellation Logic",
         "description": "Create service to check expiry timestamps, allow refunds for partial deposits, implement admin cancel with multisig, update agreement status accordingly",
-        "status": "pending",
+        "status": "done",
         "priority": "medium",
         "dependencies": [
           "22",
@@ -443,7 +443,7 @@
         "id": 28,
         "title": "Implement Agreement Query and Cancel Endpoints",
         "description": "Create GET /v1/agreements/{id} to return status, balances, deadlines. Create POST /v1/agreements/{id}/cancel to trigger cancellation for expired agreements",
-        "status": "pending",
+        "status": "done",
         "priority": "medium",
         "dependencies": [
           "24"
@@ -569,7 +569,7 @@
         "id": 30,
         "title": "Implement Settlement Receipt Generation",
         "description": "Create service to generate hash-signed settlement receipts with nft_mint, price, fees, timestamps, transaction IDs. Store in database and make available via API",
-        "status": "pending",
+        "status": "done",
         "priority": "medium",
         "dependencies": [
           "26",
@@ -633,7 +633,7 @@
         "id": 31,
         "title": "Setup Redis for Caching and Queues",
         "description": "Configure Redis client, implement caching for agreement lookups, set up job queues for blockchain monitoring and settlement processing",
-        "status": "pending",
+        "status": "done",
         "priority": "medium",
         "dependencies": [
           "21"
@@ -753,7 +753,7 @@
         "id": 33,
         "title": "Create Docker Configuration",
         "description": "Create Dockerfile for containerized backend, optimize for production, configure environment variables, health check endpoint",
-        "status": "pending",
+        "status": "done",
         "priority": "medium",
         "dependencies": [
           "21"
@@ -765,7 +765,7 @@
             "id": 1,
             "title": "Create base Dockerfile with multi-stage build",
             "description": "Create a Dockerfile with multi-stage build pattern to optimize image size and security for production deployment",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "details": "Set up multi-stage Dockerfile with builder stage for dependencies and lean production stage. Use official Node.js Alpine image as base, copy package files, install dependencies, and build application. Create final stage with minimal runtime dependencies."
           },
@@ -773,7 +773,7 @@
             "id": 2,
             "title": "Configure environment variables and secrets management",
             "description": "Set up environment variable configuration with proper defaults and secrets handling for containerized deployment",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "33.1"
             ],
@@ -783,7 +783,7 @@
             "id": 3,
             "title": "Implement health check endpoint",
             "description": "Create a dedicated health check endpoint that validates application and database connectivity for container orchestration",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "33.1"
             ],
@@ -793,7 +793,7 @@
             "id": 4,
             "title": "Optimize Docker image for production",
             "description": "Apply production optimizations including security hardening, performance tuning, and minimal attack surface",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "33.1",
               "33.2"
@@ -804,7 +804,7 @@
             "id": 5,
             "title": "Configure Docker health check and startup probes",
             "description": "Set up Docker HEALTHCHECK instruction and configure container orchestration probes for reliable deployments",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "33.3",
               "33.4"
@@ -1029,7 +1029,7 @@
         "id": 37,
         "title": "End-to-End Devnet Testing",
         "description": "Perform comprehensive end-to-end testing on devnet with specific test scenarios: happy path (create → deposit USDC → deposit NFT → settle → receipt), expiry path (create → partial deposit → expire → refund), and concurrency testing (race condition handling for multiple buyers)",
-        "status": "pending",
+        "status": "done",
         "priority": "high",
         "dependencies": [
           "35",
@@ -1095,7 +1095,7 @@
         "id": 38,
         "title": "Setup Localnet for Program Testing",
         "description": "Configure local Solana validator as the foundation for running the complete on-chain test matrix including happy path, wrong mint rejection, under/over-funding, double-settle, expiry refund, fee calculations, unauthorized cancel, PDA spoofing, rent-exempt vaults, and event validation. Localnet provides fast, free, deterministic testing environment for TDD of all state machine logic.",
-        "status": "pending",
+        "status": "done",
         "priority": "high",
         "dependencies": [
           "22"
@@ -1298,7 +1298,7 @@
         "id": 41,
         "title": "Implement Transaction ID Logging and Debugging System",
         "description": "Create comprehensive transaction logging system that captures and surfaces txids for each step (init, deposits, settle, cancel). Store txids for receipts and debugging, implement log aggregation and search",
-        "status": "pending",
+        "status": "done",
         "priority": "medium",
         "dependencies": [
           "24",
@@ -1439,7 +1439,7 @@
     ],
     "metadata": {
       "created": "2025-10-13T01:02:36.190Z",
-      "updated": "2025-10-14T04:15:16.741Z",
+      "updated": "2025-10-14T05:59:46.450Z",
       "description": "Tasks for master context"
     }
   }
