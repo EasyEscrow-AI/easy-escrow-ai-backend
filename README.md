@@ -247,7 +247,38 @@ anchor deploy  # Requires SOL for deployment
 
 ### Backend Deployment
 
-Coming soon...
+**Docker (Recommended):**
+```bash
+# Build the Docker image
+docker build -t easyescrow-backend:latest .
+
+# Run with Docker Compose (includes PostgreSQL and Redis)
+docker-compose up -d
+
+# Check logs
+docker-compose logs -f backend
+
+# Health check
+curl http://localhost:3000/health
+```
+
+See [DOCKER_DEPLOYMENT.md](docs/DOCKER_DEPLOYMENT.md) for complete deployment guide including:
+- Docker Compose setup
+- Production deployment best practices
+- Kubernetes deployment examples
+- Environment variable configuration
+
+**Manual Deployment:**
+```bash
+# Build the application
+npm run build
+
+# Run database migrations
+npm run db:migrate:deploy
+
+# Start the production server
+npm start
+```
 
 ## Environment Variables
 
@@ -290,6 +321,7 @@ See `.env.example` for complete configuration options.
 - ✅ **Agreement API endpoints** (Task 28)
 - ✅ **Real-time deposit monitoring** (Task 25)
 - ✅ **Expiry and cancellation logic** (Task 27)
+- ✅ **Docker configuration** (Task 33)
 - ✅ Security middleware (CORS, Helmet, rate limiting)
 - ✅ Comprehensive documentation
 
@@ -322,6 +354,8 @@ See `.env.example` for complete configuration options.
 - [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) - Database migrations
 - [API_DOCUMENTATION.md](API_DOCUMENTATION.md) - REST API reference
 - [DEPOSIT_MONITORING.md](DEPOSIT_MONITORING.md) - Deposit monitoring system
+- [DOCKER_DEPLOYMENT.md](docs/DOCKER_DEPLOYMENT.md) - Docker deployment guide
+- [ENVIRONMENT_VARIABLES.md](docs/ENVIRONMENT_VARIABLES.md) - Environment configuration reference
 
 ### Task Completion Reports
 - [TASK_25_COMPLETION.md](docs/tasks/TASK_25_COMPLETION.md) - Deposit Monitoring Implementation
@@ -331,6 +365,7 @@ See `.env.example` for complete configuration options.
 - [TASK_30_COMPLETION.md](docs/tasks/TASK_30_COMPLETION.md) - Settlement Receipt Generation
 - [TASK_30_TEST_RESULTS.md](docs/tasks/TASK_30_TEST_RESULTS.md) - Task 30 Test Results
 - [TASK_31_COMPLETION.md](docs/tasks/TASK_31_COMPLETION.md) - Redis Caching and Job Queues
+- [TASK_33_COMPLETION.md](docs/tasks/TASK_33_COMPLETION.md) - Docker Configuration
 - [TASK_35_COMPLETION.md](docs/tasks/TASK_35_COMPLETION.md) - Task 35 Completion
 - [TASK_37_COMPLETION.md](docs/tasks/TASK_37_COMPLETION.md) - Task 37 Completion
 - [TASK_37_SUMMARY.md](docs/tasks/TASK_37_SUMMARY.md) - Task 37 Summary
