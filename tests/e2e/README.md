@@ -60,7 +60,14 @@ solana transfer <WALLET_ADDRESS> 2 --url devnet
 
 ### Full E2E Test Suite
 ```bash
+# Note: Requires manually funded wallets (see Manual Funding Guide)
 npm run test:e2e:devnet
+```
+
+### Simple Validation Test (Start Here)
+```bash
+# Lighter test to validate program interface
+npx mocha --require ts-node/register 'tests/e2e/simple-devnet.test.ts' --timeout 180000
 ```
 
 ### Individual Test Scenarios

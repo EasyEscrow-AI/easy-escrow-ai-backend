@@ -23,8 +23,11 @@ npm run test:on-chain
 # Comprehensive on-chain tests
 npm run test:on-chain:comprehensive
 
-# End-to-end devnet tests
+# End-to-end devnet tests (requires manual wallet funding)
 npm run test:e2e:devnet
+
+# Simple E2E test (recommended first)
+npx mocha --require ts-node/register 'tests/e2e/simple-devnet.test.ts' --timeout 180000
 
 # Watch mode (auto-rerun)
 npm run test:watch
