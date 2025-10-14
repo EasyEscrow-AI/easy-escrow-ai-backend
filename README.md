@@ -207,7 +207,22 @@ npm run validate      # Run all checks (types, lint, tests)
 ### API Testing
 See [TASK_28_TESTS.md](TASK_28_TESTS.md) for comprehensive API test scenarios and examples.
 
-### Solana Program Tests
+### Solana Program Tests - Localnet (Recommended for Development)
+Fast, free, and deterministic testing on local validator:
+
+```bash
+# Terminal 1: Start local validator
+npm run localnet:start
+
+# Terminal 2: Setup environment and run tests
+npm run localnet:setup
+anchor build && anchor deploy
+npm run test:localnet
+```
+
+See [LOCALNET_SETUP.md](LOCALNET_SETUP.md) for complete setup guide.
+
+### Solana Program Tests - Devnet
 ```bash
 anchor test
 anchor test -- --show-logs  # With detailed logs
@@ -302,6 +317,7 @@ See `.env.example` for complete configuration options.
 
 ### Project Documentation
 - [SOLANA_SETUP.md](SOLANA_SETUP.md) - Solana development setup
+- [LOCALNET_SETUP.md](LOCALNET_SETUP.md) - Local validator testing setup
 - [DATABASE_SETUP.md](DATABASE_SETUP.md) - Database configuration
 - [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) - Database migrations
 - [API_DOCUMENTATION.md](API_DOCUMENTATION.md) - REST API reference
@@ -312,6 +328,7 @@ See `.env.example` for complete configuration options.
 - [TASK_27_COMPLETION.md](TASK_27_COMPLETION.md) - Expiry & Cancellation Logic
 - [TASK_28_COMPLETION.md](TASK_28_COMPLETION.md) - Agreement API Endpoints
 - [TASK_28_TESTS.md](TASK_28_TESTS.md) - API Testing Guide
+- [TASK_38_COMPLETION.md](TASK_38_COMPLETION.md) - Localnet Testing Setup
 
 ### External Resources
 - [Anchor Documentation](https://www.anchor-lang.com/)
