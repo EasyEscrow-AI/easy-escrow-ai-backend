@@ -10,6 +10,7 @@ import { Decimal } from '@prisma/client/runtime/library';
 import { PublicKey, Transaction, SystemProgram } from '@solana/web3.js';
 import { getSolanaService } from './solana.service';
 import { WebhookEventsService } from './webhook-events.service';
+import { getTransactionLogService, TransactionOperationType, TransactionStatusType } from './transaction-log.service';
 
 const prisma = new PrismaClient();
 
@@ -273,6 +274,20 @@ export class RefundService {
             type: deposit.type,
             txId,
           });
+
+          // Log the refund transaction
+          try {
+            const transactionLogService = getTransactionLogService();
+            await transactionLogService.captureTransaction({
+              txId,
+              operationType: TransactionOperationType.REFUND,
+              agreementId: agreement.agreementId,
+              status: TransactionStatusType.CONFIRMED,
+            });
+          } catch (logError) {
+            console.error('[RefundService] Failed to log refund transaction:', logError);
+            // Don't fail the refund if logging fails
+          }
         } catch (error) {
           console.error(`[RefundService] Error refunding deposit ${deposit.id}:`, error);
           result.errors.push({

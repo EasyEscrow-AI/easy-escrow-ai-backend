@@ -12,6 +12,7 @@ import { getSolanaService } from './solana.service';
 import { getIdempotencyService } from './idempotency.service';
 import { WebhookEventsService } from './webhook-events.service';
 import { getReceiptService } from './receipt.service';
+import { getTransactionLogService, TransactionOperationType, TransactionStatusType } from './transaction-log.service';
 import { Decimal } from '@prisma/client/runtime/library';
 import { AgreementStatus } from '../generated/prisma';
 
@@ -320,6 +321,21 @@ export class SettlementService {
 
       // 3. Get block height for the transaction
       const blockHeight = await this.getTransactionBlockHeight(settlementTxId);
+
+      // 3a. Log the settlement transaction
+      try {
+        const transactionLogService = getTransactionLogService();
+        await transactionLogService.captureTransaction({
+          txId: settlementTxId,
+          operationType: TransactionOperationType.SETTLE,
+          agreementId: agreement.agreementId,
+          status: TransactionStatusType.CONFIRMED,
+          blockHeight: blockHeight || undefined,
+        });
+      } catch (logError) {
+        // Log error but don't fail the settlement
+        console.error('[SettlementService] Failed to log settlement transaction:', logError);
+      }
 
       // 4. Create settlement record
       await prisma.settlement.create({
