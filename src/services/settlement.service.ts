@@ -9,6 +9,7 @@ import { PublicKey, Transaction, SystemProgram } from '@solana/web3.js';
 import { prisma } from '../config/database';
 import { config } from '../config';
 import { getSolanaService } from './solana.service';
+import { getIdempotencyService } from './idempotency.service';
 import { Decimal } from '@prisma/client/runtime/library';
 import { AgreementStatus } from '../generated/prisma';
 
@@ -253,6 +254,34 @@ export class SettlementService {
     console.log(`[SettlementService] Executing settlement for agreement ${agreement.agreementId}`);
 
     try {
+      // 0. Check idempotency to prevent double-settlement
+      const idempotencyKey = `settlement_${agreement.agreementId}`;
+      const idempotencyService = getIdempotencyService();
+      
+      const idempotencyCheck = await idempotencyService.checkIdempotency(
+        idempotencyKey,
+        'SETTLEMENT',
+        { agreementId: agreement.agreementId, operation: 'settle' }
+      );
+
+      if (idempotencyCheck.isDuplicate) {
+        console.log(
+          `[SettlementService] Settlement already processed for agreement ${agreement.agreementId}, skipping`
+        );
+        
+        // Return the cached result
+        if (idempotencyCheck.existingResponse?.body) {
+          return idempotencyCheck.existingResponse.body as SettlementResult;
+        }
+        
+        // If no cached result, return success with minimal info
+        return {
+          success: true,
+          agreementId: agreement.agreementId,
+          error: 'Settlement already processed (idempotent request)',
+        };
+      }
+
       // 1. Calculate fees
       const feeCalculation = await this.calculateFees(agreement);
 
@@ -302,7 +331,7 @@ export class SettlementService {
 
       console.log(`[SettlementService] Settlement completed successfully for ${agreement.agreementId}`);
 
-      return {
+      const settlementResult: SettlementResult = {
         success: true,
         agreementId: agreement.agreementId,
         transactionId: settlementTxId,
@@ -310,14 +339,45 @@ export class SettlementService {
         creatorRoyalty: feeCalculation.creatorRoyalty.toString(),
         sellerReceived: feeCalculation.sellerReceived.toString(),
       };
+
+      // Store idempotency key for this successful settlement
+      await idempotencyService.storeIdempotency(
+        idempotencyKey,
+        'SETTLEMENT',
+        { agreementId: agreement.agreementId, operation: 'settle' },
+        200,
+        settlementResult
+      ).catch((error) => {
+        console.error('[SettlementService] Error storing idempotency key:', error);
+        // Don't fail settlement if idempotency storage fails
+      });
+
+      return settlementResult;
     } catch (error) {
       console.error(`[SettlementService] Error executing settlement:`, error);
 
-      return {
+      const errorResult: SettlementResult = {
         success: false,
         agreementId: agreement.agreementId,
         error: error instanceof Error ? error.message : 'Unknown error',
       };
+
+      // Store idempotency key even for failed settlements to prevent retries within the idempotency window
+      const idempotencyKey = `settlement_${agreement.agreementId}`;
+      const idempotencyService = getIdempotencyService();
+      
+      await idempotencyService.storeIdempotency(
+        idempotencyKey,
+        'SETTLEMENT',
+        { agreementId: agreement.agreementId, operation: 'settle' },
+        500,
+        errorResult
+      ).catch((storeError) => {
+        console.error('[SettlementService] Error storing failed settlement idempotency:', storeError);
+        // Ignore storage errors
+      });
+
+      return errorResult;
     }
   }
 

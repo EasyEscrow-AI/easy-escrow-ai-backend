@@ -9,7 +9,11 @@ import {
   sanitizeInput,
   securityHeaders,
 } from './middleware';
-import { getMonitoringOrchestrator, getExpiryCancellationOrchestrator } from './services';
+import { 
+  getMonitoringOrchestrator, 
+  getExpiryCancellationOrchestrator,
+  getIdempotencyService 
+} from './services';
 
 // Load environment variables
 dotenv.config();
@@ -32,6 +36,11 @@ const expiryCancellationOrchestrator = getExpiryCancellationOrchestrator({
   autoProcessRefunds: true,
   refundProcessingBatchSize: 10,
   enableMonitoring: true,
+});
+
+const idempotencyService = getIdempotencyService({
+  expirationHours: 24, // Keep idempotency keys for 24 hours
+  cleanupIntervalMinutes: 60, // Clean up expired keys every hour
 });
 
 // Security Middleware (apply first)
@@ -81,7 +90,10 @@ app.get('/health', async (_req: Request, res: Response) => {
   // Get expiry-cancellation orchestrator health
   const expiryCancellationHealth = await expiryCancellationOrchestrator.healthCheck();
   
-  const allHealthy = dbHealthy && monitoringHealth.healthy && expiryCancellationHealth.healthy;
+  // Get idempotency service status
+  const idempotencyStatus = idempotencyService.getStatus();
+  
+  const allHealthy = dbHealthy && monitoringHealth.healthy && expiryCancellationHealth.healthy && idempotencyStatus.isRunning;
   const status = allHealthy ? 'healthy' : 'unhealthy';
   const statusCode = allHealthy ? 200 : 503;
   
@@ -102,6 +114,11 @@ app.get('/health', async (_req: Request, res: Response) => {
       status: expiryCancellationHealth.healthy ? 'running' : 'stopped',
       services: expiryCancellationHealth.services,
       recentErrors: expiryCancellationHealth.recentErrors,
+    },
+    idempotency: {
+      status: idempotencyStatus.isRunning ? 'running' : 'stopped',
+      expirationHours: idempotencyStatus.expirationHours,
+      cleanupIntervalMinutes: idempotencyStatus.cleanupIntervalMinutes,
     }
   });
 });
@@ -155,6 +172,10 @@ const gracefulShutdown = async (signal: string) => {
     console.log('Stopping expiry-cancellation orchestrator...');
     await expiryCancellationOrchestrator.stop();
     
+    // Stop idempotency service
+    console.log('Stopping idempotency service...');
+    await idempotencyService.stop();
+    
     console.log('Graceful shutdown completed');
     process.exit(0);
   } catch (error) {
@@ -184,13 +205,19 @@ const startServer = async () => {
     await expiryCancellationOrchestrator.start();
     console.log('✅ Expiry-cancellation orchestrator started');
     
+    // Start idempotency service
+    console.log('Starting idempotency service...');
+    await idempotencyService.start();
+    console.log('✅ Idempotency service started');
+    
     // Start Express server
     app.listen(PORT, () => {
       console.log(`\n🚀 Server is running on port ${PORT}`);
       console.log(`📍 Health check: http://localhost:${PORT}/health`);
       console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
       console.log(`👁️  Deposit monitoring: ACTIVE`);
-      console.log(`⏰ Expiry checking: ACTIVE\n`);
+      console.log(`⏰ Expiry checking: ACTIVE`);
+      console.log(`🔑 Idempotency protection: ACTIVE\n`);
     });
   } catch (error) {
     console.error('Failed to start server:', error);

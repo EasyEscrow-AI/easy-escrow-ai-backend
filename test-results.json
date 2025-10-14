@@ -1,0 +1,1556 @@
+(node:139428) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[SolanaService] Creating connection with URL: https://api.devnet.solana.com
+[SolanaService] Initialized with RPC: https://api.devnet.solana.com
+[SolanaService] Commitment: confirmed
+[CancellationService] Initialized with config: {
+  requiredSignatures: 2,
+  authorizedSigners: [],
+  proposalExpiryHours: 24
+}
+[StatusUpdateService] Registered status update listener (total: 1)
+[ExpiryCancellationOrchestrator] Initialized with config: {
+  expiryCheckIntervalMs: 60000,
+  autoProcessRefunds: true,
+  refundProcessingBatchSize: 10,
+  enableMonitoring: true,
+  multisigConfig: {}
+}
+Error creating agreement: Error: Database connection failed
+    at C:\websites\VENTURE\easy-escrow-ai-backend\tests\integration\agreement-api.test.ts:102:35
+    at Generator.next (<anonymous>)
+    at C:\websites\VENTURE\easy-escrow-ai-backend\tests\integration\agreement-api.test.ts:41:71
+    at new Promise (<anonymous>)
+    at __awaiter (C:\websites\VENTURE\easy-escrow-ai-backend\tests\integration\agreement-api.test.ts:37:12)
+    at Context.<anonymous> (C:\websites\VENTURE\easy-escrow-ai-backend\tests\integration\agreement-api.test.ts:101:61)
+    at callFn (C:\websites\VENTURE\easy-escrow-ai-backend\node_modules\mocha\lib\runnable.js:366:21)
+    at Test.Runnable.run (C:\websites\VENTURE\easy-escrow-ai-backend\node_modules\mocha\lib\runnable.js:354:5)
+    at Runner.runTest (C:\websites\VENTURE\easy-escrow-ai-backend\node_modules\mocha\lib\runner.js:678:10)
+    at C:\websites\VENTURE\easy-escrow-ai-backend\node_modules\mocha\lib\runner.js:801:12
+    at next (C:\websites\VENTURE\easy-escrow-ai-backend\node_modules\mocha\lib\runner.js:593:14)
+    at C:\websites\VENTURE\easy-escrow-ai-backend\node_modules\mocha\lib\runner.js:603:7
+    at next (C:\websites\VENTURE\easy-escrow-ai-backend\node_modules\mocha\lib\runner.js:486:14)
+    at Immediate.<anonymous> (C:\websites\VENTURE\easy-escrow-ai-backend\node_modules\mocha\lib\runner.js:571:5)
+    at processImmediate (node:internal/timers:483:21)
+Error getting agreement: Error: Database error
+    at C:\websites\VENTURE\easy-escrow-ai-backend\tests\integration\agreement-api.test.ts:163:42
+    at Generator.next (<anonymous>)
+    at C:\websites\VENTURE\easy-escrow-ai-backend\tests\integration\agreement-api.test.ts:41:71
+    at new Promise (<anonymous>)
+    at __awaiter (C:\websites\VENTURE\easy-escrow-ai-backend\tests\integration\agreement-api.test.ts:37:12)
+    at Context.<anonymous> (C:\websites\VENTURE\easy-escrow-ai-backend\tests\integration\agreement-api.test.ts:162:50)
+    at callFn (C:\websites\VENTURE\easy-escrow-ai-backend\node_modules\mocha\lib\runnable.js:366:21)
+    at Test.Runnable.run (C:\websites\VENTURE\easy-escrow-ai-backend\node_modules\mocha\lib\runnable.js:354:5)
+    at Runner.runTest (C:\websites\VENTURE\easy-escrow-ai-backend\node_modules\mocha\lib\runner.js:678:10)
+    at C:\websites\VENTURE\easy-escrow-ai-backend\node_modules\mocha\lib\runner.js:801:12
+    at next (C:\websites\VENTURE\easy-escrow-ai-backend\node_modules\mocha\lib\runner.js:593:14)
+    at C:\websites\VENTURE\easy-escrow-ai-backend\node_modules\mocha\lib\runner.js:603:7
+    at next (C:\websites\VENTURE\easy-escrow-ai-backend\node_modules\mocha\lib\runner.js:486:14)
+    at Immediate.<anonymous> (C:\websites\VENTURE\easy-escrow-ai-backend\node_modules\mocha\lib\runner.js:571:5)
+    at processImmediate (node:internal/timers:483:21)
+Error cancelling agreement: Error: Agreement has not expired yet
+    at C:\websites\VENTURE\easy-escrow-ai-backend\tests\integration\agreement-api.test.ts:254:35
+    at Generator.next (<anonymous>)
+    at C:\websites\VENTURE\easy-escrow-ai-backend\tests\integration\agreement-api.test.ts:41:71
+    at new Promise (<anonymous>)
+    at __awaiter (C:\websites\VENTURE\easy-escrow-ai-backend\tests\integration\agreement-api.test.ts:37:12)
+    at Context.<anonymous> (C:\websites\VENTURE\easy-escrow-ai-backend\tests\integration\agreement-api.test.ts:253:69)
+    at callFn (C:\websites\VENTURE\easy-escrow-ai-backend\node_modules\mocha\lib\runnable.js:366:21)
+    at Test.Runnable.run (C:\websites\VENTURE\easy-escrow-ai-backend\node_modules\mocha\lib\runnable.js:354:5)
+    at Runner.runTest (C:\websites\VENTURE\easy-escrow-ai-backend\node_modules\mocha\lib\runner.js:678:10)
+    at C:\websites\VENTURE\easy-escrow-ai-backend\node_modules\mocha\lib\runner.js:801:12
+    at next (C:\websites\VENTURE\easy-escrow-ai-backend\node_modules\mocha\lib\runner.js:593:14)
+    at C:\websites\VENTURE\easy-escrow-ai-backend\node_modules\mocha\lib\runner.js:603:7
+    at next (C:\websites\VENTURE\easy-escrow-ai-backend\node_modules\mocha\lib\runner.js:486:14)
+    at Immediate.<anonymous> (C:\websites\VENTURE\easy-escrow-ai-backend\node_modules\mocha\lib\runner.js:571:5)
+    at processImmediate (node:internal/timers:483:21)
+Error cancelling agreement: Error: Cannot cancel a settled agreement
+    at C:\websites\VENTURE\easy-escrow-ai-backend\tests\integration\agreement-api.test.ts:265:35
+    at Generator.next (<anonymous>)
+    at C:\websites\VENTURE\easy-escrow-ai-backend\tests\integration\agreement-api.test.ts:41:71
+    at new Promise (<anonymous>)
+    at __awaiter (C:\websites\VENTURE\easy-escrow-ai-backend\tests\integration\agreement-api.test.ts:37:12)
+    at Context.<anonymous> (C:\websites\VENTURE\easy-escrow-ai-backend\tests\integration\agreement-api.test.ts:264:73)
+    at callFn (C:\websites\VENTURE\easy-escrow-ai-backend\node_modules\mocha\lib\runnable.js:366:21)
+    at Test.Runnable.run (C:\websites\VENTURE\easy-escrow-ai-backend\node_modules\mocha\lib\runnable.js:354:5)
+    at Runner.runTest (C:\websites\VENTURE\easy-escrow-ai-backend\node_modules\mocha\lib\runner.js:678:10)
+    at C:\websites\VENTURE\easy-escrow-ai-backend\node_modules\mocha\lib\runner.js:801:12
+    at next (C:\websites\VENTURE\easy-escrow-ai-backend\node_modules\mocha\lib\runner.js:593:14)
+    at C:\websites\VENTURE\easy-escrow-ai-backend\node_modules\mocha\lib\runner.js:603:7
+    at next (C:\websites\VENTURE\easy-escrow-ai-backend\node_modules\mocha\lib\runner.js:486:14)
+    at Immediate.<anonymous> (C:\websites\VENTURE\easy-escrow-ai-backend\node_modules\mocha\lib\runner.js:571:5)
+    at processImmediate (node:internal/timers:483:21)
+Error cancelling agreement: Error: Agreement not found
+    at C:\websites\VENTURE\easy-escrow-ai-backend\tests\integration\agreement-api.test.ts:275:35
+    at Generator.next (<anonymous>)
+    at C:\websites\VENTURE\easy-escrow-ai-backend\tests\integration\agreement-api.test.ts:41:71
+    at new Promise (<anonymous>)
+    at __awaiter (C:\websites\VENTURE\easy-escrow-ai-backend\tests\integration\agreement-api.test.ts:37:12)
+    at Context.<anonymous> (C:\websites\VENTURE\easy-escrow-ai-backend\tests\integration\agreement-api.test.ts:274:67)
+    at callFn (C:\websites\VENTURE\easy-escrow-ai-backend\node_modules\mocha\lib\runnable.js:366:21)
+    at Test.Runnable.run (C:\websites\VENTURE\easy-escrow-ai-backend\node_modules\mocha\lib\runnable.js:354:5)
+    at Runner.runTest (C:\websites\VENTURE\easy-escrow-ai-backend\node_modules\mocha\lib\runner.js:678:10)
+    at C:\websites\VENTURE\easy-escrow-ai-backend\node_modules\mocha\lib\runner.js:801:12
+    at next (C:\websites\VENTURE\easy-escrow-ai-backend\node_modules\mocha\lib\runner.js:593:14)
+    at C:\websites\VENTURE\easy-escrow-ai-backend\node_modules\mocha\lib\runner.js:603:7
+    at next (C:\websites\VENTURE\easy-escrow-ai-backend\node_modules\mocha\lib\runner.js:486:14)
+    at Immediate.<anonymous> (C:\websites\VENTURE\easy-escrow-ai-backend\node_modules\mocha\lib\runner.js:571:5)
+    at processImmediate (node:internal/timers:483:21)
+{
+  "stats": {
+    "suites": 37,
+    "tests": 80,
+    "passes": 80,
+    "pending": 0,
+    "failures": 0,
+    "start": "2025-10-13T23:28:24.250Z",
+    "end": "2025-10-13T23:28:24.344Z",
+    "duration": 94
+  },
+  "tests": [
+    {
+      "title": "should create a new agreement successfully",
+      "fullTitle": "Agreement Service - Unit Tests createAgreement should create a new agreement successfully",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\agreement.service.test.ts",
+      "duration": 1,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should throw error if Solana initialization fails",
+      "fullTitle": "Agreement Service - Unit Tests createAgreement should throw error if Solana initialization fails",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\agreement.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should return true for expired agreement",
+      "fullTitle": "Agreement Service - Unit Tests isAgreementExpired should return true for expired agreement",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\agreement.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should return false for non-expired agreement",
+      "fullTitle": "Agreement Service - Unit Tests isAgreementExpired should return false for non-expired agreement",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\agreement.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should validate pending status transitions",
+      "fullTitle": "Agreement Service - Unit Tests Agreement Status Validation should validate pending status transitions",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\agreement.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should generate unique agreement IDs",
+      "fullTitle": "Agreement Service - Unit Tests Agreement ID Generation should generate unique agreement IDs",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\agreement.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should handle decimal prices correctly",
+      "fullTitle": "Agreement Service - Unit Tests Price Validation should handle decimal prices correctly",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\agreement.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should handle large price values",
+      "fullTitle": "Agreement Service - Unit Tests Price Validation should handle large price values",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\agreement.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should reject negative prices",
+      "fullTitle": "Agreement Service - Unit Tests Price Validation should reject negative prices",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\agreement.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should calculate platform fees correctly",
+      "fullTitle": "Agreement Service - Unit Tests Fee Calculation should calculate platform fees correctly",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\agreement.service.test.ts",
+      "duration": 1,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should calculate fees for large amounts",
+      "fullTitle": "Agreement Service - Unit Tests Fee Calculation should calculate fees for large amounts",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\agreement.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should handle zero fee",
+      "fullTitle": "Agreement Service - Unit Tests Fee Calculation should handle zero fee",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\agreement.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should have all required deposit statuses",
+      "fullTitle": "Deposit Service - Unit Tests Deposit Status Validation should have all required deposit statuses",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\deposit.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should support USDC and NFT deposit types",
+      "fullTitle": "Deposit Service - Unit Tests Deposit Type Validation should support USDC and NFT deposit types",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\deposit.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should validate positive amounts",
+      "fullTitle": "Deposit Service - Unit Tests USDC Deposit Amount Validation should validate positive amounts",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\deposit.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should reject zero amounts",
+      "fullTitle": "Deposit Service - Unit Tests USDC Deposit Amount Validation should reject zero amounts",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\deposit.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should reject negative amounts",
+      "fullTitle": "Deposit Service - Unit Tests USDC Deposit Amount Validation should reject negative amounts",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\deposit.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should handle decimal precision correctly",
+      "fullTitle": "Deposit Service - Unit Tests USDC Deposit Amount Validation should handle decimal precision correctly",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\deposit.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should match deposit amount to agreement price",
+      "fullTitle": "Deposit Service - Unit Tests Deposit Matching should match deposit amount to agreement price",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\deposit.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should detect under-deposit",
+      "fullTitle": "Deposit Service - Unit Tests Deposit Matching should detect under-deposit",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\deposit.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should detect over-deposit",
+      "fullTitle": "Deposit Service - Unit Tests Deposit Matching should detect over-deposit",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\deposit.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should validate NFT deposits have no amount",
+      "fullTitle": "Deposit Service - Unit Tests NFT Deposit Validation should validate NFT deposits have no amount",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\deposit.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should validate NFT deposits have transaction ID",
+      "fullTitle": "Deposit Service - Unit Tests NFT Deposit Validation should validate NFT deposits have transaction ID",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\deposit.service.test.ts",
+      "duration": 1,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should track detection time",
+      "fullTitle": "Deposit Service - Unit Tests Deposit Timing should track detection time",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\deposit.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should track confirmation time for confirmed deposits",
+      "fullTitle": "Deposit Service - Unit Tests Deposit Timing should track confirmation time for confirmed deposits",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\deposit.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should have null confirmation time for pending deposits",
+      "fullTitle": "Deposit Service - Unit Tests Deposit Timing should have null confirmation time for pending deposits",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\deposit.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should validate transaction ID format",
+      "fullTitle": "Deposit Service - Unit Tests Deposit Transaction Validation should validate transaction ID format",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\deposit.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should have unique transaction IDs",
+      "fullTitle": "Deposit Service - Unit Tests Deposit Transaction Validation should have unique transaction IDs",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\deposit.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should convert USDC amounts to blockchain units",
+      "fullTitle": "Deposit Service - Unit Tests Amount Conversion should convert USDC amounts to blockchain units",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\deposit.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should handle fractional USDC amounts",
+      "fullTitle": "Deposit Service - Unit Tests Amount Conversion should handle fractional USDC amounts",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\deposit.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should handle large USDC amounts",
+      "fullTitle": "Deposit Service - Unit Tests Amount Conversion should handle large USDC amounts",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\deposit.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should generate valid public keys",
+      "fullTitle": "Solana Service - Unit Tests Public Key Generation should generate valid public keys",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\solana.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should generate unique public keys",
+      "fullTitle": "Solana Service - Unit Tests Public Key Generation should generate unique public keys",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\solana.service.test.ts",
+      "duration": 1,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should generate valid keypairs",
+      "fullTitle": "Solana Service - Unit Tests Keypair Generation should generate valid keypairs",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\solana.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should generate unique keypairs",
+      "fullTitle": "Solana Service - Unit Tests Keypair Generation should generate unique keypairs",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\solana.service.test.ts",
+      "duration": 1,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should derive consistent PDAs for same input",
+      "fullTitle": "Solana Service - Unit Tests PDA Derivation should derive consistent PDAs for same input",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\solana.service.test.ts",
+      "duration": 2,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should derive different PDAs for different escrow IDs",
+      "fullTitle": "Solana Service - Unit Tests PDA Derivation should derive different PDAs for different escrow IDs",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\solana.service.test.ts",
+      "duration": 2,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should produce valid bump seeds",
+      "fullTitle": "Solana Service - Unit Tests PDA Derivation should produce valid bump seeds",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\solana.service.test.ts",
+      "duration": 1,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should convert USDC to lamports correctly",
+      "fullTitle": "Solana Service - Unit Tests USDC Amount Conversion should convert USDC to lamports correctly",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\solana.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should convert lamports to USDC correctly",
+      "fullTitle": "Solana Service - Unit Tests USDC Amount Conversion should convert lamports to USDC correctly",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\solana.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should handle round-trip conversion",
+      "fullTitle": "Solana Service - Unit Tests USDC Amount Conversion should handle round-trip conversion",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\solana.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should create BN from number",
+      "fullTitle": "Solana Service - Unit Tests Anchor BN Handling should create BN from number",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\solana.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should create BN from string",
+      "fullTitle": "Solana Service - Unit Tests Anchor BN Handling should create BN from string",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\solana.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should perform BN arithmetic",
+      "fullTitle": "Solana Service - Unit Tests Anchor BN Handling should perform BN arithmetic",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\solana.service.test.ts",
+      "duration": 1,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should compare BN values",
+      "fullTitle": "Solana Service - Unit Tests Anchor BN Handling should compare BN values",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\solana.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should validate transaction signature format",
+      "fullTitle": "Solana Service - Unit Tests Transaction Signature Validation should validate transaction signature format",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\solana.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should derive associated token account address",
+      "fullTitle": "Solana Service - Unit Tests Token Account Address Derivation should derive associated token account address",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\solana.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should allow PENDING -> USDC_LOCKED transition",
+      "fullTitle": "Status Update Service - Unit Tests Status Transition Validation should allow PENDING -> USDC_LOCKED transition",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\status-update.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should allow PENDING -> NFT_LOCKED transition",
+      "fullTitle": "Status Update Service - Unit Tests Status Transition Validation should allow PENDING -> NFT_LOCKED transition",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\status-update.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should allow USDC_LOCKED -> BOTH_LOCKED transition",
+      "fullTitle": "Status Update Service - Unit Tests Status Transition Validation should allow USDC_LOCKED -> BOTH_LOCKED transition",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\status-update.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should allow NFT_LOCKED -> BOTH_LOCKED transition",
+      "fullTitle": "Status Update Service - Unit Tests Status Transition Validation should allow NFT_LOCKED -> BOTH_LOCKED transition",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\status-update.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should allow BOTH_LOCKED -> SETTLED transition",
+      "fullTitle": "Status Update Service - Unit Tests Status Transition Validation should allow BOTH_LOCKED -> SETTLED transition",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\status-update.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should not allow SETTLED -> any transition",
+      "fullTitle": "Status Update Service - Unit Tests Status Transition Validation should not allow SETTLED -> any transition",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\status-update.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should not allow CANCELLED -> any transition",
+      "fullTitle": "Status Update Service - Unit Tests Status Transition Validation should not allow CANCELLED -> any transition",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\status-update.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should allow EXPIRED -> REFUNDED transition",
+      "fullTitle": "Status Update Service - Unit Tests Status Transition Validation should allow EXPIRED -> REFUNDED transition",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\status-update.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should identify terminal statuses",
+      "fullTitle": "Status Update Service - Unit Tests Status Finality should identify terminal statuses",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\status-update.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should identify active statuses",
+      "fullTitle": "Status Update Service - Unit Tests Status Finality should identify active statuses",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\status-update.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should validate status progression order",
+      "fullTitle": "Status Update Service - Unit Tests Status Order Validation should validate status progression order",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\status-update.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should not allow backward transitions",
+      "fullTitle": "Status Update Service - Unit Tests Monotonic Status Transitions should not allow backward transitions",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\status-update.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should not allow SETTLED -> PENDING",
+      "fullTitle": "Status Update Service - Unit Tests Monotonic Status Transitions should not allow SETTLED -> PENDING",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\status-update.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should not allow BOTH_LOCKED -> USDC_LOCKED",
+      "fullTitle": "Status Update Service - Unit Tests Monotonic Status Transitions should not allow BOTH_LOCKED -> USDC_LOCKED",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\status-update.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should return API information",
+      "fullTitle": "Agreement API - Integration Tests GET / should return API information",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\integration\\agreement-api.test.ts",
+      "duration": 12,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should return health status",
+      "fullTitle": "Agreement API - Integration Tests GET /health should return health status",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\integration\\agreement-api.test.ts",
+      "duration": 3,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should create a new agreement with valid data",
+      "fullTitle": "Agreement API - Integration Tests POST /v1/agreements should create a new agreement with valid data",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\integration\\agreement-api.test.ts",
+      "duration": 13,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should reject agreement with negative price",
+      "fullTitle": "Agreement API - Integration Tests POST /v1/agreements should reject agreement with negative price",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\integration\\agreement-api.test.ts",
+      "duration": 3,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should reject agreement with expired date",
+      "fullTitle": "Agreement API - Integration Tests POST /v1/agreements should reject agreement with expired date",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\integration\\agreement-api.test.ts",
+      "duration": 2,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should handle server errors gracefully",
+      "fullTitle": "Agreement API - Integration Tests POST /v1/agreements should handle server errors gracefully",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\integration\\agreement-api.test.ts",
+      "duration": 3,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should validate required fields",
+      "fullTitle": "Agreement API - Integration Tests POST /v1/agreements should validate required fields",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\integration\\agreement-api.test.ts",
+      "duration": 2,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should return agreement details by ID",
+      "fullTitle": "Agreement API - Integration Tests GET /v1/agreements/:agreementId should return agreement details by ID",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\integration\\agreement-api.test.ts",
+      "duration": 2,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should return 404 for non-existent agreement",
+      "fullTitle": "Agreement API - Integration Tests GET /v1/agreements/:agreementId should return 404 for non-existent agreement",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\integration\\agreement-api.test.ts",
+      "duration": 3,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should handle server errors",
+      "fullTitle": "Agreement API - Integration Tests GET /v1/agreements/:agreementId should handle server errors",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\integration\\agreement-api.test.ts",
+      "duration": 3,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should list all agreements",
+      "fullTitle": "Agreement API - Integration Tests GET /v1/agreements should list all agreements",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\integration\\agreement-api.test.ts",
+      "duration": 3,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should filter agreements by status",
+      "fullTitle": "Agreement API - Integration Tests GET /v1/agreements should filter agreements by status",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\integration\\agreement-api.test.ts",
+      "duration": 3,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should support pagination",
+      "fullTitle": "Agreement API - Integration Tests GET /v1/agreements should support pagination",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\integration\\agreement-api.test.ts",
+      "duration": 2,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should cancel an expired agreement",
+      "fullTitle": "Agreement API - Integration Tests POST /v1/agreements/:agreementId/cancel should cancel an expired agreement",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\integration\\agreement-api.test.ts",
+      "duration": 2,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should reject cancelling non-expired agreement",
+      "fullTitle": "Agreement API - Integration Tests POST /v1/agreements/:agreementId/cancel should reject cancelling non-expired agreement",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\integration\\agreement-api.test.ts",
+      "duration": 2,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should reject cancelling already settled agreement",
+      "fullTitle": "Agreement API - Integration Tests POST /v1/agreements/:agreementId/cancel should reject cancelling already settled agreement",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\integration\\agreement-api.test.ts",
+      "duration": 1,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should return 404 for non-existent agreement",
+      "fullTitle": "Agreement API - Integration Tests POST /v1/agreements/:agreementId/cancel should return 404 for non-existent agreement",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\integration\\agreement-api.test.ts",
+      "duration": 2,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should return 404 for unknown routes",
+      "fullTitle": "Agreement API - Integration Tests 404 Handler should return 404 for unknown routes",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\integration\\agreement-api.test.ts",
+      "duration": 2,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should return 404 for unsupported HTTP methods",
+      "fullTitle": "Agreement API - Integration Tests 404 Handler should return 404 for unsupported HTTP methods",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\integration\\agreement-api.test.ts",
+      "duration": 2,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    }
+  ],
+  "pending": [],
+  "failures": [],
+  "passes": [
+    {
+      "title": "should create a new agreement successfully",
+      "fullTitle": "Agreement Service - Unit Tests createAgreement should create a new agreement successfully",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\agreement.service.test.ts",
+      "duration": 1,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should throw error if Solana initialization fails",
+      "fullTitle": "Agreement Service - Unit Tests createAgreement should throw error if Solana initialization fails",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\agreement.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should return true for expired agreement",
+      "fullTitle": "Agreement Service - Unit Tests isAgreementExpired should return true for expired agreement",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\agreement.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should return false for non-expired agreement",
+      "fullTitle": "Agreement Service - Unit Tests isAgreementExpired should return false for non-expired agreement",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\agreement.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should validate pending status transitions",
+      "fullTitle": "Agreement Service - Unit Tests Agreement Status Validation should validate pending status transitions",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\agreement.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should generate unique agreement IDs",
+      "fullTitle": "Agreement Service - Unit Tests Agreement ID Generation should generate unique agreement IDs",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\agreement.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should handle decimal prices correctly",
+      "fullTitle": "Agreement Service - Unit Tests Price Validation should handle decimal prices correctly",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\agreement.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should handle large price values",
+      "fullTitle": "Agreement Service - Unit Tests Price Validation should handle large price values",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\agreement.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should reject negative prices",
+      "fullTitle": "Agreement Service - Unit Tests Price Validation should reject negative prices",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\agreement.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should calculate platform fees correctly",
+      "fullTitle": "Agreement Service - Unit Tests Fee Calculation should calculate platform fees correctly",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\agreement.service.test.ts",
+      "duration": 1,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should calculate fees for large amounts",
+      "fullTitle": "Agreement Service - Unit Tests Fee Calculation should calculate fees for large amounts",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\agreement.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should handle zero fee",
+      "fullTitle": "Agreement Service - Unit Tests Fee Calculation should handle zero fee",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\agreement.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should have all required deposit statuses",
+      "fullTitle": "Deposit Service - Unit Tests Deposit Status Validation should have all required deposit statuses",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\deposit.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should support USDC and NFT deposit types",
+      "fullTitle": "Deposit Service - Unit Tests Deposit Type Validation should support USDC and NFT deposit types",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\deposit.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should validate positive amounts",
+      "fullTitle": "Deposit Service - Unit Tests USDC Deposit Amount Validation should validate positive amounts",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\deposit.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should reject zero amounts",
+      "fullTitle": "Deposit Service - Unit Tests USDC Deposit Amount Validation should reject zero amounts",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\deposit.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should reject negative amounts",
+      "fullTitle": "Deposit Service - Unit Tests USDC Deposit Amount Validation should reject negative amounts",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\deposit.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should handle decimal precision correctly",
+      "fullTitle": "Deposit Service - Unit Tests USDC Deposit Amount Validation should handle decimal precision correctly",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\deposit.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should match deposit amount to agreement price",
+      "fullTitle": "Deposit Service - Unit Tests Deposit Matching should match deposit amount to agreement price",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\deposit.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should detect under-deposit",
+      "fullTitle": "Deposit Service - Unit Tests Deposit Matching should detect under-deposit",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\deposit.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should detect over-deposit",
+      "fullTitle": "Deposit Service - Unit Tests Deposit Matching should detect over-deposit",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\deposit.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should validate NFT deposits have no amount",
+      "fullTitle": "Deposit Service - Unit Tests NFT Deposit Validation should validate NFT deposits have no amount",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\deposit.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should validate NFT deposits have transaction ID",
+      "fullTitle": "Deposit Service - Unit Tests NFT Deposit Validation should validate NFT deposits have transaction ID",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\deposit.service.test.ts",
+      "duration": 1,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should track detection time",
+      "fullTitle": "Deposit Service - Unit Tests Deposit Timing should track detection time",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\deposit.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should track confirmation time for confirmed deposits",
+      "fullTitle": "Deposit Service - Unit Tests Deposit Timing should track confirmation time for confirmed deposits",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\deposit.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should have null confirmation time for pending deposits",
+      "fullTitle": "Deposit Service - Unit Tests Deposit Timing should have null confirmation time for pending deposits",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\deposit.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should validate transaction ID format",
+      "fullTitle": "Deposit Service - Unit Tests Deposit Transaction Validation should validate transaction ID format",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\deposit.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should have unique transaction IDs",
+      "fullTitle": "Deposit Service - Unit Tests Deposit Transaction Validation should have unique transaction IDs",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\deposit.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should convert USDC amounts to blockchain units",
+      "fullTitle": "Deposit Service - Unit Tests Amount Conversion should convert USDC amounts to blockchain units",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\deposit.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should handle fractional USDC amounts",
+      "fullTitle": "Deposit Service - Unit Tests Amount Conversion should handle fractional USDC amounts",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\deposit.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should handle large USDC amounts",
+      "fullTitle": "Deposit Service - Unit Tests Amount Conversion should handle large USDC amounts",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\deposit.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should generate valid public keys",
+      "fullTitle": "Solana Service - Unit Tests Public Key Generation should generate valid public keys",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\solana.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should generate unique public keys",
+      "fullTitle": "Solana Service - Unit Tests Public Key Generation should generate unique public keys",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\solana.service.test.ts",
+      "duration": 1,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should generate valid keypairs",
+      "fullTitle": "Solana Service - Unit Tests Keypair Generation should generate valid keypairs",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\solana.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should generate unique keypairs",
+      "fullTitle": "Solana Service - Unit Tests Keypair Generation should generate unique keypairs",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\solana.service.test.ts",
+      "duration": 1,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should derive consistent PDAs for same input",
+      "fullTitle": "Solana Service - Unit Tests PDA Derivation should derive consistent PDAs for same input",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\solana.service.test.ts",
+      "duration": 2,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should derive different PDAs for different escrow IDs",
+      "fullTitle": "Solana Service - Unit Tests PDA Derivation should derive different PDAs for different escrow IDs",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\solana.service.test.ts",
+      "duration": 2,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should produce valid bump seeds",
+      "fullTitle": "Solana Service - Unit Tests PDA Derivation should produce valid bump seeds",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\solana.service.test.ts",
+      "duration": 1,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should convert USDC to lamports correctly",
+      "fullTitle": "Solana Service - Unit Tests USDC Amount Conversion should convert USDC to lamports correctly",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\solana.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should convert lamports to USDC correctly",
+      "fullTitle": "Solana Service - Unit Tests USDC Amount Conversion should convert lamports to USDC correctly",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\solana.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should handle round-trip conversion",
+      "fullTitle": "Solana Service - Unit Tests USDC Amount Conversion should handle round-trip conversion",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\solana.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should create BN from number",
+      "fullTitle": "Solana Service - Unit Tests Anchor BN Handling should create BN from number",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\solana.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should create BN from string",
+      "fullTitle": "Solana Service - Unit Tests Anchor BN Handling should create BN from string",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\solana.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should perform BN arithmetic",
+      "fullTitle": "Solana Service - Unit Tests Anchor BN Handling should perform BN arithmetic",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\solana.service.test.ts",
+      "duration": 1,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should compare BN values",
+      "fullTitle": "Solana Service - Unit Tests Anchor BN Handling should compare BN values",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\solana.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should validate transaction signature format",
+      "fullTitle": "Solana Service - Unit Tests Transaction Signature Validation should validate transaction signature format",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\solana.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should derive associated token account address",
+      "fullTitle": "Solana Service - Unit Tests Token Account Address Derivation should derive associated token account address",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\solana.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should allow PENDING -> USDC_LOCKED transition",
+      "fullTitle": "Status Update Service - Unit Tests Status Transition Validation should allow PENDING -> USDC_LOCKED transition",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\status-update.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should allow PENDING -> NFT_LOCKED transition",
+      "fullTitle": "Status Update Service - Unit Tests Status Transition Validation should allow PENDING -> NFT_LOCKED transition",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\status-update.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should allow USDC_LOCKED -> BOTH_LOCKED transition",
+      "fullTitle": "Status Update Service - Unit Tests Status Transition Validation should allow USDC_LOCKED -> BOTH_LOCKED transition",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\status-update.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should allow NFT_LOCKED -> BOTH_LOCKED transition",
+      "fullTitle": "Status Update Service - Unit Tests Status Transition Validation should allow NFT_LOCKED -> BOTH_LOCKED transition",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\status-update.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should allow BOTH_LOCKED -> SETTLED transition",
+      "fullTitle": "Status Update Service - Unit Tests Status Transition Validation should allow BOTH_LOCKED -> SETTLED transition",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\status-update.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should not allow SETTLED -> any transition",
+      "fullTitle": "Status Update Service - Unit Tests Status Transition Validation should not allow SETTLED -> any transition",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\status-update.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should not allow CANCELLED -> any transition",
+      "fullTitle": "Status Update Service - Unit Tests Status Transition Validation should not allow CANCELLED -> any transition",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\status-update.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should allow EXPIRED -> REFUNDED transition",
+      "fullTitle": "Status Update Service - Unit Tests Status Transition Validation should allow EXPIRED -> REFUNDED transition",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\status-update.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should identify terminal statuses",
+      "fullTitle": "Status Update Service - Unit Tests Status Finality should identify terminal statuses",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\status-update.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should identify active statuses",
+      "fullTitle": "Status Update Service - Unit Tests Status Finality should identify active statuses",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\status-update.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should validate status progression order",
+      "fullTitle": "Status Update Service - Unit Tests Status Order Validation should validate status progression order",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\status-update.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should not allow backward transitions",
+      "fullTitle": "Status Update Service - Unit Tests Monotonic Status Transitions should not allow backward transitions",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\status-update.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should not allow SETTLED -> PENDING",
+      "fullTitle": "Status Update Service - Unit Tests Monotonic Status Transitions should not allow SETTLED -> PENDING",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\status-update.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should not allow BOTH_LOCKED -> USDC_LOCKED",
+      "fullTitle": "Status Update Service - Unit Tests Monotonic Status Transitions should not allow BOTH_LOCKED -> USDC_LOCKED",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\unit\\status-update.service.test.ts",
+      "duration": 0,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should return API information",
+      "fullTitle": "Agreement API - Integration Tests GET / should return API information",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\integration\\agreement-api.test.ts",
+      "duration": 12,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should return health status",
+      "fullTitle": "Agreement API - Integration Tests GET /health should return health status",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\integration\\agreement-api.test.ts",
+      "duration": 3,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should create a new agreement with valid data",
+      "fullTitle": "Agreement API - Integration Tests POST /v1/agreements should create a new agreement with valid data",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\integration\\agreement-api.test.ts",
+      "duration": 13,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should reject agreement with negative price",
+      "fullTitle": "Agreement API - Integration Tests POST /v1/agreements should reject agreement with negative price",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\integration\\agreement-api.test.ts",
+      "duration": 3,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should reject agreement with expired date",
+      "fullTitle": "Agreement API - Integration Tests POST /v1/agreements should reject agreement with expired date",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\integration\\agreement-api.test.ts",
+      "duration": 2,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should handle server errors gracefully",
+      "fullTitle": "Agreement API - Integration Tests POST /v1/agreements should handle server errors gracefully",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\integration\\agreement-api.test.ts",
+      "duration": 3,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should validate required fields",
+      "fullTitle": "Agreement API - Integration Tests POST /v1/agreements should validate required fields",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\integration\\agreement-api.test.ts",
+      "duration": 2,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should return agreement details by ID",
+      "fullTitle": "Agreement API - Integration Tests GET /v1/agreements/:agreementId should return agreement details by ID",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\integration\\agreement-api.test.ts",
+      "duration": 2,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should return 404 for non-existent agreement",
+      "fullTitle": "Agreement API - Integration Tests GET /v1/agreements/:agreementId should return 404 for non-existent agreement",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\integration\\agreement-api.test.ts",
+      "duration": 3,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should handle server errors",
+      "fullTitle": "Agreement API - Integration Tests GET /v1/agreements/:agreementId should handle server errors",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\integration\\agreement-api.test.ts",
+      "duration": 3,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should list all agreements",
+      "fullTitle": "Agreement API - Integration Tests GET /v1/agreements should list all agreements",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\integration\\agreement-api.test.ts",
+      "duration": 3,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should filter agreements by status",
+      "fullTitle": "Agreement API - Integration Tests GET /v1/agreements should filter agreements by status",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\integration\\agreement-api.test.ts",
+      "duration": 3,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should support pagination",
+      "fullTitle": "Agreement API - Integration Tests GET /v1/agreements should support pagination",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\integration\\agreement-api.test.ts",
+      "duration": 2,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should cancel an expired agreement",
+      "fullTitle": "Agreement API - Integration Tests POST /v1/agreements/:agreementId/cancel should cancel an expired agreement",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\integration\\agreement-api.test.ts",
+      "duration": 2,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should reject cancelling non-expired agreement",
+      "fullTitle": "Agreement API - Integration Tests POST /v1/agreements/:agreementId/cancel should reject cancelling non-expired agreement",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\integration\\agreement-api.test.ts",
+      "duration": 2,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should reject cancelling already settled agreement",
+      "fullTitle": "Agreement API - Integration Tests POST /v1/agreements/:agreementId/cancel should reject cancelling already settled agreement",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\integration\\agreement-api.test.ts",
+      "duration": 1,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should return 404 for non-existent agreement",
+      "fullTitle": "Agreement API - Integration Tests POST /v1/agreements/:agreementId/cancel should return 404 for non-existent agreement",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\integration\\agreement-api.test.ts",
+      "duration": 2,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should return 404 for unknown routes",
+      "fullTitle": "Agreement API - Integration Tests 404 Handler should return 404 for unknown routes",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\integration\\agreement-api.test.ts",
+      "duration": 2,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should return 404 for unsupported HTTP methods",
+      "fullTitle": "Agreement API - Integration Tests 404 Handler should return 404 for unsupported HTTP methods",
+      "file": "C:\\websites\\VENTURE\\easy-escrow-ai-backend\\tests\\integration\\agreement-api.test.ts",
+      "duration": 2,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    }
+  ]
+}
