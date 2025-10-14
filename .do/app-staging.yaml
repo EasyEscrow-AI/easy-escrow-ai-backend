@@ -1,0 +1,162 @@
+# ============================================
+# DigitalOcean App Platform Configuration
+# EasyEscrow.ai Backend API - STAGING
+# ============================================
+#
+# STAGING CONFIGURATION
+# Uses managed PostgreSQL cluster (db-s-1vcpu-1gb)
+# Tests production-like environment before deploying to prod
+#
+# Create with: doctl apps create --spec .do/app-staging.yaml
+# ============================================
+
+name: easyescrow-backend-staging
+region: sgp1
+
+# ============================================
+# Services
+# ============================================
+
+services:
+  - name: api-staging
+    # GitHub repository configuration
+    github:
+      repo: VENTURE-AI-LABS/easy-escrow-ai-backend
+      branch: staging
+      deploy_on_push: true
+    
+    # Build configuration
+    build_command: npm run build
+    
+    # Runtime configuration
+    run_command: npm start
+    
+    # Use Dockerfile for consistency
+    dockerfile_path: Dockerfile
+    
+    # Instance configuration
+    instance_count: 1
+    instance_size_slug: basic-xxs  # $5/month - 512MB RAM, 1 vCPU
+    
+    # HTTP configuration
+    http_port: 3000
+    
+    # Health check
+    health_check:
+      http_path: /health
+      initial_delay_seconds: 50
+      period_seconds: 30
+      timeout_seconds: 10
+      success_threshold: 1
+      failure_threshold: 3
+    
+    # Environment variables
+    envs:
+      - key: NODE_ENV
+        value: staging
+      - key: PORT
+        value: "3000"
+      - key: SOLANA_NETWORK
+        value: devnet  # or mainnet-beta
+      - key: SOLANA_COMMITMENT
+        value: finalized
+      - key: MONITORING_ENABLED
+        value: "true"
+      - key: WEBHOOK_ENABLED
+        value: "true"
+      - key: CORS_ENABLED
+        value: "true"
+      - key: HELMET_ENABLED
+        value: "true"
+      - key: LOG_LEVEL
+        value: info
+      - key: PLATFORM_FEE_BPS
+        value: "250"
+      
+      # Set these via console (secrets)
+      # - DATABASE_URL (from easyescrow-staging-postgres)
+      # - REDIS_URL (Upstash)
+      # - JWT_SECRET
+      # - SOLANA_RPC_URL
+      # - ESCROW_PROGRAM_ID
+      # - USDC_MINT_ADDRESS
+      # - SPACES_ACCESS_KEY
+      # - SPACES_SECRET_KEY
+      # - SPACES_BUCKET (easyescrow-storage)
+      # - SPACES_ENDPOINT (https://sgp1.digitaloceanspaces.com)
+
+# ============================================
+# Databases
+# ============================================
+
+# PostgreSQL cluster created separately
+# Database ID: c172d515-f258-412a-b8e8-6e821eb953be
+# Connection via DATABASE_URL environment variable
+
+databases:
+  - name: easyescrow-staging-postgres
+    engine: PG
+    production: false  # Staging environment
+    cluster_name: easyescrow-staging-postgres
+    db_name: easyescrow_staging
+    db_user: easyescrow_app
+
+# ============================================
+# Custom Domains (Optional)
+# ============================================
+
+# domains:
+#   - domain: staging-api.easyescrow.ai
+#     type: PRIMARY
+#     zone: easyescrow.ai
+
+# ============================================
+# Features
+# ============================================
+
+features:
+  - buildpack-stack=ubuntu-22
+
+# ============================================
+# Alerts
+# ============================================
+
+alerts:
+  - rule: DEPLOYMENT_FAILED
+  - rule: DOMAIN_FAILED
+  - rule: CPU_UTILIZATION
+    value: 85
+  - rule: MEM_UTILIZATION
+    value: 85
+  - rule: RESTART_COUNT
+    value: 5
+  - rule: RESPONSE_TIME
+    value: 3000  # 3 seconds
+
+# ============================================
+# Notes
+# ============================================
+
+# Deployment:
+# 1. Ensure PostgreSQL cluster is online:
+#    doctl databases list
+#
+# 2. Create app:
+#    doctl apps create --spec .do/app-staging.yaml
+#
+# 3. Attach database via console or:
+#    doctl apps update <APP_ID> --spec .do/app-staging.yaml
+#
+# 4. Set environment variables:
+#    - DATABASE_URL: Get from database cluster
+#    - REDIS_URL: Get from Upstash
+#    - Other secrets via console
+#
+# 5. View logs:
+#    doctl apps logs <APP_ID> --type run
+#
+# Cost: ~$20/month
+# - App Platform: $5/month
+# - PostgreSQL: $15/month
+# - Redis (Upstash): FREE tier
+

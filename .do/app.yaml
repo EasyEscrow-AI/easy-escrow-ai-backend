@@ -2,9 +2,17 @@
 # DigitalOcean App Platform Configuration
 # EasyEscrow.ai Backend API
 # ============================================
+#
+# PRODUCTION CONFIGURATION
+# This deploys to Singapore (sgp1) region
+#
+# For other environments, see:
+# - .do/app-dev.yaml (Development with free dev database)
+# - .do/app-staging.yaml (Staging environment)
+# ============================================
 
-name: easyescrow-backend-api
-region: nyc
+name: easyescrow-backend-prod
+region: sgp1
 
 # ============================================
 # Services
@@ -107,17 +115,20 @@ services:
 # Databases (Managed DigitalOcean Services)
 # ============================================
 
-# These are created separately and referenced here
-# Configure via App Platform console under "Resources"
+# PostgreSQL and Redis clusters created separately
+# Database ID: b0f97f57-f399-4727-8abf-dc741cc9a5d2 (easyescrow-prod-postgres)
+# These will be attached via App Platform console or CLI
+#
+# Note: Redis uses Upstash instead of DigitalOcean (not enabled on account)
+# Configure REDIS_URL as environment variable from Upstash
 
 databases:
-  - name: easyescrow-postgres-prod
+  - name: easyescrow-prod-postgres
     engine: PG
     production: true
-    
-  - name: easyescrow-redis-prod
-    engine: REDIS
-    production: true
+    cluster_name: easyescrow-prod-postgres
+    db_name: easyescrow_production
+    db_user: easyescrow_app
 
 # ============================================
 # Custom Domains

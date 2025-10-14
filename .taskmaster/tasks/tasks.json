@@ -817,7 +817,7 @@
         "id": 34,
         "title": "Setup DigitalOcean App Platform Deployment",
         "description": "Configure App Platform deployment from GitHub, add managed PostgreSQL and Redis via VPC, configure secrets, set up api.easyescrow.ai domain with HTTPS, enable health checks and autoscaling",
-        "status": "pending",
+        "status": "in-progress",
         "priority": "medium",
         "dependencies": [
           "42"
@@ -1439,7 +1439,7 @@
     ],
     "metadata": {
       "created": "2025-10-13T01:02:36.190Z",
-      "updated": "2025-10-14T06:40:26.458Z",
+      "updated": "2025-10-14T08:04:09.506Z",
       "description": "Tasks for master context"
     }
   }
