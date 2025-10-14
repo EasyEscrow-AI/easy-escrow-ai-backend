@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { connectDatabase, checkDatabaseHealth } from './config/database';
 import { agreementRoutes, expiryCancellationRoutes } from './routes';
+import webhookRoutes from './routes/webhook.routes';
 import {
   corsOptions,
   helmetConfig,
@@ -131,7 +132,8 @@ app.get('/', (_req: Request, res: Response) => {
     endpoints: {
       health: '/health',
       agreements: '/v1/agreements',
-      expiryCancellation: '/api/expiry-cancellation'
+      expiryCancellation: '/api/expiry-cancellation',
+      webhooks: '/api/webhooks'
     }
   });
 });
@@ -139,6 +141,7 @@ app.get('/', (_req: Request, res: Response) => {
 // API Routes
 app.use(agreementRoutes);
 app.use('/api/expiry-cancellation', expiryCancellationRoutes);
+app.use('/api', webhookRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {

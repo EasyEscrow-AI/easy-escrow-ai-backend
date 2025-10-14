@@ -6,6 +6,7 @@
  */
 
 import { PrismaClient, AgreementStatus, DepositType, DepositStatus } from '../generated/prisma';
+import { WebhookEventsService } from './webhook-events.service';
 
 const prisma = new PrismaClient();
 
@@ -332,6 +333,14 @@ export class StatusUpdateService {
       reason: event.reason,
     });
 
+    // Publish webhook events for specific status transitions
+    try {
+      await this.publishWebhookForStatusChange(event);
+    } catch (webhookError) {
+      // Log webhook error but don't fail the status transition
+      console.error('[StatusUpdateService] Failed to publish webhook event:', webhookError);
+    }
+
     // Notify all listeners
     for (const listener of this.listeners) {
       try {
@@ -339,6 +348,99 @@ export class StatusUpdateService {
       } catch (error) {
         console.error('[StatusUpdateService] Error in status update listener:', error);
       }
+    }
+  }
+
+  /**
+   * Publish webhook events for status changes
+   */
+  private async publishWebhookForStatusChange(event: StatusTransitionEvent): Promise<void> {
+    // Get full agreement details for webhook payload
+    const agreement = await prisma.agreement.findUnique({
+      where: { agreementId: event.agreementId },
+      include: {
+        deposits: {
+          where: { status: DepositStatus.CONFIRMED },
+          orderBy: { confirmedAt: 'desc' },
+        },
+      },
+    });
+
+    if (!agreement) {
+      console.error(`[StatusUpdateService] Agreement ${event.agreementId} not found for webhook`);
+      return;
+    }
+
+    // Publish appropriate webhook event based on status transition
+    switch (event.toStatus) {
+      case AgreementStatus.FUNDED:
+        // Publish funded event
+        await WebhookEventsService.publishEscrowFunded({
+          agreementId: agreement.agreementId,
+          price: agreement.price.toString(),
+          seller: agreement.seller,
+          buyer: agreement.buyer || 'pending',
+          nftMint: agreement.nftMint,
+          escrowPda: agreement.escrowPda,
+        });
+        break;
+
+      case AgreementStatus.USDC_LOCKED:
+        // Publish asset locked event for USDC
+        const usdcDeposit = agreement.deposits.find(d => d.type === DepositType.USDC);
+        if (usdcDeposit) {
+          await WebhookEventsService.publishAssetLocked({
+            agreementId: agreement.agreementId,
+            assetType: 'USDC',
+            depositor: usdcDeposit.depositor,
+            amount: usdcDeposit.amount?.toString(),
+            tokenAccount: usdcDeposit.tokenAccount || undefined,
+            txId: usdcDeposit.txId || 'unknown',
+          });
+        }
+        break;
+
+      case AgreementStatus.NFT_LOCKED:
+        // Publish asset locked event for NFT
+        const nftDeposit = agreement.deposits.find(d => d.type === DepositType.NFT);
+        if (nftDeposit) {
+          await WebhookEventsService.publishAssetLocked({
+            agreementId: agreement.agreementId,
+            assetType: 'NFT',
+            depositor: nftDeposit.depositor,
+            tokenAccount: nftDeposit.tokenAccount || undefined,
+            txId: nftDeposit.txId || 'unknown',
+          });
+        }
+        break;
+
+      case AgreementStatus.BOTH_LOCKED:
+        // Publish asset locked event for the most recent deposit
+        const latestDeposit = agreement.deposits[0];
+        if (latestDeposit) {
+          await WebhookEventsService.publishAssetLocked({
+            agreementId: agreement.agreementId,
+            assetType: latestDeposit.type === DepositType.USDC ? 'USDC' : 'NFT',
+            depositor: latestDeposit.depositor,
+            amount: latestDeposit.amount?.toString(),
+            tokenAccount: latestDeposit.tokenAccount || undefined,
+            txId: latestDeposit.txId || 'unknown',
+          });
+        }
+        break;
+
+      case AgreementStatus.EXPIRED:
+        // Publish expired event
+        await WebhookEventsService.publishEscrowExpired({
+          agreementId: agreement.agreementId,
+          expiry: agreement.expiry.toISOString(),
+          status: event.fromStatus,
+        });
+        break;
+
+      default:
+        // No webhook event for other status transitions
+        break;
     }
   }
 

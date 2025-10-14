@@ -10,6 +10,7 @@ import { prisma } from '../config/database';
 import { config } from '../config';
 import { getSolanaService } from './solana.service';
 import { getIdempotencyService } from './idempotency.service';
+import { WebhookEventsService } from './webhook-events.service';
 import { Decimal } from '@prisma/client/runtime/library';
 import { AgreementStatus } from '../generated/prisma';
 
@@ -371,6 +372,24 @@ export class SettlementService {
         console.error('[SettlementService] Error storing idempotency key:', error);
         // Don't fail settlement if idempotency storage fails
       });
+
+      // Publish webhook event for settlement
+      try {
+        await WebhookEventsService.publishEscrowSettled({
+          agreementId: agreement.agreementId,
+          nftMint: agreement.nftMint,
+          price: agreement.price.toString(),
+          platformFee: feeCalculation.platformFee.toString(),
+          creatorRoyalty: feeCalculation.creatorRoyalty.gt(0) ? feeCalculation.creatorRoyalty.toString() : undefined,
+          sellerReceived: feeCalculation.sellerReceived.toString(),
+          buyer: agreement.buyer!,
+          seller: agreement.seller,
+          settleTxId: settlementTxId,
+        });
+      } catch (webhookError) {
+        // Log webhook error but don't fail the settlement
+        console.error('[SettlementService] Failed to publish webhook event:', webhookError);
+      }
 
       return settlementResult;
     } catch (error) {

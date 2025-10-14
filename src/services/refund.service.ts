@@ -9,6 +9,7 @@ import { PrismaClient, AgreementStatus, DepositType, DepositStatus } from '../ge
 import { Decimal } from '@prisma/client/runtime/library';
 import { PublicKey, Transaction, SystemProgram } from '@solana/web3.js';
 import { getSolanaService } from './solana.service';
+import { WebhookEventsService } from './webhook-events.service';
 
 const prisma = new PrismaClient();
 
@@ -283,7 +284,7 @@ export class RefundService {
 
       // Update agreement status if all refunds successful
       if (result.errors.length === 0) {
-        await prisma.agreement.update({
+        const updatedAgreement = await prisma.agreement.update({
           where: { agreementId },
           data: {
             status: AgreementStatus.REFUNDED,
@@ -291,6 +292,18 @@ export class RefundService {
           },
         });
         result.success = true;
+
+        // Publish webhook event for refund
+        try {
+          await WebhookEventsService.publishEscrowRefunded({
+            agreementId: updatedAgreement.agreementId,
+            cancelTxId: updatedAgreement.cancelTxId || result.transactionIds[0] || 'unknown',
+            refundedTo: result.refundedDeposits.map(d => d.depositor).join(', '),
+          });
+        } catch (webhookError) {
+          // Log webhook error but don't fail the refund
+          console.error('[RefundService] Failed to publish webhook event:', webhookError);
+        }
       }
 
       console.log(`[RefundService] Refund processing completed for ${agreementId}:`, {
