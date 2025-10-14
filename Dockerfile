@@ -51,15 +51,25 @@ RUN npm ci --omit=dev --ignore-scripts && \
 
 # Copy Prisma schema and generated client from builder
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/src/generated ./src/generated
 
 # Copy built application from builder stage
 COPY --from=builder /app/dist ./dist
 
+# Copy generated Prisma client to location expected by compiled code
+# The compiled dist/config/database.js looks for ../generated/prisma
+COPY --from=builder /app/src/generated ./generated
+
 # Create non-root user and group for security
 RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001 && \
-    chown -R nodejs:nodejs /app
+    adduser -S nodejs -u 1001
+
+# Set ownership before creating symlinks
+RUN chown -R nodejs:nodejs /app
+
+# Create symlink to help Node.js resolve the Prisma client
+# This ensures ../generated/prisma can be resolved from dist/config
+RUN ln -sf /app/generated /app/dist/generated
 
 # Switch to non-root user
 USER nodejs
