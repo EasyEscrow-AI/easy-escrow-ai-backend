@@ -79,5 +79,71 @@ Complete list of all files modified/created during this task.
 Link to pull request: #123
 ```
 
+## Task Test Results Documentation
+
+When testing a completed/merged task, create a test results document:
+
+1. **Create a test results document** named `TASK_XX_TEST_RESULTS.md`
+   - Store it in: `/docs/tasks/`
+   - File naming convention: `TASK_[number]_TEST_RESULTS.md` (e.g., `TASK_30_TEST_RESULTS.md`)
+
+2. **Test results structure** should include:
+   - **Test Summary**: Overview of what was tested
+   - **Merge Status**: PR number, commits, files changed
+   - **Build & Compilation**: TypeScript compilation results
+   - **Unit Tests**: Results of unit test execution
+   - **Integration Tests**: Results of integration tests (if applicable)
+   - **Bug Fixes Verification**: Verification that all reported bugs are fixed
+   - **API Endpoint Tests**: Verification of REST endpoints (if applicable)
+   - **Security Verification**: Security features tested
+   - **Production Readiness Checklist**: Items verified before production
+   - **Next Steps**: Remaining work or production deployment steps
+   - **Final Verdict**: Overall status (PASSING/FAILING, Production Ready: YES/NO)
+
+3. **Test results example structure**:
+
+```markdown
+# Task XX - [Feature Name] Test Results
+
+**Date:** [Date]
+**Branch:** master (merged from task-xx-branch)
+**Status:** ✅ ALL TESTS PASSED
+
+## Test Summary
+Brief overview of testing performed.
+
+## 1. ✅ Build & Compilation Tests
+- TypeScript compilation: PASSED
+- No linting errors
+- Build artifacts generated
+
+## 2. ✅ Unit Tests
+- Service tests: X/X passed
+- Component tests: X/X passed
+- Integration tests: X/X passed
+
+## 3. ✅ Bug Fixes Verification
+- Bug 1: FIXED
+- Bug 2: FIXED
+
+## 4. ✅ API Endpoints (if applicable)
+- GET /endpoint: ✅
+- POST /endpoint: ✅
+
+## Production Readiness Checklist
+✅ Core functionality tested
+✅ Bug fixes verified
+✅ Documentation complete
+
+## Final Verdict
+🟢 PRODUCTION READY
+```
+
 ## Note
 Do not create completion documents for trivial or documentation-only tasks. Use judgment to determine when a formal completion document adds value.
+
+Test results documents should be created when:
+- Testing a major feature after merge
+- Verifying bug fixes
+- Conducting pre-production validation
+- Documenting comprehensive test coverage
