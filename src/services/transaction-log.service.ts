@@ -161,7 +161,8 @@ export class TransactionLogService {
         await prisma.transactionLog.update({
           where: { txId },
           data: {
-            blockHeight: transaction.blockTime ? BigInt(transaction.blockTime) : null,
+            // In Solana, slot is the equivalent of block height
+            blockHeight: transaction.slot ? BigInt(transaction.slot) : null,
             slot: transaction.slot ? BigInt(transaction.slot) : null,
             status: transaction.meta?.err ? TransactionStatusType.FAILED : TransactionStatusType.CONFIRMED,
             errorMessage: transaction.meta?.err ? JSON.stringify(transaction.meta.err) : null,

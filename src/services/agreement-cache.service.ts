@@ -59,7 +59,7 @@ export class AgreementCacheService {
       // Cache miss - fetch from database
       console.log(`Cache miss for agreement ID: ${agreementId}`);
       const agreement = await prisma.agreement.findUnique({
-        where: { id: agreementId },
+        where: { agreementId: agreementId },
       });
 
       if (agreement) {
@@ -72,7 +72,7 @@ export class AgreementCacheService {
       console.error(`Error getting agreement by ID ${agreementId}:`, error);
       // On error, fall back to database without cache
       return await prisma.agreement.findUnique({
-        where: { id: agreementId },
+        where: { agreementId: agreementId },
       });
     }
   }
@@ -170,7 +170,7 @@ export class AgreementCacheService {
     try {
       // Update in database
       const updatedAgreement = await prisma.agreement.update({
-        where: { id: agreementId },
+        where: { agreementId: agreementId },
         data,
       });
 
@@ -252,7 +252,7 @@ export class AgreementCacheService {
     try {
       const agreements = await prisma.agreement.findMany({
         where: {
-          id: { in: agreementIds },
+          agreementId: { in: agreementIds },
         },
       });
 

@@ -3,6 +3,28 @@
 ## Summary
 Implemented a comprehensive transaction logging system that captures and stores transaction IDs (txids) for all escrow lifecycle operations (init, deposits, settle, cancel, refund). The system provides log aggregation, search capabilities, and RESTful API endpoints for querying transaction history. This enables better debugging, audit trails, and receipt generation throughout the escrow process.
 
+## Bug Fixes (Post-Implementation)
+
+### Bug 1: Incorrect Identifier Usage in Agreement Cache Service
+**Fixed**: `agreement-cache.service.ts` methods were querying agreements using the database primary key `id` instead of the `agreementId` business identifier.
+
+**Changes:**
+- Fixed `getAgreementById()` to use `agreementId` instead of `id` (lines 62, 75)
+- Fixed `updateAgreement()` to use `agreementId` instead of `id` (line 173)
+- Fixed `warmupCache()` to use `agreementId` instead of `id` (line 255)
+
+**Impact**: Agreements can now be correctly found and updated using their business identifier, maintaining consistency with the rest of the codebase.
+
+### Bug 2: Incorrect Block Height Data Population
+**Fixed**: `transaction-log.service.ts` was incorrectly populating `blockHeight` field with `transaction.blockTime` (Unix timestamp) instead of the actual slot number.
+
+**Changes:**
+- Updated `enrichTransactionData()` to use `transaction.slot` for `blockHeight` field (line 165)
+- Added comment explaining that in Solana, slot is the equivalent of block height
+- Both `blockHeight` and `slot` fields now correctly store the slot number
+
+**Impact**: Block height-based queries are now accurate, and transaction data is correctly populated with Solana slot numbers.
+
 ## Changes Made
 
 ### Code Changes
