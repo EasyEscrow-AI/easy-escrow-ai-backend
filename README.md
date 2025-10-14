@@ -328,6 +328,7 @@ See `.env.example` for complete configuration options.
 - [TASK_27_COMPLETION.md](docs/tasks/TASK_27_COMPLETION.md) - Expiry & Cancellation Logic
 - [TASK_28_COMPLETION.md](docs/tasks/TASK_28_COMPLETION.md) - Agreement API Endpoints
 - [TASK_28_TESTS.md](docs/tasks/TASK_28_TESTS.md) - API Testing Guide
+- [TASK_30_COMPLETION.md](docs/tasks/TASK_30_COMPLETION.md) - Settlement Receipt Generation
 - [TASK_35_COMPLETION.md](docs/tasks/TASK_35_COMPLETION.md) - Task 35 Completion
 - [TASK_37_COMPLETION.md](docs/tasks/TASK_37_COMPLETION.md) - Task 37 Completion
 - [TASK_37_SUMMARY.md](docs/tasks/TASK_37_SUMMARY.md) - Task 37 Summary

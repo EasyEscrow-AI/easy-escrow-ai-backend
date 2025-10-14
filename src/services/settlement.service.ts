@@ -11,6 +11,7 @@ import { config } from '../config';
 import { getSolanaService } from './solana.service';
 import { getIdempotencyService } from './idempotency.service';
 import { WebhookEventsService } from './webhook-events.service';
+import { getReceiptService } from './receipt.service';
 import { Decimal } from '@prisma/client/runtime/library';
 import { AgreementStatus } from '../generated/prisma';
 
@@ -373,7 +374,41 @@ export class SettlementService {
         // Don't fail settlement if idempotency storage fails
       });
 
-      // Publish webhook event for settlement
+      // 6. Generate settlement receipt
+      try {
+        const receiptService = getReceiptService();
+        
+        // Log warning if initTxId is missing
+        if (!agreement.initTxId) {
+          console.warn(`[SettlementService] Agreement ${agreement.agreementId} has no initTxId - receipt will have empty escrowTxId`);
+        }
+        
+        const receiptResult = await receiptService.generateReceipt({
+          agreementId: agreement.agreementId,
+          nftMint: agreement.nftMint,
+          price: agreement.price.toString(),
+          platformFee: feeCalculation.platformFee.toString(),
+          creatorRoyalty: feeCalculation.creatorRoyalty.gt(0) ? feeCalculation.creatorRoyalty.toString() : undefined,
+          buyer: agreement.buyer!,
+          seller: agreement.seller,
+          escrowTxId: agreement.initTxId || '',
+          settlementTxId: settlementTxId,
+          createdAt: agreement.createdAt,
+          settledAt: new Date(),
+        });
+
+        if (receiptResult.success) {
+          console.log(`[SettlementService] Receipt generated successfully: ${receiptResult.receipt?.id}`);
+        } else {
+          console.error(`[SettlementService] Failed to generate receipt: ${receiptResult.error}`);
+          // Don't fail the settlement if receipt generation fails
+        }
+      } catch (receiptError) {
+        // Log receipt error but don't fail the settlement
+        console.error('[SettlementService] Error generating receipt:', receiptError);
+      }
+
+      // 7. Publish webhook event for settlement
       try {
         await WebhookEventsService.publishEscrowSettled({
           agreementId: agreement.agreementId,
