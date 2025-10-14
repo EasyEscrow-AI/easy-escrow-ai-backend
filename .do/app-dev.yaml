@@ -1,0 +1,130 @@
+# ============================================
+# DigitalOcean App Platform Configuration
+# EasyEscrow.ai Backend API - DEVELOPMENT
+# ============================================
+#
+# DEVELOPMENT CONFIGURATION
+# Uses App Platform's FREE dev database
+# Perfect for testing and development
+#
+# Create with: doctl apps create --spec .do/app-dev.yaml
+# ============================================
+
+name: easyescrow-backend-dev
+region: sgp1
+
+# ============================================
+# Services
+# ============================================
+
+services:
+  - name: api-dev
+    # GitHub repository configuration
+    github:
+      repo: VENTURE-AI-LABS/easy-escrow-ai-backend
+      branch: develop  # or feature branches
+      deploy_on_push: true
+    
+    # Build configuration
+    build_command: npm run build
+    
+    # Runtime configuration
+    run_command: npm start
+    
+    # Use Dockerfile for consistency
+    dockerfile_path: Dockerfile
+    
+    # Instance configuration (smallest for dev)
+    instance_count: 1
+    instance_size_slug: basic-xxs  # $5/month - 512MB RAM, 1 vCPU
+    
+    # HTTP configuration
+    http_port: 3000
+    
+    # Health check
+    health_check:
+      http_path: /health
+      initial_delay_seconds: 60
+      period_seconds: 30
+      timeout_seconds: 10
+      success_threshold: 1
+      failure_threshold: 3
+    
+    # Environment variables
+    envs:
+      - key: NODE_ENV
+        value: development
+      - key: PORT
+        value: "3000"
+      - key: SOLANA_NETWORK
+        value: devnet
+      - key: SOLANA_COMMITMENT
+        value: confirmed
+      - key: MONITORING_ENABLED
+        value: "true"
+      - key: WEBHOOK_ENABLED
+        value: "false"
+      - key: CORS_ENABLED
+        value: "true"
+      - key: HELMET_ENABLED
+        value: "false"
+      - key: LOG_LEVEL
+        value: debug
+      - key: PLATFORM_FEE_BPS
+        value: "250"
+      
+      # DEV Database (automatically injected by App Platform)
+      # DATABASE_URL will be set automatically
+      
+      # Set these via console (secrets)
+      # - JWT_SECRET
+      # - SOLANA_RPC_URL (Helius/QuickNode devnet)
+      # - ESCROW_PROGRAM_ID (devnet)
+      # - USDC_MINT_ADDRESS (devnet)
+      # - REDIS_URL (Upstash)
+      # - SPACES_ACCESS_KEY
+      # - SPACES_SECRET_KEY
+
+# ============================================
+# Dev Database (FREE)
+# ============================================
+
+databases:
+  - name: db-dev
+    engine: PG
+    production: false  # This makes it a FREE dev database!
+
+# ============================================
+# Features
+# ============================================
+
+features:
+  - buildpack-stack=ubuntu-22
+
+# ============================================
+# Alerts
+# ============================================
+
+alerts:
+  - rule: DEPLOYMENT_FAILED
+  - rule: CPU_UTILIZATION
+    value: 90
+  - rule: MEM_UTILIZATION
+    value: 90
+
+# ============================================
+# Notes
+# ============================================
+
+# Deployment:
+# 1. Create app:
+#    doctl apps create --spec .do/app-dev.yaml
+#
+# 2. Set secrets via console or CLI:
+#    doctl apps update <APP_ID> --spec .do/app-dev.yaml
+#
+# 3. View logs:
+#    doctl apps logs <APP_ID> --type run
+#
+# Cost: ~$5/month (database is FREE!)
+

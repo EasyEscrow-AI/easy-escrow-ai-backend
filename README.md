@@ -247,7 +247,35 @@ anchor deploy  # Requires SOL for deployment
 
 ### Backend Deployment
 
-**Docker (Recommended):**
+**Production (DigitalOcean App Platform - Singapore Region):**
+
+Infrastructure deployed in **Singapore (sgp1)** for optimal Asia-Pacific performance:
+- VPC Network (secure networking) - FREE
+- PostgreSQL Clusters (STAGING + PROD) - $30/month
+- Redis via Upstash (managed service) - FREE tier
+- Spaces Object Storage (S3-compatible) - $5/month  
+- App Platform instances - $15/month
+
+Quick Deploy:
+```bash
+# Deploy to DEV (FREE database)
+doctl apps create --spec .do/app-dev.yaml
+
+# Deploy to STAGING  
+doctl apps create --spec .do/app-staging.yaml
+
+# Deploy to PROD
+doctl apps create --spec .do/app.yaml
+```
+
+**Deployment Documentation:**
+- **[Deployment Guide](docs/DEPLOYMENT_GUIDE.md)** - Complete deployment instructions ⭐
+- **[Deployment Summary](docs/DEPLOYMENT_SUMMARY.md)** - Quick reference with credentials
+- [DigitalOcean Setup](docs/DIGITALOCEAN_SETUP.md) - Infrastructure details
+- [Redis Setup](docs/REDIS_SETUP.md) - Upstash Redis configuration
+- [Spaces Setup](docs/SPACES_SETUP.md) - Object storage setup
+
+**Docker (Local/Testing):**
 ```bash
 # Build the Docker image
 docker build -t easyescrow-backend:latest .
@@ -262,7 +290,7 @@ docker-compose logs -f backend
 curl http://localhost:3000/health
 ```
 
-See [DOCKER_DEPLOYMENT.md](docs/DOCKER_DEPLOYMENT.md) for complete deployment guide including:
+See [DOCKER_DEPLOYMENT.md](docs/DOCKER_DEPLOYMENT.md) for complete Docker guide including:
 - Docker Compose setup
 - Production deployment best practices
 - Kubernetes deployment examples
@@ -330,7 +358,7 @@ See `.env.example` for complete configuration options.
 - ⏳ Webhook delivery system
 - ⏳ On-chain transaction integration
 - ⏳ Frontend development
-- ⏳ Production deployment setup
+- ✅ **Production deployment setup** (Task 34) - DigitalOcean infrastructure ready
 
 ## Next Steps
 
@@ -354,8 +382,16 @@ See `.env.example` for complete configuration options.
 - [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) - Database migrations
 - [API_DOCUMENTATION.md](API_DOCUMENTATION.md) - REST API reference
 - [DEPOSIT_MONITORING.md](DEPOSIT_MONITORING.md) - Deposit monitoring system
+
+### Deployment Documentation
+- **[DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md)** - Complete deployment guide ⭐
+- **[DEPLOYMENT_SUMMARY.md](docs/DEPLOYMENT_SUMMARY.md)** - Quick reference with credentials
+- [DIGITALOCEAN_SETUP.md](docs/DIGITALOCEAN_SETUP.md) - DigitalOcean infrastructure setup
+- [REDIS_SETUP.md](docs/REDIS_SETUP.md) - Redis/Upstash configuration
+- [SPACES_SETUP.md](docs/SPACES_SETUP.md) - Object storage setup
 - [DOCKER_DEPLOYMENT.md](docs/DOCKER_DEPLOYMENT.md) - Docker deployment guide
 - [ENVIRONMENT_VARIABLES.md](docs/ENVIRONMENT_VARIABLES.md) - Environment configuration reference
+- [CLI_TOOLS_SETUP.md](docs/CLI_TOOLS_SETUP.md) - CLI tools installation
 
 ### Task Completion Reports
 - [TASK_25_COMPLETION.md](docs/tasks/TASK_25_COMPLETION.md) - Deposit Monitoring Implementation

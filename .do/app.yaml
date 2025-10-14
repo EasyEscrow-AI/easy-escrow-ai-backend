@@ -1,0 +1,240 @@
+# ============================================
+# DigitalOcean App Platform Configuration
+# EasyEscrow.ai Backend API
+# ============================================
+#
+# PRODUCTION CONFIGURATION
+# This deploys to Singapore (sgp1) region
+#
+# For other environments, see:
+# - .do/app-dev.yaml (Development with free dev database)
+# - .do/app-staging.yaml (Staging environment)
+# ============================================
+
+name: easyescrow-backend-prod
+region: sgp1
+
+# ============================================
+# Services
+# ============================================
+
+services:
+  - name: api
+    # GitHub repository configuration
+    github:
+      repo: VENTURE-AI-LABS/easy-escrow-ai-backend
+      branch: master
+      deploy_on_push: true
+    
+    # Build configuration
+    build_command: npm run build
+    
+    # Runtime configuration
+    run_command: npm start
+    
+    # Dockerfile configuration (alternative to buildpack)
+    # dockerfile_path: Dockerfile
+    
+    # Environment
+    environment_slug: node-js
+    
+    # Instance configuration
+    instance_count: 1
+    instance_size_slug: basic-xxs  # $5/month - 512MB RAM, 1 vCPU
+    
+    # HTTP configuration
+    http_port: 3000
+    
+    # Health check
+    health_check:
+      http_path: /health
+      initial_delay_seconds: 40
+      period_seconds: 30
+      timeout_seconds: 10
+      success_threshold: 1
+      failure_threshold: 3
+    
+    # Auto-scaling (optional, requires paid plan)
+    # autoscaling:
+    #   min_instance_count: 1
+    #   max_instance_count: 3
+    #   metrics:
+    #     cpu:
+    #       percent: 80
+    
+    # Environment variables (non-sensitive)
+    envs:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3000"
+      - key: SOLANA_NETWORK
+        value: mainnet-beta
+      - key: SOLANA_COMMITMENT
+        value: finalized
+      - key: MONITORING_ENABLED
+        value: "true"
+      - key: WEBHOOK_ENABLED
+        value: "true"
+      - key: CORS_ENABLED
+        value: "true"
+      - key: HELMET_ENABLED
+        value: "true"
+      - key: IDEMPOTENCY_EXPIRATION_HOURS
+        value: "24"
+      - key: PLATFORM_FEE_BPS
+        value: "250"
+      
+      # These will be set via console (sensitive values)
+      # - key: DATABASE_URL
+      #   scope: RUN_TIME
+      #   type: SECRET
+      # - key: REDIS_URL
+      #   scope: RUN_TIME
+      #   type: SECRET
+      # - key: JWT_SECRET
+      #   scope: RUN_TIME
+      #   type: SECRET
+      # - key: SOLANA_RPC_URL
+      #   scope: RUN_TIME
+      #   type: SECRET
+      # - key: ESCROW_PROGRAM_ID
+      #   scope: RUN_TIME
+      #   type: SECRET
+      # - key: USDC_MINT_ADDRESS
+      #   scope: RUN_TIME
+      #   type: SECRET
+      # - key: SPACES_ACCESS_KEY
+      #   scope: RUN_TIME
+      #   type: SECRET
+      # - key: SPACES_SECRET_KEY
+      #   scope: RUN_TIME
+      #   type: SECRET
+
+# ============================================
+# Databases (Managed DigitalOcean Services)
+# ============================================
+
+# PostgreSQL and Redis clusters created separately
+# Database ID: b0f97f57-f399-4727-8abf-dc741cc9a5d2 (easyescrow-prod-postgres)
+# These will be attached via App Platform console or CLI
+#
+# Note: Redis uses Upstash instead of DigitalOcean (not enabled on account)
+# Configure REDIS_URL as environment variable from Upstash
+
+databases:
+  - name: easyescrow-prod-postgres
+    engine: PG
+    production: true
+    cluster_name: easyescrow-prod-postgres
+    db_name: easyescrow_production
+    db_user: easyescrow_app
+
+# ============================================
+# Custom Domains
+# ============================================
+
+domains:
+  - domain: api.easyescrow.ai
+    type: PRIMARY
+    zone: easyescrow.ai
+
+# ============================================
+# Static Sites (if needed)
+# ============================================
+
+# static_sites:
+#   - name: docs
+#     github:
+#       repo: VENTURE-AI-LABS/easy-escrow-ai-backend
+#       branch: master
+#       deploy_on_push: true
+#     build_command: npm run build:docs
+#     output_dir: /docs/dist
+#     routes:
+#       - path: /docs
+
+# ============================================
+# Jobs (Background Tasks)
+# ============================================
+
+# jobs:
+#   - name: cleanup-expired-keys
+#     github:
+#       repo: VENTURE-AI-LABS/easy-escrow-ai-backend
+#       branch: master
+#       deploy_on_push: true
+#     build_command: npm run build
+#     run_command: npm run job:cleanup
+#     environment_slug: node-js
+#     instance_count: 1
+#     instance_size_slug: basic-xxs
+#     kind: PRE_DEPLOY  # or POST_DEPLOY, CRON
+#     # schedule: "0 2 * * *"  # Daily at 2 AM UTC
+
+# ============================================
+# Workers (Long-running background processes)
+# ============================================
+
+# workers:
+#   - name: queue-processor
+#     github:
+#       repo: VENTURE-AI-LABS/easy-escrow-ai-backend
+#       branch: master
+#       deploy_on_push: true
+#     build_command: npm run build
+#     run_command: npm run worker:queue
+#     environment_slug: node-js
+#     instance_count: 1
+#     instance_size_slug: basic-xxs
+#     envs:
+#       - key: WORKER_TYPE
+#         value: queue
+
+# ============================================
+# Features
+# ============================================
+
+features:
+  - buildpack-stack=ubuntu-22
+
+# ============================================
+# Alerts (requires configuration via console)
+# ============================================
+
+alerts:
+  - rule: DEPLOYMENT_FAILED
+  - rule: DOMAIN_FAILED
+  - rule: CPU_UTILIZATION
+    value: 80
+  - rule: MEM_UTILIZATION
+    value: 80
+  - rule: RESTART_COUNT
+    value: 5
+  - rule: RESPONSE_TIME
+    value: 2000  # 2 seconds
+
+# ============================================
+# Notes
+# ============================================
+
+# Deployment:
+# 1. Push this file to .do/app.yaml in your repository
+# 2. Create app via console or CLI:
+#    doctl apps create --spec .do/app.yaml
+# 3. Configure secrets via console
+# 4. Connect databases via Resources tab
+# 5. Add custom domain and verify DNS
+#
+# Update:
+# doctl apps update <APP_ID> --spec .do/app.yaml
+#
+# Get app ID:
+# doctl apps list
+#
+# View logs:
+# doctl apps logs <APP_ID> --type run
+#
+# SSH into container (if needed):
+# doctl apps exec <APP_ID> --component api
+

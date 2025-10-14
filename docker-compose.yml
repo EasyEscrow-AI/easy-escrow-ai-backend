@@ -12,14 +12,15 @@ services:
     restart: unless-stopped
     ports:
       - "3000:3000"
+    env_file:
+      - .env
     environment:
-      NODE_ENV: production
-      PORT: 3000
+      # Override specific values for Docker environment
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/easyescrow?schema=public
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      # Add other environment variables from .env.example
-      # For production, use Docker secrets or external secret management
+      REDIS_URL: redis://redis:6379
+      REDIS_TLS: "false"
     depends_on:
       postgres:
         condition: service_healthy

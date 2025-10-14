@@ -817,7 +817,7 @@
         "id": 34,
         "title": "Setup DigitalOcean App Platform Deployment",
         "description": "Configure App Platform deployment from GitHub, add managed PostgreSQL and Redis via VPC, configure secrets, set up api.easyescrow.ai domain with HTTPS, enable health checks and autoscaling",
-        "status": "pending",
+        "status": "done",
         "priority": "medium",
         "dependencies": [
           "42"
@@ -829,7 +829,7 @@
             "id": 1,
             "title": "Configure GitHub Repository Connection",
             "description": "Connect DigitalOcean App Platform to GitHub repository for automated deployments",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "details": "Set up GitHub integration in DigitalOcean App Platform, configure repository access, set up branch-based deployment triggers, and configure build settings for the backend application"
           },
@@ -837,7 +837,7 @@
             "id": 2,
             "title": "Create Managed PostgreSQL Database",
             "description": "Set up managed PostgreSQL database instance with VPC configuration",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "details": "Create PostgreSQL database cluster in DigitalOcean, configure VPC networking for secure access, set up database credentials, and configure connection pooling and backup settings"
           },
@@ -845,7 +845,7 @@
             "id": 3,
             "title": "Create Managed Redis Instance",
             "description": "Set up managed Redis instance for caching and job queues with VPC access",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "details": "Create Redis cluster in DigitalOcean, configure VPC networking to match PostgreSQL setup, set up Redis authentication, and configure memory limits and eviction policies"
           },
@@ -853,7 +853,7 @@
             "id": 4,
             "title": "Configure App Secrets and Environment Variables",
             "description": "Set up all required environment variables and secrets for the application",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "34.2",
               "34.3"
@@ -864,7 +864,7 @@
             "id": 5,
             "title": "Setup Custom Domain with HTTPS and Health Checks",
             "description": "Configure api.easyescrow.ai domain with SSL certificate and enable monitoring",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "34.1",
               "34.4"
@@ -1364,7 +1364,7 @@
         "description": "Implement simple, safe MVP production database layout using DO managed services: Managed Postgres cluster with three logical databases (prod/stage/dev), Managed Redis for idempotency and queues, DO Spaces for receipts, with proper security, PITR backups, connection pooling, and least-privilege roles",
         "details": "**Backend API:** DO App Platform (`api.easyescrow.ai`)\n\n**Database:** DO Managed Postgres in same region with three logical DBs in one cluster:\n- `easyescrow_prod` (real users)\n- `easyescrow_stage` (staging/smoke on devnet)\n- `easyescrow_dev` (playground)\n\n**Cache/Queues:** DO Managed Redis for idempotency keys, webhooks, retries\n\n**Storage:** DO Spaces (S3-compatible) for receipts/artifacts\n\n**Key Requirements:**\n- Enable private networking between App Platform and managed services\n- Turn on PITR (point-in-time recovery) + daily snapshots\n- Create least-privilege roles: `app_user_prod` (R/W, no DDL), `migrate_user_prod` (DDL only), equivalent for stage/dev\n- Enable PgBouncer connection pooling\n- Configure migration pipeline gated behind `migrate_user_*` roles\n- Store secrets via App Platform env vars with quarterly rotation policy",
         "testStrategy": "Validate database setup with connection tests from App Platform, verify role permissions, test PITR recovery, validate migration process in stage environment before prod",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           23
         ],
@@ -1376,7 +1376,7 @@
             "description": "Set up a managed PostgreSQL cluster on DigitalOcean with appropriate sizing and configuration for production workloads",
             "dependencies": [],
             "details": "Create a DO Managed PostgreSQL cluster in the same region as the App Platform. Configure cluster with appropriate node size, enable high availability, and set up in a VPC for private networking. Enable connection pooling with PgBouncer.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Verify cluster creation, test connectivity, and validate PgBouncer configuration"
           },
           {
@@ -1387,7 +1387,7 @@
               1
             ],
             "details": "Enable point-in-time recovery (PITR) with appropriate retention period, configure automated daily snapshots, set up firewall rules to restrict access to App Platform only, and enable SSL/TLS encryption for connections.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Test backup restoration process, verify firewall rules block unauthorized access, validate SSL connection"
           },
           {
@@ -1398,7 +1398,7 @@
               2
             ],
             "details": "Create easyescrow_prod, easyescrow_stage, and easyescrow_dev databases. Create role pairs for each: app_user_* (read/write, no DDL) and migrate_user_* (DDL only). Configure proper permissions and access controls for each role.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Test role permissions by attempting DDL operations with app_user roles (should fail) and DML operations with migrate_user roles"
           },
           {
@@ -1409,7 +1409,7 @@
               1
             ],
             "details": "Provision DO Managed Redis cluster in the same region and VPC as PostgreSQL. Configure appropriate memory size, enable persistence, set up eviction policies, and configure private networking access from App Platform.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Test Redis connectivity from App Platform, verify persistence settings, and validate eviction policy behavior"
           },
           {
@@ -1418,7 +1418,7 @@
             "description": "Set up DO Spaces bucket for storing receipts and artifacts with proper access controls and lifecycle policies",
             "dependencies": [],
             "details": "Create DO Spaces bucket for receipt storage, configure CORS policies for web access, set up lifecycle rules for cost optimization, create access keys with minimal required permissions, and configure CDN if needed for public assets.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Test file upload/download operations, verify access controls prevent unauthorized access, validate lifecycle policies"
           },
           {
@@ -1431,7 +1431,7 @@
               5
             ],
             "details": "Enable private networking between App Platform and all managed services. Configure App Platform environment variables for database connections, Redis, and Spaces access. Document quarterly secrets rotation policy and set up monitoring for connection health.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Test all service connections from App Platform, verify private networking isolation, validate environment variable access, and test connection failover scenarios"
           }
         ]
@@ -1439,7 +1439,7 @@
     ],
     "metadata": {
       "created": "2025-10-13T01:02:36.190Z",
-      "updated": "2025-10-14T05:59:46.450Z",
+      "updated": "2025-10-14T08:25:00.705Z",
       "description": "Tasks for master context"
     }
   }
