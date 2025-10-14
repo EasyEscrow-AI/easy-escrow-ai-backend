@@ -133,7 +133,7 @@ Complete CRUD operations for escrow agreements:
 - `PUT /v1/agreements/:id/status` - Update agreement status
 - `DELETE /v1/agreements/:id` - Delete agreement
 
-See [TASK_28_COMPLETION.md](TASK_28_COMPLETION.md) for detailed API documentation.
+See [TASK_28_COMPLETION.md](docs/tasks/TASK_28_COMPLETION.md) for detailed API documentation.
 
 ### Real-Time Deposit Monitoring (Task 25)
 Automatic monitoring and processing of deposits:
@@ -149,7 +149,7 @@ Automatic monitoring and processing of deposits:
 - Health checks and metrics collection
 - Comprehensive error handling and logging
 
-See [TASK_25_COMPLETION.md](TASK_25_COMPLETION.md) and [DEPOSIT_MONITORING.md](DEPOSIT_MONITORING.md) for details.
+See [TASK_25_COMPLETION.md](docs/tasks/TASK_25_COMPLETION.md) and [DEPOSIT_MONITORING.md](DEPOSIT_MONITORING.md) for details.
 
 ### Expiry & Cancellation Management (Task 27)
 Automated lifecycle management for agreements:
@@ -168,7 +168,7 @@ Automated lifecycle management for agreements:
 - `POST /api/expiry-cancellation/cancellation/sign/:id` - Sign proposal
 - `POST /api/expiry-cancellation/cancellation/execute/:id` - Execute cancellation
 
-See [TASK_27_COMPLETION.md](TASK_27_COMPLETION.md) for complete documentation.
+See [TASK_27_COMPLETION.md](docs/tasks/TASK_27_COMPLETION.md) for complete documentation.
 
 ## Development Workflow
 
@@ -205,7 +205,7 @@ npm run validate      # Run all checks (types, lint, tests)
 ```
 
 ### API Testing
-See [TASK_28_TESTS.md](TASK_28_TESTS.md) for comprehensive API test scenarios and examples.
+See [TASK_28_TESTS.md](docs/tasks/TASK_28_TESTS.md) for comprehensive API test scenarios and examples.
 
 ### Solana Program Tests - Localnet (Recommended for Development)
 Fast, free, and deterministic testing on local validator:
@@ -324,11 +324,19 @@ See `.env.example` for complete configuration options.
 - [DEPOSIT_MONITORING.md](DEPOSIT_MONITORING.md) - Deposit monitoring system
 
 ### Task Completion Reports
-- [TASK_25_COMPLETION.md](TASK_25_COMPLETION.md) - Deposit Monitoring Implementation
-- [TASK_27_COMPLETION.md](TASK_27_COMPLETION.md) - Expiry & Cancellation Logic
-- [TASK_28_COMPLETION.md](TASK_28_COMPLETION.md) - Agreement API Endpoints
-- [TASK_28_TESTS.md](TASK_28_TESTS.md) - API Testing Guide
-- [TASK_38_COMPLETION.md](TASK_38_COMPLETION.md) - Localnet Testing Setup
+- [TASK_25_COMPLETION.md](docs/tasks/TASK_25_COMPLETION.md) - Deposit Monitoring Implementation
+- [TASK_27_COMPLETION.md](docs/tasks/TASK_27_COMPLETION.md) - Expiry & Cancellation Logic
+- [TASK_28_COMPLETION.md](docs/tasks/TASK_28_COMPLETION.md) - Agreement API Endpoints
+- [TASK_28_TESTS.md](docs/tasks/TASK_28_TESTS.md) - API Testing Guide
+- [TASK_35_COMPLETION.md](docs/tasks/TASK_35_COMPLETION.md) - Task 35 Completion
+- [TASK_37_COMPLETION.md](docs/tasks/TASK_37_COMPLETION.md) - Task 37 Completion
+- [TASK_37_SUMMARY.md](docs/tasks/TASK_37_SUMMARY.md) - Task 37 Summary
+- [TASK_38_COMPLETION.md](docs/tasks/TASK_38_COMPLETION.md) - Localnet Testing Setup
+- [PR_TASK_29_SUMMARY.md](docs/tasks/PR_TASK_29_SUMMARY.md) - PR Task 29 Summary
+- [PR_TASK_38_SUMMARY.md](docs/tasks/PR_TASK_38_SUMMARY.md) - PR Task 38 Summary
+- [PR_TASK_40_SUMMARY.md](docs/tasks/PR_TASK_40_SUMMARY.md) - PR Task 40 Summary
+
+For more information, see the [Task Documentation Directory](docs/tasks/)
 
 ### External Resources
 - [Anchor Documentation](https://www.anchor-lang.com/)

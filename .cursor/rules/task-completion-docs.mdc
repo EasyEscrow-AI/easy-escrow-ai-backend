@@ -1,0 +1,83 @@
+---
+alwaysApply: true
+description: "Create task completion documentation upon finishing tasks"
+---
+
+## Task Completion Documentation
+
+Upon completing any task, you MUST:
+
+1. **Create a completion document** named `TASK_XX_COMPLETION.md` (where XX is the task number)
+   - Store it in: `/docs/tasks/`
+   - File naming convention: `TASK_[number]_COMPLETION.md` (e.g., `TASK_42_COMPLETION.md`)
+
+2. **Document structure** should include:
+   - **Task ID and Title**: Clear identification of the task
+   - **Summary**: Brief overview of what was accomplished
+   - **Changes Made**: Detailed list of modifications, additions, or deletions
+     - Code changes (files modified, new files created)
+     - Configuration updates
+     - Database schema changes (if applicable)
+     - API changes (if applicable)
+   - **Technical Details**: Implementation approach and key decisions
+   - **Testing**: Tests added or modified, test results
+   - **Dependencies**: New packages or services added
+   - **Migration Notes**: Any breaking changes or migration steps required
+   - **Related Files**: List of all files touched during the task
+   - **PR Reference**: Link to the pull request (if applicable)
+
+3. **Update the main README.md**:
+   - Add an entry in the task documentation section
+   - Link to the new completion document
+   - Format: `- [Task XX: Brief Description](docs/tasks/TASK_XX_COMPLETION.md)`
+
+4. **Ensure completeness**:
+   - Document should be comprehensive enough for any developer to understand what was done
+   - Include code snippets for significant changes
+   - Explain "why" decisions were made, not just "what" was done
+
+## Example Structure:
+
+```markdown
+# Task XX Completion: [Task Title]
+
+## Summary
+Brief overview of the task and what was accomplished.
+
+## Changes Made
+### Code Changes
+- Modified: `src/services/example.service.ts`
+- Added: `src/models/example.model.ts`
+- Updated: `src/routes/example.routes.ts`
+
+### Configuration
+- Updated `package.json` with new dependencies
+- Modified environment variables
+
+### Database
+- Added new table: `example_table`
+- Migration: `20231014_add_example_table.sql`
+
+## Technical Details
+Explanation of implementation approach, architecture decisions, and key technical considerations.
+
+## Testing
+- Added unit tests: `tests/unit/example.test.ts`
+- Added integration tests: `tests/integration/example.test.ts`
+- All tests passing ✓
+
+## Dependencies
+- Added: `example-package@^1.0.0`
+
+## Migration Notes
+Steps required to deploy or any breaking changes.
+
+## Related Files
+Complete list of all files modified/created during this task.
+
+## PR Reference
+Link to pull request: #123
+```
+
+## Note
+Do not create completion documents for trivial or documentation-only tasks. Use judgment to determine when a formal completion document adds value.
