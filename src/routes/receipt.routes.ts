@@ -52,12 +52,12 @@ router.get('/v1/receipts/:id', standardRateLimiter, async (req: Request, res: Re
  * GET /v1/receipts
  * List receipts with optional filters
  * Query parameters:
- * - agreementId: Filter by agreement ID
+ * - agreement_id: Filter by agreement ID
  * - buyer: Filter by buyer address
  * - seller: Filter by seller address
- * - nftMint: Filter by NFT mint address
- * - startDate: Filter by start date (ISO string)
- * - endDate: Filter by end date (ISO string)
+ * - nft_mint: Filter by NFT mint address
+ * - start_date: Filter by start date (ISO string)
+ * - end_date: Filter by end date (ISO string)
  * - page: Page number (default: 1)
  * - limit: Items per page (default: 20, max: 100)
  */

@@ -377,6 +377,12 @@ export class SettlementService {
       // 6. Generate settlement receipt
       try {
         const receiptService = getReceiptService();
+        
+        // Log warning if initTxId is missing
+        if (!agreement.initTxId) {
+          console.warn(`[SettlementService] Agreement ${agreement.agreementId} has no initTxId - receipt will have empty escrowTxId`);
+        }
+        
         const receiptResult = await receiptService.generateReceipt({
           agreementId: agreement.agreementId,
           nftMint: agreement.nftMint,
@@ -385,7 +391,7 @@ export class SettlementService {
           creatorRoyalty: feeCalculation.creatorRoyalty.gt(0) ? feeCalculation.creatorRoyalty.toString() : undefined,
           buyer: agreement.buyer!,
           seller: agreement.seller,
-          escrowTxId: agreement.initTxId || settlementTxId,
+          escrowTxId: agreement.initTxId || '',
           settlementTxId: settlementTxId,
           createdAt: agreement.createdAt,
           settledAt: new Date(),

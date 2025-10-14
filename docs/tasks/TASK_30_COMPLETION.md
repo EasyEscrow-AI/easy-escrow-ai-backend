@@ -250,6 +250,29 @@ Response:
 
 Branch: `task-30-settlement-receipt-generation`
 
+## Bug Fixes (Post-Initial Implementation)
+
+### Bug Fix 1: Transaction Type Mixing in Receipt Generation
+**Issue**: Receipt generation used `settlementTxId` as fallback for `escrowTxId` when `agreement.initTxId` was missing, mixing distinct transaction types.
+
+**Fix**: Changed to use empty string as fallback and added warning log when `initTxId` is missing, preserving transaction type integrity.
+
+**Files Modified**: `src/services/settlement.service.ts`
+
+### Bug Fix 2: Signing Key Warning Logic
+**Issue**: Constructor warning for default signing key didn't check `config.security?.receiptSigningKey`, causing false warnings when key was provided via config.
+
+**Fix**: Updated warning condition to check all three key sources: constructor parameter, environment variable, and config object.
+
+**Files Modified**: `src/services/receipt-signing.service.ts`
+
+### Bug Fix 3: API Documentation Mismatch
+**Issue**: API documentation specified camelCase query parameters (e.g., `agreementId`) while implementation expected snake_case (e.g., `agreement_id`).
+
+**Fix**: Updated documentation comments to match actual snake_case implementation for consistency.
+
+**Files Modified**: `src/routes/receipt.routes.ts`
+
 ## Notes
 
 - Receipt generation is non-blocking and won't cause settlement failures

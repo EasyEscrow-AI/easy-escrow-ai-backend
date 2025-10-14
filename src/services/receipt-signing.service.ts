@@ -38,7 +38,8 @@ export class ReceiptSigningService {
       config.security?.receiptSigningKey ||
       this.generateDefaultKey();
 
-    if (!signingKey && !process.env.RECEIPT_SIGNING_KEY) {
+    // Warn only if no key is provided from any source
+    if (!signingKey && !process.env.RECEIPT_SIGNING_KEY && !config.security?.receiptSigningKey) {
       console.warn('[ReceiptSigningService] Using default signing key. Set RECEIPT_SIGNING_KEY env var for production!');
     }
   }
