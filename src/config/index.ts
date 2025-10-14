@@ -27,6 +27,7 @@ export const config = {
   security: {
     jwtSecret: process.env.JWT_SECRET || '',
     apiKeySecret: process.env.API_KEY_SECRET || '',
+    receiptSigningKey: process.env.RECEIPT_SIGNING_KEY || '',
     allowedDomains: process.env.ALLOWED_DOMAINS?.split(',') || ['localhost'],
   },
   
