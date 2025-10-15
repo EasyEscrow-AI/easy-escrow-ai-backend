@@ -36,9 +36,63 @@ function mapTransactionLogToDTO(log: any): TransactionLogResponseDTO {
 }
 
 /**
+ * GET /v1/transactions
+ * 
+ * Alias for GET /v1/transactions/logs - List all transaction logs
+ * This provides backward compatibility and a cleaner endpoint
+ */
+router.get('/', async (req: Request, res: Response) => {
+  try {
+    const query: TransactionLogQueryDTO = {
+      agreementId: req.query.agreementId as string,
+      operationType: req.query.operationType as string,
+      status: req.query.status as string,
+      txId: req.query.txId as string,
+      dateFrom: req.query.dateFrom as string,
+      dateTo: req.query.dateTo as string,
+      limit: req.query.limit ? parseInt(req.query.limit as string) : undefined,
+      offset: req.query.offset ? parseInt(req.query.offset as string) : undefined,
+      sortBy: (req.query.sortBy as 'timestamp' | 'blockHeight') || 'timestamp',
+      sortOrder: (req.query.sortOrder as 'asc' | 'desc') || 'desc',
+    };
+
+    const transactionLogService = getTransactionLogService();
+
+    const result = await transactionLogService.searchTransactionLogs({
+      agreementId: query.agreementId,
+      operationType: query.operationType,
+      status: query.status,
+      txId: query.txId,
+      dateFrom: query.dateFrom ? new Date(query.dateFrom) : undefined,
+      dateTo: query.dateTo ? new Date(query.dateTo) : undefined,
+      limit: query.limit,
+      offset: query.offset,
+      sortBy: query.sortBy,
+      sortOrder: query.sortOrder,
+    });
+
+    const response: TransactionLogListResponseDTO = {
+      logs: result.logs.map(mapTransactionLogToDTO),
+      total: result.total,
+      limit: result.limit,
+      offset: result.offset,
+      hasMore: result.offset + result.logs.length < result.total,
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error('Error searching transaction logs:', error);
+    res.status(500).json({
+      error: 'Failed to search transaction logs',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+/**
  * GET /v1/transactions/logs
  * 
- * Search and filter transaction logs
+ * Search and filter transaction logs (alternative endpoint)
  * 
  * Query parameters:
  * - agreementId: Filter by agreement ID

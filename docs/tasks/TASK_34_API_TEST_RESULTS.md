@@ -358,10 +358,11 @@ All Prisma schema tables successfully created:
 
 ## Known Limitations
 
-1. **Transaction Logs Endpoint**
-   - Path `/v1/transactions` returns 404
-   - Likely needs to be `/api/transaction-logs/logs`
-   - **Impact**: Low - alternative path works
+1. ~~**Transaction Logs Endpoint**~~ ✅ **FIXED**
+   - ~~Path `/v1/transactions` returns 404~~
+   - Added root route handler at `/v1/transactions`
+   - Both `/v1/transactions` and `/v1/transactions/logs` now work
+   - **Status**: Resolved in subsequent commit
 
 2. **Redis Connection Warnings**
    - Occasional `EPIPE` and `ECONNRESET` errors
