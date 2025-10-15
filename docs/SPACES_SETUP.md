@@ -5,12 +5,25 @@ DigitalOcean Spaces is S3-compatible object storage for files, images, and docum
 
 ## Create Spaces Bucket
 
+### Bucket Strategy by Environment
+
+We use separate buckets for different environments:
+- **Development/Staging**: `easyescrow-test`
+- **Production**: `easyescrow-storage`
+
+This separation ensures:
+- Safe testing without affecting production data
+- Independent access control per environment
+- Cost tracking per environment
+
 ### Via Web Console (Recommended)
 
 1. Go to: https://cloud.digitalocean.com/spaces
 2. Click **"Create a Space"**
 3. Choose region: **Singapore (sgp1)**
-4. Name: `easyescrow-storage`
+4. Name: 
+   - For dev/staging: `easyescrow-test`
+   - For production: `easyescrow-storage`
 5. Enable CDN: **Yes** (optional, adds $0.01/GB bandwidth)
 6. File Listing: **Private** (recommended)
 7. Click **Create**
@@ -62,8 +75,27 @@ After creating the Space:
 
 Add these to your `.env` files:
 
+### Development/Staging Environment
+
 ```bash
-# Spaces Configuration
+# Spaces Configuration (Development/Staging)
+SPACES_ENDPOINT=https://sgp1.digitaloceanspaces.com
+SPACES_REGION=sgp1
+SPACES_BUCKET=easyescrow-test
+SPACES_ACCESS_KEY_ID=YOUR_DEV_ACCESS_KEY_ID
+SPACES_SECRET_ACCESS_KEY=YOUR_DEV_SECRET_ACCESS_KEY
+
+# CDN URL (if enabled)
+SPACES_CDN_URL=https://easyescrow-test.sgp1.cdn.digitaloceanspaces.com
+
+# Public URL (if public access enabled)
+SPACES_PUBLIC_URL=https://easyescrow-test.sgp1.digitaloceanspaces.com
+```
+
+### Production Environment
+
+```bash
+# Spaces Configuration (Production)
 SPACES_ENDPOINT=https://sgp1.digitaloceanspaces.com
 SPACES_REGION=sgp1
 SPACES_BUCKET=easyescrow-storage

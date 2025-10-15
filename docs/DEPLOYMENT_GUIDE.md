@@ -70,14 +70,26 @@ Since DigitalOcean Redis isn't enabled, we'll use Upstash (FREE tier available).
 
 #### 1.2 Setup DigitalOcean Spaces
 
+Create two separate buckets for different environments:
+
+**For Development/Staging:**
 1. Go to: https://cloud.digitalocean.com/spaces
 2. Click **"Create a Space"**
 3. Configure:
    - **Region**: Singapore (sgp1)
-   - **Name**: `easyescrow-storage`
+   - **Name**: `easyescrow-test`
    - **Enable CDN**: Yes (optional)
    - **File Listing**: Private
 4. Click **Create**
+
+**For Production:**
+1. Repeat steps above
+2. Configure:
+   - **Region**: Singapore (sgp1)
+   - **Name**: `easyescrow-storage`
+   - **Enable CDN**: Yes (optional)
+   - **File Listing**: Private
+3. Click **Create**
 
 5. Generate Access Keys:
    - Go to API → **Spaces Keys**
@@ -178,9 +190,9 @@ Set secrets via console:
    - `ESCROW_PROGRAM_ID`: Your devnet program ID
    - `USDC_MINT_ADDRESS`: USDC devnet mint address
    - `REDIS_URL`: Your Upstash dev Redis URL
-   - `SPACES_ACCESS_KEY_ID`: From Spaces
-   - `SPACES_SECRET_ACCESS_KEY`: From Spaces
-   - `SPACES_BUCKET`: `easyescrow-storage`
+   - `SPACES_ACCESS_KEY_ID`: From Spaces (dev credentials)
+   - `SPACES_SECRET_ACCESS_KEY`: From Spaces (dev credentials)
+   - `SPACES_BUCKET`: `easyescrow-test` (use test bucket for dev/staging)
    - `SPACES_ENDPOINT`: `https://sgp1.digitaloceanspaces.com`
    - `SPACES_REGION`: `sgp1`
 

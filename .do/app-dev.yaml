@@ -76,8 +76,11 @@ services:
       # - ESCROW_PROGRAM_ID (devnet)
       # - USDC_MINT_ADDRESS (devnet)
       # - REDIS_URL (Upstash)
-      # - SPACES_ACCESS_KEY
-      # - SPACES_SECRET_KEY
+      # - SPACES_ACCESS_KEY_ID
+      # - SPACES_SECRET_ACCESS_KEY
+      # - SPACES_BUCKET (easyescrow-test for dev/staging)
+      # - SPACES_ENDPOINT (https://sgp1.digitaloceanspaces.com)
+      # - SPACES_REGION (sgp1)
 
 # ============================================
 # Dev Database (FREE)

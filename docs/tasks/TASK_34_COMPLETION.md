@@ -35,8 +35,9 @@ Successfully set up production-ready infrastructure on DigitalOcean App Platform
 - **Cost**: $15/month
 - **Connection**: 
   ```
-  postgresql://doadmin:AVNS_DG9maU3rRLpkAsMIZBw@easyescrow-staging-postgres-do-user-11230012-0.d.db.ondigitalocean.com:25060/defaultdb?sslmode=require
+  postgresql://doadmin:REDACTED_PASSWORD@easyescrow-staging-postgres-do-user-11230012-0.d.db.ondigitalocean.com:25060/defaultdb?sslmode=require
   ```
+  ⚠️ **Security Note**: Actual credentials are stored in DigitalOcean App Platform secrets
 
 #### 3. PostgreSQL PROD ✅
 - **Name**: `easyescrow-prod-postgres`
@@ -47,8 +48,9 @@ Successfully set up production-ready infrastructure on DigitalOcean App Platform
 - **Cost**: $15/month
 - **Connection**:
   ```
-  postgresql://doadmin:AVNS_0IE3Ml_vRRos9nRukQC@easyescrow-prod-postgres-do-user-11230012-0.d.db.ondigitalocean.com:25060/defaultdb?sslmode=require
+  postgresql://doadmin:REDACTED_PASSWORD@easyescrow-prod-postgres-do-user-11230012-0.d.db.ondigitalocean.com:25060/defaultdb?sslmode=require
   ```
+  ⚠️ **Security Note**: Actual credentials are stored in DigitalOcean App Platform secrets
 
 #### 4. Redis (Upstash) ⚠️
 - **Status**: Setup instructions provided

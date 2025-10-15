@@ -34,14 +34,15 @@
 
 **Connection String**:
 ```
-postgresql://doadmin:AVNS_DG9maU3rRLpkAsMIZBw@easyescrow-staging-postgres-do-user-11230012-0.d.db.ondigitalocean.com:25060/defaultdb?sslmode=require
+postgresql://doadmin:REDACTED_PASSWORD@easyescrow-staging-postgres-do-user-11230012-0.d.db.ondigitalocean.com:25060/defaultdb?sslmode=require
 ```
+⚠️ **Security Note**: Actual credentials are stored in DigitalOcean App Platform secrets
 
 **Connection Details**:
 - Host: `easyescrow-staging-postgres-do-user-11230012-0.d.db.ondigitalocean.com`
 - Port: `25060`
 - User: `doadmin`
-- Password: `AVNS_DG9maU3rRLpkAsMIZBw`
+- Password: `REDACTED` (stored in DO secrets)
 - Database: `defaultdb`
 - SSL Mode: `require`
 
@@ -54,8 +55,9 @@ postgresql://doadmin:AVNS_DG9maU3rRLpkAsMIZBw@easyescrow-staging-postgres-do-use
 
 **Connection String** (will be available when online):
 ```
-postgresql://doadmin:AVNS_0IE3Ml_vRRos9nRukQC@easyescrow-prod-postgres-do-user-11230012-0.d.db.ondigitalocean.com:25060/defaultdb?sslmode=require
+postgresql://doadmin:REDACTED_PASSWORD@easyescrow-prod-postgres-do-user-11230012-0.d.db.ondigitalocean.com:25060/defaultdb?sslmode=require
 ```
+⚠️ **Security Note**: Actual credentials are stored in DigitalOcean App Platform secrets
 
 **Check Status**:
 ```bash
@@ -113,14 +115,20 @@ S3-compatible object storage for files, documents, and images.
 
 ### Setup Steps:
 
-1. **Create Bucket**:
+1. **Create Buckets** (two separate buckets for different environments):
+   
+   **For Development/Staging:**
    - Go to: https://cloud.digitalocean.com/spaces
    - Click **"Create a Space"**
    - Region: **Singapore (sgp1)**
-   - Name: `easyescrow-storage`
+   - Name: `easyescrow-test`
    - Enable CDN: Yes (optional)
    - File Listing: Private
    - Click **Create**
+   
+   **For Production:**
+   - Repeat the above steps
+   - Name: `easyescrow-storage`
 
 2. **Generate Access Keys**:
    - Go to API → **Spaces Keys**
@@ -131,13 +139,24 @@ S3-compatible object storage for files, documents, and images.
      - **Secret Key**
 
 3. **Environment Variables**:
-```bash
-SPACES_ENDPOINT=https://sgp1.digitaloceanspaces.com
-SPACES_REGION=sgp1
-SPACES_BUCKET=easyescrow-storage
-SPACES_ACCESS_KEY_ID=DO00XXXXXXXXXXXXXXXXX
-SPACES_SECRET_ACCESS_KEY=your_secret_key_here
-```
+
+   **Development/Staging:**
+   ```bash
+   SPACES_ENDPOINT=https://sgp1.digitaloceanspaces.com
+   SPACES_REGION=sgp1
+   SPACES_BUCKET=easyescrow-test
+   SPACES_ACCESS_KEY_ID=YOUR_DEV_ACCESS_KEY_ID
+   SPACES_SECRET_ACCESS_KEY=YOUR_DEV_SECRET_ACCESS_KEY
+   ```
+   
+   **Production:**
+   ```bash
+   SPACES_ENDPOINT=https://sgp1.digitaloceanspaces.com
+   SPACES_REGION=sgp1
+   SPACES_BUCKET=easyescrow-storage
+   SPACES_ACCESS_KEY_ID=DO00XXXXXXXXXXXXXXXXX
+   SPACES_SECRET_ACCESS_KEY=your_secret_key_here
+   ```
 
 **Documentation**: See `docs/SPACES_SETUP.md`
 
