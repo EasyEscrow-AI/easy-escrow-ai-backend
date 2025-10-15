@@ -24,16 +24,17 @@ const app: Application = express();
 const PORT = process.env.PORT || 3000;
 
 // Initialize orchestrator instances (before route handlers)
+// Use environment-based intervals to allow tuning in production
 const monitoringOrchestrator = getMonitoringOrchestrator({
   autoRestart: true,
   maxRestarts: 5,
   restartDelayMs: 5000,
-  healthCheckIntervalMs: 30000,
-  metricsIntervalMs: 60000,
+  healthCheckIntervalMs: parseInt(process.env.HEALTH_CHECK_INTERVAL_MS || '60000', 10), // Increased from 30s to 60s
+  metricsIntervalMs: parseInt(process.env.METRICS_INTERVAL_MS || '120000', 10), // Increased from 60s to 120s
 });
 
 const expiryCancellationOrchestrator = getExpiryCancellationOrchestrator({
-  expiryCheckIntervalMs: 60000, // Check every minute
+  expiryCheckIntervalMs: parseInt(process.env.EXPIRY_CHECK_INTERVAL_MS || '300000', 10), // Increased from 60s to 5min
   autoProcessRefunds: true,
   refundProcessingBatchSize: 10,
   enableMonitoring: true,
