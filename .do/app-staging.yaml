@@ -124,14 +124,6 @@ features:
 alerts:
   - rule: DEPLOYMENT_FAILED
   - rule: DOMAIN_FAILED
-  - rule: CPU_UTILIZATION
-    value: 85
-  - rule: MEM_UTILIZATION
-    value: 85
-  - rule: RESTART_COUNT
-    value: 5
-  - rule: RESPONSE_TIME
-    value: 3000  # 3 seconds
 
 # ============================================
 # Notes

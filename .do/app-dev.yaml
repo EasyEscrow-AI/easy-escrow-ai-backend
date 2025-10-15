@@ -22,14 +22,8 @@ services:
     # GitHub repository configuration
     github:
       repo: VENTURE-AI-LABS/easy-escrow-ai-backend
-      branch: develop  # or feature branches
-      deploy_on_push: true
-    
-    # Build configuration
-    build_command: npm run build
-    
-    # Runtime configuration
-    run_command: npm start
+      branch: master
+      deploy_on_push: false  # Manual deployments for DEV
     
     # Use Dockerfile for consistency
     dockerfile_path: Dockerfile
@@ -107,10 +101,6 @@ features:
 
 alerts:
   - rule: DEPLOYMENT_FAILED
-  - rule: CPU_UTILIZATION
-    value: 90
-  - rule: MEM_UTILIZATION
-    value: 90
 
 # ============================================
 # Notes
