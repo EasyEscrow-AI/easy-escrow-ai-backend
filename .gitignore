@@ -170,3 +170,7 @@ solana-install.sh
 deployment-info.txt
 
 /src/generated/prisma
+
+# Devnet environment files with private keys
+scripts/.env.devnet
+.env.devnet
