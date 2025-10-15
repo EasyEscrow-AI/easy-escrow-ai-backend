@@ -138,11 +138,13 @@ if (-not $config.wallets.sender) {
 
 $senderAddress = $config.wallets.sender
 $receiverAddress = $config.wallets.receiver
+$adminAddress = $config.wallets.admin
 $feeCollectorAddress = $config.wallets.feeCollector
 
 Write-Host "Wallet Addresses:" -ForegroundColor Yellow
 Write-Host "  Sender:       $senderAddress" -ForegroundColor White
 Write-Host "  Receiver:     $receiverAddress" -ForegroundColor White
+Write-Host "  Admin:        $adminAddress" -ForegroundColor White
 Write-Host "  FeeCollector: $feeCollectorAddress" -ForegroundColor White
 Write-Host ""
 
@@ -155,11 +157,13 @@ Write-Host ""
 
 $senderBalance = solana balance $senderAddress --url devnet 2>&1
 $receiverBalance = solana balance $receiverAddress --url devnet 2>&1
+$adminBalance = solana balance $adminAddress --url devnet 2>&1
 $feeCollectorBalance = solana balance $feeCollectorAddress --url devnet 2>&1
 
 Write-Host "Current SOL Balances:" -ForegroundColor Yellow
 Write-Host "  Sender:       $senderBalance" -ForegroundColor Gray
 Write-Host "  Receiver:     $receiverBalance" -ForegroundColor Gray
+Write-Host "  Admin:        $adminBalance" -ForegroundColor Gray
 Write-Host "  FeeCollector: $feeCollectorBalance" -ForegroundColor Gray
 Write-Host ""
 
@@ -177,6 +181,11 @@ if ($receiverBalance -match "(\d+\.?\d*)") {
     if ($receiverSOL -lt $minBalance) { $lowBalanceWallets += "Receiver" }
 }
 
+if ($adminBalance -match "(\d+\.?\d*)") {
+    $adminSOL = [decimal]$Matches[1]
+    if ($adminSOL -lt $minBalance) { $lowBalanceWallets += "Admin" }
+}
+
 if ($feeCollectorBalance -match "(\d+\.?\d*)") {
     $feeCollectorSOL = [decimal]$Matches[1]
     if ($feeCollectorSOL -lt $minBalance) { $lowBalanceWallets += "FeeCollector" }
@@ -187,7 +196,7 @@ if ($lowBalanceWallets.Count -gt 0) {
     Write-Host "   Wallets below $minBalance SOL: $($lowBalanceWallets -join ', ')" -ForegroundColor Yellow
     Write-Host ""
     Write-Host "   Fund wallets using:" -ForegroundColor White
-    Write-Host "   .\scripts\fund-devnet-wallets.ps1 -Buyer $receiverAddress -Seller $senderAddress -Admin $feeCollectorAddress" -ForegroundColor Green
+    Write-Host "   .\scripts\fund-devnet-wallets.ps1 -Buyer $receiverAddress -Seller $senderAddress -Admin $adminAddress -FeeCollector $feeCollectorAddress" -ForegroundColor Green
     Write-Host ""
     
     $continueLowBalance = Read-Host "Continue anyway? (y/n)"
@@ -224,16 +233,22 @@ Write-Host ""
 
 Write-Host "Next steps:" -ForegroundColor Yellow
 Write-Host "  1. Ensure wallets are funded with SOL (if not already done):" -ForegroundColor White
-Write-Host "     .\scripts\fund-devnet-wallets.ps1 -Buyer $receiverAddress -Seller $senderAddress -Admin $feeCollectorAddress" -ForegroundColor Green
+Write-Host "     .\scripts\fund-devnet-wallets.ps1 -Buyer $receiverAddress -Seller $senderAddress -Admin $adminAddress -FeeCollector $feeCollectorAddress" -ForegroundColor Green
 Write-Host ""
 Write-Host "  2. Run the E2E test (this will complete the setup):" -ForegroundColor White
 Write-Host "     npm run test:e2e:devnet:nft-swap" -ForegroundColor Green
 Write-Host ""
 Write-Host "  3. The test will create:" -ForegroundColor White
 Write-Host "     - USDC mint" -ForegroundColor Gray
-Write-Host "     - Token accounts" -ForegroundColor Gray
+Write-Host "     - Token accounts (4 wallets)" -ForegroundColor Gray
 Write-Host "     - Test NFT" -ForegroundColor Gray
 Write-Host "     - Execute swap and verify results" -ForegroundColor Gray
+Write-Host ""
+Write-Host "Note: 4 wallets for proper role separation:" -ForegroundColor Yellow
+Write-Host "  Sender       - NFT owner (seller)" -ForegroundColor Gray
+Write-Host "  Receiver     - USDC payer (buyer)" -ForegroundColor Gray
+Write-Host "  Admin        - Escrow operations" -ForegroundColor Gray
+Write-Host "  FeeCollector - Treasury (receive-only, 1% fees)" -ForegroundColor Gray
 Write-Host ""
 
 Write-Host "============================================" -ForegroundColor Cyan

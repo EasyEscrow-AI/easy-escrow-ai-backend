@@ -22,6 +22,7 @@ import * as path from 'path';
 export interface TokenAccounts {
   sender: PublicKey;
   receiver: PublicKey;
+  admin: PublicKey;
   feeCollector: PublicKey;
 }
 
@@ -40,6 +41,7 @@ export interface TokenSetupConfig {
 export interface TokenBalances {
   sender: number;
   receiver: number;
+  admin: number;
   feeCollector: number;
 }
 
@@ -83,7 +85,7 @@ export async function createDevnetUSDCMint(
 
 /**
  * Setup token accounts for all wallets
- * Creates associated token accounts (ATA) for sender, receiver, and fee collector
+ * Creates associated token accounts (ATA) for sender, receiver, admin, and fee collector
  * 
  * @param connection - Solana connection
  * @param mint - Token mint address
@@ -97,6 +99,7 @@ export async function setupTokenAccounts(
   wallets: {
     sender: Keypair;
     receiver: Keypair;
+    admin: Keypair;
     feeCollector: Keypair;
   },
   payer: Keypair
@@ -121,6 +124,14 @@ export async function setupTokenAccounts(
     );
     console.log(`  ✅ Receiver token account: ${receiverAccount.address.toString()}`);
 
+    const adminAccount = await getOrCreateAssociatedTokenAccount(
+      connection,
+      payer,
+      mint,
+      wallets.admin.publicKey
+    );
+    console.log(`  ✅ Admin token account: ${adminAccount.address.toString()}`);
+
     const feeCollectorAccount = await getOrCreateAssociatedTokenAccount(
       connection,
       payer,
@@ -132,6 +143,7 @@ export async function setupTokenAccounts(
     return {
       sender: senderAccount.address,
       receiver: receiverAccount.address,
+      admin: adminAccount.address,
       feeCollector: feeCollectorAccount.address,
     };
   } catch (error) {
@@ -214,15 +226,17 @@ export async function checkTokenBalances(
   tokenAccounts: TokenAccounts
 ): Promise<TokenBalances> {
   try {
-    const [senderBalance, receiverBalance, feeCollectorBalance] = await Promise.all([
+    const [senderBalance, receiverBalance, adminBalance, feeCollectorBalance] = await Promise.all([
       getTokenBalance(connection, tokenAccounts.sender),
       getTokenBalance(connection, tokenAccounts.receiver),
+      getTokenBalance(connection, tokenAccounts.admin),
       getTokenBalance(connection, tokenAccounts.feeCollector),
     ]);
 
     return {
       sender: senderBalance,
       receiver: receiverBalance,
+      admin: adminBalance,
       feeCollector: feeCollectorBalance,
     };
   } catch (error) {
@@ -242,6 +256,7 @@ export async function displayTokenBalances(
   console.log('💰 Current USDC Token Balances:');
   console.log(`  Sender:       ${balances.sender.toFixed(6)} USDC`);
   console.log(`  Receiver:     ${balances.receiver.toFixed(6)} USDC`);
+  console.log(`  Admin:        ${balances.admin.toFixed(6)} USDC`);
   console.log(`  FeeCollector: ${balances.feeCollector.toFixed(6)} USDC\n`);
 }
 
@@ -250,7 +265,7 @@ export async function displayTokenBalances(
  * Saves configuration to devnet-config.json for reuse
  * 
  * @param connection - Solana connection
- * @param wallets - All wallet keypairs
+ * @param wallets - All wallet keypairs (4 wallets)
  * @param initialReceiverAmount - Amount of USDC to mint to receiver (default 0.5)
  * @returns Token setup configuration
  */
@@ -259,6 +274,7 @@ export async function setupDevnetTokens(
   wallets: {
     sender: Keypair;
     receiver: Keypair;
+    admin: Keypair;
     feeCollector: Keypair;
   },
   initialReceiverAmount: number = 0.5
@@ -310,6 +326,7 @@ export async function setupDevnetTokens(
           config.tokenAccounts = {
             sender: tokenAccounts.sender.toString(),
             receiver: tokenAccounts.receiver.toString(),
+            admin: tokenAccounts.admin.toString(),
             feeCollector: tokenAccounts.feeCollector.toString(),
           };
           fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
@@ -352,6 +369,7 @@ export async function setupDevnetTokens(
     config.tokenAccounts = {
       sender: tokenAccounts.sender.toString(),
       receiver: tokenAccounts.receiver.toString(),
+      admin: tokenAccounts.admin.toString(),
       feeCollector: tokenAccounts.feeCollector.toString(),
     };
     config.updatedAt = new Date().toISOString();
@@ -392,6 +410,7 @@ export function loadTokenConfig(): TokenSetupConfig | undefined {
       tokenAccounts: {
         sender: new PublicKey(config.tokenAccounts.sender),
         receiver: new PublicKey(config.tokenAccounts.receiver),
+        admin: new PublicKey(config.tokenAccounts.admin),
         feeCollector: new PublicKey(config.tokenAccounts.feeCollector),
       },
       decimals: 6,

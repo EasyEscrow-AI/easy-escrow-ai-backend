@@ -1435,11 +1435,242 @@
             "testStrategy": "Test all service connections from App Platform, verify private networking isolation, validate environment variable access, and test connection failover scenarios"
           }
         ]
+      },
+      {
+        "id": 43,
+        "title": "Migrate from Upstash to Redis Cloud for Bull Queue Compatibility",
+        "description": "Migrate Redis infrastructure from Upstash to Redis Cloud (redis.io) due to Bull job queue incompatibility with Upstash's Lua script limitations. Redis Cloud provides full Redis compatibility required for Bull's dynamic key generation in Lua scripts.",
+        "details": "## Problem\n- Bull job queues are fundamentally incompatible with Upstash Redis\n- Upstash requires all Lua script keys as explicit arguments, but Bull generates dynamic keys inside scripts\n- Current error rate: 16.5% (EPIPE/ECONNRESET)\n- Deployments failing at 4/6 (runtime errors, no logs)\n- Jobs processing unreliably\n\n## Solution\nMigrate to Redis Cloud Free Tier (redis.io):\n- Full Bull/BullMQ compatibility\n- 30GB storage, 30 connections (free forever)\n- AWS Singapore region (ap-southeast-1) for low latency to DO apps\n- IP allowlist + TLS for cross-provider security\n- AOF persistence for data reliability\n\n## Expected Results\n- 0% error rate (down from 16.5%)\n- Successful deployments (6/6 phases)\n- Reliable Bull queue processing\n- All 3 Bull connections working (client, subscriber, bclient)\n\n## Security Requirements\n- TLS encryption (rediss:// protocol)\n- IP allowlist configured for DigitalOcean app IPs\n- Strong password authentication\n- Regular password rotation (monthly)\n\n## Environments\n- **Dev**: Free tier (30GB) - easyescrow-dev\n- **Staging**: Free tier or Fixed 250MB ($5/mo) - easyescrow-staging\n- **Production**: Fixed 1GB ($12/mo) with HA - easyescrow-prod",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [],
+        "priority": "medium",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Set up Redis Cloud account and provision DEV database",
+            "description": "Create Redis Cloud account and provision development database in AWS Singapore region with free tier specifications",
+            "dependencies": [],
+            "details": "Sign up for Redis Cloud account at redis.io, create new subscription with Free tier (30GB storage, 30 connections), select AWS ap-southeast-1 (Singapore) region for low latency to DigitalOcean apps, name database 'easyescrow-dev', configure basic settings and obtain connection details",
+            "status": "done",
+            "testStrategy": "Verify database is accessible and shows correct region/tier in Redis Cloud dashboard"
+          },
+          {
+            "id": 2,
+            "title": "Configure security settings for DEV database",
+            "description": "Set up TLS encryption, IP allowlist for DigitalOcean IPs, and strong password authentication for development database",
+            "dependencies": [
+              1
+            ],
+            "details": "Enable TLS encryption (rediss:// protocol), configure IP allowlist with DigitalOcean app IP ranges, set strong password with minimum 16 characters including special characters, enable AOF persistence for data reliability, document all security configurations",
+            "status": "done",
+            "testStrategy": "Test connection with TLS from allowed IP and verify rejection from non-allowlisted IP"
+          },
+          {
+            "id": 3,
+            "title": "Perform local connection testing to DEV database",
+            "description": "Test Redis Cloud DEV database connectivity from local development environment using Bull queue operations",
+            "dependencies": [
+              2
+            ],
+            "details": "Create test script to connect using rediss:// protocol, test basic Redis operations (SET/GET), test Bull queue creation and job processing, verify all 3 Bull connections work (client, subscriber, bclient), measure latency and connection stability",
+            "status": "done",
+            "testStrategy": "Run comprehensive Bull queue test suite with job creation, processing, and completion verification"
+          },
+          {
+            "id": 4,
+            "title": "Remove Upstash-specific workarounds from codebase",
+            "description": "Clean up code by removing Upstash compatibility workarounds and restore standard Bull queue configurations",
+            "dependencies": [
+              3
+            ],
+            "details": "Remove any Upstash-specific Lua script modifications, restore original Bull queue configurations, remove custom key handling workarounds, update Redis connection logic to use standard Redis Cloud connection string format, ensure all Bull features are re-enabled",
+            "status": "done",
+            "testStrategy": "Code review to verify all Upstash workarounds removed and unit tests pass with standard Bull configuration"
+          },
+          {
+            "id": 5,
+            "title": "Deploy to DEV environment and verify functionality",
+            "description": "Deploy updated application to DEV environment using Redis Cloud and verify 0% error rate with reliable Bull queue processing",
+            "dependencies": [
+              4
+            ],
+            "details": "Update DEV environment variables with Redis Cloud connection string, deploy application, monitor error rates for 24 hours, verify all 6 deployment phases complete successfully, test Bull queue job processing reliability, confirm EPIPE/ECONNRESET errors eliminated",
+            "status": "done",
+            "testStrategy": "Monitor application logs for 24 hours, verify 0% error rate, test all Bull queue operations, confirm successful deployment phases"
+          },
+          {
+            "id": 6,
+            "title": "Document DEV database connection details securely",
+            "description": "Securely document Redis Cloud DEV database connection details, credentials, and configuration settings",
+            "dependencies": [
+              5
+            ],
+            "details": "Store connection strings, passwords, and configuration details in secure credential management system, document IP allowlist settings, create runbook for database access and troubleshooting, update team documentation with Redis Cloud specifics for DEV environment",
+            "status": "done",
+            "testStrategy": "Verify documentation completeness and team can access connection details through secure channels"
+          },
+          {
+            "id": 7,
+            "title": "Provision STAGING database in Redis Cloud",
+            "description": "Create staging environment database with appropriate tier selection (Free tier or Fixed 250MB)",
+            "dependencies": [
+              6
+            ],
+            "details": "Evaluate staging requirements and provision either Free tier (30GB) or Fixed 250MB ($5/mo) database named 'easyescrow-staging' in AWS Singapore region, configure similar to DEV but with staging-specific settings, obtain connection details",
+            "status": "done",
+            "testStrategy": "Verify staging database is provisioned correctly and accessible from staging environment"
+          },
+          {
+            "id": 8,
+            "title": "Deploy to STAGING environment and verify",
+            "description": "Deploy application to staging environment using Redis Cloud staging database and verify functionality",
+            "dependencies": [
+              7
+            ],
+            "details": "Configure staging environment variables with Redis Cloud staging connection string, deploy application, test Bull queue functionality, verify error rates remain at 0%, confirm all deployment phases complete successfully, run staging test suite",
+            "status": "done",
+            "testStrategy": "Execute full staging test suite, monitor error rates, verify Bull queue processing reliability"
+          },
+          {
+            "id": 9,
+            "title": "Provision PRODUCTION database with high availability",
+            "description": "Create production database with Fixed 1GB tier and high availability configuration for maximum reliability",
+            "dependencies": [
+              8
+            ],
+            "details": "Provision Fixed 1GB ($12/mo) database named 'easyescrow-prod' in AWS Singapore region, enable high availability (HA) configuration, configure production-grade settings for maximum performance and reliability, obtain connection details",
+            "status": "done",
+            "testStrategy": "Verify production database shows HA configuration and meets performance requirements"
+          },
+          {
+            "id": 10,
+            "title": "Configure production security with strict settings",
+            "description": "Implement strict security configuration for production database including IP allowlist and strong authentication",
+            "dependencies": [
+              9
+            ],
+            "details": "Configure strict IP allowlist with only production DigitalOcean app IPs, set extra-strong password (20+ characters), enable TLS encryption, configure AOF persistence, set up monthly password rotation schedule, implement additional security monitoring",
+            "status": "done",
+            "testStrategy": "Test production security by verifying access restrictions and TLS encryption functionality"
+          },
+          {
+            "id": 11,
+            "title": "Deploy to PRODUCTION and verify zero error rate",
+            "description": "Deploy application to production environment using Redis Cloud production database and verify complete elimination of errors",
+            "dependencies": [
+              10
+            ],
+            "details": "Update production environment variables with Redis Cloud production connection string, perform blue-green deployment, monitor error rates continuously, verify all 6 deployment phases complete successfully, confirm Bull queue processing reliability at scale, validate 0% error rate achievement",
+            "status": "done",
+            "testStrategy": "Monitor production metrics for 48 hours, verify 0% error rate, test Bull queue under production load, confirm all deployment phases successful"
+          },
+          {
+            "id": 12,
+            "title": "Update documentation to replace Upstash references",
+            "description": "Comprehensively update all project documentation to replace Upstash references with Redis Cloud information",
+            "dependencies": [
+              11
+            ],
+            "details": "Update README files, deployment guides, troubleshooting documentation, architecture diagrams, and team runbooks to replace all Upstash references with Redis Cloud information, document new connection procedures, update security guidelines, create Redis Cloud specific troubleshooting guides",
+            "status": "done",
+            "testStrategy": "Review all documentation for completeness and accuracy, verify team can follow new Redis Cloud procedures"
+          }
+        ]
+      },
+      {
+        "id": 44,
+        "title": "E2E Devnet Test: NFT-to-USDC Swap with Fee Collection",
+        "description": "Create end-to-end test on Solana devnet for NFT swap with USDC payment and fee collection. Test the complete flow of escrow service with 3 wallets: sender (NFT owner), receiver (USDC payer), and fee collector (1% USDC fee).",
+        "details": "## Test Scenario\nHappy path test for NFT-to-USDC swap on devnet with 3 wallets:\n- **Sender Wallet**: Owns NFT, receives USDC payment (minus fee)\n- **Receiver Wallet**: Pays USDC, receives NFT\n- **Fee Collector Wallet**: Receives 1% fee in USDC\n\n## Prerequisites & Setup\n\n### 1. Wallet Setup\n- Verify 3 test wallets exist and are funded with SOL (for transaction fees)\n- Check existing setup in `scripts/fund-devnet-wallets.ps1`\n- Small values: Use ~0.1 USDC for swap, 0.001 USDC for fee\n\n### 2. USDC Token Setup\n**Challenge**: Wallets funded with SOL need USDC tokens\n**Solutions**:\na) Use Solana Devnet USDC faucet (if available)\nb) Mint devnet USDC tokens using spl-token CLI:\n   - Create USDC token mint (or use existing devnet USDC mint)\n   - Mint tokens to receiver wallet (~0.2 USDC for testing)\n   - Mint tokens to fee collector for initial setup verification\nc) Use Solana devnet faucet to airdrop devnet USDC\n\n**Recommended**: Use SPL Token CLI to mint test USDC tokens on devnet\n\n### 3. NFT Creation\n**Challenge**: Create NFT in sender's wallet\n**Solutions**:\na) Use Metaplex CLI to create test NFT collection and mint\nb) Use @metaplex-foundation/js SDK programmatically:\n   ```typescript\n   import { Metaplex } from '@metaplex-foundation/js';\n   const metaplex = Metaplex.make(connection);\n   const nft = await metaplex.nfts().create({ ... });\n   ```\nc) Leverage existing `scripts/setup-nft-collection.ps1` if available\n\n**Recommended**: Use Metaplex JS SDK within test setup to programmatically create NFT\n\n## Test Implementation Steps\n\n### Phase 1: Test Setup\n1. Load/verify 3 devnet wallets (sender, receiver, fee-collector)\n2. Ensure all wallets have SOL for transaction fees (~0.1 SOL each)\n3. Create/mint test NFT in sender wallet using Metaplex\n4. Mint devnet USDC tokens to receiver wallet (0.2 USDC)\n5. Verify initial balances\n\n### Phase 2: Create Escrow\n1. Sender creates escrow transaction via API\n2. Deposits NFT into escrow program\n3. Specifies USDC amount (0.1 USDC) and receiver wallet\n4. System calculates 1% fee (0.001 USDC)\n5. Verify escrow state in on-chain program\n\n### Phase 3: Execute Swap\n1. Receiver accepts escrow via API\n2. Transfers USDC (0.1 USDC) to escrow\n3. System distributes:\n   - 99% (0.099 USDC) to sender\n   - 1% (0.001 USDC) to fee collector\n4. NFT transferred to receiver\n5. Escrow marked as completed\n\n### Phase 4: Verification\n1. Verify NFT ownership changed to receiver\n2. Verify sender received 0.099 USDC\n3. Verify fee collector received 0.001 USDC\n4. Verify escrow status is COMPLETED\n5. Verify all transactions on Solana explorer\n\n## Technical Considerations\n\n### Token Setup Commands (Reference)\n```bash\n# Create USDC mint on devnet (or use existing)\nspl-token create-token --decimals 6\n\n# Create token account for receiver\nspl-token create-account <MINT_ADDRESS>\n\n# Mint USDC to receiver\nspl-token mint <MINT_ADDRESS> 0.2 <RECEIVER_TOKEN_ACCOUNT>\n```\n\n### NFT Creation (Reference)\n```typescript\nconst nft = await metaplex.nfts().create({\n  uri: 'https://arweave.net/mock-metadata',\n  name: 'Test NFT for E2E',\n  sellerFeeBasisPoints: 0,\n  creators: [{ address: senderWallet.publicKey, share: 100 }],\n});\n```\n\n## Files to Create/Modify\n- `tests/e2e/devnet-nft-usdc-swap.test.ts` - Main test file\n- `tests/helpers/devnet-token-setup.ts` - Helper for USDC minting\n- `tests/helpers/devnet-nft-setup.ts` - Helper for NFT creation\n- `tests/fixtures/devnet-wallets.ts` - Wallet management\n\n## Success Criteria\n✅ All 3 wallets set up with SOL\n✅ Test NFT created in sender wallet\n✅ Receiver wallet has USDC tokens\n✅ Escrow created successfully on-chain\n✅ NFT transferred to receiver\n✅ USDC payment distributed correctly (99% to sender, 1% to fee collector)\n✅ All balances verified post-transaction\n✅ Test runs reliably on devnet\n✅ Transaction costs stay under 0.05 SOL total\n\n## Scope\n**Included**: Happy path only - successful swap with all conditions met\n**Excluded**: Error paths, cancellations, timeouts (future tasks)",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create devnet wallet management helper",
+            "description": "Create helper module to load and manage 3 test wallets for devnet testing",
+            "dependencies": [],
+            "details": "Create tests/helpers/devnet-wallet-manager.ts that loads sender, receiver, and fee collector wallets from keypair files or environment variables. Include functions to check SOL balances, ensure minimum balance for transaction fees (~0.1 SOL each), and provide wallet instances for testing. Handle wallet loading errors gracefully.",
+            "status": "done",
+            "testStrategy": "Unit tests to verify wallet loading, balance checking, and error handling for missing wallets"
+          },
+          {
+            "id": 2,
+            "title": "Create USDC token setup helper",
+            "description": "Create helper module for USDC token operations on devnet using @solana/spl-token",
+            "dependencies": [
+              1
+            ],
+            "details": "Create tests/helpers/devnet-token-setup.ts using @solana/spl-token to programmatically create USDC mint, create token accounts for wallets, and mint test USDC tokens. Include functions to mint 0.2 USDC to receiver wallet, create associated token accounts, and verify token balances. Handle devnet-specific token operations.",
+            "status": "done",
+            "testStrategy": "Integration tests on devnet to verify token minting, account creation, and balance verification"
+          },
+          {
+            "id": 3,
+            "title": "Create NFT creation helper",
+            "description": "Create helper module for NFT creation using @metaplex-foundation/js SDK",
+            "dependencies": [
+              1
+            ],
+            "details": "Create tests/helpers/devnet-nft-setup.ts using @metaplex-foundation/js SDK to create test NFTs in sender wallet. Include functions to create NFT collection, mint individual NFTs with metadata, and verify NFT ownership. Use simple metadata structure with name 'Test NFT for E2E' and mock URI for devnet testing.",
+            "status": "done",
+            "testStrategy": "Integration tests on devnet to verify NFT creation, metadata upload, and ownership verification"
+          },
+          {
+            "id": 4,
+            "title": "Create PowerShell setup script",
+            "description": "Create one-time setup script for devnet USDC mint and token distribution",
+            "dependencies": [
+              2
+            ],
+            "details": "Create scripts/setup-devnet-nft-usdc.ps1 that performs one-time setup of USDC mint on devnet and distributes tokens to test wallets. Script should create or use existing devnet USDC mint, create token accounts for all 3 wallets, mint initial USDC tokens, and verify setup completion. Include error handling and status reporting.",
+            "status": "done",
+            "testStrategy": "Manual execution on devnet with verification of mint creation and token distribution"
+          },
+          {
+            "id": 5,
+            "title": "Write main E2E test file",
+            "description": "Create comprehensive E2E test orchestrating complete NFT-to-USDC swap flow",
+            "dependencies": [
+              1,
+              2,
+              3
+            ],
+            "details": "Create tests/e2e/devnet-nft-usdc-swap.test.ts that orchestrates the complete happy path: setup wallets and tokens, create NFT in sender wallet, create escrow via API, deposit NFT, receiver pays USDC, verify fee distribution (99% to sender, 1% to fee collector), verify NFT transfer, and validate final balances. Include comprehensive assertions and on-chain state verification.",
+            "status": "done",
+            "testStrategy": "End-to-end test on devnet with real transactions, verifying complete swap flow and all balance changes"
+          },
+          {
+            "id": 6,
+            "title": "Add dependencies and update package.json",
+            "description": "Install required dependencies and add test script configuration",
+            "dependencies": [],
+            "details": "Install @solana/spl-token and @metaplex-foundation/js dependencies via npm. Update package.json with new test script for devnet E2E testing. Ensure version compatibility with existing Solana dependencies. Add devnet-specific test script that sets appropriate environment variables and timeouts for devnet testing.",
+            "status": "done",
+            "testStrategy": "Verify dependency installation and test script execution without errors"
+          },
+          {
+            "id": 7,
+            "title": "Test execution and documentation",
+            "description": "Execute complete test suite and create comprehensive documentation",
+            "dependencies": [
+              4,
+              5,
+              6
+            ],
+            "details": "Run the complete E2E test on devnet, verify all transactions on Solana explorer, document test results including transaction signatures and wallet addresses. Create completion documentation with test execution steps, results verification, and troubleshooting guide. Ensure test runs reliably and transaction costs stay under 0.05 SOL total.",
+            "status": "done",
+            "testStrategy": "Full test execution with manual verification of blockchain transactions and comprehensive result documentation"
+          }
+        ]
       }
     ],
     "metadata": {
       "created": "2025-10-13T01:02:36.190Z",
-      "updated": "2025-10-15T01:34:10.565Z",
+      "updated": "2025-10-15T10:26:35.386Z",
       "description": "Tasks for master context"
     }
   }

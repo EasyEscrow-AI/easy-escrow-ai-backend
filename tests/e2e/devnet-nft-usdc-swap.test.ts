@@ -83,7 +83,7 @@ describe('E2E: NFT-to-USDC Swap on Devnet (Happy Path)', function () {
       expect(version).to.have.property('solana-core');
     });
 
-    it('should load and verify 3 devnet wallets with sufficient SOL', async function () {
+    it('should load and verify 4 devnet wallets with sufficient SOL', async function () {
       console.log('🔑 Loading devnet wallets...\n');
 
       // Load wallets (generates new ones if not found)
@@ -96,9 +96,11 @@ describe('E2E: NFT-to-USDC Swap on Devnet (Happy Path)', function () {
 
       expect(wallets.sender).to.exist;
       expect(wallets.receiver).to.exist;
+      expect(wallets.admin).to.exist;
       expect(wallets.feeCollector).to.exist;
       expect(balances.sender).to.be.at.least(minSOL);
       expect(balances.receiver).to.be.at.least(minSOL);
+      expect(balances.admin).to.be.at.least(minSOL);
       expect(balances.feeCollector).to.be.at.least(minSOL);
 
       console.log(`✅ All wallets verified with minimum ${minSOL} SOL\n`);
@@ -174,11 +176,13 @@ describe('E2E: NFT-to-USDC Swap on Devnet (Happy Path)', function () {
       console.log('Initial SOL Balances:');
       console.log(`  Sender:       ${solBalances.sender.toFixed(4)} SOL`);
       console.log(`  Receiver:     ${solBalances.receiver.toFixed(4)} SOL`);
+      console.log(`  Admin:        ${solBalances.admin.toFixed(4)} SOL`);
       console.log(`  FeeCollector: ${solBalances.feeCollector.toFixed(4)} SOL\n`);
 
       console.log('Initial USDC Balances:');
       console.log(`  Sender:       ${usdcBalances.sender.toFixed(6)} USDC`);
       console.log(`  Receiver:     ${usdcBalances.receiver.toFixed(6)} USDC`);
+      console.log(`  Admin:        ${usdcBalances.admin.toFixed(6)} USDC`);
       console.log(`  FeeCollector: ${usdcBalances.feeCollector.toFixed(6)} USDC\n`);
 
       expect(initialBalances).to.exist;
@@ -198,6 +202,8 @@ describe('E2E: NFT-to-USDC Swap on Devnet (Happy Path)', function () {
       console.log('   Body: {');
       console.log(`     sellerAddress: "${wallets.sender.publicKey.toString()}",`);
       console.log(`     buyerAddress: "${wallets.receiver.publicKey.toString()}",`);
+      console.log(`     adminAddress: "${wallets.admin.publicKey.toString()}",`);
+      console.log(`     feeCollectorAddress: "${wallets.feeCollector.publicKey.toString()}",`);
       console.log(`     nftMint: "${nft.mint.toString()}",`);
       console.log(`     usdcMint: "${tokenConfig.usdcMint.toString()}",`);
       console.log(`     amount: ${SWAP_AMOUNT_USDC},`);
@@ -312,7 +318,8 @@ describe('E2E: NFT-to-USDC Swap on Devnet (Happy Path)', function () {
       console.log('Wallets:');
       console.log(`  Sender:       ${getExplorerUrl(wallets.sender.publicKey.toString())}`);
       console.log(`  Receiver:     ${getExplorerUrl(wallets.receiver.publicKey.toString())}`);
-      console.log(`  FeeCollector: ${getExplorerUrl(wallets.feeCollector.publicKey.toString())}\n`);
+      console.log(`  Admin:        ${getExplorerUrl(wallets.admin.publicKey.toString())}`);
+      console.log(`  FeeCollector: ${getExplorerUrl(wallets.feeCollector.publicKey.toString())} (receive-only)\n`);
 
       console.log('Assets:');
       console.log(`  USDC Mint: ${getExplorerUrl(tokenConfig.usdcMint.toString())}`);
@@ -336,12 +343,14 @@ describe('E2E: NFT-to-USDC Swap on Devnet (Happy Path)', function () {
 
       const senderCost = initialBalances.sol.sender - finalSolBalances.sender;
       const receiverCost = initialBalances.sol.receiver - finalSolBalances.receiver;
+      const adminCost = initialBalances.sol.admin - finalSolBalances.admin;
       const feeCollectorCost = initialBalances.sol.feeCollector - finalSolBalances.feeCollector;
-      const totalCost = senderCost + receiverCost + feeCollectorCost;
+      const totalCost = senderCost + receiverCost + adminCost + feeCollectorCost;
 
       console.log('SOL Transaction Costs:');
       console.log(`  Sender:       ${senderCost.toFixed(6)} SOL`);
       console.log(`  Receiver:     ${receiverCost.toFixed(6)} SOL`);
+      console.log(`  Admin:        ${adminCost.toFixed(6)} SOL`);
       console.log(`  FeeCollector: ${feeCollectorCost.toFixed(6)} SOL`);
       console.log(`  Total:        ${totalCost.toFixed(6)} SOL\n`);
 
