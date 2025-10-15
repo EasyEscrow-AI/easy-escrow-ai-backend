@@ -23,6 +23,7 @@
     "test:on-chain": "anchor test --skip-local-validator",
     "test:on-chain:comprehensive": "mocha --require ts-node/register 'tests/on-chain/**/*.test.ts' --timeout 60000",
     "test:e2e:devnet": "mocha --require ts-node/register 'tests/e2e/**/*.test.ts' --timeout 120000",
+    "test:e2e:devnet:nft-swap": "mocha --require ts-node/register tests/e2e/devnet-nft-usdc-swap.test.ts --timeout 180000",
     "test:localnet": "mocha --require ts-node/register 'tests/localnet/**/*.test.ts' --timeout 60000",
     "test:localnet:comprehensive": "mocha --require ts-node/register 'tests/localnet/localnet-comprehensive.test.ts' --timeout 60000",
     "test:coverage": "echo 'Coverage reporting not yet configured'",
@@ -44,6 +45,7 @@
   "license": "ISC",
   "dependencies": {
     "@coral-xyz/anchor": "^0.32.1",
+    "@metaplex-foundation/js": "^0.20.1",
     "@prisma/client": "^6.17.1",
     "@solana/spl-token": "^0.4.14",
     "@solana/web3.js": "^1.98.4",

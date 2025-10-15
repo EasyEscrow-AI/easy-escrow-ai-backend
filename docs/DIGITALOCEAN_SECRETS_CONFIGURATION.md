@@ -105,6 +105,34 @@ openssl rand -hex 32
 openssl rand -base64 32
 ```
 
+### 8. Devnet Wallet Private Keys (For E2E Testing)
+**Description**: Private keys for static devnet test wallets
+
+**Environment Variables**:
+- `DEVNET_SENDER_PRIVATE_KEY` - Sender wallet (NFT owner)
+- `DEVNET_RECEIVER_PRIVATE_KEY` - Receiver wallet (USDC payer)
+- `DEVNET_ADMIN_PRIVATE_KEY` - Admin wallet (escrow operations)
+- `DEVNET_FEE_COLLECTOR_PRIVATE_KEY` - Fee collector wallet (treasury)
+
+**Format**: Base58 encoded private keys
+
+**Static Addresses**:
+- Sender: `CL8c2oMZUq9wdw84MAVGBdhKt6BXfKZb1Hy1Mo1jfyz1`
+- Receiver: `8GDAazp6Vm3avTiMDkaHiTCjMyJRzRF1k9n6w8b85x1m`
+- Admin: `5wwbtUoPpVw7bEWpZj9kp4gZ265uwQuoPxE5145dTdVh`
+- FeeCollector: `C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E`
+
+**Automated Setup**:
+```powershell
+# Set local environment variables first
+.\scripts\set-devnet-env-vars.ps1 -SenderKey <KEY> -ReceiverKey <KEY> -AdminKey <KEY> -FeeCollectorKey <KEY>
+
+# Push to DigitalOcean
+.\scripts\digitalocean\setup-devnet-secrets.ps1 -AppId <APP_ID> -FromEnv
+```
+
+**Note**: Only needed if running E2E tests on deployed environment. Not required for production.
+
 ### 8. API_KEY_SECRET (Optional)
 **Description**: Secret for API key generation and validation
 

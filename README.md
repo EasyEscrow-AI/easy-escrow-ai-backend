@@ -272,7 +272,9 @@ doctl apps create --spec .do/app.yaml
 ```
 
 **Deployment Documentation:**
+- **[Deployment Scripts Guide](docs/DEPLOYMENT_SCRIPTS_GUIDE.md)** - Automated deployment with devnet secrets ⭐ NEW
 - **[Deployment Guide](docs/DEPLOYMENT_GUIDE.md)** - Complete deployment instructions ⭐
+- **[Devnet Deployment Guide](docs/DEVNET_DEPLOYMENT_GUIDE.md)** - E2E testing on devnet ⭐ NEW
 - **[Deployment Summary](docs/DEPLOYMENT_SUMMARY.md)** - Quick reference with credentials
 - [DigitalOcean Setup](docs/DIGITALOCEAN_SETUP.md) - Infrastructure details
 - [Redis Infrastructure](docs/setup/REDIS_INFRASTRUCTURE.md) - Upstash Redis configuration
@@ -398,7 +400,9 @@ See `.env.example` for complete configuration options.
 - [Deposit Monitoring](docs/architecture/DEPOSIT_MONITORING.md) - Deposit monitoring system
 
 **Deployment:**
+- **[Deployment Scripts Guide](docs/DEPLOYMENT_SCRIPTS_GUIDE.md)** - Automated deployment ⭐ NEW
 - **[Deployment Guide](docs/DEPLOYMENT_GUIDE.md)** - Complete deployment guide ⭐
+- **[Devnet Deployment Guide](docs/DEVNET_DEPLOYMENT_GUIDE.md)** - E2E testing setup ⭐ NEW
 - [Docker Deployment](docs/DOCKER_DEPLOYMENT.md) - Docker deployment guide
 - [Migration Guide](docs/MIGRATION_GUIDE.md) - Database migrations
 - [Environment Variables](docs/ENVIRONMENT_VARIABLES.md) - Environment configuration

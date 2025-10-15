@@ -46,25 +46,11 @@ export class QueueService<T extends BaseJobData = BaseJobData> {
       ...queueConfig.defaultJobOptions,
     };
 
-    // Parse Redis URL for Bull-compatible configuration
-    const redisUrl = config.redis.url;
-    const urlMatch = redisUrl.match(/^redis:\/\/([^:]+):([^@]+)@([^:]+):(\d+)/);
-    
-    if (!urlMatch) {
-      throw new Error(`Invalid Redis URL format: ${redisUrl}`);
-    }
-
-    // Bull-compatible Redis configuration (no enableReadyCheck or maxRetriesPerRequest for bclient/subscriber)
-    const redisConfig = {
-      host: urlMatch[3],
-      port: parseInt(urlMatch[4], 10),
-      username: urlMatch[1],
-      password: urlMatch[2],
-      // Bull will handle maxRetriesPerRequest appropriately for each connection type
-    };
+    // Configure Redis connection for Bull with proper TLS and retry options for Upstash
+    const redisConfig = this.getRedisConfig(config.redis.url);
 
     const queueOptions: QueueOptions = {
-      redis: redisConfig, // Pass config object, not URL string
+      redis: redisConfig,
       defaultJobOptions,
       settings: {
         stalledInterval: 30000, // Check for stalled jobs every 30 seconds
@@ -78,6 +64,62 @@ export class QueueService<T extends BaseJobData = BaseJobData> {
     this.queue = new Bull<T>(this.queueName, queueOptions);
 
     this.setupEventHandlers();
+  }
+
+  /**
+   * Parse Redis URL and build configuration with TLS support for Upstash
+   */
+  private getRedisConfig(redisUrl: string): any {
+    if (!redisUrl) {
+      return 'redis://localhost:6379';
+    }
+
+    try {
+      const url = new URL(redisUrl);
+      const isTLS = url.protocol === 'rediss:';
+
+      return {
+        host: url.hostname,
+        port: parseInt(url.port || '6379', 10),
+        password: url.password || undefined,
+        username: url.username || undefined,
+        // TLS configuration for Upstash
+        tls: isTLS ? {
+          // Upstash uses valid certificates, but some environments need this
+          rejectUnauthorized: true,
+        } : undefined,
+        // Robust connection options matching main Redis client
+        maxRetriesPerRequest: 3,
+        enableReadyCheck: true,
+        enableOfflineQueue: true,
+        connectTimeout: 10000,
+        retryStrategy: (times: number) => {
+          const delay = Math.min(times * 1000, 30000);
+          if (times > 10) {
+            console.error(`[${this.queueName}] Redis connection failed after ${times} attempts`);
+            return null;
+          }
+          console.log(`[${this.queueName}] Redis retry attempt ${times}, waiting ${delay}ms`);
+          return delay;
+        },
+        reconnectOnError: (err: Error) => {
+          const reconnectErrors = ['READONLY', 'ECONNRESET', 'ETIMEDOUT', 'EPIPE'];
+          const shouldReconnect = reconnectErrors.some(errType =>
+            err.message.includes(errType) || err.name.includes(errType)
+          );
+          if (shouldReconnect) {
+            console.log(`[${this.queueName}] Reconnecting due to: ${err.message}`);
+            return true;
+          }
+          return false;
+        },
+        keepAlive: 30000,
+        commandTimeout: 5000,
+      };
+    } catch (error) {
+      console.error(`Error parsing Redis URL: ${error}`);
+      return redisUrl; // Fallback to string URL
+    }
   }
 
   /**
