@@ -34,14 +34,15 @@
 
 **Connection String**:
 ```
-postgresql://doadmin:AVNS_DG9maU3rRLpkAsMIZBw@easyescrow-staging-postgres-do-user-11230012-0.d.db.ondigitalocean.com:25060/defaultdb?sslmode=require
+postgresql://doadmin:REDACTED_PASSWORD@easyescrow-staging-postgres-do-user-11230012-0.d.db.ondigitalocean.com:25060/defaultdb?sslmode=require
 ```
+⚠️ **Security Note**: Actual credentials are stored in DigitalOcean App Platform secrets
 
 **Connection Details**:
 - Host: `easyescrow-staging-postgres-do-user-11230012-0.d.db.ondigitalocean.com`
 - Port: `25060`
 - User: `doadmin`
-- Password: `AVNS_DG9maU3rRLpkAsMIZBw`
+- Password: `REDACTED` (stored in DO secrets)
 - Database: `defaultdb`
 - SSL Mode: `require`
 
@@ -54,8 +55,9 @@ postgresql://doadmin:AVNS_DG9maU3rRLpkAsMIZBw@easyescrow-staging-postgres-do-use
 
 **Connection String** (will be available when online):
 ```
-postgresql://doadmin:AVNS_0IE3Ml_vRRos9nRukQC@easyescrow-prod-postgres-do-user-11230012-0.d.db.ondigitalocean.com:25060/defaultdb?sslmode=require
+postgresql://doadmin:REDACTED_PASSWORD@easyescrow-prod-postgres-do-user-11230012-0.d.db.ondigitalocean.com:25060/defaultdb?sslmode=require
 ```
+⚠️ **Security Note**: Actual credentials are stored in DigitalOcean App Platform secrets
 
 **Check Status**:
 ```bash
@@ -143,8 +145,8 @@ S3-compatible object storage for files, documents, and images.
    SPACES_ENDPOINT=https://sgp1.digitaloceanspaces.com
    SPACES_REGION=sgp1
    SPACES_BUCKET=easyescrow-test
-   SPACES_ACCESS_KEY_ID=DO801KN4CQPPPDQV99WL
-   SPACES_SECRET_ACCESS_KEY=udsdFmT9NR25hrHOzlyrT13J0xhBFNDTDpBkZllYo30
+   SPACES_ACCESS_KEY_ID=YOUR_DEV_ACCESS_KEY_ID
+   SPACES_SECRET_ACCESS_KEY=YOUR_DEV_SECRET_ACCESS_KEY
    ```
    
    **Production:**

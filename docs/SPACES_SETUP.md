@@ -82,8 +82,8 @@ Add these to your `.env` files:
 SPACES_ENDPOINT=https://sgp1.digitaloceanspaces.com
 SPACES_REGION=sgp1
 SPACES_BUCKET=easyescrow-test
-SPACES_ACCESS_KEY_ID=DO801KN4CQPPPDQV99WL
-SPACES_SECRET_ACCESS_KEY=udsdFmT9NR25hrHOzlyrT13J0xhBFNDTDpBkZllYo30
+SPACES_ACCESS_KEY_ID=YOUR_DEV_ACCESS_KEY_ID
+SPACES_SECRET_ACCESS_KEY=YOUR_DEV_SECRET_ACCESS_KEY
 
 # CDN URL (if enabled)
 SPACES_CDN_URL=https://easyescrow-test.sgp1.cdn.digitaloceanspaces.com

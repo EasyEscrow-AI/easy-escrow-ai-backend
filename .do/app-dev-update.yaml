@@ -81,23 +81,6 @@ services:
         value: "Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr"
         scope: RUN_TIME
       
-      # JWT Secret
-      - key: JWT_SECRET
-        value: "SMxsK0XGUOMDXDfrqjZSTal/f1OeR4DzesYET7rfANA="
-        type: SECRET
-        scope: RUN_TIME
-      
-      # Database Configuration  
-      - key: DATABASE_URL
-        value: "postgresql://doadmin:AVNS_DG9maU3rRLpkAsMIZBw@easyescrow-staging-postgres-do-user-11230012-0.d.db.ondigitalocean.com:25060/defaultdb?sslmode=require"
-        scope: RUN_AND_BUILD_TIME
-      
-      # Redis Configuration
-      - key: REDIS_URL
-        value: "rediss://default:AWCnAAIncDIzN2Q1ZWRkNzI0M2Q0ZmZhYmIwNGVlY2ViM2Y2MTYzZXAyMjQ3NDM@sterling-dog-24743.upstash.io:6379"
-        type: SECRET
-        scope: RUN_TIME
-      
       # DigitalOcean Spaces Configuration (DEV uses test bucket)
       - key: SPACES_ENDPOINT
         value: "https://sgp1.digitaloceanspaces.com"
@@ -108,14 +91,20 @@ services:
       - key: SPACES_BUCKET
         value: "easyescrow-test"
         scope: RUN_TIME
-      - key: SPACES_ACCESS_KEY_ID
-        value: "DO801KN4CQPPPDQV99WL"
-        type: SECRET
-        scope: RUN_TIME
-      - key: SPACES_SECRET_ACCESS_KEY
-        value: "udsdFmT9NR25hrHOzlyrT13J0xhBFNDTDpBkZllYo30"
-        type: SECRET
-        scope: RUN_TIME
+      
+      # ============================================
+      # SECRETS - SET VIA DO APP PLATFORM CONSOLE
+      # ============================================
+      # DO NOT hardcode secrets in this file!
+      # Set these via: https://cloud.digitalocean.com/apps
+      # Go to Settings → App-Level Environment Variables
+      #
+      # Required secrets to configure:
+      # - JWT_SECRET (type: SECRET)
+      # - DATABASE_URL (scope: RUN_AND_BUILD_TIME)
+      # - REDIS_URL (type: SECRET)
+      # - SPACES_ACCESS_KEY_ID (type: SECRET)
+      # - SPACES_SECRET_ACCESS_KEY (type: SECRET)
 
 # ============================================
 # Database
