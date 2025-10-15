@@ -403,9 +403,14 @@ See `.env.example` for complete configuration options.
 - [Environment Variables](docs/ENVIRONMENT_VARIABLES.md) - Environment configuration
 - [DigitalOcean Setup](docs/DIGITALOCEAN_SETUP.md) - Infrastructure setup
 
+**Security & Secrets Management:**
+- **[Secrets Management Guide](docs/SECRETS_MANAGEMENT.md)** - Comprehensive secrets management 🔒
+- [DigitalOcean Secrets Configuration](docs/DIGITALOCEAN_SECRETS_CONFIGURATION.md) - Platform secrets setup
+
 ### Task Completion Reports
 - [TASK_25_COMPLETION.md](docs/tasks/TASK_25_COMPLETION.md) - Deposit Monitoring Implementation
 - [TASK_27_COMPLETION.md](docs/tasks/TASK_27_COMPLETION.md) - Expiry & Cancellation Logic
+- [TASK_39_COMPLETION.md](docs/tasks/TASK_39_COMPLETION.md) - Keypair & Secrets Management Implementation
 - [TASK_28_COMPLETION.md](docs/tasks/TASK_28_COMPLETION.md) - Agreement API Endpoints
 - [TASK_28_TESTS.md](docs/tasks/TASK_28_TESTS.md) - API Testing Guide
 - [TASK_30_COMPLETION.md](docs/tasks/TASK_30_COMPLETION.md) - Settlement Receipt Generation

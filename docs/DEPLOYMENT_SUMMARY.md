@@ -113,14 +113,20 @@ S3-compatible object storage for files, documents, and images.
 
 ### Setup Steps:
 
-1. **Create Bucket**:
+1. **Create Buckets** (two separate buckets for different environments):
+   
+   **For Development/Staging:**
    - Go to: https://cloud.digitalocean.com/spaces
    - Click **"Create a Space"**
    - Region: **Singapore (sgp1)**
-   - Name: `easyescrow-storage`
+   - Name: `easyescrow-test`
    - Enable CDN: Yes (optional)
    - File Listing: Private
    - Click **Create**
+   
+   **For Production:**
+   - Repeat the above steps
+   - Name: `easyescrow-storage`
 
 2. **Generate Access Keys**:
    - Go to API → **Spaces Keys**
@@ -131,13 +137,24 @@ S3-compatible object storage for files, documents, and images.
      - **Secret Key**
 
 3. **Environment Variables**:
-```bash
-SPACES_ENDPOINT=https://sgp1.digitaloceanspaces.com
-SPACES_REGION=sgp1
-SPACES_BUCKET=easyescrow-storage
-SPACES_ACCESS_KEY_ID=DO00XXXXXXXXXXXXXXXXX
-SPACES_SECRET_ACCESS_KEY=your_secret_key_here
-```
+
+   **Development/Staging:**
+   ```bash
+   SPACES_ENDPOINT=https://sgp1.digitaloceanspaces.com
+   SPACES_REGION=sgp1
+   SPACES_BUCKET=easyescrow-test
+   SPACES_ACCESS_KEY_ID=DO801KN4CQPPPDQV99WL
+   SPACES_SECRET_ACCESS_KEY=udsdFmT9NR25hrHOzlyrT13J0xhBFNDTDpBkZllYo30
+   ```
+   
+   **Production:**
+   ```bash
+   SPACES_ENDPOINT=https://sgp1.digitaloceanspaces.com
+   SPACES_REGION=sgp1
+   SPACES_BUCKET=easyescrow-storage
+   SPACES_ACCESS_KEY_ID=DO00XXXXXXXXXXXXXXXXX
+   SPACES_SECRET_ACCESS_KEY=your_secret_key_here
+   ```
 
 **Documentation**: See `docs/SPACES_SETUP.md`
 

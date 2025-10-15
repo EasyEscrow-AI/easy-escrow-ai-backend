@@ -12,10 +12,35 @@ test-ledger/
 target/idl/
 target/types/
 
-# Keys
+# Keys & Secrets - CRITICAL: Never commit private keys or sensitive data
 *.key
+*.pem
+*.p12
+*.pfx
+*.pkcs12
 *.json.key
 id.json
+*.private
+*.secret
+*-keypair.json
+*-key.json
+keypair*.json
+wallet*.json
+authority*.json
+
+# Private key directories
+keys/
+keypairs/
+wallets/
+secrets/
+.secrets/
+
+# Solana specific keypairs
+**/deploy/*.json
+**/target/deploy/*.json
+test-keypair.json
+devnet-keypair.json
+mainnet-keypair.json
 
 # Build artifacts
 dist/
@@ -25,10 +50,38 @@ build/
 *.log
 logs/
 
-# Environment
+# Environment & Configuration Files with Secrets
 .env
+.env.*
 .env.local
 .env.localnet
+.env.development
+.env.production
+.env.staging
+.env.test
+*.env
+.envrc
+.secrets
+secrets.yml
+secrets.yaml
+config.secret.*
+*-secrets.json
+*-secrets.yml
+*-secrets.yaml
+
+# API Keys & Tokens
+.api-key
+*.api-key
+api-keys.txt
+tokens.txt
+credentials.json
+credentials.yml
+auth-config.json
+
+# Database credentials
+database.env
+db-credentials.*
+*.sql.credentials
 
 # Localnet test keypairs
 .localnet/
@@ -61,6 +114,55 @@ devnet-e2e-corrected-results.json
 temp/*
 !temp/.gitkeep
 !temp/README.md
+
+# Backup files that might contain secrets
+*.backup
+*.bak
+*.swp
+*.old
+*~
+*.orig
+
+# Cloud provider credentials
+.aws/
+.gcloud/
+.azure/
+*-credentials.json
+service-account*.json
+
+# SSH keys
+id_rsa
+id_rsa.pub
+id_dsa
+id_dsa.pub
+id_ecdsa
+id_ecdsa.pub
+id_ed25519
+id_ed25519.pub
+*.pub
+
+# GPG keys
+*.gpg
+*.asc
+secring.*
+pubring.*
+
+# Certificate files
+*.crt
+*.cer
+*.ca-bundle
+*.p7b
+*.p7s
+*.spc
+
+# Docker secrets
+docker-compose.override.yml
+docker-compose.secrets.yml
+
+# Kubernetes secrets
+*secret*.yaml
+*secret*.yml
+kube-config
 
 # Installers
 *.exe

@@ -98,7 +98,7 @@ services:
         type: SECRET
         scope: RUN_TIME
       
-      # DigitalOcean Spaces Configuration
+      # DigitalOcean Spaces Configuration (DEV uses test bucket)
       - key: SPACES_ENDPOINT
         value: "https://sgp1.digitaloceanspaces.com"
         scope: RUN_TIME
@@ -106,14 +106,14 @@ services:
         value: "sgp1"
         scope: RUN_TIME
       - key: SPACES_BUCKET
-        value: "easyescrow-storage"
+        value: "easyescrow-test"
         scope: RUN_TIME
       - key: SPACES_ACCESS_KEY_ID
-        value: "DO801QZAGY6RY7J44RWV"
+        value: "DO801KN4CQPPPDQV99WL"
         type: SECRET
         scope: RUN_TIME
       - key: SPACES_SECRET_ACCESS_KEY
-        value: "YPZp64FnfZfUyj+mubXcUSvZgW6i8crY2lMuCyyz3v8"
+        value: "udsdFmT9NR25hrHOzlyrT13J0xhBFNDTDpBkZllYo30"
         type: SECRET
         scope: RUN_TIME
 

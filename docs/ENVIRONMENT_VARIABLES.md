@@ -514,6 +514,62 @@ LOG_FORMAT=json
 
 ---
 
+## DigitalOcean Spaces Configuration
+
+### `SPACES_ENDPOINT`
+- **Type**: String (URL)
+- **Required**: Yes (if using Spaces)
+- **Description**: DigitalOcean Spaces endpoint URL.
+
+```bash
+SPACES_ENDPOINT=https://sgp1.digitaloceanspaces.com
+```
+
+### `SPACES_REGION`
+- **Type**: String
+- **Default**: `sgp1`
+- **Required**: Yes (if using Spaces)
+- **Description**: DigitalOcean Spaces region.
+
+```bash
+SPACES_REGION=sgp1
+```
+
+### `SPACES_BUCKET`
+- **Type**: String
+- **Required**: Yes (if using Spaces)
+- **Description**: DigitalOcean Spaces bucket name. Use `easyescrow-test` for dev/staging and `easyescrow-storage` for production.
+
+```bash
+# Development/Staging
+SPACES_BUCKET=easyescrow-test
+
+# Production
+SPACES_BUCKET=easyescrow-storage
+```
+
+### `SPACES_ACCESS_KEY_ID`
+- **Type**: String
+- **Required**: Yes (if using Spaces)
+- **Description**: DigitalOcean Spaces access key ID.
+- **Security**: **CRITICAL** - Keep this secret secure.
+
+```bash
+SPACES_ACCESS_KEY_ID=DO00XXXXXXXXXXXXXXXXX
+```
+
+### `SPACES_SECRET_ACCESS_KEY`
+- **Type**: String
+- **Required**: Yes (if using Spaces)
+- **Description**: DigitalOcean Spaces secret access key.
+- **Security**: **CRITICAL** - Keep this secret secure.
+
+```bash
+SPACES_SECRET_ACCESS_KEY=your_secret_key_here
+```
+
+---
+
 ## Complete Example
 
 ### Development Environment
@@ -557,6 +613,13 @@ ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001
 CORS_ENABLED=true
 HELMET_ENABLED=true
 ALLOWED_USDC_AMOUNTS=10,25,50,75,100,250,500,1000
+
+# Spaces (Development/Staging uses easyescrow-test)
+SPACES_ENDPOINT=https://sgp1.digitaloceanspaces.com
+SPACES_REGION=sgp1
+SPACES_BUCKET=easyescrow-test
+SPACES_ACCESS_KEY_ID=DO801KN4CQPPPDQV99WL
+SPACES_SECRET_ACCESS_KEY=udsdFmT9NR25hrHOzlyrT13J0xhBFNDTDpBkZllYo30
 ```
 
 ### Production Environment
@@ -614,6 +677,13 @@ RATE_LIMIT_MAX_REQUESTS=100
 # Logging
 LOG_LEVEL=info
 LOG_FORMAT=json
+
+# Spaces (Production uses easyescrow-storage)
+SPACES_ENDPOINT=https://sgp1.digitaloceanspaces.com
+SPACES_REGION=sgp1
+SPACES_BUCKET=easyescrow-storage
+SPACES_ACCESS_KEY_ID=PRODUCTION_KEY_ID
+SPACES_SECRET_ACCESS_KEY=PRODUCTION_SECRET_KEY
 ```
 
 ---

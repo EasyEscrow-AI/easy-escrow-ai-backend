@@ -104,12 +104,21 @@ services:
       # - key: USDC_MINT_ADDRESS
       #   scope: RUN_TIME
       #   type: SECRET
-      # - key: SPACES_ACCESS_KEY
+      # - key: SPACES_ACCESS_KEY_ID
       #   scope: RUN_TIME
       #   type: SECRET
-      # - key: SPACES_SECRET_KEY
+      # - key: SPACES_SECRET_ACCESS_KEY
       #   scope: RUN_TIME
       #   type: SECRET
+      # - key: SPACES_BUCKET
+      #   value: "easyescrow-storage"  # Production uses easyescrow-storage
+      #   scope: RUN_TIME
+      # - key: SPACES_ENDPOINT
+      #   value: "https://sgp1.digitaloceanspaces.com"
+      #   scope: RUN_TIME
+      # - key: SPACES_REGION
+      #   value: "sgp1"
+      #   scope: RUN_TIME
 
 # ============================================
 # Databases (Managed DigitalOcean Services)

@@ -29,4 +29,5 @@ export * from './queue.service';
 export * from './blockchain-monitoring-queue.service';
 export * from './settlement-processing-queue.service';
 export * from './transaction-log.service';
+export * from './secrets-management.service';
 
