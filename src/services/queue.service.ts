@@ -1,5 +1,4 @@
 import Bull, { Queue, Job, JobOptions, QueueOptions } from 'bull';
-import Redis from 'ioredis';
 import { config } from '../config';
 
 /**
@@ -47,62 +46,15 @@ export class QueueService<T extends BaseJobData = BaseJobData> {
       ...queueConfig.defaultJobOptions,
     };
 
-    // Parse Upstash URL for connection details
-    const redisConnectionInfo = this.parseRedisUrl(config.redis.url);
-
+    // Simple Redis Cloud configuration - fully compatible with Bull!
     const queueOptions: QueueOptions = {
-      // Use createClient pattern to ensure all 3 Bull connections (client, subscriber, bclient) have proper TLS
-      createClient: (type: string) => {
-        console.log(`[${this.queueName}] Creating ${type} Redis connection`);
-        
-        if (!redisConnectionInfo) {
-          return new Redis(); // localhost fallback
-        }
-
-        return new Redis({
-          host: redisConnectionInfo.host,
-          port: redisConnectionInfo.port,
-          username: redisConnectionInfo.username,
-          password: redisConnectionInfo.password,
-          // Enable TLS for Upstash - empty object is sufficient!
-          tls: redisConnectionInfo.isTLS ? {} : undefined,
-          // Subscriber needs null (retry forever), others need finite retries
-          maxRetriesPerRequest: type === 'subscriber' ? null : 3,
-          // Critical for Upstash compatibility
-          enableReadyCheck: false,
-          enableOfflineQueue: true,
-          connectTimeout: 30000,
-          keepAlive: 30000,
-          commandTimeout: 5000,
-          // Retry strategy
-          retryStrategy: (times: number) => {
-            const delay = Math.min(times * 1000, 30000);
-            if (times > 10) {
-              console.error(`[${this.queueName}:${type}] Redis connection failed after ${times} attempts`);
-              return null;
-            }
-            console.log(`[${this.queueName}:${type}] Redis retry attempt ${times}, waiting ${delay}ms`);
-            return delay;
-          },
-          // Reconnect on errors
-          reconnectOnError: (err: Error) => {
-            const targetErrors = /READONLY|ECONNRESET|ETIMEDOUT|EPIPE/;
-            if (targetErrors.test(err.message)) {
-              console.log(`[${this.queueName}:${type}] Reconnecting due to: ${err.message}`);
-              return true;
-            }
-            return false;
-          },
-        });
-      },
+      redis: config.redis.url, // Redis Cloud handles connection automatically
       defaultJobOptions,
-      // Optimize for Upstash: reduce polling to minimize costs
       settings: {
-        stalledInterval: 300000, // 5 min (reduced from 30s to save costs)
-        maxStalledCount: 3,
-        guardInterval: 300000, // 5 min (reduced from 5s to save costs)
-        retryProcessDelay: 5000,
-        drainDelay: 300, // 300ms pause when queue empty (reduced from 5ms)
+        stalledInterval: 30000, // Check for stalled jobs every 30 seconds
+        maxStalledCount: 3, // Maximum number of times a job can be recovered from stalled state
+        guardInterval: 5000, // Poll interval for delayed jobs
+        retryProcessDelay: 5000, // Delay before processing the job after a failure
       },
       ...queueConfig.queueOptions,
     };
@@ -110,41 +62,6 @@ export class QueueService<T extends BaseJobData = BaseJobData> {
     this.queue = new Bull<T>(this.queueName, queueOptions);
 
     this.setupEventHandlers();
-  }
-
-  /**
-   * Parse Redis URL using simple string matching (avoids new URL() issues)
-   */
-  private parseRedisUrl(redisUrl: string): {
-    host: string;
-    port: number;
-    username: string;
-    password: string;
-    isTLS: boolean;
-  } | null {
-    if (!redisUrl) {
-      return null;
-    }
-
-    try {
-      // Match pattern: redis[s]://[username]:password@host:port
-      const match = redisUrl.match(/^(rediss?):\/\/([^:]+):([^@]+)@([^:]+):(\d+)/);
-      if (!match) {
-        console.error(`[${this.queueName}] Invalid Redis URL format`);
-        return null;
-      }
-
-      return {
-        isTLS: match[1] === 'rediss',
-        username: match[2] || 'default',
-        password: match[3],
-        host: match[4],
-        port: parseInt(match[5], 10),
-      };
-    } catch (error) {
-      console.error(`[${this.queueName}] Error parsing Redis URL:`, error);
-      return null;
-    }
   }
 
   /**
