@@ -7,25 +7,40 @@ import { config } from './index';
  * Manages Redis connection with connection pooling, health checks, and retry logic
  */
 
-// Redis connection options
+// Redis connection options with resilient error handling
 const redisOptions: RedisOptions = {
   maxRetriesPerRequest: 3,
   enableReadyCheck: true,
   enableOfflineQueue: true,
   connectTimeout: 10000,
   retryStrategy(times: number) {
-    const delay = Math.min(times * 50, 2000);
+    // Exponential backoff with max 30 seconds between retries
+    const delay = Math.min(times * 1000, 30000);
+    if (times > 10) {
+      console.error(`Redis connection failed after ${times} attempts. Stopping retries temporarily.`);
+      return null; // Stop retrying after 10 attempts
+    }
     console.log(`Redis connection retry attempt ${times}, waiting ${delay}ms`);
     return delay;
   },
   reconnectOnError(err: Error) {
-    const targetError = 'READONLY';
-    if (err.message.includes(targetError)) {
-      // Only reconnect when the error contains "READONLY"
+    // Reconnect on various error conditions
+    const reconnectErrors = ['READONLY', 'ECONNRESET', 'ETIMEDOUT', 'EPIPE'];
+    const shouldReconnect = reconnectErrors.some(errType => 
+      err.message.includes(errType) || err.name.includes(errType)
+    );
+    if (shouldReconnect) {
+      console.log(`Redis reconnecting due to error: ${err.message}`);
       return true;
     }
     return false;
   },
+  // Keepalive to prevent connection drops
+  keepAlive: 30000,
+  // Prevent command timeout errors from flooding logs  
+  commandTimeout: 5000,
+  // Lazy connect to prevent startup failures
+  lazyConnect: false,
 };
 
 // Parse Redis URL or use individual config options
@@ -65,34 +80,69 @@ export const redisPubSubClient = config.redis.url
   ? new Redis(config.redis.url, redisOptions)
   : new Redis(getRedisConfig());
 
-// Event handlers for Redis client
+// Track error count to prevent log flooding
+let redisErrorCount = 0;
+let lastErrorTime = Date.now();
+const ERROR_LOG_THRESHOLD = 5; // Only log every 5th error
+const ERROR_RESET_INTERVAL = 60000; // Reset error count every minute
+
+// Event handlers for Redis client with rate-limited logging
 redisClient.on('connect', () => {
   console.log('✅ Redis client connected');
+  redisErrorCount = 0; // Reset error count on successful connection
 });
 
 redisClient.on('ready', () => {
   console.log('✅ Redis client ready');
+  redisErrorCount = 0;
 });
 
 redisClient.on('error', (err: Error) => {
-  console.error('❌ Redis client error:', err.message);
+  const now = Date.now();
+  // Reset error count if more than 1 minute has passed
+  if (now - lastErrorTime > ERROR_RESET_INTERVAL) {
+    redisErrorCount = 0;
+  }
+  
+  redisErrorCount++;
+  lastErrorTime = now;
+  
+  // Only log every Nth error to prevent flooding
+  if (redisErrorCount % ERROR_LOG_THRESHOLD === 0) {
+    console.error(`❌ Redis client error (${redisErrorCount} errors in last minute): ${err.message}`);
+  }
 });
 
 redisClient.on('close', () => {
   console.log('⚠️  Redis client connection closed');
 });
 
-redisClient.on('reconnecting', () => {
-  console.log('🔄 Redis client reconnecting...');
+redisClient.on('reconnecting', (delay: number) => {
+  console.log(`🔄 Redis client reconnecting in ${delay}ms...`);
 });
 
-// Event handlers for pub/sub client
+// Event handlers for pub/sub client with rate-limited logging
+let pubsubErrorCount = 0;
+let lastPubsubErrorTime = Date.now();
+
 redisPubSubClient.on('connect', () => {
   console.log('✅ Redis pub/sub client connected');
+  pubsubErrorCount = 0;
 });
 
 redisPubSubClient.on('error', (err: Error) => {
-  console.error('❌ Redis pub/sub client error:', err.message);
+  const now = Date.now();
+  if (now - lastPubsubErrorTime > ERROR_RESET_INTERVAL) {
+    pubsubErrorCount = 0;
+  }
+  
+  pubsubErrorCount++;
+  lastPubsubErrorTime = now;
+  
+  // Only log every Nth error
+  if (pubsubErrorCount % ERROR_LOG_THRESHOLD === 0) {
+    console.error(`❌ Redis pub/sub error (${pubsubErrorCount} errors): ${err.message}`);
+  }
 });
 
 /**

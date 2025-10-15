@@ -24,6 +24,10 @@ export interface QueueConfig {
 export class QueueService<T extends BaseJobData = BaseJobData> {
   private queue: Queue<T>;
   private queueName: string;
+  private errorCount = 0;
+  private lastErrorTime = Date.now();
+  private readonly ERROR_LOG_THRESHOLD = 10; // Only log every 10th error
+  private readonly ERROR_RESET_INTERVAL = 60000; // Reset count every minute
 
   constructor(queueConfig: QueueConfig) {
     this.queueName = queueConfig.name;
@@ -60,11 +64,34 @@ export class QueueService<T extends BaseJobData = BaseJobData> {
   }
 
   /**
-   * Setup event handlers for the queue
+   * Setup event handlers for the queue with rate-limited error logging
    */
   private setupEventHandlers(): void {
     this.queue.on('error', (error: Error) => {
-      console.error(`Queue ${this.queueName} error:`, error);
+      const now = Date.now();
+      
+      // Reset error count if more than 1 minute has passed
+      if (now - this.lastErrorTime > this.ERROR_RESET_INTERVAL) {
+        this.errorCount = 0;
+      }
+      
+      this.errorCount++;
+      this.lastErrorTime = now;
+      
+      // Only log every Nth error to prevent log flooding
+      // Skip logging for Redis connection errors (EPIPE, ECONNRESET) as they're logged elsewhere
+      const isRedisConnError = error.message && (
+        error.message.includes('EPIPE') || 
+        error.message.includes('ECONNRESET') ||
+        error.message.includes('ETIMEDOUT')
+      );
+      
+      if (!isRedisConnError && this.errorCount % this.ERROR_LOG_THRESHOLD === 0) {
+        console.error(`Queue ${this.queueName} error (${this.errorCount} errors): ${error.message}`);
+      } else if (!isRedisConnError && this.errorCount === 1) {
+        // Log first error immediately
+        console.error(`Queue ${this.queueName} error:`, error.message);
+      }
     });
 
     this.queue.on('waiting', (jobId: string) => {
