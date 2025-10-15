@@ -24,6 +24,10 @@ export interface QueueConfig {
 export class QueueService<T extends BaseJobData = BaseJobData> {
   private queue: Queue<T>;
   private queueName: string;
+  private errorCount = 0;
+  private lastErrorTime = Date.now();
+  private readonly ERROR_LOG_THRESHOLD = 10; // Only log every 10th error
+  private readonly ERROR_RESET_INTERVAL = 60000; // Reset count every minute
 
   constructor(queueConfig: QueueConfig) {
     this.queueName = queueConfig.name;
@@ -42,8 +46,11 @@ export class QueueService<T extends BaseJobData = BaseJobData> {
       ...queueConfig.defaultJobOptions,
     };
 
+    // Configure Redis connection for Bull with proper TLS and retry options for Upstash
+    const redisConfig = this.getRedisConfig(config.redis.url);
+
     const queueOptions: QueueOptions = {
-      redis: config.redis.url,
+      redis: redisConfig,
       defaultJobOptions,
       settings: {
         stalledInterval: 30000, // Check for stalled jobs every 30 seconds
@@ -60,11 +67,90 @@ export class QueueService<T extends BaseJobData = BaseJobData> {
   }
 
   /**
-   * Setup event handlers for the queue
+   * Parse Redis URL and build configuration with TLS support for Upstash
+   */
+  private getRedisConfig(redisUrl: string): any {
+    if (!redisUrl) {
+      return 'redis://localhost:6379';
+    }
+
+    try {
+      const url = new URL(redisUrl);
+      const isTLS = url.protocol === 'rediss:';
+
+      return {
+        host: url.hostname,
+        port: parseInt(url.port || '6379', 10),
+        password: url.password || undefined,
+        username: url.username || undefined,
+        // TLS configuration for Upstash
+        tls: isTLS ? {
+          // Upstash uses valid certificates, but some environments need this
+          rejectUnauthorized: true,
+        } : undefined,
+        // Robust connection options matching main Redis client
+        maxRetriesPerRequest: 3,
+        enableReadyCheck: true,
+        enableOfflineQueue: true,
+        connectTimeout: 10000,
+        retryStrategy: (times: number) => {
+          const delay = Math.min(times * 1000, 30000);
+          if (times > 10) {
+            console.error(`[${this.queueName}] Redis connection failed after ${times} attempts`);
+            return null;
+          }
+          console.log(`[${this.queueName}] Redis retry attempt ${times}, waiting ${delay}ms`);
+          return delay;
+        },
+        reconnectOnError: (err: Error) => {
+          const reconnectErrors = ['READONLY', 'ECONNRESET', 'ETIMEDOUT', 'EPIPE'];
+          const shouldReconnect = reconnectErrors.some(errType =>
+            err.message.includes(errType) || err.name.includes(errType)
+          );
+          if (shouldReconnect) {
+            console.log(`[${this.queueName}] Reconnecting due to: ${err.message}`);
+            return true;
+          }
+          return false;
+        },
+        keepAlive: 30000,
+        commandTimeout: 5000,
+      };
+    } catch (error) {
+      console.error(`Error parsing Redis URL: ${error}`);
+      return redisUrl; // Fallback to string URL
+    }
+  }
+
+  /**
+   * Setup event handlers for the queue with rate-limited error logging
    */
   private setupEventHandlers(): void {
     this.queue.on('error', (error: Error) => {
-      console.error(`Queue ${this.queueName} error:`, error);
+      const now = Date.now();
+      
+      // Reset error count if more than 1 minute has passed
+      if (now - this.lastErrorTime > this.ERROR_RESET_INTERVAL) {
+        this.errorCount = 0;
+      }
+      
+      this.errorCount++;
+      this.lastErrorTime = now;
+      
+      // Only log every Nth error to prevent log flooding
+      // Skip logging for Redis connection errors (EPIPE, ECONNRESET) as they're logged elsewhere
+      const isRedisConnError = error.message && (
+        error.message.includes('EPIPE') || 
+        error.message.includes('ECONNRESET') ||
+        error.message.includes('ETIMEDOUT')
+      );
+      
+      if (!isRedisConnError && this.errorCount % this.ERROR_LOG_THRESHOLD === 0) {
+        console.error(`Queue ${this.queueName} error (${this.errorCount} errors): ${error.message}`);
+      } else if (!isRedisConnError && this.errorCount === 1) {
+        // Log first error immediately
+        console.error(`Queue ${this.queueName} error:`, error.message);
+      }
     });
 
     this.queue.on('waiting', (jobId: string) => {
