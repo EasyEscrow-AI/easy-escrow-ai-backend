@@ -20,6 +20,7 @@ This repository contains:
 ├── README.md
 ├── SECURITY.md
 ├── docs/                      # 📚 Comprehensive documentation (see docs/README.md)
+│   ├── api/                  # API documentation (OpenAPI, webhooks, integration)
 │   ├── setup/                # Setup and installation guides
 │   ├── testing/              # Testing documentation
 │   ├── architecture/         # System architecture and design
@@ -392,7 +393,7 @@ See `.env.example` for complete configuration options.
 - [Quick Start E2E Testing](docs/testing/QUICK_START_E2E_TESTING.md) - E2E test guide
 
 **Architecture:**
-- [API Documentation](docs/architecture/API_DOCUMENTATION.md) - REST API reference
+- [API Documentation](docs/api/README.md) - Complete API documentation with OpenAPI spec, webhook events, and integration guide
 - [Webhook System](docs/architecture/WEBHOOK_SYSTEM.md) - Webhook implementation
 - [Deposit Monitoring](docs/architecture/DEPOSIT_MONITORING.md) - Deposit monitoring system
 

@@ -51,7 +51,10 @@ export class MonitoringService {
     this.nftDepositService = getNftDepositService();
 
     this.config = {
-      pollingInterval: monitoringConfig?.pollingInterval || 10000, // 10 seconds
+      pollingInterval: monitoringConfig?.pollingInterval || (() => {
+        const parsed = parseInt(process.env.MONITORING_POLL_INTERVAL_MS || '30000', 10);
+        return isNaN(parsed) ? 30000 : parsed; // Fallback to 30s if invalid
+      })(),
       maxRetries: monitoringConfig?.maxRetries || 3,
       retryDelayMs: monitoringConfig?.retryDelayMs || 1000,
     };

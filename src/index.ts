@@ -24,16 +24,26 @@ const app: Application = express();
 const PORT = process.env.PORT || 3000;
 
 // Initialize orchestrator instances (before route handlers)
+// Use environment-based intervals to allow tuning in production
 const monitoringOrchestrator = getMonitoringOrchestrator({
   autoRestart: true,
   maxRestarts: 5,
   restartDelayMs: 5000,
-  healthCheckIntervalMs: 30000,
-  metricsIntervalMs: 60000,
+  healthCheckIntervalMs: (() => {
+    const parsed = parseInt(process.env.HEALTH_CHECK_INTERVAL_MS || '60000', 10);
+    return isNaN(parsed) ? 60000 : parsed; // Fallback to 60s if invalid
+  })(),
+  metricsIntervalMs: (() => {
+    const parsed = parseInt(process.env.METRICS_INTERVAL_MS || '120000', 10);
+    return isNaN(parsed) ? 120000 : parsed; // Fallback to 120s if invalid
+  })(),
 });
 
 const expiryCancellationOrchestrator = getExpiryCancellationOrchestrator({
-  expiryCheckIntervalMs: 60000, // Check every minute
+  expiryCheckIntervalMs: (() => {
+    const parsed = parseInt(process.env.EXPIRY_CHECK_INTERVAL_MS || '300000', 10);
+    return isNaN(parsed) ? 300000 : parsed; // Fallback to 5min if invalid
+  })(),
   autoProcessRefunds: true,
   refundProcessingBatchSize: 10,
   enableMonitoring: true,
