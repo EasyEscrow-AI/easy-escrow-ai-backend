@@ -66,7 +66,7 @@
         "id": 22,
         "title": "Deploy Solana Program for Escrow",
         "description": "Create Solana program with EscrowState PDA accounts, implement instructions (init_agreement, deposit_usdc, deposit_nft, settle, cancel_if_expired, admin_cancel), deploy to devnet",
-        "status": "in-progress",
+        "status": "done",
         "priority": "high",
         "dependencies": [
           "21"
@@ -1670,7 +1670,7 @@
     ],
     "metadata": {
       "created": "2025-10-13T01:02:36.190Z",
-      "updated": "2025-10-15T10:26:35.386Z",
+      "updated": "2025-10-15T23:29:42.507Z",
       "description": "Tasks for master context"
     }
   }
