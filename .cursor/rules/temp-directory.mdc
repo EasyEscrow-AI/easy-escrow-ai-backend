@@ -1,0 +1,53 @@
+---
+alwaysApply: true
+description: "Use /temp directory for all temporary test files and outputs"
+---
+
+## Temporary Files Directory
+
+All temporary test files, test results, and intermediate outputs should be stored in the `/temp` directory.
+
+### Usage Guidelines
+
+1. **Test Results**: All test output files (JSON, logs, etc.) should be written to `/temp`
+   - Example: `temp/test-results.json`
+   - Example: `temp/devnet-e2e-results.json`
+   - Example: `temp/integration-test-output.json`
+
+2. **Temporary Scripts**: Any temporary test scripts or helpers should be created in `/temp`
+   - Example: `temp/test-helper.ts`
+   - Example: `temp/debug-script.js`
+
+3. **Test Artifacts**: Screenshots, dumps, or other test artifacts
+   - Example: `temp/screenshots/`
+   - Example: `temp/debug-logs/`
+
+4. **Temporary Data**: Any temporary data files used during development or testing
+   - Example: `temp/mock-data.json`
+   - Example: `temp/test-fixtures.json`
+
+### Important Notes
+
+- The `/temp` directory is gitignored (except for `.gitkeep`)
+- Files in this directory will NOT be committed to the repository
+- This keeps the project root clean and organized
+- Clean up old files periodically, but the directory itself persists
+
+### When Creating Test Files
+
+**DO:**
+```typescript
+// Write test results to temp directory
+const resultsPath = path.join(__dirname, "../temp/test-results.json");
+fs.writeFileSync(resultsPath, JSON.stringify(results, null, 2));
+```
+
+**DON'T:**
+```typescript
+// Don't write test results to project root
+const resultsPath = path.join(__dirname, "../test-results.json");
+```
+
+### Cleanup
+
+The `/temp` directory can be safely deleted and recreated at any time. The `.gitkeep` file ensures the directory structure is preserved in git.

@@ -18,10 +18,12 @@ This repository contains:
 ```
 /
 ├── README.md
-├── SOLANA_SETUP.md           # Solana development environment setup guide
-├── DATABASE_SETUP.md         # Database setup and migration guide
-├── MIGRATION_GUIDE.md        # Database migration management guide
-├── .gitignore
+├── SECURITY.md
+├── docs/                      # 📚 Comprehensive documentation (see docs/README.md)
+│   ├── setup/                # Setup and installation guides
+│   ├── testing/              # Testing documentation
+│   ├── architecture/         # System architecture and design
+│   └── tasks/                # Task completion reports
 ├── src/                       # Backend TypeScript/Node.js source
 │   ├── config/               # Configuration and database
 │   │   ├── database.ts       # Prisma client setup
@@ -73,7 +75,7 @@ npm run dev
 npm run build
 ```
 
-For detailed database setup instructions, see [DATABASE_SETUP.md](DATABASE_SETUP.md).
+For detailed database setup instructions, see [DATABASE_SETUP.md](docs/setup/DATABASE_SETUP.md).
 
 ### Solana Program Development
 
@@ -82,7 +84,7 @@ For detailed database setup instructions, see [DATABASE_SETUP.md](DATABASE_SETUP
 - Solana CLI
 - Anchor Framework
 
-See [SOLANA_SETUP.md](SOLANA_SETUP.md) for detailed installation instructions.
+See [SOLANA_SETUP.md](docs/setup/SOLANA_SETUP.md) for detailed installation instructions.
 
 ```bash
 # Build the Solana program
@@ -149,7 +151,7 @@ Automatic monitoring and processing of deposits:
 - Health checks and metrics collection
 - Comprehensive error handling and logging
 
-See [TASK_25_COMPLETION.md](docs/tasks/TASK_25_COMPLETION.md) and [DEPOSIT_MONITORING.md](DEPOSIT_MONITORING.md) for details.
+See [TASK_25_COMPLETION.md](docs/tasks/TASK_25_COMPLETION.md) and [DEPOSIT_MONITORING.md](docs/architecture/DEPOSIT_MONITORING.md) for details.
 
 ### Expiry & Cancellation Management (Task 27)
 Automated lifecycle management for agreements:
@@ -220,7 +222,7 @@ anchor build && anchor deploy
 npm run test:localnet
 ```
 
-See [LOCALNET_SETUP.md](LOCALNET_SETUP.md) for complete setup guide.
+See [LOCALNET_SETUP.md](docs/setup/LOCALNET_SETUP.md) for complete setup guide.
 
 ### Solana Program Tests - Devnet
 ```bash
@@ -272,7 +274,7 @@ doctl apps create --spec .do/app.yaml
 - **[Deployment Guide](docs/DEPLOYMENT_GUIDE.md)** - Complete deployment instructions ⭐
 - **[Deployment Summary](docs/DEPLOYMENT_SUMMARY.md)** - Quick reference with credentials
 - [DigitalOcean Setup](docs/DIGITALOCEAN_SETUP.md) - Infrastructure details
-- [Redis Setup](docs/REDIS_SETUP.md) - Upstash Redis configuration
+- [Redis Infrastructure](docs/setup/REDIS_INFRASTRUCTURE.md) - Upstash Redis configuration
 - [Spaces Setup](docs/SPACES_SETUP.md) - Object storage setup
 
 **Docker (Local/Testing):**
@@ -375,23 +377,31 @@ See `.env.example` for complete configuration options.
 
 ## Documentation
 
-### Project Documentation
-- [SOLANA_SETUP.md](SOLANA_SETUP.md) - Solana development setup
-- [LOCALNET_SETUP.md](LOCALNET_SETUP.md) - Local validator testing setup
-- [DATABASE_SETUP.md](DATABASE_SETUP.md) - Database configuration
-- [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) - Database migrations
-- [API_DOCUMENTATION.md](API_DOCUMENTATION.md) - REST API reference
-- [DEPOSIT_MONITORING.md](DEPOSIT_MONITORING.md) - Deposit monitoring system
+📚 **See [docs/README.md](docs/README.md) for comprehensive documentation index**
 
-### Deployment Documentation
-- **[DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md)** - Complete deployment guide ⭐
-- **[DEPLOYMENT_SUMMARY.md](docs/DEPLOYMENT_SUMMARY.md)** - Quick reference with credentials
-- [DIGITALOCEAN_SETUP.md](docs/DIGITALOCEAN_SETUP.md) - DigitalOcean infrastructure setup
-- [REDIS_SETUP.md](docs/REDIS_SETUP.md) - Redis/Upstash configuration
-- [SPACES_SETUP.md](docs/SPACES_SETUP.md) - Object storage setup
-- [DOCKER_DEPLOYMENT.md](docs/DOCKER_DEPLOYMENT.md) - Docker deployment guide
-- [ENVIRONMENT_VARIABLES.md](docs/ENVIRONMENT_VARIABLES.md) - Environment configuration reference
-- [CLI_TOOLS_SETUP.md](docs/CLI_TOOLS_SETUP.md) - CLI tools installation
+### Quick Links
+
+**Setup & Getting Started:**
+- [Setup Instructions](docs/setup/SETUP_INSTRUCTIONS.md) - Complete setup guide
+- [Solana Setup](docs/setup/SOLANA_SETUP.md) - Solana development setup
+- [Database Setup](docs/setup/DATABASE_SETUP.md) - Database configuration
+- [Localnet Setup](docs/setup/LOCALNET_SETUP.md) - Local validator testing setup
+
+**Testing:**
+- [Testing Strategy](docs/testing/TESTING_STRATEGY.md) - Testing approach
+- [Quick Start E2E Testing](docs/testing/QUICK_START_E2E_TESTING.md) - E2E test guide
+
+**Architecture:**
+- [API Documentation](docs/architecture/API_DOCUMENTATION.md) - REST API reference
+- [Webhook System](docs/architecture/WEBHOOK_SYSTEM.md) - Webhook implementation
+- [Deposit Monitoring](docs/architecture/DEPOSIT_MONITORING.md) - Deposit monitoring system
+
+**Deployment:**
+- **[Deployment Guide](docs/DEPLOYMENT_GUIDE.md)** - Complete deployment guide ⭐
+- [Docker Deployment](docs/DOCKER_DEPLOYMENT.md) - Docker deployment guide
+- [Migration Guide](docs/MIGRATION_GUIDE.md) - Database migrations
+- [Environment Variables](docs/ENVIRONMENT_VARIABLES.md) - Environment configuration
+- [DigitalOcean Setup](docs/DIGITALOCEAN_SETUP.md) - Infrastructure setup
 
 ### Task Completion Reports
 - [TASK_25_COMPLETION.md](docs/tasks/TASK_25_COMPLETION.md) - Deposit Monitoring Implementation
