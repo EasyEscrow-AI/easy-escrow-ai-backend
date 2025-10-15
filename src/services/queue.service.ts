@@ -46,9 +46,25 @@ export class QueueService<T extends BaseJobData = BaseJobData> {
       ...queueConfig.defaultJobOptions,
     };
 
-    // Simple Redis Cloud configuration - fully compatible with Bull!
+    // Parse Redis URL for Bull-compatible configuration
+    const redisUrl = config.redis.url;
+    const urlMatch = redisUrl.match(/^redis:\/\/([^:]+):([^@]+)@([^:]+):(\d+)/);
+    
+    if (!urlMatch) {
+      throw new Error(`Invalid Redis URL format: ${redisUrl}`);
+    }
+
+    // Bull-compatible Redis configuration (no enableReadyCheck or maxRetriesPerRequest for bclient/subscriber)
+    const redisConfig = {
+      host: urlMatch[3],
+      port: parseInt(urlMatch[4], 10),
+      username: urlMatch[1],
+      password: urlMatch[2],
+      // Bull will handle maxRetriesPerRequest appropriately for each connection type
+    };
+
     const queueOptions: QueueOptions = {
-      redis: config.redis.url, // Redis Cloud handles connection automatically
+      redis: redisConfig, // Pass config object, not URL string
       defaultJobOptions,
       settings: {
         stalledInterval: 30000, // Check for stalled jobs every 30 seconds
