@@ -1,0 +1,136 @@
+# Terminal Command Timeout Rules
+
+## Automatic Timeout Application
+
+When executing terminal commands using `run_terminal_cmd`, automatically apply timeouts based on command type to prevent hanging operations.
+
+### Timeout Standards
+
+#### Quick Operations (10s)
+- `git status`, `git branch`, `git log`, `git diff`
+- File listing: `ls`, `dir`, `pwd`
+- File reading: `cat`, `type` (small files)
+- Environment checks: `echo`, `printenv`
+
+#### Build Operations (60s)
+- TypeScript: `tsc`, `npm run build`
+- Linting: `npm run lint`, `eslint`
+- Solana: `anchor build`, `cargo build-sbf`
+
+#### Package Management (120s)
+- `npm install`, `npm ci`, `npm update`
+- `cargo update`
+
+#### Test Execution
+- Unit tests: 60s (`npm test`)
+- Integration tests: 120s
+- E2E tests: 180s
+
+#### Database Operations (60s)
+- `npx prisma migrate`, `npx prisma db push`
+- `npx prisma generate` (30s)
+- `npm run seed`
+
+#### Blockchain Operations
+- Network queries: 90s (`solana airdrop`, `solana balance`)
+- Deployments: 180s (`anchor deploy`, `solana program deploy`)
+
+#### Git Network Operations (60s)
+- `git fetch`, `git pull`, `git push`
+
+#### Server Startup (45s)
+- Development servers: `npm run dev`, `nodemon`
+- Allow 45s for initialization, then run in background
+
+#### Long-Running Scripts (300s)
+- Custom setup/migration scripts
+- Bulk operations
+
+#### Background Processes (No Timeout)
+- Watch modes: `npm run dev`, `jest --watch`, `nodemon`
+- Validators: `solana-test-validator`
+- **Action:** Always use `is_background: true` flag
+
+### Implementation
+
+For each `run_terminal_cmd` call:
+
+1. **Identify command type** from the command string
+2. **Apply appropriate timeout** from the table above
+3. **Use platform-specific timeout mechanism:**
+   - PowerShell: Use `Start-Job` with `Wait-Job -Timeout`
+   - Bash: Use `timeout` command
+4. **Handle timeout gracefully:**
+   - Send SIGTERM, wait 5s, then SIGKILL if needed
+   - Report clear error message with command and timeout duration
+5. **Log warnings** if command exceeds 50% of timeout
+
+### Example Usage
+
+**Quick Git Operation:**
+```powershell
+# PowerShell with 10s timeout
+$job = Start-Job -ScriptBlock { git status }
+Wait-Job -Job $job -Timeout 10
+if ($job.State -eq 'Running') {
+    Stop-Job -Job $job
+    Write-Error "git status timed out after 10s"
+    exit 1
+}
+```
+
+**Build Operation:**
+```powershell
+# PowerShell with 60s timeout
+$job = Start-Job -ScriptBlock { npm run build }
+Wait-Job -Job $job -Timeout 60
+```
+
+**Background Process:**
+```typescript
+// Use is_background flag for dev servers
+run_terminal_cmd({
+    command: "npm run dev",
+    is_background: true  // No timeout needed
+})
+```
+
+### Timeout Adjustment Rules
+
+- **CI Environment:** Apply 2x multiplier to all timeouts
+- **First-time operations:** Apply 2x multiplier (e.g., first `npm install`)
+- **Network issues detected:** Apply 1.5x multiplier and retry once
+- **Repeated timeouts:** Escalate to user with recommendation
+
+### Error Messages
+
+On timeout, provide actionable error message:
+
+```
+❌ Command timed out after {X} seconds
+Command: {command}
+Timeout: {X}s (category: {category})
+
+Possible causes:
+- Network connectivity issues
+- Resource constraints
+- Hanging process
+
+Recommendations:
+- Retry the operation
+- Check system resources
+- Verify network connectivity
+- Increase timeout if operation is legitimately slow
+```
+
+### Monitoring
+
+Track and report:
+- Commands that frequently timeout
+- Commands that consistently use >80% of timeout
+- Average execution time vs timeout threshold
+
+### Reference
+
+See `docs/TERMINAL_TIMEOUT_POLICY.md` for complete policy details and implementation examples.
+
