@@ -1,0 +1,28 @@
+{
+  "description": "Example devnet configuration - Copy to devnet-config.json and fill in your private keys",
+  "wallets": {
+    "sender": "SENDER_PUBLIC_KEY_HERE",
+    "receiver": "RECEIVER_PUBLIC_KEY_HERE",
+    "admin": "ADMIN_PUBLIC_KEY_HERE",
+    "feeCollector": "FEE_COLLECTOR_PUBLIC_KEY_HERE"
+  },
+  "walletKeys": {
+    "sender": "SENDER_PRIVATE_KEY_BASE58_HERE",
+    "receiver": "RECEIVER_PRIVATE_KEY_BASE58_HERE",
+    "admin": "ADMIN_PRIVATE_KEY_BASE58_HERE",
+    "feeCollector": "FEE_COLLECTOR_PRIVATE_KEY_BASE58_HERE"
+  },
+  "tokens": {
+    "nftMint": "NFT_MINT_ADDRESS_HERE",
+    "usdcMint": "USDC_MINT_ADDRESS_HERE"
+  },
+  "network": "devnet",
+  "notes": [
+    "NEVER COMMIT THIS FILE WITH REAL PRIVATE KEYS",
+    "Copy this file to devnet-config.json and add your keys",
+    "devnet-config.json is gitignored for security",
+    "Use scripts/setup-static-devnet-wallets.ps1 to generate this file",
+    "Or set DEVNET_SENDER_KEY, DEVNET_RECEIVER_KEY, etc. environment variables"
+  ]
+}
+

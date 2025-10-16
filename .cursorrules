@@ -1,108 +1,118 @@
 # Terminal Command Timeout Rules
 
-## Automatic Timeout Application
+## IMPORTANT: Run Fast Commands Directly, Only Wrap Slow Commands
 
-When executing terminal commands using `run_terminal_cmd`, automatically apply timeouts based on command type to prevent hanging operations.
+**DO NOT wrap simple, fast commands** - this causes hanging and output issues.
+**ONLY use timeout wrappers for slow operations** like builds, installs, and network operations.
 
-### Timeout Standards
+## Commands That Should Run DIRECTLY (No Wrapper)
 
-#### Quick Operations (10s)
-- `git status`, `git branch`, `git log`, `git diff`
-- File listing: `ls`, `dir`, `pwd`
-- File reading: `cat`, `type` (small files)
-- Environment checks: `echo`, `printenv`
+These commands are fast and reliable - **run them directly without timeout wrappers**:
 
-#### Build Operations (60s)
+### Quick Operations - Run Directly ✅
+- **Output commands:** `Write-Host`, `echo`, `Write-Output`
+- **Quick git operations:** `git status`, `git branch`, `git log --oneline`, `git diff`
+- **File operations:** `ls`, `dir`, `pwd`, `cd`, `mkdir`, `cat`, `type`
+- **Environment checks:** `node --version`, `npm --version`, `tsc --version`, `printenv`
+- **Simple queries:** Quick database queries, simple API calls
+
+**Example - Run directly:**
+```typescript
+run_terminal_cmd({ command: "git status", is_background: false })
+run_terminal_cmd({ command: "Write-Host 'Starting...'", is_background: false })
+run_terminal_cmd({ command: "ls", is_background: false })
+```
+
+## Commands That NEED Timeout Protection
+
+Use timeout utilities **ONLY** for these potentially slow operations:
+
+### Build Operations (60s) - Use Wrapper ⚠️
 - TypeScript: `tsc`, `npm run build`
 - Linting: `npm run lint`, `eslint`
 - Solana: `anchor build`, `cargo build-sbf`
 
-#### Package Management (120s)
+### Package Management (120s) - Use Wrapper ⚠️
 - `npm install`, `npm ci`, `npm update`
 - `cargo update`
 
-#### Test Execution
+### Test Execution - Use Wrapper ⚠️
 - Unit tests: 60s (`npm test`)
 - Integration tests: 120s
 - E2E tests: 180s
 
-#### Database Operations (60s)
+### Database Operations (60s) - Use Wrapper ⚠️
 - `npx prisma migrate`, `npx prisma db push`
 - `npx prisma generate` (30s)
 - `npm run seed`
 
-#### Blockchain Operations
+### Blockchain Operations - Use Wrapper ⚠️
 - Network queries: 90s (`solana airdrop`, `solana balance`)
 - Deployments: 180s (`anchor deploy`, `solana program deploy`)
 
-#### Git Network Operations (60s)
+### Git Network Operations (60s) - Use Wrapper ⚠️
 - `git fetch`, `git pull`, `git push`
+- **Note:** `git status`, `git branch`, `git diff` are fast - run directly
 
-#### Server Startup (45s)
-- Development servers: `npm run dev`, `nodemon`
-- Allow 45s for initialization, then run in background
-
-#### Long-Running Scripts (300s)
+### Long-Running Scripts (300s) - Use Wrapper ⚠️
 - Custom setup/migration scripts
 - Bulk operations
 
-#### Background Processes (No Timeout)
+### Background Processes (No Timeout) - Use is_background Flag
 - Watch modes: `npm run dev`, `jest --watch`, `nodemon`
 - Validators: `solana-test-validator`
 - **Action:** Always use `is_background: true` flag
 
-### Implementation
+## Implementation Guidelines
 
-For each `run_terminal_cmd` call:
-
-1. **Identify command type** from the command string
-2. **Apply appropriate timeout** from the table above
-3. **Use platform-specific timeout mechanism:**
-   - PowerShell: Use `Start-Job` with `Wait-Job -Timeout`
-   - Bash: Use `timeout` command
-4. **Handle timeout gracefully:**
-   - Send SIGTERM, wait 5s, then SIGKILL if needed
-   - Report clear error message with command and timeout duration
-5. **Log warnings** if command exceeds 50% of timeout
-
-### Example Usage
-
-**Quick Git Operation:**
-```powershell
-# PowerShell with 10s timeout
-$job = Start-Job -ScriptBlock { git status }
-Wait-Job -Job $job -Timeout 10
-if ($job.State -eq 'Running') {
-    Stop-Job -Job $job
-    Write-Error "git status timed out after 10s"
-    exit 1
-}
-```
-
-**Build Operation:**
-```powershell
-# PowerShell with 60s timeout
-$job = Start-Job -ScriptBlock { npm run build }
-Wait-Job -Job $job -Timeout 60
-```
-
-**Background Process:**
+### For Fast Commands (DO THIS):
 ```typescript
-// Use is_background flag for dev servers
+// Run directly - no wrapper needed
+run_terminal_cmd({ command: "git status" })
+run_terminal_cmd({ command: "Write-Host 'Building...'" })
+run_terminal_cmd({ command: "ls -la" })
+```
+
+### For Slow Commands (Use Wrapper):
+```powershell
+# PowerShell with timeout wrapper
+.\scripts\run-with-timeout.ps1 -Command "npm" -Arguments "run","build" -Timeout 60
+
+# TypeScript with timeout wrapper
+npx ts-node scripts/run-with-timeout.ts npm run build
+```
+
+### For Background Processes:
+```typescript
+// Use is_background flag
 run_terminal_cmd({
     command: "npm run dev",
     is_background: true  // No timeout needed
 })
 ```
 
-### Timeout Adjustment Rules
+## Why This Matters
+
+### ❌ Problems with Wrapping Fast Commands:
+1. **Hanging** - Wrappers add overhead that causes fast commands to wait for input
+2. **Output buffering** - Stdout/stderr handling interferes with immediate output
+3. **User annoyance** - Requires pressing ENTER to continue
+4. **Slower execution** - Adds unnecessary job management overhead
+
+### ✅ Benefits of Running Fast Commands Directly:
+1. **Instant completion** - No overhead, no waiting
+2. **Clean output** - Direct stdout/stderr handling
+3. **Better UX** - No manual intervention needed
+4. **Efficient** - Commands complete in milliseconds
+
+## Timeout Adjustment Rules (For Slow Commands Only)
 
 - **CI Environment:** Apply 2x multiplier to all timeouts
 - **First-time operations:** Apply 2x multiplier (e.g., first `npm install`)
 - **Network issues detected:** Apply 1.5x multiplier and retry once
 - **Repeated timeouts:** Escalate to user with recommendation
 
-### Error Messages
+## Error Messages (For Timeout Failures)
 
 On timeout, provide actionable error message:
 
@@ -123,14 +133,29 @@ Recommendations:
 - Increase timeout if operation is legitimately slow
 ```
 
-### Monitoring
+## Quick Reference
 
-Track and report:
-- Commands that frequently timeout
-- Commands that consistently use >80% of timeout
-- Average execution time vs timeout threshold
+| Command Type | Example | Use Wrapper? | Reason |
+|-------------|---------|--------------|--------|
+| Output | `Write-Host`, `echo` | ❌ NO | Fast, no risk |
+| Quick git | `git status`, `git branch` | ❌ NO | Fast, no network |
+| File ops | `ls`, `pwd`, `cat` | ❌ NO | Fast, local only |
+| Builds | `npm run build`, `tsc` | ✅ YES | Slow, can hang |
+| Installs | `npm install` | ✅ YES | Slow, network |
+| Tests | `npm test` | ✅ YES | Slow, can fail |
+| Git network | `git pull`, `git push` | ✅ YES | Network, can hang |
+| Background | `npm run dev` | 🔵 USE is_background | Runs indefinitely |
 
-### Reference
+## Summary
+
+✅ **DO:** Run simple commands directly (`git status`, `echo`, `ls`)  
+✅ **DO:** Use timeout wrappers ONLY for slow operations (builds, installs, deploys)  
+✅ **DO:** Use `is_background: true` for watch modes and servers  
+❌ **DON'T:** Wrap fast commands with timeout utilities (causes hanging)  
+❌ **DON'T:** Override timeouts unless necessary  
+❌ **DON'T:** Use timeout wrappers for background processes
+
+## Reference
 
 See `docs/TERMINAL_TIMEOUT_POLICY.md` for complete policy details and implementation examples.
 

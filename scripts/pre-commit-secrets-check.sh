@@ -63,7 +63,7 @@ while IFS= read -r file; do
 done <<< "$STAGED_FILES"
 
 # Check for common secret file names in commit
-DANGEROUS_FILES=$(echo "$STAGED_FILES" | grep -E "\.(key|pem|p12|pfx)$|id_rsa|\.env|keypair.*\.json|.*-keypair\.json" || true)
+DANGEROUS_FILES=$(echo "$STAGED_FILES" | grep -E "\.(key|pem|p12|pfx)$|id_rsa|\.env|keypair.*\.json|.*-keypair\.json|devnet-config\.json" || true)
 
 if [ ! -z "$DANGEROUS_FILES" ]; then
     echo -e "${RED}❌ Dangerous file types detected:${NC}"

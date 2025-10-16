@@ -174,3 +174,7 @@ deployment-info.txt
 # Devnet environment files with private keys
 scripts/.env.devnet
 .env.devnet
+
+# Devnet test configuration with private keys - NEVER COMMIT
+tests/fixtures/devnet-config.json
+**/devnet-config.json
