@@ -61,7 +61,7 @@ foreach ($file in $stagedFiles) {
 
 # Check for common secret file names in commit
 $dangerousFiles = $stagedFiles | Where-Object {
-    $_ -match "\.(key|pem|p12|pfx)$|id_rsa|\.env|keypair.*\.json|.*-keypair\.json"
+    $_ -match "\.(key|pem|p12|pfx)$|id_rsa|\.env|keypair.*\.json|.*-keypair\.json|devnet-config\.json"
 }
 
 if ($dangerousFiles) {
