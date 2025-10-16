@@ -10,6 +10,7 @@ import { getAssociatedTokenAddress, transfer, getAccount, createTransferInstruct
 import { prisma } from '../config/database';
 import { config } from '../config';
 import { getSolanaService } from './solana.service';
+import { getEscrowProgramService } from './escrow-program.service';
 import { getIdempotencyService } from './idempotency.service';
 import { WebhookEventsService } from './webhook-events.service';
 import { getReceiptService } from './receipt.service';
@@ -527,9 +528,9 @@ export class SettlementService {
     console.log('[SettlementService] Calling on-chain settlement instruction...');
 
     try {
-      // Get Solana connection
-      const connection = this.solanaService.getConnection();
-
+      // Get escrow program service
+      const escrowProgramService = getEscrowProgramService();
+      
       // Parse public keys
       const escrowPda = new PublicKey(agreement.escrowPda);
       const seller = new PublicKey(agreement.seller);
@@ -537,32 +538,39 @@ export class SettlementService {
       const nftMint = new PublicKey(agreement.nftMint);
       const feeCollector = new PublicKey(this.config.platformFeeCollectorAddress);
 
+      // Get USDC mint address from config
+      const usdcMintStr = config.usdc?.mintAddress || 'Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr'; // Devnet USDC
+      const usdcMint = new PublicKey(usdcMintStr);
+
       console.log('[SettlementService] Settlement parties:', {
         escrowPda: escrowPda.toString(),
         seller: seller.toString(),
         buyer: buyer.toString(),
         nftMint: nftMint.toString(),
+        usdcMint: usdcMint.toString(),
         feeCollector: feeCollector.toString(),
         platformFee: feeCalculation.platformFee.toString(),
         creatorRoyalty: feeCalculation.creatorRoyalty.toString(),
         sellerReceived: feeCalculation.sellerReceived.toString(),
       });
 
-      // TODO: Replace with actual Anchor program instruction when deployed
-      // For now, create a mock settlement transaction
-      // The actual Anchor program would handle all transfers atomically
-      const mockTxId = `settle_tx_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      // Call Anchor program settle instruction
+      console.log('[SettlementService] 🔗 Calling Anchor program settle() instruction...');
+      const txId = await escrowProgramService.settle(
+        escrowPda,
+        seller,
+        buyer,
+        nftMint,
+        usdcMint
+      );
 
-      console.warn('[SettlementService] ⚠️  MOCK SETTLEMENT - No tokens actually transferred!');
-      console.warn('[SettlementService] In production, this would:');
-      console.warn('[SettlementService]   1. Transfer NFT from escrow to buyer');
-      console.warn('[SettlementService]   2. Transfer USDC to seller (minus fees)');
-      console.warn('[SettlementService]   3. Transfer platform fee to fee collector');
-      console.warn('[SettlementService]   4. Transfer creator royalty (if applicable)');
-      console.warn('[SettlementService]   5. Close escrow PDA');
-      console.warn('[SettlementService] For E2E testing with actual transfers, deploy the Anchor program.');
+      console.log('[SettlementService] ✅ Settlement transaction confirmed:', txId);
+      console.log('[SettlementService] Settlement completed:');
+      console.log('[SettlementService]   ✅ NFT transferred from escrow to buyer');
+      console.log('[SettlementService]   ✅ USDC transferred to seller');
+      console.log(`[SettlementService]   Explorer: https://explorer.solana.com/tx/${txId}?cluster=devnet`);
 
-      return mockTxId;
+      return txId;
     } catch (error) {
       console.error('[SettlementService] Error executing on-chain settlement:', error);
       throw error;

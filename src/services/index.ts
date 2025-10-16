@@ -7,6 +7,7 @@
 
 export * from './solana.service';
 export * from './agreement.service';
+export * from './escrow-program.service';
 export * from './monitoring.service';
 export * from './monitoring-orchestrator.service';
 export * from './deposit-database.service';
