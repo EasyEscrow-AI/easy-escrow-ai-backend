@@ -261,12 +261,17 @@ export async function displayTokenBalances(
 }
 
 /**
- * Complete token setup: create mint, setup accounts, and mint initial USDC
- * Saves configuration to devnet-config.json for reuse
+ * Complete token setup: uses official devnet USDC mint
+ * Sets up accounts for all wallets
+ * 
+ * NOTE: For devnet E2E tests, we use the official devnet USDC mint.
+ * This matches what the API expects and allows proper integration testing.
+ * 
+ * Official Devnet USDC: Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr
  * 
  * @param connection - Solana connection
  * @param wallets - All wallet keypairs (4 wallets)
- * @param initialReceiverAmount - Amount of USDC to mint to receiver (default 0.5)
+ * @param initialReceiverAmount - Amount of USDC to mint to receiver (NOT USED - manual funding required)
  * @returns Token setup configuration
  */
 export async function setupDevnetTokens(
@@ -282,89 +287,44 @@ export async function setupDevnetTokens(
   try {
     console.log('\n=== Devnet Token Setup ===\n');
 
-    // Check if config already exists
-    const configPath = path.join(__dirname, '../fixtures/devnet-config.json');
-    let config: any = {};
+    // ALWAYS use official devnet USDC mint for E2E tests
+    // This ensures compatibility with the API which validates against this address
+    const OFFICIAL_DEVNET_USDC = 'Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr';
+    const mint = new PublicKey(OFFICIAL_DEVNET_USDC);
+    
+    console.log(`✅ Using official devnet USDC mint: ${OFFICIAL_DEVNET_USDC}`);
+    console.log(`   This matches the API's expected USDC mint address\n`);
 
-    if (fs.existsSync(configPath)) {
-      config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
-      
-      // If USDC mint already exists, try to reuse it
-      if (config.usdcMint) {
-        console.log(`ℹ️  Found existing USDC mint: ${config.usdcMint}`);
-        
-        try {
-          const mint = new PublicKey(config.usdcMint);
-          
-          // Setup token accounts (idempotent - will get existing or create new)
-          const tokenAccounts = await setupTokenAccounts(
-            connection,
-            mint,
-            wallets,
-            wallets.sender // Use sender as payer
-          );
-
-          // Mint USDC to receiver if needed
-          const receiverBalance = await getTokenBalance(connection, tokenAccounts.receiver);
-          
-          if (receiverBalance < initialReceiverAmount) {
-            const amountToMint = initialReceiverAmount - receiverBalance;
-            await mintUSDCToWallet(
-              connection,
-              mint,
-              tokenAccounts.receiver,
-              amountToMint,
-              wallets.sender // Sender is mint authority
-            );
-          } else {
-            console.log(`ℹ️  Receiver already has ${receiverBalance.toFixed(6)} USDC, skipping mint\n`);
-          }
-
-          await displayTokenBalances(connection, tokenAccounts);
-
-          // Update config
-          config.tokenAccounts = {
-            sender: tokenAccounts.sender.toString(),
-            receiver: tokenAccounts.receiver.toString(),
-            admin: tokenAccounts.admin.toString(),
-            feeCollector: tokenAccounts.feeCollector.toString(),
-          };
-          fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
-
-          return {
-            usdcMint: mint,
-            tokenAccounts,
-            decimals: 6,
-          };
-        } catch (error) {
-          console.log('⚠️  Existing mint not accessible, creating new one...\n');
-        }
-      }
-    }
-
-    // Create new mint
-    const mint = await createDevnetUSDCMint(connection, wallets.sender);
-
-    // Setup token accounts
+    // Setup token accounts (idempotent - will get existing or create new)
     const tokenAccounts = await setupTokenAccounts(
       connection,
       mint,
       wallets,
-      wallets.sender
+      wallets.sender // Use sender as payer
     );
 
-    // Mint initial USDC to receiver
-    await mintUSDCToWallet(
-      connection,
-      mint,
-      tokenAccounts.receiver,
-      initialReceiverAmount,
-      wallets.sender
-    );
-
+    // Check receiver balance
+    const receiverBalance = await getTokenBalance(connection, tokenAccounts.receiver);
+    
+    // Display balances
     await displayTokenBalances(connection, tokenAccounts);
+    
+    // Warning if balances are low
+    if (receiverBalance < initialReceiverAmount) {
+      console.log(`⚠️  WARNING: Receiver has ${receiverBalance.toFixed(6)} USDC`);
+      console.log(`   Required: ${initialReceiverAmount.toFixed(6)} USDC`);
+      console.log(`   Please fund the receiver wallet with devnet USDC`);
+      console.log(`   Get devnet USDC from: https://spl-token-faucet.com/?token-name=USDC-Dev\n`);
+    } else {
+      console.log(`✅ Receiver has sufficient USDC: ${receiverBalance.toFixed(6)} USDC\n`);
+    }
 
     // Save configuration
+    const configPath = path.join(__dirname, '../fixtures/devnet-config.json');
+    const config: any = fs.existsSync(configPath) 
+      ? JSON.parse(fs.readFileSync(configPath, 'utf-8'))
+      : {};
+    
     config.usdcMint = mint.toString();
     config.tokenAccounts = {
       sender: tokenAccounts.sender.toString(),
@@ -373,6 +333,12 @@ export async function setupDevnetTokens(
       feeCollector: tokenAccounts.feeCollector.toString(),
     };
     config.updatedAt = new Date().toISOString();
+
+    // Ensure fixtures directory exists
+    const fixturesDir = path.dirname(configPath);
+    if (!fs.existsSync(fixturesDir)) {
+      fs.mkdirSync(fixturesDir, { recursive: true });
+    }
 
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
     console.log(`✅ Token setup saved to: ${configPath}\n`);
