@@ -281,25 +281,62 @@ doctl apps create --spec .do/app.yaml
 - [Spaces Setup](docs/SPACES_SETUP.md) - Object storage setup
 
 **Docker (Local/Testing):**
+
+Using npm scripts (recommended):
+```bash
+# Start all services (backend, PostgreSQL, Redis)
+npm run docker:start
+
+# Restart services (graceful)
+npm run docker:restart                # All services
+npm run docker:restart:backend        # Backend only
+npm run docker:restart:db             # Database only
+npm run docker:restart:redis          # Redis only
+
+# Rebuild and restart (after code changes)
+npm run docker:rebuild                # All services
+npm run docker:rebuild:backend        # Backend only
+
+# View logs
+npm run docker:logs                   # All services
+npm run docker:logs:backend           # Backend only
+npm run docker:logs:db                # Database only
+npm run docker:logs:redis             # Redis only
+
+# Check service health
+npm run docker:ps                     # Service status
+npm run docker:health                 # Health check
+
+# Stop all services
+npm run docker:stop
+```
+
+Or using Docker Compose directly:
 ```bash
 # Build the Docker image
 docker build -t easyescrow-backend:latest .
 
 # Run with Docker Compose (includes PostgreSQL and Redis)
-docker-compose up -d
+docker compose up -d
+
+# Graceful restart (ALWAYS use this instead of killing processes)
+docker compose restart backend
 
 # Check logs
-docker-compose logs -f backend
+docker compose logs -f backend
 
-# Health check
-curl http://localhost:3000/health
+# Health check (PowerShell)
+Invoke-WebRequest -Uri "http://localhost:3000/health" -Method GET
 ```
+
+**Important:** Always use Docker commands for graceful restarts. Never use process killing commands (`pkill`, `taskkill`) with Dockerized services. See [DOCKER_GRACEFUL_RESTART.md](docs/DOCKER_GRACEFUL_RESTART.md) for complete guide.
 
 See [DOCKER_DEPLOYMENT.md](docs/DOCKER_DEPLOYMENT.md) for complete Docker guide including:
 - Docker Compose setup
 - Production deployment best practices
 - Kubernetes deployment examples
 - Environment variable configuration
+- Graceful restart strategies
 
 **Manual Deployment:**
 ```bash
