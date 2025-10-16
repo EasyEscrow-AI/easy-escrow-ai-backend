@@ -5,12 +5,12 @@
  * Provides methods to call program instructions for settlement and cancellation.
  */
 
-import { AnchorProvider, Program, web3, BN } from '@coral-xyz/anchor';
+import { AnchorProvider, Program, BN, Wallet } from '@coral-xyz/anchor';
 import { Connection, Keypair, PublicKey } from '@solana/web3.js';
 import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { config } from '../config';
-import { Escrow } from '../../target/types/escrow';
-import escrowIdl from '../../target/idl/escrow.json';
+import { Escrow } from '../generated/anchor/escrow';
+import escrowIdl from '../generated/anchor/escrow-idl.json';
 import bs58 from 'bs58';
 
 /**
@@ -82,8 +82,10 @@ export class EscrowProgramService {
     // Create connection
     const connection = new Connection(config.solana.rpcUrl, 'confirmed');
     
+    // Create wallet wrapper
+    const wallet = new Wallet(this.adminKeypair);
+    
     // Create provider
-    const wallet = new web3.Wallet(adminKeypair);
     this.provider = new AnchorProvider(
       connection,
       wallet,
@@ -99,7 +101,7 @@ export class EscrowProgramService {
     
     // Initialize program
     this.program = new Program<Escrow>(
-      escrowIdl as Escrow,
+      escrowIdl as any,
       programId,
       this.provider
     );
