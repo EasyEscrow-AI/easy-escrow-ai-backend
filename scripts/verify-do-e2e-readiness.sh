@@ -1,6 +1,9 @@
 #!/bin/bash
 # Verification script for DigitalOcean E2E Test Readiness
 # Run this on the DO dev server to check if everything is configured correctly
+#
+# Portable: Uses sed and awk instead of GNU-specific grep -oP for compatibility
+# with both GNU/Linux and BSD/macOS systems
 
 set -e
 
@@ -103,7 +106,8 @@ fi
 section "3. Anchor Framework"
 
 if command -v anchor &> /dev/null; then
-    ANCHOR_VERSION=$(anchor --version 2>&1 | grep -oP 'anchor-cli \K[0-9.]+')
+    # Use sed for portability (works on both GNU and BSD)
+    ANCHOR_VERSION=$(anchor --version 2>&1 | sed -n 's/.*anchor-cli \([0-9.]*\).*/\1/p')
     
     if [[ "$ANCHOR_VERSION" == "$EXPECTED_ANCHOR_VERSION" ]]; then
         pass "Anchor CLI version correct: $ANCHOR_VERSION"
@@ -167,11 +171,15 @@ if command -v solana &> /dev/null; then
     if solana account $EXPECTED_PROGRAM_ID --url devnet &> /dev/null; then
         pass "Program deployed on devnet: $EXPECTED_PROGRAM_ID"
         
-        # Get program details
+        # Get program details (use awk for portability)
         PROGRAM_INFO=$(solana account $EXPECTED_PROGRAM_ID --url devnet 2>&1)
-        PROGRAM_LAMPORTS=$(echo "$PROGRAM_INFO" | grep -oP 'lamports: \K[0-9]+' | head -1)
-        PROGRAM_SOL=$(echo "scale=4; $PROGRAM_LAMPORTS / 1000000000" | bc)
-        info "  Program balance: $PROGRAM_SOL SOL"
+        PROGRAM_LAMPORTS=$(echo "$PROGRAM_INFO" | sed -n 's/.*lamports: \([0-9]*\).*/\1/p' | head -1)
+        
+        if [ -n "$PROGRAM_LAMPORTS" ]; then
+            # Use awk for floating point division (more portable than bc)
+            PROGRAM_SOL=$(awk "BEGIN {printf \"%.4f\", $PROGRAM_LAMPORTS / 1000000000}")
+            info "  Program balance: $PROGRAM_SOL SOL"
+        fi
         info "  Explorer: https://explorer.solana.com/address/$EXPECTED_PROGRAM_ID?cluster=devnet"
     else
         fail "Program NOT found on devnet: $EXPECTED_PROGRAM_ID"
@@ -194,10 +202,12 @@ check_wallet_balance() {
     if command -v solana &> /dev/null; then
         BALANCE_OUTPUT=$(solana balance $address --url devnet 2>&1)
         
+        # Use sed for portability instead of grep -oP
         if [[ $BALANCE_OUTPUT =~ [0-9]+\.?[0-9]* ]]; then
-            BALANCE=$(echo "$BALANCE_OUTPUT" | grep -oP '[0-9]+\.?[0-9]*' | head -1)
+            BALANCE=$(echo "$BALANCE_OUTPUT" | sed -n 's/.*\([0-9]*\.[0-9]*\).*/\1/p' | head -1)
             
-            if (( $(echo "$BALANCE >= $min_balance" | bc -l) )); then
+            # Use awk for floating point comparison (more portable than bc)
+            if awk "BEGIN {exit !($BALANCE >= $min_balance)}"; then
                 pass "$name balance sufficient: $BALANCE SOL (min: $min_balance SOL)"
             else
                 warn "$name balance LOW: $BALANCE SOL (min: $min_balance SOL)"
