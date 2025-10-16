@@ -18,7 +18,7 @@
 import { Connection, PublicKey, LAMPORTS_PER_SOL, Transaction, sendAndConfirmTransaction } from '@solana/web3.js';
 import { expect } from 'chai';
 import axios from 'axios';
-import {transfer, getAccount, createTransferInstruction} from '@solana/spl-token';
+import {transfer, getAccount, createTransferInstruction, getOrCreateAssociatedTokenAccount} from '@solana/spl-token';
 import {
   loadDevnetWallets,
   verifyWalletBalances,
@@ -74,6 +74,7 @@ describe('E2E: NFT-USDC Escrow Swap on Devnet', function () {
 
   // Agreement data
   let agreementId: string;
+  let escrowPda: string;
   let depositAddresses: { usdc: string; nft: string };
 
   before(async function () {
@@ -273,7 +274,7 @@ describe('E2E: NFT-USDC Escrow Swap on Devnet', function () {
           {
             headers: {
               'Content-Type': 'application/json',
-              'X-Idempotency-Key': `e2e-test-${Date.now()}`,
+              'idempotency-key': `e2e-test-${Date.now()}`,
             },
           }
         );
@@ -283,15 +284,17 @@ describe('E2E: NFT-USDC Escrow Swap on Devnet', function () {
         expect(response.data.data).to.exist;
 
         agreementId = response.data.data.agreementId;
+        escrowPda = response.data.data.escrowPda;
         depositAddresses = response.data.data.depositAddresses;
 
         console.log('   ✅ Agreement created successfully!');
         console.log(`   Agreement ID: ${agreementId}`);
-        console.log(`   Escrow PDA: ${response.data.data.escrowPda}`);
+        console.log(`   Escrow PDA: ${escrowPda}`);
         console.log(`   USDC Deposit Address: ${depositAddresses.usdc}`);
         console.log(`   NFT Deposit Address: ${depositAddresses.nft}\n`);
 
         expect(agreementId).to.be.a('string');
+        expect(escrowPda).to.be.a('string');
         expect(depositAddresses.usdc).to.be.a('string');
         expect(depositAddresses.nft).to.be.a('string');
       } catch (error: any) {
@@ -301,6 +304,91 @@ describe('E2E: NFT-USDC Escrow Swap on Devnet', function () {
           console.error(`   Status: ${error.response.status}`);
           console.error(`   Response:`, error.response.data);
         }
+        throw error;
+      }
+    });
+
+    it('should create ATAs for escrow PDA (required for token deposits)', async function () {
+      console.log('🏗️  Creating Associated Token Accounts for escrow...\n');
+
+      try {
+        // The deposit addresses are ATAs that need to exist before we can transfer to them
+        // In production, the on-chain program would create these
+        // For testing, we need to create them manually
+
+        console.log('   📋 Debug Info:');
+        console.log(`   Escrow PDA: ${escrowPda}`);
+        console.log(`   USDC Mint: ${tokenConfig.usdcMint.toString()}`);
+        console.log(`   NFT Mint: ${nft.mint.toString()}`);
+        console.log(`   Expected USDC ATA: ${depositAddresses.usdc}`);
+        console.log(`   Expected NFT ATA: ${depositAddresses.nft}`);
+        console.log(`   Payer: ${wallets.sender.publicKey.toString()}\n`);
+
+        const escrowPdaPubkey = new PublicKey(escrowPda);
+
+        // Create USDC ATA for escrow PDA
+        // Note: We use the sender's wallet to pay for the ATA creation
+        console.log('   🔨 Creating USDC ATA for escrow PDA...');
+        console.log(`   - Owner (PDA): ${escrowPdaPubkey.toString()}`);
+        console.log(`   - Mint: ${tokenConfig.usdcMint.toString()}`);
+        console.log(`   - Payer: ${wallets.sender.publicKey.toString()}\n`);
+
+        const usdcAta = await getOrCreateAssociatedTokenAccount(
+          connection,
+          wallets.sender, // Payer (pays for account creation)
+          tokenConfig.usdcMint, // Mint
+          escrowPdaPubkey, // Owner (the escrow PDA)
+          true // allowOwnerOffCurve - required for PDAs
+        );
+
+        console.log(`   ✅ USDC ATA Result:`);
+        console.log(`      Address: ${usdcAta.address.toString()}`);
+        console.log(`      Owner: ${usdcAta.owner.toString()}`);
+        console.log(`      Mint: ${usdcAta.mint.toString()}`);
+        console.log(`      Amount: ${usdcAta.amount.toString()}\n`);
+
+        // Create NFT ATA for escrow PDA
+        console.log('   🔨 Creating NFT ATA for escrow PDA...');
+        console.log(`   - Owner (PDA): ${escrowPdaPubkey.toString()}`);
+        console.log(`   - Mint: ${nft.mint.toString()}`);
+        console.log(`   - Payer: ${wallets.sender.publicKey.toString()}\n`);
+
+        const nftAta = await getOrCreateAssociatedTokenAccount(
+          connection,
+          wallets.sender, // Payer (pays for account creation)
+          nft.mint, // NFT mint
+          escrowPdaPubkey, // Owner (the escrow PDA)
+          true // allowOwnerOffCurve - required for PDAs
+        );
+
+        console.log(`   ✅ NFT ATA Result:`);
+        console.log(`      Address: ${nftAta.address.toString()}`);
+        console.log(`      Owner: ${nftAta.owner.toString()}`);
+        console.log(`      Mint: ${nftAta.mint.toString()}`);
+        console.log(`      Amount: ${nftAta.amount.toString()}\n`);
+
+        // Verify addresses match what the API provided
+        console.log('   🔍 Verifying ATA addresses match API expectations...');
+        console.log(`   Expected USDC ATA: ${depositAddresses.usdc}`);
+        console.log(`   Actual USDC ATA:   ${usdcAta.address.toString()}`);
+        console.log(`   Match: ${usdcAta.address.toString() === depositAddresses.usdc ? '✅' : '❌'}\n`);
+        
+        console.log(`   Expected NFT ATA:  ${depositAddresses.nft}`);
+        console.log(`   Actual NFT ATA:    ${nftAta.address.toString()}`);
+        console.log(`   Match: ${nftAta.address.toString() === depositAddresses.nft ? '✅' : '❌'}\n`);
+
+        expect(usdcAta.address.toString()).to.equal(depositAddresses.usdc);
+        expect(nftAta.address.toString()).to.equal(depositAddresses.nft);
+
+        console.log('   ✅ All ATAs ready for deposits\n');
+
+      } catch (error: any) {
+        console.error('   ❌ Failed to create ATAs:');
+        console.error(`   Error: ${error.message}`);
+        if (error.stack) {
+          console.error(`   Stack: ${error.stack}`);
+        }
+        console.error('\n');
         throw error;
       }
     });
