@@ -8,8 +8,13 @@ describe("escrow - devnet integration test", () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 
-  // Use the deployed program ID on devnet
-  const programId = new PublicKey("7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV");
+  // Use the deployed program ID from environment variable
+  // This prevents program ID mismatches between environments
+  const programIdStr = process.env.ESCROW_PROGRAM_ID || "7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV";
+  const programId = new PublicKey(programIdStr);
+  
+  console.log("🔍 Using Program ID:", programIdStr);
+  console.log("   Source:", process.env.ESCROW_PROGRAM_ID ? "ESCROW_PROGRAM_ID env var" : "hardcoded fallback");
   
   // Load IDL and override the program ID to match deployed version
   const idl = require("../target/idl/escrow.json");
