@@ -32,7 +32,9 @@
     "localnet:start": "powershell -ExecutionPolicy Bypass -File ./scripts/start-localnet-validator.ps1",
     "localnet:setup": "powershell -ExecutionPolicy Bypass -File ./scripts/setup-localnet.ps1",
     "localnet:setup-nfts": "powershell -ExecutionPolicy Bypass -File ./scripts/setup-nft-collection.ps1",
-    "localnet:reset": "powershell -ExecutionPolicy Bypass -File ./scripts/reset-localnet.ps1"
+    "localnet:reset": "powershell -ExecutionPolicy Bypass -File ./scripts/reset-localnet.ps1",
+    "timeout:help": "ts-node scripts/run-with-timeout.ts --help",
+    "timeout:help:ps": "powershell -ExecutionPolicy Bypass -File ./scripts/run-with-timeout.ps1 -Help"
   },
   "keywords": [
     "escrow",

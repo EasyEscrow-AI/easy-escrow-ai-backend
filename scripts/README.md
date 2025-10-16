@@ -1,8 +1,53 @@
-# Deployment Scripts
+# Scripts Directory
 
-This directory contains scripts to help with Solana program deployment.
+This directory contains scripts to help with development, deployment, and utilities.
 
 ## Scripts Overview
+
+### Command Timeout Utilities
+
+#### `run-with-timeout.ts`
+TypeScript utility for running commands with automatic timeout detection.
+
+**Features:**
+- Intelligent timeout detection based on command type
+- Retry logic with exponential backoff
+- Live output streaming
+- Warning when commands use >80% of timeout
+- Full TypeScript types for integration
+
+**Usage:**
+```bash
+# Basic usage
+ts-node scripts/run-with-timeout.ts git status
+
+# Override timeout (in milliseconds)
+ts-node scripts/run-with-timeout.ts --timeout 120000 npm install
+
+# Configure retry behavior
+ts-node scripts/run-with-timeout.ts --retries 5 anchor deploy
+```
+
+**See:** [TIMEOUT_UTILITIES.md](../docs/TIMEOUT_UTILITIES.md) for complete documentation.
+
+#### `run-with-timeout.ps1`
+PowerShell implementation of the timeout utility for Windows users.
+
+**Usage:**
+```powershell
+# Basic usage
+.\scripts\run-with-timeout.ps1 -Command "git" -Arguments "status"
+
+# Override timeout (in seconds)
+.\scripts\run-with-timeout.ps1 -Command "npm" -Arguments "install" -Timeout 120
+
+# Configure retry behavior
+.\scripts\run-with-timeout.ps1 -Command "anchor" -Arguments "deploy" -Retries 5
+```
+
+**See:** [TIMEOUT_UTILITIES.md](../docs/TIMEOUT_UTILITIES.md) for complete documentation.
+
+### Deployment Scripts
 
 ### 1. `install-solana-tools.ps1`
 Automated installation script for Solana development tools.
