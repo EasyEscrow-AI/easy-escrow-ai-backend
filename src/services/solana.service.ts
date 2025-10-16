@@ -534,11 +534,6 @@ export const initializeEscrow = async (
       transactionId: mockTxId,
     };
     
-    // DEBUG: Log what we're about to return
-    console.error('=== RETURNING FROM initializeEscrow ===');
-    console.error(JSON.stringify(result, null, 2));
-    console.error('=======================================');
-
     return result;
 
   } catch (error) {

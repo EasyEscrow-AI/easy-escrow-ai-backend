@@ -26,10 +26,6 @@ const prisma = new PrismaClient();
 export const createAgreement = async (
   data: CreateAgreementDTO
 ): Promise<CreateAgreementResponseDTO> => {
-  console.error('===== CREATE AGREEMENT CALLED =====');
-  console.error('NFT Mint:', data.nftMint);
-  console.error('===================================');
-  
   try {
     // 1. Initialize escrow on-chain
     const escrowResult = await initializeEscrow({
