@@ -1,0 +1,24 @@
+{
+  "wallets": {
+    "sender": "FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71",
+    "receiver": "Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk",
+    "admin": "7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u",
+    "feeCollector": "C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E"
+  },
+  "walletKeys": {
+    "sender": "57CjnFUDN2rJwYfSTunKb22raU4ffzPTi5jU1FXY9mVSyf1LrJp8hLvDUFx4fbTVGoTeyk3LypFCn48MrwRWkWQo",
+    "receiver": "2mc1H2sowmD5wASC9C4ZqLa6KpifZPbuZLKQxzwCsU5PyearniMPo515JMDzejMkhc7guGc7u4XMsKJ3B6sEVVwi",
+    "admin": "2YFcwCn5bNmgcT4M7QonvpwzfPVBChT2gAib6WbDrABRw3b9zrVGqpZHUM37FfzEpQdeg9HPEWxCNaHGARqpmeFZ",
+    "feeCollector": "38N7hAeLNSvdkuE9mJ8Wqm2WLEPUxdzMP4kmKt9B4e9XQDyZ9x5GjkUGfzDypoBpNgB7gmQNB1sY4GvHAJwgbQYp"
+  },
+  "description": "Official devnet wallets for E2E testing - Confirmed 2025-10-16",
+  "createdAt": "2025-10-16T00:43:24.542Z",
+  "usdcMint": "738juYYJLqMRB1DTeffUR7zPuc9zyftCswedLYuikjzk",
+  "tokenAccounts": {
+    "sender": "7aFQuiLrKFbEdwrZnzd8t9F8bN52mRWR2R1re1CxUczZ",
+    "receiver": "M9Dcin8qwB5m1f3U4VbL2LjVbWNDfxJFybhoxmEv83S",
+    "admin": "GmxQBW8rwtXPbQrT3DQiLDDfF4Sft3YkLGE4kBW1VEUR",
+    "feeCollector": "3iQPrx2NsBYaDkGiwk816TwS7q3k5oa7bMpjiA2a9XuW"
+  },
+  "updatedAt": "2025-10-16T00:49:23.278Z"
+}
