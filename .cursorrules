@@ -159,3 +159,150 @@ Recommendations:
 
 See `docs/TERMINAL_TIMEOUT_POLICY.md` for complete policy details and implementation examples.
 
+---
+
+# Docker Graceful Restart Rule
+
+## CRITICAL: Use Docker Commands for Service Restarts
+
+**NEVER use process killing commands** (`pkill`, `taskkill`, `killall`, `kill -9`) for backend, database, or Redis services when running in Docker.
+
+**ALWAYS use Docker compose commands** for graceful shutdowns and restarts.
+
+## Why This Matters
+
+Process killing causes:
+- **Data corruption** in PostgreSQL and Redis
+- **Incomplete transactions** and rollbacks
+- **Dirty shutdowns** without cleanup handlers
+- **Orphaned connections** and resource leaks
+- **Cache inconsistency** and file locks
+
+Docker graceful restarts provide:
+- **Clean shutdowns** with proper SIGTERM handling
+- **Data safety** with proper disk flushes
+- **Transaction integrity** with proper commit/rollback
+- **Connection cleanup** with proper resource release
+- **Health checks** and dependency management
+
+## Quick Command Reference
+
+| Scenario | Command |
+|----------|---------|
+| **Restart all services** | `docker compose restart` |
+| **Restart backend only** | `docker compose restart backend` |
+| **Restart after code change** | `docker compose up -d --build backend` |
+| **Restart after env change** | `docker compose down && docker compose up -d` |
+| **Full reset** | `docker compose down && docker compose up -d --build` |
+| **Check health** | `docker compose ps` |
+| **View logs** | `docker compose logs -f backend` |
+| **Increase timeout** | `docker compose restart -t 30` |
+
+## When to Use Each Command
+
+### Standard Restart (No code changes)
+```powershell
+# Restart all services gracefully
+docker compose restart
+
+# Or restart specific service
+docker compose restart backend
+docker compose restart postgres
+docker compose restart redis
+```
+
+### After Code Changes
+```powershell
+# Rebuild and restart backend
+docker compose up -d --build backend
+
+# View logs to verify
+docker compose logs -f backend
+```
+
+### After Environment Changes
+```powershell
+# Stop all services
+docker compose down
+
+# Start with new environment
+docker compose up -d
+```
+
+### Services Unresponsive
+```powershell
+# Force stop and restart (still graceful via Docker)
+docker compose down
+docker compose up -d
+
+# Check health
+docker compose ps
+```
+
+## Service Health Verification
+
+**ALWAYS verify health after restart:**
+
+```powershell
+# Check all services status
+docker compose ps
+
+# Expected: All services show "Up (healthy)"
+# easyescrow-backend      Up (healthy)
+# easyescrow-postgres     Up (healthy)
+# easyescrow-redis        Up (healthy)
+
+# Check logs for issues
+docker compose logs -f backend
+```
+
+## Commands to NEVER Use (When Running Docker)
+
+❌ **NEVER USE:**
+- `pkill node`
+- `pkill -f "node"`
+- `taskkill /F /IM node.exe`
+- `killall node`
+- `kill -9 <pid>`
+- `npm run restart` (if it kills processes)
+- Any direct process termination commands
+
+✅ **ALWAYS USE:**
+- `docker compose restart`
+- `docker compose up -d --build`
+- `docker compose down && docker compose up -d`
+
+## Agent Instructions
+
+1. **Before restarting, check if running in Docker:**
+   ```powershell
+   docker compose ps
+   ```
+
+2. **If services are in Docker, use Docker commands:**
+   ```powershell
+   # Standard restart
+   docker compose restart backend
+   ```
+
+3. **Never suggest process killing commands**
+
+4. **Always verify health after restart:**
+   ```powershell
+   docker compose ps
+   docker compose logs -f backend
+   ```
+
+## Dependency Order
+
+Docker automatically handles startup order:
+1. **PostgreSQL** (backend depends on it)
+2. **Redis** (backend depends on it)  
+3. **Backend** (depends on both)
+
+Docker waits for health checks before starting dependent services.
+
+## Full Documentation
+
+See `docs/DOCKER_GRACEFUL_RESTART.md` for complete guide with scenarios, troubleshooting, and best practices.
+

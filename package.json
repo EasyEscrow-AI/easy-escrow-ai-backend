@@ -34,7 +34,21 @@
     "localnet:setup-nfts": "powershell -ExecutionPolicy Bypass -File ./scripts/setup-nft-collection.ps1",
     "localnet:reset": "powershell -ExecutionPolicy Bypass -File ./scripts/reset-localnet.ps1",
     "timeout:help": "ts-node scripts/run-with-timeout.ts --help",
-    "timeout:help:ps": "powershell -ExecutionPolicy Bypass -File ./scripts/run-with-timeout.ps1 -Help"
+    "timeout:help:ps": "powershell -ExecutionPolicy Bypass -File ./scripts/run-with-timeout.ps1 -Help",
+    "docker:start": "docker compose up -d",
+    "docker:stop": "docker compose down",
+    "docker:restart": "docker compose restart",
+    "docker:restart:backend": "docker compose restart backend",
+    "docker:restart:db": "docker compose restart postgres",
+    "docker:restart:redis": "docker compose restart redis",
+    "docker:rebuild": "docker compose up -d --build",
+    "docker:rebuild:backend": "docker compose up -d --build backend",
+    "docker:logs": "docker compose logs -f",
+    "docker:logs:backend": "docker compose logs -f backend",
+    "docker:logs:db": "docker compose logs -f postgres",
+    "docker:logs:redis": "docker compose logs -f redis",
+    "docker:ps": "docker compose ps",
+    "docker:health": "docker compose ps && docker compose exec backend node -e \"require('http').get('http://localhost:3000/health', (r) => {let d='';r.on('data',c=>d+=c);r.on('end',()=>{console.log(d);process.exit(r.statusCode===200?0:1)})}).on('error',()=>process.exit(1))\" || echo 'Backend health check failed'"
   },
   "keywords": [
     "escrow",
