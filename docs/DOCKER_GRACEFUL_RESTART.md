@@ -207,8 +207,8 @@ docker compose ps
 # easyescrow-postgres     Up (healthy)             0.0.0.0:5432->5432/tcp
 # easyescrow-redis        Up (healthy)             0.0.0.0:6379->6379/tcp
 
-# Check specific service health
-docker compose exec backend wget -q -O - http://localhost:3000/health
+# Check specific service health (using Node.js built-in http module)
+docker compose exec backend node -e "require('http').get('http://localhost:3000/health', (r) => {let d='';r.on('data',c=>d+=c);r.on('end',()=>{console.log(d);process.exit(r.statusCode===200?0:1)})}).on('error',()=>process.exit(1))"
 
 # Check database connectivity
 docker compose exec postgres pg_isready -U postgres

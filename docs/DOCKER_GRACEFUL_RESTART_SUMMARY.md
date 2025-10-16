@@ -54,7 +54,7 @@ Added 14 new Docker-related npm scripts:
   "docker:logs:db": "docker compose logs -f postgres",
   "docker:logs:redis": "docker compose logs -f redis",
   "docker:ps": "docker compose ps",
-  "docker:health": "docker compose ps && docker compose exec backend wget -q -O - http://localhost:3000/health || echo 'Backend health check failed'"
+  "docker:health": "docker compose ps && docker compose exec backend node -e \"require('http').get('http://localhost:3000/health', (r) => {let d='';r.on('data',c=>d+=c);r.on('end',()=>{console.log(d);process.exit(r.statusCode===200?0:1)})}).on('error',()=>process.exit(1))\" || echo 'Backend health check failed'"
 }
 ```
 
