@@ -40,18 +40,68 @@
 
 ## 🚀 How to Verify
 
-### Option 1: Run Verification Script (Recommended)
+### Option 1: One-Liner Inline Script (EASIEST - Works in DO Console)
 
-**On the DO server (if you have SSH access):**
+**Copy and paste this into the DO console:**
+
+```bash
+node -e "
+console.log('=== DO Server E2E Readiness Check ===\n');
+const { execSync } = require('child_process');
+const run = (cmd) => { try { return execSync(cmd, {encoding:'utf8'}).trim(); } catch(e) { return null; } };
+
+console.log('Node:', process.version, '✅');
+const npm = run('npm --version'); console.log('npm:', npm || '❌', npm ? '✅' : '');
+
+const solana = run('solana --version'); 
+console.log('Solana CLI:', solana || '❌ NOT INSTALLED');
+
+const anchor = run('anchor --version');
+if (anchor) {
+  const match = anchor.match(/0\.32\.1/);
+  console.log('Anchor CLI:', anchor, match ? '✅' : '⚠️  WRONG VERSION (need 0.32.1)');
+} else {
+  console.log('Anchor CLI: ❌ NOT INSTALLED (CRITICAL!)');
+}
+
+console.log('\nEnvironment Variables:');
+console.log('SOLANA_NETWORK:', process.env.SOLANA_NETWORK || '❌');
+console.log('ESCROW_PROGRAM_ID:', process.env.ESCROW_PROGRAM_ID || '❌');
+console.log('DEVNET_SENDER_PRIVATE_KEY:', process.env.DEVNET_SENDER_PRIVATE_KEY ? '✅ SET' : '❌');
+console.log('DEVNET_RECEIVER_PRIVATE_KEY:', process.env.DEVNET_RECEIVER_PRIVATE_KEY ? '✅ SET' : '❌');
+console.log('DEVNET_ADMIN_PRIVATE_KEY:', process.env.DEVNET_ADMIN_PRIVATE_KEY ? '✅ SET' : '❌');
+console.log('DEVNET_FEE_COLLECTOR_PRIVATE_KEY:', process.env.DEVNET_FEE_COLLECTOR_PRIVATE_KEY ? '✅ SET' : '❌');
+
+console.log('\nNode Dependencies:');
+const fs = require('fs');
+['@coral-xyz/anchor','@solana/web3.js','@solana/spl-token'].forEach(dep => {
+  try { 
+    const pkg = JSON.parse(fs.readFileSync(\`node_modules/\${dep}/package.json\`));
+    console.log(\`\${dep}: \${pkg.version} ✅\`);
+  } catch(e) { console.log(\`\${dep}: ❌\`); }
+});
+"
+```
+
+This checks everything in one command - no bash required!
+
+### Option 2: Run Verification Script (If Available)
+
+**On the DO server (if scripts directory exists):**
 ```bash
 # Bash
 bash scripts/verify-do-e2e-readiness.sh
 
 # Or PowerShell
 pwsh scripts/verify-do-e2e-readiness.ps1
+
+# Or Node.js
+node scripts/verify-do-server.js
 ```
 
-**Or from your local machine to check remotely:**
+### Option 3: Check Remotely from Local Machine
+
+**From your local machine to check remotely:**
 ```powershell
 # Check wallet balances (doesn't require server access)
 solana balance FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71 --url devnet
