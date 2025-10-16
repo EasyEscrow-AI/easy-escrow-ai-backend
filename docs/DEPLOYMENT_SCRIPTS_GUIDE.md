@@ -194,9 +194,9 @@ These public addresses are safe to share and are consistent across all environme
 
 | Role | Address |
 |------|---------|
-| Sender (NFT Owner) | `CL8c2oMZUq9wdw84MAVGBdhKt6BXfKZb1Hy1Mo1jfyz1` |
-| Receiver (USDC Payer) | `8GDAazp6Vm3avTiMDkaHiTCjMyJRzRF1k9n6w8b85x1m` |
-| Admin (Escrow Ops) | `5wwbtUoPpVw7bEWpZj9kp4gZ265uwQuoPxE5145dTdVh` |
+| Sender (NFT Owner) | `FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71` |
+| Receiver (USDC Payer) | `Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk` |
+| Admin (Escrow Ops) | `7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u` |
 | FeeCollector (Treasury) | `C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E` |
 
 ## After Deployment
@@ -224,9 +224,9 @@ After deploying dev/staging, fund the test wallets:
 
 ```powershell
 .\scripts\fund-devnet-wallets.ps1 `
-    -Buyer 8GDAazp6Vm3avTiMDkaHiTCjMyJRzRF1k9n6w8b85x1m `
-    -Seller CL8c2oMZUq9wdw84MAVGBdhKt6BXfKZb1Hy1Mo1jfyz1 `
-    -Admin 5wwbtUoPpVw7bEWpZj9kp4gZ265uwQuoPxE5145dTdVh `
+    -Buyer Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk `
+    -Seller FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71 `
+    -Admin 7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u `
     -FeeCollector C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E
 ```
 

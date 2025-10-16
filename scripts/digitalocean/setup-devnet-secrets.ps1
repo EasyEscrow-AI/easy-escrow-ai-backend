@@ -264,9 +264,9 @@ Write-Host "============================================" -ForegroundColor Cyan
 Write-Host ""
 
 Write-Host "Static Wallet Addresses:" -ForegroundColor Yellow
-Write-Host "  Sender:       CL8c2oMZUq9wdw84MAVGBdhKt6BXfKZb1Hy1Mo1jfyz1" -ForegroundColor Gray
-Write-Host "  Receiver:     8GDAazp6Vm3avTiMDkaHiTCjMyJRzRF1k9n6w8b85x1m" -ForegroundColor Gray
-Write-Host "  Admin:        5wwbtUoPpVw7bEWpZj9kp4gZ265uwQuoPxE5145dTdVh" -ForegroundColor Gray
+Write-Host "  Sender:       FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71" -ForegroundColor Gray
+Write-Host "  Receiver:     Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk" -ForegroundColor Gray
+Write-Host "  Admin:        7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u" -ForegroundColor Gray
 Write-Host "  FeeCollector: C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E" -ForegroundColor Gray
 Write-Host ""
 

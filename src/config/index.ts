@@ -7,6 +7,7 @@
 
 export * from './database';
 export * from './redis';
+export * from './validation';
 
 // Environment configuration
 export const config = {

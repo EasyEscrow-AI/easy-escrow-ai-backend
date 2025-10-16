@@ -19,6 +19,16 @@ import {
 // Load environment variables
 dotenv.config();
 
+// Validate configuration before starting server
+import { validateConfig } from './config';
+try {
+  validateConfig();
+} catch (error: any) {
+  console.error('❌ Configuration validation failed. Server will not start.');
+  console.error('   Error:', error.message);
+  process.exit(1);
+}
+
 // Initialize Express app
 const app: Application = express();
 const PORT = process.env.PORT || 3000;
