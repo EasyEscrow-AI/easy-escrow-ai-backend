@@ -4,7 +4,14 @@
   "ignore": ["src/**/*.spec.ts", "src/**/*.test.ts"],
   "exec": "ts-node src/index.ts",
   "env": {
-    "NODE_ENV": "development"
+    "NODE_ENV": "development",
+    "USDC_MINT_ADDRESS": "738juYYJLqMRB1DTeffUR7zPuc9zyftCswedLYuikjzk",
+    "ESCROW_PROGRAM_ID": "7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV",
+    "SOLANA_RPC_URL": "https://api.devnet.solana.com",
+    "SOLANA_NETWORK": "devnet",
+    "DATABASE_URL": "postgresql://postgres:postgres@localhost:5432/easyescrow?schema=public",
+    "REDIS_URL": "redis://localhost:6379",
+    "PLATFORM_FEE_COLLECTOR_ADDRESS": "C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E"
   }
 }
 

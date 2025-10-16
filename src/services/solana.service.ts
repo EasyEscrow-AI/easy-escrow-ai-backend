@@ -489,6 +489,11 @@ export const initializeEscrow = async (
 
     // Get USDC mint address (use devnet USDC for testing)
     const usdcMintStr = config.usdc?.mintAddress || 'Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr'; // Devnet USDC
+    console.log('[SolanaService] USDC Config:', {
+      configured: config.usdc?.mintAddress,
+      using: usdcMintStr,
+      isDefault: !config.usdc?.mintAddress
+    });
     const usdcMint = new PublicKey(usdcMintStr);
 
     // Derive deposit addresses (ATAs for the escrow PDA)
@@ -497,6 +502,8 @@ export const initializeEscrow = async (
       usdcMint,
       nftMintPubkey
     );
+    
+    console.log('[SolanaService] depositAddresses after derivation:', JSON.stringify(depositAddresses, null, 2));
 
     // TODO: Call actual on-chain program when deployed
     // The on-chain program should:
@@ -521,11 +528,18 @@ export const initializeEscrow = async (
     console.warn(`[SolanaService] USDC ATA: ${depositAddresses.usdc}`);
     console.warn(`[SolanaService] NFT ATA: ${depositAddresses.nft}`);
 
-    return {
+    const result = {
       escrowPda: escrowPda.toString(),
       depositAddresses,
       transactionId: mockTxId,
     };
+    
+    // DEBUG: Log what we're about to return
+    console.error('=== RETURNING FROM initializeEscrow ===');
+    console.error(JSON.stringify(result, null, 2));
+    console.error('=======================================');
+
+    return result;
 
   } catch (error) {
     console.error('[SolanaService] Error initializing escrow:', error);

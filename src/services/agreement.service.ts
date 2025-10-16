@@ -37,6 +37,8 @@ export const createAgreement = async (
       feeBps: data.feeBps,
       honorRoyalties: data.honorRoyalties,
     });
+    
+    console.log('[AgreementService] Escrow Result:', JSON.stringify(escrowResult, null, 2));
 
     // 2. Store agreement in database
     const agreement = await prisma.agreement.create({
