@@ -5,7 +5,8 @@
  * and executes atomic settlement on-chain with platform fees and optional royalties.
  */
 
-import { PublicKey, Transaction, SystemProgram } from '@solana/web3.js';
+import { PublicKey, Transaction, SystemProgram, Keypair, sendAndConfirmTransaction } from '@solana/web3.js';
+import { getAssociatedTokenAddress, transfer, getAccount, createTransferInstruction } from '@solana/spl-token';
 import { prisma } from '../config/database';
 import { config } from '../config';
 import { getSolanaService } from './solana.service';
@@ -536,11 +537,7 @@ export class SettlementService {
       const nftMint = new PublicKey(agreement.nftMint);
       const feeCollector = new PublicKey(this.config.platformFeeCollectorAddress);
 
-      // TODO: Replace with actual Anchor program instruction when deployed
-      // For now, create a mock settlement transaction
-      const mockTxId = `settle_tx_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-
-      console.log('[SettlementService] Mock settlement transaction created:', {
+      console.log('[SettlementService] Settlement parties:', {
         escrowPda: escrowPda.toString(),
         seller: seller.toString(),
         buyer: buyer.toString(),
@@ -551,13 +548,19 @@ export class SettlementService {
         sellerReceived: feeCalculation.sellerReceived.toString(),
       });
 
-      // In production, this would:
-      // 1. Build Anchor instruction for settle()
-      // 2. Transfer NFT from escrow to buyer
-      // 3. Transfer USDC to seller (minus fees)
-      // 4. Transfer platform fee to fee collector
-      // 5. Transfer creator royalty (if applicable)
-      // 6. Close escrow PDA
+      // TODO: Replace with actual Anchor program instruction when deployed
+      // For now, create a mock settlement transaction
+      // The actual Anchor program would handle all transfers atomically
+      const mockTxId = `settle_tx_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+
+      console.warn('[SettlementService] ⚠️  MOCK SETTLEMENT - No tokens actually transferred!');
+      console.warn('[SettlementService] In production, this would:');
+      console.warn('[SettlementService]   1. Transfer NFT from escrow to buyer');
+      console.warn('[SettlementService]   2. Transfer USDC to seller (minus fees)');
+      console.warn('[SettlementService]   3. Transfer platform fee to fee collector');
+      console.warn('[SettlementService]   4. Transfer creator royalty (if applicable)');
+      console.warn('[SettlementService]   5. Close escrow PDA');
+      console.warn('[SettlementService] For E2E testing with actual transfers, deploy the Anchor program.');
 
       return mockTxId;
     } catch (error) {
