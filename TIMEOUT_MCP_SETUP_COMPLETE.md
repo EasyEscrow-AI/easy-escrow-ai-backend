@@ -18,11 +18,15 @@ Comprehensive 400+ line policy document defining:
 - Testing strategies
 
 #### `.cursorrules`
-Workspace rules for Cursor AI agent:
-- Automatic timeout application when executing commands
-- Timeout standards by command type
-- Error handling guidelines
-- Background process detection
+General workspace rules for Cursor AI agent
+
+#### `.cursor/rules/timeout-commands.mdc`
+Specific timeout rules for the AI agent:
+- Mandatory timeout application for all terminal commands
+- Automatic timeout detection by command type
+- Retry logic guidelines for network operations
+- Integration examples and code snippets
+- Error handling and background process rules
 
 ### 2. Utility Scripts (`scripts/`)
 
@@ -205,7 +209,8 @@ On branch task-22-solana-program-deployment
 | File | Lines | Purpose |
 |------|-------|---------|
 | `docs/TERMINAL_TIMEOUT_POLICY.md` | 400+ | Complete policy document |
-| `.cursorrules` | 150+ | Cursor AI agent rules |
+| `.cursorrules` | 150+ | General Cursor workspace rules |
+| `.cursor/rules/timeout-commands.mdc` | 170+ | **Cursor AI timeout rule** |
 | `scripts/run-with-timeout.ts` | 368 | TypeScript utility |
 | `scripts/run-with-timeout.ps1` | 329 | PowerShell utility |
 | `docs/TIMEOUT_UTILITIES.md` | 500+ | Usage guide |
@@ -262,9 +267,10 @@ Review and adjust based on:
 
 ## Documentation Links
 
-- 📘 [TERMINAL_TIMEOUT_POLICY.md](./docs/TERMINAL_TIMEOUT_POLICY.md) - Complete policy
-- 📗 [TIMEOUT_UTILITIES.md](./docs/TIMEOUT_UTILITIES.md) - Usage guide
-- 📕 [TIMEOUT_IMPLEMENTATION_SUMMARY.md](./docs/TIMEOUT_IMPLEMENTATION_SUMMARY.md) - Executive summary
+- 🤖 [.cursor/rules/timeout-commands.mdc](./.cursor/rules/timeout-commands.mdc) - **Cursor AI rule** (USE THIS!)
+- 📘 [docs/TERMINAL_TIMEOUT_POLICY.md](./docs/TERMINAL_TIMEOUT_POLICY.md) - Complete policy
+- 📗 [docs/TIMEOUT_UTILITIES.md](./docs/TIMEOUT_UTILITIES.md) - Usage guide
+- 📕 [docs/TIMEOUT_IMPLEMENTATION_SUMMARY.md](./docs/TIMEOUT_IMPLEMENTATION_SUMMARY.md) - Executive summary
 - 📙 [scripts/README.md](./scripts/README.md) - Scripts documentation
 
 ## Support

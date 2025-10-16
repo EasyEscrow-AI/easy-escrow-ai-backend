@@ -1,0 +1,187 @@
+# Terminal Command Timeout Rules
+
+## Rule: Always Use Timeout Protection for Terminal Commands
+
+When executing ANY terminal command via `run_terminal_cmd`, you MUST apply timeout protection to prevent hanging operations.
+
+## Implementation
+
+### Use the Timeout Utilities
+
+**TypeScript/Node.js environments:**
+```bash
+npx ts-node scripts/run-with-timeout.ts <command> [args...]
+```
+
+**PowerShell environments:**
+```powershell
+.\scripts\run-with-timeout.ps1 -Command "<command>" -Arguments "<args>"
+```
+
+### Automatic Timeout Detection
+
+The utilities automatically detect appropriate timeouts based on command type:
+
+| Command Type | Timeout | Examples |
+|--------------|---------|----------|
+| Quick operations | 10s | `git status`, `ls`, `pwd`, `echo` |
+| Build operations | 60s | `tsc`, `npm run build`, `anchor build` |
+| Package management | 120s | `npm install`, `npm ci`, `cargo update` |
+| Unit tests | 60s | `npm test`, `jest` |
+| Integration tests | 120s | `npm run test:integration` |
+| E2E tests | 180s | `npm run test:e2e` |
+| Database operations | 60s | `prisma migrate`, `npx prisma db push` |
+| Blockchain queries | 90s | `solana airdrop`, `solana balance` |
+| Blockchain deployments | 180s | `anchor deploy`, `solana program deploy` |
+| Git network operations | 60s | `git fetch`, `git pull`, `git push` |
+
+## When to Override Timeout
+
+Override the automatic timeout ONLY when:
+1. You know the operation legitimately takes longer
+2. Running in a slow CI/CD environment (apply 2x multiplier)
+3. First-time operations (e.g., initial `npm install`)
+
+**TypeScript override:**
+```bash
+npx ts-node scripts/run-with-timeout.ts --timeout 180000 npm install
+```
+
+**PowerShell override:**
+```powershell
+.\scripts\run-with-timeout.ps1 -Command "npm" -Arguments "install" -Timeout 180
+```
+
+## Retry Logic for Flaky Operations
+
+For network operations that may be flaky, use retry logic:
+
+**TypeScript:**
+```bash
+npx ts-node scripts/run-with-timeout.ts --retries 3 --retry-delay 2000 solana airdrop 1
+```
+
+**PowerShell:**
+```powershell
+.\scripts\run-with-timeout.ps1 -Command "solana" -Arguments "airdrop","1" -Retries 3 -RetryDelay 2
+```
+
+## Background Processes
+
+For processes that should run indefinitely (watch modes, dev servers), use `is_background: true`:
+
+```typescript
+run_terminal_cmd({
+    command: "npm run dev",
+    is_background: true  // No timeout needed
+})
+```
+
+Do NOT use timeout utilities for:
+- `npm run dev`
+- `jest --watch`
+- `nodemon`
+- `solana-test-validator`
+
+## Error Handling
+
+When a command times out, the utility provides clear error messages:
+
+```
+❌ Command timed out after 60 seconds
+Command: npm run build
+Timeout: 60s (category: Build)
+
+Possible causes:
+- Network connectivity issues
+- Resource constraints
+- Hanging process
+
+Recommendations:
+- Retry the operation
+- Check system resources
+- Verify network connectivity
+- Increase timeout if operation is legitimately slow
+```
+
+## Examples
+
+### Good: Using Timeout Utilities
+
+```bash
+# Build command with automatic 60s timeout
+npx ts-node scripts/run-with-timeout.ts npm run build
+
+# Deploy with retry logic
+npx ts-node scripts/run-with-timeout.ts --retries 5 anchor deploy
+
+# Git operation with automatic 10s timeout
+npx ts-node scripts/run-with-timeout.ts git status
+```
+
+### Bad: Running Commands Without Protection
+
+```bash
+# ❌ DON'T DO THIS - could hang indefinitely
+npm install
+
+# ❌ DON'T DO THIS - could timeout without cleanup
+anchor deploy
+
+# ❌ DON'T DO THIS - could hang on slow networks
+git pull
+```
+
+## Priority Rules
+
+1. **Always default to using timeout utilities** for non-background commands
+2. **Let automatic detection work** - don't override unless necessary
+3. **Use retry logic** for network operations (blockchain, git push/pull, npm install)
+4. **Background flag** for watch modes and dev servers
+5. **Increase timeouts** for CI/CD environments (apply 2x multiplier)
+
+## Integration in Scripts
+
+When creating scripts, import and use the timeout functions:
+
+```typescript
+import { runWithTimeout, runWithRetry, TIMEOUTS } from './scripts/run-with-timeout';
+
+// Automatic timeout detection
+await runWithTimeout({
+  command: 'git',
+  args: ['status']
+});
+
+// With retry for flaky operations
+await runWithRetry({
+  command: 'solana',
+  args: ['airdrop', '1'],
+  retries: 3,
+  retryDelay: 2000
+});
+
+// Custom timeout for slow operations
+await runWithTimeout({
+  command: 'npm',
+  args: ['install'],
+  timeout: TIMEOUTS.PACKAGE_MGMT * 2
+});
+```
+
+## Reference
+
+- **Full Policy:** `docs/TERMINAL_TIMEOUT_POLICY.md`
+- **Usage Guide:** `docs/TIMEOUT_UTILITIES.md`
+- **TypeScript Utility:** `scripts/run-with-timeout.ts`
+- **PowerShell Utility:** `scripts/run-with-timeout.ps1`
+
+## Summary
+
+✅ **DO:** Wrap all commands with timeout utilities
+✅ **DO:** Use automatic timeout detection
+✅ **DO:** Add retry logic for network operations
+✅ **DO:** Use background flag for watch modes
+❌ **DON'T:** Run commands directly without timeout protection
+❌ **DON'T:** Override timeouts unless necessary
+❌ **DON'T:** Use timeouts for background processes
