@@ -115,6 +115,9 @@ temp/*
 !temp/.gitkeep
 !temp/README.md
 
+# Receipt files (generated at runtime)
+receipts/
+
 # Backup files that might contain secrets
 *.backup
 *.bak
