@@ -83,8 +83,33 @@ export async function loadDevnetWallets(): Promise<DevnetWallets> {
           throw new Error('Config file missing wallet keys');
         }
       } else {
-        // Generate new wallets and save to config
-        console.log('⚠️  No wallet configuration found. Generating new wallets...');
+        // Check if we should generate new wallets
+        const forceGenerate = process.env.FORCE_GENERATE_WALLETS === 'true';
+        
+        if (!forceGenerate) {
+          throw new Error(
+            '❌ No wallet configuration found!\n\n' +
+            '⚠️  GUARDRAIL: Automatic wallet generation is disabled to prevent overwriting existing wallets.\n\n' +
+            'Options:\n' +
+            '1. Set environment variables (RECOMMENDED):\n' +
+            '   - DEVNET_SENDER_PRIVATE_KEY\n' +
+            '   - DEVNET_RECEIVER_PRIVATE_KEY\n' +
+            '   - DEVNET_ADMIN_PRIVATE_KEY\n' +
+            '   - DEVNET_FEE_COLLECTOR_PRIVATE_KEY\n\n' +
+            '2. Use the setup script to create static wallets:\n' +
+            '   scripts/setup-static-devnet-wallets.ps1\n\n' +
+            '3. Create tests/fixtures/devnet-config.json manually with your wallet keys\n\n' +
+            '4. Force generation of NEW wallets (USE WITH CAUTION):\n' +
+            '   Set FORCE_GENERATE_WALLETS=true environment variable\n\n' +
+            'For setup instructions, see: docs/ENV_TEMPLATE.md'
+          );
+        }
+
+        // Force generate mode - warn heavily
+        console.warn('\n⚠️⚠️⚠️  WARNING: FORCE GENERATING NEW WALLETS  ⚠️⚠️⚠️\n');
+        console.warn('This will create NEW wallet addresses that may differ from your funded wallets!');
+        console.warn('If you have existing funded wallets, this will create DIFFERENT addresses.\n');
+        
         sender = Keypair.generate();
         receiver = Keypair.generate();
         admin = Keypair.generate();
@@ -105,6 +130,7 @@ export async function loadDevnetWallets(): Promise<DevnetWallets> {
             feeCollector: feeCollector.publicKey.toString(),
           },
           createdAt: new Date().toISOString(),
+          description: 'AUTO-GENERATED wallets - Set FORCE_GENERATE_WALLETS=false to prevent regeneration',
         };
 
         // Ensure fixtures directory exists
@@ -116,13 +142,15 @@ export async function loadDevnetWallets(): Promise<DevnetWallets> {
         fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
         
         console.log('\n📝 New wallets generated and saved to:', configPath);
-        console.log('\n💡 Fund these wallets using:');
+        console.warn('\n⚠️  IMPORTANT: These are NEW addresses. You must fund them before testing.\n');
+        console.log('💡 Fund these wallets using:');
         console.log(`   scripts/fund-devnet-wallets.ps1 -Buyer ${receiver.publicKey.toString()} -Seller ${sender.publicKey.toString()} -Admin ${admin.publicKey.toString()} -FeeCollector ${feeCollector.publicKey.toString()}`);
         console.log('\nWallet Addresses:');
         console.log(`  Sender:       ${sender.publicKey.toString()}`);
         console.log(`  Receiver:     ${receiver.publicKey.toString()}`);
         console.log(`  Admin:        ${admin.publicKey.toString()}`);
         console.log(`  FeeCollector: ${feeCollector.publicKey.toString()}\n`);
+        console.warn('⚠️  To use standardized wallets instead, see: docs/DEVNET_WALLET_STANDARDIZATION.md\n');
       }
     }
 

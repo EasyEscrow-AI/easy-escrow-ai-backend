@@ -17,9 +17,63 @@ $staticWalletsPath = "tests/fixtures/devnet-static-wallets.json"
 if ((Test-Path $configPath) -and -not $Force) {
     Write-Host "⚠️  Configuration file already exists: $configPath" -ForegroundColor Yellow
     Write-Host ""
-    $confirm = Read-Host "Overwrite with static wallets? (y/n)"
+    
+    # Load existing config and check wallet addresses
+    try {
+        $existingConfig = Get-Content $configPath | ConvertFrom-Json
+        
+        if ($existingConfig.wallets) {
+            Write-Host "Existing wallet addresses:" -ForegroundColor Cyan
+            Write-Host "  Sender:       $($existingConfig.wallets.sender)" -ForegroundColor Gray
+            Write-Host "  Receiver:     $($existingConfig.wallets.receiver)" -ForegroundColor Gray
+            Write-Host "  Admin:        $($existingConfig.wallets.admin)" -ForegroundColor Gray
+            Write-Host "  FeeCollector: $($existingConfig.wallets.feeCollector)" -ForegroundColor Gray
+            Write-Host ""
+            
+            # Check if they match standardized addresses
+            $staticWalletsCheck = Get-Content $staticWalletsPath | ConvertFrom-Json
+            $addressesMatch = (
+                ($existingConfig.wallets.sender -eq $staticWalletsCheck.wallets.sender) -and
+                ($existingConfig.wallets.receiver -eq $staticWalletsCheck.wallets.receiver) -and
+                ($existingConfig.wallets.admin -eq $staticWalletsCheck.wallets.admin) -and
+                ($existingConfig.wallets.feeCollector -eq $staticWalletsCheck.wallets.feeCollector)
+            )
+            
+            if ($addressesMatch) {
+                Write-Host "✅ Addresses match standardized wallets. No need to overwrite." -ForegroundColor Green
+                Write-Host ""
+                Write-Host "If you need to update private keys, edit the file manually or use:" -ForegroundColor Cyan
+                Write-Host "  .\scripts\set-devnet-env-vars.ps1" -ForegroundColor Gray
+                Write-Host ""
+                exit 0
+            } else {
+                Write-Host "⚠️  GUARDRAIL WARNING: Existing addresses DO NOT match standardized wallets!" -ForegroundColor Yellow
+                Write-Host ""
+                Write-Host "Standardized addresses:" -ForegroundColor Cyan
+                Write-Host "  Sender:       $($staticWalletsCheck.wallets.sender)" -ForegroundColor Gray
+                Write-Host "  Receiver:     $($staticWalletsCheck.wallets.receiver)" -ForegroundColor Gray
+                Write-Host "  Admin:        $($staticWalletsCheck.wallets.admin)" -ForegroundColor Gray
+                Write-Host "  FeeCollector: $($staticWalletsCheck.wallets.feeCollector)" -ForegroundColor Gray
+                Write-Host ""
+                Write-Host "⚠️  Overwriting will change your wallet addresses!" -ForegroundColor Yellow
+                Write-Host "   This means you'll need to fund NEW addresses." -ForegroundColor Yellow
+                Write-Host ""
+            }
+        }
+    } catch {
+        Write-Host "⚠️  Could not read existing config (may be invalid JSON)" -ForegroundColor Yellow
+        Write-Host ""
+    }
+    
+    $confirm = Read-Host "Overwrite with standardized static wallets? (y/n)"
     if ($confirm -ne "y" -and $confirm -ne "Y") {
-        Write-Host "❌ Cancelled" -ForegroundColor Red
+        Write-Host "❌ Cancelled - Existing configuration preserved" -ForegroundColor Red
+        Write-Host ""
+        Write-Host "To proceed, either:" -ForegroundColor Cyan
+        Write-Host "  1. Run with -Force flag: .\setup-static-devnet-wallets.ps1 -Force" -ForegroundColor Gray
+        Write-Host "  2. Delete the file manually and run again" -ForegroundColor Gray
+        Write-Host "  3. Edit the file manually to update addresses" -ForegroundColor Gray
+        Write-Host ""
         exit 0
     }
 }

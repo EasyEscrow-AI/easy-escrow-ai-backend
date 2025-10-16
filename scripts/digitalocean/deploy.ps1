@@ -154,6 +154,12 @@ if ($missingEnvVars.Count -gt 0) {
     Write-Host ""
     Write-Host "Note: This is OK if they're already configured in DigitalOcean" -ForegroundColor Cyan
     Write-Host ""
+    Write-Host "Expected Wallet Addresses (from devnet-config.json):" -ForegroundColor Yellow
+    Write-Host "  Sender:       FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71" -ForegroundColor Gray
+    Write-Host "  Receiver:     Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk" -ForegroundColor Gray
+    Write-Host "  Admin:        7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u" -ForegroundColor Gray
+    Write-Host "  FeeCollector: C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E" -ForegroundColor Gray
+    Write-Host ""
 }
 
 # Deploy devnet secrets if requested

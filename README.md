@@ -352,7 +352,7 @@ npm start
 
 ## Environment Variables
 
-Create a `.env` file based on `.env.example`:
+Create a `.env` file in the project root. See [ENV_TEMPLATE.md](docs/ENV_TEMPLATE.md) for complete template with all variables and devnet wallet configuration.
 
 ```env
 # Server Configuration
@@ -442,7 +442,9 @@ See `.env.example` for complete configuration options.
 - **[Devnet Deployment Guide](docs/DEVNET_DEPLOYMENT_GUIDE.md)** - E2E testing setup ⭐ NEW
 - [Docker Deployment](docs/DOCKER_DEPLOYMENT.md) - Docker deployment guide
 - [Migration Guide](docs/MIGRATION_GUIDE.md) - Database migrations
-- [Environment Variables](docs/ENVIRONMENT_VARIABLES.md) - Environment configuration
+- [Environment Variables](docs/ENVIRONMENT_VARIABLES.md) - Complete variable reference
+- **[Environment Template](docs/ENV_TEMPLATE.md)** - Setup guide with devnet wallet config ⭐ NEW
+- **[Devnet Wallet Standardization](docs/DEVNET_WALLET_STANDARDIZATION.md)** - Wallet address sync documentation ⭐ NEW
 - [DigitalOcean Setup](docs/DIGITALOCEAN_SETUP.md) - Infrastructure setup
 
 **Security & Secrets Management:**
