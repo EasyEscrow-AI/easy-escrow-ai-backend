@@ -43,27 +43,69 @@ const redisOptions: RedisOptions = {
   lazyConnect: false,
 };
 
+// Redis options for Bull queues (without problematic options)
+// Bull doesn't support enableReadyCheck or maxRetriesPerRequest for subscriber clients
+// See: https://github.com/OptimalBits/bull/issues/1873
+const bullRedisOptions: RedisOptions = {
+  // Removed: maxRetriesPerRequest
+  // Removed: enableReadyCheck
+  enableOfflineQueue: true,
+  connectTimeout: 10000,
+  retryStrategy(times: number) {
+    const delay = Math.min(times * 1000, 30000);
+    if (times > 10) {
+      console.error(`Redis connection failed after ${times} attempts. Stopping retries temporarily.`);
+      return null;
+    }
+    console.log(`Redis connection retry attempt ${times}, waiting ${delay}ms`);
+    return delay;
+  },
+  reconnectOnError(err: Error) {
+    const reconnectErrors = ['READONLY', 'ECONNRESET', 'ETIMEDOUT', 'EPIPE'];
+    const shouldReconnect = reconnectErrors.some(errType => 
+      err.message.includes(errType) || err.name.includes(errType)
+    );
+    if (shouldReconnect) {
+      console.log(`Redis reconnecting due to error: ${err.message}`);
+      return true;
+    }
+    return false;
+  },
+  keepAlive: 30000,
+  commandTimeout: 5000,
+  lazyConnect: false,
+};
+
 // Parse Redis URL or use individual config options
-function getRedisConfig(): RedisOptions {
+function getRedisConfig(useBullOptions: boolean = false): RedisOptions {
   const redisUrl = config.redis.url;
+  const baseOptions = useBullOptions ? bullRedisOptions : redisOptions;
   
   if (redisUrl && redisUrl.startsWith('redis://')) {
     // Parse URL for connection options
     return {
-      ...redisOptions,
+      ...baseOptions,
       // ioredis will parse the URL automatically
     };
   }
   
   // Fallback to individual config
   return {
-    ...redisOptions,
+    ...baseOptions,
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT || '6379', 10),
     password: process.env.REDIS_PASSWORD || undefined,
     db: parseInt(process.env.REDIS_DB || '0', 10),
     tls: process.env.REDIS_TLS === 'true' ? {} : undefined,
   };
+}
+
+/**
+ * Get Bull-compatible Redis configuration
+ * Use this for Bull queue connections to avoid enableReadyCheck/maxRetriesPerRequest issues
+ */
+export function getBullRedisConfig(): RedisOptions {
+  return getRedisConfig(true);
 }
 
 /**

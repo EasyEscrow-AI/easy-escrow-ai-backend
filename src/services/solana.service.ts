@@ -14,6 +14,7 @@ import {
   AccountInfo,
   KeyedAccountInfo,
 } from '@solana/web3.js';
+import { getAssociatedTokenAddress } from '@solana/spl-token';
 import { config } from '../config';
 
 /**
@@ -398,20 +399,38 @@ export const deriveEscrowPDA = async (
 
 /**
  * Derive deposit addresses (USDC and NFT token accounts)
+ * Creates Associated Token Accounts (ATAs) for the escrow PDA
  */
 export const deriveDepositAddresses = async (
   escrowPda: PublicKey,
   usdcMint: PublicKey,
   nftMint: PublicKey
 ): Promise<{ usdc: string; nft: string }> => {
-  // For now, return the PDA addresses as placeholders
-  // In production, these would be associated token accounts
-  const usdcDepositAddress = escrowPda.toString();
-  const nftDepositAddress = escrowPda.toString();
+  // Derive Associated Token Account addresses for the escrow PDA
+  // These are the proper SPL token accounts that can receive tokens
+  const usdcAta = await getAssociatedTokenAddress(
+    usdcMint,
+    escrowPda,
+    true // allowOwnerOffCurve - PDAs are off-curve
+  );
+
+  const nftAta = await getAssociatedTokenAddress(
+    nftMint,
+    escrowPda,
+    true // allowOwnerOffCurve - PDAs are off-curve
+  );
+
+  console.log('[SolanaService] Derived deposit addresses:', {
+    escrowPda: escrowPda.toString(),
+    usdcMint: usdcMint.toString(),
+    nftMint: nftMint.toString(),
+    usdcAta: usdcAta.toString(),
+    nftAta: nftAta.toString(),
+  });
 
   return {
-    usdc: usdcDepositAddress,
-    nft: nftDepositAddress,
+    usdc: usdcAta.toString(),
+    nft: nftAta.toString(),
   };
 };
 
@@ -470,31 +489,52 @@ export const initializeEscrow = async (
 
     // Get USDC mint address (use devnet USDC for testing)
     const usdcMintStr = config.usdc?.mintAddress || 'Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr'; // Devnet USDC
+    console.log('[SolanaService] USDC Config:', {
+      configured: config.usdc?.mintAddress,
+      using: usdcMintStr,
+      isDefault: !config.usdc?.mintAddress
+    });
     const usdcMint = new PublicKey(usdcMintStr);
 
-    // Derive deposit addresses
+    // Derive deposit addresses (ATAs for the escrow PDA)
     const depositAddresses = await deriveDepositAddresses(
       escrowPda,
       usdcMint,
       nftMintPubkey
     );
+    
+    console.log('[SolanaService] depositAddresses after derivation:', JSON.stringify(depositAddresses, null, 2));
 
     // TODO: Call actual on-chain program when deployed
+    // The on-chain program should:
+    // 1. Create the escrow PDA
+    // 2. Create ATAs for USDC and NFT if they don't exist
+    // 3. Initialize the escrow state
+    // 
     // For now, return a mock transaction ID
+    // NOTE: In testing/development, ATAs should be created separately
+    // before deposits can be made to them.
     const mockTxId = `mock_tx_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
-    console.log('[SolanaService] Escrow PDA initialized:', {
+    console.log('[SolanaService] Escrow initialized (mock):', {
       escrowPda: escrowPda.toString(),
       depositAddresses,
       params,
       bump,
     });
 
-    return {
+    console.warn('[SolanaService] WARNING: This is a mock implementation.');
+    console.warn('[SolanaService] Associated Token Accounts must be created before deposits.');
+    console.warn(`[SolanaService] USDC ATA: ${depositAddresses.usdc}`);
+    console.warn(`[SolanaService] NFT ATA: ${depositAddresses.nft}`);
+
+    const result = {
       escrowPda: escrowPda.toString(),
       depositAddresses,
       transactionId: mockTxId,
     };
+    
+    return result;
 
   } catch (error) {
     console.error('[SolanaService] Error initializing escrow:', error);

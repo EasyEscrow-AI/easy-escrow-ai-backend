@@ -1,5 +1,6 @@
 import Bull, { Queue, Job, JobOptions, QueueOptions } from 'bull';
 import { config } from '../config';
+import { getBullRedisConfig } from '../config/redis';
 
 /**
  * Queue Service
@@ -88,9 +89,10 @@ export class QueueService<T extends BaseJobData = BaseJobData> {
           // Upstash uses valid certificates, but some environments need this
           rejectUnauthorized: true,
         } : undefined,
-        // Robust connection options matching main Redis client
-        maxRetriesPerRequest: 3,
-        enableReadyCheck: true,
+        // Bull-compatible connection options (no maxRetriesPerRequest or enableReadyCheck)
+        // See: https://github.com/OptimalBits/bull/issues/1873
+        // Removed: maxRetriesPerRequest: 3,
+        // Removed: enableReadyCheck: true,
         enableOfflineQueue: true,
         connectTimeout: 10000,
         retryStrategy: (times: number) => {

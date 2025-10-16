@@ -1,5 +1,6 @@
 import { Connection, Keypair, PublicKey } from '@solana/web3.js';
 import { Metaplex, keypairIdentity } from '@metaplex-foundation/js';
+import { getAssociatedTokenAddress } from '@solana/spl-token';
 
 /**
  * NFT details structure
@@ -98,13 +99,20 @@ export async function createTestNFT(
     console.log(`   Owner: ${senderWallet.publicKey.toString()}`);
     console.log(`   Explorer: https://explorer.solana.com/address/${nft.address.toString()}?cluster=devnet\n`);
 
+    // Derive the Associated Token Account (ATA) that holds the NFT
+    // This is the actual token account address, not the metadata account
+    const tokenAccount = await getAssociatedTokenAddress(
+      nft.mint.address, // mint
+      senderWallet.publicKey // owner
+    );
+
     return {
       mint: nft.mint.address,
       name: nft.name,
       symbol: nft.symbol,
       uri: nft.uri,
       owner: senderWallet.publicKey,
-      address: nft.address,
+      address: tokenAccount, // Token account (ATA), NOT metadata account
     };
   } catch (error) {
     throw new Error(`Failed to create test NFT: ${error instanceof Error ? error.message : String(error)}`);
@@ -128,13 +136,19 @@ export async function getNFTDetails(
     
     const nft = await metaplex.nfts().findByMint({ mintAddress });
 
+    // Derive the Associated Token Account (ATA) that holds the NFT
+    const tokenAccount = await getAssociatedTokenAddress(
+      nft.mint.address, // mint
+      wallet.publicKey // owner
+    );
+
     return {
       mint: nft.mint.address,
       name: nft.name,
       symbol: nft.symbol,
       uri: nft.uri,
       owner: nft.updateAuthorityAddress, // This may need adjustment based on actual ownership
-      address: nft.address,
+      address: tokenAccount, // Token account (ATA), NOT metadata account
     };
   } catch (error) {
     throw new Error(`Failed to get NFT details: ${error instanceof Error ? error.message : String(error)}`);
