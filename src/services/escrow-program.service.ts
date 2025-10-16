@@ -195,15 +195,16 @@ export class EscrowProgramService {
       });
       
       // Call settle instruction
+      // Note: In Anchor v0.32.1, we need to use accountsPartial or cast to bypass strict typing
+      // The escrowState PDA is validated on-chain against the derived address
       const tx = await this.program.methods
         .settle()
-        .accounts({
+        .accountsPartial({
           escrowState: escrowPda,
           escrowUsdcAccount,
           escrowNftAccount,
           sellerUsdcAccount,
           buyerNftAccount,
-          tokenProgram: TOKEN_PROGRAM_ID,
         })
         .rpc();
       
@@ -238,13 +239,12 @@ export class EscrowProgramService {
       // Call cancelIfExpired instruction
       const tx = await this.program.methods
         .cancelIfExpired()
-        .accounts({
+        .accountsPartial({
           escrowState: escrowPda,
           escrowUsdcAccount,
           escrowNftAccount,
           buyerUsdcAccount,
           sellerNftAccount,
-          tokenProgram: TOKEN_PROGRAM_ID,
         })
         .rpc();
       
@@ -279,14 +279,13 @@ export class EscrowProgramService {
       // Call adminCancel instruction
       const tx = await this.program.methods
         .adminCancel()
-        .accounts({
+        .accountsPartial({
           escrowState: escrowPda,
           admin: this.adminKeypair.publicKey,
           escrowUsdcAccount,
           escrowNftAccount,
           buyerUsdcAccount,
           sellerNftAccount,
-          tokenProgram: TOKEN_PROGRAM_ID,
         })
         .signers([this.adminKeypair])
         .rpc();
