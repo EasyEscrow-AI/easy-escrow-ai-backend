@@ -37,9 +37,9 @@ Use the helper script to set environment variables in one command:
 
 ```powershell
 .\scripts\fund-devnet-wallets.ps1 `
-  -Buyer 8GDAazp6Vm3avTiMDkaHiTCjMyJRzRF1k9n6w8b85x1m `
-  -Seller CL8c2oMZUq9wdw84MAVGBdhKt6BXfKZb1Hy1Mo1jfyz1 `
-  -Admin 5wwbtUoPpVw7bEWpZj9kp4gZ265uwQuoPxE5145dTdVh `
+  -Buyer Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk `
+  -Seller FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71 `
+  -Admin 7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u `
   -FeeCollector C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E
 ```
 
@@ -252,9 +252,9 @@ For reference, the static devnet wallets are:
 
 | Role | Address |
 |------|---------|
-| Sender | `CL8c2oMZUq9wdw84MAVGBdhKt6BXfKZb1Hy1Mo1jfyz1` |
-| Receiver | `8GDAazp6Vm3avTiMDkaHiTCjMyJRzRF1k9n6w8b85x1m` |
-| Admin | `5wwbtUoPpVw7bEWpZj9kp4gZ265uwQuoPxE5145dTdVh` |
+| Sender | `FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71` |
+| Receiver | `Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk` |
+| Admin | `7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u` |
 | FeeCollector | `C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E` |
 
 See [STATIC_DEVNET_WALLETS.md](./STATIC_DEVNET_WALLETS.md) for more details.

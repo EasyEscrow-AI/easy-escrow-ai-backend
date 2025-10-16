@@ -135,17 +135,17 @@ The static wallet addresses need to be funded on devnet:
 ```powershell
 # Option 1: Automated script
 .\scripts\fund-devnet-wallets.ps1 `
-  -Buyer 8GDAazp6Vm3avTiMDkaHiTCjMyJRzRF1k9n6w8b85x1m `
-  -Seller CL8c2oMZUq9wdw84MAVGBdhKt6BXfKZb1Hy1Mo1jfyz1 `
-  -Admin 5wwbtUoPpVw7bEWpZj9kp4gZ265uwQuoPxE5145dTdVh `
+  -Buyer Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk `
+  -Seller FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71 `
+  -Admin 7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u `
   -FeeCollector C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E
 ```
 
 ```bash
 # Option 2: Individual commands
-solana transfer CL8c2oMZUq9wdw84MAVGBdhKt6BXfKZb1Hy1Mo1jfyz1 2 --url devnet
-solana transfer 8GDAazp6Vm3avTiMDkaHiTCjMyJRzRF1k9n6w8b85x1m 2 --url devnet
-solana transfer 5wwbtUoPpVw7bEWpZj9kp4gZ265uwQuoPxE5145dTdVh 2 --url devnet
+solana transfer FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71 2 --url devnet
+solana transfer Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk 2 --url devnet
+solana transfer 7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u 2 --url devnet
 solana transfer C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E 1 --url devnet
 ```
 
@@ -302,9 +302,9 @@ For reference (public addresses, safe to share):
 
 | Role | Address |
 |------|---------|
-| Sender (Seller) | `CL8c2oMZUq9wdw84MAVGBdhKt6BXfKZb1Hy1Mo1jfyz1` |
-| Receiver (Buyer) | `8GDAazp6Vm3avTiMDkaHiTCjMyJRzRF1k9n6w8b85x1m` |
-| Admin | `5wwbtUoPpVw7bEWpZj9kp4gZ265uwQuoPxE5145dTdVh` |
+| Sender (Seller) | `FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71` |
+| Receiver (Buyer) | `Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk` |
+| Admin | `7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u` |
 | FeeCollector | `C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E` |
 
 ## Related Documentation

@@ -1,18 +1,18 @@
 {
   "description": "Static devnet wallets for E2E testing - DO NOT COMMIT PRIVATE KEYS",
   "wallets": {
-    "sender": "CL8c2oMZUq9wdw84MAVGBdhKt6BXfKZb1Hy1Mo1jfyz1",
-    "receiver": "8GDAazp6Vm3avTiMDkaHiTCjMyJRzRF1k9n6w8b85x1m",
-    "admin": "5wwbtUoPpVw7bEWpZj9kp4gZ265uwQuoPxE5145dTdVh",
+    "sender": "FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71",
+    "receiver": "Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk",
+    "admin": "7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u",
     "feeCollector": "C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E"
   },
   "fundingCommands": {
-    "seller": "solana transfer CL8c2oMZUq9wdw84MAVGBdhKt6BXfKZb1Hy1Mo1jfyz1 2 --url devnet",
-    "receiver": "solana transfer 8GDAazp6Vm3avTiMDkaHiTCjMyJRzRF1k9n6w8b85x1m 2 --url devnet",
-    "admin": "solana transfer 5wwbtUoPpVw7bEWpZj9kp4gZ265uwQuoPxE5145dTdVh 2 --url devnet",
+    "seller": "solana transfer FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71 2 --url devnet",
+    "receiver": "solana transfer Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk 2 --url devnet",
+    "admin": "solana transfer 7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u 2 --url devnet",
     "feeCollector": "solana transfer C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E 1 --url devnet"
   },
-  "powershellCommand": ".\\scripts\\fund-devnet-wallets.ps1 -Buyer 8GDAazp6Vm3avTiMDkaHiTCjMyJRzRF1k9n6w8b85x1m -Seller CL8c2oMZUq9wdw84MAVGBdhKt6BXfKZb1Hy1Mo1jfyz1 -Admin 5wwbtUoPpVw7bEWpZj9kp4gZ265uwQuoPxE5145dTdVh -FeeCollector C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E",
+  "powershellCommand": ".\\scripts\\fund-devnet-wallets.ps1 -Buyer Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk -Seller FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71 -Admin 7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u -FeeCollector C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E",
   "note": "Private keys should be stored in environment variables or secure vault. Never commit private keys to repository.",
   "createdAt": "2025-10-15T00:00:00.000Z"
 }

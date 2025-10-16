@@ -5,17 +5,17 @@ This document describes the static wallet addresses used for devnet E2E testing.
 ## Wallet Addresses
 
 ### Sender (Seller) - NFT Owner
-**Address:** `CL8c2oMZUq9wdw84MAVGBdhKt6BXfKZb1Hy1Mo1jfyz1`
+**Address:** `FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71`
 - Owns NFT
 - Receives USDC payment (99%)
 
 ### Receiver (Buyer) - USDC Payer
-**Address:** `8GDAazp6Vm3avTiMDkaHiTCjMyJRzRF1k9n6w8b85x1m`
+**Address:** `Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk`
 - Pays USDC
 - Receives NFT
 
 ### Admin - Escrow Operations
-**Address:** `5wwbtUoPpVw7bEWpZj9kp4gZ265uwQuoPxE5145dTdVh`
+**Address:** `7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u`
 - Performs escrow operations
 - System admin wallet
 
@@ -87,9 +87,9 @@ Edit `tests/fixtures/devnet-config.json` and add:
 #### Quick Fund (Individual Commands)
 
 ```bash
-solana transfer CL8c2oMZUq9wdw84MAVGBdhKt6BXfKZb1Hy1Mo1jfyz1 2 --url devnet  # Sender
-solana transfer 8GDAazp6Vm3avTiMDkaHiTCjMyJRzRF1k9n6w8b85x1m 2 --url devnet  # Receiver
-solana transfer 5wwbtUoPpVw7bEWpZj9kp4gZ265uwQuoPxE5145dTdVh 2 --url devnet  # Admin
+solana transfer FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71 2 --url devnet  # Sender
+solana transfer Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk 2 --url devnet  # Receiver
+solana transfer 7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u 2 --url devnet  # Admin
 solana transfer C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E 1 --url devnet  # FeeCollector
 ```
 
@@ -97,9 +97,9 @@ solana transfer C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E 1 --url devnet  # F
 
 ```powershell
 .\scripts\fund-devnet-wallets.ps1 `
-  -Buyer 8GDAazp6Vm3avTiMDkaHiTCjMyJRzRF1k9n6w8b85x1m `
-  -Seller CL8c2oMZUq9wdw84MAVGBdhKt6BXfKZb1Hy1Mo1jfyz1 `
-  -Admin 5wwbtUoPpVw7bEWpZj9kp4gZ265uwQuoPxE5145dTdVh `
+  -Buyer Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk `
+  -Seller FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71 `
+  -Admin 7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u `
   -FeeCollector C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E
 ```
 
@@ -140,9 +140,9 @@ node -e "const bs58=require('bs58');const fs=require('fs');console.log(bs58.enco
 
 ## Solana Explorer Links
 
-- [Sender](https://explorer.solana.com/address/CL8c2oMZUq9wdw84MAVGBdhKt6BXfKZb1Hy1Mo1jfyz1?cluster=devnet)
-- [Receiver](https://explorer.solana.com/address/8GDAazp6Vm3avTiMDkaHiTCjMyJRzRF1k9n6w8b85x1m?cluster=devnet)
-- [Admin](https://explorer.solana.com/address/5wwbtUoPpVw7bEWpZj9kp4gZ265uwQuoPxE5145dTdVh?cluster=devnet)
+- [Sender](https://explorer.solana.com/address/FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71?cluster=devnet)
+- [Receiver](https://explorer.solana.com/address/Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk?cluster=devnet)
+- [Admin](https://explorer.solana.com/address/7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u?cluster=devnet)
 - [FeeCollector](https://explorer.solana.com/address/C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E?cluster=devnet)
 
 ## Troubleshooting
@@ -170,18 +170,18 @@ node -e "const bs58=require('bs58');const fs=require('fs');console.log(bs58.enco
 ### Check Balances
 
 ```bash
-solana balance CL8c2oMZUq9wdw84MAVGBdhKt6BXfKZb1Hy1Mo1jfyz1 --url devnet
-solana balance 8GDAazp6Vm3avTiMDkaHiTCjMyJRzRF1k9n6w8b85x1m --url devnet
-solana balance 5wwbtUoPpVw7bEWpZj9kp4gZ265uwQuoPxE5145dTdVh --url devnet
+solana balance FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71 --url devnet
+solana balance Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk --url devnet
+solana balance 7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u --url devnet
 solana balance C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E --url devnet
 ```
 
 ### Request Airdrop (if needed)
 
 ```bash
-solana airdrop 2 CL8c2oMZUq9wdw84MAVGBdhKt6BXfKZb1Hy1Mo1jfyz1 --url devnet
-solana airdrop 2 8GDAazp6Vm3avTiMDkaHiTCjMyJRzRF1k9n6w8b85x1m --url devnet
-solana airdrop 2 5wwbtUoPpVw7bEWpZj9kp4gZ265uwQuoPxE5145dTdVh --url devnet
+solana airdrop 2 FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71 --url devnet
+solana airdrop 2 Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk --url devnet
+solana airdrop 2 7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u --url devnet
 solana airdrop 1 C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E --url devnet
 ```
 

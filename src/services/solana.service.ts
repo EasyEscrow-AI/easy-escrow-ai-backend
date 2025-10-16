@@ -451,9 +451,14 @@ export const initializeEscrow = async (
     const sellerPubkey = new PublicKey(params.seller);
     const buyerPubkey = params.buyer ? new PublicKey(params.buyer) : undefined;
     
-    // Get program ID (use a default for testing if not set)
-    const programIdStr = config.solana?.escrowProgramId || '11111111111111111111111111111111';
-    const programId = new PublicKey(programIdStr);
+    // Get program ID - MUST be set in environment
+    if (!config.solana?.escrowProgramId) {
+      throw new Error(
+        'ESCROW_PROGRAM_ID not configured. ' +
+        'Set ESCROW_PROGRAM_ID environment variable to your deployed program address.'
+      );
+    }
+    const programId = new PublicKey(config.solana.escrowProgramId);
     
     // Derive escrow PDA
     const [escrowPda, bump] = await deriveEscrowPDA(

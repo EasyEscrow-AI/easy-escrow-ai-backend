@@ -117,9 +117,9 @@ openssl rand -base64 32
 **Format**: Base58 encoded private keys
 
 **Static Addresses**:
-- Sender: `CL8c2oMZUq9wdw84MAVGBdhKt6BXfKZb1Hy1Mo1jfyz1`
-- Receiver: `8GDAazp6Vm3avTiMDkaHiTCjMyJRzRF1k9n6w8b85x1m`
-- Admin: `5wwbtUoPpVw7bEWpZj9kp4gZ265uwQuoPxE5145dTdVh`
+- Sender: `FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71`
+- Receiver: `Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk`
+- Admin: `7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u`
 - FeeCollector: `C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E`
 
 **Automated Setup**:

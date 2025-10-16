@@ -1,20 +1,24 @@
 /**
- * E2E Devnet Test: NFT-to-USDC Swap with Fee Collection
+ * E2E Devnet Test: NFT-to-USDC Escrow Swap with Fee Collection
  * 
- * Happy path test for complete escrow flow:
+ * Tests complete escrow swap flow with pre-existing assets:
  * - Sender has NFT, wants USDC
  * - Receiver has USDC, wants NFT
  * - Fee collector receives 1% fee in USDC
  * 
- * Test flow:
- * 1. Setup: Load wallets, create USDC mint/accounts, create test NFT
- * 2. Create escrow via API
- * 3. Execute swap
- * 4. Verify all balances and ownership transfers
+ * Test Structure:
+ * 1. PREREQUISITES: Asset Setup (USDC mint, token accounts, NFT creation)
+ * 2. ESCROW SWAP: Actual escrow flow using pre-existing assets
+ *    - Create escrow agreement (with existing nftMint/usdcMint)
+ *    - Deposit assets
+ *    - Execute swap
+ *    - Verify results
  */
 
-import { Connection, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { Connection, PublicKey, LAMPORTS_PER_SOL, Transaction, sendAndConfirmTransaction } from '@solana/web3.js';
 import { expect } from 'chai';
+import axios from 'axios';
+import {transfer, getAccount, createTransferInstruction} from '@solana/spl-token';
 import {
   loadDevnetWallets,
   verifyWalletBalances,
@@ -41,13 +45,16 @@ import {
 // Devnet RPC endpoint
 const DEVNET_RPC_URL = process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com';
 
+// API endpoint (use localhost if backend is running locally)
+const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3000';
+
 // Test constants
 const SWAP_AMOUNT_USDC = 0.1; // 0.1 USDC for swap
 const FEE_PERCENTAGE = 0.01; // 1% fee
 const EXPECTED_SENDER_USDC = SWAP_AMOUNT_USDC * (1 - FEE_PERCENTAGE); // 0.099 USDC
 const EXPECTED_FEE_USDC = SWAP_AMOUNT_USDC * FEE_PERCENTAGE; // 0.001 USDC
 
-describe('E2E: NFT-to-USDC Swap on Devnet (Happy Path)', function () {
+describe('E2E: NFT-USDC Escrow Swap on Devnet', function () {
   // Increase timeout for devnet operations
   this.timeout(300000); // 5 minutes
 
@@ -61,13 +68,21 @@ describe('E2E: NFT-to-USDC Swap on Devnet (Happy Path)', function () {
     usdc: TokenBalances;
   };
 
+  // Escrow timing (for actual swap performance)
+  let escrowStartTime: number;
+  let escrowEndTime: number;
+
+  // Agreement data
+  let agreementId: string;
+  let depositAddresses: { usdc: string; nft: string };
+
   before(async function () {
     console.log('\n' + '='.repeat(60));
-    console.log('🚀 E2E Test: NFT-to-USDC Swap on Solana Devnet');
+    console.log('🚀 E2E Test: NFT-USDC Escrow Swap on Solana Devnet');
     console.log('='.repeat(60) + '\n');
   });
 
-  describe('Setup Phase', function () {
+  describe('1. Prerequisites: Asset Setup (Test Fixtures)', function () {
     it('should connect to Solana devnet', async function () {
       console.log('📡 Connecting to Solana devnet...\n');
 
@@ -106,8 +121,8 @@ describe('E2E: NFT-to-USDC Swap on Devnet (Happy Path)', function () {
       console.log(`✅ All wallets verified with minimum ${minSOL} SOL\n`);
     });
 
-    it('should create USDC mint and token accounts', async function () {
-      console.log('🪙  Setting up USDC mint and token accounts...\n');
+    it('should create USDC mint and token accounts (test fixture)', async function () {
+      console.log('🪙  Setting up USDC mint and token accounts (test fixture)...\n');
 
       // Setup tokens: creates mint, token accounts, and mints initial USDC
       tokenConfig = await setupDevnetTokens(
@@ -135,8 +150,8 @@ describe('E2E: NFT-to-USDC Swap on Devnet (Happy Path)', function () {
       expect(receiverBalance).to.be.at.least(SWAP_AMOUNT_USDC);
     });
 
-    it('should create test NFT in sender wallet', async function () {
-      console.log('🎨 Creating test NFT in sender wallet...\n');
+    it('should create test NFT in sender wallet (test fixture)', async function () {
+      console.log('🎨 Creating test NFT in sender wallet (test fixture)...\n');
 
       nft = await createTestNFT(connection, wallets.sender, {
         name: 'E2E Test NFT',
@@ -162,8 +177,8 @@ describe('E2E: NFT-to-USDC Swap on Devnet (Happy Path)', function () {
       console.log('✅ NFT ownership verified\n');
     });
 
-    it('should record initial balances', async function () {
-      console.log('📊 Recording initial balances...\n');
+    it('should verify all assets exist and are ready', async function () {
+      console.log('✅ Verifying all assets exist and are ready...\n');
 
       const solBalances = await verifyWalletBalances(connection, wallets, 0);
       const usdcBalances = await checkTokenBalances(connection, tokenConfig.tokenAccounts);
@@ -189,126 +204,328 @@ describe('E2E: NFT-to-USDC Swap on Devnet (Happy Path)', function () {
     });
   });
 
-  describe('Escrow Creation (via API)', function () {
-    it('should create escrow transaction via API', async function () {
-      console.log('📝 Creating escrow transaction...\n');
+  describe('2. Escrow Swap Flow (Using Pre-Existing Assets)', function () {
+    
+    before(async function () {
+      console.log('\n' + '='.repeat(60));
+      console.log('🔄 Starting Escrow Swap Flow');
+      console.log('='.repeat(60) + '\n');
+      
+      // Start timing the escrow swap
+      escrowStartTime = Date.now();
+      console.log('⏱️  Escrow timer started\n');
+      
+      console.log('📊 Recording initial balances...\n');
 
-      // TODO: Call escrow API to create transaction
-      // This will be implemented when the backend API is running
-      // For now, we're testing the helper functions and setup
+      const solBalances = await verifyWalletBalances(connection, wallets, 0);
+      const usdcBalances = await checkTokenBalances(connection, tokenConfig.tokenAccounts);
 
-      console.log('⚠️  API integration pending - would call:');
-      console.log('   POST /api/escrow/create');
-      console.log('   Body: {');
-      console.log(`     sellerAddress: "${wallets.sender.publicKey.toString()}",`);
-      console.log(`     buyerAddress: "${wallets.receiver.publicKey.toString()}",`);
-      console.log(`     adminAddress: "${wallets.admin.publicKey.toString()}",`);
-      console.log(`     feeCollectorAddress: "${wallets.feeCollector.publicKey.toString()}",`);
-      console.log(`     nftMint: "${nft.mint.toString()}",`);
-      console.log(`     usdcMint: "${tokenConfig.usdcMint.toString()}",`);
-      console.log(`     amount: ${SWAP_AMOUNT_USDC},`);
-      console.log(`     feePercentage: ${FEE_PERCENTAGE}`);
-      console.log('   }\n');
+      initialBalances = {
+        sol: solBalances,
+        usdc: usdcBalances,
+      };
 
-      // For now, mark as pending implementation
-      this.skip();
+      console.log('Initial SOL Balances:');
+      console.log(`  Sender:       ${solBalances.sender.toFixed(4)} SOL`);
+      console.log(`  Receiver:     ${solBalances.receiver.toFixed(4)} SOL`);
+      console.log(`  Admin:        ${solBalances.admin.toFixed(4)} SOL`);
+      console.log(`  FeeCollector: ${solBalances.feeCollector.toFixed(4)} SOL\n`);
+
+      console.log('Initial USDC Balances:');
+      console.log(`  Sender:       ${usdcBalances.sender.toFixed(6)} USDC`);
+      console.log(`  Receiver:     ${usdcBalances.receiver.toFixed(6)} USDC`);
+      console.log(`  Admin:        ${usdcBalances.admin.toFixed(6)} USDC`);
+      console.log(`  FeeCollector: ${usdcBalances.feeCollector.toFixed(6)} USDC\n`);
+    });
+
+    describe('2.1. Escrow Creation (via API)', function () {
+    it('should create escrow agreement via API', async function () {
+      console.log('📝 Creating escrow agreement...\n');
+
+      // Calculate expiry (1 hour from now)
+      const expiry = new Date(Date.now() + 60 * 60 * 1000);
+
+      const requestBody = {
+        nftMint: nft.mint.toString(),
+        price: SWAP_AMOUNT_USDC,
+        seller: wallets.sender.publicKey.toString(),
+        buyer: wallets.receiver.publicKey.toString(),
+        expiry: expiry.toISOString(),
+        feeBps: FEE_PERCENTAGE * 10000, // Convert to basis points (1% = 100 bps)
+        honorRoyalties: false,
+      };
+
+      console.log('   Request:');
+      console.log(`     POST ${API_BASE_URL}/v1/agreements`);
+      console.log('     Body:');
+      console.log(`       nft: ${requestBody.nftMint} ← PRE-EXISTING`);
+      console.log(`       price: ${requestBody.price} USDC`);
+      console.log(`       seller: ${requestBody.seller}`);
+      console.log(`       buyer: ${requestBody.buyer}`);
+      console.log(`       expiry: ${requestBody.expiry}`);
+      console.log(`       feeBps: ${requestBody.feeBps} (${FEE_PERCENTAGE * 100}%)`);
+      console.log(`       honorRoyalties: ${requestBody.honorRoyalties}\n`);
+
+      try {
+        const response = await axios.post(
+          `${API_BASE_URL}/v1/agreements`,
+          requestBody,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Idempotency-Key': `e2e-test-${Date.now()}`,
+            },
+          }
+        );
+
+        expect(response.status).to.equal(201);
+        expect(response.data.success).to.be.true;
+        expect(response.data.data).to.exist;
+
+        agreementId = response.data.data.agreementId;
+        depositAddresses = response.data.data.depositAddresses;
+
+        console.log('   ✅ Agreement created successfully!');
+        console.log(`   Agreement ID: ${agreementId}`);
+        console.log(`   Escrow PDA: ${response.data.data.escrowPda}`);
+        console.log(`   USDC Deposit Address: ${depositAddresses.usdc}`);
+        console.log(`   NFT Deposit Address: ${depositAddresses.nft}\n`);
+
+        expect(agreementId).to.be.a('string');
+        expect(depositAddresses.usdc).to.be.a('string');
+        expect(depositAddresses.nft).to.be.a('string');
+      } catch (error: any) {
+        console.error('   ❌ Failed to create agreement:');
+        console.error(`   Error: ${error.message}`);
+        if (error.response) {
+          console.error(`   Status: ${error.response.status}`);
+          console.error(`   Response:`, error.response.data);
+        }
+        throw error;
+      }
     });
 
     it('should deposit NFT into escrow', async function () {
       console.log('🔐 Depositing NFT into escrow...\n');
 
-      // TODO: Verify NFT transferred to escrow PDA
-      // This requires the escrow program interaction
+      try {
+        console.log(`   Transferring NFT from sender to ${depositAddresses.nft}...`);
+        console.log(`   NFT Mint: ${nft.mint.toString()}`);
+        console.log(`   Amount: 1 NFT\n`);
 
-      console.log('⚠️  Escrow deposit pending - would verify:');
-      console.log('   - NFT transferred from sender to escrow PDA');
-      console.log('   - Escrow account created on-chain');
-      console.log('   - Escrow state matches expected values\n');
+        // Transfer NFT to escrow deposit address
+        const depositPubkey = new PublicKey(depositAddresses.nft);
+        
+        const signature = await transfer(
+          connection,
+          wallets.sender,
+          nft.address, // NFT token account address
+          depositPubkey,
+          wallets.sender.publicKey,
+          1 // NFT amount (1)
+        );
 
-      this.skip();
+        console.log(`   ✅ NFT transferred successfully!`);
+        console.log(`   Transaction: ${signature}`);
+        console.log(`   Explorer: ${getExplorerUrl(signature)}\n`);
+
+        // Wait for confirmation
+        await connection.confirmTransaction(signature, 'confirmed');
+        console.log('   ✅ Transaction confirmed\n');
+
+      } catch (error: any) {
+        console.error('   ❌ Failed to deposit NFT:');
+        console.error(`   Error: ${error.message}\n`);
+        throw error;
+      }
     });
   });
 
-  describe('Swap Execution (via API)', function () {
-    it('should execute swap with USDC payment', async function () {
-      console.log('💱 Executing swap...\n');
+    describe('2.2. Deposit USDC & Wait for Settlement', function () {
+    it('should deposit USDC into escrow', async function () {
+      console.log('💰 Depositing USDC into escrow...\n');
 
-      // TODO: Receiver accepts escrow and pays USDC
-      // This will interact with the backend API
+      try {
+        const usdcAmount = SWAP_AMOUNT_USDC * 1_000_000; // Convert to micro-USDC (6 decimals)
 
-      console.log('⚠️  Swap execution pending - would call:');
-      console.log('   POST /api/escrow/accept');
-      console.log('   Body: {');
-      console.log('     escrowId: "<ESCROW_ID>",');
-      console.log(`     buyerAddress: "${wallets.receiver.publicKey.toString()}"`);
-      console.log('   }\n');
+        console.log(`   Transferring ${SWAP_AMOUNT_USDC} USDC from receiver to ${depositAddresses.usdc}...`);
+        console.log(`   USDC Mint: ${tokenConfig.usdcMint.toString()}`);
+        console.log(`   Amount: ${usdcAmount} micro-USDC\n`);
 
-      this.skip();
+        // Transfer USDC to escrow deposit address
+        const depositPubkey = new PublicKey(depositAddresses.usdc);
+        
+        const signature = await transfer(
+          connection,
+          wallets.receiver,
+          tokenConfig.tokenAccounts.receiver,
+          depositPubkey,
+          wallets.receiver.publicKey,
+          usdcAmount
+        );
+
+        console.log(`   ✅ USDC transferred successfully!`);
+        console.log(`   Transaction: ${signature}`);
+        console.log(`   Explorer: ${getExplorerUrl(signature)}\n`);
+
+        // Wait for confirmation
+        await connection.confirmTransaction(signature, 'confirmed');
+        console.log('   ✅ Transaction confirmed\n');
+
+      } catch (error: any) {
+        console.error('   ❌ Failed to deposit USDC:');
+        console.error(`   Error: ${error.message}\n`);
+        throw error;
+      }
     });
 
-    it('should transfer NFT to receiver', async function () {
-      console.log('🎨 Verifying NFT transfer...\n');
+    it('should wait for automatic settlement', async function () {
+      console.log('⏳ Waiting for backend to detect deposits and settle...\n');
 
-      // TODO: Verify NFT ownership changed to receiver
-      
-      console.log('⚠️  NFT transfer verification pending\n');
+      const maxAttempts = 30; // 30 seconds max
+      let attempts = 0;
+      let settled = false;
 
-      this.skip();
+      while (attempts < maxAttempts && !settled) {
+        attempts++;
+        
+        try {
+          const response = await axios.get(`${API_BASE_URL}/v1/agreements/${agreementId}`);
+          
+          const status = response.data.data.status;
+          console.log(`   Attempt ${attempts}/${maxAttempts}: Status = ${status}`);
+
+          if (status === 'SETTLED') {
+            settled = true;
+            console.log('\n   ✅ Agreement settled successfully!\n');
+            
+            // Stop timing when settlement is detected
+            escrowEndTime = Date.now();
+            break;
+          } else if (status === 'LOCKED') {
+            console.log('   💫 Both deposits confirmed, settlement in progress...');
+          } else if (status === 'PENDING') {
+            console.log('   ⏳ Waiting for deposits to be confirmed...');
+          }
+
+        } catch (error: any) {
+          console.error(`   ⚠️  Error checking status: ${error.message}`);
+        }
+
+        // Wait 1 second before next check
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+
+      if (!settled) {
+        throw new Error(`Settlement timeout after ${maxAttempts} seconds. Status did not reach SETTLED.`);
+      }
+
+      expect(settled).to.be.true;
     });
   });
 
-  describe('Verification (Post-Swap)', function () {
-    it('should verify sender received 99% of USDC payment', async function () {
+    describe('2.3. Verification (Post-Swap)', function () {
+    it('should verify sender received USDC payment (minus fee)', async function () {
       console.log('💰 Verifying sender USDC balance...\n');
 
-      // TODO: Check sender token account balance
-      const senderBalance = await getTokenBalance(
-        connection,
-        tokenConfig.tokenAccounts.sender
-      );
+      try {
+        const finalSenderBalance = await getTokenBalance(
+          connection,
+          tokenConfig.tokenAccounts.sender
+        );
 
-      console.log(`   Expected: ${EXPECTED_SENDER_USDC.toFixed(6)} USDC`);
-      console.log(`   Actual:   ${senderBalance.toFixed(6)} USDC\n`);
+        const usdcReceived = finalSenderBalance - initialBalances.usdc.sender;
 
-      // For now, just log the current balance
-      console.log('⚠️  Full verification pending swap completion\n');
+        console.log(`   Initial balance: ${initialBalances.usdc.sender.toFixed(6)} USDC`);
+        console.log(`   Final balance:   ${finalSenderBalance.toFixed(6)} USDC`);
+        console.log(`   USDC received:   ${usdcReceived.toFixed(6)} USDC`);
+        console.log(`   Expected:        ${EXPECTED_SENDER_USDC.toFixed(6)} USDC (99%)\n`);
 
-      this.skip();
+        // Allow small tolerance for rounding
+        expect(usdcReceived).to.be.closeTo(EXPECTED_SENDER_USDC, 0.001);
+        console.log('   ✅ Sender received correct USDC amount!\n');
+
+      } catch (error: any) {
+        console.error('   ❌ Failed to verify sender balance:');
+        console.error(`   Error: ${error.message}\n`);
+        throw error;
+      }
     });
 
-    it('should verify fee collector received 1% of USDC payment', async function () {
-      console.log('💵 Verifying fee collector USDC balance...\n');
+    it('should verify fee collector received platform fee', async function () {
+      console.log('💸 Verifying fee collector balance...\n');
 
-      // TODO: Check fee collector token account balance
-      const feeBalance = await getTokenBalance(
-        connection,
-        tokenConfig.tokenAccounts.feeCollector
-      );
+      try {
+        const finalFeeBalance = await getTokenBalance(
+          connection,
+          tokenConfig.tokenAccounts.feeCollector
+        );
 
-      console.log(`   Expected: ${EXPECTED_FEE_USDC.toFixed(6)} USDC`);
-      console.log(`   Actual:   ${feeBalance.toFixed(6)} USDC\n`);
+        const feeReceived = finalFeeBalance - initialBalances.usdc.feeCollector;
 
-      console.log('⚠️  Full verification pending swap completion\n');
+        console.log(`   Initial balance: ${initialBalances.usdc.feeCollector.toFixed(6)} USDC`);
+        console.log(`   Final balance:   ${finalFeeBalance.toFixed(6)} USDC`);
+        console.log(`   Fee received:    ${feeReceived.toFixed(6)} USDC`);
+        console.log(`   Expected:        ${EXPECTED_FEE_USDC.toFixed(6)} USDC (1%)\n`);
 
-      this.skip();
+        // Allow small tolerance for rounding
+        expect(feeReceived).to.be.closeTo(EXPECTED_FEE_USDC, 0.001);
+        console.log('   ✅ Fee collector received correct amount!\n');
+
+      } catch (error: any) {
+        console.error('   ❌ Failed to verify fee collector balance:');
+        console.error(`   Error: ${error.message}\n`);
+        throw error;
+      }
     });
 
-    it('should verify NFT ownership transferred to receiver', async function () {
-      console.log('🎨 Verifying NFT ownership...\n');
+    it('should verify NFT transferred to receiver', async function () {
+      console.log('🎨 Verifying NFT ownership transfer...\n');
 
-      // TODO: Verify NFT owned by receiver
-      console.log('⚠️  NFT ownership verification pending\n');
+      try {
+        // Check if receiver now owns the NFT
+        const receiverNftOwnership = await verifyNFTOwnership(
+          connection,
+          nft.mint,
+          wallets.receiver.publicKey,
+          wallets.receiver
+        );
 
-      this.skip();
+        console.log(`   NFT Mint: ${nft.mint.toString()}`);
+        console.log(`   New Owner: ${wallets.receiver.publicKey.toString()}`);
+        console.log(`   Ownership verified: ${receiverNftOwnership ? '✅' : '❌'}\n`);
+
+        expect(receiverNftOwnership).to.be.true;
+        console.log('   ✅ NFT successfully transferred to receiver!\n');
+
+      } catch (error: any) {
+        console.error('   ❌ Failed to verify NFT ownership:');
+        console.error(`   Error: ${error.message}\n`);
+        throw error;
+      }
     });
 
-    it('should verify escrow marked as completed', async function () {
-      console.log('✅ Verifying escrow status...\n');
+    it('should verify agreement status is SETTLED', async function () {
+      console.log('✅ Verifying final agreement status...\n');
 
-      // TODO: Check escrow status via API and on-chain
-      console.log('⚠️  Escrow status verification pending\n');
+      try {
+        const response = await axios.get(`${API_BASE_URL}/v1/agreements/${agreementId}`);
+        
+        const agreementData = response.data.data;
 
-      this.skip();
+        console.log(`   Agreement ID: ${agreementData.agreementId}`);
+        console.log(`   Status: ${agreementData.status}`);
+        console.log(`   Settled At: ${agreementData.settledAt || 'N/A'}\n`);
+
+        expect(agreementData.status).to.equal('SETTLED');
+        expect(agreementData.settledAt).to.exist;
+        console.log('   ✅ Agreement marked as SETTLED!\n');
+
+      } catch (error: any) {
+        console.error('   ❌ Failed to verify agreement status:');
+        console.error(`   Error: ${error.message}\n`);
+        throw error;
+      }
     });
 
     it('should display transaction links and summary', async function () {
@@ -334,8 +551,9 @@ describe('E2E: NFT-to-USDC Swap on Devnet (Happy Path)', function () {
       console.log('='.repeat(60) + '\n');
     });
   });
+  });
 
-  describe('Cost Analysis', function () {
+  describe('3. Cost Analysis & Summary', function () {
     it('should calculate and verify total SOL costs', async function () {
       console.log('💸 Calculating total SOL costs...\n');
 
@@ -353,6 +571,16 @@ describe('E2E: NFT-to-USDC Swap on Devnet (Happy Path)', function () {
       console.log(`  Admin:        ${adminCost.toFixed(6)} SOL`);
       console.log(`  FeeCollector: ${feeCollectorCost.toFixed(6)} SOL`);
       console.log(`  Total:        ${totalCost.toFixed(6)} SOL\n`);
+
+      // Calculate escrow completion time
+      if (escrowStartTime && escrowEndTime) {
+        const escrowDuration = (escrowEndTime - escrowStartTime) / 1000; // Convert to seconds
+        console.log('⏱️  Escrow Performance:');
+        console.log(`  Escrow swap completed in ${escrowDuration.toFixed(3)} seconds\n`);
+      } else {
+        console.log('⏱️  Escrow Performance:');
+        console.log('  ⚠️  Timing not available (swap not completed yet)\n');
+      }
 
       // Verify total cost is reasonable (should be < 0.05 SOL)
       expect(totalCost).to.be.lessThan(0.05);

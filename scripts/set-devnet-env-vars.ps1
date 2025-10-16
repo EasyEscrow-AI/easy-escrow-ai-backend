@@ -83,9 +83,9 @@ if (-not $SenderKey -and -not $ReceiverKey -and -not $AdminKey -and -not $FeeCol
     Write-Host "Note: Private keys should be in base58 format" -ForegroundColor Yellow
     Write-Host ""
     Write-Host "Static Wallet Addresses:" -ForegroundColor Cyan
-    Write-Host "  Sender:       CL8c2oMZUq9wdw84MAVGBdhKt6BXfKZb1Hy1Mo1jfyz1" -ForegroundColor Gray
-    Write-Host "  Receiver:     8GDAazp6Vm3avTiMDkaHiTCjMyJRzRF1k9n6w8b85x1m" -ForegroundColor Gray
-    Write-Host "  Admin:        5wwbtUoPpVw7bEWpZj9kp4gZ265uwQuoPxE5145dTdVh" -ForegroundColor Gray
+    Write-Host "  Sender:       FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71" -ForegroundColor Gray
+    Write-Host "  Receiver:     Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk" -ForegroundColor Gray
+    Write-Host "  Admin:        7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u" -ForegroundColor Gray
     Write-Host "  FeeCollector: C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E" -ForegroundColor Gray
     Write-Host ""
     exit 1
@@ -161,7 +161,7 @@ if ($Permanent) {
 Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Yellow
 Write-Host "  1. Fund wallets (if not already done):" -ForegroundColor White
-Write-Host "     .\scripts\fund-devnet-wallets.ps1 -Buyer 8GDAazp6Vm3avTiMDkaHiTCjMyJRzRF1k9n6w8b85x1m -Seller CL8c2oMZUq9wdw84MAVGBdhKt6BXfKZb1Hy1Mo1jfyz1 -Admin 5wwbtUoPpVw7bEWpZj9kp4gZ265uwQuoPxE5145dTdVh -FeeCollector C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E" -ForegroundColor Green
+Write-Host "     .\scripts\fund-devnet-wallets.ps1 -Buyer Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk -Seller FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71 -Admin 7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u -FeeCollector C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E" -ForegroundColor Green
 Write-Host ""
 Write-Host "  2. Run E2E tests:" -ForegroundColor White
 Write-Host "     npm run test:e2e:devnet:nft-swap" -ForegroundColor Green
