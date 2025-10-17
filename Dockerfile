@@ -44,32 +44,33 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install production dependencies only
+# Copy Prisma schema from builder (needed for generation)
+COPY --from=builder /app/prisma ./prisma
+
+# Install production dependencies only (including Prisma)
 # --omit=dev ensures no devDependencies are installed
 RUN npm ci --omit=dev --ignore-scripts && \
     npm cache clean --force
 
-# Copy Prisma schema and generated client from builder
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/src/generated ./src/generated
+# Generate Prisma Client in production stage
+# This ensures platform-specific binaries match the production environment
+# Generates to /app/src/generated/prisma (as specified in schema.prisma)
+RUN npx prisma generate
 
 # Copy built application from builder stage
 COPY --from=builder /app/dist ./dist
 
-# Copy generated Prisma client to location expected by compiled code
-# The compiled dist/config/database.js looks for ../generated/prisma
-COPY --from=builder /app/src/generated ./generated
+# Copy generated Prisma client to dist/generated so compiled code can find it
+# dist/config/database.js imports from '../generated/prisma'
+RUN mkdir -p dist/generated && \
+    cp -r src/generated/prisma dist/generated/
 
 # Create non-root user and group for security
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001
 
-# Set ownership before creating symlinks
+# Fix ownership for non-root user
 RUN chown -R nodejs:nodejs /app
-
-# Create symlink to help Node.js resolve the Prisma client
-# This ensures ../generated/prisma can be resolved from dist/config
-RUN ln -sf /app/generated /app/dist/generated
 
 # Switch to non-root user
 USER nodejs
