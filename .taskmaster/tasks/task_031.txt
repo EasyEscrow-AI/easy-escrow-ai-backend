@@ -1,0 +1,43 @@
+# Task ID: 31
+# Title: Setup Redis for Caching and Queues
+# Status: done
+# Dependencies: 21
+# Priority: medium
+# Description: Configure Redis client, implement caching for agreement lookups, set up job queues for blockchain monitoring and settlement processing
+# Details:
+
+
+# Test Strategy:
+
+
+# Subtasks:
+## 1. Install and Configure Redis Client [pending]
+### Dependencies: None
+### Description: Set up Redis client library and establish connection configuration for the application
+### Details:
+Install redis-py library, create Redis connection class with connection pooling, configure connection parameters (host, port, password, SSL), implement connection health checks and retry logic
+
+## 2. Implement Agreement Caching System [pending]
+### Dependencies: 31.1
+### Description: Create caching layer for agreement data to improve lookup performance and reduce database load
+### Details:
+Design cache key structure for agreements, implement cache-aside pattern with TTL configuration, create methods for get/set/delete operations, handle cache invalidation on agreement updates
+
+## 3. Setup Job Queue Infrastructure [pending]
+### Dependencies: 31.1
+### Description: Configure Redis-based job queue system for asynchronous task processing
+### Details:
+Implement job queue using Redis lists or streams, create job serialization/deserialization, add job priority handling, implement dead letter queue for failed jobs, configure job retry mechanisms
+
+## 4. Implement Blockchain Monitoring Queue [pending]
+### Dependencies: 31.3
+### Description: Create specialized job queue for blockchain event monitoring and processing tasks
+### Details:
+Design job structure for blockchain monitoring tasks, implement periodic blockchain scanning jobs, create event processing workflows, add block confirmation tracking, handle blockchain reorganization scenarios
+
+## 5. Setup Settlement Processing Queue [pending]
+### Dependencies: 31.3
+### Description: Implement job queue system for handling escrow settlement and payment processing tasks
+### Details:
+Create settlement job types (release funds, refund, dispute resolution), implement job scheduling for time-based settlements, add transaction validation workflows, integrate with payment processing systems
+

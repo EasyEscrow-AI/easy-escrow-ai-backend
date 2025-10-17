@@ -72,7 +72,7 @@ const bullRedisOptions: RedisOptions = {
     return false;
   },
   keepAlive: 30000,
-  commandTimeout: 5000,
+  commandTimeout: 30000, // 30 second timeout for queue operations
   lazyConnect: false,
 };
 

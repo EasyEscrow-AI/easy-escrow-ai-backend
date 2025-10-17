@@ -1,0 +1,20 @@
+# Task ID: 45
+# Title: Generate new Solana program keypair
+# Status: pending
+# Dependencies: None
+# Priority: high
+# Description: Generate a fresh keypair for the escrow program deployment to ensure no ID conflicts
+# Details:
+Execute: solana-keygen new -o target/deploy/escrow-keypair.json --force
+
+This will create a new keypair file that will be used to derive the program's address. The --force flag will overwrite any existing keypair.
+
+After generation:
+- Capture the new public key (program ID)
+- Verify the keypair file exists at target/deploy/escrow-keypair.json
+- Store the program ID for use in subsequent tasks
+
+Expected output: A new keypair file and a base58-encoded public key
+
+# Test Strategy:
+

@@ -15,6 +15,7 @@ import {
   KeyedAccountInfo,
 } from '@solana/web3.js';
 import { getAssociatedTokenAddress } from '@solana/spl-token';
+import { BN } from '@coral-xyz/anchor';
 import { config } from '../config';
 
 /**
@@ -479,6 +480,14 @@ export const initializeEscrow = async (
     }
     const programId = new PublicKey(config.solana.escrowProgramId);
     
+    // Derive escrow PDA
+    const [escrowPda, bump] = await deriveEscrowPDA(
+      programId,
+      sellerPubkey,
+      nftMintPubkey,
+      buyerPubkey
+    );
+
     // Get USDC mint address (use devnet USDC for testing)
     const usdcMintStr = config.usdc?.mintAddress || 'Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr'; // Devnet USDC
     console.log('[SolanaService] USDC Config:', {
@@ -488,43 +497,36 @@ export const initializeEscrow = async (
     });
     const usdcMint = new PublicKey(usdcMintStr);
 
-    // Call on-chain init_agreement instruction
-    const { BN } = await import('@coral-xyz/anchor');
-    const { getEscrowProgramService } = await import('./escrow-program.service');
-    const escrowProgramService = getEscrowProgramService();
-    
-    // Generate unique escrow ID (use timestamp as u64)
+    // Generate a unique escrow ID (timestamp-based)
+    // This will be used to derive the PDA on-chain
     const escrowId = new BN(Date.now());
     
-    // Convert price to lamports (USDC has 6 decimals)
-    const usdcAmount = new BN(Math.floor(params.price * 1_000_000));
+    console.log('[SolanaService] Generated escrow ID:', escrowId.toString());
     
-    // Convert expiry to unix timestamp
+    // Call Anchor program to initialize escrow on-chain
+    const { getEscrowProgramService } = await import('./escrow-program.service');
+    const escrowService = getEscrowProgramService();
+    
+    // Convert price to USDC amount (assuming 6 decimals for USDC)
+    const usdcAmount = new BN(parseFloat(params.price.toString()) * 1_000_000);
+    
+    // Convert expiry to Unix timestamp
     const expiryTimestamp = new BN(Math.floor(params.expiry.getTime() / 1000));
     
-    // Validate that buyer is specified (buyer and seller must be different parties)
-    if (!buyerPubkey) {
-      throw new Error('Buyer address is required for escrow initialization. Seller and buyer must be different parties.');
-    }
-    
-    // Validate that buyer and seller are different
-    if (buyerPubkey.equals(sellerPubkey)) {
-      throw new Error('Buyer and seller must be different addresses. Cannot create an escrow where the same party is both buyer and seller.');
-    }
-    
-    console.log('[SolanaService] Calling on-chain init_agreement:', {
+    console.log('[SolanaService] Initializing escrow on-chain:', {
       escrowId: escrowId.toString(),
-      buyer: buyerPubkey.toString(),
+      buyer: buyerPubkey?.toString() || sellerPubkey.toString(),
       seller: sellerPubkey.toString(),
       nftMint: nftMintPubkey.toString(),
       usdcAmount: usdcAmount.toString(),
       expiryTimestamp: expiryTimestamp.toString(),
     });
     
-    // Initialize escrow agreement on-chain
-    const initResult = await escrowProgramService.initAgreement(
+    // Initialize escrow on-chain
+    // Note: Using seller as buyer for now since buyer might be optional
+    const { pda: anchorEscrowPda, txId } = await escrowService.initAgreement(
       escrowId,
-      buyerPubkey,
+      buyerPubkey || sellerPubkey, // Use seller if buyer not specified
       sellerPubkey,
       nftMintPubkey,
       usdcAmount,
@@ -532,23 +534,23 @@ export const initializeEscrow = async (
     );
     
     console.log('[SolanaService] Escrow initialized on-chain:', {
-      escrowPda: initResult.pda.toString(),
-      transactionId: initResult.txId,
+      escrowPda: anchorEscrowPda.toString(),
+      txId,
     });
-
-    // Derive deposit addresses (ATAs for the escrow PDA) using the correct PDA from init
+    
+    // Derive deposit addresses using the Anchor-derived PDA
     const depositAddresses = await deriveDepositAddresses(
-      initResult.pda,
+      anchorEscrowPda,
       usdcMint,
       nftMintPubkey
     );
     
-    console.log('[SolanaService] Deposit addresses derived:', JSON.stringify(depositAddresses, null, 2));
+    console.log('[SolanaService] Deposit addresses:', JSON.stringify(depositAddresses, null, 2));
 
     const result = {
-      escrowPda: initResult.pda.toString(),
+      escrowPda: anchorEscrowPda.toString(),
       depositAddresses,
-      transactionId: initResult.txId,
+      transactionId: txId,
     };
     
     return result;

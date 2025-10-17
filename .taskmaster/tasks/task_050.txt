@@ -1,0 +1,30 @@
+# Task ID: 50
+# Title: Update backend environment variables
+# Status: pending
+# Dependencies: None
+# Priority: high
+# Description: Update all environment configurations with the new program ID
+# Details:
+Files to update:
+
+1. nodemon.json (line 9):
+   "ESCROW_PROGRAM_ID": "<NEW_PROGRAM_ID>"
+
+2. docker-compose.yml (if ESCROW_PROGRAM_ID is defined there)
+
+3. .env file (if exists)
+
+4. Any other config files that reference the old program ID
+
+Optional but recommended:
+- Update tests/fixtures/devnet-config.json if it has program references
+- Update docs that mention the program ID
+- Update README.md with new deployment info
+
+Verification:
+- Grep for old program ID to find all references
+- Ensure consistency across all config files
+- No hardcoded old IDs remain in source code
+
+# Test Strategy:
+

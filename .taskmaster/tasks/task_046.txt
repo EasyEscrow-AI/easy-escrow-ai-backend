@@ -1,0 +1,25 @@
+# Task ID: 46
+# Title: Update declare_id in Rust source code
+# Status: pending
+# Dependencies: None
+# Priority: high
+# Description: Update the program ID in the Rust source code to match the newly generated keypair
+# Details:
+File to modify: programs/escrow/src/lib.rs (line 5)
+
+Change:
+declare_id!("7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV");
+
+To:
+declare_id!("<NEW_PROGRAM_ID>");
+
+Where <NEW_PROGRAM_ID> is the public key from the generated keypair.
+
+This ensures the compiled program has the correct ID embedded in the bytecode.
+
+Verification:
+- Grep for declare_id to confirm the update
+- Ensure the ID matches: solana address -k target/deploy/escrow-keypair.json
+
+# Test Strategy:
+

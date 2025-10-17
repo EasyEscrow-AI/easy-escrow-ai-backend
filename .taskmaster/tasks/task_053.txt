@@ -1,0 +1,40 @@
+# Task ID: 53
+# Title: Verify program deployment and backend integration
+# Status: pending
+# Dependencies: None
+# Priority: high
+# Description: Run comprehensive verification tests to ensure program and backend are working correctly
+# Details:
+Verification checklist:
+
+1. Verify on-chain program:
+   solana program show <NEW_PROGRAM_ID> --url devnet
+   - Should show program exists
+   - Check program size
+   - Verify upgrade authority
+
+2. Verify IDL matches:
+   anchor idl fetch <NEW_PROGRAM_ID> --provider.cluster devnet
+   - Compare with src/generated/anchor/escrow-idl.json
+   - Ensure instructions match
+
+3. Test backend health:
+   curl http://localhost:3000/api/health
+   - Should return 200 OK
+   - No program configuration errors
+
+4. Check backend logs:
+   docker compose logs backend | Select-String "EscrowProgramService"
+   - Look for initialization success
+   - Confirm program ID matches
+   - No mismatch errors
+
+5. Test program interaction (optional):
+   - Create test escrow agreement
+   - Verify PDA derivation works
+   - Check transaction succeeds
+
+Expected result: All verifications pass, no ID mismatch errors, program is functional
+
+# Test Strategy:
+

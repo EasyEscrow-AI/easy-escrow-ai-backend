@@ -158,6 +158,17 @@ exports.Prisma.DepositScalarFieldEnum = {
   confirmedAt: 'confirmedAt'
 };
 
+exports.Prisma.IdempotencyKeyScalarFieldEnum = {
+  id: 'id',
+  key: 'key',
+  endpoint: 'endpoint',
+  requestHash: 'requestHash',
+  responseStatus: 'responseStatus',
+  responseBody: 'responseBody',
+  createdAt: 'createdAt',
+  expiresAt: 'expiresAt'
+};
+
 exports.Prisma.SettlementScalarFieldEnum = {
   id: 'id',
   agreementId: 'agreementId',
@@ -193,6 +204,18 @@ exports.Prisma.ReceiptScalarFieldEnum = {
   generatedAt: 'generatedAt'
 };
 
+exports.Prisma.TransactionLogScalarFieldEnum = {
+  id: 'id',
+  agreementId: 'agreementId',
+  txId: 'txId',
+  operationType: 'operationType',
+  blockHeight: 'blockHeight',
+  slot: 'slot',
+  status: 'status',
+  errorMessage: 'errorMessage',
+  timestamp: 'timestamp'
+};
+
 exports.Prisma.WebhookScalarFieldEnum = {
   id: 'id',
   agreementId: 'agreementId',
@@ -209,29 +232,6 @@ exports.Prisma.WebhookScalarFieldEnum = {
   signature: 'signature',
   createdAt: 'createdAt',
   scheduledFor: 'scheduledFor'
-};
-
-exports.Prisma.IdempotencyKeyScalarFieldEnum = {
-  id: 'id',
-  key: 'key',
-  endpoint: 'endpoint',
-  requestHash: 'requestHash',
-  responseStatus: 'responseStatus',
-  responseBody: 'responseBody',
-  createdAt: 'createdAt',
-  expiresAt: 'expiresAt'
-};
-
-exports.Prisma.TransactionLogScalarFieldEnum = {
-  id: 'id',
-  agreementId: 'agreementId',
-  txId: 'txId',
-  operationType: 'operationType',
-  blockHeight: 'blockHeight',
-  slot: 'slot',
-  status: 'status',
-  errorMessage: 'errorMessage',
-  timestamp: 'timestamp'
 };
 
 exports.Prisma.SortOrder = {
@@ -304,11 +304,11 @@ exports.WebhookDeliveryStatus = exports.$Enums.WebhookDeliveryStatus = {
 exports.Prisma.ModelName = {
   Agreement: 'Agreement',
   Deposit: 'Deposit',
+  IdempotencyKey: 'IdempotencyKey',
   Settlement: 'Settlement',
   Receipt: 'Receipt',
-  Webhook: 'Webhook',
-  IdempotencyKey: 'IdempotencyKey',
-  TransactionLog: 'TransactionLog'
+  TransactionLog: 'TransactionLog',
+  Webhook: 'Webhook'
 };
 
 /**

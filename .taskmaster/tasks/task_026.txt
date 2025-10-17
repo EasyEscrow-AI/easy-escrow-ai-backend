@@ -1,0 +1,43 @@
+# Task ID: 26
+# Title: Implement Atomic Settlement Engine
+# Status: done
+# Dependencies: 22, 25
+# Priority: high
+# Description: Create service that detects when both NFT and USDC are locked, validates not expired, calls on-chain settle instruction to swap assets, calculates and deducts platform fee, optionally honors creator royalties
+# Details:
+
+
+# Test Strategy:
+
+
+# Subtasks:
+## 1. Implement Lock Detection Service [done]
+### Dependencies: None
+### Description: Create service to monitor and detect when both NFT and USDC assets are locked in escrow
+### Details:
+Build a monitoring service that polls blockchain state to detect when both parties have locked their assets (NFT and USDC) in the escrow contract. Include event listeners for lock confirmations and maintain state tracking.
+
+## 2. Implement Expiration Validation [done]
+### Dependencies: 26.1
+### Description: Create validation logic to check if escrow agreements have not expired before settlement
+### Details:
+Implement timestamp validation against current block time to ensure the escrow agreement is still within its valid time window. Include buffer time considerations and proper error handling for expired agreements.
+
+## 3. Implement On-Chain Settlement Caller [done]
+### Dependencies: 26.2
+### Description: Create service to call the on-chain settle instruction to execute the asset swap
+### Details:
+Build the interface to interact with the blockchain settlement contract, including proper transaction construction, signing, and submission. Handle transaction failures and implement retry logic with exponential backoff.
+
+## 4. Implement Platform Fee Calculator [done]
+### Dependencies: 26.3
+### Description: Create fee calculation and deduction system for platform fees from settlements
+### Details:
+Implement configurable fee calculation logic that computes platform fees as percentage of transaction value. Include fee deduction from settlement amounts and proper accounting for fee collection wallet.
+
+## 5. Implement Creator Royalty Handler [done]
+### Dependencies: 26.4
+### Description: Create optional creator royalty calculation and distribution system
+### Details:
+Build system to detect NFT creator royalty requirements from metadata, calculate royalty amounts, and distribute payments to creators during settlement. Make royalty handling configurable and optional per agreement.
+

@@ -1,0 +1,25 @@
+# Task ID: 47
+# Title: Update Anchor.toml with new program ID
+# Status: pending
+# Dependencies: None
+# Priority: high
+# Description: Update the devnet program address in Anchor.toml configuration
+# Details:
+File to modify: Anchor.toml (line 9)
+
+Change:
+[programs.devnet]
+escrow = "7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV"
+
+To:
+[programs.devnet]
+escrow = "<NEW_PROGRAM_ID>"
+
+This tells Anchor which program ID to use for devnet deployments.
+
+Verification:
+- Read Anchor.toml and verify the ID matches the keypair
+- Ensure the ID is consistent with the declare_id in lib.rs
+
+# Test Strategy:
+

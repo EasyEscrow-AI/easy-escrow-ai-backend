@@ -1,0 +1,29 @@
+# Task ID: 48
+# Title: Build Anchor program with matching IDs
+# Status: pending
+# Dependencies: None
+# Priority: high
+# Description: Compile the Solana program with the updated program ID embedded in the bytecode
+# Details:
+Execute: anchor build
+
+This will:
+1. Compile the Rust program with the updated declare_id
+2. Generate the program binary (.so file)
+3. Create/update the IDL JSON file
+4. Place artifacts in target/ directory
+
+Expected outputs:
+- target/deploy/escrow.so (compiled program)
+- target/idl/escrow.json (Interface Definition Language file)
+- target/types/escrow.ts (TypeScript types)
+
+Verification:
+- Check build completes without errors
+- Verify .so file exists and has recent timestamp
+- Confirm IDL has the correct program ID in "address" field
+
+Timeout: Use 60s timeout wrapper for anchor build
+
+# Test Strategy:
+

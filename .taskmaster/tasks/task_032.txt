@@ -1,0 +1,43 @@
+# Task ID: 32
+# Title: Implement Security Middleware
+# Status: done
+# Dependencies: 21
+# Priority: high
+# Description: Add rate limiting, CORS configuration for easyescrow.ai domain, input validation, USDC mint allowlist, authentication for protected endpoints
+# Details:
+
+
+# Test Strategy:
+
+
+# Subtasks:
+## 1. Implement Rate Limiting Middleware [done]
+### Dependencies: None
+### Description: Create rate limiting middleware to prevent API abuse and ensure fair usage across all endpoints
+### Details:
+Implement rate limiting using a sliding window or token bucket algorithm. Configure different limits for different endpoint types (e.g., 100 requests/minute for general endpoints, 10 requests/minute for settlement operations). Store rate limit counters in Redis or in-memory cache. Return appropriate HTTP 429 status codes when limits are exceeded.
+
+## 2. Configure CORS for easyescrow.ai Domain [done]
+### Dependencies: None
+### Description: Set up Cross-Origin Resource Sharing (CORS) configuration to allow requests from easyescrow.ai domain
+### Details:
+Configure CORS middleware to allow requests from easyescrow.ai and its subdomains. Set appropriate allowed methods (GET, POST, PUT, DELETE), headers (Content-Type, Authorization, X-API-Key), and credentials handling. Ensure preflight requests are handled correctly for complex requests.
+
+## 3. Implement Input Validation Middleware [done]
+### Dependencies: None
+### Description: Create comprehensive input validation middleware to sanitize and validate all incoming request data
+### Details:
+Implement validation for all API endpoints using schema validation (e.g., Joi, Yup, or similar). Validate data types, required fields, string lengths, numeric ranges, and format constraints. Sanitize inputs to prevent injection attacks. Return detailed validation error messages with HTTP 400 status codes.
+
+## 4. Implement USDC Mint Allowlist Validation [done]
+### Dependencies: None
+### Description: Create middleware to validate that only approved USDC mint addresses are accepted in transactions
+### Details:
+Maintain a configurable allowlist of approved USDC mint addresses. Create middleware that validates incoming requests containing USDC mint addresses against this allowlist. Support for updating the allowlist through admin endpoints or configuration. Reject transactions with non-approved mint addresses with appropriate error messages.
+
+## 5. Implement Authentication Middleware for Protected Endpoints [done]
+### Dependencies: 32.1, 32.2, 32.3
+### Description: Create authentication middleware to secure protected API endpoints and validate user credentials
+### Details:
+Implement JWT-based authentication middleware for protected endpoints. Validate JWT tokens, check expiration, and extract user information. Support for API key authentication for service-to-service communication. Implement role-based access control if needed. Return HTTP 401 for invalid tokens and HTTP 403 for insufficient permissions.
+

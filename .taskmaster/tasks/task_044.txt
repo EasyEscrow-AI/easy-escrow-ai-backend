@@ -1,0 +1,169 @@
+# Task ID: 44
+# Title: E2E Devnet Test: NFT-to-USDC Swap with Fee Collection
+# Status: done
+# Dependencies: None
+# Priority: high
+# Description: Create end-to-end test on Solana devnet for NFT swap with USDC payment and fee collection. Test the complete flow of escrow service with 3 wallets: sender (NFT owner), receiver (USDC payer), and fee collector (1% USDC fee).
+# Details:
+## Test Scenario
+Happy path test for NFT-to-USDC swap on devnet with 3 wallets:
+- **Sender Wallet**: Owns NFT, receives USDC payment (minus fee)
+- **Receiver Wallet**: Pays USDC, receives NFT
+- **Fee Collector Wallet**: Receives 1% fee in USDC
+
+## Prerequisites & Setup
+
+### 1. Wallet Setup
+- Verify 3 test wallets exist and are funded with SOL (for transaction fees)
+- Check existing setup in `scripts/fund-devnet-wallets.ps1`
+- Small values: Use ~0.1 USDC for swap, 0.001 USDC for fee
+
+### 2. USDC Token Setup
+**Challenge**: Wallets funded with SOL need USDC tokens
+**Solutions**:
+a) Use Solana Devnet USDC faucet (if available)
+b) Mint devnet USDC tokens using spl-token CLI:
+   - Create USDC token mint (or use existing devnet USDC mint)
+   - Mint tokens to receiver wallet (~0.2 USDC for testing)
+   - Mint tokens to fee collector for initial setup verification
+c) Use Solana devnet faucet to airdrop devnet USDC
+
+**Recommended**: Use SPL Token CLI to mint test USDC tokens on devnet
+
+### 3. NFT Creation
+**Challenge**: Create NFT in sender's wallet
+**Solutions**:
+a) Use Metaplex CLI to create test NFT collection and mint
+b) Use @metaplex-foundation/js SDK programmatically:
+   ```typescript
+   import { Metaplex } from '@metaplex-foundation/js';
+   const metaplex = Metaplex.make(connection);
+   const nft = await metaplex.nfts().create({ ... });
+   ```
+c) Leverage existing `scripts/setup-nft-collection.ps1` if available
+
+**Recommended**: Use Metaplex JS SDK within test setup to programmatically create NFT
+
+## Test Implementation Steps
+
+### Phase 1: Test Setup
+1. Load/verify 3 devnet wallets (sender, receiver, fee-collector)
+2. Ensure all wallets have SOL for transaction fees (~0.1 SOL each)
+3. Create/mint test NFT in sender wallet using Metaplex
+4. Mint devnet USDC tokens to receiver wallet (0.2 USDC)
+5. Verify initial balances
+
+### Phase 2: Create Escrow
+1. Sender creates escrow transaction via API
+2. Deposits NFT into escrow program
+3. Specifies USDC amount (0.1 USDC) and receiver wallet
+4. System calculates 1% fee (0.001 USDC)
+5. Verify escrow state in on-chain program
+
+### Phase 3: Execute Swap
+1. Receiver accepts escrow via API
+2. Transfers USDC (0.1 USDC) to escrow
+3. System distributes:
+   - 99% (0.099 USDC) to sender
+   - 1% (0.001 USDC) to fee collector
+4. NFT transferred to receiver
+5. Escrow marked as completed
+
+### Phase 4: Verification
+1. Verify NFT ownership changed to receiver
+2. Verify sender received 0.099 USDC
+3. Verify fee collector received 0.001 USDC
+4. Verify escrow status is COMPLETED
+5. Verify all transactions on Solana explorer
+
+## Technical Considerations
+
+### Token Setup Commands (Reference)
+```bash
+# Create USDC mint on devnet (or use existing)
+spl-token create-token --decimals 6
+
+# Create token account for receiver
+spl-token create-account <MINT_ADDRESS>
+
+# Mint USDC to receiver
+spl-token mint <MINT_ADDRESS> 0.2 <RECEIVER_TOKEN_ACCOUNT>
+```
+
+### NFT Creation (Reference)
+```typescript
+const nft = await metaplex.nfts().create({
+  uri: 'https://arweave.net/mock-metadata',
+  name: 'Test NFT for E2E',
+  sellerFeeBasisPoints: 0,
+  creators: [{ address: senderWallet.publicKey, share: 100 }],
+});
+```
+
+## Files to Create/Modify
+- `tests/e2e/devnet-nft-usdc-swap.test.ts` - Main test file
+- `tests/helpers/devnet-token-setup.ts` - Helper for USDC minting
+- `tests/helpers/devnet-nft-setup.ts` - Helper for NFT creation
+- `tests/fixtures/devnet-wallets.ts` - Wallet management
+
+## Success Criteria
+✅ All 3 wallets set up with SOL
+✅ Test NFT created in sender wallet
+✅ Receiver wallet has USDC tokens
+✅ Escrow created successfully on-chain
+✅ NFT transferred to receiver
+✅ USDC payment distributed correctly (99% to sender, 1% to fee collector)
+✅ All balances verified post-transaction
+✅ Test runs reliably on devnet
+✅ Transaction costs stay under 0.05 SOL total
+
+## Scope
+**Included**: Happy path only - successful swap with all conditions met
+**Excluded**: Error paths, cancellations, timeouts (future tasks)
+
+# Test Strategy:
+
+
+# Subtasks:
+## 1. Create devnet wallet management helper [done]
+### Dependencies: None
+### Description: Create helper module to load and manage 3 test wallets for devnet testing
+### Details:
+Create tests/helpers/devnet-wallet-manager.ts that loads sender, receiver, and fee collector wallets from keypair files or environment variables. Include functions to check SOL balances, ensure minimum balance for transaction fees (~0.1 SOL each), and provide wallet instances for testing. Handle wallet loading errors gracefully.
+
+## 2. Create USDC token setup helper [done]
+### Dependencies: 44.1
+### Description: Create helper module for USDC token operations on devnet using @solana/spl-token
+### Details:
+Create tests/helpers/devnet-token-setup.ts using @solana/spl-token to programmatically create USDC mint, create token accounts for wallets, and mint test USDC tokens. Include functions to mint 0.2 USDC to receiver wallet, create associated token accounts, and verify token balances. Handle devnet-specific token operations.
+
+## 3. Create NFT creation helper [done]
+### Dependencies: 44.1
+### Description: Create helper module for NFT creation using @metaplex-foundation/js SDK
+### Details:
+Create tests/helpers/devnet-nft-setup.ts using @metaplex-foundation/js SDK to create test NFTs in sender wallet. Include functions to create NFT collection, mint individual NFTs with metadata, and verify NFT ownership. Use simple metadata structure with name 'Test NFT for E2E' and mock URI for devnet testing.
+
+## 4. Create PowerShell setup script [done]
+### Dependencies: 44.2
+### Description: Create one-time setup script for devnet USDC mint and token distribution
+### Details:
+Create scripts/setup-devnet-nft-usdc.ps1 that performs one-time setup of USDC mint on devnet and distributes tokens to test wallets. Script should create or use existing devnet USDC mint, create token accounts for all 3 wallets, mint initial USDC tokens, and verify setup completion. Include error handling and status reporting.
+
+## 5. Write main E2E test file [done]
+### Dependencies: 44.1, 44.2, 44.3
+### Description: Create comprehensive E2E test orchestrating complete NFT-to-USDC swap flow
+### Details:
+Create tests/e2e/devnet-nft-usdc-swap.test.ts that orchestrates the complete happy path: setup wallets and tokens, create NFT in sender wallet, create escrow via API, deposit NFT, receiver pays USDC, verify fee distribution (99% to sender, 1% to fee collector), verify NFT transfer, and validate final balances. Include comprehensive assertions and on-chain state verification.
+
+## 6. Add dependencies and update package.json [done]
+### Dependencies: None
+### Description: Install required dependencies and add test script configuration
+### Details:
+Install @solana/spl-token and @metaplex-foundation/js dependencies via npm. Update package.json with new test script for devnet E2E testing. Ensure version compatibility with existing Solana dependencies. Add devnet-specific test script that sets appropriate environment variables and timeouts for devnet testing.
+
+## 7. Test execution and documentation [done]
+### Dependencies: 44.4, 44.5, 44.6
+### Description: Execute complete test suite and create comprehensive documentation
+### Details:
+Run the complete E2E test on devnet, verify all transactions on Solana explorer, document test results including transaction signatures and wallet addresses. Create completion documentation with test execution steps, results verification, and troubleshooting guide. Ensure test runs reliably and transaction costs stay under 0.05 SOL total.
+

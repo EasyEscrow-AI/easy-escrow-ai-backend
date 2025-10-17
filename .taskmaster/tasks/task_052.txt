@@ -1,0 +1,30 @@
+# Task ID: 52
+# Title: Restart Docker services
+# Status: pending
+# Dependencies: None
+# Priority: high
+# Description: Gracefully restart backend services to load new configuration
+# Details:
+Execute: docker compose restart backend
+
+This will:
+1. Stop the backend container gracefully
+2. Reload environment variables from nodemon.json
+3. Restart with new ESCROW_PROGRAM_ID
+
+Alternative (if full rebuild needed):
+docker compose up -d --build backend
+
+Verification after restart:
+- Check container is healthy: docker compose ps
+- View logs: docker compose logs -f backend
+- Look for "EscrowProgramService initialized with program: <NEW_PROGRAM_ID>"
+- Confirm no program ID mismatch errors
+
+Health check:
+curl http://localhost:3000/api/health
+
+Should return status 200 with no errors about program configuration.
+
+# Test Strategy:
+
