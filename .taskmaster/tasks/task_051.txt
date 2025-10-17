@@ -1,0 +1,28 @@
+# Task ID: 51
+# Title: Copy new IDL to backend source
+# Status: pending
+# Dependencies: None
+# Priority: high
+# Description: Update the backend's IDL file with the newly generated one from anchor build
+# Details:
+Execute: Copy target/idl/escrow.json to src/generated/anchor/escrow-idl.json
+
+This ensures the backend TypeScript code uses the correct program interface.
+
+Steps:
+1. Verify target/idl/escrow.json has the new program ID
+2. Backup existing src/generated/anchor/escrow-idl.json (optional)
+3. Copy the new IDL file
+4. Verify the copied file has correct program ID in "address" field
+
+The IDL contains:
+- Program address
+- Instruction definitions
+- Account structures
+- Error codes
+- Type definitions
+
+Backend service (EscrowProgramService) will use this to construct transactions.
+
+# Test Strategy:
+

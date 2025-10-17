@@ -1,0 +1,66 @@
+# Task ID: 42
+# Title: Setup Production Database Infrastructure on DigitalOcean
+# Status: done
+# Dependencies: 23
+# Priority: high
+# Description: Implement simple, safe MVP production database layout using DO managed services: Managed Postgres cluster with three logical databases (prod/stage/dev), Managed Redis for idempotency and queues, DO Spaces for receipts, with proper security, PITR backups, connection pooling, and least-privilege roles
+# Details:
+**Backend API:** DO App Platform (`api.easyescrow.ai`)
+
+**Database:** DO Managed Postgres in same region with three logical DBs in one cluster:
+- `easyescrow_prod` (real users)
+- `easyescrow_stage` (staging/smoke on devnet)
+- `easyescrow_dev` (playground)
+
+**Cache/Queues:** DO Managed Redis for idempotency keys, webhooks, retries
+
+**Storage:** DO Spaces (S3-compatible) for receipts/artifacts
+
+**Key Requirements:**
+- Enable private networking between App Platform and managed services
+- Turn on PITR (point-in-time recovery) + daily snapshots
+- Create least-privilege roles: `app_user_prod` (R/W, no DDL), `migrate_user_prod` (DDL only), equivalent for stage/dev
+- Enable PgBouncer connection pooling
+- Configure migration pipeline gated behind `migrate_user_*` roles
+- Store secrets via App Platform env vars with quarterly rotation policy
+
+# Test Strategy:
+Validate database setup with connection tests from App Platform, verify role permissions, test PITR recovery, validate migration process in stage environment before prod
+
+# Subtasks:
+## 1. Create DigitalOcean Managed PostgreSQL Cluster [done]
+### Dependencies: None
+### Description: Set up a managed PostgreSQL cluster on DigitalOcean with appropriate sizing and configuration for production workloads
+### Details:
+Create a DO Managed PostgreSQL cluster in the same region as the App Platform. Configure cluster with appropriate node size, enable high availability, and set up in a VPC for private networking. Enable connection pooling with PgBouncer.
+
+## 2. Configure Database Security and Backup Settings [done]
+### Dependencies: 42.1
+### Description: Enable PITR backups, configure daily snapshots, and set up security settings for the PostgreSQL cluster
+### Details:
+Enable point-in-time recovery (PITR) with appropriate retention period, configure automated daily snapshots, set up firewall rules to restrict access to App Platform only, and enable SSL/TLS encryption for connections.
+
+## 3. Create Logical Databases and User Roles [done]
+### Dependencies: 42.2
+### Description: Set up three logical databases (prod/stage/dev) and create least-privilege user roles for each environment
+### Details:
+Create easyescrow_prod, easyescrow_stage, and easyescrow_dev databases. Create role pairs for each: app_user_* (read/write, no DDL) and migrate_user_* (DDL only). Configure proper permissions and access controls for each role.
+
+## 4. Setup DigitalOcean Managed Redis Instance [done]
+### Dependencies: 42.1
+### Description: Create and configure a managed Redis instance for caching, idempotency keys, and queue management
+### Details:
+Provision DO Managed Redis cluster in the same region and VPC as PostgreSQL. Configure appropriate memory size, enable persistence, set up eviction policies, and configure private networking access from App Platform.
+
+## 5. Configure DigitalOcean Spaces for File Storage [done]
+### Dependencies: None
+### Description: Set up DO Spaces bucket for storing receipts and artifacts with proper access controls and lifecycle policies
+### Details:
+Create DO Spaces bucket for receipt storage, configure CORS policies for web access, set up lifecycle rules for cost optimization, create access keys with minimal required permissions, and configure CDN if needed for public assets.
+
+## 6. Configure App Platform Integration and Secrets Management [done]
+### Dependencies: 42.3, 42.4, 42.5
+### Description: Set up private networking between App Platform and managed services, configure environment variables and implement secrets rotation policy
+### Details:
+Enable private networking between App Platform and all managed services. Configure App Platform environment variables for database connections, Redis, and Spaces access. Document quarterly secrets rotation policy and set up monitoring for connection health.
+

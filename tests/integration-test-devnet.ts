@@ -10,7 +10,7 @@ describe("escrow - devnet integration test", () => {
 
   // Use the deployed program ID from environment variable
   // This prevents program ID mismatches between environments
-  const programIdStr = process.env.ESCROW_PROGRAM_ID || "7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV";
+  const programIdStr = process.env.ESCROW_PROGRAM_ID || "4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd";
   const programId = new PublicKey(programIdStr);
   
   console.log("🔍 Using Program ID:", programIdStr);

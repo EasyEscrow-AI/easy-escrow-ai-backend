@@ -1,0 +1,34 @@
+# Task ID: 49
+# Title: Deploy program to Solana devnet
+# Status: pending
+# Dependencies: None
+# Priority: high
+# Description: Deploy the compiled escrow program to Solana devnet
+# Details:
+Execute: anchor deploy --provider.cluster devnet
+
+Prerequisites:
+- Ensure wallet has sufficient SOL for deployment (check balance)
+- Confirm RPC connection to devnet is working
+- Verify anchor build completed successfully
+
+The deployment will:
+1. Upload the program binary to devnet
+2. Create the program account at the keypair's address
+3. Set the program as executable
+4. Initialize upgrade authority (if applicable)
+
+Expected result:
+- Program deployed at the new program ID
+- Transaction signature returned
+- Program shows as deployed: solana program show <PROGRAM_ID> --url devnet
+
+Error handling:
+- If insufficient funds: airdrop SOL to wallet
+- If RPC timeout: retry with longer timeout
+- If program already exists: use upgrade instead
+
+Timeout: Use 180s timeout wrapper for deployment
+
+# Test Strategy:
+

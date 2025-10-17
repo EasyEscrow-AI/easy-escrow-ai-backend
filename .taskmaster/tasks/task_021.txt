@@ -1,0 +1,43 @@
+# Task ID: 21
+# Title: Setup Backend Project Structure
+# Status: done
+# Dependencies: None
+# Priority: high
+# Description: Initialize Node.js/TypeScript backend with Express, configure package.json, setup ESLint/Prettier, and create basic folder structure (routes, services, models, utils, config)
+# Details:
+
+
+# Test Strategy:
+
+
+# Subtasks:
+## 1. Initialize Node.js project with TypeScript [done]
+### Dependencies: None
+### Description: Create new Node.js project and configure TypeScript compilation settings
+### Details:
+Run npm init to create package.json, install TypeScript as dev dependency, create tsconfig.json with strict mode, target ES2020, and output to dist folder. Configure build and dev scripts.
+
+## 2. Install and configure Express framework [done]
+### Dependencies: 21.1
+### Description: Set up Express server with TypeScript types and basic middleware
+### Details:
+Install express and @types/express, create basic server.ts with Express app, configure JSON parsing middleware, CORS, and basic error handling. Set up port configuration from environment variables.
+
+## 3. Setup ESLint and Prettier configuration [done]
+### Dependencies: 21.1
+### Description: Configure code linting and formatting tools for consistent code quality
+### Details:
+Install ESLint with TypeScript parser, Prettier, and related plugins. Create .eslintrc.js with TypeScript rules, .prettierrc for formatting config. Add lint and format scripts to package.json with pre-commit hooks.
+
+## 4. Create basic folder structure [done]
+### Dependencies: 21.2
+### Description: Establish organized directory structure for backend components
+### Details:
+Create src folder with subdirectories: routes (API endpoints), services (business logic), models (data structures), utils (helper functions), config (environment settings), middleware (custom middleware). Add index files for exports.
+
+## 5. Configure environment and build setup [done]
+### Dependencies: 21.3, 21.4
+### Description: Setup environment configuration and production build process
+### Details:
+Create .env.example with required environment variables, install dotenv for environment loading, configure nodemon for development, setup build script with TypeScript compilation, and create basic Dockerfile for containerization.
+

@@ -1,0 +1,115 @@
+# Task ID: 43
+# Title: Migrate from Upstash to Redis Cloud for Bull Queue Compatibility
+# Status: done
+# Dependencies: None
+# Priority: medium
+# Description: Migrate Redis infrastructure from Upstash to Redis Cloud (redis.io) due to Bull job queue incompatibility with Upstash's Lua script limitations. Redis Cloud provides full Redis compatibility required for Bull's dynamic key generation in Lua scripts.
+# Details:
+## Problem
+- Bull job queues are fundamentally incompatible with Upstash Redis
+- Upstash requires all Lua script keys as explicit arguments, but Bull generates dynamic keys inside scripts
+- Current error rate: 16.5% (EPIPE/ECONNRESET)
+- Deployments failing at 4/6 (runtime errors, no logs)
+- Jobs processing unreliably
+
+## Solution
+Migrate to Redis Cloud Free Tier (redis.io):
+- Full Bull/BullMQ compatibility
+- 30GB storage, 30 connections (free forever)
+- AWS Singapore region (ap-southeast-1) for low latency to DO apps
+- IP allowlist + TLS for cross-provider security
+- AOF persistence for data reliability
+
+## Expected Results
+- 0% error rate (down from 16.5%)
+- Successful deployments (6/6 phases)
+- Reliable Bull queue processing
+- All 3 Bull connections working (client, subscriber, bclient)
+
+## Security Requirements
+- TLS encryption (rediss:// protocol)
+- IP allowlist configured for DigitalOcean app IPs
+- Strong password authentication
+- Regular password rotation (monthly)
+
+## Environments
+- **Dev**: Free tier (30GB) - easyescrow-dev
+- **Staging**: Free tier or Fixed 250MB ($5/mo) - easyescrow-staging
+- **Production**: Fixed 1GB ($12/mo) with HA - easyescrow-prod
+
+# Test Strategy:
+
+
+# Subtasks:
+## 1. Set up Redis Cloud account and provision DEV database [done]
+### Dependencies: None
+### Description: Create Redis Cloud account and provision development database in AWS Singapore region with free tier specifications
+### Details:
+Sign up for Redis Cloud account at redis.io, create new subscription with Free tier (30GB storage, 30 connections), select AWS ap-southeast-1 (Singapore) region for low latency to DigitalOcean apps, name database 'easyescrow-dev', configure basic settings and obtain connection details
+
+## 2. Configure security settings for DEV database [done]
+### Dependencies: 43.1
+### Description: Set up TLS encryption, IP allowlist for DigitalOcean IPs, and strong password authentication for development database
+### Details:
+Enable TLS encryption (rediss:// protocol), configure IP allowlist with DigitalOcean app IP ranges, set strong password with minimum 16 characters including special characters, enable AOF persistence for data reliability, document all security configurations
+
+## 3. Perform local connection testing to DEV database [done]
+### Dependencies: 43.2
+### Description: Test Redis Cloud DEV database connectivity from local development environment using Bull queue operations
+### Details:
+Create test script to connect using rediss:// protocol, test basic Redis operations (SET/GET), test Bull queue creation and job processing, verify all 3 Bull connections work (client, subscriber, bclient), measure latency and connection stability
+
+## 4. Remove Upstash-specific workarounds from codebase [done]
+### Dependencies: 43.3
+### Description: Clean up code by removing Upstash compatibility workarounds and restore standard Bull queue configurations
+### Details:
+Remove any Upstash-specific Lua script modifications, restore original Bull queue configurations, remove custom key handling workarounds, update Redis connection logic to use standard Redis Cloud connection string format, ensure all Bull features are re-enabled
+
+## 5. Deploy to DEV environment and verify functionality [done]
+### Dependencies: 43.4
+### Description: Deploy updated application to DEV environment using Redis Cloud and verify 0% error rate with reliable Bull queue processing
+### Details:
+Update DEV environment variables with Redis Cloud connection string, deploy application, monitor error rates for 24 hours, verify all 6 deployment phases complete successfully, test Bull queue job processing reliability, confirm EPIPE/ECONNRESET errors eliminated
+
+## 6. Document DEV database connection details securely [done]
+### Dependencies: 43.5
+### Description: Securely document Redis Cloud DEV database connection details, credentials, and configuration settings
+### Details:
+Store connection strings, passwords, and configuration details in secure credential management system, document IP allowlist settings, create runbook for database access and troubleshooting, update team documentation with Redis Cloud specifics for DEV environment
+
+## 7. Provision STAGING database in Redis Cloud [done]
+### Dependencies: 43.6
+### Description: Create staging environment database with appropriate tier selection (Free tier or Fixed 250MB)
+### Details:
+Evaluate staging requirements and provision either Free tier (30GB) or Fixed 250MB ($5/mo) database named 'easyescrow-staging' in AWS Singapore region, configure similar to DEV but with staging-specific settings, obtain connection details
+
+## 8. Deploy to STAGING environment and verify [done]
+### Dependencies: 43.7
+### Description: Deploy application to staging environment using Redis Cloud staging database and verify functionality
+### Details:
+Configure staging environment variables with Redis Cloud staging connection string, deploy application, test Bull queue functionality, verify error rates remain at 0%, confirm all deployment phases complete successfully, run staging test suite
+
+## 9. Provision PRODUCTION database with high availability [done]
+### Dependencies: 43.8
+### Description: Create production database with Fixed 1GB tier and high availability configuration for maximum reliability
+### Details:
+Provision Fixed 1GB ($12/mo) database named 'easyescrow-prod' in AWS Singapore region, enable high availability (HA) configuration, configure production-grade settings for maximum performance and reliability, obtain connection details
+
+## 10. Configure production security with strict settings [done]
+### Dependencies: 43.9
+### Description: Implement strict security configuration for production database including IP allowlist and strong authentication
+### Details:
+Configure strict IP allowlist with only production DigitalOcean app IPs, set extra-strong password (20+ characters), enable TLS encryption, configure AOF persistence, set up monthly password rotation schedule, implement additional security monitoring
+
+## 11. Deploy to PRODUCTION and verify zero error rate [done]
+### Dependencies: 43.10
+### Description: Deploy application to production environment using Redis Cloud production database and verify complete elimination of errors
+### Details:
+Update production environment variables with Redis Cloud production connection string, perform blue-green deployment, monitor error rates continuously, verify all 6 deployment phases complete successfully, confirm Bull queue processing reliability at scale, validate 0% error rate achievement
+
+## 12. Update documentation to replace Upstash references [done]
+### Dependencies: 43.11
+### Description: Comprehensively update all project documentation to replace Upstash references with Redis Cloud information
+### Details:
+Update README files, deployment guides, troubleshooting documentation, architecture diagrams, and team runbooks to replace all Upstash references with Redis Cloud information, document new connection procedures, update security guidelines, create Redis Cloud specific troubleshooting guides
+

@@ -1,0 +1,30 @@
+# Task ID: 54
+# Title: Update documentation with new program ID
+# Status: pending
+# Dependencies: None
+# Priority: medium
+# Description: Update all documentation files that reference the old program ID
+# Details:
+Files to update (search for old program ID):
+
+Priority files:
+- README.md - Update deployment info
+- docs/PROGRAM_DEPLOYMENT_GUIDE.md - Update examples
+- docs/DEPLOYMENT_SUCCESS.md - Update deployment records
+- docs/DO_SERVER_E2E_CHECKLIST.md - Update checklist values
+- docs/ENV_TEMPLATE.md - Update example value
+
+Optional documentation updates:
+- Update any task completion documents
+- Update testing documentation
+- Update deployment scripts that hardcode the ID
+
+Use grep to find all occurrences:
+grep -r "7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV" docs/
+
+Replace with new program ID where appropriate.
+
+Some references may be historical and don't need updating (e.g., in task completion logs showing what was done).
+
+# Test Strategy:
+

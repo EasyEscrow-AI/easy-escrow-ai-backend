@@ -253,7 +253,7 @@
         "id": 25,
         "title": "Implement Solana Blockchain Monitoring Service",
         "description": "Create service to monitor escrow vault accounts for USDC and NFT deposits. Validate NFT mint, metadata, and amount. Update database with deposit status",
-        "status": "in-progress",
+        "status": "done",
         "priority": "high",
         "dependencies": [
           "22",
@@ -305,7 +305,7 @@
             "id": 5,
             "title": "Implement monitoring service orchestration and error handling",
             "description": "Create main monitoring service that coordinates deposit detection, handles errors, and manages service lifecycle",
-            "status": "in-progress",
+            "status": "done",
             "dependencies": [
               "25.4"
             ],
@@ -393,7 +393,7 @@
             "id": 1,
             "title": "Create Expiry Timestamp Checking Service",
             "description": "Implement a service that continuously monitors and checks expiry timestamps for active escrow agreements",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "details": "Create a background service that periodically queries the database for active agreements and checks their expiry timestamps against current time. Service should identify expired agreements and trigger appropriate actions."
           },
@@ -401,7 +401,7 @@
             "id": 2,
             "title": "Implement Partial Deposit Refund Logic",
             "description": "Create functionality to calculate and process refunds for agreements with partial deposits when cancellation occurs",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "27.1"
             ],
@@ -411,7 +411,7 @@
             "id": 3,
             "title": "Implement Admin Multisig Cancellation",
             "description": "Create admin cancellation functionality that requires multisig approval for cancelling active agreements",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "27.2"
             ],
@@ -421,7 +421,7 @@
             "id": 4,
             "title": "Implement Agreement Status Update Engine",
             "description": "Create service to automatically update agreement status based on expiry checks and cancellation events",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "27.3"
             ],
@@ -431,7 +431,7 @@
             "id": 5,
             "title": "Integrate Expiry and Cancellation Services",
             "description": "Integrate all expiry and cancellation components into a cohesive system with proper error handling and monitoring",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "27.4"
             ],
@@ -455,7 +455,7 @@
             "id": 1,
             "title": "Design Agreement Data Model and Database Schema",
             "description": "Define the database schema and data structures for storing agreement information including status, balances, and deadlines",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "details": "Create database tables/collections to store agreement data with fields for agreement_id, status (active/expired/cancelled), buyer_balance, seller_balance, nft_locked_status, usdc_locked_status, expiry_deadline, created_at, updated_at. Define TypeScript interfaces and validation schemas."
           },
@@ -463,7 +463,7 @@
             "id": 2,
             "title": "Implement Agreement Repository Layer",
             "description": "Create database access layer with methods to query and update agreement records",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "28.1"
             ],
@@ -473,7 +473,7 @@
             "id": 3,
             "title": "Create GET /v1/agreements/{id} Endpoint",
             "description": "Implement REST endpoint to retrieve agreement details including status, balances, and deadlines",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "28.2"
             ],
@@ -483,7 +483,7 @@
             "id": 4,
             "title": "Implement Agreement Expiry Detection Logic",
             "description": "Create service to detect expired agreements and validate cancellation eligibility",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "28.2"
             ],
@@ -493,7 +493,7 @@
             "id": 5,
             "title": "Create POST /v1/agreements/{id}/cancel Endpoint",
             "description": "Implement REST endpoint to trigger cancellation of expired agreements",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "28.3",
               "28.4"
@@ -582,7 +582,7 @@
             "id": 1,
             "title": "Design Settlement Receipt Data Structure",
             "description": "Define the complete data structure for settlement receipts including all required fields and validation rules",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "details": "Create TypeScript interfaces/types for settlement receipt containing nft_mint, price, fees breakdown, timestamps (created, settled), transaction IDs (escrow, settlement), buyer/seller addresses, agreement ID, and hash signature field. Define validation schemas for each field including format requirements and constraints."
           },
@@ -590,7 +590,7 @@
             "id": 2,
             "title": "Implement Hash Signing Service",
             "description": "Create cryptographic service to generate secure hash signatures for settlement receipts",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "30.1"
             ],
@@ -600,7 +600,7 @@
             "id": 3,
             "title": "Create Database Schema and Models",
             "description": "Design and implement database table structure for storing settlement receipts with proper indexing",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "30.1"
             ],
@@ -610,7 +610,7 @@
             "id": 4,
             "title": "Build Receipt Generation Service",
             "description": "Implement core service logic to generate settlement receipts from completed escrow transactions",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "30.2",
               "30.3"
@@ -621,7 +621,7 @@
             "id": 5,
             "title": "Implement Receipt API Endpoints",
             "description": "Create REST API endpoints to retrieve settlement receipts with proper authentication and filtering",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "30.4"
             ],
@@ -645,7 +645,7 @@
             "id": 1,
             "title": "Install and Configure Redis Client",
             "description": "Set up Redis client library and establish connection configuration for the application",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "details": "Install redis-py library, create Redis connection class with connection pooling, configure connection parameters (host, port, password, SSL), implement connection health checks and retry logic"
           },
@@ -653,7 +653,7 @@
             "id": 2,
             "title": "Implement Agreement Caching System",
             "description": "Create caching layer for agreement data to improve lookup performance and reduce database load",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "31.1"
             ],
@@ -663,7 +663,7 @@
             "id": 3,
             "title": "Setup Job Queue Infrastructure",
             "description": "Configure Redis-based job queue system for asynchronous task processing",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "31.1"
             ],
@@ -673,7 +673,7 @@
             "id": 4,
             "title": "Implement Blockchain Monitoring Queue",
             "description": "Create specialized job queue for blockchain event monitoring and processing tasks",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "31.3"
             ],
@@ -683,7 +683,7 @@
             "id": 5,
             "title": "Setup Settlement Processing Queue",
             "description": "Implement job queue system for handling escrow settlement and payment processing tasks",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "31.3"
             ],
@@ -1043,7 +1043,7 @@
             "id": 1,
             "title": "Setup Devnet Testing Environment",
             "description": "Configure and prepare the devnet environment for comprehensive end-to-end testing",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "details": "Set up devnet RPC endpoints, configure wallet with sufficient SOL for transaction fees, prepare test USDC tokens and NFT collections, verify Solana program deployment on devnet, configure environment variables for testing"
           },
@@ -1051,7 +1051,7 @@
             "id": 2,
             "title": "Execute Happy Path End-to-End Test",
             "description": "Test the complete happy path scenario: create agreement → deposit USDC → deposit NFT → atomic settle → receipt JSON published",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "37.1"
             ],
@@ -1061,7 +1061,7 @@
             "id": 3,
             "title": "Execute Expiry Path Test Scenario",
             "description": "Test expiry and refund functionality: create agreement → deposit one side only → wait for expiry → execute refund",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "37.1"
             ],
@@ -1071,7 +1071,7 @@
             "id": 4,
             "title": "Execute Concurrency Race Condition Test",
             "description": "Test race condition handling when multiple buyers attempt to fund the same open offer simultaneously",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "37.1"
             ],
@@ -1081,7 +1081,7 @@
             "id": 5,
             "title": "Validate Fee Collection and Receipt Generation",
             "description": "Test fee collection mechanism and receipt validation for completed transactions across all test scenarios",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "37.2",
               "37.3",
@@ -1107,7 +1107,7 @@
             "id": 1,
             "title": "Install and Configure Solana CLI for Local Development",
             "description": "Install Solana CLI tools and configure for local development environment",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "details": "Download and install Solana CLI from official sources. Configure solana config set --url localhost to point to local validator. Verify installation with solana --version and solana config get commands."
           },
@@ -1115,7 +1115,7 @@
             "id": 2,
             "title": "Start Local Solana Validator with Custom Configuration",
             "description": "Launch local Solana validator with optimized settings for fast testing",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "38.1"
             ],
@@ -1125,7 +1125,7 @@
             "id": 3,
             "title": "Setup Test Keypairs and SOL Airdrops",
             "description": "Generate test keypairs and fund them with SOL for transaction fees",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "38.2"
             ],
@@ -1135,7 +1135,7 @@
             "id": 4,
             "title": "Deploy Test USDC Token Mint and Distribution",
             "description": "Create local USDC token mint and distribute test tokens to accounts",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "38.3"
             ],
@@ -1145,7 +1145,7 @@
             "id": 5,
             "title": "Create Test NFT Collection and Mint Sample NFTs",
             "description": "Setup test NFT collection and mint sample NFTs for escrow testing",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "38.3"
             ],
@@ -1155,7 +1155,7 @@
             "id": 6,
             "title": "Setup Test Matrix Infrastructure for Comprehensive State Machine Testing",
             "description": "Configure additional test accounts and scenarios to support the complete on-chain test matrix",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "38.4",
               "38.5"
@@ -1312,7 +1312,7 @@
             "id": 1,
             "title": "Design Transaction ID Data Model and Storage Schema",
             "description": "Create database schema and data models for storing transaction IDs across all escrow lifecycle stages",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "details": "Design tables/collections to store txids for init, deposits, settle, cancel operations. Include fields for agreement_id, operation_type, txid, timestamp, status, block_height. Create indexes for efficient querying by agreement and operation type."
           },
@@ -1320,7 +1320,7 @@
             "id": 2,
             "title": "Implement Transaction ID Capture Service",
             "description": "Create service to capture and store transaction IDs from blockchain operations during escrow lifecycle",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "41.1"
             ],
@@ -1330,7 +1330,7 @@
             "id": 3,
             "title": "Build Transaction Log Aggregation System",
             "description": "Implement log aggregation system to collect and organize transaction logs from multiple sources",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "41.2"
             ],
@@ -1340,7 +1340,7 @@
             "id": 4,
             "title": "Develop Transaction Search and Query API",
             "description": "Create API endpoints for searching and retrieving transaction logs with filtering capabilities",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "41.3"
             ],
@@ -1350,7 +1350,7 @@
             "id": 5,
             "title": "Create Transaction Debugging Dashboard and Tools",
             "description": "Build debugging interface and tools for viewing transaction flows and troubleshooting issues",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "41.4"
             ],
@@ -1666,11 +1666,226 @@
             "testStrategy": "Full test execution with manual verification of blockchain transactions and comprehensive result documentation"
           }
         ]
+      },
+      {
+        "id": 45,
+        "title": "Generate new Solana program keypair",
+        "description": "Generate a fresh keypair for the escrow program deployment to ensure no ID conflicts",
+        "details": "Execute: solana-keygen new -o target/deploy/escrow-keypair.json --force\n\nThis will create a new keypair file that will be used to derive the program's address. The --force flag will overwrite any existing keypair.\n\nAfter generation:\n- Capture the new public key (program ID)\n- Verify the keypair file exists at target/deploy/escrow-keypair.json\n- Store the program ID for use in subsequent tasks\n\nExpected output: A new keypair file and a base58-encoded public key",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 46,
+        "title": "Update declare_id in Rust source code",
+        "description": "Update the program ID in the Rust source code to match the newly generated keypair",
+        "details": "File to modify: programs/escrow/src/lib.rs (line 5)\n\nChange:\ndeclare_id!(\"7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV\");\n\nTo:\ndeclare_id!(\"<NEW_PROGRAM_ID>\");\n\nWhere <NEW_PROGRAM_ID> is the public key from the generated keypair.\n\nThis ensures the compiled program has the correct ID embedded in the bytecode.\n\nVerification:\n- Grep for declare_id to confirm the update\n- Ensure the ID matches: solana address -k target/deploy/escrow-keypair.json",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 47,
+        "title": "Update Anchor.toml with new program ID",
+        "description": "Update the devnet program address in Anchor.toml configuration",
+        "details": "File to modify: Anchor.toml (line 9)\n\nChange:\n[programs.devnet]\nescrow = \"7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV\"\n\nTo:\n[programs.devnet]\nescrow = \"<NEW_PROGRAM_ID>\"\n\nThis tells Anchor which program ID to use for devnet deployments.\n\nVerification:\n- Read Anchor.toml and verify the ID matches the keypair\n- Ensure the ID is consistent with the declare_id in lib.rs",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 48,
+        "title": "Build Anchor program with matching IDs",
+        "description": "Compile the Solana program with the updated program ID embedded in the bytecode",
+        "details": "Execute: anchor build\n\nThis will:\n1. Compile the Rust program with the updated declare_id\n2. Generate the program binary (.so file)\n3. Create/update the IDL JSON file\n4. Place artifacts in target/ directory\n\nExpected outputs:\n- target/deploy/escrow.so (compiled program)\n- target/idl/escrow.json (Interface Definition Language file)\n- target/types/escrow.ts (TypeScript types)\n\nVerification:\n- Check build completes without errors\n- Verify .so file exists and has recent timestamp\n- Confirm IDL has the correct program ID in \"address\" field\n\nTimeout: Use 60s timeout wrapper for anchor build",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 49,
+        "title": "Deploy program to Solana devnet",
+        "description": "Deploy the compiled escrow program to Solana devnet",
+        "details": "Execute: anchor deploy --provider.cluster devnet\n\nPrerequisites:\n- Ensure wallet has sufficient SOL for deployment (check balance)\n- Confirm RPC connection to devnet is working\n- Verify anchor build completed successfully\n\nThe deployment will:\n1. Upload the program binary to devnet\n2. Create the program account at the keypair's address\n3. Set the program as executable\n4. Initialize upgrade authority (if applicable)\n\nExpected result:\n- Program deployed at the new program ID\n- Transaction signature returned\n- Program shows as deployed: solana program show <PROGRAM_ID> --url devnet\n\nError handling:\n- If insufficient funds: airdrop SOL to wallet\n- If RPC timeout: retry with longer timeout\n- If program already exists: use upgrade instead\n\nTimeout: Use 180s timeout wrapper for deployment",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 50,
+        "title": "Update backend environment variables",
+        "description": "Update all environment configurations with the new program ID",
+        "details": "Files to update:\n\n1. nodemon.json (line 9):\n   \"ESCROW_PROGRAM_ID\": \"<NEW_PROGRAM_ID>\"\n\n2. docker-compose.yml (if ESCROW_PROGRAM_ID is defined there)\n\n3. .env file (if exists)\n\n4. Any other config files that reference the old program ID\n\nOptional but recommended:\n- Update tests/fixtures/devnet-config.json if it has program references\n- Update docs that mention the program ID\n- Update README.md with new deployment info\n\nVerification:\n- Grep for old program ID to find all references\n- Ensure consistency across all config files\n- No hardcoded old IDs remain in source code",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 51,
+        "title": "Copy new IDL to backend source",
+        "description": "Update the backend's IDL file with the newly generated one from anchor build",
+        "details": "Execute: Copy target/idl/escrow.json to src/generated/anchor/escrow-idl.json\n\nThis ensures the backend TypeScript code uses the correct program interface.\n\nSteps:\n1. Verify target/idl/escrow.json has the new program ID\n2. Backup existing src/generated/anchor/escrow-idl.json (optional)\n3. Copy the new IDL file\n4. Verify the copied file has correct program ID in \"address\" field\n\nThe IDL contains:\n- Program address\n- Instruction definitions\n- Account structures\n- Error codes\n- Type definitions\n\nBackend service (EscrowProgramService) will use this to construct transactions.",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 52,
+        "title": "Restart Docker services",
+        "description": "Gracefully restart backend services to load new configuration",
+        "details": "Execute: docker compose restart backend\n\nThis will:\n1. Stop the backend container gracefully\n2. Reload environment variables from nodemon.json\n3. Restart with new ESCROW_PROGRAM_ID\n\nAlternative (if full rebuild needed):\ndocker compose up -d --build backend\n\nVerification after restart:\n- Check container is healthy: docker compose ps\n- View logs: docker compose logs -f backend\n- Look for \"EscrowProgramService initialized with program: <NEW_PROGRAM_ID>\"\n- Confirm no program ID mismatch errors\n\nHealth check:\ncurl http://localhost:3000/api/health\n\nShould return status 200 with no errors about program configuration.",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 53,
+        "title": "Verify program deployment and backend integration",
+        "description": "Run comprehensive verification tests to ensure program and backend are working correctly",
+        "details": "Verification checklist:\n\n1. Verify on-chain program:\n   solana program show <NEW_PROGRAM_ID> --url devnet\n   - Should show program exists\n   - Check program size\n   - Verify upgrade authority\n\n2. Verify IDL matches:\n   anchor idl fetch <NEW_PROGRAM_ID> --provider.cluster devnet\n   - Compare with src/generated/anchor/escrow-idl.json\n   - Ensure instructions match\n\n3. Test backend health:\n   curl http://localhost:3000/api/health\n   - Should return 200 OK\n   - No program configuration errors\n\n4. Check backend logs:\n   docker compose logs backend | Select-String \"EscrowProgramService\"\n   - Look for initialization success\n   - Confirm program ID matches\n   - No mismatch errors\n\n5. Test program interaction (optional):\n   - Create test escrow agreement\n   - Verify PDA derivation works\n   - Check transaction succeeds\n\nExpected result: All verifications pass, no ID mismatch errors, program is functional",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 54,
+        "title": "Update documentation with new program ID",
+        "description": "Update all documentation files that reference the old program ID",
+        "details": "Files to update (search for old program ID):\n\nPriority files:\n- README.md - Update deployment info\n- docs/PROGRAM_DEPLOYMENT_GUIDE.md - Update examples\n- docs/DEPLOYMENT_SUCCESS.md - Update deployment records\n- docs/DO_SERVER_E2E_CHECKLIST.md - Update checklist values\n- docs/ENV_TEMPLATE.md - Update example value\n\nOptional documentation updates:\n- Update any task completion documents\n- Update testing documentation\n- Update deployment scripts that hardcode the ID\n\nUse grep to find all occurrences:\ngrep -r \"7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV\" docs/\n\nReplace with new program ID where appropriate.\n\nSome references may be historical and don't need updating (e.g., in task completion logs showing what was done).",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 55,
+        "title": "Create task completion documentation",
+        "description": "Document the program redeployment process and results",
+        "details": "Create: docs/tasks/PROGRAM_REDEPLOYMENT_COMPLETION.md\n\nInclude:\n- Summary of the program ID mismatch issue\n- Steps taken to resolve it\n- Old program ID vs new program ID\n- Files modified with before/after values\n- Deployment transaction signature\n- Verification results\n- Lessons learned\n- Updated devnet configuration\n\nAlso document:\n- Why the mismatch occurred\n- How to prevent it in future\n- Best practices for program deployment\n- Anchor build/deploy workflow\n\nThis serves as:\n- Historical record\n- Reference for future deployments\n- Troubleshooting guide\n- Knowledge base entry",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [],
+        "priority": "low",
+        "subtasks": []
+      },
+      {
+        "id": 56,
+        "title": "Pre-flight: Verify Program ID and Keypair Match",
+        "description": "Verify that the intended Program ID matches the keypair at target/deploy/escrow-keypair.json and restore from backup if there's a mismatch.",
+        "details": "This pre-flight verification ensures the program keypair is correct before deployment:\n\n1. Check current keypair address:\n   ```bash\n   solana address -k target/deploy/escrow-keypair.json\n   ```\n\n2. Verify the output matches the expected Program ID: 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd\n\n3. If there's a mismatch, restore from backup:\n   ```bash\n   cp temp/escrow-keypair-4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd.json target/deploy/escrow-keypair.json\n   ```\n\n4. Re-verify after restoration:\n   ```bash\n   solana address -k target/deploy/escrow-keypair.json\n   ```\n\nThis verification prevents deployment issues caused by incorrect keypairs and ensures consistency with the expected program configuration. The backup keypair should have been created during the initial keypair generation process.",
+        "testStrategy": "1. Execute `solana address -k target/deploy/escrow-keypair.json` and confirm output is exactly: 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd\n2. If mismatch occurs, verify backup file exists at temp/escrow-keypair-4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd.json\n3. After restoration (if needed), re-run address command and verify correct output\n4. Check file permissions and ensure keypair file is readable by deployment tools\n5. Document any mismatch found and restoration performed for audit trail",
+        "status": "done",
+        "dependencies": [
+          45
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 57,
+        "title": "Update All Code and Configs to Unified Program ID",
+        "description": "Update four critical locations to use the unified program ID 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd across all configuration files and source code.",
+        "details": "This task ensures all program references use the exact same program ID: 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd\n\nFiles to update:\n\n1. **programs/escrow/src/lib.rs** (line 5):\n   ```rust\n   declare_id!(\"4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd\");\n   ```\n\n2. **Anchor.toml** (line 9):\n   ```toml\n   [programs.devnet]\n   escrow = \"4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd\"\n   ```\n\n3. **src/generated/anchor/escrow-idl.json**:\n   Update the \"address\" field:\n   ```json\n   {\n     \"address\": \"4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd\",\n     ...\n   }\n   ```\n\n4. **Backend environment configuration**:\n   - In nodemon.json (line 9): `\"ESCROW_PROGRAM_ID\": \"4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd\"`\n   - In .env file (if exists): `ESCROW_PROGRAM_ID=4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd`\n\nImplementation steps:\n1. Use find/replace or sed commands to update each file\n2. Verify each change manually to ensure exact match\n3. Double-check no typos in the program ID string\n4. Ensure consistent formatting across all files\n\nCritical: All four locations must reference the EXACT same program ID string to avoid runtime errors.",
+        "testStrategy": "1. **File verification**: Use grep to search for the program ID in each of the four target files:\n   ```bash\n   grep -n \"4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd\" programs/escrow/src/lib.rs\n   grep -n \"4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd\" Anchor.toml\n   grep -n \"4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd\" src/generated/anchor/escrow-idl.json\n   grep -n \"4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd\" nodemon.json\n   ```\n\n2. **Consistency check**: Verify no old program IDs remain:\n   ```bash\n   grep -r \"7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV\" . --exclude-dir=node_modules\n   ```\n\n3. **Build verification**: Run `anchor build` to ensure Rust code compiles with new program ID\n\n4. **Backend startup test**: Start backend server and verify it loads without program ID configuration errors\n\n5. **Cross-reference validation**: Confirm the program ID matches the keypair address:\n   ```bash\n   solana address -k target/deploy/escrow-keypair.json\n   ```\n\nSuccess criteria: All four locations contain the exact program ID string and no old program IDs remain in the codebase.",
+        "status": "done",
+        "dependencies": [
+          56
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 58,
+        "title": "Clean Build and Deploy Fresh Program to Devnet",
+        "description": "Perform a clean build of the escrow program with unified program ID and deploy fresh artifacts to Solana devnet using the pinned program keypair.",
+        "details": "Execute a complete clean build and deployment process to ensure all artifacts are regenerated with the correct unified program ID:\n\n**Step 1: Clean Build**\n```bash\nanchor build\n# OR alternatively: cargo build-sbf\n```\nThis regenerates all artifacts including:\n- IDL files with correct program ID\n- Compiled program binary (.so file)\n- TypeScript types\n- All metadata with unified program ID\n\n**Step 2: Deploy with Pinned Keypair**\n```bash\nsolana program deploy \\\n  --url devnet \\\n  --program-id target/deploy/escrow-keypair.json \\\n  target/deploy/escrow.so\n```\n\n**Step 3: Verify Deployment**\n- Confirm transaction signature is returned\n- Verify program is executable on devnet\n- Check program account exists at expected address: 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd\n\n**Important Considerations:**\n- Ensure wallet has sufficient SOL for deployment fees\n- Verify devnet RPC connection is stable\n- Clean build ensures no stale artifacts with old program IDs\n- Using --program-id flag ensures deployment to specific address\n\n**Expected Outputs:**\n- Fresh program binary deployed to devnet\n- Transaction signature confirming successful deployment\n- Program account active and executable",
+        "testStrategy": "1. **Build Verification**: Confirm `anchor build` completes without errors and generates fresh artifacts with recent timestamps in target/deploy/\n2. **Deployment Success**: Verify deployment command returns a transaction signature and completes without errors\n3. **Program Address Verification**: Execute `solana program show --url devnet 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd` to confirm program exists and is executable\n4. **IDL Consistency Check**: Verify the generated IDL file contains the correct program address matching the deployed program ID\n5. **Transaction Confirmation**: Check the deployment transaction on Solana Explorer (devnet) to confirm successful program deployment\n6. **Functional Test**: Execute a simple program instruction call to verify the deployed program is operational and responding correctly",
+        "status": "done",
+        "dependencies": [
+          57
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 59,
+        "title": "Propagate New IDL to Backend and Restart Services",
+        "description": "Sync the updated IDL to the application and restart services to pick up changes with the new program ID.",
+        "details": "This task ensures the backend application uses the freshly built IDL with the correct program ID after a clean deployment:\n\n**Step 1: Copy Fresh IDL**\n```bash\ncp target/idl/escrow.json src/generated/anchor/escrow-idl.json\n```\nThis overwrites the backend's IDL file with the newly generated one from `anchor build`, ensuring the TypeScript code uses the correct program interface and address.\n\n**Step 2: Restart Backend Services**\n```bash\ndocker compose restart backend\n```\nThis gracefully restarts the backend container to:\n- Reload environment variables from nodemon.json\n- Pick up the new IDL file\n- Initialize services with the updated program ID\n\n**Step 3: Verify Backend Startup**\nMonitor the startup logs to confirm:\n- Container restarts successfully\n- EscrowProgramService initializes with correct program ID\n- No program ID mismatch errors occur\n- All services are healthy and responding\n\n**Step 4: Health Check**\nVerify the backend is operational:\n- Check container status: `docker compose ps`\n- View logs: `docker compose logs -f backend`\n- Test API endpoints are responding\n- Confirm program ID matches in service initialization logs\n\nThis task completes the deployment pipeline by ensuring the backend application layer is synchronized with the freshly deployed Solana program.",
+        "testStrategy": "1. **IDL File Verification**: Confirm `src/generated/anchor/escrow-idl.json` has been updated by checking the \"address\" field matches the deployed program ID: 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd\n\n2. **Container Restart Success**: Verify `docker compose restart backend` completes without errors and container shows \"healthy\" status in `docker compose ps`\n\n3. **Startup Log Verification**: Check backend logs contain the message \"EscrowProgramService initialized with program: 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd\" and no program ID mismatch errors\n\n4. **Service Health Check**: Test that backend API endpoints respond correctly and services are fully operational after restart\n\n5. **End-to-End Verification**: Confirm the backend can successfully interact with the deployed Solana program using the updated IDL",
+        "status": "done",
+        "dependencies": [
+          58
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 60,
+        "title": "Verify Program ID Alignment Before E2E Tests",
+        "description": "Run comprehensive verification checks to catch any lingering program ID mismatches before executing end-to-end tests.",
+        "details": "This task performs a final verification sweep to ensure all components are aligned with the correct program ID (4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd) before running e2e tests:\n\n**Step 1: Verify On-Chain Program**\n```bash\nsolana program show 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd --url devnet\n```\nConfirms the program exists on devnet and is executable.\n\n**Step 2: Verify IDL Matches Deployed Program**\n```bash\nanchor idl fetch 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd --provider.cluster devnet\n```\nFetches the on-chain IDL and compares it with local artifacts to ensure consistency.\n\n**Step 3: Check Backend Environment Variable**\n```bash\necho $ESCROW_PROGRAM_ID\n```\nVerifies the backend service has the correct program ID configured (should output: 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd).\n\n**Step 4: Verify Test Fixtures Configuration**\nCheck that test configuration files point to devnet with the correct program ID:\n- Verify test environment variables\n- Confirm test RPC endpoints use devnet\n- Validate test fixtures use the correct program address\n\n**Step 5: Cross-Reference All Components**\nEnsure consistency across:\n- Local IDL file (src/generated/anchor/escrow-idl.json)\n- On-chain program\n- Backend configuration\n- Test setup\n\nThis verification prevents e2e test failures due to program ID mismatches and ensures all components are properly synchronized.",
+        "testStrategy": "1. **On-Chain Program Verification**: Execute `solana program show 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd --url devnet` and verify:\n   - Command returns successfully (exit code 0)\n   - Program shows as \"executable: true\"\n   - Program ID matches exactly\n\n2. **IDL Consistency Check**: Run `anchor idl fetch 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd --provider.cluster devnet` and verify:\n   - Command completes without errors\n   - Fetched IDL structure matches local src/generated/anchor/escrow-idl.json\n   - Address field in both IDLs shows 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd\n\n3. **Backend Environment Verification**: Execute `echo $ESCROW_PROGRAM_ID` and confirm output is exactly: 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd\n\n4. **Test Configuration Validation**: \n   - Grep test files for program ID references\n   - Verify test RPC endpoints point to devnet\n   - Confirm no hardcoded references to old program IDs\n\n5. **Health Check**: Run `curl http://localhost:3000/api/health` to ensure backend service starts without program configuration errors\n\nSuccess criteria: All verification steps pass with consistent program ID across all components.",
+        "status": "done",
+        "dependencies": [
+          59,
+          58
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 61,
+        "title": "Run Devnet E2E Tests with Correct Configuration",
+        "description": "Execute the devnet end-to-end tests with proper environment configuration pointing to the unified program ID to verify system functionality without program ID mismatch errors.",
+        "details": "Execute comprehensive end-to-end tests on Solana devnet with the correct environment configuration to validate the complete escrow system functionality:\n\n**Step 1: Set Environment Variables**\n```bash\nexport SOLANA_RPC_URL=https://api.devnet.solana.com\nexport SOLANA_NETWORK=devnet\nexport ESCROW_PROGRAM_ID=4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd\n```\n\n**Step 2: Execute E2E Tests**\n```bash\nnpm run test:e2e:devnet\n# OR alternative test command based on project structure\n```\n\n**Step 3: Monitor Test Execution**\n- Watch for successful test initialization with correct program ID\n- Verify no \"Program ID mismatch\" errors occur\n- Monitor transaction confirmations on devnet\n- Check wallet balance changes during test scenarios\n\n**Step 4: Document Results**\n- Record test pass/fail status for each scenario\n- Document any failures unrelated to program ID issues\n- Note performance metrics (transaction times, confirmation delays)\n- Capture logs for debugging any remaining issues\n\n**Expected Test Scenarios:**\n- Happy path: NFT-to-USDC swap with fee collection\n- Error handling: Invalid inputs, insufficient funds\n- Expiry scenarios: Timeout and refund flows\n- Concurrency testing: Multiple simultaneous operations\n\nThis validates the complete integration between frontend, backend, and on-chain program with the unified program ID configuration.",
+        "testStrategy": "1. **Environment Verification**: Confirm all required environment variables are set correctly by echoing them:\n   ```bash\n   echo $SOLANA_RPC_URL\n   echo $SOLANA_NETWORK  \n   echo $ESCROW_PROGRAM_ID\n   ```\n   Verify they match the expected values exactly.\n\n2. **Test Execution Success**: Run the e2e test command and verify:\n   - Tests start without immediate failures\n   - No \"Program ID mismatch\" errors in console output\n   - Test suite completes execution (pass or fail on business logic, not configuration)\n\n3. **Program ID Usage Verification**: Check test logs contain references to the correct program ID (4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd) and no references to old program IDs.\n\n4. **Transaction Success**: For tests that execute on-chain transactions, verify:\n   - Transactions are submitted to devnet successfully\n   - Transaction signatures are returned\n   - No RPC or network connectivity errors\n\n5. **Test Result Documentation**: Create a test report documenting:\n   - Which test scenarios passed/failed\n   - Any failures unrelated to program ID configuration\n   - Performance observations\n   - Recommendations for any remaining issues",
+        "status": "done",
+        "dependencies": [
+          60
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 62,
+        "title": "Document Program ID Fix and Common Gotchas",
+        "description": "Create comprehensive documentation to prevent future program ID mismatch issues and help debug if they occur again.",
+        "details": "Create comprehensive documentation to prevent recurrence of program ID mismatch issues:\n\n**1. Task Completion Documentation (docs/tasks/)**\nCreate PROGRAM_ID_FIX_COMPLETION.md documenting:\n- Root cause analysis of the program ID mismatch\n- Complete fix process with step-by-step resolution\n- Before/after configuration states\n- Lessons learned and prevention strategies\n\n**2. Troubleshooting Guide (docs/PROGRAM_ID_TROUBLESHOOTING.md)**\nDocument common gotchas and solutions:\n- **Stale IDL Issue**: When backend uses old IDL after program changes\n  - Symptoms: Transaction failures, instruction not found errors\n  - Solution: Copy fresh IDL from target/idl/ and restart services\n- **Wrong Runtime Address**: Mismatched program IDs in different configs\n  - Symptoms: Program not found errors, deployment failures\n  - Solution: Verify all .env files, Anchor.toml, and declare_id match\n- **Accidentally Changed Program Keypair**: Lost or corrupted keypair\n  - Symptoms: Cannot deploy to existing program address\n  - Solution: Restore from backup in temp/ directory\n\n**3. Deployment Guide Updates**\nAdd verification checklist to existing deployment guides:\n- Pre-deployment: Verify keypair matches intended program ID\n- Post-deployment: Confirm on-chain program matches local config\n- IDL sync verification steps\n\n**4. Backup/Recovery Process Documentation**\nDocument the program keypair backup strategy:\n- Automatic backup creation during keypair generation\n- Backup location and naming convention\n- Recovery procedures for different scenarios\n\n**5. Update DO_SERVER_E2E_CHECKLIST.md**\nAdd program ID verification steps:\n- Environment variable checks\n- Program ID consistency across all configs\n- IDL freshness verification before tests",
+        "testStrategy": "1. **Documentation Completeness**: Verify all five documentation deliverables are created/updated with comprehensive content covering the specified areas\n\n2. **Troubleshooting Guide Validation**: Test each documented gotcha scenario by:\n   - Intentionally creating the problem condition\n   - Following the documented solution steps\n   - Confirming the issue is resolved\n\n3. **Checklist Functionality**: Execute the updated DO_SERVER_E2E_CHECKLIST.md to ensure:\n   - All program ID verification steps are actionable\n   - Steps catch potential mismatches before they cause failures\n   - Checklist integrates smoothly with existing workflow\n\n4. **Cross-Reference Accuracy**: Verify all program IDs, file paths, and command examples in documentation match the current system configuration (4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd)\n\n5. **Documentation Accessibility**: Confirm documentation is properly linked from main README.md and follows project documentation standards",
+        "status": "done",
+        "dependencies": [
+          55,
+          54,
+          61
+        ],
+        "priority": "medium",
+        "subtasks": []
       }
     ],
     "metadata": {
       "created": "2025-10-13T01:02:36.190Z",
-      "updated": "2025-10-15T23:29:42.507Z",
+      "updated": "2025-10-17T02:25:23.912Z",
       "description": "Tasks for master context"
     }
   }

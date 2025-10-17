@@ -1,0 +1,43 @@
+# Task ID: 24
+# Title: Implement Agreement Creation API
+# Status: done
+# Dependencies: 22, 23
+# Priority: high
+# Description: Create POST /v1/agreements endpoint that accepts nft_mint, price, seller, optional buyer, expiry, fee_bps, honor_royalties. Calls on-chain program to init escrow PDA and returns agreement_id with deposit addresses
+# Details:
+
+
+# Test Strategy:
+
+
+# Subtasks:
+## 1. Design API endpoint structure and request/response schemas [done]
+### Dependencies: None
+### Description: Define the POST /v1/agreements endpoint structure with request validation schemas and response format
+### Details:
+Create OpenAPI specification for POST /v1/agreements endpoint. Define request schema with required fields (nft_mint, price, seller, expiry, fee_bps, honor_royalties) and optional buyer field. Define response schema with agreement_id and deposit addresses. Include proper HTTP status codes and error responses.
+
+## 2. Implement request validation middleware [done]
+### Dependencies: 24.1
+### Description: Create middleware to validate incoming request parameters and data types
+### Details:
+Implement validation for nft_mint (valid Solana public key), price (positive number), seller (valid public key), buyer (optional valid public key), expiry (future timestamp), fee_bps (0-10000 range), honor_royalties (boolean). Return appropriate error messages for invalid inputs.
+
+## 3. Integrate on-chain program escrow PDA initialization [done]
+### Dependencies: 24.2
+### Description: Implement service layer to call on-chain program for escrow PDA creation
+### Details:
+Create service function to interact with Solana on-chain program. Generate escrow PDA using agreement parameters. Call init_escrow instruction with validated parameters. Handle transaction confirmation and error cases. Extract PDA address and deposit addresses from transaction result.
+
+## 4. Implement database storage for agreement records [done]
+### Dependencies: 24.3
+### Description: Create database schema and service to store agreement data with generated agreement_id
+### Details:
+Design database table for agreements with fields: agreement_id (UUID), nft_mint, price, seller, buyer, expiry, fee_bps, honor_royalties, escrow_pda, deposit_addresses, created_at, status. Implement database service with create agreement function. Generate unique agreement_id and store all parameters.
+
+## 5. Implement complete API endpoint handler [done]
+### Dependencies: 24.4
+### Description: Create the final POST /v1/agreements endpoint handler that orchestrates all components
+### Details:
+Implement Express.js route handler that combines validation, on-chain interaction, and database storage. Handle success response with agreement_id and deposit addresses. Implement proper error handling with rollback mechanisms. Add logging for monitoring and debugging. Return structured JSON response matching API specification.
+

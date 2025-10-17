@@ -1,0 +1,43 @@
+# Task ID: 27
+# Title: Implement Expiry and Cancellation Logic
+# Status: done
+# Dependencies: 22, 25
+# Priority: medium
+# Description: Create service to check expiry timestamps, allow refunds for partial deposits, implement admin cancel with multisig, update agreement status accordingly
+# Details:
+
+
+# Test Strategy:
+
+
+# Subtasks:
+## 1. Create Expiry Timestamp Checking Service [pending]
+### Dependencies: None
+### Description: Implement a service that continuously monitors and checks expiry timestamps for active escrow agreements
+### Details:
+Create a background service that periodically queries the database for active agreements and checks their expiry timestamps against current time. Service should identify expired agreements and trigger appropriate actions.
+
+## 2. Implement Partial Deposit Refund Logic [pending]
+### Dependencies: 27.1
+### Description: Create functionality to calculate and process refunds for agreements with partial deposits when cancellation occurs
+### Details:
+Implement logic to determine refund amounts based on current deposit status, handle USDC transfers back to depositors, and update agreement balances accordingly. Include validation for refund eligibility.
+
+## 3. Implement Admin Multisig Cancellation [pending]
+### Dependencies: 27.2
+### Description: Create admin cancellation functionality that requires multisig approval for cancelling active agreements
+### Details:
+Implement multisig workflow for admin-initiated cancellations, including proposal creation, signature collection, and execution. Ensure proper authorization checks and audit logging for all admin actions.
+
+## 4. Implement Agreement Status Update Engine [pending]
+### Dependencies: 27.3
+### Description: Create service to automatically update agreement status based on expiry checks and cancellation events
+### Details:
+Implement status transition logic that updates agreement status from active to expired, cancelled, or refunded based on various triggers. Include database updates and event emission for status changes.
+
+## 5. Integrate Expiry and Cancellation Services [pending]
+### Dependencies: 27.4
+### Description: Integrate all expiry and cancellation components into a cohesive system with proper error handling and monitoring
+### Details:
+Combine all services into a unified expiry and cancellation system, implement comprehensive error handling, add monitoring and alerting for failed operations, and ensure proper cleanup of resources.
+

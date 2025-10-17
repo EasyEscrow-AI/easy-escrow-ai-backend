@@ -24,6 +24,11 @@ export type Agreement = $Result.DefaultSelection<Prisma.$AgreementPayload>
  */
 export type Deposit = $Result.DefaultSelection<Prisma.$DepositPayload>
 /**
+ * Model IdempotencyKey
+ * 
+ */
+export type IdempotencyKey = $Result.DefaultSelection<Prisma.$IdempotencyKeyPayload>
+/**
  * Model Settlement
  * 
  */
@@ -34,20 +39,15 @@ export type Settlement = $Result.DefaultSelection<Prisma.$SettlementPayload>
  */
 export type Receipt = $Result.DefaultSelection<Prisma.$ReceiptPayload>
 /**
- * Model Webhook
- * 
- */
-export type Webhook = $Result.DefaultSelection<Prisma.$WebhookPayload>
-/**
- * Model IdempotencyKey
- * 
- */
-export type IdempotencyKey = $Result.DefaultSelection<Prisma.$IdempotencyKeyPayload>
-/**
  * Model TransactionLog
  * 
  */
 export type TransactionLog = $Result.DefaultSelection<Prisma.$TransactionLogPayload>
+/**
+ * Model Webhook
+ * 
+ */
+export type Webhook = $Result.DefaultSelection<Prisma.$WebhookPayload>
 
 /**
  * Enums
@@ -266,6 +266,16 @@ export class PrismaClient<
   get deposit(): Prisma.DepositDelegate<ExtArgs, ClientOptions>;
 
   /**
+   * `prisma.idempotencyKey`: Exposes CRUD operations for the **IdempotencyKey** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more IdempotencyKeys
+    * const idempotencyKeys = await prisma.idempotencyKey.findMany()
+    * ```
+    */
+  get idempotencyKey(): Prisma.IdempotencyKeyDelegate<ExtArgs, ClientOptions>;
+
+  /**
    * `prisma.settlement`: Exposes CRUD operations for the **Settlement** model.
     * Example usage:
     * ```ts
@@ -286,26 +296,6 @@ export class PrismaClient<
   get receipt(): Prisma.ReceiptDelegate<ExtArgs, ClientOptions>;
 
   /**
-   * `prisma.webhook`: Exposes CRUD operations for the **Webhook** model.
-    * Example usage:
-    * ```ts
-    * // Fetch zero or more Webhooks
-    * const webhooks = await prisma.webhook.findMany()
-    * ```
-    */
-  get webhook(): Prisma.WebhookDelegate<ExtArgs, ClientOptions>;
-
-  /**
-   * `prisma.idempotencyKey`: Exposes CRUD operations for the **IdempotencyKey** model.
-    * Example usage:
-    * ```ts
-    * // Fetch zero or more IdempotencyKeys
-    * const idempotencyKeys = await prisma.idempotencyKey.findMany()
-    * ```
-    */
-  get idempotencyKey(): Prisma.IdempotencyKeyDelegate<ExtArgs, ClientOptions>;
-
-  /**
    * `prisma.transactionLog`: Exposes CRUD operations for the **TransactionLog** model.
     * Example usage:
     * ```ts
@@ -314,6 +304,16 @@ export class PrismaClient<
     * ```
     */
   get transactionLog(): Prisma.TransactionLogDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.webhook`: Exposes CRUD operations for the **Webhook** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Webhooks
+    * const webhooks = await prisma.webhook.findMany()
+    * ```
+    */
+  get webhook(): Prisma.WebhookDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -756,11 +756,11 @@ export namespace Prisma {
   export const ModelName: {
     Agreement: 'Agreement',
     Deposit: 'Deposit',
+    IdempotencyKey: 'IdempotencyKey',
     Settlement: 'Settlement',
     Receipt: 'Receipt',
-    Webhook: 'Webhook',
-    IdempotencyKey: 'IdempotencyKey',
-    TransactionLog: 'TransactionLog'
+    TransactionLog: 'TransactionLog',
+    Webhook: 'Webhook'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -779,7 +779,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "agreement" | "deposit" | "settlement" | "receipt" | "webhook" | "idempotencyKey" | "transactionLog"
+      modelProps: "agreement" | "deposit" | "idempotencyKey" | "settlement" | "receipt" | "transactionLog" | "webhook"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -931,6 +931,80 @@ export namespace Prisma {
           }
         }
       }
+      IdempotencyKey: {
+        payload: Prisma.$IdempotencyKeyPayload<ExtArgs>
+        fields: Prisma.IdempotencyKeyFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.IdempotencyKeyFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IdempotencyKeyPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.IdempotencyKeyFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IdempotencyKeyPayload>
+          }
+          findFirst: {
+            args: Prisma.IdempotencyKeyFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IdempotencyKeyPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.IdempotencyKeyFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IdempotencyKeyPayload>
+          }
+          findMany: {
+            args: Prisma.IdempotencyKeyFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IdempotencyKeyPayload>[]
+          }
+          create: {
+            args: Prisma.IdempotencyKeyCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IdempotencyKeyPayload>
+          }
+          createMany: {
+            args: Prisma.IdempotencyKeyCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.IdempotencyKeyCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IdempotencyKeyPayload>[]
+          }
+          delete: {
+            args: Prisma.IdempotencyKeyDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IdempotencyKeyPayload>
+          }
+          update: {
+            args: Prisma.IdempotencyKeyUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IdempotencyKeyPayload>
+          }
+          deleteMany: {
+            args: Prisma.IdempotencyKeyDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.IdempotencyKeyUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.IdempotencyKeyUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IdempotencyKeyPayload>[]
+          }
+          upsert: {
+            args: Prisma.IdempotencyKeyUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$IdempotencyKeyPayload>
+          }
+          aggregate: {
+            args: Prisma.IdempotencyKeyAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateIdempotencyKey>
+          }
+          groupBy: {
+            args: Prisma.IdempotencyKeyGroupByArgs<ExtArgs>
+            result: $Utils.Optional<IdempotencyKeyGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.IdempotencyKeyCountArgs<ExtArgs>
+            result: $Utils.Optional<IdempotencyKeyCountAggregateOutputType> | number
+          }
+        }
+      }
       Settlement: {
         payload: Prisma.$SettlementPayload<ExtArgs>
         fields: Prisma.SettlementFieldRefs
@@ -1079,154 +1153,6 @@ export namespace Prisma {
           }
         }
       }
-      Webhook: {
-        payload: Prisma.$WebhookPayload<ExtArgs>
-        fields: Prisma.WebhookFieldRefs
-        operations: {
-          findUnique: {
-            args: Prisma.WebhookFindUniqueArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$WebhookPayload> | null
-          }
-          findUniqueOrThrow: {
-            args: Prisma.WebhookFindUniqueOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$WebhookPayload>
-          }
-          findFirst: {
-            args: Prisma.WebhookFindFirstArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$WebhookPayload> | null
-          }
-          findFirstOrThrow: {
-            args: Prisma.WebhookFindFirstOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$WebhookPayload>
-          }
-          findMany: {
-            args: Prisma.WebhookFindManyArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$WebhookPayload>[]
-          }
-          create: {
-            args: Prisma.WebhookCreateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$WebhookPayload>
-          }
-          createMany: {
-            args: Prisma.WebhookCreateManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          createManyAndReturn: {
-            args: Prisma.WebhookCreateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$WebhookPayload>[]
-          }
-          delete: {
-            args: Prisma.WebhookDeleteArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$WebhookPayload>
-          }
-          update: {
-            args: Prisma.WebhookUpdateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$WebhookPayload>
-          }
-          deleteMany: {
-            args: Prisma.WebhookDeleteManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          updateMany: {
-            args: Prisma.WebhookUpdateManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          updateManyAndReturn: {
-            args: Prisma.WebhookUpdateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$WebhookPayload>[]
-          }
-          upsert: {
-            args: Prisma.WebhookUpsertArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$WebhookPayload>
-          }
-          aggregate: {
-            args: Prisma.WebhookAggregateArgs<ExtArgs>
-            result: $Utils.Optional<AggregateWebhook>
-          }
-          groupBy: {
-            args: Prisma.WebhookGroupByArgs<ExtArgs>
-            result: $Utils.Optional<WebhookGroupByOutputType>[]
-          }
-          count: {
-            args: Prisma.WebhookCountArgs<ExtArgs>
-            result: $Utils.Optional<WebhookCountAggregateOutputType> | number
-          }
-        }
-      }
-      IdempotencyKey: {
-        payload: Prisma.$IdempotencyKeyPayload<ExtArgs>
-        fields: Prisma.IdempotencyKeyFieldRefs
-        operations: {
-          findUnique: {
-            args: Prisma.IdempotencyKeyFindUniqueArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$IdempotencyKeyPayload> | null
-          }
-          findUniqueOrThrow: {
-            args: Prisma.IdempotencyKeyFindUniqueOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$IdempotencyKeyPayload>
-          }
-          findFirst: {
-            args: Prisma.IdempotencyKeyFindFirstArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$IdempotencyKeyPayload> | null
-          }
-          findFirstOrThrow: {
-            args: Prisma.IdempotencyKeyFindFirstOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$IdempotencyKeyPayload>
-          }
-          findMany: {
-            args: Prisma.IdempotencyKeyFindManyArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$IdempotencyKeyPayload>[]
-          }
-          create: {
-            args: Prisma.IdempotencyKeyCreateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$IdempotencyKeyPayload>
-          }
-          createMany: {
-            args: Prisma.IdempotencyKeyCreateManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          createManyAndReturn: {
-            args: Prisma.IdempotencyKeyCreateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$IdempotencyKeyPayload>[]
-          }
-          delete: {
-            args: Prisma.IdempotencyKeyDeleteArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$IdempotencyKeyPayload>
-          }
-          update: {
-            args: Prisma.IdempotencyKeyUpdateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$IdempotencyKeyPayload>
-          }
-          deleteMany: {
-            args: Prisma.IdempotencyKeyDeleteManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          updateMany: {
-            args: Prisma.IdempotencyKeyUpdateManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          updateManyAndReturn: {
-            args: Prisma.IdempotencyKeyUpdateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$IdempotencyKeyPayload>[]
-          }
-          upsert: {
-            args: Prisma.IdempotencyKeyUpsertArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$IdempotencyKeyPayload>
-          }
-          aggregate: {
-            args: Prisma.IdempotencyKeyAggregateArgs<ExtArgs>
-            result: $Utils.Optional<AggregateIdempotencyKey>
-          }
-          groupBy: {
-            args: Prisma.IdempotencyKeyGroupByArgs<ExtArgs>
-            result: $Utils.Optional<IdempotencyKeyGroupByOutputType>[]
-          }
-          count: {
-            args: Prisma.IdempotencyKeyCountArgs<ExtArgs>
-            result: $Utils.Optional<IdempotencyKeyCountAggregateOutputType> | number
-          }
-        }
-      }
       TransactionLog: {
         payload: Prisma.$TransactionLogPayload<ExtArgs>
         fields: Prisma.TransactionLogFieldRefs
@@ -1298,6 +1224,80 @@ export namespace Prisma {
           count: {
             args: Prisma.TransactionLogCountArgs<ExtArgs>
             result: $Utils.Optional<TransactionLogCountAggregateOutputType> | number
+          }
+        }
+      }
+      Webhook: {
+        payload: Prisma.$WebhookPayload<ExtArgs>
+        fields: Prisma.WebhookFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.WebhookFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WebhookPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.WebhookFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WebhookPayload>
+          }
+          findFirst: {
+            args: Prisma.WebhookFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WebhookPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.WebhookFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WebhookPayload>
+          }
+          findMany: {
+            args: Prisma.WebhookFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WebhookPayload>[]
+          }
+          create: {
+            args: Prisma.WebhookCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WebhookPayload>
+          }
+          createMany: {
+            args: Prisma.WebhookCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.WebhookCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WebhookPayload>[]
+          }
+          delete: {
+            args: Prisma.WebhookDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WebhookPayload>
+          }
+          update: {
+            args: Prisma.WebhookUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WebhookPayload>
+          }
+          deleteMany: {
+            args: Prisma.WebhookDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.WebhookUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.WebhookUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WebhookPayload>[]
+          }
+          upsert: {
+            args: Prisma.WebhookUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WebhookPayload>
+          }
+          aggregate: {
+            args: Prisma.WebhookAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateWebhook>
+          }
+          groupBy: {
+            args: Prisma.WebhookGroupByArgs<ExtArgs>
+            result: $Utils.Optional<WebhookGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.WebhookCountArgs<ExtArgs>
+            result: $Utils.Optional<WebhookCountAggregateOutputType> | number
           }
         }
       }
@@ -1399,11 +1399,11 @@ export namespace Prisma {
   export type GlobalOmitConfig = {
     agreement?: AgreementOmit
     deposit?: DepositOmit
+    idempotencyKey?: IdempotencyKeyOmit
     settlement?: SettlementOmit
     receipt?: ReceiptOmit
-    webhook?: WebhookOmit
-    idempotencyKey?: IdempotencyKeyOmit
     transactionLog?: TransactionLogOmit
+    webhook?: WebhookOmit
   }
 
   /* Types for Logging */
@@ -4084,6 +4084,1070 @@ export namespace Prisma {
 
 
   /**
+   * Model IdempotencyKey
+   */
+
+  export type AggregateIdempotencyKey = {
+    _count: IdempotencyKeyCountAggregateOutputType | null
+    _avg: IdempotencyKeyAvgAggregateOutputType | null
+    _sum: IdempotencyKeySumAggregateOutputType | null
+    _min: IdempotencyKeyMinAggregateOutputType | null
+    _max: IdempotencyKeyMaxAggregateOutputType | null
+  }
+
+  export type IdempotencyKeyAvgAggregateOutputType = {
+    responseStatus: number | null
+  }
+
+  export type IdempotencyKeySumAggregateOutputType = {
+    responseStatus: number | null
+  }
+
+  export type IdempotencyKeyMinAggregateOutputType = {
+    id: string | null
+    key: string | null
+    endpoint: string | null
+    requestHash: string | null
+    responseStatus: number | null
+    createdAt: Date | null
+    expiresAt: Date | null
+  }
+
+  export type IdempotencyKeyMaxAggregateOutputType = {
+    id: string | null
+    key: string | null
+    endpoint: string | null
+    requestHash: string | null
+    responseStatus: number | null
+    createdAt: Date | null
+    expiresAt: Date | null
+  }
+
+  export type IdempotencyKeyCountAggregateOutputType = {
+    id: number
+    key: number
+    endpoint: number
+    requestHash: number
+    responseStatus: number
+    responseBody: number
+    createdAt: number
+    expiresAt: number
+    _all: number
+  }
+
+
+  export type IdempotencyKeyAvgAggregateInputType = {
+    responseStatus?: true
+  }
+
+  export type IdempotencyKeySumAggregateInputType = {
+    responseStatus?: true
+  }
+
+  export type IdempotencyKeyMinAggregateInputType = {
+    id?: true
+    key?: true
+    endpoint?: true
+    requestHash?: true
+    responseStatus?: true
+    createdAt?: true
+    expiresAt?: true
+  }
+
+  export type IdempotencyKeyMaxAggregateInputType = {
+    id?: true
+    key?: true
+    endpoint?: true
+    requestHash?: true
+    responseStatus?: true
+    createdAt?: true
+    expiresAt?: true
+  }
+
+  export type IdempotencyKeyCountAggregateInputType = {
+    id?: true
+    key?: true
+    endpoint?: true
+    requestHash?: true
+    responseStatus?: true
+    responseBody?: true
+    createdAt?: true
+    expiresAt?: true
+    _all?: true
+  }
+
+  export type IdempotencyKeyAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which IdempotencyKey to aggregate.
+     */
+    where?: IdempotencyKeyWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of IdempotencyKeys to fetch.
+     */
+    orderBy?: IdempotencyKeyOrderByWithRelationInput | IdempotencyKeyOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: IdempotencyKeyWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` IdempotencyKeys from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` IdempotencyKeys.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned IdempotencyKeys
+    **/
+    _count?: true | IdempotencyKeyCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: IdempotencyKeyAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: IdempotencyKeySumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: IdempotencyKeyMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: IdempotencyKeyMaxAggregateInputType
+  }
+
+  export type GetIdempotencyKeyAggregateType<T extends IdempotencyKeyAggregateArgs> = {
+        [P in keyof T & keyof AggregateIdempotencyKey]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateIdempotencyKey[P]>
+      : GetScalarType<T[P], AggregateIdempotencyKey[P]>
+  }
+
+
+
+
+  export type IdempotencyKeyGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: IdempotencyKeyWhereInput
+    orderBy?: IdempotencyKeyOrderByWithAggregationInput | IdempotencyKeyOrderByWithAggregationInput[]
+    by: IdempotencyKeyScalarFieldEnum[] | IdempotencyKeyScalarFieldEnum
+    having?: IdempotencyKeyScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: IdempotencyKeyCountAggregateInputType | true
+    _avg?: IdempotencyKeyAvgAggregateInputType
+    _sum?: IdempotencyKeySumAggregateInputType
+    _min?: IdempotencyKeyMinAggregateInputType
+    _max?: IdempotencyKeyMaxAggregateInputType
+  }
+
+  export type IdempotencyKeyGroupByOutputType = {
+    id: string
+    key: string
+    endpoint: string
+    requestHash: string
+    responseStatus: number
+    responseBody: JsonValue
+    createdAt: Date
+    expiresAt: Date
+    _count: IdempotencyKeyCountAggregateOutputType | null
+    _avg: IdempotencyKeyAvgAggregateOutputType | null
+    _sum: IdempotencyKeySumAggregateOutputType | null
+    _min: IdempotencyKeyMinAggregateOutputType | null
+    _max: IdempotencyKeyMaxAggregateOutputType | null
+  }
+
+  type GetIdempotencyKeyGroupByPayload<T extends IdempotencyKeyGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<IdempotencyKeyGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof IdempotencyKeyGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], IdempotencyKeyGroupByOutputType[P]>
+            : GetScalarType<T[P], IdempotencyKeyGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type IdempotencyKeySelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    key?: boolean
+    endpoint?: boolean
+    requestHash?: boolean
+    responseStatus?: boolean
+    responseBody?: boolean
+    createdAt?: boolean
+    expiresAt?: boolean
+  }, ExtArgs["result"]["idempotencyKey"]>
+
+  export type IdempotencyKeySelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    key?: boolean
+    endpoint?: boolean
+    requestHash?: boolean
+    responseStatus?: boolean
+    responseBody?: boolean
+    createdAt?: boolean
+    expiresAt?: boolean
+  }, ExtArgs["result"]["idempotencyKey"]>
+
+  export type IdempotencyKeySelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    key?: boolean
+    endpoint?: boolean
+    requestHash?: boolean
+    responseStatus?: boolean
+    responseBody?: boolean
+    createdAt?: boolean
+    expiresAt?: boolean
+  }, ExtArgs["result"]["idempotencyKey"]>
+
+  export type IdempotencyKeySelectScalar = {
+    id?: boolean
+    key?: boolean
+    endpoint?: boolean
+    requestHash?: boolean
+    responseStatus?: boolean
+    responseBody?: boolean
+    createdAt?: boolean
+    expiresAt?: boolean
+  }
+
+  export type IdempotencyKeyOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "key" | "endpoint" | "requestHash" | "responseStatus" | "responseBody" | "createdAt" | "expiresAt", ExtArgs["result"]["idempotencyKey"]>
+
+  export type $IdempotencyKeyPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "IdempotencyKey"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      key: string
+      endpoint: string
+      requestHash: string
+      responseStatus: number
+      responseBody: Prisma.JsonValue
+      createdAt: Date
+      expiresAt: Date
+    }, ExtArgs["result"]["idempotencyKey"]>
+    composites: {}
+  }
+
+  type IdempotencyKeyGetPayload<S extends boolean | null | undefined | IdempotencyKeyDefaultArgs> = $Result.GetResult<Prisma.$IdempotencyKeyPayload, S>
+
+  type IdempotencyKeyCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<IdempotencyKeyFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: IdempotencyKeyCountAggregateInputType | true
+    }
+
+  export interface IdempotencyKeyDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['IdempotencyKey'], meta: { name: 'IdempotencyKey' } }
+    /**
+     * Find zero or one IdempotencyKey that matches the filter.
+     * @param {IdempotencyKeyFindUniqueArgs} args - Arguments to find a IdempotencyKey
+     * @example
+     * // Get one IdempotencyKey
+     * const idempotencyKey = await prisma.idempotencyKey.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends IdempotencyKeyFindUniqueArgs>(args: SelectSubset<T, IdempotencyKeyFindUniqueArgs<ExtArgs>>): Prisma__IdempotencyKeyClient<$Result.GetResult<Prisma.$IdempotencyKeyPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one IdempotencyKey that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {IdempotencyKeyFindUniqueOrThrowArgs} args - Arguments to find a IdempotencyKey
+     * @example
+     * // Get one IdempotencyKey
+     * const idempotencyKey = await prisma.idempotencyKey.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends IdempotencyKeyFindUniqueOrThrowArgs>(args: SelectSubset<T, IdempotencyKeyFindUniqueOrThrowArgs<ExtArgs>>): Prisma__IdempotencyKeyClient<$Result.GetResult<Prisma.$IdempotencyKeyPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first IdempotencyKey that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {IdempotencyKeyFindFirstArgs} args - Arguments to find a IdempotencyKey
+     * @example
+     * // Get one IdempotencyKey
+     * const idempotencyKey = await prisma.idempotencyKey.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends IdempotencyKeyFindFirstArgs>(args?: SelectSubset<T, IdempotencyKeyFindFirstArgs<ExtArgs>>): Prisma__IdempotencyKeyClient<$Result.GetResult<Prisma.$IdempotencyKeyPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first IdempotencyKey that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {IdempotencyKeyFindFirstOrThrowArgs} args - Arguments to find a IdempotencyKey
+     * @example
+     * // Get one IdempotencyKey
+     * const idempotencyKey = await prisma.idempotencyKey.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends IdempotencyKeyFindFirstOrThrowArgs>(args?: SelectSubset<T, IdempotencyKeyFindFirstOrThrowArgs<ExtArgs>>): Prisma__IdempotencyKeyClient<$Result.GetResult<Prisma.$IdempotencyKeyPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more IdempotencyKeys that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {IdempotencyKeyFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all IdempotencyKeys
+     * const idempotencyKeys = await prisma.idempotencyKey.findMany()
+     * 
+     * // Get first 10 IdempotencyKeys
+     * const idempotencyKeys = await prisma.idempotencyKey.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const idempotencyKeyWithIdOnly = await prisma.idempotencyKey.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends IdempotencyKeyFindManyArgs>(args?: SelectSubset<T, IdempotencyKeyFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$IdempotencyKeyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a IdempotencyKey.
+     * @param {IdempotencyKeyCreateArgs} args - Arguments to create a IdempotencyKey.
+     * @example
+     * // Create one IdempotencyKey
+     * const IdempotencyKey = await prisma.idempotencyKey.create({
+     *   data: {
+     *     // ... data to create a IdempotencyKey
+     *   }
+     * })
+     * 
+     */
+    create<T extends IdempotencyKeyCreateArgs>(args: SelectSubset<T, IdempotencyKeyCreateArgs<ExtArgs>>): Prisma__IdempotencyKeyClient<$Result.GetResult<Prisma.$IdempotencyKeyPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many IdempotencyKeys.
+     * @param {IdempotencyKeyCreateManyArgs} args - Arguments to create many IdempotencyKeys.
+     * @example
+     * // Create many IdempotencyKeys
+     * const idempotencyKey = await prisma.idempotencyKey.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends IdempotencyKeyCreateManyArgs>(args?: SelectSubset<T, IdempotencyKeyCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many IdempotencyKeys and returns the data saved in the database.
+     * @param {IdempotencyKeyCreateManyAndReturnArgs} args - Arguments to create many IdempotencyKeys.
+     * @example
+     * // Create many IdempotencyKeys
+     * const idempotencyKey = await prisma.idempotencyKey.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many IdempotencyKeys and only return the `id`
+     * const idempotencyKeyWithIdOnly = await prisma.idempotencyKey.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends IdempotencyKeyCreateManyAndReturnArgs>(args?: SelectSubset<T, IdempotencyKeyCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$IdempotencyKeyPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a IdempotencyKey.
+     * @param {IdempotencyKeyDeleteArgs} args - Arguments to delete one IdempotencyKey.
+     * @example
+     * // Delete one IdempotencyKey
+     * const IdempotencyKey = await prisma.idempotencyKey.delete({
+     *   where: {
+     *     // ... filter to delete one IdempotencyKey
+     *   }
+     * })
+     * 
+     */
+    delete<T extends IdempotencyKeyDeleteArgs>(args: SelectSubset<T, IdempotencyKeyDeleteArgs<ExtArgs>>): Prisma__IdempotencyKeyClient<$Result.GetResult<Prisma.$IdempotencyKeyPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one IdempotencyKey.
+     * @param {IdempotencyKeyUpdateArgs} args - Arguments to update one IdempotencyKey.
+     * @example
+     * // Update one IdempotencyKey
+     * const idempotencyKey = await prisma.idempotencyKey.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends IdempotencyKeyUpdateArgs>(args: SelectSubset<T, IdempotencyKeyUpdateArgs<ExtArgs>>): Prisma__IdempotencyKeyClient<$Result.GetResult<Prisma.$IdempotencyKeyPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more IdempotencyKeys.
+     * @param {IdempotencyKeyDeleteManyArgs} args - Arguments to filter IdempotencyKeys to delete.
+     * @example
+     * // Delete a few IdempotencyKeys
+     * const { count } = await prisma.idempotencyKey.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends IdempotencyKeyDeleteManyArgs>(args?: SelectSubset<T, IdempotencyKeyDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more IdempotencyKeys.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {IdempotencyKeyUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many IdempotencyKeys
+     * const idempotencyKey = await prisma.idempotencyKey.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends IdempotencyKeyUpdateManyArgs>(args: SelectSubset<T, IdempotencyKeyUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more IdempotencyKeys and returns the data updated in the database.
+     * @param {IdempotencyKeyUpdateManyAndReturnArgs} args - Arguments to update many IdempotencyKeys.
+     * @example
+     * // Update many IdempotencyKeys
+     * const idempotencyKey = await prisma.idempotencyKey.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more IdempotencyKeys and only return the `id`
+     * const idempotencyKeyWithIdOnly = await prisma.idempotencyKey.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends IdempotencyKeyUpdateManyAndReturnArgs>(args: SelectSubset<T, IdempotencyKeyUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$IdempotencyKeyPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one IdempotencyKey.
+     * @param {IdempotencyKeyUpsertArgs} args - Arguments to update or create a IdempotencyKey.
+     * @example
+     * // Update or create a IdempotencyKey
+     * const idempotencyKey = await prisma.idempotencyKey.upsert({
+     *   create: {
+     *     // ... data to create a IdempotencyKey
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the IdempotencyKey we want to update
+     *   }
+     * })
+     */
+    upsert<T extends IdempotencyKeyUpsertArgs>(args: SelectSubset<T, IdempotencyKeyUpsertArgs<ExtArgs>>): Prisma__IdempotencyKeyClient<$Result.GetResult<Prisma.$IdempotencyKeyPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of IdempotencyKeys.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {IdempotencyKeyCountArgs} args - Arguments to filter IdempotencyKeys to count.
+     * @example
+     * // Count the number of IdempotencyKeys
+     * const count = await prisma.idempotencyKey.count({
+     *   where: {
+     *     // ... the filter for the IdempotencyKeys we want to count
+     *   }
+     * })
+    **/
+    count<T extends IdempotencyKeyCountArgs>(
+      args?: Subset<T, IdempotencyKeyCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], IdempotencyKeyCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a IdempotencyKey.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {IdempotencyKeyAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends IdempotencyKeyAggregateArgs>(args: Subset<T, IdempotencyKeyAggregateArgs>): Prisma.PrismaPromise<GetIdempotencyKeyAggregateType<T>>
+
+    /**
+     * Group by IdempotencyKey.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {IdempotencyKeyGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends IdempotencyKeyGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: IdempotencyKeyGroupByArgs['orderBy'] }
+        : { orderBy?: IdempotencyKeyGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, IdempotencyKeyGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetIdempotencyKeyGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the IdempotencyKey model
+   */
+  readonly fields: IdempotencyKeyFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for IdempotencyKey.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__IdempotencyKeyClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the IdempotencyKey model
+   */
+  interface IdempotencyKeyFieldRefs {
+    readonly id: FieldRef<"IdempotencyKey", 'String'>
+    readonly key: FieldRef<"IdempotencyKey", 'String'>
+    readonly endpoint: FieldRef<"IdempotencyKey", 'String'>
+    readonly requestHash: FieldRef<"IdempotencyKey", 'String'>
+    readonly responseStatus: FieldRef<"IdempotencyKey", 'Int'>
+    readonly responseBody: FieldRef<"IdempotencyKey", 'Json'>
+    readonly createdAt: FieldRef<"IdempotencyKey", 'DateTime'>
+    readonly expiresAt: FieldRef<"IdempotencyKey", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * IdempotencyKey findUnique
+   */
+  export type IdempotencyKeyFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IdempotencyKey
+     */
+    select?: IdempotencyKeySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IdempotencyKey
+     */
+    omit?: IdempotencyKeyOmit<ExtArgs> | null
+    /**
+     * Filter, which IdempotencyKey to fetch.
+     */
+    where: IdempotencyKeyWhereUniqueInput
+  }
+
+  /**
+   * IdempotencyKey findUniqueOrThrow
+   */
+  export type IdempotencyKeyFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IdempotencyKey
+     */
+    select?: IdempotencyKeySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IdempotencyKey
+     */
+    omit?: IdempotencyKeyOmit<ExtArgs> | null
+    /**
+     * Filter, which IdempotencyKey to fetch.
+     */
+    where: IdempotencyKeyWhereUniqueInput
+  }
+
+  /**
+   * IdempotencyKey findFirst
+   */
+  export type IdempotencyKeyFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IdempotencyKey
+     */
+    select?: IdempotencyKeySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IdempotencyKey
+     */
+    omit?: IdempotencyKeyOmit<ExtArgs> | null
+    /**
+     * Filter, which IdempotencyKey to fetch.
+     */
+    where?: IdempotencyKeyWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of IdempotencyKeys to fetch.
+     */
+    orderBy?: IdempotencyKeyOrderByWithRelationInput | IdempotencyKeyOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for IdempotencyKeys.
+     */
+    cursor?: IdempotencyKeyWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` IdempotencyKeys from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` IdempotencyKeys.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of IdempotencyKeys.
+     */
+    distinct?: IdempotencyKeyScalarFieldEnum | IdempotencyKeyScalarFieldEnum[]
+  }
+
+  /**
+   * IdempotencyKey findFirstOrThrow
+   */
+  export type IdempotencyKeyFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IdempotencyKey
+     */
+    select?: IdempotencyKeySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IdempotencyKey
+     */
+    omit?: IdempotencyKeyOmit<ExtArgs> | null
+    /**
+     * Filter, which IdempotencyKey to fetch.
+     */
+    where?: IdempotencyKeyWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of IdempotencyKeys to fetch.
+     */
+    orderBy?: IdempotencyKeyOrderByWithRelationInput | IdempotencyKeyOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for IdempotencyKeys.
+     */
+    cursor?: IdempotencyKeyWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` IdempotencyKeys from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` IdempotencyKeys.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of IdempotencyKeys.
+     */
+    distinct?: IdempotencyKeyScalarFieldEnum | IdempotencyKeyScalarFieldEnum[]
+  }
+
+  /**
+   * IdempotencyKey findMany
+   */
+  export type IdempotencyKeyFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IdempotencyKey
+     */
+    select?: IdempotencyKeySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IdempotencyKey
+     */
+    omit?: IdempotencyKeyOmit<ExtArgs> | null
+    /**
+     * Filter, which IdempotencyKeys to fetch.
+     */
+    where?: IdempotencyKeyWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of IdempotencyKeys to fetch.
+     */
+    orderBy?: IdempotencyKeyOrderByWithRelationInput | IdempotencyKeyOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing IdempotencyKeys.
+     */
+    cursor?: IdempotencyKeyWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` IdempotencyKeys from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` IdempotencyKeys.
+     */
+    skip?: number
+    distinct?: IdempotencyKeyScalarFieldEnum | IdempotencyKeyScalarFieldEnum[]
+  }
+
+  /**
+   * IdempotencyKey create
+   */
+  export type IdempotencyKeyCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IdempotencyKey
+     */
+    select?: IdempotencyKeySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IdempotencyKey
+     */
+    omit?: IdempotencyKeyOmit<ExtArgs> | null
+    /**
+     * The data needed to create a IdempotencyKey.
+     */
+    data: XOR<IdempotencyKeyCreateInput, IdempotencyKeyUncheckedCreateInput>
+  }
+
+  /**
+   * IdempotencyKey createMany
+   */
+  export type IdempotencyKeyCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many IdempotencyKeys.
+     */
+    data: IdempotencyKeyCreateManyInput | IdempotencyKeyCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * IdempotencyKey createManyAndReturn
+   */
+  export type IdempotencyKeyCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IdempotencyKey
+     */
+    select?: IdempotencyKeySelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the IdempotencyKey
+     */
+    omit?: IdempotencyKeyOmit<ExtArgs> | null
+    /**
+     * The data used to create many IdempotencyKeys.
+     */
+    data: IdempotencyKeyCreateManyInput | IdempotencyKeyCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * IdempotencyKey update
+   */
+  export type IdempotencyKeyUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IdempotencyKey
+     */
+    select?: IdempotencyKeySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IdempotencyKey
+     */
+    omit?: IdempotencyKeyOmit<ExtArgs> | null
+    /**
+     * The data needed to update a IdempotencyKey.
+     */
+    data: XOR<IdempotencyKeyUpdateInput, IdempotencyKeyUncheckedUpdateInput>
+    /**
+     * Choose, which IdempotencyKey to update.
+     */
+    where: IdempotencyKeyWhereUniqueInput
+  }
+
+  /**
+   * IdempotencyKey updateMany
+   */
+  export type IdempotencyKeyUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update IdempotencyKeys.
+     */
+    data: XOR<IdempotencyKeyUpdateManyMutationInput, IdempotencyKeyUncheckedUpdateManyInput>
+    /**
+     * Filter which IdempotencyKeys to update
+     */
+    where?: IdempotencyKeyWhereInput
+    /**
+     * Limit how many IdempotencyKeys to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * IdempotencyKey updateManyAndReturn
+   */
+  export type IdempotencyKeyUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IdempotencyKey
+     */
+    select?: IdempotencyKeySelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the IdempotencyKey
+     */
+    omit?: IdempotencyKeyOmit<ExtArgs> | null
+    /**
+     * The data used to update IdempotencyKeys.
+     */
+    data: XOR<IdempotencyKeyUpdateManyMutationInput, IdempotencyKeyUncheckedUpdateManyInput>
+    /**
+     * Filter which IdempotencyKeys to update
+     */
+    where?: IdempotencyKeyWhereInput
+    /**
+     * Limit how many IdempotencyKeys to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * IdempotencyKey upsert
+   */
+  export type IdempotencyKeyUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IdempotencyKey
+     */
+    select?: IdempotencyKeySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IdempotencyKey
+     */
+    omit?: IdempotencyKeyOmit<ExtArgs> | null
+    /**
+     * The filter to search for the IdempotencyKey to update in case it exists.
+     */
+    where: IdempotencyKeyWhereUniqueInput
+    /**
+     * In case the IdempotencyKey found by the `where` argument doesn't exist, create a new IdempotencyKey with this data.
+     */
+    create: XOR<IdempotencyKeyCreateInput, IdempotencyKeyUncheckedCreateInput>
+    /**
+     * In case the IdempotencyKey was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<IdempotencyKeyUpdateInput, IdempotencyKeyUncheckedUpdateInput>
+  }
+
+  /**
+   * IdempotencyKey delete
+   */
+  export type IdempotencyKeyDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IdempotencyKey
+     */
+    select?: IdempotencyKeySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IdempotencyKey
+     */
+    omit?: IdempotencyKeyOmit<ExtArgs> | null
+    /**
+     * Filter which IdempotencyKey to delete.
+     */
+    where: IdempotencyKeyWhereUniqueInput
+  }
+
+  /**
+   * IdempotencyKey deleteMany
+   */
+  export type IdempotencyKeyDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which IdempotencyKeys to delete
+     */
+    where?: IdempotencyKeyWhereInput
+    /**
+     * Limit how many IdempotencyKeys to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * IdempotencyKey without action
+   */
+  export type IdempotencyKeyDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the IdempotencyKey
+     */
+    select?: IdempotencyKeySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the IdempotencyKey
+     */
+    omit?: IdempotencyKeyOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Model Settlement
    */
 
@@ -6539,6 +7603,1091 @@ export namespace Prisma {
 
 
   /**
+   * Model TransactionLog
+   */
+
+  export type AggregateTransactionLog = {
+    _count: TransactionLogCountAggregateOutputType | null
+    _avg: TransactionLogAvgAggregateOutputType | null
+    _sum: TransactionLogSumAggregateOutputType | null
+    _min: TransactionLogMinAggregateOutputType | null
+    _max: TransactionLogMaxAggregateOutputType | null
+  }
+
+  export type TransactionLogAvgAggregateOutputType = {
+    blockHeight: number | null
+    slot: number | null
+  }
+
+  export type TransactionLogSumAggregateOutputType = {
+    blockHeight: bigint | null
+    slot: bigint | null
+  }
+
+  export type TransactionLogMinAggregateOutputType = {
+    id: string | null
+    agreementId: string | null
+    txId: string | null
+    operationType: string | null
+    blockHeight: bigint | null
+    slot: bigint | null
+    status: string | null
+    errorMessage: string | null
+    timestamp: Date | null
+  }
+
+  export type TransactionLogMaxAggregateOutputType = {
+    id: string | null
+    agreementId: string | null
+    txId: string | null
+    operationType: string | null
+    blockHeight: bigint | null
+    slot: bigint | null
+    status: string | null
+    errorMessage: string | null
+    timestamp: Date | null
+  }
+
+  export type TransactionLogCountAggregateOutputType = {
+    id: number
+    agreementId: number
+    txId: number
+    operationType: number
+    blockHeight: number
+    slot: number
+    status: number
+    errorMessage: number
+    timestamp: number
+    _all: number
+  }
+
+
+  export type TransactionLogAvgAggregateInputType = {
+    blockHeight?: true
+    slot?: true
+  }
+
+  export type TransactionLogSumAggregateInputType = {
+    blockHeight?: true
+    slot?: true
+  }
+
+  export type TransactionLogMinAggregateInputType = {
+    id?: true
+    agreementId?: true
+    txId?: true
+    operationType?: true
+    blockHeight?: true
+    slot?: true
+    status?: true
+    errorMessage?: true
+    timestamp?: true
+  }
+
+  export type TransactionLogMaxAggregateInputType = {
+    id?: true
+    agreementId?: true
+    txId?: true
+    operationType?: true
+    blockHeight?: true
+    slot?: true
+    status?: true
+    errorMessage?: true
+    timestamp?: true
+  }
+
+  export type TransactionLogCountAggregateInputType = {
+    id?: true
+    agreementId?: true
+    txId?: true
+    operationType?: true
+    blockHeight?: true
+    slot?: true
+    status?: true
+    errorMessage?: true
+    timestamp?: true
+    _all?: true
+  }
+
+  export type TransactionLogAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TransactionLog to aggregate.
+     */
+    where?: TransactionLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TransactionLogs to fetch.
+     */
+    orderBy?: TransactionLogOrderByWithRelationInput | TransactionLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: TransactionLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TransactionLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TransactionLogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned TransactionLogs
+    **/
+    _count?: true | TransactionLogCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: TransactionLogAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: TransactionLogSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: TransactionLogMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: TransactionLogMaxAggregateInputType
+  }
+
+  export type GetTransactionLogAggregateType<T extends TransactionLogAggregateArgs> = {
+        [P in keyof T & keyof AggregateTransactionLog]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateTransactionLog[P]>
+      : GetScalarType<T[P], AggregateTransactionLog[P]>
+  }
+
+
+
+
+  export type TransactionLogGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TransactionLogWhereInput
+    orderBy?: TransactionLogOrderByWithAggregationInput | TransactionLogOrderByWithAggregationInput[]
+    by: TransactionLogScalarFieldEnum[] | TransactionLogScalarFieldEnum
+    having?: TransactionLogScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: TransactionLogCountAggregateInputType | true
+    _avg?: TransactionLogAvgAggregateInputType
+    _sum?: TransactionLogSumAggregateInputType
+    _min?: TransactionLogMinAggregateInputType
+    _max?: TransactionLogMaxAggregateInputType
+  }
+
+  export type TransactionLogGroupByOutputType = {
+    id: string
+    agreementId: string | null
+    txId: string
+    operationType: string
+    blockHeight: bigint | null
+    slot: bigint | null
+    status: string
+    errorMessage: string | null
+    timestamp: Date
+    _count: TransactionLogCountAggregateOutputType | null
+    _avg: TransactionLogAvgAggregateOutputType | null
+    _sum: TransactionLogSumAggregateOutputType | null
+    _min: TransactionLogMinAggregateOutputType | null
+    _max: TransactionLogMaxAggregateOutputType | null
+  }
+
+  type GetTransactionLogGroupByPayload<T extends TransactionLogGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<TransactionLogGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof TransactionLogGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], TransactionLogGroupByOutputType[P]>
+            : GetScalarType<T[P], TransactionLogGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type TransactionLogSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    agreementId?: boolean
+    txId?: boolean
+    operationType?: boolean
+    blockHeight?: boolean
+    slot?: boolean
+    status?: boolean
+    errorMessage?: boolean
+    timestamp?: boolean
+  }, ExtArgs["result"]["transactionLog"]>
+
+  export type TransactionLogSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    agreementId?: boolean
+    txId?: boolean
+    operationType?: boolean
+    blockHeight?: boolean
+    slot?: boolean
+    status?: boolean
+    errorMessage?: boolean
+    timestamp?: boolean
+  }, ExtArgs["result"]["transactionLog"]>
+
+  export type TransactionLogSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    agreementId?: boolean
+    txId?: boolean
+    operationType?: boolean
+    blockHeight?: boolean
+    slot?: boolean
+    status?: boolean
+    errorMessage?: boolean
+    timestamp?: boolean
+  }, ExtArgs["result"]["transactionLog"]>
+
+  export type TransactionLogSelectScalar = {
+    id?: boolean
+    agreementId?: boolean
+    txId?: boolean
+    operationType?: boolean
+    blockHeight?: boolean
+    slot?: boolean
+    status?: boolean
+    errorMessage?: boolean
+    timestamp?: boolean
+  }
+
+  export type TransactionLogOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "agreementId" | "txId" | "operationType" | "blockHeight" | "slot" | "status" | "errorMessage" | "timestamp", ExtArgs["result"]["transactionLog"]>
+
+  export type $TransactionLogPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "TransactionLog"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      agreementId: string | null
+      txId: string
+      operationType: string
+      blockHeight: bigint | null
+      slot: bigint | null
+      status: string
+      errorMessage: string | null
+      timestamp: Date
+    }, ExtArgs["result"]["transactionLog"]>
+    composites: {}
+  }
+
+  type TransactionLogGetPayload<S extends boolean | null | undefined | TransactionLogDefaultArgs> = $Result.GetResult<Prisma.$TransactionLogPayload, S>
+
+  type TransactionLogCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<TransactionLogFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: TransactionLogCountAggregateInputType | true
+    }
+
+  export interface TransactionLogDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['TransactionLog'], meta: { name: 'TransactionLog' } }
+    /**
+     * Find zero or one TransactionLog that matches the filter.
+     * @param {TransactionLogFindUniqueArgs} args - Arguments to find a TransactionLog
+     * @example
+     * // Get one TransactionLog
+     * const transactionLog = await prisma.transactionLog.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends TransactionLogFindUniqueArgs>(args: SelectSubset<T, TransactionLogFindUniqueArgs<ExtArgs>>): Prisma__TransactionLogClient<$Result.GetResult<Prisma.$TransactionLogPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one TransactionLog that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {TransactionLogFindUniqueOrThrowArgs} args - Arguments to find a TransactionLog
+     * @example
+     * // Get one TransactionLog
+     * const transactionLog = await prisma.transactionLog.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends TransactionLogFindUniqueOrThrowArgs>(args: SelectSubset<T, TransactionLogFindUniqueOrThrowArgs<ExtArgs>>): Prisma__TransactionLogClient<$Result.GetResult<Prisma.$TransactionLogPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first TransactionLog that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TransactionLogFindFirstArgs} args - Arguments to find a TransactionLog
+     * @example
+     * // Get one TransactionLog
+     * const transactionLog = await prisma.transactionLog.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends TransactionLogFindFirstArgs>(args?: SelectSubset<T, TransactionLogFindFirstArgs<ExtArgs>>): Prisma__TransactionLogClient<$Result.GetResult<Prisma.$TransactionLogPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first TransactionLog that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TransactionLogFindFirstOrThrowArgs} args - Arguments to find a TransactionLog
+     * @example
+     * // Get one TransactionLog
+     * const transactionLog = await prisma.transactionLog.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends TransactionLogFindFirstOrThrowArgs>(args?: SelectSubset<T, TransactionLogFindFirstOrThrowArgs<ExtArgs>>): Prisma__TransactionLogClient<$Result.GetResult<Prisma.$TransactionLogPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more TransactionLogs that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TransactionLogFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all TransactionLogs
+     * const transactionLogs = await prisma.transactionLog.findMany()
+     * 
+     * // Get first 10 TransactionLogs
+     * const transactionLogs = await prisma.transactionLog.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const transactionLogWithIdOnly = await prisma.transactionLog.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends TransactionLogFindManyArgs>(args?: SelectSubset<T, TransactionLogFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TransactionLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a TransactionLog.
+     * @param {TransactionLogCreateArgs} args - Arguments to create a TransactionLog.
+     * @example
+     * // Create one TransactionLog
+     * const TransactionLog = await prisma.transactionLog.create({
+     *   data: {
+     *     // ... data to create a TransactionLog
+     *   }
+     * })
+     * 
+     */
+    create<T extends TransactionLogCreateArgs>(args: SelectSubset<T, TransactionLogCreateArgs<ExtArgs>>): Prisma__TransactionLogClient<$Result.GetResult<Prisma.$TransactionLogPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many TransactionLogs.
+     * @param {TransactionLogCreateManyArgs} args - Arguments to create many TransactionLogs.
+     * @example
+     * // Create many TransactionLogs
+     * const transactionLog = await prisma.transactionLog.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends TransactionLogCreateManyArgs>(args?: SelectSubset<T, TransactionLogCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many TransactionLogs and returns the data saved in the database.
+     * @param {TransactionLogCreateManyAndReturnArgs} args - Arguments to create many TransactionLogs.
+     * @example
+     * // Create many TransactionLogs
+     * const transactionLog = await prisma.transactionLog.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many TransactionLogs and only return the `id`
+     * const transactionLogWithIdOnly = await prisma.transactionLog.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends TransactionLogCreateManyAndReturnArgs>(args?: SelectSubset<T, TransactionLogCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TransactionLogPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a TransactionLog.
+     * @param {TransactionLogDeleteArgs} args - Arguments to delete one TransactionLog.
+     * @example
+     * // Delete one TransactionLog
+     * const TransactionLog = await prisma.transactionLog.delete({
+     *   where: {
+     *     // ... filter to delete one TransactionLog
+     *   }
+     * })
+     * 
+     */
+    delete<T extends TransactionLogDeleteArgs>(args: SelectSubset<T, TransactionLogDeleteArgs<ExtArgs>>): Prisma__TransactionLogClient<$Result.GetResult<Prisma.$TransactionLogPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one TransactionLog.
+     * @param {TransactionLogUpdateArgs} args - Arguments to update one TransactionLog.
+     * @example
+     * // Update one TransactionLog
+     * const transactionLog = await prisma.transactionLog.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends TransactionLogUpdateArgs>(args: SelectSubset<T, TransactionLogUpdateArgs<ExtArgs>>): Prisma__TransactionLogClient<$Result.GetResult<Prisma.$TransactionLogPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more TransactionLogs.
+     * @param {TransactionLogDeleteManyArgs} args - Arguments to filter TransactionLogs to delete.
+     * @example
+     * // Delete a few TransactionLogs
+     * const { count } = await prisma.transactionLog.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends TransactionLogDeleteManyArgs>(args?: SelectSubset<T, TransactionLogDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more TransactionLogs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TransactionLogUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many TransactionLogs
+     * const transactionLog = await prisma.transactionLog.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends TransactionLogUpdateManyArgs>(args: SelectSubset<T, TransactionLogUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more TransactionLogs and returns the data updated in the database.
+     * @param {TransactionLogUpdateManyAndReturnArgs} args - Arguments to update many TransactionLogs.
+     * @example
+     * // Update many TransactionLogs
+     * const transactionLog = await prisma.transactionLog.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more TransactionLogs and only return the `id`
+     * const transactionLogWithIdOnly = await prisma.transactionLog.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends TransactionLogUpdateManyAndReturnArgs>(args: SelectSubset<T, TransactionLogUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TransactionLogPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one TransactionLog.
+     * @param {TransactionLogUpsertArgs} args - Arguments to update or create a TransactionLog.
+     * @example
+     * // Update or create a TransactionLog
+     * const transactionLog = await prisma.transactionLog.upsert({
+     *   create: {
+     *     // ... data to create a TransactionLog
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the TransactionLog we want to update
+     *   }
+     * })
+     */
+    upsert<T extends TransactionLogUpsertArgs>(args: SelectSubset<T, TransactionLogUpsertArgs<ExtArgs>>): Prisma__TransactionLogClient<$Result.GetResult<Prisma.$TransactionLogPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of TransactionLogs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TransactionLogCountArgs} args - Arguments to filter TransactionLogs to count.
+     * @example
+     * // Count the number of TransactionLogs
+     * const count = await prisma.transactionLog.count({
+     *   where: {
+     *     // ... the filter for the TransactionLogs we want to count
+     *   }
+     * })
+    **/
+    count<T extends TransactionLogCountArgs>(
+      args?: Subset<T, TransactionLogCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], TransactionLogCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a TransactionLog.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TransactionLogAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends TransactionLogAggregateArgs>(args: Subset<T, TransactionLogAggregateArgs>): Prisma.PrismaPromise<GetTransactionLogAggregateType<T>>
+
+    /**
+     * Group by TransactionLog.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TransactionLogGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends TransactionLogGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: TransactionLogGroupByArgs['orderBy'] }
+        : { orderBy?: TransactionLogGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, TransactionLogGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetTransactionLogGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the TransactionLog model
+   */
+  readonly fields: TransactionLogFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for TransactionLog.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__TransactionLogClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the TransactionLog model
+   */
+  interface TransactionLogFieldRefs {
+    readonly id: FieldRef<"TransactionLog", 'String'>
+    readonly agreementId: FieldRef<"TransactionLog", 'String'>
+    readonly txId: FieldRef<"TransactionLog", 'String'>
+    readonly operationType: FieldRef<"TransactionLog", 'String'>
+    readonly blockHeight: FieldRef<"TransactionLog", 'BigInt'>
+    readonly slot: FieldRef<"TransactionLog", 'BigInt'>
+    readonly status: FieldRef<"TransactionLog", 'String'>
+    readonly errorMessage: FieldRef<"TransactionLog", 'String'>
+    readonly timestamp: FieldRef<"TransactionLog", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * TransactionLog findUnique
+   */
+  export type TransactionLogFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TransactionLog
+     */
+    select?: TransactionLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TransactionLog
+     */
+    omit?: TransactionLogOmit<ExtArgs> | null
+    /**
+     * Filter, which TransactionLog to fetch.
+     */
+    where: TransactionLogWhereUniqueInput
+  }
+
+  /**
+   * TransactionLog findUniqueOrThrow
+   */
+  export type TransactionLogFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TransactionLog
+     */
+    select?: TransactionLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TransactionLog
+     */
+    omit?: TransactionLogOmit<ExtArgs> | null
+    /**
+     * Filter, which TransactionLog to fetch.
+     */
+    where: TransactionLogWhereUniqueInput
+  }
+
+  /**
+   * TransactionLog findFirst
+   */
+  export type TransactionLogFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TransactionLog
+     */
+    select?: TransactionLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TransactionLog
+     */
+    omit?: TransactionLogOmit<ExtArgs> | null
+    /**
+     * Filter, which TransactionLog to fetch.
+     */
+    where?: TransactionLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TransactionLogs to fetch.
+     */
+    orderBy?: TransactionLogOrderByWithRelationInput | TransactionLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TransactionLogs.
+     */
+    cursor?: TransactionLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TransactionLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TransactionLogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TransactionLogs.
+     */
+    distinct?: TransactionLogScalarFieldEnum | TransactionLogScalarFieldEnum[]
+  }
+
+  /**
+   * TransactionLog findFirstOrThrow
+   */
+  export type TransactionLogFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TransactionLog
+     */
+    select?: TransactionLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TransactionLog
+     */
+    omit?: TransactionLogOmit<ExtArgs> | null
+    /**
+     * Filter, which TransactionLog to fetch.
+     */
+    where?: TransactionLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TransactionLogs to fetch.
+     */
+    orderBy?: TransactionLogOrderByWithRelationInput | TransactionLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TransactionLogs.
+     */
+    cursor?: TransactionLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TransactionLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TransactionLogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TransactionLogs.
+     */
+    distinct?: TransactionLogScalarFieldEnum | TransactionLogScalarFieldEnum[]
+  }
+
+  /**
+   * TransactionLog findMany
+   */
+  export type TransactionLogFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TransactionLog
+     */
+    select?: TransactionLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TransactionLog
+     */
+    omit?: TransactionLogOmit<ExtArgs> | null
+    /**
+     * Filter, which TransactionLogs to fetch.
+     */
+    where?: TransactionLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TransactionLogs to fetch.
+     */
+    orderBy?: TransactionLogOrderByWithRelationInput | TransactionLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing TransactionLogs.
+     */
+    cursor?: TransactionLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TransactionLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TransactionLogs.
+     */
+    skip?: number
+    distinct?: TransactionLogScalarFieldEnum | TransactionLogScalarFieldEnum[]
+  }
+
+  /**
+   * TransactionLog create
+   */
+  export type TransactionLogCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TransactionLog
+     */
+    select?: TransactionLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TransactionLog
+     */
+    omit?: TransactionLogOmit<ExtArgs> | null
+    /**
+     * The data needed to create a TransactionLog.
+     */
+    data: XOR<TransactionLogCreateInput, TransactionLogUncheckedCreateInput>
+  }
+
+  /**
+   * TransactionLog createMany
+   */
+  export type TransactionLogCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many TransactionLogs.
+     */
+    data: TransactionLogCreateManyInput | TransactionLogCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * TransactionLog createManyAndReturn
+   */
+  export type TransactionLogCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TransactionLog
+     */
+    select?: TransactionLogSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the TransactionLog
+     */
+    omit?: TransactionLogOmit<ExtArgs> | null
+    /**
+     * The data used to create many TransactionLogs.
+     */
+    data: TransactionLogCreateManyInput | TransactionLogCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * TransactionLog update
+   */
+  export type TransactionLogUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TransactionLog
+     */
+    select?: TransactionLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TransactionLog
+     */
+    omit?: TransactionLogOmit<ExtArgs> | null
+    /**
+     * The data needed to update a TransactionLog.
+     */
+    data: XOR<TransactionLogUpdateInput, TransactionLogUncheckedUpdateInput>
+    /**
+     * Choose, which TransactionLog to update.
+     */
+    where: TransactionLogWhereUniqueInput
+  }
+
+  /**
+   * TransactionLog updateMany
+   */
+  export type TransactionLogUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update TransactionLogs.
+     */
+    data: XOR<TransactionLogUpdateManyMutationInput, TransactionLogUncheckedUpdateManyInput>
+    /**
+     * Filter which TransactionLogs to update
+     */
+    where?: TransactionLogWhereInput
+    /**
+     * Limit how many TransactionLogs to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * TransactionLog updateManyAndReturn
+   */
+  export type TransactionLogUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TransactionLog
+     */
+    select?: TransactionLogSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the TransactionLog
+     */
+    omit?: TransactionLogOmit<ExtArgs> | null
+    /**
+     * The data used to update TransactionLogs.
+     */
+    data: XOR<TransactionLogUpdateManyMutationInput, TransactionLogUncheckedUpdateManyInput>
+    /**
+     * Filter which TransactionLogs to update
+     */
+    where?: TransactionLogWhereInput
+    /**
+     * Limit how many TransactionLogs to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * TransactionLog upsert
+   */
+  export type TransactionLogUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TransactionLog
+     */
+    select?: TransactionLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TransactionLog
+     */
+    omit?: TransactionLogOmit<ExtArgs> | null
+    /**
+     * The filter to search for the TransactionLog to update in case it exists.
+     */
+    where: TransactionLogWhereUniqueInput
+    /**
+     * In case the TransactionLog found by the `where` argument doesn't exist, create a new TransactionLog with this data.
+     */
+    create: XOR<TransactionLogCreateInput, TransactionLogUncheckedCreateInput>
+    /**
+     * In case the TransactionLog was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<TransactionLogUpdateInput, TransactionLogUncheckedUpdateInput>
+  }
+
+  /**
+   * TransactionLog delete
+   */
+  export type TransactionLogDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TransactionLog
+     */
+    select?: TransactionLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TransactionLog
+     */
+    omit?: TransactionLogOmit<ExtArgs> | null
+    /**
+     * Filter which TransactionLog to delete.
+     */
+    where: TransactionLogWhereUniqueInput
+  }
+
+  /**
+   * TransactionLog deleteMany
+   */
+  export type TransactionLogDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TransactionLogs to delete
+     */
+    where?: TransactionLogWhereInput
+    /**
+     * Limit how many TransactionLogs to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * TransactionLog without action
+   */
+  export type TransactionLogDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TransactionLog
+     */
+    select?: TransactionLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TransactionLog
+     */
+    omit?: TransactionLogOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Model Webhook
    */
 
@@ -7765,2155 +9914,6 @@ export namespace Prisma {
 
 
   /**
-   * Model IdempotencyKey
-   */
-
-  export type AggregateIdempotencyKey = {
-    _count: IdempotencyKeyCountAggregateOutputType | null
-    _avg: IdempotencyKeyAvgAggregateOutputType | null
-    _sum: IdempotencyKeySumAggregateOutputType | null
-    _min: IdempotencyKeyMinAggregateOutputType | null
-    _max: IdempotencyKeyMaxAggregateOutputType | null
-  }
-
-  export type IdempotencyKeyAvgAggregateOutputType = {
-    responseStatus: number | null
-  }
-
-  export type IdempotencyKeySumAggregateOutputType = {
-    responseStatus: number | null
-  }
-
-  export type IdempotencyKeyMinAggregateOutputType = {
-    id: string | null
-    key: string | null
-    endpoint: string | null
-    requestHash: string | null
-    responseStatus: number | null
-    createdAt: Date | null
-    expiresAt: Date | null
-  }
-
-  export type IdempotencyKeyMaxAggregateOutputType = {
-    id: string | null
-    key: string | null
-    endpoint: string | null
-    requestHash: string | null
-    responseStatus: number | null
-    createdAt: Date | null
-    expiresAt: Date | null
-  }
-
-  export type IdempotencyKeyCountAggregateOutputType = {
-    id: number
-    key: number
-    endpoint: number
-    requestHash: number
-    responseStatus: number
-    responseBody: number
-    createdAt: number
-    expiresAt: number
-    _all: number
-  }
-
-
-  export type IdempotencyKeyAvgAggregateInputType = {
-    responseStatus?: true
-  }
-
-  export type IdempotencyKeySumAggregateInputType = {
-    responseStatus?: true
-  }
-
-  export type IdempotencyKeyMinAggregateInputType = {
-    id?: true
-    key?: true
-    endpoint?: true
-    requestHash?: true
-    responseStatus?: true
-    createdAt?: true
-    expiresAt?: true
-  }
-
-  export type IdempotencyKeyMaxAggregateInputType = {
-    id?: true
-    key?: true
-    endpoint?: true
-    requestHash?: true
-    responseStatus?: true
-    createdAt?: true
-    expiresAt?: true
-  }
-
-  export type IdempotencyKeyCountAggregateInputType = {
-    id?: true
-    key?: true
-    endpoint?: true
-    requestHash?: true
-    responseStatus?: true
-    responseBody?: true
-    createdAt?: true
-    expiresAt?: true
-    _all?: true
-  }
-
-  export type IdempotencyKeyAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Filter which IdempotencyKey to aggregate.
-     */
-    where?: IdempotencyKeyWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of IdempotencyKeys to fetch.
-     */
-    orderBy?: IdempotencyKeyOrderByWithRelationInput | IdempotencyKeyOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the start position
-     */
-    cursor?: IdempotencyKeyWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` IdempotencyKeys from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` IdempotencyKeys.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Count returned IdempotencyKeys
-    **/
-    _count?: true | IdempotencyKeyCountAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to average
-    **/
-    _avg?: IdempotencyKeyAvgAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to sum
-    **/
-    _sum?: IdempotencyKeySumAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to find the minimum value
-    **/
-    _min?: IdempotencyKeyMinAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to find the maximum value
-    **/
-    _max?: IdempotencyKeyMaxAggregateInputType
-  }
-
-  export type GetIdempotencyKeyAggregateType<T extends IdempotencyKeyAggregateArgs> = {
-        [P in keyof T & keyof AggregateIdempotencyKey]: P extends '_count' | 'count'
-      ? T[P] extends true
-        ? number
-        : GetScalarType<T[P], AggregateIdempotencyKey[P]>
-      : GetScalarType<T[P], AggregateIdempotencyKey[P]>
-  }
-
-
-
-
-  export type IdempotencyKeyGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: IdempotencyKeyWhereInput
-    orderBy?: IdempotencyKeyOrderByWithAggregationInput | IdempotencyKeyOrderByWithAggregationInput[]
-    by: IdempotencyKeyScalarFieldEnum[] | IdempotencyKeyScalarFieldEnum
-    having?: IdempotencyKeyScalarWhereWithAggregatesInput
-    take?: number
-    skip?: number
-    _count?: IdempotencyKeyCountAggregateInputType | true
-    _avg?: IdempotencyKeyAvgAggregateInputType
-    _sum?: IdempotencyKeySumAggregateInputType
-    _min?: IdempotencyKeyMinAggregateInputType
-    _max?: IdempotencyKeyMaxAggregateInputType
-  }
-
-  export type IdempotencyKeyGroupByOutputType = {
-    id: string
-    key: string
-    endpoint: string
-    requestHash: string
-    responseStatus: number
-    responseBody: JsonValue
-    createdAt: Date
-    expiresAt: Date
-    _count: IdempotencyKeyCountAggregateOutputType | null
-    _avg: IdempotencyKeyAvgAggregateOutputType | null
-    _sum: IdempotencyKeySumAggregateOutputType | null
-    _min: IdempotencyKeyMinAggregateOutputType | null
-    _max: IdempotencyKeyMaxAggregateOutputType | null
-  }
-
-  type GetIdempotencyKeyGroupByPayload<T extends IdempotencyKeyGroupByArgs> = Prisma.PrismaPromise<
-    Array<
-      PickEnumerable<IdempotencyKeyGroupByOutputType, T['by']> &
-        {
-          [P in ((keyof T) & (keyof IdempotencyKeyGroupByOutputType))]: P extends '_count'
-            ? T[P] extends boolean
-              ? number
-              : GetScalarType<T[P], IdempotencyKeyGroupByOutputType[P]>
-            : GetScalarType<T[P], IdempotencyKeyGroupByOutputType[P]>
-        }
-      >
-    >
-
-
-  export type IdempotencyKeySelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    id?: boolean
-    key?: boolean
-    endpoint?: boolean
-    requestHash?: boolean
-    responseStatus?: boolean
-    responseBody?: boolean
-    createdAt?: boolean
-    expiresAt?: boolean
-  }, ExtArgs["result"]["idempotencyKey"]>
-
-  export type IdempotencyKeySelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    id?: boolean
-    key?: boolean
-    endpoint?: boolean
-    requestHash?: boolean
-    responseStatus?: boolean
-    responseBody?: boolean
-    createdAt?: boolean
-    expiresAt?: boolean
-  }, ExtArgs["result"]["idempotencyKey"]>
-
-  export type IdempotencyKeySelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    id?: boolean
-    key?: boolean
-    endpoint?: boolean
-    requestHash?: boolean
-    responseStatus?: boolean
-    responseBody?: boolean
-    createdAt?: boolean
-    expiresAt?: boolean
-  }, ExtArgs["result"]["idempotencyKey"]>
-
-  export type IdempotencyKeySelectScalar = {
-    id?: boolean
-    key?: boolean
-    endpoint?: boolean
-    requestHash?: boolean
-    responseStatus?: boolean
-    responseBody?: boolean
-    createdAt?: boolean
-    expiresAt?: boolean
-  }
-
-  export type IdempotencyKeyOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "key" | "endpoint" | "requestHash" | "responseStatus" | "responseBody" | "createdAt" | "expiresAt", ExtArgs["result"]["idempotencyKey"]>
-
-  export type $IdempotencyKeyPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    name: "IdempotencyKey"
-    objects: {}
-    scalars: $Extensions.GetPayloadResult<{
-      id: string
-      key: string
-      endpoint: string
-      requestHash: string
-      responseStatus: number
-      responseBody: Prisma.JsonValue
-      createdAt: Date
-      expiresAt: Date
-    }, ExtArgs["result"]["idempotencyKey"]>
-    composites: {}
-  }
-
-  type IdempotencyKeyGetPayload<S extends boolean | null | undefined | IdempotencyKeyDefaultArgs> = $Result.GetResult<Prisma.$IdempotencyKeyPayload, S>
-
-  type IdempotencyKeyCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
-    Omit<IdempotencyKeyFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
-      select?: IdempotencyKeyCountAggregateInputType | true
-    }
-
-  export interface IdempotencyKeyDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
-    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['IdempotencyKey'], meta: { name: 'IdempotencyKey' } }
-    /**
-     * Find zero or one IdempotencyKey that matches the filter.
-     * @param {IdempotencyKeyFindUniqueArgs} args - Arguments to find a IdempotencyKey
-     * @example
-     * // Get one IdempotencyKey
-     * const idempotencyKey = await prisma.idempotencyKey.findUnique({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findUnique<T extends IdempotencyKeyFindUniqueArgs>(args: SelectSubset<T, IdempotencyKeyFindUniqueArgs<ExtArgs>>): Prisma__IdempotencyKeyClient<$Result.GetResult<Prisma.$IdempotencyKeyPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find one IdempotencyKey that matches the filter or throw an error with `error.code='P2025'`
-     * if no matches were found.
-     * @param {IdempotencyKeyFindUniqueOrThrowArgs} args - Arguments to find a IdempotencyKey
-     * @example
-     * // Get one IdempotencyKey
-     * const idempotencyKey = await prisma.idempotencyKey.findUniqueOrThrow({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findUniqueOrThrow<T extends IdempotencyKeyFindUniqueOrThrowArgs>(args: SelectSubset<T, IdempotencyKeyFindUniqueOrThrowArgs<ExtArgs>>): Prisma__IdempotencyKeyClient<$Result.GetResult<Prisma.$IdempotencyKeyPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find the first IdempotencyKey that matches the filter.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {IdempotencyKeyFindFirstArgs} args - Arguments to find a IdempotencyKey
-     * @example
-     * // Get one IdempotencyKey
-     * const idempotencyKey = await prisma.idempotencyKey.findFirst({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findFirst<T extends IdempotencyKeyFindFirstArgs>(args?: SelectSubset<T, IdempotencyKeyFindFirstArgs<ExtArgs>>): Prisma__IdempotencyKeyClient<$Result.GetResult<Prisma.$IdempotencyKeyPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find the first IdempotencyKey that matches the filter or
-     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {IdempotencyKeyFindFirstOrThrowArgs} args - Arguments to find a IdempotencyKey
-     * @example
-     * // Get one IdempotencyKey
-     * const idempotencyKey = await prisma.idempotencyKey.findFirstOrThrow({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findFirstOrThrow<T extends IdempotencyKeyFindFirstOrThrowArgs>(args?: SelectSubset<T, IdempotencyKeyFindFirstOrThrowArgs<ExtArgs>>): Prisma__IdempotencyKeyClient<$Result.GetResult<Prisma.$IdempotencyKeyPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find zero or more IdempotencyKeys that matches the filter.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {IdempotencyKeyFindManyArgs} args - Arguments to filter and select certain fields only.
-     * @example
-     * // Get all IdempotencyKeys
-     * const idempotencyKeys = await prisma.idempotencyKey.findMany()
-     * 
-     * // Get first 10 IdempotencyKeys
-     * const idempotencyKeys = await prisma.idempotencyKey.findMany({ take: 10 })
-     * 
-     * // Only select the `id`
-     * const idempotencyKeyWithIdOnly = await prisma.idempotencyKey.findMany({ select: { id: true } })
-     * 
-     */
-    findMany<T extends IdempotencyKeyFindManyArgs>(args?: SelectSubset<T, IdempotencyKeyFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$IdempotencyKeyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
-
-    /**
-     * Create a IdempotencyKey.
-     * @param {IdempotencyKeyCreateArgs} args - Arguments to create a IdempotencyKey.
-     * @example
-     * // Create one IdempotencyKey
-     * const IdempotencyKey = await prisma.idempotencyKey.create({
-     *   data: {
-     *     // ... data to create a IdempotencyKey
-     *   }
-     * })
-     * 
-     */
-    create<T extends IdempotencyKeyCreateArgs>(args: SelectSubset<T, IdempotencyKeyCreateArgs<ExtArgs>>): Prisma__IdempotencyKeyClient<$Result.GetResult<Prisma.$IdempotencyKeyPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Create many IdempotencyKeys.
-     * @param {IdempotencyKeyCreateManyArgs} args - Arguments to create many IdempotencyKeys.
-     * @example
-     * // Create many IdempotencyKeys
-     * const idempotencyKey = await prisma.idempotencyKey.createMany({
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     *     
-     */
-    createMany<T extends IdempotencyKeyCreateManyArgs>(args?: SelectSubset<T, IdempotencyKeyCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Create many IdempotencyKeys and returns the data saved in the database.
-     * @param {IdempotencyKeyCreateManyAndReturnArgs} args - Arguments to create many IdempotencyKeys.
-     * @example
-     * // Create many IdempotencyKeys
-     * const idempotencyKey = await prisma.idempotencyKey.createManyAndReturn({
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Create many IdempotencyKeys and only return the `id`
-     * const idempotencyKeyWithIdOnly = await prisma.idempotencyKey.createManyAndReturn({
-     *   select: { id: true },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    createManyAndReturn<T extends IdempotencyKeyCreateManyAndReturnArgs>(args?: SelectSubset<T, IdempotencyKeyCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$IdempotencyKeyPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
-
-    /**
-     * Delete a IdempotencyKey.
-     * @param {IdempotencyKeyDeleteArgs} args - Arguments to delete one IdempotencyKey.
-     * @example
-     * // Delete one IdempotencyKey
-     * const IdempotencyKey = await prisma.idempotencyKey.delete({
-     *   where: {
-     *     // ... filter to delete one IdempotencyKey
-     *   }
-     * })
-     * 
-     */
-    delete<T extends IdempotencyKeyDeleteArgs>(args: SelectSubset<T, IdempotencyKeyDeleteArgs<ExtArgs>>): Prisma__IdempotencyKeyClient<$Result.GetResult<Prisma.$IdempotencyKeyPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Update one IdempotencyKey.
-     * @param {IdempotencyKeyUpdateArgs} args - Arguments to update one IdempotencyKey.
-     * @example
-     * // Update one IdempotencyKey
-     * const idempotencyKey = await prisma.idempotencyKey.update({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: {
-     *     // ... provide data here
-     *   }
-     * })
-     * 
-     */
-    update<T extends IdempotencyKeyUpdateArgs>(args: SelectSubset<T, IdempotencyKeyUpdateArgs<ExtArgs>>): Prisma__IdempotencyKeyClient<$Result.GetResult<Prisma.$IdempotencyKeyPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Delete zero or more IdempotencyKeys.
-     * @param {IdempotencyKeyDeleteManyArgs} args - Arguments to filter IdempotencyKeys to delete.
-     * @example
-     * // Delete a few IdempotencyKeys
-     * const { count } = await prisma.idempotencyKey.deleteMany({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     * 
-     */
-    deleteMany<T extends IdempotencyKeyDeleteManyArgs>(args?: SelectSubset<T, IdempotencyKeyDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Update zero or more IdempotencyKeys.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {IdempotencyKeyUpdateManyArgs} args - Arguments to update one or more rows.
-     * @example
-     * // Update many IdempotencyKeys
-     * const idempotencyKey = await prisma.idempotencyKey.updateMany({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: {
-     *     // ... provide data here
-     *   }
-     * })
-     * 
-     */
-    updateMany<T extends IdempotencyKeyUpdateManyArgs>(args: SelectSubset<T, IdempotencyKeyUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Update zero or more IdempotencyKeys and returns the data updated in the database.
-     * @param {IdempotencyKeyUpdateManyAndReturnArgs} args - Arguments to update many IdempotencyKeys.
-     * @example
-     * // Update many IdempotencyKeys
-     * const idempotencyKey = await prisma.idempotencyKey.updateManyAndReturn({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Update zero or more IdempotencyKeys and only return the `id`
-     * const idempotencyKeyWithIdOnly = await prisma.idempotencyKey.updateManyAndReturn({
-     *   select: { id: true },
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    updateManyAndReturn<T extends IdempotencyKeyUpdateManyAndReturnArgs>(args: SelectSubset<T, IdempotencyKeyUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$IdempotencyKeyPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
-
-    /**
-     * Create or update one IdempotencyKey.
-     * @param {IdempotencyKeyUpsertArgs} args - Arguments to update or create a IdempotencyKey.
-     * @example
-     * // Update or create a IdempotencyKey
-     * const idempotencyKey = await prisma.idempotencyKey.upsert({
-     *   create: {
-     *     // ... data to create a IdempotencyKey
-     *   },
-     *   update: {
-     *     // ... in case it already exists, update
-     *   },
-     *   where: {
-     *     // ... the filter for the IdempotencyKey we want to update
-     *   }
-     * })
-     */
-    upsert<T extends IdempotencyKeyUpsertArgs>(args: SelectSubset<T, IdempotencyKeyUpsertArgs<ExtArgs>>): Prisma__IdempotencyKeyClient<$Result.GetResult<Prisma.$IdempotencyKeyPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-
-    /**
-     * Count the number of IdempotencyKeys.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {IdempotencyKeyCountArgs} args - Arguments to filter IdempotencyKeys to count.
-     * @example
-     * // Count the number of IdempotencyKeys
-     * const count = await prisma.idempotencyKey.count({
-     *   where: {
-     *     // ... the filter for the IdempotencyKeys we want to count
-     *   }
-     * })
-    **/
-    count<T extends IdempotencyKeyCountArgs>(
-      args?: Subset<T, IdempotencyKeyCountArgs>,
-    ): Prisma.PrismaPromise<
-      T extends $Utils.Record<'select', any>
-        ? T['select'] extends true
-          ? number
-          : GetScalarType<T['select'], IdempotencyKeyCountAggregateOutputType>
-        : number
-    >
-
-    /**
-     * Allows you to perform aggregations operations on a IdempotencyKey.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {IdempotencyKeyAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
-     * @example
-     * // Ordered by age ascending
-     * // Where email contains prisma.io
-     * // Limited to the 10 users
-     * const aggregations = await prisma.user.aggregate({
-     *   _avg: {
-     *     age: true,
-     *   },
-     *   where: {
-     *     email: {
-     *       contains: "prisma.io",
-     *     },
-     *   },
-     *   orderBy: {
-     *     age: "asc",
-     *   },
-     *   take: 10,
-     * })
-    **/
-    aggregate<T extends IdempotencyKeyAggregateArgs>(args: Subset<T, IdempotencyKeyAggregateArgs>): Prisma.PrismaPromise<GetIdempotencyKeyAggregateType<T>>
-
-    /**
-     * Group by IdempotencyKey.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {IdempotencyKeyGroupByArgs} args - Group by arguments.
-     * @example
-     * // Group by city, order by createdAt, get count
-     * const result = await prisma.user.groupBy({
-     *   by: ['city', 'createdAt'],
-     *   orderBy: {
-     *     createdAt: true
-     *   },
-     *   _count: {
-     *     _all: true
-     *   },
-     * })
-     * 
-    **/
-    groupBy<
-      T extends IdempotencyKeyGroupByArgs,
-      HasSelectOrTake extends Or<
-        Extends<'skip', Keys<T>>,
-        Extends<'take', Keys<T>>
-      >,
-      OrderByArg extends True extends HasSelectOrTake
-        ? { orderBy: IdempotencyKeyGroupByArgs['orderBy'] }
-        : { orderBy?: IdempotencyKeyGroupByArgs['orderBy'] },
-      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
-      ByFields extends MaybeTupleToUnion<T['by']>,
-      ByValid extends Has<ByFields, OrderFields>,
-      HavingFields extends GetHavingFields<T['having']>,
-      HavingValid extends Has<ByFields, HavingFields>,
-      ByEmpty extends T['by'] extends never[] ? True : False,
-      InputErrors extends ByEmpty extends True
-      ? `Error: "by" must not be empty.`
-      : HavingValid extends False
-      ? {
-          [P in HavingFields]: P extends ByFields
-            ? never
-            : P extends string
-            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
-            : [
-                Error,
-                'Field ',
-                P,
-                ` in "having" needs to be provided in "by"`,
-              ]
-        }[HavingFields]
-      : 'take' extends Keys<T>
-      ? 'orderBy' extends Keys<T>
-        ? ByValid extends True
-          ? {}
-          : {
-              [P in OrderFields]: P extends ByFields
-                ? never
-                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-            }[OrderFields]
-        : 'Error: If you provide "take", you also need to provide "orderBy"'
-      : 'skip' extends Keys<T>
-      ? 'orderBy' extends Keys<T>
-        ? ByValid extends True
-          ? {}
-          : {
-              [P in OrderFields]: P extends ByFields
-                ? never
-                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-            }[OrderFields]
-        : 'Error: If you provide "skip", you also need to provide "orderBy"'
-      : ByValid extends True
-      ? {}
-      : {
-          [P in OrderFields]: P extends ByFields
-            ? never
-            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-        }[OrderFields]
-    >(args: SubsetIntersection<T, IdempotencyKeyGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetIdempotencyKeyGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
-  /**
-   * Fields of the IdempotencyKey model
-   */
-  readonly fields: IdempotencyKeyFieldRefs;
-  }
-
-  /**
-   * The delegate class that acts as a "Promise-like" for IdempotencyKey.
-   * Why is this prefixed with `Prisma__`?
-   * Because we want to prevent naming conflicts as mentioned in
-   * https://github.com/prisma/prisma-client-js/issues/707
-   */
-  export interface Prisma__IdempotencyKeyClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
-    readonly [Symbol.toStringTag]: "PrismaPromise"
-    /**
-     * Attaches callbacks for the resolution and/or rejection of the Promise.
-     * @param onfulfilled The callback to execute when the Promise is resolved.
-     * @param onrejected The callback to execute when the Promise is rejected.
-     * @returns A Promise for the completion of which ever callback is executed.
-     */
-    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
-    /**
-     * Attaches a callback for only the rejection of the Promise.
-     * @param onrejected The callback to execute when the Promise is rejected.
-     * @returns A Promise for the completion of the callback.
-     */
-    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
-    /**
-     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
-     * resolved value cannot be modified from the callback.
-     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
-     * @returns A Promise for the completion of the callback.
-     */
-    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
-  }
-
-
-
-
-  /**
-   * Fields of the IdempotencyKey model
-   */
-  interface IdempotencyKeyFieldRefs {
-    readonly id: FieldRef<"IdempotencyKey", 'String'>
-    readonly key: FieldRef<"IdempotencyKey", 'String'>
-    readonly endpoint: FieldRef<"IdempotencyKey", 'String'>
-    readonly requestHash: FieldRef<"IdempotencyKey", 'String'>
-    readonly responseStatus: FieldRef<"IdempotencyKey", 'Int'>
-    readonly responseBody: FieldRef<"IdempotencyKey", 'Json'>
-    readonly createdAt: FieldRef<"IdempotencyKey", 'DateTime'>
-    readonly expiresAt: FieldRef<"IdempotencyKey", 'DateTime'>
-  }
-    
-
-  // Custom InputTypes
-  /**
-   * IdempotencyKey findUnique
-   */
-  export type IdempotencyKeyFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the IdempotencyKey
-     */
-    select?: IdempotencyKeySelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the IdempotencyKey
-     */
-    omit?: IdempotencyKeyOmit<ExtArgs> | null
-    /**
-     * Filter, which IdempotencyKey to fetch.
-     */
-    where: IdempotencyKeyWhereUniqueInput
-  }
-
-  /**
-   * IdempotencyKey findUniqueOrThrow
-   */
-  export type IdempotencyKeyFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the IdempotencyKey
-     */
-    select?: IdempotencyKeySelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the IdempotencyKey
-     */
-    omit?: IdempotencyKeyOmit<ExtArgs> | null
-    /**
-     * Filter, which IdempotencyKey to fetch.
-     */
-    where: IdempotencyKeyWhereUniqueInput
-  }
-
-  /**
-   * IdempotencyKey findFirst
-   */
-  export type IdempotencyKeyFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the IdempotencyKey
-     */
-    select?: IdempotencyKeySelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the IdempotencyKey
-     */
-    omit?: IdempotencyKeyOmit<ExtArgs> | null
-    /**
-     * Filter, which IdempotencyKey to fetch.
-     */
-    where?: IdempotencyKeyWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of IdempotencyKeys to fetch.
-     */
-    orderBy?: IdempotencyKeyOrderByWithRelationInput | IdempotencyKeyOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for searching for IdempotencyKeys.
-     */
-    cursor?: IdempotencyKeyWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` IdempotencyKeys from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` IdempotencyKeys.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-     * 
-     * Filter by unique combinations of IdempotencyKeys.
-     */
-    distinct?: IdempotencyKeyScalarFieldEnum | IdempotencyKeyScalarFieldEnum[]
-  }
-
-  /**
-   * IdempotencyKey findFirstOrThrow
-   */
-  export type IdempotencyKeyFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the IdempotencyKey
-     */
-    select?: IdempotencyKeySelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the IdempotencyKey
-     */
-    omit?: IdempotencyKeyOmit<ExtArgs> | null
-    /**
-     * Filter, which IdempotencyKey to fetch.
-     */
-    where?: IdempotencyKeyWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of IdempotencyKeys to fetch.
-     */
-    orderBy?: IdempotencyKeyOrderByWithRelationInput | IdempotencyKeyOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for searching for IdempotencyKeys.
-     */
-    cursor?: IdempotencyKeyWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` IdempotencyKeys from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` IdempotencyKeys.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-     * 
-     * Filter by unique combinations of IdempotencyKeys.
-     */
-    distinct?: IdempotencyKeyScalarFieldEnum | IdempotencyKeyScalarFieldEnum[]
-  }
-
-  /**
-   * IdempotencyKey findMany
-   */
-  export type IdempotencyKeyFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the IdempotencyKey
-     */
-    select?: IdempotencyKeySelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the IdempotencyKey
-     */
-    omit?: IdempotencyKeyOmit<ExtArgs> | null
-    /**
-     * Filter, which IdempotencyKeys to fetch.
-     */
-    where?: IdempotencyKeyWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of IdempotencyKeys to fetch.
-     */
-    orderBy?: IdempotencyKeyOrderByWithRelationInput | IdempotencyKeyOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for listing IdempotencyKeys.
-     */
-    cursor?: IdempotencyKeyWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` IdempotencyKeys from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` IdempotencyKeys.
-     */
-    skip?: number
-    distinct?: IdempotencyKeyScalarFieldEnum | IdempotencyKeyScalarFieldEnum[]
-  }
-
-  /**
-   * IdempotencyKey create
-   */
-  export type IdempotencyKeyCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the IdempotencyKey
-     */
-    select?: IdempotencyKeySelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the IdempotencyKey
-     */
-    omit?: IdempotencyKeyOmit<ExtArgs> | null
-    /**
-     * The data needed to create a IdempotencyKey.
-     */
-    data: XOR<IdempotencyKeyCreateInput, IdempotencyKeyUncheckedCreateInput>
-  }
-
-  /**
-   * IdempotencyKey createMany
-   */
-  export type IdempotencyKeyCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * The data used to create many IdempotencyKeys.
-     */
-    data: IdempotencyKeyCreateManyInput | IdempotencyKeyCreateManyInput[]
-    skipDuplicates?: boolean
-  }
-
-  /**
-   * IdempotencyKey createManyAndReturn
-   */
-  export type IdempotencyKeyCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the IdempotencyKey
-     */
-    select?: IdempotencyKeySelectCreateManyAndReturn<ExtArgs> | null
-    /**
-     * Omit specific fields from the IdempotencyKey
-     */
-    omit?: IdempotencyKeyOmit<ExtArgs> | null
-    /**
-     * The data used to create many IdempotencyKeys.
-     */
-    data: IdempotencyKeyCreateManyInput | IdempotencyKeyCreateManyInput[]
-    skipDuplicates?: boolean
-  }
-
-  /**
-   * IdempotencyKey update
-   */
-  export type IdempotencyKeyUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the IdempotencyKey
-     */
-    select?: IdempotencyKeySelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the IdempotencyKey
-     */
-    omit?: IdempotencyKeyOmit<ExtArgs> | null
-    /**
-     * The data needed to update a IdempotencyKey.
-     */
-    data: XOR<IdempotencyKeyUpdateInput, IdempotencyKeyUncheckedUpdateInput>
-    /**
-     * Choose, which IdempotencyKey to update.
-     */
-    where: IdempotencyKeyWhereUniqueInput
-  }
-
-  /**
-   * IdempotencyKey updateMany
-   */
-  export type IdempotencyKeyUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * The data used to update IdempotencyKeys.
-     */
-    data: XOR<IdempotencyKeyUpdateManyMutationInput, IdempotencyKeyUncheckedUpdateManyInput>
-    /**
-     * Filter which IdempotencyKeys to update
-     */
-    where?: IdempotencyKeyWhereInput
-    /**
-     * Limit how many IdempotencyKeys to update.
-     */
-    limit?: number
-  }
-
-  /**
-   * IdempotencyKey updateManyAndReturn
-   */
-  export type IdempotencyKeyUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the IdempotencyKey
-     */
-    select?: IdempotencyKeySelectUpdateManyAndReturn<ExtArgs> | null
-    /**
-     * Omit specific fields from the IdempotencyKey
-     */
-    omit?: IdempotencyKeyOmit<ExtArgs> | null
-    /**
-     * The data used to update IdempotencyKeys.
-     */
-    data: XOR<IdempotencyKeyUpdateManyMutationInput, IdempotencyKeyUncheckedUpdateManyInput>
-    /**
-     * Filter which IdempotencyKeys to update
-     */
-    where?: IdempotencyKeyWhereInput
-    /**
-     * Limit how many IdempotencyKeys to update.
-     */
-    limit?: number
-  }
-
-  /**
-   * IdempotencyKey upsert
-   */
-  export type IdempotencyKeyUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the IdempotencyKey
-     */
-    select?: IdempotencyKeySelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the IdempotencyKey
-     */
-    omit?: IdempotencyKeyOmit<ExtArgs> | null
-    /**
-     * The filter to search for the IdempotencyKey to update in case it exists.
-     */
-    where: IdempotencyKeyWhereUniqueInput
-    /**
-     * In case the IdempotencyKey found by the `where` argument doesn't exist, create a new IdempotencyKey with this data.
-     */
-    create: XOR<IdempotencyKeyCreateInput, IdempotencyKeyUncheckedCreateInput>
-    /**
-     * In case the IdempotencyKey was found with the provided `where` argument, update it with this data.
-     */
-    update: XOR<IdempotencyKeyUpdateInput, IdempotencyKeyUncheckedUpdateInput>
-  }
-
-  /**
-   * IdempotencyKey delete
-   */
-  export type IdempotencyKeyDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the IdempotencyKey
-     */
-    select?: IdempotencyKeySelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the IdempotencyKey
-     */
-    omit?: IdempotencyKeyOmit<ExtArgs> | null
-    /**
-     * Filter which IdempotencyKey to delete.
-     */
-    where: IdempotencyKeyWhereUniqueInput
-  }
-
-  /**
-   * IdempotencyKey deleteMany
-   */
-  export type IdempotencyKeyDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Filter which IdempotencyKeys to delete
-     */
-    where?: IdempotencyKeyWhereInput
-    /**
-     * Limit how many IdempotencyKeys to delete.
-     */
-    limit?: number
-  }
-
-  /**
-   * IdempotencyKey without action
-   */
-  export type IdempotencyKeyDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the IdempotencyKey
-     */
-    select?: IdempotencyKeySelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the IdempotencyKey
-     */
-    omit?: IdempotencyKeyOmit<ExtArgs> | null
-  }
-
-
-  /**
-   * Model TransactionLog
-   */
-
-  export type AggregateTransactionLog = {
-    _count: TransactionLogCountAggregateOutputType | null
-    _avg: TransactionLogAvgAggregateOutputType | null
-    _sum: TransactionLogSumAggregateOutputType | null
-    _min: TransactionLogMinAggregateOutputType | null
-    _max: TransactionLogMaxAggregateOutputType | null
-  }
-
-  export type TransactionLogAvgAggregateOutputType = {
-    blockHeight: number | null
-    slot: number | null
-  }
-
-  export type TransactionLogSumAggregateOutputType = {
-    blockHeight: bigint | null
-    slot: bigint | null
-  }
-
-  export type TransactionLogMinAggregateOutputType = {
-    id: string | null
-    agreementId: string | null
-    txId: string | null
-    operationType: string | null
-    blockHeight: bigint | null
-    slot: bigint | null
-    status: string | null
-    errorMessage: string | null
-    timestamp: Date | null
-  }
-
-  export type TransactionLogMaxAggregateOutputType = {
-    id: string | null
-    agreementId: string | null
-    txId: string | null
-    operationType: string | null
-    blockHeight: bigint | null
-    slot: bigint | null
-    status: string | null
-    errorMessage: string | null
-    timestamp: Date | null
-  }
-
-  export type TransactionLogCountAggregateOutputType = {
-    id: number
-    agreementId: number
-    txId: number
-    operationType: number
-    blockHeight: number
-    slot: number
-    status: number
-    errorMessage: number
-    timestamp: number
-    _all: number
-  }
-
-
-  export type TransactionLogAvgAggregateInputType = {
-    blockHeight?: true
-    slot?: true
-  }
-
-  export type TransactionLogSumAggregateInputType = {
-    blockHeight?: true
-    slot?: true
-  }
-
-  export type TransactionLogMinAggregateInputType = {
-    id?: true
-    agreementId?: true
-    txId?: true
-    operationType?: true
-    blockHeight?: true
-    slot?: true
-    status?: true
-    errorMessage?: true
-    timestamp?: true
-  }
-
-  export type TransactionLogMaxAggregateInputType = {
-    id?: true
-    agreementId?: true
-    txId?: true
-    operationType?: true
-    blockHeight?: true
-    slot?: true
-    status?: true
-    errorMessage?: true
-    timestamp?: true
-  }
-
-  export type TransactionLogCountAggregateInputType = {
-    id?: true
-    agreementId?: true
-    txId?: true
-    operationType?: true
-    blockHeight?: true
-    slot?: true
-    status?: true
-    errorMessage?: true
-    timestamp?: true
-    _all?: true
-  }
-
-  export type TransactionLogAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Filter which TransactionLog to aggregate.
-     */
-    where?: TransactionLogWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of TransactionLogs to fetch.
-     */
-    orderBy?: TransactionLogOrderByWithRelationInput | TransactionLogOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the start position
-     */
-    cursor?: TransactionLogWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` TransactionLogs from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` TransactionLogs.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Count returned TransactionLogs
-    **/
-    _count?: true | TransactionLogCountAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to average
-    **/
-    _avg?: TransactionLogAvgAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to sum
-    **/
-    _sum?: TransactionLogSumAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to find the minimum value
-    **/
-    _min?: TransactionLogMinAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to find the maximum value
-    **/
-    _max?: TransactionLogMaxAggregateInputType
-  }
-
-  export type GetTransactionLogAggregateType<T extends TransactionLogAggregateArgs> = {
-        [P in keyof T & keyof AggregateTransactionLog]: P extends '_count' | 'count'
-      ? T[P] extends true
-        ? number
-        : GetScalarType<T[P], AggregateTransactionLog[P]>
-      : GetScalarType<T[P], AggregateTransactionLog[P]>
-  }
-
-
-
-
-  export type TransactionLogGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: TransactionLogWhereInput
-    orderBy?: TransactionLogOrderByWithAggregationInput | TransactionLogOrderByWithAggregationInput[]
-    by: TransactionLogScalarFieldEnum[] | TransactionLogScalarFieldEnum
-    having?: TransactionLogScalarWhereWithAggregatesInput
-    take?: number
-    skip?: number
-    _count?: TransactionLogCountAggregateInputType | true
-    _avg?: TransactionLogAvgAggregateInputType
-    _sum?: TransactionLogSumAggregateInputType
-    _min?: TransactionLogMinAggregateInputType
-    _max?: TransactionLogMaxAggregateInputType
-  }
-
-  export type TransactionLogGroupByOutputType = {
-    id: string
-    agreementId: string | null
-    txId: string
-    operationType: string
-    blockHeight: bigint | null
-    slot: bigint | null
-    status: string
-    errorMessage: string | null
-    timestamp: Date
-    _count: TransactionLogCountAggregateOutputType | null
-    _avg: TransactionLogAvgAggregateOutputType | null
-    _sum: TransactionLogSumAggregateOutputType | null
-    _min: TransactionLogMinAggregateOutputType | null
-    _max: TransactionLogMaxAggregateOutputType | null
-  }
-
-  type GetTransactionLogGroupByPayload<T extends TransactionLogGroupByArgs> = Prisma.PrismaPromise<
-    Array<
-      PickEnumerable<TransactionLogGroupByOutputType, T['by']> &
-        {
-          [P in ((keyof T) & (keyof TransactionLogGroupByOutputType))]: P extends '_count'
-            ? T[P] extends boolean
-              ? number
-              : GetScalarType<T[P], TransactionLogGroupByOutputType[P]>
-            : GetScalarType<T[P], TransactionLogGroupByOutputType[P]>
-        }
-      >
-    >
-
-
-  export type TransactionLogSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    id?: boolean
-    agreementId?: boolean
-    txId?: boolean
-    operationType?: boolean
-    blockHeight?: boolean
-    slot?: boolean
-    status?: boolean
-    errorMessage?: boolean
-    timestamp?: boolean
-  }, ExtArgs["result"]["transactionLog"]>
-
-  export type TransactionLogSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    id?: boolean
-    agreementId?: boolean
-    txId?: boolean
-    operationType?: boolean
-    blockHeight?: boolean
-    slot?: boolean
-    status?: boolean
-    errorMessage?: boolean
-    timestamp?: boolean
-  }, ExtArgs["result"]["transactionLog"]>
-
-  export type TransactionLogSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    id?: boolean
-    agreementId?: boolean
-    txId?: boolean
-    operationType?: boolean
-    blockHeight?: boolean
-    slot?: boolean
-    status?: boolean
-    errorMessage?: boolean
-    timestamp?: boolean
-  }, ExtArgs["result"]["transactionLog"]>
-
-  export type TransactionLogSelectScalar = {
-    id?: boolean
-    agreementId?: boolean
-    txId?: boolean
-    operationType?: boolean
-    blockHeight?: boolean
-    slot?: boolean
-    status?: boolean
-    errorMessage?: boolean
-    timestamp?: boolean
-  }
-
-  export type TransactionLogOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "agreementId" | "txId" | "operationType" | "blockHeight" | "slot" | "status" | "errorMessage" | "timestamp", ExtArgs["result"]["transactionLog"]>
-
-  export type $TransactionLogPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    name: "TransactionLog"
-    objects: {}
-    scalars: $Extensions.GetPayloadResult<{
-      id: string
-      agreementId: string | null
-      txId: string
-      operationType: string
-      blockHeight: bigint | null
-      slot: bigint | null
-      status: string
-      errorMessage: string | null
-      timestamp: Date
-    }, ExtArgs["result"]["transactionLog"]>
-    composites: {}
-  }
-
-  type TransactionLogGetPayload<S extends boolean | null | undefined | TransactionLogDefaultArgs> = $Result.GetResult<Prisma.$TransactionLogPayload, S>
-
-  type TransactionLogCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
-    Omit<TransactionLogFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
-      select?: TransactionLogCountAggregateInputType | true
-    }
-
-  export interface TransactionLogDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
-    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['TransactionLog'], meta: { name: 'TransactionLog' } }
-    /**
-     * Find zero or one TransactionLog that matches the filter.
-     * @param {TransactionLogFindUniqueArgs} args - Arguments to find a TransactionLog
-     * @example
-     * // Get one TransactionLog
-     * const transactionLog = await prisma.transactionLog.findUnique({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findUnique<T extends TransactionLogFindUniqueArgs>(args: SelectSubset<T, TransactionLogFindUniqueArgs<ExtArgs>>): Prisma__TransactionLogClient<$Result.GetResult<Prisma.$TransactionLogPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find one TransactionLog that matches the filter or throw an error with `error.code='P2025'`
-     * if no matches were found.
-     * @param {TransactionLogFindUniqueOrThrowArgs} args - Arguments to find a TransactionLog
-     * @example
-     * // Get one TransactionLog
-     * const transactionLog = await prisma.transactionLog.findUniqueOrThrow({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findUniqueOrThrow<T extends TransactionLogFindUniqueOrThrowArgs>(args: SelectSubset<T, TransactionLogFindUniqueOrThrowArgs<ExtArgs>>): Prisma__TransactionLogClient<$Result.GetResult<Prisma.$TransactionLogPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find the first TransactionLog that matches the filter.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {TransactionLogFindFirstArgs} args - Arguments to find a TransactionLog
-     * @example
-     * // Get one TransactionLog
-     * const transactionLog = await prisma.transactionLog.findFirst({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findFirst<T extends TransactionLogFindFirstArgs>(args?: SelectSubset<T, TransactionLogFindFirstArgs<ExtArgs>>): Prisma__TransactionLogClient<$Result.GetResult<Prisma.$TransactionLogPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find the first TransactionLog that matches the filter or
-     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {TransactionLogFindFirstOrThrowArgs} args - Arguments to find a TransactionLog
-     * @example
-     * // Get one TransactionLog
-     * const transactionLog = await prisma.transactionLog.findFirstOrThrow({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findFirstOrThrow<T extends TransactionLogFindFirstOrThrowArgs>(args?: SelectSubset<T, TransactionLogFindFirstOrThrowArgs<ExtArgs>>): Prisma__TransactionLogClient<$Result.GetResult<Prisma.$TransactionLogPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find zero or more TransactionLogs that matches the filter.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {TransactionLogFindManyArgs} args - Arguments to filter and select certain fields only.
-     * @example
-     * // Get all TransactionLogs
-     * const transactionLogs = await prisma.transactionLog.findMany()
-     * 
-     * // Get first 10 TransactionLogs
-     * const transactionLogs = await prisma.transactionLog.findMany({ take: 10 })
-     * 
-     * // Only select the `id`
-     * const transactionLogWithIdOnly = await prisma.transactionLog.findMany({ select: { id: true } })
-     * 
-     */
-    findMany<T extends TransactionLogFindManyArgs>(args?: SelectSubset<T, TransactionLogFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TransactionLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
-
-    /**
-     * Create a TransactionLog.
-     * @param {TransactionLogCreateArgs} args - Arguments to create a TransactionLog.
-     * @example
-     * // Create one TransactionLog
-     * const TransactionLog = await prisma.transactionLog.create({
-     *   data: {
-     *     // ... data to create a TransactionLog
-     *   }
-     * })
-     * 
-     */
-    create<T extends TransactionLogCreateArgs>(args: SelectSubset<T, TransactionLogCreateArgs<ExtArgs>>): Prisma__TransactionLogClient<$Result.GetResult<Prisma.$TransactionLogPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Create many TransactionLogs.
-     * @param {TransactionLogCreateManyArgs} args - Arguments to create many TransactionLogs.
-     * @example
-     * // Create many TransactionLogs
-     * const transactionLog = await prisma.transactionLog.createMany({
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     *     
-     */
-    createMany<T extends TransactionLogCreateManyArgs>(args?: SelectSubset<T, TransactionLogCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Create many TransactionLogs and returns the data saved in the database.
-     * @param {TransactionLogCreateManyAndReturnArgs} args - Arguments to create many TransactionLogs.
-     * @example
-     * // Create many TransactionLogs
-     * const transactionLog = await prisma.transactionLog.createManyAndReturn({
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Create many TransactionLogs and only return the `id`
-     * const transactionLogWithIdOnly = await prisma.transactionLog.createManyAndReturn({
-     *   select: { id: true },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    createManyAndReturn<T extends TransactionLogCreateManyAndReturnArgs>(args?: SelectSubset<T, TransactionLogCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TransactionLogPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
-
-    /**
-     * Delete a TransactionLog.
-     * @param {TransactionLogDeleteArgs} args - Arguments to delete one TransactionLog.
-     * @example
-     * // Delete one TransactionLog
-     * const TransactionLog = await prisma.transactionLog.delete({
-     *   where: {
-     *     // ... filter to delete one TransactionLog
-     *   }
-     * })
-     * 
-     */
-    delete<T extends TransactionLogDeleteArgs>(args: SelectSubset<T, TransactionLogDeleteArgs<ExtArgs>>): Prisma__TransactionLogClient<$Result.GetResult<Prisma.$TransactionLogPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Update one TransactionLog.
-     * @param {TransactionLogUpdateArgs} args - Arguments to update one TransactionLog.
-     * @example
-     * // Update one TransactionLog
-     * const transactionLog = await prisma.transactionLog.update({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: {
-     *     // ... provide data here
-     *   }
-     * })
-     * 
-     */
-    update<T extends TransactionLogUpdateArgs>(args: SelectSubset<T, TransactionLogUpdateArgs<ExtArgs>>): Prisma__TransactionLogClient<$Result.GetResult<Prisma.$TransactionLogPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Delete zero or more TransactionLogs.
-     * @param {TransactionLogDeleteManyArgs} args - Arguments to filter TransactionLogs to delete.
-     * @example
-     * // Delete a few TransactionLogs
-     * const { count } = await prisma.transactionLog.deleteMany({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     * 
-     */
-    deleteMany<T extends TransactionLogDeleteManyArgs>(args?: SelectSubset<T, TransactionLogDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Update zero or more TransactionLogs.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {TransactionLogUpdateManyArgs} args - Arguments to update one or more rows.
-     * @example
-     * // Update many TransactionLogs
-     * const transactionLog = await prisma.transactionLog.updateMany({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: {
-     *     // ... provide data here
-     *   }
-     * })
-     * 
-     */
-    updateMany<T extends TransactionLogUpdateManyArgs>(args: SelectSubset<T, TransactionLogUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Update zero or more TransactionLogs and returns the data updated in the database.
-     * @param {TransactionLogUpdateManyAndReturnArgs} args - Arguments to update many TransactionLogs.
-     * @example
-     * // Update many TransactionLogs
-     * const transactionLog = await prisma.transactionLog.updateManyAndReturn({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Update zero or more TransactionLogs and only return the `id`
-     * const transactionLogWithIdOnly = await prisma.transactionLog.updateManyAndReturn({
-     *   select: { id: true },
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    updateManyAndReturn<T extends TransactionLogUpdateManyAndReturnArgs>(args: SelectSubset<T, TransactionLogUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TransactionLogPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
-
-    /**
-     * Create or update one TransactionLog.
-     * @param {TransactionLogUpsertArgs} args - Arguments to update or create a TransactionLog.
-     * @example
-     * // Update or create a TransactionLog
-     * const transactionLog = await prisma.transactionLog.upsert({
-     *   create: {
-     *     // ... data to create a TransactionLog
-     *   },
-     *   update: {
-     *     // ... in case it already exists, update
-     *   },
-     *   where: {
-     *     // ... the filter for the TransactionLog we want to update
-     *   }
-     * })
-     */
-    upsert<T extends TransactionLogUpsertArgs>(args: SelectSubset<T, TransactionLogUpsertArgs<ExtArgs>>): Prisma__TransactionLogClient<$Result.GetResult<Prisma.$TransactionLogPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-
-    /**
-     * Count the number of TransactionLogs.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {TransactionLogCountArgs} args - Arguments to filter TransactionLogs to count.
-     * @example
-     * // Count the number of TransactionLogs
-     * const count = await prisma.transactionLog.count({
-     *   where: {
-     *     // ... the filter for the TransactionLogs we want to count
-     *   }
-     * })
-    **/
-    count<T extends TransactionLogCountArgs>(
-      args?: Subset<T, TransactionLogCountArgs>,
-    ): Prisma.PrismaPromise<
-      T extends $Utils.Record<'select', any>
-        ? T['select'] extends true
-          ? number
-          : GetScalarType<T['select'], TransactionLogCountAggregateOutputType>
-        : number
-    >
-
-    /**
-     * Allows you to perform aggregations operations on a TransactionLog.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {TransactionLogAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
-     * @example
-     * // Ordered by age ascending
-     * // Where email contains prisma.io
-     * // Limited to the 10 users
-     * const aggregations = await prisma.user.aggregate({
-     *   _avg: {
-     *     age: true,
-     *   },
-     *   where: {
-     *     email: {
-     *       contains: "prisma.io",
-     *     },
-     *   },
-     *   orderBy: {
-     *     age: "asc",
-     *   },
-     *   take: 10,
-     * })
-    **/
-    aggregate<T extends TransactionLogAggregateArgs>(args: Subset<T, TransactionLogAggregateArgs>): Prisma.PrismaPromise<GetTransactionLogAggregateType<T>>
-
-    /**
-     * Group by TransactionLog.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {TransactionLogGroupByArgs} args - Group by arguments.
-     * @example
-     * // Group by city, order by createdAt, get count
-     * const result = await prisma.user.groupBy({
-     *   by: ['city', 'createdAt'],
-     *   orderBy: {
-     *     createdAt: true
-     *   },
-     *   _count: {
-     *     _all: true
-     *   },
-     * })
-     * 
-    **/
-    groupBy<
-      T extends TransactionLogGroupByArgs,
-      HasSelectOrTake extends Or<
-        Extends<'skip', Keys<T>>,
-        Extends<'take', Keys<T>>
-      >,
-      OrderByArg extends True extends HasSelectOrTake
-        ? { orderBy: TransactionLogGroupByArgs['orderBy'] }
-        : { orderBy?: TransactionLogGroupByArgs['orderBy'] },
-      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
-      ByFields extends MaybeTupleToUnion<T['by']>,
-      ByValid extends Has<ByFields, OrderFields>,
-      HavingFields extends GetHavingFields<T['having']>,
-      HavingValid extends Has<ByFields, HavingFields>,
-      ByEmpty extends T['by'] extends never[] ? True : False,
-      InputErrors extends ByEmpty extends True
-      ? `Error: "by" must not be empty.`
-      : HavingValid extends False
-      ? {
-          [P in HavingFields]: P extends ByFields
-            ? never
-            : P extends string
-            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
-            : [
-                Error,
-                'Field ',
-                P,
-                ` in "having" needs to be provided in "by"`,
-              ]
-        }[HavingFields]
-      : 'take' extends Keys<T>
-      ? 'orderBy' extends Keys<T>
-        ? ByValid extends True
-          ? {}
-          : {
-              [P in OrderFields]: P extends ByFields
-                ? never
-                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-            }[OrderFields]
-        : 'Error: If you provide "take", you also need to provide "orderBy"'
-      : 'skip' extends Keys<T>
-      ? 'orderBy' extends Keys<T>
-        ? ByValid extends True
-          ? {}
-          : {
-              [P in OrderFields]: P extends ByFields
-                ? never
-                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-            }[OrderFields]
-        : 'Error: If you provide "skip", you also need to provide "orderBy"'
-      : ByValid extends True
-      ? {}
-      : {
-          [P in OrderFields]: P extends ByFields
-            ? never
-            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-        }[OrderFields]
-    >(args: SubsetIntersection<T, TransactionLogGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetTransactionLogGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
-  /**
-   * Fields of the TransactionLog model
-   */
-  readonly fields: TransactionLogFieldRefs;
-  }
-
-  /**
-   * The delegate class that acts as a "Promise-like" for TransactionLog.
-   * Why is this prefixed with `Prisma__`?
-   * Because we want to prevent naming conflicts as mentioned in
-   * https://github.com/prisma/prisma-client-js/issues/707
-   */
-  export interface Prisma__TransactionLogClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
-    readonly [Symbol.toStringTag]: "PrismaPromise"
-    /**
-     * Attaches callbacks for the resolution and/or rejection of the Promise.
-     * @param onfulfilled The callback to execute when the Promise is resolved.
-     * @param onrejected The callback to execute when the Promise is rejected.
-     * @returns A Promise for the completion of which ever callback is executed.
-     */
-    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
-    /**
-     * Attaches a callback for only the rejection of the Promise.
-     * @param onrejected The callback to execute when the Promise is rejected.
-     * @returns A Promise for the completion of the callback.
-     */
-    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
-    /**
-     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
-     * resolved value cannot be modified from the callback.
-     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
-     * @returns A Promise for the completion of the callback.
-     */
-    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
-  }
-
-
-
-
-  /**
-   * Fields of the TransactionLog model
-   */
-  interface TransactionLogFieldRefs {
-    readonly id: FieldRef<"TransactionLog", 'String'>
-    readonly agreementId: FieldRef<"TransactionLog", 'String'>
-    readonly txId: FieldRef<"TransactionLog", 'String'>
-    readonly operationType: FieldRef<"TransactionLog", 'String'>
-    readonly blockHeight: FieldRef<"TransactionLog", 'BigInt'>
-    readonly slot: FieldRef<"TransactionLog", 'BigInt'>
-    readonly status: FieldRef<"TransactionLog", 'String'>
-    readonly errorMessage: FieldRef<"TransactionLog", 'String'>
-    readonly timestamp: FieldRef<"TransactionLog", 'DateTime'>
-  }
-    
-
-  // Custom InputTypes
-  /**
-   * TransactionLog findUnique
-   */
-  export type TransactionLogFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the TransactionLog
-     */
-    select?: TransactionLogSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the TransactionLog
-     */
-    omit?: TransactionLogOmit<ExtArgs> | null
-    /**
-     * Filter, which TransactionLog to fetch.
-     */
-    where: TransactionLogWhereUniqueInput
-  }
-
-  /**
-   * TransactionLog findUniqueOrThrow
-   */
-  export type TransactionLogFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the TransactionLog
-     */
-    select?: TransactionLogSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the TransactionLog
-     */
-    omit?: TransactionLogOmit<ExtArgs> | null
-    /**
-     * Filter, which TransactionLog to fetch.
-     */
-    where: TransactionLogWhereUniqueInput
-  }
-
-  /**
-   * TransactionLog findFirst
-   */
-  export type TransactionLogFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the TransactionLog
-     */
-    select?: TransactionLogSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the TransactionLog
-     */
-    omit?: TransactionLogOmit<ExtArgs> | null
-    /**
-     * Filter, which TransactionLog to fetch.
-     */
-    where?: TransactionLogWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of TransactionLogs to fetch.
-     */
-    orderBy?: TransactionLogOrderByWithRelationInput | TransactionLogOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for searching for TransactionLogs.
-     */
-    cursor?: TransactionLogWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` TransactionLogs from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` TransactionLogs.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-     * 
-     * Filter by unique combinations of TransactionLogs.
-     */
-    distinct?: TransactionLogScalarFieldEnum | TransactionLogScalarFieldEnum[]
-  }
-
-  /**
-   * TransactionLog findFirstOrThrow
-   */
-  export type TransactionLogFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the TransactionLog
-     */
-    select?: TransactionLogSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the TransactionLog
-     */
-    omit?: TransactionLogOmit<ExtArgs> | null
-    /**
-     * Filter, which TransactionLog to fetch.
-     */
-    where?: TransactionLogWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of TransactionLogs to fetch.
-     */
-    orderBy?: TransactionLogOrderByWithRelationInput | TransactionLogOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for searching for TransactionLogs.
-     */
-    cursor?: TransactionLogWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` TransactionLogs from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` TransactionLogs.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-     * 
-     * Filter by unique combinations of TransactionLogs.
-     */
-    distinct?: TransactionLogScalarFieldEnum | TransactionLogScalarFieldEnum[]
-  }
-
-  /**
-   * TransactionLog findMany
-   */
-  export type TransactionLogFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the TransactionLog
-     */
-    select?: TransactionLogSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the TransactionLog
-     */
-    omit?: TransactionLogOmit<ExtArgs> | null
-    /**
-     * Filter, which TransactionLogs to fetch.
-     */
-    where?: TransactionLogWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of TransactionLogs to fetch.
-     */
-    orderBy?: TransactionLogOrderByWithRelationInput | TransactionLogOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for listing TransactionLogs.
-     */
-    cursor?: TransactionLogWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` TransactionLogs from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` TransactionLogs.
-     */
-    skip?: number
-    distinct?: TransactionLogScalarFieldEnum | TransactionLogScalarFieldEnum[]
-  }
-
-  /**
-   * TransactionLog create
-   */
-  export type TransactionLogCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the TransactionLog
-     */
-    select?: TransactionLogSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the TransactionLog
-     */
-    omit?: TransactionLogOmit<ExtArgs> | null
-    /**
-     * The data needed to create a TransactionLog.
-     */
-    data: XOR<TransactionLogCreateInput, TransactionLogUncheckedCreateInput>
-  }
-
-  /**
-   * TransactionLog createMany
-   */
-  export type TransactionLogCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * The data used to create many TransactionLogs.
-     */
-    data: TransactionLogCreateManyInput | TransactionLogCreateManyInput[]
-    skipDuplicates?: boolean
-  }
-
-  /**
-   * TransactionLog createManyAndReturn
-   */
-  export type TransactionLogCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the TransactionLog
-     */
-    select?: TransactionLogSelectCreateManyAndReturn<ExtArgs> | null
-    /**
-     * Omit specific fields from the TransactionLog
-     */
-    omit?: TransactionLogOmit<ExtArgs> | null
-    /**
-     * The data used to create many TransactionLogs.
-     */
-    data: TransactionLogCreateManyInput | TransactionLogCreateManyInput[]
-    skipDuplicates?: boolean
-  }
-
-  /**
-   * TransactionLog update
-   */
-  export type TransactionLogUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the TransactionLog
-     */
-    select?: TransactionLogSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the TransactionLog
-     */
-    omit?: TransactionLogOmit<ExtArgs> | null
-    /**
-     * The data needed to update a TransactionLog.
-     */
-    data: XOR<TransactionLogUpdateInput, TransactionLogUncheckedUpdateInput>
-    /**
-     * Choose, which TransactionLog to update.
-     */
-    where: TransactionLogWhereUniqueInput
-  }
-
-  /**
-   * TransactionLog updateMany
-   */
-  export type TransactionLogUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * The data used to update TransactionLogs.
-     */
-    data: XOR<TransactionLogUpdateManyMutationInput, TransactionLogUncheckedUpdateManyInput>
-    /**
-     * Filter which TransactionLogs to update
-     */
-    where?: TransactionLogWhereInput
-    /**
-     * Limit how many TransactionLogs to update.
-     */
-    limit?: number
-  }
-
-  /**
-   * TransactionLog updateManyAndReturn
-   */
-  export type TransactionLogUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the TransactionLog
-     */
-    select?: TransactionLogSelectUpdateManyAndReturn<ExtArgs> | null
-    /**
-     * Omit specific fields from the TransactionLog
-     */
-    omit?: TransactionLogOmit<ExtArgs> | null
-    /**
-     * The data used to update TransactionLogs.
-     */
-    data: XOR<TransactionLogUpdateManyMutationInput, TransactionLogUncheckedUpdateManyInput>
-    /**
-     * Filter which TransactionLogs to update
-     */
-    where?: TransactionLogWhereInput
-    /**
-     * Limit how many TransactionLogs to update.
-     */
-    limit?: number
-  }
-
-  /**
-   * TransactionLog upsert
-   */
-  export type TransactionLogUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the TransactionLog
-     */
-    select?: TransactionLogSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the TransactionLog
-     */
-    omit?: TransactionLogOmit<ExtArgs> | null
-    /**
-     * The filter to search for the TransactionLog to update in case it exists.
-     */
-    where: TransactionLogWhereUniqueInput
-    /**
-     * In case the TransactionLog found by the `where` argument doesn't exist, create a new TransactionLog with this data.
-     */
-    create: XOR<TransactionLogCreateInput, TransactionLogUncheckedCreateInput>
-    /**
-     * In case the TransactionLog was found with the provided `where` argument, update it with this data.
-     */
-    update: XOR<TransactionLogUpdateInput, TransactionLogUncheckedUpdateInput>
-  }
-
-  /**
-   * TransactionLog delete
-   */
-  export type TransactionLogDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the TransactionLog
-     */
-    select?: TransactionLogSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the TransactionLog
-     */
-    omit?: TransactionLogOmit<ExtArgs> | null
-    /**
-     * Filter which TransactionLog to delete.
-     */
-    where: TransactionLogWhereUniqueInput
-  }
-
-  /**
-   * TransactionLog deleteMany
-   */
-  export type TransactionLogDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Filter which TransactionLogs to delete
-     */
-    where?: TransactionLogWhereInput
-    /**
-     * Limit how many TransactionLogs to delete.
-     */
-    limit?: number
-  }
-
-  /**
-   * TransactionLog without action
-   */
-  export type TransactionLogDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the TransactionLog
-     */
-    select?: TransactionLogSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the TransactionLog
-     */
-    omit?: TransactionLogOmit<ExtArgs> | null
-  }
-
-
-  /**
    * Enums
    */
 
@@ -9971,6 +9971,20 @@ export namespace Prisma {
   export type DepositScalarFieldEnum = (typeof DepositScalarFieldEnum)[keyof typeof DepositScalarFieldEnum]
 
 
+  export const IdempotencyKeyScalarFieldEnum: {
+    id: 'id',
+    key: 'key',
+    endpoint: 'endpoint',
+    requestHash: 'requestHash',
+    responseStatus: 'responseStatus',
+    responseBody: 'responseBody',
+    createdAt: 'createdAt',
+    expiresAt: 'expiresAt'
+  };
+
+  export type IdempotencyKeyScalarFieldEnum = (typeof IdempotencyKeyScalarFieldEnum)[keyof typeof IdempotencyKeyScalarFieldEnum]
+
+
   export const SettlementScalarFieldEnum: {
     id: 'id',
     agreementId: 'agreementId',
@@ -10012,6 +10026,21 @@ export namespace Prisma {
   export type ReceiptScalarFieldEnum = (typeof ReceiptScalarFieldEnum)[keyof typeof ReceiptScalarFieldEnum]
 
 
+  export const TransactionLogScalarFieldEnum: {
+    id: 'id',
+    agreementId: 'agreementId',
+    txId: 'txId',
+    operationType: 'operationType',
+    blockHeight: 'blockHeight',
+    slot: 'slot',
+    status: 'status',
+    errorMessage: 'errorMessage',
+    timestamp: 'timestamp'
+  };
+
+  export type TransactionLogScalarFieldEnum = (typeof TransactionLogScalarFieldEnum)[keyof typeof TransactionLogScalarFieldEnum]
+
+
   export const WebhookScalarFieldEnum: {
     id: 'id',
     agreementId: 'agreementId',
@@ -10031,35 +10060,6 @@ export namespace Prisma {
   };
 
   export type WebhookScalarFieldEnum = (typeof WebhookScalarFieldEnum)[keyof typeof WebhookScalarFieldEnum]
-
-
-  export const IdempotencyKeyScalarFieldEnum: {
-    id: 'id',
-    key: 'key',
-    endpoint: 'endpoint',
-    requestHash: 'requestHash',
-    responseStatus: 'responseStatus',
-    responseBody: 'responseBody',
-    createdAt: 'createdAt',
-    expiresAt: 'expiresAt'
-  };
-
-  export type IdempotencyKeyScalarFieldEnum = (typeof IdempotencyKeyScalarFieldEnum)[keyof typeof IdempotencyKeyScalarFieldEnum]
-
-
-  export const TransactionLogScalarFieldEnum: {
-    id: 'id',
-    agreementId: 'agreementId',
-    txId: 'txId',
-    operationType: 'operationType',
-    blockHeight: 'blockHeight',
-    slot: 'slot',
-    status: 'status',
-    errorMessage: 'errorMessage',
-    timestamp: 'timestamp'
-  };
-
-  export type TransactionLogScalarFieldEnum = (typeof TransactionLogScalarFieldEnum)[keyof typeof TransactionLogScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -10526,6 +10526,75 @@ export namespace Prisma {
     confirmedAt?: DateTimeNullableWithAggregatesFilter<"Deposit"> | Date | string | null
   }
 
+  export type IdempotencyKeyWhereInput = {
+    AND?: IdempotencyKeyWhereInput | IdempotencyKeyWhereInput[]
+    OR?: IdempotencyKeyWhereInput[]
+    NOT?: IdempotencyKeyWhereInput | IdempotencyKeyWhereInput[]
+    id?: StringFilter<"IdempotencyKey"> | string
+    key?: StringFilter<"IdempotencyKey"> | string
+    endpoint?: StringFilter<"IdempotencyKey"> | string
+    requestHash?: StringFilter<"IdempotencyKey"> | string
+    responseStatus?: IntFilter<"IdempotencyKey"> | number
+    responseBody?: JsonFilter<"IdempotencyKey">
+    createdAt?: DateTimeFilter<"IdempotencyKey"> | Date | string
+    expiresAt?: DateTimeFilter<"IdempotencyKey"> | Date | string
+  }
+
+  export type IdempotencyKeyOrderByWithRelationInput = {
+    id?: SortOrder
+    key?: SortOrder
+    endpoint?: SortOrder
+    requestHash?: SortOrder
+    responseStatus?: SortOrder
+    responseBody?: SortOrder
+    createdAt?: SortOrder
+    expiresAt?: SortOrder
+  }
+
+  export type IdempotencyKeyWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    key?: string
+    AND?: IdempotencyKeyWhereInput | IdempotencyKeyWhereInput[]
+    OR?: IdempotencyKeyWhereInput[]
+    NOT?: IdempotencyKeyWhereInput | IdempotencyKeyWhereInput[]
+    endpoint?: StringFilter<"IdempotencyKey"> | string
+    requestHash?: StringFilter<"IdempotencyKey"> | string
+    responseStatus?: IntFilter<"IdempotencyKey"> | number
+    responseBody?: JsonFilter<"IdempotencyKey">
+    createdAt?: DateTimeFilter<"IdempotencyKey"> | Date | string
+    expiresAt?: DateTimeFilter<"IdempotencyKey"> | Date | string
+  }, "id" | "key">
+
+  export type IdempotencyKeyOrderByWithAggregationInput = {
+    id?: SortOrder
+    key?: SortOrder
+    endpoint?: SortOrder
+    requestHash?: SortOrder
+    responseStatus?: SortOrder
+    responseBody?: SortOrder
+    createdAt?: SortOrder
+    expiresAt?: SortOrder
+    _count?: IdempotencyKeyCountOrderByAggregateInput
+    _avg?: IdempotencyKeyAvgOrderByAggregateInput
+    _max?: IdempotencyKeyMaxOrderByAggregateInput
+    _min?: IdempotencyKeyMinOrderByAggregateInput
+    _sum?: IdempotencyKeySumOrderByAggregateInput
+  }
+
+  export type IdempotencyKeyScalarWhereWithAggregatesInput = {
+    AND?: IdempotencyKeyScalarWhereWithAggregatesInput | IdempotencyKeyScalarWhereWithAggregatesInput[]
+    OR?: IdempotencyKeyScalarWhereWithAggregatesInput[]
+    NOT?: IdempotencyKeyScalarWhereWithAggregatesInput | IdempotencyKeyScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"IdempotencyKey"> | string
+    key?: StringWithAggregatesFilter<"IdempotencyKey"> | string
+    endpoint?: StringWithAggregatesFilter<"IdempotencyKey"> | string
+    requestHash?: StringWithAggregatesFilter<"IdempotencyKey"> | string
+    responseStatus?: IntWithAggregatesFilter<"IdempotencyKey"> | number
+    responseBody?: JsonWithAggregatesFilter<"IdempotencyKey">
+    createdAt?: DateTimeWithAggregatesFilter<"IdempotencyKey"> | Date | string
+    expiresAt?: DateTimeWithAggregatesFilter<"IdempotencyKey"> | Date | string
+  }
+
   export type SettlementWhereInput = {
     AND?: SettlementWhereInput | SettlementWhereInput[]
     OR?: SettlementWhereInput[]
@@ -10735,6 +10804,80 @@ export namespace Prisma {
     generatedAt?: DateTimeWithAggregatesFilter<"Receipt"> | Date | string
   }
 
+  export type TransactionLogWhereInput = {
+    AND?: TransactionLogWhereInput | TransactionLogWhereInput[]
+    OR?: TransactionLogWhereInput[]
+    NOT?: TransactionLogWhereInput | TransactionLogWhereInput[]
+    id?: StringFilter<"TransactionLog"> | string
+    agreementId?: StringNullableFilter<"TransactionLog"> | string | null
+    txId?: StringFilter<"TransactionLog"> | string
+    operationType?: StringFilter<"TransactionLog"> | string
+    blockHeight?: BigIntNullableFilter<"TransactionLog"> | bigint | number | null
+    slot?: BigIntNullableFilter<"TransactionLog"> | bigint | number | null
+    status?: StringFilter<"TransactionLog"> | string
+    errorMessage?: StringNullableFilter<"TransactionLog"> | string | null
+    timestamp?: DateTimeFilter<"TransactionLog"> | Date | string
+  }
+
+  export type TransactionLogOrderByWithRelationInput = {
+    id?: SortOrder
+    agreementId?: SortOrderInput | SortOrder
+    txId?: SortOrder
+    operationType?: SortOrder
+    blockHeight?: SortOrderInput | SortOrder
+    slot?: SortOrderInput | SortOrder
+    status?: SortOrder
+    errorMessage?: SortOrderInput | SortOrder
+    timestamp?: SortOrder
+  }
+
+  export type TransactionLogWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    txId?: string
+    AND?: TransactionLogWhereInput | TransactionLogWhereInput[]
+    OR?: TransactionLogWhereInput[]
+    NOT?: TransactionLogWhereInput | TransactionLogWhereInput[]
+    agreementId?: StringNullableFilter<"TransactionLog"> | string | null
+    operationType?: StringFilter<"TransactionLog"> | string
+    blockHeight?: BigIntNullableFilter<"TransactionLog"> | bigint | number | null
+    slot?: BigIntNullableFilter<"TransactionLog"> | bigint | number | null
+    status?: StringFilter<"TransactionLog"> | string
+    errorMessage?: StringNullableFilter<"TransactionLog"> | string | null
+    timestamp?: DateTimeFilter<"TransactionLog"> | Date | string
+  }, "id" | "txId">
+
+  export type TransactionLogOrderByWithAggregationInput = {
+    id?: SortOrder
+    agreementId?: SortOrderInput | SortOrder
+    txId?: SortOrder
+    operationType?: SortOrder
+    blockHeight?: SortOrderInput | SortOrder
+    slot?: SortOrderInput | SortOrder
+    status?: SortOrder
+    errorMessage?: SortOrderInput | SortOrder
+    timestamp?: SortOrder
+    _count?: TransactionLogCountOrderByAggregateInput
+    _avg?: TransactionLogAvgOrderByAggregateInput
+    _max?: TransactionLogMaxOrderByAggregateInput
+    _min?: TransactionLogMinOrderByAggregateInput
+    _sum?: TransactionLogSumOrderByAggregateInput
+  }
+
+  export type TransactionLogScalarWhereWithAggregatesInput = {
+    AND?: TransactionLogScalarWhereWithAggregatesInput | TransactionLogScalarWhereWithAggregatesInput[]
+    OR?: TransactionLogScalarWhereWithAggregatesInput[]
+    NOT?: TransactionLogScalarWhereWithAggregatesInput | TransactionLogScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"TransactionLog"> | string
+    agreementId?: StringNullableWithAggregatesFilter<"TransactionLog"> | string | null
+    txId?: StringWithAggregatesFilter<"TransactionLog"> | string
+    operationType?: StringWithAggregatesFilter<"TransactionLog"> | string
+    blockHeight?: BigIntNullableWithAggregatesFilter<"TransactionLog"> | bigint | number | null
+    slot?: BigIntNullableWithAggregatesFilter<"TransactionLog"> | bigint | number | null
+    status?: StringWithAggregatesFilter<"TransactionLog"> | string
+    errorMessage?: StringNullableWithAggregatesFilter<"TransactionLog"> | string | null
+    timestamp?: DateTimeWithAggregatesFilter<"TransactionLog"> | Date | string
+  }
+
   export type WebhookWhereInput = {
     AND?: WebhookWhereInput | WebhookWhereInput[]
     OR?: WebhookWhereInput[]
@@ -10840,149 +10983,6 @@ export namespace Prisma {
     signature?: StringNullableWithAggregatesFilter<"Webhook"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Webhook"> | Date | string
     scheduledFor?: DateTimeWithAggregatesFilter<"Webhook"> | Date | string
-  }
-
-  export type IdempotencyKeyWhereInput = {
-    AND?: IdempotencyKeyWhereInput | IdempotencyKeyWhereInput[]
-    OR?: IdempotencyKeyWhereInput[]
-    NOT?: IdempotencyKeyWhereInput | IdempotencyKeyWhereInput[]
-    id?: StringFilter<"IdempotencyKey"> | string
-    key?: StringFilter<"IdempotencyKey"> | string
-    endpoint?: StringFilter<"IdempotencyKey"> | string
-    requestHash?: StringFilter<"IdempotencyKey"> | string
-    responseStatus?: IntFilter<"IdempotencyKey"> | number
-    responseBody?: JsonFilter<"IdempotencyKey">
-    createdAt?: DateTimeFilter<"IdempotencyKey"> | Date | string
-    expiresAt?: DateTimeFilter<"IdempotencyKey"> | Date | string
-  }
-
-  export type IdempotencyKeyOrderByWithRelationInput = {
-    id?: SortOrder
-    key?: SortOrder
-    endpoint?: SortOrder
-    requestHash?: SortOrder
-    responseStatus?: SortOrder
-    responseBody?: SortOrder
-    createdAt?: SortOrder
-    expiresAt?: SortOrder
-  }
-
-  export type IdempotencyKeyWhereUniqueInput = Prisma.AtLeast<{
-    id?: string
-    key?: string
-    AND?: IdempotencyKeyWhereInput | IdempotencyKeyWhereInput[]
-    OR?: IdempotencyKeyWhereInput[]
-    NOT?: IdempotencyKeyWhereInput | IdempotencyKeyWhereInput[]
-    endpoint?: StringFilter<"IdempotencyKey"> | string
-    requestHash?: StringFilter<"IdempotencyKey"> | string
-    responseStatus?: IntFilter<"IdempotencyKey"> | number
-    responseBody?: JsonFilter<"IdempotencyKey">
-    createdAt?: DateTimeFilter<"IdempotencyKey"> | Date | string
-    expiresAt?: DateTimeFilter<"IdempotencyKey"> | Date | string
-  }, "id" | "key">
-
-  export type IdempotencyKeyOrderByWithAggregationInput = {
-    id?: SortOrder
-    key?: SortOrder
-    endpoint?: SortOrder
-    requestHash?: SortOrder
-    responseStatus?: SortOrder
-    responseBody?: SortOrder
-    createdAt?: SortOrder
-    expiresAt?: SortOrder
-    _count?: IdempotencyKeyCountOrderByAggregateInput
-    _avg?: IdempotencyKeyAvgOrderByAggregateInput
-    _max?: IdempotencyKeyMaxOrderByAggregateInput
-    _min?: IdempotencyKeyMinOrderByAggregateInput
-    _sum?: IdempotencyKeySumOrderByAggregateInput
-  }
-
-  export type IdempotencyKeyScalarWhereWithAggregatesInput = {
-    AND?: IdempotencyKeyScalarWhereWithAggregatesInput | IdempotencyKeyScalarWhereWithAggregatesInput[]
-    OR?: IdempotencyKeyScalarWhereWithAggregatesInput[]
-    NOT?: IdempotencyKeyScalarWhereWithAggregatesInput | IdempotencyKeyScalarWhereWithAggregatesInput[]
-    id?: StringWithAggregatesFilter<"IdempotencyKey"> | string
-    key?: StringWithAggregatesFilter<"IdempotencyKey"> | string
-    endpoint?: StringWithAggregatesFilter<"IdempotencyKey"> | string
-    requestHash?: StringWithAggregatesFilter<"IdempotencyKey"> | string
-    responseStatus?: IntWithAggregatesFilter<"IdempotencyKey"> | number
-    responseBody?: JsonWithAggregatesFilter<"IdempotencyKey">
-    createdAt?: DateTimeWithAggregatesFilter<"IdempotencyKey"> | Date | string
-    expiresAt?: DateTimeWithAggregatesFilter<"IdempotencyKey"> | Date | string
-  }
-
-  export type TransactionLogWhereInput = {
-    AND?: TransactionLogWhereInput | TransactionLogWhereInput[]
-    OR?: TransactionLogWhereInput[]
-    NOT?: TransactionLogWhereInput | TransactionLogWhereInput[]
-    id?: StringFilter<"TransactionLog"> | string
-    agreementId?: StringNullableFilter<"TransactionLog"> | string | null
-    txId?: StringFilter<"TransactionLog"> | string
-    operationType?: StringFilter<"TransactionLog"> | string
-    blockHeight?: BigIntNullableFilter<"TransactionLog"> | bigint | number | null
-    slot?: BigIntNullableFilter<"TransactionLog"> | bigint | number | null
-    status?: StringFilter<"TransactionLog"> | string
-    errorMessage?: StringNullableFilter<"TransactionLog"> | string | null
-    timestamp?: DateTimeFilter<"TransactionLog"> | Date | string
-  }
-
-  export type TransactionLogOrderByWithRelationInput = {
-    id?: SortOrder
-    agreementId?: SortOrderInput | SortOrder
-    txId?: SortOrder
-    operationType?: SortOrder
-    blockHeight?: SortOrderInput | SortOrder
-    slot?: SortOrderInput | SortOrder
-    status?: SortOrder
-    errorMessage?: SortOrderInput | SortOrder
-    timestamp?: SortOrder
-  }
-
-  export type TransactionLogWhereUniqueInput = Prisma.AtLeast<{
-    id?: string
-    txId?: string
-    AND?: TransactionLogWhereInput | TransactionLogWhereInput[]
-    OR?: TransactionLogWhereInput[]
-    NOT?: TransactionLogWhereInput | TransactionLogWhereInput[]
-    agreementId?: StringNullableFilter<"TransactionLog"> | string | null
-    operationType?: StringFilter<"TransactionLog"> | string
-    blockHeight?: BigIntNullableFilter<"TransactionLog"> | bigint | number | null
-    slot?: BigIntNullableFilter<"TransactionLog"> | bigint | number | null
-    status?: StringFilter<"TransactionLog"> | string
-    errorMessage?: StringNullableFilter<"TransactionLog"> | string | null
-    timestamp?: DateTimeFilter<"TransactionLog"> | Date | string
-  }, "id" | "txId">
-
-  export type TransactionLogOrderByWithAggregationInput = {
-    id?: SortOrder
-    agreementId?: SortOrderInput | SortOrder
-    txId?: SortOrder
-    operationType?: SortOrder
-    blockHeight?: SortOrderInput | SortOrder
-    slot?: SortOrderInput | SortOrder
-    status?: SortOrder
-    errorMessage?: SortOrderInput | SortOrder
-    timestamp?: SortOrder
-    _count?: TransactionLogCountOrderByAggregateInput
-    _avg?: TransactionLogAvgOrderByAggregateInput
-    _max?: TransactionLogMaxOrderByAggregateInput
-    _min?: TransactionLogMinOrderByAggregateInput
-    _sum?: TransactionLogSumOrderByAggregateInput
-  }
-
-  export type TransactionLogScalarWhereWithAggregatesInput = {
-    AND?: TransactionLogScalarWhereWithAggregatesInput | TransactionLogScalarWhereWithAggregatesInput[]
-    OR?: TransactionLogScalarWhereWithAggregatesInput[]
-    NOT?: TransactionLogScalarWhereWithAggregatesInput | TransactionLogScalarWhereWithAggregatesInput[]
-    id?: StringWithAggregatesFilter<"TransactionLog"> | string
-    agreementId?: StringNullableWithAggregatesFilter<"TransactionLog"> | string | null
-    txId?: StringWithAggregatesFilter<"TransactionLog"> | string
-    operationType?: StringWithAggregatesFilter<"TransactionLog"> | string
-    blockHeight?: BigIntNullableWithAggregatesFilter<"TransactionLog"> | bigint | number | null
-    slot?: BigIntNullableWithAggregatesFilter<"TransactionLog"> | bigint | number | null
-    status?: StringWithAggregatesFilter<"TransactionLog"> | string
-    errorMessage?: StringNullableWithAggregatesFilter<"TransactionLog"> | string | null
-    timestamp?: DateTimeWithAggregatesFilter<"TransactionLog"> | Date | string
   }
 
   export type AgreementCreateInput = {
@@ -11266,6 +11266,83 @@ export namespace Prisma {
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
+  export type IdempotencyKeyCreateInput = {
+    id?: string
+    key: string
+    endpoint: string
+    requestHash: string
+    responseStatus: number
+    responseBody: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    expiresAt: Date | string
+  }
+
+  export type IdempotencyKeyUncheckedCreateInput = {
+    id?: string
+    key: string
+    endpoint: string
+    requestHash: string
+    responseStatus: number
+    responseBody: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    expiresAt: Date | string
+  }
+
+  export type IdempotencyKeyUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    key?: StringFieldUpdateOperationsInput | string
+    endpoint?: StringFieldUpdateOperationsInput | string
+    requestHash?: StringFieldUpdateOperationsInput | string
+    responseStatus?: IntFieldUpdateOperationsInput | number
+    responseBody?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type IdempotencyKeyUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    key?: StringFieldUpdateOperationsInput | string
+    endpoint?: StringFieldUpdateOperationsInput | string
+    requestHash?: StringFieldUpdateOperationsInput | string
+    responseStatus?: IntFieldUpdateOperationsInput | number
+    responseBody?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type IdempotencyKeyCreateManyInput = {
+    id?: string
+    key: string
+    endpoint: string
+    requestHash: string
+    responseStatus: number
+    responseBody: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    expiresAt: Date | string
+  }
+
+  export type IdempotencyKeyUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    key?: StringFieldUpdateOperationsInput | string
+    endpoint?: StringFieldUpdateOperationsInput | string
+    requestHash?: StringFieldUpdateOperationsInput | string
+    responseStatus?: IntFieldUpdateOperationsInput | number
+    responseBody?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type IdempotencyKeyUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    key?: StringFieldUpdateOperationsInput | string
+    endpoint?: StringFieldUpdateOperationsInput | string
+    requestHash?: StringFieldUpdateOperationsInput | string
+    responseStatus?: IntFieldUpdateOperationsInput | number
+    responseBody?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type SettlementCreateInput = {
     id?: string
     nftMint: string
@@ -11509,6 +11586,90 @@ export namespace Prisma {
     generatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type TransactionLogCreateInput = {
+    id?: string
+    agreementId?: string | null
+    txId: string
+    operationType: string
+    blockHeight?: bigint | number | null
+    slot?: bigint | number | null
+    status: string
+    errorMessage?: string | null
+    timestamp?: Date | string
+  }
+
+  export type TransactionLogUncheckedCreateInput = {
+    id?: string
+    agreementId?: string | null
+    txId: string
+    operationType: string
+    blockHeight?: bigint | number | null
+    slot?: bigint | number | null
+    status: string
+    errorMessage?: string | null
+    timestamp?: Date | string
+  }
+
+  export type TransactionLogUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    agreementId?: NullableStringFieldUpdateOperationsInput | string | null
+    txId?: StringFieldUpdateOperationsInput | string
+    operationType?: StringFieldUpdateOperationsInput | string
+    blockHeight?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    slot?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    status?: StringFieldUpdateOperationsInput | string
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    timestamp?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TransactionLogUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    agreementId?: NullableStringFieldUpdateOperationsInput | string | null
+    txId?: StringFieldUpdateOperationsInput | string
+    operationType?: StringFieldUpdateOperationsInput | string
+    blockHeight?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    slot?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    status?: StringFieldUpdateOperationsInput | string
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    timestamp?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TransactionLogCreateManyInput = {
+    id?: string
+    agreementId?: string | null
+    txId: string
+    operationType: string
+    blockHeight?: bigint | number | null
+    slot?: bigint | number | null
+    status: string
+    errorMessage?: string | null
+    timestamp?: Date | string
+  }
+
+  export type TransactionLogUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    agreementId?: NullableStringFieldUpdateOperationsInput | string | null
+    txId?: StringFieldUpdateOperationsInput | string
+    operationType?: StringFieldUpdateOperationsInput | string
+    blockHeight?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    slot?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    status?: StringFieldUpdateOperationsInput | string
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    timestamp?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TransactionLogUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    agreementId?: NullableStringFieldUpdateOperationsInput | string | null
+    txId?: StringFieldUpdateOperationsInput | string
+    operationType?: StringFieldUpdateOperationsInput | string
+    blockHeight?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    slot?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    status?: StringFieldUpdateOperationsInput | string
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    timestamp?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type WebhookCreateInput = {
     id?: string
     eventType: $Enums.WebhookEventType
@@ -11632,167 +11793,6 @@ export namespace Prisma {
     signature?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     scheduledFor?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type IdempotencyKeyCreateInput = {
-    id?: string
-    key: string
-    endpoint: string
-    requestHash: string
-    responseStatus: number
-    responseBody: JsonNullValueInput | InputJsonValue
-    createdAt?: Date | string
-    expiresAt: Date | string
-  }
-
-  export type IdempotencyKeyUncheckedCreateInput = {
-    id?: string
-    key: string
-    endpoint: string
-    requestHash: string
-    responseStatus: number
-    responseBody: JsonNullValueInput | InputJsonValue
-    createdAt?: Date | string
-    expiresAt: Date | string
-  }
-
-  export type IdempotencyKeyUpdateInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    key?: StringFieldUpdateOperationsInput | string
-    endpoint?: StringFieldUpdateOperationsInput | string
-    requestHash?: StringFieldUpdateOperationsInput | string
-    responseStatus?: IntFieldUpdateOperationsInput | number
-    responseBody?: JsonNullValueInput | InputJsonValue
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type IdempotencyKeyUncheckedUpdateInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    key?: StringFieldUpdateOperationsInput | string
-    endpoint?: StringFieldUpdateOperationsInput | string
-    requestHash?: StringFieldUpdateOperationsInput | string
-    responseStatus?: IntFieldUpdateOperationsInput | number
-    responseBody?: JsonNullValueInput | InputJsonValue
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type IdempotencyKeyCreateManyInput = {
-    id?: string
-    key: string
-    endpoint: string
-    requestHash: string
-    responseStatus: number
-    responseBody: JsonNullValueInput | InputJsonValue
-    createdAt?: Date | string
-    expiresAt: Date | string
-  }
-
-  export type IdempotencyKeyUpdateManyMutationInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    key?: StringFieldUpdateOperationsInput | string
-    endpoint?: StringFieldUpdateOperationsInput | string
-    requestHash?: StringFieldUpdateOperationsInput | string
-    responseStatus?: IntFieldUpdateOperationsInput | number
-    responseBody?: JsonNullValueInput | InputJsonValue
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type IdempotencyKeyUncheckedUpdateManyInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    key?: StringFieldUpdateOperationsInput | string
-    endpoint?: StringFieldUpdateOperationsInput | string
-    requestHash?: StringFieldUpdateOperationsInput | string
-    responseStatus?: IntFieldUpdateOperationsInput | number
-    responseBody?: JsonNullValueInput | InputJsonValue
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type TransactionLogCreateInput = {
-    id?: string
-    agreementId?: string | null
-    txId: string
-    operationType: string
-    blockHeight?: bigint | number | null
-    slot?: bigint | number | null
-    status: string
-    errorMessage?: string | null
-    timestamp?: Date | string
-  }
-
-  export type TransactionLogUncheckedCreateInput = {
-    id?: string
-    agreementId?: string | null
-    txId: string
-    operationType: string
-    blockHeight?: bigint | number | null
-    slot?: bigint | number | null
-    status: string
-    errorMessage?: string | null
-    timestamp?: Date | string
-  }
-
-  export type TransactionLogUpdateInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    agreementId?: NullableStringFieldUpdateOperationsInput | string | null
-    txId?: StringFieldUpdateOperationsInput | string
-    operationType?: StringFieldUpdateOperationsInput | string
-    blockHeight?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
-    slot?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
-    status?: StringFieldUpdateOperationsInput | string
-    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
-    timestamp?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type TransactionLogUncheckedUpdateInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    agreementId?: NullableStringFieldUpdateOperationsInput | string | null
-    txId?: StringFieldUpdateOperationsInput | string
-    operationType?: StringFieldUpdateOperationsInput | string
-    blockHeight?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
-    slot?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
-    status?: StringFieldUpdateOperationsInput | string
-    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
-    timestamp?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type TransactionLogCreateManyInput = {
-    id?: string
-    agreementId?: string | null
-    txId: string
-    operationType: string
-    blockHeight?: bigint | number | null
-    slot?: bigint | number | null
-    status: string
-    errorMessage?: string | null
-    timestamp?: Date | string
-  }
-
-  export type TransactionLogUpdateManyMutationInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    agreementId?: NullableStringFieldUpdateOperationsInput | string | null
-    txId?: StringFieldUpdateOperationsInput | string
-    operationType?: StringFieldUpdateOperationsInput | string
-    blockHeight?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
-    slot?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
-    status?: StringFieldUpdateOperationsInput | string
-    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
-    timestamp?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type TransactionLogUncheckedUpdateManyInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    agreementId?: NullableStringFieldUpdateOperationsInput | string | null
-    txId?: StringFieldUpdateOperationsInput | string
-    operationType?: StringFieldUpdateOperationsInput | string
-    blockHeight?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
-    slot?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
-    status?: StringFieldUpdateOperationsInput | string
-    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
-    timestamp?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type StringFilter<$PrismaModel = never> = {
@@ -12303,6 +12303,94 @@ export namespace Prisma {
     _min?: NestedJsonNullableFilter<$PrismaModel>
     _max?: NestedJsonNullableFilter<$PrismaModel>
   }
+  export type JsonFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type IdempotencyKeyCountOrderByAggregateInput = {
+    id?: SortOrder
+    key?: SortOrder
+    endpoint?: SortOrder
+    requestHash?: SortOrder
+    responseStatus?: SortOrder
+    responseBody?: SortOrder
+    createdAt?: SortOrder
+    expiresAt?: SortOrder
+  }
+
+  export type IdempotencyKeyAvgOrderByAggregateInput = {
+    responseStatus?: SortOrder
+  }
+
+  export type IdempotencyKeyMaxOrderByAggregateInput = {
+    id?: SortOrder
+    key?: SortOrder
+    endpoint?: SortOrder
+    requestHash?: SortOrder
+    responseStatus?: SortOrder
+    createdAt?: SortOrder
+    expiresAt?: SortOrder
+  }
+
+  export type IdempotencyKeyMinOrderByAggregateInput = {
+    id?: SortOrder
+    key?: SortOrder
+    endpoint?: SortOrder
+    requestHash?: SortOrder
+    responseStatus?: SortOrder
+    createdAt?: SortOrder
+    expiresAt?: SortOrder
+  }
+
+  export type IdempotencyKeySumOrderByAggregateInput = {
+    responseStatus?: SortOrder
+  }
+  export type JsonWithAggregatesFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonWithAggregatesFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonWithAggregatesFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedJsonFilter<$PrismaModel>
+    _max?: NestedJsonFilter<$PrismaModel>
+  }
 
   export type BigIntFilter<$PrismaModel = never> = {
     equals?: bigint | number | BigIntFieldRefInput<$PrismaModel>
@@ -12464,34 +12552,57 @@ export namespace Prisma {
     creatorRoyalty?: SortOrder
   }
 
+  export type TransactionLogCountOrderByAggregateInput = {
+    id?: SortOrder
+    agreementId?: SortOrder
+    txId?: SortOrder
+    operationType?: SortOrder
+    blockHeight?: SortOrder
+    slot?: SortOrder
+    status?: SortOrder
+    errorMessage?: SortOrder
+    timestamp?: SortOrder
+  }
+
+  export type TransactionLogAvgOrderByAggregateInput = {
+    blockHeight?: SortOrder
+    slot?: SortOrder
+  }
+
+  export type TransactionLogMaxOrderByAggregateInput = {
+    id?: SortOrder
+    agreementId?: SortOrder
+    txId?: SortOrder
+    operationType?: SortOrder
+    blockHeight?: SortOrder
+    slot?: SortOrder
+    status?: SortOrder
+    errorMessage?: SortOrder
+    timestamp?: SortOrder
+  }
+
+  export type TransactionLogMinOrderByAggregateInput = {
+    id?: SortOrder
+    agreementId?: SortOrder
+    txId?: SortOrder
+    operationType?: SortOrder
+    blockHeight?: SortOrder
+    slot?: SortOrder
+    status?: SortOrder
+    errorMessage?: SortOrder
+    timestamp?: SortOrder
+  }
+
+  export type TransactionLogSumOrderByAggregateInput = {
+    blockHeight?: SortOrder
+    slot?: SortOrder
+  }
+
   export type EnumWebhookEventTypeFilter<$PrismaModel = never> = {
     equals?: $Enums.WebhookEventType | EnumWebhookEventTypeFieldRefInput<$PrismaModel>
     in?: $Enums.WebhookEventType[] | ListEnumWebhookEventTypeFieldRefInput<$PrismaModel>
     notIn?: $Enums.WebhookEventType[] | ListEnumWebhookEventTypeFieldRefInput<$PrismaModel>
     not?: NestedEnumWebhookEventTypeFilter<$PrismaModel> | $Enums.WebhookEventType
-  }
-  export type JsonFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<JsonFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonFilterBase<$PrismaModel>>, 'path'>>,
-        Required<JsonFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<JsonFilterBase<$PrismaModel>>, 'path'>>
-
-  export type JsonFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
 
   export type EnumWebhookDeliveryStatusFilter<$PrismaModel = never> = {
@@ -12585,32 +12696,6 @@ export namespace Prisma {
     _min?: NestedEnumWebhookEventTypeFilter<$PrismaModel>
     _max?: NestedEnumWebhookEventTypeFilter<$PrismaModel>
   }
-  export type JsonWithAggregatesFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
-        Required<JsonWithAggregatesFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
-
-  export type JsonWithAggregatesFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedJsonFilter<$PrismaModel>
-    _max?: NestedJsonFilter<$PrismaModel>
-  }
 
   export type EnumWebhookDeliveryStatusWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.WebhookDeliveryStatus | EnumWebhookDeliveryStatusFieldRefInput<$PrismaModel>
@@ -12636,91 +12721,6 @@ export namespace Prisma {
     _sum?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedIntNullableFilter<$PrismaModel>
     _max?: NestedIntNullableFilter<$PrismaModel>
-  }
-
-  export type IdempotencyKeyCountOrderByAggregateInput = {
-    id?: SortOrder
-    key?: SortOrder
-    endpoint?: SortOrder
-    requestHash?: SortOrder
-    responseStatus?: SortOrder
-    responseBody?: SortOrder
-    createdAt?: SortOrder
-    expiresAt?: SortOrder
-  }
-
-  export type IdempotencyKeyAvgOrderByAggregateInput = {
-    responseStatus?: SortOrder
-  }
-
-  export type IdempotencyKeyMaxOrderByAggregateInput = {
-    id?: SortOrder
-    key?: SortOrder
-    endpoint?: SortOrder
-    requestHash?: SortOrder
-    responseStatus?: SortOrder
-    createdAt?: SortOrder
-    expiresAt?: SortOrder
-  }
-
-  export type IdempotencyKeyMinOrderByAggregateInput = {
-    id?: SortOrder
-    key?: SortOrder
-    endpoint?: SortOrder
-    requestHash?: SortOrder
-    responseStatus?: SortOrder
-    createdAt?: SortOrder
-    expiresAt?: SortOrder
-  }
-
-  export type IdempotencyKeySumOrderByAggregateInput = {
-    responseStatus?: SortOrder
-  }
-
-  export type TransactionLogCountOrderByAggregateInput = {
-    id?: SortOrder
-    agreementId?: SortOrder
-    txId?: SortOrder
-    operationType?: SortOrder
-    blockHeight?: SortOrder
-    slot?: SortOrder
-    status?: SortOrder
-    errorMessage?: SortOrder
-    timestamp?: SortOrder
-  }
-
-  export type TransactionLogAvgOrderByAggregateInput = {
-    blockHeight?: SortOrder
-    slot?: SortOrder
-  }
-
-  export type TransactionLogMaxOrderByAggregateInput = {
-    id?: SortOrder
-    agreementId?: SortOrder
-    txId?: SortOrder
-    operationType?: SortOrder
-    blockHeight?: SortOrder
-    slot?: SortOrder
-    status?: SortOrder
-    errorMessage?: SortOrder
-    timestamp?: SortOrder
-  }
-
-  export type TransactionLogMinOrderByAggregateInput = {
-    id?: SortOrder
-    agreementId?: SortOrder
-    txId?: SortOrder
-    operationType?: SortOrder
-    blockHeight?: SortOrder
-    slot?: SortOrder
-    status?: SortOrder
-    errorMessage?: SortOrder
-    timestamp?: SortOrder
-  }
-
-  export type TransactionLogSumOrderByAggregateInput = {
-    blockHeight?: SortOrder
-    slot?: SortOrder
   }
 
   export type DepositCreateNestedManyWithoutAgreementInput = {
@@ -13354,6 +13354,29 @@ export namespace Prisma {
     gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
     not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
+  export type NestedJsonFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<NestedJsonFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>,
+        Required<NestedJsonFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>
+
+  export type NestedJsonFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
 
   export type NestedBigIntFilter<$PrismaModel = never> = {
     equals?: bigint | number | BigIntFieldRefInput<$PrismaModel>
@@ -13404,29 +13427,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumWebhookEventTypeFilter<$PrismaModel>
     _max?: NestedEnumWebhookEventTypeFilter<$PrismaModel>
-  }
-  export type NestedJsonFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<NestedJsonFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>,
-        Required<NestedJsonFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>
-
-  export type NestedJsonFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
 
   export type NestedEnumWebhookDeliveryStatusWithAggregatesFilter<$PrismaModel = never> = {

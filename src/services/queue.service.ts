@@ -116,7 +116,7 @@ export class QueueService<T extends BaseJobData = BaseJobData> {
           return false;
         },
         keepAlive: 30000,
-        commandTimeout: 5000,
+        commandTimeout: 30000, // 30 second timeout for queue management operations
       };
     } catch (error) {
       console.error(`Error parsing Redis URL: ${error}`);
