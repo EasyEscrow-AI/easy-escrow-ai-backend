@@ -6,7 +6,11 @@ import {
   getAgreementById, 
   getAgreementDetailById,
   cancelAgreement,
-  listAgreements 
+  listAgreements,
+  depositNftToEscrow,
+  depositUsdcToEscrow,
+  prepareDepositNftTransaction,
+  prepareDepositUsdcTransaction
 } from '../services/agreement.service';
 import { CreateAgreementDTO, AgreementQueryDTO } from '../models/dto/agreement.dto';
 import { AgreementStatus } from '../generated/prisma';
@@ -157,6 +161,194 @@ router.post(
         errorMessage.includes('already refunded') ||
         errorMessage.includes('not expired') ||
         errorMessage.includes('has not expired')
+      ) {
+        statusCode = 400;
+      }
+
+      res.status(statusCode).json({
+        success: false,
+        error: statusCode === 404 ? 'Not Found' : statusCode === 400 ? 'Bad Request' : 'Internal Server Error',
+        message: errorMessage,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * POST /v1/agreements/:agreementId/deposit-nft/prepare
+ * PRODUCTION ENDPOINT: Returns unsigned transaction for client-side signing
+ * Client must sign with seller's wallet and submit to network
+ */
+router.post(
+  '/v1/agreements/:agreementId/deposit-nft/prepare',
+  standardRateLimiter,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { agreementId } = req.params;
+
+      console.log('[AgreementRoutes] POST /deposit-nft/prepare for:', agreementId);
+
+      const result = await prepareDepositNftTransaction(agreementId);
+
+      res.status(200).json({
+        success: true,
+        data: result,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('[AgreementRoutes] Error preparing NFT deposit transaction:', error);
+      
+      const errorMessage = error instanceof Error ? error.message : 'Failed to prepare NFT deposit transaction';
+      
+      let statusCode = 500;
+      if (errorMessage.includes('not found')) {
+        statusCode = 404;
+      } else if (
+        errorMessage.includes('Cannot deposit') || 
+        errorMessage.includes('status is')
+      ) {
+        statusCode = 400;
+      }
+
+      res.status(statusCode).json({
+        success: false,
+        error: statusCode === 404 ? 'Not Found' : statusCode === 400 ? 'Bad Request' : 'Internal Server Error',
+        message: errorMessage,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * POST /v1/agreements/:agreementId/deposit-usdc/prepare
+ * PRODUCTION ENDPOINT: Returns unsigned transaction for client-side signing
+ * Client must sign with buyer's wallet and submit to network
+ */
+router.post(
+  '/v1/agreements/:agreementId/deposit-usdc/prepare',
+  standardRateLimiter,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { agreementId } = req.params;
+
+      console.log('[AgreementRoutes] POST /deposit-usdc/prepare for:', agreementId);
+
+      const result = await prepareDepositUsdcTransaction(agreementId);
+
+      res.status(200).json({
+        success: true,
+        data: result,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('[AgreementRoutes] Error preparing USDC deposit transaction:', error);
+      
+      const errorMessage = error instanceof Error ? error.message : 'Failed to prepare USDC deposit transaction';
+      
+      let statusCode = 500;
+      if (errorMessage.includes('not found')) {
+        statusCode = 404;
+      } else if (
+        errorMessage.includes('Cannot deposit') || 
+        errorMessage.includes('status is') ||
+        errorMessage.includes('No buyer')
+      ) {
+        statusCode = 400;
+      }
+
+      res.status(statusCode).json({
+        success: false,
+        error: statusCode === 404 ? 'Not Found' : statusCode === 400 ? 'Bad Request' : 'Internal Server Error',
+        message: errorMessage,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * POST /v1/agreements/:agreementId/deposit-nft
+ * @deprecated Use /deposit-nft/prepare for production (client-side signing)
+ * Deposit NFT into escrow by calling the on-chain deposit_nft instruction
+ * This properly sets the seller_nft_deposited flag on-chain
+ */
+router.post(
+  '/v1/agreements/:agreementId/deposit-nft',
+  standardRateLimiter,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { agreementId } = req.params;
+
+      console.log('[AgreementRoutes] POST /deposit-nft for:', agreementId);
+
+      const result = await depositNftToEscrow(agreementId);
+
+      res.status(200).json({
+        success: true,
+        data: result,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('[AgreementRoutes] Error depositing NFT:', error);
+      
+      const errorMessage = error instanceof Error ? error.message : 'Failed to deposit NFT';
+      
+      let statusCode = 500;
+      if (errorMessage.includes('not found')) {
+        statusCode = 404;
+      } else if (
+        errorMessage.includes('Cannot deposit') || 
+        errorMessage.includes('status is')
+      ) {
+        statusCode = 400;
+      }
+
+      res.status(statusCode).json({
+        success: false,
+        error: statusCode === 404 ? 'Not Found' : statusCode === 400 ? 'Bad Request' : 'Internal Server Error',
+        message: errorMessage,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * POST /v1/agreements/:agreementId/deposit-usdc
+ * @deprecated Use /deposit-usdc/prepare for production (client-side signing)
+ * Deposit USDC into escrow by calling the on-chain deposit_usdc instruction
+ * This properly sets the buyer_usdc_deposited flag on-chain
+ */
+router.post(
+  '/v1/agreements/:agreementId/deposit-usdc',
+  standardRateLimiter,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { agreementId } = req.params;
+
+      console.log('[AgreementRoutes] POST /deposit-usdc for:', agreementId);
+
+      const result = await depositUsdcToEscrow(agreementId);
+
+      res.status(200).json({
+        success: true,
+        data: result,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('[AgreementRoutes] Error depositing USDC:', error);
+      
+      const errorMessage = error instanceof Error ? error.message : 'Failed to deposit USDC';
+      
+      let statusCode = 500;
+      if (errorMessage.includes('not found')) {
+        statusCode = 404;
+      } else if (
+        errorMessage.includes('Cannot deposit') || 
+        errorMessage.includes('status is') ||
+        errorMessage.includes('No buyer')
       ) {
         statusCode = 400;
       }

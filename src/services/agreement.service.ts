@@ -12,6 +12,8 @@ import { initializeEscrow } from './solana.service';
 import { getMonitoringOrchestrator } from './monitoring-orchestrator.service';
 import { getTransactionLogService, TransactionOperationType, TransactionStatusType } from './transaction-log.service';
 import { Decimal } from '@prisma/client/runtime/library';
+import { PublicKey } from '@solana/web3.js';
+import { EscrowProgramService } from './escrow-program.service';
 
 const prisma = new PrismaClient();
 
@@ -402,6 +404,237 @@ export const cleanupExpiredAgreements = async (): Promise<number> => {
   } catch (error) {
     console.error('Error cleaning up expired agreements:', error);
     throw new Error('Failed to cleanup expired agreements');
+  }
+};
+
+/**
+ * Build unsigned deposit NFT transaction (PRODUCTION)
+ * Client signs and submits this transaction with their wallet
+ */
+export const prepareDepositNftTransaction = async (agreementId: string): Promise<{ transaction: string; message: string }> => {
+  try {
+    console.log('[AgreementService] prepareDepositNftTransaction called for:', agreementId);
+
+    // 1. Get agreement from database
+    const agreement = await prisma.agreement.findUnique({
+      where: { agreementId },
+    });
+
+    if (!agreement) {
+      throw new Error(`Agreement not found: ${agreementId}`);
+    }
+
+    // 2. Validate status - allow NFT deposit when PENDING or USDC_LOCKED
+    const allowedStatuses: AgreementStatus[] = [AgreementStatus.PENDING, AgreementStatus.USDC_LOCKED];
+    if (!allowedStatuses.includes(agreement.status)) {
+      throw new Error(`Cannot deposit NFT: Agreement status is ${agreement.status}. Must be PENDING or USDC_LOCKED.`);
+    }
+
+    // 3. Build unsigned transaction
+    const escrowService = new EscrowProgramService();
+    const escrowPda = new PublicKey(agreement.escrowPda);
+    const seller = new PublicKey(agreement.seller);
+    const nftMint = new PublicKey(agreement.nftMint);
+
+    const result = await escrowService.buildDepositNftTransaction(escrowPda, seller, nftMint);
+
+    console.log('[AgreementService] Unsigned NFT deposit transaction prepared');
+
+    return result;
+  } catch (error) {
+    console.error('[AgreementService] prepareDepositNftTransaction error:', error);
+    throw error;
+  }
+};
+
+/**
+ * Build unsigned deposit USDC transaction (PRODUCTION)
+ * Client signs and submits this transaction with their wallet
+ */
+export const prepareDepositUsdcTransaction = async (agreementId: string): Promise<{ transaction: string; message: string }> => {
+  try {
+    console.log('[AgreementService] prepareDepositUsdcTransaction called for:', agreementId);
+
+    // 1. Get agreement from database
+    const agreement = await prisma.agreement.findUnique({
+      where: { agreementId },
+    });
+
+    if (!agreement) {
+      throw new Error(`Agreement not found: ${agreementId}`);
+    }
+
+    // 2. Validate status - allow USDC deposit when PENDING or NFT_LOCKED
+    const allowedStatuses: AgreementStatus[] = [AgreementStatus.PENDING, AgreementStatus.NFT_LOCKED];
+    if (!allowedStatuses.includes(agreement.status)) {
+      throw new Error(`Cannot deposit USDC: Agreement status is ${agreement.status}. Must be PENDING or NFT_LOCKED.`);
+    }
+
+    if (!agreement.buyer) {
+      throw new Error('Cannot deposit USDC: No buyer assigned');
+    }
+
+    // 3. Build unsigned transaction
+    const escrowService = new EscrowProgramService();
+    const escrowPda = new PublicKey(agreement.escrowPda);
+    const buyer = new PublicKey(agreement.buyer);
+    const usdcMint = new PublicKey(process.env.USDC_MINT_ADDRESS || '');
+
+    if (!process.env.USDC_MINT_ADDRESS) {
+      throw new Error('USDC_MINT_ADDRESS not configured');
+    }
+
+    const result = await escrowService.buildDepositUsdcTransaction(escrowPda, buyer, usdcMint);
+
+    console.log('[AgreementService] Unsigned USDC deposit transaction prepared');
+
+    return result;
+  } catch (error) {
+    console.error('[AgreementService] prepareDepositUsdcTransaction error:', error);
+    throw error;
+  }
+};
+
+/**
+ * Deposit NFT into escrow
+ * Calls the on-chain deposit_nft instruction
+ * @deprecated Use prepareDepositNftTransaction for production (client-side signing)
+ */
+export const depositNftToEscrow = async (agreementId: string): Promise<{ transactionId: string }> => {
+  try {
+    console.log('[AgreementService] depositNftToEscrow called for:', agreementId);
+
+    // 1. Get agreement from database
+    const agreement = await prisma.agreement.findUnique({
+      where: { agreementId },
+      include: { deposits: true }
+    });
+
+    if (!agreement) {
+      throw new Error(`Agreement not found: ${agreementId}`);
+    }
+
+    // 2. Validate status
+    if (agreement.status !== AgreementStatus.PENDING) {
+      throw new Error(`Cannot deposit NFT: Agreement status is ${agreement.status}`);
+    }
+
+    // 3. Call on-chain deposit_nft instruction
+    const escrowService = new EscrowProgramService();
+    const escrowPda = new PublicKey(agreement.escrowPda);
+    const seller = new PublicKey(agreement.seller);
+    const nftMint = new PublicKey(agreement.nftMint);
+
+    const txId = await escrowService.depositNft(escrowPda, seller, nftMint);
+
+    console.log('[AgreementService] NFT deposit transaction:', txId);
+
+    // 4. Log transaction
+    const txLogService = getTransactionLogService();
+    await txLogService.captureTransaction({
+      txId,
+      agreementId,
+      operationType: TransactionOperationType.DEPOSIT_NFT,
+      status: TransactionStatusType.CONFIRMED,
+    });
+
+    return { transactionId: txId };
+  } catch (error) {
+    console.error('[AgreementService] depositNftToEscrow error:', error);
+    
+    // Log failure (optional - can skip if txId doesn't exist)
+    if (error instanceof Error && error.message) {
+      const txLogService = getTransactionLogService();
+      try {
+        await txLogService.captureTransaction({
+          txId: `failed-nft-${Date.now()}`,
+          agreementId,
+          operationType: TransactionOperationType.DEPOSIT_NFT,
+          status: TransactionStatusType.FAILED,
+          errorMessage: error.message,
+        });
+      } catch (logError) {
+        // Ignore logging errors
+        console.error('[AgreementService] Failed to log NFT deposit error:', logError);
+      }
+    }
+
+    throw error;
+  }
+};
+
+/**
+ * Deposit USDC into escrow
+ * Calls the on-chain deposit_usdc instruction
+ */
+export const depositUsdcToEscrow = async (agreementId: string): Promise<{ transactionId: string }> => {
+  try {
+    console.log('[AgreementService] depositUsdcToEscrow called for:', agreementId);
+
+    // 1. Get agreement from database
+    const agreement = await prisma.agreement.findUnique({
+      where: { agreementId },
+      include: { deposits: true }
+    });
+
+    if (!agreement) {
+      throw new Error(`Agreement not found: ${agreementId}`);
+    }
+
+    // 2. Validate status
+    if (agreement.status !== AgreementStatus.PENDING) {
+      throw new Error(`Cannot deposit USDC: Agreement status is ${agreement.status}`);
+    }
+
+    if (!agreement.buyer) {
+      throw new Error('Cannot deposit USDC: No buyer assigned');
+    }
+
+    // 3. Call on-chain deposit_usdc instruction
+    const escrowService = new EscrowProgramService();
+    const escrowPda = new PublicKey(agreement.escrowPda);
+    const buyer = new PublicKey(agreement.buyer);
+    const usdcMint = new PublicKey(process.env.USDC_MINT_ADDRESS || '');
+
+    if (!process.env.USDC_MINT_ADDRESS) {
+      throw new Error('USDC_MINT_ADDRESS not configured');
+    }
+
+    const txId = await escrowService.depositUsdc(escrowPda, buyer, usdcMint);
+
+    console.log('[AgreementService] USDC deposit transaction:', txId);
+
+    // 4. Log transaction
+    const txLogService = getTransactionLogService();
+    await txLogService.captureTransaction({
+      txId,
+      agreementId,
+      operationType: TransactionOperationType.DEPOSIT_USDC,
+      status: TransactionStatusType.CONFIRMED,
+    });
+
+    return { transactionId: txId };
+  } catch (error) {
+    console.error('[AgreementService] depositUsdcToEscrow error:', error);
+    
+    // Log failure (optional - can skip if txId doesn't exist)
+    if (error instanceof Error && error.message) {
+      const txLogService = getTransactionLogService();
+      try {
+        await txLogService.captureTransaction({
+          txId: `failed-usdc-${Date.now()}`,
+          agreementId,
+          operationType: TransactionOperationType.DEPOSIT_USDC,
+          status: TransactionStatusType.FAILED,
+          errorMessage: error.message,
+        });
+      } catch (logError) {
+        // Ignore logging errors
+        console.error('[AgreementService] Failed to log USDC deposit error:', logError);
+      }
+    }
+
+    throw error;
   }
 };
 
