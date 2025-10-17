@@ -94,8 +94,8 @@ pub mod escrow {
         Ok(())
     }
 
-    /// Settle the escrow and exchange assets
-    pub fn settle(ctx: Context<Settle>) -> Result<()> {
+    /// Settle the escrow and exchange assets with fee distribution
+    pub fn settle(ctx: Context<Settle>, platform_fee_bps: u16) -> Result<()> {
         let escrow = &ctx.accounts.escrow_state;
         
         require!(escrow.status == EscrowStatus::Pending, EscrowError::InvalidStatus);
@@ -105,8 +105,8 @@ pub mod escrow {
             Clock::get()?.unix_timestamp <= escrow.expiry_timestamp,
             EscrowError::Expired
         );
+        require!(platform_fee_bps <= 10000, EscrowError::InvalidFeeBps);
         
-        // Transfer USDC to seller
         let escrow_id = escrow.escrow_id;
         let bump = escrow.bump;
         let escrow_id_bytes = escrow_id.to_le_bytes();
@@ -117,6 +117,37 @@ pub mod escrow {
         ];
         let signer = &[&seeds[..]];
         
+        // Calculate fee distribution
+        let total_amount = escrow.usdc_amount;
+        let platform_fee = (total_amount as u128)
+            .checked_mul(platform_fee_bps as u128)
+            .ok_or(EscrowError::CalculationOverflow)?
+            .checked_div(10000)
+            .ok_or(EscrowError::CalculationOverflow)? as u64;
+        let seller_amount = total_amount
+            .checked_sub(platform_fee)
+            .ok_or(EscrowError::CalculationOverflow)?;
+        
+        msg!("Settlement - Total: {}, Fee: {}, Seller: {}", total_amount, platform_fee, seller_amount);
+        
+        // Transfer fee to platform fee collector (if fee > 0)
+        if platform_fee > 0 {
+            let fee_transfer_accounts = Transfer {
+                from: ctx.accounts.escrow_usdc_account.to_account_info(),
+                to: ctx.accounts.fee_collector_usdc_account.to_account_info(),
+                authority: ctx.accounts.escrow_state.to_account_info(),
+            };
+            let fee_cpi_program = ctx.accounts.token_program.to_account_info();
+            let fee_cpi_ctx = CpiContext::new_with_signer(
+                fee_cpi_program,
+                fee_transfer_accounts,
+                signer,
+            );
+            token::transfer(fee_cpi_ctx, platform_fee)?;
+            msg!("Platform fee transferred: {}", platform_fee);
+        }
+        
+        // Transfer remaining USDC to seller
         let usdc_transfer_accounts = Transfer {
             from: ctx.accounts.escrow_usdc_account.to_account_info(),
             to: ctx.accounts.seller_usdc_account.to_account_info(),
@@ -128,7 +159,8 @@ pub mod escrow {
             usdc_transfer_accounts,
             signer,
         );
-        token::transfer(usdc_cpi_ctx, escrow.usdc_amount)?;
+        token::transfer(usdc_cpi_ctx, seller_amount)?;
+        msg!("Seller payment transferred: {}", seller_amount);
         
         // Transfer NFT to buyer
         let nft_transfer_accounts = Transfer {
@@ -143,11 +175,12 @@ pub mod escrow {
             signer,
         );
         token::transfer(nft_cpi_ctx, 1)?;
+        msg!("NFT transferred to buyer");
         
         let escrow_mut = &mut ctx.accounts.escrow_state;
         escrow_mut.status = EscrowStatus::Completed;
         
-        msg!("Escrow settled successfully");
+        msg!("Escrow settled successfully with fee distribution");
         Ok(())
     }
 
@@ -392,6 +425,10 @@ pub struct Settle<'info> {
     )]
     pub buyer_nft_account: Account<'info, TokenAccount>,
     
+    /// Platform fee collector USDC account
+    #[account(mut)]
+    pub fee_collector_usdc_account: Account<'info, TokenAccount>,
+    
     pub token_program: Program<'info, Token>,
 }
 
@@ -512,5 +549,11 @@ pub enum EscrowError {
     
     #[msg("Escrow has not expired yet")]
     NotExpired,
+    
+    #[msg("Invalid fee basis points (must be <= 10000)")]
+    InvalidFeeBps,
+    
+    #[msg("Calculation overflow")]
+    CalculationOverflow,
 }
 

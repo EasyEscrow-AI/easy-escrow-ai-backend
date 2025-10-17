@@ -554,20 +554,24 @@ export class SettlementService {
         sellerReceived: feeCalculation.sellerReceived.toString(),
       });
 
-      // Call Anchor program settle instruction
-      console.log('[SettlementService] 🔗 Calling Anchor program settle() instruction...');
+      // Call Anchor program settle instruction with fee distribution
+      console.log('[SettlementService] 🔗 Calling Anchor program settle() instruction with fee distribution...');
+      const platformFeeBps = agreement.feeBps || 100; // Default to 100 bps (1%) if not specified
       const txId = await escrowProgramService.settle(
         escrowPda,
         seller,
         buyer,
         nftMint,
-        usdcMint
+        usdcMint,
+        feeCollector,
+        platformFeeBps
       );
 
       console.log('[SettlementService] ✅ Settlement transaction confirmed:', txId);
-      console.log('[SettlementService] Settlement completed:');
+      console.log('[SettlementService] Settlement completed with fee distribution:');
       console.log('[SettlementService]   ✅ NFT transferred from escrow to buyer');
-      console.log('[SettlementService]   ✅ USDC transferred to seller');
+      console.log('[SettlementService]   ✅ USDC transferred to seller (minus fee)');
+      console.log('[SettlementService]   ✅ Platform fee transferred to fee collector');
       console.log(`[SettlementService]   Explorer: https://explorer.solana.com/tx/${txId}?cluster=devnet`);
 
       return txId;

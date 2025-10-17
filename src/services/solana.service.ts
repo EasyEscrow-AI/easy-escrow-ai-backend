@@ -479,14 +479,6 @@ export const initializeEscrow = async (
     }
     const programId = new PublicKey(config.solana.escrowProgramId);
     
-    // Derive escrow PDA
-    const [escrowPda, bump] = await deriveEscrowPDA(
-      programId,
-      sellerPubkey,
-      nftMintPubkey,
-      buyerPubkey
-    );
-
     // Get USDC mint address (use devnet USDC for testing)
     const usdcMintStr = config.usdc?.mintAddress || 'Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr'; // Devnet USDC
     console.log('[SolanaService] USDC Config:', {
@@ -496,42 +488,57 @@ export const initializeEscrow = async (
     });
     const usdcMint = new PublicKey(usdcMintStr);
 
-    // Derive deposit addresses (ATAs for the escrow PDA)
+    // Call on-chain init_agreement instruction
+    const { BN } = await import('@coral-xyz/anchor');
+    const { getEscrowProgramService } = await import('./escrow-program.service');
+    const escrowProgramService = getEscrowProgramService();
+    
+    // Generate unique escrow ID (use timestamp as u64)
+    const escrowId = new BN(Date.now());
+    
+    // Convert price to lamports (USDC has 6 decimals)
+    const usdcAmount = new BN(Math.floor(params.price * 1_000_000));
+    
+    // Convert expiry to unix timestamp
+    const expiryTimestamp = new BN(Math.floor(params.expiry.getTime() / 1000));
+    
+    console.log('[SolanaService] Calling on-chain init_agreement:', {
+      escrowId: escrowId.toString(),
+      buyer: buyerPubkey?.toString(),
+      seller: sellerPubkey.toString(),
+      nftMint: nftMintPubkey.toString(),
+      usdcAmount: usdcAmount.toString(),
+      expiryTimestamp: expiryTimestamp.toString(),
+    });
+    
+    // Initialize escrow agreement on-chain
+    const initResult = await escrowProgramService.initAgreement(
+      escrowId,
+      buyerPubkey || sellerPubkey, // Use seller as buyer if buyer not specified
+      sellerPubkey,
+      nftMintPubkey,
+      usdcAmount,
+      expiryTimestamp
+    );
+    
+    console.log('[SolanaService] Escrow initialized on-chain:', {
+      escrowPda: initResult.pda.toString(),
+      transactionId: initResult.txId,
+    });
+
+    // Derive deposit addresses (ATAs for the escrow PDA) using the correct PDA from init
     const depositAddresses = await deriveDepositAddresses(
-      escrowPda,
+      initResult.pda,
       usdcMint,
       nftMintPubkey
     );
     
-    console.log('[SolanaService] depositAddresses after derivation:', JSON.stringify(depositAddresses, null, 2));
-
-    // TODO: Call actual on-chain program when deployed
-    // The on-chain program should:
-    // 1. Create the escrow PDA
-    // 2. Create ATAs for USDC and NFT if they don't exist
-    // 3. Initialize the escrow state
-    // 
-    // For now, return a mock transaction ID
-    // NOTE: In testing/development, ATAs should be created separately
-    // before deposits can be made to them.
-    const mockTxId = `mock_tx_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-
-    console.log('[SolanaService] Escrow initialized (mock):', {
-      escrowPda: escrowPda.toString(),
-      depositAddresses,
-      params,
-      bump,
-    });
-
-    console.warn('[SolanaService] WARNING: This is a mock implementation.');
-    console.warn('[SolanaService] Associated Token Accounts must be created before deposits.');
-    console.warn(`[SolanaService] USDC ATA: ${depositAddresses.usdc}`);
-    console.warn(`[SolanaService] NFT ATA: ${depositAddresses.nft}`);
+    console.log('[SolanaService] Deposit addresses derived:', JSON.stringify(depositAddresses, null, 2));
 
     const result = {
-      escrowPda: escrowPda.toString(),
+      escrowPda: initResult.pda.toString(),
       depositAddresses,
-      transactionId: mockTxId,
+      transactionId: initResult.txId,
     };
     
     return result;

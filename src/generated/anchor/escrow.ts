@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/escrow.json`.
  */
 export type Escrow = {
-  "address": "7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV",
+  "address": "4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd",
   "metadata": {
     "name": "escrow",
     "version": "0.1.0",
@@ -497,9 +497,7 @@ export type Escrow = {
           }
         },
         {
-          "name": "buyer",
-          "writable": true,
-          "signer": true
+          "name": "buyer"
         },
         {
           "name": "seller"
@@ -508,7 +506,12 @@ export type Escrow = {
           "name": "nftMint"
         },
         {
-          "name": "admin"
+          "name": "admin",
+          "docs": [
+            "Admin pays for escrow account creation"
+          ],
+          "writable": true,
+          "signer": true
         },
         {
           "name": "systemProgram",
@@ -533,7 +536,7 @@ export type Escrow = {
     {
       "name": "settle",
       "docs": [
-        "Settle the escrow and exchange assets"
+        "Settle the escrow and exchange assets with fee distribution"
       ],
       "discriminator": [
         175,
@@ -587,11 +590,23 @@ export type Escrow = {
           "writable": true
         },
         {
+          "name": "feeCollectorUsdcAccount",
+          "docs": [
+            "Platform fee collector USDC account"
+          ],
+          "writable": true
+        },
+        {
           "name": "tokenProgram",
           "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "platformFeeBps",
+          "type": "u16"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -654,6 +669,16 @@ export type Escrow = {
       "code": 6008,
       "name": "notExpired",
       "msg": "Escrow has not expired yet"
+    },
+    {
+      "code": 6009,
+      "name": "invalidFeeBps",
+      "msg": "Invalid fee basis points (must be <= 10000)"
+    },
+    {
+      "code": 6010,
+      "name": "calculationOverflow",
+      "msg": "Calculation overflow"
     }
   ],
   "types": [
