@@ -514,9 +514,10 @@ export const depositNftToEscrow = async (agreementId: string): Promise<{ transac
       throw new Error(`Agreement not found: ${agreementId}`);
     }
 
-    // 2. Validate status
-    if (agreement.status !== AgreementStatus.PENDING) {
-      throw new Error(`Cannot deposit NFT: Agreement status is ${agreement.status}`);
+    // 2. Validate status - allow NFT deposit when PENDING or USDC_LOCKED
+    const allowedStatuses: AgreementStatus[] = [AgreementStatus.PENDING, AgreementStatus.USDC_LOCKED];
+    if (!allowedStatuses.includes(agreement.status)) {
+      throw new Error(`Cannot deposit NFT: Agreement status is ${agreement.status}. Must be PENDING or USDC_LOCKED.`);
     }
 
     // 3. Call on-chain deposit_nft instruction
@@ -581,9 +582,10 @@ export const depositUsdcToEscrow = async (agreementId: string): Promise<{ transa
       throw new Error(`Agreement not found: ${agreementId}`);
     }
 
-    // 2. Validate status
-    if (agreement.status !== AgreementStatus.PENDING) {
-      throw new Error(`Cannot deposit USDC: Agreement status is ${agreement.status}`);
+    // 2. Validate status - allow USDC deposit when PENDING or NFT_LOCKED
+    const allowedStatuses: AgreementStatus[] = [AgreementStatus.PENDING, AgreementStatus.NFT_LOCKED];
+    if (!allowedStatuses.includes(agreement.status)) {
+      throw new Error(`Cannot deposit USDC: Agreement status is ${agreement.status}. Must be PENDING or NFT_LOCKED.`);
     }
 
     if (!agreement.buyer) {

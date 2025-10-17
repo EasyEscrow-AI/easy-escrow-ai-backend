@@ -458,6 +458,14 @@ export class EscrowProgramService {
         })
         .instruction();
       
+      // FIX: Manually set seller as NON-signer (Anchor SDK bug workaround)
+      instruction.keys.forEach((key) => {
+        if (key.pubkey.equals(seller)) {
+          console.log(`[EscrowProgramService] Fixing: Setting ${key.pubkey.toString()} isSigner to false`);
+          key.isSigner = false;
+        }
+      });
+      
       // Create unsigned transaction
       const { Transaction } = await import('@solana/web3.js');
       const transaction = new Transaction().add(instruction);
@@ -536,6 +544,14 @@ export class EscrowProgramService {
           systemProgram: SystemProgram.programId,
         })
         .instruction();
+      
+      // FIX: Manually set buyer as NON-signer (Anchor SDK bug workaround)
+      instruction.keys.forEach((key) => {
+        if (key.pubkey.equals(buyer)) {
+          console.log(`[EscrowProgramService] Fixing: Setting ${key.pubkey.toString()} isSigner to false`);
+          key.isSigner = false;
+        }
+      });
       
       // Create unsigned transaction
       const { Transaction } = await import('@solana/web3.js');
