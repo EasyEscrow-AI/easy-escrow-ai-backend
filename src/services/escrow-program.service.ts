@@ -100,9 +100,10 @@ export class EscrowProgramService {
     const programId = new PublicKey(config.solana.escrowProgramId);
     
     // Initialize program
+    // Note: In Anchor v0.32.1, Program constructor takes (idl, provider) or (idl, programId, provider)
+    // We need to ensure the programId from IDL matches our config
     this.program = new Program<Escrow>(
       escrowIdl as any,
-      programId,
       this.provider
     );
     
