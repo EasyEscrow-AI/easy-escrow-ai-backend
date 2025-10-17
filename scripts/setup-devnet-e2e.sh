@@ -51,7 +51,7 @@ echo ""
 
 # Check if program is deployed
 echo "Checking program deployment..."
-PROGRAM_ID="7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV"
+PROGRAM_ID="4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd"
 
 if solana account $PROGRAM_ID --url devnet &> /dev/null; then
     echo -e "${GREEN}✅ Program deployed: $PROGRAM_ID${NC}"
@@ -134,7 +134,7 @@ if [ ! -f ".env" ]; then
 # Devnet E2E Testing Configuration
 SOLANA_NETWORK=devnet
 SOLANA_RPC_URL=https://api.devnet.solana.com
-PROGRAM_ID=7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV
+PROGRAM_ID=4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd
 
 # Database (if needed for integration)
 DATABASE_URL=postgresql://localhost:5432/easyescrow_test

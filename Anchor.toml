@@ -6,7 +6,7 @@ resolution = true
 skip-lint = false
 
 [programs.devnet]
-escrow = "7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV"
+escrow = "4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd"
 
 [programs.localnet]
 escrow = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"

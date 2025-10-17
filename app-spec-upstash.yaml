@@ -49,7 +49,7 @@ services:
     value: https://api.devnet.solana.com
   - key: ESCROW_PROGRAM_ID
     scope: RUN_TIME
-    value: 7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV
+    value: 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd
   - key: USDC_MINT_ADDRESS
     scope: RUN_TIME
     value: Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr

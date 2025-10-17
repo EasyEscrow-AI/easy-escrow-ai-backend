@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount, Transfer, Mint};
 use anchor_spl::associated_token::AssociatedToken;
 
-declare_id!("7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV");
+declare_id!("4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd");
 
 #[program]
 pub mod escrow {
@@ -277,23 +277,24 @@ pub mod escrow {
 pub struct InitAgreement<'info> {
     #[account(
         init,
-        payer = buyer,
+        payer = admin,
         space = 8 + EscrowState::INIT_SPACE,
         seeds = [b"escrow", escrow_id.to_le_bytes().as_ref()],
         bump
     )]
     pub escrow_state: Account<'info, EscrowState>,
     
-    #[account(mut)]
-    pub buyer: Signer<'info>,
+    /// CHECK: Buyer address is validated by storing in escrow state
+    pub buyer: UncheckedAccount<'info>,
     
     /// CHECK: Seller address is validated by storing in escrow state
     pub seller: UncheckedAccount<'info>,
     
     pub nft_mint: Account<'info, Mint>,
     
-    /// CHECK: Admin address for emergency cancellation
-    pub admin: UncheckedAccount<'info>,
+    /// Admin pays for escrow account creation
+    #[account(mut)]
+    pub admin: Signer<'info>,
     
     pub system_program: Program<'info, System>,
 }
