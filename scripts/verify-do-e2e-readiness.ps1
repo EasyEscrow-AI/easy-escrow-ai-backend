@@ -17,7 +17,7 @@ $script:WarnCount = 0
 
 # Expected values
 $EXPECTED_ANCHOR_VERSION = "0.32.1"
-$EXPECTED_PROGRAM_ID = "7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV"
+$EXPECTED_PROGRAM_ID = "4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd"
 $EXPECTED_NETWORK = "devnet"
 $MIN_SOL_BALANCE = 0.05
 

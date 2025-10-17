@@ -16,7 +16,7 @@ programs/escrow/src/lib.rs:
 
 This ID is then **set in `.env`** for the backend:
 ```
-ESCROW_PROGRAM_ID=7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV
+ESCROW_PROGRAM_ID=4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd
 ```
 
 ---
@@ -109,14 +109,14 @@ declare_id!("MainnetProgramId...");
 
 #### Devnet (`.env`):
 ```bash
-ESCROW_PROGRAM_ID=7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV
+ESCROW_PROGRAM_ID=4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd
 SOLANA_RPC_URL=https://api.devnet.solana.com
 SOLANA_NETWORK=devnet
 ```
 
 #### Staging (`.env.staging`):
 ```bash
-ESCROW_PROGRAM_ID=7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV
+ESCROW_PROGRAM_ID=4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd
 SOLANA_RPC_URL=https://api.devnet.solana.com
 SOLANA_NETWORK=devnet
 ```
@@ -304,7 +304,7 @@ declare_id!("7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV");
 ```
 ```bash
 # .env - MUST MATCH
-ESCROW_PROGRAM_ID=7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV
+ESCROW_PROGRAM_ID=4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd
 ```
 
 ---

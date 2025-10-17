@@ -47,7 +47,7 @@
 - ✅ `SOLANA_NETWORK=devnet`
 - ✅ `SOLANA_RPC_URL=https://api.devnet.solana.com`
 - ✅ `SOLANA_COMMITMENT=confirmed`
-- ✅ `ESCROW_PROGRAM_ID=7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV`
+- ✅ `ESCROW_PROGRAM_ID=4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd`
 - ✅ `USDC_MINT_ADDRESS=Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr`
 
 #### Devnet Wallet Private Keys (SECRETS - Need Verification)
@@ -121,18 +121,51 @@ solana transfer C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E 1 --url devnet
 ### 4. ✅ Deployed Program
 
 #### Program Information
-- **Program ID:** `7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV`
+- **Program ID:** `4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd`
 - **Network:** Devnet
 - **Source:** `programs/escrow/src/lib.rs`
 
 #### Verify Program is Deployed
 ```bash
 # Check program account exists
-solana account 7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV --url devnet
+solana program show 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd --url devnet
 
 # View in explorer
-# https://explorer.solana.com/address/7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV?cluster=devnet
+# https://explorer.solana.com/address/4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd?cluster=devnet
 ```
+
+#### ⚠️ CRITICAL: Program ID Consistency Check
+
+**Before running E2E tests, verify program ID is consistent across ALL configurations:**
+
+```bash
+# 1. Verify Rust source code
+grep "declare_id" programs/escrow/src/lib.rs
+# Expected: declare_id!("4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd");
+
+# 2. Verify Anchor.toml
+grep "escrow =" Anchor.toml | grep devnet
+# Expected: escrow = "4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd"
+
+# 3. Verify backend IDL
+grep '"address"' src/generated/anchor/escrow-idl.json | head -1
+# Expected: "address": "4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd",
+
+# 4. Verify environment variable
+echo $ESCROW_PROGRAM_ID
+# Expected: 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd
+
+# 5. Verify on-chain IDL matches
+anchor idl fetch 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd --provider.cluster devnet | grep '"address"' | head -1
+# Expected: "address": "4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd",
+```
+
+**If any check fails, STOP and fix the mismatch before running tests.**
+
+Common fixes:
+- **Stale IDL**: `cp target/idl/escrow.json src/generated/anchor/escrow-idl.json && docker compose restart backend`
+- **Wrong env var**: Update `nodemon.json` or `.env` and restart services
+- **Mismatched declare_id**: Rebuild and redeploy program
 
 #### Required Program Instructions
 The deployed program must have these instructions:
@@ -211,7 +244,7 @@ node --version
 npm --version
 
 # 4. Verify program deployment
-solana account 7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV --url devnet
+solana account 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd --url devnet
 
 # 5. Check wallet balances
 solana balance FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71 --url devnet
@@ -279,7 +312,7 @@ avm use 0.32.1
 ### ❌ "Program account not found"
 **Solution:** Verify program is deployed to devnet:
 ```bash
-solana account 7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV --url devnet
+solana account 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd --url devnet
 ```
 
 ### ❌ "Transaction simulation failed"
