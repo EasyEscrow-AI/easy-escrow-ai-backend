@@ -502,9 +502,19 @@ export const initializeEscrow = async (
     // Convert expiry to unix timestamp
     const expiryTimestamp = new BN(Math.floor(params.expiry.getTime() / 1000));
     
+    // Validate that buyer is specified (buyer and seller must be different parties)
+    if (!buyerPubkey) {
+      throw new Error('Buyer address is required for escrow initialization. Seller and buyer must be different parties.');
+    }
+    
+    // Validate that buyer and seller are different
+    if (buyerPubkey.equals(sellerPubkey)) {
+      throw new Error('Buyer and seller must be different addresses. Cannot create an escrow where the same party is both buyer and seller.');
+    }
+    
     console.log('[SolanaService] Calling on-chain init_agreement:', {
       escrowId: escrowId.toString(),
-      buyer: buyerPubkey?.toString(),
+      buyer: buyerPubkey.toString(),
       seller: sellerPubkey.toString(),
       nftMint: nftMintPubkey.toString(),
       usdcAmount: usdcAmount.toString(),
@@ -514,7 +524,7 @@ export const initializeEscrow = async (
     // Initialize escrow agreement on-chain
     const initResult = await escrowProgramService.initAgreement(
       escrowId,
-      buyerPubkey || sellerPubkey, // Use seller as buyer if buyer not specified
+      buyerPubkey,
       sellerPubkey,
       nftMintPubkey,
       usdcAmount,

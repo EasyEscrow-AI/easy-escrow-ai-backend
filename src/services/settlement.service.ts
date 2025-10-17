@@ -554,9 +554,9 @@ export class SettlementService {
         sellerReceived: feeCalculation.sellerReceived.toString(),
       });
 
-      // Call Anchor program settle instruction with fee distribution
-      console.log('[SettlementService] 🔗 Calling Anchor program settle() instruction with fee distribution...');
-      const platformFeeBps = agreement.feeBps || 100; // Default to 100 bps (1%) if not specified
+        // Call Anchor program settle instruction with fee distribution
+        console.log('[SettlementService] 🔗 Calling Anchor program settle() instruction with fee distribution...');
+        const platformFeeBps = agreement.feeBps ?? 100; // Default to 100 bps (1%) if not specified (use nullish coalescing to allow 0)
       const txId = await escrowProgramService.settle(
         escrowPda,
         seller,
