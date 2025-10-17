@@ -13,12 +13,12 @@
   },
   "description": "Official devnet wallets for E2E testing - Confirmed 2025-10-16",
   "createdAt": "2025-10-16T00:43:24.542Z",
-  "usdcMint": "738juYYJLqMRB1DTeffUR7zPuc9zyftCswedLYuikjzk",
+  "usdcMint": "Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr",
   "tokenAccounts": {
-    "sender": "7aFQuiLrKFbEdwrZnzd8t9F8bN52mRWR2R1re1CxUczZ",
-    "receiver": "M9Dcin8qwB5m1f3U4VbL2LjVbWNDfxJFybhoxmEv83S",
-    "admin": "GmxQBW8rwtXPbQrT3DQiLDDfF4Sft3YkLGE4kBW1VEUR",
-    "feeCollector": "3iQPrx2NsBYaDkGiwk816TwS7q3k5oa7bMpjiA2a9XuW"
+    "sender": "8Y7jhQqYDacTk31sTaG1xVFcGg9HB5QFS1CTF876LCWc",
+    "receiver": "4tBfUUxN2X7osYjBk6wnQae6cVnenzBxHRVvaLLuM5wH",
+    "admin": "E5N3stzDVwT4cMeswJ683mPRHPboGD1g1P6Wc6kazhFE",
+    "feeCollector": "GUddoWrmHFaB1i55Q4Z42VofnLfBV6x8GyoGkA81heeG"
   },
-  "updatedAt": "2025-10-16T00:49:23.278Z"
+  "updatedAt": "2025-10-17T08:07:04.227Z"
 }

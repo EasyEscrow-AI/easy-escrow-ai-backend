@@ -48,7 +48,11 @@
     "docker:logs:db": "docker compose logs -f postgres",
     "docker:logs:redis": "docker compose logs -f redis",
     "docker:ps": "docker compose ps",
-    "docker:health": "docker compose ps && docker compose exec backend node -e \"require('http').get('http://localhost:3000/health', (r) => {let d='';r.on('data',c=>d+=c);r.on('end',()=>{console.log(d);process.exit(r.statusCode===200?0:1)})}).on('error',()=>process.exit(1))\" || echo 'Backend health check failed'"
+    "docker:health": "docker compose ps && docker compose exec backend node -e \"require('http').get('http://localhost:3000/health', (r) => {let d='';r.on('data',c=>d+=c);r.on('end',()=>{console.log(d);process.exit(r.statusCode===200?0:1)})}).on('error',()=>process.exit(1))\" || echo 'Backend health check failed'",
+    "docker:fresh": "powershell -ExecutionPolicy Bypass -File ./scripts/docker-fresh-start.ps1",
+    "docker:fresh:keep-data": "powershell -ExecutionPolicy Bypass -File ./scripts/docker-fresh-start.ps1 -KeepData",
+    "docker:fresh:seed": "powershell -ExecutionPolicy Bypass -File ./scripts/docker-fresh-start.ps1 -Seed",
+    "docker:clean": "docker compose down -v --rmi all && docker builder prune -f"
   },
   "keywords": [
     "escrow",

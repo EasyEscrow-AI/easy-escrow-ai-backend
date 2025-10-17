@@ -584,14 +584,16 @@ export class EscrowProgramService {
   }
   
   /**
-   * Settle the escrow - transfer NFT to buyer and USDC to seller
+   * Settle the escrow - transfer NFT to buyer and USDC to seller with fee distribution
    */
   async settle(
     escrowPda: PublicKey,
     seller: PublicKey,
     buyer: PublicKey,
     nftMint: PublicKey,
-    usdcMint: PublicKey
+    usdcMint: PublicKey,
+    feeCollector: PublicKey,
+    platformFeeBps: number
   ): Promise<string> {
     try {
       console.log('[EscrowProgramService] Settling escrow:', {
@@ -600,6 +602,8 @@ export class EscrowProgramService {
         buyer: buyer.toString(),
         nftMint: nftMint.toString(),
         usdcMint: usdcMint.toString(),
+        feeCollector: feeCollector.toString(),
+        platformFeeBps,
       });
       
       // Get escrow ID from on-chain account
@@ -634,11 +638,17 @@ export class EscrowProgramService {
         buyer
       );
       
+      const feeCollectorUsdcAccount = await getAssociatedTokenAddress(
+        usdcMint,
+        feeCollector
+      );
+      
       console.log('[EscrowProgramService] Token accounts:', {
         escrowUsdcAccount: escrowUsdcAccount.toString(),
         escrowNftAccount: escrowNftAccount.toString(),
         sellerUsdcAccount: sellerUsdcAccount.toString(),
         buyerNftAccount: buyerNftAccount.toString(),
+        feeCollectorUsdcAccount: feeCollectorUsdcAccount.toString(),
       });
       
       // Ensure buyer's NFT ATA exists
@@ -667,21 +677,22 @@ export class EscrowProgramService {
         console.log('[EscrowProgramService] Buyer NFT ATA already exists');
       }
       
-      // Call settle instruction
-      // Note: In Anchor v0.32.1, we need to use accountsPartial or cast to bypass strict typing
-      // The escrowState PDA is validated on-chain against the derived address
-      const tx = await this.program.methods
-        .settle()
+      // Call settle instruction with fee distribution
+      // Note: TypeScript types not yet regenerated from updated IDL, using 'as any' to bypass
+      // The IDL is correct on-chain, types will be regenerated in next build cycle
+      const tx = await (this.program.methods as any)
+        .settle(platformFeeBps)
         .accountsPartial({
           escrowState: escrowPda,
           escrowUsdcAccount,
           escrowNftAccount,
           sellerUsdcAccount,
           buyerNftAccount,
+          feeCollectorUsdcAccount,
         })
         .rpc();
       
-      console.log('[EscrowProgramService] Settlement transaction:', tx);
+      console.log('[EscrowProgramService] Settlement transaction with fee distribution:', tx);
       
       return tx;
     } catch (error) {

@@ -297,6 +297,11 @@ npm run docker:restart:redis          # Redis only
 npm run docker:rebuild                # All services
 npm run docker:rebuild:backend        # Backend only
 
+# Fresh start (eliminate all cache issues)
+npm run docker:fresh                  # Complete fresh build (removes all data)
+npm run docker:fresh:keep-data        # Fresh build but keep database/Redis data
+npm run docker:fresh:seed             # Fresh build with sample data
+
 # View logs
 npm run docker:logs                   # All services
 npm run docker:logs:backend           # Backend only
@@ -330,6 +335,8 @@ Invoke-WebRequest -Uri "http://localhost:3000/health" -Method GET
 ```
 
 **Important:** Always use Docker commands for graceful restarts. Never use process killing commands (`pkill`, `taskkill`) with Dockerized services. See [DOCKER_GRACEFUL_RESTART.md](docs/DOCKER_GRACEFUL_RESTART.md) for complete guide.
+
+**Cache Issues?** If you're experiencing Docker cache issues (old code, stale configs, outdated IDLs), use the fresh start script to completely rebuild everything. See [DOCKER_CACHE_ELIMINATION.md](docs/DOCKER_CACHE_ELIMINATION.md) for details.
 
 See [DOCKER_DEPLOYMENT.md](docs/DOCKER_DEPLOYMENT.md) for complete Docker guide including:
 - Docker Compose setup
@@ -441,6 +448,7 @@ See `.env.example` for complete configuration options.
 - **[Deployment Guide](docs/DEPLOYMENT_GUIDE.md)** - Complete deployment guide ⭐
 - **[Devnet Deployment Guide](docs/DEVNET_DEPLOYMENT_GUIDE.md)** - E2E testing setup ⭐ NEW
 - [Docker Deployment](docs/DOCKER_DEPLOYMENT.md) - Docker deployment guide
+- [Docker Cache Elimination](docs/DOCKER_CACHE_ELIMINATION.md) - Fix Docker cache issues ⭐ NEW
 - [Migration Guide](docs/MIGRATION_GUIDE.md) - Database migrations
 - [Environment Variables](docs/ENVIRONMENT_VARIABLES.md) - Complete variable reference
 - **[Environment Template](docs/ENV_TEMPLATE.md)** - Setup guide with devnet wallet config ⭐ NEW
