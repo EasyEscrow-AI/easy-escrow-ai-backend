@@ -58,7 +58,7 @@ $response.app.spec.services[0].envs | Where-Object { $_.key -match "USDC_MINT|ES
 
 ```powershell
 # Check if server is responding
-Invoke-RestMethod -Uri "https://easyescrow-backend-dev-ks5c5.ondigitalocean.app/health" -Method Get
+Invoke-RestMethod -Uri "https://easyescrow-backend-dev-rg7y6.ondigitalocean.app/health" -Method Get
 ```
 
 **Expected Response:**

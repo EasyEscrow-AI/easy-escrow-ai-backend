@@ -9,7 +9,7 @@ param(
     [string]$EnvFile = ".env.dev",
     
     [Parameter(Mandatory=$false)]
-    [string]$AppUrl = "https://easyescrow-backend-dev-ks5c5.ondigitalocean.app"
+    [string]$AppUrl = "https://easyescrow-backend-dev-rg7y6.ondigitalocean.app"
 )
 
 $ErrorActionPreference = "Stop"
