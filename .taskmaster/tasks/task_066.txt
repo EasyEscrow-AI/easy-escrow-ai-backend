@@ -1,0 +1,108 @@
+# Task ID: 66
+# Title: Build and Deploy Escrow Program to Devnet for STAGING
+# Status: pending
+# Dependencies: 64, 65, 87
+# Priority: high
+# Description: Deploy the escrow program using CI/CD pipeline with Anchor.staging.toml configuration, implementing build-once-deploy-everywhere principles with proper artifact verification and staging environment isolation.
+# Details:
+Deploy the escrow program using CI/CD pipeline with dedicated STAGING environment configuration:
+
+**Prerequisites:**
+- Anchor.staging.toml configured (Task 87)
+- STAGING Program ID from Task 64
+- Deployer keypair funded with SOL
+- Separate private RPC for STAGING
+
+**CI Build Step (runs once on merge/tag):**
+```bash
+# Pin toolchains in CI environment
+solana-install init 1.18.x
+rustup install 1.75.0
+
+# Build program once with pinned versions
+anchor build
+
+# Generate checksums for artifact verification
+shasum -a 256 target/deploy/escrow.so > target/deploy/escrow.so.sha256
+shasum -a 256 target/idl/escrow.json > target/idl/escrow.json.sha256
+
+# Store artifacts for promotion (same .so and IDL for all envs)
+# Upload to artifact storage or GitHub releases
+```
+
+**CI Deploy Step (promotes artifact to STAGING):**
+```bash
+# Set staging RPC (private, not public devnet)
+export ANCHOR_PROVIDER_URL=https://<private-devnet-rpc-staging>
+
+# Deploy using STAGING config and deployer keypair
+anchor deploy \
+  -C Anchor.staging.toml \
+  --provider.cluster devnet \
+  --provider.wallet $STAGING_DEPLOYER_KEYPAIR
+
+# Verify deployment
+solana program show $STAGING_PROGRAM_ID --url devnet
+
+# Upload/Update IDL (first time: init, subsequent: upgrade)
+anchor idl upgrade $STAGING_PROGRAM_ID \
+  target/idl/escrow.json \
+  -C Anchor.staging.toml \
+  --provider.cluster devnet
+```
+
+**Post-Deploy Migration/Seed:**
+```bash
+# Initialize PDAs and config accounts
+npm run staging:migrate
+
+# Fund test wallets if needed
+npm run staging:fund-wallets
+```
+
+**Verification:**
+```bash
+# Run smoke tests against STAGING
+npm run test:staging:smoke
+
+# Verify program account exists
+solana program show $STAGING_PROGRAM_ID --url devnet
+```
+
+**Important CI/CD Principles:**
+- Build once, deploy everywhere (same .so for DEV → STAGING → PROD)
+- Never deploy from laptop; always from CI
+- Use separate RPC endpoints per environment
+- Require green tests before marking RC ready
+- Manual approval gate before promotion
+
+**CI Secrets Required:**
+- STAGING_DEPLOYER_KEYPAIR (base58 or JSON)
+- STAGING_RPC_URL (private devnet endpoint)
+- Any seed mints/authority keys for PDA initialization
+
+Document deployment in CI logs with:
+- Git commit SHA
+- Build artifacts checksums
+- Deployment transaction signature
+- Timestamp and deployer
+
+Document in: docs/deployment/STAGING_CI_DEPLOYMENT.md
+
+# Test Strategy:
+1. **CI Build Verification**: Confirm CI pipeline builds successfully with pinned toolchain versions (Solana 1.18.x, Rust 1.75.0), verify `anchor build` completes with exit code 0, and validate artifact checksums are generated correctly
+
+2. **Artifact Integrity**: Verify shasum checksums for escrow.so and escrow.json match expected values, confirm artifacts are stored properly for promotion, and validate same .so file will be used across all environments
+
+3. **CI Deploy Process**: Execute deployment using `anchor deploy -C Anchor.staging.toml` and verify it uses correct STAGING Program ID, private RPC endpoint, and deployer keypair from CI secrets
+
+4. **Deployment Verification**: Run `solana program show $STAGING_PROGRAM_ID --url devnet` and confirm program exists, is executable, and shows correct deployment transaction signature in CI logs
+
+5. **IDL Management**: Verify `anchor idl upgrade` succeeds for STAGING Program ID, confirm IDL is properly uploaded to devnet, and validate IDL fetch returns expected program interface
+
+6. **Post-Deploy Operations**: Execute `npm run staging:migrate` successfully to initialize PDAs and config accounts, verify test wallet funding if required, and confirm all seed data is properly initialized
+
+7. **Smoke Testing**: Run `npm run test:staging:smoke` against deployed STAGING program and verify all basic operations (PDA creation, escrow initialization) work correctly with private RPC endpoint
+
+8. **Documentation Completeness**: Verify CI logs contain git commit SHA, artifact checksums, deployment transaction signature, and timestamp, and confirm docs/deployment/STAGING_CI_DEPLOYMENT.md is updated with deployment details
+

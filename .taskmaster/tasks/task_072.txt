@@ -1,0 +1,114 @@
+# Task ID: 72
+# Title: Run Full E2E Tests on STAGING Environment
+# Status: pending
+# Dependencies: 70, 71, 65, 64
+# Priority: high
+# Description: Execute comprehensive end-to-end testing on STAGING environment covering all critical user flows, edge cases, and system integrations to validate production readiness.
+# Details:
+Execute comprehensive end-to-end testing on the STAGING environment to validate complete system functionality before production deployment:
+
+**Step 1: Test Environment Setup**
+```bash
+# Configure STAGING environment
+export NODE_ENV=staging
+export SOLANA_NETWORK=devnet
+export SOLANA_RPC_URL=https://api.devnet.solana.com
+export API_BASE_URL=https://staging-api.easyescrow.ai
+export ESCROW_PROGRAM_ID=<STAGING_PROGRAM_ID_FROM_TASK_64>
+```
+
+**Step 2: Create Test Suite Structure**
+```bash
+mkdir -p tests/e2e/staging
+touch tests/e2e/staging/staging-e2e.test.js
+touch tests/e2e/staging/test-config.js
+touch tests/e2e/staging/test-helpers.js
+```
+
+**Step 3: Implement Test Scenarios**
+
+**Happy Path Test:**
+- Create agreement with valid parameters
+- Deposit USDC using staging sender wallet
+- Deposit NFT using staging receiver wallet
+- Execute atomic settlement
+- Verify receipt generation and storage
+- Validate blockchain state changes
+
+**Expiry Path Test:**
+- Create agreement with short expiry
+- Make partial deposits only
+- Wait for agreement expiry
+- Trigger refund process
+- Verify funds returned to original depositors
+
+**Cancellation Test:**
+- Create agreement
+- Admin cancellation via staging admin wallet
+- Verify refund processing
+- Check webhook notifications
+
+**Fee Collection Test:**
+- Execute settlement with fee calculation
+- Verify platform fees collected to fee collector wallet
+- Validate fee amounts match configuration
+
+**Webhook Delivery Test:**
+- Configure test webhook endpoints
+- Execute various agreement actions
+- Verify webhook payloads and delivery
+- Test webhook retry mechanisms
+
+**Idempotency Test:**
+- Submit duplicate requests with same idempotency keys
+- Verify no duplicate processing
+- Test Redis idempotency key storage
+
+**Concurrent Operations Test:**
+- Create multiple agreements simultaneously
+- Test race condition handling
+- Verify database consistency
+
+**Edge Cases Test:**
+- Wrong mint address handling
+- Insufficient funds scenarios
+- Expired agreement interactions
+- Invalid signature handling
+
+**Step 4: Database and Redis Validation**
+- Query STAGING database after each test
+- Verify agreement states and transitions
+- Check Redis queue processing
+- Validate cache consistency
+
+**Step 5: Blockchain Verification**
+- Monitor devnet explorer for transactions
+- Verify program account states
+- Check token account balances
+- Validate escrow account creation/closure
+
+**Step 6: Results Documentation**
+Create comprehensive test report in docs/testing/STAGING_E2E_RESULTS.md including:
+- Test execution summary
+- Pass/fail status for each scenario
+- Performance metrics and timing
+- Blockchain transaction links
+- Database state snapshots
+- Error logs and debugging info
+- Recommendations for production deployment
+
+# Test Strategy:
+1. **Test Suite Execution**: Run complete STAGING E2E test suite and verify all 8 test scenarios pass successfully with proper assertions for each step
+
+2. **Environment Integration Validation**: Confirm tests properly connect to staging-api.easyescrow.ai, STAGING database, Redis instance, and devnet blockchain with correct authentication
+
+3. **Blockchain State Verification**: For each test scenario, verify corresponding blockchain transactions appear on devnet explorer with correct program interactions and account state changes
+
+4. **Database Consistency Check**: Query STAGING database after test completion to ensure all agreement states, deposits, and settlements are correctly recorded with proper timestamps and status transitions
+
+5. **Webhook Delivery Confirmation**: Verify all webhook events are delivered to test endpoints with correct payloads, proper retry behavior, and successful delivery confirmations
+
+6. **Performance Metrics Validation**: Measure and document test execution times, API response times, blockchain confirmation times, and overall system throughput under test load
+
+7. **Results Documentation Review**: Verify docs/testing/STAGING_E2E_RESULTS.md contains comprehensive test results, metrics, transaction links, and clear pass/fail status for production readiness assessment
+

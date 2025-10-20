@@ -1,0 +1,100 @@
+# Task ID: 71
+# Title: Setup STAGING Monitoring and Alerting
+# Status: pending
+# Dependencies: 70, 69, 68, 67
+# Priority: medium
+# Description: Implement comprehensive monitoring and alerting system for STAGING environment including application health checks, performance metrics, resource utilization monitoring, and automated alerting for critical failures.
+# Details:
+Configure comprehensive monitoring and alerting infrastructure for the STAGING environment to ensure system reliability and early issue detection:
+
+**Step 1: DigitalOcean Built-in Monitoring Setup**
+- Enable DO App Platform monitoring for easyescrow-backend-staging
+- Configure resource utilization alerts (CPU >80%, Memory >85%, Network anomalies)
+- Set up uptime monitoring for staging-api.easyescrow.ai endpoint
+- Enable database monitoring for PostgreSQL connection pool metrics
+- Configure Redis monitoring for connection health and memory usage
+
+**Step 2: Application Health Checks Implementation**
+```javascript
+// Add to Express app
+app.get('/health', async (req, res) => {
+  const health = {
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    checks: {
+      database: await checkDatabaseHealth(),
+      redis: await checkRedisHealth(),
+      solana: await checkSolanaRPCHealth(),
+      escrowProgram: await checkEscrowProgramHealth()
+    }
+  };
+  res.json(health);
+});
+```
+
+**Step 3: API Performance Monitoring**
+- Implement response time tracking for all endpoints
+- Set up error rate monitoring with 5% threshold alerting
+- Monitor API endpoint success/failure rates
+- Track settlement engine performance metrics
+- Monitor blockchain transaction success rates
+
+**Step 4: Database and Redis Monitoring**
+- Configure PostgreSQL connection pool monitoring
+- Set up alerts for database connection failures
+- Monitor Redis queue depths and processing rates
+- Track Bull queue job success/failure rates
+- Set up Redis connection failure alerts
+
+**Step 5: Log Aggregation Setup**
+```javascript
+// Configure structured logging
+const winston = require('winston');
+const logger = winston.createLogger({
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json()
+  ),
+  transports: [
+    new winston.transports.Console(),
+    new winston.transports.File({ filename: 'staging.log' })
+  ]
+});
+```
+
+**Step 6: Alert Configuration**
+- Configure Slack/Discord webhooks for critical alerts
+- Set up deployment failure notifications
+- Configure PagerDuty integration if available
+- Implement escalation policies for different alert severities
+- Set up alert suppression during maintenance windows
+
+**Step 7: Optional Third-Party Integration**
+- Evaluate DataDog/New Relic/Sentry for enhanced monitoring
+- Configure error tracking and performance insights
+- Set up custom dashboards for STAGING environment
+- Implement distributed tracing for complex transactions
+
+**Step 8: Documentation Creation**
+Create comprehensive documentation in `docs/monitoring/STAGING_MONITORING.md` covering:
+- Monitoring architecture and tool selection rationale
+- Alert thresholds and escalation procedures
+- Dashboard access and interpretation guide
+- Troubleshooting runbooks for common issues
+- Monitoring maintenance and update procedures
+
+# Test Strategy:
+1. **Health Check Validation**: Verify `/health` endpoint returns comprehensive status for all system components (database, Redis, Solana RPC, escrow program) with proper error handling for failed checks
+
+2. **Alert Testing**: Trigger test alerts by simulating failure conditions (stop Redis, exceed API error threshold, simulate database connection failure) and verify alerts are delivered to configured channels within expected timeframes
+
+3. **Performance Monitoring Verification**: Generate load on API endpoints and verify response time metrics are captured accurately, confirm error rate calculations are correct when introducing deliberate failures
+
+4. **Resource Monitoring Validation**: Stress test the application to trigger CPU/memory alerts, verify DigitalOcean monitoring dashboards show accurate resource utilization data
+
+5. **Log Aggregation Testing**: Generate various log levels and types, verify logs are properly structured, searchable, and accessible through configured aggregation system
+
+6. **End-to-End Monitoring Test**: Execute complete escrow workflow (create agreement, fund, settle) while monitoring all metrics, verify blockchain transaction monitoring captures success/failure rates accurately
+
+7. **Documentation Review**: Validate monitoring documentation completeness by following runbooks to resolve simulated issues, ensure all monitoring tools and dashboards are properly documented with access instructions
+

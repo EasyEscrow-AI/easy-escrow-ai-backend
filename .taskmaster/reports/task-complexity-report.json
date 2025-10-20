@@ -1,181 +1,205 @@
 {
 	"meta": {
-		"generatedAt": "2025-10-13T01:04:31.951Z",
-		"tasksAnalyzed": 21,
-		"totalTasks": 21,
-		"analysisCount": 21,
+		"generatedAt": "2025-10-20T00:27:26.056Z",
+		"tasksAnalyzed": 24,
+		"totalTasks": 67,
+		"analysisCount": 24,
 		"thresholdScore": 5,
 		"projectName": "Task Master",
-		"usedResearch": false
+		"usedResearch": true
 	},
 	"complexityAnalysis": [
 		{
-			"taskId": 21,
-			"taskTitle": "Setup Backend Project Structure",
-			"complexityScore": 4,
-			"recommendedSubtasks": 5,
-			"expansionPrompt": "Break down the backend project initialization into discrete setup steps: Node.js/TypeScript configuration, Express framework setup, code quality tools (ESLint/Prettier), folder structure creation, and environment/build configuration. Each subtask should be independently completable and testable.",
-			"reasoning": "This is a foundational setup task with well-defined components. While it requires knowledge of Node.js, TypeScript, and Express, the steps are mostly configuration-based with established patterns. The existing 5 subtasks are appropriately scoped and cover all major setup areas."
-		},
-		{
-			"taskId": 22,
-			"taskTitle": "Deploy Solana Program for Escrow",
-			"complexityScore": 8,
-			"recommendedSubtasks": 5,
-			"expansionPrompt": "Decompose the Solana program development into: project structure setup, PDA account design, core instruction implementation (init, deposits), settlement/cancellation logic, and devnet deployment with testing. Focus on the complex state machine logic and security considerations for each instruction.",
-			"reasoning": "High complexity due to blockchain programming requirements, complex state management with PDAs, multiple instruction handlers with security implications, and the need for thorough testing on devnet. Requires deep Solana/Anchor expertise and careful handling of financial operations."
-		},
-		{
-			"taskId": 23,
-			"taskTitle": "Setup Database Schema and Migrations",
-			"complexityScore": 6,
-			"recommendedSubtasks": 5,
-			"expansionPrompt": "Structure the database setup into: schema design with relationships and constraints, ORM configuration and connection setup, model/entity creation with validation, initial migration generation and execution, and migration management system setup. Ensure proper data integrity and performance considerations.",
-			"reasoning": "Moderate-high complexity involving database design decisions that will impact the entire system. Requires careful consideration of relationships, constraints, and performance. The migration system setup adds operational complexity for deployment management."
-		},
-		{
-			"taskId": 24,
-			"taskTitle": "Implement Agreement Creation API",
+			"taskId": 63,
+			"taskTitle": "Document STAGING Environment Strategy and Architecture",
 			"complexityScore": 7,
 			"recommendedSubtasks": 5,
-			"expansionPrompt": "Break down the API implementation into: endpoint schema design and validation, request validation middleware, on-chain program integration for PDA creation, database storage service, and complete endpoint handler with error handling. Focus on the integration between off-chain API and on-chain operations.",
-			"reasoning": "High complexity due to the integration between off-chain API and on-chain Solana operations. Requires careful validation, error handling, and coordination between database operations and blockchain transactions. The existing subtasks appropriately separate concerns."
+			"expansionPrompt": "Break down the documentation into clear, modular sections: environment overview, network rationale, isolation strategy, CI/CD workflow, upgrade authority, program ID tracking, canary/rollback, migration, and mainnet-shadow testing. Assign each section to a subtask for focused drafting, peer review, and integration.",
+			"reasoning": "This task requires synthesizing technical, operational, and strategic decisions into comprehensive, maintainable documentation. The breadth of topics—from environment isolation and CI/CD pipelines to upgrade authority and migration procedures—demands careful organization and cross-team validation. While not deeply technical in implementation, the cognitive load to ensure accuracy, clarity, and completeness across all stakeholders is substantial. The task is foundational for future deployments and incident response, raising its importance and complexity. Industry best practices emphasize modular, peer-reviewed documentation for critical infrastructure, justifying both the score and subtask breakdown."
 		},
 		{
-			"taskId": 25,
-			"taskTitle": "Implement Solana Blockchain Monitoring Service",
-			"complexityScore": 8,
-			"recommendedSubtasks": 5,
-			"expansionPrompt": "Decompose monitoring into: RPC connection and account subscription infrastructure, USDC deposit detection and validation, NFT deposit detection with metadata validation, database update service for deposit status, and monitoring service orchestration with error handling. Focus on real-time monitoring reliability and validation accuracy.",
-			"reasoning": "High complexity involving real-time blockchain monitoring, WebSocket connections, transaction parsing, and metadata validation. Requires robust error handling, connection management, and precise validation logic. Critical for system reliability."
-		},
-		{
-			"taskId": 26,
-			"taskTitle": "Implement Atomic Settlement Engine",
-			"complexityScore": 9,
-			"recommendedSubtasks": 5,
-			"expansionPrompt": "Structure the settlement engine into: lock detection service, expiration validation logic, on-chain settlement caller, platform fee calculator, and creator royalty handler. Focus on the atomic nature of settlements and complex fee calculations with proper error handling and rollback mechanisms.",
-			"reasoning": "Very high complexity as this is the core business logic involving atomic operations, fee calculations, royalty distributions, and blockchain interactions. Requires precise timing, error handling, and financial accuracy. Critical system component with high risk if implemented incorrectly."
-		},
-		{
-			"taskId": 27,
-			"taskTitle": "Implement Expiry and Cancellation Logic",
-			"complexityScore": 7,
-			"recommendedSubtasks": 5,
-			"expansionPrompt": "Break down expiry handling into: timestamp checking service, partial deposit refund logic, admin multisig cancellation, agreement status update engine, and service integration with monitoring. Focus on proper state transitions and refund calculations.",
-			"reasoning": "High complexity due to time-based logic, partial refund calculations, multisig requirements, and state management. Requires careful handling of edge cases and proper coordination between multiple services."
-		},
-		{
-			"taskId": 28,
-			"taskTitle": "Implement Agreement Query and Cancel Endpoints",
-			"complexityScore": 5,
-			"recommendedSubtasks": 5,
-			"expansionPrompt": "Structure the endpoints into: database schema and data model design, repository layer implementation, GET endpoint for agreement details, expiry detection logic, and POST cancellation endpoint. Focus on proper data modeling and endpoint security.",
-			"reasoning": "Moderate complexity involving standard CRUD operations with some business logic for expiry detection and cancellation. The existing subtasks provide good separation of concerns between data layer, business logic, and API endpoints."
-		},
-		{
-			"taskId": 29,
-			"taskTitle": "Implement Webhook System",
-			"complexityScore": 7,
-			"recommendedSubtasks": 5,
-			"expansionPrompt": "Decompose webhook system into: event system architecture design, webhook URL management and configuration, signature verification system, delivery service with retry logic, and integration with escrow lifecycle events. Focus on reliability and security of webhook deliveries.",
-			"reasoning": "High complexity due to the need for reliable event delivery, retry mechanisms, signature verification, and integration with multiple system components. Requires careful design for scalability and fault tolerance."
-		},
-		{
-			"taskId": 30,
-			"taskTitle": "Implement Settlement Receipt Generation",
-			"complexityScore": 6,
-			"recommendedSubtasks": 5,
-			"expansionPrompt": "Structure receipt generation into: data structure design with validation, hash signing service implementation, database schema and models, receipt generation service, and API endpoints for receipt retrieval. Focus on data integrity and cryptographic security.",
-			"reasoning": "Moderate-high complexity involving cryptographic operations, data integrity, and API design. Requires careful handling of sensitive financial data and proper signature verification mechanisms."
-		},
-		{
-			"taskId": 31,
-			"taskTitle": "Setup Redis for Caching and Queues",
-			"complexityScore": 5,
-			"recommendedSubtasks": 5,
-			"expansionPrompt": "Break down Redis setup into: client installation and configuration, agreement caching system implementation, job queue infrastructure setup, blockchain monitoring queue, and settlement processing queue. Focus on performance optimization and queue reliability.",
-			"reasoning": "Moderate complexity involving Redis configuration, caching strategies, and queue management. The existing subtasks appropriately separate different Redis use cases and provide good structure for implementation."
-		},
-		{
-			"taskId": 32,
-			"taskTitle": "Implement Security Middleware",
-			"complexityScore": 6,
-			"recommendedSubtasks": 5,
-			"expansionPrompt": "Structure security implementation into: rate limiting middleware, CORS configuration for domain restrictions, comprehensive input validation, USDC mint allowlist validation, and authentication middleware for protected endpoints. Focus on security best practices and attack prevention.",
-			"reasoning": "Moderate-high complexity due to security implications and the need for comprehensive protection mechanisms. Requires knowledge of various attack vectors and proper implementation of security controls."
-		},
-		{
-			"taskId": 33,
-			"taskTitle": "Create Docker Configuration",
-			"complexityScore": 4,
-			"recommendedSubtasks": 5,
-			"expansionPrompt": "Break down Docker setup into: multi-stage Dockerfile creation, environment variable and secrets configuration, health check endpoint implementation, production optimization and security hardening, and Docker health check configuration. Focus on production readiness and security.",
-			"reasoning": "Moderate complexity involving Docker best practices, security hardening, and production optimization. The existing subtasks provide good coverage of containerization concerns."
-		},
-		{
-			"taskId": 34,
-			"taskTitle": "Setup DigitalOcean App Platform Deployment",
-			"complexityScore": 5,
-			"recommendedSubtasks": 5,
-			"expansionPrompt": "Structure deployment setup into: GitHub repository connection, managed PostgreSQL database creation, managed Redis instance setup, app secrets and environment configuration, and custom domain with HTTPS and monitoring. Focus on production deployment and monitoring setup.",
-			"reasoning": "Moderate complexity involving cloud platform configuration, managed services setup, and domain configuration. Requires understanding of DigitalOcean services and proper production deployment practices."
-		},
-		{
-			"taskId": 35,
-			"taskTitle": "Write Comprehensive Tests",
-			"complexityScore": 9,
-			"recommendedSubtasks": 7,
-			"expansionPrompt": "Structure comprehensive testing into: unit tests for core services, API integration tests, on-chain smart contract tests with local validator, off-chain API integration tests, happy path test scenarios, edge cases and security testing, and test infrastructure with CI integration. Focus on both on-chain and off-chain testing methodologies with comprehensive coverage.",
-			"reasoning": "Very high complexity due to the need for comprehensive testing across multiple layers (unit, integration, on-chain, off-chain), security testing, and complex test infrastructure setup. Requires expertise in both blockchain testing and traditional API testing. The expanded subtask count reflects the comprehensive nature of the testing requirements."
-		},
-		{
-			"taskId": 36,
-			"taskTitle": "Create API Documentation",
+			"taskId": 64,
+			"taskTitle": "Generate New Solana Program Keypair for STAGING",
 			"complexityScore": 3,
-			"recommendedSubtasks": 5,
-			"expansionPrompt": "Structure documentation into: OpenAPI specification setup, endpoint documentation with schemas, webhook event documentation, error code documentation, and integration guide with examples. Focus on comprehensive developer experience and clear integration instructions.",
-			"reasoning": "Low-moderate complexity involving documentation creation with established tools and patterns. The existing subtasks provide good structure for comprehensive API documentation."
+			"recommendedSubtasks": 0,
+			"expansionPrompt": "",
+			"reasoning": "This is a straightforward, scriptable operation with well-defined steps: generate keypair, extract program ID, create backups, secure storage, update documentation, and verify isolation. The process is deterministic, has minimal dependencies, and is easily testable. Industry standards treat keypair generation as a routine, automatable task with low risk of variation or error when following documented procedures."
 		},
 		{
-			"taskId": 37,
-			"taskTitle": "End-to-End Devnet Testing",
+			"taskId": 65,
+			"taskTitle": "Create and Fund STAGING Devnet Wallets",
+			"complexityScore": 4,
+			"recommendedSubtasks": 0,
+			"expansionPrompt": "",
+			"reasoning": "The task involves generating multiple keypairs, backing them up, funding them, setting up token accounts, minting test tokens, and updating configuration—all with clear, scripted steps. While there are several sequential actions, each is simple and well-understood in blockchain DevOps. The main complexity comes from ensuring proper naming conventions and environment variable management, but this is mitigated by automation and documentation."
+		},
+		{
+			"taskId": 66,
+			"taskTitle": "Build and Deploy Escrow Program to Devnet for STAGING",
+			"complexityScore": 6,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Divide into: (1) CI build and artifact generation, (2) deployment and verification, (3) post-deploy migration and smoke testing. This reflects the natural phases of the deployment pipeline and allows for focused automation, validation, and documentation.",
+			"reasoning": "Deploying a Solana program via CI/CD with pinned toolchains, artifact verification, and environment-specific configuration requires careful coordination. The need for reproducible builds, secure secret management, and post-deploy validation adds to the complexity. While each step is well-defined, the integration and failure modes (e.g., deployment rollback, artifact mismatch) justify a moderate complexity score and subtask breakdown."
+		},
+		{
+			"taskId": 67,
+			"taskTitle": "Setup STAGING Database Infrastructure",
+			"complexityScore": 5,
+			"recommendedSubtasks": 2,
+			"expansionPrompt": "Split into: (1) database and user creation with least-privilege permissions, and (2) migration, seeding, connection pooling, and backup configuration. This separates the initial provisioning from the ongoing operational setup.",
+			"reasoning": "Creating a database, user, and connection string is routine, but integrating migrations, seeding, connection pooling, and backups requires attention to detail and validation. The task is not deeply complex but involves multiple steps that benefit from clear separation and testing. Industry standards for staging environments emphasize isolation, reproducibility, and operational readiness, which are all addressed here."
+		},
+		{
+			"taskId": 68,
+			"taskTitle": "Configure STAGING Redis Instance",
+			"complexityScore": 4,
+			"recommendedSubtasks": 0,
+			"expansionPrompt": "",
+			"reasoning": "Provisioning a managed Redis instance with TLS, authentication, and IP allowlisting is a well-documented, provider-specific process. The main complexity is in ensuring proper integration with the application (queues, idempotency) and validating security settings. These are standard cloud operations with low risk of variation."
+		},
+		{
+			"taskId": 69,
+			"taskTitle": "Configure STAGING Environment Variables and Secrets",
+			"complexityScore": 5,
+			"recommendedSubtasks": 2,
+			"expansionPrompt": "Separate into: (1) environment file and template creation with naming conventions, and (2) secrets management, rotation procedures, and deployment automation integration. This reflects the distinction between configuration definition and operational security.",
+			"reasoning": "Managing environment variables and secrets is critical for security and reproducibility. The task involves not just file creation but also establishing naming conventions, secret rotation, and CI/CD integration. While each step is straightforward, the need to prevent configuration drift and ensure secure handling justifies a moderate complexity score and subtask breakdown."
+		},
+		{
+			"taskId": 70,
+			"taskTitle": "Deploy Backend Application to STAGING Environment",
+			"complexityScore": 6,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Divide into: (1) App Platform setup and build/runtime configuration, (2) environment variable and secret integration, and (3) custom domain, monitoring, and security configuration. This mirrors the lifecycle from provisioning to production-readiness.",
+			"reasoning": "Deploying a backend to a managed platform involves multiple integration points: build configuration, secrets, database/Redis connectivity, custom domains, monitoring, and security. The task is not deeply technical but requires careful coordination and validation. Industry standards for staging deployments emphasize full production-like configuration, which increases the effort and testing surface."
+		},
+		{
+			"taskId": 71,
+			"taskTitle": "Setup STAGING Monitoring and Alerting",
+			"complexityScore": 7,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Break into: (1) infrastructure and application health checks, (2) performance and business metrics collection, (3) alert configuration and notification channels, (4) documentation and dashboard setup. This reflects the full monitoring stack from data collection to actionable alerts.",
+			"reasoning": "Implementing comprehensive monitoring requires integrating multiple tools (platform-native, Prometheus/Grafana, etc.), defining meaningful metrics, setting alert thresholds, and establishing notification workflows. The cognitive complexity of designing a useful, maintainable monitoring system is high, and the task is critical for operational reliability. Best practices recommend modular, documented monitoring setups."
+		},
+		{
+			"taskId": 72,
+			"taskTitle": "Run Full E2E Tests on STAGING Environment",
 			"complexityScore": 8,
 			"recommendedSubtasks": 5,
-			"expansionPrompt": "Structure devnet testing into: testing environment setup, happy path end-to-end test execution, expiry path test scenario, concurrency race condition testing, and fee collection and receipt validation. Focus on real-world testing scenarios with actual blockchain transactions.",
-			"reasoning": "High complexity due to end-to-end testing on actual blockchain network, coordination of multiple system components, and validation of complex scenarios including race conditions. Requires careful test design and execution."
+			"expansionPrompt": "Organize by test scenario: (1) happy path, (2) expiry/cancellation, (3) fee collection, (4) webhook/idempotency, (5) race conditions/edge cases. Assign each scenario to a subtask for focused test development, execution, and reporting.",
+			"reasoning": "End-to-end testing in a blockchain environment involves coordinating API, database, Redis, and on-chain interactions across multiple user flows and edge cases. The need to simulate real-world conditions, validate idempotency, and test failure modes significantly increases complexity. Industry standards stress the importance of comprehensive, scenario-based E2E testing for production readiness."
 		},
 		{
-			"taskId": 38,
-			"taskTitle": "Setup Localnet for Program Testing",
+			"taskId": 73,
+			"taskTitle": "Create STAGING Deployment Automation Scripts",
+			"complexityScore": 8,
+			"recommendedSubtasks": 8,
+			"expansionPrompt": "Divide into: (1) build workflow, (2) deployment workflow, (3) rollback workflow, (4) smoke test runner, (5) migration script, (6) pipeline documentation, (7) environment protection rules, (8) notification integration. This reflects the CI/CD pipeline's major components and operational requirements.",
+			"reasoning": "Building a robust, auditable CI/CD pipeline for a blockchain backend involves multiple workflows, secret management, approval gates, rollback procedures, and integration testing. The task is critical for deployment safety and requires careful design to prevent configuration errors and ensure reproducibility. Industry standards for DevOps in blockchain emphasize automation, security, and clear documentation, all of which contribute to the high complexity score."
+		},
+		{
+			"taskId": 74,
+			"taskTitle": "Document STAGING Program IDs and Infrastructure",
 			"complexityScore": 6,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Split into: (1) environment and program ID documentation, (2) wallet and infrastructure details, (3) deployment, backup, and testing procedures. This ensures comprehensive coverage while maintaining modularity.",
+			"reasoning": "This task requires aggregating and clearly presenting critical operational information: program IDs, wallet addresses, infrastructure endpoints, deployment procedures, and backup/recovery steps. While each piece is straightforward, the need for accuracy, cross-referencing, and usability increases the cognitive load. Documentation of this nature is foundational for incident response and onboarding, justifying a moderate complexity score."
+		},
+		{
+			"taskId": 76,
+			"taskTitle": "Implement STAGING CI/CD Pipeline",
+			"complexityScore": 9,
 			"recommendedSubtasks": 6,
-			"expansionPrompt": "Structure localnet setup into: Solana CLI installation and configuration, local validator startup with custom settings, test keypairs and SOL funding, test USDC token creation and distribution, test NFT collection and minting, and comprehensive test matrix infrastructure setup. Focus on creating a robust foundation for extensive on-chain testing.",
-			"reasoning": "Moderate-high complexity involving local blockchain setup, token creation, NFT minting, and comprehensive test infrastructure. The expanded subtask count reflects the detailed setup required for comprehensive testing capabilities."
+			"expansionPrompt": "Organize by pipeline phase: (1) build workflow, (2) deployment workflow, (3) rollback workflow, (4) secrets and variables, (5) branch protection, (6) pipeline documentation. This mirrors the CI/CD lifecycle and operational requirements.",
+			"reasoning": "Implementing a full CI/CD pipeline with build-once-promote, artifact verification, approval gates, rollback, and comprehensive testing is a high-complexity, high-stakes task. It requires deep integration with GitHub Actions, DigitalOcean, and blockchain tooling, plus careful secret management and documentation. Industry standards treat such pipelines as critical infrastructure, with extensive validation and peer review required."
 		},
 		{
-			"taskId": 39,
-			"taskTitle": "Implement Keypair and Secrets Management",
+			"taskId": 77,
+			"taskTitle": "Configure Dedicated Devnet RPC Provider for STAGING",
+			"complexityScore": 4,
+			"recommendedSubtasks": 0,
+			"expansionPrompt": "",
+			"reasoning": "Setting up a dedicated RPC endpoint is a provider-specific, well-documented process. The main complexity is in configuring the application to use the new endpoint and implementing fallback logic, but these are standard cloud integration tasks with low variation."
+		},
+		{
+			"taskId": 78,
+			"taskTitle": "Create STAGING Smoke Test Suite",
+			"complexityScore": 5,
+			"recommendedSubtasks": 2,
+			"expansionPrompt": "Separate into: (1) test framework and individual test implementation, (2) integration with deployment pipeline and notification. This reflects the distinction between test development and operational integration.",
+			"reasoning": "Developing a smoke test suite involves defining critical checks, implementing them, and integrating them into the deployment pipeline. While the individual tests are simple, ensuring comprehensive coverage and reliable integration increases the effort. Smoke tests are a DevOps best practice for deployment validation."
+		},
+		{
+			"taskId": 79,
+			"taskTitle": "Implement STAGING Rollback Testing and Procedures",
 			"complexityScore": 7,
-			"recommendedSubtasks": 5,
-			"expansionPrompt": "Structure secrets management into: DigitalOcean secrets storage configuration, environment variable mounting system, comprehensive .gitignore rules, repository security scanning, and secret management process documentation. Focus on security best practices and preventing accidental exposure.",
-			"reasoning": "High complexity due to security implications and the critical nature of proper secrets management. Requires careful implementation to prevent security vulnerabilities and proper operational procedures."
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Divide into: (1) rollback procedure documentation, (2) automation script development, (3) testing and validation. This ensures procedures are well-defined, automated where possible, and thoroughly validated.",
+			"reasoning": "Rollback procedures are critical for incident response but involve multiple components (application, database, program, configs). Documenting, automating, and testing these procedures requires careful coordination and validation. Industry standards emphasize the importance of tested, documented rollback for production-like environments."
 		},
 		{
-			"taskId": 40,
-			"taskTitle": "Implement Idempotency Keys for Critical Endpoints",
-			"complexityScore": 6,
-			"recommendedSubtasks": 5,
-			"expansionPrompt": "Structure idempotency implementation into: key schema and storage design, validation middleware, duplicate request detection logic, integration with agreement creation endpoint, and integration with settlement endpoint. Focus on preventing duplicate operations and handling race conditions.",
-			"reasoning": "Moderate-high complexity involving careful handling of duplicate requests, race conditions, and atomic operations. Critical for preventing double-processing of financial transactions."
+			"taskId": 80,
+			"taskTitle": "Perform STAGING Load and Performance Testing",
+			"complexityScore": 8,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Organize by: (1) tool setup and test configuration, (2) test scenario implementation, (3) monitoring and metrics collection, (4) results analysis and reporting. This covers the full performance testing lifecycle.",
+			"reasoning": "Load testing a blockchain backend involves simulating real user behavior, monitoring system and blockchain metrics, and analyzing results for bottlenecks. The task requires integration with multiple tools, careful test design, and interpretation of complex metrics. Performance testing is a best practice for production readiness and scalability planning."
 		},
 		{
-			"taskId": 41,
-			"taskTitle": "Implement Transaction ID Logging and Debugging System",
+			"taskId": 81,
+			"taskTitle": "Setup STAGING Data Seeding and Test Data Management",
 			"complexityScore": 6,
+			"recommendedSubtasks": 2,
+			"expansionPrompt": "Split into: (1) test data generation framework and scenario implementation, (2) data management scripts and documentation. This separates data creation from operational procedures.",
+			"reasoning": "Creating realistic, comprehensive test data involves defining personas, agreement states, historical data, and edge cases. While the implementation is straightforward, ensuring the data is useful for testing and easy to manage increases the effort. Test data management is a QA and DevOps best practice."
+		},
+		{
+			"taskId": 82,
+			"taskTitle": "Implement STAGING Security Testing and Vulnerability Scanning",
+			"complexityScore": 9,
 			"recommendedSubtasks": 5,
-			"expansionPrompt": "Structure transaction logging into: data model and storage schema design, transaction ID capture service, log aggregation system, search and query API, and debugging dashboard and tools. Focus on comprehensive transaction tracking and debugging capabilities.",
-			"reasoning": "Moderate-high complexity involving log aggregation, search functionality, and debugging tools. Requires careful design for performance and usability while handling large volumes of transaction data."
+			"expansionPrompt": "Divide into: (1) API and infrastructure security testing, (2) blockchain security testing, (3) dependency and secret scanning, (4) penetration testing, (5) reporting and remediation. This covers the full security testing lifecycle.",
+			"reasoning": "Security testing in a blockchain environment involves API, infrastructure, smart contract, and dependency scanning, plus manual penetration testing. The task is critical for production readiness and requires integration of multiple tools, careful analysis of results, and clear reporting. Industry standards treat security testing as a high-complexity, high-priority activity."
+		},
+		{
+			"taskId": 83,
+			"taskTitle": "Create STAGING Monitoring Dashboard and Alerts Configuration",
+			"complexityScore": 7,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Organize by: (1) dashboard and metrics implementation, (2) alert configuration and notification channels, (3) documentation and access management. This reflects the operational monitoring stack.",
+			"reasoning": "Building a useful monitoring dashboard involves selecting metrics, visualizing data, setting alert thresholds, and configuring notifications. The task requires integration with multiple tools and careful design to ensure actionable insights. Monitoring is a DevOps best practice for operational reliability."
+		},
+		{
+			"taskId": 84,
+			"taskTitle": "Test STAGING Database Migration Strategy and Procedures",
+			"complexityScore": 7,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Split into: (1) migration testing framework, (2) zero-downtime strategy implementation, (3) automation and documentation. This covers the full migration lifecycle.",
+			"reasoning": "Testing database migrations involves validating schema changes, data integrity, rollback procedures, and zero-downtime strategies. The task is critical for deployment safety and requires careful coordination and validation. Industry standards emphasize tested, documented migration procedures."
+		},
+		{
+			"taskId": 85,
+			"taskTitle": "Implement STAGING Webhook Testing and Reliability Verification",
+			"complexityScore": 8,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Divide into: (1) mock endpoint and test suite implementation, (2) security and reliability testing, (3) monitoring and metrics, (4) documentation. This covers the full webhook testing lifecycle.",
+			"reasoning": "Webhook testing involves simulating various failure modes, validating retry logic, testing security controls, and monitoring delivery metrics. The task requires careful test design, integration with monitoring, and clear documentation. Reliable webhook delivery is a best practice for integration-heavy systems."
+		},
+		{
+			"taskId": 86,
+			"taskTitle": "Establish STAGING SOL and Resource Usage Tracking",
+			"complexityScore": 6,
+			"recommendedSubtasks": 2,
+			"expansionPrompt": "Separate into: (1) tracking implementation and metrics collection, (2) cost analysis, reporting, and alerting. This reflects the distinction between data collection and operational insights.",
+			"reasoning": "Implementing resource tracking involves instrumenting the application for SOL, database, Redis, and compute metrics, then analyzing and reporting on usage. The task is important for cost optimization and capacity planning but is largely a matter of integration and data presentation."
+		},
+		{
+			"taskId": 87,
+			"taskTitle": "Setup Anchor Configuration Files for DEV and STAGING Environments",
+			"complexityScore": 4,
+			"recommendedSubtasks": 0,
+			"expansionPrompt": "",
+			"reasoning": "Creating environment-specific Anchor configuration files is a routine, well-documented task. The main complexity is in ensuring proper naming conventions and keypair management, but these are standard Solana/Anchor practices. The task is foundational but not deeply complex."
 		}
 	]
 }

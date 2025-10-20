@@ -1,0 +1,114 @@
+# Task ID: 87
+# Title: Setup Anchor Configuration Files for DEV and STAGING Environments
+# Status: pending
+# Dependencies: 64
+# Priority: high
+# Description: Create separate Anchor configuration files for DEV and STAGING environments to enable CI-based deployments with distinct Program IDs and dedicated deployment keypairs.
+# Details:
+Create comprehensive Anchor configuration setup for multi-environment deployments:
+
+**Step 1: Create Anchor.dev.toml**
+```toml
+[toolchain]
+anchor_version = "0.30.1"
+
+[features]
+seeds = false
+skip-lint = false
+resolution = true
+
+[programs.devnet]
+escrow = "4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd"
+
+[provider]
+cluster = "Devnet"
+wallet = "~/.config/solana/id.json"
+
+[[test.validator.account]]
+address = "4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd"
+filename = "target/deploy/escrow.json"
+```
+
+**Step 2: Create Anchor.staging.toml**
+```toml
+[toolchain]
+anchor_version = "0.30.1"
+
+[features]
+seeds = false
+skip-lint = false
+resolution = true
+
+[programs.devnet]
+escrow = "<STAGING_PROGRAM_ID_from_task_64>"
+
+[provider]
+cluster = "Devnet"
+wallet = "keys/staging-deployer.json"
+
+[[test.validator.account]]
+address = "<STAGING_PROGRAM_ID_from_task_64>"
+filename = "target/deploy/escrow.json"
+```
+
+**Step 3: Create Dedicated Deployment Keypairs**
+```bash
+# Create keys directory if not exists
+mkdir -p keys
+
+# Generate staging deployer keypair (has SOL for deployment)
+solana-keygen new -o keys/staging-deployer.json --force
+
+# Fund deployer with devnet SOL for deployment costs
+solana airdrop 5 keys/staging-deployer.json --url devnet
+
+# Backup to /temp
+cp keys/staging-deployer.json /temp/staging-backups/
+```
+
+**Step 4: Update .gitignore**
+```
+keys/*.json
+!keys/.gitkeep
+Anchor.*.toml  # Optional: if configs have sensitive data
+```
+
+**Step 5: Pin Toolchain Versions**
+Create/update `rust-toolchain.toml`:
+```toml
+[toolchain]
+channel = "1.75.0"
+components = ["rustfmt", "clippy"]
+targets = ["wasm32-unknown-unknown"]
+```
+
+**Step 6: Document Usage Patterns**
+Create docs/deployment/ANCHOR_CONFIG_SETUP.md with:
+- Environment-specific build commands: `anchor build -C Anchor.dev.toml`
+- Environment-specific deployment: `anchor deploy -C Anchor.staging.toml --provider.cluster devnet`
+- Keypair management best practices
+- CI/CD integration guidelines
+
+**Important Considerations:**
+- Program keypairs (target/deploy/escrow-keypair.json, escrow-keypair-staging.json) stay in target/deploy
+- Deployer keypairs (who pays for deployment) go in keys/
+- Each environment has its own Program ID for complete isolation
+- CI will use these config files to deploy to correct environments
+
+# Test Strategy:
+1. **Configuration File Validation**: Verify both Anchor.dev.toml and Anchor.staging.toml are created with correct syntax by running `anchor build -C Anchor.dev.toml` and `anchor build -C Anchor.staging.toml` without errors
+
+2. **Program ID Integration**: Confirm Anchor.staging.toml references the correct STAGING_PROGRAM_ID from Task 64 by cross-referencing the generated keypair address
+
+3. **Keypair Generation Testing**: Verify staging deployer keypair is created successfully by running `solana address -k keys/staging-deployer.json` and confirming it returns a valid base58 address
+
+4. **Funding Verification**: Test devnet SOL funding by checking balance with `solana balance keys/staging-deployer.json --url devnet` shows approximately 5 SOL
+
+5. **Backup Process Testing**: Confirm backup creation by verifying `/temp/staging-backups/staging-deployer.json` exists and matches the original keypair
+
+6. **Environment Isolation Testing**: Build with each configuration file separately and verify they produce different program IDs in the artifacts
+
+7. **Documentation Completeness**: Review docs/deployment/ANCHOR_CONFIG_SETUP.md contains all usage patterns, best practices, and CI/CD integration guidelines
+
+8. **Gitignore Validation**: Verify sensitive keypair files are properly excluded from version control by running `git status` and confirming keys/*.json files are ignored
+

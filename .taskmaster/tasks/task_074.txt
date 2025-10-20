@@ -1,0 +1,75 @@
+# Task ID: 74
+# Title: Document STAGING Program IDs and Infrastructure
+# Status: pending
+# Dependencies: 73, 70, 69, 68, 67, 66, 65, 64, 63
+# Priority: medium
+# Description: Create comprehensive reference documentation for STAGING environment including program IDs, wallet addresses with naming conventions, infrastructure details, deployment procedures, backup/recovery procedures, and testing guidelines.
+# Details:
+Create comprehensive STAGING environment reference documentation in docs/STAGING_REFERENCE.md:
+
+**Step 1: Environment Overview Section**
+Document STAGING purpose as production-like testing environment on devnet, differences from DEV (local development) and PROD (mainnet), and usage guidelines for pre-production validation.
+
+**Step 2: Program IDs by Environment**
+```markdown
+## Program IDs by Environment
+- DEV Program ID: 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd
+- STAGING Program ID: [from Task 64 keypair generation]
+- PROD Program ID: [TBD - to be generated for mainnet]
+- Explorer Links:
+  - DEV: https://explorer.solana.com/address/4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd?cluster=devnet
+  - STAGING: https://explorer.solana.com/address/[STAGING_ID]?cluster=devnet
+```
+
+**Step 3: Wallet Addresses and Naming Convention Section**
+Document all 4 STAGING wallet addresses from Task 65 with their roles and naming convention:
+- Staging Sender Wallet: [address] (DEVNET_STAGING_SENDER_PRIVATE_KEY)
+- Staging Receiver Wallet: [address] (DEVNET_STAGING_RECEIVER_PRIVATE_KEY)
+- Staging Admin Wallet: [address] (DEVNET_STAGING_ADMIN_PRIVATE_KEY)
+- Staging Fee Collector Wallet: [address] (DEVNET_STAGING_FEE_COLLECTOR_PRIVATE_KEY)
+Include explorer links and explain DEVNET_STAGING_ prefix rationale to avoid conflicts with DEV keys.
+
+**Step 4: Infrastructure Details**
+```markdown
+## Infrastructure Details
+- API Endpoint: staging-api.easyescrow.ai
+- Database: easyescrow_staging (DO Managed PostgreSQL)
+- Redis: Redis Cloud staging instance with TLS
+- RPC Endpoint: https://api.devnet.solana.com
+- Environment file: .env.staging
+```
+
+**Step 5: Deployment Information**
+Include build/deploy commands from Task 73 automation scripts, rollback procedures, access credentials reference to .env.staging, and DO App Platform secrets management.
+
+**Step 6: Backup and Recovery Procedures**
+Document backup locations and recovery procedures:
+- Wallet backups location: /temp/staging-backups/
+- Program keypair backup: /temp/staging-backups/escrow-keypair-staging.json
+- Recovery procedures for lost keypairs
+- When to restore from backups
+
+**Step 7: Testing Procedures**
+Document E2E test execution, wallet funding procedures via devnet faucet, expected test results, and smoke test validation steps.
+
+**Step 8: Environment Variable Naming Convention**
+Explain DEVNET_STAGING_ prefix rationale, comparison with DEV naming (DEVNET_), and how to avoid mixing environments.
+
+**Step 9: Cross-References**
+Add links to related documentation (STAGING_STRATEGY.md, deployment guides, troubleshooting docs) and update other docs to reference this comprehensive guide.
+
+# Test Strategy:
+1. **Documentation Completeness**: Verify docs/STAGING_REFERENCE.md contains all 8 required sections with comprehensive coverage of environment overview, program IDs, wallet addresses with naming conventions, infrastructure details, deployment procedures, backup/recovery procedures, testing guidelines, and environment variable conventions.
+
+2. **Accuracy Validation**: Cross-check all program IDs, wallet addresses, and infrastructure endpoints against actual deployed resources from dependent tasks, ensuring no placeholder values remain unfilled and naming conventions are correctly documented.
+
+3. **Link Verification**: Test all explorer links, API endpoints, and cross-references to confirm they resolve correctly and point to valid resources.
+
+4. **Naming Convention Validation**: Verify all documented environment variables use the correct DEVNET_STAGING_ prefix and that the rationale for avoiding conflicts with DEV keys is clearly explained.
+
+5. **Backup Procedure Testing**: Validate that backup locations exist and recovery procedures are accurate by testing keypair restoration from documented backup paths.
+
+6. **Usability Testing**: Have team members follow the documented procedures to deploy to STAGING and run tests, verifying the documentation provides sufficient detail for successful execution including proper environment variable usage.
+
+7. **Integration Verification**: Confirm related documentation files are updated with cross-references and that the STAGING reference integrates properly with existing documentation structure.
+

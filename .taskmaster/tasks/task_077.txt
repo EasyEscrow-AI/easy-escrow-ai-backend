@@ -1,0 +1,64 @@
+# Task ID: 77
+# Title: Configure Dedicated Devnet RPC Provider for STAGING
+# Status: pending
+# Dependencies: 69
+# Priority: high
+# Description: Setup dedicated RPC endpoint for STAGING environment to avoid rate limits and ensure reliable performance for production-like testing.
+# Details:
+Configure a dedicated devnet RPC provider to eliminate rate limiting issues and ensure consistent performance for STAGING environment testing:
+
+**Step 1: RPC Provider Selection and Setup**
+- Sign up for Helius account (recommended: free devnet tier, 100 req/sec)
+- Alternative providers: QuickNode, Alchemy, or Triton (RPC Pool)
+- Create new devnet project/endpoint in provider dashboard
+- Generate dedicated RPC URL and API key
+- Document provider choice rationale and account details
+
+**Step 2: Environment Configuration**
+```bash
+# Update .env.staging with dedicated RPC endpoint
+SOLANA_RPC_URL=https://devnet.helius-rpc.com/?api-key=<your-api-key>
+# Keep fallback for redundancy
+SOLANA_RPC_URL_FALLBACK=https://api.devnet.solana.com
+```
+
+**Step 3: Connection Optimization**
+- Configure connection pooling if supported by provider
+- Set appropriate timeout values (30s recommended)
+- Implement retry logic with exponential backoff
+- Configure rate limiting on client side to stay within provider limits
+
+**Step 4: Monitoring and Health Checks**
+- Setup RPC endpoint health monitoring
+- Implement response time tracking
+- Configure alerts for RPC failures or degraded performance
+- Monitor error rates and success metrics
+
+**Step 5: Fallback Strategy Implementation**
+- Configure secondary RPC endpoint (public devnet as fallback)
+- Implement automatic failover logic in application
+- Test failover scenarios and recovery procedures
+- Document failover thresholds and procedures
+
+**Step 6: Documentation and Security**
+- Create docs/infrastructure/STAGING_RPC_SETUP.md with:
+  - Provider setup instructions
+  - API key management procedures
+  - Monitoring and alerting configuration
+  - Troubleshooting common issues
+- Secure API key storage in environment variables
+- Document key rotation procedures
+
+# Test Strategy:
+1. **RPC Provider Connectivity**: Test dedicated RPC endpoint connection using `solana cluster-version --url <dedicated-rpc-url>` and verify successful response with cluster information
+
+2. **Performance Validation**: Execute load test with 50+ concurrent requests to verify rate limits are not hit and response times are consistently under 2 seconds
+
+3. **Fallback Mechanism Testing**: Temporarily disable primary RPC endpoint and verify application automatically switches to fallback RPC without service interruption
+
+4. **Environment Integration**: Deploy STAGING application with new RPC configuration and run basic escrow operations to confirm all blockchain interactions work correctly
+
+5. **Monitoring Verification**: Confirm RPC health monitoring is active by checking metrics dashboard shows connection status, response times, and error rates
+
+6. **Documentation Completeness**: Verify docs/infrastructure/STAGING_RPC_SETUP.md contains all required sections with clear setup instructions, troubleshooting steps, and security procedures
+

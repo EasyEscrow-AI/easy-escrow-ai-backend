@@ -1,0 +1,170 @@
+# Task ID: 75
+# Title: Setup Mainnet-Shadow Testing Framework
+# Status: deferred
+# Dependencies: 72, 37, 42
+# Priority: medium
+# Description: Implement gated mainnet testing framework for production validation using small, controlled transactions on mainnet to validate conditions that can't be reproduced on devnet.
+# Details:
+Create a comprehensive mainnet-shadow testing framework to validate production conditions before full mainnet launch:
+
+**Step 1: Create Mainnet-Shadow Configuration**
+```bash
+# Create mainnet-shadow environment configuration
+cat > .env.mainnet-shadow << EOF
+NODE_ENV=mainnet-shadow
+SOLANA_NETWORK=mainnet-beta
+SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
+ESCROW_PROGRAM_ID=<MAINNET_SHADOW_PROGRAM_ID>
+MAINNET_SHADOW_ENABLED=true
+MAX_TRANSACTION_VALUE_USD=5
+DAILY_BUDGET_LIMIT_USD=50
+ADMIN_ONLY_ACCESS=true
+EOF
+```
+
+**Step 2: Generate and Fund Mainnet Wallets**
+```bash
+# Generate minimal mainnet wallets
+mkdir -p wallets/mainnet-shadow
+solana-keygen new -o wallets/mainnet-shadow/shadow-sender.json --force
+solana-keygen new -o wallets/mainnet-shadow/shadow-receiver.json --force
+solana-keygen new -o wallets/mainnet-shadow/shadow-admin.json --force
+
+# Fund with minimal SOL (0.1-0.5 SOL each)
+# Manual funding required for mainnet wallets
+```
+
+**Step 3: Deploy Escrow Program to Mainnet**
+```bash
+# Deploy with separate Program ID for isolation
+solana program deploy target/deploy/escrow.so \
+  --keypair wallets/mainnet-shadow/shadow-admin.json \
+  --program-id target/deploy/escrow-keypair-mainnet-shadow.json \
+  --url mainnet-beta
+```
+
+**Step 4: Implement Gating Mechanism**
+```typescript
+// Add feature flag and admin-only access controls
+export class MainnetShadowGate {
+  static isEnabled(): boolean {
+    return process.env.MAINNET_SHADOW_ENABLED === 'true';
+  }
+  
+  static validateAccess(adminKey: string): boolean {
+    return process.env.ADMIN_ONLY_ACCESS === 'true' && 
+           this.isValidAdmin(adminKey);
+  }
+  
+  static validateTransactionValue(valueUSD: number): boolean {
+    const maxValue = parseFloat(process.env.MAX_TRANSACTION_VALUE_USD || '5');
+    return valueUSD <= maxValue;
+  }
+}
+```
+
+**Step 5: Implement Transaction Limits and Cost Tracking**
+```typescript
+// Add transaction value limits and budget tracking
+export class MainnetShadowLimits {
+  async checkDailyBudget(): Promise<boolean> {
+    const dailySpent = await this.getDailySpending();
+    const dailyLimit = parseFloat(process.env.DAILY_BUDGET_LIMIT_USD || '50');
+    return dailySpent < dailyLimit;
+  }
+  
+  async trackTransaction(valueUSD: number, txId: string): Promise<void> {
+    await this.recordSpending(valueUSD, txId, new Date());
+  }
+}
+```
+
+**Step 6: Setup Dedicated Monitoring**
+```typescript
+// Mainnet-shadow specific monitoring
+export class MainnetShadowMonitor {
+  async monitorTransaction(txId: string): Promise<void> {
+    // Enhanced monitoring for mainnet transactions
+    const confirmation = await this.waitForConfirmation(txId);
+    await this.logMainnetTransaction(txId, confirmation);
+    
+    if (!confirmation.success) {
+      await this.alertMainnetFailure(txId, confirmation.error);
+    }
+  }
+}
+```
+
+**Step 7: Create Test Scenarios**
+```typescript
+// Production-like test scenarios
+const MAINNET_SHADOW_SCENARIOS = [
+  {
+    name: 'minimal-nft-escrow',
+    nftValue: 0.01, // SOL
+    usdcAmount: 1, // $1 USDC
+    description: 'Test basic escrow with minimal values'
+  },
+  {
+    name: 'network-congestion-test',
+    priority: 'high',
+    description: 'Test behavior during network congestion'
+  },
+  {
+    name: 'rpc-reliability-test',
+    description: 'Test RPC behavior under mainnet conditions'
+  }
+];
+```
+
+**Step 8: Implement Automated Test Execution**
+```bash
+# Create cron job for scheduled mainnet-shadow tests
+0 */6 * * * /usr/local/bin/node scripts/run-mainnet-shadow-tests.js
+```
+
+**Step 9: Setup Alert System**
+```typescript
+// Alert system for mainnet-shadow failures
+export class MainnetShadowAlerts {
+  async alertFailure(testName: string, error: Error): Promise<void> {
+    const alert = {
+      severity: 'HIGH',
+      environment: 'mainnet-shadow',
+      test: testName,
+      error: error.message,
+      timestamp: new Date().toISOString()
+    };
+    
+    await this.sendSlackAlert(alert);
+    await this.sendEmailAlert(alert);
+  }
+}
+```
+
+**Step 10: Documentation**
+Create comprehensive documentation in `docs/testing/MAINNET_SHADOW_TESTING.md` covering:
+- Purpose and scope of mainnet-shadow testing
+- Setup and configuration procedures
+- Test scenarios and execution schedules
+- Monitoring and alerting procedures
+- Budget management and cost controls
+- Security considerations and access controls
+
+# Test Strategy:
+1. **Configuration Validation**: Verify mainnet-shadow environment configuration loads correctly with proper feature flags, transaction limits, and admin access controls enabled
+
+2. **Wallet Setup Testing**: Confirm all mainnet wallets are generated successfully, funded with appropriate SOL amounts (0.1-0.5 SOL), and can execute transactions on mainnet-beta network
+
+3. **Program Deployment Verification**: Deploy escrow program to mainnet with dedicated Program ID, verify deployment success, and confirm program is callable with test transactions
+
+4. **Gating Mechanism Testing**: Test feature flag controls, admin-only access restrictions, transaction value limits ($1-5 max), and daily budget enforcement ($50 daily limit)
+
+5. **Test Scenario Execution**: Run all defined mainnet-shadow test scenarios (minimal NFT escrow, network congestion handling, RPC reliability) and verify successful completion with proper monitoring
+
+6. **Monitoring and Alerting Validation**: Trigger test failures to verify alert system sends notifications via Slack/email, confirm transaction monitoring captures all mainnet activity, and validate cost tracking accuracy
+
+7. **Automated Execution Testing**: Verify cron job executes mainnet-shadow tests on schedule, confirm test results are logged properly, and validate automatic failure recovery mechanisms
+
+8. **Documentation Review**: Ensure MAINNET_SHADOW_TESTING.md contains complete setup instructions, test procedures, and operational guidelines for production validation workflow
+

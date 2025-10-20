@@ -1,0 +1,99 @@
+# Task ID: 81
+# Title: Setup STAGING Data Seeding and Test Data Management
+# Status: pending
+# Dependencies: 70, 69, 68, 67, 65
+# Priority: medium
+# Description: Create comprehensive test data seeding for realistic STAGING environment testing with agreements in various states, historical data, edge cases, and multiple test personas.
+# Details:
+Create comprehensive test data seeding infrastructure for the STAGING environment to enable realistic testing scenarios:
+
+**Step 1: Create Staging Data Seeding Framework**
+```typescript
+// seeds/staging/seed-staging-data.ts
+import { Connection, PublicKey, Keypair } from '@solana/web3.js';
+import { Pool } from 'pg';
+import { faker } from '@faker-js/faker';
+
+interface TestPersona {
+  name: string;
+  wallet: Keypair;
+  solBalance: number;
+  usdcBalance: number;
+  nftCollections?: string[];
+}
+
+class StagingDataSeeder {
+  private connection: Connection;
+  private db: Pool;
+  
+  async seedAgreements() {
+    // Create agreements in all states
+    await this.createPendingAgreements(10);
+    await this.createPartiallyFundedAgreements(8);
+    await this.createFullyFundedAgreements(12);
+    await this.createSettledAgreements(15);
+    await this.createExpiredAgreements(5);
+    await this.createCancelledAgreements(3);
+  }
+}
+```
+
+**Step 2: Generate Test Personas**
+Create realistic buyer and seller personas:
+- **Buyers**: "Premium Collector" (high SOL/USDC), "Casual Buyer" (moderate funds), "Budget Hunter" (low funds)
+- **Sellers**: "Blue Chip Artist" (high-value NFTs), "Emerging Creator" (mid-tier), "Volume Trader" (many low-value)
+- **Admin**: "Platform Admin" (admin privileges), "Support Agent" (limited admin)
+
+**Step 3: Seed Historical Data**
+```typescript
+async seedHistoricalData() {
+  // Settlement receipts from past 90 days
+  await this.createSettlementReceipts(50);
+  // Transaction logs with realistic timestamps
+  await this.createTransactionLogs(200);
+  // Webhook delivery logs (success/failure)
+  await this.createWebhookLogs(150);
+  // Failed transaction records for testing
+  await this.createFailedTransactions(25);
+}
+```
+
+**Step 4: Edge Case Data Generation**
+- High-value agreements (>100 SOL equivalent)
+- Near-expiry agreements (expiring within 24 hours)
+- Custom fee structures (0%, 2.5%, 5%, 10%)
+- NFTs with complex royalty structures vs royalty-free
+
+**Step 5: Data Management Scripts**
+```bash
+# scripts/staging/refresh-test-data.sh
+#!/bin/bash
+echo "Cleaning existing test data..."
+npm run seed:staging:clean
+echo "Seeding fresh test data..."
+npm run seed:staging:full
+echo "Creating data snapshot..."
+npm run seed:staging:snapshot
+```
+
+**Step 6: Documentation and Snapshots**
+Create docs/testing/STAGING_TEST_DATA.md with:
+- Complete list of test personas and credentials
+- Agreement scenarios and their purposes
+- Data refresh procedures
+- Snapshot restore instructions
+- Testing workflows and best practices
+
+# Test Strategy:
+1. **Data Seeding Verification**: Execute the complete seeding script and verify all agreement states are created with correct counts (10 pending, 8 partially funded, 12 fully funded, 15 settled, 5 expired, 3 cancelled) and realistic data values
+
+2. **Test Persona Validation**: Confirm all test personas are created with proper wallet funding, verify buyer personas have appropriate SOL/USDC balances, and seller personas have NFT collections assigned correctly
+
+3. **Historical Data Integrity**: Validate that 50 settlement receipts, 200 transaction logs, 150 webhook logs, and 25 failed transaction records are created with realistic timestamps spanning the past 90 days
+
+4. **Edge Case Coverage**: Verify high-value agreements (>100 SOL), near-expiry agreements (within 24 hours), and various fee structures (0%, 2.5%, 5%, 10%) are properly seeded
+
+5. **Data Management Testing**: Execute data cleanup, refresh, and snapshot scripts to ensure they complete without errors and can restore the environment to a known state
+
+6. **Documentation Completeness**: Verify docs/testing/STAGING_TEST_DATA.md contains comprehensive test persona credentials, agreement scenarios, and clear instructions for data management procedures
+

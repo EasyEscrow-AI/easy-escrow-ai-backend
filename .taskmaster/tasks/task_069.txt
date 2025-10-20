@@ -1,0 +1,135 @@
+# Task ID: 69
+# Title: Configure STAGING Environment Variables and Secrets
+# Status: pending
+# Dependencies: 64, 65, 67, 68, 66
+# Priority: high
+# Description: Setup complete environment configuration for STAGING environment using .env.staging file with proper naming conventions to avoid DEV conflicts, including all required variables, secrets management, and deployment automation integration.
+# Details:
+Configure comprehensive STAGING environment variables and secrets management to support isolated testing on devnet with proper naming conventions:
+
+**Step 1: Update .env.staging with Proper Naming Convention**
+```bash
+# Update environment file with staging-specific naming
+cat > .env.staging << EOF
+NODE_ENV=staging
+SOLANA_NETWORK=devnet
+SOLANA_RPC_URL=<dedicated_devnet_rpc_not_public>
+DEVNET_STAGING_PROGRAM_ID=<staging_program_id_from_task_64>
+DEVNET_STAGING_SENDER_PRIVATE_KEY=<base58_staging_sender_private_key>
+DEVNET_STAGING_RECEIVER_PRIVATE_KEY=<base58_staging_receiver_private_key>
+DEVNET_STAGING_ADMIN_PRIVATE_KEY=<base58_staging_admin_private_key>
+DEVNET_STAGING_FEE_COLLECTOR_PRIVATE_KEY=<base58_staging_fee_collector_private_key>
+DEVNET_STAGING_USDC_MINT_ADDRESS=<devnet_usdc_mint_address>
+DATABASE_URL=<staging_postgres_connection_from_task_67>
+REDIS_URL=<staging_redis_connection_from_task_68>
+DIGITAL_OCEAN_API_KEY=<from_existing_env>
+PLATFORM_FEE_BPS=100
+MONITORING_ENDPOINT=https://staging-api.easyescrow.ai/health
+LOG_LEVEL=debug
+EOF
+```
+
+**Step 2: Create .env.staging.example Template**
+```bash
+# Create template without sensitive values
+cat > .env.staging.example << EOF
+NODE_ENV=staging
+SOLANA_NETWORK=devnet
+SOLANA_RPC_URL=<your_dedicated_devnet_rpc_url>
+DEVNET_STAGING_PROGRAM_ID=<your_staging_program_id>
+DEVNET_STAGING_SENDER_PRIVATE_KEY=<your_staging_sender_private_key>
+DEVNET_STAGING_RECEIVER_PRIVATE_KEY=<your_staging_receiver_private_key>
+DEVNET_STAGING_ADMIN_PRIVATE_KEY=<your_staging_admin_private_key>
+DEVNET_STAGING_FEE_COLLECTOR_PRIVATE_KEY=<your_staging_fee_collector_private_key>
+DEVNET_STAGING_USDC_MINT_ADDRESS=<devnet_usdc_mint_address>
+DATABASE_URL=<your_staging_postgres_url>
+REDIS_URL=<your_staging_redis_url>
+DIGITAL_OCEAN_API_KEY=<your_do_api_key>
+PLATFORM_FEE_BPS=100
+MONITORING_ENDPOINT=https://staging-api.easyescrow.ai/health
+LOG_LEVEL=debug
+EOF
+```
+
+**Step 3: Configure DigitalOcean App Platform Secrets**
+```bash
+# Update staging app spec to use .env.staging or DO secrets
+doctl apps create-deployment <staging-app-id> --spec staging-app.yaml
+```
+
+Create staging-app.yaml with proper naming:
+```yaml
+name: easyescrow-staging
+services:
+- name: api
+  environment_slug: node-js
+  github:
+    repo: your-org/easyescrow
+    branch: staging
+  envs:
+  - key: NODE_ENV
+    value: staging
+  - key: SOLANA_NETWORK
+    value: devnet
+  - key: DEVNET_STAGING_PROGRAM_ID
+    type: SECRET
+    value: <encrypted_staging_program_id>
+  - key: DATABASE_URL
+    type: SECRET
+    value: <encrypted_staging_db_url>
+  - key: REDIS_URL
+    type: SECRET
+    value: <encrypted_staging_redis_url>
+  - key: DEVNET_STAGING_SENDER_PRIVATE_KEY
+    type: SECRET
+    value: <encrypted_staging_sender_key>
+```
+
+**Step 4: Document Environment Variables**
+Create docs/environments/STAGING_ENV_VARS.md with:
+- Complete variable reference with DEVNET_STAGING_ naming convention
+- Security classification (public/secret)
+- Differentiation from DEV environment variables
+- Source and rotation procedures
+- Troubleshooting guide
+
+**Step 5: Setup Secret Rotation Procedures**
+```bash
+# Create rotation script with proper naming
+cat > scripts/rotate-staging-secrets.sh << EOF
+#!/bin/bash
+# Rotate staging environment secrets with DEVNET_STAGING_ prefix
+echo "Rotating STAGING secrets..."
+# Update DEVNET_STAGING_* keypairs, database passwords, API keys
+# Deploy updated secrets to DO App Platform
+EOF
+```
+
+**Step 6: Add to Deployment Automation**
+Update deployment scripts to use .env.staging configuration:
+```bash
+# Add staging deployment target that loads .env.staging
+npm run deploy:staging
+# OR
+docker-compose -f docker-compose.staging.yml up -d
+```
+
+# Test Strategy:
+1. **Environment Template Validation**: Verify .env.staging file contains all required variables with DEVNET_STAGING_ naming convention, ensure .env.staging.example exists without sensitive data, confirm no sensitive data is committed to version control
+
+2. **Naming Convention Verification**: Confirm all staging-specific variables use DEVNET_STAGING_ prefix to differentiate from DEV environment (DEVNET_SENDER_PRIVATE_KEY vs DEVNET_STAGING_SENDER_PRIVATE_KEY)
+
+3. **DO App Platform Configuration**: Deploy staging app with secrets using proper naming and verify all environment variables are properly loaded by checking app logs and /health endpoint response
+
+4. **Database Connection Testing**: Test DATABASE_URL connection from staging environment using staging postgres instance from task 67, verify connection and database access
+
+5. **Redis Connection Verification**: Test REDIS_URL connection using staging redis instance from task 68, verify successful PING/PONG response and queue operations
+
+6. **Keypair Loading Test**: Verify all DEVNET_STAGING_* wallet private keys load correctly by testing Solana address derivation from each base58-encoded private key without errors
+
+7. **Configuration Loading Test**: Start application with .env.staging and verify all variables load correctly without conflicts with DEV environment variables
+
+8. **Secret Rotation Procedure**: Execute rotation script in dry-run mode, verify it identifies all DEVNET_STAGING_* secrets to rotate and has proper DO CLI access configured
+
+9. **Deployment Automation Integration**: Run staging deployment command and verify it uses .env.staging configuration, check deployed application loads all variables successfully with proper naming convention
+

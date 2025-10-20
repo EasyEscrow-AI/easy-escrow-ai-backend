@@ -1,0 +1,69 @@
+# Task ID: 61
+# Title: Run Devnet E2E Tests with Correct Configuration
+# Status: done
+# Dependencies: 60
+# Priority: high
+# Description: Execute the devnet end-to-end tests with proper environment configuration pointing to the unified program ID to verify system functionality without program ID mismatch errors.
+# Details:
+Execute comprehensive end-to-end tests on Solana devnet with the correct environment configuration to validate the complete escrow system functionality:
+
+**Step 1: Set Environment Variables**
+```bash
+export SOLANA_RPC_URL=https://api.devnet.solana.com
+export SOLANA_NETWORK=devnet
+export ESCROW_PROGRAM_ID=4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd
+```
+
+**Step 2: Execute E2E Tests**
+```bash
+npm run test:e2e:devnet
+# OR alternative test command based on project structure
+```
+
+**Step 3: Monitor Test Execution**
+- Watch for successful test initialization with correct program ID
+- Verify no "Program ID mismatch" errors occur
+- Monitor transaction confirmations on devnet
+- Check wallet balance changes during test scenarios
+
+**Step 4: Document Results**
+- Record test pass/fail status for each scenario
+- Document any failures unrelated to program ID issues
+- Note performance metrics (transaction times, confirmation delays)
+- Capture logs for debugging any remaining issues
+
+**Expected Test Scenarios:**
+- Happy path: NFT-to-USDC swap with fee collection
+- Error handling: Invalid inputs, insufficient funds
+- Expiry scenarios: Timeout and refund flows
+- Concurrency testing: Multiple simultaneous operations
+
+This validates the complete integration between frontend, backend, and on-chain program with the unified program ID configuration.
+
+# Test Strategy:
+1. **Environment Verification**: Confirm all required environment variables are set correctly by echoing them:
+   ```bash
+   echo $SOLANA_RPC_URL
+   echo $SOLANA_NETWORK  
+   echo $ESCROW_PROGRAM_ID
+   ```
+   Verify they match the expected values exactly.
+
+2. **Test Execution Success**: Run the e2e test command and verify:
+   - Tests start without immediate failures
+   - No "Program ID mismatch" errors in console output
+   - Test suite completes execution (pass or fail on business logic, not configuration)
+
+3. **Program ID Usage Verification**: Check test logs contain references to the correct program ID (4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd) and no references to old program IDs.
+
+4. **Transaction Success**: For tests that execute on-chain transactions, verify:
+   - Transactions are submitted to devnet successfully
+   - Transaction signatures are returned
+   - No RPC or network connectivity errors
+
+5. **Test Result Documentation**: Create a test report documenting:
+   - Which test scenarios passed/failed
+   - Any failures unrelated to program ID configuration
+   - Performance observations
+   - Recommendations for any remaining issues
+

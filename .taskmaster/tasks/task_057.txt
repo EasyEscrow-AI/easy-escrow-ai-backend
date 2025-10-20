@@ -1,0 +1,68 @@
+# Task ID: 57
+# Title: Update All Code and Configs to Unified Program ID
+# Status: done
+# Dependencies: 56
+# Priority: high
+# Description: Update four critical locations to use the unified program ID 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd across all configuration files and source code.
+# Details:
+This task ensures all program references use the exact same program ID: 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd
+
+Files to update:
+
+1. **programs/escrow/src/lib.rs** (line 5):
+   ```rust
+   declare_id!("4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd");
+   ```
+
+2. **Anchor.toml** (line 9):
+   ```toml
+   [programs.devnet]
+   escrow = "4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd"
+   ```
+
+3. **src/generated/anchor/escrow-idl.json**:
+   Update the "address" field:
+   ```json
+   {
+     "address": "4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd",
+     ...
+   }
+   ```
+
+4. **Backend environment configuration**:
+   - In nodemon.json (line 9): `"ESCROW_PROGRAM_ID": "4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd"`
+   - In .env file (if exists): `ESCROW_PROGRAM_ID=4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd`
+
+Implementation steps:
+1. Use find/replace or sed commands to update each file
+2. Verify each change manually to ensure exact match
+3. Double-check no typos in the program ID string
+4. Ensure consistent formatting across all files
+
+Critical: All four locations must reference the EXACT same program ID string to avoid runtime errors.
+
+# Test Strategy:
+1. **File verification**: Use grep to search for the program ID in each of the four target files:
+   ```bash
+   grep -n "4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd" programs/escrow/src/lib.rs
+   grep -n "4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd" Anchor.toml
+   grep -n "4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd" src/generated/anchor/escrow-idl.json
+   grep -n "4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd" nodemon.json
+   ```
+
+2. **Consistency check**: Verify no old program IDs remain:
+   ```bash
+   grep -r "7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV" . --exclude-dir=node_modules
+   ```
+
+3. **Build verification**: Run `anchor build` to ensure Rust code compiles with new program ID
+
+4. **Backend startup test**: Start backend server and verify it loads without program ID configuration errors
+
+5. **Cross-reference validation**: Confirm the program ID matches the keypair address:
+   ```bash
+   solana address -k target/deploy/escrow-keypair.json
+   ```
+
+Success criteria: All four locations contain the exact program ID string and no old program IDs remain in the codebase.
+

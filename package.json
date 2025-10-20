@@ -52,7 +52,8 @@
     "docker:fresh": "powershell -ExecutionPolicy Bypass -File ./scripts/docker-fresh-start.ps1",
     "docker:fresh:keep-data": "powershell -ExecutionPolicy Bypass -File ./scripts/docker-fresh-start.ps1 -KeepData",
     "docker:fresh:seed": "powershell -ExecutionPolicy Bypass -File ./scripts/docker-fresh-start.ps1 -Seed",
-    "docker:clean": "docker compose down -v --rmi all && docker builder prune -f"
+    "docker:clean": "docker compose down -v --rmi all && docker builder prune -f",
+    "prepare": "husky"
   },
   "keywords": [
     "escrow",
@@ -95,6 +96,7 @@
     "@types/supertest": "^6.0.3",
     "axios": "^1.12.2",
     "chai": "^4.3.4",
+    "husky": "^9.1.7",
     "mocha": "^9.0.3",
     "nodemon": "^3.1.7",
     "prettier": "^2.6.2",
