@@ -15,8 +15,10 @@ Write-Host "============================================" -ForegroundColor Cyan
 Write-Host ""
 
 # Configuration
+# STAGING Program ID (distinct from DEV: 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd)
+# See docs/PROGRAM_IDS.md for full registry
 $programId = "AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei"
-$adminKeypair = "keys/staging-admin.json"
+$adminKeypair = "wallets/staging/staging-admin.json"
 $network = "devnet"
 
 # Pre-flight checks

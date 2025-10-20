@@ -29,9 +29,10 @@ The STAGING environment deploys the Escrow program to Devnet using a **build-onc
 |----------|-------|
 | **Environment** | STAGING |
 | **Network** | Devnet |
-| **Program ID** | `AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei` |
+| **Program ID** | `AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei` (distinct from DEV) |
 | **Anchor Config** | `Anchor.staging.toml` |
-| **Deployer Keypair** | `keys/staging-deployer.json` |
+| **Deployer Keypair** | `wallets/staging/staging-deployer.json` |
+| **Admin Keypair** | `wallets/staging/staging-admin.json` |
 | **RPC Endpoint** | Private Devnet RPC (configured in CI) |
 
 ## Prerequisites
@@ -54,9 +55,11 @@ rustc --version   # Should show 1.75.x
 ### Required Files
 
 - ✅ `Anchor.staging.toml` - Anchor configuration for STAGING
-- ✅ `keys/staging-deployer.json` - Deployer keypair (funded with 5+ SOL)
-- ✅ `keys/staging-admin.json` - Admin keypair for post-deploy operations
+- ✅ `wallets/staging/staging-deployer.json` - Deployer keypair (funded with 5+ SOL)
+- ✅ `wallets/staging/staging-admin.json` - Admin keypair for post-deploy operations
 - ✅ `rust-toolchain.toml` - Pinned Rust toolchain version
+
+**Note:** STAGING uses Program ID `AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei`, which is distinct from DEV's Program ID `4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd`. See [Program IDs Registry](../PROGRAM_IDS.md) for details.
 
 ### Required Secrets (CI Environment)
 
@@ -275,8 +278,8 @@ jobs:
       # Setup deployer keypair
       - name: Setup Deployer Keypair
         run: |
-          mkdir -p keys
-          echo "${{ secrets.STAGING_DEPLOYER_KEYPAIR }}" > keys/staging-deployer.json
+          mkdir -p wallets/staging
+          echo "${{ secrets.STAGING_DEPLOYER_KEYPAIR }}" > wallets/staging/staging-deployer.json
       
       # Verify checksums
       - name: Verify Artifact Checksums
@@ -297,7 +300,7 @@ jobs:
           anchor deploy \
             -C Anchor.staging.toml \
             --provider.cluster devnet \
-            --provider.wallet keys/staging-deployer.json
+            --provider.wallet wallets/staging/staging-deployer.json
       
       # Verify deployment
       - name: Verify Deployment
@@ -313,13 +316,13 @@ jobs:
               target/idl/escrow.json \
               -C Anchor.staging.toml \
               --provider.cluster devnet \
-              --provider.wallet keys/staging-deployer.json
+              --provider.wallet wallets/staging/staging-deployer.json
           else
             anchor idl upgrade AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei \
               target/idl/escrow.json \
               -C Anchor.staging.toml \
               --provider.cluster devnet \
-              --provider.wallet keys/staging-deployer.json
+              --provider.wallet wallets/staging/staging-deployer.json
           fi
       
       # Save deployment record
@@ -333,7 +336,7 @@ jobs:
             "programId": "AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei",
             "gitCommit": "${{ github.sha }}",
             "gitTag": "${{ github.ref_name }}",
-            "deployer": "$(solana-keygen pubkey keys/staging-deployer.json)"
+            "deployer": "$(solana-keygen pubkey wallets/staging/staging-deployer.json)"
           }
           EOF
 ```
@@ -501,10 +504,10 @@ rustc --version
 **Solution:**
 ```bash
 # Check deployer balance
-solana balance $(solana-keygen pubkey keys/staging-deployer.json) --url devnet
+solana balance $(solana-keygen pubkey wallets/staging/staging-deployer.json) --url devnet
 
 # Airdrop more SOL
-solana airdrop 5 $(solana-keygen pubkey keys/staging-deployer.json) --url devnet
+solana airdrop 5 $(solana-keygen pubkey wallets/staging/staging-deployer.json) --url devnet
 ```
 
 #### Issue: Program ID mismatch
@@ -516,7 +519,7 @@ grep "escrow =" Anchor.staging.toml
 # Should show: escrow = "AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei"
 
 # Verify deployer keypair
-solana-keygen pubkey keys/staging-deployer.json
+solana-keygen pubkey wallets/staging/staging-deployer.json
 ```
 
 #### Issue: IDL upload fails
@@ -551,7 +554,7 @@ export ANCHOR_PROVIDER_URL="https://api.devnet.solana.com"
 **Solution:**
 ```bash
 # Airdrop to admin wallet
-solana airdrop 3 $(solana-keygen pubkey keys/staging-admin.json) --url devnet
+solana airdrop 3 $(solana-keygen pubkey wallets/staging/staging-admin.json) --url devnet
 ```
 
 ## Deployment Checklist

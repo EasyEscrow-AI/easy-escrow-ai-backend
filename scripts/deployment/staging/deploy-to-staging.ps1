@@ -17,8 +17,10 @@ Write-Host ""
 
 # Configuration
 $anchorConfig = "Anchor.staging.toml"
+# STAGING Program ID (distinct from DEV: 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd)
+# See docs/PROGRAM_IDS.md for full registry
 $programId = "AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei"
-$deployerKeypair = "keys/staging-deployer.json"
+$deployerKeypair = "wallets/staging/staging-deployer.json"
 $programSo = "target/deploy/escrow.so"
 $programIdl = "target/idl/escrow.json"
 

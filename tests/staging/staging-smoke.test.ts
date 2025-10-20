@@ -16,6 +16,8 @@ import fs from 'fs';
 import path from 'path';
 
 // STAGING Configuration
+// STAGING Program ID (distinct from DEV: 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd)
+// See docs/PROGRAM_IDS.md for full registry
 const STAGING_PROGRAM_ID = 'AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei';
 const NETWORK_URL = 'https://api.devnet.solana.com';
 
@@ -36,7 +38,7 @@ describe('STAGING Smoke Tests', function () {
     connection = new Connection(NETWORK_URL, 'confirmed');
 
     // Load admin wallet
-    const adminKeypairPath = path.join(__dirname, '../../keys/staging-admin.json');
+    const adminKeypairPath = path.join(__dirname, '../../wallets/staging/staging-admin.json');
     
     if (!fs.existsSync(adminKeypairPath)) {
       throw new Error(`Admin keypair not found: ${adminKeypairPath}`);
