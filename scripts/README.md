@@ -74,6 +74,12 @@ scripts/
 
 #### Database Utilities (`utilities/database/`)
 - `setup-database.ps1/.sh` - Setup PostgreSQL database
+- `test-db-connection.ts` - Test database connectivity and CRUD operations
+
+#### Deployment Database Scripts (`deployment/`)
+- `setup-staging-database.ps1` - Automated staging database setup (PowerShell)
+- `setup-staging-database.sql` - SQL script for staging database creation
+- `connect-staging-db.ps1` - Connect to staging PostgreSQL cluster
 
 #### Git Hooks (`utilities/git-hooks/`)
 - `setup-git-hooks.ps1/.sh` - Install git hooks
@@ -136,7 +142,7 @@ PowerShell implementation of the timeout utility for Windows users.
 # Step 1: Install development tools
 .\scripts\utilities\install-solana-tools.ps1
 
-# Step 2: Setup database
+# Step 2: Setup local database
 .\scripts\utilities\database\setup-database.ps1
 
 # Step 3: Setup git hooks
@@ -148,6 +154,28 @@ PowerShell implementation of the timeout utility for Windows users.
 # Step 5: Deploy to devnet
 .\scripts\deployment\devnet\deploy-to-devnet.ps1
 ```
+
+### Staging Database Setup
+
+```powershell
+# Setup staging database (DigitalOcean Managed PostgreSQL)
+.\scripts\deployment\setup-staging-database.ps1
+
+# Or manually using SQL
+psql "postgresql://doadmin:PASSWORD@host:25060/defaultdb?sslmode=require" -f .\scripts\deployment\setup-staging-database.sql
+
+# Run migrations
+$env:DATABASE_URL="postgresql://staging_user:PASSWORD@host:25060/easyescrow_staging?sslmode=require"
+npx prisma migrate deploy
+
+# Seed test data
+npm run db:seed:staging
+
+# Test connection
+npm run db:test-connection
+```
+
+**See:** [STAGING_DATABASE_SETUP.md](../docs/infrastructure/STAGING_DATABASE_SETUP.md) for complete staging setup guide.
 
 ### Development Workflow
 

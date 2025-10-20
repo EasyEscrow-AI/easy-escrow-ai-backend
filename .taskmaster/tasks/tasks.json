@@ -18,7 +18,7 @@
             "status": "done",
             "dependencies": [],
             "details": "Run npm init to create package.json, install TypeScript as dev dependency, create tsconfig.json with strict mode, target ES2020, and output to dist folder. Configure build and dev scripts.",
-            "parentId": "21"
+            "parentId": "undefined"
           },
           {
             "id": 2,
@@ -29,7 +29,7 @@
               "21.1"
             ],
             "details": "Install express and @types/express, create basic server.ts with Express app, configure JSON parsing middleware, CORS, and basic error handling. Set up port configuration from environment variables.",
-            "parentId": "21"
+            "parentId": "undefined"
           },
           {
             "id": 3,
@@ -40,7 +40,7 @@
               "21.1"
             ],
             "details": "Install ESLint with TypeScript parser, Prettier, and related plugins. Create .eslintrc.js with TypeScript rules, .prettierrc for formatting config. Add lint and format scripts to package.json with pre-commit hooks.",
-            "parentId": "21"
+            "parentId": "undefined"
           },
           {
             "id": 4,
@@ -51,7 +51,7 @@
               "21.2"
             ],
             "details": "Create src folder with subdirectories: routes (API endpoints), services (business logic), models (data structures), utils (helper functions), config (environment settings), middleware (custom middleware). Add index files for exports.",
-            "parentId": "21"
+            "parentId": "undefined"
           },
           {
             "id": 5,
@@ -63,7 +63,7 @@
               "21.4"
             ],
             "details": "Create .env.example with required environment variables, install dotenv for environment loading, configure nodemon for development, setup build script with TypeScript compilation, and create basic Dockerfile for containerization.",
-            "parentId": "21"
+            "parentId": "undefined"
           }
         ]
       },
@@ -86,7 +86,7 @@
             "status": "done",
             "dependencies": [],
             "details": "Create new Anchor project using 'anchor init', configure Cargo.toml with required dependencies (anchor-lang, anchor-spl, spl-token), setup lib.rs with program module structure",
-            "parentId": "22"
+            "parentId": "undefined"
           },
           {
             "id": 2,
@@ -97,7 +97,7 @@
               "22.1"
             ],
             "details": "Define EscrowState struct with fields: escrow_id, buyer, seller, usdc_amount, nft_mint, nft_token_account, status (pending/completed/cancelled), expiry_timestamp, bump seed. Implement Account trait and space calculation",
-            "parentId": "22"
+            "parentId": "undefined"
           },
           {
             "id": 3,
@@ -108,7 +108,7 @@
               "22.2"
             ],
             "details": "Create instruction handlers: init_agreement (creates PDA with escrow terms), deposit_usdc (transfers USDC to escrow PDA), deposit_nft (transfers NFT to escrow PDA). Include proper validation, CPI calls to token program, and state updates",
-            "parentId": "22"
+            "parentId": "undefined"
           },
           {
             "id": 4,
@@ -119,7 +119,7 @@
               "22.3"
             ],
             "details": "Create instruction handlers: settle (transfers USDC to seller, NFT to buyer), cancel_if_expired (returns assets if past expiry), admin_cancel (emergency cancellation with admin authority). Include proper authorization checks and asset return logic",
-            "parentId": "22"
+            "parentId": "undefined"
           },
           {
             "id": 5,
@@ -130,7 +130,7 @@
               "22.4"
             ],
             "details": "Configure Anchor.toml for devnet deployment, build program with 'anchor build', deploy using 'anchor deploy', verify deployment with program ID, test all instructions on devnet with actual SOL/USDC/NFT transactions\n<info added on 2025-10-13T01:49:05.616Z>\nSolana escrow program code is complete and ready for deployment. All program files created including lib.rs with all instructions, comprehensive tests, deployment documentation, and setup guides. Actual deployment to devnet requires Solana CLI, Anchor Framework, and Rust to be installed on the system. Installation guides provided in SOLANA_SETUP.md. Once tools are installed, deployment can proceed with: anchor build && anchor deploy. Program is production-ready pending tool installation.\n</info added on 2025-10-13T01:49:05.616Z>",
-            "parentId": "22"
+            "parentId": "undefined"
           }
         ]
       },
@@ -153,7 +153,7 @@
             "status": "done",
             "dependencies": [],
             "details": "Design tables with primary keys, foreign keys, indexes, and constraints. Define relationships between agreements and deposits, settlements and receipts. Include fields for timestamps, status tracking, transaction IDs, and hash signatures. Consider data types for Solana addresses, USDC amounts, and NFT metadata.",
-            "parentId": "23"
+            "parentId": "undefined"
           },
           {
             "id": 2,
@@ -164,7 +164,7 @@
               "23.1"
             ],
             "details": "Install and configure Prisma or TypeORM with PostgreSQL driver. Set up database connection string, environment variables, and configuration files. Create project structure for models, migrations, and database utilities.",
-            "parentId": "23"
+            "parentId": "undefined"
           },
           {
             "id": 3,
@@ -175,7 +175,7 @@
               "23.2"
             ],
             "details": "Create model classes with proper field types, decorators, and relationships. Define enums for status fields, validation rules, and default values. Implement model methods for common operations and data transformations.",
-            "parentId": "23"
+            "parentId": "undefined"
           },
           {
             "id": 4,
@@ -186,7 +186,7 @@
               "23.3"
             ],
             "details": "Generate migration files using ORM tools to create all tables with correct column types, primary keys, foreign keys, and indexes. Include proper constraints for data integrity and performance optimization. Execute migration against development database.",
-            "parentId": "23"
+            "parentId": "undefined"
           },
           {
             "id": 5,
@@ -197,7 +197,7 @@
               "23.4"
             ],
             "details": "Set up migration tracking table, configure migration commands for different environments, create scripts for automated deployment. Document migration procedures and establish rollback strategies for production deployments.",
-            "parentId": "23"
+            "parentId": "undefined"
           }
         ]
       },
@@ -221,7 +221,7 @@
             "status": "done",
             "dependencies": [],
             "details": "Create OpenAPI specification for POST /v1/agreements endpoint. Define request schema with required fields (nft_mint, price, seller, expiry, fee_bps, honor_royalties) and optional buyer field. Define response schema with agreement_id and deposit addresses. Include proper HTTP status codes and error responses.",
-            "parentId": "24"
+            "parentId": "undefined"
           },
           {
             "id": 2,
@@ -232,7 +232,7 @@
               "24.1"
             ],
             "details": "Implement validation for nft_mint (valid Solana public key), price (positive number), seller (valid public key), buyer (optional valid public key), expiry (future timestamp), fee_bps (0-10000 range), honor_royalties (boolean). Return appropriate error messages for invalid inputs.",
-            "parentId": "24"
+            "parentId": "undefined"
           },
           {
             "id": 3,
@@ -243,7 +243,7 @@
               "24.2"
             ],
             "details": "Create service function to interact with Solana on-chain program. Generate escrow PDA using agreement parameters. Call init_escrow instruction with validated parameters. Handle transaction confirmation and error cases. Extract PDA address and deposit addresses from transaction result.",
-            "parentId": "24"
+            "parentId": "undefined"
           },
           {
             "id": 4,
@@ -254,7 +254,7 @@
               "24.3"
             ],
             "details": "Design database table for agreements with fields: agreement_id (UUID), nft_mint, price, seller, buyer, expiry, fee_bps, honor_royalties, escrow_pda, deposit_addresses, created_at, status. Implement database service with create agreement function. Generate unique agreement_id and store all parameters.",
-            "parentId": "24"
+            "parentId": "undefined"
           },
           {
             "id": 5,
@@ -265,7 +265,7 @@
               "24.4"
             ],
             "details": "Implement Express.js route handler that combines validation, on-chain interaction, and database storage. Handle success response with agreement_id and deposit addresses. Implement proper error handling with rollback mechanisms. Add logging for monitoring and debugging. Return structured JSON response matching API specification.",
-            "parentId": "24"
+            "parentId": "undefined"
           }
         ]
       },
@@ -289,7 +289,7 @@
             "status": "done",
             "dependencies": [],
             "details": "Configure Solana web3.js client with RPC endpoints, implement WebSocket connections for real-time account monitoring, set up connection pooling and failover mechanisms for reliability",
-            "parentId": "25"
+            "parentId": "undefined"
           },
           {
             "id": 2,
@@ -300,7 +300,7 @@
               "25.1"
             ],
             "details": "Monitor SPL token account changes for USDC mint, parse transaction logs to extract transfer amounts, validate against expected deposit amounts from database, handle decimal precision correctly",
-            "parentId": "25"
+            "parentId": "undefined"
           },
           {
             "id": 3,
@@ -311,7 +311,7 @@
               "25.1"
             ],
             "details": "Monitor NFT token account changes, fetch and validate NFT metadata from on-chain and off-chain sources, verify mint address matches expected NFT, validate collection membership if required",
-            "parentId": "25"
+            "parentId": "undefined"
           },
           {
             "id": 4,
@@ -323,7 +323,7 @@
               "25.3"
             ],
             "details": "Update escrow agreement records with deposit status, store transaction signatures and block confirmations, implement atomic database operations to prevent race conditions, add logging for audit trail",
-            "parentId": "25"
+            "parentId": "undefined"
           },
           {
             "id": 5,
@@ -334,7 +334,7 @@
               "25.4"
             ],
             "details": "Implement service startup/shutdown procedures, add comprehensive error handling and retry logic, implement health checks and monitoring metrics, add configuration management for RPC endpoints and monitoring intervals",
-            "parentId": "25"
+            "parentId": "undefined"
           }
         ]
       },
@@ -358,7 +358,7 @@
             "status": "done",
             "dependencies": [],
             "details": "Build a monitoring service that polls blockchain state to detect when both parties have locked their assets (NFT and USDC) in the escrow contract. Include event listeners for lock confirmations and maintain state tracking.",
-            "parentId": "26"
+            "parentId": "undefined"
           },
           {
             "id": 2,
@@ -369,7 +369,7 @@
               "26.1"
             ],
             "details": "Implement timestamp validation against current block time to ensure the escrow agreement is still within its valid time window. Include buffer time considerations and proper error handling for expired agreements.",
-            "parentId": "26"
+            "parentId": "undefined"
           },
           {
             "id": 3,
@@ -380,7 +380,7 @@
               "26.2"
             ],
             "details": "Build the interface to interact with the blockchain settlement contract, including proper transaction construction, signing, and submission. Handle transaction failures and implement retry logic with exponential backoff.",
-            "parentId": "26"
+            "parentId": "undefined"
           },
           {
             "id": 4,
@@ -391,7 +391,7 @@
               "26.3"
             ],
             "details": "Implement configurable fee calculation logic that computes platform fees as percentage of transaction value. Include fee deduction from settlement amounts and proper accounting for fee collection wallet.",
-            "parentId": "26"
+            "parentId": "undefined"
           },
           {
             "id": 5,
@@ -402,7 +402,7 @@
               "26.4"
             ],
             "details": "Build system to detect NFT creator royalty requirements from metadata, calculate royalty amounts, and distribute payments to creators during settlement. Make royalty handling configurable and optional per agreement.",
-            "parentId": "26"
+            "parentId": "undefined"
           }
         ]
       },
@@ -426,7 +426,7 @@
             "status": "done",
             "dependencies": [],
             "details": "Create a background service that periodically queries the database for active agreements and checks their expiry timestamps against current time. Service should identify expired agreements and trigger appropriate actions.",
-            "parentId": "27"
+            "parentId": "undefined"
           },
           {
             "id": 2,
@@ -437,7 +437,7 @@
               "27.1"
             ],
             "details": "Implement logic to determine refund amounts based on current deposit status, handle USDC transfers back to depositors, and update agreement balances accordingly. Include validation for refund eligibility.",
-            "parentId": "27"
+            "parentId": "undefined"
           },
           {
             "id": 3,
@@ -448,7 +448,7 @@
               "27.2"
             ],
             "details": "Implement multisig workflow for admin-initiated cancellations, including proposal creation, signature collection, and execution. Ensure proper authorization checks and audit logging for all admin actions.",
-            "parentId": "27"
+            "parentId": "undefined"
           },
           {
             "id": 4,
@@ -459,7 +459,7 @@
               "27.3"
             ],
             "details": "Implement status transition logic that updates agreement status from active to expired, cancelled, or refunded based on various triggers. Include database updates and event emission for status changes.",
-            "parentId": "27"
+            "parentId": "undefined"
           },
           {
             "id": 5,
@@ -470,7 +470,7 @@
               "27.4"
             ],
             "details": "Combine all services into a unified expiry and cancellation system, implement comprehensive error handling, add monitoring and alerting for failed operations, and ensure proper cleanup of resources.",
-            "parentId": "27"
+            "parentId": "undefined"
           }
         ]
       },
@@ -493,7 +493,7 @@
             "status": "done",
             "dependencies": [],
             "details": "Create database tables/collections to store agreement data with fields for agreement_id, status (active/expired/cancelled), buyer_balance, seller_balance, nft_locked_status, usdc_locked_status, expiry_deadline, created_at, updated_at. Define TypeScript interfaces and validation schemas.",
-            "parentId": "28"
+            "parentId": "undefined"
           },
           {
             "id": 2,
@@ -504,7 +504,7 @@
               "28.1"
             ],
             "details": "Implement repository class with methods: findAgreementById(), updateAgreementStatus(), getAgreementBalances(), checkExpiryStatus(). Include proper error handling for not found cases and database connection issues.",
-            "parentId": "28"
+            "parentId": "undefined"
           },
           {
             "id": 3,
@@ -515,7 +515,7 @@
               "28.2"
             ],
             "details": "Create Express.js route handler that validates agreement ID parameter, calls repository to fetch agreement data, formats response with status, buyer/seller balances, NFT/USDC lock status, expiry deadline. Return 404 for non-existent agreements.",
-            "parentId": "28"
+            "parentId": "undefined"
           },
           {
             "id": 4,
@@ -526,7 +526,7 @@
               "28.2"
             ],
             "details": "Implement service methods to check if agreement has passed expiry deadline, validate that agreement is in cancellable state (not already settled/cancelled), and determine if cancellation is authorized. Include timezone handling for deadline comparisons.",
-            "parentId": "28"
+            "parentId": "undefined"
           },
           {
             "id": 5,
@@ -538,7 +538,7 @@
               "28.4"
             ],
             "details": "Create Express.js route handler that validates agreement ID, checks expiry status using detection service, updates agreement status to cancelled, triggers any necessary cleanup operations (unlock assets, notify parties). Return appropriate HTTP status codes and error messages.",
-            "parentId": "28"
+            "parentId": "undefined"
           }
         ]
       },
@@ -561,7 +561,7 @@
             "status": "done",
             "dependencies": [],
             "details": "Define event types (escrow.funded, escrow.asset_locked, escrow.settled, escrow.expired, escrow.refunded), create event payload schemas with relevant data fields like agreement ID, timestamps, amounts, and transaction hashes. Design event publishing interface and webhook configuration storage.",
-            "parentId": "29"
+            "parentId": "undefined"
           },
           {
             "id": 2,
@@ -572,7 +572,7 @@
               "29.1"
             ],
             "details": "Build webhook URL registration API endpoints, implement URL validation (format, reachability), create database schema for storing webhook configurations per user/organization, add CRUD operations for webhook management with proper authentication.",
-            "parentId": "29"
+            "parentId": "undefined"
           },
           {
             "id": 3,
@@ -583,7 +583,7 @@
               "29.1"
             ],
             "details": "Implement HMAC-SHA256 signature generation using secret keys, add signature headers to webhook requests, create signature verification utilities for webhook consumers, manage webhook secrets securely with rotation capabilities.",
-            "parentId": "29"
+            "parentId": "undefined"
           },
           {
             "id": 4,
@@ -595,7 +595,7 @@
               "29.3"
             ],
             "details": "Implement webhook HTTP client with timeout configuration, build exponential backoff retry logic (max 5 retries), add dead letter queue for failed deliveries, implement delivery status tracking and logging, create webhook delivery queue system.",
-            "parentId": "29"
+            "parentId": "undefined"
           },
           {
             "id": 5,
@@ -606,7 +606,7 @@
               "29.4"
             ],
             "details": "Add webhook triggers to escrow funding, asset locking, settlement, expiration, and refund processes. Implement event publishing from escrow state machines, ensure webhook delivery doesn't block main escrow operations using async processing, add webhook delivery monitoring and alerting.",
-            "parentId": "29"
+            "parentId": "undefined"
           }
         ]
       },
@@ -630,7 +630,7 @@
             "status": "done",
             "dependencies": [],
             "details": "Create TypeScript interfaces/types for settlement receipt containing nft_mint, price, fees breakdown, timestamps (created, settled), transaction IDs (escrow, settlement), buyer/seller addresses, agreement ID, and hash signature field. Define validation schemas for each field including format requirements and constraints.",
-            "parentId": "30"
+            "parentId": "undefined"
           },
           {
             "id": 2,
@@ -641,7 +641,7 @@
               "30.1"
             ],
             "details": "Implement hash signing functionality using SHA-256 or similar algorithm to create tamper-proof signatures for receipt data. Include private key management for signing and public key verification. Create utility functions to generate deterministic hashes from receipt data and sign with server private key.",
-            "parentId": "30"
+            "parentId": "undefined"
           },
           {
             "id": 3,
@@ -652,7 +652,7 @@
               "30.1"
             ],
             "details": "Create settlement_receipts table with columns for all receipt fields including indexed fields like agreement_id, nft_mint, buyer_address, seller_address, created_at. Implement database model/entity classes with proper relationships to agreements table. Add database migrations and ensure proper constraints and foreign keys.",
-            "parentId": "30"
+            "parentId": "undefined"
           },
           {
             "id": 4,
@@ -664,7 +664,7 @@
               "30.3"
             ],
             "details": "Create SettlementReceiptService class that takes settlement transaction data, populates receipt structure, generates hash signature, and stores in database. Include methods to extract transaction details, calculate fee breakdowns, format timestamps, and handle error cases. Integrate with atomic settlement engine to trigger receipt generation.",
-            "parentId": "30"
+            "parentId": "undefined"
           },
           {
             "id": 5,
@@ -675,7 +675,7 @@
               "30.4"
             ],
             "details": "Implement GET /v1/receipts/{id} and GET /v1/receipts endpoints with query parameters for filtering by agreement_id, nft_mint, date range, buyer/seller addresses. Add proper authentication, input validation, pagination, and response formatting. Include receipt verification endpoint to validate hash signatures.",
-            "parentId": "30"
+            "parentId": "undefined"
           }
         ]
       },
@@ -698,7 +698,7 @@
             "status": "done",
             "dependencies": [],
             "details": "Install redis-py library, create Redis connection class with connection pooling, configure connection parameters (host, port, password, SSL), implement connection health checks and retry logic",
-            "parentId": "31"
+            "parentId": "undefined"
           },
           {
             "id": 2,
@@ -709,7 +709,7 @@
               "31.1"
             ],
             "details": "Design cache key structure for agreements, implement cache-aside pattern with TTL configuration, create methods for get/set/delete operations, handle cache invalidation on agreement updates",
-            "parentId": "31"
+            "parentId": "undefined"
           },
           {
             "id": 3,
@@ -720,7 +720,7 @@
               "31.1"
             ],
             "details": "Implement job queue using Redis lists or streams, create job serialization/deserialization, add job priority handling, implement dead letter queue for failed jobs, configure job retry mechanisms",
-            "parentId": "31"
+            "parentId": "undefined"
           },
           {
             "id": 4,
@@ -731,7 +731,7 @@
               "31.3"
             ],
             "details": "Design job structure for blockchain monitoring tasks, implement periodic blockchain scanning jobs, create event processing workflows, add block confirmation tracking, handle blockchain reorganization scenarios",
-            "parentId": "31"
+            "parentId": "undefined"
           },
           {
             "id": 5,
@@ -742,7 +742,7 @@
               "31.3"
             ],
             "details": "Create settlement job types (release funds, refund, dispute resolution), implement job scheduling for time-based settlements, add transaction validation workflows, integrate with payment processing systems",
-            "parentId": "31"
+            "parentId": "undefined"
           }
         ]
       },
@@ -765,7 +765,7 @@
             "status": "done",
             "dependencies": [],
             "details": "Implement rate limiting using a sliding window or token bucket algorithm. Configure different limits for different endpoint types (e.g., 100 requests/minute for general endpoints, 10 requests/minute for settlement operations). Store rate limit counters in Redis or in-memory cache. Return appropriate HTTP 429 status codes when limits are exceeded.",
-            "parentId": "32"
+            "parentId": "undefined"
           },
           {
             "id": 2,
@@ -774,7 +774,7 @@
             "status": "done",
             "dependencies": [],
             "details": "Configure CORS middleware to allow requests from easyescrow.ai and its subdomains. Set appropriate allowed methods (GET, POST, PUT, DELETE), headers (Content-Type, Authorization, X-API-Key), and credentials handling. Ensure preflight requests are handled correctly for complex requests.",
-            "parentId": "32"
+            "parentId": "undefined"
           },
           {
             "id": 3,
@@ -783,7 +783,7 @@
             "status": "done",
             "dependencies": [],
             "details": "Implement validation for all API endpoints using schema validation (e.g., Joi, Yup, or similar). Validate data types, required fields, string lengths, numeric ranges, and format constraints. Sanitize inputs to prevent injection attacks. Return detailed validation error messages with HTTP 400 status codes.",
-            "parentId": "32"
+            "parentId": "undefined"
           },
           {
             "id": 4,
@@ -792,7 +792,7 @@
             "status": "done",
             "dependencies": [],
             "details": "Maintain a configurable allowlist of approved USDC mint addresses. Create middleware that validates incoming requests containing USDC mint addresses against this allowlist. Support for updating the allowlist through admin endpoints or configuration. Reject transactions with non-approved mint addresses with appropriate error messages.",
-            "parentId": "32"
+            "parentId": "undefined"
           },
           {
             "id": 5,
@@ -805,7 +805,7 @@
               "32.3"
             ],
             "details": "Implement JWT-based authentication middleware for protected endpoints. Validate JWT tokens, check expiration, and extract user information. Support for API key authentication for service-to-service communication. Implement role-based access control if needed. Return HTTP 401 for invalid tokens and HTTP 403 for insufficient permissions.",
-            "parentId": "32"
+            "parentId": "undefined"
           }
         ]
       },
@@ -828,7 +828,7 @@
             "status": "done",
             "dependencies": [],
             "details": "Set up multi-stage Dockerfile with builder stage for dependencies and lean production stage. Use official Node.js Alpine image as base, copy package files, install dependencies, and build application. Create final stage with minimal runtime dependencies.",
-            "parentId": "33"
+            "parentId": "undefined"
           },
           {
             "id": 2,
@@ -839,7 +839,7 @@
               "33.1"
             ],
             "details": "Define environment variables for database connections, API keys, JWT secrets, and other configuration. Use Docker secrets or environment files for sensitive data. Set up proper variable validation and fallback values.",
-            "parentId": "33"
+            "parentId": "undefined"
           },
           {
             "id": 3,
@@ -850,7 +850,7 @@
               "33.1"
             ],
             "details": "Implement /health endpoint that checks database connectivity, external service availability, and application readiness. Return appropriate HTTP status codes and health information. Configure endpoint to be lightweight and fast.",
-            "parentId": "33"
+            "parentId": "undefined"
           },
           {
             "id": 4,
@@ -862,7 +862,7 @@
               "33.2"
             ],
             "details": "Remove development dependencies, set non-root user, configure proper file permissions, minimize installed packages. Add security scanning, optimize layer caching, and configure proper logging. Set resource limits and startup parameters.",
-            "parentId": "33"
+            "parentId": "undefined"
           },
           {
             "id": 5,
@@ -874,7 +874,7 @@
               "33.4"
             ],
             "details": "Add HEALTHCHECK instruction to Dockerfile using the health endpoint. Configure appropriate intervals, timeouts, and retry counts. Document probe configuration for Kubernetes readiness and liveness probes.",
-            "parentId": "33"
+            "parentId": "undefined"
           }
         ]
       },
@@ -897,7 +897,7 @@
             "status": "done",
             "dependencies": [],
             "details": "Set up GitHub integration in DigitalOcean App Platform, configure repository access, set up branch-based deployment triggers, and configure build settings for the backend application",
-            "parentId": "34"
+            "parentId": "undefined"
           },
           {
             "id": 2,
@@ -906,7 +906,7 @@
             "status": "done",
             "dependencies": [],
             "details": "Create PostgreSQL database cluster in DigitalOcean, configure VPC networking for secure access, set up database credentials, and configure connection pooling and backup settings",
-            "parentId": "34"
+            "parentId": "undefined"
           },
           {
             "id": 3,
@@ -915,7 +915,7 @@
             "status": "done",
             "dependencies": [],
             "details": "Create Redis cluster in DigitalOcean, configure VPC networking to match PostgreSQL setup, set up Redis authentication, and configure memory limits and eviction policies",
-            "parentId": "34"
+            "parentId": "undefined"
           },
           {
             "id": 4,
@@ -927,7 +927,7 @@
               "34.3"
             ],
             "details": "Configure database connection strings, Redis URLs, JWT secrets, blockchain RPC endpoints, and other sensitive configuration in App Platform's encrypted environment variables",
-            "parentId": "34"
+            "parentId": "undefined"
           },
           {
             "id": 5,
@@ -939,7 +939,7 @@
               "34.4"
             ],
             "details": "Add custom domain api.easyescrow.ai to App Platform, configure automatic SSL certificate, set up health check endpoints, configure autoscaling rules based on CPU/memory usage, and test domain resolution",
-            "parentId": "34"
+            "parentId": "undefined"
           }
         ]
       },
@@ -968,7 +968,7 @@
             "status": "done",
             "dependencies": [],
             "details": "Implement unit tests using a testing framework like Jest or Mocha. Cover all public methods, mock external dependencies, test error handling, and achieve high code coverage for services developed in tasks 24, 26, 27, 29, 30",
-            "parentId": "35"
+            "parentId": "undefined"
           },
           {
             "id": 2,
@@ -979,7 +979,7 @@
               "35.1"
             ],
             "details": "Set up test database, create test fixtures, write integration tests for all API endpoints from task 28. Test authentication, authorization, request validation, and response formats using tools like Supertest or similar",
-            "parentId": "35"
+            "parentId": "undefined"
           },
           {
             "id": 3,
@@ -988,7 +988,7 @@
             "status": "done",
             "dependencies": [],
             "details": "Set up local Solana validator testing environment and implement comprehensive on-chain tests covering: happy path settlements (USDC first then NFT, and vice versa), wrong mint rejection (invalid USDC or NFT mints), under/over-funding protection (price-1, price+1 scenarios), double-settle and double-deposit no-ops, expiry refund functionality (only depositor withdrawal), precise fee collection and optional royalties distribution, unauthorized cancel blocking with admin-cancel multisig requirements, PDA/account spoofing prevention with account metadata permutation tests, rent-exempt vault management with proper rent release on closing, and event field validation matching state for receipt generation",
-            "parentId": "35"
+            "parentId": "undefined"
           },
           {
             "id": 4,
@@ -999,7 +999,7 @@
               "35.2"
             ],
             "details": "Implement integration tests covering: deterministic agreement_id generation and validation, idempotency key handling for duplicate request prevention, exact-once webhook delivery guarantees, RPC failure retry logic with exponential backoff, partial success recovery mechanisms, and database invariant enforcement (no negative balances, monotonic status transitions only)",
-            "parentId": "35"
+            "parentId": "undefined"
           },
           {
             "id": 5,
@@ -1011,7 +1011,7 @@
               "35.4"
             ],
             "details": "Write test scenarios for successful payment flows, user registration, deposit processing, settlement completion, and normal cancellation processes. Ensure all positive paths work correctly from start to finish including both on-chain and off-chain components",
-            "parentId": "35"
+            "parentId": "undefined"
           },
           {
             "id": 6,
@@ -1022,7 +1022,7 @@
               "35.5"
             ],
             "details": "Create specific test cases for: early cancellation before deposit, late cancellation after settlement, partial deposit scenarios, double-settlement prevention, automatic expiry refunds, network failures, timeout handling, account spoofing attempts, unauthorized access patterns, and fee calculation precision to the lamport level",
-            "parentId": "35"
+            "parentId": "undefined"
           },
           {
             "id": 7,
@@ -1033,7 +1033,7 @@
               "35.6"
             ],
             "details": "Set up local Solana validator for on-chain testing, configure test databases, implement CI/CD pipeline to run all test suites automatically, create test reporting and coverage analysis for both Rust and JavaScript/TypeScript code, develop test data seeding scripts, and establish comprehensive testing best practices documentation covering both on-chain and off-chain testing methodologies",
-            "parentId": "35"
+            "parentId": "undefined"
           }
         ]
       },
@@ -1057,7 +1057,7 @@
             "status": "done",
             "dependencies": [],
             "details": "Create openapi.yaml file with API version, title, description, contact info, license, and server URLs. Define common security schemes like API keys or JWT authentication that will be used across endpoints.",
-            "parentId": "36"
+            "parentId": "undefined"
           },
           {
             "id": 2,
@@ -1068,7 +1068,7 @@
               "36.1"
             ],
             "details": "Document each endpoint with HTTP methods, URL paths, query parameters, request body schemas, response codes, and response body schemas. Include examples for common use cases and edge cases.",
-            "parentId": "36"
+            "parentId": "undefined"
           },
           {
             "id": 3,
@@ -1079,7 +1079,7 @@
               "36.1"
             ],
             "details": "Document webhook event types, payload structures, headers, retry policies, and signature verification. Include examples of webhook payloads and handling instructions for different event types.",
-            "parentId": "36"
+            "parentId": "undefined"
           },
           {
             "id": 4,
@@ -1090,7 +1090,7 @@
               "36.2"
             ],
             "details": "Document HTTP status codes, custom error codes, error response structure, error messages, and common troubleshooting steps. Include examples of error responses and resolution strategies.",
-            "parentId": "36"
+            "parentId": "undefined"
           },
           {
             "id": 5,
@@ -1103,7 +1103,7 @@
               "36.4"
             ],
             "details": "Create getting started guide, authentication setup, common integration patterns, code examples in multiple languages, SDK usage instructions, and best practices for rate limiting and error handling.",
-            "parentId": "36"
+            "parentId": "undefined"
           }
         ]
       },
@@ -1128,7 +1128,7 @@
             "status": "done",
             "dependencies": [],
             "details": "Set up devnet RPC endpoints, configure wallet with sufficient SOL for transaction fees, prepare test USDC tokens and NFT collections, verify Solana program deployment on devnet, configure environment variables for testing",
-            "parentId": "37"
+            "parentId": "undefined"
           },
           {
             "id": 2,
@@ -1139,7 +1139,7 @@
               "37.1"
             ],
             "details": "Create new escrow agreement with test parameters, perform USDC deposit from buyer wallet, deposit NFT from seller wallet, execute atomic settlement, verify receipt JSON is published with complete transaction details. Validate all state transitions and final balances.",
-            "parentId": "37"
+            "parentId": "undefined"
           },
           {
             "id": 3,
@@ -1150,7 +1150,7 @@
               "37.1"
             ],
             "details": "Create escrow agreement, deposit either USDC or NFT (but not both), allow agreement to expire, execute expiry refund instruction, verify correct refund to original depositor and proper cleanup of escrow account.",
-            "parentId": "37"
+            "parentId": "undefined"
           },
           {
             "id": 4,
@@ -1161,7 +1161,7 @@
               "37.1"
             ],
             "details": "Set up scenario with one open offer and two buyer wallets attempting to deposit USDC simultaneously. Execute concurrent transactions and verify only one succeeds while the other fails gracefully. Test system's ability to handle race conditions properly.",
-            "parentId": "37"
+            "parentId": "undefined"
           },
           {
             "id": 5,
@@ -1174,7 +1174,7 @@
               "37.4"
             ],
             "details": "Verify platform fees are correctly deducted and transferred to fee collection account across all test scenarios, validate receipt generation with accurate transaction details, test receipt retrieval and verification endpoints for each completed transaction type.",
-            "parentId": "37"
+            "parentId": "undefined"
           }
         ]
       },
@@ -1197,7 +1197,7 @@
             "status": "done",
             "dependencies": [],
             "details": "Download and install Solana CLI from official sources. Configure solana config set --url localhost to point to local validator. Verify installation with solana --version and solana config get commands.",
-            "parentId": "38"
+            "parentId": "undefined"
           },
           {
             "id": 2,
@@ -1208,7 +1208,7 @@
               "38.1"
             ],
             "details": "Start validator using solana-test-validator with custom flags: --reset for clean state, --quiet for minimal logging, --bpf-program for preloaded programs, and --slots-per-epoch 32 for faster epoch transitions. Configure validator to run on default localhost:8899.",
-            "parentId": "38"
+            "parentId": "undefined"
           },
           {
             "id": 3,
@@ -1219,7 +1219,7 @@
               "38.2"
             ],
             "details": "Generate multiple test keypairs using solana-keygen new command. Create keypairs for buyer, seller, admin, and fee collector accounts. Fund each account with 10 SOL using solana airdrop command for transaction fees during testing.",
-            "parentId": "38"
+            "parentId": "undefined"
           },
           {
             "id": 4,
@@ -1230,7 +1230,7 @@
               "38.3"
             ],
             "details": "Use spl-token CLI to create a new token mint representing USDC. Set mint authority and create associated token accounts for test keypairs. Mint 1000 test USDC tokens to buyer and seller accounts for escrow testing scenarios.",
-            "parentId": "38"
+            "parentId": "undefined"
           },
           {
             "id": 5,
@@ -1241,7 +1241,7 @@
               "38.3"
             ],
             "details": "Deploy Metaplex Token Metadata program if not available. Create NFT collection with metadata including name, symbol, and URI. Mint 5-10 test NFTs with unique metadata to seller accounts for use in escrow agreement testing scenarios.",
-            "parentId": "38"
+            "parentId": "undefined"
           },
           {
             "id": 6,
@@ -1253,7 +1253,7 @@
               "38.5"
             ],
             "details": "Create specialized test accounts for edge case scenarios: accounts with insufficient funds for under-funding tests, multiple buyer accounts for double-settle prevention testing, expired agreement scenarios for refund testing, unauthorized accounts for cancel testing, and malicious accounts for PDA spoofing attempts. Setup test data structures to track all test scenarios and their expected outcomes.",
-            "parentId": "38"
+            "parentId": "undefined"
           }
         ]
       },
@@ -1277,7 +1277,7 @@
             "status": "done",
             "dependencies": [],
             "details": "Create secrets in DO App Platform dashboard for private keys, API keys, and other sensitive data. Configure environment variable mapping from secrets to application runtime. Ensure secrets are encrypted at rest and in transit.",
-            "parentId": "39"
+            "parentId": "undefined"
           },
           {
             "id": 2,
@@ -1288,7 +1288,7 @@
               "39.1"
             ],
             "details": "Develop service layer to safely load private keys and secrets from environment variables. Implement validation to ensure required secrets are present. Add error handling for missing or malformed secrets. Create secure in-memory storage for runtime access.",
-            "parentId": "39"
+            "parentId": "undefined"
           },
           {
             "id": 3,
@@ -1297,7 +1297,7 @@
             "status": "done",
             "dependencies": [],
             "details": "Add patterns for common secret file extensions (.key, .pem, .env, .secret), wallet files, configuration files with secrets. Include patterns for IDE-specific files and temporary files that might contain sensitive data. Test with sample secret files to ensure exclusion works.",
-            "parentId": "39"
+            "parentId": "undefined"
           },
           {
             "id": 4,
@@ -1308,7 +1308,7 @@
               "39.3"
             ],
             "details": "Integrate pre-commit hooks to scan for potential secrets using tools like git-secrets or similar. Configure CI/CD pipeline to scan commits for sensitive patterns. Set up alerts for any detected secrets. Create remediation process for accidental commits.",
-            "parentId": "39"
+            "parentId": "undefined"
           },
           {
             "id": 5,
@@ -1322,7 +1322,7 @@
               "39.4"
             ],
             "details": "Write detailed documentation covering: secret creation and rotation procedures, environment variable configuration, deployment checklist, troubleshooting guide, security best practices, and incident response procedures. Include examples and step-by-step instructions for team members.",
-            "parentId": "39"
+            "parentId": "undefined"
           }
         ]
       },
@@ -1346,7 +1346,7 @@
             "status": "done",
             "dependencies": [],
             "details": "Create database table with fields: idempotency_key (unique), endpoint_path, request_hash, response_status, response_body, created_at, expires_at. Define TTL for key expiration (24-48 hours). Design indexes for efficient lookups.",
-            "parentId": "40"
+            "parentId": "undefined"
           },
           {
             "id": 2,
@@ -1357,7 +1357,7 @@
               "40.1"
             ],
             "details": "Extract Idempotency-Key header, validate format (UUID v4), check for required endpoints (/v1/agreements, /v1/agreements/{id}/settle). Return 400 for missing/invalid keys on protected endpoints.",
-            "parentId": "40"
+            "parentId": "undefined"
           },
           {
             "id": 3,
@@ -1369,7 +1369,7 @@
               "40.2"
             ],
             "details": "Generate SHA-256 hash of request body and parameters. Check database for existing idempotency key. If found with same hash, return cached response. If found with different hash, return 409 Conflict.",
-            "parentId": "40"
+            "parentId": "undefined"
           },
           {
             "id": 4,
@@ -1381,7 +1381,7 @@
               "40.3"
             ],
             "details": "Wrap agreement creation logic with idempotency checks. Store successful responses with 201 status. Handle race conditions with database constraints. Ensure atomic operations between agreement creation and idempotency key storage.",
-            "parentId": "40"
+            "parentId": "undefined"
           },
           {
             "id": 5,
@@ -1393,7 +1393,7 @@
               "40.3"
             ],
             "details": "Wrap settlement logic with idempotency checks. Store successful settlement responses. Handle edge cases where settlement fails after idempotency key is stored. Implement cleanup for failed settlements.",
-            "parentId": "40"
+            "parentId": "undefined"
           }
         ]
       },
@@ -1418,7 +1418,7 @@
             "status": "done",
             "dependencies": [],
             "details": "Design tables/collections to store txids for init, deposits, settle, cancel operations. Include fields for agreement_id, operation_type, txid, timestamp, status, block_height. Create indexes for efficient querying by agreement and operation type.",
-            "parentId": "41"
+            "parentId": "undefined"
           },
           {
             "id": 2,
@@ -1429,7 +1429,7 @@
               "41.1"
             ],
             "details": "Build service that intercepts blockchain transaction responses and extracts txids. Implement hooks in existing escrow operations (init, deposit, settle, cancel) to automatically capture and store txids with proper error handling and retry logic.",
-            "parentId": "41"
+            "parentId": "undefined"
           },
           {
             "id": 3,
@@ -1440,7 +1440,7 @@
               "41.2"
             ],
             "details": "Create log aggregation service that collects txid logs from database, application logs, and blockchain events. Implement log parsing, normalization, and correlation by agreement ID. Add structured logging with consistent format across all transaction operations.",
-            "parentId": "41"
+            "parentId": "undefined"
           },
           {
             "id": 4,
@@ -1451,7 +1451,7 @@
               "41.3"
             ],
             "details": "Build REST API endpoints for querying transaction logs by agreement ID, operation type, date range, and txid. Implement pagination, sorting, and filtering. Add endpoints like GET /v1/transactions/logs and GET /v1/agreements/{id}/transactions with proper authentication and rate limiting.",
-            "parentId": "41"
+            "parentId": "undefined"
           },
           {
             "id": 5,
@@ -1462,7 +1462,7 @@
               "41.4"
             ],
             "details": "Create web-based debugging dashboard showing transaction timeline for each agreement. Implement transaction flow visualization, error highlighting, and export functionality. Add debugging tools for transaction replay and status verification with blockchain explorers integration.",
-            "parentId": "41"
+            "parentId": "undefined"
           }
         ]
       },
@@ -1486,7 +1486,7 @@
             "details": "Create a DO Managed PostgreSQL cluster in the same region as the App Platform. Configure cluster with appropriate node size, enable high availability, and set up in a VPC for private networking. Enable connection pooling with PgBouncer.",
             "status": "done",
             "testStrategy": "Verify cluster creation, test connectivity, and validate PgBouncer configuration",
-            "parentId": "42"
+            "parentId": "undefined"
           },
           {
             "id": 2,
@@ -1498,7 +1498,7 @@
             "details": "Enable point-in-time recovery (PITR) with appropriate retention period, configure automated daily snapshots, set up firewall rules to restrict access to App Platform only, and enable SSL/TLS encryption for connections.",
             "status": "done",
             "testStrategy": "Test backup restoration process, verify firewall rules block unauthorized access, validate SSL connection",
-            "parentId": "42"
+            "parentId": "undefined"
           },
           {
             "id": 3,
@@ -1510,7 +1510,7 @@
             "details": "Create easyescrow_prod, easyescrow_stage, and easyescrow_dev databases. Create role pairs for each: app_user_* (read/write, no DDL) and migrate_user_* (DDL only). Configure proper permissions and access controls for each role.",
             "status": "done",
             "testStrategy": "Test role permissions by attempting DDL operations with app_user roles (should fail) and DML operations with migrate_user roles",
-            "parentId": "42"
+            "parentId": "undefined"
           },
           {
             "id": 4,
@@ -1522,7 +1522,7 @@
             "details": "Provision DO Managed Redis cluster in the same region and VPC as PostgreSQL. Configure appropriate memory size, enable persistence, set up eviction policies, and configure private networking access from App Platform.",
             "status": "done",
             "testStrategy": "Test Redis connectivity from App Platform, verify persistence settings, and validate eviction policy behavior",
-            "parentId": "42"
+            "parentId": "undefined"
           },
           {
             "id": 5,
@@ -1532,7 +1532,7 @@
             "details": "Create DO Spaces bucket for receipt storage, configure CORS policies for web access, set up lifecycle rules for cost optimization, create access keys with minimal required permissions, and configure CDN if needed for public assets.",
             "status": "done",
             "testStrategy": "Test file upload/download operations, verify access controls prevent unauthorized access, validate lifecycle policies",
-            "parentId": "42"
+            "parentId": "undefined"
           },
           {
             "id": 6,
@@ -1546,7 +1546,7 @@
             "details": "Enable private networking between App Platform and all managed services. Configure App Platform environment variables for database connections, Redis, and Spaces access. Document quarterly secrets rotation policy and set up monitoring for connection health.",
             "status": "done",
             "testStrategy": "Test all service connections from App Platform, verify private networking isolation, validate environment variable access, and test connection failover scenarios",
-            "parentId": "42"
+            "parentId": "undefined"
           }
         ]
       },
@@ -1568,7 +1568,7 @@
             "details": "Sign up for Redis Cloud account at redis.io, create new subscription with Free tier (30GB storage, 30 connections), select AWS ap-southeast-1 (Singapore) region for low latency to DigitalOcean apps, name database 'easyescrow-dev', configure basic settings and obtain connection details",
             "status": "done",
             "testStrategy": "Verify database is accessible and shows correct region/tier in Redis Cloud dashboard",
-            "parentId": "43"
+            "parentId": "undefined"
           },
           {
             "id": 2,
@@ -1580,7 +1580,7 @@
             "details": "Enable TLS encryption (rediss:// protocol), configure IP allowlist with DigitalOcean app IP ranges, set strong password with minimum 16 characters including special characters, enable AOF persistence for data reliability, document all security configurations",
             "status": "done",
             "testStrategy": "Test connection with TLS from allowed IP and verify rejection from non-allowlisted IP",
-            "parentId": "43"
+            "parentId": "undefined"
           },
           {
             "id": 3,
@@ -1592,7 +1592,7 @@
             "details": "Create test script to connect using rediss:// protocol, test basic Redis operations (SET/GET), test Bull queue creation and job processing, verify all 3 Bull connections work (client, subscriber, bclient), measure latency and connection stability",
             "status": "done",
             "testStrategy": "Run comprehensive Bull queue test suite with job creation, processing, and completion verification",
-            "parentId": "43"
+            "parentId": "undefined"
           },
           {
             "id": 4,
@@ -1604,7 +1604,7 @@
             "details": "Remove any Upstash-specific Lua script modifications, restore original Bull queue configurations, remove custom key handling workarounds, update Redis connection logic to use standard Redis Cloud connection string format, ensure all Bull features are re-enabled",
             "status": "done",
             "testStrategy": "Code review to verify all Upstash workarounds removed and unit tests pass with standard Bull configuration",
-            "parentId": "43"
+            "parentId": "undefined"
           },
           {
             "id": 5,
@@ -1616,7 +1616,7 @@
             "details": "Update DEV environment variables with Redis Cloud connection string, deploy application, monitor error rates for 24 hours, verify all 6 deployment phases complete successfully, test Bull queue job processing reliability, confirm EPIPE/ECONNRESET errors eliminated",
             "status": "done",
             "testStrategy": "Monitor application logs for 24 hours, verify 0% error rate, test all Bull queue operations, confirm successful deployment phases",
-            "parentId": "43"
+            "parentId": "undefined"
           },
           {
             "id": 6,
@@ -1628,7 +1628,7 @@
             "details": "Store connection strings, passwords, and configuration details in secure credential management system, document IP allowlist settings, create runbook for database access and troubleshooting, update team documentation with Redis Cloud specifics for DEV environment",
             "status": "done",
             "testStrategy": "Verify documentation completeness and team can access connection details through secure channels",
-            "parentId": "43"
+            "parentId": "undefined"
           },
           {
             "id": 7,
@@ -1640,7 +1640,7 @@
             "details": "Evaluate staging requirements and provision either Free tier (30GB) or Fixed 250MB ($5/mo) database named 'easyescrow-staging' in AWS Singapore region, configure similar to DEV but with staging-specific settings, obtain connection details",
             "status": "done",
             "testStrategy": "Verify staging database is provisioned correctly and accessible from staging environment",
-            "parentId": "43"
+            "parentId": "undefined"
           },
           {
             "id": 8,
@@ -1652,7 +1652,7 @@
             "details": "Configure staging environment variables with Redis Cloud staging connection string, deploy application, test Bull queue functionality, verify error rates remain at 0%, confirm all deployment phases complete successfully, run staging test suite",
             "status": "done",
             "testStrategy": "Execute full staging test suite, monitor error rates, verify Bull queue processing reliability",
-            "parentId": "43"
+            "parentId": "undefined"
           },
           {
             "id": 9,
@@ -1664,7 +1664,7 @@
             "details": "Provision Fixed 1GB ($12/mo) database named 'easyescrow-prod' in AWS Singapore region, enable high availability (HA) configuration, configure production-grade settings for maximum performance and reliability, obtain connection details",
             "status": "done",
             "testStrategy": "Verify production database shows HA configuration and meets performance requirements",
-            "parentId": "43"
+            "parentId": "undefined"
           },
           {
             "id": 10,
@@ -1676,7 +1676,7 @@
             "details": "Configure strict IP allowlist with only production DigitalOcean app IPs, set extra-strong password (20+ characters), enable TLS encryption, configure AOF persistence, set up monthly password rotation schedule, implement additional security monitoring",
             "status": "done",
             "testStrategy": "Test production security by verifying access restrictions and TLS encryption functionality",
-            "parentId": "43"
+            "parentId": "undefined"
           },
           {
             "id": 11,
@@ -1688,7 +1688,7 @@
             "details": "Update production environment variables with Redis Cloud production connection string, perform blue-green deployment, monitor error rates continuously, verify all 6 deployment phases complete successfully, confirm Bull queue processing reliability at scale, validate 0% error rate achievement",
             "status": "done",
             "testStrategy": "Monitor production metrics for 48 hours, verify 0% error rate, test Bull queue under production load, confirm all deployment phases successful",
-            "parentId": "43"
+            "parentId": "undefined"
           },
           {
             "id": 12,
@@ -1700,7 +1700,7 @@
             "details": "Update README files, deployment guides, troubleshooting documentation, architecture diagrams, and team runbooks to replace all Upstash references with Redis Cloud information, document new connection procedures, update security guidelines, create Redis Cloud specific troubleshooting guides",
             "status": "done",
             "testStrategy": "Review all documentation for completeness and accuracy, verify team can follow new Redis Cloud procedures",
-            "parentId": "43"
+            "parentId": "undefined"
           }
         ]
       },
@@ -1722,7 +1722,7 @@
             "details": "Create tests/helpers/devnet-wallet-manager.ts that loads sender, receiver, and fee collector wallets from keypair files or environment variables. Include functions to check SOL balances, ensure minimum balance for transaction fees (~0.1 SOL each), and provide wallet instances for testing. Handle wallet loading errors gracefully.",
             "status": "done",
             "testStrategy": "Unit tests to verify wallet loading, balance checking, and error handling for missing wallets",
-            "parentId": "44"
+            "parentId": "undefined"
           },
           {
             "id": 2,
@@ -1734,7 +1734,7 @@
             "details": "Create tests/helpers/devnet-token-setup.ts using @solana/spl-token to programmatically create USDC mint, create token accounts for wallets, and mint test USDC tokens. Include functions to mint 0.2 USDC to receiver wallet, create associated token accounts, and verify token balances. Handle devnet-specific token operations.",
             "status": "done",
             "testStrategy": "Integration tests on devnet to verify token minting, account creation, and balance verification",
-            "parentId": "44"
+            "parentId": "undefined"
           },
           {
             "id": 3,
@@ -1746,7 +1746,7 @@
             "details": "Create tests/helpers/devnet-nft-setup.ts using @metaplex-foundation/js SDK to create test NFTs in sender wallet. Include functions to create NFT collection, mint individual NFTs with metadata, and verify NFT ownership. Use simple metadata structure with name 'Test NFT for E2E' and mock URI for devnet testing.",
             "status": "done",
             "testStrategy": "Integration tests on devnet to verify NFT creation, metadata upload, and ownership verification",
-            "parentId": "44"
+            "parentId": "undefined"
           },
           {
             "id": 4,
@@ -1758,7 +1758,7 @@
             "details": "Create scripts/setup-devnet-nft-usdc.ps1 that performs one-time setup of USDC mint on devnet and distributes tokens to test wallets. Script should create or use existing devnet USDC mint, create token accounts for all 3 wallets, mint initial USDC tokens, and verify setup completion. Include error handling and status reporting.",
             "status": "done",
             "testStrategy": "Manual execution on devnet with verification of mint creation and token distribution",
-            "parentId": "44"
+            "parentId": "undefined"
           },
           {
             "id": 5,
@@ -1772,7 +1772,7 @@
             "details": "Create tests/e2e/devnet-nft-usdc-swap.test.ts that orchestrates the complete happy path: setup wallets and tokens, create NFT in sender wallet, create escrow via API, deposit NFT, receiver pays USDC, verify fee distribution (99% to sender, 1% to fee collector), verify NFT transfer, and validate final balances. Include comprehensive assertions and on-chain state verification.",
             "status": "done",
             "testStrategy": "End-to-end test on devnet with real transactions, verifying complete swap flow and all balance changes",
-            "parentId": "44"
+            "parentId": "undefined"
           },
           {
             "id": 6,
@@ -1782,7 +1782,7 @@
             "details": "Install @solana/spl-token and @metaplex-foundation/js dependencies via npm. Update package.json with new test script for devnet E2E testing. Ensure version compatibility with existing Solana dependencies. Add devnet-specific test script that sets appropriate environment variables and timeouts for devnet testing.",
             "status": "done",
             "testStrategy": "Verify dependency installation and test script execution without errors",
-            "parentId": "44"
+            "parentId": "undefined"
           },
           {
             "id": 7,
@@ -1796,7 +1796,7 @@
             "details": "Run the complete E2E test on devnet, verify all transactions on Solana explorer, document test results including transaction signatures and wallet addresses. Create completion documentation with test execution steps, results verification, and troubleshooting guide. Ensure test runs reliably and transaction costs stay under 0.05 SOL total.",
             "status": "done",
             "testStrategy": "Full test execution with manual verification of blockchain transactions and comprehensive result documentation",
-            "parentId": "44"
+            "parentId": "undefined"
           }
         ]
       },
@@ -2067,7 +2067,7 @@
             "status": "pending",
             "dependencies": [],
             "details": "Implement multiple layers of protection for STAGING wallet files to prevent accidental modification or deletion:\n\n**Step 1: Make Wallet Files Read-Only**\n```powershell\n# Set read-only attribute on all STAGING wallet files\nSet-ItemProperty -Path \"wallets/staging/staging-sender.json\" -Name IsReadOnly -Value $true\nSet-ItemProperty -Path \"wallets/staging/staging-receiver.json\" -Name IsReadOnly -Value $true\nSet-ItemProperty -Path \"wallets/staging/staging-admin.json\" -Name IsReadOnly -Value $true\nSet-ItemProperty -Path \"wallets/staging/staging-fee-collector.json\" -Name IsReadOnly -Value $true\n\n# Verify read-only status\nGet-ChildItem -Path \"wallets/staging/*.json\" | Select-Object Name, IsReadOnly\n```\n\n**Step 2: Protect Program Keypair**\n```powershell\n# Set read-only attribute on STAGING program keypair\nSet-ItemProperty -Path \"target/deploy/escrow-keypair-staging.json\" -Name IsReadOnly -Value $true\n\n# Verify protection\nGet-ItemProperty -Path \"target/deploy/escrow-keypair-staging.json\" | Select-Object Name, IsReadOnly\n```\n\n**Step 3: Verify Git Ignore Protection**\nConfirm wallet files are properly git-ignored (NEVER commit private keys):\n```bash\n# These should all be ignored by git\ngit check-ignore wallets/staging/staging-sender.json\ngit check-ignore .env.staging\ngit check-ignore target/deploy/escrow-keypair-staging.json\n\n# All should return the filename (means ignored)\n```\n\n**Step 4: Create Protection Documentation**\nCreate `docs/STAGING_WALLET_PROTECTION.md` documenting:\n- **Why wallets are protected**: STAGING is prod-like environment that should be stable\n- **How to unlock if changes needed**: `Set-ItemProperty -Path \"<file>\" -Name IsReadOnly -Value $false`\n- **Emergency recovery procedures**: Restore from `/temp/staging-backups/`\n- **Security note**: Wallets are git-ignored, shared via secure channels only\n- **Warning about regeneration**: Changing wallet addresses breaks configs and tests\n\n**Step 5: Update Pre-commit Hook**\nUpdate `.husky/pre-commit` to BLOCK any private key commits:\n```bash\n#!/bin/sh\n\n# Check for accidental private key commits\nif git diff --cached --name-only | grep -qE \"wallets/.*\\.json|.*keypair.*\\.json|^.env\\.[^.]*$\"; then\n  echo \"🚨 CRITICAL: You are about to commit PRIVATE KEYS or secrets!\"\n  echo \"This is a SECURITY RISK and should NEVER be done.\"\n  echo \"❌ Commit BLOCKED for your protection.\"\n  exit 1\nfi\n\nnpm test\n```\n\n**Why This Matters:**\n- STAGING is a prod-like environment that should be stable and predictable\n- Wallet addresses (PUBLIC) are referenced in docs and configs\n- Private keys (SECRET) are NEVER in git - stored in .env files and backups\n- Changing wallets breaks existing configurations, tests, and deployments\n- Read-only protection prevents accidental `solana-keygen new --force` overwrites\n- Pre-commit hook prevents accidental commits of private keys\n- Team shares keys via secure channels (password manager, DO secrets, etc.)\n\n**How to Temporarily Unlock (If Really Needed):**\n```powershell\n# Remove read-only protection\nSet-ItemProperty -Path \"wallets/staging/staging-sender.json\" -Name IsReadOnly -Value $false\n\n# Make your changes\n\n# Re-enable protection\nSet-ItemProperty -Path \"wallets/staging/staging-sender.json\" -Name IsReadOnly -Value $true\n```\n\n**SECURITY REMINDER:**\n- Private keys NEVER go in git (even private repos)\n- Wallets are git-ignored for security\n- Only PUBLIC addresses are documented in git\n- See docs/SECURITY_FIX_WALLET_GIT_TRACKING.md for details",
-            "parentId": "65"
+            "parentId": "undefined"
           }
         ],
         "complexity": 4,
@@ -2078,7 +2078,7 @@
         "id": "66",
         "title": "Build and Deploy Escrow Program to Devnet for STAGING",
         "description": "Deploy the escrow program using CI/CD pipeline with Anchor.staging.toml configuration, implementing build-once-deploy-everywhere principles with proper artifact verification and staging environment isolation.",
-        "status": "done",
+        "status": "pending",
         "dependencies": [
           "64",
           "65",
@@ -2090,8 +2090,7 @@
         "subtasks": [],
         "complexity": 6,
         "recommendedSubtasks": 3,
-        "expansionPrompt": "Divide into: (1) CI build and artifact generation, (2) deployment and verification, (3) post-deploy migration and smoke testing. This reflects the natural phases of the deployment pipeline and allows for focused automation, validation, and documentation.",
-        "updatedAt": "2025-10-20T02:31:47.612Z"
+        "expansionPrompt": "Divide into: (1) CI build and artifact generation, (2) deployment and verification, (3) post-deploy migration and smoke testing. This reflects the natural phases of the deployment pipeline and allows for focused automation, validation, and documentation."
       },
       {
         "id": "67",
@@ -2099,7 +2098,7 @@
         "description": "Create isolated STAGING database infrastructure using existing DO Managed PostgreSQL cluster with staging-specific database, user, migrations, and configuration.",
         "details": "Create comprehensive STAGING database infrastructure leveraging the existing DigitalOcean Managed PostgreSQL cluster:\n\n**Step 1: Create Staging Database**\n```sql\n-- Connect to existing DO Managed PostgreSQL cluster\nCREATE DATABASE easyescrow_staging;\n```\n\n**Step 2: Create Staging Database User**\n```sql\n-- Create staging-specific user with least-privilege permissions\nCREATE USER staging_user WITH PASSWORD 'secure_staging_password';\nGRANT CONNECT ON DATABASE easyescrow_staging TO staging_user;\nGRANT USAGE ON SCHEMA public TO staging_user;\nGRANT CREATE ON SCHEMA public TO staging_user;\n-- Grant table-level permissions after migrations\n```\n\n**Step 3: Configure Environment Variables**\n```bash\n# Add to staging environment configuration\nDATABASE_URL=\"postgresql://staging_user:password@cluster-host:25060/easyescrow_staging?sslmode=require\"\nDATABASE_POOL_SIZE=10\nDATABASE_POOL_TIMEOUT=30\n```\n\n**Step 4: Run Prisma Migrations**\n```bash\n# Set staging database URL\nexport DATABASE_URL=\"postgresql://staging_user:password@cluster-host:25060/easyescrow_staging?sslmode=require\"\n\n# Run migrations against staging database\nnpx prisma migrate deploy\nnpx prisma generate\n```\n\n**Step 5: Seed Test Data (if needed)**\n```bash\n# Create staging-specific seed data\nnpx prisma db seed --preview-feature\n# OR run custom staging seed script\nnode scripts/seed-staging.js\n```\n\n**Step 6: Configure Connection Pooling**\n- Leverage DO Managed PostgreSQL built-in connection pooling\n- Configure staging-specific pool settings (smaller than prod)\n- Set appropriate connection limits for staging workload\n\n**Step 7: Setup Backup Schedule**\n- Configure automated backups (daily instead of hourly like prod)\n- Set retention period (7 days for staging vs 30 days for prod)\n- Document backup restoration process\n\n**Step 8: Store Connection Strings Securely**\n```bash\n# Store in DigitalOcean App Platform environment variables\nSTAGING_DATABASE_URL=\"postgresql://staging_user:password@cluster-host:25060/easyescrow_staging?sslmode=require\"\nSTAGING_DATABASE_POOL_URL=\"postgresql://staging_user:password@pooler-host:25061/easyescrow_staging?sslmode=require\"\n```\n\n**Step 9: Update Documentation**\nAdd staging database details to docs/setup/DATABASE_SETUP.md:\n- Connection string format\n- User permissions and roles\n- Migration process for staging\n- Backup and recovery procedures\n- Troubleshooting common issues",
         "testStrategy": "1. **Database Creation Verification**: Connect to DO Managed PostgreSQL cluster and verify `easyescrow_staging` database exists using `\\l` command in psql\n\n2. **User Permissions Testing**: Connect as `staging_user` and verify:\n   - Can connect to easyescrow_staging database\n   - Can create tables in public schema\n   - Cannot access other databases (easyescrow_prod, easyescrow_dev)\n   - Has appropriate read/write permissions on migrated tables\n\n3. **Migration Success Validation**: \n   - Run `npx prisma migrate status` to confirm all migrations applied\n   - Verify schema matches expected structure using `\\dt` and `\\d table_name`\n   - Check that all indexes, constraints, and relationships are properly created\n\n4. **Connection Pooling Test**: \n   - Test connections through both direct and pooled connection strings\n   - Verify connection limits are respected\n   - Monitor connection pool metrics in DO dashboard\n\n5. **Backup Configuration Verification**:\n   - Confirm backup schedule is active in DO dashboard\n   - Test point-in-time recovery capability with a small test restoration\n   - Verify backup retention settings match staging requirements\n\n6. **Environment Integration Test**:\n   - Deploy staging application with new DATABASE_URL\n   - Execute basic CRUD operations against staging database\n   - Verify application logs show successful database connections\n   - Run staging-specific test suite to validate full functionality",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           "42",
           "63"
@@ -2108,7 +2107,8 @@
         "subtasks": [],
         "complexity": 5,
         "recommendedSubtasks": 2,
-        "expansionPrompt": "Split into: (1) database and user creation with least-privilege permissions, and (2) migration, seeding, connection pooling, and backup configuration. This separates the initial provisioning from the ongoing operational setup."
+        "expansionPrompt": "Split into: (1) database and user creation with least-privilege permissions, and (2) migration, seeding, connection pooling, and backup configuration. This separates the initial provisioning from the ongoing operational setup.",
+        "updatedAt": "2025-10-20T03:01:32.980Z"
       },
       {
         "id": "68",
@@ -2227,7 +2227,7 @@
             "details": "Implement the GitHub Actions workflow file at .github/workflows/build-staging.yml that handles:\n- Checkout of code\n- Installation of pinned Solana CLI version\n- Setting up Rust toolchain from rust-toolchain.toml\n- Building the program with anchor build\n- Generating checksums for artifacts\n- Running unit tests\n- Uploading artifacts for later deployment",
             "status": "pending",
             "testStrategy": "Verify the workflow runs successfully on staging branch push by making a test commit and checking that artifacts are properly generated and stored",
-            "parentId": "73"
+            "parentId": "undefined"
           },
           {
             "id": 2,
@@ -2239,7 +2239,7 @@
             "details": "Implement the GitHub Actions workflow file at .github/workflows/deploy-staging.yml that handles:\n- Triggering after successful build workflow\n- Requiring manual approval via environment protection rule\n- Downloading build artifacts\n- Setting up Solana CLI\n- Configuring staging deployer keypair\n- Deploying program to devnet\n- Updating IDL\n- Deploying backend to DigitalOcean App Platform\n- Running smoke tests\n- Sending deployment notifications",
             "status": "pending",
             "testStrategy": "Verify the workflow correctly waits for manual approval and then deploys artifacts to the staging environment, with proper notifications sent upon completion",
-            "parentId": "73"
+            "parentId": "undefined"
           },
           {
             "id": 3,
@@ -2251,7 +2251,7 @@
             "details": "Implement the GitHub Actions workflow file at .github/workflows/rollback-staging.yml that handles:\n- Manual workflow dispatch with deployment ID input\n- Verification of the specified deployment\n- Rollback to the specified deployment via DigitalOcean API\n- Notification of rollback status",
             "status": "pending",
             "testStrategy": "Test the rollback workflow by manually triggering it with a valid deployment ID and verifying the environment is restored to that specific deployment",
-            "parentId": "73"
+            "parentId": "undefined"
           },
           {
             "id": 4,
@@ -2261,7 +2261,7 @@
             "details": "Create a JavaScript/TypeScript script that performs essential health and functionality checks:\n- API health endpoint check\n- Basic API functionality test\n- Solana RPC connection test\n- Database connectivity test\n- Redis connectivity test if applicable\n\nThe script should exit with non-zero status on any failure to properly integrate with CI/CD pipeline.",
             "status": "pending",
             "testStrategy": "Test the smoke test script against both healthy and unhealthy environments to verify it correctly identifies issues and exits with appropriate status codes",
-            "parentId": "73"
+            "parentId": "undefined"
           },
           {
             "id": 5,
@@ -2271,7 +2271,7 @@
             "details": "Create a JavaScript/TypeScript script that:\n- Connects to the staging database using environment variables\n- Identifies and applies pending migrations in order\n- Logs migration progress\n- Handles errors appropriately\n- Updates migration tracking table",
             "status": "pending",
             "testStrategy": "Test the migration script against a test database with various migration scenarios to verify it correctly applies migrations in order and handles errors",
-            "parentId": "73"
+            "parentId": "undefined"
           },
           {
             "id": 6,
@@ -2287,7 +2287,7 @@
             "details": "Create detailed documentation that includes:\n- CI/CD pipeline architecture diagram\n- Workflow descriptions and triggers\n- Required secrets and environment variables\n- Manual approval process\n- Rollback procedures\n- Troubleshooting guide\n- Security considerations\n- Best practices for working with the pipeline",
             "status": "pending",
             "testStrategy": "Verify documentation completeness by having a team member follow the documentation to perform a test deployment without additional guidance",
-            "parentId": "73"
+            "parentId": "undefined"
           },
           {
             "id": 7,
@@ -2297,7 +2297,7 @@
             "details": "Configure GitHub repository settings:\n- Create a 'staging' environment\n- Add required reviewers for deployment approval\n- Set appropriate timeout for approvals\n- Configure environment secrets required by the workflows\n- Document the approval process",
             "status": "pending",
             "testStrategy": "Verify protection rules work by triggering a deployment and confirming it waits for the required approvals before proceeding",
-            "parentId": "73"
+            "parentId": "undefined"
           },
           {
             "id": 8,
@@ -2307,7 +2307,7 @@
             "details": "Set up notification system:\n- Create Slack/Discord webhook\n- Store webhook URL in GitHub Secrets\n- Configure notification format with deployment details\n- Include success/failure status\n- Add links to deployment logs\n- Test notification delivery",
             "status": "pending",
             "testStrategy": "Trigger test deployments with both success and failure scenarios to verify notifications are sent with correct information and formatting",
-            "parentId": "73"
+            "parentId": "undefined"
           }
         ],
         "complexity": 8,
@@ -2377,7 +2377,7 @@
             "details": "Create the .github/workflows/staging-build.yml file with the following components:\n- Trigger on push to staging branch or staging-v* tags\n- Cache and install pinned Solana CLI (v1.18.x)\n- Build Anchor program once for all environments\n- Generate checksums for verification\n- Run unit tests without deployment\n- Build and push Docker image to registry\n- Upload program artifacts with retention policy",
             "status": "pending",
             "testStrategy": "Verify the workflow runs successfully on push to staging branch and correctly builds and stores all artifacts with proper checksums.",
-            "parentId": "76"
+            "parentId": "undefined"
           },
           {
             "id": 2,
@@ -2389,7 +2389,7 @@
             "details": "Create the .github/workflows/staging-deploy.yml file with the following components:\n- Trigger on successful completion of STAGING Build workflow\n- Download and verify checksums of build artifacts\n- Deploy program to STAGING environment using Anchor.staging.toml\n- Update IDL on-chain\n- Deploy backend to DigitalOcean App Platform\n- Run smoke tests and E2E tests\n- Send notifications for success/failure\n- Include manual approval gate via environment protection rules",
             "status": "pending",
             "testStrategy": "Test the workflow by triggering a full pipeline run and verifying all deployment steps complete successfully with proper verification and testing.",
-            "parentId": "76"
+            "parentId": "undefined"
           },
           {
             "id": 3,
@@ -2401,7 +2401,7 @@
             "details": "Create the .github/workflows/staging-rollback.yml file with the following components:\n- Manual trigger with commit SHA input\n- Download artifacts from specified commit\n- Redeploy previous version of program and backend\n- Verify deployment success\n- Send notifications",
             "status": "pending",
             "testStrategy": "Test the rollback workflow by manually triggering it with a known-good commit SHA and verifying the rollback completes successfully.",
-            "parentId": "76"
+            "parentId": "undefined"
           },
           {
             "id": 4,
@@ -2411,7 +2411,7 @@
             "details": "Configure the following secrets in GitHub repository settings:\n- STAGING_DEPLOYER_KEYPAIR: Base58 or JSON keypair for program deployment\n- STAGING_RPC_URL: Private RPC endpoint for STAGING environment\n- STAGING_PROGRAM_ID: Program ID from task 64\n- STAGING_APP_ID: DigitalOcean App Platform ID\n- DIGITAL_OCEAN_API_KEY: API key for DO deployments\n- SLACK_WEBHOOK: Webhook URL for deployment notifications",
             "status": "pending",
             "testStrategy": "Verify all secrets are correctly configured and accessible by the workflows without exposing sensitive information in logs.",
-            "parentId": "76"
+            "parentId": "undefined"
           },
           {
             "id": 5,
@@ -2421,7 +2421,7 @@
             "details": "Configure the following branch protection rules for the staging branch:\n- Require status checks to pass before merging\n- Require approval for deployments\n- Require linear history\n- Prevent force pushes\n- Restrict who can push to the branch",
             "status": "pending",
             "testStrategy": "Test branch protection by attempting to merge code that fails tests or doesn't have required approvals and verify it's blocked.",
-            "parentId": "76"
+            "parentId": "undefined"
           },
           {
             "id": 6,
@@ -2437,7 +2437,7 @@
             "details": "Create docs/deployment/STAGING_CI_CD_COMPLETE.md with the following sections:\n- Pipeline Architecture Overview\n- Key Principles and Benefits\n- Workflow Descriptions\n- Secret Management\n- Branch Protection\n- Deployment Process\n- Rollback Process\n- Troubleshooting Guide",
             "status": "pending",
             "testStrategy": "Review documentation for completeness and accuracy, ensure it covers all aspects of the CI/CD pipeline and provides clear instructions for team members.",
-            "parentId": "76"
+            "parentId": "undefined"
           }
         ],
         "complexity": 9,
@@ -2659,7 +2659,7 @@
     ],
     "metadata": {
       "version": "1.0.0",
-      "lastModified": "2025-10-20T02:31:47.613Z",
+      "lastModified": "2025-10-20T03:01:32.981Z",
       "taskCount": 67,
       "completedCount": 43,
       "tags": [
