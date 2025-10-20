@@ -162,6 +162,53 @@ npx prisma validate
 npx prisma format
 ```
 
+## Staging Database Setup
+
+### DigitalOcean Managed PostgreSQL (Staging)
+
+The staging environment uses an isolated database within the same PostgreSQL cluster:
+
+**Quick Setup:**
+```bash
+# Windows (PowerShell)
+.\scripts\deployment\setup-staging-database.ps1
+
+# Or manually using SQL script
+psql "postgresql://doadmin:PASSWORD@host:25060/defaultdb?sslmode=require" -f scripts/deployment/setup-staging-database.sql
+```
+
+**Configuration:**
+1. Database: `easyescrow_staging`
+2. User: `staging_user` (least-privilege permissions)
+3. Connection strings saved in DigitalOcean App Platform secrets
+4. Separate connection pool (10-15 connections)
+5. Daily backups with 7-day retention
+
+**Environment Variables for Staging:**
+```env
+DATABASE_URL="postgresql://staging_user:PASSWORD@host:25060/easyescrow_staging?sslmode=require"
+DATABASE_POOL_URL="postgresql://staging_user:PASSWORD@pooler:25061/easyescrow_staging?sslmode=require"
+DATABASE_POOL_SIZE=10
+NODE_ENV=staging
+```
+
+**Run Migrations:**
+```bash
+DATABASE_URL="postgresql://staging_user:PASSWORD@host:25060/easyescrow_staging?sslmode=require" npx prisma migrate deploy
+```
+
+**Seed Test Data:**
+```bash
+npm run db:seed:staging
+```
+
+**Test Connection:**
+```bash
+npm run db:test-connection
+```
+
+📖 **Detailed Guide:** See [STAGING_DATABASE_SETUP.md](../infrastructure/STAGING_DATABASE_SETUP.md) for comprehensive staging setup instructions.
+
 ## Production Deployment
 
 ### DigitalOcean Managed PostgreSQL
