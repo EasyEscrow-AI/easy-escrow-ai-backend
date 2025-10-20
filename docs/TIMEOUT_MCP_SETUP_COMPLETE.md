@@ -77,8 +77,8 @@ Added timeout utilities section with usage examples
 #### `package.json`
 Added npm scripts:
 ```json
-"timeout:help": "ts-node scripts/run-with-timeout.ts --help",
-"timeout:help:ps": "powershell -ExecutionPolicy Bypass -File ./scripts/run-with-timeout.ps1 -Help"
+"timeout:help": "ts-node scripts/utilities/timeout/run-with-timeout.ts --help",
+"timeout:help:ps": "powershell -ExecutionPolicy Bypass -File ./scripts/utilities/timeout/run-with-timeout.ps1 -Help"
 ```
 
 ## Timeout Categories
@@ -135,7 +135,7 @@ npm run timeout:help:ps
 ### Integration in Code
 
 ```typescript
-import { runWithTimeout, runWithRetry, TIMEOUTS } from './scripts/run-with-timeout';
+import { runWithTimeout, runWithRetry, TIMEOUTS } from './scripts/utilities/timeout/run-with-timeout';
 
 // Simple with auto-detection
 await runWithTimeout({
@@ -244,7 +244,7 @@ On branch task-22-solana-program-deployment
 ### 2. Integration Testing
 ```typescript
 // Add to your scripts
-import { runWithTimeout } from './scripts/run-with-timeout';
+import { runWithTimeout } from './scripts/utilities/timeout/run-with-timeout';
 
 // Use in deployment scripts
 await runWithTimeout({

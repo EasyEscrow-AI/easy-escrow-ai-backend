@@ -273,7 +273,7 @@ npm list @coral-xyz/anchor @solana/web3.js @solana/spl-token
 # Run the setup verification script
 npm run setup:devnet:verify
 # or
-./scripts/setup-devnet-e2e.ps1
+./scripts/deployment/devnet/setup-devnet-e2e.ps1
 ```
 
 ### Run Tests

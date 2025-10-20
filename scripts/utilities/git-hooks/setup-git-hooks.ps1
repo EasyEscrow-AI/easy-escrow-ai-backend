@@ -5,7 +5,7 @@ $ErrorActionPreference = "Stop"
 
 $HOOK_DIR = ".git\hooks"
 $HOOK_FILE = "$HOOK_DIR\pre-commit"
-$SCRIPT_PATH = "scripts\pre-commit-secrets-check.ps1"
+$SCRIPT_PATH = "scripts\utilities\git-hooks\pre-commit-secrets-check.ps1"
 
 Write-Host "🔧 Setting up Git hooks for secret scanning..." -ForegroundColor Cyan
 
@@ -37,15 +37,15 @@ $hookContent = @'
 # Detect OS and run appropriate script
 if command -v pwsh &> /dev/null; then
     # PowerShell available
-    pwsh -File scripts/pre-commit-secrets-check.ps1
+    pwsh -File scripts/utilities/git-hooks/pre-commit-secrets-check.ps1
     exit $?
 elif command -v powershell &> /dev/null; then
     # Windows PowerShell available
-    powershell -ExecutionPolicy Bypass -File scripts/pre-commit-secrets-check.ps1
+    powershell -ExecutionPolicy Bypass -File scripts/utilities/git-hooks/pre-commit-secrets-check.ps1
     exit $?
 else
     # Use bash script
-    bash scripts/pre-commit-secrets-check.sh
+    bash scripts/utilities/git-hooks/pre-commit-secrets-check.sh
     exit $?
 fi
 '@

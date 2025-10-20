@@ -97,7 +97,7 @@ export async function loadDevnetWallets(): Promise<DevnetWallets> {
             '   - DEVNET_ADMIN_PRIVATE_KEY\n' +
             '   - DEVNET_FEE_COLLECTOR_PRIVATE_KEY\n\n' +
             '2. Use the setup script to create static wallets:\n' +
-            '   scripts/setup-static-devnet-wallets.ps1\n\n' +
+            '   scripts/deployment/devnet/setup-static-devnet-wallets.ps1\n\n' +
             '3. Create tests/fixtures/devnet-config.json manually with your wallet keys\n\n' +
             '4. Force generation of NEW wallets (USE WITH CAUTION):\n' +
             '   Set FORCE_GENERATE_WALLETS=true environment variable\n\n' +
@@ -144,7 +144,7 @@ export async function loadDevnetWallets(): Promise<DevnetWallets> {
         console.log('\n📝 New wallets generated and saved to:', configPath);
         console.warn('\n⚠️  IMPORTANT: These are NEW addresses. You must fund them before testing.\n');
         console.log('💡 Fund these wallets using:');
-        console.log(`   scripts/fund-devnet-wallets.ps1 -Buyer ${receiver.publicKey.toString()} -Seller ${sender.publicKey.toString()} -Admin ${admin.publicKey.toString()} -FeeCollector ${feeCollector.publicKey.toString()}`);
+        console.log(`   scripts/deployment/devnet/fund-devnet-wallets.ps1 -Buyer ${receiver.publicKey.toString()} -Seller ${sender.publicKey.toString()} -Admin ${admin.publicKey.toString()} -FeeCollector ${feeCollector.publicKey.toString()}`);
         console.log('\nWallet Addresses:');
         console.log(`  Sender:       ${sender.publicKey.toString()}`);
         console.log(`  Receiver:     ${receiver.publicKey.toString()}`);
@@ -247,7 +247,7 @@ export async function verifyWalletBalances(
     throw new Error(
       `⚠️  Insufficient wallet balances (minimum ${minSOL} SOL required):\n` +
       errors.map(e => `  - ${e}`).join('\n') + '\n\n' +
-      `Run: scripts/fund-devnet-wallets.ps1 -Buyer ${wallets.receiver.publicKey.toString()} ` +
+      `Run: scripts/deployment/devnet/fund-devnet-wallets.ps1 -Buyer ${wallets.receiver.publicKey.toString()} ` +
       `-Seller ${wallets.sender.publicKey.toString()} -Admin ${wallets.admin.publicKey.toString()} ` +
       `-FeeCollector ${wallets.feeCollector.publicKey.toString()}`
     );
