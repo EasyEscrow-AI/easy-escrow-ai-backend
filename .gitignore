@@ -74,6 +74,10 @@ config.secret.*
 *-secrets.yml
 *-secrets.yaml
 
+# CRITICAL: staging-app.yaml contains secrets and should NEVER be committed
+# Use staging-app.yaml.template instead
+staging-app.yaml
+
 # API Keys & Tokens
 .api-key
 *.api-key

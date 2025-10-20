@@ -1,21 +1,13 @@
 #
-# DigitalOcean App Platform Configuration - STAGING Environment
+# DigitalOcean App Platform Configuration - STAGING Environment (TEMPLATE)
 #
-# IMPORTANT SECURITY NOTE:
-# This file is SAFE TO COMMIT to Git. All sensitive values use ${VARIABLE_NAME}
-# placeholders that reference secrets stored in:
-#   - GitHub Secrets (for CI/CD deployments)
-#   - DigitalOcean App Platform Environment Variables (for runtime)
-#
-# NEVER commit actual private keys, passwords, or API keys to this file.
-#
-# This configuration uses DEVNET_STAGING_* naming convention to differentiate
-# from DEV environment variables.
+# This is a TEMPLATE file. DO NOT add real secrets here.
+# Secrets should ONLY be added via DigitalOcean App Platform Console or CLI.
 #
 # Deploy with: doctl apps create --spec staging-app.yaml
 # Update with: doctl apps update <app-id> --spec staging-app.yaml
 #
-# See docs/deployment/STAGING_SECRETS_MANAGEMENT.md for details on managing secrets.
+# For secrets management, see: docs/deployment/STAGING_SECRETS_MANAGEMENT.md
 #
 
 name: easyescrow-backend-staging
@@ -82,10 +74,10 @@ services:
       
       #
       # Solana RPC Configuration
-      # IMPORTANT: Actual RPC URL with API key stored in GitHub Secrets
+      # Add SOLANA_RPC_URL via DO Console with your Helius API key
       #
       - key: SOLANA_RPC_URL
-        value: ${SOLANA_RPC_URL}
+        value: __SECRET_VIA_CONSOLE__
         type: SECRET
         scope: RUN_TIME
       
@@ -120,26 +112,26 @@ services:
       
       #
       # STAGING Wallet Configuration (Base58 Private Keys)
-      # NOTE: Uses DEVNET_STAGING_* prefix to avoid DEV conflicts
-      # IMPORTANT: Actual private keys stored in GitHub Secrets and DO App Platform
+      # NOTE: ALL wallet private keys MUST be added via DO Console as SECRETS
+      # See docs/deployment/STAGING_SECRETS_MANAGEMENT.md
       #
       - key: DEVNET_STAGING_SENDER_PRIVATE_KEY
-        value: ${DEVNET_STAGING_SENDER_PRIVATE_KEY}
+        value: __SECRET_VIA_CONSOLE__
         type: SECRET
         scope: RUN_TIME
       
       - key: DEVNET_STAGING_RECEIVER_PRIVATE_KEY
-        value: ${DEVNET_STAGING_RECEIVER_PRIVATE_KEY}
+        value: __SECRET_VIA_CONSOLE__
         type: SECRET
         scope: RUN_TIME
       
       - key: DEVNET_STAGING_ADMIN_PRIVATE_KEY
-        value: ${DEVNET_STAGING_ADMIN_PRIVATE_KEY}
+        value: __SECRET_VIA_CONSOLE__
         type: SECRET
         scope: RUN_TIME
       
       - key: DEVNET_STAGING_FEE_COLLECTOR_PRIVATE_KEY
-        value: ${DEVNET_STAGING_FEE_COLLECTOR_PRIVATE_KEY}
+        value: __SECRET_VIA_CONSOLE__
         type: SECRET
         scope: RUN_TIME
       
@@ -157,15 +149,16 @@ services:
       
       #
       # Database Configuration
-      # IMPORTANT: Actual connection strings with passwords stored in GitHub Secrets
+      # IMPORTANT: Add DATABASE_URL and DATABASE_POOL_URL via DO Console as SECRETS
+      # Format: postgresql://staging_user:PASSWORD@host:25060/easyescrow_staging?sslmode=require
       #
       - key: DATABASE_URL
-        value: ${DATABASE_URL}
+        value: __SECRET_VIA_CONSOLE__
         type: SECRET
         scope: RUN_TIME
       
       - key: DATABASE_POOL_URL
-        value: ${DATABASE_POOL_URL}
+        value: __SECRET_VIA_CONSOLE__
         type: SECRET
         scope: RUN_TIME
       
@@ -179,10 +172,10 @@ services:
       
       #
       # Redis Configuration
-      # IMPORTANT: Actual Redis URL with password stored in GitHub Secrets
+      # IMPORTANT: Add REDIS_URL via DO Console as SECRET
       #
       - key: REDIS_URL
-        value: ${REDIS_URL}
+        value: __SECRET_VIA_CONSOLE__
         type: SECRET
         scope: RUN_TIME
       
@@ -226,10 +219,10 @@ services:
       
       #
       # JWT Configuration
-      # IMPORTANT: Actual JWT secret stored in GitHub Secrets
+      # IMPORTANT: Add JWT_SECRET via DO Console as SECRET
       #
       - key: JWT_SECRET
-        value: ${JWT_SECRET}
+        value: __SECRET_VIA_CONSOLE__
         type: SECRET
         scope: RUN_TIME
       
@@ -257,10 +250,10 @@ services:
       
       #
       # Webhook Configuration
-      # IMPORTANT: Actual webhook secret stored in GitHub Secrets
+      # IMPORTANT: Add WEBHOOK_SECRET via DO Console as SECRET
       #
       - key: WEBHOOK_SECRET
-        value: ${WEBHOOK_SECRET}
+        value: __SECRET_VIA_CONSOLE__
         type: SECRET
         scope: RUN_TIME
       
@@ -316,7 +309,7 @@ services:
       
       #
       # Email Configuration (Test Service)
-      # IMPORTANT: SMTP credentials stored in GitHub Secrets
+      # IMPORTANT: Add SMTP credentials via DO Console as SECRETS
       #
       - key: SMTP_HOST
         value: smtp.mailtrap.io
@@ -327,12 +320,12 @@ services:
         scope: RUN_TIME
       
       - key: SMTP_USER
-        value: ${SMTP_USER}
+        value: __SECRET_VIA_CONSOLE__
         type: SECRET
         scope: RUN_TIME
       
       - key: SMTP_PASS
-        value: ${SMTP_PASS}
+        value: __SECRET_VIA_CONSOLE__
         type: SECRET
         scope: RUN_TIME
       
@@ -342,7 +335,7 @@ services:
       
       #
       # S3/Spaces Configuration
-      # IMPORTANT: Spaces credentials stored in GitHub Secrets
+      # IMPORTANT: Add DO_SPACES_KEY and DO_SPACES_SECRET via DO Console as SECRETS
       #
       - key: DO_SPACES_ENDPOINT
         value: https://nyc3.digitaloceanspaces.com
@@ -353,12 +346,12 @@ services:
         scope: RUN_TIME
       
       - key: DO_SPACES_KEY
-        value: ${DO_SPACES_KEY}
+        value: __SECRET_VIA_CONSOLE__
         type: SECRET
         scope: RUN_TIME
       
       - key: DO_SPACES_SECRET
-        value: ${DO_SPACES_SECRET}
+        value: __SECRET_VIA_CONSOLE__
         type: SECRET
         scope: RUN_TIME
       
@@ -368,10 +361,10 @@ services:
       
       #
       # DigitalOcean API
-      # IMPORTANT: DO API key stored in GitHub Secrets
+      # IMPORTANT: Add DIGITAL_OCEAN_API_KEY via DO Console as SECRET
       #
       - key: DIGITAL_OCEAN_API_KEY
-        value: ${DIGITAL_OCEAN_API_KEY}
+        value: __SECRET_VIA_CONSOLE__
         type: SECRET
         scope: RUN_TIME
       
