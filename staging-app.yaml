@@ -25,7 +25,7 @@ services:
     instance_size_slug: basic-xxs
     
     # Build command
-    build_command: npm ci && npm run db:generate && npm run build && cp -r src/generated dist/
+    build_command: npm ci && npm run db:generate && npm run build
     
     # Start command
     run_command: npm start
