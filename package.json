@@ -68,6 +68,8 @@
     "staging:verify": "powershell -ExecutionPolicy Bypass -File ./scripts/deployment/verify-staging-deployment.ps1",
     "staging:verify:verbose": "powershell -ExecutionPolicy Bypass -File ./scripts/deployment/verify-staging-deployment.ps1 -Verbose",
     "staging:verify:skip-tests": "powershell -ExecutionPolicy Bypass -File ./scripts/deployment/verify-staging-deployment.ps1 -SkipSmokeTests",
+    "staging:prepare-yaml": "powershell -ExecutionPolicy Bypass -File ./scripts/deployment/staging/prepare-app-yaml.ps1",
+    "staging:prepare-yaml:dry-run": "powershell -ExecutionPolicy Bypass -File ./scripts/deployment/staging/prepare-app-yaml.ps1 -DryRun",
     "prepare": "husky"
   },
   "keywords": [

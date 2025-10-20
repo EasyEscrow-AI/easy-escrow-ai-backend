@@ -64,6 +64,11 @@ logs/
 .secrets
 secrets.yml
 secrets.yaml
+
+# Deployment-ready app specs with secrets (generated from templates)
+*-app-deploy.yaml
+staging-app-deploy.yaml
+production-app-deploy.yaml
 config.secret.*
 *-secrets.json
 *-secrets.yml
