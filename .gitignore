@@ -103,7 +103,8 @@ Thumbs.db
 *~
 
 # GitHub PR documentation (temporary)
-.github/
+# .github/ - Commented out to allow tracking GitHub Actions workflows
+# .github/pr_templates/
 
 # TypeScript
 *.tsbuildinfo

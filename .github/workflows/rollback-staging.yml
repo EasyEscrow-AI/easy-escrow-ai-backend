@@ -93,6 +93,8 @@ jobs:
       
       - name: Notify rollback success
         if: success()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
         uses: 8398a7/action-slack@v3
         with:
           status: success
@@ -101,11 +103,12 @@ jobs:
             Git ref: ${{ github.event.inputs.git_ref }}
             Reason: ${{ github.event.inputs.reason }}
             Executed by: ${{ github.actor }}
-          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
         continue-on-error: true
       
       - name: Notify rollback failure
         if: failure()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
         uses: 8398a7/action-slack@v3
         with:
           status: failure
@@ -114,7 +117,6 @@ jobs:
             Git ref: ${{ github.event.inputs.git_ref }}
             Reason: ${{ github.event.inputs.reason }}
             Check: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
         continue-on-error: true
       
       - name: Upload audit log

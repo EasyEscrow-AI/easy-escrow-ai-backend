@@ -51,7 +51,7 @@ jobs:
           
           # Generate checksums (relative paths)
           cd target/deploy && shasum -a 256 escrow.so > escrow.so.sha256
-          cd ../../target/idl && shasum -a 256 escrow.json > escrow.json.sha256
+          cd ../idl && shasum -a 256 escrow.json > escrow.json.sha256
           
           # Build TypeScript backend
           npm run build
@@ -69,7 +69,7 @@ jobs:
           echo "Verifying program binary checksum..."
           cd target/deploy && shasum -c escrow.so.sha256
           echo "Verifying IDL checksum..."
-          cd target/deploy && shasum -c escrow.json.sha256
+          cd target/idl && shasum -c escrow.json.sha256
       
       - name: Deploy Solana program to STAGING
         env:
@@ -130,6 +130,8 @@ jobs:
       
       - name: Notify deployment success
         if: success()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
         uses: 8398a7/action-slack@v3
         with:
           status: success
@@ -137,11 +139,12 @@ jobs:
             ✅ STAGING deployment completed successfully!
             Commit: ${{ github.sha }}
             Branch: ${{ github.ref_name }}
-          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
         continue-on-error: true
       
       - name: Notify deployment failure
         if: failure()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
         uses: 8398a7/action-slack@v3
         with:
           status: failure
@@ -150,6 +153,5 @@ jobs:
             Commit: ${{ github.sha }}
             Branch: ${{ github.ref_name }}
             Check: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
         continue-on-error: true
 
