@@ -22,16 +22,12 @@ services:
       branch: staging
       deploy_on_push: true
     
+    # Use custom Dockerfile instead of buildpacks
+    dockerfile_path: Dockerfile
+    
     # Runtime
-    environment_slug: node-js
     instance_count: 1
     instance_size_slug: basic-xxs
-    
-    # Build command
-    build_command: npm ci && npm run db:generate && npm run build
-    
-    # Start command
-    run_command: npm start
     
     # Health check
     health_check:
