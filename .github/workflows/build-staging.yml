@@ -51,7 +51,7 @@ jobs:
         run: npm run test:unit
       
       - name: Upload program artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: program-artifacts
           path: |
@@ -61,7 +61,7 @@ jobs:
             target/idl/escrow.json.sha256
       
       - name: Upload backend build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: backend-artifacts
           path: |
