@@ -22,10 +22,34 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      - name: Pin Solana CLI
+      - name: Install Solana CLI (with retry)
         run: |
-          sh -c "$(curl -sSfL https://release.solana.com/v1.18.x/install)"
-          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+          # Retry logic for Solana CLI installation
+          MAX_RETRIES=3
+          RETRY_DELAY=5
+          
+          for i in $(seq 1 $MAX_RETRIES); do
+            echo "Attempt $i of $MAX_RETRIES to install Solana CLI..."
+            if sh -c "$(curl -sSfL https://release.solana.com/v1.18.x/install)"; then
+              echo "Solana CLI installed successfully!"
+              echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+              export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
+              break
+            else
+              if [ $i -lt $MAX_RETRIES ]; then
+                echo "Installation failed. Retrying in ${RETRY_DELAY}s..."
+                sleep $RETRY_DELAY
+              else
+                echo "Failed to install Solana CLI after $MAX_RETRIES attempts"
+                exit 1
+              fi
+            fi
+          done
+          
+          # Verify installation
+          export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
+          solana --version || { echo "Solana CLI verification failed"; exit 1; }
+          cargo build-sbf --version || { echo "cargo-build-sbf verification failed"; exit 1; }
       
       - name: Pin Rust toolchain
         run: rustup show  # Reads rust-toolchain.toml
@@ -35,6 +59,14 @@ jobs:
           cargo install --git https://github.com/coral-xyz/anchor avm --locked --force
           avm install latest
           avm use latest
+      
+      - name: Verify build tools
+        run: |
+          echo "Verifying build tools installation..."
+          solana --version
+          cargo --version
+          anchor --version
+          cargo build-sbf --version
       
       - name: Build program
         run: anchor build
