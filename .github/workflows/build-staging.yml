@@ -41,8 +41,8 @@ jobs:
       
       - name: Generate checksums
         run: |
-          shasum -a 256 target/deploy/escrow.so > target/deploy/escrow.so.sha256
-          shasum -a 256 target/idl/escrow.json > target/idl/escrow.json.sha256
+          cd target/deploy && shasum -a 256 escrow.so > escrow.so.sha256
+          cd ../../target/idl && shasum -a 256 escrow.json > escrow.json.sha256
       
       - name: Build TypeScript backend
         run: npm run build

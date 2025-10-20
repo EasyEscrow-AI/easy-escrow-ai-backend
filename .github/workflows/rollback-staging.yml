@@ -3,9 +3,13 @@ name: Rollback STAGING
 on:
   workflow_dispatch:
     inputs:
-      deployment_id:
-        description: 'DigitalOcean Deployment ID to rollback to'
+      git_ref:
+        description: 'Git commit SHA or tag to rollback to (e.g., previous release tag or commit)'
         required: true
+        type: string
+      deployment_id:
+        description: 'DigitalOcean Deployment ID for reference (optional)'
+        required: false
         type: string
       reason:
         description: 'Reason for rollback'
@@ -18,8 +22,10 @@ jobs:
     environment: staging  # Requires manual approval
     
     steps:
-      - name: Checkout code
+      - name: Checkout code at specific commit/tag
         uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.inputs.git_ref }}
       
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -38,20 +44,25 @@ jobs:
           DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
         run: doctl auth init --access-token $DIGITALOCEAN_ACCESS_TOKEN
       
-      - name: Verify deployment exists
-        env:
-          STAGING_APP_ID: ${{ secrets.STAGING_APP_ID }}
+      - name: Verify rollback target
         run: |
-          doctl apps get-deployment $STAGING_APP_ID ${{ github.event.inputs.deployment_id }}
+          echo "Rolling back to: ${{ github.event.inputs.git_ref }}"
+          echo "Current commit: $(git rev-parse HEAD)"
+          echo "Commit message: $(git log -1 --pretty=%B)"
+          if [ -n "${{ github.event.inputs.deployment_id }}" ]; then
+            echo "Reference deployment ID: ${{ github.event.inputs.deployment_id }}"
+          fi
       
-      - name: Rollback to previous deployment
+      - name: Build at rollback point
+        run: |
+          npm ci
+          npm run build
+      
+      - name: Rollback deployment via DigitalOcean App Platform
         env:
           STAGING_APP_ID: ${{ secrets.STAGING_APP_ID }}
         run: |
-          # Get the previous deployment spec
-          doctl apps get-deployment $STAGING_APP_ID ${{ github.event.inputs.deployment_id }} --format json > deployment-spec.json
-          
-          # Redeploy that specific deployment
+          echo "Triggering deployment from git ref: ${{ github.event.inputs.git_ref }}"
           doctl apps create-deployment $STAGING_APP_ID \
             --wait \
             --timeout 10m
@@ -71,7 +82,11 @@ jobs:
       - name: Create rollback audit log
         run: |
           echo "Rollback executed at $(date)" >> rollback-audit.log
-          echo "Deployment ID: ${{ github.event.inputs.deployment_id }}" >> rollback-audit.log
+          echo "Git ref: ${{ github.event.inputs.git_ref }}" >> rollback-audit.log
+          echo "Commit SHA: $(git rev-parse HEAD)" >> rollback-audit.log
+          if [ -n "${{ github.event.inputs.deployment_id }}" ]; then
+            echo "Reference Deployment ID: ${{ github.event.inputs.deployment_id }}" >> rollback-audit.log
+          fi
           echo "Reason: ${{ github.event.inputs.reason }}" >> rollback-audit.log
           echo "Executed by: ${{ github.actor }}" >> rollback-audit.log
           cat rollback-audit.log
@@ -83,7 +98,7 @@ jobs:
           status: success
           text: |
             🔄 STAGING rollback completed successfully!
-            Deployment ID: ${{ github.event.inputs.deployment_id }}
+            Git ref: ${{ github.event.inputs.git_ref }}
             Reason: ${{ github.event.inputs.reason }}
             Executed by: ${{ github.actor }}
           webhook_url: ${{ secrets.SLACK_WEBHOOK }}
@@ -96,7 +111,7 @@ jobs:
           status: failure
           text: |
             ❌ STAGING rollback failed!
-            Deployment ID: ${{ github.event.inputs.deployment_id }}
+            Git ref: ${{ github.event.inputs.git_ref }}
             Reason: ${{ github.event.inputs.reason }}
             Check: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           webhook_url: ${{ secrets.SLACK_WEBHOOK }}

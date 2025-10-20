@@ -25,7 +25,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      - name: Download program artifacts
+      - name: Download program artifacts (from build workflow)
+        if: github.event_name == 'workflow_run'
         uses: actions/download-artifact@v3
         with:
           name: program-artifacts
@@ -42,6 +43,19 @@ jobs:
           avm install latest
           avm use latest
       
+      - name: Build program (manual deployment only)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          echo "Building program for manual deployment..."
+          anchor build
+          
+          # Generate checksums (relative paths)
+          cd target/deploy && shasum -a 256 escrow.so > escrow.so.sha256
+          cd ../../target/idl && shasum -a 256 escrow.json > escrow.json.sha256
+          
+          # Build TypeScript backend
+          npm run build
+      
       - name: Configure staging deployer
         env:
           STAGING_DEPLOYER_KEY: ${{ secrets.STAGING_DEPLOYER_KEYPAIR }}
@@ -49,11 +63,13 @@ jobs:
           echo "$STAGING_DEPLOYER_KEY" > /tmp/staging-deployer.json
           chmod 600 /tmp/staging-deployer.json
       
-      - name: Verify program checksum
+      - name: Verify program checksum (from artifacts)
+        if: github.event_name == 'workflow_run'
         run: |
-          cd target/deploy
-          shasum -c escrow.so.sha256
-          shasum -c escrow.json.sha256
+          echo "Verifying program binary checksum..."
+          cd target/deploy && shasum -c escrow.so.sha256
+          echo "Verifying IDL checksum..."
+          cd target/deploy && shasum -c escrow.json.sha256
       
       - name: Deploy Solana program to STAGING
         env:
