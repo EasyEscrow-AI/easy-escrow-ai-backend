@@ -74,7 +74,7 @@ services:
       # Solana RPC Configuration
       #
       - key: SOLANA_RPC_URL
-        value: https://devnet.helius-rpc.com/?api-key=YOUR_HELIUS_API_KEY
+        value: https://api.devnet.solana.com
         type: SECRET
         scope: RUN_TIME
       
@@ -112,22 +112,22 @@ services:
       # NOTE: Uses DEVNET_STAGING_* prefix to avoid DEV conflicts
       #
       - key: DEVNET_STAGING_SENDER_PRIVATE_KEY
-        value: YOUR_STAGING_SENDER_PRIVATE_KEY
+        value: 21YtDf3GptHmEL414KRMjJs9yV6R7A61tjvWc6ZXi8yodGekfQA56sfqgxBKWVGfJRfMBomaxqpDH2sp7HYiqiGp
         type: SECRET
         scope: RUN_TIME
       
       - key: DEVNET_STAGING_RECEIVER_PRIVATE_KEY
-        value: YOUR_STAGING_RECEIVER_PRIVATE_KEY
+        value: 2b6UD1VrvUYZb6eoidA8Xi5sPyezFqPKDNikXpaH2KsSHFVUACXxNGDSVph9zsqPgoQrUB6oxg4noDHVmCBK32hz
         type: SECRET
         scope: RUN_TIME
       
       - key: DEVNET_STAGING_ADMIN_PRIVATE_KEY
-        value: YOUR_STAGING_ADMIN_PRIVATE_KEY
+        value: 4JMoiWVkrnUxXqdhqCEoPcYu5RjmFSGBPX9Wb2ngRHnoQjCE75SjfuwRoNe87GUK2gYkiWk15xGYH9uXqDRf6Cw8
         type: SECRET
         scope: RUN_TIME
       
       - key: DEVNET_STAGING_FEE_COLLECTOR_PRIVATE_KEY
-        value: YOUR_STAGING_FEE_COLLECTOR_PRIVATE_KEY
+        value: 3m2viLKKSgGVkM5cWr92dbiRh57o6BqTZfjgmURujANLrdE4h9LkVMumwqLCNJpSFSDnhV5CKSz9HKRA1jPQ9YwD
         type: SECRET
         scope: RUN_TIME
       
@@ -147,12 +147,12 @@ services:
       # Database Configuration
       #
       - key: DATABASE_URL
-        value: postgresql://staging_user:PASSWORD@host.db.ondigitalocean.com:25060/easyescrow_staging?sslmode=require
+        value: postgresql://doadmin:AVNS_DG9maU3rRLpkAsMIZBw@easyescrow-staging-postgres-do-user-11230012-0.d.db.ondigitalocean.com:25060/easyescrow_staging?sslmode=require
         type: SECRET
         scope: RUN_TIME
       
       - key: DATABASE_POOL_URL
-        value: postgresql://staging_user:PASSWORD@host-pooler.db.ondigitalocean.com:25061/easyescrow_staging?sslmode=require
+        value: postgresql://doadmin:AVNS_DG9maU3rRLpkAsMIZBw@easyescrow-staging-postgres-do-user-11230012-0.d.db.ondigitalocean.com:25060/easyescrow_staging?sslmode=require
         type: SECRET
         scope: RUN_TIME
       
@@ -214,7 +214,7 @@ services:
       # JWT Configuration
       #
       - key: JWT_SECRET
-        value: YOUR_JWT_SECRET
+        value: WCo2XbH3djVy048rcsNTULiBxqK5tYwvSgDJ7nuGIAQMmake
         type: SECRET
         scope: RUN_TIME
       
