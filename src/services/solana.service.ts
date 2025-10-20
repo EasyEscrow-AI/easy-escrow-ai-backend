@@ -23,9 +23,13 @@ import { config } from '../config';
  */
 interface SolanaConnectionConfig {
   rpcUrl: string;
+  rpcUrlFallback?: string;
   wsUrl?: string;
   commitment?: Commitment;
   confirmTransactionInitialTimeout?: number;
+  timeout?: number;
+  maxRetries?: number;
+  healthCheckInterval?: number;
 }
 
 /**
@@ -46,19 +50,45 @@ interface AccountSubscription {
 }
 
 /**
+ * RPC endpoint status tracking
+ */
+interface RpcEndpointStatus {
+  url: string;
+  isHealthy: boolean;
+  lastCheck: Date | null;
+  lastResponseTime: number | null;
+  failureCount: number;
+  totalRequests: number;
+  successfulRequests: number;
+}
+
+/**
  * Solana Service Class
  * 
  * Manages Solana RPC connections with connection pooling and failover support.
  * Provides WebSocket-based account monitoring for real-time updates.
+ * Features:
+ * - Automatic failover to backup RPC endpoints
+ * - Retry logic with exponential backoff
+ * - Response time tracking and monitoring
+ * - Health checks and status reporting
  */
 export class SolanaService {
   private connection: Connection;
+  private fallbackConnection?: Connection;
   private wsConnection?: Connection;
   private subscriptions: Map<string, AccountSubscription> = new Map();
   private isHealthy: boolean = false;
+  private usingFallback: boolean = false;
   private lastHealthCheck: Date | null = null;
-  private readonly healthCheckInterval: number = 30000; // 30 seconds
+  private readonly healthCheckInterval: number;
+  private readonly maxRetries: number;
+  private readonly timeout: number;
   private healthCheckTimer?: NodeJS.Timeout;
+  
+  // RPC endpoint tracking
+  private primaryRpcStatus: RpcEndpointStatus;
+  private fallbackRpcStatus?: RpcEndpointStatus;
 
   constructor(connectionConfig?: SolanaConnectionConfig) {
     // Validate config.solana exists
@@ -67,11 +97,17 @@ export class SolanaService {
     }
 
     const rpcUrl = connectionConfig?.rpcUrl || config.solana?.rpcUrl;
+    const rpcUrlFallback = connectionConfig?.rpcUrlFallback || config.solana?.rpcUrlFallback;
     
     // Validate RPC URL is provided
     if (!rpcUrl) {
       throw new Error('[SolanaService] Configuration error: Solana RPC URL is not configured');
     }
+
+    // Set configuration parameters
+    this.timeout = connectionConfig?.timeout || config.solana?.rpcTimeout || 30000;
+    this.maxRetries = connectionConfig?.maxRetries || config.solana?.rpcRetries || 3;
+    this.healthCheckInterval = connectionConfig?.healthCheckInterval || config.solana?.rpcHealthCheckInterval || 30000;
 
     const commitment = connectionConfig?.commitment || 'confirmed';
     
@@ -81,16 +117,49 @@ export class SolanaService {
       confirmTransactionInitialTimeout: connectionConfig?.confirmTransactionInitialTimeout || 60000,
     };
     
-    console.log(`[SolanaService] Creating connection with URL: ${rpcUrl}`);
+    // Initialize primary connection
+    console.log(`[SolanaService] Creating primary connection with URL: ${rpcUrl}`);
     this.connection = new Connection(rpcUrl, httpConnectionConfig);
+    
+    // Initialize primary RPC status tracking
+    this.primaryRpcStatus = {
+      url: rpcUrl,
+      isHealthy: false,
+      lastCheck: null,
+      lastResponseTime: null,
+      failureCount: 0,
+      totalRequests: 0,
+      successfulRequests: 0,
+    };
+    
+    // Initialize fallback connection if configured
+    if (rpcUrlFallback) {
+      console.log(`[SolanaService] Creating fallback connection with URL: ${rpcUrlFallback}`);
+      this.fallbackConnection = new Connection(rpcUrlFallback, httpConnectionConfig);
+      
+      this.fallbackRpcStatus = {
+        url: rpcUrlFallback,
+        isHealthy: false,
+        lastCheck: null,
+        lastResponseTime: null,
+        failureCount: 0,
+        totalRequests: 0,
+        successfulRequests: 0,
+      };
+    }
     
     // Note: Solana's Connection class handles WebSocket subscriptions internally.
     // The same HTTP/HTTPS connection is used for both RPC calls and WebSocket subscriptions.
     // We don't need a separate WebSocket connection.
     this.wsConnection = this.connection;
     
-    console.log(`[SolanaService] Initialized with RPC: ${rpcUrl}`);
+    console.log(`[SolanaService] Initialized with primary RPC: ${rpcUrl}`);
+    if (rpcUrlFallback) {
+      console.log(`[SolanaService] Fallback RPC configured: ${rpcUrlFallback}`);
+    }
     console.log(`[SolanaService] Commitment: ${commitment}`);
+    console.log(`[SolanaService] Timeout: ${this.timeout}ms`);
+    console.log(`[SolanaService] Max retries: ${this.maxRetries}`);
   }
 
   /**
@@ -112,10 +181,36 @@ export class SolanaService {
   }
 
   /**
-   * Get the main RPC connection
+   * Get the main RPC connection (with automatic fallback if primary is unhealthy)
    */
   public getConnection(): Connection {
+    // If primary is unhealthy and fallback is available and healthy, use fallback
+    if (!this.primaryRpcStatus.isHealthy && this.fallbackConnection && this.fallbackRpcStatus?.isHealthy) {
+      if (!this.usingFallback) {
+        console.warn('[SolanaService] Primary RPC unhealthy, switching to fallback');
+        this.usingFallback = true;
+      }
+      return this.fallbackConnection;
+    }
+    
+    // If using fallback but primary is now healthy, switch back
+    if (this.usingFallback && this.primaryRpcStatus.isHealthy) {
+      console.log('[SolanaService] Primary RPC recovered, switching back from fallback');
+      this.usingFallback = false;
+    }
+    
     return this.connection;
+  }
+  
+  /**
+   * Get current RPC endpoint status
+   */
+  public getRpcStatus(): { primary: RpcEndpointStatus; fallback?: RpcEndpointStatus; usingFallback: boolean } {
+    return {
+      primary: { ...this.primaryRpcStatus },
+      fallback: this.fallbackRpcStatus ? { ...this.fallbackRpcStatus } : undefined,
+      usingFallback: this.usingFallback,
+    };
   }
 
   /**
@@ -160,25 +255,119 @@ export class SolanaService {
   }
 
   /**
-   * Check connection health
+   * Execute RPC call with retry logic and exponential backoff
    */
-  public async checkHealth(): Promise<boolean> {
+  private async executeWithRetry<T>(
+    operation: () => Promise<T>,
+    operationName: string = 'RPC call',
+    retryCount: number = 0
+  ): Promise<T> {
     try {
       const startTime = Date.now();
-      const version = await this.connection.getVersion();
-      const latency = Date.now() - startTime;
+      const result = await operation();
+      const responseTime = Date.now() - startTime;
       
-      this.isHealthy = true;
-      this.lastHealthCheck = new Date();
+      // Update success metrics
+      const status = this.usingFallback ? this.fallbackRpcStatus : this.primaryRpcStatus;
+      if (status) {
+        status.totalRequests++;
+        status.successfulRequests++;
+        status.lastResponseTime = responseTime;
+        status.failureCount = 0; // Reset failure count on success
+      }
       
-      console.log(`[SolanaService] Health check passed - Solana version: ${version['solana-core']}, Latency: ${latency}ms`);
+      return result;
+    } catch (error) {
+      const status = this.usingFallback ? this.fallbackRpcStatus : this.primaryRpcStatus;
+      if (status) {
+        status.totalRequests++;
+        status.failureCount++;
+      }
+      
+      // If we have retries left, retry with exponential backoff
+      if (retryCount < this.maxRetries) {
+        const delayMs = Math.min(1000 * Math.pow(2, retryCount), 10000); // Max 10s delay
+        console.warn(`[SolanaService] ${operationName} failed (attempt ${retryCount + 1}/${this.maxRetries}), retrying in ${delayMs}ms...`);
+        
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+        return this.executeWithRetry(operation, operationName, retryCount + 1);
+      }
+      
+      // If all retries exhausted and fallback is available, try switching
+      if (!this.usingFallback && this.fallbackConnection && this.fallbackRpcStatus) {
+        console.warn(`[SolanaService] ${operationName} failed on primary after ${this.maxRetries} retries, attempting fallback...`);
+        this.usingFallback = true;
+        this.primaryRpcStatus.isHealthy = false;
+        
+        try {
+          return await this.executeWithRetry(operation, `${operationName} (fallback)`, 0);
+        } catch (fallbackError) {
+          console.error(`[SolanaService] ${operationName} also failed on fallback:`, fallbackError);
+          throw fallbackError;
+        }
+      }
+      
+      throw error;
+    }
+  }
+  
+  /**
+   * Check health of a specific connection
+   */
+  private async checkConnectionHealth(
+    connection: Connection,
+    status: RpcEndpointStatus
+  ): Promise<boolean> {
+    try {
+      const startTime = Date.now();
+      const version = await Promise.race([
+        connection.getVersion(),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Health check timeout')), this.timeout)
+        )
+      ]) as any;
+      
+      const responseTime = Date.now() - startTime;
+      
+      status.isHealthy = true;
+      status.lastCheck = new Date();
+      status.lastResponseTime = responseTime;
+      status.failureCount = 0;
+      
+      console.log(`[SolanaService] Health check passed for ${status.url} - Solana version: ${version['solana-core']}, Latency: ${responseTime}ms`);
       return true;
     } catch (error) {
-      this.isHealthy = false;
-      this.lastHealthCheck = new Date();
-      console.error('[SolanaService] Health check failed:', error);
+      status.isHealthy = false;
+      status.lastCheck = new Date();
+      status.failureCount++;
+      
+      console.error(`[SolanaService] Health check failed for ${status.url}:`, error);
       return false;
     }
+  }
+
+  /**
+   * Check connection health for all endpoints
+   */
+  public async checkHealth(): Promise<boolean> {
+    // Check primary connection
+    const primaryHealthy = await this.checkConnectionHealth(this.connection, this.primaryRpcStatus);
+    
+    // Check fallback connection if configured
+    let fallbackHealthy = false;
+    if (this.fallbackConnection && this.fallbackRpcStatus) {
+      fallbackHealthy = await this.checkConnectionHealth(this.fallbackConnection, this.fallbackRpcStatus);
+    }
+    
+    // Overall health is true if either endpoint is healthy
+    this.isHealthy = primaryHealthy || fallbackHealthy;
+    this.lastHealthCheck = new Date();
+    
+    if (!this.isHealthy) {
+      console.error('[SolanaService] All RPC endpoints are unhealthy');
+    }
+    
+    return this.isHealthy;
   }
 
   /**
@@ -294,15 +483,18 @@ export class SolanaService {
   }
 
   /**
-   * Get account info
+   * Get account info (with retry logic)
    */
   public async getAccountInfo(publicKey: PublicKey | string): Promise<AccountInfo<Buffer> | null> {
     const pubKey = typeof publicKey === 'string' ? new PublicKey(publicKey) : publicKey;
-    return await this.connection.getAccountInfo(pubKey);
+    return await this.executeWithRetry(
+      () => this.getConnection().getAccountInfo(pubKey),
+      `getAccountInfo(${pubKey.toString()})`
+    );
   }
 
   /**
-   * Get multiple accounts info
+   * Get multiple accounts info (with retry logic)
    */
   public async getMultipleAccountsInfo(
     publicKeys: (PublicKey | string)[]
@@ -310,7 +502,10 @@ export class SolanaService {
     const pubKeys = publicKeys.map(pk =>
       typeof pk === 'string' ? new PublicKey(pk) : pk
     );
-    return await this.connection.getMultipleAccountsInfo(pubKeys);
+    return await this.executeWithRetry(
+      () => this.getConnection().getMultipleAccountsInfo(pubKeys),
+      `getMultipleAccountsInfo(${pubKeys.length} accounts)`
+    );
   }
 
   /**
