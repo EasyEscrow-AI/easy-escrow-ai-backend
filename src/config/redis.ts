@@ -13,16 +13,16 @@ const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
 
 // Redis connection options with resilient error handling
 const redisOptions: RedisOptions = {
-  maxRetriesPerRequest: 3,
+  maxRetriesPerRequest: 5,
   enableReadyCheck: true,
   enableOfflineQueue: true,
-  connectTimeout: 10000,
+  connectTimeout: 30000, // Increased to 30 seconds for cloud connections
   retryStrategy(times: number) {
     // Exponential backoff with max 30 seconds between retries
     const delay = Math.min(times * 1000, 30000);
-    if (times > 10) {
+    if (times > 15) {
       console.error(`Redis connection failed after ${times} attempts. Stopping retries temporarily.`);
-      return null; // Stop retrying after 10 attempts
+      return null; // Stop retrying after 15 attempts
     }
     console.log(`Redis connection retry attempt ${times}, waiting ${delay}ms`);
     return delay;
@@ -41,10 +41,14 @@ const redisOptions: RedisOptions = {
   },
   // Keepalive to prevent connection drops
   keepAlive: 30000,
-  // Prevent command timeout errors from flooding logs  
-  commandTimeout: 5000,
+  // Increased timeout for cloud connections
+  commandTimeout: 30000,
   // Lazy connect to prevent startup failures
   lazyConnect: false,
+  // TLS configuration for Redis Cloud
+  tls: REDIS_URL.includes('redis-cloud.com') || REDIS_URL.includes('redns.redis-cloud.com') ? {
+    rejectUnauthorized: false, // Accept self-signed certificates for Redis Cloud
+  } : undefined,
 };
 
 // Redis options for Bull queues (without problematic options)
@@ -54,10 +58,10 @@ const bullRedisOptions: RedisOptions = {
   // Removed: maxRetriesPerRequest
   // Removed: enableReadyCheck
   enableOfflineQueue: true,
-  connectTimeout: 10000,
+  connectTimeout: 30000,
   retryStrategy(times: number) {
     const delay = Math.min(times * 1000, 30000);
-    if (times > 10) {
+    if (times > 15) {
       console.error(`Redis connection failed after ${times} attempts. Stopping retries temporarily.`);
       return null;
     }
@@ -78,6 +82,10 @@ const bullRedisOptions: RedisOptions = {
   keepAlive: 30000,
   commandTimeout: 30000, // 30 second timeout for queue operations
   lazyConnect: false,
+  // TLS configuration for Redis Cloud
+  tls: REDIS_URL.includes('redis-cloud.com') || REDIS_URL.includes('redns.redis-cloud.com') ? {
+    rejectUnauthorized: false, // Accept self-signed certificates for Redis Cloud
+  } : undefined,
 };
 
 // Parse Redis URL or use individual config options
