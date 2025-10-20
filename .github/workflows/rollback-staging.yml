@@ -1,0 +1,111 @@
+name: Rollback STAGING
+
+on:
+  workflow_dispatch:
+    inputs:
+      deployment_id:
+        description: 'DigitalOcean Deployment ID to rollback to'
+        required: true
+        type: string
+      reason:
+        description: 'Reason for rollback'
+        required: true
+        type: string
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    environment: staging  # Requires manual approval
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Install doctl
+        run: |
+          cd ~
+          wget https://github.com/digitalocean/doctl/releases/download/v1.104.0/doctl-1.104.0-linux-amd64.tar.gz
+          tar xf doctl-1.104.0-linux-amd64.tar.gz
+          sudo mv doctl /usr/local/bin
+      
+      - name: Authenticate with DigitalOcean
+        env:
+          DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+        run: doctl auth init --access-token $DIGITALOCEAN_ACCESS_TOKEN
+      
+      - name: Verify deployment exists
+        env:
+          STAGING_APP_ID: ${{ secrets.STAGING_APP_ID }}
+        run: |
+          doctl apps get-deployment $STAGING_APP_ID ${{ github.event.inputs.deployment_id }}
+      
+      - name: Rollback to previous deployment
+        env:
+          STAGING_APP_ID: ${{ secrets.STAGING_APP_ID }}
+        run: |
+          # Get the previous deployment spec
+          doctl apps get-deployment $STAGING_APP_ID ${{ github.event.inputs.deployment_id }} --format json > deployment-spec.json
+          
+          # Redeploy that specific deployment
+          doctl apps create-deployment $STAGING_APP_ID \
+            --wait \
+            --timeout 10m
+      
+      - name: Wait for rollback to stabilize
+        run: sleep 30
+      
+      - name: Run smoke tests after rollback
+        env:
+          STAGING_API_URL: ${{ secrets.STAGING_API_URL }}
+          STAGING_RPC_URL: ${{ secrets.STAGING_RPC_URL }}
+          STAGING_PROGRAM_ID: ${{ secrets.STAGING_PROGRAM_ID }}
+        run: |
+          npm ci
+          npm run test:staging:smoke:ci
+      
+      - name: Create rollback audit log
+        run: |
+          echo "Rollback executed at $(date)" >> rollback-audit.log
+          echo "Deployment ID: ${{ github.event.inputs.deployment_id }}" >> rollback-audit.log
+          echo "Reason: ${{ github.event.inputs.reason }}" >> rollback-audit.log
+          echo "Executed by: ${{ github.actor }}" >> rollback-audit.log
+          cat rollback-audit.log
+      
+      - name: Notify rollback success
+        if: success()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: success
+          text: |
+            🔄 STAGING rollback completed successfully!
+            Deployment ID: ${{ github.event.inputs.deployment_id }}
+            Reason: ${{ github.event.inputs.reason }}
+            Executed by: ${{ github.actor }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        continue-on-error: true
+      
+      - name: Notify rollback failure
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          text: |
+            ❌ STAGING rollback failed!
+            Deployment ID: ${{ github.event.inputs.deployment_id }}
+            Reason: ${{ github.event.inputs.reason }}
+            Check: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        continue-on-error: true
+      
+      - name: Upload audit log
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: rollback-audit-log
+          path: rollback-audit.log
+

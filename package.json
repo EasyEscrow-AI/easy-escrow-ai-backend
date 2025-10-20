@@ -63,6 +63,8 @@
     "staging:migrate": "powershell -ExecutionPolicy Bypass -File ./scripts/deployment/staging/post-deploy-migrate.ps1",
     "staging:fund-wallets": "powershell -ExecutionPolicy Bypass -File ./scripts/deployment/staging/fund-staging-wallets.ps1",
     "test:staging:smoke": "mocha --require ts-node/register tests/staging/staging-smoke.test.ts --timeout 60000 --reporter spec --colors",
+    "test:staging:smoke:ci": "ts-node scripts/testing/smoke-tests.ts",
+    "staging:migrate:ci": "ts-node scripts/deployment/migrate-staging.ts",
     "prepare": "husky"
   },
   "keywords": [
