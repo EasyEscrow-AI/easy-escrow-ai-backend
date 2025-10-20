@@ -95,21 +95,22 @@ if ([string]::IsNullOrWhiteSpace($dbHost)) {
 }
 
 # Redis Password
-$redisPassword = Read-Host "Redis Password [C2FFCNjuy43x5U0GwWCdMIFjNoLpbEQJ]"
+Write-Host "Get from: https://app.redislabs.com/ (Redis Cloud dashboard)" -ForegroundColor Gray
+$redisPassword = Read-Host "Redis Password [YOUR_REDIS_PASSWORD]"
 if ([string]::IsNullOrWhiteSpace($redisPassword)) {
-    $redisPassword = "C2FFCNjuy43x5U0GwWCdMIFjNoLpbEQJ"
+    $redisPassword = "YOUR_REDIS_PASSWORD"
 }
 
 # Redis Host
-$redisHost = Read-Host "Redis Host [redis-19320.c1.ap-southeast-1-1.ec2.redns.redis-cloud.com]"
+$redisHost = Read-Host "Redis Host [redis-xxxxx.cloud.redislabs.com]"
 if ([string]::IsNullOrWhiteSpace($redisHost)) {
-    $redisHost = "redis-19320.c1.ap-southeast-1-1.ec2.redns.redis-cloud.com"
+    $redisHost = "redis-xxxxx.cloud.redislabs.com"
 }
 
 # Redis Port
-$redisPort = Read-Host "Redis Port [19320]"
+$redisPort = Read-Host "Redis Port [6379]"
 if ([string]::IsNullOrWhiteSpace($redisPort)) {
-    $redisPort = "19320"
+    $redisPort = "6379"
 }
 
 # JWT Secret
