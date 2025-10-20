@@ -39,6 +39,8 @@ CREATE DATABASE easyescrow_staging
 
 -- Replace 'YOUR_SECURE_PASSWORD_HERE' with a strong, randomly generated password
 -- Recommended: Use a password manager to generate a 32+ character password
+-- IMPORTANT: If your password contains single quotes ('), escape them by doubling ('')
+-- Example: If password is "P@ss'word", use 'P@ss''word' in the query below
 CREATE USER staging_user WITH PASSWORD 'YOUR_SECURE_PASSWORD_HERE';
 
 \echo '✅ Staging user created'

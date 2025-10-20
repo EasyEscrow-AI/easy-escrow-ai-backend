@@ -14,7 +14,7 @@
 # ============================================================================
 
 param(
-    [string]$Host = "",
+    [string]$DbHost = "",
     [string]$Port = "25060",
     [string]$AdminUser = "doadmin",
     [string]$AdminPassword = "",
@@ -32,7 +32,7 @@ Usage:
   .\setup-staging-database.ps1 [options]
 
 Options:
-  -Host <string>              PostgreSQL cluster host
+  -DbHost <string>            PostgreSQL cluster host
   -Port <string>              PostgreSQL cluster port (default: 25060)
   -AdminUser <string>         Admin username (default: doadmin)
   -AdminPassword <string>     Admin password (prompted if not provided)
@@ -45,7 +45,7 @@ Examples:
   .\setup-staging-database.ps1
 
   # Automated setup with all parameters
-  .\setup-staging-database.ps1 -Host "cluster.db.ondigitalocean.com" -AdminPassword "admin_pass" -StagingPassword "staging_pass" -SkipConfirmation
+  .\setup-staging-database.ps1 -DbHost "cluster.db.ondigitalocean.com" -AdminPassword "admin_pass" -StagingPassword "staging_pass" -SkipConfirmation
 
 "@
     exit 0
@@ -92,10 +92,10 @@ Write-Host "✅ psql client found" -ForegroundColor Green
 Write-Host ""
 
 # Get host if not provided
-if (-not $Host) {
+if (-not $DbHost) {
     Write-Host "📝 Enter your DigitalOcean PostgreSQL cluster details:" -ForegroundColor Cyan
     Write-Host ""
-    $Host = Read-Host "  Cluster host (e.g., your-cluster.db.ondigitalocean.com)"
+    $DbHost = Read-Host "  Cluster host (e.g., your-cluster.db.ondigitalocean.com)"
 }
 
 # Get admin password if not provided
@@ -127,7 +127,7 @@ if (-not $SkipConfirmation) {
     Write-Host "  2. Create user: staging_user" -ForegroundColor Yellow
     Write-Host "  3. Grant appropriate permissions" -ForegroundColor Yellow
     Write-Host ""
-    Write-Host "Target cluster: $Host" -ForegroundColor Yellow
+    Write-Host "Target cluster: $DbHost" -ForegroundColor Yellow
     Write-Host ""
     $confirm = Read-Host "Do you want to continue? (yes/no)"
     if ($confirm -ne "yes") {
@@ -140,6 +140,9 @@ if (-not $SkipConfirmation) {
 Write-Host ""
 Write-Host "📄 Preparing SQL script..." -ForegroundColor Cyan
 
+# Escape single quotes in password for SQL safety (prevent SQL injection)
+$escapedPassword = $StagingPassword -replace "'", "''"
+
 $sqlScript = @"
 -- Create Staging Database
 CREATE DATABASE easyescrow_staging
@@ -150,7 +153,8 @@ CREATE DATABASE easyescrow_staging
   TEMPLATE = template0;
 
 -- Create Staging User
-CREATE USER staging_user WITH PASSWORD '$StagingPassword';
+-- Password is properly escaped to prevent SQL injection
+CREATE USER staging_user WITH PASSWORD '$escapedPassword';
 
 -- Grant Connection Privileges
 GRANT CONNECT ON DATABASE easyescrow_staging TO staging_user;
@@ -188,7 +192,7 @@ $sqlScript | Out-File -FilePath $tempSqlFile -Encoding UTF8
 Write-Host "✅ SQL script prepared" -ForegroundColor Green
 
 # Build connection string
-$connectionString = "postgresql://${AdminUser}:${AdminPassword}@${Host}:${Port}/defaultdb?sslmode=require"
+$connectionString = "postgresql://${AdminUser}:${AdminPassword}@${DbHost}:${Port}/defaultdb?sslmode=require"
 
 # Execute SQL script
 Write-Host ""
@@ -215,11 +219,11 @@ try {
         Write-Host "Connection Strings:" -ForegroundColor Cyan
         Write-Host ""
         Write-Host "Direct (for migrations):" -ForegroundColor White
-        Write-Host "  DATABASE_URL=`"postgresql://staging_user:${StagingPassword}@${Host}:${Port}/easyescrow_staging?sslmode=require`"" -ForegroundColor Gray
+        Write-Host "  DATABASE_URL=`"postgresql://staging_user:${StagingPassword}@${DbHost}:${Port}/easyescrow_staging?sslmode=require`"" -ForegroundColor Gray
         Write-Host ""
         
         # Try to get pooler host (replace main host pattern)
-        $poolerHost = $Host -replace '\.db\.', '-pooler.db.'
+        $poolerHost = $DbHost -replace '\.db\.', '-pooler.db.'
         Write-Host "Pooled (for application):" -ForegroundColor White
         Write-Host "  DATABASE_POOL_URL=`"postgresql://staging_user:${StagingPassword}@${poolerHost}:25061/easyescrow_staging?sslmode=require`"" -ForegroundColor Gray
         Write-Host ""

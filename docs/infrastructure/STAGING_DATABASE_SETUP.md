@@ -64,6 +64,8 @@ Create a dedicated user with least-privilege permissions:
 
 ```sql
 -- Create staging user with a strong password
+-- IMPORTANT: If your password contains single quotes ('), escape them by doubling ('')
+-- Example: If password is "P@ss'word", use 'P@ss''word'
 CREATE USER staging_user WITH PASSWORD 'YOUR_SECURE_PASSWORD_HERE';
 
 -- Grant connection privilege to the staging database
