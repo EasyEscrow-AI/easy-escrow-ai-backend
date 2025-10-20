@@ -1,0 +1,249 @@
+# Task ID: 73
+# Title: Create STAGING Deployment Automation Scripts
+# Status: pending
+# Dependencies: 70, 69, 68, 67
+# Priority: medium
+# Description: Develop comprehensive CI/CD pipeline for STAGING environment deployments including build automation, artifact promotion, health checks, rollback capabilities, smoke tests, and secret management with notifications and audit logging.
+# Details:
+Create a complete CI/CD pipeline for the STAGING environment using GitHub Actions:
+
+**Stage 1: Build (On merge to staging branch or tag)**
+```yaml
+# .github/workflows/build-staging.yml
+name: Build for STAGING
+
+on:
+  push:
+    branches: [staging]
+    tags: ['staging-*']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Pin Solana CLI
+        run: |
+          sh -c "$(curl -sSfL https://release.solana.com/v1.18.x/install)"
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+      
+      - name: Pin Rust toolchain
+        run: rustup show  # Reads rust-toolchain.toml
+      
+      - name: Build program
+        run: anchor build
+      
+      - name: Generate checksums
+        run: |
+          shasum -a 256 target/deploy/escrow.so > target/deploy/escrow.so.sha256
+          shasum -a 256 target/idl/escrow.json > target/idl/escrow.json.sha256
+      
+      - name: Run unit tests
+        run: anchor test --skip-local-validator
+      
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: program-artifacts
+          path: |
+            target/deploy/escrow.so
+            target/deploy/escrow.so.sha256
+            target/idl/escrow.json
+            target/idl/escrow.json.sha256
+```
+
+**Stage 2: Deploy to STAGING (Artifact promotion)**
+```yaml
+# .github/workflows/deploy-staging.yml
+name: Deploy to STAGING
+
+on:
+  workflow_run:
+    workflows: ["Build for STAGING"]
+    types: [completed]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    environment: staging  # Requires manual approval in GitHub
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: program-artifacts
+          path: target/deploy
+      
+      - name: Setup Solana CLI
+        run: |
+          sh -c "$(curl -sSfL https://release.solana.com/v1.18.x/install)"
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+      
+      - name: Configure staging deployer
+        env:
+          STAGING_DEPLOYER_KEY: ${{ secrets.STAGING_DEPLOYER_KEYPAIR }}
+        run: |
+          echo "$STAGING_DEPLOYER_KEY" > /tmp/staging-deployer.json
+          chmod 600 /tmp/staging-deployer.json
+      
+      - name: Deploy to STAGING
+        env:
+          STAGING_RPC_URL: ${{ secrets.STAGING_RPC_URL }}
+          STAGING_PROGRAM_ID: ${{ secrets.STAGING_PROGRAM_ID }}
+        run: |
+          anchor deploy \
+            -C Anchor.staging.toml \
+            --provider.cluster devnet \
+            --provider.wallet /tmp/staging-deployer.json
+      
+      - name: Update IDL
+        run: |
+          anchor idl upgrade $STAGING_PROGRAM_ID \
+            target/idl/escrow.json \
+            -C Anchor.staging.toml \
+            --provider.cluster devnet
+      
+      - name: Deploy backend to DO App Platform
+        env:
+          DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DIGITAL_OCEAN_API_KEY }}
+        run: |
+          doctl apps create-deployment $STAGING_APP_ID \
+            --wait \
+            --timeout 10m
+      
+      - name: Run smoke tests
+        run: npm run test:staging:smoke
+      
+      - name: Notify deployment
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: 'STAGING deployment completed'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+```
+
+**Rollback Procedure (CI-based)**
+```yaml
+# .github/workflows/rollback-staging.yml
+name: Rollback STAGING
+
+on:
+  workflow_dispatch:
+    inputs:
+      deployment_id:
+        description: 'Deployment ID to rollback to'
+        required: true
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Rollback DO App
+        run: |
+          doctl apps get-deployment ${{ github.event.inputs.deployment_id }}
+          # Redeploy that specific deployment
+```
+
+**Additional Required Components:**
+
+1. **Smoke Test Runner**
+Create a smoke test script that can be executed via `npm run test:staging:smoke` to verify critical functionality after deployment:
+```javascript
+// scripts/smoke-tests.js
+const axios = require('axios');
+const { Connection } = require('@solana/web3.js');
+
+async function runSmokeTests() {
+  // Health check
+  await axios.get('https://staging-api.easyescrow.ai/health');
+  
+  // API functionality test
+  await axios.post('https://staging-api.easyescrow.ai/v1/agreements', { test: true });
+  
+  // Solana connection test
+  const connection = new Connection(process.env.STAGING_RPC_URL);
+  await connection.getHealth();
+  
+  console.log('All smoke tests passed!');
+}
+
+runSmokeTests().catch(err => {
+  console.error('Smoke tests failed:', err);
+  process.exit(1);
+});
+```
+
+2. **Migration Script**
+Create a database migration script that can be executed via `npm run staging:migrate`:
+```javascript
+// scripts/migrate-staging.js
+const { Pool } = require('pg');
+const fs = require('fs');
+const path = require('path');
+
+async function runMigrations() {
+  const pool = new Pool({
+    connectionString: process.env.STAGING_DATABASE_URL
+  });
+  
+  // Get migration files
+  const migrationDir = path.join(__dirname, '../migrations');
+  const files = fs.readdirSync(migrationDir).sort();
+  
+  // Run each migration
+  for (const file of files) {
+    const migration = fs.readFileSync(path.join(migrationDir, file), 'utf8');
+    await pool.query(migration);
+    console.log(`Applied migration: ${file}`);
+  }
+  
+  await pool.end();
+}
+
+runMigrations().catch(err => {
+  console.error('Migration failed:', err);
+  process.exit(1);
+});
+```
+
+3. **Documentation**
+Create comprehensive documentation in `docs/deployment/STAGING_CI_CD_PIPELINE.md` that includes:
+- CI/CD pipeline architecture diagram
+- Workflow descriptions and triggers
+- Required secrets and environment variables
+- Manual approval process
+- Rollback procedures
+- Troubleshooting guide
+- Security considerations
+
+**Benefits of CI-based Approach:**
+- Reproducible builds with pinned toolchains
+- Auditable deployments with clear history
+- Secure secret management via GitHub Secrets
+- Consistent deployment process
+- Optional manual approval gates
+- Automated testing and verification
+
+# Test Strategy:
+1. **CI/CD Pipeline Validation**: Verify GitHub Actions workflows execute correctly by triggering test runs on staging branch pushes and validating artifact generation, deployment, and notifications
+
+2. **End-to-End Deployment Flow**: Execute complete CI/CD pipeline from build through deployment and verify successful STAGING environment update with proper artifact promotion
+
+3. **Rollback Functionality**: Test rollback workflow by intentionally deploying a broken version, triggering rollback action, and verifying successful restoration to previous working state
+
+4. **Manual Approval Gate**: Verify the environment protection rule works correctly by requiring manual approval before deployment proceeds
+
+5. **Smoke Test Integration**: Ensure smoke tests run automatically after deployment and correctly identify critical issues by testing against both working and intentionally broken deployments
+
+6. **Secret Management**: Verify GitHub Secrets are properly accessed by the workflows and not exposed in logs
+
+7. **Notification Integration**: Trigger deployment workflows and verify Slack/Discord notifications are sent with correct status information and deployment details
+
+8. **Documentation Verification**: Follow documented procedures to perform a complete deployment cycle and verify all steps work as described
+
+9. **Migration Script Testing**: Verify database migrations run correctly through the CI/CD pipeline without data loss or service interruption
+

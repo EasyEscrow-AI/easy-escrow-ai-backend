@@ -1,0 +1,196 @@
+# Task ID: 65
+# Title: Create and Fund STAGING Devnet Wallets
+# Status: pending
+# Dependencies: 64, 63
+# Priority: high
+# Description: Generate 4 new devnet wallets specifically for STAGING environment with proper naming to avoid conflicts with DEV server keys (both on devnet) and comprehensive backup procedures.
+# Details:
+Create a complete set of STAGING environment wallets with proper naming convention and backup procedures to support isolated testing of the escrow system:
+
+**Step 1: Generate Keypairs with Staging Naming**
+```bash
+# Create secure directory for staging wallets
+mkdir -p wallets/staging
+cd wallets/staging
+
+# Generate 4 keypairs with staging-specific names to avoid DEV conflicts
+solana-keygen new -o staging-sender.json --force
+solana-keygen new -o staging-receiver.json --force  
+solana-keygen new -o staging-admin.json --force
+solana-keygen new -o staging-fee-collector.json --force
+```
+
+**Step 2: Create Backup Directory and Copy Keypairs**
+```bash
+# Create backup directory for restore capability
+mkdir -p /temp/staging-backups/
+
+# Copy all keypairs to backup location
+cp staging-sender.json /temp/staging-backups/
+cp staging-receiver.json /temp/staging-backups/
+cp staging-admin.json /temp/staging-backups/
+cp staging-fee-collector.json /temp/staging-backups/
+
+echo "Backup created at /temp/staging-backups/"
+```
+
+**Step 3: Extract and Document Addresses**
+```bash
+# Extract public keys for documentation
+SENDER_ADDR=$(solana address -k staging-sender.json)
+RECEIVER_ADDR=$(solana address -k staging-receiver.json)
+ADMIN_ADDR=$(solana address -k staging-admin.json)
+FEE_COLLECTOR_ADDR=$(solana address -k staging-fee-collector.json)
+```
+
+**Step 4: Fund with Devnet SOL**
+```bash
+# Fund each wallet with 2-5 SOL for transaction fees
+solana airdrop 5 $SENDER_ADDR --url devnet
+solana airdrop 5 $RECEIVER_ADDR --url devnet
+solana airdrop 3 $ADMIN_ADDR --url devnet
+solana airdrop 3 $FEE_COLLECTOR_ADDR --url devnet
+```
+
+**Step 5: Setup USDC Token Accounts**
+```bash
+# Create USDC token accounts (devnet USDC mint: 4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU)
+spl-token create-account 4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU --owner staging-sender.json --url devnet
+spl-token create-account 4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU --owner staging-receiver.json --url devnet
+```
+
+**Step 6: Mint Test USDC to Receiver**
+```bash
+# Mint 10,000 USDC to receiver wallet for testing purchases
+spl-token mint 4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU 10000 $RECEIVER_USDC_ACCOUNT --url devnet
+```
+
+**Step 7: Create Test NFT for Sender**
+```bash
+# Create NFT collection and mint test NFT to sender
+metaplex create-collection --keypair staging-sender.json --name "STAGING Test Collection" --url devnet
+metaplex mint-nft --keypair staging-sender.json --collection $COLLECTION_ADDR --name "Test NFT #1" --url devnet
+```
+
+**Step 8: Update STAGING Configuration with Proper Environment Variables**
+Create `.env.staging` with staging-prefixed environment variables:
+```
+DEVNET_STAGING_SENDER_PRIVATE_KEY=<base58_private_key_from_staging-sender.json>
+DEVNET_STAGING_RECEIVER_PRIVATE_KEY=<base58_private_key_from_staging-receiver.json>
+DEVNET_STAGING_ADMIN_PRIVATE_KEY=<base58_private_key_from_staging-admin.json>
+DEVNET_STAGING_FEE_COLLECTOR_PRIVATE_KEY=<base58_private_key_from_staging-fee-collector.json>
+STAGING_ESCROW_PROGRAM_ID=<from Task 64>
+```
+
+**Step 9: Security and Documentation**
+- Add wallets/staging/ to .gitignore
+- Add .env.staging to .gitignore
+- Document wallet purposes and backup procedures in docs/STAGING_WALLETS.md
+- Include backup restoration instructions
+- Update STAGING environment documentation with wallet management procedures
+- Document naming convention rationale (staging prefix to avoid DEV conflicts)
+
+# Test Strategy:
+1. **Keypair Generation Verification**: Confirm all 4 keypair files exist in wallets/staging/ directory with proper staging naming convention and contain valid keypair data by running `solana address -k` on each file successfully
+
+2. **Backup Verification**: Verify all 4 keypair files exist in /temp/staging-backups/ directory and are identical to original files using file comparison commands
+
+3. **Funding Verification**: Check SOL balances for all wallets using `solana balance <address> --url devnet` and verify each has the expected amount (2-5 SOL)
+
+4. **USDC Token Account Setup**: Verify USDC token accounts exist for sender and receiver wallets using `spl-token accounts --owner <wallet> --url devnet`
+
+5. **USDC Balance Check**: Confirm receiver wallet has 10,000 USDC tokens using `spl-token balance 4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU --owner staging-receiver.json --url devnet`
+
+6. **NFT Ownership Verification**: Verify sender wallet owns test NFT using `metaplex show-nft <nft_address> --url devnet` and confirm owner matches sender address
+
+7. **Environment Variable Configuration**: Verify `.env.staging` contains all required staging-prefixed environment variables (DEVNET_STAGING_*) and they correspond to the generated keypair addresses
+
+8. **Security Check**: Confirm wallets/staging/ directory and .env.staging file are properly excluded from version control by checking .gitignore and running `git status` to ensure no keypair files or environment files are tracked
+
+9. **Documentation Completeness**: Verify docs/STAGING_WALLETS.md exists and documents wallet purposes, backup procedures, restoration instructions, and naming convention rationale
+
+10. **Backup Restoration Test**: Test backup restoration process by temporarily moving original files and restoring from /temp/staging-backups/ to verify backup integrity
+
+# Subtasks:
+
+## Subtask 65.1: Protect STAGING Wallet Files from Accidental Overwrite
+**Status:** pending  
+**Description:** Make STAGING wallet keypair files read-only and add git protection to prevent accidental deletion or overwriting, ensuring they remain static like DEV server wallets.
+
+**Details:**
+Implement multiple layers of protection for STAGING wallet files to prevent accidental modification or deletion:
+
+**Step 1: Make Wallet Files Read-Only**
+```powershell
+# Set read-only attribute on all STAGING wallet files
+Set-ItemProperty -Path "wallets/staging/staging-sender.json" -Name IsReadOnly -Value $true
+Set-ItemProperty -Path "wallets/staging/staging-receiver.json" -Name IsReadOnly -Value $true
+Set-ItemProperty -Path "wallets/staging/staging-admin.json" -Name IsReadOnly -Value $true
+Set-ItemProperty -Path "wallets/staging/staging-fee-collector.json" -Name IsReadOnly -Value $true
+
+# Verify read-only status
+Get-ChildItem -Path "wallets/staging/*.json" | Select-Object Name, IsReadOnly
+```
+
+**Step 2: Protect Program Keypair**
+```powershell
+# Set read-only attribute on STAGING program keypair
+Set-ItemProperty -Path "target/deploy/escrow-keypair-staging.json" -Name IsReadOnly -Value $true
+
+# Verify protection
+Get-ItemProperty -Path "target/deploy/escrow-keypair-staging.json" | Select-Object Name, IsReadOnly
+```
+
+**Step 3: Update .gitignore with Exceptions**
+Add these lines to `.gitignore` to track these specific files (exception to general wallet ignore rules):
+```
+# STAGING wallets are tracked (exception to general wallet ignore)
+!wallets/staging/staging-sender.json
+!wallets/staging/staging-receiver.json
+!wallets/staging/staging-admin.json
+!wallets/staging/staging-fee-collector.json
+!target/deploy/escrow-keypair-staging.json
+```
+
+**Step 4: Create Protection Documentation**
+Create `docs/STAGING_WALLET_PROTECTION.md` documenting:
+- **Why wallets are protected**: STAGING is prod-like environment that should be stable
+- **How to unlock if changes needed**: `Set-ItemProperty -Path "<file>" -Name IsReadOnly -Value $false`
+- **Emergency recovery procedures**: Restore from `/temp/staging-backups/`
+- **Git tracking rationale**: These files should be versioned for team consistency
+- **Warning about regeneration**: Changing wallet addresses breaks configs and tests
+
+**Step 5: Add Pre-commit Hook (Optional)**
+Create `.husky/pre-commit` or update existing to warn if STAGING wallets are modified:
+```bash
+#!/bin/sh
+if git diff --cached --name-only | grep -q "wallets/staging/.*\.json\|escrow-keypair-staging.json"; then
+  echo "⚠️  WARNING: You are about to commit changes to STAGING wallets!"
+  echo "These should remain static. Are you sure? (y/n)"
+  read -r response
+  if [ "$response" != "y" ]; then
+    echo "Commit aborted."
+    exit 1
+  fi
+fi
+```
+
+**Why This Matters:**
+- STAGING is a prod-like environment that should be stable and predictable
+- Wallet addresses are referenced in configs, docs, and CI/CD pipelines
+- Changing wallets breaks existing configurations, tests, and deployments
+- Protection prevents accidental `solana-keygen new --force` overwrites
+- Matches DEV wallet protection strategy for consistency
+- Team members can safely clone repo with stable wallet configuration
+
+**How to Temporarily Unlock (If Really Needed):**
+```powershell
+# Remove read-only protection
+Set-ItemProperty -Path "wallets/staging/staging-sender.json" -Name IsReadOnly -Value $false
+
+# Make your changes
+
+# Re-enable protection
+Set-ItemProperty -Path "wallets/staging/staging-sender.json" -Name IsReadOnly -Value $true
+```
+

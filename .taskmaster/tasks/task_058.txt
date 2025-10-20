@@ -1,0 +1,52 @@
+# Task ID: 58
+# Title: Clean Build and Deploy Fresh Program to Devnet
+# Status: done
+# Dependencies: 57
+# Priority: high
+# Description: Perform a clean build of the escrow program with unified program ID and deploy fresh artifacts to Solana devnet using the pinned program keypair.
+# Details:
+Execute a complete clean build and deployment process to ensure all artifacts are regenerated with the correct unified program ID:
+
+**Step 1: Clean Build**
+```bash
+anchor build
+# OR alternatively: cargo build-sbf
+```
+This regenerates all artifacts including:
+- IDL files with correct program ID
+- Compiled program binary (.so file)
+- TypeScript types
+- All metadata with unified program ID
+
+**Step 2: Deploy with Pinned Keypair**
+```bash
+solana program deploy \
+  --url devnet \
+  --program-id target/deploy/escrow-keypair.json \
+  target/deploy/escrow.so
+```
+
+**Step 3: Verify Deployment**
+- Confirm transaction signature is returned
+- Verify program is executable on devnet
+- Check program account exists at expected address: 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd
+
+**Important Considerations:**
+- Ensure wallet has sufficient SOL for deployment fees
+- Verify devnet RPC connection is stable
+- Clean build ensures no stale artifacts with old program IDs
+- Using --program-id flag ensures deployment to specific address
+
+**Expected Outputs:**
+- Fresh program binary deployed to devnet
+- Transaction signature confirming successful deployment
+- Program account active and executable
+
+# Test Strategy:
+1. **Build Verification**: Confirm `anchor build` completes without errors and generates fresh artifacts with recent timestamps in target/deploy/
+2. **Deployment Success**: Verify deployment command returns a transaction signature and completes without errors
+3. **Program Address Verification**: Execute `solana program show --url devnet 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd` to confirm program exists and is executable
+4. **IDL Consistency Check**: Verify the generated IDL file contains the correct program address matching the deployed program ID
+5. **Transaction Confirmation**: Check the deployment transaction on Solana Explorer (devnet) to confirm successful program deployment
+6. **Functional Test**: Execute a simple program instruction call to verify the deployed program is operational and responding correctly
+

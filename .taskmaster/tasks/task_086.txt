@@ -1,0 +1,174 @@
+# Task ID: 86
+# Title: Establish STAGING SOL and Resource Usage Tracking
+# Status: pending
+# Dependencies: 70, 71, 78, 80
+# Priority: low
+# Description: Implement comprehensive resource usage tracking and monitoring system for STAGING environment to predict production costs, optimize efficiency, and identify resource leaks across SOL consumption, database usage, Redis metrics, RPC calls, and compute resources.
+# Details:
+Create a complete resource tracking and cost analysis system for the STAGING environment to enable production cost prediction and optimization:
+
+**Step 1: Create Resource Tracking Service**
+```typescript
+// src/services/resource-tracker.ts
+interface ResourceMetrics {
+  timestamp: Date;
+  solUsage: {
+    transactionFees: number;
+    walletBalance: number;
+    operationType: string;
+    agreementId?: string;
+  };
+  databaseMetrics: {
+    activeConnections: number;
+    queryDuration: number;
+    queryType: string;
+    slowQueries: string[];
+  };
+  redisMetrics: {
+    memoryUsage: number;
+    keyCount: number;
+    hitRate: number;
+    queueLength: number;
+  };
+  rpcMetrics: {
+    requestCount: number;
+    requestType: string;
+    responseTime: number;
+    rateLimitApproach: boolean;
+  };
+  computeMetrics: {
+    cpuUsage: number;
+    memoryUsage: number;
+    networkBandwidth: number;
+    apiRequestVolume: number;
+  };
+}
+
+class ResourceTracker {
+  async trackSolUsage(operation: string, cost: number, agreementId?: string): Promise<void> {
+    // Track SOL consumption per operation
+  }
+  
+  async trackDatabaseQuery(query: string, duration: number): Promise<void> {
+    // Monitor database performance
+  }
+  
+  async generateDailyReport(): Promise<ResourceReport> {
+    // Generate comprehensive usage reports
+  }
+}
+```
+
+**Step 2: Implement SOL Usage Tracking**
+```typescript
+// Track SOL consumption patterns
+const solTracker = {
+  async trackAgreementLifecycle(agreementId: string, stage: string) {
+    const preBalance = await connection.getBalance(senderWallet.publicKey);
+    // Execute operation
+    const postBalance = await connection.getBalance(senderWallet.publicKey);
+    const consumed = (preBalance - postBalance) / LAMPORTS_PER_SOL;
+    
+    await resourceTracker.trackSolUsage(`agreement_${stage}`, consumed, agreementId);
+  },
+  
+  async trackWalletRefills() {
+    // Monitor wallet balance thresholds and refill frequency
+  }
+};
+```
+
+**Step 3: Database Usage Monitoring**
+```typescript
+// Monitor database performance and growth
+const dbTracker = {
+  async trackQueryPerformance(query: string, startTime: number) {
+    const duration = Date.now() - startTime;
+    if (duration > 1000) { // Slow query threshold
+      await resourceTracker.trackSlowQuery(query, duration);
+    }
+    await resourceTracker.trackDatabaseQuery(query, duration);
+  },
+  
+  async trackStorageGrowth() {
+    const size = await pool.query('SELECT pg_database_size(current_database())');
+    await resourceTracker.trackDatabaseSize(size.rows[0].pg_database_size);
+  }
+};
+```
+
+**Step 4: Redis and RPC Monitoring**
+```typescript
+// Track Redis and RPC usage patterns
+const cacheTracker = {
+  async trackRedisMetrics() {
+    const info = await redis.info('memory');
+    const keyCount = await redis.dbsize();
+    await resourceTracker.trackRedisUsage(info, keyCount);
+  },
+  
+  async trackRpcUsage(method: string, startTime: number) {
+    const duration = Date.now() - startTime;
+    await resourceTracker.trackRpcCall(method, duration);
+  }
+};
+```
+
+**Step 5: Cost Analysis and Reporting**
+```typescript
+// Generate cost projections and optimization recommendations
+class CostAnalyzer {
+  async calculateMainnetProjection(devnetUsage: ResourceMetrics[]): Promise<CostProjection> {
+    // Project mainnet costs based on devnet patterns
+    const avgSolPerTransaction = this.calculateAverageSolUsage(devnetUsage);
+    const mainnetMultiplier = 1.2; // Account for mainnet vs devnet differences
+    
+    return {
+      estimatedMonthlySol: avgSolPerTransaction * expectedTransactions * mainnetMultiplier,
+      databaseCosts: this.projectDatabaseCosts(devnetUsage),
+      redisCosts: this.projectRedisCosts(devnetUsage),
+      optimizationOpportunities: this.identifyOptimizations(devnetUsage)
+    };
+  }
+  
+  async generateWeeklyReport(): Promise<void> {
+    // Create comprehensive usage and cost reports
+  }
+}
+```
+
+**Step 6: Alerting and Optimization**
+```typescript
+// Set up alerts for unusual patterns
+const alertSystem = {
+  async checkResourceAnomalies(metrics: ResourceMetrics) {
+    if (metrics.solUsage.transactionFees > ALERT_THRESHOLDS.SOL_PER_TX) {
+      await this.sendAlert('High SOL usage detected', metrics);
+    }
+    
+    if (metrics.databaseMetrics.queryDuration > ALERT_THRESHOLDS.SLOW_QUERY) {
+      await this.sendAlert('Slow database query detected', metrics);
+    }
+  }
+};
+```
+
+**Step 7: Documentation and Reporting**
+Create docs/operations/STAGING_RESOURCE_TRACKING.md with:
+- Resource tracking methodology
+- Cost calculation formulas
+- Optimization recommendations
+- Alert thresholds and responses
+- Weekly/monthly reporting procedures
+
+# Test Strategy:
+1. **Resource Tracking Validation**: Execute all tracking functions (SOL, database, Redis, RPC, compute) with test operations and verify metrics are correctly captured, stored, and retrievable with accurate timestamps and values
+
+2. **Cost Projection Accuracy**: Run resource tracking for 24-48 hours on STAGING, generate cost projections, and validate calculations by manually verifying SOL consumption patterns, database query costs, and resource usage trends match projected values
+
+3. **Alert System Testing**: Trigger alert conditions by simulating high resource usage scenarios (expensive transactions, slow queries, high memory usage) and verify alerts are sent promptly with accurate metric data and actionable information
+
+4. **Report Generation Verification**: Generate daily and weekly resource reports, verify all tracked metrics are included, cost projections are reasonable, optimization recommendations are relevant, and reports are properly formatted and accessible
+
+5. **Integration Testing**: Verify resource tracking integrates properly with existing STAGING infrastructure (database, Redis, RPC endpoints) without impacting application performance or causing resource leaks in the tracking system itself
+

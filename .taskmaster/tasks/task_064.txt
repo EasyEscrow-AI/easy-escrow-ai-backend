@@ -1,0 +1,68 @@
+# Task ID: 64
+# Title: Generate New Solana Program Keypair for STAGING
+# Status: pending
+# Dependencies: 63
+# Priority: high
+# Description: Generate a fresh keypair specifically for the STAGING environment escrow program to ensure complete isolation between DEV and STAGING deployments with proper backup and naming conventions.
+# Details:
+Create a dedicated keypair for the STAGING environment to maintain deployment isolation with backup recovery capability:
+
+**Step 1: Generate STAGING Keypair**
+```bash
+solana-keygen new -o target/deploy/escrow-keypair-staging.json --force
+```
+This creates a fresh keypair specifically for STAGING environment deployment.
+
+**Step 2: Extract and Document Program ID**
+```bash
+solana address -k target/deploy/escrow-keypair-staging.json
+```
+Capture the output (base58-encoded public key) as the STAGING Program ID.
+
+**Step 3: Create Backup for Recovery**
+```bash
+# Create backup directory if it doesn't exist
+mkdir -p /temp/staging-backups
+
+# Copy keypair to backup location
+cp target/deploy/escrow-keypair-staging.json /temp/staging-backups/escrow-keypair-staging.json
+
+# Set restrictive permissions on backup
+chmod 600 /temp/staging-backups/escrow-keypair-staging.json
+```
+This provides restore capability in case the primary keypair is lost or corrupted.
+
+**Step 4: Secure Storage and Git Protection**
+- Add `target/deploy/escrow-keypair-staging.json` to .gitignore if not already covered
+- Set restrictive permissions: `chmod 600 target/deploy/escrow-keypair-staging.json`
+- Verify keypair is never committed to git repository
+
+**Step 5: Documentation Updates with Proper Naming**
+- Document the STAGING Program ID in `docs/environments/STAGING_CONFIG.md`
+- Add Program ID to `.env.staging` using naming convention: `DEVNET_STAGING_PROGRAM_ID=[extracted public key]`
+- Add entry to environment tracking spreadsheet with:
+  - Environment: STAGING
+  - Program ID: [extracted public key]
+  - Keypair Location: target/deploy/escrow-keypair-staging.json
+  - Backup Location: /temp/staging-backups/escrow-keypair-staging.json
+  - Created Date: [current date]
+  - Network: devnet
+
+**Step 6: Environment Isolation Verification**
+Confirm the STAGING keypair differs from DEV keypair to ensure complete deployment isolation.
+
+# Test Strategy:
+1. **Keypair Generation Verification**: Confirm `target/deploy/escrow-keypair-staging.json` exists and contains valid keypair data by running `solana address -k target/deploy/escrow-keypair-staging.json` successfully
+
+2. **Program ID Extraction**: Verify the extracted Program ID is a valid base58-encoded Solana address (44 characters, alphanumeric)
+
+3. **Backup Creation and Verification**: Confirm backup exists at `/temp/staging-backups/escrow-keypair-staging.json` with correct permissions (600) and verify it contains identical keypair data to the original
+
+4. **Git Protection**: Run `git status` and confirm the staging keypair file is ignored (not shown as untracked)
+
+5. **Documentation Updates**: Confirm STAGING Program ID is documented in configuration files, `.env.staging` with `DEVNET_STAGING_PROGRAM_ID` naming convention, and tracking spreadsheet with all required fields populated including backup location
+
+6. **Environment Isolation**: Compare DEV and STAGING Program IDs to ensure they are different, confirming deployment isolation
+
+7. **Backup Recovery Test**: Verify backup can be used for recovery by temporarily moving original keypair and confirming backup produces same Program ID
+

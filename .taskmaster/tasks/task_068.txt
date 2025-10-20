@@ -1,0 +1,65 @@
+# Task ID: 68
+# Title: Configure STAGING Redis Instance
+# Status: pending
+# Dependencies: 67, 63
+# Priority: high
+# Description: Setup isolated Redis instance for STAGING environment using Redis Cloud with TLS encryption, authentication, IP allowlisting, and proper configuration for Bull queues and idempotency key storage.
+# Details:
+Configure a dedicated Redis instance for the STAGING environment to provide isolated caching and queue services:
+
+**Step 1: Provision Redis Cloud Database**
+- Log into Redis Cloud (redis.io) console
+- Create new database in same region as DigitalOcean STAGING infrastructure
+- Select appropriate memory limit (start with 30MB, scale as needed)
+- Enable TLS encryption and strong authentication
+- Configure eviction policy: `allkeys-lru` for cache efficiency
+
+**Step 2: Security Configuration**
+- Enable IP allowlist with DigitalOcean App Platform STAGING IPs
+- Generate strong Redis password (store in DO App Platform secrets)
+- Configure TLS certificates for encrypted connections
+- Test connection from STAGING app using Redis CLI
+
+**Step 3: Bull Queue Configuration**
+```javascript
+// Configure Bull queues for STAGING
+const Queue = require('bull');
+const stagingQueue = new Queue('staging-blockchain-monitor', {
+  redis: {
+    port: 6379,
+    host: 'redis-staging.redis.io',
+    password: process.env.REDIS_STAGING_PASSWORD,
+    tls: {}
+  }
+});
+```
+
+**Step 4: Idempotency Key Storage Setup**
+- Configure Redis for idempotency key storage with appropriate TTL
+- Test key storage and retrieval operations
+- Verify key expiration behavior matches business requirements
+
+**Step 5: Environment Configuration**
+- Update STAGING environment variables in DO App Platform
+- Add Redis connection string to environment templates
+- Document connection details in secure credential store
+- Update Redis setup guide with STAGING-specific configuration
+
+**Step 6: Memory and Performance Tuning**
+- Configure memory limits based on expected STAGING load
+- Set up monitoring for memory usage and connection counts
+- Configure appropriate timeout values for STAGING testing
+
+# Test Strategy:
+1. **Connection Testing**: Verify Redis connection from STAGING app using `redis-cli` with TLS and authentication, confirm successful PING/PONG response
+
+2. **Bull Queue Validation**: Create test job in Bull queue, verify job processing, check queue dashboard for successful job completion and proper queue statistics
+
+3. **Idempotency Key Testing**: Store test idempotency key with TTL, retrieve it successfully, wait for expiration and confirm key is automatically removed
+
+4. **Security Verification**: Attempt connection without proper credentials (should fail), verify TLS encryption is active, confirm IP allowlist blocks unauthorized access
+
+5. **Performance Testing**: Run load test with concurrent Redis operations to verify memory limits and connection handling under STAGING load conditions
+
+6. **Environment Integration**: Deploy STAGING app with new Redis configuration, verify all Redis-dependent features work correctly, check logs for connection errors
+

@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# Check for accidental private key commits
+if git diff --cached --name-only | grep -qE "wallets/.*\.json|.*keypair.*\.json|\.env\..*"; then
+  echo "🚨 CRITICAL: You are about to commit PRIVATE KEYS or secrets!"
+  echo "This is a SECURITY RISK and should NEVER be done."
+  echo "❌ Commit BLOCKED for your protection."
+  exit 1
+fi
+
+npm test

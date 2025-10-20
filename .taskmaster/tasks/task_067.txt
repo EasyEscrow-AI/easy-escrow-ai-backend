@@ -1,0 +1,106 @@
+# Task ID: 67
+# Title: Setup STAGING Database Infrastructure
+# Status: pending
+# Dependencies: 42, 63
+# Priority: high
+# Description: Create isolated STAGING database infrastructure using existing DO Managed PostgreSQL cluster with staging-specific database, user, migrations, and configuration.
+# Details:
+Create comprehensive STAGING database infrastructure leveraging the existing DigitalOcean Managed PostgreSQL cluster:
+
+**Step 1: Create Staging Database**
+```sql
+-- Connect to existing DO Managed PostgreSQL cluster
+CREATE DATABASE easyescrow_staging;
+```
+
+**Step 2: Create Staging Database User**
+```sql
+-- Create staging-specific user with least-privilege permissions
+CREATE USER staging_user WITH PASSWORD 'secure_staging_password';
+GRANT CONNECT ON DATABASE easyescrow_staging TO staging_user;
+GRANT USAGE ON SCHEMA public TO staging_user;
+GRANT CREATE ON SCHEMA public TO staging_user;
+-- Grant table-level permissions after migrations
+```
+
+**Step 3: Configure Environment Variables**
+```bash
+# Add to staging environment configuration
+DATABASE_URL="postgresql://staging_user:password@cluster-host:25060/easyescrow_staging?sslmode=require"
+DATABASE_POOL_SIZE=10
+DATABASE_POOL_TIMEOUT=30
+```
+
+**Step 4: Run Prisma Migrations**
+```bash
+# Set staging database URL
+export DATABASE_URL="postgresql://staging_user:password@cluster-host:25060/easyescrow_staging?sslmode=require"
+
+# Run migrations against staging database
+npx prisma migrate deploy
+npx prisma generate
+```
+
+**Step 5: Seed Test Data (if needed)**
+```bash
+# Create staging-specific seed data
+npx prisma db seed --preview-feature
+# OR run custom staging seed script
+node scripts/seed-staging.js
+```
+
+**Step 6: Configure Connection Pooling**
+- Leverage DO Managed PostgreSQL built-in connection pooling
+- Configure staging-specific pool settings (smaller than prod)
+- Set appropriate connection limits for staging workload
+
+**Step 7: Setup Backup Schedule**
+- Configure automated backups (daily instead of hourly like prod)
+- Set retention period (7 days for staging vs 30 days for prod)
+- Document backup restoration process
+
+**Step 8: Store Connection Strings Securely**
+```bash
+# Store in DigitalOcean App Platform environment variables
+STAGING_DATABASE_URL="postgresql://staging_user:password@cluster-host:25060/easyescrow_staging?sslmode=require"
+STAGING_DATABASE_POOL_URL="postgresql://staging_user:password@pooler-host:25061/easyescrow_staging?sslmode=require"
+```
+
+**Step 9: Update Documentation**
+Add staging database details to docs/setup/DATABASE_SETUP.md:
+- Connection string format
+- User permissions and roles
+- Migration process for staging
+- Backup and recovery procedures
+- Troubleshooting common issues
+
+# Test Strategy:
+1. **Database Creation Verification**: Connect to DO Managed PostgreSQL cluster and verify `easyescrow_staging` database exists using `\l` command in psql
+
+2. **User Permissions Testing**: Connect as `staging_user` and verify:
+   - Can connect to easyescrow_staging database
+   - Can create tables in public schema
+   - Cannot access other databases (easyescrow_prod, easyescrow_dev)
+   - Has appropriate read/write permissions on migrated tables
+
+3. **Migration Success Validation**: 
+   - Run `npx prisma migrate status` to confirm all migrations applied
+   - Verify schema matches expected structure using `\dt` and `\d table_name`
+   - Check that all indexes, constraints, and relationships are properly created
+
+4. **Connection Pooling Test**: 
+   - Test connections through both direct and pooled connection strings
+   - Verify connection limits are respected
+   - Monitor connection pool metrics in DO dashboard
+
+5. **Backup Configuration Verification**:
+   - Confirm backup schedule is active in DO dashboard
+   - Test point-in-time recovery capability with a small test restoration
+   - Verify backup retention settings match staging requirements
+
+6. **Environment Integration Test**:
+   - Deploy staging application with new DATABASE_URL
+   - Execute basic CRUD operations against staging database
+   - Verify application logs show successful database connections
+   - Run staging-specific test suite to validate full functionality
+

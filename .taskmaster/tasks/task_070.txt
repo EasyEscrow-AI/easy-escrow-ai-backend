@@ -1,0 +1,96 @@
+# Task ID: 70
+# Title: Deploy Backend Application to STAGING Environment
+# Status: pending
+# Dependencies: 67, 68, 69, 66
+# Priority: high
+# Description: Deploy the backend application to DigitalOcean App Platform STAGING environment with complete infrastructure integration, custom domain configuration, and comprehensive monitoring setup.
+# Details:
+Deploy the backend application to DigitalOcean App Platform for STAGING environment with full production-like configuration:
+
+**Step 1: Create STAGING App in DO App Platform**
+- Navigate to DigitalOcean App Platform console
+- Create new App named "easyescrow-backend-staging"
+- Select GitHub repository with staging branch (or main branch with staging deployment)
+- Configure region to match database and Redis infrastructure
+
+**Step 2: Configure Build and Runtime Settings**
+```yaml
+# App Platform spec configuration
+name: easyescrow-backend-staging
+services:
+- name: api
+  source_dir: /
+  github:
+    repo: your-org/easyescrow-backend
+    branch: staging  # or main with staging config
+  run_command: npm start
+  build_command: npm ci && npm run build
+  environment_slug: node-js
+  instance_count: 1
+  instance_size_slug: basic-xxs  # Can scale up as needed
+```
+
+**Step 3: Environment Variables Configuration**
+Link all STAGING environment variables from Task 69:
+- NODE_ENV=staging
+- SOLANA_NETWORK=devnet
+- ESCROW_PROGRAM_ID (from Task 64)
+- Database connection strings (from Task 67)
+- Redis connection details (from Task 68)
+- All wallet keypairs and secrets
+
+**Step 4: Database and Redis Integration**
+- Configure DATABASE_URL pointing to easyescrow_staging database
+- Setup Redis connection with TLS and authentication
+- Verify private networking between App Platform and managed services
+- Test connection pooling and SSL certificates
+
+**Step 5: Custom Domain Setup**
+- Add custom domain: staging-api.easyescrow.ai
+- Configure DNS CNAME record pointing to App Platform
+- Enable automatic HTTPS/SSL certificate provisioning
+- Verify SSL certificate installation and HTTPS redirect
+
+**Step 6: Health Checks and Monitoring**
+- Configure health check endpoint: GET /health
+- Set up resource monitoring and alerting
+- Enable application logs aggregation
+- Configure log retention and search capabilities
+
+**Step 7: Deployment Automation**
+- Setup GitHub Actions integration using DIGITAL_OCEAN_API_KEY
+- Configure automatic deployment on staging branch push
+- Implement deployment rollback capabilities
+- Setup deployment notifications
+
+**Step 8: Resource Configuration**
+- Configure appropriate CPU and memory limits
+- Setup horizontal scaling rules if needed
+- Configure environment-specific resource sizing
+- Enable performance monitoring and metrics
+
+**Step 9: Security Configuration**
+- Configure CORS settings for staging frontend
+- Setup rate limiting and DDoS protection
+- Configure firewall rules and IP allowlisting
+- Enable security headers and HSTS
+
+# Test Strategy:
+1. **Deployment Verification**: Confirm App Platform deployment completes successfully with green status, verify build logs show no errors, and check application starts without crashes
+
+2. **Domain and SSL Testing**: Verify staging-api.easyescrow.ai resolves correctly, test HTTPS certificate is valid and trusted, confirm HTTP redirects to HTTPS automatically
+
+3. **Database Connectivity**: Test database connection by hitting endpoints that query the staging database, verify connection pooling works under load, confirm migrations run successfully
+
+4. **Redis Integration**: Test Redis connectivity through cache operations, verify Bull queue processing works correctly, confirm session storage and idempotency keys function properly
+
+5. **Health Check Validation**: Verify GET /health endpoint returns 200 status with proper health information, test health check frequency and timeout settings
+
+6. **API Functionality Testing**: Execute comprehensive API endpoint tests against staging-api.easyescrow.ai, verify all CRUD operations work with staging database, test authentication and authorization flows
+
+7. **Environment Variables**: Confirm all environment variables are properly loaded by checking application logs, verify sensitive secrets are masked in logs, test configuration-dependent features
+
+8. **Performance and Monitoring**: Verify application metrics are being collected, test log aggregation and search functionality, confirm alerting rules trigger appropriately
+
+9. **Documentation Validation**: Create and verify docs/STAGING_DEPLOYMENT.md contains complete deployment process, troubleshooting steps, and rollback procedures
+

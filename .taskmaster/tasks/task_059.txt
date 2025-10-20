@@ -1,0 +1,51 @@
+# Task ID: 59
+# Title: Propagate New IDL to Backend and Restart Services
+# Status: done
+# Dependencies: 58
+# Priority: high
+# Description: Sync the updated IDL to the application and restart services to pick up changes with the new program ID.
+# Details:
+This task ensures the backend application uses the freshly built IDL with the correct program ID after a clean deployment:
+
+**Step 1: Copy Fresh IDL**
+```bash
+cp target/idl/escrow.json src/generated/anchor/escrow-idl.json
+```
+This overwrites the backend's IDL file with the newly generated one from `anchor build`, ensuring the TypeScript code uses the correct program interface and address.
+
+**Step 2: Restart Backend Services**
+```bash
+docker compose restart backend
+```
+This gracefully restarts the backend container to:
+- Reload environment variables from nodemon.json
+- Pick up the new IDL file
+- Initialize services with the updated program ID
+
+**Step 3: Verify Backend Startup**
+Monitor the startup logs to confirm:
+- Container restarts successfully
+- EscrowProgramService initializes with correct program ID
+- No program ID mismatch errors occur
+- All services are healthy and responding
+
+**Step 4: Health Check**
+Verify the backend is operational:
+- Check container status: `docker compose ps`
+- View logs: `docker compose logs -f backend`
+- Test API endpoints are responding
+- Confirm program ID matches in service initialization logs
+
+This task completes the deployment pipeline by ensuring the backend application layer is synchronized with the freshly deployed Solana program.
+
+# Test Strategy:
+1. **IDL File Verification**: Confirm `src/generated/anchor/escrow-idl.json` has been updated by checking the "address" field matches the deployed program ID: 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd
+
+2. **Container Restart Success**: Verify `docker compose restart backend` completes without errors and container shows "healthy" status in `docker compose ps`
+
+3. **Startup Log Verification**: Check backend logs contain the message "EscrowProgramService initialized with program: 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd" and no program ID mismatch errors
+
+4. **Service Health Check**: Test that backend API endpoints respond correctly and services are fully operational after restart
+
+5. **End-to-End Verification**: Confirm the backend can successfully interact with the deployed Solana program using the updated IDL
+

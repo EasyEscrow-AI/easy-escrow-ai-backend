@@ -1,0 +1,64 @@
+# Task ID: 60
+# Title: Verify Program ID Alignment Before E2E Tests
+# Status: done
+# Dependencies: 59, 58
+# Priority: high
+# Description: Run comprehensive verification checks to catch any lingering program ID mismatches before executing end-to-end tests.
+# Details:
+This task performs a final verification sweep to ensure all components are aligned with the correct program ID (4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd) before running e2e tests:
+
+**Step 1: Verify On-Chain Program**
+```bash
+solana program show 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd --url devnet
+```
+Confirms the program exists on devnet and is executable.
+
+**Step 2: Verify IDL Matches Deployed Program**
+```bash
+anchor idl fetch 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd --provider.cluster devnet
+```
+Fetches the on-chain IDL and compares it with local artifacts to ensure consistency.
+
+**Step 3: Check Backend Environment Variable**
+```bash
+echo $ESCROW_PROGRAM_ID
+```
+Verifies the backend service has the correct program ID configured (should output: 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd).
+
+**Step 4: Verify Test Fixtures Configuration**
+Check that test configuration files point to devnet with the correct program ID:
+- Verify test environment variables
+- Confirm test RPC endpoints use devnet
+- Validate test fixtures use the correct program address
+
+**Step 5: Cross-Reference All Components**
+Ensure consistency across:
+- Local IDL file (src/generated/anchor/escrow-idl.json)
+- On-chain program
+- Backend configuration
+- Test setup
+
+This verification prevents e2e test failures due to program ID mismatches and ensures all components are properly synchronized.
+
+# Test Strategy:
+1. **On-Chain Program Verification**: Execute `solana program show 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd --url devnet` and verify:
+   - Command returns successfully (exit code 0)
+   - Program shows as "executable: true"
+   - Program ID matches exactly
+
+2. **IDL Consistency Check**: Run `anchor idl fetch 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd --provider.cluster devnet` and verify:
+   - Command completes without errors
+   - Fetched IDL structure matches local src/generated/anchor/escrow-idl.json
+   - Address field in both IDLs shows 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd
+
+3. **Backend Environment Verification**: Execute `echo $ESCROW_PROGRAM_ID` and confirm output is exactly: 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd
+
+4. **Test Configuration Validation**: 
+   - Grep test files for program ID references
+   - Verify test RPC endpoints point to devnet
+   - Confirm no hardcoded references to old program IDs
+
+5. **Health Check**: Run `curl http://localhost:3000/api/health` to ensure backend service starts without program configuration errors
+
+Success criteria: All verification steps pass with consistent program ID across all components.
+

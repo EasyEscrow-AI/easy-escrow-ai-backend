@@ -1,0 +1,107 @@
+# Task ID: 78
+# Title: Create STAGING Smoke Test Suite
+# Status: pending
+# Dependencies: 73, 70, 69, 68, 67, 65, 64
+# Priority: high
+# Description: Develop automated smoke tests that run immediately after deployment to verify critical functionality including health checks, database connectivity, RPC connectivity, and basic agreement operations.
+# Details:
+Create a comprehensive smoke test suite for the STAGING environment that validates critical system functionality post-deployment:
+
+**Step 1: Create Smoke Test Framework**
+```typescript
+// tests/smoke/staging-smoke-tests.ts
+import { Connection, PublicKey } from '@solana/web3.js';
+import Redis from 'ioredis';
+import { Pool } from 'pg';
+
+interface SmokeTestResult {
+  name: string;
+  passed: boolean;
+  duration: number;
+  error?: string;
+}
+
+class StagingSmokeTests {
+  private results: SmokeTestResult[] = [];
+  private startTime = Date.now();
+  
+  async runAllTests(): Promise<void> {
+    const tests = [
+      this.testHealthCheck,
+      this.testDatabaseConnectivity,
+      this.testRedisConnectivity,
+      this.testRPCConnectivity,
+      this.testProgramAccountExists,
+      this.testWalletBalances,
+      this.testAPIAuthentication,
+      this.testBasicAgreementCreation,
+      this.testAgreementQuery,
+      this.testEnvironmentVariables
+    ];
+    
+    for (const test of tests) {
+      await this.runTest(test.name, test.bind(this));
+    }
+    
+    this.reportResults();
+  }
+}
+```
+
+**Step 2: Implement Individual Smoke Tests**
+1. **Health Check**: GET /health returns 200 with proper response structure
+2. **Database Connectivity**: Test connection pool, basic query execution
+3. **Redis Connectivity**: PING command, basic set/get operations
+4. **RPC Connectivity**: Solana RPC getVersion, getSlot calls
+5. **Program Account**: Verify STAGING program ID exists on-chain with correct data
+6. **Wallet Balances**: Check all 4 staging wallets have minimum 0.1 SOL
+7. **API Authentication**: Test API key validation if implemented
+8. **Basic Agreement Creation**: Create test agreement without funding
+9. **Agreement Query**: Query the created agreement and verify response
+10. **Environment Variables**: Verify all DEVNET_STAGING_* variables loaded correctly
+
+**Step 3: Integration with Deployment Pipeline**
+```bash
+#!/bin/bash
+# deploy-staging-with-smoke.sh
+echo "Deploying to STAGING..."
+./deploy-to-staging.sh
+
+echo "Running smoke tests..."
+npm run smoke:staging
+
+if [ $? -eq 0 ]; then
+  echo "✅ Smoke tests passed - deployment successful"
+  # Send success notification
+else
+  echo "❌ Smoke tests failed - blocking deployment"
+  # Send failure notification and potentially rollback
+  exit 1
+fi
+```
+
+**Step 4: Notification Integration**
+- Slack/Discord webhook integration for test failures
+- Clear pass/fail reporting with execution times
+- Failure details for quick debugging
+
+**Step 5: Documentation**
+Create tests/smoke/README.md with:
+- Test descriptions and success criteria
+- How to run tests locally
+- Integration with CI/CD pipeline
+- Troubleshooting common failures
+
+# Test Strategy:
+1. **Individual Test Validation**: Execute each of the 10 smoke tests independently to verify they correctly identify both success and failure conditions, ensuring proper error handling and meaningful error messages
+
+2. **Performance Testing**: Run the complete smoke test suite multiple times to verify total execution time stays under 2 minutes, measure individual test performance to identify bottlenecks
+
+3. **Integration Testing**: Execute smoke tests immediately after a STAGING deployment to verify they correctly validate the deployed system state and catch real deployment issues
+
+4. **Failure Scenario Testing**: Intentionally break each tested component (stop database, invalid RPC, etc.) and verify smoke tests correctly detect and report failures with appropriate error messages
+
+5. **Notification Testing**: Trigger test failures and verify Slack/Discord notifications are sent with correct failure details and actionable information
+
+6. **CI/CD Integration Verification**: Confirm smoke tests integrate properly with deployment scripts, verify failed tests block deployment progression, and test rollback triggers work correctly
+

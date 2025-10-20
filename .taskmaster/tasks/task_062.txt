@@ -1,0 +1,63 @@
+# Task ID: 62
+# Title: Document Program ID Fix and Common Gotchas
+# Status: done
+# Dependencies: 55, 54, 61
+# Priority: medium
+# Description: Create comprehensive documentation to prevent future program ID mismatch issues and help debug if they occur again.
+# Details:
+Create comprehensive documentation to prevent recurrence of program ID mismatch issues:
+
+**1. Task Completion Documentation (docs/tasks/)**
+Create PROGRAM_ID_FIX_COMPLETION.md documenting:
+- Root cause analysis of the program ID mismatch
+- Complete fix process with step-by-step resolution
+- Before/after configuration states
+- Lessons learned and prevention strategies
+
+**2. Troubleshooting Guide (docs/PROGRAM_ID_TROUBLESHOOTING.md)**
+Document common gotchas and solutions:
+- **Stale IDL Issue**: When backend uses old IDL after program changes
+  - Symptoms: Transaction failures, instruction not found errors
+  - Solution: Copy fresh IDL from target/idl/ and restart services
+- **Wrong Runtime Address**: Mismatched program IDs in different configs
+  - Symptoms: Program not found errors, deployment failures
+  - Solution: Verify all .env files, Anchor.toml, and declare_id match
+- **Accidentally Changed Program Keypair**: Lost or corrupted keypair
+  - Symptoms: Cannot deploy to existing program address
+  - Solution: Restore from backup in temp/ directory
+
+**3. Deployment Guide Updates**
+Add verification checklist to existing deployment guides:
+- Pre-deployment: Verify keypair matches intended program ID
+- Post-deployment: Confirm on-chain program matches local config
+- IDL sync verification steps
+
+**4. Backup/Recovery Process Documentation**
+Document the program keypair backup strategy:
+- Automatic backup creation during keypair generation
+- Backup location and naming convention
+- Recovery procedures for different scenarios
+
+**5. Update DO_SERVER_E2E_CHECKLIST.md**
+Add program ID verification steps:
+- Environment variable checks
+- Program ID consistency across all configs
+- IDL freshness verification before tests
+
+# Test Strategy:
+1. **Documentation Completeness**: Verify all five documentation deliverables are created/updated with comprehensive content covering the specified areas
+
+2. **Troubleshooting Guide Validation**: Test each documented gotcha scenario by:
+   - Intentionally creating the problem condition
+   - Following the documented solution steps
+   - Confirming the issue is resolved
+
+3. **Checklist Functionality**: Execute the updated DO_SERVER_E2E_CHECKLIST.md to ensure:
+   - All program ID verification steps are actionable
+   - Steps catch potential mismatches before they cause failures
+   - Checklist integrates smoothly with existing workflow
+
+4. **Cross-Reference Accuracy**: Verify all program IDs, file paths, and command examples in documentation match the current system configuration (4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd)
+
+5. **Documentation Accessibility**: Confirm documentation is properly linked from main README.md and follows project documentation standards
+

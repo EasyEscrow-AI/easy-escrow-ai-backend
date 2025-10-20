@@ -1,0 +1,35 @@
+# Task ID: 56
+# Title: Pre-flight: Verify Program ID and Keypair Match
+# Status: done
+# Dependencies: 45
+# Priority: high
+# Description: Verify that the intended Program ID matches the keypair at target/deploy/escrow-keypair.json and restore from backup if there's a mismatch.
+# Details:
+This pre-flight verification ensures the program keypair is correct before deployment:
+
+1. Check current keypair address:
+   ```bash
+   solana address -k target/deploy/escrow-keypair.json
+   ```
+
+2. Verify the output matches the expected Program ID: 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd
+
+3. If there's a mismatch, restore from backup:
+   ```bash
+   cp temp/escrow-keypair-4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd.json target/deploy/escrow-keypair.json
+   ```
+
+4. Re-verify after restoration:
+   ```bash
+   solana address -k target/deploy/escrow-keypair.json
+   ```
+
+This verification prevents deployment issues caused by incorrect keypairs and ensures consistency with the expected program configuration. The backup keypair should have been created during the initial keypair generation process.
+
+# Test Strategy:
+1. Execute `solana address -k target/deploy/escrow-keypair.json` and confirm output is exactly: 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd
+2. If mismatch occurs, verify backup file exists at temp/escrow-keypair-4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd.json
+3. After restoration (if needed), re-run address command and verify correct output
+4. Check file permissions and ensure keypair file is readable by deployment tools
+5. Document any mismatch found and restoration performed for audit trail
+

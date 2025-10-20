@@ -1,0 +1,114 @@
+# Task ID: 63
+# Title: Document STAGING Environment Strategy and Architecture
+# Status: pending
+# Dependencies: 62
+# Priority: high
+# Description: Create detailed documentation outlining the STAGING environment setup, configuration, and strategic decisions to ensure production-like testing and deployment fidelity with emphasis on CI/CD-based deployment strategy.
+# Details:
+Develop comprehensive documentation in docs/architecture/STAGING_STRATEGY.md covering the following key areas:
+
+**1. STAGING Environment Overview**
+- Purpose: Production-like testing on devnet (release candidate gate)
+- Not a manual deploy environment - CI/CD only
+- Promotion path: Local → DEV → STAGING → PROD
+- Build once, promote everywhere (same .so and IDL)
+
+**2. Why Devnet for STAGING (Not Testnet)**
+- Devnet: Public testing playground, faucet access, stable for app testing
+- Testnet: Validator/core stress testing, newer branches, can be flaky
+- Mainnet-shadow: Small gated real mainnet transactions (separate step)
+
+**3. Environment Separation Strategy**
+Even though DEV and STAGING both use devnet:
+- Separate Program IDs: DEV can be noisy; STAGING clean and stable
+- Separate RPC endpoints: Private RPC per env to isolate rate limits
+- Separate infrastructure: DB, Redis, queues, indexers, monitoring
+- Separate wallets: Distinct funder/test wallets, independent balance management
+- Separate configs: Anchor.dev.toml vs Anchor.staging.toml
+
+**4. Build-Once-Promote Pattern**
+Merge to staging branch → CI: Build (pin Solana 1.18.x, Rust 1.75.0) → Generate artifacts (.so, IDL, checksums) → Unit tests (no public chain) → Store artifacts → [Manual Approval Gate] → CI: Promote to STAGING → Deploy same .so and IDL → Smoke tests → E2E tests → Mark as RC for PROD
+
+**5. CI/CD Requirements**
+- Never deploy from laptop ("ssh + deploy" is forbidden)
+- All deploys through GitHub Actions or similar CI
+- Pinned toolchains (reproducible builds)
+- Artifact checksums for verification
+- Auditable (who/what/when logged)
+- Automatic rollback capability
+
+**6. One-Time Setup**
+- Separate Program IDs per env (DEV, STAGING, PROD)
+- Keep keypairs encrypted in repo or secure store (never reuse IDs)
+- Anchor.dev.toml and Anchor.staging.toml configs
+- CI secrets: deployer keypairs, RPC URLs, seed mints
+- Use ANCHOR_CONFIG env var or -C flag to switch configs
+
+**7. Upgrade Authority Management**
+- Keep upgrade authority in safe signer (multisig, not laptop)
+- Can transfer authority later or make program immutable
+- Document who holds upgrade authority
+- Plan for emergency upgrades
+
+**8. Program ID Tracking**
+Environment-specific Program IDs:
+- DEV: 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd (devnet)
+- STAGING: [from Task 64] (devnet)
+- PROD: [TBD - will generate separately for mainnet]
+
+**9. Canary Deployments and Rollback**
+After any deployment:
+- Run synthetic canary swaps with tiny amounts
+- Monitor metrics and error rates
+- Have rollback plan ready (< 5 minutes)
+- Keep previous deployment artifacts
+
+**10. What STAGING Provides**
+✅ Stable RC lane separate from DEV churn
+✅ Prod-like topology (API, queues, websockets, DB, metrics)
+✅ Repeatable E2E before mainnet - no real funds at risk
+✅ Performance baseline establishment
+✅ Security testing gate
+✅ Confidence for production promotion
+
+**11. Migration from DEV to STAGING**
+- Promote code, NOT keys
+- Each environment has distinct credentials
+- Test database migrations on STAGING first
+- Verify backward compatibility
+- Run full test suite before marking RC ready
+
+**12. Mainnet-Shadow Testing (Separate from STAGING)**
+- Small, gated real mainnet transactions
+- Validates production conditions devnet can't reproduce
+- Not part of STAGING - separate testing phase
+- Will be implemented before PROD launch
+
+Create related documentation:
+- docs/deployment/STAGING_CI_CD_COMPLETE.md
+- docs/deployment/ANCHOR_CONFIG_SETUP.md
+- docs/deployment/STAGING_CI_DEPLOYMENT.md
+
+Incorporate best practices from blockchain DevOps and environment security, such as Infrastructure as Code (IaC) for environment replication, centralized secrets management, and monitoring strategies to detect configuration drift. Use diagrams and examples where appropriate to illustrate architecture and workflows.
+
+# Test Strategy:
+Verify documentation completeness by ensuring all specified topics are thoroughly covered with clear explanations and rationale.
+
+Conduct peer reviews with development, DevOps, and security teams to validate accuracy and practicality.
+
+Test the documented CI/CD deployment pipeline by executing a full deployment cycle from Local to PROD, confirming each environment's configuration matches the documentation and that the build-once-promote pattern works correctly.
+
+Simulate upgrade authority multisig workflows and canary deployments as described to confirm procedures are feasible and effective.
+
+Validate the CI/CD requirements by testing that manual deployments are properly blocked and all deployments go through the approved CI pipeline.
+
+Test the environment separation strategy by confirming that DEV and STAGING environments are properly isolated despite both using devnet.
+
+Review wallet management practices against security standards to ensure code promotion strategy is correctly implemented and no keys are shared between environments.
+
+Confirm that the rationale for using devnet over testnet is well justified and aligns with current best practices.
+
+Verify that all related documentation files are created and properly cross-referenced.
+
+Ensure the documentation is accessible and stored at docs/architecture/STAGING_STRATEGY.md for team reference.
+

@@ -1,0 +1,247 @@
+# Task ID: 76
+# Title: Implement STAGING CI/CD Pipeline
+# Status: pending
+# Dependencies: 70, 69, 68, 67, 73
+# Priority: medium
+# Description: Setup automated CI/CD pipeline for STAGING environment following the build-once-promote pattern with comprehensive testing, security scanning, deployment automation, and rollback capabilities.
+# Details:
+Create a complete CI/CD pipeline for the STAGING environment following the build-once-promote pattern:
+
+**Pipeline Architecture:**
+```
+[Merge to staging] 
+    ↓
+[Build Once] → Store Artifacts
+    ↓
+[Unit Tests]
+    ↓
+[Promote to STAGING] → Deploy Program + Backend
+    ↓
+[Smoke Tests]
+    ↓
+[E2E Tests]
+    ↓
+[Manual Approval Gate]
+    ↓
+[Ready for PROD] (future)
+```
+
+**Key Principles:**
+- Build once, promote everywhere (same .so and IDL)
+- Never deploy from laptop
+- Pin all toolchains
+- Separate configs per environment
+- Use private RPC per environment
+- Require green tests before promotion
+
+**Step 1: Create GitHub Actions Build Workflow**
+```yaml
+# .github/workflows/staging-build.yml
+name: STAGING Build
+
+on:
+  push:
+    branches: [staging]
+    tags: ['staging-v*']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Cache Solana CLI
+        uses: actions/cache@v3
+        with:
+          path: ~/.local/share/solana
+          key: solana-1.18.x
+      
+      - name: Install pinned Solana CLI
+        run: sh -c "$(curl -sSfL https://release.solana.com/v1.18.x/install)"
+      
+      - name: Install pinned Rust toolchain
+        run: rustup show  # Reads rust-toolchain.toml
+      
+      - name: Build program (once for all envs)
+        run: anchor build
+      
+      - name: Generate checksums for verification
+        run: |
+          cd target/deploy
+          shasum -a 256 escrow.so > escrow.so.sha256
+          cd ../idl
+          shasum -a 256 escrow.json > escrow.json.sha256
+      
+      - name: Run unit tests (no public chain needed)
+        run: anchor test --skip-deploy
+      
+      - name: Build backend Docker image
+        run: docker build -t easyescrow-backend:${{ github.sha }} .
+      
+      - name: Upload program artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: program-artifacts-${{ github.sha }}
+          path: |
+            target/deploy/escrow.so*
+            target/idl/escrow.json*
+          retention-days: 90
+      
+      - name: Push Docker image to registry
+        run: |
+          docker tag easyescrow-backend:${{ github.sha }} \
+            registry.digitalocean.com/easyescrow/backend:staging-${{ github.sha }}
+          docker push registry.digitalocean.com/easyescrow/backend:staging-${{ github.sha }}
+```
+
+**Step 2: Create GitHub Actions Deploy Workflow**
+```yaml
+# .github/workflows/staging-deploy.yml
+name: STAGING Deploy
+
+on:
+  workflow_run:
+    workflows: ["STAGING Build"]
+    types: [completed]
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    environment: staging  # Manual approval gate
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: program-artifacts-${{ github.sha }}
+      
+      - name: Verify checksums
+        run: |
+          cd target/deploy
+          shasum -a 256 -c escrow.so.sha256
+          cd ../idl
+          shasum -a 256 -c escrow.json.sha256
+      
+      - name: Setup Solana CLI
+        run: sh -c "$(curl -sSfL https://release.solana.com/v1.18.x/install)"
+      
+      - name: Deploy program to STAGING
+        env:
+          STAGING_DEPLOYER_KEY: ${{ secrets.STAGING_DEPLOYER_KEYPAIR }}
+          STAGING_RPC_URL: ${{ secrets.STAGING_RPC_URL }}
+        run: |
+          echo "$STAGING_DEPLOYER_KEY" > /tmp/deployer.json
+          chmod 600 /tmp/deployer.json
+          
+          anchor deploy \
+            -C Anchor.staging.toml \
+            --provider.cluster devnet \
+            --provider.wallet /tmp/deployer.json
+      
+      - name: Update IDL
+        run: |
+          anchor idl upgrade ${{ secrets.STAGING_PROGRAM_ID }} \
+            target/idl/escrow.json \
+            -C Anchor.staging.toml
+      
+      - name: Deploy backend to DO App Platform
+        env:
+          DOCTL_TOKEN: ${{ secrets.DIGITAL_OCEAN_API_KEY }}
+        run: |
+          doctl apps create-deployment ${{ secrets.STAGING_APP_ID }} \
+            --image registry.digitalocean.com/easyescrow/backend:staging-${{ github.sha }} \
+            --wait
+      
+      - name: Run smoke tests
+        run: |
+          npm ci
+          npm run test:staging:smoke
+        env:
+          STAGING_API_URL: https://staging-api.easyescrow.ai
+      
+      - name: Run E2E tests
+        run: npm run test:staging:e2e
+      
+      - name: Notify success
+        uses: 8398a7/action-slack@v3
+        with:
+          status: success
+          text: '✅ STAGING deployment ${{ github.sha }} completed successfully'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+      
+      - name: Notify failure
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          text: '❌ STAGING deployment ${{ github.sha }} failed'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+```
+
+**Step 3: Create Rollback Workflow**
+```yaml
+# .github/workflows/staging-rollback.yml
+name: STAGING Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit_sha:
+        description: 'Git SHA to rollback to'
+        required: true
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download previous artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: program-artifacts-${{ github.event.inputs.commit_sha }}
+      
+      - name: Redeploy previous version
+        run: |
+          # Same deployment steps as promote job
+          # But using specified commit_sha artifacts
+```
+
+**Step 4: CI Secrets Configuration**
+In GitHub repo settings → Secrets and variables → Actions:
+
+```
+STAGING_DEPLOYER_KEYPAIR: [base58 or JSON keypair]
+STAGING_RPC_URL: https://devnet.helius-rpc.com/...
+STAGING_PROGRAM_ID: <from task 64>
+STAGING_APP_ID: <DO App Platform app ID>
+DIGITAL_OCEAN_API_KEY: <from .env>
+SLACK_WEBHOOK: <for notifications>
+```
+
+**Step 5: Branch Protection Rules**
+- Require status checks to pass: Build, Tests
+- Require manual approval for deployment
+- Require linear history
+
+Document in: docs/deployment/STAGING_CI_CD_COMPLETE.md
+
+# Test Strategy:
+1. **Pipeline Execution Testing**: Trigger the CI/CD pipeline by pushing to staging branch and verify all stages complete successfully: build → unit tests → promote → smoke tests → E2E tests
+
+2. **Build-Once Verification**: Confirm the same artifacts (.so file and IDL) are used across environments by verifying checksums match between build and deployment stages
+
+3. **Automated Testing Validation**: Confirm unit tests, smoke tests, and E2E tests all execute and pass during pipeline run, with proper test result reporting
+
+4. **Deployment Success Testing**: Confirm successful deployment of both Solana program and backend to STAGING environment, verify staging-api.easyescrow.ai is accessible and health checks pass
+
+5. **Manual Approval Gate Testing**: Verify the manual approval gate works correctly, preventing automatic promotion to production without explicit approval
+
+6. **Rollback Capability Testing**: Test the rollback workflow by intentionally introducing a failing test or deployment issue and verify rollback to previous working version occurs successfully
+
+7. **Notification Testing**: Verify Slack notifications are sent for both successful deployments and failures with accurate status information
+
+8. **Toolchain Pinning Verification**: Confirm the pipeline uses pinned versions of Solana CLI (1.18.x) and Rust toolchain as specified in rust-toolchain.toml
+
