@@ -2098,7 +2098,7 @@
         "description": "Create isolated STAGING database infrastructure using existing DO Managed PostgreSQL cluster with staging-specific database, user, migrations, and configuration.",
         "details": "Create comprehensive STAGING database infrastructure leveraging the existing DigitalOcean Managed PostgreSQL cluster:\n\n**Step 1: Create Staging Database**\n```sql\n-- Connect to existing DO Managed PostgreSQL cluster\nCREATE DATABASE easyescrow_staging;\n```\n\n**Step 2: Create Staging Database User**\n```sql\n-- Create staging-specific user with least-privilege permissions\nCREATE USER staging_user WITH PASSWORD 'secure_staging_password';\nGRANT CONNECT ON DATABASE easyescrow_staging TO staging_user;\nGRANT USAGE ON SCHEMA public TO staging_user;\nGRANT CREATE ON SCHEMA public TO staging_user;\n-- Grant table-level permissions after migrations\n```\n\n**Step 3: Configure Environment Variables**\n```bash\n# Add to staging environment configuration\nDATABASE_URL=\"postgresql://staging_user:password@cluster-host:25060/easyescrow_staging?sslmode=require\"\nDATABASE_POOL_SIZE=10\nDATABASE_POOL_TIMEOUT=30\n```\n\n**Step 4: Run Prisma Migrations**\n```bash\n# Set staging database URL\nexport DATABASE_URL=\"postgresql://staging_user:password@cluster-host:25060/easyescrow_staging?sslmode=require\"\n\n# Run migrations against staging database\nnpx prisma migrate deploy\nnpx prisma generate\n```\n\n**Step 5: Seed Test Data (if needed)**\n```bash\n# Create staging-specific seed data\nnpx prisma db seed --preview-feature\n# OR run custom staging seed script\nnode scripts/seed-staging.js\n```\n\n**Step 6: Configure Connection Pooling**\n- Leverage DO Managed PostgreSQL built-in connection pooling\n- Configure staging-specific pool settings (smaller than prod)\n- Set appropriate connection limits for staging workload\n\n**Step 7: Setup Backup Schedule**\n- Configure automated backups (daily instead of hourly like prod)\n- Set retention period (7 days for staging vs 30 days for prod)\n- Document backup restoration process\n\n**Step 8: Store Connection Strings Securely**\n```bash\n# Store in DigitalOcean App Platform environment variables\nSTAGING_DATABASE_URL=\"postgresql://staging_user:password@cluster-host:25060/easyescrow_staging?sslmode=require\"\nSTAGING_DATABASE_POOL_URL=\"postgresql://staging_user:password@pooler-host:25061/easyescrow_staging?sslmode=require\"\n```\n\n**Step 9: Update Documentation**\nAdd staging database details to docs/setup/DATABASE_SETUP.md:\n- Connection string format\n- User permissions and roles\n- Migration process for staging\n- Backup and recovery procedures\n- Troubleshooting common issues",
         "testStrategy": "1. **Database Creation Verification**: Connect to DO Managed PostgreSQL cluster and verify `easyescrow_staging` database exists using `\\l` command in psql\n\n2. **User Permissions Testing**: Connect as `staging_user` and verify:\n   - Can connect to easyescrow_staging database\n   - Can create tables in public schema\n   - Cannot access other databases (easyescrow_prod, easyescrow_dev)\n   - Has appropriate read/write permissions on migrated tables\n\n3. **Migration Success Validation**: \n   - Run `npx prisma migrate status` to confirm all migrations applied\n   - Verify schema matches expected structure using `\\dt` and `\\d table_name`\n   - Check that all indexes, constraints, and relationships are properly created\n\n4. **Connection Pooling Test**: \n   - Test connections through both direct and pooled connection strings\n   - Verify connection limits are respected\n   - Monitor connection pool metrics in DO dashboard\n\n5. **Backup Configuration Verification**:\n   - Confirm backup schedule is active in DO dashboard\n   - Test point-in-time recovery capability with a small test restoration\n   - Verify backup retention settings match staging requirements\n\n6. **Environment Integration Test**:\n   - Deploy staging application with new DATABASE_URL\n   - Execute basic CRUD operations against staging database\n   - Verify application logs show successful database connections\n   - Run staging-specific test suite to validate full functionality",
-        "status": "in-progress",
+        "status": "done",
         "dependencies": [
           "42",
           "63"
@@ -2108,7 +2108,7 @@
         "complexity": 5,
         "recommendedSubtasks": 2,
         "expansionPrompt": "Split into: (1) database and user creation with least-privilege permissions, and (2) migration, seeding, connection pooling, and backup configuration. This separates the initial provisioning from the ongoing operational setup.",
-        "updatedAt": "2025-10-20T02:51:43.325Z"
+        "updatedAt": "2025-10-20T03:01:32.980Z"
       },
       {
         "id": "68",
@@ -2659,9 +2659,9 @@
     ],
     "metadata": {
       "version": "1.0.0",
-      "lastModified": "2025-10-20T02:51:43.326Z",
+      "lastModified": "2025-10-20T03:01:32.981Z",
       "taskCount": 67,
-      "completedCount": 42,
+      "completedCount": 43,
       "tags": [
         "master"
       ]
