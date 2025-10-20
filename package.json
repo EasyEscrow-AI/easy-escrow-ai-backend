@@ -65,6 +65,9 @@
     "test:staging:smoke": "mocha --require ts-node/register tests/staging/staging-smoke.test.ts --timeout 60000 --reporter spec --colors",
     "test:staging:smoke:ci": "ts-node scripts/testing/smoke-tests.ts",
     "staging:migrate:ci": "ts-node scripts/deployment/migrate-staging.ts",
+    "staging:verify": "powershell -ExecutionPolicy Bypass -File ./scripts/deployment/verify-staging-deployment.ps1",
+    "staging:verify:verbose": "powershell -ExecutionPolicy Bypass -File ./scripts/deployment/verify-staging-deployment.ps1 -Verbose",
+    "staging:verify:skip-tests": "powershell -ExecutionPolicy Bypass -File ./scripts/deployment/verify-staging-deployment.ps1 -SkipSmokeTests",
     "prepare": "husky"
   },
   "keywords": [
