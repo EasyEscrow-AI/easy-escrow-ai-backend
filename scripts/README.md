@@ -37,8 +37,11 @@ scripts/
 - `.env.devnet.example` - Example environment configuration for devnet
 
 #### Staging (`deployment/staging/`)
+- `build-with-checksums.ps1` - Build escrow program with artifact verification
+- `deploy-to-staging.ps1` - Deploy escrow program to STAGING (Devnet)
+- `post-deploy-migrate.ps1` - Post-deployment migration and initialization
 - `fund-staging-wallets.ps1` - Fund staging environment wallets
-- `deploy-with-env-verification.ps1` - Deploy with environment verification
+- `deploy-with-env-verification.ps1` - Deploy backend with environment verification
 
 #### DigitalOcean (`deployment/digitalocean/`)
 - `deploy-to-digitalocean.ps1/.sh` - Deploy to DigitalOcean App Platform
