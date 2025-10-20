@@ -11,6 +11,9 @@
 name: easyescrow-backend-staging
 region: sgp1
 
+# Note: VPC configuration must be added via DigitalOcean Console
+# VPC: easyescrow-vpc (1b54e9f9-6da0-45bd-9acb-2b9df642aa61)
+
 services:
   - name: api
     # Build configuration
