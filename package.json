@@ -55,6 +55,8 @@
     "docker:fresh:keep-data": "powershell -ExecutionPolicy Bypass -File ./scripts/development/docker/docker-fresh-start.ps1 -KeepData",
     "docker:fresh:seed": "powershell -ExecutionPolicy Bypass -File ./scripts/development/docker/docker-fresh-start.ps1 -Seed",
     "docker:clean": "docker compose down -v --rmi all && docker builder prune -f",
+    "staging:setup-env": "powershell -ExecutionPolicy Bypass -File ./scripts/deployment/setup-staging-env.ps1",
+    "staging:rotate-secrets": "powershell -ExecutionPolicy Bypass -File ./scripts/deployment/rotate-staging-secrets.ps1",
     "staging:build": "powershell -ExecutionPolicy Bypass -File ./scripts/deployment/staging/build-with-checksums.ps1",
     "staging:build:clean": "powershell -ExecutionPolicy Bypass -File ./scripts/deployment/staging/build-with-checksums.ps1 -Clean",
     "staging:deploy": "powershell -ExecutionPolicy Bypass -File ./scripts/deployment/staging/deploy-to-staging.ps1",

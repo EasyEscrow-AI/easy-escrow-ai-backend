@@ -52,7 +52,6 @@ logs/
 
 # Environment & Configuration Files with Secrets
 .env
-.env.*
 .env.local
 .env.localnet
 .env.development
@@ -60,6 +59,7 @@ logs/
 .env.staging
 .env.test
 *.env
+!.env.*.example
 .envrc
 .secrets
 secrets.yml

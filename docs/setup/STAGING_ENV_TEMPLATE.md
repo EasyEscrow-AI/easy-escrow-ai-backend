@@ -1,11 +1,21 @@
 # Staging Environment Variables Template
 
-This document provides a template for staging environment variables. Copy these to your `.env.staging` file or DigitalOcean App Platform environment variables.
+This document provides a template for staging environment variables with the **DEVNET_STAGING_*** naming convention to differentiate from DEV environment variables.
 
 ## How to Use This Template
 
 1. **For Local Testing**: Create `.env.staging` in the project root and copy these variables
 2. **For DigitalOcean Deployment**: Add these as environment variables in App Platform settings
+3. **Automated Setup**: Run `.\scripts\deployment\setup-staging-env.ps1` to generate `.env.staging` automatically
+
+## ⚠️ IMPORTANT: Naming Convention
+
+**STAGING uses `DEVNET_STAGING_*` prefix** to avoid conflicts with DEV environment (`DEVNET_*`).
+
+- ✅ `DEVNET_STAGING_PROGRAM_ID` - STAGING environment
+- ✅ `DEVNET_STAGING_SENDER_PRIVATE_KEY` - STAGING wallet
+- ❌ `DEVNET_PROGRAM_ID` - DEV environment only
+- ❌ `DEVNET_SENDER_PRIVATE_KEY` - DEV wallet only
 
 ## Environment Variables
 
@@ -41,15 +51,19 @@ SOLANA_RPC_TIMEOUT=30000                      # 30 seconds
 SOLANA_RPC_RETRIES=3                          # Number of retry attempts
 SOLANA_RPC_HEALTH_CHECK_INTERVAL=30000        # Health check interval in ms
 
-# Anchor Wallet (Staging)
-# Use absolute path to your staging wallet keypair
-ANCHOR_WALLET=/path/to/staging/wallet.json
+# STAGING Program Configuration (Devnet)
+# NOTE: Uses DEVNET_STAGING_* prefix to differentiate from DEV
+DEVNET_STAGING_PROGRAM_ID=AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei
 
-# Program IDs (Staging Devnet Programs)
-ESCROW_PROGRAM_ID=YourStagingProgramIdHere
+# STAGING Wallet Configuration (Base58 Private Keys)
+# Extract using: npx ts-node scripts/utilities/extract-base58-keys.ts
+DEVNET_STAGING_SENDER_PRIVATE_KEY=your_staging_sender_private_key_base58
+DEVNET_STAGING_RECEIVER_PRIVATE_KEY=your_staging_receiver_private_key_base58
+DEVNET_STAGING_ADMIN_PRIVATE_KEY=your_staging_admin_private_key_base58
+DEVNET_STAGING_FEE_COLLECTOR_PRIVATE_KEY=your_staging_fee_collector_private_key_base58
 
-# USDC Token (Devnet)
-USDC_MINT=Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr
+# USDC Token (Official Circle Devnet)
+DEVNET_STAGING_USDC_MINT_ADDRESS=Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr
 
 # Redis Configuration (Staging)
 REDIS_HOST=your-staging-redis.cloud.redislabs.com

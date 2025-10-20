@@ -1,0 +1,369 @@
+#
+# DigitalOcean App Platform Configuration - STAGING Environment
+#
+# This configuration uses DEVNET_STAGING_* naming convention to differentiate
+# from DEV environment variables.
+#
+# Deploy with: doctl apps create --spec staging-app.yaml
+# Update with: doctl apps update <app-id> --spec staging-app.yaml
+#
+
+name: easyescrow-staging
+region: nyc
+
+services:
+  - name: api
+    # Build configuration
+    github:
+      repo: VENTURE-AI-LABS/easy-escrow-ai-backend
+      branch: staging
+      deploy_on_push: true
+    
+    # Runtime
+    environment_slug: node-js
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    
+    # Build command
+    build_command: npm ci && npm run build
+    
+    # Start command
+    run_command: npm start
+    
+    # Health check
+    health_check:
+      http_path: /health
+      initial_delay_seconds: 30
+      period_seconds: 30
+      timeout_seconds: 10
+      success_threshold: 1
+      failure_threshold: 3
+    
+    # HTTP configuration
+    http_port: 8080
+    
+    # Routes
+    routes:
+      - path: /
+    
+    # Environment variables
+    envs:
+      #
+      # Core Environment
+      #
+      - key: NODE_ENV
+        value: staging
+        scope: RUN_AND_BUILD_TIME
+      
+      - key: SOLANA_NETWORK
+        value: devnet
+        scope: RUN_AND_BUILD_TIME
+      
+      - key: PORT
+        value: "8080"
+        scope: RUN_AND_BUILD_TIME
+      
+      - key: HOST
+        value: 0.0.0.0
+        scope: RUN_AND_BUILD_TIME
+      
+      - key: LOG_LEVEL
+        value: debug
+        scope: RUN_AND_BUILD_TIME
+      
+      #
+      # Solana RPC Configuration
+      #
+      - key: SOLANA_RPC_URL
+        value: https://devnet.helius-rpc.com/?api-key=YOUR_HELIUS_API_KEY
+        type: SECRET
+        scope: RUN_TIME
+      
+      - key: SOLANA_RPC_URL_FALLBACK
+        value: https://api.devnet.solana.com
+        scope: RUN_TIME
+      
+      - key: SOLANA_RPC_TIMEOUT
+        value: "30000"
+        scope: RUN_TIME
+      
+      - key: SOLANA_RPC_RETRIES
+        value: "3"
+        scope: RUN_TIME
+      
+      - key: SOLANA_RPC_HEALTH_CHECK_INTERVAL
+        value: "30000"
+        scope: RUN_TIME
+      
+      #
+      # STAGING Program Configuration
+      # NOTE: Uses DEVNET_STAGING_* prefix
+      #
+      - key: DEVNET_STAGING_PROGRAM_ID
+        value: AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei
+        scope: RUN_TIME
+      
+      #
+      # STAGING Wallet Configuration (Base58 Private Keys)
+      # NOTE: Uses DEVNET_STAGING_* prefix to avoid DEV conflicts
+      #
+      - key: DEVNET_STAGING_SENDER_PRIVATE_KEY
+        value: YOUR_STAGING_SENDER_PRIVATE_KEY
+        type: SECRET
+        scope: RUN_TIME
+      
+      - key: DEVNET_STAGING_RECEIVER_PRIVATE_KEY
+        value: YOUR_STAGING_RECEIVER_PRIVATE_KEY
+        type: SECRET
+        scope: RUN_TIME
+      
+      - key: DEVNET_STAGING_ADMIN_PRIVATE_KEY
+        value: YOUR_STAGING_ADMIN_PRIVATE_KEY
+        type: SECRET
+        scope: RUN_TIME
+      
+      - key: DEVNET_STAGING_FEE_COLLECTOR_PRIVATE_KEY
+        value: YOUR_STAGING_FEE_COLLECTOR_PRIVATE_KEY
+        type: SECRET
+        scope: RUN_TIME
+      
+      #
+      # Token Configuration
+      #
+      - key: DEVNET_STAGING_USDC_MINT_ADDRESS
+        value: Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr
+        scope: RUN_TIME
+      
+      #
+      # Database Configuration
+      #
+      - key: DATABASE_URL
+        value: postgresql://staging_user:PASSWORD@host.db.ondigitalocean.com:25060/easyescrow_staging?sslmode=require
+        type: SECRET
+        scope: RUN_TIME
+      
+      - key: DATABASE_POOL_URL
+        value: postgresql://staging_user:PASSWORD@host-pooler.db.ondigitalocean.com:25061/easyescrow_staging?sslmode=require
+        type: SECRET
+        scope: RUN_TIME
+      
+      - key: DATABASE_POOL_SIZE
+        value: "10"
+        scope: RUN_TIME
+      
+      - key: DATABASE_POOL_TIMEOUT
+        value: "30"
+        scope: RUN_TIME
+      
+      #
+      # Redis Configuration
+      #
+      - key: REDIS_URL
+        value: redis://default:PASSWORD@redis-xxxxx.cloud.redislabs.com:xxxxx
+        type: SECRET
+        scope: RUN_TIME
+      
+      #
+      # Platform Fee Configuration
+      #
+      - key: PLATFORM_FEE_BPS
+        value: "100"
+        scope: RUN_TIME
+      
+      - key: FEE_COLLECTOR_ADDRESS
+        value: 8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ
+        scope: RUN_TIME
+      
+      #
+      # Monitoring & Health Checks
+      #
+      - key: MONITORING_ENDPOINT
+        value: https://staging-api.easyescrow.ai/health
+        scope: RUN_TIME
+      
+      - key: HEALTH_CHECK_ENABLED
+        value: "true"
+        scope: RUN_TIME
+      
+      - key: HEALTH_CHECK_PATH
+        value: /health
+        scope: RUN_TIME
+      
+      - key: ENABLE_DEPOSIT_MONITORING
+        value: "true"
+        scope: RUN_TIME
+      
+      - key: DEPOSIT_POLL_INTERVAL_MS
+        value: "10000"
+        scope: RUN_TIME
+      
+      - key: TRANSACTION_CONFIRMATION_TIMEOUT
+        value: "60000"
+        scope: RUN_TIME
+      
+      #
+      # JWT Configuration
+      #
+      - key: JWT_SECRET
+        value: YOUR_JWT_SECRET
+        type: SECRET
+        scope: RUN_TIME
+      
+      - key: JWT_EXPIRATION
+        value: 24h
+        scope: RUN_TIME
+      
+      #
+      # API Rate Limiting
+      #
+      - key: RATE_LIMIT_WINDOW_MS
+        value: "900000"
+        scope: RUN_TIME
+      
+      - key: RATE_LIMIT_MAX_REQUESTS
+        value: "200"
+        scope: RUN_TIME
+      
+      #
+      # CORS Configuration
+      #
+      - key: CORS_ORIGIN
+        value: https://staging.easyescrow.ai,http://localhost:3000
+        scope: RUN_TIME
+      
+      #
+      # Webhook Configuration
+      #
+      - key: WEBHOOK_SECRET
+        value: YOUR_WEBHOOK_SECRET
+        type: SECRET
+        scope: RUN_TIME
+      
+      - key: WEBHOOK_MAX_RETRIES
+        value: "5"
+        scope: RUN_TIME
+      
+      - key: WEBHOOK_RETRY_DELAY
+        value: "5000"
+        scope: RUN_TIME
+      
+      #
+      # Feature Flags
+      #
+      - key: ENABLE_WEBHOOKS
+        value: "true"
+        scope: RUN_TIME
+      
+      - key: ENABLE_RATE_LIMITING
+        value: "true"
+        scope: RUN_TIME
+      
+      - key: ENABLE_REQUEST_LOGGING
+        value: "true"
+        scope: RUN_TIME
+      
+      #
+      # Swagger/Documentation
+      #
+      - key: ENABLE_SWAGGER
+        value: "true"
+        scope: RUN_TIME
+      
+      - key: SWAGGER_PATH
+        value: /api-docs
+        scope: RUN_TIME
+      
+      #
+      # Monitoring & Analytics (Optional)
+      #
+      - key: SENTRY_DSN
+        value: ""
+        type: SECRET
+        scope: RUN_TIME
+      
+      - key: SENTRY_ENVIRONMENT
+        value: staging
+        scope: RUN_TIME
+      
+      - key: SENTRY_TRACES_SAMPLE_RATE
+        value: "0.5"
+        scope: RUN_TIME
+      
+      #
+      # Email Configuration (Test Service)
+      #
+      - key: SMTP_HOST
+        value: smtp.mailtrap.io
+        scope: RUN_TIME
+      
+      - key: SMTP_PORT
+        value: "2525"
+        scope: RUN_TIME
+      
+      - key: SMTP_USER
+        value: YOUR_MAILTRAP_USER
+        type: SECRET
+        scope: RUN_TIME
+      
+      - key: SMTP_PASS
+        value: YOUR_MAILTRAP_PASS
+        type: SECRET
+        scope: RUN_TIME
+      
+      - key: SMTP_FROM
+        value: noreply@staging.easyescrow.ai
+        scope: RUN_TIME
+      
+      #
+      # S3/Spaces Configuration
+      #
+      - key: DO_SPACES_ENDPOINT
+        value: https://nyc3.digitaloceanspaces.com
+        scope: RUN_TIME
+      
+      - key: DO_SPACES_BUCKET
+        value: easyescrow-staging
+        scope: RUN_TIME
+      
+      - key: DO_SPACES_KEY
+        value: YOUR_SPACES_KEY
+        type: SECRET
+        scope: RUN_TIME
+      
+      - key: DO_SPACES_SECRET
+        value: YOUR_SPACES_SECRET
+        type: SECRET
+        scope: RUN_TIME
+      
+      - key: DO_SPACES_REGION
+        value: nyc3
+        scope: RUN_TIME
+      
+      #
+      # DigitalOcean API
+      #
+      - key: DIGITAL_OCEAN_API_KEY
+        value: YOUR_DO_API_KEY
+        type: SECRET
+        scope: RUN_TIME
+      
+      #
+      # Logging Configuration
+      #
+      - key: LOG_FORMAT
+        value: json
+        scope: RUN_TIME
+      
+      - key: LOG_MAX_SIZE
+        value: 10m
+        scope: RUN_TIME
+      
+      - key: LOG_MAX_FILES
+        value: "7"
+        scope: RUN_TIME
+
+# Alerts (optional - configure as needed)
+alerts:
+  - rule: DEPLOYMENT_FAILED
+  - rule: DOMAIN_FAILED
+
