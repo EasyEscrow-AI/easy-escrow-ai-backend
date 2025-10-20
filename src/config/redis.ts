@@ -1,11 +1,15 @@
 import Redis, { RedisOptions } from 'ioredis';
-import { config } from './index';
 
 /**
  * Redis Configuration
  * 
  * Manages Redis connection with connection pooling, health checks, and retry logic
+ * 
+ * Note: Reads REDIS_URL directly from process.env to avoid circular dependency with config/index.ts
  */
+
+// Read Redis URL directly to avoid circular dependency
+const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
 
 // Redis connection options with resilient error handling
 const redisOptions: RedisOptions = {
@@ -78,7 +82,7 @@ const bullRedisOptions: RedisOptions = {
 
 // Parse Redis URL or use individual config options
 function getRedisConfig(useBullOptions: boolean = false): RedisOptions {
-  const redisUrl = config.redis.url;
+  const redisUrl = REDIS_URL;
   const baseOptions = useBullOptions ? bullRedisOptions : redisOptions;
   
   if (redisUrl && redisUrl.startsWith('redis://')) {
@@ -111,15 +115,15 @@ export function getBullRedisConfig(): RedisOptions {
 /**
  * Main Redis client instance for caching
  */
-export const redisClient = config.redis.url 
-  ? new Redis(config.redis.url, redisOptions)
+export const redisClient = REDIS_URL 
+  ? new Redis(REDIS_URL, redisOptions)
   : new Redis(getRedisConfig());
 
 /**
  * Separate Redis client for pub/sub (Bull job queues)
  */
-export const redisPubSubClient = config.redis.url
-  ? new Redis(config.redis.url, redisOptions)
+export const redisPubSubClient = REDIS_URL
+  ? new Redis(REDIS_URL, redisOptions)
   : new Redis(getRedisConfig());
 
 // Track error count to prevent log flooding
@@ -242,7 +246,7 @@ export const getRedisInfo = async (): Promise<string> => {
  * Flush Redis database (use with caution!)
  */
 export const flushRedis = async (): Promise<void> => {
-  if (config.nodeEnv === 'production') {
+  if (process.env.NODE_ENV === 'production') {
     throw new Error('Cannot flush Redis in production environment');
   }
   
