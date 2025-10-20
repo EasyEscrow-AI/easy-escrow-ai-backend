@@ -232,31 +232,39 @@ const startServer = async () => {
     await connectRedis();
     console.log('✅ Redis connected');
     
-    // Start monitoring orchestrator
-    console.log('Starting monitoring orchestrator...');
-    await monitoringOrchestrator.start();
-    console.log('✅ Monitoring orchestrator started');
-    
-    // Start expiry-cancellation orchestrator
-    console.log('Starting expiry-cancellation orchestrator...');
-    await expiryCancellationOrchestrator.start();
-    console.log('✅ Expiry-cancellation orchestrator started');
-    
-    // Start idempotency service
-    console.log('Starting idempotency service...');
-    await idempotencyService.start();
-    console.log('✅ Idempotency service started');
-    
-    // Start Express server
+    // Start Express server FIRST to respond to health checks
     app.listen(PORT, () => {
       console.log(`\n🚀 Server is running on port ${PORT}`);
       console.log(`📍 Health check: http://localhost:${PORT}/health`);
       console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`💾 Redis caching: ACTIVE`);
-      console.log(`📋 Job queues: ACTIVE`);
-      console.log(`👁️  Deposit monitoring: ACTIVE`);
-      console.log(`⏰ Expiry checking: ACTIVE`);
-      console.log(`🔑 Idempotency protection: ACTIVE\n`);
+      console.log(`💾 Redis caching: ACTIVE\n`);
+      
+      // Start orchestrators in background after server is listening
+      (async () => {
+        try {
+          console.log('Starting background services...');
+          
+          // Start monitoring orchestrator
+          console.log('Starting monitoring orchestrator...');
+          await monitoringOrchestrator.start();
+          console.log('✅ Monitoring orchestrator started');
+          
+          // Start expiry-cancellation orchestrator
+          console.log('Starting expiry-cancellation orchestrator...');
+          await expiryCancellationOrchestrator.start();
+          console.log('✅ Expiry-cancellation orchestrator started');
+          
+          // Start idempotency service
+          console.log('Starting idempotency service...');
+          await idempotencyService.start();
+          console.log('✅ Idempotency service started');
+          
+          console.log('✅ All background services started');
+        } catch (error) {
+          console.error('⚠️  Error starting background services:', error);
+          console.log('Server will continue running without background services');
+        }
+      })();
     });
   } catch (error) {
     console.error('Failed to start server:', error);
