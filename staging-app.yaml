@@ -169,7 +169,7 @@ services:
       # Redis Configuration
       #
       - key: REDIS_URL
-        value: redis://default:PASSWORD@redis-xxxxx.cloud.redislabs.com:xxxxx
+        value: redis://default:C2FFCNjuy43x5U0GwWCdMIFjNoLpbEQJ@redis-19320.c1.ap-southeast-1-1.ec2.redns.redis-cloud.com:19320
         type: SECRET
         scope: RUN_TIME
       
