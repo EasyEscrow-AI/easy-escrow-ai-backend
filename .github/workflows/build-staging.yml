@@ -1,0 +1,71 @@
+name: Build for STAGING
+
+on:
+  push:
+    branches: [staging]
+    tags: ['staging-*']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Pin Solana CLI
+        run: |
+          sh -c "$(curl -sSfL https://release.solana.com/v1.18.x/install)"
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+      
+      - name: Pin Rust toolchain
+        run: rustup show  # Reads rust-toolchain.toml
+      
+      - name: Install Anchor CLI
+        run: |
+          cargo install --git https://github.com/coral-xyz/anchor avm --locked --force
+          avm install latest
+          avm use latest
+      
+      - name: Build program
+        run: anchor build
+      
+      - name: Generate checksums
+        run: |
+          cd target/deploy && shasum -a 256 escrow.so > escrow.so.sha256
+          cd ../../target/idl && shasum -a 256 escrow.json > escrow.json.sha256
+      
+      - name: Build TypeScript backend
+        run: npm run build
+      
+      - name: Run unit tests
+        run: npm run test:unit
+      
+      - name: Upload program artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: program-artifacts
+          path: |
+            target/deploy/escrow.so
+            target/deploy/escrow.so.sha256
+            target/idl/escrow.json
+            target/idl/escrow.json.sha256
+      
+      - name: Upload backend build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: backend-artifacts
+          path: |
+            dist/
+            package.json
+            package-lock.json
+
