@@ -21,8 +21,12 @@ export const config = {
   // Solana
   solana: {
     rpcUrl: process.env.SOLANA_RPC_URL || 'http://localhost:8899',
+    rpcUrlFallback: process.env.SOLANA_RPC_URL_FALLBACK || 'https://api.devnet.solana.com',
     network: process.env.SOLANA_NETWORK || 'localnet',
     escrowProgramId: process.env.ESCROW_PROGRAM_ID || '',
+    rpcTimeout: parseInt(process.env.SOLANA_RPC_TIMEOUT || '30000', 10),
+    rpcRetries: parseInt(process.env.SOLANA_RPC_RETRIES || '3', 10),
+    rpcHealthCheckInterval: parseInt(process.env.SOLANA_RPC_HEALTH_CHECK_INTERVAL || '30000', 10),
   },
   
   // Security

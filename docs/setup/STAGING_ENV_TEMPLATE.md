@@ -30,9 +30,16 @@ DATABASE_POOL_SIZE=10
 DATABASE_POOL_TIMEOUT=30
 
 # Solana Configuration (Devnet for Staging)
-SOLANA_RPC_ENDPOINT=https://api.devnet.solana.com
+# Primary RPC Endpoint - Use dedicated provider (Helius recommended)
+SOLANA_RPC_URL=https://devnet.helius-rpc.com/?api-key=YOUR_HELIUS_API_KEY
+# Fallback RPC Endpoint - Public devnet as backup
+SOLANA_RPC_URL_FALLBACK=https://api.devnet.solana.com
 SOLANA_NETWORK=devnet
-SOLANA_COMMITMENT=confirmed
+
+# RPC Connection Optimization
+SOLANA_RPC_TIMEOUT=30000                      # 30 seconds
+SOLANA_RPC_RETRIES=3                          # Number of retry attempts
+SOLANA_RPC_HEALTH_CHECK_INTERVAL=30000        # Health check interval in ms
 
 # Anchor Wallet (Staging)
 # Use absolute path to your staging wallet keypair
@@ -131,7 +138,30 @@ DATABASE_URL="postgresql://staging_user:PASSWORD@host:25060/easyescrow_staging?s
 npm run db:seed:staging
 ```
 
-### 2. Wallet Setup
+### 2. RPC Provider Setup
+
+**IMPORTANT**: For production-like staging environment, use a dedicated RPC provider to avoid rate limiting.
+
+```bash
+# 1. Sign up for Helius (recommended free tier)
+#    Visit: https://dashboard.helius.dev/
+
+# 2. Create a new Devnet project named "easy-escrow-staging"
+
+# 3. Copy your API key and update SOLANA_RPC_URL above:
+#    SOLANA_RPC_URL=https://devnet.helius-rpc.com/?api-key=YOUR_API_KEY
+
+# 4. Test the connection
+solana cluster-version --url https://devnet.helius-rpc.com/?api-key=YOUR_API_KEY
+
+# 5. Verify the fallback is configured
+#    SOLANA_RPC_URL_FALLBACK=https://api.devnet.solana.com
+```
+
+For detailed setup instructions, provider comparisons, and troubleshooting:
+📚 See [STAGING_RPC_SETUP.md](../infrastructure/STAGING_RPC_SETUP.md)
+
+### 3. Wallet Setup
 
 ```bash
 # Generate staging wallet
@@ -143,7 +173,7 @@ solana airdrop 5 --url devnet --keypair staging-wallet.json
 # Update ANCHOR_WALLET path in environment variables
 ```
 
-### 3. Program Deployment
+### 4. Program Deployment
 
 ```bash
 # Update Anchor.staging.toml with staging wallet
@@ -156,13 +186,13 @@ anchor deploy --provider.cluster devnet
 # Update ESCROW_PROGRAM_ID in environment variables
 ```
 
-### 4. Redis Setup
+### 5. Redis Setup
 
 1. Create Redis instance in DigitalOcean or Upstash
 2. Get connection details from dashboard
 3. Update REDIS_* variables
 
-### 5. Test Connection
+### 6. Test Connection
 
 ```bash
 # Test database connection
