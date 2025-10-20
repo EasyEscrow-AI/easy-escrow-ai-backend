@@ -166,7 +166,7 @@ Set these instead of using the file:
 - [Static Devnet Wallets Guide](./STATIC_DEVNET_WALLETS.md)
 - [Security Incident Policy](./SECURITY_INCIDENT_CREDENTIAL_EXPOSURE.md)
 - [Test Fixtures README](../tests/fixtures/README.md)
-- [Pre-commit Hooks Setup](../scripts/setup-git-hooks.ps1)
+- [Pre-commit Hooks Setup](../scripts/utilities/git-hooks/setup-git-hooks.ps1)
 
 ## Verification Checklist
 

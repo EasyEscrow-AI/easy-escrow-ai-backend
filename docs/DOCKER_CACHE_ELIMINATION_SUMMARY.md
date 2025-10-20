@@ -113,8 +113,8 @@ Created comprehensive `.dockerignore` to prevent old artifacts from being copied
 ## Files Created/Modified
 
 ### New Files
-1. **`scripts/docker-fresh-start.ps1`** - PowerShell fresh start script (Windows)
-2. **`scripts/docker-fresh-start.sh`** - Bash fresh start script (Linux/Mac)
+1. **`scripts/development/docker/docker-fresh-start.ps1`** - PowerShell fresh start script (Windows)
+2. **`scripts/development/docker/docker-fresh-start.sh`** - Bash fresh start script (Linux/Mac)
 3. **`.dockerignore`** - Prevents copying old artifacts into builds
 4. **`docs/DOCKER_CACHE_ELIMINATION.md`** - Comprehensive documentation
 5. **`docs/DOCKER_CACHE_ELIMINATION_SUMMARY.md`** - This summary

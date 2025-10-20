@@ -20,42 +20,42 @@ The deployment system provides a streamlined way to deploy to DigitalOcean App P
 
 ```powershell
 # Windows PowerShell
-.\scripts\deploy-to-digitalocean.ps1
+.\scripts\deployment\digitalocean\deploy-to-digitalocean.ps1
 
 # Or explicitly
-.\scripts\deploy-to-digitalocean.ps1 -Environment dev
+.\scripts\deployment\digitalocean\deploy-to-digitalocean.ps1 -Environment dev
 ```
 
 ```bash
 # Linux/Mac
-./scripts/deploy-to-digitalocean.sh
+./scripts/deployment/digitalocean/deploy-to-digitalocean.sh
 ```
 
 ### Deploy to Staging
 
 ```powershell
 # Windows
-.\scripts\deploy-to-digitalocean.ps1 -Staging
+.\scripts\deployment\digitalocean\deploy-to-digitalocean.ps1 -Staging
 
 # Or
-.\scripts\deploy-to-digitalocean.ps1 -Environment staging
+.\scripts\deployment\digitalocean\deploy-to-digitalocean.ps1 -Environment staging
 ```
 
 ```bash
 # Linux/Mac
-./scripts/deploy-to-digitalocean.sh --staging
+./scripts/deployment/digitalocean/deploy-to-digitalocean.sh --staging
 ```
 
 ### Deploy to Production
 
 ```powershell
 # Windows (no devnet secrets by default)
-.\scripts\deploy-to-digitalocean.ps1 -Production
+.\scripts\deployment\digitalocean\deploy-to-digitalocean.ps1 -Production
 ```
 
 ```bash
 # Linux/Mac
-./scripts/deploy-to-digitalocean.sh --production
+./scripts/deployment/digitalocean/deploy-to-digitalocean.sh --production
 ```
 
 ## Environment Behavior
@@ -73,7 +73,7 @@ The deployment system provides a streamlined way to deploy to DigitalOcean App P
 Even for dev/staging, you can skip devnet configuration:
 
 ```powershell
-.\scripts\deploy-to-digitalocean.ps1 -Environment dev -NoDevnetSecrets
+.\scripts\deployment\digitalocean\deploy-to-digitalocean.ps1 -Environment dev -NoDevnetSecrets
 ```
 
 ### Dry Run (Preview Changes)
@@ -81,7 +81,7 @@ Even for dev/staging, you can skip devnet configuration:
 Preview what would happen without making changes:
 
 ```powershell
-.\scripts\deploy-to-digitalocean.ps1 -DryRun
+.\scripts\deployment\digitalocean\deploy-to-digitalocean.ps1 -DryRun
 ```
 
 ### Direct Script with All Options
@@ -90,7 +90,7 @@ Use the main deployment script directly for full control:
 
 ```powershell
 # Full control
-.\scripts\digitalocean\deploy.ps1 `
+.\scripts\deployment\digitalocean\deploy.ps1 `
     -Environment dev `
     -AppId "your-app-id" `
     -ApiKey "your-api-key" `
@@ -371,7 +371,7 @@ Common issues:
 ```
 deploy-to-digitalocean.ps1        # User-friendly wrapper
   ↓
-scripts/digitalocean/deploy.ps1   # Main deployment logic
+scripts/deployment/digitalocean/deploy.ps1   # Main deployment logic
   ↓
 setup-devnet-secrets.ps1          # Devnet wallet configuration (if enabled)
   ↓

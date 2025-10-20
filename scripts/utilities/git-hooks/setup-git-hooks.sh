@@ -6,7 +6,7 @@ set -e
 
 HOOK_DIR=".git/hooks"
 HOOK_FILE="$HOOK_DIR/pre-commit"
-SCRIPT_PATH="scripts/pre-commit-secrets-check.sh"
+SCRIPT_PATH="scripts/utilities/git-hooks/pre-commit-secrets-check.sh"
 
 echo "🔧 Setting up Git hooks for secret scanning..."
 
@@ -34,7 +34,7 @@ cat > "$HOOK_FILE" << 'EOF'
 # Scans for secrets before allowing commits
 
 # Run the secrets check script
-bash scripts/pre-commit-secrets-check.sh
+bash scripts/utilities/git-hooks/pre-commit-secrets-check.sh
 
 # Exit with the script's exit code
 exit $?

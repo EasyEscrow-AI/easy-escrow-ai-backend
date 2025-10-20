@@ -17,7 +17,7 @@ Contains **public addresses only** for static devnet wallets used in E2E tests.
 ### `devnet-config.json` ❌ NEVER COMMIT
 Contains **private keys** for devnet wallets.
 - **GITIGNORED** - Must never be committed
-- Created locally by running `scripts/setup-static-devnet-wallets.ps1`
+- Created locally by running `scripts/deployment/devnet/setup-static-devnet-wallets.ps1`
 - Contains `walletKeys` section with base58-encoded private keys
 - Alternative: Use environment variables instead
 
@@ -30,7 +30,7 @@ Template file showing the structure of `devnet-config.json` without real keys.
 
 ### Option 1: Use Setup Script (Recommended)
 ```powershell
-.\scripts\setup-static-devnet-wallets.ps1
+.\scripts\deployment\devnet\setup-static-devnet-wallets.ps1
 ```
 This creates `devnet-config.json` with all necessary keys.
 
@@ -50,8 +50,8 @@ Set these environment variables instead of using `devnet-config.json`:
 ## Pre-commit Protection
 
 The repository has pre-commit hooks that scan for private keys:
-- `scripts/pre-commit-secrets-check.ps1` (Windows)
-- `scripts/pre-commit-secrets-check.sh` (Linux/Mac)
+- `scripts/utilities/git-hooks/pre-commit-secrets-check.ps1` (Windows)
+- `scripts/utilities/git-hooks/pre-commit-secrets-check.sh` (Linux/Mac)
 
 These hooks will **block commits** if they detect:
 - Private keys in base58 format (44-88 characters)
@@ -78,5 +78,5 @@ Even for devnet/testnet:
 
 - [Static Wallet Setup Guide](../../docs/STATIC_DEVNET_WALLETS.md)
 - [Security Incident Policy](../../docs/SECURITY_INCIDENT_CREDENTIAL_EXPOSURE.md)
-- [Pre-commit Hooks Setup](../../scripts/setup-git-hooks.ps1)
+- [Pre-commit Hooks Setup](../../scripts/utilities/git-hooks/setup-git-hooks.ps1)
 

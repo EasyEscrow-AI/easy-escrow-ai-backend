@@ -118,10 +118,10 @@ Successfully implemented a complete local Solana validator environment for compr
 ## NPM Scripts Added
 
 ```json
-"localnet:start": "powershell -ExecutionPolicy Bypass -File ./scripts/start-localnet-validator.ps1",
-"localnet:setup": "powershell -ExecutionPolicy Bypass -File ./scripts/setup-localnet.ps1",
-"localnet:setup-nfts": "powershell -ExecutionPolicy Bypass -File ./scripts/setup-nft-collection.ps1",
-"localnet:reset": "powershell -ExecutionPolicy Bypass -File ./scripts/reset-localnet.ps1",
+"localnet:start": "powershell -ExecutionPolicy Bypass -File ./scripts/development/localnet/start-localnet-validator.ps1",
+"localnet:setup": "powershell -ExecutionPolicy Bypass -File ./scripts/development/localnet/setup-localnet.ps1",
+"localnet:setup-nfts": "powershell -ExecutionPolicy Bypass -File ./scripts/development/localnet/setup-nft-collection.ps1",
+"localnet:reset": "powershell -ExecutionPolicy Bypass -File ./scripts/development/localnet/reset-localnet.ps1",
 "test:localnet": "mocha --require ts-node/register 'tests/localnet/**/*.test.ts' --timeout 60000",
 "test:localnet:comprehensive": "mocha --require ts-node/register 'tests/localnet/localnet-comprehensive.test.ts' --timeout 60000"
 ```

@@ -1,12 +1,92 @@
 # Scripts Directory
 
-This directory contains scripts to help with development, deployment, and utilities.
+This directory contains organized scripts to help with development, deployment, and utilities.
 
-## Scripts Overview
+## Directory Structure
 
-### Command Timeout Utilities
+```
+scripts/
+├── deployment/          # Deployment scripts for different environments
+│   ├── devnet/         # Devnet deployment and setup
+│   ├── staging/        # Staging environment deployment
+│   └── digitalocean/   # DigitalOcean-specific deployment
+├── development/        # Development environment scripts
+│   ├── docker/         # Docker-related scripts
+│   └── localnet/       # Local Solana validator scripts
+├── testing/            # Testing and verification scripts
+│   ├── e2e/           # End-to-end testing scripts
+│   └── verification/  # Verification and validation scripts
+└── utilities/          # General utility scripts
+    ├── wallet/        # Wallet management utilities
+    ├── database/      # Database setup and management
+    ├── git-hooks/     # Git hook scripts
+    └── timeout/       # Command timeout utilities
+```
 
-#### `run-with-timeout.ts`
+## Quick Reference
+
+### Deployment Scripts
+
+#### Devnet (`deployment/devnet/`)
+- `deploy-to-devnet.ps1` - Deploy escrow program to Solana devnet
+- `fund-devnet-wallets.ps1/.sh` - Fund devnet wallets with SOL
+- `set-devnet-env-vars.ps1` - Configure devnet environment variables
+- `setup-devnet-e2e.ps1/.sh` - Setup E2E testing environment for devnet
+- `setup-devnet-nft-usdc.ps1` - Setup NFT and USDC tokens on devnet
+- `setup-static-devnet-wallets.ps1` - Configure static devnet wallets
+- `.env.devnet.example` - Example environment configuration for devnet
+
+#### Staging (`deployment/staging/`)
+- `fund-staging-wallets.ps1` - Fund staging environment wallets
+- `deploy-with-env-verification.ps1` - Deploy with environment verification
+
+#### DigitalOcean (`deployment/digitalocean/`)
+- `deploy-to-digitalocean.ps1/.sh` - Deploy to DigitalOcean App Platform
+- `deploy.ps1` - Alternative deployment script
+- `verify-do-deployment.ps1` - Verify DigitalOcean deployment
+- `verify-do-e2e-readiness.ps1/.sh` - Verify E2E test readiness
+- `verify-do-server.js` - Server verification script
+- `verify-do-wallet-config.ps1` - Verify wallet configuration
+- `install-cli-tools-windows.ps1` - Install CLI tools on Windows
+- `quick-install.ps1` - Quick installation script
+- `run-migration-prod.ps1/.sh` - Run production database migrations
+- `setup-database-roles.sql` - SQL script for database role setup
+- `setup-devnet-secrets.ps1` - Setup devnet secrets in DigitalOcean
+
+### Development Scripts
+
+#### Docker (`development/docker/`)
+- `docker-fresh-start.ps1/.sh` - Fresh Docker environment start
+
+#### Localnet (`development/localnet/`)
+- `reset-localnet.ps1` - Reset local Solana validator
+- `setup-localnet.ps1` - Setup local Solana validator
+- `start-localnet-validator.ps1` - Start local validator
+- `setup-nft-collection.ps1` - Setup NFT collection on localnet
+
+### Utility Scripts
+
+#### Wallet Utilities (`utilities/wallet/`)
+- `convert-keys-to-base58.js` - Convert wallet keys to base58 format
+
+#### Database Utilities (`utilities/database/`)
+- `setup-database.ps1/.sh` - Setup PostgreSQL database
+
+#### Git Hooks (`utilities/git-hooks/`)
+- `setup-git-hooks.ps1/.sh` - Install git hooks
+- `pre-commit-secrets-check.ps1/.sh` - Pre-commit hook for secrets detection
+
+#### Timeout Utilities (`utilities/timeout/`)
+- `run-with-timeout.ps1` - PowerShell timeout wrapper for commands
+- `run-with-timeout.ts` - TypeScript timeout wrapper for commands
+
+#### General Utilities (`utilities/`)
+- `install-solana-tools.ps1` - Install Solana development tools
+- `generate-missing-tasks.js` - Generate missing task files
+
+## Command Timeout Utilities
+
+### `utilities/timeout/run-with-timeout.ts`
 TypeScript utility for running commands with automatic timeout detection.
 
 **Features:**
@@ -19,115 +99,31 @@ TypeScript utility for running commands with automatic timeout detection.
 **Usage:**
 ```bash
 # Basic usage
-ts-node scripts/run-with-timeout.ts git status
+npx ts-node scripts/utilities/timeout/run-with-timeout.ts git status
 
 # Override timeout (in milliseconds)
-ts-node scripts/run-with-timeout.ts --timeout 120000 npm install
+npx ts-node scripts/utilities/timeout/run-with-timeout.ts --timeout 120000 npm install
 
 # Configure retry behavior
-ts-node scripts/run-with-timeout.ts --retries 5 anchor deploy
+npx ts-node scripts/utilities/timeout/run-with-timeout.ts --retries 5 anchor deploy
 ```
 
-**See:** [TIMEOUT_UTILITIES.md](../docs/TIMEOUT_UTILITIES.md) for complete documentation.
-
-#### `run-with-timeout.ps1`
+### `utilities/timeout/run-with-timeout.ps1`
 PowerShell implementation of the timeout utility for Windows users.
 
 **Usage:**
 ```powershell
 # Basic usage
-.\scripts\run-with-timeout.ps1 -Command "git" -Arguments "status"
+.\scripts\utilities\timeout\run-with-timeout.ps1 -Command "git" -Arguments "status"
 
 # Override timeout (in seconds)
-.\scripts\run-with-timeout.ps1 -Command "npm" -Arguments "install" -Timeout 120
+.\scripts\utilities\timeout\run-with-timeout.ps1 -Command "npm" -Arguments "install" -Timeout 120
 
 # Configure retry behavior
-.\scripts\run-with-timeout.ps1 -Command "anchor" -Arguments "deploy" -Retries 5
+.\scripts\utilities\timeout\run-with-timeout.ps1 -Command "anchor" -Arguments "deploy" -Retries 5
 ```
 
 **See:** [TIMEOUT_UTILITIES.md](../docs/TIMEOUT_UTILITIES.md) for complete documentation.
-
-### Deployment Scripts
-
-### 1. `install-solana-tools.ps1`
-Automated installation script for Solana development tools.
-
-**What it installs:**
-- Rust (if not already installed)
-- Solana CLI
-- Anchor Framework (v0.32.1)
-
-**Usage:**
-```powershell
-.\scripts\install-solana-tools.ps1
-```
-
-**Options:**
-- Interactive menu for choosing installation method
-- Automatic PATH configuration
-- Verification of all installations
-
-**Estimated Time:**
-- Method 1 (GitHub Download): 5-10 minutes
-- Method 2 (Cargo Build): 20-30 minutes
-
-### 2. `deploy-to-devnet.ps1`
-Automated deployment script for deploying the escrow program to Solana devnet.
-
-**What it does:**
-1. Verifies all prerequisites are installed
-2. Builds the Solana program (`anchor build`)
-3. Configures Solana for devnet
-4. Checks SOL balance and airdrops if needed
-5. Deploys the program to devnet
-6. Verifies the deployment
-7. Saves deployment info to `deployment-info.txt`
-
-**Usage:**
-```powershell
-.\scripts\deploy-to-devnet.ps1
-```
-
-**Prerequisites:**
-- Rust installed
-- Solana CLI installed
-- Anchor Framework installed
-- Devnet SOL in wallet (~5 SOL)
-
-**Output:**
-- Deployment status and program ID
-- Link to Solana Explorer
-- Deployment info saved to file
-
-### 3. `setup-devnet-e2e.ps1` / `setup-devnet-e2e.sh`
-Setup scripts for E2E devnet testing environment (Task 37).
-
-**Features:**
-- Verifies Solana CLI installation
-- Configures devnet RPC endpoints
-- Checks program deployment
-- Requests SOL airdrops for testing
-- Validates USDC availability
-- Creates output directories
-- Sets up environment variables
-
-**Usage:**
-```powershell
-# Windows
-.\scripts\setup-devnet-e2e.ps1
-
-# Skip airdrop (if rate limited)
-.\scripts\setup-devnet-e2e.ps1 -SkipAirdrop
-```
-
-```bash
-# Linux/Mac
-chmod +x scripts/setup-devnet-e2e.sh
-./scripts/setup-devnet-e2e.sh
-```
-
-### 4. `setup-database.ps1` / `setup-database.sh`
-Database setup scripts (already existing).
 
 ## Quick Start Guide
 
@@ -135,34 +131,74 @@ Database setup scripts (already existing).
 
 ```powershell
 # Step 1: Install development tools
-.\scripts\install-solana-tools.ps1
+.\scripts\utilities\install-solana-tools.ps1
 
-# Step 2: Restart PowerShell (important!)
+# Step 2: Setup database
+.\scripts\utilities\database\setup-database.ps1
+
+# Step 3: Setup git hooks
+.\scripts\utilities\git-hooks\setup-git-hooks.ps1
+
+# Step 4: Restart PowerShell (important!)
 # Close and reopen PowerShell
 
-# Step 3: Deploy to devnet
-.\scripts\deploy-to-devnet.ps1
+# Step 5: Deploy to devnet
+.\scripts\deployment\devnet\deploy-to-devnet.ps1
 ```
 
-### Manual Deployment
-
-If you prefer manual steps:
+### Development Workflow
 
 ```powershell
-# 1. Build the program
-anchor build
+# Start local validator
+.\scripts\development\localnet\start-localnet-validator.ps1
 
-# 2. Configure for devnet
-solana config set --url devnet
+# Setup localnet environment
+.\scripts\development\localnet\setup-localnet.ps1
 
-# 3. Get devnet SOL
-solana airdrop 2
+# Reset localnet if needed
+.\scripts\development\localnet\reset-localnet.ps1
+```
 
-# 4. Deploy
-anchor deploy
+### Docker Development
 
-# 5. Verify
-solana program show <PROGRAM_ID>
+```powershell
+# Fresh Docker start
+.\scripts\development\docker\docker-fresh-start.ps1
+```
+
+### Deployment Workflows
+
+#### Devnet Deployment
+```powershell
+# Setup devnet environment
+.\scripts\deployment\devnet\setup-devnet-e2e.ps1
+
+# Fund wallets
+.\scripts\deployment\devnet\fund-devnet-wallets.ps1
+
+# Deploy program
+.\scripts\deployment\devnet\deploy-to-devnet.ps1
+```
+
+#### Staging Deployment
+```powershell
+# Fund staging wallets
+.\scripts\deployment\staging\fund-staging-wallets.ps1
+
+# Deploy with verification
+.\scripts\deployment\staging\deploy-with-env-verification.ps1
+```
+
+#### DigitalOcean Deployment
+```powershell
+# Deploy to DigitalOcean
+.\scripts\deployment\digitalocean\deploy-to-digitalocean.ps1
+
+# Verify deployment
+.\scripts\deployment\digitalocean\verify-do-deployment.ps1
+
+# Verify E2E readiness
+.\scripts\deployment\digitalocean\verify-do-e2e-readiness.ps1
 ```
 
 ## Troubleshooting
@@ -243,9 +279,10 @@ After successful deployment:
 
 ## Resources
 
-- [DEVNET_DEPLOYMENT_STATUS.md](../DEVNET_DEPLOYMENT_STATUS.md) - Current deployment status
-- [SOLANA_SETUP.md](../SOLANA_SETUP.md) - Detailed setup instructions
-- [DEPLOYMENT.md](../DEPLOYMENT.md) - Complete deployment guide
+- [DEVNET_DEPLOYMENT_GUIDE.md](../docs/DEVNET_DEPLOYMENT_GUIDE.md) - Devnet deployment guide
+- [DEPLOYMENT_GUIDE.md](../docs/DEPLOYMENT_GUIDE.md) - Complete deployment guide
+- [DOCKER_DEPLOYMENT.md](../docs/DOCKER_DEPLOYMENT.md) - Docker deployment guide
+- [TIMEOUT_UTILITIES.md](../docs/TIMEOUT_UTILITIES.md) - Timeout utilities documentation
 - [Solana Documentation](https://docs.solana.com/)
 - [Anchor Documentation](https://www.anchor-lang.com/)
 
@@ -256,7 +293,7 @@ If you encounter issues:
 1. Check the troubleshooting section above
 2. Review error messages carefully
 3. Check Solana status: https://status.solana.com/
-4. Consult the detailed guides in the project root
+4. Consult the detailed guides in the docs directory
 5. Ask on Anchor Discord: https://discord.gg/anchor
 
 ## Notes
@@ -269,5 +306,5 @@ If you encounter issues:
 
 ---
 
-**Last Updated:** October 13, 2025
-
+**Last Updated:** October 20, 2025
+**Organization:** Reorganized into logical subdirectories for better maintainability

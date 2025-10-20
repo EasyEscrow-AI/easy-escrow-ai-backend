@@ -1,6 +1,6 @@
 #!/bin/bash
 # Complete Docker fresh start - eliminates all cache issues
-# Usage: ./scripts/docker-fresh-start.sh [--keep-data] [--seed] [--skip-migrations]
+# Usage: ./scripts/development/docker/docker-fresh-start.sh [--keep-data] [--seed] [--skip-migrations]
 
 set -e
 
