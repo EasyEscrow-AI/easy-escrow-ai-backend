@@ -27,28 +27,46 @@ jobs:
           # Retry logic for Solana CLI installation
           MAX_RETRIES=3
           RETRY_DELAY=5
+          INSTALLED=false
           
           for i in $(seq 1 $MAX_RETRIES); do
             echo "Attempt $i of $MAX_RETRIES to install Solana CLI..."
-            if sh -c "$(curl -sSfL https://release.solana.com/v1.18.x/install)"; then
-              echo "Solana CLI installed successfully!"
-              echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
-              export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
-              break
-            else
-              if [ $i -lt $MAX_RETRIES ]; then
-                echo "Installation failed. Retrying in ${RETRY_DELAY}s..."
-                sleep $RETRY_DELAY
+            
+            # Download the install script
+            INSTALL_SCRIPT=$(curl -sSfL https://release.solana.com/v1.18.x/install 2>&1)
+            CURL_EXIT=$?
+            
+            if [ $CURL_EXIT -eq 0 ] && [ -n "$INSTALL_SCRIPT" ]; then
+              echo "Download successful, running installation..."
+              if sh -c "$INSTALL_SCRIPT"; then
+                echo "Solana CLI installed successfully!"
+                echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+                export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
+                INSTALLED=true
+                break
               else
-                echo "Failed to install Solana CLI after $MAX_RETRIES attempts"
-                exit 1
+                echo "Installation script failed with exit code $?"
               fi
+            else
+              echo "Download failed with curl exit code: $CURL_EXIT"
+            fi
+            
+            if [ $i -lt $MAX_RETRIES ]; then
+              echo "Retrying in ${RETRY_DELAY}s..."
+              sleep $RETRY_DELAY
             fi
           done
           
+          if [ "$INSTALLED" != "true" ]; then
+            echo "Failed to install Solana CLI after $MAX_RETRIES attempts"
+            exit 1
+          fi
+          
           # Verify installation
           export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
+          echo "Verifying Solana CLI installation..."
           solana --version || { echo "Solana CLI verification failed"; exit 1; }
+          echo "Verifying cargo-build-sbf..."
           cargo build-sbf --version || { echo "cargo-build-sbf verification failed"; exit 1; }
       
       - name: Pin Rust toolchain
