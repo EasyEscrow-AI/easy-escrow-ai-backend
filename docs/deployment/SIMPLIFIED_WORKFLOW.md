@@ -76,37 +76,63 @@ https://cloud.digitalocean.com/apps
 
 ## 🚨 **Rollback Process**
 
-If needed, rollback to previous deployment:
+DigitalOcean has native rollback support (much simpler than GitHub Actions):
 
+### **Via DigitalOcean Dashboard (Recommended):**
+1. Go to https://cloud.digitalocean.com/apps
+2. Select your app
+3. Click "Deployments" tab
+4. Click "⋮" menu on previous deployment
+5. Click "Rollback to this deployment"
+6. Confirm ✅
+
+### **Via CLI:**
 ```bash
 # List recent deployments
 doctl apps deployment list <app-id>
 
 # Rollback to specific deployment
 doctl apps deployment rollback <app-id> <deployment-id>
+
+# Verify rollback
+doctl apps get <app-id>
 ```
 
-Or use the DigitalOcean dashboard for one-click rollback.
+**Note:** The old GitHub Actions rollback workflow has been removed. DO's native rollback is faster, simpler, and more reliable.
 
-## 📝 **Disabled Workflows**
+## 📝 **Removed Workflows**
 
-The following GitHub Actions workflows have been disabled (renamed to `.disabled`):
+The following GitHub Actions workflows have been **removed**:
 
-- `.github/workflows/build-staging.yml.disabled`
+- **`build-staging.yml`**
   - **Why:** Failing due to SSL errors with `release.solana.com`
   - **Replaced by:** DigitalOcean native build
 
-- `.github/workflows/deploy-staging.yml.disabled`
+- **`deploy-staging.yml`**
   - **Why:** Depends on build workflow, added unnecessary complexity
   - **Replaced by:** DigitalOcean auto-deployment on push
 
+- **`rollback-staging.yml`**
+  - **Why:** DigitalOcean has native one-click rollback (faster and simpler)
+  - **Replaced by:** `doctl apps deployment rollback` or DO dashboard
+
+### **Remaining Workflows:**
+
+- **`test.yml`** - Still active for PR validation
+  - Runs unit tests ✅
+  - Runs integration tests ✅
+  - On-chain tests commented out (run locally instead)
+
 ### **Re-enabling (if needed):**
 
-If you ever need to re-enable GitHub Actions workflows:
+If you ever need to restore these workflows, retrieve them from git history:
 
 ```bash
-git mv .github/workflows/build-staging.yml.disabled .github/workflows/build-staging.yml
-git mv .github/workflows/deploy-staging.yml.disabled .github/workflows/deploy-staging.yml
+# View commit that removed them
+git log --all --full-history -- .github/workflows/build-staging.yml
+
+# Restore a specific workflow
+git checkout <commit-hash> -- .github/workflows/build-staging.yml
 ```
 
 ## 🎯 **Development Workflow**
