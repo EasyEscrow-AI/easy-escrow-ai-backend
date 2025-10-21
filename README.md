@@ -280,6 +280,11 @@ doctl apps create --spec .do/app.yaml
 - [Redis Infrastructure](docs/setup/REDIS_INFRASTRUCTURE.md) - Upstash Redis configuration
 - [Spaces Setup](docs/SPACES_SETUP.md) - Object storage setup
 
+**Environment References:**
+- **[STAGING Reference](docs/STAGING_REFERENCE.md)** - Complete STAGING environment reference (program IDs, wallets, infrastructure) ⭐ NEW
+- [Program IDs](docs/PROGRAM_IDS.md) - Program IDs across all environments
+- [STAGING Wallets](docs/STAGING_WALLETS.md) - STAGING wallet addresses and management
+
 **Docker (Local/Testing):**
 
 Using npm scripts (recommended):

@@ -219,6 +219,15 @@ solana airdrop 5 <address> --url devnet
 
 ---
 
+## Related Documentation
+
+- **[STAGING Reference](STAGING_REFERENCE.md)** - Complete STAGING infrastructure reference (comprehensive guide) ⭐
+- [STAGING Token Addresses](STAGING_TOKEN_ADDRESSES.md) - Official token mint addresses
+- [Program IDs](PROGRAM_IDS.md) - Program IDs across all environments
+- [STAGING Strategy](architecture/STAGING_STRATEGY.md) - Overall STAGING approach and architecture
+
+---
+
 **Last Updated**: 2025-01-20  
 **Maintained By**: DevOps Team
 

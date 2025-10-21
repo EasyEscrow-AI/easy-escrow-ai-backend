@@ -164,7 +164,7 @@ Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr
 
 ## Related Documentation
 
+- **[STAGING Reference](STAGING_REFERENCE.md)** - Complete STAGING infrastructure reference (comprehensive) ⭐
 - [STAGING Wallets](STAGING_WALLETS.md) - Wallet addresses and management
-- [STAGING Reference](STAGING_REFERENCE.md) - Complete infrastructure reference
 - [Program IDs](PROGRAM_IDS.md) - All program IDs across environments
 

@@ -2319,7 +2319,7 @@
         "id": 74,
         "title": "Document STAGING Program IDs and Infrastructure",
         "description": "Create comprehensive reference documentation for STAGING environment including program IDs, wallet addresses with naming conventions, infrastructure details, deployment procedures, backup/recovery procedures, and testing guidelines.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           "73",
           "70",
@@ -2722,7 +2722,7 @@
       ],
       "created": "2025-10-21T00:36:23.178Z",
       "description": "Tasks for master context",
-      "updated": "2025-10-21T00:46:55.151Z"
+      "updated": "2025-10-21T03:56:24.769Z"
     }
   }
 }
