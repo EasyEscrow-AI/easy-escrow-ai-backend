@@ -82,11 +82,10 @@ services:
       
       #
       # Solana RPC Configuration
-      # IMPORTANT: Actual RPC URL with API key stored in GitHub Secrets
+      # Using public devnet RPC for STAGING (can be upgraded to private RPC later)
       #
       - key: SOLANA_RPC_URL
-        value: ${SOLANA_RPC_URL}
-        type: SECRET
+        value: https://api.devnet.solana.com
         scope: RUN_TIME
       
       - key: SOLANA_RPC_URL_FALLBACK
