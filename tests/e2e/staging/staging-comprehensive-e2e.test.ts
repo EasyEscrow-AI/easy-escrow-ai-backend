@@ -39,8 +39,8 @@ const STAGING_CONFIG = {
   network: 'devnet',
   rpcUrl: process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com',
   
-  // API endpoint (use environment variable for flexibility)
-  apiBaseUrl: process.env.STAGING_API_BASE_URL || 'http://localhost:3000',
+  // API endpoint (defaults to STAGING deployment)
+  apiBaseUrl: process.env.STAGING_API_BASE_URL || 'https://staging-api.easyescrow.ai',
   
   // Official Devnet USDC Mint
   usdcMint: 'Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr',

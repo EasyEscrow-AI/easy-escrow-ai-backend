@@ -12,8 +12,8 @@ export const STAGING_CONFIG = {
   network: 'devnet' as const,
   rpcUrl: process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com',
   
-  // API endpoint (configurable for local vs deployed testing)
-  apiBaseUrl: process.env.STAGING_API_BASE_URL || 'http://localhost:3000',
+  // API endpoint (defaults to STAGING deployment)
+  apiBaseUrl: process.env.STAGING_API_BASE_URL || 'https://staging-api.easyescrow.ai',
   
   // STAGING Program ID (from Task 64)
   programId: 'AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei',
