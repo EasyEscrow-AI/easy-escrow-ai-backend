@@ -38,6 +38,7 @@
     "localnet:reset": "powershell -ExecutionPolicy Bypass -File ./scripts/development/localnet/reset-localnet.ps1",
     "timeout:help": "ts-node scripts/utilities/timeout/run-with-timeout.ts --help",
     "timeout:help:ps": "powershell -ExecutionPolicy Bypass -File ./scripts/utilities/timeout/run-with-timeout.ps1 -Help",
+    "verify:rpc": "ts-node scripts/testing/verify-rpc-config.ts",
     "docker:start": "docker compose up -d",
     "docker:stop": "docker compose down",
     "docker:restart": "docker compose restart",

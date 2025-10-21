@@ -393,6 +393,11 @@ services:
         value: "7"
         scope: RUN_TIME
 
+# Custom Domain Configuration
+domains:
+  - domain: staging-api.easyescrow.ai
+    type: PRIMARY
+
 # Alerts (optional - configure as needed)
 alerts:
   - rule: DEPLOYMENT_FAILED
