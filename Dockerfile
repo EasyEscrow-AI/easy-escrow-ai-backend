@@ -1,6 +1,7 @@
 # ============================================
 # Builder Stage - Build TypeScript application
 # ============================================
+# Cache bust: 2025-10-21-04:42
 FROM node:20-alpine AS builder
 
 # Set working directory
