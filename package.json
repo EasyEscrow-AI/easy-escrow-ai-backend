@@ -66,6 +66,8 @@
     "staging:fund-wallets": "powershell -ExecutionPolicy Bypass -File ./scripts/deployment/staging/fund-staging-wallets.ps1",
     "test:staging:smoke": "mocha --require ts-node/register tests/staging/staging-smoke.test.ts --timeout 60000 --reporter spec --colors",
     "test:staging:smoke:ci": "ts-node scripts/testing/smoke-tests.ts",
+    "test:staging:e2e": "mocha --require ts-node/register --no-config tests/e2e/staging/staging-comprehensive-e2e.test.ts --timeout 300000 --reporter spec --colors",
+    "test:staging:e2e:verbose": "mocha --require ts-node/register --no-config tests/e2e/staging/staging-comprehensive-e2e.test.ts --timeout 300000 --reporter spec --colors --full-trace",
     "staging:migrate:ci": "ts-node scripts/deployment/migrate-staging.ts",
     "staging:verify": "powershell -ExecutionPolicy Bypass -File ./scripts/deployment/verify-staging-deployment.ps1",
     "staging:verify:verbose": "powershell -ExecutionPolicy Bypass -File ./scripts/deployment/verify-staging-deployment.ps1 -Verbose",

@@ -139,6 +139,18 @@ services:
         type: SECRET
         scope: RUN_TIME
       
+      # Application code expects AUTHORITY_KEYPAIR or DEVNET_ADMIN_PRIVATE_KEY
+      # Map STAGING admin key to what the application expects
+      - key: AUTHORITY_KEYPAIR
+        value: ${DEVNET_STAGING_ADMIN_PRIVATE_KEY}
+        type: SECRET
+        scope: RUN_TIME
+      
+      - key: DEVNET_ADMIN_PRIVATE_KEY
+        value: ${DEVNET_STAGING_ADMIN_PRIVATE_KEY}
+        type: SECRET
+        scope: RUN_TIME
+      
       - key: DEVNET_STAGING_FEE_COLLECTOR_PRIVATE_KEY
         value: ${DEVNET_STAGING_FEE_COLLECTOR_PRIVATE_KEY}
         type: SECRET
