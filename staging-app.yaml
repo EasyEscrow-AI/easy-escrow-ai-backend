@@ -82,10 +82,11 @@ services:
       
       #
       # Solana RPC Configuration
-      # Using public devnet RPC for STAGING (can be upgraded to private RPC later)
+      # IMPORTANT: SOLANA_RPC_URL secret is already stored in DO App Platform
       #
       - key: SOLANA_RPC_URL
-        value: https://api.devnet.solana.com
+        value: ${SOLANA_RPC_URL}
+        type: SECRET
         scope: RUN_TIME
       
       - key: SOLANA_RPC_URL_FALLBACK
