@@ -85,9 +85,9 @@ services:
       #
       # Solana RPC Configuration
       # IMPORTANT: Set actual value in DigitalOcean App Platform console
+      # NOTE: No 'value' field - must be set in DO console
       #
       - key: SOLANA_RPC_URL
-        value: ${SOLANA_RPC_URL}
         type: SECRET
         scope: RUN_TIME
       
@@ -118,8 +118,7 @@ services:
         scope: RUN_TIME
       
       - key: ESCROW_PROGRAM_ID
-        value: ${DEVNET_STAGING_PROGRAM_ID}
-        type: SECRET
+        value: AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei
         scope: RUN_TIME
       
       #
@@ -128,29 +127,24 @@ services:
       # IMPORTANT: Actual private keys stored in GitHub Secrets and DO App Platform
       #
       - key: DEVNET_STAGING_SENDER_PRIVATE_KEY
-        value: ${DEVNET_STAGING_SENDER_PRIVATE_KEY}
         type: SECRET
         scope: RUN_TIME
       
       - key: DEVNET_STAGING_RECEIVER_PRIVATE_KEY
-        value: ${DEVNET_STAGING_RECEIVER_PRIVATE_KEY}
         type: SECRET
         scope: RUN_TIME
       
       - key: DEVNET_STAGING_ADMIN_PRIVATE_KEY
-        value: ${DEVNET_STAGING_ADMIN_PRIVATE_KEY}
         type: SECRET
         scope: RUN_TIME
       
       # Application code expects AUTHORITY_KEYPAIR or DEVNET_ADMIN_PRIVATE_KEY
       # Map STAGING admin key to what the application expects
       - key: AUTHORITY_KEYPAIR
-        value: ${DEVNET_STAGING_ADMIN_PRIVATE_KEY}
         type: SECRET
         scope: RUN_TIME
       
       - key: DEVNET_ADMIN_PRIVATE_KEY
-        value: ${DEVNET_STAGING_ADMIN_PRIVATE_KEY}
         type: SECRET
         scope: RUN_TIME
       
@@ -160,7 +154,6 @@ services:
         scope: RUN_TIME
       
       - key: DEVNET_STAGING_FEE_COLLECTOR_PRIVATE_KEY
-        value: ${DEVNET_STAGING_FEE_COLLECTOR_PRIVATE_KEY}
         type: SECRET
         scope: RUN_TIME
       
@@ -183,12 +176,10 @@ services:
       # IMPORTANT: Actual connection strings with passwords stored in GitHub Secrets
       #
       - key: DATABASE_URL
-        value: ${DATABASE_URL}
         type: SECRET
         scope: RUN_TIME
       
       - key: DATABASE_POOL_URL
-        value: ${DATABASE_POOL_URL}
         type: SECRET
         scope: RUN_TIME
       
@@ -205,7 +196,6 @@ services:
       # IMPORTANT: Actual Redis URL with password stored in GitHub Secrets
       #
       - key: REDIS_URL
-        value: ${REDIS_URL}
         type: SECRET
         scope: RUN_TIME
       
@@ -252,7 +242,6 @@ services:
       # IMPORTANT: Actual JWT secret stored in GitHub Secrets
       #
       - key: JWT_SECRET
-        value: ${JWT_SECRET}
         type: SECRET
         scope: RUN_TIME
       
@@ -283,7 +272,6 @@ services:
       # IMPORTANT: Actual webhook secret stored in GitHub Secrets
       #
       - key: WEBHOOK_SECRET
-        value: ${WEBHOOK_SECRET}
         type: SECRET
         scope: RUN_TIME
       
@@ -325,7 +313,6 @@ services:
       # Monitoring & Analytics (Optional)
       #
       - key: SENTRY_DSN
-        value: ""
         type: SECRET
         scope: RUN_TIME
       
@@ -350,12 +337,10 @@ services:
         scope: RUN_TIME
       
       - key: SMTP_USER
-        value: ${SMTP_USER}
         type: SECRET
         scope: RUN_TIME
       
       - key: SMTP_PASS
-        value: ${SMTP_PASS}
         type: SECRET
         scope: RUN_TIME
       
@@ -376,12 +361,10 @@ services:
         scope: RUN_TIME
       
       - key: DO_SPACES_KEY
-        value: ${DO_SPACES_KEY}
         type: SECRET
         scope: RUN_TIME
       
       - key: DO_SPACES_SECRET
-        value: ${DO_SPACES_SECRET}
         type: SECRET
         scope: RUN_TIME
       
