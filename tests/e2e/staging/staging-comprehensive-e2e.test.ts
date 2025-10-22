@@ -1521,56 +1521,77 @@ describe('STAGING Comprehensive E2E Tests', function () {
       console.log('🧹 Cleaning up test agreements...\n');
       console.log(`   Found ${createdAgreementIds.length} test agreements to clean up\n`);
       
+      // Save agreement IDs to file for manual cleanup if needed
+      const fs = await import('fs');
+      const path = await import('path');
+      const cleanupFile = path.join(__dirname, '../../../temp/test-agreements-to-cleanup.txt');
+      
       try {
-        // Import required modules
-        const { PrismaClient } = await import('@prisma/client');
-        const prisma = new PrismaClient();
-        
-        let deletedCount = 0;
-        let failedCount = 0;
-        
-        for (const agreementId of createdAgreementIds) {
-          try {
-            // Delete in transaction to ensure consistency
-            await prisma.$transaction(async (tx: any) => {
-              // Delete related receipts
-              await tx.receipt.deleteMany({
-                where: { agreementId },
-              });
-
-              // Delete related webhook deliveries
-              await tx.webhookDelivery.deleteMany({
-                where: { agreementId },
-              });
-
-              // Delete the agreement
-              await tx.agreement.delete({
-                where: { agreementId },
-              });
-            });
-            
-            console.log(`   ✅ Deleted: ${agreementId}`);
-            deletedCount++;
-            
-          } catch (error: any) {
-            console.error(`   ❌ Failed to delete ${agreementId}: ${error.message}`);
-            failedCount++;
-          }
-        }
-        
-        console.log(`\n   ✅ Cleanup complete!`);
-        console.log(`   • Deleted: ${deletedCount}`);
-        if (failedCount > 0) {
-          console.log(`   • Failed: ${failedCount}`);
-        }
-        console.log('');
-        
-        await prisma.$disconnect();
-        
+        fs.writeFileSync(cleanupFile, createdAgreementIds.join('\n'));
+        console.log(`   📝 Saved agreement IDs to: ${cleanupFile}\n`);
       } catch (error: any) {
-        console.error(`   ❌ Cleanup failed: ${error.message}`);
-        console.log(`   ℹ️  You can manually cleanup using:`);
-        console.log(`   npx ts-node scripts/utilities/cleanup-test-agreements.ts ${createdAgreementIds.join(' ')}\n`);
+        console.log(`   ⚠️  Could not save cleanup file: ${error.message}\n`);
+      }
+      
+      // Only attempt Prisma cleanup if we're in a Node.js environment with DB access
+      const shouldAttemptCleanup = process.env.DATABASE_URL && !process.env.CI;
+      
+      if (shouldAttemptCleanup) {
+        try {
+          // Import required modules
+          const { PrismaClient } = await import('@prisma/client');
+          const prisma = new PrismaClient();
+          
+          let deletedCount = 0;
+          let failedCount = 0;
+          
+          for (const agreementId of createdAgreementIds) {
+            try {
+              // Delete in transaction to ensure consistency
+              await prisma.$transaction(async (tx: any) => {
+                // Delete related receipts
+                await tx.receipt.deleteMany({
+                  where: { agreementId },
+                });
+
+                // Delete related webhook deliveries
+                await tx.webhookDelivery.deleteMany({
+                  where: { agreementId },
+                });
+
+                // Delete the agreement
+                await tx.agreement.delete({
+                  where: { agreementId },
+                });
+              });
+              
+              console.log(`   ✅ Deleted: ${agreementId}`);
+              deletedCount++;
+              
+            } catch (error: any) {
+              console.error(`   ❌ Failed to delete ${agreementId}: ${error.message}`);
+              failedCount++;
+            }
+          }
+          
+          console.log(`\n   ✅ Cleanup complete!`);
+          console.log(`   • Deleted: ${deletedCount}`);
+          if (failedCount > 0) {
+            console.log(`   • Failed: ${failedCount}`);
+          }
+          console.log('');
+          
+          await prisma.$disconnect();
+          
+        } catch (error: any) {
+          console.log(`   ⚠️  Automatic cleanup not available: ${error.message}`);
+          console.log(`   ℹ️  Please run manual cleanup:\n`);
+          console.log(`   npm run test:cleanup ${createdAgreementIds.join(' ')}\n`);
+        }
+      } else {
+        console.log(`   ℹ️  Automatic cleanup skipped (no DB access in test environment)`);
+        console.log(`   ℹ️  Please run manual cleanup:\n`);
+        console.log(`   npm run test:cleanup ${createdAgreementIds.join(' ')}\n`);
       }
     }
   });
