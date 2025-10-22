@@ -9,6 +9,8 @@ import { prisma } from '../config/database';
 import { getReceiptSigningService } from './receipt-signing.service';
 import { ReceiptDTO, CreateReceiptDTO, ReceiptQueryDTO, ReceiptVerificationDTO } from '../models/dto/receipt.dto';
 import { Receipt } from '../generated/prisma';
+import fs from 'fs/promises';
+import path from 'path';
 
 /**
  * Receipt generation result
@@ -88,6 +90,8 @@ export class ReceiptService {
           buyer: receiptData.buyer,
           seller: receiptData.seller,
           escrowTxId: receiptData.escrowTxId,
+          depositNftTxId: receiptData.depositNftTxId || null,   // NEW
+          depositUsdcTxId: receiptData.depositUsdcTxId || null, // NEW
           settlementTxId: receiptData.settlementTxId,
           receiptHash,
           signature,
@@ -98,6 +102,33 @@ export class ReceiptService {
       });
 
       console.log(`[ReceiptService] Receipt generated successfully: ${receipt.id}`);
+
+      // Save receipt as JSON file in /receipts folder
+      try {
+        const receiptsDir = path.join(process.cwd(), 'receipts');
+        
+        // Ensure receipts directory exists
+        await fs.mkdir(receiptsDir, { recursive: true });
+        
+        // Create receipt JSON file
+        const receiptFilePath = path.join(receiptsDir, `${receipt.id}.json`);
+        const receiptDTO = this.mapReceiptToDTO(receipt);
+        const receiptJSON = {
+          ...receiptDTO,
+          fileGeneratedAt: new Date().toISOString(),
+        };
+        
+        await fs.writeFile(
+          receiptFilePath,
+          JSON.stringify(receiptJSON, null, 2),
+          'utf-8'
+        );
+        
+        console.log(`[ReceiptService] Receipt JSON saved to: ${receiptFilePath}`);
+      } catch (fileError) {
+        console.error('[ReceiptService] Error saving receipt JSON file:', fileError);
+        // Don't fail receipt generation if file save fails
+      }
 
       return {
         success: true,
@@ -292,6 +323,43 @@ export class ReceiptService {
    * Map database receipt to DTO
    */
   private mapReceiptToDTO(receipt: Receipt): ReceiptDTO {
+    // Build transactions array from available transaction IDs
+    const transactions: Array<{
+      type: 'INIT' | 'DEPOSIT_NFT' | 'DEPOSIT_USDC' | 'SETTLEMENT';
+      transactionId: string;
+      timestamp?: string;
+    }> = [];
+
+    // Add init transaction
+    transactions.push({
+      type: 'INIT',
+      transactionId: receipt.escrowTxId,
+      timestamp: receipt.createdAt.toISOString(),
+    });
+
+    // Add NFT deposit if available
+    if (receipt.depositNftTxId) {
+      transactions.push({
+        type: 'DEPOSIT_NFT',
+        transactionId: receipt.depositNftTxId,
+      });
+    }
+
+    // Add USDC deposit if available
+    if (receipt.depositUsdcTxId) {
+      transactions.push({
+        type: 'DEPOSIT_USDC',
+        transactionId: receipt.depositUsdcTxId,
+      });
+    }
+
+    // Add settlement transaction
+    transactions.push({
+      type: 'SETTLEMENT',
+      transactionId: receipt.settlementTxId,
+      timestamp: receipt.settledAt.toISOString(),
+    });
+
     return {
       id: receipt.id,
       agreementId: receipt.agreementId,
@@ -302,7 +370,10 @@ export class ReceiptService {
       buyer: receipt.buyer,
       seller: receipt.seller,
       escrowTxId: receipt.escrowTxId,
+      depositNftTxId: receipt.depositNftTxId || undefined,
+      depositUsdcTxId: receipt.depositUsdcTxId || undefined,
       settlementTxId: receipt.settlementTxId,
+      transactions,
       receiptHash: receipt.receiptHash,
       signature: receipt.signature,
       createdAt: receipt.createdAt.toISOString(),

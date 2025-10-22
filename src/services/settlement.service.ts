@@ -392,7 +392,7 @@ export class SettlementService {
         // Don't fail settlement if idempotency storage fails
       });
 
-      // 6. Generate settlement receipt
+      // 6. Generate settlement receipt with all transaction IDs
       try {
         const receiptService = getReceiptService();
         
@@ -400,6 +400,28 @@ export class SettlementService {
         if (!agreement.initTxId) {
           console.warn(`[SettlementService] Agreement ${agreement.agreementId} has no initTxId - receipt will have empty escrowTxId`);
         }
+        
+        // Fetch all transaction IDs from transaction log for complete audit trail
+        console.log(`[SettlementService] Fetching transaction logs for agreement ${agreement.agreementId}`);
+        const transactions = await prisma.transactionLog.findMany({
+          where: { agreementId: agreement.agreementId },
+          orderBy: { timestamp: 'asc' },
+        });
+
+        // Extract deposit transaction IDs
+        const depositNftTx = transactions.find(tx => 
+          tx.operationType === 'DEPOSIT_NFT' || tx.operationType === 'deposit'
+        );
+        const depositUsdcTx = transactions.find(tx => 
+          tx.operationType === 'DEPOSIT_USDC' || tx.operationType === 'deposit'
+        );
+
+        console.log(`[SettlementService] Found transaction logs:`, {
+          total: transactions.length,
+          depositNft: depositNftTx?.txId || 'not found',
+          depositUsdc: depositUsdcTx?.txId || 'not found',
+          settlement: settlementTxId,
+        });
         
         const receiptResult = await receiptService.generateReceipt({
           agreementId: agreement.agreementId,
@@ -410,6 +432,8 @@ export class SettlementService {
           buyer: agreement.buyer!,
           seller: agreement.seller,
           escrowTxId: agreement.initTxId || '',
+          depositNftTxId: depositNftTx?.txId,     // NEW: NFT deposit transaction
+          depositUsdcTxId: depositUsdcTx?.txId,   // NEW: USDC deposit transaction
           settlementTxId: settlementTxId,
           createdAt: agreement.createdAt,
           settledAt: new Date(),
@@ -417,6 +441,7 @@ export class SettlementService {
 
         if (receiptResult.success) {
           console.log(`[SettlementService] Receipt generated successfully: ${receiptResult.receipt?.id}`);
+          // Note: Agreement-Receipt relation is automatically established via Receipt.agreementId
         } else {
           console.error(`[SettlementService] Failed to generate receipt: ${receiptResult.error}`);
           // Don't fail the settlement if receipt generation fails

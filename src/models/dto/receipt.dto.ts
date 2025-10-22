@@ -10,8 +10,20 @@ export interface ReceiptDTO {
   creatorRoyalty?: string;
   buyer: string;
   seller: string;
-  escrowTxId: string;
-  settlementTxId: string;
+  
+  // All transaction IDs for complete audit trail
+  escrowTxId: string;        // Keep for backwards compatibility
+  depositNftTxId?: string;   // NFT deposit transaction
+  depositUsdcTxId?: string;  // USDC deposit transaction
+  settlementTxId: string;    // Settlement transaction
+  
+  // Structured transactions array
+  transactions: Array<{
+    type: 'INIT' | 'DEPOSIT_NFT' | 'DEPOSIT_USDC' | 'SETTLEMENT';
+    transactionId: string;
+    timestamp?: string;
+  }>;
+  
   receiptHash: string;
   signature: string;
   createdAt: string;
@@ -31,6 +43,8 @@ export interface CreateReceiptDTO {
   buyer: string;
   seller: string;
   escrowTxId: string;
+  depositNftTxId?: string;  // NFT deposit transaction (optional)
+  depositUsdcTxId?: string; // USDC deposit transaction (optional)
   settlementTxId: string;
   createdAt: Date | string;
   settledAt: Date | string;

@@ -170,8 +170,13 @@ model Receipt {
   creatorRoyalty  Decimal?   @db.Decimal(20, 9) @map("creator_royalty")
   buyer           String
   seller          String
-  escrowTxId      String     @map("escrow_tx_id")
-  settlementTxId  String     @map("settlement_tx_id")
+  
+  // All transaction IDs for complete audit trail
+  escrowTxId      String     @map("escrow_tx_id")       // Init/creation transaction
+  depositNftTxId  String?    @map("deposit_nft_tx_id")  // NFT deposit transaction
+  depositUsdcTxId String?    @map("deposit_usdc_tx_id") // USDC deposit transaction
+  settlementTxId  String     @map("settlement_tx_id")    // Final settlement transaction
+  
   receiptHash     String     @unique @map("receipt_hash")
   signature       String
   createdAt       DateTime   @map("created_at")

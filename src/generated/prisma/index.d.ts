@@ -6406,6 +6406,8 @@ export namespace Prisma {
     buyer: string | null
     seller: string | null
     escrowTxId: string | null
+    depositNftTxId: string | null
+    depositUsdcTxId: string | null
     settlementTxId: string | null
     receiptHash: string | null
     signature: string | null
@@ -6424,6 +6426,8 @@ export namespace Prisma {
     buyer: string | null
     seller: string | null
     escrowTxId: string | null
+    depositNftTxId: string | null
+    depositUsdcTxId: string | null
     settlementTxId: string | null
     receiptHash: string | null
     signature: string | null
@@ -6442,6 +6446,8 @@ export namespace Prisma {
     buyer: number
     seller: number
     escrowTxId: number
+    depositNftTxId: number
+    depositUsdcTxId: number
     settlementTxId: number
     receiptHash: number
     signature: number
@@ -6474,6 +6480,8 @@ export namespace Prisma {
     buyer?: true
     seller?: true
     escrowTxId?: true
+    depositNftTxId?: true
+    depositUsdcTxId?: true
     settlementTxId?: true
     receiptHash?: true
     signature?: true
@@ -6492,6 +6500,8 @@ export namespace Prisma {
     buyer?: true
     seller?: true
     escrowTxId?: true
+    depositNftTxId?: true
+    depositUsdcTxId?: true
     settlementTxId?: true
     receiptHash?: true
     signature?: true
@@ -6510,6 +6520,8 @@ export namespace Prisma {
     buyer?: true
     seller?: true
     escrowTxId?: true
+    depositNftTxId?: true
+    depositUsdcTxId?: true
     settlementTxId?: true
     receiptHash?: true
     signature?: true
@@ -6615,6 +6627,8 @@ export namespace Prisma {
     buyer: string
     seller: string
     escrowTxId: string
+    depositNftTxId: string | null
+    depositUsdcTxId: string | null
     settlementTxId: string
     receiptHash: string
     signature: string
@@ -6652,6 +6666,8 @@ export namespace Prisma {
     buyer?: boolean
     seller?: boolean
     escrowTxId?: boolean
+    depositNftTxId?: boolean
+    depositUsdcTxId?: boolean
     settlementTxId?: boolean
     receiptHash?: boolean
     signature?: boolean
@@ -6671,6 +6687,8 @@ export namespace Prisma {
     buyer?: boolean
     seller?: boolean
     escrowTxId?: boolean
+    depositNftTxId?: boolean
+    depositUsdcTxId?: boolean
     settlementTxId?: boolean
     receiptHash?: boolean
     signature?: boolean
@@ -6690,6 +6708,8 @@ export namespace Prisma {
     buyer?: boolean
     seller?: boolean
     escrowTxId?: boolean
+    depositNftTxId?: boolean
+    depositUsdcTxId?: boolean
     settlementTxId?: boolean
     receiptHash?: boolean
     signature?: boolean
@@ -6709,6 +6729,8 @@ export namespace Prisma {
     buyer?: boolean
     seller?: boolean
     escrowTxId?: boolean
+    depositNftTxId?: boolean
+    depositUsdcTxId?: boolean
     settlementTxId?: boolean
     receiptHash?: boolean
     signature?: boolean
@@ -6717,7 +6739,7 @@ export namespace Prisma {
     generatedAt?: boolean
   }
 
-  export type ReceiptOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "agreementId" | "nftMint" | "price" | "platformFee" | "creatorRoyalty" | "buyer" | "seller" | "escrowTxId" | "settlementTxId" | "receiptHash" | "signature" | "createdAt" | "settledAt" | "generatedAt", ExtArgs["result"]["receipt"]>
+  export type ReceiptOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "agreementId" | "nftMint" | "price" | "platformFee" | "creatorRoyalty" | "buyer" | "seller" | "escrowTxId" | "depositNftTxId" | "depositUsdcTxId" | "settlementTxId" | "receiptHash" | "signature" | "createdAt" | "settledAt" | "generatedAt", ExtArgs["result"]["receipt"]>
   export type ReceiptInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     agreement?: boolean | AgreementDefaultArgs<ExtArgs>
   }
@@ -6743,6 +6765,8 @@ export namespace Prisma {
       buyer: string
       seller: string
       escrowTxId: string
+      depositNftTxId: string | null
+      depositUsdcTxId: string | null
       settlementTxId: string
       receiptHash: string
       signature: string
@@ -7182,6 +7206,8 @@ export namespace Prisma {
     readonly buyer: FieldRef<"Receipt", 'String'>
     readonly seller: FieldRef<"Receipt", 'String'>
     readonly escrowTxId: FieldRef<"Receipt", 'String'>
+    readonly depositNftTxId: FieldRef<"Receipt", 'String'>
+    readonly depositUsdcTxId: FieldRef<"Receipt", 'String'>
     readonly settlementTxId: FieldRef<"Receipt", 'String'>
     readonly receiptHash: FieldRef<"Receipt", 'String'>
     readonly signature: FieldRef<"Receipt", 'String'>
@@ -10015,6 +10041,8 @@ export namespace Prisma {
     buyer: 'buyer',
     seller: 'seller',
     escrowTxId: 'escrowTxId',
+    depositNftTxId: 'depositNftTxId',
+    depositUsdcTxId: 'depositUsdcTxId',
     settlementTxId: 'settlementTxId',
     receiptHash: 'receiptHash',
     signature: 'signature',
@@ -10710,6 +10738,8 @@ export namespace Prisma {
     buyer?: StringFilter<"Receipt"> | string
     seller?: StringFilter<"Receipt"> | string
     escrowTxId?: StringFilter<"Receipt"> | string
+    depositNftTxId?: StringNullableFilter<"Receipt"> | string | null
+    depositUsdcTxId?: StringNullableFilter<"Receipt"> | string | null
     settlementTxId?: StringFilter<"Receipt"> | string
     receiptHash?: StringFilter<"Receipt"> | string
     signature?: StringFilter<"Receipt"> | string
@@ -10729,6 +10759,8 @@ export namespace Prisma {
     buyer?: SortOrder
     seller?: SortOrder
     escrowTxId?: SortOrder
+    depositNftTxId?: SortOrderInput | SortOrder
+    depositUsdcTxId?: SortOrderInput | SortOrder
     settlementTxId?: SortOrder
     receiptHash?: SortOrder
     signature?: SortOrder
@@ -10752,6 +10784,8 @@ export namespace Prisma {
     buyer?: StringFilter<"Receipt"> | string
     seller?: StringFilter<"Receipt"> | string
     escrowTxId?: StringFilter<"Receipt"> | string
+    depositNftTxId?: StringNullableFilter<"Receipt"> | string | null
+    depositUsdcTxId?: StringNullableFilter<"Receipt"> | string | null
     settlementTxId?: StringFilter<"Receipt"> | string
     signature?: StringFilter<"Receipt"> | string
     createdAt?: DateTimeFilter<"Receipt"> | Date | string
@@ -10770,6 +10804,8 @@ export namespace Prisma {
     buyer?: SortOrder
     seller?: SortOrder
     escrowTxId?: SortOrder
+    depositNftTxId?: SortOrderInput | SortOrder
+    depositUsdcTxId?: SortOrderInput | SortOrder
     settlementTxId?: SortOrder
     receiptHash?: SortOrder
     signature?: SortOrder
@@ -10796,6 +10832,8 @@ export namespace Prisma {
     buyer?: StringWithAggregatesFilter<"Receipt"> | string
     seller?: StringWithAggregatesFilter<"Receipt"> | string
     escrowTxId?: StringWithAggregatesFilter<"Receipt"> | string
+    depositNftTxId?: StringNullableWithAggregatesFilter<"Receipt"> | string | null
+    depositUsdcTxId?: StringNullableWithAggregatesFilter<"Receipt"> | string | null
     settlementTxId?: StringWithAggregatesFilter<"Receipt"> | string
     receiptHash?: StringWithAggregatesFilter<"Receipt"> | string
     signature?: StringWithAggregatesFilter<"Receipt"> | string
@@ -11470,6 +11508,8 @@ export namespace Prisma {
     buyer: string
     seller: string
     escrowTxId: string
+    depositNftTxId?: string | null
+    depositUsdcTxId?: string | null
     settlementTxId: string
     receiptHash: string
     signature: string
@@ -11489,6 +11529,8 @@ export namespace Prisma {
     buyer: string
     seller: string
     escrowTxId: string
+    depositNftTxId?: string | null
+    depositUsdcTxId?: string | null
     settlementTxId: string
     receiptHash: string
     signature: string
@@ -11506,6 +11548,8 @@ export namespace Prisma {
     buyer?: StringFieldUpdateOperationsInput | string
     seller?: StringFieldUpdateOperationsInput | string
     escrowTxId?: StringFieldUpdateOperationsInput | string
+    depositNftTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    depositUsdcTxId?: NullableStringFieldUpdateOperationsInput | string | null
     settlementTxId?: StringFieldUpdateOperationsInput | string
     receiptHash?: StringFieldUpdateOperationsInput | string
     signature?: StringFieldUpdateOperationsInput | string
@@ -11525,6 +11569,8 @@ export namespace Prisma {
     buyer?: StringFieldUpdateOperationsInput | string
     seller?: StringFieldUpdateOperationsInput | string
     escrowTxId?: StringFieldUpdateOperationsInput | string
+    depositNftTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    depositUsdcTxId?: NullableStringFieldUpdateOperationsInput | string | null
     settlementTxId?: StringFieldUpdateOperationsInput | string
     receiptHash?: StringFieldUpdateOperationsInput | string
     signature?: StringFieldUpdateOperationsInput | string
@@ -11543,6 +11589,8 @@ export namespace Prisma {
     buyer: string
     seller: string
     escrowTxId: string
+    depositNftTxId?: string | null
+    depositUsdcTxId?: string | null
     settlementTxId: string
     receiptHash: string
     signature: string
@@ -11560,6 +11608,8 @@ export namespace Prisma {
     buyer?: StringFieldUpdateOperationsInput | string
     seller?: StringFieldUpdateOperationsInput | string
     escrowTxId?: StringFieldUpdateOperationsInput | string
+    depositNftTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    depositUsdcTxId?: NullableStringFieldUpdateOperationsInput | string | null
     settlementTxId?: StringFieldUpdateOperationsInput | string
     receiptHash?: StringFieldUpdateOperationsInput | string
     signature?: StringFieldUpdateOperationsInput | string
@@ -11578,6 +11628,8 @@ export namespace Prisma {
     buyer?: StringFieldUpdateOperationsInput | string
     seller?: StringFieldUpdateOperationsInput | string
     escrowTxId?: StringFieldUpdateOperationsInput | string
+    depositNftTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    depositUsdcTxId?: NullableStringFieldUpdateOperationsInput | string | null
     settlementTxId?: StringFieldUpdateOperationsInput | string
     receiptHash?: StringFieldUpdateOperationsInput | string
     signature?: StringFieldUpdateOperationsInput | string
@@ -12496,6 +12548,8 @@ export namespace Prisma {
     buyer?: SortOrder
     seller?: SortOrder
     escrowTxId?: SortOrder
+    depositNftTxId?: SortOrder
+    depositUsdcTxId?: SortOrder
     settlementTxId?: SortOrder
     receiptHash?: SortOrder
     signature?: SortOrder
@@ -12520,6 +12574,8 @@ export namespace Prisma {
     buyer?: SortOrder
     seller?: SortOrder
     escrowTxId?: SortOrder
+    depositNftTxId?: SortOrder
+    depositUsdcTxId?: SortOrder
     settlementTxId?: SortOrder
     receiptHash?: SortOrder
     signature?: SortOrder
@@ -12538,6 +12594,8 @@ export namespace Prisma {
     buyer?: SortOrder
     seller?: SortOrder
     escrowTxId?: SortOrder
+    depositNftTxId?: SortOrder
+    depositUsdcTxId?: SortOrder
     settlementTxId?: SortOrder
     receiptHash?: SortOrder
     signature?: SortOrder
@@ -13539,6 +13597,8 @@ export namespace Prisma {
     buyer: string
     seller: string
     escrowTxId: string
+    depositNftTxId?: string | null
+    depositUsdcTxId?: string | null
     settlementTxId: string
     receiptHash: string
     signature: string
@@ -13556,6 +13616,8 @@ export namespace Prisma {
     buyer: string
     seller: string
     escrowTxId: string
+    depositNftTxId?: string | null
+    depositUsdcTxId?: string | null
     settlementTxId: string
     receiptHash: string
     signature: string
@@ -13710,6 +13772,8 @@ export namespace Prisma {
     buyer?: StringFieldUpdateOperationsInput | string
     seller?: StringFieldUpdateOperationsInput | string
     escrowTxId?: StringFieldUpdateOperationsInput | string
+    depositNftTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    depositUsdcTxId?: NullableStringFieldUpdateOperationsInput | string | null
     settlementTxId?: StringFieldUpdateOperationsInput | string
     receiptHash?: StringFieldUpdateOperationsInput | string
     signature?: StringFieldUpdateOperationsInput | string
@@ -13727,6 +13791,8 @@ export namespace Prisma {
     buyer?: StringFieldUpdateOperationsInput | string
     seller?: StringFieldUpdateOperationsInput | string
     escrowTxId?: StringFieldUpdateOperationsInput | string
+    depositNftTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    depositUsdcTxId?: NullableStringFieldUpdateOperationsInput | string | null
     settlementTxId?: StringFieldUpdateOperationsInput | string
     receiptHash?: StringFieldUpdateOperationsInput | string
     signature?: StringFieldUpdateOperationsInput | string

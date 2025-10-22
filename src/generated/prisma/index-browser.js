@@ -196,6 +196,8 @@ exports.Prisma.ReceiptScalarFieldEnum = {
   buyer: 'buyer',
   seller: 'seller',
   escrowTxId: 'escrowTxId',
+  depositNftTxId: 'depositNftTxId',
+  depositUsdcTxId: 'depositUsdcTxId',
   settlementTxId: 'settlementTxId',
   receiptHash: 'receiptHash',
   signature: 'signature',
