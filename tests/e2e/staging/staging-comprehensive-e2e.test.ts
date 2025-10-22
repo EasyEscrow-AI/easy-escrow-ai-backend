@@ -271,6 +271,9 @@ describe('STAGING Comprehensive E2E Tests', function () {
   let connection: Connection;
   let wallets: StagingWallets;
   let program: Program;
+  
+  // Track all created agreement IDs for cleanup
+  const createdAgreementIds: string[] = [];
 
   before(async function () {
     console.log('\n' + '='.repeat(80));
@@ -417,6 +420,9 @@ describe('STAGING Comprehensive E2E Tests', function () {
           depositAddresses: response.data.data.depositAddresses,
           transactionId: response.data.data.transactionId,
         };
+        
+        // Track for cleanup
+        createdAgreementIds.push(agreement.agreementId);
 
         console.log('   ✅ Agreement created!');
         console.log(`   Agreement ID: ${agreement.agreementId}`);
@@ -859,6 +865,9 @@ describe('STAGING Comprehensive E2E Tests', function () {
           escrowPda: response.data.data.escrowPda,
           depositAddresses: response.data.data.depositAddresses,
         };
+        
+        // Track for cleanup
+        createdAgreementIds.push(expiryAgreement.agreementId);
 
         console.log(`   ✅ Expiry agreement created: ${expiryAgreement.agreementId}`);
         console.log(`   Expires at: ${expiry.toISOString()}`);
@@ -1027,6 +1036,7 @@ describe('STAGING Comprehensive E2E Tests', function () {
         );
 
         const cancelAgreementId = createResponse.data.data.agreementId;
+        createdAgreementIds.push(cancelAgreementId); // Track for cleanup
         console.log(`   ✅ Created agreement: ${cancelAgreementId}`);
         
         // Admin cancels the agreement
@@ -1116,6 +1126,7 @@ describe('STAGING Comprehensive E2E Tests', function () {
         );
 
         expect(response.status).to.equal(201);
+        createdAgreementIds.push(response.data.data.agreementId); // Track for cleanup
         console.log(`   ✅ Created zero-fee agreement: ${response.data.data.agreementId}`);
         console.log('   ✅ Zero-fee transaction accepted by API\n');
         
@@ -1189,6 +1200,7 @@ describe('STAGING Comprehensive E2E Tests', function () {
 
         expect(firstResponse.status).to.equal(201);
         const firstAgreementId = firstResponse.data.data.agreementId;
+        createdAgreementIds.push(firstAgreementId); // Track for cleanup
         console.log(`   ✅ First request: ${firstAgreementId}`);
 
         // Wait a moment to ensure first request is fully processed
@@ -1284,6 +1296,7 @@ describe('STAGING Comprehensive E2E Tests', function () {
         responses.forEach((response, index) => {
           expect(response.status).to.equal(201);
           expect(response.data.success).to.be.true;
+          createdAgreementIds.push(response.data.data.agreementId); // Track for cleanup
           console.log(`   ✅ Agreement ${index + 1}: ${response.data.data.agreementId}`);
         });
 
@@ -1375,6 +1388,7 @@ describe('STAGING Comprehensive E2E Tests', function () {
         );
 
         const agreementId = createResponse.data.data.agreementId;
+        createdAgreementIds.push(agreementId); // Track for cleanup
         console.log(`   ✅ Created agreement with large amount: ${agreementId}`);
         
         // Try to deposit USDC (will fail due to insufficient funds)
@@ -1448,6 +1462,7 @@ describe('STAGING Comprehensive E2E Tests', function () {
         );
 
         const agreementId = createResponse.data.data.agreementId;
+        createdAgreementIds.push(agreementId); // Track for cleanup
         console.log(`   ✅ Created test agreement: ${agreementId}`);
         
         // Get deposit transaction
@@ -1492,7 +1507,7 @@ describe('STAGING Comprehensive E2E Tests', function () {
   // CLEANUP AND SUMMARY
   // ==========================================================================
 
-  after(function () {
+  after(async function () {
     console.log('\n' + '='.repeat(80));
     console.log('✅ STAGING E2E Test Suite Complete!');
     console.log('='.repeat(80));
@@ -1500,6 +1515,64 @@ describe('STAGING Comprehensive E2E Tests', function () {
     console.log(`   Program: ${STAGING_CONFIG.programId}`);
     console.log(`   API: ${STAGING_CONFIG.apiBaseUrl}`);
     console.log('='.repeat(80) + '\n');
+    
+    // Cleanup test agreements from database
+    if (createdAgreementIds.length > 0) {
+      console.log('🧹 Cleaning up test agreements...\n');
+      console.log(`   Found ${createdAgreementIds.length} test agreements to clean up\n`);
+      
+      try {
+        // Import required modules
+        const { PrismaClient } = await import('@prisma/client');
+        const prisma = new PrismaClient();
+        
+        let deletedCount = 0;
+        let failedCount = 0;
+        
+        for (const agreementId of createdAgreementIds) {
+          try {
+            // Delete in transaction to ensure consistency
+            await prisma.$transaction(async (tx: any) => {
+              // Delete related receipts
+              await tx.receipt.deleteMany({
+                where: { agreementId },
+              });
+
+              // Delete related webhook deliveries
+              await tx.webhookDelivery.deleteMany({
+                where: { agreementId },
+              });
+
+              // Delete the agreement
+              await tx.agreement.delete({
+                where: { agreementId },
+              });
+            });
+            
+            console.log(`   ✅ Deleted: ${agreementId}`);
+            deletedCount++;
+            
+          } catch (error: any) {
+            console.error(`   ❌ Failed to delete ${agreementId}: ${error.message}`);
+            failedCount++;
+          }
+        }
+        
+        console.log(`\n   ✅ Cleanup complete!`);
+        console.log(`   • Deleted: ${deletedCount}`);
+        if (failedCount > 0) {
+          console.log(`   • Failed: ${failedCount}`);
+        }
+        console.log('');
+        
+        await prisma.$disconnect();
+        
+      } catch (error: any) {
+        console.error(`   ❌ Cleanup failed: ${error.message}`);
+        console.log(`   ℹ️  You can manually cleanup using:`);
+        console.log(`   npx ts-node scripts/utilities/cleanup-test-agreements.ts ${createdAgreementIds.join(' ')}\n`);
+      }
+    }
   });
 });
 
