@@ -382,20 +382,64 @@ describe('STAGING E2E - Happy Path: NFT-for-USDC Swap', function () {
   it('should verify receipt generation', async function () {
     console.log('📄 Verifying receipt generation...\n');
     
-    const response = await axios.get(
-      `${STAGING_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}`
-    );
-    
-    const data = response.data.data;
-    
-    if (data.receiptId) {
-      console.log(`   ✅ Receipt generated: ${data.receiptId}`);
+    try {
+      const response = await axios.get(
+        `${STAGING_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}`
+      );
+      
+      const data = response.data.data;
+      
+      if (!data.receiptId) {
+        console.log('   ⚠️  No receipt ID found (may be async processing)');
+        console.log('   Skipping receipt verification\n');
+        this.skip();
+        return;
+      }
+      
+      console.log(`   ✅ Receipt ID: ${data.receiptId}`);
       expect(data.receiptId).to.be.a('string');
-      expect(data.status).to.equal('SETTLED');
-      expect(data.settledAt).to.exist;
-      console.log('   ✅ Receipt verified\n');
-    } else {
-      console.log('   ⚠️  No receipt ID found (may be async)\n');
+      
+      // Fetch the actual receipt
+      console.log('   Fetching receipt details...');
+      const receiptResponse = await axios.get(
+        `${STAGING_CONFIG.apiBaseUrl}/v1/receipts/${data.receiptId}`
+      );
+      
+      const receipt = receiptResponse.data.data;
+      
+      console.log(`   ✅ Receipt fetched successfully`);
+      console.log(`   Agreement ID: ${receipt.agreementId}`);
+      console.log(`   Status: ${receipt.status}`);
+      
+      // Verify receipt structure
+      expect(receipt.agreementId).to.equal(agreement.agreementId);
+      expect(receipt.status).to.equal('SETTLED');
+      expect(receipt.settledAt).to.exist;
+      console.log('   ✅ Receipt structure verified');
+      
+      // Verify transaction IDs are present
+      expect(receipt.transactions).to.be.an('array');
+      expect(receipt.transactions.length).to.be.greaterThan(0);
+      console.log(`   ✅ Receipt contains ${receipt.transactions.length} transaction(s)`);
+      
+      // Verify each transaction has a valid ID
+      receipt.transactions.forEach((tx: any, index: number) => {
+        expect(tx.transactionId).to.be.a('string');
+        expect(tx.transactionId.length).to.be.greaterThan(0);
+        expect(tx.type).to.be.a('string');
+        console.log(`   ✅ Transaction ${index + 1}: ${tx.type}`);
+        console.log(`      TX ID: ${tx.transactionId.substring(0, 32)}...`);
+      });
+      
+      console.log('   ✅ All transaction IDs verified\n');
+      
+      // Optional: Display receipt URL
+      console.log(`   🔗 Receipt URL: ${STAGING_CONFIG.apiBaseUrl}/v1/receipts/${data.receiptId}\n`);
+      
+    } catch (error: any) {
+      console.error('   ❌ Failed to verify receipt:');
+      console.error(`   Error: ${error.message}\n`);
+      throw error;
     }
   });
 });
