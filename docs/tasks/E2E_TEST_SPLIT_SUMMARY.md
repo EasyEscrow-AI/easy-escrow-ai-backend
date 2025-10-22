@@ -19,7 +19,7 @@ Successfully split the monolithic STAGING comprehensive E2E test into modular, i
    - Token operations: `getTokenBalance()`, `createTestNFT()`, `setupUSDCAccounts()`
    - Balance tracking: `getInitialBalances()`, `displayBalances()`
 
-2. **`tests/e2e/staging/01-happy-path.test.ts`** (NEW)
+2. **`tests/e2e/staging/01-solana-nft-usdc-happy-path.test.ts`** (NEW)
    - Complete NFT-for-USDC swap flow
    - 11 test cases covering the full happy path
    - ~42 seconds execution time
@@ -28,8 +28,8 @@ Successfully split the monolithic STAGING comprehensive E2E test into modular, i
 ### NPM Scripts Added
 
 ```json
-"test:staging:e2e:happy-path": "mocha --require ts-node/register --no-config tests/e2e/staging/01-happy-path.test.ts --timeout 180000 --reporter spec --colors",
-"test:staging:e2e:happy-path:verbose": "mocha --require ts-node/register --no-config tests/e2e/staging/01-happy-path.test.ts --timeout 180000 --reporter spec --colors --full-trace"
+"test:staging:e2e:happy-path": "mocha --require ts-node/register --no-config tests/e2e/staging/01-solana-nft-usdc-happy-path.test.ts --timeout 180000 --reporter spec --colors",
+"test:staging:e2e:happy-path:verbose": "mocha --require ts-node/register --no-config tests/e2e/staging/01-solana-nft-usdc-happy-path.test.ts --timeout 180000 --reporter spec --colors --full-trace"
 ```
 
 ## Test Results
@@ -195,7 +195,7 @@ All tests load wallets from `wallets/staging/`:
 ## Files Modified
 
 1. **`tests/e2e/staging/shared-test-utils.ts`** - CREATED
-2. **`tests/e2e/staging/01-happy-path.test.ts`** - CREATED
+2. **`tests/e2e/staging/01-solana-nft-usdc-happy-path.test.ts`** - CREATED
 3. **`package.json`** - UPDATED (added npm scripts)
 4. **`tests/e2e/staging/staging-comprehensive-e2e.test.ts`** - PRESERVED (original comprehensive test still available)
 

@@ -238,7 +238,7 @@ console.log('✅ Critical configuration validated');
 
 ### 2. Enhanced E2E Test Coverage
 
-Already implemented in `tests/e2e/staging/01-happy-path.test.ts`:
+Already implemented in `tests/e2e/staging/01-solana-nft-usdc-happy-path.test.ts`:
 
 ```typescript
 it('should verify settlement and fee distribution', async function() {
@@ -268,7 +268,7 @@ Add alerts for:
 - `staging-app.yaml` - Staging environment configuration (VERIFIED)
 - `.env.staging` - Staging environment variables (VERIFIED)
 - `.env.staging.example` - Staging env template (UPDATED)
-- `tests/e2e/staging/01-happy-path.test.ts` - E2E test with fee verification
+- `tests/e2e/staging/01-solana-nft-usdc-happy-path.test.ts` - E2E test with fee verification
 
 ---
 

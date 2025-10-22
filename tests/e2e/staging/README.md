@@ -31,16 +31,16 @@ npm run test:staging:e2e:verbose
 
 ### Test Scenarios
 
-#### 01. Happy Path ✅ (Available)
-**File:** `01-happy-path.test.ts`  
+#### 01. Solana NFT-for-USDC Happy Path ✅ (Available)
+**File:** `01-solana-nft-usdc-happy-path.test.ts`  
 **Command:** `npm run test:staging:e2e:happy-path`  
-**Duration:** ~42 seconds  
+**Duration:** ~46 seconds  
 **Tests:** 11 test cases
 
 **Flow:**
 1. Setup USDC accounts
-2. Create test NFT
-3. Create escrow agreement
+2. Create test NFT on Solana
+3. Create escrow agreement via API
 4. Deposit NFT from sender
 5. Deposit USDC from receiver
 6. Wait for automatic settlement
@@ -48,7 +48,7 @@ npm run test:staging:e2e:verbose
 8. Verify USDC distribution with fees
 9. Verify receipt generation
 
-**Status:** 10/11 passing (fee distribution needs investigation)
+**Status:** ✅ 11/11 passing (100% success rate)
 
 #### 02. Expiry & Cancellation (Planned)
 **File:** `02-expiry-cancellation.test.ts`  
@@ -95,13 +95,15 @@ npm run test:staging:e2e:verbose
 
 ### Environment Variables
 
-Tests use the following environment variables (with defaults):
+Tests use the following environment variables from `.env.staging`:
 
 ```bash
-SOLANA_RPC_URL=https://api.devnet.solana.com
+SOLANA_RPC_URL=https://devnet.helius-rpc.com/?api-key=...  # Helius RPC (fast, reliable)
 STAGING_API_BASE_URL=https://staging-api.easyescrow.ai
 NODE_ENV=staging
 ```
+
+**Note:** Tests automatically load `.env.staging` with `override: true` to use Helius RPC instead of the public devnet RPC.
 
 ### Test Configuration
 
@@ -302,9 +304,8 @@ const agreement = await waitForAgreementStatus(
 
 ## Known Issues
 
-1. **Fee Distribution** - Fee collector receives 0 USDC instead of expected platform fee (under investigation)
-2. **Rate Limiting** - Running all scenarios together triggers 429 errors
-3. **Receipt Generation** - Receipt ID may not be immediately available (async processing)
+1. **Rate Limiting** - Running all scenarios together triggers 429 errors
+2. **Receipt Generation** - Receipt ID may not be immediately available (async processing)
 
 ## Contributing
 
@@ -331,4 +332,5 @@ For issues or questions:
 ---
 
 **Last Updated:** 2025-10-22  
+**Status:** All tests passing (11/11) ✅  
 **Maintained By:** Development Team
