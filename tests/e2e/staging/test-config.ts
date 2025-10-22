@@ -2,6 +2,8 @@
  * STAGING Test Configuration
  * 
  * Centralized configuration for STAGING E2E tests
+ * 
+ * Note: .env.staging should be loaded BEFORE importing this file
  */
 
 export const STAGING_CONFIG = {
@@ -22,6 +24,8 @@ export const STAGING_CONFIG = {
   usdcMint: 'Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr',
   
   // Test parameters
+  swapAmount: 0.1, // 0.1 USDC for testing
+  feePercentage: 0.01, // 1% platform fee
   testAmounts: {
     swap: 0.1, // 0.1 USDC
     fee: 0.01, // 1%

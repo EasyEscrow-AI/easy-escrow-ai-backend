@@ -13,6 +13,17 @@
  * Run: npm run test:staging:e2e:happy-path
  */
 
+// Load .env.staging file BEFORE any other imports
+import dotenv from 'dotenv';
+import path from 'path';
+
+const envPath = path.resolve(process.cwd(), '.env.staging');
+const result = dotenv.config({ path: envPath, override: true }); // Override .env with .env.staging
+
+if (result.error) {
+  throw new Error(`Failed to load .env.staging: ${result.error}`);
+}
+
 import { describe, it, before } from 'mocha';
 import { expect } from 'chai';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
