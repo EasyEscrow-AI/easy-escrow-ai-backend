@@ -82,6 +82,11 @@ services:
         value: debug
         scope: RUN_AND_BUILD_TIME
       
+      # Enable E2E testing mode (higher rate limits for comprehensive testing)
+      - key: ENABLE_E2E_TESTING
+        value: "true"
+        scope: RUN_AND_BUILD_TIME
+      
       #
       # Solana RPC Configuration
       # IMPORTANT: Set actual value in DigitalOcean App Platform console

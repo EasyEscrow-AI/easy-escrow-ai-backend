@@ -8,11 +8,12 @@ import { Request, Response } from 'express';
 
 /**
  * Standard rate limiter for most API endpoints
- * Allows 100 requests per 15 minutes per IP
+ * Production: 100 requests per 15 minutes per IP
+ * Testing: 1000 requests per 15 minutes per IP
  */
 export const standardRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  max: process.env.ENABLE_E2E_TESTING === 'true' ? 1000 : 100, // Higher limit for E2E testing
   message: {
     error: 'Too Many Requests',
     message: 'Too many requests from this IP, please try again later',
@@ -31,11 +32,12 @@ export const standardRateLimiter = rateLimit({
 
 /**
  * Strict rate limiter for sensitive endpoints (e.g., agreement creation)
- * Allows 20 requests per 15 minutes per IP
+ * Production: 20 requests per 15 minutes per IP
+ * Testing: 500 requests per 15 minutes per IP (allows comprehensive E2E testing)
  */
 export const strictRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20, // Limit each IP to 20 requests per windowMs
+  max: process.env.ENABLE_E2E_TESTING === 'true' ? 500 : 20, // Significantly higher limit for E2E testing
   message: {
     error: 'Too Many Requests',
     message: 'Too many creation requests from this IP, please try again later',
@@ -55,11 +57,12 @@ export const strictRateLimiter = rateLimit({
 
 /**
  * Authentication rate limiter for login/auth endpoints
- * Allows 5 attempts per 15 minutes per IP
+ * Production: 5 attempts per 15 minutes per IP
+ * Testing: 50 attempts per 15 minutes per IP
  */
 export const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // Limit each IP to 5 requests per windowMs
+  max: process.env.ENABLE_E2E_TESTING === 'true' ? 50 : 5, // Higher limit for E2E testing
   message: {
     error: 'Too Many Requests',
     message: 'Too many authentication attempts, please try again later',
