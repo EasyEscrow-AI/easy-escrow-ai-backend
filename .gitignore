@@ -74,9 +74,9 @@ config.secret.*
 *-secrets.yml
 *-secrets.yaml
 
-# CRITICAL: staging-app.yaml contains secrets and should NEVER be committed
-# Use staging-app.yaml.template instead
-staging-app.yaml
+# NOTE: staging-app.yaml is NOW SAFE to commit (contains no secret values)
+# Secrets are set directly in DigitalOcean App Platform console
+# staging-app-deploy.yaml remains ignored (generated file with secrets)
 
 # API Keys & Tokens
 .api-key
