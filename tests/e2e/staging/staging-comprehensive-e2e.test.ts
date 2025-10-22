@@ -154,7 +154,7 @@ async function waitForAgreementStatus(
 }
 
 /**
- * Get token balance
+ * Get token balance with proper decimal handling
  */
 async function getTokenBalance(
   connection: Connection,
@@ -162,7 +162,9 @@ async function getTokenBalance(
 ): Promise<number> {
   try {
     const accountInfo = await getAccount(connection, tokenAccount);
-    return Number(accountInfo.amount) / Math.pow(10, 6); // Assuming 6 decimals for USDC
+    const mintInfo = await connection.getParsedAccountInfo(accountInfo.mint);
+    const decimals = (mintInfo.value?.data as any)?.parsed?.info?.decimals || 0;
+    return Number(accountInfo.amount) / Math.pow(10, decimals);
   } catch (error) {
     return 0;
   }
@@ -231,8 +233,9 @@ async function setupUSDCAccounts(
   connection: Connection,
   usdcMint: PublicKey,
   sender: Keypair,
-  receiver: Keypair
-): Promise<{ senderAccount: PublicKey; receiverAccount: PublicKey }> {
+  receiver: Keypair,
+  feeCollector?: Keypair
+): Promise<{ senderAccount: PublicKey; receiverAccount: PublicKey; feeCollectorAccount?: PublicKey }> {
   const { getOrCreateAssociatedTokenAccount } = await import('@solana/spl-token');
   
   console.log('   💰 Setting up USDC accounts...');
@@ -254,9 +257,22 @@ async function setupUSDCAccounts(
   console.log(`   ✅ Sender USDC: ${senderUsdcAccount.address.toBase58()}`);
   console.log(`   ✅ Receiver USDC: ${receiverUsdcAccount.address.toBase58()}`);
   
+  // Create fee collector account if provided
+  let feeCollectorUsdcAccount;
+  if (feeCollector) {
+    feeCollectorUsdcAccount = await getOrCreateAssociatedTokenAccount(
+      connection,
+      sender, // Use sender as payer
+      usdcMint,
+      feeCollector.publicKey
+    );
+    console.log(`   ✅ Fee Collector USDC: ${feeCollectorUsdcAccount.address.toBase58()}`);
+  }
+  
   return {
     senderAccount: senderUsdcAccount.address,
     receiverAccount: receiverUsdcAccount.address,
+    feeCollectorAccount: feeCollectorUsdcAccount?.address,
   };
 }
 
@@ -325,6 +341,7 @@ describe('STAGING Comprehensive E2E Tests', function () {
     let agreement: TestAgreement;
     let nft: TestNFT;
     let initialBalances: any;
+    let usdcAccounts: { senderAccount: PublicKey; receiverAccount: PublicKey; feeCollectorAccount?: PublicKey };
 
     it('should verify wallet balances', async function () {
       console.log('💰 Checking wallet balances...\n');
@@ -340,6 +357,21 @@ describe('STAGING Comprehensive E2E Tests', function () {
       }
       
       console.log('');
+    });
+
+    it('should setup USDC accounts for all parties', async function () {
+      console.log('💰 Setting up USDC accounts...\n');
+      
+      const usdcMint = new PublicKey(STAGING_CONFIG.usdcMint);
+      usdcAccounts = await setupUSDCAccounts(
+        connection, 
+        usdcMint, 
+        wallets.sender, 
+        wallets.receiver,
+        wallets.feeCollector // Create fee collector USDC account
+      );
+      
+      console.log(`   ✅ All USDC accounts created\n`);
     });
 
     it('should create test NFT for sender', async function () {
@@ -359,21 +391,31 @@ describe('STAGING Comprehensive E2E Tests', function () {
     it('should record initial balances', async function () {
       console.log('📊 Recording initial balances...\n');
       
+      // Get USDC balances
+      const senderUsdcBalance = await getTokenBalance(connection, usdcAccounts.senderAccount);
+      const receiverUsdcBalance = await getTokenBalance(connection, usdcAccounts.receiverAccount);
+      const feeCollectorUsdcBalance = usdcAccounts.feeCollectorAccount 
+        ? await getTokenBalance(connection, usdcAccounts.feeCollectorAccount)
+        : 0;
+      
       initialBalances = {
         sender: {
           sol: await connection.getBalance(wallets.sender.publicKey) / LAMPORTS_PER_SOL,
+          usdc: senderUsdcBalance,
         },
         receiver: {
           sol: await connection.getBalance(wallets.receiver.publicKey) / LAMPORTS_PER_SOL,
+          usdc: receiverUsdcBalance,
         },
         feeCollector: {
           sol: await connection.getBalance(wallets.feeCollector.publicKey) / LAMPORTS_PER_SOL,
+          usdc: feeCollectorUsdcBalance,
         },
       };
       
-      console.log(`   Sender SOL: ${initialBalances.sender.sol.toFixed(4)}`);
-      console.log(`   Receiver SOL: ${initialBalances.receiver.sol.toFixed(4)}`);
-      console.log(`   Fee Collector SOL: ${initialBalances.feeCollector.sol.toFixed(4)}\n`);
+      console.log(`   Sender SOL: ${initialBalances.sender.sol.toFixed(4)}, USDC: ${initialBalances.sender.usdc.toFixed(6)}`);
+      console.log(`   Receiver SOL: ${initialBalances.receiver.sol.toFixed(4)}, USDC: ${initialBalances.receiver.usdc.toFixed(6)}`);
+      console.log(`   Fee Collector SOL: ${initialBalances.feeCollector.sol.toFixed(4)}, USDC: ${initialBalances.feeCollector.usdc.toFixed(6)}\n`);
     });
 
     it('should create escrow agreement via API', async function () {
@@ -612,21 +654,17 @@ describe('STAGING Comprehensive E2E Tests', function () {
       console.log('💰 Depositing USDC into escrow...\n');
       
       try {
-        // Setup USDC accounts if needed
-        const usdcMint = new PublicKey(STAGING_CONFIG.usdcMint);
-        const accounts = await setupUSDCAccounts(connection, usdcMint, wallets.sender, wallets.receiver);
-        
         // Note: Receiver needs USDC for deposit
         // In real scenario, receiver would have USDC from devnet faucet
         console.log(`   ⚠️  Receiver needs ${STAGING_CONFIG.swapAmount} USDC for deposit`);
-        console.log(`   Receiver USDC account: ${accounts.receiverAccount.toBase58()}\n`);
+        console.log(`   Receiver USDC account: ${usdcAccounts.receiverAccount.toBase58()}\n`);
         
         // Get unsigned transaction from API
         console.log(`   Requesting deposit transaction from API...`);
         const response = await axios.post(
           `${STAGING_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}/deposit-usdc/prepare`,
           {
-            buyerUsdcAccount: accounts.receiverAccount.toString(),
+            buyerUsdcAccount: usdcAccounts.receiverAccount.toString(),
           },
           {
             headers: { 'Content-Type': 'application/json' },
@@ -717,7 +755,7 @@ describe('STAGING Comprehensive E2E Tests', function () {
       console.log('🔍 Verifying settlement...\n');
       
       try {
-        // Get final balances
+        // Get final SOL balances
         const finalBalances = {
           sender: {
             sol: await connection.getBalance(wallets.sender.publicKey) / LAMPORTS_PER_SOL,
@@ -730,7 +768,7 @@ describe('STAGING Comprehensive E2E Tests', function () {
           },
         };
         
-        console.log('Final Balances:');
+        console.log('Final SOL Balances:');
         console.log(`   Sender SOL: ${finalBalances.sender.sol.toFixed(4)} (was: ${initialBalances.sender.sol.toFixed(4)})`);
         console.log(`   Receiver SOL: ${finalBalances.receiver.sol.toFixed(4)} (was: ${initialBalances.receiver.sol.toFixed(4)})`);
         console.log(`   Fee Collector SOL: ${finalBalances.feeCollector.sol.toFixed(4)} (was: ${initialBalances.feeCollector.sol.toFixed(4)})\n`);
@@ -747,35 +785,43 @@ describe('STAGING Comprehensive E2E Tests', function () {
         const receiverNftBalance = await getTokenBalance(connection, receiverNftAccount.address);
         console.log(`   Receiver NFT Balance: ${receiverNftBalance}`);
         expect(receiverNftBalance).to.equal(1);
-        console.log('   ✅ NFT transferred to receiver');
+        console.log('   ✅ NFT transferred to receiver\n');
         
-        // Verify USDC transferred to sender (minus fees)
-        const usdcMint = new PublicKey(STAGING_CONFIG.usdcMint);
-        const senderUsdcAccount = await getOrCreateAssociatedTokenAccount(
-          connection,
-          wallets.sender,
-          usdcMint,
-          wallets.sender.publicKey
-        );
+        // Get final USDC balances
+        const senderUsdcBalance = await getTokenBalance(connection, usdcAccounts.senderAccount);
+        const receiverUsdcBalance = await getTokenBalance(connection, usdcAccounts.receiverAccount);
+        const feeCollectorUsdcBalance = usdcAccounts.feeCollectorAccount
+          ? await getTokenBalance(connection, usdcAccounts.feeCollectorAccount)
+          : 0;
         
-        const senderUsdcBalance = await getTokenBalance(connection, senderUsdcAccount.address);
-        const expectedAmount = STAGING_CONFIG.swapAmount * (1 - STAGING_CONFIG.feePercentage);
-        console.log(`   Sender USDC Balance: ${senderUsdcBalance.toFixed(6)} (expected: ~${expectedAmount.toFixed(6)})`);
-        expect(senderUsdcBalance).to.be.at.least(expectedAmount * 0.99); // Allow 1% variance
-        console.log('   ✅ USDC transferred to sender (minus fees)');
+        console.log('Final USDC Balances:');
+        console.log(`   Sender USDC: ${senderUsdcBalance.toFixed(6)} (was: ${initialBalances.sender.usdc.toFixed(6)})`);
+        console.log(`   Receiver USDC: ${receiverUsdcBalance.toFixed(6)} (was: ${initialBalances.receiver.usdc.toFixed(6)})`);
+        console.log(`   Fee Collector USDC: ${feeCollectorUsdcBalance.toFixed(6)} (was: ${initialBalances.feeCollector.usdc.toFixed(6)})\n`);
         
-        // Verify fee collected
-        const feeCollectorUsdcAccount = await getOrCreateAssociatedTokenAccount(
-          connection,
-          wallets.feeCollector,
-          usdcMint,
-          wallets.feeCollector.publicKey
-        );
+        // Calculate expected changes
+        const expectedSenderIncrease = STAGING_CONFIG.swapAmount * (1 - STAGING_CONFIG.feePercentage);
+        const expectedReceiverDecrease = STAGING_CONFIG.swapAmount;
+        const expectedFeeIncrease = STAGING_CONFIG.swapAmount * STAGING_CONFIG.feePercentage;
         
-        const feeCollectorUsdcBalance = await getTokenBalance(connection, feeCollectorUsdcAccount.address);
-        const expectedFee = STAGING_CONFIG.swapAmount * STAGING_CONFIG.feePercentage;
-        console.log(`   Fee Collector USDC Balance: ${feeCollectorUsdcBalance.toFixed(6)} (expected: ~${expectedFee.toFixed(6)})`);
-        expect(feeCollectorUsdcBalance).to.be.at.least(expectedFee * 0.99); // Allow 1% variance
+        // Verify USDC changes
+        const senderUsdcIncrease = senderUsdcBalance - initialBalances.sender.usdc;
+        const receiverUsdcDecrease = initialBalances.receiver.usdc - receiverUsdcBalance;
+        const feeCollectorUsdcIncrease = feeCollectorUsdcBalance - initialBalances.feeCollector.usdc;
+        
+        console.log('USDC Changes:');
+        console.log(`   Sender received: ${senderUsdcIncrease.toFixed(6)} USDC (expected: ~${expectedSenderIncrease.toFixed(6)})`);
+        console.log(`   Receiver paid: ${receiverUsdcDecrease.toFixed(6)} USDC (expected: ~${expectedReceiverDecrease.toFixed(6)})`);
+        console.log(`   Fee collected: ${feeCollectorUsdcIncrease.toFixed(6)} USDC (expected: ~${expectedFeeIncrease.toFixed(6)})\n`);
+        
+        // Verify amounts (with 1% tolerance for rounding)
+        expect(senderUsdcIncrease).to.be.at.least(expectedSenderIncrease * 0.99);
+        console.log('   ✅ Sender received correct amount (minus fees)');
+        
+        expect(receiverUsdcDecrease).to.be.at.least(expectedReceiverDecrease * 0.99);
+        console.log('   ✅ Receiver paid correct amount');
+        
+        expect(feeCollectorUsdcIncrease).to.be.at.least(expectedFeeIncrease * 0.99);
         console.log('   ✅ Platform fee collected\n');
         
         console.log('   🎉 All settlements verified successfully!\n');

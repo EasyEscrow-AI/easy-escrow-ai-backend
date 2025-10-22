@@ -203,8 +203,9 @@ services:
         value: "100"
         scope: RUN_TIME
       
-      - key: DEVNET_PLATFORM_FEE_COLLECTOR_ADDRESS
-        value: 8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ
+      - key: DEVNET_STAGING_FEE_COLLECTOR_ADDRESS
+        value: ${DEVNET_STAGING_FEE_COLLECTOR_ADDRESS}
+        type: SECRET
         scope: RUN_TIME
       
       #

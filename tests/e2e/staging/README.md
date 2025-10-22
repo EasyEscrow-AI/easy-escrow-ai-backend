@@ -1,387 +1,334 @@
-# STAGING Comprehensive E2E Tests
+# STAGING E2E Tests
 
-Complete end-to-end test suite for validating the STAGING environment before production deployment.
+Modular end-to-end test suite for STAGING environment validation.
 
-## Overview
+## Quick Start
 
-These tests validate the entire escrow system on the STAGING environment, covering:
-
-- ✅ Happy path flows (complete agreement lifecycle)
-- ✅ Expiry and refund mechanisms
-- ✅ Admin cancellation workflows
-- ✅ Platform fee collection and distribution
-- ✅ Webhook delivery and retry logic
-- ✅ Idempotency key handling
-- ✅ Concurrent operation safety
-- ✅ Edge case error handling
-
-## Prerequisites
-
-### 1. STAGING Environment Setup
-
-Ensure STAGING environment is fully deployed and configured:
+### Run Specific Scenarios
 
 ```bash
-# Verify STAGING deployment
-npm run staging:verify
+# Happy Path: Complete NFT-for-USDC swap
+npm run test:staging:e2e:happy-path
 
-# Or run smoke tests first
-npm run test:staging:smoke
+# Verbose mode with full stack traces
+npm run test:staging:e2e:happy-path:verbose
 ```
 
-### 2. Wallet Setup
-
-STAGING wallets must be funded and ready:
+### Run All Scenarios
 
 ```bash
-# Fund STAGING wallets (if needed)
-npm run staging:fund-wallets
-
-# Check wallet balances
-solana balance AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z --url devnet  # Sender
-solana balance 5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4 --url devnet  # Receiver
-solana balance 498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R --url devnet  # Admin
-solana balance 8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ --url devnet  # Fee Collector
-```
-
-**Required Balances:**
-- Sender: ~5 SOL
-- Receiver: ~5 SOL + test USDC
-- Admin: ~3 SOL
-- Fee Collector: ~3 SOL
-
-### 3. Environment Variables
-
-Set the API endpoint:
-
-```bash
-# For deployed STAGING API
-export STAGING_API_BASE_URL=https://staging-api.easyescrow.ai
-
-# For local testing against STAGING backend
-export STAGING_API_BASE_URL=http://localhost:3000
-```
-
-## Running Tests
-
-### Run All E2E Tests
-
-```bash
+# Comprehensive test (all scenarios)
 npm run test:staging:e2e
-```
-
-### Run with Verbose Output
-
-```bash
 npm run test:staging:e2e:verbose
 ```
 
-### Run Specific Test Scenarios
+## Test Structure
+
+### Shared Utilities
+- **`shared-test-utils.ts`** - Common functions, types, and helpers
+- **`test-config.ts`** - Centralized configuration
+- **`test-helpers.ts`** - Additional helper functions
+
+### Test Scenarios
+
+#### 01. Happy Path ✅ (Available)
+**File:** `01-happy-path.test.ts`  
+**Command:** `npm run test:staging:e2e:happy-path`  
+**Duration:** ~42 seconds  
+**Tests:** 11 test cases
+
+**Flow:**
+1. Setup USDC accounts
+2. Create test NFT
+3. Create escrow agreement
+4. Deposit NFT from sender
+5. Deposit USDC from receiver
+6. Wait for automatic settlement
+7. Verify NFT transfer
+8. Verify USDC distribution with fees
+9. Verify receipt generation
+
+**Status:** 10/11 passing (fee distribution needs investigation)
+
+#### 02. Expiry & Cancellation (Planned)
+**File:** `02-expiry-cancellation.test.ts`  
+**Command:** `npm run test:staging:e2e:expiry` (not yet implemented)
+
+**Tests:**
+- Agreement expiry handling
+- Automatic refunds
+- Admin cancellation
+- Refund verification
+
+#### 03. Fee Collection (Planned)
+**File:** `03-fee-collection.test.ts`  
+**Command:** `npm run test:staging:e2e:fees` (not yet implemented)
+
+**Tests:**
+- Platform fee calculations
+- Fee distribution verification
+- Zero-fee transactions
+- Variable fee rates
+
+#### 04. Idempotency & Webhooks (Planned)
+**File:** `04-idempotency-webhooks.test.ts`  
+**Command:** `npm run test:staging:e2e:idempotency` (not yet implemented)
+
+**Tests:**
+- Duplicate request handling
+- Webhook delivery
+- Event notifications
+- Retry logic
+
+#### 05. Edge Cases (Planned)
+**File:** `05-edge-cases.test.ts`  
+**Command:** `npm run test:staging:e2e:edge-cases` (not yet implemented)
+
+**Tests:**
+- Concurrent operations
+- Invalid inputs
+- Insufficient funds
+- Invalid signatures
+- Rate limiting
+
+## Configuration
+
+### Environment Variables
+
+Tests use the following environment variables (with defaults):
 
 ```bash
-# Run only happy path tests
-npx mocha --require ts-node/register \
-  tests/e2e/staging/staging-comprehensive-e2e.test.ts \
-  --grep "Happy Path" \
-  --timeout 300000
-
-# Run only expiry tests
-npx mocha --require ts-node/register \
-  tests/e2e/staging/staging-comprehensive-e2e.test.ts \
-  --grep "Expiry" \
-  --timeout 300000
+SOLANA_RPC_URL=https://api.devnet.solana.com
+STAGING_API_BASE_URL=https://staging-api.easyescrow.ai
+NODE_ENV=staging
 ```
 
-## Test Scenarios
+### Test Configuration
 
-### Scenario 1: Happy Path
-
-**Description:** Complete agreement flow from creation to settlement
-
-**Steps:**
-1. Verify wallet balances
-2. Create test NFT
-3. Create escrow agreement via API
-4. Deposit NFT (seller)
-5. Deposit USDC (buyer)
-6. Wait for automatic settlement
-7. Verify fund distribution (seller, buyer, fee collector)
-8. Verify receipt generation
-
-**Expected Results:**
-- Seller receives 99% of swap amount in USDC
-- Buyer receives NFT
-- Fee collector receives 1% platform fee
-- Agreement status: `SETTLED`
-- Receipt generated and stored
-
-### Scenario 2: Expiry and Cancellation
-
-**Description:** Test agreement expiry and admin cancellation workflows
-
-**Test Cases:**
-
-#### 2a. Expiry with Partial Deposits
-1. Create agreement with short expiry (5 minutes)
-2. Deposit only NFT (no USDC)
-3. Wait for expiry
-4. Verify refund process triggered
-5. Verify NFT returned to sender
-
-**Expected Results:**
-- Agreement status: `EXPIRED`
-- NFT refunded to seller
-- No USDC transferred
-
-#### 2b. Admin Cancellation
-1. Create agreement
-2. Make both deposits
-3. Admin triggers cancellation
-4. Verify refund process
-5. Verify webhook notifications sent
-
-**Expected Results:**
-- Agreement status: `CANCELLED`
-- Funds returned to original depositors
-- Webhook events delivered
-
-### Scenario 3: Platform Fee Collection
-
-**Description:** Validate fee calculation and distribution
-
-**Test Cases:**
-
-#### 3a. Standard Fee (1%)
-1. Execute settlement with 1% fee
-2. Verify fee amount calculation
-3. Verify fee sent to fee collector wallet
-4. Verify seller received correct amount (99%)
-
-**Expected Results:**
-- Fee collector receives exactly 1% of swap amount
-- Seller receives exactly 99% of swap amount
-
-#### 3b. Zero Fee
-1. Create agreement with `feeBps = 0`
-2. Execute settlement
-3. Verify no fees collected
-4. Verify seller receives full amount (100%)
-
-**Expected Results:**
-- Fee collector receives 0 USDC
-- Seller receives 100% of swap amount
-
-### Scenario 4: Webhook Delivery
-
-**Description:** Test webhook notification system
-
-**Test Cases:**
-
-#### 4a. Webhook Delivery
-1. Configure test webhook endpoint
-2. Create agreement
-3. Trigger various events (deposit, settlement)
-4. Verify webhook payloads received
-5. Verify proper event data in payloads
-
-**Expected Results:**
-- All webhooks delivered successfully
-- Payloads contain correct event data
-- Proper retry behavior on failures
-
-#### 4b. Idempotency
-1. Create agreement with idempotency key
-2. Submit same request again (same key)
-3. Verify no duplicate created
-4. Verify original agreement returned
-
-**Expected Results:**
-- Only one agreement created
-- Second request returns existing agreement
-- Redis stores idempotency keys correctly
-
-### Scenario 5: Concurrent Operations & Edge Cases
-
-**Description:** Test system robustness and error handling
-
-**Test Cases:**
-
-#### 5a. Concurrent Agreement Creation
-1. Create multiple agreements simultaneously
-2. Verify no race conditions
-3. Verify database consistency
-
-**Expected Results:**
-- All agreements created successfully
-- No duplicate IDs or corrupted state
-- Proper locking mechanisms working
-
-#### 5b. Wrong Mint Address
-1. Attempt to create agreement with invalid NFT mint
-2. Verify proper error handling
-3. Verify no partial state created
-
-**Expected Results:**
-- Request rejected with clear error message
-- No agreement record created
-- No blockchain state modified
-
-#### 5c. Insufficient Funds
-1. Attempt deposit with insufficient balance
-2. Verify transaction fails gracefully
-3. Verify proper error message returned
-
-**Expected Results:**
-- Transaction rejected
-- Clear error message about insufficient funds
-- Agreement remains in `PENDING` state
-
-#### 5d. Invalid Signatures
-1. Submit transaction with wrong signer
-2. Verify rejection
-3. Verify security measures working
-
-**Expected Results:**
-- Transaction rejected
-- Security validation working
-- No unauthorized state changes
-
-## Test Configuration
-
-Configuration is centralized in `test-config.ts`:
+Located in `test-config.ts`:
 
 ```typescript
 {
   programId: 'AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei',
   network: 'devnet',
-  rpcUrl: 'https://api.devnet.solana.com',
-  apiBaseUrl: process.env.STAGING_API_BASE_URL || 'http://localhost:3000',
   usdcMint: 'Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr',
+  apiBaseUrl: 'https://staging-api.easyescrow.ai',
   testAmounts: {
-    swap: 0.1,
-    fee: 0.01,
+    swap: 0.1,      // USDC
+    fee: 0.01,      // 1%
     minSOL: 0.1,
-  },
+  }
 }
 ```
 
-## Helper Modules
+### Wallets
 
-### `test-config.ts`
+Tests use static wallets from `wallets/staging/`:
+- `staging-sender.json` - NFT seller
+- `staging-receiver.json` - USDC buyer  
+- `staging-admin.json` - Agreement signer
+- `staging-fee-collector.json` - Platform fee recipient
 
-- Centralized test configuration
-- Explorer URL generators
-- Idempotency key generators
-- Amount calculators
+**⚠️ Important:** Ensure wallets have sufficient SOL and USDC before running tests.
 
-### `test-helpers.ts`
+## Writing New Test Scenarios
 
-- Wallet management functions
-- Token balance checking
-- Agreement creation helpers
-- Status polling utilities
-- Transaction signing helpers
+### Template
+
+```typescript
+import { describe, it, before } from 'mocha';
+import { expect } from 'chai';
+import { Connection } from '@solana/web3.js';
+import { STAGING_CONFIG } from './test-config';
+import {
+  loadStagingWallets,
+  createTestNFT,
+  // ... other utilities
+  type StagingWallets,
+} from './shared-test-utils';
+
+describe('STAGING E2E - Your Scenario', function () {
+  this.timeout(180000); // 3 minutes
+
+  let connection: Connection;
+  let wallets: StagingWallets;
+
+  before(async function () {
+    connection = new Connection(STAGING_CONFIG.rpcUrl, 'confirmed');
+    wallets = loadStagingWallets();
+    // Additional setup...
+  });
+
+  it('should do something', async function () {
+    // Your test logic here
+  });
+});
+```
+
+### Best Practices
+
+1. **Use Shared Utilities** - Don't duplicate code
+2. **Descriptive Test Names** - Use "should..." format
+3. **Console Logging** - Add visual feedback with emojis
+4. **Proper Timeouts** - Set realistic timeouts per test
+5. **Clean Setup** - Initialize in `before()` hook
+6. **Assertions** - Use Chai's expect syntax
+7. **Error Handling** - Log detailed error information
+
+### Example Test
+
+```typescript
+it('should create test NFT for sender', async function () {
+  console.log('🎨 Creating test NFT...\n');
+  
+  const nft = await createTestNFT(connection, wallets.sender);
+  
+  console.log(`   NFT Mint: ${nft.mint.toBase58()}`);
+  console.log(`   Owner: ${wallets.sender.publicKey.toBase58()}\n`);
+  
+  expect(nft.mint).to.be.instanceOf(PublicKey);
+  expect(nft.tokenAccount).to.be.instanceOf(PublicKey);
+});
+```
 
 ## Troubleshooting
 
-### "Wallet file not found"
+### Rate Limiting (429 Errors)
 
-**Solution:** Ensure STAGING wallets are generated and in the correct location:
+**Problem:** `Too many creation requests from this IP`
 
+**Solution:**
+- Run tests individually instead of all at once
+- Add delays between test runs
+- Wait a few minutes before retrying
+
+### Insufficient Funds
+
+**Problem:** `insufficient funds` errors
+
+**Solution:**
 ```bash
-ls -la wallets/staging/
-# Should show:
-# - staging-sender.json
-# - staging-receiver.json
-# - staging-admin.json
-# - staging-fee-collector.json
-```
+# Check wallet balances
+npm run staging:verify
 
-### "Insufficient funds"
-
-**Solution:** Fund the wallets:
-
-```bash
+# Fund wallets with SOL
 npm run staging:fund-wallets
 ```
 
-### "Connection timeout"
+### Account Not Found
 
-**Solution:** Verify RPC endpoint is accessible:
+**Problem:** `TokenAccountNotFoundError`
 
-```bash
-curl -X POST https://api.devnet.solana.com \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"getHealth"}'
+**Solution:**
+- Ensure USDC accounts are created before use
+- Use `setupUSDCAccounts()` helper in test setup
+- Check that wallets have been funded
+
+### Connection Timeout
+
+**Problem:** RPC connection timeouts
+
+**Solution:**
+- Use a reliable RPC endpoint (Helius, QuickNode)
+- Increase timeout values in test config
+- Check network connectivity
+
+## Utilities Reference
+
+### Wallet Management
+
+```typescript
+// Load all staging wallets
+const wallets = loadStagingWallets();
+
+// Access individual wallets
+wallets.sender
+wallets.receiver
+wallets.admin
+wallets.feeCollector
 ```
 
-### "API endpoint not responding"
+### Token Operations
 
-**Solution:** Verify STAGING API is deployed and healthy:
+```typescript
+// Create test NFT
+const nft = await createTestNFT(connection, owner);
 
-```bash
-# For deployed STAGING
-curl https://staging-api.easyescrow.ai/health
+// Setup USDC accounts
+const accounts = await setupUSDCAccounts(
+  connection,
+  usdcMint,
+  sender,
+  receiver,
+  feeCollector // optional
+);
 
-# For local backend
-curl http://localhost:3000/health
+// Get token balance (handles decimals automatically)
+const balance = await getTokenBalance(connection, tokenAccount);
 ```
 
-### "Test timeout"
+### Balance Tracking
 
-**Solution:** Increase timeout or check network connectivity:
+```typescript
+// Get comprehensive balances
+const balances = await getInitialBalances(
+  connection,
+  wallets,
+  usdcAccounts
+);
 
-```bash
-# Increase timeout (already set to 5 minutes)
-# Check devnet status: https://status.solana.com/
-
-# Verify wallet balances are sufficient
-npm run staging:fund-wallets
+// Display formatted balances
+displayBalances(balances, 'Initial Balances');
 ```
 
-## Expected Test Duration
+### API Helpers
 
-| Scenario | Expected Duration |
-|----------|-------------------|
-| Happy Path | ~30-60 seconds |
-| Expiry Tests | ~5-7 minutes (waiting for expiry) |
-| Cancellation | ~20-30 seconds |
-| Fee Collection | ~20-30 seconds |
-| Webhooks | ~15-30 seconds |
-| Idempotency | ~10-15 seconds |
-| Concurrent Ops | ~30-60 seconds |
-| Edge Cases | ~15-30 seconds each |
-| **Total Suite** | **~10-15 minutes** |
+```typescript
+// Generate unique idempotency key
+const key = generateIdempotencyKey('my-test');
 
-## Output and Reporting
+// Get explorer URL
+const url = getExplorerUrl(txId, 'tx');
+const addressUrl = getExplorerUrl(pubkey, 'address');
 
-Test results are logged to console with:
-- ✅ Success indicators
-- ❌ Failure indicators
-- 🔗 Explorer links for transactions
-- 📊 Balance summaries
-- ⏱️ Timing metrics
+// Wait for agreement status
+const agreement = await waitForAgreementStatus(
+  agreementId,
+  'SETTLED',
+  60,    // max attempts
+  2000   // interval ms
+);
+```
 
-After tests complete, review results and document in:
-- `docs/testing/STAGING_E2E_RESULTS.md`
+## Known Issues
 
-## CI/CD Integration
+1. **Fee Distribution** - Fee collector receives 0 USDC instead of expected platform fee (under investigation)
+2. **Rate Limiting** - Running all scenarios together triggers 429 errors
+3. **Receipt Generation** - Receipt ID may not be immediately available (async processing)
 
-These tests should be run:
+## Contributing
 
-1. **After STAGING deployment** (automatically via CI)
-2. **Before production promotion** (manual verification)
-3. **After significant backend changes** (regression testing)
+To add a new test scenario:
 
-## Related Documentation
+1. Create new test file: `0X-scenario-name.test.ts`
+2. Import shared utilities from `shared-test-utils.ts`
+3. Follow the template structure above
+4. Add npm scripts to `package.json`:
+   ```json
+   "test:staging:e2e:scenario-name": "mocha --require ts-node/register --no-config tests/e2e/staging/0X-scenario-name.test.ts --timeout 180000 --reporter spec --colors"
+   ```
+5. Update this README with new scenario details
+6. Test thoroughly before committing
 
-- [STAGING Reference](../../../docs/STAGING_REFERENCE.md) - Complete STAGING infrastructure
-- [STAGING Wallets](../../../docs/STAGING_WALLETS.md) - Wallet management
-- [Program IDs](../../../docs/PROGRAM_IDS.md) - Program ID registry
-- [STAGING Strategy](../../../docs/architecture/STAGING_STRATEGY.md) - Overall approach
+## Support
+
+For issues or questions:
+- Check existing test implementations for examples
+- Review shared utilities documentation
+- Consult staging deployment docs
+- Check API documentation at `/api-docs`
 
 ---
 
-**Last Updated:** 2025-01-21  
+**Last Updated:** 2025-10-22  
 **Maintained By:** Development Team
-

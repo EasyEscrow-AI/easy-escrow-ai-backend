@@ -72,6 +72,8 @@
     "test:staging:smoke:ci": "ts-node scripts/testing/smoke-tests.ts",
     "test:staging:e2e": "mocha --require ts-node/register --no-config tests/e2e/staging/staging-comprehensive-e2e.test.ts --timeout 300000 --reporter spec --colors",
     "test:staging:e2e:verbose": "mocha --require ts-node/register --no-config tests/e2e/staging/staging-comprehensive-e2e.test.ts --timeout 300000 --reporter spec --colors --full-trace",
+    "test:staging:e2e:happy-path": "mocha --require ts-node/register --no-config tests/e2e/staging/01-happy-path.test.ts --timeout 180000 --reporter spec --colors",
+    "test:staging:e2e:happy-path:verbose": "mocha --require ts-node/register --no-config tests/e2e/staging/01-happy-path.test.ts --timeout 180000 --reporter spec --colors --full-trace",
     "test:cleanup": "ts-node scripts/utilities/cleanup-test-agreements.ts",
     "test:cleanup:all": "ts-node scripts/utilities/cleanup-test-agreements.ts --all-test",
     "test:cleanup:dry-run": "ts-node scripts/utilities/cleanup-test-agreements.ts --all-test --dry-run",
