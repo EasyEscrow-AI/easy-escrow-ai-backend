@@ -14,21 +14,39 @@ import { getEscrowIdl } from '../utils/idl-loader';
 import bs58 from 'bs58';
 
 /**
- * Load admin keypair from environment
+ * Load admin keypair from environment based on NODE_ENV
+ * 
+ * Environment-specific variables:
+ * - development/test: DEVNET_ADMIN_PRIVATE_KEY
+ * - staging: DEVNET_STAGING_ADMIN_PRIVATE_KEY
+ * - production: MAINNET_ADMIN_PRIVATE_KEY (future)
  */
 function loadAdminKeypair(): Keypair {
-  // Try AUTHORITY_KEYPAIR first (preferred)
-  let envValue = process.env.AUTHORITY_KEYPAIR;
-  let envName = 'AUTHORITY_KEYPAIR';
+  const nodeEnv = process.env.NODE_ENV || 'development';
   
-  // Fallback to DEVNET_ADMIN_PRIVATE_KEY for devnet testing
-  if (!envValue && process.env.SOLANA_NETWORK === 'devnet') {
-    envValue = process.env.DEVNET_ADMIN_PRIVATE_KEY;
-    envName = 'DEVNET_ADMIN_PRIVATE_KEY';
+  // Determine which environment variable to use based on NODE_ENV
+  let envName: string;
+  let envValue: string | undefined;
+  
+  switch (nodeEnv) {
+    case 'staging':
+      envName = 'DEVNET_STAGING_ADMIN_PRIVATE_KEY';
+      envValue = process.env.DEVNET_STAGING_ADMIN_PRIVATE_KEY;
+      break;
+    case 'production':
+      envName = 'MAINNET_ADMIN_PRIVATE_KEY';
+      envValue = process.env.MAINNET_ADMIN_PRIVATE_KEY;
+      break;
+    case 'development':
+    case 'test':
+    default:
+      envName = 'DEVNET_ADMIN_PRIVATE_KEY';
+      envValue = process.env.DEVNET_ADMIN_PRIVATE_KEY;
+      break;
   }
   
   if (!envValue) {
-    throw new Error('[EscrowProgramService] Admin keypair not configured. Set AUTHORITY_KEYPAIR or DEVNET_ADMIN_PRIVATE_KEY');
+    throw new Error(`[EscrowProgramService] Admin keypair not configured for ${nodeEnv}. Set ${envName}`);
   }
   
   try {
@@ -36,15 +54,15 @@ function loadAdminKeypair(): Keypair {
     if (envValue.startsWith('[')) {
       const secretKey = Uint8Array.from(JSON.parse(envValue));
       const keypair = Keypair.fromSecretKey(secretKey);
-      console.log(`[EscrowProgramService] Loaded admin keypair from ${envName}: ${keypair.publicKey.toString()}`);
+      console.log(`[EscrowProgramService] Loaded admin keypair from ${envName} (${nodeEnv}): ${keypair.publicKey.toString()}`);
       return keypair;
     }
     
-    // Try Base58 format
+    // Try Base58 format (Solana standard)
     const secretKey = bs58.decode(envValue);
     if (secretKey.length === 64) {
       const keypair = Keypair.fromSecretKey(secretKey);
-      console.log(`[EscrowProgramService] Loaded admin keypair from ${envName}: ${keypair.publicKey.toString()}`);
+      console.log(`[EscrowProgramService] Loaded admin keypair from ${envName} (${nodeEnv}): ${keypair.publicKey.toString()}`);
       return keypair;
     }
     
@@ -52,13 +70,13 @@ function loadAdminKeypair(): Keypair {
     const base64Key = Buffer.from(envValue, 'base64');
     if (base64Key.length === 64) {
       const keypair = Keypair.fromSecretKey(base64Key);
-      console.log(`[EscrowProgramService] Loaded admin keypair from ${envName}: ${keypair.publicKey.toString()}`);
+      console.log(`[EscrowProgramService] Loaded admin keypair from ${envName} (${nodeEnv}): ${keypair.publicKey.toString()}`);
       return keypair;
     }
     
-    throw new Error('Unsupported keypair format');
+    throw new Error('Unsupported keypair format (expected Base58, JSON array, or Base64)');
   } catch (error) {
-    throw new Error(`[EscrowProgramService] Failed to load admin keypair: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(`[EscrowProgramService] Failed to load admin keypair from ${envName}: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 

@@ -13,7 +13,7 @@ export const STAGING_CONFIG = {
   rpcUrl: process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com',
   
   // API endpoint (defaults to STAGING deployment)
-  apiBaseUrl: process.env.STAGING_API_BASE_URL || 'https://easyescrow-backend-staging-mwx9s.ondigitalocean.app',
+  apiBaseUrl: process.env.STAGING_API_BASE_URL || 'https://staging-api.easyescrow.ai',
   
   // STAGING Program ID (from Task 64)
   programId: 'AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei',

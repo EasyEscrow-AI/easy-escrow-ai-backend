@@ -134,21 +134,13 @@ services:
         type: SECRET
         scope: RUN_TIME
       
+      # Admin keypair for signing escrow transactions
+      # Application code reads DEVNET_STAGING_ADMIN_PRIVATE_KEY (based on NODE_ENV=staging)
       - key: DEVNET_STAGING_ADMIN_PRIVATE_KEY
         type: SECRET
         scope: RUN_TIME
       
-      # Application code expects AUTHORITY_KEYPAIR or DEVNET_ADMIN_PRIVATE_KEY
-      # Map STAGING admin key to what the application expects
-      - key: AUTHORITY_KEYPAIR
-        type: SECRET
-        scope: RUN_TIME
-      
-      - key: DEVNET_ADMIN_PRIVATE_KEY
-        type: SECRET
-        scope: RUN_TIME
-      
-      # Add admin address for reference
+      # Admin address for reference (derived from DEVNET_STAGING_ADMIN_PRIVATE_KEY)
       - key: DEVNET_STAGING_ADMIN_ADDRESS
         value: 498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R
         scope: RUN_TIME
