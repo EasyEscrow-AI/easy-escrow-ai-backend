@@ -10,7 +10,7 @@ import { Connection, Keypair, PublicKey, SystemProgram } from '@solana/web3.js';
 import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { config } from '../config';
 import { Escrow } from '../generated/anchor/escrow';
-import escrowIdl from '../generated/anchor/escrow-idl.json';
+import { getEscrowIdl } from '../utils/idl-loader';
 import bs58 from 'bs58';
 
 /**
@@ -103,6 +103,7 @@ export class EscrowProgramService {
     // Note: In Anchor v0.32.1, Program constructor takes (idl, provider)
     // The programId is taken from the IDL's address field
     // We verify it matches our config
+    const escrowIdl = getEscrowIdl();
     this.program = new Program<Escrow>(
       escrowIdl as any,
       this.provider

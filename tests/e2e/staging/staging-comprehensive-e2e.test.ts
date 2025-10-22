@@ -40,7 +40,7 @@ const STAGING_CONFIG = {
   rpcUrl: process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com',
   
   // API endpoint (defaults to STAGING deployment)
-  apiBaseUrl: process.env.STAGING_API_BASE_URL || 'https://staging-api.easyescrow.ai',
+  apiBaseUrl: process.env.STAGING_API_BASE_URL || 'https://easyescrow-backend-staging-mwx9s.ondigitalocean.app',
   
   // Official Devnet USDC Mint
   usdcMint: 'Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr',
