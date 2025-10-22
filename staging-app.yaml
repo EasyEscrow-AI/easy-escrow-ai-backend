@@ -22,8 +22,9 @@ name: easyescrow-backend-staging
 region: sgp1
 
 # VPC configuration for private database access
-vpc:
-  id: 1b54e9f9-6da0-45bd-9acb-2b9df642aa61
+# COMMENTED OUT: Had problems with VPC, will add back later
+# vpc:
+#   id: 1b54e9f9-6da0-45bd-9acb-2b9df642aa61
 
 services:
   - name: api
@@ -83,7 +84,7 @@ services:
       
       #
       # Solana RPC Configuration
-      # IMPORTANT: SOLANA_RPC_URL secret is already stored in DO App Platform
+      # IMPORTANT: Set actual value in DigitalOcean App Platform console
       #
       - key: SOLANA_RPC_URL
         value: ${SOLANA_RPC_URL}
@@ -153,6 +154,11 @@ services:
         type: SECRET
         scope: RUN_TIME
       
+      # Add admin address for reference
+      - key: DEVNET_STAGING_ADMIN_ADDRESS
+        value: 498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R
+        scope: RUN_TIME
+      
       - key: DEVNET_STAGING_FEE_COLLECTOR_PRIVATE_KEY
         value: ${DEVNET_STAGING_FEE_COLLECTOR_PRIVATE_KEY}
         type: SECRET
@@ -210,7 +216,7 @@ services:
         value: "100"
         scope: RUN_TIME
       
-      - key: PLATFORM_FEE_COLLECTOR_ADDRESS
+      - key: DEVNET_PLATFORM_FEE_COLLECTOR_ADDRESS
         value: 8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ
         scope: RUN_TIME
       
@@ -218,7 +224,7 @@ services:
       # Monitoring & Health Checks
       #
       - key: MONITORING_ENDPOINT
-        value: https://staging-api.easyescrow.ai/health
+        value: https://staging.easyescrow.ai/health
         scope: RUN_TIME
       
       - key: HEALTH_CHECK_ENABLED
@@ -384,15 +390,6 @@ services:
         scope: RUN_TIME
       
       #
-      # DigitalOcean API
-      # IMPORTANT: DO API key stored in GitHub Secrets
-      #
-      - key: DIGITAL_OCEAN_API_KEY
-        value: ${DIGITAL_OCEAN_API_KEY}
-        type: SECRET
-        scope: RUN_TIME
-      
-      #
       # Logging Configuration
       #
       - key: LOG_FORMAT
@@ -409,7 +406,7 @@ services:
 
 # Custom Domain Configuration
 domains:
-  - domain: staging-api.easyescrow.ai
+  - domain: staging.easyescrow.ai
     type: PRIMARY
 
 # Alerts (optional - configure as needed)

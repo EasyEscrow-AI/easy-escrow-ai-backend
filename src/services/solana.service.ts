@@ -99,9 +99,27 @@ export class SolanaService {
     const rpcUrl = connectionConfig?.rpcUrl || config.solana?.rpcUrl;
     const rpcUrlFallback = connectionConfig?.rpcUrlFallback || config.solana?.rpcUrlFallback;
     
-    // Validate RPC URL is provided
+    // Validate RPC URL is provided and properly formatted
     if (!rpcUrl) {
       throw new Error('[SolanaService] Configuration error: Solana RPC URL is not configured');
+    }
+
+    // Check for common configuration errors
+    if (rpcUrl.includes('${') || rpcUrl.includes('}')) {
+      throw new Error(
+        `[SolanaService] Configuration error: SOLANA_RPC_URL contains placeholder syntax '${rpcUrl}'. ` +
+        `This means the environment variable is not set in DigitalOcean App Platform. ` +
+        `Please set the actual RPC URL value in the App Platform console under Settings > Environment Variables.`
+      );
+    }
+
+    // Validate URL format (must start with http:// or https://)
+    if (!/^https?:\/\//i.test(rpcUrl)) {
+      throw new Error(
+        `[SolanaService] Configuration error: SOLANA_RPC_URL must start with 'http://' or 'https://'. ` +
+        `Got: '${rpcUrl?.slice(0, 50)}...' ` +
+        `Please check the environment variable value in DigitalOcean App Platform.`
+      );
     }
 
     // Set configuration parameters
@@ -118,7 +136,8 @@ export class SolanaService {
     };
     
     // Initialize primary connection
-    console.log(`[SolanaService] Creating primary connection with URL: ${rpcUrl}`);
+    // Log only the first 30 characters for security
+    console.log(`[SolanaService] Creating primary connection with URL: ${rpcUrl.slice(0, 30)}...`);
     this.connection = new Connection(rpcUrl, httpConnectionConfig);
     
     // Initialize primary RPC status tracking
@@ -134,18 +153,26 @@ export class SolanaService {
     
     // Initialize fallback connection if configured
     if (rpcUrlFallback) {
-      console.log(`[SolanaService] Creating fallback connection with URL: ${rpcUrlFallback}`);
-      this.fallbackConnection = new Connection(rpcUrlFallback, httpConnectionConfig);
-      
-      this.fallbackRpcStatus = {
-        url: rpcUrlFallback,
-        isHealthy: false,
-        lastCheck: null,
-        lastResponseTime: null,
-        failureCount: 0,
-        totalRequests: 0,
-        successfulRequests: 0,
-      };
+      // Validate fallback URL format
+      if (!/^https?:\/\//i.test(rpcUrlFallback)) {
+        console.warn(
+          `[SolanaService] Warning: SOLANA_RPC_URL_FALLBACK has invalid format: '${rpcUrlFallback?.slice(0, 50)}...'. ` +
+          `Fallback connection will not be available.`
+        );
+      } else {
+        console.log(`[SolanaService] Creating fallback connection with URL: ${rpcUrlFallback.slice(0, 30)}...`);
+        this.fallbackConnection = new Connection(rpcUrlFallback, httpConnectionConfig);
+        
+        this.fallbackRpcStatus = {
+          url: rpcUrlFallback,
+          isHealthy: false,
+          lastCheck: null,
+          lastResponseTime: null,
+          failureCount: 0,
+          totalRequests: 0,
+          successfulRequests: 0,
+        };
+      }
     }
     
     // Note: Solana's Connection class handles WebSocket subscriptions internally.
@@ -648,18 +675,21 @@ export const initializeEscrow = async (
       throw new Error('[SolanaService] Configuration error: config.usdc is undefined');
     }
 
+    const rpcUrl = config.solana?.rpcUrl;
+    
+    // Validate RPC URL
+    if (!rpcUrl || !rpcUrl.startsWith('http')) {
+      throw new Error(
+        `[SolanaService] Invalid RPC URL configuration: '${rpcUrl}'. ` +
+        `SOLANA_RPC_URL must be set to a valid HTTP/HTTPS endpoint.`
+      );
+    }
+
     console.log('[SolanaService] Initializing escrow with config:', {
-      rpcUrl: config.solana?.rpcUrl,
+      rpcUrl: rpcUrl.slice(0, 30) + '...',
       network: config.solana?.network,
       programId: config.solana?.escrowProgramId,
     });
-
-    // Use default devnet if RPC URL is not configured properly
-    const rpcUrl = config.solana?.rpcUrl && config.solana.rpcUrl.startsWith('http') 
-      ? config.solana.rpcUrl 
-      : 'https://api.devnet.solana.com';
-    
-    console.log('[SolanaService] Using RPC URL:', rpcUrl);
     
     // Parse addresses
     const nftMintPubkey = new PublicKey(params.nftMint);
