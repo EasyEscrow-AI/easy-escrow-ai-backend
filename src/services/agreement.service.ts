@@ -1,4 +1,4 @@
-import { PrismaClient, Agreement, AgreementStatus, Deposit, Receipt } from '../generated/prisma';
+import { PrismaClient, Agreement, AgreementStatus, Deposit } from '../generated/prisma';
 import { 
   CreateAgreementDTO, 
   CreateAgreementResponseDTO, 
@@ -260,7 +260,7 @@ const generateAgreementId = (): string => {
 /**
  * Map Agreement model to DTO
  */
-const mapAgreementToDTO = (agreement: Agreement & { receipt?: Receipt | null }): AgreementResponseDTO => {
+const mapAgreementToDTO = (agreement: any): AgreementResponseDTO => {
   return {
     agreementId: agreement.agreementId,
     nftMint: agreement.nftMint,
@@ -288,11 +288,11 @@ const mapAgreementToDTO = (agreement: Agreement & { receipt?: Receipt | null }):
 /**
  * Map Agreement with deposits to detailed DTO
  */
-const mapAgreementToDetailDTO = (agreement: Agreement & { deposits: Deposit[]; receipt?: Receipt | null }): AgreementDetailResponseDTO => {
+const mapAgreementToDetailDTO = (agreement: any): AgreementDetailResponseDTO => {
   const baseDTO = mapAgreementToDTO(agreement);
   
   // Map deposits
-  const deposits: DepositInfoDTO[] = agreement.deposits.map(deposit => ({
+  const deposits: DepositInfoDTO[] = agreement.deposits.map((deposit: any) => ({
     id: deposit.id,
     type: deposit.type,
     depositor: deposit.depositor,
@@ -304,8 +304,8 @@ const mapAgreementToDetailDTO = (agreement: Agreement & { deposits: Deposit[]; r
   }));
 
   // Calculate balances
-  const usdcDeposit = agreement.deposits.find(d => d.type === 'USDC' && d.status === 'CONFIRMED');
-  const nftDeposit = agreement.deposits.find(d => d.type === 'NFT' && d.status === 'CONFIRMED');
+  const usdcDeposit = agreement.deposits.find((d: any) => d.type === 'USDC' && d.status === 'CONFIRMED');
+  const nftDeposit = agreement.deposits.find((d: any) => d.type === 'NFT' && d.status === 'CONFIRMED');
 
   const balances = {
     usdcLocked: !!usdcDeposit,
