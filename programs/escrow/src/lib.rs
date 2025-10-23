@@ -496,6 +496,7 @@ pub struct AdminCancel<'info> {
 
 // State Account
 
+/// Escrow state account storing agreement details
 #[account]
 #[derive(InitSpace)]
 pub struct EscrowState {
@@ -503,7 +504,15 @@ pub struct EscrowState {
     pub buyer: Pubkey,
     pub seller: Pubkey,
     pub usdc_amount: u64,
+    
+    /// The NFT's mint address (unique identifier).
+    /// 
+    /// Important: This is NOT "minting" (creating) an NFT.
+    /// The NFT must ALREADY EXIST in the seller's wallet.
+    /// This field stores the mint address to identify WHICH specific NFT
+    /// is being traded in this escrow agreement.
     pub nft_mint: Pubkey,
+    
     pub buyer_usdc_deposited: bool,
     pub seller_nft_deposited: bool,
     pub status: EscrowStatus,

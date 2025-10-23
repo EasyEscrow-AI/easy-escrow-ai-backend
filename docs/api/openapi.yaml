@@ -1039,7 +1039,15 @@ components:
       properties:
         nftMint:
           type: string
-          description: Solana NFT mint address
+          description: |
+            The NFT's mint address (unique identifier).
+            
+            Important: This is NOT "minting" (creating) an NFT.
+            The NFT must ALREADY EXIST in the seller's wallet.
+            Provide the mint address of the specific NFT to be traded in this escrow agreement.
+            
+            In Solana, a "mint" is the account that defines a token type. For NFTs,
+            the mint address serves as the unique identifier (like a serial number or contract address).
           example: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
         price:
           type: string
@@ -1147,6 +1155,7 @@ components:
           type: string
         nftMint:
           type: string
+          description: The NFT's mint address (unique identifier of the NFT being traded)
         price:
           type: string
         seller:
@@ -1258,6 +1267,7 @@ components:
           type: string
         nftMint:
           type: string
+          description: The NFT's mint address (identifier of the NFT that was traded)
         price:
           type: string
         platformFee:

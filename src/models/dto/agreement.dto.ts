@@ -5,7 +5,17 @@ import { AgreementStatus } from '../../generated/prisma';
  * DTO for creating a new agreement
  */
 export interface CreateAgreementDTO {
+  /**
+   * The NFT's mint address (unique identifier).
+   * 
+   * Important: This is NOT "minting" (creating) an NFT.
+   * The NFT must ALREADY EXIST in the seller's wallet.
+   * Provide the mint address of the specific NFT to be traded.
+   * 
+   * Example: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+   */
   nftMint: string;
+  
   price: string | number | Decimal;
   seller: string;
   buyer?: string;
@@ -19,7 +29,13 @@ export interface CreateAgreementDTO {
  */
 export interface AgreementResponseDTO {
   agreementId: string;
+  
+  /**
+   * The NFT's mint address (unique identifier of the NFT being traded).
+   * This identifies which specific NFT is part of this agreement.
+   */
   nftMint: string;
+  
   price: string;
   seller: string;
   buyer?: string;
@@ -55,7 +71,12 @@ export interface AgreementQueryDTO {
   status?: AgreementStatus;
   seller?: string;
   buyer?: string;
+  
+  /**
+   * Filter by NFT mint address (to find agreements for a specific NFT).
+   */
   nftMint?: string;
+  
   page?: number;
   limit?: number;
 }
