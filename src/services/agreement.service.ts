@@ -114,6 +114,9 @@ export const getAgreementById = async (
   try {
     const agreement = await prisma.agreement.findUnique({
       where: { agreementId },
+      include: {
+        receipt: true, // Include receipt to get receiptId
+      },
     });
 
     if (!agreement) {
@@ -256,7 +259,7 @@ const generateAgreementId = (): string => {
 /**
  * Map Agreement model to DTO
  */
-const mapAgreementToDTO = (agreement: Agreement): AgreementResponseDTO => {
+const mapAgreementToDTO = (agreement: Agreement & { receipt?: { id: string } | null }): AgreementResponseDTO => {
   return {
     agreementId: agreement.agreementId,
     nftMint: agreement.nftMint,
@@ -273,6 +276,7 @@ const mapAgreementToDTO = (agreement: Agreement): AgreementResponseDTO => {
     initTxId: agreement.initTxId || undefined,
     settleTxId: agreement.settleTxId || undefined,
     cancelTxId: agreement.cancelTxId || undefined,
+    receiptId: agreement.receipt?.id || undefined,
     createdAt: agreement.createdAt.toISOString(),
     updatedAt: agreement.updatedAt.toISOString(),
     settledAt: agreement.settledAt?.toISOString(),

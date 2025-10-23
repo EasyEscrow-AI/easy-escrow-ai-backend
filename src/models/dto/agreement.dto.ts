@@ -49,6 +49,7 @@ export interface AgreementResponseDTO {
   initTxId?: string;        // Escrow initialization transaction
   settleTxId?: string;      // Settlement transaction (when status = SETTLED)
   cancelTxId?: string;      // Cancellation transaction (when status = CANCELLED)
+  receiptId?: string;       // Receipt ID (when status = SETTLED and receipt generated)
   createdAt: string;
   updatedAt: string;
   settledAt?: string;       // Timestamp when settled
