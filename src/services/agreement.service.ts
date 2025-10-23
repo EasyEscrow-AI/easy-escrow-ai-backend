@@ -277,7 +277,7 @@ const mapAgreementToDTO = (agreement: any): AgreementResponseDTO => {
     initTxId: agreement.initTxId || undefined,
     settleTxId: agreement.settleTxId || undefined,
     cancelTxId: agreement.cancelTxId || undefined,
-    receiptId: agreement.receipt?.id || undefined,
+    receiptId: agreement.receipt?.id ?? null,
     createdAt: agreement.createdAt.toISOString(),
     updatedAt: agreement.updatedAt.toISOString(),
     settledAt: agreement.settledAt?.toISOString(),
