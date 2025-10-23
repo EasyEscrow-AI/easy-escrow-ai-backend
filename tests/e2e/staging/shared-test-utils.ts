@@ -11,6 +11,9 @@ import fs from 'fs';
 import path from 'path';
 import { STAGING_CONFIG } from './test-config';
 
+// Re-export configuration for use in test files
+export { STAGING_CONFIG };
+
 // ============================================================================
 // TYPES
 // ============================================================================

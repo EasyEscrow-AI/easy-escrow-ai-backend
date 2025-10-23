@@ -7,10 +7,12 @@ Modular end-to-end test suite for STAGING environment validation.
 ### Run All Scenarios
 
 ```bash
-# Comprehensive test (all 8 scenarios)
+# Run all 8 scenarios in sequence (via staging-all-e2e.test.ts orchestrator)
 npm run test:staging:e2e
 npm run test:staging:e2e:verbose
 ```
+
+**Note:** The `staging-all-e2e.test.ts` file imports all individual test scenarios in sequence. This eliminates code duplication while allowing both comprehensive and individual test execution.
 
 ### Run Individual Scenarios
 
@@ -48,12 +50,41 @@ npm run test:staging:e2e:08-edge-cases-validation
 npm run test:staging:e2e:08-edge-cases-validation:verbose
 ```
 
-## Test Structure
+## Test Architecture
+
+### File Structure
+
+```
+tests/e2e/staging/
+├── staging-all-e2e.test.ts              # Master orchestrator (imports all tests)
+├── 01-solana-nft-usdc-happy-path.test.ts
+├── 02-agreement-expiry-refund.test.ts
+├── 03-admin-cancellation.test.ts
+├── 04-platform-fee-collection.test.ts
+├── 05-webhook-delivery.test.ts
+├── 06-idempotency-handling.test.ts
+├── 07-concurrent-operations.test.ts
+├── 08-edge-cases-validation.test.ts
+├── shared-test-utils.ts                 # Common utilities
+├── test-config.ts                       # Configuration
+└── README.md                            # This file
+```
+
+### How It Works
+
+**Single Source of Truth:**
+- Each test scenario exists in ONE file only
+- `staging-all-e2e.test.ts` imports all individual test files
+- No code duplication = easier maintenance
+- Changes to individual tests automatically reflect in "run all" mode
+
+**Run Options:**
+- `npm run test:staging:e2e` → Runs all 8 scenarios via orchestrator
+- `npm run test:staging:e2e:01-*` → Runs specific scenario independently
 
 ### Shared Utilities
 - **`shared-test-utils.ts`** - Common functions, types, and helpers
 - **`test-config.ts`** - Centralized configuration
-- **`test-helpers.ts`** - Additional helper functions
 
 ### Test Scenarios
 
