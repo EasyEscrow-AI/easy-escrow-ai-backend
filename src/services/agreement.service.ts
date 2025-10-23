@@ -143,6 +143,7 @@ export const getAgreementDetailById = async (
         deposits: {
           orderBy: { detectedAt: 'asc' }
         },
+        receipt: true, // Include receipt to get receiptId
       },
     });
 
@@ -287,7 +288,7 @@ const mapAgreementToDTO = (agreement: Agreement & { receipt?: { id: string } | n
 /**
  * Map Agreement with deposits to detailed DTO
  */
-const mapAgreementToDetailDTO = (agreement: Agreement & { deposits: Deposit[] }): AgreementDetailResponseDTO => {
+const mapAgreementToDetailDTO = (agreement: Agreement & { deposits: Deposit[]; receipt?: { id: string } | null }): AgreementDetailResponseDTO => {
   const baseDTO = mapAgreementToDTO(agreement);
   
   // Map deposits
