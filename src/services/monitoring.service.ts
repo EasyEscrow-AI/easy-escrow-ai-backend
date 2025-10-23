@@ -158,7 +158,7 @@ export class MonitoringService {
           agreement.usdcDepositAddr &&
           !['USDC_LOCKED', 'BOTH_LOCKED'].includes(agreement.status)
         ) {
-          await this.monitorAccount(agreement.usdcDepositAddr, agreement.id, 'usdc');
+          await this.monitorAccount(agreement.usdcDepositAddr, agreement.agreementId, 'usdc');
         }
 
         // Monitor NFT deposit address if not yet locked
@@ -166,7 +166,7 @@ export class MonitoringService {
           agreement.nftDepositAddr &&
           !['NFT_LOCKED', 'BOTH_LOCKED'].includes(agreement.status)
         ) {
-          await this.monitorAccount(agreement.nftDepositAddr, agreement.id, 'nft');
+          await this.monitorAccount(agreement.nftDepositAddr, agreement.agreementId, 'nft');
         }
       }
 
