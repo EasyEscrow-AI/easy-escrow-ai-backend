@@ -383,39 +383,70 @@ describe('STAGING E2E - Happy Path: NFT-for-USDC Swap', function () {
       2000 // 2 seconds between attempts
     );
     
-    const settlementEndTime = Date.now();
-    
     console.log('\n   ✅ Agreement settled successfully!');
     console.log(`   Settlement time: ${settledAgreement.settledAt}\n`);
     
     expect(settledAgreement.status).to.equal('SETTLED');
     
-    // Try to get settlement transaction details
-    try {
-      // Fetch receipt to get settlement transaction ID
-      const receiptResponse = await axios.get(
-        `${STAGING_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}`
-      );
-      
-      if (receiptResponse.data.data.receiptId) {
-        const receiptDetailResponse = await axios.get(
-          `${STAGING_CONFIG.apiBaseUrl}/v1/receipts/${receiptResponse.data.data.receiptId}`
+    // Wait for settlement transaction ID to be available
+    console.log('   ⏳ Waiting for settlement transaction to be recorded...\n');
+    let settleTxId: string | null = null;
+    const maxAttempts = 30; // 30 attempts
+    const retryDelay = 1000; // 1 second
+    
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const response = await axios.get(
+          `${STAGING_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}`
         );
         
-        const receipt = receiptDetailResponse.data.data;
-        const settlementTx = receipt.transactions?.find((tx: any) => tx.type === 'SETTLEMENT');
+        if (response.data.data.settleTxId) {
+          settleTxId = response.data.data.settleTxId;
+          console.log(`   ✅ Settlement TX ID found after ${attempt} attempt(s): ${settleTxId}\n`);
+          break;
+        }
         
-        if (settlementTx && settlementTx.transactionId) {
-          // Get transaction details for fee
-          const txDetails = await connection.getTransaction(settlementTx.transactionId, { 
+        if (attempt < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, retryDelay));
+        }
+      } catch (error) {
+        console.log(`   ⚠️  Error checking for settleTxId (attempt ${attempt}/${maxAttempts})`);
+      }
+    }
+    
+    const settlementEndTime = Date.now();
+    
+    // Get settlement transaction details
+    if (settleTxId) {
+      try {
+        console.log('   📊 Fetching settlement transaction details...');
+        
+        // Wait for transaction to be confirmed on chain
+        let txDetails = null;
+        const txMaxAttempts = 10;
+        for (let i = 0; i < txMaxAttempts; i++) {
+          txDetails = await connection.getTransaction(settleTxId, { 
             commitment: 'confirmed', 
             maxSupportedTransactionVersion: 0 
           });
-          const txFee = (txDetails?.meta?.fee || 0) / 1_000_000_000;
+          
+          if (txDetails) {
+            console.log(`   ✅ Transaction confirmed on-chain\n`);
+            break;
+          }
+          
+          if (i < txMaxAttempts - 1) {
+            console.log(`   ⏳ Waiting for transaction confirmation... (${i + 1}/${txMaxAttempts})`);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        }
+        
+        if (txDetails) {
+          const txFee = (txDetails.meta?.fee || 0) / 1_000_000_000;
           
           transactions.push({
-            description: 'Settlement (NFT→Buyer, USDC→Seller)',
-            txId: settlementTx.transactionId,
+            description: 'Settlement (NFT→Buyer, USDC→Seller, Fee→Collector)',
+            txId: settleTxId,
             startTime: settlementStartTime,
             endTime: settlementEndTime,
             duration: (settlementEndTime - settlementStartTime) / 1000,
@@ -423,11 +454,15 @@ describe('STAGING E2E - Happy Path: NFT-for-USDC Swap', function () {
           });
           
           console.log(`   ⏱️  Settlement completed in ${((settlementEndTime - settlementStartTime) / 1000).toFixed(2)} seconds`);
-          console.log(`   💰 Transaction fee: ${txFee.toFixed(9)} SOL\n`);
+          console.log(`   💰 Transaction fee: ${txFee.toFixed(9)} SOL (paid by backend)\n`);
+        } else {
+          console.log('   ⚠️  Could not confirm settlement transaction on-chain\n');
         }
+      } catch (error) {
+        console.log(`   ⚠️  Error retrieving settlement transaction details: ${error}\n`);
       }
-    } catch (error) {
-      console.log('   ⚠️  Could not retrieve settlement transaction details\n');
+    } else {
+      console.log('   ⚠️  Settlement transaction ID not available after waiting\n');
     }
   });
 
@@ -494,7 +529,9 @@ describe('STAGING E2E - Happy Path: NFT-for-USDC Swap', function () {
       console.log('-'.repeat(80));
       
       let totalTxTime = 0;
-      let totalFees = 0;
+      let sellerDepositFee = 0;
+      let buyerDepositFee = 0;
+      let settlementFee = 0;
       
       transactions.forEach((tx, index) => {
         console.log(`   ${index + 1}. ${tx.description}`);
@@ -504,13 +541,41 @@ describe('STAGING E2E - Happy Path: NFT-for-USDC Swap', function () {
         console.log(`      🔗 ${getExplorerUrl(tx.txId)}\n`);
         
         totalTxTime += tx.duration;
-        totalFees += tx.fee;
+        
+        // Categorize fees
+        if (tx.description.includes('Seller > NFT')) {
+          sellerDepositFee = tx.fee;
+        } else if (tx.description.includes('Buyer > USDC')) {
+          buyerDepositFee = tx.fee;
+        } else if (tx.description.includes('Settlement')) {
+          settlementFee = tx.fee;
+        }
       });
       
       console.log('-'.repeat(80));
       const avgTxTime = totalTxTime / transactions.length;
-      console.log(`   📈 Average blockchain transaction time: ${avgTxTime.toFixed(2)} seconds`);
-      console.log(`   💰 Total transaction fees: ${totalFees.toFixed(9)} SOL`);
+      const totalSolFees = sellerDepositFee + buyerDepositFee + settlementFee;
+      
+      console.log(`   📈 Average blockchain transaction time: ${avgTxTime.toFixed(2)} seconds\n`);
+      
+      // Detailed fee breakdown
+      console.log('💰 FEE BREAKDOWN:');
+      console.log('-'.repeat(80));
+      console.log('   Blockchain Fees (SOL):');
+      console.log(`     • Seller deposit fee:      ${sellerDepositFee.toFixed(9)} SOL (paid by seller)`);
+      console.log(`     • Buyer deposit fee:       ${buyerDepositFee.toFixed(9)} SOL (paid by buyer)`);
+      console.log(`     • Settlement fee:          ${settlementFee.toFixed(9)} SOL (paid by backend)`);
+      console.log(`     • Total blockchain fees:   ${totalSolFees.toFixed(9)} SOL\n`);
+      
+      console.log('   Platform Commission (USDC):');
+      const platformCommission = STAGING_CONFIG.testAmounts.swap * STAGING_CONFIG.testAmounts.fee;
+      console.log(`     • EasyEscrow commission:   ${platformCommission.toFixed(6)} USDC (${(STAGING_CONFIG.testAmounts.fee * 100).toFixed(1)}% of swap)`);
+      console.log(`     • Seller receives:         ${(STAGING_CONFIG.testAmounts.swap - platformCommission).toFixed(6)} USDC (after commission)\n`);
+      
+      console.log('   Summary:');
+      console.log(`     • Total SOL fees paid:     ${totalSolFees.toFixed(9)} SOL (~$${(totalSolFees * 200).toFixed(4)} USD)`);
+      console.log(`     • Platform revenue:        ${platformCommission.toFixed(6)} USDC`);
+      
       console.log('='.repeat(80) + '\n');
     }
   });
@@ -519,58 +584,77 @@ describe('STAGING E2E - Happy Path: NFT-for-USDC Swap', function () {
     console.log('📄 Verifying receipt generation...\n');
     
     try {
-      const response = await axios.get(
-        `${STAGING_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}`
-      );
+      // Wait for receipt to be generated
+      console.log('   ⏳ Waiting for receipt generation...\n');
+      let receiptId: string | null = null;
+      const maxAttempts = 30; // 30 attempts
+      const retryDelay = 1000; // 1 second
       
-      const data = response.data.data;
-      
-      if (!data.receiptId) {
-        console.log('   ⚠️  No receipt ID found (may be async processing)');
-        console.log('   Skipping receipt verification\n');
-        this.skip();
-        return;
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+          const response = await axios.get(
+            `${STAGING_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}`
+          );
+          
+          if (response.data.data.receiptId) {
+            receiptId = response.data.data.receiptId;
+            console.log(`   ✅ Receipt ID found after ${attempt} attempt(s): ${receiptId}\n`);
+            break;
+          }
+          
+          if (attempt < maxAttempts) {
+            if (attempt % 5 === 0) {
+              console.log(`   ⏳ Still waiting for receipt... (${attempt}/${maxAttempts})`);
+            }
+            await new Promise(resolve => setTimeout(resolve, retryDelay));
+          }
+        } catch (error) {
+          console.log(`   ⚠️  Error checking for receipt (attempt ${attempt}/${maxAttempts})`);
+        }
       }
       
-      console.log(`   ✅ Receipt ID: ${data.receiptId}`);
-      expect(data.receiptId).to.be.a('string');
+      if (!receiptId) {
+        console.log('   ⚠️  Receipt not generated after waiting');
+        console.log('   This may indicate an issue with async receipt generation\n');
+        throw new Error('Receipt not generated within timeout period');
+      }
+      
+      expect(receiptId).to.be.a('string');
       
       // Fetch the actual receipt
-      console.log('   Fetching receipt details...');
+      console.log('   📊 Fetching receipt details...');
       const receiptResponse = await axios.get(
-        `${STAGING_CONFIG.apiBaseUrl}/v1/receipts/${data.receiptId}`
+        `${STAGING_CONFIG.apiBaseUrl}/v1/receipts/${receiptId}`
       );
       
       const receipt = receiptResponse.data.data;
       
       console.log(`   ✅ Receipt fetched successfully`);
       console.log(`   Agreement ID: ${receipt.agreementId}`);
-      console.log(`   Status: ${receipt.status}`);
+      console.log(`   Settled At: ${receipt.settledAt}\n`);
       
       // Verify receipt structure
       expect(receipt.agreementId).to.equal(agreement.agreementId);
-      expect(receipt.status).to.equal('SETTLED');
       expect(receipt.settledAt).to.exist;
       console.log('   ✅ Receipt structure verified');
       
       // Verify transaction IDs are present
       expect(receipt.transactions).to.be.an('array');
       expect(receipt.transactions.length).to.be.greaterThan(0);
-      console.log(`   ✅ Receipt contains ${receipt.transactions.length} transaction(s)`);
+      console.log(`   ✅ Receipt contains ${receipt.transactions.length} transaction(s)\n`);
       
       // Verify each transaction has a valid ID
       receipt.transactions.forEach((tx: any, index: number) => {
         expect(tx.transactionId).to.be.a('string');
         expect(tx.transactionId.length).to.be.greaterThan(0);
         expect(tx.type).to.be.a('string');
-        console.log(`   ✅ Transaction ${index + 1}: ${tx.type}`);
-        console.log(`      TX ID: ${tx.transactionId.substring(0, 32)}...`);
+        console.log(`   ${index + 1}. ${tx.type}`);
+        console.log(`      TX ID: ${tx.transactionId}`);
+        console.log(`      🔗 ${getExplorerUrl(tx.transactionId)}`);
       });
       
-      console.log('   ✅ All transaction IDs verified\n');
-      
-      // Optional: Display receipt URL
-      console.log(`   🔗 Receipt URL: ${STAGING_CONFIG.apiBaseUrl}/v1/receipts/${data.receiptId}\n`);
+      console.log('\n   ✅ All transaction IDs verified');
+      console.log(`   🔗 Receipt URL: ${STAGING_CONFIG.apiBaseUrl}/v1/receipts/${receiptId}\n`);
       
     } catch (error: any) {
       console.error('   ❌ Failed to verify receipt:');

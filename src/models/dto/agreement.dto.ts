@@ -46,8 +46,13 @@ export interface AgreementResponseDTO {
   escrowPda: string;
   usdcDepositAddr?: string;
   nftDepositAddr?: string;
+  initTxId?: string;        // Escrow initialization transaction
+  settleTxId?: string;      // Settlement transaction (when status = SETTLED)
+  cancelTxId?: string;      // Cancellation transaction (when status = CANCELLED)
   createdAt: string;
   updatedAt: string;
+  settledAt?: string;       // Timestamp when settled
+  cancelledAt?: string;     // Timestamp when cancelled
 }
 
 /**

@@ -270,8 +270,13 @@ const mapAgreementToDTO = (agreement: Agreement): AgreementResponseDTO => {
     escrowPda: agreement.escrowPda,
     usdcDepositAddr: agreement.usdcDepositAddr || undefined,
     nftDepositAddr: agreement.nftDepositAddr || undefined,
+    initTxId: agreement.initTxId || undefined,
+    settleTxId: agreement.settleTxId || undefined,
+    cancelTxId: agreement.cancelTxId || undefined,
     createdAt: agreement.createdAt.toISOString(),
     updatedAt: agreement.updatedAt.toISOString(),
+    settledAt: agreement.settledAt?.toISOString(),
+    cancelledAt: agreement.cancelledAt?.toISOString(),
   };
 };
 
