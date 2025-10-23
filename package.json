@@ -22,6 +22,7 @@
     "db:setup": "npm run db:generate && npm run db:migrate",
     "test": "mocha --require ts-node/register 'tests/**/*.test.ts' --timeout 30000",
     "test:unit": "mocha --require ts-node/register 'tests/unit/**/*.test.ts' --timeout 10000",
+    "test:unit:receipt": "mocha --require ts-node/register tests/unit/receipt.service.test.ts --timeout 10000 --reporter spec --colors",
     "test:integration": "mocha --require ts-node/register 'tests/integration/**/*.test.ts' --timeout 20000",
     "test:on-chain": "anchor test --skip-local-validator",
     "test:on-chain:comprehensive": "mocha --require ts-node/register 'tests/on-chain/**/*.test.ts' --timeout 60000",

@@ -393,6 +393,11 @@ export class SettlementService {
       });
 
       // 6. Generate settlement receipt with all transaction IDs
+      // Declare variables outside try block for catch block access
+      let transactions: any[] = [];
+      let depositNftTx: any = undefined;
+      let depositUsdcTx: any = undefined;
+      
       try {
         const receiptService = getReceiptService();
         
@@ -403,16 +408,16 @@ export class SettlementService {
         
         // Fetch all transaction IDs from transaction log for complete audit trail
         console.log(`[SettlementService] Fetching transaction logs for agreement ${agreement.agreementId}`);
-        const transactions = await prisma.transactionLog.findMany({
+        transactions = await prisma.transactionLog.findMany({
           where: { agreementId: agreement.agreementId },
           orderBy: { timestamp: 'asc' },
         });
 
         // Extract deposit transaction IDs
-        const depositNftTx = transactions.find(tx => 
+        depositNftTx = transactions.find(tx => 
           tx.operationType === 'DEPOSIT_NFT' || tx.operationType === 'deposit'
         );
-        const depositUsdcTx = transactions.find(tx => 
+        depositUsdcTx = transactions.find(tx => 
           tx.operationType === 'DEPOSIT_USDC' || tx.operationType === 'deposit'
         );
 
@@ -440,15 +445,45 @@ export class SettlementService {
         });
 
         if (receiptResult.success) {
-          console.log(`[SettlementService] Receipt generated successfully: ${receiptResult.receipt?.id}`);
+          console.log(`[SettlementService] ✅ Receipt generated successfully: ${receiptResult.receipt?.id}`);
           // Note: Agreement-Receipt relation is automatically established via Receipt.agreementId
         } else {
-          console.error(`[SettlementService] Failed to generate receipt: ${receiptResult.error}`);
+          // Enhanced error logging for receipt generation failures
+          console.error('═'.repeat(80));
+          console.error('[SettlementService] ❌ RECEIPT GENERATION FAILED');
+          console.error('═'.repeat(80));
+          console.error(`[SettlementService] Agreement ID: ${agreement.agreementId}`);
+          console.error(`[SettlementService] NFT Mint: ${agreement.nftMint}`);
+          console.error(`[SettlementService] Price: ${agreement.price.toString()}`);
+          console.error(`[SettlementService] Error: ${receiptResult.error}`);
+          console.error('[SettlementService] Transaction IDs:');
+          console.error(`[SettlementService]   • Escrow (init): ${agreement.initTxId || 'NULL'}`);
+          console.error(`[SettlementService]   • Deposit NFT: ${depositNftTx?.txId || 'NULL'}`);
+          console.error(`[SettlementService]   • Deposit USDC: ${depositUsdcTx?.txId || 'NULL'}`);
+          console.error(`[SettlementService]   • Settlement: ${settlementTxId}`);
+          console.error(`[SettlementService] Total transaction logs found: ${transactions.length}`);
+          console.error('═'.repeat(80));
           // Don't fail the settlement if receipt generation fails
         }
-      } catch (receiptError) {
-        // Log receipt error but don't fail the settlement
-        console.error('[SettlementService] Error generating receipt:', receiptError);
+      } catch (receiptError: any) {
+        // Enhanced error logging for exceptions during receipt generation
+        console.error('═'.repeat(80));
+        console.error('[SettlementService] ❌ EXCEPTION IN RECEIPT GENERATION');
+        console.error('═'.repeat(80));
+        console.error(`[SettlementService] Agreement ID: ${agreement.agreementId}`);
+        console.error(`[SettlementService] NFT Mint: ${agreement.nftMint}`);
+        console.error(`[SettlementService] Error Type: ${receiptError?.constructor?.name || 'Unknown'}`);
+        console.error(`[SettlementService] Error Message: ${receiptError?.message || receiptError}`);
+        console.error(`[SettlementService] Error Stack:`);
+        console.error(receiptError?.stack || 'No stack trace available');
+        console.error('[SettlementService] Transaction IDs:');
+        console.error(`[SettlementService]   • Escrow (init): ${agreement.initTxId || 'NULL'}`);
+        console.error(`[SettlementService]   • Deposit NFT: ${depositNftTx?.txId || 'NULL'}`);
+        console.error(`[SettlementService]   • Deposit USDC: ${depositUsdcTx?.txId || 'NULL'}`);
+        console.error(`[SettlementService]   • Settlement: ${settlementTxId}`);
+        console.error(`[SettlementService] Total transaction logs found: ${transactions.length}`);
+        console.error('═'.repeat(80));
+        // Don't fail the settlement if receipt generation fails
       }
 
       // 7. Publish webhook event for settlement
