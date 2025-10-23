@@ -339,7 +339,7 @@ export class RefundService {
   }
 
   /**
-   * Process refund for a single deposit
+   * Process refund for a single deposit with on-chain execution
    */
   private async processDepositRefund(
     agreementId: string,
@@ -352,33 +352,184 @@ export class RefundService {
     console.log(`[RefundService] Processing ${type} refund for deposit ${depositId}`);
 
     try {
-      // TODO: Implement actual on-chain refund transactions
-      // For now, return mock transaction ID
-      const mockTxId = `refund_${type}_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      // Get agreement details
+      const agreement = await prisma.agreement.findUnique({
+        where: { agreementId },
+      });
 
-      console.log(`[RefundService] Refund transaction created:`, {
+      if (!agreement) {
+        throw new Error(`Agreement ${agreementId} not found`);
+      }
+
+      // Execute on-chain refund with retries
+      const txId = await this.executeOnChainRefundWithRetry(
+        agreement,
+        type,
+        depositId,
+        3 // max retries
+      );
+
+      console.log(`[RefundService] On-chain refund transaction confirmed:`, {
         depositId,
         type,
         depositor,
         amount: amount || 'N/A',
-        txId: mockTxId,
+        txId,
       });
 
-      // Log the refund in transaction logs
-      await prisma.transactionLog.create({
-        data: {
-          agreementId,
-          txId: mockTxId,
-          operationType: 'refund',
-          status: 'success',
-          timestamp: new Date(),
-        },
-      });
-
-      return mockTxId;
+      return txId;
     } catch (error) {
       console.error(`[RefundService] Error processing deposit refund:`, error);
       throw error;
+    }
+  }
+
+  /**
+   * Execute on-chain refund with retry logic
+   */
+  private async executeOnChainRefundWithRetry(
+    agreement: any,
+    type: DepositType,
+    depositId: string,
+    maxRetries: number
+  ): Promise<string> {
+    let lastError: Error | null = null;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`[RefundService] Refund attempt ${attempt}/${maxRetries} for deposit ${depositId}`);
+        
+        // Execute the on-chain refund
+        const txId = await this.executeOnChainRefund(agreement);
+        
+        // Wait for transaction confirmation
+        await this.waitForTransactionConfirmation(txId);
+        
+        console.log(`[RefundService] Refund confirmed on attempt ${attempt}/${maxRetries}`);
+        return txId;
+        
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+        console.error(`[RefundService] Refund attempt ${attempt}/${maxRetries} failed:`, lastError.message);
+        
+        // If this isn't the last attempt, wait with exponential backoff
+        if (attempt < maxRetries) {
+          const delayMs = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s, etc.
+          console.log(`[RefundService] Retrying in ${delayMs}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delayMs));
+        }
+      }
+    }
+    
+    // All retries failed
+    throw new Error(
+      `Failed to process refund after ${maxRetries} attempts: ${lastError?.message || 'Unknown error'}`
+    );
+  }
+
+  /**
+   * Execute actual on-chain refund transaction
+   */
+  private async executeOnChainRefund(agreement: any): Promise<string> {
+    console.log(`[RefundService] Executing on-chain refund for agreement: ${agreement.agreementId}`);
+    
+    try {
+      // Import EscrowProgramService
+      const { EscrowProgramService } = await import('./escrow-program.service');
+      const escrowService = new EscrowProgramService();
+      
+      // Prepare parameters
+      const escrowPda = new PublicKey(agreement.escrowPda);
+      const seller = new PublicKey(agreement.seller);
+      const nftMint = new PublicKey(agreement.nftMint);
+      
+      // Get buyer (use seller if buyer not set)
+      const buyer = agreement.buyer 
+        ? new PublicKey(agreement.buyer)
+        : seller;
+      
+      // Get USDC mint from config
+      const { config } = await import('../config');
+      const usdcMintAddress = config.usdc.mintAddress;
+      if (!usdcMintAddress) {
+        throw new Error('USDC_MINT_ADDRESS not configured (check DEVNET_STAGING_USDC_MINT_ADDRESS or USDC_MINT_ADDRESS in environment)');
+      }
+      const usdcMint = new PublicKey(usdcMintAddress);
+      
+      // Choose appropriate cancellation method based on agreement status
+      let txId: string;
+      
+      if (agreement.status === AgreementStatus.EXPIRED) {
+        // Use cancelIfExpired for expired agreements
+        console.log(`[RefundService] Using cancelIfExpired for expired agreement`);
+        txId = await escrowService.cancelIfExpired(
+          escrowPda,
+          buyer,
+          seller,
+          nftMint,
+          usdcMint
+        );
+      } else {
+        // Use adminCancel for other cancellation scenarios
+        console.log(`[RefundService] Using adminCancel for ${agreement.status} agreement`);
+        txId = await escrowService.adminCancel(
+          escrowPda,
+          buyer,
+          seller,
+          nftMint,
+          usdcMint
+        );
+      }
+      
+      console.log(`[RefundService] On-chain refund transaction submitted:`, txId);
+      return txId;
+      
+    } catch (error) {
+      console.error(`[RefundService] On-chain refund execution failed:`, error);
+      throw new Error(
+        `On-chain refund failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+  }
+
+  /**
+   * Wait for transaction confirmation with timeout
+   */
+  private async waitForTransactionConfirmation(
+    txId: string,
+    timeoutMs: number = 60000
+  ): Promise<void> {
+    console.log(`[RefundService] Waiting for transaction confirmation: ${txId}`);
+    
+    const startTime = Date.now();
+    const connection = this.solanaService.getConnection();
+    
+    try {
+      // Wait for confirmation with timeout
+      const result = await Promise.race([
+        connection.confirmTransaction(txId, 'confirmed'),
+        new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('Transaction confirmation timeout')), timeoutMs)
+        )
+      ]);
+      
+      const elapsed = Date.now() - startTime;
+      console.log(`[RefundService] Transaction confirmed in ${elapsed}ms`);
+      
+    } catch (error) {
+      console.error(`[RefundService] Transaction confirmation failed:`, error);
+      
+      // Try to get transaction status for debugging
+      try {
+        const status = await connection.getSignatureStatus(txId);
+        console.log(`[RefundService] Transaction status:`, status);
+      } catch (statusError) {
+        console.error(`[RefundService] Could not get transaction status:`, statusError);
+      }
+      
+      throw new Error(
+        `Transaction confirmation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 

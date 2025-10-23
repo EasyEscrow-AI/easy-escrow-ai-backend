@@ -44,7 +44,7 @@ export const config = {
   
   // USDC Configuration
   usdc: {
-    mintAddress: process.env.USDC_MINT_ADDRESS || '',
+    mintAddress: process.env.DEVNET_STAGING_USDC_MINT_ADDRESS || process.env.USDC_MINT_ADDRESS || '',
   },
   
   // Platform

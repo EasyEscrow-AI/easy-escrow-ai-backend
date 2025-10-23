@@ -240,6 +240,19 @@ describe('STAGING E2E: Agreement Expiry and Refund', function () {
       }
       console.log('');
       
+      // Manually trigger expiry check (don't wait for 60s automatic check)
+      console.log('   Triggering manual expiry check...');
+      try {
+        const triggerResponse = await axios.post(
+          `${STAGING_CONFIG.apiBaseUrl}/api/expiry-cancellation/check-expired`
+        );
+        console.log(`   ✅ Expiry check completed: ${triggerResponse.data.result?.expiredCount || 0} agreements expired`);
+      } catch (triggerError: any) {
+        console.log(`   ⚠️  Manual trigger failed: ${triggerError.message}`);
+        console.log('   Continuing with status check...');
+      }
+      console.log('');
+      
       // Check if status changed to EXPIRED
       console.log('   Checking agreement status...');
       const agreementData = await axios.get(
@@ -252,26 +265,60 @@ describe('STAGING E2E: Agreement Expiry and Refund', function () {
       if (status === 'EXPIRED' || status === 'CANCELLED') {
         console.log('   ✅ Agreement expired as expected\n');
         
-        // Check if refund process was triggered
-        if (agreementData.data.data.refundedAt) {
-          console.log(`   ✅ Refund processed at: ${agreementData.data.data.refundedAt}`);
-        } else {
-          console.log('   ℹ️  Refund may be processed asynchronously');
+        // Manually trigger refund processing (don't wait for 5min automatic check)
+        console.log('   Triggering manual refund processing...');
+        try {
+          const refundResponse = await axios.post(
+            `${STAGING_CONFIG.apiBaseUrl}/api/expiry-cancellation/refund/process/${expiryAgreement.agreementId}`
+          );
+          
+          if (refundResponse.data.success) {
+            console.log(`   ✅ Refund processed successfully`);
+            console.log(`   Refunded ${refundResponse.data.result?.refundedDeposits?.length || 0} deposit(s)`);
+          } else {
+            console.log(`   ⚠️  Refund processing failed: ${refundResponse.data.result?.errors?.[0]?.error || 'Unknown error'}`);
+          }
+        } catch (refundError: any) {
+          console.log(`   ⚠️  Manual refund failed: ${refundError.message}`);
+          console.log('   Continuing with balance verification...');
         }
+        console.log('');
         
-        // Verify NFT returned to sender (if deposit succeeded)
+        // Wait a bit for on-chain transaction to propagate
+        console.log('   Waiting for on-chain transaction to propagate...');
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        
+        // Verify NFT balance after refund
         try {
           const finalNftBalance = await getTokenBalance(connection, expiryNft.tokenAccount);
           console.log(`   Final sender NFT balance: ${finalNftBalance}`);
           
+          // Verify escrow PDA no longer has NFT
+          let escrowNftBalance = 0;
+          try {
+            escrowNftBalance = await getTokenBalance(
+              connection,
+              new PublicKey(expiryAgreement.depositAddresses.nft)
+            );
+            console.log(`   Escrow NFT balance: ${escrowNftBalance}`);
+          } catch (escrowError: any) {
+            console.log(`   Escrow account closed (expected after refund)`);
+          }
+          
           if (finalNftBalance === initialNftBalance) {
-            console.log('   ✅ NFT returned to sender\n');
+            console.log('   ✅ NFT successfully returned to sender');
+            
+            if (escrowNftBalance === 0) {
+              console.log('   ✅ Escrow vault cleared');
+            }
           } else if (finalNftBalance < initialNftBalance) {
-            console.log('   ⚠️  NFT still in escrow (refund may be async)\n');
+            console.log('   ⚠️  NFT still in escrow - on-chain refund may have failed');
+            console.log(`   Expected: ${initialNftBalance}, Got: ${finalNftBalance}`);
           }
         } catch (balanceError: any) {
-          console.log(`   ℹ️  Could not verify balance: ${balanceError.message}\n`);
+          console.log(`   ⚠️  Could not verify balance: ${balanceError.message}`);
         }
+        console.log('');
         
       } else if (status === 'PENDING') {
         console.log('   ⚠️  Agreement still PENDING (expiry may not be implemented)');
