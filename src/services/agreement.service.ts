@@ -1,4 +1,4 @@
-import { PrismaClient, Agreement, AgreementStatus, Deposit } from '../generated/prisma';
+import { PrismaClient, Agreement, AgreementStatus, Deposit, Receipt } from '../generated/prisma';
 import { 
   CreateAgreementDTO, 
   CreateAgreementResponseDTO, 
@@ -260,7 +260,7 @@ const generateAgreementId = (): string => {
 /**
  * Map Agreement model to DTO
  */
-const mapAgreementToDTO = (agreement: Agreement & { receipt?: { id: string } | null }): AgreementResponseDTO => {
+const mapAgreementToDTO = (agreement: Agreement & { receipt?: Receipt | null }): AgreementResponseDTO => {
   return {
     agreementId: agreement.agreementId,
     nftMint: agreement.nftMint,
@@ -288,7 +288,7 @@ const mapAgreementToDTO = (agreement: Agreement & { receipt?: { id: string } | n
 /**
  * Map Agreement with deposits to detailed DTO
  */
-const mapAgreementToDetailDTO = (agreement: Agreement & { deposits: Deposit[]; receipt?: { id: string } | null }): AgreementDetailResponseDTO => {
+const mapAgreementToDetailDTO = (agreement: Agreement & { deposits: Deposit[]; receipt?: Receipt | null }): AgreementDetailResponseDTO => {
   const baseDTO = mapAgreementToDTO(agreement);
   
   // Map deposits
