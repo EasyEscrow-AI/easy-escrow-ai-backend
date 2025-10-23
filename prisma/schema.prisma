@@ -106,7 +106,7 @@ model Deposit {
   detectedAt    DateTime       @default(now()) @map("detected_at")
   confirmedAt   DateTime?      @map("confirmed_at")
   
-  agreement     Agreement      @relation(fields: [agreementId], references: [id], onDelete: Cascade)
+  agreement     Agreement      @relation(fields: [agreementId], references: [agreementId], onDelete: Cascade)
   
   @@index([agreementId])
   @@index([type])
@@ -150,7 +150,7 @@ model Settlement {
   royaltyRecipient  String?    @map("royalty_recipient")
   settledAt         DateTime   @default(now()) @map("settled_at")
   
-  agreement         Agreement  @relation(fields: [agreementId], references: [id], onDelete: Cascade)
+  agreement         Agreement  @relation(fields: [agreementId], references: [agreementId], onDelete: Cascade)
   
   @@index([agreementId])
   @@index([buyer])
@@ -183,7 +183,7 @@ model Receipt {
   settledAt       DateTime   @map("settled_at")
   generatedAt     DateTime   @default(now()) @map("generated_at")
   
-  agreement       Agreement  @relation(fields: [agreementId], references: [id], onDelete: Cascade)
+  agreement       Agreement  @relation(fields: [agreementId], references: [agreementId], onDelete: Cascade)
   
   @@index([agreementId])
   @@index([buyer])
@@ -232,7 +232,7 @@ model Webhook {
   createdAt         DateTime              @default(now()) @map("created_at")
   scheduledFor      DateTime              @default(now()) @map("scheduled_for")
   
-  agreement         Agreement             @relation(fields: [agreementId], references: [id], onDelete: Cascade)
+  agreement         Agreement             @relation(fields: [agreementId], references: [agreementId], onDelete: Cascade)
   
   @@index([agreementId])
   @@index([eventType])
