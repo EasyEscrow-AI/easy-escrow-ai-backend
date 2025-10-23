@@ -4,22 +4,48 @@ Modular end-to-end test suite for STAGING environment validation.
 
 ## Quick Start
 
-### Run Specific Scenarios
-
-```bash
-# Happy Path: Complete NFT-for-USDC swap
-npm run test:staging:e2e:happy-path
-
-# Verbose mode with full stack traces
-npm run test:staging:e2e:happy-path:verbose
-```
-
 ### Run All Scenarios
 
 ```bash
-# Comprehensive test (all scenarios)
+# Comprehensive test (all 8 scenarios)
 npm run test:staging:e2e
 npm run test:staging:e2e:verbose
+```
+
+### Run Individual Scenarios
+
+```bash
+# 01 - Happy Path
+npm run test:staging:e2e:01-solana-nft-usdc-happy-path
+npm run test:staging:e2e:01-solana-nft-usdc-happy-path:verbose
+
+# 02 - Agreement Expiry & Refund
+npm run test:staging:e2e:02-agreement-expiry-refund
+npm run test:staging:e2e:02-agreement-expiry-refund:verbose
+
+# 03 - Admin Cancellation
+npm run test:staging:e2e:03-admin-cancellation
+npm run test:staging:e2e:03-admin-cancellation:verbose
+
+# 04 - Platform Fee Collection
+npm run test:staging:e2e:04-platform-fee-collection
+npm run test:staging:e2e:04-platform-fee-collection:verbose
+
+# 05 - Webhook Delivery
+npm run test:staging:e2e:05-webhook-delivery
+npm run test:staging:e2e:05-webhook-delivery:verbose
+
+# 06 - Idempotency Handling
+npm run test:staging:e2e:06-idempotency-handling
+npm run test:staging:e2e:06-idempotency-handling:verbose
+
+# 07 - Concurrent Operations
+npm run test:staging:e2e:07-concurrent-operations
+npm run test:staging:e2e:07-concurrent-operations:verbose
+
+# 08 - Edge Cases & Validation
+npm run test:staging:e2e:08-edge-cases-validation
+npm run test:staging:e2e:08-edge-cases-validation:verbose
 ```
 
 ## Test Structure
@@ -31,65 +57,160 @@ npm run test:staging:e2e:verbose
 
 ### Test Scenarios
 
-#### 01. Solana NFT-for-USDC Happy Path ✅ (Available)
+#### 01. Solana NFT-for-USDC Happy Path ✅
 **File:** `01-solana-nft-usdc-happy-path.test.ts`  
-**Command:** `npm run test:staging:e2e:happy-path`  
+**Commands:** 
+- `npm run test:staging:e2e:01-solana-nft-usdc-happy-path`
+- `npm run test:staging:e2e:01-solana-nft-usdc-happy-path:verbose`
+
 **Duration:** ~46 seconds  
 **Tests:** 11 test cases
 
 **Flow:**
-1. Setup USDC accounts
+1. Setup USDC accounts for all parties
 2. Create test NFT on Solana
 3. Create escrow agreement via API
 4. Deposit NFT from sender
 5. Deposit USDC from receiver
 6. Wait for automatic settlement
-7. Verify NFT transfer
-8. Verify USDC distribution with fees
-9. Verify receipt generation
+7. Verify NFT transfer to receiver
+8. Verify USDC distribution with platform fees
+9. Verify receipt generation with all transaction IDs
 
 **Status:** ✅ 11/11 passing (100% success rate)
 
-#### 02. Expiry & Cancellation (Planned)
-**File:** `02-expiry-cancellation.test.ts`  
-**Command:** `npm run test:staging:e2e:expiry` (not yet implemented)
+---
+
+#### 02. Agreement Expiry & Refund ✅
+**File:** `02-agreement-expiry-refund.test.ts`  
+**Commands:**
+- `npm run test:staging:e2e:02-agreement-expiry-refund`
+- `npm run test:staging:e2e:02-agreement-expiry-refund:verbose`
+
+**Duration:** ~30 seconds  
+**Tests:** 2 test cases
+
+**Flow:**
+1. Create agreement with 15-second expiry
+2. Optionally deposit NFT (partial deposit)
+3. Wait for agreement to expire
+4. Verify status changes to EXPIRED
+5. Verify refund processing triggered
+6. Verify NFT returned to sender
+
+**Note:** Tests automatic expiry handling and refund workflows.
+
+---
+
+#### 03. Admin Cancellation ✅
+**File:** `03-admin-cancellation.test.ts`  
+**Commands:**
+- `npm run test:staging:e2e:03-admin-cancellation`
+- `npm run test:staging:e2e:03-admin-cancellation:verbose`
+
+**Duration:** ~15 seconds  
+**Tests:** 1 test case
+
+**Flow:**
+1. Create escrow agreement
+2. Admin initiates cancellation (via API with admin key)
+3. Verify status changes to CANCELLED
+4. Verify refund processing (if deposits were made)
+
+**Note:** Requires `ADMIN_API_KEY` in environment.
+
+---
+
+#### 04. Platform Fee Collection ✅
+**File:** `04-platform-fee-collection.test.ts`  
+**Commands:**
+- `npm run test:staging:e2e:04-platform-fee-collection`
+- `npm run test:staging:e2e:04-platform-fee-collection:verbose`
+
+**Duration:** ~10 seconds  
+**Tests:** 2 test cases
 
 **Tests:**
-- Agreement expiry handling
-- Automatic refunds
-- Admin cancellation
-- Refund verification
+1. Verify standard fee collection (1% platform fee)
+2. Zero-fee transactions acceptance
 
-#### 03. Fee Collection (Planned)
-**File:** `03-fee-collection.test.ts`  
-**Command:** `npm run test:staging:e2e:fees` (not yet implemented)
+**Note:** Fee distribution is also thoroughly tested in Test 01 (Happy Path).
+
+---
+
+#### 05. Webhook Delivery ⏭️
+**File:** `05-webhook-delivery.test.ts`  
+**Commands:**
+- `npm run test:staging:e2e:05-webhook-delivery`
+- `npm run test:staging:e2e:05-webhook-delivery:verbose`
+
+**Duration:** ~5 seconds  
+**Tests:** 1 test case (currently skipped)
+
+**Note:** Requires external webhook receiver (webhook.site or similar). Skipped in automated E2E suite.
+
+**Events to verify:**
+- AGREEMENT_CREATED
+- DEPOSIT_DETECTED
+- AGREEMENT_SETTLED
+- AGREEMENT_CANCELLED
+
+---
+
+#### 06. Idempotency Handling ✅
+**File:** `06-idempotency-handling.test.ts`  
+**Commands:**
+- `npm run test:staging:e2e:06-idempotency-handling`
+- `npm run test:staging:e2e:06-idempotency-handling:verbose`
+
+**Duration:** ~15 seconds  
+**Tests:** 1 test case
+
+**Flow:**
+1. Create agreement with idempotency key
+2. Retry same request with same idempotency key
+3. Verify same agreement is returned (no duplicate)
+4. Verify no new agreement created
+
+**Note:** Tests duplicate request prevention via idempotency keys.
+
+---
+
+#### 07. Concurrent Operations ✅
+**File:** `07-concurrent-operations.test.ts`  
+**Commands:**
+- `npm run test:staging:e2e:07-concurrent-operations`
+- `npm run test:staging:e2e:07-concurrent-operations:verbose`
+
+**Duration:** ~25 seconds  
+**Tests:** 1 test case
+
+**Flow:**
+1. Create 5 NFTs for testing
+2. Create 5 agreements concurrently (parallel requests)
+3. Verify all succeed
+4. Verify all agreements have unique IDs
+5. Verify no race conditions detected
+
+**Note:** Tests database transaction isolation and concurrent request handling.
+
+---
+
+#### 08. Edge Cases & Validation ✅
+**File:** `08-edge-cases-validation.test.ts`  
+**Commands:**
+- `npm run test:staging:e2e:08-edge-cases-validation`
+- `npm run test:staging:e2e:08-edge-cases-validation:verbose`
+
+**Duration:** ~30 seconds  
+**Tests:** 3 test cases
 
 **Tests:**
-- Platform fee calculations
-- Fee distribution verification
-- Zero-fee transactions
-- Variable fee rates
+1. Invalid mint address handling
+2. Insufficient funds detection
+3. Invalid signature rejection
 
-#### 04. Idempotency & Webhooks (Planned)
-**File:** `04-idempotency-webhooks.test.ts`  
-**Command:** `npm run test:staging:e2e:idempotency` (not yet implemented)
-
-**Tests:**
-- Duplicate request handling
-- Webhook delivery
-- Event notifications
-- Retry logic
-
-#### 05. Edge Cases (Planned)
-**File:** `05-edge-cases.test.ts`  
-**Command:** `npm run test:staging:e2e:edge-cases` (not yet implemented)
-
-**Tests:**
-- Concurrent operations
-- Invalid inputs
-- Insufficient funds
-- Invalid signatures
-- Rate limiting
+**Note:** Tests error handling and input validation across the system.
 
 ## Configuration
 
