@@ -10,6 +10,7 @@ import sinon from 'sinon';
 import { PrismaClient } from '../../src/generated/prisma';
 import { ReceiptService } from '../../src/services/receipt.service';
 import { Decimal } from '@prisma/client/runtime/library';
+import { mockPrismaForTest, teardownPrismaMock } from '../helpers/prisma-mock';
 
 describe('Receipt Service - Unit Tests', () => {
   let receiptService: ReceiptService;
@@ -27,15 +28,16 @@ describe('Receipt Service - Unit Tests', () => {
       },
     };
 
-    // Create service instance
+    // Setup mock Prisma client
+    mockPrismaForTest(prismaStub);
+
+    // Create service instance (will use mocked Prisma)
     receiptService = new ReceiptService();
-    
-    // Replace internal prisma with stub
-    (receiptService as any).prisma = prismaStub;
   });
 
   afterEach(() => {
     sinon.restore();
+    teardownPrismaMock();
   });
 
   describe('generateReceipt', () => {
@@ -68,7 +70,7 @@ describe('Receipt Service - Unit Tests', () => {
         depositNftTxId: validReceiptData.depositNftTxId,
         depositUsdcTxId: validReceiptData.depositUsdcTxId,
         settlementTxId: validReceiptData.settlementTxId,
-        receiptHash: 'hash123',
+    receiptHash: 'hash123',
         signature: 'sig123',
         createdAt: validReceiptData.createdAt,
         settledAt: validReceiptData.settledAt,

@@ -1,6 +1,6 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
-import { Escrow } from "../../target/types/escrow";
+import { Escrow } from "../../../target/types/escrow";
 import { PublicKey, Keypair, SystemProgram, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import {
   TOKEN_PROGRAM_ID,

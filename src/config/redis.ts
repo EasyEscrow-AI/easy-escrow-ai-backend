@@ -121,90 +121,146 @@ export function getBullRedisConfig(): RedisOptions {
 }
 
 /**
- * Main Redis client instance for caching
+ * Lazy-loaded Redis client instances
+ * Only initialize when first accessed and skip in test environment
  */
-export const redisClient = REDIS_URL 
-  ? new Redis(REDIS_URL, redisOptions)
-  : new Redis(getRedisConfig());
+let _redisClient: Redis | null = null;
+let _redisPubSubClient: Redis | null = null;
 
 /**
- * Separate Redis client for pub/sub (Bull job queues)
+ * Get or create Redis client (lazy initialization)
+ * Skips initialization in test environment unless explicitly forced
  */
-export const redisPubSubClient = REDIS_URL
-  ? new Redis(REDIS_URL, redisOptions)
-  : new Redis(getRedisConfig());
+function getRedisClient(): Redis {
+  // Skip Redis in test environment
+  if (process.env.NODE_ENV === 'test' && !process.env.FORCE_REDIS) {
+    // Return a mock client that doesn't connect
+    if (!_redisClient) {
+      console.log('[Redis] Skipping initialization in test environment');
+      _redisClient = new Redis({
+        lazyConnect: true,
+        enableOfflineQueue: false,
+      });
+    }
+    return _redisClient;
+  }
+
+  // Create real client on first access
+  if (!_redisClient) {
+    console.log('[Redis] Initializing Redis client...');
+    _redisClient = REDIS_URL 
+      ? new Redis(REDIS_URL, redisOptions)
+      : new Redis(getRedisConfig());
+    
+    // Attach event handlers
+    setupRedisEventHandlers(_redisClient, 'Redis client');
+  }
+  
+  return _redisClient;
+}
+
+/**
+ * Get or create Redis pub/sub client (lazy initialization)
+ */
+function getRedisPubSubClient(): Redis {
+  // Skip Redis in test environment
+  if (process.env.NODE_ENV === 'test' && !process.env.FORCE_REDIS) {
+    if (!_redisPubSubClient) {
+      console.log('[Redis] Skipping pub/sub client initialization in test environment');
+      _redisPubSubClient = new Redis({
+        lazyConnect: true,
+        enableOfflineQueue: false,
+      });
+    }
+    return _redisPubSubClient;
+  }
+
+  // Create real client on first access
+  if (!_redisPubSubClient) {
+    console.log('[Redis] Initializing Redis pub/sub client...');
+    _redisPubSubClient = REDIS_URL
+      ? new Redis(REDIS_URL, redisOptions)
+      : new Redis(getRedisConfig());
+    
+    // Attach event handlers
+    setupRedisEventHandlers(_redisPubSubClient, 'Redis pub/sub');
+  }
+  
+  return _redisPubSubClient;
+}
+
+/**
+ * Export clients with getters for lazy loading
+ */
+export const redisClient = new Proxy({} as Redis, {
+  get(target, prop) {
+    const client = getRedisClient();
+    const value = (client as any)[prop];
+    return typeof value === 'function' ? value.bind(client) : value;
+  }
+});
+
+export const redisPubSubClient = new Proxy({} as Redis, {
+  get(target, prop) {
+    const client = getRedisPubSubClient();
+    const value = (client as any)[prop];
+    return typeof value === 'function' ? value.bind(client) : value;
+  }
+});
 
 // Track error count to prevent log flooding
-let redisErrorCount = 0;
-let lastErrorTime = Date.now();
 const ERROR_LOG_THRESHOLD = 5; // Only log every 5th error
 const ERROR_RESET_INTERVAL = 60000; // Reset error count every minute
 
-// Event handlers for Redis client with rate-limited logging
-redisClient.on('connect', () => {
-  console.log('✅ Redis client connected');
-  redisErrorCount = 0; // Reset error count on successful connection
-});
+/**
+ * Setup event handlers for Redis client with rate-limited logging
+ */
+function setupRedisEventHandlers(client: Redis, clientName: string): void {
+  let errorCount = 0;
+  let lastErrorTime = Date.now();
 
-redisClient.on('ready', () => {
-  console.log('✅ Redis client ready');
-  redisErrorCount = 0;
-});
+  client.on('connect', () => {
+    console.log(`✅ ${clientName} connected`);
+    errorCount = 0; // Reset error count on successful connection
+  });
 
-redisClient.on('error', (err: Error) => {
-  const now = Date.now();
-  // Reset error count if more than 1 minute has passed
-  if (now - lastErrorTime > ERROR_RESET_INTERVAL) {
-    redisErrorCount = 0;
-  }
-  
-  redisErrorCount++;
-  lastErrorTime = now;
-  
-  // Only log every Nth error to prevent flooding
-  if (redisErrorCount % ERROR_LOG_THRESHOLD === 0) {
-    console.error(`❌ Redis client error (${redisErrorCount} errors in last minute): ${err.message}`);
-  }
-});
+  client.on('ready', () => {
+    console.log(`✅ ${clientName} ready`);
+    errorCount = 0;
+  });
 
-redisClient.on('close', () => {
-  console.log('⚠️  Redis client connection closed');
-});
+  client.on('error', (err: Error) => {
+    const now = Date.now();
+    // Reset error count if more than 1 minute has passed
+    if (now - lastErrorTime > ERROR_RESET_INTERVAL) {
+      errorCount = 0;
+    }
+    
+    errorCount++;
+    lastErrorTime = now;
+    
+    // Only log every Nth error to prevent flooding
+    if (errorCount % ERROR_LOG_THRESHOLD === 0) {
+      console.error(`❌ ${clientName} error (${errorCount} errors in last minute): ${err.message}`);
+    }
+  });
 
-redisClient.on('reconnecting', (delay: number) => {
-  console.log(`🔄 Redis client reconnecting in ${delay}ms...`);
-});
+  client.on('close', () => {
+    console.log(`⚠️  ${clientName} connection closed`);
+  });
 
-// Event handlers for pub/sub client with rate-limited logging
-let pubsubErrorCount = 0;
-let lastPubsubErrorTime = Date.now();
-
-redisPubSubClient.on('connect', () => {
-  console.log('✅ Redis pub/sub client connected');
-  pubsubErrorCount = 0;
-});
-
-redisPubSubClient.on('error', (err: Error) => {
-  const now = Date.now();
-  if (now - lastPubsubErrorTime > ERROR_RESET_INTERVAL) {
-    pubsubErrorCount = 0;
-  }
-  
-  pubsubErrorCount++;
-  lastPubsubErrorTime = now;
-  
-  // Only log every Nth error
-  if (pubsubErrorCount % ERROR_LOG_THRESHOLD === 0) {
-    console.error(`❌ Redis pub/sub error (${pubsubErrorCount} errors): ${err.message}`);
-  }
-});
+  client.on('reconnecting', (delay: number) => {
+    console.log(`🔄 ${clientName} reconnecting in ${delay}ms...`);
+  });
+}
 
 /**
  * Connect to Redis
  */
 export const connectRedis = async (): Promise<void> => {
   try {
-    await redisClient.ping();
+    const client = getRedisClient();
+    await client.ping();
     console.log('✅ Redis connection successful');
   } catch (error) {
     console.error('❌ Redis connection failed:', error);
@@ -217,8 +273,12 @@ export const connectRedis = async (): Promise<void> => {
  */
 export const disconnectRedis = async (): Promise<void> => {
   try {
-    await redisClient.quit();
-    await redisPubSubClient.quit();
+    if (_redisClient) {
+      await _redisClient.quit();
+    }
+    if (_redisPubSubClient) {
+      await _redisPubSubClient.quit();
+    }
     console.log('✅ Redis disconnected successfully');
   } catch (error) {
     console.error('❌ Redis disconnection failed:', error);
@@ -230,7 +290,8 @@ export const disconnectRedis = async (): Promise<void> => {
  */
 export const checkRedisHealth = async (): Promise<boolean> => {
   try {
-    const result = await redisClient.ping();
+    const client = getRedisClient();
+    const result = await client.ping();
     return result === 'PONG';
   } catch (error) {
     console.error('Redis health check failed:', error);
@@ -243,7 +304,8 @@ export const checkRedisHealth = async (): Promise<boolean> => {
  */
 export const getRedisInfo = async (): Promise<string> => {
   try {
-    return await redisClient.info();
+    const client = getRedisClient();
+    return await client.info();
   } catch (error) {
     console.error('Failed to get Redis info:', error);
     throw error;
@@ -259,13 +321,17 @@ export const flushRedis = async (): Promise<void> => {
   }
   
   try {
-    await redisClient.flushdb();
+    const client = getRedisClient();
+    await client.flushdb();
     console.log('✅ Redis database flushed');
   } catch (error) {
     console.error('❌ Failed to flush Redis database:', error);
     throw error;
   }
 };
+
+// Export getter functions for advanced use cases
+export { getRedisClient, getRedisPubSubClient };
 
 export default redisClient;
 

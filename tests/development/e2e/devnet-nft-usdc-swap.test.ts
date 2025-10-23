@@ -26,7 +26,7 @@ import {
   getExplorerUrl,
   DevnetWallets,
   WalletBalances,
-} from '../helpers/devnet-wallet-manager';
+} from '../../helpers/devnet-wallet-manager';
 import {
   setupDevnetTokens,
   checkTokenBalances,
@@ -34,13 +34,13 @@ import {
   TokenSetupConfig,
   TokenBalances,
   getTokenBalance,
-} from '../helpers/devnet-token-setup';
+} from '../../helpers/devnet-token-setup';
 import {
   createTestNFT,
   displayNFTInfo,
   verifyNFTOwnership,
   NFTDetails,
-} from '../helpers/devnet-nft-setup';
+} from '../../helpers/devnet-nft-setup';
 
 // Devnet RPC endpoint
 const DEVNET_RPC_URL = process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com';

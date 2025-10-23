@@ -56,6 +56,18 @@ describe('STAGING E2E - Happy Path: NFT-for-USDC Swap', function () {
   let usdcAccounts: { senderAccount: PublicKey; receiverAccount: PublicKey; feeCollectorAccount?: PublicKey };
   let initialBalances: any;
 
+  // Timing and transaction tracking
+  let escrowStartTime: number;
+  let escrowEndTime: number;
+  const transactions: Array<{
+    description: string;
+    txId: string;
+    startTime: number;
+    endTime: number;
+    duration: number;
+    fee: number;
+  }> = [];
+
   before(async function () {
     console.log('\n' + '='.repeat(80));
     console.log('🚀 STAGING E2E Test - Happy Path');
@@ -117,6 +129,10 @@ describe('STAGING E2E - Happy Path: NFT-for-USDC Swap', function () {
     
     initialBalances = await getInitialBalances(connection, wallets, usdcAccounts);
     displayBalances(initialBalances, 'Initial Balances');
+    
+    // Start escrow timer (after setup, before contract operations)
+    escrowStartTime = Date.now();
+    console.log('\n⏱️  Starting escrow timer...\n');
   });
 
   it('should create escrow agreement via API', async function () {
@@ -228,6 +244,8 @@ describe('STAGING E2E - Happy Path: NFT-for-USDC Swap', function () {
   it('should deposit NFT into escrow', async function () {
     console.log('🔐 Depositing NFT into escrow...\n');
     
+    const txStartTime = Date.now();
+    
     // Get unsigned transaction from API
     console.log(`   Requesting deposit transaction from API...`);
     const response = await axios.post(
@@ -261,7 +279,25 @@ describe('STAGING E2E - Happy Path: NFT-for-USDC Swap', function () {
     
     // Wait for confirmation
     await connection.confirmTransaction(txId, 'confirmed');
+    const txEndTime = Date.now();
     console.log(`   ✅ NFT deposit confirmed!\n`);
+    
+    // Get transaction fee
+    const txDetails = await connection.getTransaction(txId, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 });
+    const txFee = (txDetails?.meta?.fee || 0) / 1_000_000_000; // Convert lamports to SOL
+    
+    // Track transaction
+    transactions.push({
+      description: 'Seller > NFT > Escrow',
+      txId,
+      startTime: txStartTime,
+      endTime: txEndTime,
+      duration: (txEndTime - txStartTime) / 1000, // Convert to seconds
+      fee: txFee,
+    });
+    
+    console.log(`   ⏱️  Transaction completed in ${((txEndTime - txStartTime) / 1000).toFixed(2)} seconds`);
+    console.log(`   💰 Transaction fee: ${txFee.toFixed(9)} SOL\n`);
     
     // Verify NFT is in escrow
     const nftVaultBalance = await getTokenBalance(connection, new PublicKey(agreement.depositAddresses.nft));
@@ -274,6 +310,8 @@ describe('STAGING E2E - Happy Path: NFT-for-USDC Swap', function () {
     
     console.log(`   ⚠️  Receiver needs ${STAGING_CONFIG.testAmounts.swap} USDC for deposit`);
     console.log(`   Receiver USDC account: ${usdcAccounts.receiverAccount.toBase58()}\n`);
+    
+    const txStartTime = Date.now();
     
     // Get unsigned transaction from API
     console.log(`   Requesting deposit transaction from API...`);
@@ -307,7 +345,25 @@ describe('STAGING E2E - Happy Path: NFT-for-USDC Swap', function () {
     
     // Wait for confirmation
     await connection.confirmTransaction(txId, 'confirmed');
+    const txEndTime = Date.now();
     console.log(`   ✅ USDC deposit confirmed!\n`);
+    
+    // Get transaction fee
+    const txDetails = await connection.getTransaction(txId, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 });
+    const txFee = (txDetails?.meta?.fee || 0) / 1_000_000_000; // Convert lamports to SOL
+    
+    // Track transaction
+    transactions.push({
+      description: 'Buyer > USDC > Escrow',
+      txId,
+      startTime: txStartTime,
+      endTime: txEndTime,
+      duration: (txEndTime - txStartTime) / 1000, // Convert to seconds
+      fee: txFee,
+    });
+    
+    console.log(`   ⏱️  Transaction completed in ${((txEndTime - txStartTime) / 1000).toFixed(2)} seconds`);
+    console.log(`   💰 Transaction fee: ${txFee.toFixed(9)} SOL\n`);
     
     // Verify USDC is in escrow
     const usdcVaultBalance = await getTokenBalance(connection, new PublicKey(agreement.depositAddresses.usdc));
@@ -318,6 +374,8 @@ describe('STAGING E2E - Happy Path: NFT-for-USDC Swap', function () {
   it('should wait for automatic settlement', async function () {
     console.log('⏳ Waiting for automatic settlement...\n');
     
+    const settlementStartTime = Date.now();
+    
     const settledAgreement = await waitForAgreementStatus(
       agreement.agreementId,
       'SETTLED',
@@ -325,10 +383,52 @@ describe('STAGING E2E - Happy Path: NFT-for-USDC Swap', function () {
       2000 // 2 seconds between attempts
     );
     
+    const settlementEndTime = Date.now();
+    
     console.log('\n   ✅ Agreement settled successfully!');
     console.log(`   Settlement time: ${settledAgreement.settledAt}\n`);
     
     expect(settledAgreement.status).to.equal('SETTLED');
+    
+    // Try to get settlement transaction details
+    try {
+      // Fetch receipt to get settlement transaction ID
+      const receiptResponse = await axios.get(
+        `${STAGING_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}`
+      );
+      
+      if (receiptResponse.data.data.receiptId) {
+        const receiptDetailResponse = await axios.get(
+          `${STAGING_CONFIG.apiBaseUrl}/v1/receipts/${receiptResponse.data.data.receiptId}`
+        );
+        
+        const receipt = receiptDetailResponse.data.data;
+        const settlementTx = receipt.transactions?.find((tx: any) => tx.type === 'SETTLEMENT');
+        
+        if (settlementTx && settlementTx.transactionId) {
+          // Get transaction details for fee
+          const txDetails = await connection.getTransaction(settlementTx.transactionId, { 
+            commitment: 'confirmed', 
+            maxSupportedTransactionVersion: 0 
+          });
+          const txFee = (txDetails?.meta?.fee || 0) / 1_000_000_000;
+          
+          transactions.push({
+            description: 'Settlement (NFT→Buyer, USDC→Seller)',
+            txId: settlementTx.transactionId,
+            startTime: settlementStartTime,
+            endTime: settlementEndTime,
+            duration: (settlementEndTime - settlementStartTime) / 1000,
+            fee: txFee,
+          });
+          
+          console.log(`   ⏱️  Settlement completed in ${((settlementEndTime - settlementStartTime) / 1000).toFixed(2)} seconds`);
+          console.log(`   💰 Transaction fee: ${txFee.toFixed(9)} SOL\n`);
+        }
+      }
+    } catch (error) {
+      console.log('   ⚠️  Could not retrieve settlement transaction details\n');
+    }
   });
 
   it('should verify settlement and fee distribution', async function () {
@@ -377,6 +477,42 @@ describe('STAGING E2E - Happy Path: NFT-for-USDC Swap', function () {
     console.log('   ✅ Platform fee collected\n');
     
     console.log('   🎉 All settlements verified successfully!\n');
+    
+    // Stop escrow timer
+    escrowEndTime = Date.now();
+    const totalEscrowTime = (escrowEndTime - escrowStartTime) / 1000;
+    
+    // Display comprehensive timing summary
+    console.log('\n' + '='.repeat(80));
+    console.log('⏱️  PERFORMANCE SUMMARY');
+    console.log('='.repeat(80) + '\n');
+    
+    console.log(`✅ Solana NFT ↔ USDC escrow completed and verified on-chain in ${totalEscrowTime.toFixed(2)} seconds\n`);
+    
+    if (transactions.length > 0) {
+      console.log('📊 Solana blockchain transactions summary:');
+      console.log('-'.repeat(80));
+      
+      let totalTxTime = 0;
+      let totalFees = 0;
+      
+      transactions.forEach((tx, index) => {
+        console.log(`   ${index + 1}. ${tx.description}`);
+        console.log(`      TX: ${tx.txId}`);
+        console.log(`      ⏱️  Completed in ${tx.duration.toFixed(2)} seconds`);
+        console.log(`      💰 Fee: ${tx.fee.toFixed(9)} SOL`);
+        console.log(`      🔗 ${getExplorerUrl(tx.txId)}\n`);
+        
+        totalTxTime += tx.duration;
+        totalFees += tx.fee;
+      });
+      
+      console.log('-'.repeat(80));
+      const avgTxTime = totalTxTime / transactions.length;
+      console.log(`   📈 Average blockchain transaction time: ${avgTxTime.toFixed(2)} seconds`);
+      console.log(`   💰 Total transaction fees: ${totalFees.toFixed(9)} SOL`);
+      console.log('='.repeat(80) + '\n');
+    }
   });
 
   it('should verify receipt generation', async function () {
