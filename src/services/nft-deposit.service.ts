@@ -209,7 +209,7 @@ export class NftDepositService {
 
       // Get agreement details
       const agreement = await prisma.agreement.findUnique({
-        where: { id: agreementId },
+        where: { agreementId: agreementId },
         select: {
           id: true,
           agreementId: true,
