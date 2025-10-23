@@ -12,6 +12,7 @@ import { config } from '../config';
 import { getSolanaService } from './solana.service';
 import { Decimal } from '@prisma/client/runtime/library';
 import { DepositStatus, AgreementStatus } from '../generated/prisma';
+import { getTransactionLogService, TransactionOperationType, TransactionStatusType } from './transaction-log.service';
 
 /**
  * Token account data structure
@@ -211,6 +212,30 @@ export class UsdcDepositService {
           },
         });
 
+        // Create transaction log for confirmed deposit (if not already logged)
+        if (depositStatus === 'CONFIRMED' && isValidAmount && existingDeposit.status !== 'CONFIRMED') {
+          try {
+            const transactionLogService = getTransactionLogService();
+            const txSignature = await this.solanaService.getRecentTransactionSignature(publicKey);
+            
+            if (txSignature) {
+              await transactionLogService.captureTransaction({
+                txId: txSignature,
+                operationType: TransactionOperationType.DEPOSIT_USDC,
+                agreementId: agreement.agreementId,
+                status: TransactionStatusType.CONFIRMED,
+                blockHeight: BigInt(context.slot),
+              });
+              console.log(`[UsdcDepositService] Transaction log created for USDC deposit: ${txSignature}`);
+            } else {
+              console.warn(`[UsdcDepositService] Could not retrieve transaction signature for USDC deposit`);
+            }
+          } catch (logError) {
+            console.error(`[UsdcDepositService] Error creating transaction log:`, logError);
+            // Don't fail the deposit if transaction log creation fails
+          }
+        }
+
         // Update agreement status only if deposit is confirmed
         if (depositStatus === 'CONFIRMED' && isValidAmount) {
           await this.updateAgreementStatus(agreement.id, agreement.status);
@@ -239,6 +264,30 @@ export class UsdcDepositService {
       });
 
       console.log(`[UsdcDepositService] Created deposit record: ${deposit.id}`);
+
+      // Create transaction log for confirmed deposit
+      if (depositStatus === 'CONFIRMED' && isValidAmount) {
+        try {
+          const transactionLogService = getTransactionLogService();
+          const txSignature = await this.solanaService.getRecentTransactionSignature(publicKey);
+          
+          if (txSignature) {
+            await transactionLogService.captureTransaction({
+              txId: txSignature,
+              operationType: TransactionOperationType.DEPOSIT_USDC,
+              agreementId: agreement.agreementId,
+              status: TransactionStatusType.CONFIRMED,
+              blockHeight: BigInt(context.slot),
+            });
+            console.log(`[UsdcDepositService] Transaction log created for USDC deposit: ${txSignature}`);
+          } else {
+            console.warn(`[UsdcDepositService] Could not retrieve transaction signature for USDC deposit`);
+          }
+        } catch (logError) {
+          console.error(`[UsdcDepositService] Error creating transaction log:`, logError);
+          // Don't fail the deposit if transaction log creation fails
+        }
+      }
 
       // Update agreement status if USDC is now locked
       if (depositStatus === 'CONFIRMED' && isValidAmount) {

@@ -548,6 +548,42 @@ export class SolanaService {
   public getSubscribedAccounts(): string[] {
     return Array.from(this.subscriptions.keys());
   }
+
+  /**
+   * Get most recent transaction signature for an account
+   * Used to capture deposit transaction signatures when monitoring detects account changes
+   * 
+   * @param publicKey - Account public key
+   * @param limit - Number of signatures to fetch (default 1)
+   * @returns Most recent transaction signature or null
+   */
+  public async getRecentTransactionSignature(
+    publicKey: PublicKey | string,
+    limit: number = 1
+  ): Promise<string | null> {
+    try {
+      const pubKey = typeof publicKey === 'string' ? new PublicKey(publicKey) : publicKey;
+      
+      const signatures = await this.connection.getSignaturesForAddress(
+        pubKey,
+        { limit },
+        'confirmed'
+      );
+      
+      if (signatures.length === 0) {
+        console.log(`[SolanaService] No transactions found for account: ${pubKey.toBase58()}`);
+        return null;
+      }
+      
+      const mostRecent = signatures[0];
+      console.log(`[SolanaService] Found recent transaction for ${pubKey.toBase58()}: ${mostRecent.signature}`);
+      
+      return mostRecent.signature;
+    } catch (error) {
+      console.error(`[SolanaService] Error fetching transaction signatures:`, error);
+      return null;
+    }
+  }
 }
 
 // Singleton instance

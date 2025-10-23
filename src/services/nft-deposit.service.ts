@@ -10,6 +10,7 @@ import { AccountLayout, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { prisma } from '../config/database';
 import { getSolanaService } from './solana.service';
 import { DepositStatus, AgreementStatus } from '../generated/prisma';
+import { getTransactionLogService, TransactionOperationType, TransactionStatusType } from './transaction-log.service';
 
 /**
  * NFT token account data structure
@@ -160,6 +161,35 @@ export class NftDepositService {
             },
           });
 
+          // Create transaction log for confirmed NFT deposit
+          try {
+            const agreement = await prisma.agreement.findUnique({
+              where: { id: agreementId },
+              select: { agreementId: true },
+            });
+            
+            if (agreement) {
+              const transactionLogService = getTransactionLogService();
+              const txSignature = await this.solanaService.getRecentTransactionSignature(publicKey);
+              
+              if (txSignature) {
+                await transactionLogService.captureTransaction({
+                  txId: txSignature,
+                  operationType: TransactionOperationType.DEPOSIT_NFT,
+                  agreementId: agreement.agreementId,
+                  status: TransactionStatusType.CONFIRMED,
+                  blockHeight: BigInt(context.slot),
+                });
+                console.log(`[NftDepositService] Transaction log created for NFT deposit: ${txSignature}`);
+              } else {
+                console.warn(`[NftDepositService] Could not retrieve transaction signature for NFT deposit`);
+              }
+            }
+          } catch (logError) {
+            console.error(`[NftDepositService] Error creating transaction log:`, logError);
+            // Don't fail the deposit if transaction log creation fails
+          }
+
           return {
             success: true,
             depositId: existingDeposit.id,
@@ -244,6 +274,30 @@ export class NftDepositService {
       });
 
       console.log(`[NftDepositService] Created deposit record: ${deposit.id}`);
+
+      // Create transaction log for confirmed NFT deposit
+      if (depositStatus === 'CONFIRMED') {
+        try {
+          const transactionLogService = getTransactionLogService();
+          const txSignature = await this.solanaService.getRecentTransactionSignature(publicKey);
+          
+          if (txSignature) {
+            await transactionLogService.captureTransaction({
+              txId: txSignature,
+              operationType: TransactionOperationType.DEPOSIT_NFT,
+              agreementId: agreement.agreementId,
+              status: TransactionStatusType.CONFIRMED,
+              blockHeight: BigInt(context.slot),
+            });
+            console.log(`[NftDepositService] Transaction log created for NFT deposit: ${txSignature}`);
+          } else {
+            console.warn(`[NftDepositService] Could not retrieve transaction signature for NFT deposit`);
+          }
+        } catch (logError) {
+          console.error(`[NftDepositService] Error creating transaction log:`, logError);
+          // Don't fail the deposit if transaction log creation fails
+        }
+      }
 
       // Update agreement status if NFT is now locked
       if (depositStatus === 'CONFIRMED') {
