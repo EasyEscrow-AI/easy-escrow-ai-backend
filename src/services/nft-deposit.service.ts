@@ -170,7 +170,8 @@ export class NftDepositService {
             
             if (agreement) {
               const transactionLogService = getTransactionLogService();
-              const txSignature = await this.solanaService.getRecentTransactionSignature(publicKey);
+              // Pass slot from context to help find the exact transaction
+              const txSignature = await this.solanaService.getRecentTransactionSignature(publicKey, context.slot);
               
               if (txSignature) {
                 await transactionLogService.captureTransaction({
@@ -180,9 +181,9 @@ export class NftDepositService {
                   status: TransactionStatusType.CONFIRMED,
                   blockHeight: BigInt(context.slot),
                 });
-                console.log(`[NftDepositService] Transaction log created for NFT deposit: ${txSignature}`);
+                console.log(`[NftDepositService] ✅ Transaction log created for NFT deposit: ${txSignature}`);
               } else {
-                console.warn(`[NftDepositService] Could not retrieve transaction signature for NFT deposit`);
+                console.error(`[NftDepositService] ❌ Failed to retrieve transaction signature for NFT deposit at slot ${context.slot}`);
               }
             }
           } catch (logError) {
@@ -279,7 +280,8 @@ export class NftDepositService {
       if (depositStatus === 'CONFIRMED') {
         try {
           const transactionLogService = getTransactionLogService();
-          const txSignature = await this.solanaService.getRecentTransactionSignature(publicKey);
+          // Pass slot from context to help find the exact transaction
+          const txSignature = await this.solanaService.getRecentTransactionSignature(publicKey, context.slot);
           
           if (txSignature) {
             await transactionLogService.captureTransaction({
@@ -289,9 +291,9 @@ export class NftDepositService {
               status: TransactionStatusType.CONFIRMED,
               blockHeight: BigInt(context.slot),
             });
-            console.log(`[NftDepositService] Transaction log created for NFT deposit: ${txSignature}`);
+            console.log(`[NftDepositService] ✅ Transaction log created for NFT deposit: ${txSignature}`);
           } else {
-            console.warn(`[NftDepositService] Could not retrieve transaction signature for NFT deposit`);
+            console.error(`[NftDepositService] ❌ Failed to retrieve transaction signature for NFT deposit at slot ${context.slot}`);
           }
         } catch (logError) {
           console.error(`[NftDepositService] Error creating transaction log:`, logError);

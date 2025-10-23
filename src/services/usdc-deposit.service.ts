@@ -216,7 +216,8 @@ export class UsdcDepositService {
         if (depositStatus === 'CONFIRMED' && isValidAmount && existingDeposit.status !== 'CONFIRMED') {
           try {
             const transactionLogService = getTransactionLogService();
-            const txSignature = await this.solanaService.getRecentTransactionSignature(publicKey);
+            // Pass slot from context to help find the exact transaction
+            const txSignature = await this.solanaService.getRecentTransactionSignature(publicKey, context.slot);
             
             if (txSignature) {
               await transactionLogService.captureTransaction({
@@ -226,9 +227,9 @@ export class UsdcDepositService {
                 status: TransactionStatusType.CONFIRMED,
                 blockHeight: BigInt(context.slot),
               });
-              console.log(`[UsdcDepositService] Transaction log created for USDC deposit: ${txSignature}`);
+              console.log(`[UsdcDepositService] ✅ Transaction log created for USDC deposit: ${txSignature}`);
             } else {
-              console.warn(`[UsdcDepositService] Could not retrieve transaction signature for USDC deposit`);
+              console.error(`[UsdcDepositService] ❌ Failed to retrieve transaction signature for USDC deposit at slot ${context.slot}`);
             }
           } catch (logError) {
             console.error(`[UsdcDepositService] Error creating transaction log:`, logError);
@@ -269,7 +270,8 @@ export class UsdcDepositService {
       if (depositStatus === 'CONFIRMED' && isValidAmount) {
         try {
           const transactionLogService = getTransactionLogService();
-          const txSignature = await this.solanaService.getRecentTransactionSignature(publicKey);
+          // Pass slot from context to help find the exact transaction
+          const txSignature = await this.solanaService.getRecentTransactionSignature(publicKey, context.slot);
           
           if (txSignature) {
             await transactionLogService.captureTransaction({
@@ -279,9 +281,9 @@ export class UsdcDepositService {
               status: TransactionStatusType.CONFIRMED,
               blockHeight: BigInt(context.slot),
             });
-            console.log(`[UsdcDepositService] Transaction log created for USDC deposit: ${txSignature}`);
+            console.log(`[UsdcDepositService] ✅ Transaction log created for USDC deposit: ${txSignature}`);
           } else {
-            console.warn(`[UsdcDepositService] Could not retrieve transaction signature for USDC deposit`);
+            console.error(`[UsdcDepositService] ❌ Failed to retrieve transaction signature for USDC deposit at slot ${context.slot}`);
           }
         } catch (logError) {
           console.error(`[UsdcDepositService] Error creating transaction log:`, logError);

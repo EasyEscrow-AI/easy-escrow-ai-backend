@@ -557,28 +557,82 @@ export class SolanaService {
    * @param limit - Number of signatures to fetch (default 1)
    * @returns Most recent transaction signature or null
    */
+  /**
+   * Get recent transaction signature for an account with retry logic
+   * Includes delay and retries to handle RPC indexing lag after account changes
+   * 
+   * @param publicKey Account public key
+   * @param targetSlot Optional slot to find transaction near (from context)
+   * @param limit Number of signatures to fetch
+   * @param maxRetries Maximum number of retry attempts
+   * @param retryDelayMs Delay between retries in milliseconds
+   * @returns Transaction signature or null if not found
+   */
   public async getRecentTransactionSignature(
     publicKey: PublicKey | string,
-    limit: number = 1
+    targetSlot?: number,
+    limit: number = 10,
+    maxRetries: number = 3,
+    retryDelayMs: number = 1000
   ): Promise<string | null> {
     try {
       const pubKey = typeof publicKey === 'string' ? new PublicKey(publicKey) : publicKey;
       
-      const signatures = await this.connection.getSignaturesForAddress(
-        pubKey,
-        { limit },
-        'confirmed'
-      );
-      
-      if (signatures.length === 0) {
-        console.log(`[SolanaService] No transactions found for account: ${pubKey.toBase58()}`);
-        return null;
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          // Add delay before retry (except first attempt)
+          if (attempt > 1) {
+            console.log(`[SolanaService] Retry ${attempt}/${maxRetries} after ${retryDelayMs}ms delay...`);
+            await new Promise(resolve => setTimeout(resolve, retryDelayMs));
+          }
+          
+          const signatures = await this.connection.getSignaturesForAddress(
+            pubKey,
+            { limit },
+            'confirmed'
+          );
+          
+          if (signatures.length === 0) {
+            if (attempt < maxRetries) {
+              console.log(`[SolanaService] No transactions found yet for account: ${pubKey.toBase58()} (attempt ${attempt}/${maxRetries})`);
+              continue; // Retry
+            }
+            console.log(`[SolanaService] No transactions found for account after ${maxRetries} attempts: ${pubKey.toBase58()}`);
+            return null;
+          }
+          
+          // If targetSlot provided, try to find transaction near that slot
+          if (targetSlot !== undefined) {
+            const matchingSignature = signatures.find(sig => 
+              sig.slot === targetSlot || Math.abs((sig.slot || 0) - targetSlot) <= 5
+            );
+            
+            if (matchingSignature) {
+              console.log(`[SolanaService] Found transaction near slot ${targetSlot} for ${pubKey.toBase58()}: ${matchingSignature.signature}`);
+              return matchingSignature.signature;
+            }
+            
+            // If no exact match but we have signatures, log and continue
+            console.log(`[SolanaService] No exact slot match found, checking if any recent transaction works...`);
+          }
+          
+          // Return most recent if no slot match or slot not provided
+          const mostRecent = signatures[0];
+          console.log(`[SolanaService] Found recent transaction for ${pubKey.toBase58()}: ${mostRecent.signature} (slot: ${mostRecent.slot})`);
+          
+          return mostRecent.signature;
+          
+        } catch (retryError) {
+          if (attempt < maxRetries) {
+            console.warn(`[SolanaService] Attempt ${attempt}/${maxRetries} failed:`, retryError);
+            continue; // Retry
+          }
+          throw retryError; // Last attempt failed, throw
+        }
       }
       
-      const mostRecent = signatures[0];
-      console.log(`[SolanaService] Found recent transaction for ${pubKey.toBase58()}: ${mostRecent.signature}`);
+      return null; // All retries exhausted
       
-      return mostRecent.signature;
     } catch (error) {
       console.error(`[SolanaService] Error fetching transaction signatures:`, error);
       return null;
