@@ -281,7 +281,7 @@ export class SettlementService {
         
         // If no cached result, query the database for the actual settlement
         const existingSettlement = await prisma.settlement.findUnique({
-          where: { agreementId: agreement.id },
+          where: { agreementId: agreement.agreementId },
         });
 
         if (existingSettlement) {
@@ -342,7 +342,7 @@ export class SettlementService {
       // 4. Create settlement record
       await prisma.settlement.create({
         data: {
-          agreementId: agreement.id,
+          agreementId: agreement.agreementId,
           nftMint: agreement.nftMint,
           price: agreement.price,
           platformFee: feeCalculation.platformFee,
