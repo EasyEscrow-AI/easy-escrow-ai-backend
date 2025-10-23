@@ -262,7 +262,7 @@ export class NftDepositService {
       // Create deposit record
       const deposit = await prisma.deposit.create({
         data: {
-          agreementId: agreement.id,
+          agreementId: agreement.agreementId,
           type: 'NFT',
           depositor: tokenAccountData.owner.toBase58(),
           amount: null, // NFTs don't have a USD amount

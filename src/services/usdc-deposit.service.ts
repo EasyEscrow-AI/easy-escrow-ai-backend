@@ -253,7 +253,7 @@ export class UsdcDepositService {
       // Create deposit record
       const deposit = await prisma.deposit.create({
         data: {
-          agreementId: agreement.id,
+          agreementId: agreement.agreementId,
           type: 'USDC',
           depositor: tokenAccountData.owner.toBase58(),
           amount: new Decimal(depositAmount),
