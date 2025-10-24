@@ -1106,7 +1106,10 @@ export class PenetrationTester {
       this.report.passed++;
     } else {
       this.report.failed++;
-      this.report.summary[result.severity]++;
+      // Only count non-info severities in summary
+      if (result.severity !== 'info') {
+        this.report.summary[result.severity]++;
+      }
     }
 
     const icon = result.passed ? '✅' : '❌';
