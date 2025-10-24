@@ -138,8 +138,14 @@ export const phase3_MigrateData: MigrationTest = {
   name: 'zero-downtime-phase3-migrate-data',
   riskLevel: 'medium',
   
-  setupData: async () => {
-    const prisma = new PrismaClient();
+  setupData: async (databaseUrl: string) => {
+    const prisma = new PrismaClient({
+      datasources: {
+        db: {
+          url: databaseUrl,
+        },
+      },
+    });
     try {
       // Ensure Phase 1 migration is applied
       await prisma.$executeRaw`
@@ -206,8 +212,14 @@ export const phase3_MigrateData: MigrationTest = {
     UPDATE agreements SET platform_fee_bps = NULL WHERE true;
   `,
   
-  teardownData: async () => {
-    const prisma = new PrismaClient();
+  teardownData: async (databaseUrl: string) => {
+    const prisma = new PrismaClient({
+      datasources: {
+        db: {
+          url: databaseUrl,
+        },
+      },
+    });
     try {
       // Clean up test data
       await prisma.$executeRaw`
@@ -309,8 +321,14 @@ export const phase5_DropOldColumn: MigrationTest = {
   name: 'zero-downtime-phase5-drop-old-column',
   riskLevel: 'medium',
   
-  setupData: async () => {
-    const prisma = new PrismaClient();
+  setupData: async (databaseUrl: string) => {
+    const prisma = new PrismaClient({
+      datasources: {
+        db: {
+          url: databaseUrl,
+        },
+      },
+    });
     try {
       // Ensure both columns exist and are populated
       await prisma.$executeRaw`

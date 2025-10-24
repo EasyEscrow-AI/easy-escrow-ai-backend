@@ -40,8 +40,8 @@ export interface MigrationTest {
   upMigration: string;
   downMigration: string;
   dataIntegrityChecks: DataIntegrityCheck[];
-  setupData?: () => Promise<void>;
-  teardownData?: () => Promise<void>;
+  setupData?: (databaseUrl: string) => Promise<void>;
+  teardownData?: (databaseUrl: string) => Promise<void>;
 }
 
 /**
@@ -151,10 +151,25 @@ export class MigrationTester {
       const username = dbUrl.username;
       const password = dbUrl.password;
 
-      // Build pg_dump command
-      const pgDumpCmd = `PGPASSWORD="${password}" pg_dump -h ${host} -p ${port} -U ${username} -d ${database} -f "${backupPath}"`;
+      // Use pg_dump with environment variables to avoid command injection
+      // Pass password via PGPASSWORD environment variable
+      const env = {
+        ...process.env,
+        PGPASSWORD: password,
+      };
+
+      // Build pg_dump command with safe arguments (no interpolation)
+      const pgDumpArgs = [
+        'pg_dump',
+        '-h', host,
+        '-p', port,
+        '-U', username,
+        '-d', database,
+        '-f', backupPath
+      ];
       
-      execSync(pgDumpCmd, {
+      execSync(pgDumpArgs.join(' '), {
+        env,
         stdio: 'pipe',
         timeout: this.config.timeoutMs,
       });
@@ -262,7 +277,7 @@ export class MigrationTester {
       // Setup test data if provided
       if (test.setupData) {
         this.log('Setting up test data...');
-        await test.setupData();
+        await test.setupData(this.config.databaseUrl);
         this.log('✅ Test data setup complete');
       }
 
@@ -291,7 +306,7 @@ export class MigrationTester {
       // Teardown test data if provided
       if (test.teardownData) {
         this.log('\nCleaning up test data...');
-        await test.teardownData();
+        await test.teardownData(this.config.databaseUrl);
         this.log('✅ Test data cleanup complete');
       }
 

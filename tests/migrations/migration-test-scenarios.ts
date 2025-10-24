@@ -190,9 +190,15 @@ export const renameColumnTest: MigrationTest = {
     ALTER TABLE agreements 
     DROP COLUMN IF EXISTS test_notes;
   `,
-  setupData: async () => {
+  setupData: async (databaseUrl: string) => {
     // Ensure test column exists before renaming
-    const prisma = new PrismaClient();
+    const prisma = new PrismaClient({
+      datasources: {
+        db: {
+          url: databaseUrl,
+        },
+      },
+    });
     try {
       await prisma.$executeRaw`
         ALTER TABLE agreements 
@@ -258,8 +264,14 @@ export const changeColumnTypeTest: MigrationTest = {
     ALTER TABLE agreements 
     DROP COLUMN IF EXISTS test_code;
   `,
-  setupData: async () => {
-    const prisma = new PrismaClient();
+  setupData: async (databaseUrl: string) => {
+    const prisma = new PrismaClient({
+      datasources: {
+        db: {
+          url: databaseUrl,
+        },
+      },
+    });
     try {
       await prisma.$executeRaw`
         ALTER TABLE agreements 
@@ -349,8 +361,14 @@ export const addNonNullableColumnTest: MigrationTest = {
 export const dropColumnTest: MigrationTest = {
   name: 'drop-column',
   riskLevel: 'high',
-  setupData: async () => {
-    const prisma = new PrismaClient();
+  setupData: async (databaseUrl: string) => {
+    const prisma = new PrismaClient({
+      datasources: {
+        db: {
+          url: databaseUrl,
+        },
+      },
+    });
     try {
       // Add a test column first
       await prisma.$executeRaw`
@@ -409,8 +427,14 @@ export const dropColumnTest: MigrationTest = {
 export const dropTableTest: MigrationTest = {
   name: 'drop-table',
   riskLevel: 'high',
-  setupData: async () => {
-    const prisma = new PrismaClient();
+  setupData: async (databaseUrl: string) => {
+    const prisma = new PrismaClient({
+      datasources: {
+        db: {
+          url: databaseUrl,
+        },
+      },
+    });
     try {
       // Create a temporary test table
       await prisma.$executeRaw`
@@ -463,8 +487,14 @@ export const dropTableTest: MigrationTest = {
 export const dataTransformationTest: MigrationTest = {
   name: 'data-transformation',
   riskLevel: 'high',
-  setupData: async () => {
-    const prisma = new PrismaClient();
+  setupData: async (databaseUrl: string) => {
+    const prisma = new PrismaClient({
+      datasources: {
+        db: {
+          url: databaseUrl,
+        },
+      },
+    });
     try {
       // Add test columns
       await prisma.$executeRaw`
@@ -512,8 +542,14 @@ export const dataTransformationTest: MigrationTest = {
     UPDATE agreements 
     SET test_new_format = NULL;
   `,
-  teardownData: async () => {
-    const prisma = new PrismaClient();
+  teardownData: async (databaseUrl: string) => {
+    const prisma = new PrismaClient({
+      datasources: {
+        db: {
+          url: databaseUrl,
+        },
+      },
+    });
     try {
       await prisma.$executeRaw`
         ALTER TABLE agreements 
