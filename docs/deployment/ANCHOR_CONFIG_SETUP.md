@@ -1,254 +1,741 @@
-# Anchor Configuration Setup
+# Anchor Configuration Setup Guide
 
-This document explains the Anchor configuration files for different environments.
+**Complete Guide to Anchor Configuration for Multi-Environment Deployments**  
+**Last Updated:** January 2025  
+**Related:** [STAGING Strategy](../architecture/STAGING_STRATEGY.md)
 
-## Overview
+---
 
-We use **separate Anchor configuration files** for each environment to enable CI/CD-based deployments with distinct Program IDs:
+## Table of Contents
 
-- `Anchor.toml` - Default (localnet)
-- `Anchor.dev.toml` - DEV environment (devnet)
-- `Anchor.staging.toml` - STAGING environment (devnet)
-- `Anchor.prod.toml` - PROD environment (mainnet, future)
+1. [Overview](#1-overview)
+2. [Anchor Configuration Files](#2-anchor-configuration-files)
+3. [Environment-Specific Configurations](#3-environment-specific-configurations)
+4. [Using ANCHOR_CONFIG Environment Variable](#4-using-anchor_config-environment-variable)
+5. [Program ID Management](#5-program-id-management)
+6. [Wallet Configuration](#6-wallet-configuration)
+7. [Network Configuration](#7-network-configuration)
+8. [Build and Deploy Commands](#8-build-and-deploy-commands)
+9. [CI/CD Integration](#9-cicd-integration)
+10. [Troubleshooting](#10-troubleshooting)
 
-## Configuration Files
+---
 
-### Anchor.dev.toml
+## 1. Overview
 
-For **DEV environment** deployments on devnet:
+### Why Multiple Anchor Configurations?
 
-```toml
-[programs.devnet]
-escrow = "4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd"
+**Problem:** Single `Anchor.toml` file can only target one Program ID and one network at a time.
 
-[provider]
-cluster = "Devnet"
-wallet = "~/.config/solana/id.json"
-```
+**Solution:** Use environment-specific Anchor configuration files:
 
-**Usage:**
-```bash
-anchor build -C Anchor.dev.toml
-anchor deploy -C Anchor.dev.toml
-```
+- `Anchor.dev.toml` - For DEV environment
+- `Anchor.staging.toml` - For STAGING environment
+- `Anchor.prod.toml` - For PROD environment (future)
 
-### Anchor.staging.toml
+### Benefits
 
-For **STAGING environment** deployments on devnet:
+✅ **Advantages:**
 
-```toml
-[programs.devnet]
-escrow = "AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei"
+1. **Environment Isolation**
+   - Each environment has its own Program ID
+   - Separate wallets for deployment
+   - Independent network configurations
 
-[provider]
-cluster = "Devnet"
-wallet = "keys/staging-deployer.json"
-```
+2. **CI/CD Friendly**
+   - Single command to target specific environment
+   - No manual configuration changes
+   - Easy to switch between environments
 
-**Usage:**
-```bash
-anchor build  # Build once, same artifacts for all environments
-anchor deploy -C Anchor.staging.toml --provider.cluster devnet
-```
+3. **Version Control**
+   - Configuration stored in git
+   - Track configuration changes
+   - Audit trail for changes
 
-## Toolchain Pinning
+4. **Reproducible Builds**
+   - Consistent configuration across team
+   - No local configuration drift
+   - Deterministic deployments
 
-### rust-toolchain.toml
+---
 
-Ensures consistent Rust version across all environments:
+## 2. Anchor Configuration Files
+
+### Standard Structure
 
 ```toml
 [toolchain]
-channel = "1.75.0"
-components = ["rustfmt", "clippy"]
-targets = ["wasm32-unknown-unknown"]
+anchor_version = "0.30.1"      # Pin Anchor version
+
+[features]
+seeds = false                   # Don't auto-derive seeds
+skip-lint = false              # Run linter
+resolution = true              # Enable dependency resolution
+
+[programs.<network>]
+<program_name> = "<program_id>"
+
+[registry]
+url = "https://api.apr.dev"    # Anchor Package Registry
+
+[provider]
+cluster = "<network>"          # Network (Devnet/Mainnet)
+wallet = "<path_to_wallet>"    # Deployer keypair
+
+[scripts]
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+
+[[test.validator.account]]
+address = "<program_id>"
+filename = "target/deploy/<program>.json"
 ```
 
-This file is automatically read by `rustup` to install/use the correct Rust version.
-
-## Directory Structure
+### File Locations
 
 ```
 project-root/
-├── Anchor.toml              # Default (localnet)
+├── Anchor.toml              # Default (optional, or symlink to dev)
 ├── Anchor.dev.toml          # DEV environment
 ├── Anchor.staging.toml      # STAGING environment
-├── Anchor.prod.toml         # PROD environment (future)
-├── rust-toolchain.toml      # Rust version pinning
-├── keys/
-│   ├── .gitkeep            # Preserve directory in git
-│   └── staging-deployer.json  # STAGING deployer (NOT in git)
-└── target/deploy/
-    ├── escrow-keypair.json         # DEV program keypair
-    └── escrow-keypair-staging.json # STAGING program keypair
+└── Anchor.prod.toml         # PROD environment (future)
 ```
 
-## Deployer Keypairs
+---
 
-### keys/ Directory
+## 3. Environment-Specific Configurations
 
-The `keys/` directory stores **deployer keypairs** (wallets that pay for deployment costs):
+### DEV Environment (`Anchor.dev.toml`)
 
-- **NOT the program keypairs** (those are in `target/deploy/`)
-- **NOT committed to git** (in `.gitignore`)
-- Used by CI/CD for deployments
+```toml
+[toolchain]
+anchor_version = "0.30.1"
 
-### Creating Deployer Keypairs
+[features]
+seeds = false
+skip-lint = false
+resolution = true
 
-```bash
-# Create staging deployer keypair
-solana-keygen new -o keys/staging-deployer.json --force
+[programs.devnet]
+escrow = "4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd"
 
-# Fund with devnet SOL for deployment costs
-solana airdrop 5 keys/staging-deployer.json --url devnet
+[registry]
+url = "https://api.apr.dev"
 
-# Verify balance
-solana balance keys/staging-deployer.json --url devnet
+[provider]
+cluster = "Devnet"
+wallet = "wallets/dev/dev-deployer.json"
+
+[scripts]
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+
+[[test.validator.account]]
+address = "4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd"
+filename = "target/deploy/escrow.json"
 ```
 
-## Usage in CI/CD
-
-### Build Phase (Once)
+**Usage:**
 
 ```bash
-# Install pinned toolchains
-solana-install init 1.18.x
-rustup show  # Reads rust-toolchain.toml
+# Build for DEV
+anchor build -C Anchor.dev.toml
 
-# Build program once
-anchor build
-
-# Same .so and IDL will be used for all environments
-```
-
-### Deploy Phase (Environment-Specific)
-
-```bash
 # Deploy to DEV
 anchor deploy -C Anchor.dev.toml
-
-# Deploy to STAGING (same artifacts!)
-anchor deploy -C Anchor.staging.toml
-
-# Deploy to PROD (future, same artifacts!)
-anchor deploy -C Anchor.prod.toml
 ```
 
-## Environment Variables
+### STAGING Environment (`Anchor.staging.toml`)
 
-You can also use environment variables:
+```toml
+[toolchain]
+anchor_version = "0.30.1"
+
+[features]
+seeds = false
+skip-lint = false
+resolution = true
+
+[programs.devnet]
+escrow = "AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei"
+
+[registry]
+url = "https://api.apr.dev"
+
+[provider]
+cluster = "Devnet"
+wallet = "target/deploy/escrow-keypair-staging.json"
+
+[scripts]
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+
+[[test.validator.account]]
+address = "AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei"
+filename = "target/deploy/escrow.json"
+```
+
+**Usage:**
 
 ```bash
-# Set config file
-export ANCHOR_CONFIG=Anchor.staging.toml
+# Build for STAGING
+anchor build -C Anchor.staging.toml
 
-# Deploy with environment config
+# Deploy to STAGING
+anchor deploy -C Anchor.staging.toml
+```
+
+### PROD Environment (`Anchor.prod.toml`) - Future
+
+```toml
+[toolchain]
+anchor_version = "0.30.1"
+
+[features]
+seeds = false
+skip-lint = false
+resolution = true
+
+[programs.mainnet]
+escrow = "<TBD-MAINNET-PROGRAM-ID>"
+
+[registry]
+url = "https://api.apr.dev"
+
+[provider]
+cluster = "Mainnet"
+wallet = "<path-to-multisig-or-secure-wallet>"
+
+[scripts]
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+
+[[test.validator.account]]
+address = "<TBD-MAINNET-PROGRAM-ID>"
+filename = "target/deploy/escrow.json"
+```
+
+---
+
+## 4. Using ANCHOR_CONFIG Environment Variable
+
+### Setting the Environment Variable
+
+**Option 1: Command Line (Temporary)**
+
+```bash
+# Set for single command
+ANCHOR_CONFIG=Anchor.staging.toml anchor build
+
+# Set for entire session
+export ANCHOR_CONFIG=Anchor.staging.toml
+anchor build
 anchor deploy
 ```
 
-## CI Secrets
-
-For **GitHub Actions**, configure these secrets:
-
-```
-STAGING_DEPLOYER_KEYPAIR  # Contents of keys/staging-deployer.json
-STAGING_PROGRAM_ID        # AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei
-STAGING_RPC_URL           # Private RPC endpoint
-```
-
-## Security Notes
-
-### ⚠️ **NEVER Commit These Files:**
-
-```gitignore
-keys/*.json
-!keys/.gitkeep
-target/deploy/*.json
-.env*
-!.env*.example
-```
-
-### ✅ **Safe to Commit:**
-
-- `Anchor.*.toml` files (contain public Program IDs only)
-- `rust-toolchain.toml`
-- `.env.*.example` templates
-- `keys/.gitkeep`
-
-## Verification
-
-### Verify Configurations
+**Option 2: Shell Profile (Permanent)**
 
 ```bash
-# Check DEV config
-anchor build -C Anchor.dev.toml
-# Should show DEV Program ID: 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd
-
-# Check STAGING config
-anchor build -C Anchor.staging.toml
-# Should show STAGING Program ID: AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei
+# Add to ~/.bashrc or ~/.zshrc
+export ANCHOR_CONFIG=Anchor.dev.toml  # Default to DEV
 ```
 
-### Verify Toolchain
+**Option 3: .env File (Project-Specific)**
 
 ```bash
-# Check Rust version
-rustc --version
-# Should output: rustc 1.75.0
-
-# Check Solana version
-solana --version
-# Should output: solana-cli 1.18.x
+# .env.staging
+ANCHOR_CONFIG=Anchor.staging.toml
 ```
 
-## Troubleshooting
+### CI/CD Usage
 
-### "Program ID mismatch" Error
+**GitHub Actions:**
 
-**Cause:** Program keypair doesn't match the ID in Anchor config.
+```yaml
+- name: Build with STAGING Config
+  env:
+    ANCHOR_CONFIG: Anchor.staging.toml
+  run: |
+    anchor build
+    anchor deploy
+```
 
-**Solution:**
+### Verification
+
+**Check which config is being used:**
+
 ```bash
-# Extract actual Program ID from keypair
+# Anchor will show config file path
+anchor build --verbose
+
+# Or explicitly verify
+echo $ANCHOR_CONFIG
+```
+
+---
+
+## 5. Program ID Management
+
+### Generating Program IDs
+
+**For each environment, generate a unique Program ID:**
+
+```bash
+# Generate DEV program keypair
+solana-keygen new --outfile target/deploy/escrow-keypair.json
+
+# Get Program ID
+solana address -k target/deploy/escrow-keypair.json
+# Output: 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd
+
+# Generate STAGING program keypair
+solana-keygen new --outfile target/deploy/escrow-keypair-staging.json
+
+# Get Program ID
 solana address -k target/deploy/escrow-keypair-staging.json
-
-# Update Anchor.staging.toml with the correct ID
+# Output: AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei
 ```
 
-### "Deployer has insufficient funds"
+### Updating Program IDs
 
-**Cause:** Deployer keypair doesn't have enough SOL.
+**After generating new keypair:**
+
+1. Update Anchor config file:
+   ```toml
+   [programs.devnet]
+   escrow = "AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei"  # New ID
+   ```
+
+2. Update Rust source code:
+   ```rust
+   // programs/escrow/src/lib.rs
+   declare_id!("AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei");
+   ```
+
+3. Rebuild program:
+   ```bash
+   anchor build -C Anchor.staging.toml
+   ```
+
+4. Verify Program ID matches:
+   ```bash
+   # Check compiled program
+   solana-keygen pubkey target/deploy/escrow-keypair-staging.json
+   
+   # Should match declare_id in source code
+   ```
+
+### Program ID Registry
+
+**Maintain a registry of all Program IDs:**
+
+| Environment | Network | Program ID | Keypair Location |
+|-------------|---------|------------|------------------|
+| DEV | Devnet | `4FQ5...Twhd` | `target/deploy/escrow-keypair.json` |
+| STAGING | Devnet | `AvdX...9Zei` | `target/deploy/escrow-keypair-staging.json` |
+| PROD | Mainnet | `<TBD>` | `<TBD>` |
+
+---
+
+## 6. Wallet Configuration
+
+### Deployer Wallets
+
+**Each environment needs its own deployer wallet:**
+
+```toml
+# DEV
+[provider]
+wallet = "wallets/dev/dev-deployer.json"
+
+# STAGING
+[provider]
+wallet = "target/deploy/escrow-keypair-staging.json"
+
+# PROD (future)
+[provider]
+wallet = "<secure-multisig-or-hardware-wallet>"
+```
+
+### Wallet Security
+
+**DEV:**
+- ✅ Local keypair file is acceptable
+- ✅ Stored in `wallets/dev/` (gitignored)
+
+**STAGING:**
+- ✅ Keypair file stored in CI/CD secrets
+- ✅ Temporary file created during deployment
+- ✅ File deleted after deployment
+
+**PROD:**
+- ⚠️ Never use local keypair file
+- ✅ Use hardware wallet (Ledger, Trezor)
+- ✅ Or use multisig (Squads Protocol)
+- ✅ Multiple signers required
+
+### Funding Deployer Wallets
+
+```bash
+# Fund DEV deployer
+solana airdrop 5 <dev-deployer-address> --url devnet
+
+# Fund STAGING deployer
+solana airdrop 5 <staging-deployer-address> --url devnet
+
+# PROD deployer (buy SOL on mainnet)
+# Transfer SOL to deployer address
+```
+
+---
+
+## 7. Network Configuration
+
+### Network Options
+
+```toml
+[provider]
+cluster = "Localnet"   # Local validator
+cluster = "Devnet"     # Public devnet
+cluster = "Testnet"    # Public testnet (not recommended)
+cluster = "Mainnet"    # Production mainnet
+```
+
+### Custom RPC URLs
+
+**Override default RPC endpoint:**
+
+```bash
+# Use custom RPC for deployment
+anchor deploy \
+  -C Anchor.staging.toml \
+  --provider.cluster devnet \
+  --provider.wallet target/deploy/escrow-keypair-staging.json \
+  --url https://devnet.helius-rpc.com/?api-key=<key>
+```
+
+### Network-Specific Considerations
+
+**Devnet:**
+- ✅ Free SOL from faucet
+- ✅ Faster block times (testing-friendly)
+- ⚠️ Can reset occasionally
+
+**Testnet:**
+- ⚠️ Less stable than devnet
+- ⚠️ Used for validator testing
+- ❌ Not recommended for app testing
+
+**Mainnet:**
+- ⚠️ Real SOL costs money
+- ⚠️ Slower block times (production-realistic)
+- ⚠️ Higher transaction fees
+
+---
+
+## 8. Build and Deploy Commands
+
+### Basic Commands
+
+**Build:**
+
+```bash
+# Build with specific config
+anchor build -C Anchor.staging.toml
+
+# Or with environment variable
+export ANCHOR_CONFIG=Anchor.staging.toml
+anchor build
+```
+
+**Deploy:**
+
+```bash
+# Deploy with specific config
+anchor deploy -C Anchor.staging.toml
+
+# Deploy specific program
+anchor deploy -C Anchor.staging.toml --program-name escrow
+```
+
+**IDL Operations:**
+
+```bash
+# Initialize IDL
+anchor idl init <PROGRAM_ID> target/idl/escrow.json -C Anchor.staging.toml
+
+# Upgrade IDL
+anchor idl upgrade <PROGRAM_ID> target/idl/escrow.json -C Anchor.staging.toml
+
+# Fetch IDL
+anchor idl fetch <PROGRAM_ID> -C Anchor.staging.toml
+```
+
+### Advanced Commands
+
+**Verify Program Deployment:**
+
+```bash
+# Check program exists
+solana program show <PROGRAM_ID> --url devnet
+
+# Get program data
+anchor idl fetch <PROGRAM_ID> -C Anchor.staging.toml -o fetched-idl.json
+
+# Compare with local IDL
+diff target/idl/escrow.json fetched-idl.json
+```
+
+**Test with Specific Config:**
+
+```bash
+# Run tests with STAGING config
+anchor test -C Anchor.staging.toml
+```
+
+---
+
+## 9. CI/CD Integration
+
+### GitHub Actions Example
+
+```yaml
+name: Deploy to STAGING
+
+on:
+  push:
+    branches:
+      - staging
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: Install Anchor
+        run: |
+          cargo install --git https://github.com/coral-xyz/anchor --tag v0.30.1 anchor-cli --locked
+      
+      - name: Setup Deployer Keypair
+        run: |
+          echo "${{ secrets.STAGING_PROGRAM_KEYPAIR }}" > keypair.json
+          chmod 600 keypair.json
+      
+      - name: Build with STAGING Config
+        run: |
+          anchor build -C Anchor.staging.toml
+      
+      - name: Deploy to STAGING
+        run: |
+          anchor deploy \
+            -C Anchor.staging.toml \
+            --provider.cluster devnet \
+            --provider.wallet keypair.json
+      
+      - name: Clean up Keypair
+        if: always()
+        run: rm -f keypair.json
+```
+
+### Script-Based Deployment
+
+**Create deployment script:**
+
+```bash
+#!/bin/bash
+# scripts/deploy-staging.sh
+
+set -e
+
+ENVIRONMENT=${1:-staging}
+CONFIG_FILE="Anchor.${ENVIRONMENT}.toml"
+
+echo "Deploying to ${ENVIRONMENT} environment..."
+echo "Using config: ${CONFIG_FILE}"
+
+# Verify config exists
+if [ ! -f "$CONFIG_FILE" ]; then
+  echo "Error: Config file not found: $CONFIG_FILE"
+  exit 1
+fi
+
+# Build
+echo "Building program..."
+anchor build -C "$CONFIG_FILE"
+
+# Deploy
+echo "Deploying program..."
+anchor deploy -C "$CONFIG_FILE"
+
+# Update IDL
+echo "Updating IDL..."
+PROGRAM_ID=$(anchor keys list -C "$CONFIG_FILE" | grep escrow | awk '{print $2}')
+anchor idl upgrade "$PROGRAM_ID" target/idl/escrow.json -C "$CONFIG_FILE"
+
+echo "Deployment complete!"
+```
+
+**Usage:**
+
+```bash
+# Deploy to STAGING
+./scripts/deploy-staging.sh staging
+
+# Deploy to DEV
+./scripts/deploy-staging.sh dev
+```
+
+---
+
+## 10. Troubleshooting
+
+### Common Issues
+
+**Problem:** `anchor build` uses wrong Program ID
 
 **Solution:**
-```bash
-# Check balance
-solana balance keys/staging-deployer.json --url devnet
 
-# Add more SOL
-solana airdrop 5 keys/staging-deployer.json --url devnet
+```bash
+# Explicitly specify config
+anchor build -C Anchor.staging.toml
+
+# Or set environment variable
+export ANCHOR_CONFIG=Anchor.staging.toml
+anchor build
 ```
 
-### "Cannot find wallet file"
-
-**Cause:** Deployer keypair not created or not in correct location.
+**Problem:** "Program ID mismatch" error
 
 **Solution:**
-```bash
-# Create deployer keypair
-solana-keygen new -o keys/staging-deployer.json
 
-# Or copy from secure location
-cp /path/to/backup/staging-deployer.json keys/
+```bash
+# Verify Program ID in config matches Rust source
+grep escrow Anchor.staging.toml
+# Should output: escrow = "AvdX..."
+
+# Check Rust source
+grep declare_id programs/escrow/src/lib.rs
+# Should output: declare_id!("AvdX...");
+
+# If mismatch, update Rust source and rebuild
 ```
+
+**Problem:** Deployment fails with "insufficient funds"
+
+**Solution:**
+
+```bash
+# Check deployer wallet balance
+DEPLOYER=$(solana address -k target/deploy/escrow-keypair-staging.json)
+solana balance $DEPLOYER --url devnet
+
+# Fund wallet if needed
+solana airdrop 5 $DEPLOYER --url devnet
+```
+
+**Problem:** Can't find keypair file
+
+**Solution:**
+
+```bash
+# Verify keypair file path in config
+grep wallet Anchor.staging.toml
+
+# Check file exists
+ls -lh target/deploy/escrow-keypair-staging.json
+
+# If missing, restore from backup or regenerate
+```
+
+**Problem:** IDL upgrade fails
+
+**Solution:**
+
+```bash
+# Check upgrade authority
+solana program show <PROGRAM_ID> --url devnet
+
+# Verify deployer wallet is the authority
+# If not, transfer authority or use correct wallet
+```
+
+### Debug Mode
+
+**Enable verbose output:**
+
+```bash
+# Build with verbose logging
+anchor build -C Anchor.staging.toml --verbose
+
+# Deploy with verbose logging
+anchor deploy -C Anchor.staging.toml --verbose
+```
+
+---
+
+## Best Practices
+
+### 1. Always Use -C Flag
+
+**Don't rely on default `Anchor.toml`:**
+
+```bash
+# ❌ WRONG: Ambiguous which config
+anchor build
+anchor deploy
+
+# ✅ CORRECT: Explicit config
+anchor build -C Anchor.staging.toml
+anchor deploy -C Anchor.staging.toml
+```
+
+### 2. Commit Config Files to Git
+
+```bash
+# ✅ DO commit
+git add Anchor.dev.toml Anchor.staging.toml
+git commit -m "Add environment-specific Anchor configs"
+
+# ❌ DON'T commit keypair files
+# (already in .gitignore)
+```
+
+### 3. Document Program IDs
+
+**Maintain a registry:**
+
+```markdown
+# Program IDs
+
+| Environment | Program ID | Config File |
+|-------------|------------|-------------|
+| DEV | 4FQ5...Twhd | Anchor.dev.toml |
+| STAGING | AvdX...9Zei | Anchor.staging.toml |
+| PROD | <TBD> | Anchor.prod.toml |
+```
+
+### 4. Test Config Before Deployment
+
+```bash
+# Dry-run build
+anchor build -C Anchor.staging.toml
+
+# Verify Program ID
+anchor keys list -C Anchor.staging.toml
+
+# Check deployer wallet
+solana address -k $(grep wallet Anchor.staging.toml | awk -F'"' '{print $2}')
+```
+
+---
 
 ## Related Documentation
 
-- [STAGING Strategy](../architecture/STAGING_STRATEGY.md) - Overall STAGING approach
-- [STAGING Reference](../STAGING_REFERENCE.md) - Program IDs and infrastructure
-- [Program IDs Registry](../PROGRAM_IDS.md) - All Program IDs
+- [STAGING Strategy](../architecture/STAGING_STRATEGY.md) - Overall STAGING architecture
+- [STAGING CI/CD Complete](STAGING_CI_CD_COMPLETE.md) - Full CI/CD setup
+- [STAGING CI Deployment](STAGING_CI_DEPLOYMENT.md) - CI deployment procedures
 
 ---
 
 **Last Updated**: 2025-01-20  
-**Maintained By**: DevOps Team
-
+**Maintained By**: DevOps Team  
+**Questions?** Contact the DevOps team or update this document via PR.
