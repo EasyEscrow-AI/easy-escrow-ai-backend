@@ -301,10 +301,32 @@ try {
         
         # Check for severely outdated packages (>1 major version behind)
         foreach ($pkg in $outdatedData.PSObject.Properties) {
-            $current = [version]$pkg.Value.current -replace '[^0-9.]', ''
-            $latest = [version]$pkg.Value.latest -replace '[^0-9.]', ''
-            if ($latest.Major - $current.Major -gt 1) {
-                $criticalOutdated++
+            try {
+                # Clean version strings first, then cast to [version]
+                $currentVersion = $pkg.Value.current -replace '[^0-9.]', ''
+                $latestVersion = $pkg.Value.latest -replace '[^0-9.]', ''
+                
+                # Remove leading/trailing dots and collapse multiple dots
+                $currentVersion = $currentVersion.Trim('.') -replace '\.+', '.'
+                $latestVersion = $latestVersion.Trim('.') -replace '\.+', '.'
+                
+                # Skip if version strings are invalid
+                if ([string]::IsNullOrEmpty($currentVersion) -or [string]::IsNullOrEmpty($latestVersion)) {
+                    continue
+                }
+                
+                # Cast to version objects for comparison
+                $current = [version]$currentVersion
+                $latest = [version]$latestVersion
+                
+                if ($latest.Major - $current.Major -gt 1) {
+                    $criticalOutdated++
+                }
+            }
+            catch {
+                # Skip packages with unparseable versions
+                Write-Verbose "Could not parse version for package: $($pkg.Name)"
+                continue
             }
         }
         
