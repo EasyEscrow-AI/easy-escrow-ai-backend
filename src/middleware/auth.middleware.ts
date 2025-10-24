@@ -11,6 +11,7 @@ import { Request, Response, NextFunction } from 'express';
 export interface AuthenticatedRequest extends Request {
   apiKey?: string;
   authenticated?: boolean;
+  isAdmin?: boolean;
 }
 
 /**
@@ -116,7 +117,8 @@ export const authenticateAdmin = (
   next: NextFunction
 ): void => {
   try {
-    const apiKey = req.headers['x-api-key'] as string;
+    // Accept both x-api-key and x-admin-key headers for backwards compatibility
+    const apiKey = (req.headers['x-api-key'] || req.headers['x-admin-key']) as string;
     
     if (!apiKey) {
       res.status(401).json({
@@ -157,6 +159,58 @@ export const authenticateAdmin = (
       message: 'Failed to authenticate admin request',
       timestamp: new Date().toISOString(),
     });
+  }
+};
+
+/**
+ * Optional admin authentication middleware
+ * Sets req.isAdmin = true if valid admin credentials are provided
+ * Allows request to continue even if no admin credentials are provided
+ */
+export const optionalAdminAuth = (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): void => {
+  try {
+    // Accept both x-api-key and x-admin-key headers for backwards compatibility
+    const apiKey = (req.headers['x-api-key'] || req.headers['x-admin-key']) as string;
+    
+    if (!apiKey) {
+      // No admin key provided, continue without admin privileges
+      req.isAdmin = false;
+      next();
+      return;
+    }
+    
+    // Validate against admin API keys
+    const adminKeys = process.env.ADMIN_API_KEYS?.split(',').map(k => k.trim()) || [];
+    
+    // For development and staging
+    if ((process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'staging') && 
+        (apiKey === 'test-admin-key' || apiKey === 'test-admin-key-dev')) {
+      req.authenticated = true;
+      req.isAdmin = true;
+      req.apiKey = apiKey;
+      next();
+      return;
+    }
+    
+    if (adminKeys.includes(apiKey)) {
+      req.authenticated = true;
+      req.isAdmin = true;
+      req.apiKey = apiKey;
+    } else {
+      // Invalid admin key provided, continue without admin privileges
+      req.isAdmin = false;
+    }
+    
+    next();
+  } catch (error) {
+    console.error('Optional admin authentication error:', error);
+    // Don't fail the request, just continue without admin privileges
+    req.isAdmin = false;
+    next();
   }
 };
 

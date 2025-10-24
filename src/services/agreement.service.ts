@@ -337,7 +337,8 @@ const mapAgreementToDetailDTO = (agreement: any): AgreementDetailResponseDTO => 
  * Cancel an agreement (only if expired and not already settled/cancelled)
  */
 export const cancelAgreement = async (
-  agreementId: string
+  agreementId: string,
+  isAdminOverride: boolean = false
 ): Promise<CancelAgreementResponseDTO> => {
   try {
     // Get agreement with current status
@@ -362,9 +363,9 @@ export const cancelAgreement = async (
       throw new Error('Agreement is already refunded');
     }
 
-    // Check if expired
+    // Check if expired (unless admin override is enabled)
     const now = new Date();
-    if (now <= agreement.expiry) {
+    if (!isAdminOverride && now <= agreement.expiry) {
       throw new Error('Agreement has not expired yet. Cannot cancel before expiry.');
     }
 

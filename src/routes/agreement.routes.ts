@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { validateAgreementCreation } from '../middleware/validation.middleware';
-import { standardRateLimiter, strictRateLimiter, validateUSDCMintMiddleware, requiredIdempotency } from '../middleware';
+import { standardRateLimiter, strictRateLimiter, validateUSDCMintMiddleware, requiredIdempotency, optionalAdminAuth } from '../middleware';
+import { AuthenticatedRequest } from '../middleware/auth.middleware';
 import { 
   createAgreement, 
   getAgreementById, 
@@ -128,17 +129,20 @@ router.get('/v1/agreements', standardRateLimiter, async (req: Request, res: Resp
 
 /**
  * POST /v1/agreements/:agreementId/cancel
- * Cancel an expired agreement
- * Only allows cancellation of expired agreements that haven't been settled
+ * Cancel an agreement
+ * - Regular users: Only allows cancellation of expired agreements that haven't been settled
+ * - Admin users: Can cancel any agreement (except settled/refunded) using x-admin-key header
  */
 router.post(
   '/v1/agreements/:agreementId/cancel', 
-  standardRateLimiter, 
-  async (req: Request, res: Response): Promise<void> => {
+  standardRateLimiter,
+  optionalAdminAuth,
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
       const { agreementId } = req.params;
+      const isAdmin = req.isAdmin || false;
 
-      const result = await cancelAgreement(agreementId);
+      const result = await cancelAgreement(agreementId, isAdmin);
 
       res.status(200).json({
         success: true,
