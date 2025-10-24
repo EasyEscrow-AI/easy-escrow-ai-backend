@@ -268,7 +268,8 @@ class SmokeTestRunner {
               text: `*Timestamp:*\n${timestamp}`,
             },
           },
-          {
+          // Only include Explorer button if Program ID is set
+          ...(STAGING_PROGRAM_ID ? [{
             type: 'actions',
             elements: [
               {
@@ -280,7 +281,7 @@ class SmokeTestRunner {
                 url: `https://explorer.solana.com/address/${STAGING_PROGRAM_ID}?cluster=devnet`,
               },
             ],
-          },
+          }] : []),
         ],
       };
     } else {
