@@ -8,7 +8,7 @@
  * 2. Retry same request with same idempotency key
  * 3. Verify same agreement is returned (no duplicate)
  * 
- * Run: npm run test:staging:e2e:06-idempotency-handling:verbose
+ * Run: npm run test:staging:e2e:05-idempotency-handling:verbose
  */
 
 // Load .env.staging file BEFORE any other imports

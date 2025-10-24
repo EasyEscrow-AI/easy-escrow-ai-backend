@@ -92,7 +92,6 @@ describe("Escrow - Comprehensive On-Chain Tests", () => {
       await program.methods
         .initAgreement(escrowId, usdcAmount, expiryTimestamp)
         .accounts({
-          escrowState,
           buyer: buyer.publicKey,
           seller: seller.publicKey,
           nftMint,
@@ -107,7 +106,6 @@ describe("Escrow - Comprehensive On-Chain Tests", () => {
       await program.methods
         .depositUsdc()
         .accounts({
-          escrowState,
           buyer: buyer.publicKey,
           buyerUsdcAccount,
           escrowUsdcAccount,
@@ -129,7 +127,6 @@ describe("Escrow - Comprehensive On-Chain Tests", () => {
       await program.methods
         .depositNft()
         .accounts({
-          escrowState,
           seller: seller.publicKey,
           sellerNftAccount,
           escrowNftAccount,
@@ -146,11 +143,11 @@ describe("Escrow - Comprehensive On-Chain Tests", () => {
       assert.equal(escrowAccount.buyerUsdcDeposited, true);
       assert.equal(escrowAccount.sellerNftDeposited, true);
 
-      // Settle
+      // Settle with platform fee (100 bps = 1%)
+      const platformFeeBps = 100;
       await program.methods
-        .settle()
+        .settle(platformFeeBps)
         .accounts({
-          escrowState,
           escrowUsdcAccount,
           escrowNftAccount,
           sellerUsdcAccount,
@@ -203,7 +200,6 @@ describe("Escrow - Comprehensive On-Chain Tests", () => {
       await program.methods
         .initAgreement(escrowId, usdcAmount, expiryTimestamp)
         .accounts({
-          escrowState,
           buyer: buyer.publicKey,
           seller: seller.publicKey,
           nftMint,
@@ -218,7 +214,6 @@ describe("Escrow - Comprehensive On-Chain Tests", () => {
       await program.methods
         .depositNft()
         .accounts({
-          escrowState,
           seller: seller.publicKey,
           sellerNftAccount,
           escrowNftAccount,
@@ -235,7 +230,6 @@ describe("Escrow - Comprehensive On-Chain Tests", () => {
       await program.methods
         .depositUsdc()
         .accounts({
-          escrowState,
           buyer: buyer.publicKey,
           buyerUsdcAccount,
           escrowUsdcAccount,
@@ -247,11 +241,11 @@ describe("Escrow - Comprehensive On-Chain Tests", () => {
         .signers([buyer])
         .rpc();
 
-      // Settle
+      // Settle with platform fee (100 bps = 1%)
+      const platformFeeBps = 100;
       await program.methods
-        .settle()
+        .settle(platformFeeBps)
         .accounts({
-          escrowState,
           escrowUsdcAccount,
           escrowNftAccount,
           sellerUsdcAccount,
@@ -285,7 +279,6 @@ describe("Escrow - Comprehensive On-Chain Tests", () => {
       await program.methods
         .initAgreement(escrowId, usdcAmount, expiryTimestamp)
         .accounts({
-          escrowState,
           buyer: buyer.publicKey,
           seller: seller.publicKey,
           nftMint,
@@ -302,7 +295,6 @@ describe("Escrow - Comprehensive On-Chain Tests", () => {
         await program.methods
           .depositUsdc()
           .accounts({
-            escrowState,
             buyer: buyer.publicKey,
             buyerUsdcAccount: buyerWrongUsdcAccount,
             escrowUsdcAccount: escrowWrongUsdcAccount,
@@ -340,7 +332,6 @@ describe("Escrow - Comprehensive On-Chain Tests", () => {
       await program.methods
         .initAgreement(escrowId, usdcAmount, expiryTimestamp)
         .accounts({
-          escrowState,
           buyer: buyer.publicKey,
           seller: seller.publicKey,
           nftMint,
@@ -357,7 +348,6 @@ describe("Escrow - Comprehensive On-Chain Tests", () => {
         await program.methods
           .depositNft()
           .accounts({
-            escrowState,
             seller: seller.publicKey,
             sellerNftAccount: sellerWrongNftAccount,
             escrowNftAccount: escrowWrongNftAccount,
@@ -398,7 +388,6 @@ describe("Escrow - Comprehensive On-Chain Tests", () => {
       await program.methods
         .initAgreement(escrowId, usdcAmount, expiryTimestamp)
         .accounts({
-          escrowState,
           buyer: buyer.publicKey,
           seller: seller.publicKey,
           nftMint,
@@ -414,7 +403,6 @@ describe("Escrow - Comprehensive On-Chain Tests", () => {
         await program.methods
           .depositUsdc()
           .accounts({
-            escrowState,
             buyer: buyer.publicKey,
             buyerUsdcAccount,
             escrowUsdcAccount,
@@ -454,7 +442,6 @@ describe("Escrow - Comprehensive On-Chain Tests", () => {
       await program.methods
         .initAgreement(escrowId, usdcAmount, expiryTimestamp)
         .accounts({
-          escrowState,
           buyer: buyer.publicKey,
           seller: seller.publicKey,
           nftMint,
@@ -470,7 +457,6 @@ describe("Escrow - Comprehensive On-Chain Tests", () => {
       await program.methods
         .depositUsdc()
         .accounts({
-          escrowState,
           buyer: buyer.publicKey,
           buyerUsdcAccount,
           escrowUsdcAccount,
@@ -487,7 +473,6 @@ describe("Escrow - Comprehensive On-Chain Tests", () => {
         await program.methods
           .depositUsdc()
           .accounts({
-            escrowState,
             buyer: buyer.publicKey,
             buyerUsdcAccount,
             escrowUsdcAccount,
@@ -519,7 +504,6 @@ describe("Escrow - Comprehensive On-Chain Tests", () => {
       await program.methods
         .initAgreement(escrowId, usdcAmount, expiryTimestamp)
         .accounts({
-          escrowState,
           buyer: buyer.publicKey,
           seller: seller.publicKey,
           nftMint,
@@ -538,7 +522,6 @@ describe("Escrow - Comprehensive On-Chain Tests", () => {
         await program.methods
           .adminCancel()
           .accounts({
-            escrowState,
             admin: attacker.publicKey, // Wrong admin
             escrowUsdcAccount,
             escrowNftAccount,
@@ -556,4 +539,3 @@ describe("Escrow - Comprehensive On-Chain Tests", () => {
     });
   });
 });
-
