@@ -250,12 +250,12 @@ tests/e2e/staging/
 Tests use the following environment variables from `.env.staging`:
 
 ```bash
-SOLANA_RPC_URL=https://devnet.helius-rpc.com/?api-key=...  # Helius RPC (fast, reliable)
+SOLANA_RPC_URL=https://red-quaint-wind.solana-devnet.quiknode.pro/[your-api-key]/  # QuickNode RPC (fast, cross-chain ready)
 STAGING_API_BASE_URL=https://staging-api.easyescrow.ai
 NODE_ENV=staging
 ```
 
-**Note:** Tests automatically load `.env.staging` with `override: true` to use Helius RPC instead of the public devnet RPC.
+**Note:** Tests automatically load `.env.staging` with `override: true` to use QuickNode RPC instead of the public devnet RPC.
 
 ### Test Configuration
 

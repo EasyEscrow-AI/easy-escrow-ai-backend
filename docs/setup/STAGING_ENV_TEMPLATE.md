@@ -40,8 +40,8 @@ DATABASE_POOL_SIZE=10
 DATABASE_POOL_TIMEOUT=30
 
 # Solana Configuration (Devnet for Staging)
-# Primary RPC Endpoint - Use dedicated provider (Helius recommended)
-SOLANA_RPC_URL=https://devnet.helius-rpc.com/?api-key=YOUR_HELIUS_API_KEY
+# Primary RPC Endpoint - Use dedicated provider (QuickNode recommended)
+SOLANA_RPC_URL=https://[subdomain].solana-devnet.quiknode.pro/[your-api-key]/
 # Fallback RPC Endpoint - Public devnet as backup
 SOLANA_RPC_URL_FALLBACK=https://api.devnet.solana.com
 SOLANA_NETWORK=devnet
@@ -157,20 +157,26 @@ npm run db:seed:staging
 **IMPORTANT**: For production-like staging environment, use a dedicated RPC provider to avoid rate limiting.
 
 ```bash
-# 1. Sign up for Helius (recommended free tier)
-#    Visit: https://dashboard.helius.dev/
+# 1. Sign up for QuickNode (recommended - faster, cross-chain ready)
+#    Visit: https://www.quicknode.com/
 
-# 2. Create a new Devnet project named "easy-escrow-staging"
+# 2. Create a new Solana Devnet endpoint named "easy-escrow-staging"
 
-# 3. Copy your API key and update SOLANA_RPC_URL above:
-#    SOLANA_RPC_URL=https://devnet.helius-rpc.com/?api-key=YOUR_API_KEY
+# 3. Copy your HTTP Provider URL and update SOLANA_RPC_URL above:
+#    SOLANA_RPC_URL=https://[subdomain].solana-devnet.quiknode.pro/[your-api-key]/
 
 # 4. Test the connection
-solana cluster-version --url https://devnet.helius-rpc.com/?api-key=YOUR_API_KEY
+solana cluster-version --url https://[your-subdomain].solana-devnet.quiknode.pro/[your-api-key]/
 
 # 5. Verify the fallback is configured
 #    SOLANA_RPC_URL_FALLBACK=https://api.devnet.solana.com
 ```
+
+**Why QuickNode?**
+- ⚡ Faster performance and lower latency
+- 🌐 Cross-chain ready for future multi-chain expansion
+- 📊 Comprehensive dashboard and analytics
+- 🔒 Enterprise-grade security
 
 For detailed setup instructions, provider comparisons, and troubleshooting:
 📚 See [STAGING_RPC_SETUP.md](../infrastructure/STAGING_RPC_SETUP.md)

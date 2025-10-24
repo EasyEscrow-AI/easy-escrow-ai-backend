@@ -36,44 +36,51 @@ Dedicated RPC providers offer:
 
 | Provider | Free Tier | Devnet Support | Rate Limit | Notable Features |
 |----------|-----------|----------------|------------|------------------|
-| **Helius** | ✅ Yes | ✅ Yes | 100 req/sec | Best free tier, excellent docs |
-| **QuickNode** | 7-day trial | ✅ Yes | Varies | Easy setup, good dashboard |
+| **QuickNode** | ✅ Yes | ✅ Yes | High | Faster performance, cross-chain ready, excellent dashboard |
+| **Helius** | ✅ Yes | ✅ Yes | 100 req/sec | Good free tier, excellent docs |
 | **Alchemy** | ✅ Yes | ✅ Yes | 50 req/sec | Robust analytics |
 | **Triton (RPC Pool)** | ✅ Yes | ✅ Yes | 100 req/sec | Geographic distribution |
 
-**Recommendation**: **Helius** for STAGING due to generous free tier and reliable devnet support.
+**Recommendation**: **QuickNode** for STAGING due to superior performance, cross-chain capabilities, and reliable devnet support.
 
 ---
 
 ## RPC Provider Selection
 
-### Step 1: Sign Up for Helius
+### Step 1: Sign Up for QuickNode
+
+1. Visit [QuickNode](https://www.quicknode.com/)
+2. Sign up for a free account
+3. Verify your email address
+4. Navigate to "Endpoints" section
+
+### Step 2: Create Devnet Endpoint
+
+1. Click **"Create Endpoint"**
+2. Select **"Solana"** as the blockchain
+3. Select **"Devnet"** as the network
+4. Name your endpoint: `easy-escrow-staging`
+5. Click **"Create Endpoint"**
+
+### Step 3: Get Your RPC URL
+
+1. Copy the HTTP Provider URL
+2. Your RPC URL will be: `https://[subdomain].solana-devnet.quiknode.pro/[api-key]/`
+3. Store this securely (see [Security](#security-and-api-key-management))
+
+**Why QuickNode?**
+- ⚡ **Faster Performance**: Lower latency and higher throughput
+- 🌐 **Cross-Chain Ready**: Future-proof for multi-chain expansion
+- 📊 **Better Dashboard**: Comprehensive analytics and monitoring
+- 🔒 **Enterprise Security**: Advanced security features
+
+### Alternative: Helius Setup
 
 1. Visit [Helius Dashboard](https://dashboard.helius.dev/)
 2. Sign up for a free account
-3. Verify your email address
-4. Navigate to "API Keys" section
-
-### Step 2: Create Devnet Project
-
-1. Click **"Create New Project"**
-2. Select **"Devnet"** as the network
-3. Name your project: `easy-escrow-staging`
-4. Click **"Create"**
-
-### Step 3: Get Your API Key
-
-1. Copy the generated API key
-2. Your RPC URL will be: `https://devnet.helius-rpc.com/?api-key=YOUR_API_KEY`
-3. Store this securely (see [Security](#security-and-api-key-management))
-
-### Alternative: QuickNode Setup
-
-1. Visit [QuickNode](https://www.quicknode.com/)
-2. Start 7-day free trial
-3. Create endpoint → Select Solana → Select Devnet
-4. Copy the HTTP Provider URL
-5. Store securely
+3. Create devnet project
+4. Copy API key
+5. Use URL format: `https://devnet.helius-rpc.com/?api-key=YOUR_API_KEY`
 
 ---
 
@@ -84,8 +91,8 @@ Dedicated RPC providers offer:
 Create or update your `.env.staging` file:
 
 ```bash
-# Primary RPC Endpoint (Helius)
-SOLANA_RPC_URL=https://devnet.helius-rpc.com/?api-key=YOUR_HELIUS_API_KEY
+# Primary RPC Endpoint (QuickNode)
+SOLANA_RPC_URL=https://[subdomain].solana-devnet.quiknode.pro/[your-api-key]/
 
 # Fallback RPC Endpoint (Public Devnet)
 SOLANA_RPC_URL_FALLBACK=https://api.devnet.solana.com
@@ -105,7 +112,7 @@ Test your RPC connection:
 
 ```bash
 # Using Solana CLI
-solana cluster-version --url https://devnet.helius-rpc.com/?api-key=YOUR_API_KEY
+solana cluster-version --url https://[subdomain].solana-devnet.quiknode.pro/[your-api-key]/
 
 # Expected output:
 # devnet 1.18.x (or current version)
@@ -118,9 +125,9 @@ solana cluster-version --url https://devnet.helius-rpc.com/?api-key=YOUR_API_KEY
 npm run dev
 
 # Check logs for successful connection:
-# [SolanaService] Initialized with primary RPC: https://devnet.helius-rpc.com/...
+# [SolanaService] Initialized with primary RPC: https://[subdomain].solana-devnet.quiknode.pro/...
 # [SolanaService] Fallback RPC configured: https://api.devnet.solana.com
-# [SolanaService] Health check passed for https://devnet.helius-rpc.com/... - Latency: XXms
+# [SolanaService] Health check passed for https://[subdomain].solana-devnet.quiknode.pro/... - Latency: XXms
 ```
 
 ---
@@ -328,12 +335,12 @@ npm run dev
 SOLANA_RPC_URL=http://localhost:8899
 
 # Staging (.env.staging)
-SOLANA_RPC_URL=https://devnet.helius-rpc.com/?api-key=STAGING_KEY
+SOLANA_RPC_URL=https://[subdomain].solana-devnet.quiknode.pro/[staging-api-key]/
 SOLANA_RPC_URL_FALLBACK=https://api.devnet.solana.com
 
 # Production (.env.production)
-SOLANA_RPC_URL=https://mainnet.helius-rpc.com/?api-key=PRODUCTION_KEY
-SOLANA_RPC_URL_FALLBACK=https://mainnet-fallback.helius-rpc.com/?api-key=PRODUCTION_KEY_2
+SOLANA_RPC_URL=https://[subdomain].solana-mainnet.quiknode.pro/[production-api-key]/
+SOLANA_RPC_URL_FALLBACK=https://api.mainnet-beta.solana.com
 ```
 
 ### Key Rotation Procedures
@@ -419,7 +426,7 @@ Error: Health check timeout
 
 ```bash
 # Test RPC endpoint directly
-curl -X POST https://devnet.helius-rpc.com/?api-key=YOUR_KEY \
+curl -X POST https://[subdomain].solana-devnet.quiknode.pro/[your-api-key]/ \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","id":1,"method":"getVersion"}'
 
@@ -427,10 +434,10 @@ curl -X POST https://devnet.helius-rpc.com/?api-key=YOUR_KEY \
 solana cluster-version --url YOUR_RPC_URL
 
 # Check network connectivity
-ping devnet.helius-rpc.com
+ping [subdomain].solana-devnet.quiknode.pro
 
 # Test DNS resolution
-nslookup devnet.helius-rpc.com
+nslookup [subdomain].solana-devnet.quiknode.pro
 ```
 
 ### Logging for Debugging
@@ -495,15 +502,17 @@ LOG_LEVEL=debug
 
 ### Provider-Specific Optimizations
 
-#### Helius
+#### QuickNode (Current Provider)
+- Use add-ons for additional features (NFT API, Webhooks, etc.)
+- Configure global caching settings for improved performance
+- Enable request logging for debugging
+- Leverage cross-chain capabilities for future expansion
+- Use websocket endpoints for real-time subscriptions
+
+#### Helius (Alternative)
 - Use WebSocket subscriptions for real-time updates
 - Leverage enhanced APIs (getParsedTransaction, etc.)
 - Enable compression for reduced bandwidth
-
-#### QuickNode
-- Use add-ons for additional features
-- Configure global caching settings
-- Enable request logging for debugging
 
 ### Monitoring Performance
 
@@ -524,20 +533,21 @@ When moving to mainnet:
 
 1. **Use Mainnet-Specific RPC Providers**
    ```bash
-   SOLANA_RPC_URL=https://mainnet.helius-rpc.com/?api-key=PROD_KEY
-   SOLANA_RPC_URL_FALLBACK=https://mainnet-backup.helius-rpc.com/?api-key=PROD_KEY_2
+   SOLANA_RPC_URL=https://[subdomain].solana-mainnet.quiknode.pro/[prod-api-key]/
+   SOLANA_RPC_URL_FALLBACK=https://api.mainnet-beta.solana.com
    ```
 
 2. **Upgrade to Paid Tiers**
    - Higher rate limits
-   - Better SLA guarantees
+   - Better SLA guarantees (99.99%+)
    - Priority support
    - Advanced analytics
+   - Cross-chain capabilities
 
 3. **Implement Multiple Fallbacks**
    ```bash
-   SOLANA_RPC_URL=https://mainnet.helius-rpc.com/?api-key=PRIMARY
-   SOLANA_RPC_URL_FALLBACK=https://mainnet.quicknode.pro/SECONDARY
+   SOLANA_RPC_URL=https://[subdomain].solana-mainnet.quiknode.pro/[primary-key]/
+   SOLANA_RPC_URL_FALLBACK=https://[subdomain-2].solana-mainnet.quiknode.pro/[secondary-key]/
    SOLANA_RPC_URL_FALLBACK_2=https://api.mainnet-beta.solana.com
    ```
 
