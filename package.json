@@ -70,6 +70,7 @@
     "staging:build": "powershell -ExecutionPolicy Bypass -File ./scripts/deployment/staging/build-with-checksums.ps1",
     "staging:build:clean": "powershell -ExecutionPolicy Bypass -File ./scripts/deployment/staging/build-with-checksums.ps1 -Clean",
     "staging:deploy": "powershell -ExecutionPolicy Bypass -File ./scripts/deployment/staging/deploy-to-staging.ps1",
+    "staging:deploy:smoke": "powershell -ExecutionPolicy Bypass -File ./scripts/deployment/staging/deploy-with-smoke-tests.ps1",
     "staging:migrate": "powershell -ExecutionPolicy Bypass -File ./scripts/deployment/staging/post-deploy-migrate.ps1",
     "staging:fund-wallets": "powershell -ExecutionPolicy Bypass -File ./scripts/deployment/staging/fund-staging-wallets.ps1",
     "test:staging:smoke": "mocha --require ts-node/register tests/staging/smoke/staging-smoke.test.ts --timeout 60000 --reporter spec --colors",

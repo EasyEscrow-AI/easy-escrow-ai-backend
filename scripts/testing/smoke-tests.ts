@@ -16,6 +16,10 @@ const STAGING_API_URL = process.env.STAGING_API_URL || 'https://staging-api.easy
 const STAGING_RPC_URL = process.env.STAGING_RPC_URL || 'https://api.devnet.solana.com';
 const STAGING_PROGRAM_ID = process.env.STAGING_PROGRAM_ID;
 
+// Notification configuration
+const WEBHOOK_URL = process.env.SLACK_WEBHOOK_URL || process.env.DISCORD_WEBHOOK_URL;
+const NOTIFY_ON_FAILURE = process.env.NOTIFY_ON_FAILURE === 'true';
+
 interface SmokeTestResult {
   name: string;
   passed: boolean;
@@ -48,8 +52,13 @@ class SmokeTestRunner {
     // Print results
     this.printResults();
 
-    // Exit with appropriate code
+    // Send notifications if enabled and tests failed
     const allPassed = this.results.every(r => r.passed);
+    if (!allPassed && NOTIFY_ON_FAILURE && WEBHOOK_URL) {
+      await this.sendFailureNotification();
+    }
+
+    // Exit with appropriate code
     if (allPassed) {
       console.log('\n✅ All smoke tests passed!');
       process.exit(0);
@@ -187,6 +196,143 @@ class SmokeTestRunner {
         }
         throw error;
       }
+    }
+  }
+
+  private async sendFailureNotification(): Promise<void> {
+    if (!WEBHOOK_URL) {
+      return;
+    }
+
+    console.log('\n📢 Sending failure notification...');
+
+    const failed = this.results.filter(r => !r.passed);
+    const totalDuration = this.results.reduce((sum, r) => sum + r.duration, 0);
+
+    // Format failed tests for notification
+    const failedTestsText = failed
+      .map(r => `• ${r.name}\n  Error: ${r.error}`)
+      .join('\n\n');
+
+    const timestamp = new Date().toISOString();
+
+    // Determine webhook type and format accordingly
+    const isSlack = WEBHOOK_URL.includes('slack.com');
+    
+    let payload: any;
+
+    if (isSlack) {
+      // Slack format
+      payload = {
+        text: '❌ STAGING Smoke Tests Failed',
+        blocks: [
+          {
+            type: 'header',
+            text: {
+              type: 'plain_text',
+              text: '❌ STAGING Smoke Tests Failed',
+            },
+          },
+          {
+            type: 'section',
+            fields: [
+              {
+                type: 'mrkdwn',
+                text: `*Environment:*\nSTAGING (Devnet)`,
+              },
+              {
+                type: 'mrkdwn',
+                text: `*Failed:*\n${failed.length}/${this.results.length} tests`,
+              },
+              {
+                type: 'mrkdwn',
+                text: `*Duration:*\n${totalDuration}ms`,
+              },
+              {
+                type: 'mrkdwn',
+                text: `*Program ID:*\n${STAGING_PROGRAM_ID || 'Not set'}`,
+              },
+            ],
+          },
+          {
+            type: 'section',
+            text: {
+              type: 'mrkdwn',
+              text: `*Failed Tests:*\n\`\`\`${failedTestsText}\`\`\``,
+            },
+          },
+          {
+            type: 'section',
+            text: {
+              type: 'mrkdwn',
+              text: `*Timestamp:*\n${timestamp}`,
+            },
+          },
+          // Only include Explorer button if Program ID is set
+          ...(STAGING_PROGRAM_ID ? [{
+            type: 'actions',
+            elements: [
+              {
+                type: 'button',
+                text: {
+                  type: 'plain_text',
+                  text: 'View on Explorer',
+                },
+                url: `https://explorer.solana.com/address/${STAGING_PROGRAM_ID}?cluster=devnet`,
+              },
+            ],
+          }] : []),
+        ],
+      };
+    } else {
+      // Discord format
+      payload = {
+        content: '❌ STAGING Smoke Tests Failed',
+        embeds: [
+          {
+            title: 'STAGING Smoke Test Failure',
+            color: 15158332, // Red color
+            fields: [
+              {
+                name: 'Environment',
+                value: 'STAGING (Devnet)',
+                inline: true,
+              },
+              {
+                name: 'Failed Tests',
+                value: `${failed.length}/${this.results.length}`,
+                inline: true,
+              },
+              {
+                name: 'Duration',
+                value: `${totalDuration}ms`,
+                inline: true,
+              },
+              {
+                name: 'Program ID',
+                value: STAGING_PROGRAM_ID || 'Not set',
+                inline: false,
+              },
+              {
+                name: 'Failed Tests',
+                value: `\`\`\`${failedTestsText.substring(0, 1000)}\`\`\``,
+                inline: false,
+              },
+            ],
+            timestamp: timestamp,
+          },
+        ],
+      };
+    }
+
+    try {
+      await axios.post(WEBHOOK_URL, payload, {
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 10000,
+      });
+      console.log('✅ Notification sent successfully');
+    } catch (error) {
+      console.error('⚠️  Failed to send notification:', error instanceof Error ? error.message : String(error));
     }
   }
 
