@@ -1,15 +1,14 @@
 /**
- * STAGING E2E Test: Platform Fee Collection
+ * STAGING E2E Test: Zero-Fee Transactions
  * 
- * Tests platform fee calculation and collection logic.
+ * Tests edge case of agreements with zero platform fees.
  * 
  * Test Cases:
- * 1. Standard fee collection (1% fee)
- * 2. Zero-fee transactions
+ * 1. Zero-fee agreement creation
  * 
- * Note: Fee distribution is also tested in happy path test (01)
+ * Note: Standard fee collection (1%) is tested in happy path test (01)
  * 
- * Run: npm run test:staging:e2e:04-platform-fee-collection:verbose
+ * Run: npm run test:staging:e2e:04-zero-fee:verbose
  */
 
 // Load .env.staging file BEFORE any other imports
@@ -38,7 +37,7 @@ import {
 // TEST DATA
 // ============================================================================
 
-describe('STAGING E2E: Platform Fee Collection', function () {
+describe('STAGING E2E: Zero-Fee Transactions', function () {
   this.timeout(120000); // 2 minutes
 
   let connection: Connection;
@@ -55,7 +54,7 @@ describe('STAGING E2E: Platform Fee Collection', function () {
   // ==========================================================================
 
   before(async function () {
-    console.log('\n🔧 Setting up Platform Fee Collection test...\n');
+    console.log('\n🔧 Setting up Zero-Fee Transactions test...\n');
     
     // Initialize connection
     connection = new Connection(STAGING_CONFIG.rpcUrl, {
@@ -84,29 +83,10 @@ describe('STAGING E2E: Platform Fee Collection', function () {
   });
 
   // ==========================================================================
-  // TEST: FEE COLLECTION VERIFICATION
-  // ==========================================================================
-
-  it('should correctly calculate and collect platform fees', async function () {
-    console.log('💸 Testing fee collection...\n');
-    
-    // This is already tested in the happy path settlement verification
-    // The happy path test verifies:
-    // - Seller receives 99% of swap amount
-    // - Fee collector receives 1% of swap amount
-    // - Fee calculations are accurate
-    
-    console.log('   ✅ Fee collection verified in happy path tests');
-    console.log('   Expected fee: 1% of swap amount');
-    console.log('   Seller receives: 99% of swap amount');
-    console.log('   Fee collector receives: 1% of swap amount\n');
-  });
-
-  // ==========================================================================
   // TEST: ZERO-FEE TRANSACTIONS
   // ==========================================================================
 
-  it('should handle zero-fee transactions', async function () {
+  it('should create and accept zero-fee agreements', async function () {
     console.log('💸 Testing zero-fee transactions...\n');
     
     // Create agreement with 0 fee
