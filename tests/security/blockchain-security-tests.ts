@@ -216,7 +216,7 @@ export class BlockchainSecurityTester {
       const testSeeds = [
         ['escrow', Buffer.from('test')],
         ['../../../etc/passwd'], // Path traversal attempt
-        [''; DROP TABLE escrows; --'], // SQL injection style
+        ['\'; DROP TABLE escrows; --'], // SQL injection style
         ['\x00\x00\x00\x00'], // Null bytes
         ['A'.repeat(1000)], // Extremely long seed
       ];
