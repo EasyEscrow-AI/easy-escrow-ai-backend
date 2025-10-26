@@ -272,6 +272,15 @@ class CostAnalyzerService {
       const mainnetSolPerTx = devnetSolPerTx * this.MAINNET_MULTIPLIER;
       const mainnetMonthlySol = mainnetSolPerTx * monthlyTransactions;
 
+      // Guard against division by zero when calculating percent increase
+      let percentIncrease = 0;
+      if (devnetMonthlySol === 0) {
+        // If no devnet data, percent increase is 0 (or could be undefined)
+        percentIncrease = mainnetMonthlySol > 0 ? 100 : 0;
+      } else {
+        percentIncrease = ((mainnetMonthlySol - devnetMonthlySol) / devnetMonthlySol) * 100;
+      }
+
       return {
         devnet: {
           solPerTransaction: devnetSolPerTx,
@@ -287,7 +296,7 @@ class CostAnalyzerService {
         difference: {
           solPerTransaction: mainnetSolPerTx - devnetSolPerTx,
           monthlySol: mainnetMonthlySol - devnetMonthlySol,
-          percentIncrease: ((mainnetMonthlySol - devnetMonthlySol) / devnetMonthlySol) * 100,
+          percentIncrease,
         },
       };
     } catch (error) {
@@ -391,14 +400,22 @@ class CostAnalyzerService {
       const lastWeekAvg = daily.slice(-7).reduce((sum, d) => sum + d.totalCost, 0) / 7;
       
       let trend: 'increasing' | 'decreasing' | 'stable';
-      const changePercent = ((lastWeekAvg - firstWeekAvg) / firstWeekAvg) * 100;
       
-      if (changePercent > 10) {
-        trend = 'increasing';
-      } else if (changePercent < -10) {
-        trend = 'decreasing';
+      // Guard against division by zero
+      let changePercent = 0;
+      if (firstWeekAvg === 0) {
+        // If first week is 0 but last week has data, consider it increasing
+        trend = lastWeekAvg > 0 ? 'increasing' : 'stable';
       } else {
-        trend = 'stable';
+        changePercent = ((lastWeekAvg - firstWeekAvg) / firstWeekAvg) * 100;
+        
+        if (changePercent > 10) {
+          trend = 'increasing';
+        } else if (changePercent < -10) {
+          trend = 'decreasing';
+        } else {
+          trend = 'stable';
+        }
       }
 
       const averageDailyCost = daily.reduce((sum, d) => sum + d.totalCost, 0) / daily.length;
