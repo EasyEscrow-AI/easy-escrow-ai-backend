@@ -31,4 +31,8 @@ export * from './blockchain-monitoring-queue.service';
 export * from './settlement-processing-queue.service';
 export * from './transaction-log.service';
 export * from './secrets-management.service';
+export * from './resource-tracker.service';
+export * from './sol-tracker.service';
+export * from './database-tracker.service';
+export * from './cost-analyzer.service';
 
