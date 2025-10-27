@@ -224,7 +224,7 @@ redis://default:PASSWORD@redis-xxxxx.cloud.redislabs.com:19320
 | Variable | Value | Classification | Description |
 |----------|-------|----------------|-------------|
 | `ENABLE_SWAGGER` | `true` | Public | Enable Swagger UI |
-| `SWAGGER_PATH` | `/api-docs` | Public | Swagger UI path |
+| `SWAGGER_PATH` | `/api/docs` | Public | Swagger UI path |
 
 **Note:** Enabled in STAGING for API testing
 

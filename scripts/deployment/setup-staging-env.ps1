@@ -274,7 +274,7 @@ ENABLE_REQUEST_LOGGING=true
 # ============================================================================
 
 ENABLE_SWAGGER=true
-SWAGGER_PATH=/api-docs
+SWAGGER_PATH=/api/docs
 
 # ============================================================================
 # Monitoring & Analytics (Optional)

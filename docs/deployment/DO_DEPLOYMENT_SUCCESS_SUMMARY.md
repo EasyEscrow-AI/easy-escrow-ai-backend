@@ -104,7 +104,7 @@ All **26 environment variables** from `.env.dev` successfully deployed:
 - `REDIS_URL` = Redis Cloud connection
 
 ### Spaces (Optional) ✅
-- `DIGITAL_OCEAN_SPACES_BUCKET_NAME`
+- `DO_SPACES_BUCKET`
 - `DIGITAL_OCEAN_SPACES_KEY_ID`
 - `DIGITAL_OCEAN_SPACES_KEY_SECRET`
 - `DIGITAL_OCEAN_SPACES_KEY_NAME`

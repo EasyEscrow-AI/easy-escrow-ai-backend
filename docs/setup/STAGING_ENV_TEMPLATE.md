@@ -131,7 +131,7 @@ HEALTH_CHECK_PATH=/health
 
 # Swagger/OpenAPI Documentation
 ENABLE_SWAGGER=true
-SWAGGER_PATH=/api-docs
+SWAGGER_PATH=/api/docs
 ```
 
 ## Setup Instructions
