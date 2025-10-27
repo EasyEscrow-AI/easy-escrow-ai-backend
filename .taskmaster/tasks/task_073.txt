@@ -1,6 +1,6 @@
 # Task ID: 73
 # Title: Create STAGING Deployment Automation Scripts
-# Status: pending
+# Status: done
 # Dependencies: 70, 69, 68, 67
 # Priority: medium
 # Description: Develop comprehensive CI/CD pipeline for STAGING environment deployments including build automation, artifact promotion, health checks, rollback capabilities, smoke tests, and secret management with notifications and audit logging.
@@ -246,4 +246,105 @@ Create comprehensive documentation in `docs/deployment/STAGING_CI_CD_PIPELINE.md
 8. **Documentation Verification**: Follow documented procedures to perform a complete deployment cycle and verify all steps work as described
 
 9. **Migration Script Testing**: Verify database migrations run correctly through the CI/CD pipeline without data loss or service interruption
+
+# Subtasks:
+## 1. Create GitHub Actions build workflow [done]
+### Dependencies: None
+### Description: Create the build-staging.yml workflow file that builds the program and generates artifacts on staging branch pushes or tags
+### Details:
+Implement the GitHub Actions workflow file at .github/workflows/build-staging.yml that handles:
+- Checkout of code
+- Installation of pinned Solana CLI version
+- Setting up Rust toolchain from rust-toolchain.toml
+- Building the program with anchor build
+- Generating checksums for artifacts
+- Running unit tests
+- Uploading artifacts for later deployment
+
+## 2. Create GitHub Actions deployment workflow [done]
+### Dependencies: 73.1
+### Description: Create the deploy-staging.yml workflow file that deploys built artifacts to the STAGING environment with manual approval gate
+### Details:
+Implement the GitHub Actions workflow file at .github/workflows/deploy-staging.yml that handles:
+- Triggering after successful build workflow
+- Requiring manual approval via environment protection rule
+- Downloading build artifacts
+- Setting up Solana CLI
+- Configuring staging deployer keypair
+- Deploying program to devnet
+- Updating IDL
+- Deploying backend to DigitalOcean App Platform
+- Running smoke tests
+- Sending deployment notifications
+
+## 3. Create GitHub Actions rollback workflow [done]
+### Dependencies: 73.2
+### Description: Create the rollback-staging.yml workflow file that provides a manual trigger to roll back to a previous deployment
+### Details:
+Implement the GitHub Actions workflow file at .github/workflows/rollback-staging.yml that handles:
+- Manual workflow dispatch with deployment ID input
+- Verification of the specified deployment
+- Rollback to the specified deployment via DigitalOcean API
+- Notification of rollback status
+
+## 4. Create smoke test runner script [done]
+### Dependencies: None
+### Description: Implement the smoke test script that can be executed via npm run test:staging:smoke to verify critical functionality
+### Details:
+Create a JavaScript/TypeScript script that performs essential health and functionality checks:
+- API health endpoint check
+- Basic API functionality test
+- Solana RPC connection test
+- Database connectivity test
+- Redis connectivity test if applicable
+
+The script should exit with non-zero status on any failure to properly integrate with CI/CD pipeline.
+
+## 5. Create database migration script [done]
+### Dependencies: None
+### Description: Implement the migration script that can be executed via npm run staging:migrate to update the database schema
+### Details:
+Create a JavaScript/TypeScript script that:
+- Connects to the staging database using environment variables
+- Identifies and applies pending migrations in order
+- Logs migration progress
+- Handles errors appropriately
+- Updates migration tracking table
+
+## 6. Create CI/CD pipeline documentation [done]
+### Dependencies: 73.1, 73.2, 73.3, 73.4, 73.5
+### Description: Create comprehensive documentation for the STAGING CI/CD pipeline in docs/deployment/STAGING_CI_CD_PIPELINE.md
+### Details:
+Create detailed documentation that includes:
+- CI/CD pipeline architecture diagram
+- Workflow descriptions and triggers
+- Required secrets and environment variables
+- Manual approval process
+- Rollback procedures
+- Troubleshooting guide
+- Security considerations
+- Best practices for working with the pipeline
+
+## 7. Configure GitHub environment protection rules [done]
+### Dependencies: None
+### Description: Set up the staging environment in GitHub with appropriate protection rules for manual approval
+### Details:
+Configure GitHub repository settings:
+- Create a 'staging' environment
+- Add required reviewers for deployment approval
+- Set appropriate timeout for approvals
+- Configure environment secrets required by the workflows
+- Document the approval process
+
+## 8. Set up notification integrations [done]
+### Dependencies: None
+### Description: Configure Slack/Discord webhook integration for deployment notifications
+### Details:
+Set up notification system:
+- Create Slack/Discord webhook
+- Store webhook URL in GitHub Secrets
+- Configure notification format with deployment details
+- Include success/failure status
+- Add links to deployment logs
+- Test notification delivery
 

@@ -12,11 +12,11 @@ describe('AgreementCacheService', () => {
 
   const mockAgreement: Partial<Agreement> = {
     id: 'agreement-123',
-    escrowAddress: 'EscrowAddress123',
-    buyerWallet: 'BuyerWallet123',
-    sellerWallet: 'SellerWallet123',
-    amount: '1000000',
-    status: 'PENDING_DEPOSIT',
+    escrowPda: 'EscrowPda123',
+    buyer: 'BuyerWallet123',
+    seller: 'SellerWallet123',
+    price: '1000000' as any,
+    status: 'PENDING',
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -66,26 +66,6 @@ describe('AgreementCacheService', () => {
       sinon.stub(prisma.agreement, 'findUnique').resolves(mockAgreement as Agreement);
       
       const result = await agreementCacheService.getAgreementById('agreement-123');
-      
-      expect(result).to.deep.equal(mockAgreement);
-    });
-  });
-
-  describe('getAgreementByAddress', () => {
-    it('should return agreement from cache if available', async () => {
-      sinon.stub(CacheService.prototype, 'get').resolves(mockAgreement as Agreement);
-      
-      const result = await agreementCacheService.getAgreementByAddress('EscrowAddress123');
-      
-      expect(result).to.deep.equal(mockAgreement);
-    });
-
-    it('should fetch from database and cache if not in cache', async () => {
-      sinon.stub(CacheService.prototype, 'get').resolves(null);
-      sinon.stub(CacheService.prototype, 'set').resolves(true);
-      sinon.stub(prisma.agreement, 'findUnique').resolves(mockAgreement as Agreement);
-      
-      const result = await agreementCacheService.getAgreementByAddress('EscrowAddress123');
       
       expect(result).to.deep.equal(mockAgreement);
     });

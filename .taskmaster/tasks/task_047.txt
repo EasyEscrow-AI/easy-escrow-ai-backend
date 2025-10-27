@@ -1,6 +1,6 @@
 # Task ID: 47
 # Title: Update Anchor.toml with new program ID
-# Status: pending
+# Status: done
 # Dependencies: None
 # Priority: high
 # Description: Update the devnet program address in Anchor.toml configuration

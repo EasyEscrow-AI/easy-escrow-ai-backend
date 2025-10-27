@@ -48,4 +48,3 @@ This task completes the deployment pipeline by ensuring the backend application 
 4. **Service Health Check**: Test that backend API endpoints respond correctly and services are fully operational after restart
 
 5. **End-to-End Verification**: Confirm the backend can successfully interact with the deployed Solana program using the updated IDL
-

@@ -1,0 +1,233 @@
+# DigitalOcean App Platform Spec - STAGING with Pre-Deployment Validation
+#
+# This spec includes pre-deployment validation job that runs before deployment.
+# 
+# Features:
+# - Automatic validation on deployment
+# - Blocks deployment if tests fail
+# - Generates validation reports
+#
+# Usage:
+#   doctl apps create --spec staging-app-with-validation.yaml
+#   doctl apps update <app-id> --spec staging-app-with-validation.yaml
+
+name: easyescrow-staging
+region: nyc
+
+# Main backend service
+services:
+  - name: backend
+    source_dir: /
+    github:
+      repo: <your-org>/<your-repo>
+      branch: staging
+      deploy_on_push: true
+    
+    build_command: |
+      npm ci
+      npm run build
+    
+    run_command: node dist/index.js
+    
+    http_port: 3000
+    
+    instance_count: 1
+    instance_size_slug: professional-xs
+    
+    health_check:
+      http_path: /health
+      initial_delay_seconds: 30
+      period_seconds: 10
+      timeout_seconds: 5
+      success_threshold: 1
+      failure_threshold: 3
+    
+    envs:
+      # Application
+      - key: NODE_ENV
+        value: staging
+      - key: PORT
+        value: "3000"
+      
+      # API
+      - key: API_BASE_URL
+        value: https://staging-api.easyescrow.ai
+      - key: FRONTEND_URL
+        value: https://staging.easyescrow.ai
+      
+      # Database (PostgreSQL)
+      - key: DATABASE_URL
+        value: ${DATABASE_URL}
+        type: SECRET
+        scope: RUN_TIME
+      
+      # Redis
+      - key: REDIS_URL
+        value: ${REDIS_URL}
+        type: SECRET
+        scope: RUN_TIME
+      
+      # Solana
+      - key: SOLANA_NETWORK
+        value: devnet
+      - key: SOLANA_RPC_URL
+        value: ${SOLANA_RPC_URL}
+        type: SECRET
+        scope: RUN_TIME
+      - key: STAGING_PROGRAM_ID
+        value: ${STAGING_PROGRAM_ID}
+        type: SECRET
+        scope: RUN_TIME
+      
+      # USDC
+      - key: USDC_MINT_ADDRESS
+        value: Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr
+        scope: RUN_TIME
+      
+      # Admin Wallet
+      - key: DEVNET_STAGING_ADMIN_PRIVATE_KEY
+        value: ${DEVNET_STAGING_ADMIN_PRIVATE_KEY}
+        type: SECRET
+        scope: RUN_AND_BUILD_TIME
+      - key: DEVNET_STAGING_ADMIN_ADDRESS
+        value: ${DEVNET_STAGING_ADMIN_ADDRESS}
+        type: SECRET
+        scope: RUN_TIME
+      
+      # Platform Fees
+      - key: PLATFORM_FEE_BPS
+        value: "100"
+        scope: RUN_TIME
+      - key: PLATFORM_FEE_COLLECTOR_ADDRESS
+        value: ${PLATFORM_FEE_COLLECTOR_ADDRESS}
+        type: SECRET
+        scope: RUN_TIME
+      
+      # JWT
+      - key: JWT_SECRET
+        value: ${JWT_SECRET}
+        type: SECRET
+        scope: RUN_TIME
+      
+      # Rate Limiting
+      - key: RATE_LIMIT_WINDOW_MS
+        value: "900000"
+        scope: RUN_TIME
+      - key: RATE_LIMIT_MAX_REQUESTS
+        value: "100"
+        scope: RUN_TIME
+
+# Pre-deployment validation job
+# Runs BEFORE deployment to ensure production readiness
+jobs:
+  - name: pre-deployment-validation
+    kind: PRE_DEPLOY
+    source_dir: /
+    github:
+      repo: <your-org>/<your-repo>
+      branch: staging
+      deploy_on_push: false  # Manual trigger only
+    
+    build_command: npm ci
+    
+    run_command: |
+      echo "═══════════════════════════════════════════════════════════"
+      echo "  Starting Pre-Deployment Validation"
+      echo "═══════════════════════════════════════════════════════════"
+      echo ""
+      npm run validate:pre-deployment
+      
+      # Check exit code
+      if [ $? -eq 0 ]; then
+        echo ""
+        echo "✅ Validation passed - deployment will proceed"
+        exit 0
+      else
+        echo ""
+        echo "❌ Validation failed - blocking deployment"
+        exit 1
+      fi
+    
+    environment_slug: node-js
+    
+    envs:
+      # Validation mode
+      - key: NODE_ENV
+        value: staging
+      - key: STAGING_VALIDATION
+        value: "true"
+      
+      # API URL for smoke tests
+      - key: STAGING_API_URL
+        value: https://staging-api.easyescrow.ai
+      
+      # Solana for smoke tests
+      - key: STAGING_RPC_URL
+        value: ${SOLANA_RPC_URL}
+        type: SECRET
+      - key: STAGING_PROGRAM_ID
+        value: ${STAGING_PROGRAM_ID}
+        type: SECRET
+      
+      # Database (for E2E tests)
+      - key: DATABASE_URL
+        value: ${DATABASE_URL}
+        type: SECRET
+      
+      # Redis (for E2E tests)
+      - key: REDIS_URL
+        value: ${REDIS_URL}
+        type: SECRET
+      
+      # Admin wallet (for E2E tests)
+      - key: DEVNET_STAGING_ADMIN_PRIVATE_KEY
+        value: ${DEVNET_STAGING_ADMIN_PRIVATE_KEY}
+        type: SECRET
+      - key: DEVNET_STAGING_ADMIN_ADDRESS
+        value: ${DEVNET_STAGING_ADMIN_ADDRESS}
+        type: SECRET
+
+# Optional: Post-deployment validation job
+# Runs AFTER deployment to verify it's working
+# jobs:
+#   - name: post-deployment-validation
+#     kind: POST_DEPLOY
+#     source_dir: /
+#     github:
+#       repo: <your-org>/<your-repo>
+#       branch: staging
+#     
+#     build_command: npm ci
+#     
+#     run_command: |
+#       echo "Running post-deployment smoke tests..."
+#       npm run test:staging:smoke
+#     
+#     environment_slug: node-js
+#     
+#     envs:
+#       - key: STAGING_API_URL
+#         value: https://staging-api.easyescrow.ai
+#       - key: STAGING_RPC_URL
+#         value: ${SOLANA_RPC_URL}
+#         type: SECRET
+#       - key: STAGING_PROGRAM_ID
+#         value: ${STAGING_PROGRAM_ID}
+#         type: SECRET
+
+# Databases
+databases:
+  - name: postgres
+    engine: PG
+    version: "15"
+    production: false
+    cluster_name: staging-db
+
+# Notes:
+# 1. Replace <your-org>/<your-repo> with your GitHub repository
+# 2. Set all SECRET values in DigitalOcean App Platform console
+# 3. PRE_DEPLOY jobs run before deployment and block if they fail
+# 4. POST_DEPLOY jobs run after deployment (optional, for verification)
+# 5. Manual trigger recommended for PRE_DEPLOY to avoid blocking automatic deployments
+# 6. Validation reports are saved to .taskmaster/reports/ (view in job logs)
+

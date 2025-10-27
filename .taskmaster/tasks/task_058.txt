@@ -49,4 +49,3 @@ solana program deploy \
 4. **IDL Consistency Check**: Verify the generated IDL file contains the correct program address matching the deployed program ID
 5. **Transaction Confirmation**: Check the deployment transaction on Solana Explorer (devnet) to confirm successful program deployment
 6. **Functional Test**: Execute a simple program instruction call to verify the deployed program is operational and responding correctly
-

@@ -1,0 +1,153 @@
+# Task ID: 92
+# Title: Production Backend Deployment
+# Status: pending
+# Dependencies: 89, 91, 90, 88
+# Priority: high
+# Description: Configure production environment variables as placeholders in DO App using MAINNET_PROD_* naming convention, deploy backend to easyescrow-backend-production using master branch, and verify health checks, API endpoints, logging and monitoring.
+# Details:
+Deploy the backend application to production DigitalOcean App Platform with complete configuration and monitoring:
+
+**Step 1: Configure Production Environment Variables**
+```yaml
+# Update production-app-spec.yaml with placeholder environment variables using MAINNET_PROD_* naming
+envs:
+- key: NODE_ENV
+  value: production
+- key: DATABASE_URL
+  value: ${DATABASE_URL}
+- key: REDIS_URL
+  value: ${REDIS_URL}
+- key: MAINNET_PROD_PROGRAM_ID
+  value: ${MAINNET_PROD_PROGRAM_ID}
+- key: MAINNET_PROD_USDC_MINT_ADDRESS
+  value: ${MAINNET_PROD_USDC_MINT_ADDRESS}
+- key: MAINNET_PROD_ADMIN_PRIVATE_KEY
+  value: ${MAINNET_PROD_ADMIN_PRIVATE_KEY}
+- key: MAINNET_PROD_SENDER_PRIVATE_KEY
+  value: ${MAINNET_PROD_SENDER_PRIVATE_KEY}
+- key: MAINNET_PROD_RECEIVER_PRIVATE_KEY
+  value: ${MAINNET_PROD_RECEIVER_PRIVATE_KEY}
+- key: MAINNET_PROD_ADMIN_ADDRESS
+  value: ${MAINNET_PROD_ADMIN_ADDRESS}
+- key: MAINNET_PROD_SENDER_ADDRESS
+  value: ${MAINNET_PROD_SENDER_ADDRESS}
+- key: MAINNET_PROD_RECEIVER_ADDRESS
+  value: ${MAINNET_PROD_RECEIVER_ADDRESS}
+- key: MAINNET_PROD_FEE_COLLECTOR_ADDRESS
+  value: ${MAINNET_PROD_FEE_COLLECTOR_ADDRESS}
+- key: SOLANA_RPC_URL
+  value: https://api.mainnet-beta.solana.com
+- key: JWT_SECRET
+  value: ${JWT_SECRET}
+- key: WEBHOOK_SECRET
+  value: ${WEBHOOK_SECRET}
+- key: LOG_LEVEL
+  value: info
+```
+
+**Step 2: Deploy to Production App Platform**
+```bash
+# Deploy using DO CLI or trigger via GitHub push to master
+doctl apps update easyescrow-backend-production --spec production-app-spec.yaml
+
+# Or configure auto-deploy from master branch in DO console
+```
+
+**Step 3: Configure Production Logging**
+```typescript
+// Update src/config/logger.ts for production
+const productionConfig = {
+  level: process.env.LOG_LEVEL || 'info',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.errors({ stack: true }),
+    winston.format.json()
+  ),
+  transports: [
+    new winston.transports.Console(),
+    new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
+    new winston.transports.File({ filename: 'logs/combined.log' })
+  ]
+};
+```
+
+**Step 4: Set Up Health Check Endpoints**
+```typescript
+// Ensure comprehensive health checks in src/routes/health.ts
+app.get('/health', async (req, res) => {
+  const checks = {
+    database: await checkDatabaseConnection(),
+    redis: await checkRedisConnection(),
+    solana: await checkSolanaRPC(),
+    program: await checkEscrowProgram()
+  };
+  
+  const allHealthy = Object.values(checks).every(check => check.healthy);
+  res.status(allHealthy ? 200 : 503).json({
+    status: allHealthy ? 'healthy' : 'unhealthy',
+    timestamp: new Date().toISOString(),
+    checks
+  });
+});
+```
+
+**Step 5: Configure Monitoring and Alerts**
+- Set up DO App Platform monitoring dashboard
+- Configure alerts for high error rates, response times, and resource usage
+- Enable log aggregation and search capabilities
+- Set up uptime monitoring for api.easyescrow.ai
+
+**Step 6: Production Security Configuration**
+- Ensure CORS is properly configured for production domains
+- Verify rate limiting is enabled
+- Confirm all sensitive data is properly encrypted
+- Validate SSL/TLS configuration
+
+# Test Strategy:
+1. **Deployment Verification**: Confirm DigitalOcean App Platform successfully deploys "easyescrow-backend-production" from master branch with green status, verify build logs show no errors, and check application starts without crashes
+
+2. **Health Check Validation**: Test `/health` endpoint returns 200 status with all subsystem checks (database, Redis, Solana RPC, escrow program) showing healthy status, verify response includes proper timestamp and check details
+
+3. **API Endpoint Testing**: Execute comprehensive API tests against production endpoints including authentication, agreement creation, status updates, and webhook processing to ensure all functionality works correctly
+
+4. **Environment Variable Verification**: Confirm all MAINNET_PROD_* placeholder environment variables are properly configured in DO App Platform console, verify sensitive values are masked, and test that application loads configuration correctly with new naming convention
+
+5. **Domain and SSL Testing**: Verify api.easyescrow.ai resolves correctly to production app, test HTTPS certificate is valid and properly configured, confirm redirects from HTTP to HTTPS work properly
+
+6. **Logging and Monitoring Validation**: Check application logs are being generated with appropriate log levels, verify error logs capture stack traces, test log aggregation is working, and confirm monitoring dashboards show metrics
+
+7. **Performance and Load Testing**: Execute basic load tests to verify production performance meets requirements, check response times are within acceptable limits, and confirm resource usage is optimal
+
+8. **Security Testing**: Validate CORS configuration blocks unauthorized domains, test rate limiting prevents abuse, verify authentication endpoints work correctly, and confirm no sensitive data is exposed in logs or responses
+
+# Subtasks:
+## 1. Merge staging to master branch [pending]
+### Dependencies: None
+### Description: Merge the staging branch into master branch to prepare for production deployment
+### Details:
+Create pull request from staging to master branch, review all changes, ensure all tests pass, and merge to master. This prepares the codebase for production deployment with all staging-tested features.
+
+## 2. Create production environment template with MAINNET_PROD naming [pending]
+### Dependencies: 92.1
+### Description: Create .env.production.template file with all required environment variable placeholders using MAINNET_PROD_* naming convention
+### Details:
+Generate comprehensive .env.production.template file containing all required environment variables as placeholders using MAINNET_PROD_* naming convention: NODE_ENV=production, DATABASE_URL=${DATABASE_URL}, REDIS_URL=${REDIS_URL}, MAINNET_PROD_PROGRAM_ID=${MAINNET_PROD_PROGRAM_ID}, MAINNET_PROD_USDC_MINT_ADDRESS=${MAINNET_PROD_USDC_MINT_ADDRESS}, MAINNET_PROD_ADMIN_PRIVATE_KEY=${MAINNET_PROD_ADMIN_PRIVATE_KEY}, MAINNET_PROD_SENDER_PRIVATE_KEY=${MAINNET_PROD_SENDER_PRIVATE_KEY}, MAINNET_PROD_RECEIVER_PRIVATE_KEY=${MAINNET_PROD_RECEIVER_PRIVATE_KEY}, MAINNET_PROD_ADMIN_ADDRESS=${MAINNET_PROD_ADMIN_ADDRESS}, MAINNET_PROD_SENDER_ADDRESS=${MAINNET_PROD_SENDER_ADDRESS}, MAINNET_PROD_RECEIVER_ADDRESS=${MAINNET_PROD_RECEIVER_ADDRESS}, MAINNET_PROD_FEE_COLLECTOR_ADDRESS=${MAINNET_PROD_FEE_COLLECTOR_ADDRESS}, SOLANA_RPC_URL=https://api.mainnet-beta.solana.com, JWT_SECRET=${JWT_SECRET}, WEBHOOK_SECRET=${WEBHOOK_SECRET}, LOG_LEVEL=info
+
+## 3. Configure DigitalOcean App environment variables with MAINNET_PROD naming [pending]
+### Dependencies: 92.2
+### Description: Set up environment variables in DigitalOcean App Platform using MAINNET_PROD_* placeholders for user to add actual secrets
+### Details:
+Access DigitalOcean App Platform console for easyescrow-backend-production, navigate to Settings > Environment Variables, add all variables from .env.production.template as encrypted environment variables with placeholder values using MAINNET_PROD_* naming convention that user will replace with actual secrets. Configure variables to be available at runtime.
+
+## 4. Deploy backend to DigitalOcean production [pending]
+### Dependencies: 92.3
+### Description: Deploy the backend application to easyescrow-backend-production using master branch
+### Details:
+Trigger deployment of easyescrow-backend-production app on DigitalOcean App Platform from master branch. Monitor deployment logs for successful build and startup. Ensure auto-deploy from master is configured for future updates. Verify application starts without errors and reaches running state.
+
+## 5. Verify health checks and API endpoints [pending]
+### Dependencies: 92.4
+### Description: Test production health check endpoints and verify API functionality after deployment
+### Details:
+Test /health endpoint returns 200 status with comprehensive health checks for database, redis, solana RPC, and escrow program connections. Verify all API endpoints are accessible at api.easyescrow.ai domain. Test basic API functionality including authentication endpoints, escrow creation endpoints, and monitoring endpoints. Validate logging is working correctly and monitoring dashboards show healthy metrics.
+

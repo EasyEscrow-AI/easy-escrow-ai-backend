@@ -1,0 +1,229 @@
+# Task ID: 93
+# Title: Production E2E Testing Setup
+# Status: pending
+# Dependencies: 75, 90, 91, 92, 88
+# Priority: high
+# Description: Create production e2e test suite similar to staging tests but adapted for mainnet. Exclude NFT minting and USDC minting (user provides real assets). Test suite should verify all escrow operations with real mainnet transactions.
+# Details:
+Create a comprehensive production end-to-end testing framework adapted for mainnet operations with real user-provided assets:
+
+**Step 1: Create Production E2E Test Configuration**
+```javascript
+// test/production-e2e/config.js
+const config = {
+  environment: 'production',
+  network: 'mainnet-beta',
+  rpcUrl: process.env.SOLANA_RPC_URL,
+  programId: process.env.MAINNET_PROD_PROGRAM_ID,
+  apiBaseUrl: 'https://api.easyescrow.ai',
+  
+  // Real asset requirements (user-provided)
+  testAssets: {
+    usdc: {
+      mint: process.env.MAINNET_PROD_USDC_MINT_ADDRESS, // EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v for mainnet USDC
+      requiredAmount: 10, // $10 USDC minimum for testing
+      senderWallet: process.env.MAINNET_PROD_SENDER_ADDRESS,
+      receiverWallet: process.env.MAINNET_PROD_RECEIVER_ADDRESS
+    },
+    nft: {
+      requiredCollection: process.env.TEST_NFT_COLLECTION,
+      senderWallet: process.env.MAINNET_PROD_SENDER_ADDRESS,
+      receiverWallet: process.env.MAINNET_PROD_RECEIVER_ADDRESS
+    }
+  },
+  
+  // Wallet configuration
+  wallets: {
+    sender: {
+      privateKey: process.env.MAINNET_PROD_SENDER_PRIVATE_KEY,
+      address: process.env.MAINNET_PROD_SENDER_ADDRESS
+    },
+    receiver: {
+      privateKey: process.env.MAINNET_PROD_RECEIVER_PRIVATE_KEY,
+      address: process.env.MAINNET_PROD_RECEIVER_ADDRESS
+    }
+  },
+  
+  // Conservative limits for production testing
+  maxTestValue: 50, // $50 maximum per test
+  dailyTestBudget: 200, // $200 daily limit
+  requireManualApproval: true
+};
+```
+
+**Step 2: Adapt Staging Tests for Production**
+```javascript
+// test/production-e2e/escrow-operations.test.js
+describe('Production Escrow Operations', () => {
+  beforeAll(async () => {
+    // Verify user has provided required assets
+    await verifyUserAssets();
+    await validateWalletBalances();
+    await requestManualApproval();
+  });
+
+  test('Happy Path - Complete Escrow with Real Assets', async () => {
+    // Create agreement with real USDC/NFT amounts
+    const agreement = await createAgreement({
+      usdcAmount: config.testAssets.usdc.requiredAmount,
+      nftMint: await getUserProvidedNFT(),
+      buyerWallet: config.wallets.sender.address,
+      sellerWallet: config.wallets.receiver.address
+    });
+
+    // Execute full escrow flow with real mainnet transactions
+    await depositUSDC(agreement.id, realUSDCAmount);
+    await depositNFT(agreement.id, realNFTMint);
+    await settleEscrow(agreement.id);
+    
+    // Verify real blockchain state changes
+    await verifyMainnetTransactions(agreement.transactions);
+  });
+
+  test('Expiry and Refund with Real Assets', async () => {
+    // Test partial deposit → expiry → refund flow
+    const agreement = await createAgreementWithShortExpiry();
+    await partialDepositUSDC(agreement.id);
+    await waitForExpiry();
+    await processRefund(agreement.id);
+    
+    // Verify real refund transactions on mainnet
+    await verifyRefundTransactions();
+  });
+});
+```
+
+**Step 3: Create Manual Test Execution Script**
+```bash
+#!/bin/bash
+# scripts/run-production-e2e.sh
+
+set -e
+
+echo "🚀 Production E2E Test Execution Script"
+echo "======================================="
+
+# Pre-flight checks
+echo "📋 Pre-flight Checks..."
+check_environment_variables
+check_wallet_balances
+check_asset_availability
+
+# Manual approval gate
+echo "⚠️  PRODUCTION TESTING APPROVAL REQUIRED"
+echo "This will execute real transactions on Solana mainnet"
+echo "Estimated cost: \$$(calculate_test_cost)"
+read -p "Type 'APPROVE' to continue: " approval
+
+if [ "$approval" != "APPROVE" ]; then
+    echo "❌ Test execution cancelled"
+    exit 1
+fi
+
+# Execute test suite with safety limits
+echo "🧪 Executing Production E2E Tests..."
+npm run test:production-e2e -- \
+  --timeout=300000 \
+  --max-concurrent=1 \
+  --fail-fast \
+  --verbose
+
+# Generate test report
+echo "📊 Generating Test Report..."
+generate_production_test_report
+
+echo "✅ Production E2E Testing Complete"
+```
+
+**Step 4: Asset Verification and Safety Checks**
+```javascript
+// test/production-e2e/asset-verification.js
+async function verifyUserAssets() {
+  // Verify USDC balance
+  const usdcBalance = await getTokenBalance(
+    config.wallets.sender.address,
+    config.testAssets.usdc.mint
+  );
+  
+  if (usdcBalance < config.testAssets.usdc.requiredAmount) {
+    throw new Error(`Insufficient USDC balance. Required: ${config.testAssets.usdc.requiredAmount}, Available: ${usdcBalance}`);
+  }
+
+  // Verify NFT ownership
+  const nftOwnership = await verifyNFTOwnership(
+    config.wallets.sender.address,
+    config.testAssets.nft.requiredCollection
+  );
+  
+  if (!nftOwnership.isValid) {
+    throw new Error('Required NFT not found in sender wallet');
+  }
+
+  // Verify SOL balance for transaction fees
+  const solBalance = await getSolBalance(config.wallets.sender.address);
+  if (solBalance < 0.1) {
+    throw new Error('Insufficient SOL for transaction fees');
+  }
+}
+```
+
+**Step 5: Production-Specific Test Scenarios**
+- Real mainnet transaction confirmation times
+- Network congestion handling
+- Fee estimation accuracy
+- Cross-program invocation validation
+- Real RPC endpoint reliability testing
+- Production database consistency checks
+
+**Safety Measures:**
+- Manual approval gates before test execution
+- Conservative transaction value limits
+- Real-time cost monitoring
+- Automatic test termination on budget exceeded
+- Comprehensive logging for audit trail
+- Rollback procedures for failed tests
+
+# Test Strategy:
+1. **Pre-Test Validation**: Verify all required user assets (USDC, NFT) are available in test wallets with sufficient balances using MAINNET_PROD_SENDER_ADDRESS and MAINNET_PROD_RECEIVER_ADDRESS, confirm SOL balance for transaction fees, and validate production environment connectivity to mainnet RPC endpoints with MAINNET_PROD_PROGRAM_ID.
+
+2. **Manual Approval Process**: Execute manual approval script requiring explicit "APPROVE" confirmation, verify estimated test costs are within budget limits ($200 daily maximum), and confirm test execution parameters with stakeholder sign-off using production wallet configuration.
+
+3. **Real Transaction Verification**: Execute complete escrow flow with real mainnet transactions using MAINNET_PROD_* environment variables, verify all blockchain state changes using Solana explorers, confirm USDC and NFT transfers are recorded correctly on-chain with MAINNET_PROD_USDC_MINT_ADDRESS, and validate transaction signatures and confirmation status.
+
+4. **Cost and Safety Monitoring**: Track real-time transaction costs during test execution with production wallets, verify daily budget limits are enforced, confirm automatic test termination triggers work correctly, and validate rollback procedures can recover from failed test states.
+
+5. **Production Environment Integration**: Test complete API integration with production backend at api.easyescrow.ai using MAINNET_PROD_PROGRAM_ID, verify webhook delivery to production endpoints, validate database consistency between test transactions and production records, and confirm monitoring and alerting systems capture test activities correctly.
+
+6. **Test Report Generation**: Generate comprehensive test execution report including transaction hashes, costs incurred, test coverage metrics, and any issues encountered, with detailed logs for audit trail and production readiness assessment using production wallet addresses.
+
+# Subtasks:
+## 1. Create Production E2E Directory Structure and Configuration [pending]
+### Dependencies: None
+### Description: Set up the tests/production/e2e/ directory structure with configuration files for mainnet testing environment using MAINNET_PROD_* environment variables
+### Details:
+Create tests/production/e2e/ directory with config.js containing mainnet-beta network settings, real asset requirements (user-provided USDC/NFT), conservative testing limits ($50 max per test, $200 daily budget), and manual approval gates. Update configuration to use MAINNET_PROD_* environment variable naming: MAINNET_PROD_PROGRAM_ID, MAINNET_PROD_USDC_MINT_ADDRESS, MAINNET_PROD_SENDER_PRIVATE_KEY, MAINNET_PROD_RECEIVER_PRIVATE_KEY, MAINNET_PROD_SENDER_ADDRESS, MAINNET_PROD_RECEIVER_ADDRESS for consistency with production infrastructure.
+
+## 2. Adapt Staging E2E Tests for Mainnet Operations [pending]
+### Dependencies: 93.1
+### Description: Modify existing staging e2e tests to work with mainnet by removing asset minting and using real user-provided assets with MAINNET_PROD_* wallet configuration
+### Details:
+Copy staging e2e tests to production directory and adapt them to use real USDC and NFT assets provided by users through MAINNET_PROD_SENDER_ADDRESS and MAINNET_PROD_RECEIVER_ADDRESS wallets. Remove all NFT minting and USDC minting code. Add asset verification checks before test execution using MAINNET_PROD_USDC_MINT_ADDRESS. Update test scenarios to handle real mainnet transaction confirmation times and network conditions. Include happy path escrow completion and expiry/refund scenarios with production wallet private keys.
+
+## 3. Create Manual Test Execution Script [pending]
+### Dependencies: 93.2
+### Description: Build a bash script for safe manual execution of production e2e tests with approval gates and safety checks using MAINNET_PROD_* environment variables
+### Details:
+Create scripts/run-production-e2e.sh with pre-flight checks for MAINNET_PROD_* environment variables, wallet balances using MAINNET_PROD_SENDER_ADDRESS and MAINNET_PROD_RECEIVER_ADDRESS, and asset availability. Include manual approval gate requiring 'APPROVE' input before executing real mainnet transactions. Add cost estimation, safety limits enforcement, and automatic test termination on budget exceeded. Include verbose logging and fail-fast configuration with production program ID validation.
+
+## 4. Implement Asset Verification and Safety Checks [pending]
+### Dependencies: 93.1
+### Description: Create comprehensive asset verification system using MAINNET_PROD_* wallet addresses to ensure user has required USDC, NFT, and SOL before test execution
+### Details:
+Build asset-verification.js module with functions to verify USDC balance meets minimum requirements using MAINNET_PROD_USDC_MINT_ADDRESS and MAINNET_PROD_SENDER_ADDRESS, confirm NFT ownership in specified collection, validate SOL balance for transaction fees (minimum 0.1 SOL) in both sender and receiver wallets, and check wallet connectivity to mainnet using MAINNET_PROD_PROGRAM_ID. Include real-time balance monitoring and automatic test termination if balances fall below thresholds.
+
+## 5. Document Production Testing Procedures and Safety Guidelines [pending]
+### Dependencies: 93.3, 93.4
+### Description: Create comprehensive documentation for safely running production e2e tests on mainnet with real assets using MAINNET_PROD_* environment variables
+### Details:
+Write detailed README.md for production e2e testing including prerequisites (wallet setup with MAINNET_PROD_* variables, asset requirements), step-by-step execution instructions, safety guidelines, cost estimates, troubleshooting guide, and rollback procedures. Include examples of required MAINNET_PROD_* environment variables (MAINNET_PROD_PROGRAM_ID, MAINNET_PROD_USDC_MINT_ADDRESS, MAINNET_PROD_SENDER_PRIVATE_KEY, MAINNET_PROD_RECEIVER_PRIVATE_KEY, MAINNET_PROD_SENDER_ADDRESS, MAINNET_PROD_RECEIVER_ADDRESS), wallet funding instructions, and expected test outputs. Document emergency procedures for failed tests.
+

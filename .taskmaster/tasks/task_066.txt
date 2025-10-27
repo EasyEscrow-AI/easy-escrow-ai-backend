@@ -1,6 +1,6 @@
 # Task ID: 66
 # Title: Build and Deploy Escrow Program to Devnet for STAGING
-# Status: pending
+# Status: done
 # Dependencies: 64, 65, 87
 # Priority: high
 # Description: Deploy the escrow program using CI/CD pipeline with Anchor.staging.toml configuration, implementing build-once-deploy-everywhere principles with proper artifact verification and staging environment isolation.
@@ -105,4 +105,3 @@ Document in: docs/deployment/STAGING_CI_DEPLOYMENT.md
 7. **Smoke Testing**: Run `npm run test:staging:smoke` against deployed STAGING program and verify all basic operations (PDA creation, escrow initialization) work correctly with private RPC endpoint
 
 8. **Documentation Completeness**: Verify CI logs contain git commit SHA, artifact checksums, deployment transaction signature, and timestamp, and confirm docs/deployment/STAGING_CI_DEPLOYMENT.md is updated with deployment details
-

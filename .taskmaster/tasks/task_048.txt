@@ -1,6 +1,6 @@
 # Task ID: 48
 # Title: Build Anchor program with matching IDs
-# Status: pending
+# Status: done
 # Dependencies: None
 # Priority: high
 # Description: Compile the Solana program with the updated program ID embedded in the bytecode

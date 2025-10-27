@@ -1,0 +1,127 @@
+# Task ID: 90
+# Title: Production Solana Program Deployment
+# Status: pending
+# Dependencies: 66, 89, 88
+# Priority: high
+# Description: Build and deploy production mainnet-ready Solana escrow program. Generate production IDL using existing script. Update Anchor configuration for mainnet deployment. Verify program deployment on mainnet.
+# Details:
+Deploy the escrow program to Solana mainnet with production-grade configuration and verification:
+
+**Prerequisites:**
+- Generate new production keypair: `solana-keygen new -o target/deploy/escrow-mainnet-keypair.json --force`
+- Fund deployer wallet with sufficient SOL for mainnet deployment (minimum 5-10 SOL recommended)
+- Configure mainnet RPC endpoint with high rate limits
+
+**Step 1: Update Configuration for Mainnet**
+```toml
+# Create Anchor.mainnet.toml
+[toolchain]
+anchor_version = "0.29.0"
+solana_version = "1.18.x"
+
+[programs.mainnet]
+escrow = "<PRODUCTION_PROGRAM_ID>"
+
+[provider]
+cluster = "mainnet"
+wallet = "~/.config/solana/mainnet-deployer.json"
+
+[scripts]
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+```
+
+**Step 2: Update Program ID in Source**
+```rust
+// programs/escrow/src/lib.rs
+declare_id!("<PRODUCTION_PROGRAM_ID>");
+```
+
+**Step 3: Build Production Program**
+```bash
+# Use pinned toolchain versions for reproducible builds
+solana-install init 1.18.x
+rustup install 1.75.0
+
+# Build with production configuration
+anchor build --config Anchor.mainnet.toml
+
+# Generate production IDL
+anchor idl build --config Anchor.mainnet.toml
+```
+
+**Step 4: Deploy to Mainnet**
+```bash
+# Verify sufficient balance
+solana balance --url mainnet-beta
+
+# Deploy program
+anchor deploy --provider.cluster mainnet-beta --config Anchor.mainnet.toml
+
+# Verify deployment
+solana program show <PROGRAM_ID> --url mainnet-beta
+```
+
+**Step 5: Initialize Production IDL**
+```bash
+# Upload IDL to mainnet
+anchor idl init <PROGRAM_ID> --provider.cluster mainnet-beta --filepath target/idl/escrow.json
+
+# Verify IDL upload
+anchor idl fetch <PROGRAM_ID> --provider.cluster mainnet-beta
+```
+
+**Security Considerations:**
+- Use hardware wallet or secure key management for deployer keypair
+- Verify program bytecode matches expected hash
+- Set upgrade authority to multisig or governance program
+- Enable program freeze protection if needed
+
+**Post-Deployment Configuration:**
+- Update backend environment variables with production program ID
+- Configure monitoring for program account changes
+- Set up alerts for unusual program activity
+
+# Test Strategy:
+1. **Pre-Deployment Verification**: Confirm production keypair generation with `solana address -k target/deploy/escrow-mainnet-keypair.json`, verify deployer wallet has sufficient SOL balance (>5 SOL) using `solana balance --url mainnet-beta`, and validate Anchor.mainnet.toml configuration syntax
+
+2. **Build Verification**: Confirm `anchor build --config Anchor.mainnet.toml` completes successfully with exit code 0, verify program binary exists at `target/deploy/escrow.so`, validate IDL generation with `ls target/idl/escrow.json`, and check program ID consistency between declare_id!, Anchor.mainnet.toml, and keypair
+
+3. **Deployment Verification**: Verify successful deployment with `solana program show <PROGRAM_ID> --url mainnet-beta` showing "Executable: true", confirm deployment transaction signature is valid, validate program account exists and is owned by BPF Loader, and verify upgrade authority is set correctly
+
+4. **IDL Verification**: Confirm IDL upload success with `anchor idl fetch <PROGRAM_ID> --provider.cluster mainnet-beta`, validate fetched IDL matches local target/idl/escrow.json, and verify IDL account exists on-chain
+
+5. **Integration Testing**: Update backend configuration with production program ID, test program interaction from backend using mainnet RPC, verify escrow account creation works with production program, and confirm monitoring systems detect the new program deployment
+
+6. **Security Audit**: Verify program bytecode hash matches expected value, confirm upgrade authority configuration, validate no unexpected program modifications, and ensure deployer keypair is secured post-deployment
+
+# Subtasks:
+## 1. Create Anchor.mainnet.toml Production Configuration [pending]
+### Dependencies: None
+### Description: Create production Anchor configuration file for mainnet deployment with proper toolchain versions and program settings
+### Details:
+Create Anchor.mainnet.toml file with mainnet cluster configuration, production program ID placeholder, mainnet RPC endpoint, and pinned toolchain versions (Anchor 0.29.0, Solana 1.18.x). Configure wallet path for mainnet deployer keypair and set up proper build scripts for production environment.
+
+## 2. Build Production Solana Program with Pinned Toolchain [pending]
+### Dependencies: 90.1
+### Description: Build the escrow program using production configuration with pinned toolchain versions for reproducible builds
+### Details:
+Install pinned Solana CLI version 1.18.x and Rust 1.75.0, update program ID in lib.rs with production program ID, execute anchor build --config Anchor.mainnet.toml to generate production bytecode, and verify build artifacts are created in target/deploy directory with correct program keypair.
+
+## 3. Deploy Escrow Program to Solana Mainnet [pending]
+### Dependencies: 90.2
+### Description: Deploy the built escrow program to Solana mainnet using production configuration and verify successful deployment
+### Details:
+Verify deployer wallet has sufficient SOL balance (minimum 5-10 SOL), execute anchor deploy --provider.cluster mainnet-beta --config Anchor.mainnet.toml to deploy program to mainnet, capture deployment transaction signature, and confirm program is deployed successfully with correct program ID.
+
+## 4. Generate and Upload Production IDL to Mainnet [pending]
+### Dependencies: 90.3
+### Description: Generate production IDL using existing script and upload it to mainnet for program interaction
+### Details:
+Execute anchor idl build --config Anchor.mainnet.toml to generate production IDL file, upload IDL to mainnet using anchor idl init <PROGRAM_ID> --provider.cluster mainnet-beta --filepath target/idl/escrow.json, and verify IDL is properly associated with the deployed program on mainnet.
+
+## 5. Verify Production Deployment and Configure Security [pending]
+### Dependencies: 90.4
+### Description: Perform comprehensive verification of mainnet deployment and configure production security settings
+### Details:
+Verify program deployment using solana program show command, confirm program bytecode matches expected hash, set up upgrade authority configuration (multisig or governance), enable program freeze protection if needed, and document all production program details including addresses and security configurations.
+

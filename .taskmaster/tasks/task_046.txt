@@ -1,6 +1,6 @@
 # Task ID: 46
 # Title: Update declare_id in Rust source code
-# Status: pending
+# Status: done
 # Dependencies: None
 # Priority: high
 # Description: Update the program ID in the Rust source code to match the newly generated keypair

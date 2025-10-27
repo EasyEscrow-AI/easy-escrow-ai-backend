@@ -11,31 +11,31 @@
 
 
 # Subtasks:
-## 1. Design Agreement Data Model and Database Schema [pending]
+## 1. Design Agreement Data Model and Database Schema [done]
 ### Dependencies: None
 ### Description: Define the database schema and data structures for storing agreement information including status, balances, and deadlines
 ### Details:
 Create database tables/collections to store agreement data with fields for agreement_id, status (active/expired/cancelled), buyer_balance, seller_balance, nft_locked_status, usdc_locked_status, expiry_deadline, created_at, updated_at. Define TypeScript interfaces and validation schemas.
 
-## 2. Implement Agreement Repository Layer [pending]
+## 2. Implement Agreement Repository Layer [done]
 ### Dependencies: 28.1
 ### Description: Create database access layer with methods to query and update agreement records
 ### Details:
 Implement repository class with methods: findAgreementById(), updateAgreementStatus(), getAgreementBalances(), checkExpiryStatus(). Include proper error handling for not found cases and database connection issues.
 
-## 3. Create GET /v1/agreements/{id} Endpoint [pending]
+## 3. Create GET /v1/agreements/{id} Endpoint [done]
 ### Dependencies: 28.2
 ### Description: Implement REST endpoint to retrieve agreement details including status, balances, and deadlines
 ### Details:
 Create Express.js route handler that validates agreement ID parameter, calls repository to fetch agreement data, formats response with status, buyer/seller balances, NFT/USDC lock status, expiry deadline. Return 404 for non-existent agreements.
 
-## 4. Implement Agreement Expiry Detection Logic [pending]
+## 4. Implement Agreement Expiry Detection Logic [done]
 ### Dependencies: 28.2
 ### Description: Create service to detect expired agreements and validate cancellation eligibility
 ### Details:
 Implement service methods to check if agreement has passed expiry deadline, validate that agreement is in cancellable state (not already settled/cancelled), and determine if cancellation is authorized. Include timezone handling for deadline comparisons.
 
-## 5. Create POST /v1/agreements/{id}/cancel Endpoint [pending]
+## 5. Create POST /v1/agreements/{id}/cancel Endpoint [done]
 ### Dependencies: 28.3, 28.4
 ### Description: Implement REST endpoint to trigger cancellation of expired agreements
 ### Details:
