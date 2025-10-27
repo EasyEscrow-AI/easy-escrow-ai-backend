@@ -95,8 +95,10 @@ class CostAnalyzerService {
       
       const metrics = await resourceTracker.getMetrics(startTime, endTime);
       
-      // Calculate SOL costs
-      const solMetrics = metrics.filter(m => m.solUsage).map(m => m.solUsage!);
+      // Calculate SOL costs (exclude wallet refills)
+      const solMetrics = metrics
+        .filter(m => m.solUsage && m.solUsage.operationType !== 'wallet_refill')
+        .map(m => m.solUsage!);
       const avgSolPerTransaction = solMetrics.length > 0
         ? solMetrics.reduce((sum, m) => sum + m.transactionFees, 0) / solMetrics.length
         : 0;
@@ -185,8 +187,10 @@ class CostAnalyzerService {
   async identifyOptimizations(metrics: ResourceMetrics[]): Promise<OptimizationOpportunity[]> {
     const opportunities: OptimizationOpportunity[] = [];
 
-    // Analyze SOL usage
-    const solMetrics = metrics.filter(m => m.solUsage).map(m => m.solUsage!);
+    // Analyze SOL usage (exclude wallet refills)
+    const solMetrics = metrics
+      .filter(m => m.solUsage && m.solUsage.operationType !== 'wallet_refill')
+      .map(m => m.solUsage!);
     if (solMetrics.length > 0) {
       const avgSolPerTx = solMetrics.reduce((sum, m) => sum + m.transactionFees, 0) / solMetrics.length;
       
@@ -383,7 +387,8 @@ class CostAnalyzerService {
           dailyCosts[date] = { solCost: 0, totalCost: 0 };
         }
         
-        if (metric.solUsage) {
+        // Exclude wallet refills from cost calculations
+        if (metric.solUsage && metric.solUsage.operationType !== 'wallet_refill') {
           const solCostUsd = metric.solUsage.transactionFees * this.SOL_PRICE_USD;
           dailyCosts[date].solCost += solCostUsd;
           dailyCosts[date].totalCost += solCostUsd;

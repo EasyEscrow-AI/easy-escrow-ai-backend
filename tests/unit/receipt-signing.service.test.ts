@@ -201,11 +201,12 @@ describe('ReceiptSigningService', () => {
       const hash = service.generateReceiptHash(mockReceiptData);
       const validSignature = service.signReceiptHash(hash);
       
-      // Test with various invalid signatures
+      // Test with various invalid signatures of different lengths
       const invalidSignatures = [
-        'short',
-        validSignature.substring(0, 32), // Half length
-        validSignature + 'extra', // Extra characters
+        'abcd', // Too short
+        validSignature.substring(0, 32), // Half length (32 chars = 16 bytes)
+        validSignature + 'abcdef', // Extra hex characters (longer)
+        '0'.repeat(validSignature.length), // Same length but different content
       ];
 
       invalidSignatures.forEach((invalidSig) => {

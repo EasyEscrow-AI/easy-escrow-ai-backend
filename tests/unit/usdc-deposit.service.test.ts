@@ -93,7 +93,7 @@ describe('USDC Deposit Service - Unit Tests', () => {
     const accountData = Buffer.alloc(AccountLayout.span);
     const mockData = {
       mint: new PublicKey(mint),
-      owner: new PublicKey('OwnerAddress123'),
+      owner: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'), // Valid base58 address
       amount,
       state: 1,
       delegateOption: 0 as 0 | 1,
@@ -167,7 +167,7 @@ describe('USDC Deposit Service - Unit Tests', () => {
 
     it('should reject deposit with invalid account owner', async () => {
       const accountInfo = createMockAccountInfo(usdcToLamports(0.1));
-      accountInfo.owner = new PublicKey('InvalidOwner123');
+      accountInfo.owner = new PublicKey('11111111111111111111111111111111'); // System program, not Token program
 
       const result = await usdcDepositService.handleUsdcAccountChange(
         publicKey,
@@ -181,7 +181,7 @@ describe('USDC Deposit Service - Unit Tests', () => {
     });
 
     it('should reject deposit with wrong mint address', async () => {
-      const wrongMint = 'WrongMintAddress123';
+      const wrongMint = 'So11111111111111111111111111111111111111112'; // Wrapped SOL mint, not USDC
       const accountInfo = createMockAccountInfo(usdcToLamports(0.1), wrongMint);
 
       const result = await usdcDepositService.handleUsdcAccountChange(
@@ -517,7 +517,7 @@ describe('USDC Deposit Service - Unit Tests', () => {
     });
 
     it('should return null for non-USDC account', async () => {
-      const wrongMint = 'WrongMintAddress123';
+      const wrongMint = 'So11111111111111111111111111111111111111112'; // Wrapped SOL mint, not USDC
       const accountInfo = createMockAccountInfo(usdcToLamports(1.0), wrongMint);
 
       solanaServiceStub.getAccountInfo.resolves(accountInfo);

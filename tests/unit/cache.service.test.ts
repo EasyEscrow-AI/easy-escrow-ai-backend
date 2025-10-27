@@ -1,17 +1,20 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { CacheService } from '../../src/services/cache.service';
-import { redisClient } from '../../src/config/redis';
+import * as redis from '../../src/config/redis';
 
 describe('CacheService', () => {
   let cacheService: CacheService;
-  let redisStub: sinon.SinonStubbedInstance<typeof redisClient>;
+  let redisClientStub: any;
+  let originalNodeEnv: string | undefined;
 
   beforeEach(() => {
-    cacheService = new CacheService({ prefix: 'test:', ttl: 3600 });
+    // Save original NODE_ENV and set to test
+    originalNodeEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'test';
     
-    // Stub Redis client methods
-    redisStub = {
+    // Create mock Redis client with all required methods
+    redisClientStub = {
       get: sinon.stub(),
       setex: sinon.stub(),
       del: sinon.stub(),
@@ -19,13 +22,31 @@ describe('CacheService', () => {
       exists: sinon.stub(),
       ttl: sinon.stub(),
       incrby: sinon.stub(),
+      incr: sinon.stub(),
       expire: sinon.stub(),
       mget: sinon.stub(),
-      pipeline: sinon.stub(),
-    } as any;
+      pipeline: sinon.stub().returns({
+        del: sinon.stub().returnsThis(),
+        setex: sinon.stub().returnsThis(),
+        exec: sinon.stub().resolves([]),
+      }),
+    };
+    
+    // Inject mock Redis client into CacheService
+    cacheService = new CacheService({ 
+      prefix: 'test:', 
+      ttl: 3600,
+      redisClient: redisClientStub as any
+    });
   });
 
   afterEach(() => {
+    // Restore NODE_ENV
+    if (originalNodeEnv !== undefined) {
+      process.env.NODE_ENV = originalNodeEnv;
+    } else {
+      delete process.env.NODE_ENV;
+    }
     sinon.restore();
   });
 
@@ -34,7 +55,7 @@ describe('CacheService', () => {
       const key = 'test-key';
       const value = { id: '123', name: 'Test' };
       
-      sinon.stub(redisClient, 'get').resolves(JSON.stringify(value));
+      redisClientStub.get.resolves(JSON.stringify(value));
       
       const result = await cacheService.get<typeof value>(key);
       
@@ -42,7 +63,7 @@ describe('CacheService', () => {
     });
 
     it('should return null if key does not exist', async () => {
-      sinon.stub(redisClient, 'get').resolves(null);
+      redisClientStub.get.resolves(null);
       
       const result = await cacheService.get('non-existent-key');
       
@@ -50,7 +71,7 @@ describe('CacheService', () => {
     });
 
     it('should return null on error', async () => {
-      sinon.stub(redisClient, 'get').rejects(new Error('Redis error'));
+      redisClientStub.get.rejects(new Error('Redis error'));
       
       const result = await cacheService.get('error-key');
       
@@ -63,15 +84,15 @@ describe('CacheService', () => {
       const key = 'test-key';
       const value = { id: '123', name: 'Test' };
       
-      const setexStub = sinon.stub(redisClient, 'setex').resolves('OK');
+      redisClientStub.setex.resolves('OK');
       
       const result = await cacheService.set(key, value);
       
       expect(result).to.be.true;
-      expect(setexStub.calledOnce).to.be.true;
-      expect(setexStub.firstCall.args[0]).to.equal('test:test-key');
-      expect(setexStub.firstCall.args[1]).to.equal(3600);
-      expect(setexStub.firstCall.args[2]).to.equal(JSON.stringify(value));
+      expect(redisClientStub.setex.calledOnce).to.be.true;
+      expect(redisClientStub.setex.firstCall.args[0]).to.equal('test:test-key');
+      expect(redisClientStub.setex.firstCall.args[1]).to.equal(3600);
+      expect(redisClientStub.setex.firstCall.args[2]).to.equal(JSON.stringify(value));
     });
 
     it('should set value in cache with custom TTL', async () => {
@@ -79,15 +100,15 @@ describe('CacheService', () => {
       const value = { id: '123' };
       const ttl = 7200;
       
-      const setexStub = sinon.stub(redisClient, 'setex').resolves('OK');
+      redisClientStub.setex.resolves('OK');
       
       await cacheService.set(key, value, ttl);
       
-      expect(setexStub.firstCall.args[1]).to.equal(ttl);
+      expect(redisClientStub.setex.firstCall.args[1]).to.equal(ttl);
     });
 
     it('should return false on error', async () => {
-      sinon.stub(redisClient, 'setex').rejects(new Error('Redis error'));
+      redisClientStub.setex.rejects(new Error('Redis error'));
       
       const result = await cacheService.set('key', { value: 'test' });
       
@@ -99,7 +120,7 @@ describe('CacheService', () => {
     it('should delete value from cache', async () => {
       const key = 'test-key';
       
-      sinon.stub(redisClient, 'del').resolves(1);
+      redisClientStub.del.resolves(1);
       
       const result = await cacheService.delete(key);
       
@@ -107,7 +128,7 @@ describe('CacheService', () => {
     });
 
     it('should return false if key was not deleted', async () => {
-      sinon.stub(redisClient, 'del').resolves(0);
+      redisClientStub.del.resolves(0);
       
       const result = await cacheService.delete('non-existent');
       
@@ -117,7 +138,7 @@ describe('CacheService', () => {
 
   describe('exists', () => {
     it('should return true if key exists', async () => {
-      sinon.stub(redisClient, 'exists').resolves(1);
+      redisClientStub.exists.resolves(1);
       
       const result = await cacheService.exists('test-key');
       
@@ -125,7 +146,7 @@ describe('CacheService', () => {
     });
 
     it('should return false if key does not exist', async () => {
-      sinon.stub(redisClient, 'exists').resolves(0);
+      redisClientStub.exists.resolves(0);
       
       const result = await cacheService.exists('non-existent');
       
@@ -137,7 +158,7 @@ describe('CacheService', () => {
     it('should increment counter', async () => {
       const key = 'counter';
       
-      sinon.stub(redisClient, 'incrby').resolves(5);
+      redisClientStub.incrby.resolves(5);
       
       const result = await cacheService.increment(key, 2);
       
@@ -154,7 +175,7 @@ describe('CacheService', () => {
         { id: '3' },
       ];
       
-      sinon.stub(redisClient, 'mget').resolves(values.map(v => JSON.stringify(v)));
+      redisClientStub.mget.resolves(values.map(v => JSON.stringify(v)));
       
       const result = await cacheService.mget<{ id: string }>(keys);
       
@@ -164,7 +185,7 @@ describe('CacheService', () => {
     it('should handle null values', async () => {
       const keys = ['key1', 'key2'];
       
-      sinon.stub(redisClient, 'mget').resolves([JSON.stringify({ id: '1' }), null]);
+      redisClientStub.mget.resolves([JSON.stringify({ id: '1' }), null]);
       
       const result = await cacheService.mget(keys);
       
@@ -175,8 +196,8 @@ describe('CacheService', () => {
 
   describe('clear', () => {
     it('should clear all keys with prefix', async () => {
-      sinon.stub(redisClient, 'keys').resolves(['test:key1', 'test:key2']);
-      sinon.stub(redisClient, 'del').resolves(2);
+      redisClientStub.keys.resolves(['test:key1', 'test:key2']);
+      redisClientStub.del.resolves(2); // del returns number of keys deleted
       
       const result = await cacheService.clear();
       

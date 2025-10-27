@@ -5,14 +5,13 @@
  * Processes USDC and NFT refunds when agreements are cancelled or expired.
  */
 
-import { PrismaClient, AgreementStatus, DepositType, DepositStatus } from '../generated/prisma';
+import { AgreementStatus, DepositType, DepositStatus } from '../generated/prisma';
 import { Decimal } from '@prisma/client/runtime/library';
 import { PublicKey, Transaction, SystemProgram } from '@solana/web3.js';
+import { prisma } from '../config/database';
 import { getSolanaService } from './solana.service';
 import { WebhookEventsService } from './webhook-events.service';
 import { getTransactionLogService, TransactionOperationType, TransactionStatusType } from './transaction-log.service';
-
-const prisma = new PrismaClient();
 
 /**
  * Refund calculation result

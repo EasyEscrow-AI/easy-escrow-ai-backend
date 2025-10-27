@@ -1,10 +1,10 @@
-# Prepare staging-app.yaml for Deployment
+# Prepare .do/staging.yaml for Deployment
 # Replaces placeholder values with real values from .env.staging
 
 param(
     [string]$EnvFile = ".env.staging",
-    [string]$TemplateFile = "staging-app.yaml",
-    [string]$OutputFile = "staging-app-deploy.yaml",
+    [string]$TemplateFile = ".do/staging.yaml",
+    [string]$OutputFile = ".do/staging-deploy.yaml",
     [switch]$DryRun = $false
 )
 
