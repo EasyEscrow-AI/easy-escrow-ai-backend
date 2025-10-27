@@ -136,8 +136,8 @@ databases:
     engine: PG
     production: true
     cluster_name: easyescrow-prod-postgres
-    db_name: easyescrow_production
-    db_user: easyescrow_app
+    db_name: defaultdb
+    db_user: doadmin
 
 # ============================================
 # Custom Domains

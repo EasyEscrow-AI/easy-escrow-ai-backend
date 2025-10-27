@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount, Transfer, Mint};
 use anchor_spl::associated_token::AssociatedToken;
 
-declare_id!("AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei");
+declare_id!("2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx");
 
 #[program]
 pub mod escrow {
@@ -32,7 +32,6 @@ pub mod escrow {
         escrow.bump = ctx.bumps.escrow_state;
         escrow.admin = ctx.accounts.admin.key();
         
-        msg!("Escrow agreement initialized with ID: {}", escrow_id);
         Ok(())
     }
 
@@ -59,7 +58,6 @@ pub mod escrow {
         
         escrow.buyer_usdc_deposited = true;
         
-        msg!("USDC deposited: {} tokens", escrow.usdc_amount);
         Ok(())
     }
 
@@ -90,7 +88,6 @@ pub mod escrow {
         
         escrow.seller_nft_deposited = true;
         
-        msg!("NFT deposited successfully");
         Ok(())
     }
 
@@ -128,8 +125,6 @@ pub mod escrow {
             .checked_sub(platform_fee)
             .ok_or(EscrowError::CalculationOverflow)?;
         
-        msg!("Settlement - Total: {}, Fee: {}, Seller: {}", total_amount, platform_fee, seller_amount);
-        
         // Transfer fee to platform fee collector (if fee > 0)
         if platform_fee > 0 {
             let fee_transfer_accounts = Transfer {
@@ -144,7 +139,6 @@ pub mod escrow {
                 signer,
             );
             token::transfer(fee_cpi_ctx, platform_fee)?;
-            msg!("Platform fee transferred: {}", platform_fee);
         }
         
         // Transfer remaining USDC to seller
@@ -160,7 +154,6 @@ pub mod escrow {
             signer,
         );
         token::transfer(usdc_cpi_ctx, seller_amount)?;
-        msg!("Seller payment transferred: {}", seller_amount);
         
         // Transfer NFT to buyer
         let nft_transfer_accounts = Transfer {
@@ -175,12 +168,10 @@ pub mod escrow {
             signer,
         );
         token::transfer(nft_cpi_ctx, 1)?;
-        msg!("NFT transferred to buyer");
         
         let escrow_mut = &mut ctx.accounts.escrow_state;
         escrow_mut.status = EscrowStatus::Completed;
         
-        msg!("Escrow settled successfully with fee distribution");
         Ok(())
     }
 
@@ -239,7 +230,6 @@ pub mod escrow {
         let escrow_mut = &mut ctx.accounts.escrow_state;
         escrow_mut.status = EscrowStatus::Cancelled;
         
-        msg!("Escrow cancelled due to expiration");
         Ok(())
     }
 
@@ -298,7 +288,6 @@ pub mod escrow {
         let escrow_mut = &mut ctx.accounts.escrow_state;
         escrow_mut.status = EscrowStatus::Cancelled;
         
-        msg!("Escrow cancelled by admin");
         Ok(())
     }
 }

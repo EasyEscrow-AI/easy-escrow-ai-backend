@@ -4,7 +4,9 @@
  * Comprehensive tests for resource tracking, cost analysis, and monitoring
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, beforeEach, afterEach } from 'mocha';
+import { expect } from 'chai';
+import sinon from 'sinon';
 import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { resourceTracker, ALERT_THRESHOLDS } from '../../src/services/resource-tracker.service';
 import { solTracker, AgreementStage } from '../../src/services/sol-tracker.service';
@@ -35,11 +37,11 @@ describe('Resource Tracking System', () => {
       const startTime = new Date(endTime.getTime() - 60000); // Last minute
       const metrics = await resourceTracker.getMetrics(startTime, endTime);
 
-      expect(metrics.length).toBeGreaterThan(0);
+      expect(metrics.length).to.be.greaterThan(0);
       const solMetric = metrics.find(m => m.solUsage?.operationType === operation);
-      expect(solMetric).toBeDefined();
-      expect(solMetric?.solUsage?.transactionFees).toBe(cost);
-      expect(solMetric?.solUsage?.agreementId).toBe(agreementId);
+      expect(solMetric).to.not.be.undefined;
+      expect(solMetric?.solUsage?.transactionFees).to.equal(cost);
+      expect(solMetric?.solUsage?.agreementId).to.equal(agreementId);
     });
 
     it('should create alert for high SOL usage', async () => {
@@ -65,9 +67,9 @@ describe('Resource Tracking System', () => {
         a.message.includes('High SOL usage')
       );
       
-      expect(solAlert).toBeDefined();
-      expect(solAlert?.severity).toBe('high');
-      expect(solAlert?.actualValue).toBe(highCost);
+      expect(solAlert).to.not.be.undefined;
+      expect(solAlert?.severity).to.equal('high');
+      expect(solAlert?.actualValue).to.equal(highCost);
     });
 
     it('should create alert for low wallet balance', async () => {
@@ -93,8 +95,8 @@ describe('Resource Tracking System', () => {
         a.message.includes('Low wallet balance')
       );
       
-      expect(balanceAlert).toBeDefined();
-      expect(balanceAlert?.severity).toBe('critical');
+      expect(balanceAlert).to.not.be.undefined;
+      expect(balanceAlert?.severity).to.equal('critical');
     });
 
     it('should track database query performance', async () => {
@@ -117,9 +119,9 @@ describe('Resource Tracking System', () => {
       const metrics = await resourceTracker.getMetrics(startTime, endTime);
 
       const dbMetric = metrics.find(m => m.databaseMetrics?.queryType === queryType);
-      expect(dbMetric).toBeDefined();
-      expect(dbMetric?.databaseMetrics?.queryDuration).toBe(duration);
-      expect(dbMetric?.databaseMetrics?.tableName).toBe(tableName);
+      expect(dbMetric).to.not.be.undefined;
+      expect(dbMetric?.databaseMetrics?.queryDuration).to.equal(duration);
+      expect(dbMetric?.databaseMetrics?.tableName).to.equal(tableName);
     });
 
     it('should create alert for slow query', async () => {
@@ -144,8 +146,8 @@ describe('Resource Tracking System', () => {
         a.message.includes('Slow query')
       );
       
-      expect(slowQueryAlert).toBeDefined();
-      expect(slowQueryAlert?.severity).toBe('medium');
+      expect(slowQueryAlert).to.not.be.undefined;
+      expect(slowQueryAlert?.severity).to.equal('medium');
     });
 
     it('should track Redis metrics', async () => {
@@ -157,9 +159,9 @@ describe('Resource Tracking System', () => {
       const metrics = await resourceTracker.getMetrics(startTime, endTime);
 
       const redisMetric = metrics.find(m => m.redisMetrics);
-      expect(redisMetric).toBeDefined();
-      expect(redisMetric?.redisMetrics?.memoryUsage).toBeGreaterThanOrEqual(0);
-      expect(redisMetric?.redisMetrics?.keyCount).toBeGreaterThanOrEqual(0);
+      expect(redisMetric).to.not.be.undefined;
+      expect(redisMetric?.redisMetrics?.memoryUsage).to.be.at.least(0);
+      expect(redisMetric?.redisMetrics?.keyCount).to.be.at.least(0);
     });
 
     it('should track RPC call metrics', async () => {
@@ -175,9 +177,9 @@ describe('Resource Tracking System', () => {
       const metrics = await resourceTracker.getMetrics(startTime, endTime);
 
       const rpcMetric = metrics.find(m => m.rpcMetrics?.requestType === method);
-      expect(rpcMetric).toBeDefined();
-      expect(rpcMetric?.rpcMetrics?.responseTime).toBe(duration);
-      expect(rpcMetric?.rpcMetrics?.endpoint).toBe(endpoint);
+      expect(rpcMetric).to.not.be.undefined;
+      expect(rpcMetric?.rpcMetrics?.responseTime).to.equal(duration);
+      expect(rpcMetric?.rpcMetrics?.endpoint).to.equal(endpoint);
     });
 
     it('should generate daily report', async () => {
@@ -188,20 +190,20 @@ describe('Resource Tracking System', () => {
 
       const report = await resourceTracker.generateDailyReport();
 
-      expect(report).toBeDefined();
-      expect(report.period).toBeDefined();
-      expect(report.summary).toBeDefined();
-      expect(report.summary.totalSolConsumed).toBeGreaterThanOrEqual(0);
-      expect(report.summary.totalDatabaseQueries).toBeGreaterThanOrEqual(0);
-      expect(report.summary.totalRpcCalls).toBeGreaterThanOrEqual(0);
-      expect(report.recommendations).toBeInstanceOf(Array);
-      expect(report.alerts).toBeInstanceOf(Array);
+      expect(report).to.not.be.undefined;
+      expect(report.period).to.not.be.undefined;
+      expect(report.summary).to.not.be.undefined;
+      expect(report.summary.totalSolConsumed).to.be.at.least(0);
+      expect(report.summary.totalDatabaseQueries).to.be.at.least(0);
+      expect(report.summary.totalRpcCalls).to.be.at.least(0);
+      expect(report.recommendations).to.be.instanceOf(Array);
+      expect(report.alerts).to.be.instanceOf(Array);
     });
 
     it('should clean up old metrics', async () => {
       await resourceTracker.cleanupOldMetrics();
       // Should complete without errors
-      expect(true).toBe(true);
+      expect(true).to.equal(true);
     });
   });
 
@@ -210,24 +212,24 @@ describe('Resource Tracking System', () => {
     it('should estimate agreement lifecycle cost', async () => {
       const estimate = await solTracker.estimateAgreementCost();
 
-      expect(estimate).toBeDefined();
-      expect(estimate.initialization).toBeGreaterThanOrEqual(0);
-      expect(estimate.usdcDeposit).toBeGreaterThanOrEqual(0);
-      expect(estimate.nftDeposit).toBeGreaterThanOrEqual(0);
-      expect(estimate.settlement).toBeGreaterThanOrEqual(0);
-      expect(estimate.cancellation).toBeGreaterThanOrEqual(0);
-      expect(estimate.total).toBeGreaterThanOrEqual(0);
+      expect(estimate).to.not.be.undefined;
+      expect(estimate.initialization).to.be.at.least(0);
+      expect(estimate.usdcDeposit).to.be.at.least(0);
+      expect(estimate.nftDeposit).to.be.at.least(0);
+      expect(estimate.settlement).to.be.at.least(0);
+      expect(estimate.cancellation).to.be.at.least(0);
+      expect(estimate.total).to.be.at.least(0);
     });
 
     it('should get SOL consumption report', async () => {
       const report = await solTracker.getSolConsumptionReport(7);
 
-      expect(report).toBeDefined();
-      expect(report.totalConsumed).toBeGreaterThanOrEqual(0);
-      expect(report.averagePerTransaction).toBeGreaterThanOrEqual(0);
-      expect(report.byStage).toBeDefined();
-      expect(report.refillCount).toBeGreaterThanOrEqual(0);
-      expect(report.totalRefilled).toBeGreaterThanOrEqual(0);
+      expect(report).to.not.be.undefined;
+      expect(report.totalConsumed).to.be.at.least(0);
+      expect(report.averagePerTransaction).to.be.at.least(0);
+      expect(report.byStage).to.not.be.undefined;
+      expect(report.refillCount).to.be.at.least(0);
+      expect(report.totalRefilled).to.be.at.least(0);
     });
 
     it('should track wallet refill', async () => {
@@ -245,9 +247,9 @@ describe('Resource Tracking System', () => {
       const history = solTracker.getRefillHistory();
       const refill = history.find(r => r.walletAddress === walletAddress);
 
-      expect(refill).toBeDefined();
-      expect(refill?.amountAdded).toBe(4.5);
-      expect(refill?.reason).toBe('test_refill');
+      expect(refill).to.not.be.undefined;
+      expect(refill?.amountAdded).to.equal(4.5);
+      expect(refill?.reason).to.equal('test_refill');
     });
 
     it('should get refill frequency', async () => {
@@ -258,7 +260,7 @@ describe('Resource Tracking System', () => {
       await solTracker.trackWalletRefill(walletAddress, 0.3, 5.0);
 
       const frequency = solTracker.getRefillFrequency(walletAddress, 7);
-      expect(frequency).toBeGreaterThanOrEqual(2);
+      expect(frequency).to.be.at.least(2);
     });
   });
 
@@ -281,7 +283,7 @@ describe('Resource Tracking System', () => {
 
       const slowQueries = databaseTracker.getSlowQueries(10);
       // May or may not have slow queries depending on timing
-      expect(slowQueries).toBeInstanceOf(Array);
+      expect(slowQueries).to.be.instanceOf(Array);
     });
 
     it('should get query stats by type', async () => {
@@ -293,11 +295,11 @@ describe('Resource Tracking System', () => {
       );
 
       const stats = databaseTracker.getQueryStatsByType();
-      expect(stats).toBeDefined();
+      expect(stats).to.not.be.undefined;
       
       if (stats['SELECT']) {
-        expect(stats['SELECT'].count).toBeGreaterThan(0);
-        expect(stats['SELECT'].averageDuration).toBeGreaterThanOrEqual(0);
+        expect(stats['SELECT'].count).to.be.greaterThan(0);
+        expect(stats['SELECT'].averageDuration).to.be.at.least(0);
       }
     });
 
@@ -310,22 +312,22 @@ describe('Resource Tracking System', () => {
       );
 
       const stats = databaseTracker.getQueryStatsByTable();
-      expect(stats).toBeDefined();
+      expect(stats).to.not.be.undefined;
       
       if (stats['agreements']) {
-        expect(stats['agreements'].count).toBeGreaterThan(0);
-        expect(stats['agreements'].averageDuration).toBeGreaterThanOrEqual(0);
+        expect(stats['agreements'].count).to.be.greaterThan(0);
+        expect(stats['agreements'].averageDuration).to.be.at.least(0);
       }
     });
 
     it('should monitor database health', async () => {
       const health = await databaseTracker.monitorDatabaseHealth();
 
-      expect(health).toBeDefined();
-      expect(health.isHealthy).toBeDefined();
-      expect(health.issues).toBeInstanceOf(Array);
-      expect(health.metrics).toBeDefined();
-      expect(health.metrics.activeConnections).toBeGreaterThanOrEqual(0);
+      expect(health).to.not.be.undefined;
+      expect(health.isHealthy).to.not.be.undefined;
+      expect(health.issues).to.be.instanceOf(Array);
+      expect(health.metrics).to.not.be.undefined;
+      expect(health.metrics.activeConnections).to.be.at.least(0);
     });
   });
 
@@ -337,16 +339,16 @@ describe('Resource Tracking System', () => {
       
       const projection = await costAnalyzer.calculateMainnetProjection(7, 1000);
 
-      expect(projection).toBeDefined();
-      expect(projection.period).toBe('monthly');
-      expect(projection.estimatedMonthlySol).toBeGreaterThanOrEqual(0);
-      expect(projection.estimatedMonthlySolUsd).toBeGreaterThanOrEqual(0);
-      expect(projection.databaseCosts).toBeDefined();
-      expect(projection.redisCosts).toBeDefined();
-      expect(projection.rpcCosts).toBeDefined();
-      expect(projection.totalMonthlyCost).toBeGreaterThanOrEqual(0);
-      expect(projection.optimizationOpportunities).toBeInstanceOf(Array);
-      expect(projection.assumptions).toBeInstanceOf(Array);
+      expect(projection).to.not.be.undefined;
+      expect(projection.period).to.equal('monthly');
+      expect(projection.estimatedMonthlySol).to.be.at.least(0);
+      expect(projection.estimatedMonthlySolUsd).to.be.at.least(0);
+      expect(projection.databaseCosts).to.not.be.undefined;
+      expect(projection.redisCosts).to.not.be.undefined;
+      expect(projection.rpcCosts).to.not.be.undefined;
+      expect(projection.totalMonthlyCost).to.be.at.least(0);
+      expect(projection.optimizationOpportunities).to.be.instanceOf(Array);
+      expect(projection.assumptions).to.be.instanceOf(Array);
     });
 
     it('should compare devnet vs mainnet costs', async () => {
@@ -355,11 +357,11 @@ describe('Resource Tracking System', () => {
       
       const comparison = await costAnalyzer.compareDevnetMainnet(7);
 
-      expect(comparison).toBeDefined();
-      expect(comparison.devnet).toBeDefined();
-      expect(comparison.mainnet).toBeDefined();
-      expect(comparison.difference).toBeDefined();
-      expect(comparison.mainnet.multiplier).toBe(1.2);
+      expect(comparison).to.not.be.undefined;
+      expect(comparison.devnet).to.not.be.undefined;
+      expect(comparison.mainnet).to.not.be.undefined;
+      expect(comparison.difference).to.not.be.undefined;
+      expect(comparison.mainnet.multiplier).to.equal(1.2);
     });
 
     it('should generate weekly report', async () => {
@@ -369,10 +371,10 @@ describe('Resource Tracking System', () => {
       
       const report = await costAnalyzer.generateWeeklyReport();
 
-      expect(report).toBeDefined();
-      expect(report.projection).toBeDefined();
-      expect(report.comparison).toBeDefined();
-      expect(report.resourceReport).toBeDefined();
+      expect(report).to.not.be.undefined;
+      expect(report.projection).to.not.be.undefined;
+      expect(report.comparison).to.not.be.undefined;
+      expect(report.resourceReport).to.not.be.undefined;
     });
 
     it('should calculate optimization ROI', () => {
@@ -388,12 +390,12 @@ describe('Resource Tracking System', () => {
 
       const roi = costAnalyzer.calculateOptimizationROI(opportunity, 10, 100);
 
-      expect(roi).toBeDefined();
-      expect(roi.implementationCost).toBe(1000);
-      expect(roi.monthlySavings).toBe(100);
-      expect(roi.annualSavings).toBe(1200);
-      expect(roi.breakEvenMonths).toBe(10);
-      expect(roi.roi).toBeGreaterThan(0);
+      expect(roi).to.not.be.undefined;
+      expect(roi.implementationCost).to.equal(1000);
+      expect(roi.monthlySavings).to.equal(100);
+      expect(roi.annualSavings).to.equal(1200);
+      expect(roi.breakEvenMonths).to.equal(10);
+      expect(roi.roi).to.be.greaterThan(0);
     });
 
     it('should get cost trends', async () => {
@@ -405,11 +407,11 @@ describe('Resource Tracking System', () => {
       
       const trends = await costAnalyzer.getCostTrends(7);
 
-      expect(trends).toBeDefined();
-      expect(trends.daily).toBeInstanceOf(Array);
-      expect(trends.trend).toMatch(/^(increasing|decreasing|stable)$/);
-      expect(trends.averageDailyCost).toBeGreaterThanOrEqual(0);
-      expect(trends.projectedMonthlyCost).toBeGreaterThanOrEqual(0);
+      expect(trends).to.not.be.undefined;
+      expect(trends.daily).to.be.instanceOf(Array);
+      expect(trends.trend).to.match(/^(increasing|decreasing|stable)$/);
+      expect(trends.averageDailyCost).to.be.at.least(0);
+      expect(trends.projectedMonthlyCost).to.be.at.least(0);
     });
   });
 
@@ -463,14 +465,14 @@ describe('Resource Tracking System', () => {
         m => m.solUsage?.agreementId === agreementId
       );
 
-      expect(agreementMetrics.length).toBe(4);
+      expect(agreementMetrics.length).to.equal(4);
       
       const totalCost = agreementMetrics.reduce(
         (sum, m) => sum + (m.solUsage?.transactionFees || 0),
         0
       );
       
-      expect(totalCost).toBe(0.007);
+      expect(totalCost).to.equal(0.007);
     });
 
     it('should generate comprehensive report with all metrics', async () => {
@@ -487,17 +489,18 @@ describe('Resource Tracking System', () => {
       const solReport = await solTracker.getSolConsumptionReport(7);
 
       // Verify all reports are generated
-      expect(dailyReport).toBeDefined();
-      expect(costProjection).toBeDefined();
-      expect(dbReport).toBeDefined();
-      expect(solReport).toBeDefined();
+      expect(dailyReport).to.not.be.undefined;
+      expect(costProjection).to.not.be.undefined;
+      expect(dbReport).to.not.be.undefined;
+      expect(solReport).to.not.be.undefined;
 
       // Verify report structure
-      expect(dailyReport.summary).toBeDefined();
-      expect(costProjection.totalMonthlyCost).toBeGreaterThanOrEqual(0);
-      expect(dbReport.totalQueries).toBeGreaterThanOrEqual(0);
-      expect(solReport.totalConsumed).toBeGreaterThanOrEqual(0);
+      expect(dailyReport.summary).to.not.be.undefined;
+      expect(costProjection.totalMonthlyCost).to.be.at.least(0);
+      expect(dbReport.totalQueries).to.be.at.least(0);
+      expect(solReport.totalConsumed).to.be.at.least(0);
     });
   });
 });
+
 

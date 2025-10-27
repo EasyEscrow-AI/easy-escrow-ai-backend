@@ -1,0 +1,50 @@
+# Anchor Configuration for Mainnet Production Deployment
+# This configuration is used for deploying the escrow program to Solana mainnet.
+#
+# IMPORTANT SECURITY NOTES:
+# - The wallet path points to a production keypair that should be HIGHLY SECURED
+# - Never commit the actual keypair file to git
+# - Use hardware wallet or secure key management for production deployments
+# - Verify program ID matches the deployed program before any operations
+#
+# Deploy command: anchor deploy --provider.cluster mainnet-beta --config Anchor.mainnet.toml
+# Build command: anchor build --config Anchor.mainnet.toml
+#
+
+[toolchain]
+# Pin Anchor version for reproducible builds (matches actual dependencies in Cargo.toml)
+anchor_version = "0.32.1"
+
+[features]
+# Production feature flags
+seeds = false
+skip-lint = false
+resolution = true
+
+[programs.mainnet]
+# Production program ID
+# Generated: 2025-10-27
+# Keypair: target/deploy/escrow-mainnet-keypair.json
+escrow = "2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx"
+
+[registry]
+url = "https://api.apr.dev"
+
+[provider]
+# Mainnet cluster configuration
+cluster = "mainnet"
+
+# Production deployer wallet path
+# SECURITY: This keypair should be:
+# - Stored in a secure location (hardware wallet recommended)
+# - Never committed to git
+# - Have restricted file permissions (chmod 600)
+# - Backed up securely
+wallet = "wallets/production/mainnet-deployer.json"
+
+[scripts]
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+
+# Note: Test validator configuration is omitted for mainnet
+# Mainnet deployments do not use local validators
+

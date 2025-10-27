@@ -4,7 +4,8 @@
  * Tests for idempotency key validation, storage, and duplicate detection
  */
 
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { describe, it, beforeEach, afterEach } from 'mocha';
+import { expect } from 'chai';
 import { IdempotencyService } from '../../src/services/idempotency.service';
 import { prisma } from '../../src/config/database';
 
@@ -33,20 +34,20 @@ describe('IdempotencyService', () => {
 
   describe('validateKeyFormat', () => {
     it('should accept valid idempotency keys', () => {
-      expect(idempotencyService.validateKeyFormat('abcd1234-efgh-5678-ijkl-9012mnop3456')).toBe(true);
-      expect(idempotencyService.validateKeyFormat('test-key-123456789')).toBe(true);
-      expect(idempotencyService.validateKeyFormat('valid_key_with_underscores_1234567890')).toBe(true);
+      expect(idempotencyService.validateKeyFormat('abcd1234-efgh-5678-ijkl-9012mnop3456')).to.equal(true);
+      expect(idempotencyService.validateKeyFormat('test-key-123456789')).to.equal(true);
+      expect(idempotencyService.validateKeyFormat('valid_key_with_underscores_1234567890')).to.equal(true);
     });
 
     it('should reject invalid idempotency keys', () => {
-      expect(idempotencyService.validateKeyFormat('')).toBe(false);
-      expect(idempotencyService.validateKeyFormat('short')).toBe(false);
-      expect(idempotencyService.validateKeyFormat('key with spaces')).toBe(false);
-      expect(idempotencyService.validateKeyFormat('key@with!special#chars')).toBe(false);
+      expect(idempotencyService.validateKeyFormat('')).to.equal(false);
+      expect(idempotencyService.validateKeyFormat('short')).to.equal(false);
+      expect(idempotencyService.validateKeyFormat('key with spaces')).to.equal(false);
+      expect(idempotencyService.validateKeyFormat('key@with!special#chars')).to.equal(false);
     });
 
     it('should reject keys that are too short', () => {
-      expect(idempotencyService.validateKeyFormat('abc123')).toBe(false);
+      expect(idempotencyService.validateKeyFormat('abc123')).to.equal(false);
     });
   });
 
@@ -55,7 +56,7 @@ describe('IdempotencyService', () => {
       const body = { field1: 'value1', field2: 'value2' };
       const hash1 = idempotencyService.generateRequestHash(body);
       const hash2 = idempotencyService.generateRequestHash(body);
-      expect(hash1).toBe(hash2);
+      expect(hash1).to.equal(hash2);
     });
 
     it('should generate different hashes for different request bodies', () => {
@@ -63,7 +64,7 @@ describe('IdempotencyService', () => {
       const body2 = { field1: 'value1', field2: 'different' };
       const hash1 = idempotencyService.generateRequestHash(body1);
       const hash2 = idempotencyService.generateRequestHash(body2);
-      expect(hash1).not.toBe(hash2);
+      expect(hash1).to.not.equal(hash2);
     });
   });
 
@@ -75,8 +76,8 @@ describe('IdempotencyService', () => {
         { test: 'data' }
       );
 
-      expect(result.isDuplicate).toBe(false);
-      expect(result.existingResponse).toBeUndefined();
+      expect(result.isDuplicate).to.equal(false);
+      expect(result.existingResponse).to.be.undefined;
     });
 
     it('should return duplicate for repeated request', async () => {
@@ -96,10 +97,10 @@ describe('IdempotencyService', () => {
       // Check if duplicate
       const result = await idempotencyService.checkIdempotency(key, endpoint, body);
 
-      expect(result.isDuplicate).toBe(true);
-      expect(result.existingResponse).toBeDefined();
-      expect(result.existingResponse?.status).toBe(200);
-      expect(result.existingResponse?.body).toEqual({ success: true });
+      expect(result.isDuplicate).to.equal(true);
+      expect(result.existingResponse).to.not.be.undefined;
+      expect(result.existingResponse?.status).to.equal(200);
+      expect(result.existingResponse?.body).to.deep.equal({ success: true });
     });
 
     it('should throw error if key used with different endpoint', async () => {
@@ -116,9 +117,12 @@ describe('IdempotencyService', () => {
       );
 
       // Try to use with different endpoint
-      await expect(
-        idempotencyService.checkIdempotency(key, 'TEST_ENDPOINT_2', body)
-      ).rejects.toThrow('different endpoint');
+      try {
+        await idempotencyService.checkIdempotency(key, 'TEST_ENDPOINT_2', body);
+        throw new Error('Expected an error to be thrown');
+      } catch (error: any) {
+        expect(error.message).to.include('different endpoint');
+      }
     });
 
     it('should throw error if key used with different request body', async () => {
@@ -135,9 +139,12 @@ describe('IdempotencyService', () => {
       );
 
       // Try to use with different body
-      await expect(
-        idempotencyService.checkIdempotency(key, endpoint, { test: 'data2' })
-      ).rejects.toThrow('different request body');
+      try {
+        await idempotencyService.checkIdempotency(key, endpoint, { test: 'data2' });
+        throw new Error('Expected an error to be thrown');
+      } catch (error: any) {
+        expect(error.message).to.include('different request body');
+      }
     });
   });
 
@@ -162,10 +169,10 @@ describe('IdempotencyService', () => {
         where: { key },
       });
 
-      expect(stored).toBeDefined();
-      expect(stored?.endpoint).toBe(endpoint);
-      expect(stored?.responseStatus).toBe(responseStatus);
-      expect(stored?.responseBody).toEqual(responseBody);
+      expect(stored).to.not.be.null;
+      expect(stored?.endpoint).to.equal(endpoint);
+      expect(stored?.responseStatus).to.equal(responseStatus);
+      expect(stored?.responseBody).to.deep.equal(responseBody);
     });
   });
 
@@ -190,13 +197,12 @@ describe('IdempotencyService', () => {
         where: { key },
       });
 
-      expect(deleted).toBeNull();
+      expect(deleted).to.be.null;
     });
 
     it('should not throw error when deleting non-existent key', async () => {
-      await expect(
-        idempotencyService.deleteIdempotencyKey('non-existent-key-1234567890')
-      ).resolves.not.toThrow();
+      // Should complete without throwing
+      await idempotencyService.deleteIdempotencyKey('non-existent-key-1234567890');
     });
   });
 
@@ -204,10 +210,10 @@ describe('IdempotencyService', () => {
     it('should return service status', () => {
       const status = idempotencyService.getStatus();
 
-      expect(status).toBeDefined();
-      expect(status.isRunning).toBe(true);
-      expect(status.expirationHours).toBe(1);
-      expect(status.cleanupIntervalMinutes).toBe(60);
+      expect(status).to.not.be.undefined;
+      expect(status.isRunning).to.equal(true);
+      expect(status.expirationHours).to.equal(1);
+      expect(status.cleanupIntervalMinutes).to.equal(60);
     });
   });
 });
