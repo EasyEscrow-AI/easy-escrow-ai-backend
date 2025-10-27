@@ -2,640 +2,650 @@
 
 ## Overview
 
-The STAGING environment uses a fully automated CI/CD pipeline built with GitHub Actions. This pipeline provides reproducible builds, safe deployments, automated testing, and rollback capabilities.
+This document describes the complete CI/CD pipeline for deploying the EasyEscrow backend application to the STAGING environment. The pipeline automates building, testing, deployment, and rollback procedures using GitHub Actions.
+
+## Table of Contents
+
+- [Architecture](#architecture)
+- [Workflow Overview](#workflow-overview)
+- [Required Secrets](#required-secrets)
+- [Workflows](#workflows)
+- [Manual Approval Process](#manual-approval-process)
+- [Smoke Tests](#smoke-tests)
+- [Database Migrations](#database-migrations)
+- [Rollback Procedures](#rollback-procedures)
+- [Troubleshooting](#troubleshooting)
+- [Security Considerations](#security-considerations)
 
 ## Architecture
 
+The CI/CD pipeline consists of three main GitHub Actions workflows:
+
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        GitHub Actions Workflow                       │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                       │
-│  ┌────────────────┐      ┌────────────────┐      ┌────────────────┐ │
-│  │  Build Stage   │ ───▶ │ Deploy Stage   │ ───▶ │ Verify Stage   │ │
-│  └────────────────┘      └────────────────┘      └────────────────┘ │
-│         │                        │                        │           │
-│         ▼                        ▼                        ▼           │
-│   ┌──────────┐            ┌──────────┐            ┌──────────┐      │
-│   │ Compile  │            │ Program  │            │  Smoke   │      │
-│   │ Test     │            │ Backend  │            │  Tests   │      │
-│   │ Artifact │            │ Database │            │  Health  │      │
-│   └──────────┘            └──────────┘            └──────────┘      │
-│                                                                       │
-└─────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                    STAGING CI/CD PIPELINE                    │
+└─────────────────────────────────────────────────────────────┘
+
+1. BUILD WORKFLOW (build-staging.yml)
+   ├─ Triggered by: Push to 'staging' branch or 'staging-*' tags
+   ├─ Runs on: ubuntu-latest
+   └─ Steps:
+      ├─ Checkout code
+      ├─ Setup Node.js & install dependencies
+      ├─ Build TypeScript
+      ├─ Setup Solana CLI & Rust
+      ├─ Build Anchor program
+      ├─ Generate checksums
+      ├─ Run tests
+      └─ Upload artifacts (program + backend)
+
+                    ↓ (on success)
+
+2. DEPLOY WORKFLOW (deploy-staging.yml)
+   ├─ Triggered by: Successful build workflow completion
+   ├─ Requires: Manual approval (staging environment)
+   ├─ Runs on: ubuntu-latest
+   └─ Steps:
+      ├─ Download build artifacts
+      ├─ Verify checksums
+      ├─ Deploy Solana program to devnet
+      ├─ Update IDL
+      ├─ Deploy backend to DigitalOcean App Platform
+      ├─ Run smoke tests
+      └─ Send notifications (Slack/Discord)
+
+3. ROLLBACK WORKFLOW (rollback-staging.yml)
+   ├─ Triggered by: Manual workflow dispatch
+   ├─ Requires: Manual approval + deployment ID + reason
+   ├─ Runs on: ubuntu-latest
+   └─ Steps:
+      ├─ Verify deployment exists
+      ├─ Rollback DigitalOcean App to previous deployment
+      ├─ Wait for completion
+      ├─ Run smoke tests
+      └─ Send notifications
 ```
 
-## Workflows
+## Workflow Overview
 
 ### 1. Build Workflow (`build-staging.yml`)
 
-**Trigger**: Push to `staging` branch or `staging-*` tags
+**Trigger:**
+- Push to `staging` branch
+- Push of tags matching `staging-*`
 
-**Purpose**: Compile, test, and create deployment artifacts
+**Purpose:**
+- Build and test the application
+- Generate deployment artifacts
+- Create checksums for verification
 
-**Steps**:
-1. **Checkout Code**: Get latest code from repository
-2. **Setup Node.js**: Install Node.js 18 with npm caching
-3. **Install Dependencies**: Run `npm ci` for clean install
-4. **Setup Solana CLI**: Install Solana CLI v1.18.x
-5. **Setup Rust**: Use pinned toolchain from `rust-toolchain.toml`
-6. **Install Anchor**: Install Anchor CLI using avm
-7. **Build Program**: Compile Solana program with `anchor build`
-8. **Generate Checksums**: Create SHA256 checksums for verification
-9. **Build Backend**: Compile TypeScript with `npm run build`
-10. **Run Tests**: Execute unit tests
-11. **Upload Artifacts**: Store compiled program and backend
+**Key Features:**
+- Pins Solana CLI to version 1.18.26 for reproducibility
+- Uses Rust toolchain from `rust-toolchain.toml`
+- Generates SHA-256 checksums for artifacts
+- Stores artifacts for 30 days
+- Creates build summary in GitHub Actions UI
 
-**Artifacts Produced**:
-- `target/deploy/escrow.so` - Compiled Solana program
-- `target/deploy/escrow.so.sha256` - Program checksum
-- `target/idl/escrow.json` - Program IDL
-- `target/idl/escrow.json.sha256` - IDL checksum
-- `dist/` - Compiled TypeScript backend
-
-**Runtime**: ~5-10 minutes
+**Artifacts Generated:**
+- `program-artifacts/`: Solana program binary and IDL with checksums
+- `backend-artifacts/`: TypeScript build output and dependencies
 
 ### 2. Deploy Workflow (`deploy-staging.yml`)
 
-**Trigger**: Successful completion of Build workflow, or manual trigger
+**Trigger:**
+- Successful completion of build workflow
+- Manual workflow dispatch (for redeployments)
 
-**Environment**: `staging` (requires manual approval)
+**Purpose:**
+- Deploy built artifacts to STAGING environment
+- Verify deployment success
+- Run smoke tests
 
-**Purpose**: Deploy artifacts to STAGING environment
+**Key Features:**
+- Downloads artifacts from build workflow
+- Verifies artifact integrity using checksums
+- Deploys Solana program to devnet
+- Updates IDL on-chain
+- Deploys backend to DigitalOcean App Platform
+- Runs comprehensive smoke tests
+- Sends deployment notifications
 
-**Steps**:
-1. **Checkout Code**: Get deployment scripts
-2. **Download Artifacts**: Retrieve artifacts from build workflow
-3. **Setup Tools**: Install Node.js, Solana CLI, Anchor CLI
-4. **Configure Deployer**: Set up staging deployer wallet
-5. **Verify Checksums**: Validate artifact integrity
-6. **Deploy Program**: Deploy to Solana devnet
-7. **Update IDL**: Upgrade program IDL
-8. **Run Migrations**: Apply database schema changes
-9. **Deploy Backend**: Push to DigitalOcean App Platform
-10. **Run Smoke Tests**: Verify critical functionality
-11. **Notify**: Send deployment status to Slack
-
-**Required Secrets**:
-- `STAGING_DEPLOYER_KEYPAIR` - Wallet for program deployment
-- `STAGING_RPC_URL` - Solana RPC endpoint
-- `STAGING_PROGRAM_ID` - Expected program address
-- `STAGING_DATABASE_URL` - PostgreSQL connection string
-- `DIGITALOCEAN_ACCESS_TOKEN` - DigitalOcean API token
-- `STAGING_APP_ID` - App Platform application ID
-- `STAGING_API_URL` - Backend API URL
-- `SLACK_WEBHOOK` - Slack notification webhook (optional)
-
-**Runtime**: ~10-15 minutes
-
-**Manual Approval**: Required before deployment starts
+**Manual Approval:**
+This workflow requires manual approval via GitHub's environment protection rules before deploying. See [Manual Approval Process](#manual-approval-process) for details.
 
 ### 3. Rollback Workflow (`rollback-staging.yml`)
 
-**Trigger**: Manual workflow dispatch
+**Trigger:**
+- Manual workflow dispatch only
 
-**Environment**: `staging` (requires manual approval)
+**Purpose:**
+- Rollback to a previous deployment
+- Verify rollback success
+- Maintain deployment history
 
-**Purpose**: Restore previous working deployment
+**Required Inputs:**
+- `deployment_id`: DigitalOcean App Platform deployment ID to rollback to
+- `reason`: Explanation for the rollback (for audit trail)
 
-**Inputs**:
-- `deployment_id` - DigitalOcean deployment ID to restore
-- `reason` - Explanation for rollback (audit purposes)
+**Key Features:**
+- Verifies target deployment exists before rollback
+- Updates DigitalOcean App to previous deployment spec
+- Waits for rollback completion (10-minute timeout)
+- Runs smoke tests to verify health
+- Sends rollback notifications
 
-**Steps**:
-1. **Verify Deployment**: Confirm deployment exists
-2. **Rollback Backend**: Restore previous deployment
-3. **Run Smoke Tests**: Verify system health
-4. **Create Audit Log**: Document rollback action
-5. **Notify**: Send rollback status to Slack
+## Required Secrets
 
-**Required Secrets**: Same as Deploy workflow
+The following secrets must be configured in GitHub repository settings:
 
-**Runtime**: ~5-10 minutes
+### GitHub Secrets
 
-**Manual Approval**: Required before rollback starts
+Configure these in: **Settings → Secrets and variables → Actions → Repository secrets**
 
-## Required GitHub Secrets
+| Secret Name | Description | Example Value |
+|------------|-------------|---------------|
+| `STAGING_DEPLOYER_KEYPAIR` | Solana keypair JSON for program deployment | `[123,45,...]` |
+| `STAGING_RPC_URL` | Solana RPC endpoint URL | `https://devnet.helius-rpc.com/?api-key=xxx` |
+| `STAGING_PROGRAM_ID` | Deployed program's public key | `AvdX6LEkoAmP...` |
+| `STAGING_APP_ID` | DigitalOcean App Platform app ID | `abc123...` |
+| `STAGING_API_URL` | STAGING backend API URL | `https://staging-api.easyescrow.ai` |
+| `DIGITALOCEAN_ACCESS_TOKEN` | DigitalOcean API token with app management permissions | `dop_v1_abc...` |
+| `SLACK_WEBHOOK` | Slack webhook URL for notifications (optional) | `https://hooks.slack.com/...` |
 
-### Configure in Repository Settings → Secrets and variables → Actions
+### Environment Secrets
 
-| Secret Name | Description | Example |
-|------------|-------------|---------|
-| `STAGING_DEPLOYER_KEYPAIR` | JSON keypair for program deployment | `[123,45,...]` |
-| `STAGING_RPC_URL` | Solana RPC endpoint | `https://api.devnet.solana.com` |
-| `STAGING_PROGRAM_ID` | Expected program public key | `ABC123...` |
-| `STAGING_DATABASE_URL` | PostgreSQL connection string | `postgresql://user:pass@host/db` |
-| `DIGITALOCEAN_ACCESS_TOKEN` | DO API token | `dop_v1_...` |
-| `STAGING_APP_ID` | DO App Platform app ID | `abc-123-xyz` |
-| `STAGING_API_URL` | Backend API URL | `https://staging-api.easyescrow.ai` |
-| `SLACK_WEBHOOK` | Slack webhook URL (optional) | `https://hooks.slack.com/...` |
+The `staging` environment must be configured with protection rules. See [Configure GitHub Environment Protection Rules](#configure-github-environment-protection-rules).
 
-## GitHub Environment Protection Rules
+## Workflows
 
-### Configure in Repository Settings → Environments → staging
+### Running a Build
 
-1. **Required Reviewers**: 
-   - Add at least one reviewer
-   - Reviewers must approve before deployment proceeds
-
-2. **Wait Timer**: 
-   - Optional: Add 5-minute wait before deployment
-   - Allows time to cancel if needed
-
-3. **Deployment Branches**:
-   - Restrict to `staging` branch only
-   - Prevents accidental deployments from other branches
-
-## NPM Scripts
-
-The following scripts support the CI/CD pipeline:
-
+**Automatic:**
 ```bash
-# Build
-npm run build                  # Compile TypeScript backend
-npm run staging:build          # Build with checksums (PowerShell)
-npm run staging:build:clean    # Clean build
+# Push to staging branch
+git push origin staging
 
-# Deploy
-npm run staging:deploy         # Deploy to staging (PowerShell)
-
-# Database
-npm run staging:migrate        # Run migrations (PowerShell)
-npm run staging:migrate:ci     # Run migrations (TypeScript, for CI)
-
-# Testing
-npm run test:unit                    # Unit tests
-npm run test:staging:smoke           # Smoke tests (Mocha)
-npm run test:staging:smoke:ci        # Smoke tests (TypeScript, for CI)
+# Or create and push a staging tag
+git tag staging-v1.0.0
+git push origin staging-v1.0.0
 ```
+
+**Manual:**
+Not applicable - builds are only triggered by branch/tag pushes.
+
+### Running a Deployment
+
+**Automatic:**
+Deployments are triggered automatically after successful builds but require manual approval.
+
+**Manual Redeployment:**
+1. Go to **Actions** tab in GitHub
+2. Select **Deploy to STAGING** workflow
+3. Click **Run workflow**
+4. Select branch and click **Run workflow**
+5. Wait for approval request
+6. Approve the deployment
+
+### Running a Rollback
+
+1. Get the deployment ID to rollback to:
+   ```bash
+   doctl apps list-deployments <STAGING_APP_ID>
+   ```
+
+2. Go to **Actions** tab in GitHub
+
+3. Select **Rollback STAGING** workflow
+
+4. Click **Run workflow**
+
+5. Enter:
+   - **deployment_id**: The target deployment ID
+   - **reason**: Clear explanation for the rollback
+
+6. Click **Run workflow**
+
+7. Approve the rollback when prompted
+
+## Manual Approval Process
+
+### Setting Up Environment Protection
+
+1. Go to **Settings → Environments** in GitHub
+
+2. Click **New environment** or select existing `staging` environment
+
+3. Configure protection rules:
+   - ✅ **Required reviewers**: Add team members who can approve deployments
+   - ✅ **Wait timer**: Optional delay before deployment can proceed
+   - ⬜ **Deployment branches**: Optionally restrict to specific branches
+
+4. Add required secrets to the environment (if not using repository secrets)
+
+### Approving a Deployment
+
+When a deployment is waiting for approval:
+
+1. GitHub will send notification to required reviewers
+
+2. Navigate to the workflow run:
+   - Go to **Actions** tab
+   - Click on the pending workflow run
+   - You'll see "Waiting for approval" status
+
+3. Click **Review deployments**
+
+4. Review the deployment details:
+   - Branch/commit being deployed
+   - Build artifacts and checksums
+   - Who triggered the deployment
+
+5. Add optional comment
+
+6. Click **Approve and deploy** or **Reject**
+
+### Approval Best Practices
+
+- ✅ Review the commit history and changes being deployed
+- ✅ Verify smoke tests passed in build workflow
+- ✅ Check that no critical bugs are being deployed
+- ✅ Ensure proper change management procedures are followed
+- ✅ Document approval in commit/PR comments
+- ❌ Don't approve without reviewing changes
+- ❌ Don't approve if build artifacts failed verification
 
 ## Smoke Tests
 
-### Purpose
-Quick validation that critical functionality works after deployment.
+### Overview
 
-### Tests Included
-1. **API Health Check** - Verify API is responding
-2. **Database Connectivity** - Confirm DB connection
-3. **Solana RPC Connection** - Test blockchain access
-4. **Program Deployment** - Verify program is deployed
-5. **API Authentication** - Check auth endpoints
-6. **Core API Endpoints** - Validate key endpoints exist
+Smoke tests are critical post-deployment checks that verify the STAGING environment is functioning correctly.
 
-### Running Locally
+### Test Coverage
+
+The smoke test suite (`scripts/testing/smoke-tests.ts`) includes:
+
+1. **API Health Check**: Verify `/health` endpoint responds with 200 status
+2. **API Version Check**: Confirm API version endpoint is accessible
+3. **Authentication Test**: Verify auth is properly enforced (401 for unauthenticated)
+4. **Solana RPC Connection**: Test connectivity to Solana devnet
+5. **Program Account Verification**: Confirm program is deployed and executable
+6. **Database Connectivity**: Verify database connection via API
+7. **Redis Connectivity**: Verify Redis connection via API
+8. **CORS Configuration**: Confirm CORS headers are properly configured
+
+### Running Smoke Tests Locally
+
 ```bash
-# Set environment variables
+# Set required environment variables
 export STAGING_API_URL="https://staging-api.easyescrow.ai"
-export STAGING_RPC_URL="https://api.devnet.solana.com"
-export STAGING_PROGRAM_ID="YourProgramIdHere"
+export STAGING_RPC_URL="https://devnet.helius-rpc.com/?api-key=xxx"
+export STAGING_PROGRAM_ID="AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei"
 
 # Run smoke tests
-npm run test:staging:smoke:ci
+npm run test:staging:smoke
 ```
 
-### Expected Output
-```
-🚬 Running STAGING Smoke Tests...
+### Smoke Test Failures
 
-✅ API Health Check (125ms)
-✅ Database Connectivity (89ms)
-✅ Solana RPC Connection (234ms)
-✅ Program Deployment Verification (156ms)
-✅ API Authentication (78ms)
-✅ Core API Endpoints (201ms)
+If smoke tests fail during deployment:
 
-============================================================
-SMOKE TEST RESULTS
-============================================================
-
-Total: 6 tests
-Passed: 6 ✅
-Failed: 0 ❌
-Duration: 883ms
-
-============================================================
-
-✅ All smoke tests passed!
-```
+1. **Workflow automatically stops** - deployment is marked as failed
+2. **Review logs** in GitHub Actions to identify which test failed
+3. **Common issues:**
+   - API not responding (DigitalOcean deployment still starting)
+   - Database connection issues (check DATABASE_URL secret)
+   - Redis connection issues (check REDIS_URL secret)
+   - Program not found (wrong PROGRAM_ID or deployment failed)
+4. **Resolution:**
+   - If transient (API still starting), re-run the workflow
+   - If persistent, investigate the specific failure and fix before redeploying
+   - Consider rolling back if critical functionality is broken
 
 ## Database Migrations
 
-### Purpose
-Apply schema changes to STAGING database safely with rollback capability.
+### Overview
 
-### Process
-1. **Validate Connection** - Ensure DB is accessible
-2. **Check Status** - Identify pending migrations
-3. **Create Backup** - Record backup point (via DO auto-backups)
-4. **Apply Migrations** - Run `prisma migrate deploy`
-5. **Verify Schema** - Confirm critical tables exist
-6. **Rollback on Failure** - Restore from backup if needed
+Database migrations are run as part of the deployment process using Prisma's `migrate deploy` command.
 
-### Running Locally
+### Migration Script
+
+The migration script (`scripts/deployment/migrate-staging.ts`) performs:
+
+1. **Environment validation**: Checks DATABASE_URL and NODE_ENV
+2. **Migration discovery**: Lists pending migrations
+3. **Migration execution**: Runs `prisma migrate deploy`
+4. **Client generation**: Generates Prisma client
+5. **Status verification**: Confirms all migrations applied
+
+### Running Migrations in CI/CD
+
+Migrations are **automatically included** in the deploy workflow. The workflow runs migrations after deploying the backend but before running smoke tests.
+
+### Running Migrations Manually
+
+If you need to run migrations separately:
+
 ```bash
-# Set database URL
-export STAGING_DATABASE_URL="postgresql://user:pass@host:25060/db?sslmode=require"
-
-# Run migrations
+# Local development
 npm run staging:migrate:ci
+
+# Via doctl (on DigitalOcean App)
+doctl apps exec <STAGING_APP_ID> npm run staging:migrate:ci
 ```
 
-### Expected Output
-```
-🗄️  Starting STAGING Database Migration...
+### Migration Best Practices
 
-1️⃣  Validating database connection...
-   ✅ Database connection validated
+- ✅ Test migrations locally before pushing to staging
+- ✅ Create reversible migrations when possible
+- ✅ Back up database before running migrations
+- ✅ Review migration SQL files before committing
+- ✅ Keep migrations small and focused
+- ❌ Don't edit existing migrations after they've been applied
+- ❌ Don't delete migration files
+- ❌ Don't run migrations that drop production data
 
-2️⃣  Checking current migration status...
-   ℹ️  Found 2 pending migration(s)
+### Migration Failures
 
-3️⃣  Creating database backup...
-   ℹ️  Backup ID: staging-backup-1234567890
-   ℹ️  Using DigitalOcean managed database automatic backups
+If migrations fail during deployment:
 
-4️⃣  Applying migrations...
-   ✅ Migrations applied successfully
-
-5️⃣  Verifying database schema...
-   ✅ Schema verification passed
-
-✅ Migration completed successfully!
-```
-
-## Deployment Process
-
-### Standard Deployment
-
-1. **Merge to Staging Branch**
+1. **Workflow stops** - deployment marked as failed
+2. **Database is left in potentially inconsistent state**
+3. **Resolution steps:**
    ```bash
-   git checkout staging
-   git merge feature-branch
+   # 1. Check migration status
+   doctl apps exec <STAGING_APP_ID> npx prisma migrate status
+   
+   # 2. Review failed migration
+   # Check logs in GitHub Actions for error details
+   
+   # 3. Fix the migration issue
+   # - Create a new migration to fix the issue
+   # - Or manually fix the database and mark migration as applied
+   
+   # 4. Redeploy
    git push origin staging
    ```
 
-2. **Build Workflow Runs** (automatic)
-   - Compiles code
-   - Runs tests
-   - Creates artifacts
-
-3. **Deploy Workflow Triggers** (automatic, requires approval)
-   - GitHub sends approval notification
-   - Reviewer approves deployment
-   - Workflow deploys to STAGING
-   - Smoke tests run automatically
-   - Slack notification sent
-
-4. **Verify Deployment**
-   - Check smoke test results
-   - Review application logs
-   - Test critical features manually
-
-### Manual Deployment
-
-1. **Navigate to Actions Tab**
-2. **Select "Deploy to STAGING" workflow**
-3. **Click "Run workflow" button**
-4. **Select `staging` branch**
-5. **Click "Run workflow" to start**
-6. **Approve when prompted**
-
-## Rollback Process
+## Rollback Procedures
 
 ### When to Rollback
-- Critical bugs discovered in production
-- Performance degradation
-- Data integrity issues
-- Failed smoke tests
 
-### Steps
+Rollback to a previous deployment when:
 
-1. **Find Deployment ID**
+- ✅ Critical bug discovered in production
+- ✅ Smoke tests fail persistently after deployment
+- ✅ Performance degradation detected
+- ✅ Breaking change deployed accidentally
+- ✅ Security vulnerability introduced
+
+### How to Rollback
+
+1. **Identify the target deployment:**
    ```bash
-   # Using doctl
-   doctl auth init --access-token $DIGITALOCEAN_ACCESS_TOKEN
-   doctl apps list-deployments $STAGING_APP_ID
+   # List recent deployments
+   doctl apps list-deployments <STAGING_APP_ID> --format ID,Phase,CreatedAt | head -10
+   
+   # Get details of a specific deployment
+   doctl apps get-deployment <STAGING_APP_ID> <DEPLOYMENT_ID>
    ```
 
-2. **Trigger Rollback Workflow**
-   - Navigate to Actions → Rollback STAGING
-   - Click "Run workflow"
-   - Enter deployment ID
-   - Enter reason for rollback
-   - Click "Run workflow"
-   - Approve when prompted
+2. **Trigger rollback workflow:**
+   - Go to **Actions → Rollback STAGING**
+   - Click **Run workflow**
+   - Enter deployment ID and reason
+   - Approve the rollback
 
-3. **Verify Rollback**
-   - Check smoke test results
-   - Review application logs
-   - Confirm issue is resolved
+3. **Monitor rollback:**
+   - Watch workflow progress in GitHub Actions
+   - Check logs for any errors
+   - Verify smoke tests pass after rollback
 
-4. **Post-Rollback**
-   - Fix the issue in code
-   - Test thoroughly
-   - Deploy again when ready
+4. **Verify rollback:**
+   ```bash
+   # Check current deployment
+   doctl apps get <STAGING_APP_ID> --format ActiveDeployment.ID,ActiveDeployment.Phase
+   
+   # Test the API
+   curl https://staging-api.easyescrow.ai/health
+   ```
 
-## Monitoring & Notifications
+### Rollback Limitations
 
-### Slack Notifications
+- ⚠️ **Database migrations are NOT automatically rolled back**
+  - You must manually rollback database changes if needed
+  - Consider creating "down" migrations for critical schema changes
+  
+- ⚠️ **Solana program deployments are NOT rolled back**
+  - Programs are immutable once deployed
+  - Only backend API is rolled back
+  
+- ⚠️ **Redis data is NOT rolled back**
+  - Cache and queue data may be inconsistent after rollback
+  - Consider flushing Redis if necessary
 
-Deployment events are sent to Slack (if configured):
+### Manual Database Rollback
 
-**Success**:
+If you need to rollback database changes:
+
+```bash
+# Option 1: Run a "down" migration (if you created one)
+# Create a new migration that reverses the changes
+npx prisma migrate dev --name revert_problematic_change
+
+# Option 2: Restore from backup
+# Use DigitalOcean's backup restoration feature
+doctl databases backup restore <DB_CLUSTER_ID> <BACKUP_ID>
+
+# Option 3: Manual SQL rollback
+# Write and execute SQL to reverse the changes
+psql $DATABASE_URL -c "-- your rollback SQL here"
 ```
-✅ STAGING deployment completed successfully!
-Commit: abc123def
-Branch: staging
-```
-
-**Failure**:
-```
-❌ STAGING deployment failed!
-Commit: abc123def
-Branch: staging
-Check: [GitHub Actions Link]
-```
-
-**Rollback**:
-```
-🔄 STAGING rollback completed successfully!
-Deployment ID: xyz789
-Reason: Critical bug in payment processing
-Executed by: username
-```
-
-### GitHub Actions Logs
-
-View detailed logs:
-1. Navigate to repository → Actions tab
-2. Select workflow run
-3. Click on job to view logs
-4. Download logs if needed
 
 ## Troubleshooting
 
-### Build Fails
+### Build Failures
 
-**Problem**: Compilation errors
+**Symptom**: Build workflow fails
 
-**Solution**:
-1. Check build logs for specific errors
-2. Verify dependencies are compatible
-3. Test build locally: `npm run build`
-4. Fix issues and push again
+**Common Causes:**
+1. **TypeScript compilation errors**
+   - Check `npm run build` logs
+   - Fix type errors in code
 
-### Deploy Fails - Program Deployment
+2. **Anchor build failures**
+   - Verify Rust toolchain version matches `rust-toolchain.toml`
+   - Check Anchor.toml configuration
 
-**Problem**: Solana program deployment fails
+3. **Test failures**
+   - Review test output in workflow logs
+   - Fix failing tests before pushing
 
-**Solutions**:
-- Verify deployer wallet has sufficient SOL
-- Check program ID matches expected value
-- Confirm RPC endpoint is accessible
-- Verify Anchor.staging.toml configuration
-
-**Check Deployer Balance**:
+**Resolution:**
 ```bash
-solana balance --keypair /path/to/deployer.json --url devnet
+# Test locally before pushing
+npm run build
+npm test
+anchor build
 ```
 
-### Deploy Fails - Backend Deployment
+### Deployment Failures
 
-**Problem**: DigitalOcean deployment fails
+**Symptom**: Deploy workflow fails
 
-**Solutions**:
-- Verify DIGITALOCEAN_ACCESS_TOKEN is valid
-- Check app ID is correct
-- Review DigitalOcean logs in console
-- Ensure staging-app.yaml is valid
+**Common Causes:**
+1. **Missing or invalid secrets**
+   - Verify all required secrets are set in GitHub
+   - Check secret values are correct (especially keypairs)
 
-### Smoke Tests Fail
+2. **Solana program deployment fails**
+   - Verify STAGING_DEPLOYER_KEYPAIR has sufficient SOL
+   - Check STAGING_RPC_URL is accessible
+   - Verify STAGING_PROGRAM_ID matches keypair
 
-**Problem**: Tests fail after deployment
+3. **DigitalOcean App Platform deployment fails**
+   - Check DIGITALOCEAN_ACCESS_TOKEN is valid
+   - Verify STAGING_APP_ID is correct
+   - Review App Platform logs in DO console
 
-**Investigation**:
-1. Check which test failed
-2. Review smoke test output
-3. Check application logs
-4. Verify environment variables
-5. Test endpoints manually
+4. **Smoke tests fail**
+   - See [Smoke Test Failures](#smoke-test-failures) section
 
-**Common Issues**:
-- Database connection: Check DATABASE_URL
-- RPC connection: Verify RPC endpoint is up
-- Program not found: Confirm deployment succeeded
-- API not responding: Check DigitalOcean app status
+**Resolution:**
+```bash
+# Verify secrets locally
+echo $STAGING_RPC_URL
+solana-keygen pubkey <(echo $STAGING_DEPLOYER_KEYPAIR)
 
-### Migration Fails
+# Check DO app status
+doctl apps get $STAGING_APP_ID
 
-**Problem**: Database migration fails
+# Manually run smoke tests
+npm run test:staging:smoke
+```
 
-**Solutions**:
-1. Check migration logs for SQL errors
-2. Verify database connection string
-3. Ensure database user has permissions
-4. Rollback via DigitalOcean console if needed
+### Rollback Failures
 
-**Manual Rollback**:
-1. Go to DigitalOcean → Databases
-2. Select STAGING database
-3. Go to "Backups & Restore" tab
-4. Select pre-migration backup
-5. Click "Restore"
+**Symptom**: Rollback workflow fails
+
+**Common Causes:**
+1. **Invalid deployment ID**
+   - Verify deployment ID exists
+   - Use `doctl apps list-deployments` to find valid IDs
+
+2. **App Platform rollback timeout**
+   - Deployment taking longer than 10 minutes
+   - Check DO console for deployment progress
+
+3. **Smoke tests fail after rollback**
+   - Previous deployment may also have issues
+   - Consider rolling back further
+
+**Resolution:**
+```bash
+# Verify deployment exists
+doctl apps get-deployment $STAGING_APP_ID $DEPLOYMENT_ID
+
+# Check app status
+doctl apps get $STAGING_APP_ID --format ActiveDeployment.Phase
+
+# Manually verify health
+curl https://staging-api.easyescrow.ai/health
+```
+
+### Notification Failures
+
+**Symptom**: Slack/Discord notifications not sent
+
+**Common Causes:**
+1. **Invalid webhook URL**
+   - Verify SLACK_WEBHOOK secret is correct
+   - Test webhook manually
+
+2. **Notification action fails**
+   - Check workflow logs for specific error
+   - Notification failures don't stop deployment (continue-on-error: true)
+
+**Resolution:**
+```bash
+# Test Slack webhook manually
+curl -X POST $SLACK_WEBHOOK \
+  -H 'Content-Type: application/json' \
+  -d '{"text":"Test notification"}'
+```
 
 ## Security Considerations
 
-### Secrets Management
-- ✅ Never commit secrets to repository
-- ✅ Use GitHub Secrets for sensitive values
-- ✅ Rotate deployer keypairs periodically
-- ✅ Use read-only tokens where possible
-- ✅ Audit secret access regularly
+### Secret Management
 
-### Wallet Security
-- ✅ Staging deployer wallet is separate from production
-- ✅ Wallet stored as GitHub Secret
-- ✅ Cleaned up after deployment
-- ✅ Limited permissions (deploy only)
-
-### Code Review
-- ✅ Require PR reviews before merging to staging
-- ✅ Run tests in CI before merge
-- ✅ Manual approval required for deployment
-- ✅ Multiple reviewers for critical changes
+- ✅ **Use GitHub Secrets** for all sensitive values
+- ✅ **Use environment secrets** for deployment-specific values
+- ✅ **Rotate secrets** regularly (at least quarterly)
+- ✅ **Audit secret access** in GitHub settings
+- ❌ **Never commit secrets** to version control
+- ❌ **Never log secret values** in workflows
 
 ### Access Control
-- ✅ Limit who can approve deployments
-- ✅ Restrict who can trigger workflows
-- ✅ Use branch protection rules
-- ✅ Enable audit logging
+
+- ✅ **Limit approval permissions** to senior team members
+- ✅ **Enable branch protection** on staging branch
+- ✅ **Require code reviews** before merging to staging
+- ✅ **Enable audit logging** for deployments
+- ❌ **Don't share deployer keypairs** between environments
+
+### Deployment Security
+
+- ✅ **Verify checksums** before deploying artifacts
+- ✅ **Use pinned versions** for tools (Solana CLI, Rust, Node)
+- ✅ **Run security scans** in build workflow
+- ✅ **Validate environment variables** before deployment
+- ❌ **Don't deploy untested code** to staging
+- ❌ **Don't skip smoke tests**
+
+### Audit Trail
+
+All deployments and rollbacks create an audit trail:
+
+- **GitHub Actions logs**: Full workflow execution logs
+- **Deployment notifications**: Slack/Discord messages with deployment details
+- **Git history**: Commit and tag history shows what was deployed
+- **DigitalOcean logs**: App Platform maintains deployment history
+
+### Incident Response
+
+If a security issue is discovered:
+
+1. **Immediately rollback** to last known good deployment
+2. **Rotate all secrets** that may have been compromised
+3. **Investigate the issue** and create a post-mortem
+4. **Fix the vulnerability** before redeploying
+5. **Update security practices** to prevent recurrence
 
 ## Best Practices
 
-### Before Deployment
-1. Review all changes thoroughly
-2. Test locally and in development
-3. Update documentation if needed
-4. Create database backup if major changes
-5. Notify team of deployment
+### Deployment Workflow
 
-### During Deployment
-1. Monitor workflow progress
-2. Watch for errors or warnings
-3. Review smoke test results
-4. Check application logs
-5. Be ready to rollback if needed
+1. **Test thoroughly** in development before pushing to staging
+2. **Create descriptive commit messages** for audit trail
+3. **Use semantic versioning** for staging tags (e.g., `staging-v1.2.3`)
+4. **Review changes** before approving deployments
+5. **Monitor deployments** via Slack/Discord notifications
+6. **Verify smoke tests** pass before considering deployment successful
 
-### After Deployment
-1. Verify critical features work
-2. Monitor error rates
-3. Check performance metrics
-4. Document any issues
-5. Update team on status
+### Migration Workflow
 
-### Regular Maintenance
-1. Review and update workflows monthly
-2. Rotate secrets quarterly
-3. Update dependencies regularly
-4. Test rollback procedure quarterly
-5. Audit access permissions monthly
+1. **Test migrations locally** before committing
+2. **Back up database** before running destructive migrations
+3. **Create reversible migrations** when possible
+4. **Keep migrations small** and focused on one change
+5. **Document breaking changes** in migration comments
 
-## Workflow Diagrams
+### Rollback Workflow
 
-### Deployment Flow
+1. **Document rollback reason** clearly in workflow input
+2. **Communicate rollback** to team via Slack/Discord
+3. **Investigate root cause** of issue that caused rollback
+4. **Fix the issue** before attempting to redeploy
+5. **Consider database rollback** if schema changes were involved
 
-```
-┌─────────────────┐
-│  Push to        │
-│  staging branch │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Build Workflow │
-│  - Compile      │
-│  - Test         │
-│  - Create       │
-│    Artifacts    │
-└────────┬────────┘
-         │
-         ▼
-    ┌────────┐
-    │Success?│──No──▶ Stop, Fix Issues
-    └───┬────┘
-        │Yes
-        ▼
-┌─────────────────┐
-│ Deploy Workflow │
-│ (Approval       │
-│  Required)      │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│   Reviewer      │
-│   Approves      │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Deploy Steps   │
-│  - Program      │
-│  - Backend      │
-│  - Database     │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Smoke Tests    │
-└────────┬────────┘
-         │
-         ▼
-    ┌────────┐
-    │ Pass?  │──No──▶ Alert, Consider Rollback
-    └───┬────┘
-        │Yes
-        ▼
-┌─────────────────┐
-│  Send Success   │
-│  Notification   │
-└─────────────────┘
-```
+## Additional Resources
 
-### Rollback Flow
-
-```
-┌─────────────────┐
-│  Issue          │
-│  Detected       │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Find Previous  │
-│  Deployment ID  │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Trigger        │
-│  Rollback       │
-│  Workflow       │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Approval       │
-│  Required       │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Rollback       │
-│  Deployment     │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Smoke Tests    │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Create Audit   │
-│  Log            │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Send           │
-│  Notification   │
-└─────────────────┘
-```
-
-## Related Documentation
-
-- [Deployment Guide](../DEPLOYMENT_GUIDE.md)
-- [STAGING Environment Setup](../environments/STAGING.md)
-- [Secrets Management](../SECRETS_MANAGEMENT.md)
-- [Testing Guide](../testing/TESTING_GUIDE.md)
+- [GitHub Actions Documentation](https://docs.github.com/en/actions)
+- [DigitalOcean App Platform Documentation](https://docs.digitalocean.com/products/app-platform/)
+- [Prisma Migrations Documentation](https://www.prisma.io/docs/concepts/components/prisma-migrate)
+- [Solana CLI Documentation](https://docs.solana.com/cli)
+- [Anchor Framework Documentation](https://www.anchor-lang.com/)
 
 ## Support
 
 For issues with the CI/CD pipeline:
 
-1. Check GitHub Actions logs
-2. Review this documentation
-3. Check related docs above
-4. Contact DevOps team
-5. Create GitHub issue if needed
+1. Check [Troubleshooting](#troubleshooting) section
+2. Review GitHub Actions workflow logs
+3. Check DigitalOcean App Platform console
+4. Contact DevOps team via Slack #devops channel
 
-## Changelog
+---
 
-### 2025-01-20
-- Initial CI/CD pipeline implementation
-- Added build, deploy, and rollback workflows
-- Created smoke test runner
-- Implemented database migration script
-- Added comprehensive documentation
-
+**Last Updated**: 2025-10-26  
+**Version**: 1.0.0  
+**Maintained by**: DevOps Team

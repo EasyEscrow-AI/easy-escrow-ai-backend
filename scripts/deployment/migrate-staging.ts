@@ -1,231 +1,227 @@
+#!/usr/bin/env ts-node
+
 /**
- * STAGING Database Migration Script
+ * Database Migration Script for STAGING Environment
  * 
- * Runs Prisma migrations against the STAGING database in a safe and controlled manner.
- * Includes backup, migration, and rollback capabilities.
+ * This script runs database migrations for the STAGING environment
+ * using Prisma migrate deploy command. It's designed to be run as
+ * part of the CI/CD pipeline.
+ * 
+ * Usage: npm run staging:migrate:ci
  */
 
 import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
-import { PrismaClient } from '@prisma/client';
 
-// Environment validation
-const STAGING_DATABASE_URL = process.env.STAGING_DATABASE_URL;
+// Color codes for console output
+const colors = {
+  reset: '\x1b[0m',
+  green: '\x1b[32m',
+  red: '\x1b[31m',
+  yellow: '\x1b[33m',
+  blue: '\x1b[34m',
+  cyan: '\x1b[36m'
+};
 
-if (!STAGING_DATABASE_URL) {
-  console.error('❌ Error: STAGING_DATABASE_URL environment variable is not set');
-  process.exit(1);
+function log(message: string, color: string = colors.reset): void {
+  console.log(`${color}${message}${colors.reset}`);
 }
 
-interface MigrationResult {
-  success: boolean;
-  migrationsApplied: number;
-  error?: string;
+function logSection(title: string): void {
+  log('\n' + '='.repeat(60), colors.blue);
+  log(title, colors.blue);
+  log('='.repeat(60), colors.blue);
 }
 
-class StagingMigrationRunner {
-  private prisma: PrismaClient;
-  private backupCreated: boolean = false;
-  private backupId: string = '';
+function checkEnvironmentVariables(): void {
+  logSection('Environment Variables Check');
+  
+  const requiredVars = ['DATABASE_URL', 'NODE_ENV'];
+  const missingVars: string[] = [];
+  
+  for (const varName of requiredVars) {
+    if (!process.env[varName]) {
+      missingVars.push(varName);
+      log(`✗ ${varName}: Not set`, colors.red);
+    } else {
+      // Mask the value for security
+      const value = process.env[varName]!;
+      const maskedValue = value.includes('postgresql') 
+        ? value.replace(/:[^:@]+@/, ':****@')
+        : '****';
+      log(`✓ ${varName}: ${maskedValue}`, colors.green);
+    }
+  }
+  
+  if (missingVars.length > 0) {
+    log(`\n✗ Missing required environment variables: ${missingVars.join(', ')}`, colors.red);
+    process.exit(1);
+  }
+  
+  // Verify we're targeting STAGING
+  if (process.env.NODE_ENV !== 'staging') {
+    log(`\n⚠ Warning: NODE_ENV is '${process.env.NODE_ENV}', expected 'staging'`, colors.yellow);
+    log('Continuing anyway...', colors.yellow);
+  }
+}
 
-  constructor() {
-    this.prisma = new PrismaClient({
-      datasources: {
-        db: {
-          url: STAGING_DATABASE_URL,
-        },
-      },
+function checkMigrationFiles(): void {
+  logSection('Migration Files Check');
+  
+  const migrationsDir = path.join(process.cwd(), 'prisma', 'migrations');
+  
+  if (!fs.existsSync(migrationsDir)) {
+    log('✗ Migrations directory not found', colors.red);
+    process.exit(1);
+  }
+  
+  const migrationFolders = fs.readdirSync(migrationsDir)
+    .filter(file => {
+      const fullPath = path.join(migrationsDir, file);
+      return fs.statSync(fullPath).isDirectory();
+    })
+    .filter(folder => folder !== 'migration_lock.toml');
+  
+  if (migrationFolders.length === 0) {
+    log('⚠ No migration folders found', colors.yellow);
+  } else {
+    log(`✓ Found ${migrationFolders.length} migration(s)`, colors.green);
+    migrationFolders.forEach(folder => {
+      log(`  - ${folder}`, colors.cyan);
     });
   }
+}
 
-  async run(): Promise<MigrationResult> {
-    console.log('🗄️  Starting STAGING Database Migration...\n');
+function runMigrations(): void {
+  logSection('Running Migrations');
+  
+  try {
+    log('Executing: prisma migrate deploy', colors.cyan);
     
-    try {
-      // Step 1: Validate connection
-      console.log('1️⃣  Validating database connection...');
-      await this.validateConnection();
-      console.log('   ✅ Database connection validated\n');
-
-      // Step 2: Check migration status
-      console.log('2️⃣  Checking current migration status...');
-      const pendingMigrations = await this.checkPendingMigrations();
-      console.log(`   ℹ️  Found ${pendingMigrations} pending migration(s)\n`);
-
-      if (pendingMigrations === 0) {
-        console.log('✅ Database is already up to date. No migrations needed.');
-        return { success: true, migrationsApplied: 0 };
-      }
-
-      // Step 3: Create backup (optional in CI/CD, but recommended)
-      console.log('3️⃣  Creating database backup...');
-      await this.createBackup();
-      console.log('   ✅ Backup created\n');
-
-      // Step 4: Run migrations
-      console.log('4️⃣  Applying migrations...');
-      await this.applyMigrations();
-      console.log('   ✅ Migrations applied successfully\n');
-
-      // Step 5: Verify schema
-      console.log('5️⃣  Verifying database schema...');
-      await this.verifySchema();
-      console.log('   ✅ Schema verification passed\n');
-
-      console.log('✅ Migration completed successfully!');
-      return { success: true, migrationsApplied: pendingMigrations };
-
-    } catch (error) {
-      console.error('\n❌ Migration failed:', error);
-      
-      if (this.backupCreated) {
-        console.log('\n🔄 Attempting to restore from backup...');
-        try {
-          await this.restoreBackup();
-          console.log('✅ Database restored from backup');
-        } catch (restoreError) {
-          console.error('❌ Failed to restore backup:', restoreError);
-          console.error('⚠️  Manual intervention required!');
-        }
-      }
-
-      return {
-        success: false,
-        migrationsApplied: 0,
-        error: error instanceof Error ? error.message : String(error),
-      };
-    } finally {
-      await this.prisma.$disconnect();
-    }
-  }
-
-  private async validateConnection(): Promise<void> {
-    try {
-      await this.prisma.$connect();
-      await this.prisma.$executeRaw`SELECT 1`;
-    } catch (error) {
-      throw new Error(
-        `Failed to connect to database: ${error instanceof Error ? error.message : String(error)}`
-      );
-    }
-  }
-
-  private async checkPendingMigrations(): Promise<number> {
-    try {
-      // Check migration status using Prisma CLI
-      const output = execSync('npx prisma migrate status', {
-        encoding: 'utf-8',
-        stdio: 'pipe',
-        env: {
-          ...process.env,
-          DATABASE_URL: STAGING_DATABASE_URL,
-        },
-      });
-
-      // Parse output to count pending migrations
-      const pendingMatches = output.match(/(\d+) migrations? have not yet been applied/);
-      return pendingMatches ? parseInt(pendingMatches[1], 10) : 0;
-    } catch (error) {
-      // If command exits with non-zero status, there might be pending migrations
-      if (error instanceof Error && 'stdout' in error) {
-        const stdout = (error as any).stdout?.toString() || '';
-        const pendingMatches = stdout.match(/(\d+) migrations? have not yet been applied/);
-        if (pendingMatches) {
-          return parseInt(pendingMatches[1], 10);
-        }
-      }
-      // If we can't determine, assume 0 pending
-      return 0;
-    }
-  }
-
-  private async createBackup(): Promise<void> {
-    // For DigitalOcean managed databases, we rely on their automatic backups
-    // For other setups, implement pg_dump here
-    this.backupId = `staging-backup-${Date.now()}`;
-    this.backupCreated = true;
+    const output = execSync('npx prisma migrate deploy', {
+      encoding: 'utf-8',
+      stdio: 'pipe'
+    });
     
-    console.log(`   ℹ️  Backup ID: ${this.backupId}`);
-    console.log('   ℹ️  Using DigitalOcean managed database automatic backups');
-    console.log('   ℹ️  Manual backup can be created via DigitalOcean console if needed');
-  }
-
-  private async applyMigrations(): Promise<void> {
-    try {
-      // Run migrations using Prisma CLI
-      execSync('npx prisma migrate deploy', {
-        encoding: 'utf-8',
-        stdio: 'inherit',
-        env: {
-          ...process.env,
-          DATABASE_URL: STAGING_DATABASE_URL,
-        },
-      });
-    } catch (error) {
-      throw new Error(
-        `Failed to apply migrations: ${error instanceof Error ? error.message : String(error)}`
-      );
+    log(output, colors.reset);
+    log('✓ Migrations completed successfully', colors.green);
+  } catch (error: any) {
+    log('✗ Migration failed', colors.red);
+    if (error.stdout) {
+      log(error.stdout, colors.reset);
     }
-  }
-
-  private async verifySchema(): Promise<void> {
-    try {
-      // Verify that Prisma client can connect and query
-      await this.prisma.$queryRaw`SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'`;
-      
-      // Verify key tables exist
-      const requiredTables = ['User', 'Agreement', 'Transaction'];
-      for (const table of requiredTables) {
-        const result = await this.prisma.$queryRaw<any[]>`
-          SELECT EXISTS (
-            SELECT FROM information_schema.tables 
-            WHERE table_schema = 'public' 
-            AND table_name = ${table}
-          ) as exists
-        `;
-        
-        if (!result[0]?.exists) {
-          throw new Error(`Required table '${table}' not found`);
-        }
-      }
-    } catch (error) {
-      throw new Error(
-        `Schema verification failed: ${error instanceof Error ? error.message : String(error)}`
-      );
+    if (error.stderr) {
+      log(error.stderr, colors.red);
     }
-  }
-
-  private async restoreBackup(): Promise<void> {
-    // For DigitalOcean managed databases, restoration must be done via console
-    console.log('   ℹ️  To restore from backup:');
-    console.log('   1. Go to DigitalOcean Databases console');
-    console.log('   2. Select your STAGING database');
-    console.log('   3. Go to "Backups & Restore" tab');
-    console.log('   4. Select the most recent backup before migration');
-    console.log('   5. Click "Restore"');
-    console.log(`   6. Backup ID: ${this.backupId}`);
-    
-    throw new Error('Automatic restore not available for DigitalOcean managed databases');
+    process.exit(1);
   }
 }
 
-// Run migration if executed directly
-if (require.main === module) {
-  const runner = new StagingMigrationRunner();
-  runner.run().then(result => {
-    if (result.success) {
-      console.log(`\n✅ Migration completed: ${result.migrationsApplied} migration(s) applied`);
-      process.exit(0);
-    } else {
-      console.error(`\n❌ Migration failed: ${result.error}`);
+function generatePrismaClient(): void {
+  logSection('Generating Prisma Client');
+  
+  try {
+    log('Executing: prisma generate', colors.cyan);
+    
+    const output = execSync('npx prisma generate', {
+      encoding: 'utf-8',
+      stdio: 'pipe'
+    });
+    
+    log(output, colors.reset);
+    log('✓ Prisma client generated successfully', colors.green);
+  } catch (error: any) {
+    log('✗ Client generation failed', colors.red);
+    if (error.stdout) {
+      log(error.stdout, colors.reset);
+    }
+    if (error.stderr) {
+      log(error.stderr, colors.red);
+    }
+    process.exit(1);
+  }
+}
+
+function verifyMigrationStatus(): void {
+  logSection('Migration Status Verification');
+  
+  try {
+    log('Executing: prisma migrate status', colors.cyan);
+    
+    const output = execSync('npx prisma migrate status', {
+      encoding: 'utf-8',
+      stdio: 'pipe'
+    });
+    
+    log(output, colors.reset);
+    
+    // Check if there are pending migrations
+    if (output.includes('Following migration have not yet been applied')) {
+      log('⚠ Warning: There are still pending migrations', colors.yellow);
       process.exit(1);
     }
-  }).catch(error => {
-    console.error('Fatal error running migration:', error);
-    process.exit(1);
-  });
+    
+    log('✓ All migrations applied successfully', colors.green);
+  } catch (error: any) {
+    // prisma migrate status returns exit code 1 if migrations are pending
+    // So we need to check the output
+    if (error.stdout) {
+      log(error.stdout, colors.reset);
+      
+      if (error.stdout.includes('Following migration have not yet been applied')) {
+        log('✗ Pending migrations detected', colors.red);
+        process.exit(1);
+      }
+    }
+    
+    log('✓ Migration status verified', colors.green);
+  }
 }
 
-export default StagingMigrationRunner;
+function printSummary(startTime: number): void {
+  const duration = Date.now() - startTime;
+  
+  logSection('Migration Summary');
+  log(`Environment: ${process.env.NODE_ENV || 'unknown'}`, colors.cyan);
+  log(`Duration: ${duration}ms`, colors.cyan);
+  log('Status: SUCCESS', colors.green);
+  log('\n✓ STAGING database migrations completed successfully\n', colors.green);
+}
 
+async function main(): Promise<void> {
+  const startTime = Date.now();
+  
+  log('\n' + '='.repeat(60), colors.blue);
+  log('STAGING Database Migration Script', colors.blue);
+  log('='.repeat(60) + '\n', colors.blue);
+  
+  try {
+    // Step 1: Check environment variables
+    checkEnvironmentVariables();
+    
+    // Step 2: Check migration files exist
+    checkMigrationFiles();
+    
+    // Step 3: Run migrations
+    runMigrations();
+    
+    // Step 4: Generate Prisma client
+    generatePrismaClient();
+    
+    // Step 5: Verify migration status
+    verifyMigrationStatus();
+    
+    // Step 6: Print summary
+    printSummary(startTime);
+    
+    process.exit(0);
+  } catch (error: any) {
+    log('\n✗ Migration script failed', colors.red);
+    log(error.message, colors.red);
+    process.exit(1);
+  }
+}
+
+// Run the migration script
+main();

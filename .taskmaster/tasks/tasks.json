@@ -2209,7 +2209,7 @@
         "id": 73,
         "title": "Create STAGING Deployment Automation Scripts",
         "description": "Develop comprehensive CI/CD pipeline for STAGING environment deployments including build automation, artifact promotion, health checks, rollback capabilities, smoke tests, and secret management with notifications and audit logging.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           "70",
           "69",
@@ -2226,7 +2226,7 @@
             "description": "Create the build-staging.yml workflow file that builds the program and generates artifacts on staging branch pushes or tags",
             "dependencies": [],
             "details": "Implement the GitHub Actions workflow file at .github/workflows/build-staging.yml that handles:\n- Checkout of code\n- Installation of pinned Solana CLI version\n- Setting up Rust toolchain from rust-toolchain.toml\n- Building the program with anchor build\n- Generating checksums for artifacts\n- Running unit tests\n- Uploading artifacts for later deployment",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Verify the workflow runs successfully on staging branch push by making a test commit and checking that artifacts are properly generated and stored",
             "parentId": "undefined"
           },
@@ -2238,7 +2238,7 @@
               1
             ],
             "details": "Implement the GitHub Actions workflow file at .github/workflows/deploy-staging.yml that handles:\n- Triggering after successful build workflow\n- Requiring manual approval via environment protection rule\n- Downloading build artifacts\n- Setting up Solana CLI\n- Configuring staging deployer keypair\n- Deploying program to devnet\n- Updating IDL\n- Deploying backend to DigitalOcean App Platform\n- Running smoke tests\n- Sending deployment notifications",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Verify the workflow correctly waits for manual approval and then deploys artifacts to the staging environment, with proper notifications sent upon completion",
             "parentId": "undefined"
           },
@@ -2250,7 +2250,7 @@
               2
             ],
             "details": "Implement the GitHub Actions workflow file at .github/workflows/rollback-staging.yml that handles:\n- Manual workflow dispatch with deployment ID input\n- Verification of the specified deployment\n- Rollback to the specified deployment via DigitalOcean API\n- Notification of rollback status",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Test the rollback workflow by manually triggering it with a valid deployment ID and verifying the environment is restored to that specific deployment",
             "parentId": "undefined"
           },
@@ -2260,7 +2260,7 @@
             "description": "Implement the smoke test script that can be executed via npm run test:staging:smoke to verify critical functionality",
             "dependencies": [],
             "details": "Create a JavaScript/TypeScript script that performs essential health and functionality checks:\n- API health endpoint check\n- Basic API functionality test\n- Solana RPC connection test\n- Database connectivity test\n- Redis connectivity test if applicable\n\nThe script should exit with non-zero status on any failure to properly integrate with CI/CD pipeline.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Test the smoke test script against both healthy and unhealthy environments to verify it correctly identifies issues and exits with appropriate status codes",
             "parentId": "undefined"
           },
@@ -2270,7 +2270,7 @@
             "description": "Implement the migration script that can be executed via npm run staging:migrate to update the database schema",
             "dependencies": [],
             "details": "Create a JavaScript/TypeScript script that:\n- Connects to the staging database using environment variables\n- Identifies and applies pending migrations in order\n- Logs migration progress\n- Handles errors appropriately\n- Updates migration tracking table",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Test the migration script against a test database with various migration scenarios to verify it correctly applies migrations in order and handles errors",
             "parentId": "undefined"
           },
@@ -2286,7 +2286,7 @@
               5
             ],
             "details": "Create detailed documentation that includes:\n- CI/CD pipeline architecture diagram\n- Workflow descriptions and triggers\n- Required secrets and environment variables\n- Manual approval process\n- Rollback procedures\n- Troubleshooting guide\n- Security considerations\n- Best practices for working with the pipeline",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Verify documentation completeness by having a team member follow the documentation to perform a test deployment without additional guidance",
             "parentId": "undefined"
           },
@@ -2296,7 +2296,7 @@
             "description": "Set up the staging environment in GitHub with appropriate protection rules for manual approval",
             "dependencies": [],
             "details": "Configure GitHub repository settings:\n- Create a 'staging' environment\n- Add required reviewers for deployment approval\n- Set appropriate timeout for approvals\n- Configure environment secrets required by the workflows\n- Document the approval process",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Verify protection rules work by triggering a deployment and confirming it waits for the required approvals before proceeding",
             "parentId": "undefined"
           },
@@ -2306,7 +2306,7 @@
             "description": "Configure Slack/Discord webhook integration for deployment notifications",
             "dependencies": [],
             "details": "Set up notification system:\n- Create Slack/Discord webhook\n- Store webhook URL in GitHub Secrets\n- Configure notification format with deployment details\n- Include success/failure status\n- Add links to deployment logs\n- Test notification delivery",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Trigger test deployments with both success and failure scenarios to verify notifications are sent with correct information and formatting",
             "parentId": "undefined"
           }
@@ -2750,7 +2750,7 @@
         "description": "Create separate Anchor configuration files for DEV and STAGING environments to enable CI-based deployments with distinct Program IDs and dedicated deployment keypairs.",
         "details": "Create comprehensive Anchor configuration setup for multi-environment deployments:\n\n**Step 1: Create Anchor.dev.toml**\n```toml\n[toolchain]\nanchor_version = \"0.30.1\"\n\n[features]\nseeds = false\nskip-lint = false\nresolution = true\n\n[programs.devnet]\nescrow = \"4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd\"\n\n[provider]\ncluster = \"Devnet\"\nwallet = \"~/.config/solana/id.json\"\n\n[[test.validator.account]]\naddress = \"4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd\"\nfilename = \"target/deploy/escrow.json\"\n```\n\n**Step 2: Create Anchor.staging.toml**\n```toml\n[toolchain]\nanchor_version = \"0.30.1\"\n\n[features]\nseeds = false\nskip-lint = false\nresolution = true\n\n[programs.devnet]\nescrow = \"<STAGING_PROGRAM_ID_from_task_64>\"\n\n[provider]\ncluster = \"Devnet\"\nwallet = \"keys/staging-deployer.json\"\n\n[[test.validator.account]]\naddress = \"<STAGING_PROGRAM_ID_from_task_64>\"\nfilename = \"target/deploy/escrow.json\"\n```\n\n**Step 3: Create Dedicated Deployment Keypairs**\n```bash\n# Create keys directory if not exists\nmkdir -p keys\n\n# Generate staging deployer keypair (has SOL for deployment)\nsolana-keygen new -o keys/staging-deployer.json --force\n\n# Fund deployer with devnet SOL for deployment costs\nsolana airdrop 5 keys/staging-deployer.json --url devnet\n\n# Backup to /temp\ncp keys/staging-deployer.json /temp/staging-backups/\n```\n\n**Step 4: Update .gitignore**\n```\nkeys/*.json\n!keys/.gitkeep\nAnchor.*.toml  # Optional: if configs have sensitive data\n```\n\n**Step 5: Pin Toolchain Versions**\nCreate/update `rust-toolchain.toml`:\n```toml\n[toolchain]\nchannel = \"1.75.0\"\ncomponents = [\"rustfmt\", \"clippy\"]\ntargets = [\"wasm32-unknown-unknown\"]\n```\n\n**Step 6: Document Usage Patterns**\nCreate docs/deployment/ANCHOR_CONFIG_SETUP.md with:\n- Environment-specific build commands: `anchor build -C Anchor.dev.toml`\n- Environment-specific deployment: `anchor deploy -C Anchor.staging.toml --provider.cluster devnet`\n- Keypair management best practices\n- CI/CD integration guidelines\n\n**Important Considerations:**\n- Program keypairs (target/deploy/escrow-keypair.json, escrow-keypair-staging.json) stay in target/deploy\n- Deployer keypairs (who pays for deployment) go in keys/\n- Each environment has its own Program ID for complete isolation\n- CI will use these config files to deploy to correct environments",
         "testStrategy": "1. **Configuration File Validation**: Verify both Anchor.dev.toml and Anchor.staging.toml are created with correct syntax by running `anchor build -C Anchor.dev.toml` and `anchor build -C Anchor.staging.toml` without errors\n\n2. **Program ID Integration**: Confirm Anchor.staging.toml references the correct STAGING_PROGRAM_ID from Task 64 by cross-referencing the generated keypair address\n\n3. **Keypair Generation Testing**: Verify staging deployer keypair is created successfully by running `solana address -k keys/staging-deployer.json` and confirming it returns a valid base58 address\n\n4. **Funding Verification**: Test devnet SOL funding by checking balance with `solana balance keys/staging-deployer.json --url devnet` shows approximately 5 SOL\n\n5. **Backup Process Testing**: Confirm backup creation by verifying `/temp/staging-backups/staging-deployer.json` exists and matches the original keypair\n\n6. **Environment Isolation Testing**: Build with each configuration file separately and verify they produce different program IDs in the artifacts\n\n7. **Documentation Completeness**: Review docs/deployment/ANCHOR_CONFIG_SETUP.md contains all usage patterns, best practices, and CI/CD integration guidelines\n\n8. **Gitignore Validation**: Verify sensitive keypair files are properly excluded from version control by running `git status` and confirming keys/*.json files are ignored",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           "64"
         ],
@@ -2771,7 +2771,7 @@
       ],
       "created": "2025-10-21T00:36:23.178Z",
       "description": "Tasks for master context",
-      "updated": "2025-10-24T05:03:52.968Z"
+      "updated": "2025-10-26T23:59:32.236Z"
     }
   }
 }
