@@ -1,6 +1,6 @@
 # Task ID: 51
 # Title: Copy new IDL to backend source
-# Status: pending
+# Status: done
 # Dependencies: None
 # Priority: high
 # Description: Update the backend's IDL file with the newly generated one from anchor build

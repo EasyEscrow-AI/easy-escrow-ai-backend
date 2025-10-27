@@ -65,4 +65,3 @@ Critical: All four locations must reference the EXACT same program ID string to 
    ```
 
 Success criteria: All four locations contain the exact program ID string and no old program IDs remain in the codebase.
-

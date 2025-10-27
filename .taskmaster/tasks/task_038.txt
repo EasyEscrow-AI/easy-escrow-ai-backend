@@ -11,37 +11,37 @@ This localnet setup serves as the critical foundation for comprehensive test-dri
 Validate localnet setup by running a subset of the complete test matrix to ensure all testing infrastructure is properly configured. Test should include basic program deployment, account creation, token operations, and state transitions to confirm the environment supports the full range of planned test scenarios.
 
 # Subtasks:
-## 1. Install and Configure Solana CLI for Local Development [pending]
+## 1. Install and Configure Solana CLI for Local Development [done]
 ### Dependencies: None
 ### Description: Install Solana CLI tools and configure for local development environment
 ### Details:
 Download and install Solana CLI from official sources. Configure solana config set --url localhost to point to local validator. Verify installation with solana --version and solana config get commands.
 
-## 2. Start Local Solana Validator with Custom Configuration [pending]
+## 2. Start Local Solana Validator with Custom Configuration [done]
 ### Dependencies: 38.1
 ### Description: Launch local Solana validator with optimized settings for fast testing
 ### Details:
 Start validator using solana-test-validator with custom flags: --reset for clean state, --quiet for minimal logging, --bpf-program for preloaded programs, and --slots-per-epoch 32 for faster epoch transitions. Configure validator to run on default localhost:8899.
 
-## 3. Setup Test Keypairs and SOL Airdrops [pending]
+## 3. Setup Test Keypairs and SOL Airdrops [done]
 ### Dependencies: 38.2
 ### Description: Generate test keypairs and fund them with SOL for transaction fees
 ### Details:
 Generate multiple test keypairs using solana-keygen new command. Create keypairs for buyer, seller, admin, and fee collector accounts. Fund each account with 10 SOL using solana airdrop command for transaction fees during testing.
 
-## 4. Deploy Test USDC Token Mint and Distribution [pending]
+## 4. Deploy Test USDC Token Mint and Distribution [done]
 ### Dependencies: 38.3
 ### Description: Create local USDC token mint and distribute test tokens to accounts
 ### Details:
 Use spl-token CLI to create a new token mint representing USDC. Set mint authority and create associated token accounts for test keypairs. Mint 1000 test USDC tokens to buyer and seller accounts for escrow testing scenarios.
 
-## 5. Create Test NFT Collection and Mint Sample NFTs [pending]
+## 5. Create Test NFT Collection and Mint Sample NFTs [done]
 ### Dependencies: 38.3
 ### Description: Setup test NFT collection and mint sample NFTs for escrow testing
 ### Details:
 Deploy Metaplex Token Metadata program if not available. Create NFT collection with metadata including name, symbol, and URI. Mint 5-10 test NFTs with unique metadata to seller accounts for use in escrow agreement testing scenarios.
 
-## 6. Setup Test Matrix Infrastructure for Comprehensive State Machine Testing [pending]
+## 6. Setup Test Matrix Infrastructure for Comprehensive State Machine Testing [done]
 ### Dependencies: 38.4, 38.5
 ### Description: Configure additional test accounts and scenarios to support the complete on-chain test matrix
 ### Details:

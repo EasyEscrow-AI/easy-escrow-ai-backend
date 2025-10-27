@@ -1,6 +1,6 @@
 # Task ID: 87
 # Title: Setup Anchor Configuration Files for DEV and STAGING Environments
-# Status: pending
+# Status: done
 # Dependencies: 64
 # Priority: high
 # Description: Create separate Anchor configuration files for DEV and STAGING environments to enable CI-based deployments with distinct Program IDs and dedicated deployment keypairs.
@@ -111,4 +111,3 @@ Create docs/deployment/ANCHOR_CONFIG_SETUP.md with:
 7. **Documentation Completeness**: Review docs/deployment/ANCHOR_CONFIG_SETUP.md contains all usage patterns, best practices, and CI/CD integration guidelines
 
 8. **Gitignore Validation**: Verify sensitive keypair files are properly excluded from version control by running `git status` and confirming keys/*.json files are ignored
-

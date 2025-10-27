@@ -1,6 +1,6 @@
 # Task ID: 49
 # Title: Deploy program to Solana devnet
-# Status: pending
+# Status: done
 # Dependencies: None
 # Priority: high
 # Description: Deploy the compiled escrow program to Solana devnet
