@@ -1,4 +1,5 @@
 import { redisClient } from '../config/redis';
+import type { Redis } from 'ioredis';
 
 /**
  * Cache Service
@@ -10,15 +11,19 @@ import { redisClient } from '../config/redis';
 export interface CacheOptions {
   ttl?: number; // Time to live in seconds
   prefix?: string; // Cache key prefix
+  redisClient?: Redis; // Optional Redis client for testing
 }
 
 export class CacheService {
   private defaultTTL: number = 3600; // 1 hour default
   private prefix: string = 'cache:';
+  private redis: Redis;
 
   constructor(options?: CacheOptions) {
     if (options?.ttl) this.defaultTTL = options.ttl;
     if (options?.prefix) this.prefix = options.prefix;
+    // Use provided client (for testing) or default Redis client
+    this.redis = options?.redisClient || redisClient as any;
   }
 
   /**
@@ -34,7 +39,7 @@ export class CacheService {
   async get<T>(key: string): Promise<T | null> {
     try {
       const cacheKey = this.getKey(key);
-      const data = await redisClient.get(cacheKey);
+      const data = await this.redis.get(cacheKey);
       
       if (!data) {
         return null;
@@ -56,7 +61,7 @@ export class CacheService {
       const data = JSON.stringify(value);
       const expirySeconds = ttl || this.defaultTTL;
 
-      await redisClient.setex(cacheKey, expirySeconds, data);
+      await this.redis.setex(cacheKey, expirySeconds, data);
       return true;
     } catch (error) {
       console.error(`Cache set error for key ${key}:`, error);
@@ -70,7 +75,7 @@ export class CacheService {
   async delete(key: string): Promise<boolean> {
     try {
       const cacheKey = this.getKey(key);
-      const result = await redisClient.del(cacheKey);
+      const result = await this.redis.del(cacheKey);
       return result > 0;
     } catch (error) {
       console.error(`Cache delete error for key ${key}:`, error);
@@ -84,13 +89,13 @@ export class CacheService {
   async deletePattern(pattern: string): Promise<number> {
     try {
       const cachePattern = this.getKey(pattern);
-      const keys = await redisClient.keys(cachePattern);
+      const keys = await this.redis.keys(cachePattern);
       
       if (keys.length === 0) {
         return 0;
       }
 
-      const result = await redisClient.del(...keys);
+      const result = await this.redis.del(...keys);
       return result;
     } catch (error) {
       console.error(`Cache delete pattern error for pattern ${pattern}:`, error);
@@ -104,7 +109,7 @@ export class CacheService {
   async exists(key: string): Promise<boolean> {
     try {
       const cacheKey = this.getKey(key);
-      const result = await redisClient.exists(cacheKey);
+      const result = await this.redis.exists(cacheKey);
       return result === 1;
     } catch (error) {
       console.error(`Cache exists error for key ${key}:`, error);
@@ -118,7 +123,7 @@ export class CacheService {
   async ttl(key: string): Promise<number> {
     try {
       const cacheKey = this.getKey(key);
-      return await redisClient.ttl(cacheKey);
+      return await this.redis.ttl(cacheKey);
     } catch (error) {
       console.error(`Cache TTL error for key ${key}:`, error);
       return -1;
@@ -131,7 +136,7 @@ export class CacheService {
   async increment(key: string, amount: number = 1): Promise<number> {
     try {
       const cacheKey = this.getKey(key);
-      return await redisClient.incrby(cacheKey, amount);
+      return await this.redis.incrby(cacheKey, amount);
     } catch (error) {
       console.error(`Cache increment error for key ${key}:`, error);
       throw error;
@@ -144,7 +149,7 @@ export class CacheService {
   async expire(key: string, seconds: number): Promise<boolean> {
     try {
       const cacheKey = this.getKey(key);
-      const result = await redisClient.expire(cacheKey, seconds);
+      const result = await this.redis.expire(cacheKey, seconds);
       return result === 1;
     } catch (error) {
       console.error(`Cache expire error for key ${key}:`, error);
@@ -158,7 +163,7 @@ export class CacheService {
   async mget<T>(keys: string[]): Promise<(T | null)[]> {
     try {
       const cacheKeys = keys.map(k => this.getKey(k));
-      const values = await redisClient.mget(...cacheKeys);
+      const values = await this.redis.mget(...cacheKeys);
       
       return values.map(value => {
         if (!value) return null;
@@ -179,7 +184,7 @@ export class CacheService {
    */
   async mset<T>(entries: Array<{ key: string; value: T; ttl?: number }>): Promise<boolean> {
     try {
-      const pipeline = redisClient.pipeline();
+      const pipeline = this.redis.pipeline();
       
       for (const entry of entries) {
         const cacheKey = this.getKey(entry.key);

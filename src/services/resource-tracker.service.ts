@@ -425,7 +425,9 @@ class ResourceTrackerService {
    */
   private async storeMetrics(metrics: ResourceMetrics): Promise<void> {
     try {
-      const key = `${this.REDIS_METRICS_KEY}:${metrics.timestamp.getTime()}`;
+      // Use timestamp + random suffix to ensure uniqueness (avoid overwrites)
+      const uniqueSuffix = Math.random().toString(36).substr(2, 9);
+      const key = `${this.REDIS_METRICS_KEY}:${metrics.timestamp.getTime()}:${uniqueSuffix}`;
       await redisClient.setex(
         key,
         this.METRICS_RETENTION_HOURS * 3600,
@@ -486,7 +488,16 @@ class ResourceTrackerService {
       for (const key of keys) {
         const data = await redisClient.get(key);
         if (data) {
-          metrics.push(JSON.parse(data));
+          const parsed = JSON.parse(data);
+          // Convert timestamp string back to Date object
+          if (parsed.timestamp && typeof parsed.timestamp === 'string') {
+            parsed.timestamp = new Date(parsed.timestamp);
+          }
+          // Convert computeMetrics timestamp if present
+          if (parsed.computeMetrics?.timestamp && typeof parsed.computeMetrics.timestamp === 'string') {
+            parsed.computeMetrics.timestamp = new Date(parsed.computeMetrics.timestamp);
+          }
+          metrics.push(parsed);
         }
       }
 
@@ -512,7 +523,12 @@ class ResourceTrackerService {
       for (const key of keys) {
         const data = await redisClient.get(key);
         if (data) {
-          alerts.push(JSON.parse(data));
+          const parsed = JSON.parse(data);
+          // Convert timestamp string back to Date object
+          if (parsed.timestamp && typeof parsed.timestamp === 'string') {
+            parsed.timestamp = new Date(parsed.timestamp);
+          }
+          alerts.push(parsed);
         }
       }
 
@@ -551,8 +567,10 @@ class ResourceTrackerService {
       const metrics = await this.getMetrics(startTime, endTime);
       const alerts = await this.getAlerts(startTime, endTime);
 
-      // Calculate summary statistics
-      const solMetrics = metrics.filter(m => m.solUsage).map(m => m.solUsage!);
+      // Calculate summary statistics (exclude wallet refills from SOL metrics)
+      const solMetrics = metrics
+        .filter(m => m.solUsage && m.solUsage.operationType !== 'wallet_refill')
+        .map(m => m.solUsage!);
       const dbMetrics = metrics.filter(m => m.databaseMetrics).map(m => m.databaseMetrics!);
       const redisMetrics = metrics.filter(m => m.redisMetrics).map(m => m.redisMetrics!);
       const rpcMetrics = metrics.filter(m => m.rpcMetrics).map(m => m.rpcMetrics!);

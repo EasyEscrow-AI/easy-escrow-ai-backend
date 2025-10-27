@@ -6,10 +6,9 @@
  * Provides log aggregation and search capabilities for debugging and receipts.
  */
 
-import { PrismaClient, TransactionLog } from '../generated/prisma';
+import { TransactionLog } from '../generated/prisma';
 import { Connection, PublicKey } from '@solana/web3.js';
-
-const prisma = new PrismaClient();
+import { prisma } from '../config/database';
 
 /**
  * Operation types for transaction logging

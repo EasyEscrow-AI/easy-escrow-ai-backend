@@ -6,13 +6,27 @@
 
 import { describe, it, beforeEach, afterEach } from 'mocha';
 import { expect } from 'chai';
+import sinon from 'sinon';
 import { IdempotencyService } from '../../src/services/idempotency.service';
-import { prisma } from '../../src/config/database';
+import { mockPrismaForTest, teardownPrismaMock } from '../helpers/prisma-mock';
 
 describe('IdempotencyService', () => {
   let idempotencyService: IdempotencyService;
+  let prismaStub: any;
 
   beforeEach(async () => {
+    // Setup Prisma mock
+    prismaStub = {
+      idempotencyKey: {
+        findUnique: sinon.stub(),
+        create: sinon.stub(),
+        delete: sinon.stub().resolves({ key: 'test-key' }),
+        deleteMany: sinon.stub().resolves({ count: 0 }),
+        count: sinon.stub().resolves(0),
+      },
+    };
+    mockPrismaForTest(prismaStub);
+    
     idempotencyService = new IdempotencyService({
       expirationHours: 1,
       cleanupIntervalMinutes: 60,
@@ -21,15 +35,9 @@ describe('IdempotencyService', () => {
   });
 
   afterEach(async () => {
-    // Clean up test data
-    await prisma.idempotencyKey.deleteMany({
-      where: {
-        endpoint: {
-          contains: 'TEST',
-        },
-      },
-    });
     await idempotencyService.stop();
+    sinon.restore();
+    teardownPrismaMock();
   });
 
   describe('validateKeyFormat', () => {
@@ -84,6 +92,20 @@ describe('IdempotencyService', () => {
       const key = 'test-key-duplicate-1234567890';
       const endpoint = 'TEST_ENDPOINT';
       const body = { test: 'data' };
+      const requestHash = idempotencyService.generateRequestHash(body);
+      
+      const storedRecord = {
+        key,
+        endpoint,
+        requestHash,
+        responseStatus: 200,
+        responseBody: { success: true },
+        createdAt: new Date(),
+        expiresAt: new Date(Date.now() + 3600000),
+      };
+
+      // Mock create to store the record
+      prismaStub.idempotencyKey.create.resolves(storedRecord);
 
       // Store the first request
       await idempotencyService.storeIdempotency(
@@ -93,6 +115,9 @@ describe('IdempotencyService', () => {
         200,
         { success: true }
       );
+
+      // NOW mock findUnique to return the stored record (after storage)
+      prismaStub.idempotencyKey.findUnique.resolves(storedRecord);
 
       // Check if duplicate
       const result = await idempotencyService.checkIdempotency(key, endpoint, body);
@@ -106,6 +131,23 @@ describe('IdempotencyService', () => {
     it('should throw error if key used with different endpoint', async () => {
       const key = 'test-key-endpoint-mismatch';
       const body = { test: 'data' };
+      const requestHash = idempotencyService.generateRequestHash(body);
+      
+      const storedRecord = {
+        key,
+        endpoint: 'TEST_ENDPOINT_1',
+        requestHash,
+        responseStatus: 200,
+        responseBody: { success: true },
+        createdAt: new Date(),
+        expiresAt: new Date(Date.now() + 3600000),
+      };
+      
+      // Mock create
+      prismaStub.idempotencyKey.create.resolves(storedRecord);
+      
+      // Mock findUnique to return the stored record
+      prismaStub.idempotencyKey.findUnique.resolves(storedRecord);
 
       // Store with one endpoint
       await idempotencyService.storeIdempotency(
@@ -128,12 +170,30 @@ describe('IdempotencyService', () => {
     it('should throw error if key used with different request body', async () => {
       const key = 'test-key-body-mismatch-12345';
       const endpoint = 'TEST_ENDPOINT';
+      const body1 = { test: 'data1' };
+      const requestHash1 = idempotencyService.generateRequestHash(body1);
+      
+      const storedRecord = {
+        key,
+        endpoint,
+        requestHash: requestHash1,
+        responseStatus: 200,
+        responseBody: { success: true },
+        createdAt: new Date(),
+        expiresAt: new Date(Date.now() + 3600000),
+      };
+      
+      // Mock create
+      prismaStub.idempotencyKey.create.resolves(storedRecord);
+      
+      // Mock findUnique to return the stored record
+      prismaStub.idempotencyKey.findUnique.resolves(storedRecord);
 
       // Store with one body
       await idempotencyService.storeIdempotency(
         key,
         endpoint,
-        { test: 'data1' },
+        body1,
         200,
         { success: true }
       );
@@ -156,6 +216,18 @@ describe('IdempotencyService', () => {
       const responseStatus = 201;
       const responseBody = { success: true, id: '123' };
 
+      const mockRecord = {
+        key,
+        endpoint,
+        requestHash: 'mock-hash',
+        responseStatus,
+        responseBody: JSON.stringify(responseBody),
+        createdAt: new Date(),
+        expiresAt: new Date(Date.now() + 3600000),
+      };
+      
+      prismaStub.idempotencyKey.create.resolves(mockRecord);
+      
       await idempotencyService.storeIdempotency(
         key,
         endpoint,
@@ -164,6 +236,8 @@ describe('IdempotencyService', () => {
         responseBody
       );
 
+      // Verify Prisma create was called
+      expect(prismaStub.idempotencyKey.create.calledOnce).to.be.true;
       // Verify stored
       const stored = await prisma.idempotencyKey.findUnique({
         where: { key },
@@ -180,18 +254,13 @@ describe('IdempotencyService', () => {
     it('should delete idempotency key successfully', async () => {
       const key = 'test-key-delete-1234567890';
 
-      // Store key
-      await idempotencyService.storeIdempotency(
-        key,
-        'TEST_ENDPOINT',
-        { test: 'data' },
-        200,
-        { success: true }
-      );
+      prismaStub.idempotencyKey.deleteMany.resolves({ count: 1 });
 
       // Delete key
       await idempotencyService.deleteIdempotencyKey(key);
 
+      // Verify Prisma deleteMany was called
+      expect(prismaStub.idempotencyKey.deleteMany.calledOnce).to.be.true;
       // Verify deleted
       const deleted = await prisma.idempotencyKey.findUnique({
         where: { key },

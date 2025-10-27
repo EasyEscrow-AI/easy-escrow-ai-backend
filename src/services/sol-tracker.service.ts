@@ -295,13 +295,18 @@ class SolTrackerService {
       const metrics = await resourceTracker.getMetrics(startTime, endTime);
       const solMetrics = metrics.filter(m => m.solUsage);
 
-      const totalConsumed = solMetrics.reduce(
+      // Filter out wallet refills (negative amounts) when calculating consumption
+      const consumptionMetrics = solMetrics.filter(
+        m => m.solUsage?.operationType !== 'wallet_refill'
+      );
+
+      const totalConsumed = consumptionMetrics.reduce(
         (sum, m) => sum + (m.solUsage?.transactionFees || 0),
         0
       );
 
-      const averagePerTransaction = solMetrics.length > 0
-        ? totalConsumed / solMetrics.length
+      const averagePerTransaction = consumptionMetrics.length > 0
+        ? totalConsumed / consumptionMetrics.length
         : 0;
 
       // Group by stage

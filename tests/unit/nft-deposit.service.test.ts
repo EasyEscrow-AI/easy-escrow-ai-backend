@@ -69,14 +69,14 @@ describe('NFT Deposit Service - Unit Tests', () => {
   describe('handleNftAccountChange', () => {
     const agreementId = 'test-agreement-id';
     const publicKey = '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU';
-    const nftMint = 'NFTMintAddress123';
+    const nftMint = 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB'; // Valid Solana NFT mint address
     const context: Context = { slot: 100 };
 
     function createMockAccountInfo(amount: bigint = BigInt(1)): AccountInfo<Buffer> {
       const accountData = Buffer.alloc(AccountLayout.span);
       const mockData = {
         mint: new PublicKey(nftMint),
-        owner: new PublicKey('OwnerAddress123'),
+        owner: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'), // Valid base58 address
         amount,
         state: 1,
         delegateOption: 0 as 0 | 1,
@@ -141,7 +141,7 @@ describe('NFT Deposit Service - Unit Tests', () => {
 
     it('should reject deposit with invalid account owner', async () => {
       const accountInfo = createMockAccountInfo();
-      accountInfo.owner = new PublicKey('InvalidOwner123');
+      accountInfo.owner = new PublicKey('11111111111111111111111111111111'); // System program, not Token program
 
       const result = await nftDepositService.handleNftAccountChange(
         publicKey,
@@ -158,7 +158,7 @@ describe('NFT Deposit Service - Unit Tests', () => {
       const mockAgreement = {
         id: agreementId,
         agreementId: 'AGR-TEST-001',
-        nftMint: 'DifferentNFTMint',
+        nftMint: 'So11111111111111111111111111111111111111112', // Valid but different mint (wrapped SOL)
         seller: 'SellerAddress',
         nftDepositAddr: publicKey,
         status: 'PENDING',
@@ -387,11 +387,11 @@ describe('NFT Deposit Service - Unit Tests', () => {
   });
 
   describe('validateNftMint', () => {
-    const nftMint = 'NFTMintAddress123';
+    const nftMint = 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB'; // Valid Solana address
 
     it('should validate valid NFT mint with metadata', async () => {
       const mockAccountInfo = {
-        owner: TOKEN_PROGRAM_ID,
+        owner: TOKEN_PROGRAM_ID, // This is already a PublicKey with toBase58() method
         data: Buffer.alloc(82), // Mint account size
         lamports: 1000000,
         executable: false,
@@ -410,7 +410,9 @@ describe('NFT Deposit Service - Unit Tests', () => {
       };
 
       solanaServiceStub.getAccountInfo.resolves(mockAccountInfo);
-      sinon.stub(nftDepositService as any, 'fetchNftMetadata').resolves(mockMetadata);
+
+      // Replace the private method directly on the instance
+      (nftDepositService as any).fetchNftMetadata = sinon.stub().resolves(mockMetadata);
 
       const result = await nftDepositService.validateNftMint(nftMint);
 
@@ -430,7 +432,7 @@ describe('NFT Deposit Service - Unit Tests', () => {
 
     it('should return invalid for non-token-program account', async () => {
       const mockAccountInfo = {
-        owner: new PublicKey('SomeOtherProgram123'),
+        owner: new PublicKey('11111111111111111111111111111111'), // System program, not Token program
         data: Buffer.alloc(82),
         lamports: 1000000,
         executable: false,
@@ -457,12 +459,13 @@ describe('NFT Deposit Service - Unit Tests', () => {
 
   describe('Agreement Status Updates', () => {
     const agreementId = 'test-agreement-id';
+    const nftMint = 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB'; // Valid Solana NFT mint address
 
     it('should update status to NFT_LOCKED when only NFT is deposited', async () => {
       const mockAgreement = {
         id: agreementId,
         agreementId: 'AGR-TEST-001',
-        nftMint: 'NFTMint123',
+        nftMint,  // Use the valid nftMint from describe block
         seller: 'SellerAddress',
         nftDepositAddr: 'DepositAddress',
         status: 'PENDING',
@@ -485,8 +488,8 @@ describe('NFT Deposit Service - Unit Tests', () => {
 
       // Encode NFT data
       const mockData = {
-        mint: new PublicKey('NFTMint123'),
-        owner: new PublicKey('OwnerAddress123'),
+        mint: new PublicKey(nftMint),
+        owner: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'), // Valid base58 address
         amount: BigInt(1),
         state: 1,
         delegateOption: 0 as 0 | 1,
@@ -515,7 +518,7 @@ describe('NFT Deposit Service - Unit Tests', () => {
       const mockAgreement = {
         id: agreementId,
         agreementId: 'AGR-TEST-001',
-        nftMint: 'NFTMint123',
+        nftMint,  // Use the valid nftMint from describe block
         seller: 'SellerAddress',
         nftDepositAddr: 'DepositAddress',
         status: 'USDC_LOCKED',
@@ -543,8 +546,8 @@ describe('NFT Deposit Service - Unit Tests', () => {
       };
 
       const mockData = {
-        mint: new PublicKey('NFTMint123'),
-        owner: new PublicKey('OwnerAddress123'),
+        mint: new PublicKey(nftMint),
+        owner: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'), // Valid base58 address
         amount: BigInt(1),
         state: 1,
         delegateOption: 0 as 0 | 1,

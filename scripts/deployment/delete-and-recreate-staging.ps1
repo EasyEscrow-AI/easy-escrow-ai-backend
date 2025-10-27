@@ -71,14 +71,14 @@ if ($appExists) {
 # Create the new app using the staging configuration
 Write-Host "🏗️  Creating new staging app..." -ForegroundColor Yellow
 
-# Check if staging-app.yaml exists
-if (-not (Test-Path "staging-app.yaml")) {
-    Write-Error "❌ staging-app.yaml not found in current directory"
+# Check if .do/staging.yaml exists
+if (-not (Test-Path ".do/staging.yaml")) {
+    Write-Error "❌ .do/staging.yaml not found"
     exit 1
 }
 
 # Create the app
-doctl apps create --spec staging-app.yaml
+doctl apps create --spec .do/staging.yaml
 
 if ($LASTEXITCODE -ne 0) {
     Write-Error "❌ Failed to create new staging app"
