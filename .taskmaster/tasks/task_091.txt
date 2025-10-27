@@ -1,0 +1,174 @@
+# Task ID: 91
+# Title: Production Wallet Management - Generate Mainnet Wallets
+# Status: pending
+# Dependencies: 90, 89
+# Priority: high
+# Description: Generate production mainnet wallets for Admin, Sender (testing), and Receiver (testing) roles, document wallet addresses securely, and prepare for manual funding with SOL/USDC/NFT. Fee Collector wallet is cold storage provided by user.
+# Details:
+Create and securely manage production mainnet wallets for the escrow system with proper documentation and security practices:
+
+**Step 1: Generate Production Wallets**
+```bash
+# Generate Admin wallet (system operations)
+solana-keygen new -o wallets/production/admin-wallet.json --force
+ADMIN_PUBKEY=$(solana address -k wallets/production/admin-wallet.json)
+
+# Generate Sender wallet (testing transactions)
+solana-keygen new -o wallets/production/sender-wallet.json --force
+SENDER_PUBKEY=$(solana address -k wallets/production/sender-wallet.json)
+
+# Generate Receiver wallet (testing transactions)
+solana-keygen new -o wallets/production/receiver-wallet.json --force
+RECEIVER_PUBKEY=$(solana address -k wallets/production/receiver-wallet.json)
+```
+
+**Step 2: Secure Documentation**
+Create secure wallet documentation in encrypted storage:
+```bash
+# Create wallet registry
+cat > wallets/production/WALLET_REGISTRY.md << EOF
+# Production Mainnet Wallets
+
+## Admin Wallet
+- **Purpose**: System administration and program authority
+- **Address**: $ADMIN_PUBKEY
+- **Keypair**: admin-wallet.json
+- **Required Funding**: 5 SOL minimum
+
+## Sender Wallet (Testing)
+- **Purpose**: Testing escrow creation and deposits
+- **Address**: $SENDER_PUBKEY
+- **Keypair**: sender-wallet.json
+- **Required Funding**: 2 SOL, 100 USDC, Test NFTs
+
+## Receiver Wallet (Testing)
+- **Purpose**: Testing escrow settlements and withdrawals
+- **Address**: $RECEIVER_PUBKEY
+- **Keypair**: receiver-wallet.json
+- **Required Funding**: 1 SOL minimum
+
+## Fee Collector Wallet (User Provided)
+- **Purpose**: Cold storage for collected fees (deposit only)
+- **Address**: [TO BE PROVIDED BY USER]
+- **Private Key**: NOT MANAGED BY SYSTEM
+- **Note**: User will provide public address only
+EOF
+```
+
+**Step 3: Security Measures**
+```bash
+# Set restrictive permissions on wallet files
+chmod 600 wallets/production/*.json
+chmod 700 wallets/production/
+
+# Create backup instructions
+cat > wallets/production/BACKUP_INSTRUCTIONS.md << EOF
+# Wallet Backup Procedures
+
+1. **Immediate Backup**: Copy all .json files to encrypted USB drive
+2. **Secure Storage**: Store backup in fireproof safe or safety deposit box
+3. **Access Control**: Limit access to authorized personnel only
+4. **Recovery Testing**: Verify backup integrity monthly
+
+## Emergency Recovery Commands
+solana address -k admin-wallet.json
+solana address -k sender-wallet.json
+solana address -k receiver-wallet.json
+EOF
+```
+
+**Step 4: Environment Configuration**
+Update production environment variables using MAINNET_PROD_* convention:
+```bash
+# Add to production .env
+MAINNET_PROD_ADMIN_ADDRESS=$ADMIN_PUBKEY
+MAINNET_PROD_SENDER_ADDRESS=$SENDER_PUBKEY
+MAINNET_PROD_RECEIVER_ADDRESS=$RECEIVER_PUBKEY
+MAINNET_PROD_FEE_COLLECTOR_ADDRESS=[USER_PROVIDED_ADDRESS]
+
+# Wallet private key paths (for server access)
+MAINNET_PROD_ADMIN_PRIVATE_KEY=/app/wallets/production/admin-wallet.json
+MAINNET_PROD_SENDER_PRIVATE_KEY=/app/wallets/production/sender-wallet.json
+MAINNET_PROD_RECEIVER_PRIVATE_KEY=/app/wallets/production/receiver-wallet.json
+MAINNET_PROD_FEE_COLLECTOR_PRIVATE_KEY=[NOT_MANAGED_COLD_STORAGE]
+```
+
+**Step 5: Funding Preparation**
+Create funding checklist for manual execution:
+```markdown
+# Manual Funding Checklist
+
+## Admin Wallet ($ADMIN_PUBKEY)
+- [ ] Transfer 5 SOL for transaction fees and program operations
+- [ ] Verify balance: `solana balance $ADMIN_PUBKEY --url mainnet-beta`
+- [ ] Update MAINNET_PROD_ADMIN_ADDRESS in environment
+
+## Sender Wallet ($SENDER_PUBKEY)
+- [ ] Transfer 2 SOL for transaction fees
+- [ ] Transfer 100 USDC for testing escrow deposits
+- [ ] Transfer test NFTs for escrow testing
+- [ ] Verify all balances on mainnet
+- [ ] Update MAINNET_PROD_SENDER_ADDRESS in environment
+
+## Receiver Wallet ($RECEIVER_PUBKEY)
+- [ ] Transfer 1 SOL for transaction fees
+- [ ] Verify balance: `solana balance $RECEIVER_PUBKEY --url mainnet-beta`
+- [ ] Update MAINNET_PROD_RECEIVER_ADDRESS in environment
+
+## Fee Collector Setup
+- [ ] Obtain cold storage wallet address from user
+- [ ] Update MAINNET_PROD_FEE_COLLECTOR_ADDRESS in environment
+- [ ] Verify address format and network compatibility
+- [ ] Confirm MAINNET_PROD_FEE_COLLECTOR_PRIVATE_KEY remains as [NOT_MANAGED_COLD_STORAGE]
+```
+
+**Security Considerations:**
+- All private keys stored with 600 permissions
+- Wallet registry encrypted and access-controlled
+- Backup procedures documented and tested
+- Fee collector remains cold storage (no private key access)
+- Regular balance monitoring and security audits
+- Environment variables follow MAINNET_PROD_* naming convention
+
+# Test Strategy:
+1. **Wallet Generation Verification**: Confirm all three wallet keypair files exist in `wallets/production/` directory with correct permissions (600), verify each wallet address can be extracted successfully using `solana address -k [wallet-file]`, and validate all addresses are valid mainnet Solana addresses.
+
+2. **Documentation Completeness**: Verify WALLET_REGISTRY.md contains all required wallet information including addresses, purposes, and funding requirements, confirm BACKUP_INSTRUCTIONS.md provides clear recovery procedures, and validate all wallet addresses match the generated keypairs.
+
+3. **Security Validation**: Test file permissions are restrictive (600 for .json files, 700 for directory), verify wallet files are not accessible by unauthorized users, confirm backup procedures can successfully restore wallet access, and validate environment variables are properly configured with MAINNET_PROD_* naming convention.
+
+4. **Network Compatibility**: Verify all generated addresses are valid for Solana mainnet using `solana address --check [address] --url mainnet-beta`, confirm addresses can be looked up on mainnet explorers (Solscan, Solana Beach), and validate address format consistency across all wallets.
+
+5. **Funding Readiness**: Confirm funding checklist is complete and actionable with MAINNET_PROD_* environment variable references, verify balance check commands work correctly for each wallet address, test that Fee Collector address placeholder is properly configured for user input, and validate all required funding amounts are documented and reasonable for production operations.
+
+# Subtasks:
+## 1. Generate Admin Wallet for Production Mainnet [pending]
+### Dependencies: None
+### Description: Create the Admin wallet keypair for system operations and program authority on mainnet
+### Details:
+Use solana-keygen to generate admin-wallet.json in wallets/production/ directory with proper permissions (600). Extract and store the public key for environment configuration. This wallet will handle system administration and program authority operations.
+
+## 2. Generate Sender Wallet for Production Testing [pending]
+### Dependencies: None
+### Description: Create the Sender wallet keypair for testing escrow creation and deposit operations on mainnet
+### Details:
+Use solana-keygen to generate sender-wallet.json in wallets/production/ directory with proper permissions (600). Extract and store the public key for environment configuration. This wallet will be used for testing escrow deposits with real USDC and NFTs.
+
+## 3. Generate Receiver Wallet for Production Testing [pending]
+### Dependencies: None
+### Description: Create the Receiver wallet keypair for testing escrow settlement and withdrawal operations on mainnet
+### Details:
+Use solana-keygen to generate receiver-wallet.json in wallets/production/ directory with proper permissions (600). Extract and store the public key for environment configuration. This wallet will be used for testing escrow settlements and withdrawals.
+
+## 4. Create Secure Wallet Documentation and Registry [pending]
+### Dependencies: 91.1, 91.2, 91.3
+### Description: Document all wallet addresses securely in encrypted storage with proper access controls and backup procedures
+### Details:
+Create WALLET_REGISTRY.md and BACKUP_INSTRUCTIONS.md in wallets/production/ directory. Document all wallet purposes, addresses, funding requirements, and security procedures. Set directory permissions to 700 and implement access controls for authorized personnel only.
+
+## 5. Configure MAINNET_PROD Environment Variables and Funding Checklist [pending]
+### Dependencies: 91.4
+### Description: Update production environment variables using MAINNET_PROD_* naming convention and create comprehensive funding checklist with proper variable references
+### Details:
+Update production .env with MAINNET_PROD_* environment variables including MAINNET_PROD_ADMIN_ADDRESS, MAINNET_PROD_SENDER_ADDRESS, MAINNET_PROD_RECEIVER_ADDRESS, MAINNET_PROD_FEE_COLLECTOR_ADDRESS, and corresponding private key paths. Create funding checklist that references these new variable names and includes verification steps for each wallet funding requirement.
+

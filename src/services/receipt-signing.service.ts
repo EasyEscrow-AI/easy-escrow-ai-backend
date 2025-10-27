@@ -103,11 +103,18 @@ export class ReceiptSigningService {
     try {
       const expectedSignature = this.signReceiptHash(receiptHash);
       
+      // Convert to buffers
+      const expectedBuffer = Buffer.from(expectedSignature, 'hex');
+      const signatureBuffer = Buffer.from(signature, 'hex');
+      
+      // Check length match before timing-safe comparison
+      // timingSafeEqual requires equal length buffers
+      if (expectedBuffer.length !== signatureBuffer.length) {
+        return false;
+      }
+      
       // Use timing-safe comparison to prevent timing attacks
-      return crypto.timingSafeEqual(
-        Buffer.from(expectedSignature, 'hex'),
-        Buffer.from(signature, 'hex')
-      );
+      return crypto.timingSafeEqual(expectedBuffer, signatureBuffer);
     } catch (error) {
       console.error('[ReceiptSigningService] Error verifying signature:', error);
       return false;

@@ -212,3 +212,5 @@ dev-debug.log
 # Task files
 # tasks.json
 # tasks/
+# PR body temporary files
+.pr-body.md

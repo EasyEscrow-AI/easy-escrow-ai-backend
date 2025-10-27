@@ -1,6 +1,6 @@
 # Task ID: 25
 # Title: Implement Solana Blockchain Monitoring Service
-# Status: in-progress
+# Status: done
 # Dependencies: 22, 23
 # Priority: high
 # Description: Create service to monitor escrow vault accounts for USDC and NFT deposits. Validate NFT mint, metadata, and amount. Update database with deposit status
@@ -35,7 +35,7 @@ Monitor NFT token account changes, fetch and validate NFT metadata from on-chain
 ### Details:
 Update escrow agreement records with deposit status, store transaction signatures and block confirmations, implement atomic database operations to prevent race conditions, add logging for audit trail
 
-## 5. Implement monitoring service orchestration and error handling [in-progress]
+## 5. Implement monitoring service orchestration and error handling [done]
 ### Dependencies: 25.4
 ### Description: Create main monitoring service that coordinates deposit detection, handles errors, and manages service lifecycle
 ### Details:

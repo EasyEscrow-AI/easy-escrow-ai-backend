@@ -11,31 +11,31 @@ Execute three critical test scenarios on actual Solana devnet with real wallets 
 Run tests on actual Solana devnet using real wallets and transactions. Validate blockchain state changes, transaction confirmations, and system behavior under various conditions including network delays and concurrent operations.
 
 # Subtasks:
-## 1. Setup Devnet Testing Environment [pending]
+## 1. Setup Devnet Testing Environment [done]
 ### Dependencies: None
 ### Description: Configure and prepare the devnet environment for comprehensive end-to-end testing
 ### Details:
 Set up devnet RPC endpoints, configure wallet with sufficient SOL for transaction fees, prepare test USDC tokens and NFT collections, verify Solana program deployment on devnet, configure environment variables for testing
 
-## 2. Execute Happy Path End-to-End Test [pending]
+## 2. Execute Happy Path End-to-End Test [done]
 ### Dependencies: 37.1
 ### Description: Test the complete happy path scenario: create agreement → deposit USDC → deposit NFT → atomic settle → receipt JSON published
 ### Details:
 Create new escrow agreement with test parameters, perform USDC deposit from buyer wallet, deposit NFT from seller wallet, execute atomic settlement, verify receipt JSON is published with complete transaction details. Validate all state transitions and final balances.
 
-## 3. Execute Expiry Path Test Scenario [pending]
+## 3. Execute Expiry Path Test Scenario [done]
 ### Dependencies: 37.1
 ### Description: Test expiry and refund functionality: create agreement → deposit one side only → wait for expiry → execute refund
 ### Details:
 Create escrow agreement, deposit either USDC or NFT (but not both), allow agreement to expire, execute expiry refund instruction, verify correct refund to original depositor and proper cleanup of escrow account.
 
-## 4. Execute Concurrency Race Condition Test [pending]
+## 4. Execute Concurrency Race Condition Test [done]
 ### Dependencies: 37.1
 ### Description: Test race condition handling when multiple buyers attempt to fund the same open offer simultaneously
 ### Details:
 Set up scenario with one open offer and two buyer wallets attempting to deposit USDC simultaneously. Execute concurrent transactions and verify only one succeeds while the other fails gracefully. Test system's ability to handle race conditions properly.
 
-## 5. Validate Fee Collection and Receipt Generation [pending]
+## 5. Validate Fee Collection and Receipt Generation [done]
 ### Dependencies: 37.2, 37.3, 37.4
 ### Description: Test fee collection mechanism and receipt validation for completed transactions across all test scenarios
 ### Details:

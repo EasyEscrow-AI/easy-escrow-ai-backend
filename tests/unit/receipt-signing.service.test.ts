@@ -2,7 +2,8 @@
  * Unit tests for Receipt Signing Service
  */
 
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { describe, it, beforeEach, afterEach } from 'mocha';
+import { expect } from 'chai';
 import { 
   ReceiptSigningService, 
   getReceiptSigningService, 
@@ -42,8 +43,8 @@ describe('ReceiptSigningService', () => {
       const hash1 = service.generateReceiptHash(mockReceiptData);
       const hash2 = service.generateReceiptHash(mockReceiptData);
 
-      expect(hash1).toBe(hash2);
-      expect(hash1).toHaveLength(64); // SHA-256 produces 64 hex characters
+      expect(hash1).to.equal(hash2);
+      expect(hash1).to.have.lengthOf(64); // SHA-256 produces 64 hex characters
     });
 
     it('should generate different hashes for different data', () => {
@@ -52,7 +53,7 @@ describe('ReceiptSigningService', () => {
       const modifiedData = { ...mockReceiptData, price: '200000000' };
       const hash2 = service.generateReceiptHash(modifiedData);
 
-      expect(hash1).not.toBe(hash2);
+      expect(hash1).to.not.equal(hash2);
     });
 
     it('should handle missing optional fields (creatorRoyalty)', () => {
@@ -61,8 +62,8 @@ describe('ReceiptSigningService', () => {
 
       const hash = service.generateReceiptHash(dataWithoutRoyalty);
       
-      expect(hash).toBeDefined();
-      expect(hash).toHaveLength(64);
+      expect(hash).to.not.be.undefined;
+      expect(hash).to.have.lengthOf(64);
     });
   });
 
@@ -71,8 +72,8 @@ describe('ReceiptSigningService', () => {
       const hash = service.generateReceiptHash(mockReceiptData);
       const signature = service.signReceiptHash(hash);
 
-      expect(signature).toBeDefined();
-      expect(signature).toHaveLength(64); // HMAC-SHA256 produces 64 hex characters
+      expect(signature).to.not.be.undefined;
+      expect(signature).to.have.lengthOf(64); // HMAC-SHA256 produces 64 hex characters
     });
 
     it('should generate the same signature for the same hash', () => {
@@ -80,7 +81,7 @@ describe('ReceiptSigningService', () => {
       const signature1 = service.signReceiptHash(hash);
       const signature2 = service.signReceiptHash(hash);
 
-      expect(signature1).toBe(signature2);
+      expect(signature1).to.equal(signature2);
     });
 
     it('should generate different signatures for different hashes', () => {
@@ -90,7 +91,7 @@ describe('ReceiptSigningService', () => {
       const signature1 = service.signReceiptHash(hash1);
       const signature2 = service.signReceiptHash(hash2);
 
-      expect(signature1).not.toBe(signature2);
+      expect(signature1).to.not.equal(signature2);
     });
   });
 
@@ -101,7 +102,7 @@ describe('ReceiptSigningService', () => {
 
       const isValid = service.verifySignature(hash, signature);
 
-      expect(isValid).toBe(true);
+      expect(isValid).to.equal(true);
     });
 
     it('should reject an invalid signature', () => {
@@ -110,7 +111,7 @@ describe('ReceiptSigningService', () => {
 
       const isValid = service.verifySignature(hash, invalidSignature);
 
-      expect(isValid).toBe(false);
+      expect(isValid).to.equal(false);
     });
 
     it('should reject a signature with wrong hash', () => {
@@ -124,7 +125,7 @@ describe('ReceiptSigningService', () => {
 
       const isValid = service.verifySignature(differentHash, signature);
 
-      expect(isValid).toBe(false);
+      expect(isValid).to.equal(false);
     });
   });
 
@@ -132,10 +133,10 @@ describe('ReceiptSigningService', () => {
     it('should generate both hash and signature', () => {
       const result = service.generateHashAndSignature(mockReceiptData);
 
-      expect(result.receiptHash).toBeDefined();
-      expect(result.signature).toBeDefined();
-      expect(result.receiptHash).toHaveLength(64);
-      expect(result.signature).toHaveLength(64);
+      expect(result.receiptHash).to.not.be.undefined;
+      expect(result.signature).to.not.be.undefined;
+      expect(result.receiptHash).to.have.lengthOf(64);
+      expect(result.signature).to.have.lengthOf(64);
     });
 
     it('should generate verifiable hash and signature', () => {
@@ -143,7 +144,7 @@ describe('ReceiptSigningService', () => {
 
       const isValid = service.verifySignature(result.receiptHash, result.signature);
 
-      expect(isValid).toBe(true);
+      expect(isValid).to.equal(true);
     });
   });
 
@@ -153,8 +154,8 @@ describe('ReceiptSigningService', () => {
 
       const verification = service.verifyReceipt(mockReceiptData, signature);
 
-      expect(verification.isValid).toBe(true);
-      expect(verification.receiptHash).toBeDefined();
+      expect(verification.isValid).to.equal(true);
+      expect(verification.receiptHash).to.not.be.undefined;
     });
 
     it('should reject a receipt with invalid signature', () => {
@@ -162,7 +163,7 @@ describe('ReceiptSigningService', () => {
 
       const verification = service.verifyReceipt(mockReceiptData, invalidSignature);
 
-      expect(verification.isValid).toBe(false);
+      expect(verification.isValid).to.equal(false);
     });
 
     it('should detect tampered receipt data', () => {
@@ -173,7 +174,7 @@ describe('ReceiptSigningService', () => {
 
       const verification = service.verifyReceipt(tamperedData, signature);
 
-      expect(verification.isValid).toBe(false);
+      expect(verification.isValid).to.equal(false);
     });
   });
 
@@ -182,7 +183,7 @@ describe('ReceiptSigningService', () => {
       const instance1 = getReceiptSigningService();
       const instance2 = getReceiptSigningService();
 
-      expect(instance1).toBe(instance2);
+      expect(instance1).to.equal(instance2);
     });
 
     it('should create new instance after reset', () => {
@@ -190,7 +191,7 @@ describe('ReceiptSigningService', () => {
       resetReceiptSigningService();
       const instance2 = getReceiptSigningService();
 
-      expect(instance1).not.toBe(instance2);
+      expect(instance1).to.not.equal(instance2);
     });
   });
 
@@ -200,17 +201,18 @@ describe('ReceiptSigningService', () => {
       const hash = service.generateReceiptHash(mockReceiptData);
       const validSignature = service.signReceiptHash(hash);
       
-      // Test with various invalid signatures
+      // Test with various invalid signatures of different lengths
       const invalidSignatures = [
-        'short',
-        validSignature.substring(0, 32), // Half length
-        validSignature + 'extra', // Extra characters
+        'abcd', // Too short
+        validSignature.substring(0, 32), // Half length (32 chars = 16 bytes)
+        validSignature + 'abcdef', // Extra hex characters (longer)
+        '0'.repeat(validSignature.length), // Same length but different content
       ];
 
       invalidSignatures.forEach((invalidSig) => {
         const result = service.verifySignature(hash, invalidSig);
         // Should not throw and should return false
-        expect(result).toBe(false);
+        expect(result).to.equal(false);
       });
     });
 
@@ -227,7 +229,7 @@ describe('ReceiptSigningService', () => {
       const sig2 = service2.signReceiptHash(hash);
 
       // Different keys should produce different signatures
-      expect(sig1).not.toBe(sig2);
+      expect(sig1).to.not.equal(sig2);
     });
   });
 });

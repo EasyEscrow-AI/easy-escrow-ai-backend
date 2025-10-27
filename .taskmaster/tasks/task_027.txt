@@ -11,31 +11,31 @@
 
 
 # Subtasks:
-## 1. Create Expiry Timestamp Checking Service [pending]
+## 1. Create Expiry Timestamp Checking Service [done]
 ### Dependencies: None
 ### Description: Implement a service that continuously monitors and checks expiry timestamps for active escrow agreements
 ### Details:
 Create a background service that periodically queries the database for active agreements and checks their expiry timestamps against current time. Service should identify expired agreements and trigger appropriate actions.
 
-## 2. Implement Partial Deposit Refund Logic [pending]
+## 2. Implement Partial Deposit Refund Logic [done]
 ### Dependencies: 27.1
 ### Description: Create functionality to calculate and process refunds for agreements with partial deposits when cancellation occurs
 ### Details:
 Implement logic to determine refund amounts based on current deposit status, handle USDC transfers back to depositors, and update agreement balances accordingly. Include validation for refund eligibility.
 
-## 3. Implement Admin Multisig Cancellation [pending]
+## 3. Implement Admin Multisig Cancellation [done]
 ### Dependencies: 27.2
 ### Description: Create admin cancellation functionality that requires multisig approval for cancelling active agreements
 ### Details:
 Implement multisig workflow for admin-initiated cancellations, including proposal creation, signature collection, and execution. Ensure proper authorization checks and audit logging for all admin actions.
 
-## 4. Implement Agreement Status Update Engine [pending]
+## 4. Implement Agreement Status Update Engine [done]
 ### Dependencies: 27.3
 ### Description: Create service to automatically update agreement status based on expiry checks and cancellation events
 ### Details:
 Implement status transition logic that updates agreement status from active to expired, cancelled, or refunded based on various triggers. Include database updates and event emission for status changes.
 
-## 5. Integrate Expiry and Cancellation Services [pending]
+## 5. Integrate Expiry and Cancellation Services [done]
 ### Dependencies: 27.4
 ### Description: Integrate all expiry and cancellation components into a cohesive system with proper error handling and monitoring
 ### Details:

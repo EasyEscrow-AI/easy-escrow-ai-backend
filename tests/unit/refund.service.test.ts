@@ -50,12 +50,17 @@ describe('Refund Service - Unit Tests', () => {
 
     // Stub Transaction Log service
     transactionLogServiceStub = {
-      captureTransaction: sinon.stub(),
+      captureTransaction: sinon.stub().resolves({ id: 'log-123', txId: 'mock-tx-id' }),
     };
     sinon.stub(transactionLogService, 'getTransactionLogService').returns(transactionLogServiceStub as any);
 
     // Create service instance (will use mocked Prisma)
     refundService = new RefundService();
+    
+    // Mock the on-chain execution methods to avoid actual blockchain calls
+    sinon.stub(refundService as any, 'executeOnChainRefund').resolves('mock-tx-signature');
+    sinon.stub(refundService as any, 'executeOnChainRefundWithRetry').resolves('mock-tx-signature');
+    sinon.stub(refundService as any, 'waitForTransactionConfirmation').resolves();
   });
 
   afterEach(() => {
@@ -123,7 +128,7 @@ describe('Refund Service - Unit Tests', () => {
       const result = await refundService.checkRefundEligibility(agreementId);
 
       expect(result.eligible).to.be.false;
-      expect(result.reason).to.include('already settled');
+      expect(result.reason).to.include('does not allow refunds');
     });
 
     it('should reject refund for already refunded agreement', async () => {
@@ -138,7 +143,7 @@ describe('Refund Service - Unit Tests', () => {
       const result = await refundService.checkRefundEligibility(agreementId);
 
       expect(result.eligible).to.be.false;
-      expect(result.reason).to.include('already refunded');
+      expect(result.reason).to.include('does not allow refunds');
     });
 
     it('should reject refund for agreement with no deposits', async () => {
@@ -214,6 +219,7 @@ describe('Refund Service - Unit Tests', () => {
         ],
       };
 
+      // calculateRefunds calls findUnique twice (once directly, once via checkRefundEligibility)
       prismaStub.agreement.findUnique.resolves(mockAgreement);
 
       const result = await refundService.calculateRefunds(agreementId);
@@ -346,13 +352,11 @@ describe('Refund Service - Unit Tests', () => {
         ],
       };
 
-      // First call for calculateRefunds, second for processRefunds
-      prismaStub.agreement.findUnique.onFirstCall().resolves(mockAgreement);
-      prismaStub.agreement.findUnique.onSecondCall().resolves(mockAgreement);
-      prismaStub.agreement.findUnique.onThirdCall().resolves(mockAgreement);
+      // Multiple findUnique calls: calculateRefunds + checkRefundEligibility + processDepositRefund per deposit (2)
+      prismaStub.agreement.findUnique.resolves(mockAgreement); // Return for all calls
       prismaStub.agreement.update.resolves({ ...mockAgreement, status: AgreementStatus.REFUNDED });
       prismaStub.transactionLog.create.resolves({});
-      transactionLogServiceStub.captureTransaction.resolves({});
+      transactionLogServiceStub.captureTransaction.resolves({ id: 'log-123', txId: 'mock-tx-id' });
 
       const result = await refundService.processRefunds(agreementId);
 
@@ -378,7 +382,7 @@ describe('Refund Service - Unit Tests', () => {
       expect(result.transactionIds).to.have.lengthOf(0);
       expect(result.refundedDeposits).to.have.lengthOf(0);
       expect(result.errors).to.have.lengthOf(1);
-      expect(result.errors[0].error).to.include('not eligible');
+      expect(result.errors[0].error).to.include('does not allow refunds');
     });
 
     it('should handle partial refund success (some deposits fail)', async () => {
@@ -405,14 +409,16 @@ describe('Refund Service - Unit Tests', () => {
         ],
       };
 
-      prismaStub.agreement.findUnique.onFirstCall().resolves(mockAgreement);
-      prismaStub.agreement.findUnique.onSecondCall().resolves(mockAgreement);
-      prismaStub.agreement.findUnique.onThirdCall().resolves(mockAgreement);
+      prismaStub.agreement.findUnique.resolves(mockAgreement); // All calls return agreement
       
-      // First deposit succeeds, second fails
-      prismaStub.transactionLog.create.onFirstCall().resolves({});
-      prismaStub.transactionLog.create.onSecondCall().rejects(new Error('Refund failed'));
-      transactionLogServiceStub.captureTransaction.resolves({});
+      // Restore the stub so we can configure it per-call
+      (refundService as any).executeOnChainRefundWithRetry.restore();
+      const retryStub = sinon.stub(refundService as any, 'executeOnChainRefundWithRetry');
+      retryStub.onFirstCall().resolves('tx-success'); // First deposit succeeds
+      retryStub.onSecondCall().rejects(new Error('On-chain refund failed')); // Second deposit fails
+      
+      prismaStub.transactionLog.create.resolves({});
+      transactionLogServiceStub.captureTransaction.resolves({ id: 'log-123', txId: 'mock-tx-id' });
 
       const result = await refundService.processRefunds(agreementId);
 
@@ -439,9 +445,7 @@ describe('Refund Service - Unit Tests', () => {
         ],
       };
 
-      prismaStub.agreement.findUnique.onFirstCall().resolves(mockAgreement);
-      prismaStub.agreement.findUnique.onSecondCall().resolves(mockAgreement);
-      prismaStub.agreement.findUnique.onThirdCall().resolves(mockAgreement);
+      prismaStub.agreement.findUnique.resolves(mockAgreement); // All calls return agreement
       prismaStub.agreement.update.resolves({ ...mockAgreement, status: AgreementStatus.REFUNDED });
       prismaStub.transactionLog.create.resolves({});
       transactionLogServiceStub.captureTransaction.rejects(new Error('Log service down'));

@@ -54,15 +54,14 @@ services:
     scope: RUN_TIME
     value: Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr
   - key: JWT_SECRET
-    scope: RUN_TIME
     type: SECRET
-    value: EV[1:26QBtx9qJ0gldUvQH2MFiaxxPU5eUpe/:pEgd/2KTl7IcIvbbrIk50us7TRab6kCjjbolOYvtADOzG/YLBWelZcL5gk7RXBAPhqBuHsaBTn9g8mrU]
-  - key: DATABASE_URL
-    scope: RUN_AND_BUILD_TIME
-    value: postgresql://doadmin:AVNS_DG9maU3rRLpkAsMIZBw@easyescrow-staging-postgres-do-user-11230012-0.d.db.ondigitalocean.com:25060/defaultdb?sslmode=require
-  - key: REDIS_URL
     scope: RUN_TIME
-    value: redis://default:YeFIsTSyyoS1q7kUhUt9XYv769Pn9YIe@redis-17552.c252.ap-southeast-1-1.ec2.redns.redis-cloud.com:17552
+  - key: DATABASE_URL
+    type: SECRET
+    scope: RUN_AND_BUILD_TIME
+  - key: REDIS_URL
+    type: SECRET
+    scope: RUN_TIME
   - key: SPACES_ENDPOINT
     scope: RUN_TIME
     value: https://sgp1.digitaloceanspaces.com
@@ -73,13 +72,11 @@ services:
     scope: RUN_TIME
     value: easyescrow-storage
   - key: SPACES_ACCESS_KEY_ID
-    scope: RUN_TIME
     type: SECRET
-    value: EV[1:ZS2WZS8VtWLYrJCLzrzzdrw+NUE+yv7P:PiiE8RnkqhDS/x8eI3RORdYK2CUZo7BxgXQp4NhKClqShLgp]
+    scope: RUN_TIME
   - key: SPACES_SECRET_ACCESS_KEY
-    scope: RUN_TIME
     type: SECRET
-    value: EV[1:wZEVsYke7INsPCqyPeGZ3wO//+k7mMOf:yI8vXOmkabTazPdq2um+/SLC9CaAcSnHiURpso7KnF5dpznRT2nbsn2dSqwR7fioY8jDZrbz8czDsQ0=]
+    scope: RUN_TIME
   github:
     branch: master
     repo: VENTURE-AI-LABS/easy-escrow-ai-backend
@@ -94,3 +91,4 @@ services:
   instance_count: 1
   instance_size_slug: basic-xxs
   name: api-dev
+

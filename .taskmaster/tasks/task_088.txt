@@ -1,0 +1,258 @@
+# Task ID: 88
+# Title: Pre-Deployment Validation - Ensure staging environment is production-ready by running all staging e2e tests and smoke tests
+# Status: pending
+# Dependencies: 78, 84, 81, 80, 76
+# Priority: high
+# Description: Execute comprehensive pre-deployment validation by running all end-to-end tests and smoke tests on STAGING environment to verify production readiness before merging to master branch.
+# Details:
+Implement comprehensive pre-deployment validation process to ensure STAGING environment is production-ready through automated testing:
+
+**Step 1: Create Pre-Deployment Test Runner**
+```typescript
+// tests/pre-deployment/staging-validation.ts
+import { execSync } from 'child_process';
+import { StagingSmokeTests } from '../smoke/staging-smoke-tests';
+
+interface ValidationResult {
+  testSuite: string;
+  passed: boolean;
+  duration: number;
+  failedTests?: string[];
+  error?: string;
+}
+
+class PreDeploymentValidator {
+  async runFullValidation(): Promise<ValidationResult[]> {
+    const results: ValidationResult[] = [];
+    
+    // Run smoke tests first
+    console.log('🔍 Running smoke tests...');
+    const smokeResult = await this.runSmokeTests();
+    results.push(smokeResult);
+    
+    if (!smokeResult.passed) {
+      throw new Error('Smoke tests failed - aborting validation');
+    }
+    
+    // Run E2E tests
+    console.log('🧪 Running E2E tests...');
+    const e2eResult = await this.runE2ETests();
+    results.push(e2eResult);
+    
+    return results;
+  }
+  
+  private async runSmokeTests(): Promise<ValidationResult> {
+    try {
+      const smokeTests = new StagingSmokeTests();
+      const results = await smokeTests.runAllTests();
+      const failedTests = results.filter(r => !r.passed);
+      
+      return {
+        testSuite: 'Smoke Tests',
+        passed: failedTests.length === 0,
+        duration: results.reduce((sum, r) => sum + r.duration, 0),
+        failedTests: failedTests.map(t => t.name)
+      };
+    } catch (error) {
+      return {
+        testSuite: 'Smoke Tests',
+        passed: false,
+        duration: 0,
+        error: error.message
+      };
+    }
+  }
+  
+  private async runE2ETests(): Promise<ValidationResult> {
+    try {
+      const startTime = Date.now();
+      execSync('npm run test:e2e:staging', { 
+        stdio: 'inherit',
+        env: { ...process.env, NODE_ENV: 'staging' }
+      });
+      
+      return {
+        testSuite: 'E2E Tests',
+        passed: true,
+        duration: Date.now() - startTime
+      };
+    } catch (error) {
+      return {
+        testSuite: 'E2E Tests',
+        passed: false,
+        duration: Date.now() - startTime,
+        error: error.message
+      };
+    }
+  }
+}
+```
+
+**Step 2: Create Staging E2E Test Suite**
+```typescript
+// tests/staging/e2e/staging-all-e2e.test.ts
+import { test, expect } from '@playwright/test';
+import { Connection, PublicKey } from '@solana/web3.js';
+
+test.describe('STAGING E2E Tests', () => {
+  test.beforeAll(async () => {
+    // Verify staging environment is accessible
+    const response = await fetch('https://staging-api.easyescrow.ai/health');
+    expect(response.status).toBe(200);
+  });
+  
+  test('Complete Agreement Lifecycle', async ({ page }) => {
+    // Test full agreement creation, funding, and settlement flow
+    await page.goto('https://staging.easyescrow.ai');
+    
+    // Create new agreement
+    await page.click('[data-testid="create-agreement"]');
+    await page.fill('[data-testid="agreement-title"]', 'E2E Test Agreement');
+    await page.fill('[data-testid="agreement-amount"]', '100');
+    await page.click('[data-testid="submit-agreement"]');
+    
+    // Verify agreement creation
+    await expect(page.locator('[data-testid="agreement-status"]')).toContainText('Pending');
+    
+    // Test funding flow
+    await page.click('[data-testid="fund-agreement"]');
+    await page.click('[data-testid="confirm-funding"]');
+    
+    // Wait for blockchain confirmation
+    await page.waitForSelector('[data-testid="funding-confirmed"]', { timeout: 30000 });
+    
+    // Test settlement
+    await page.click('[data-testid="settle-agreement"]');
+    await page.click('[data-testid="confirm-settlement"]');
+    
+    // Verify settlement completion
+    await expect(page.locator('[data-testid="agreement-status"]')).toContainText('Settled');
+  });
+  
+  test('Multi-Party Agreement Flow', async ({ page }) => {
+    // Test complex multi-party agreement scenarios
+    // Implementation details for multi-party testing
+  });
+  
+  test('Error Handling and Edge Cases', async ({ page }) => {
+    // Test error scenarios, network failures, invalid inputs
+    // Implementation details for error case testing
+  });
+});
+```
+
+**Step 3: Create Pre-Deployment CLI Command**
+```bash
+#!/bin/bash
+# scripts/pre-deployment-validation.sh
+
+echo "🚀 Starting Pre-Deployment Validation for STAGING"
+echo "=================================================="
+
+# Set staging environment
+export NODE_ENV=staging
+export STAGING_VALIDATION=true
+
+# Run validation
+npm run validate:pre-deployment
+
+if [ $? -eq 0 ]; then
+    echo "✅ All validation tests passed - STAGING is production-ready"
+    echo "🔄 Ready to merge to master branch"
+    exit 0
+else
+    echo "❌ Validation failed - DO NOT merge to master"
+    echo "🔧 Fix failing tests before proceeding"
+    exit 1
+fi
+```
+
+**Step 4: Integration with CI/CD Pipeline**
+```yaml
+# Add to DigitalOcean App Platform spec
+jobs:
+  - name: pre-deployment-validation
+    kind: PRE_DEPLOY
+    source_dir: /
+    github:
+      branch: staging
+      deploy_on_push: false  # Manual trigger only
+    run_command: |
+      npm install
+      npm run validate:pre-deployment
+    environment_slug: node-js
+```
+
+**Step 5: Create Validation Report Generator**
+```typescript
+// Generate detailed validation report
+class ValidationReporter {
+  generateReport(results: ValidationResult[]): string {
+    const totalTests = results.length;
+    const passedTests = results.filter(r => r.passed).length;
+    const totalDuration = results.reduce((sum, r) => sum + r.duration, 0);
+    
+    return `
+# Pre-Deployment Validation Report
+Generated: ${new Date().toISOString()}
+
+## Summary
+- Total Test Suites: ${totalTests}
+- Passed: ${passedTests}
+- Failed: ${totalTests - passedTests}
+- Total Duration: ${totalDuration}ms
+
+## Test Results
+${results.map(r => this.formatTestResult(r)).join('\n')}
+
+## Production Readiness: ${passedTests === totalTests ? '✅ READY' : '❌ NOT READY'}
+    `;
+  }
+}
+```
+
+# Test Strategy:
+1. **Smoke Test Execution**: Run the complete smoke test suite and verify all 10 critical tests pass (health checks, database connectivity, Redis connectivity, Solana RPC connectivity, program deployment verification, basic agreement operations, webhook endpoints, queue processing, authentication, and environment configuration)
+
+2. **E2E Test Suite Validation**: Execute tests/staging/e2e/staging-all-e2e.test.ts and verify all test scenarios pass including complete agreement lifecycle, multi-party agreements, error handling, and edge cases with proper blockchain confirmations
+
+3. **Pre-Deployment CLI Testing**: Run scripts/pre-deployment-validation.sh and confirm it correctly executes both smoke tests and E2E tests, generates comprehensive validation reports, and returns appropriate exit codes (0 for success, 1 for failure)
+
+4. **Integration Verification**: Test the pre-deployment validation integration with CI/CD pipeline by triggering manual validation runs and confirming proper blocking behavior when tests fail
+
+5. **Performance Validation**: Verify the complete validation suite completes within acceptable time limits (under 10 minutes) and generates detailed timing reports for each test suite
+
+6. **Report Generation Testing**: Confirm validation reports are generated with comprehensive test results, failure details, duration metrics, and clear production readiness status indicators
+
+# Subtasks:
+## 1. Setup Pre-Deployment Test Runner Infrastructure [pending]
+### Dependencies: None
+### Description: Create the core pre-deployment validation infrastructure including test runner class, validation result interfaces, and configuration for staging environment testing.
+### Details:
+Implement PreDeploymentValidator class with methods for running smoke tests and E2E tests sequentially. Create ValidationResult interface to standardize test output format. Setup environment configuration for staging validation with proper error handling and logging.
+
+## 2. Execute Comprehensive Staging Smoke Tests [pending]
+### Dependencies: 88.1
+### Description: Run all critical smoke tests on staging environment including health checks, database connectivity, Redis connectivity, Solana RPC connectivity, and basic API endpoint validation.
+### Details:
+Execute the complete smoke test suite covering all 10 critical tests: API health checks, database connectivity verification, Redis connection testing, Solana RPC connectivity, program deployment verification, basic agreement operations, webhook endpoints, queue processing, authentication flows, and external service integrations.
+
+## 3. Execute Full Staging E2E Test Suite [pending]
+### Dependencies: 88.2
+### Description: Run comprehensive end-to-end tests covering complete agreement lifecycle, multi-party scenarios, error handling, and edge cases on staging environment.
+### Details:
+Execute all E2E tests including complete agreement lifecycle (creation, funding, settlement), multi-party agreement flows, error handling scenarios, network failure recovery, invalid input handling, and blockchain interaction edge cases. Use Playwright for browser automation and verify all user workflows function correctly.
+
+## 4. Analyze Test Results and Generate Validation Report [pending]
+### Dependencies: 88.3
+### Description: Process all test execution results, identify any failures or performance issues, and generate comprehensive validation report with production readiness assessment.
+### Details:
+Analyze results from smoke tests and E2E tests, calculate pass/fail rates, measure performance metrics, identify any failed tests with detailed error information, and generate formatted validation report including production readiness recommendation and any required remediation steps.
+
+## 5. Review Staging Branch Commit History and Document Lessons Learned [pending]
+### Dependencies: 88.4
+### Description: Review the last 100 commits on staging branch to identify patterns, potential issues, and lessons learned, then document findings and update deployment procedures.
+### Details:
+Analyze the last 100 commits on staging branch using git log, identify recurring issues, deployment patterns, hotfixes, and rollbacks. Document lessons learned including common failure points, successful deployment strategies, and recommended best practices. Update pre-deployment checklist based on historical insights.
+

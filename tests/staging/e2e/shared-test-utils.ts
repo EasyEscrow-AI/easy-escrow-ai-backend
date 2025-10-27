@@ -162,6 +162,9 @@ export async function createTestNFT(
   
   console.log(`   ✅ NFT Mint created: ${nftMint.toBase58()}`);
   
+  // Wait for mint to be confirmed on-chain
+  await new Promise(resolve => setTimeout(resolve, 2000));
+  
   // Create token account for owner
   const tokenAccount = await getOrCreateAssociatedTokenAccount(
     connection,
@@ -183,6 +186,9 @@ export async function createTestNFT(
   );
   
   console.log(`   ✅ Minted 1 NFT to owner`);
+  
+  // Wait for mint transaction to confirm
+  await new Promise(resolve => setTimeout(resolve, 1000));
   
   return {
     mint: nftMint,

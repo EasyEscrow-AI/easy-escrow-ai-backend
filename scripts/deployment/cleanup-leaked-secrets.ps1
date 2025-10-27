@@ -41,8 +41,8 @@ $filesToClean = @(
     "docs\setup\BASE58_VS_BYTE_ARRAY.md",
     "docs\SECRETS_REMOVED_FROM_DOCS.md",
     "docs\tasks\TASK_77_TEST_RESULTS.md",
-    "app-spec-upstash.yaml",
-    "app-spec-redis-cloud.yaml",
+    ".do\upstash.yaml",
+    ".do\redis-cloud.yaml",
     "docs\SECURITY_INCIDENT_CREDENTIAL_EXPOSURE.md"
 )
 

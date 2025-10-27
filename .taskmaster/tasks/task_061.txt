@@ -66,4 +66,3 @@ This validates the complete integration between frontend, backend, and on-chain 
    - Any failures unrelated to program ID configuration
    - Performance observations
    - Recommendations for any remaining issues
-

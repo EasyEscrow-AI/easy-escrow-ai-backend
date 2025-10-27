@@ -1,6 +1,6 @@
 # Task ID: 50
 # Title: Update backend environment variables
-# Status: pending
+# Status: done
 # Dependencies: None
 # Priority: high
 # Description: Update all environment configurations with the new program ID

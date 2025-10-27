@@ -8,6 +8,9 @@ resolver = "2"
 overflow-checks = true
 lto = "fat"
 codegen-units = 1
+opt-level = "z"        # Optimize for size (not speed)
+strip = true           # Strip debug symbols
+panic = "abort"        # Smaller panic handler
 
 [profile.release.build-override]
 opt-level = 3
