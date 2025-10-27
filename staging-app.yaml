@@ -299,7 +299,7 @@ services:
       # Monitoring & Health Checks
       #
       - key: MONITORING_ENDPOINT
-        value: https://staging.easyescrow.ai/health
+        value: https://staging-api.easyescrow.ai/health
         scope: RUN_TIME
       
       - key: HEALTH_CHECK_ENABLED
@@ -347,6 +347,7 @@ services:
       
       #
       # CORS Configuration
+      # Note: This allows the frontend domain to make requests to this API
       #
       - key: CORS_ORIGIN
         value: https://staging.easyescrow.ai,http://localhost:3000
@@ -535,7 +536,7 @@ workers:
     
     envs:
       - key: STAGING_API_URL
-        value: https://staging.easyescrow.ai
+        value: https://staging-api.easyescrow.ai
       - key: STAGING_RPC_URL
         type: SECRET
       - key: STAGING_PROGRAM_ID
@@ -545,7 +546,7 @@ workers:
 
 # Custom Domain Configuration
 domains:
-  - domain: staging.easyescrow.ai
+  - domain: staging-api.easyescrow.ai
     type: PRIMARY
 
 # Alerts - DigitalOcean will notify on these events

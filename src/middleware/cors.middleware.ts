@@ -32,7 +32,7 @@ const getAllowedOrigins = (): string[] => {
     'https://easyescrow.ai',
     'https://www.easyescrow.ai',
     'https://app.easyescrow.ai',
-    'https://staging.easyescrow.ai',
+    'https://staging-api.easyescrow.ai',
   ];
 };
 
