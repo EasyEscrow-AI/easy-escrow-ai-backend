@@ -60,11 +60,11 @@ $envConfig = @{
         Description = "Staging environment (production-like on devnet)"
     }
     production = @{
-        ProgramId = "TBD_PRODUCTION_PROGRAM_ID"
+        ProgramId = "2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx"
         KeypairPath = "wallets/production/escrow-program-keypair.json"
-        AnchorConfig = "Anchor.production.toml"
-        Network = "mainnet-beta"
-        Description = "Production environment"
+        AnchorConfig = "Anchor.mainnet.toml"
+        Network = "mainnet"
+        Description = "Production environment (mainnet)"
     }
 }
 

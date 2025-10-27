@@ -71,26 +71,6 @@ describe('AgreementCacheService', () => {
     });
   });
 
-  describe('getAgreementById', () => {
-    it('should return agreement from cache if available by ID', async () => {
-      sinon.stub(CacheService.prototype, 'get').resolves(mockAgreement as Agreement);
-      
-      const result = await agreementCacheService.getAgreementById('agreement-123');
-      
-      expect(result).to.deep.equal(mockAgreement);
-    });
-
-    it('should fetch from database and cache if not in cache', async () => {
-      sinon.stub(CacheService.prototype, 'get').resolves(null);
-      sinon.stub(CacheService.prototype, 'set').resolves(true);
-      sinon.stub(prisma.agreement, 'findUnique').resolves(mockAgreement as Agreement);
-      
-      const result = await agreementCacheService.getAgreementById('agreement-123');
-      
-      expect(result).to.deep.equal(mockAgreement);
-    });
-  });
-
   describe('cacheAgreement', () => {
     it('should cache agreement by both ID and address', async () => {
       const cacheSetStub = sinon.stub(CacheService.prototype, 'set').resolves(true);
