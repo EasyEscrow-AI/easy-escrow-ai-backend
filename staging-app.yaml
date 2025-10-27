@@ -1,11 +1,10 @@
 #
 # DigitalOcean App Platform Configuration - STAGING Environment
+# Native CI/CD Pipeline with Pre-Deploy Testing
 #
 # IMPORTANT SECURITY NOTE:
 # This file is SAFE TO COMMIT to Git. All sensitive values use ${VARIABLE_NAME}
-# placeholders that reference secrets stored in:
-#   - GitHub Secrets (for CI/CD deployments)
-#   - DigitalOcean App Platform Environment Variables (for runtime)
+# placeholders or are marked as type: SECRET and configured in DigitalOcean App Platform.
 #
 # NEVER commit actual private keys, passwords, or API keys to this file.
 #
@@ -15,7 +14,7 @@
 # Deploy with: doctl apps create --spec staging-app.yaml
 # Update with: doctl apps update <app-id> --spec staging-app.yaml
 #
-# See docs/deployment/STAGING_SECRETS_MANAGEMENT.md for details on managing secrets.
+# See docs/deployment/DO_NATIVE_CICD.md for complete CI/CD pipeline documentation.
 #
 
 name: easyescrow-backend-staging
@@ -34,14 +33,100 @@ services:
       branch: staging
       deploy_on_push: true
     
-    # Use custom Dockerfile instead of buildpacks
+    #
+    # PRE-DEPLOY JOBS
+    # These run BEFORE building and deploying. If any fail, deployment stops.
+    #
+    jobs:
+      # Job 1: Run tests and linting
+      - name: pre-deploy-tests
+        kind: PRE_DEPLOY
+        run_command: |
+          #!/bin/bash
+          set -e  # Exit on any error
+          
+          echo "=========================================="
+          echo "   PRE-DEPLOYMENT TESTS & VALIDATION"
+          echo "=========================================="
+          
+          echo ""
+          echo "Step 1: Installing dependencies..."
+          npm ci
+          
+          echo ""
+          echo "Step 2: Running linter..."
+          npm run lint
+          
+          echo ""
+          echo "Step 3: Running unit tests..."
+          npm run test:unit
+          
+          echo ""
+          echo "Step 4: Generating Prisma client..."
+          npm run db:generate
+          
+          echo ""
+          echo "=========================================="
+          echo "   ✅ ALL PRE-DEPLOYMENT CHECKS PASSED"
+          echo "=========================================="
+        
+        environment_slug: node-js
+        instance_size_slug: basic-xxs
+        
+        # Environment variables needed for testing
+        envs:
+          - key: NODE_ENV
+            value: staging
+          - key: DATABASE_URL
+            type: SECRET
+            scope: BUILD_TIME
+      
+      # Job 2: Run database migrations
+      - name: run-migrations
+        kind: PRE_DEPLOY
+        run_command: |
+          #!/bin/bash
+          set -e  # Exit on any error
+          
+          echo "=========================================="
+          echo "   DATABASE MIGRATIONS"
+          echo "=========================================="
+          
+          echo ""
+          echo "Installing dependencies..."
+          npm ci
+          
+          echo ""
+          echo "Running Prisma migrations..."
+          npx prisma migrate deploy
+          
+          echo ""
+          echo "Generating Prisma client..."
+          npx prisma generate
+          
+          echo ""
+          echo "=========================================="
+          echo "   ✅ MIGRATIONS COMPLETED SUCCESSFULLY"
+          echo "=========================================="
+        
+        environment_slug: node-js
+        instance_size_slug: basic-xxs
+        
+        envs:
+          - key: NODE_ENV
+            value: staging
+          - key: DATABASE_URL
+            type: SECRET
+            scope: BUILD_TIME
+    
+    # Use custom Dockerfile for building
     dockerfile_path: Dockerfile
     
-    # Runtime
+    # Runtime configuration
     instance_count: 1
     instance_size_slug: basic-xxs
     
-    # Health check
+    # Health check - DigitalOcean waits for this before marking deployment successful
     health_check:
       http_path: /health
       initial_delay_seconds: 60
@@ -57,7 +142,10 @@ services:
     routes:
       - path: /
     
-    # Environment variables
+    #
+    # ENVIRONMENT VARIABLES
+    # All secrets are configured in DigitalOcean App Platform console
+    #
     envs:
       #
       # Core Environment
@@ -129,7 +217,7 @@ services:
       #
       # STAGING Wallet Configuration (Base58 Private Keys)
       # NOTE: Uses DEVNET_STAGING_* prefix to avoid DEV conflicts
-      # IMPORTANT: Actual private keys stored in GitHub Secrets and DO App Platform
+      # IMPORTANT: Actual private keys stored in DO App Platform
       #
       - key: DEVNET_STAGING_SENDER_PRIVATE_KEY
         type: SECRET
@@ -170,11 +258,11 @@ services:
       
       #
       # Database Configuration
-      # IMPORTANT: Actual connection strings with passwords stored in GitHub Secrets
+      # IMPORTANT: Actual connection strings with passwords stored in DO App Platform
       #
       - key: DATABASE_URL
         type: SECRET
-        scope: RUN_TIME
+        scope: RUN_AND_BUILD_TIME
       
       - key: DATABASE_POOL_URL
         type: SECRET
@@ -190,7 +278,7 @@ services:
       
       #
       # Redis Configuration
-      # IMPORTANT: Actual Redis URL with password stored in GitHub Secrets
+      # IMPORTANT: Actual Redis URL with password stored in DO App Platform
       #
       - key: REDIS_URL
         type: SECRET
@@ -204,7 +292,6 @@ services:
         scope: RUN_TIME
       
       - key: DEVNET_STAGING_FEE_COLLECTOR_ADDRESS
-        value: ${DEVNET_STAGING_FEE_COLLECTOR_ADDRESS}
         type: SECRET
         scope: RUN_TIME
       
@@ -237,7 +324,7 @@ services:
       
       #
       # JWT Configuration
-      # IMPORTANT: Actual JWT secret stored in GitHub Secrets
+      # IMPORTANT: Actual JWT secret stored in DO App Platform
       #
       - key: JWT_SECRET
         type: SECRET
@@ -267,7 +354,7 @@ services:
       
       #
       # Webhook Configuration
-      # IMPORTANT: Actual webhook secret stored in GitHub Secrets
+      # IMPORTANT: Actual webhook secret stored in DO App Platform
       #
       - key: WEBHOOK_SECRET
         type: SECRET
@@ -324,7 +411,7 @@ services:
       
       #
       # Email Configuration (Test Service)
-      # IMPORTANT: SMTP credentials stored in GitHub Secrets
+      # IMPORTANT: SMTP credentials stored in DO App Platform
       #
       - key: SMTP_HOST
         value: smtp.mailtrap.io
@@ -348,7 +435,7 @@ services:
       
       #
       # S3/Spaces Configuration (Singapore Region)
-      # IMPORTANT: Spaces credentials stored in GitHub Secrets
+      # IMPORTANT: Spaces credentials stored in DO App Platform
       #
       - key: DO_SPACES_ENDPOINT
         value: https://sgp1.digitaloceanspaces.com
@@ -384,14 +471,85 @@ services:
       - key: LOG_MAX_FILES
         value: "7"
         scope: RUN_TIME
+      
+      #
+      # Notification Configuration (Optional)
+      # For deployment notifications via Slack/Discord
+      #
+      - key: SLACK_WEBHOOK
+        type: SECRET
+        scope: BUILD_TIME
+      
+      - key: DISCORD_WEBHOOK
+        type: SECRET
+        scope: BUILD_TIME
+
+#
+# WORKERS
+# Optional: Smoke test worker that runs after deployment
+#
+workers:
+  - name: post-deploy-smoke-tests
+    github:
+      repo: VENTURE-AI-LABS/easy-escrow-ai-backend
+      branch: staging
+      deploy_on_push: false  # Don't auto-deploy, will be triggered manually
+    
+    run_command: |
+      #!/bin/bash
+      set -e
+      
+      echo "=========================================="
+      echo "   POST-DEPLOYMENT SMOKE TESTS"
+      echo "=========================================="
+      
+      # Wait for API to be fully ready
+      echo ""
+      echo "Waiting 60 seconds for API to stabilize..."
+      sleep 60
+      
+      # Install dependencies
+      echo ""
+      echo "Installing dependencies..."
+      npm ci
+      
+      # Run smoke tests
+      echo ""
+      echo "Running smoke tests..."
+      npm run test:staging:smoke
+      
+      # Send success notification
+      if [ -n "$SLACK_WEBHOOK" ]; then
+        curl -X POST "$SLACK_WEBHOOK" \
+          -H 'Content-Type: application/json' \
+          -d "{\"text\":\"✅ STAGING deployment smoke tests passed!\"}"
+      fi
+      
+      echo ""
+      echo "=========================================="
+      echo "   ✅ SMOKE TESTS PASSED"
+      echo "=========================================="
+    
+    environment_slug: node-js
+    instance_size_slug: basic-xxs
+    
+    envs:
+      - key: STAGING_API_URL
+        value: https://staging.easyescrow.ai
+      - key: STAGING_RPC_URL
+        type: SECRET
+      - key: STAGING_PROGRAM_ID
+        value: AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei
+      - key: SLACK_WEBHOOK
+        type: SECRET
 
 # Custom Domain Configuration
 domains:
   - domain: staging.easyescrow.ai
     type: PRIMARY
 
-# Alerts (optional - configure as needed)
+# Alerts - DigitalOcean will notify on these events
 alerts:
   - rule: DEPLOYMENT_FAILED
   - rule: DOMAIN_FAILED
-
+  - rule: DEPLOYMENT_LIVE
