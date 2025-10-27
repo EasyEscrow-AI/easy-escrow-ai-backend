@@ -441,7 +441,7 @@ services:
         value: https://sgp1.digitaloceanspaces.com
         scope: RUN_TIME
       
-      - key: DO_SPACES_BUCKET_NAME
+      - key: DO_SPACES_BUCKET
         value: easyescrow-test
         scope: RUN_TIME
       
