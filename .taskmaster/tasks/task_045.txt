@@ -1,6 +1,6 @@
 # Task ID: 45
 # Title: Generate new Solana program keypair
-# Status: pending
+# Status: done
 # Dependencies: None
 # Priority: high
 # Description: Generate a fresh keypair for the escrow program deployment to ensure no ID conflicts

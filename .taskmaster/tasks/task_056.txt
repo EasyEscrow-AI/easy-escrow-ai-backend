@@ -32,4 +32,3 @@ This verification prevents deployment issues caused by incorrect keypairs and en
 3. After restoration (if needed), re-run address command and verify correct output
 4. Check file permissions and ensure keypair file is readable by deployment tools
 5. Document any mismatch found and restoration performed for audit trail
-

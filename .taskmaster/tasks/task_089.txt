@@ -1,0 +1,133 @@
+# Task ID: 89
+# Title: Production Infrastructure Setup
+# Status: pending
+# Dependencies: 33, 42, 88
+# Priority: high
+# Description: Create DigitalOcean App server named "easyescrow-backend-production" using master branch, configure Cloudflare DNS for api.easyescrow.ai domain, and set up production app spec YAML with placeholder environment variables using MAINNET_PROD_* naming convention.
+# Details:
+Create comprehensive production infrastructure on DigitalOcean App Platform:
+
+**Step 1: Create Production App Server**
+```bash
+# Create DO App Platform app via CLI or web console
+doctl apps create --spec production-app-spec.yaml
+```
+
+**Step 2: Production App Spec YAML (production-app-spec.yaml)**
+```yaml
+name: easyescrow-backend-production
+services:
+- name: api
+  source_dir: /
+  github:
+    repo: your-org/easyescrow-backend
+    branch: master
+    deploy_on_push: true
+  run_command: npm start
+  environment_slug: node-js
+  instance_count: 2
+  instance_size_slug: basic-xxs
+  http_port: 3000
+  routes:
+  - path: /
+  health_check:
+    http_path: /health
+    initial_delay_seconds: 30
+    period_seconds: 10
+    timeout_seconds: 5
+    success_threshold: 1
+    failure_threshold: 3
+  envs:
+  - key: NODE_ENV
+    value: production
+  - key: DATABASE_URL
+    value: PLACEHOLDER_DATABASE_URL
+  - key: REDIS_URL
+    value: PLACEHOLDER_REDIS_URL
+  - key: SOLANA_RPC_URL
+    value: PLACEHOLDER_SOLANA_RPC_URL
+  - key: MAINNET_PROD_PROGRAM_ID
+    value: PLACEHOLDER_MAINNET_PROD_PROGRAM_ID
+  - key: MAINNET_PROD_USDC_MINT_ADDRESS
+    value: PLACEHOLDER_MAINNET_PROD_USDC_MINT_ADDRESS
+  - key: MAINNET_PROD_ADMIN_PRIVATE_KEY
+    value: PLACEHOLDER_MAINNET_PROD_ADMIN_PRIVATE_KEY
+  - key: MAINNET_PROD_ADMIN_ADDRESS
+    value: PLACEHOLDER_MAINNET_PROD_ADMIN_ADDRESS
+  - key: MAINNET_PROD_FEE_COLLECTOR_ADDRESS
+    value: PLACEHOLDER_MAINNET_PROD_FEE_COLLECTOR_ADDRESS
+  - key: JWT_SECRET
+    value: PLACEHOLDER_JWT_SECRET
+  - key: WEBHOOK_SECRET
+    value: PLACEHOLDER_WEBHOOK_SECRET
+  - key: DO_SPACES_KEY
+    value: PLACEHOLDER_DO_SPACES_KEY
+  - key: DO_SPACES_SECRET
+    value: PLACEHOLDER_DO_SPACES_SECRET
+  - key: DO_SPACES_ENDPOINT
+    value: PLACEHOLDER_DO_SPACES_ENDPOINT
+  - key: DO_SPACES_BUCKET
+    value: PLACEHOLDER_DO_SPACES_BUCKET
+```
+
+**Step 3: Configure Cloudflare DNS**
+1. Add CNAME record: `api.easyescrow.ai` → `easyescrow-backend-production.ondigitalocean.app`
+2. Set proxy status to "Proxied" for DDoS protection
+3. Configure SSL/TLS to "Full (strict)" mode
+4. Add custom domain in DO App Platform settings
+
+**Step 4: Security Configuration**
+- Enable CORS for production domains only
+- Configure rate limiting via Cloudflare
+- Set up SSL certificate auto-renewal
+- Enable HTTP/2 and modern TLS versions
+
+**Step 5: Monitoring Setup**
+- Configure DO App Platform alerts
+- Set up Cloudflare analytics
+- Enable application logs retention
+
+# Test Strategy:
+1. **App Deployment Verification**: Confirm DigitalOcean App Platform successfully creates "easyescrow-backend-production" app from master branch and displays healthy status in DO console
+
+2. **DNS Resolution Testing**: Verify api.easyescrow.ai resolves correctly using `nslookup api.easyescrow.ai` and `curl -I https://api.easyescrow.ai/health` returns expected response
+
+3. **SSL Certificate Validation**: Test HTTPS connectivity with `curl -vI https://api.easyescrow.ai` to confirm valid SSL certificate and proper TLS configuration
+
+4. **App Spec Configuration**: Validate production-app-spec.yaml syntax using `doctl apps spec validate production-app-spec.yaml` and verify all placeholder environment variables with MAINNET_PROD_* naming convention are properly defined
+
+5. **Health Check Functionality**: Confirm health endpoint responds correctly at https://api.easyescrow.ai/health with proper status codes and response times under 5 seconds
+
+6. **Cloudflare Integration**: Verify Cloudflare proxy is active by checking response headers for CF-Ray and confirm DDoS protection and caching rules are applied correctly
+
+# Subtasks:
+## 1. Create production-app-spec.yaml with MAINNET_PROD_* environment variables [pending]
+### Dependencies: None
+### Description: Create the production app specification YAML file with all required configuration for DigitalOcean App Platform deployment including placeholder environment variables using MAINNET_PROD_* naming convention.
+### Details:
+Create production-app-spec.yaml file with name 'easyescrow-backend-production', configure GitHub source from master branch, set up Node.js environment with 2 instances of basic-xxs size, configure health checks on /health endpoint, and include all placeholder environment variables using MAINNET_PROD_* naming convention: MAINNET_PROD_PROGRAM_ID, MAINNET_PROD_USDC_MINT_ADDRESS, MAINNET_PROD_ADMIN_PRIVATE_KEY, MAINNET_PROD_ADMIN_ADDRESS, MAINNET_PROD_FEE_COLLECTOR_ADDRESS, plus standard variables (DATABASE_URL, REDIS_URL, SOLANA_RPC_URL, JWT_SECRET, WEBHOOK_SECRET, DO_SPACES_KEY, DO_SPACES_SECRET, DO_SPACES_ENDPOINT, DO_SPACES_BUCKET).
+
+## 2. Create DigitalOcean App server named 'easyescrow-backend-production' [pending]
+### Dependencies: 89.1
+### Description: Deploy the production app server on DigitalOcean App Platform using the created app specification file and verify successful deployment.
+### Details:
+Execute 'doctl apps create --spec production-app-spec.yaml' command to create the production app server, verify the app is created with correct name 'easyescrow-backend-production', confirm it's connected to the master branch of the GitHub repository, and ensure the app shows healthy status in DO console with 2 running instances.
+
+## 3. Configure Cloudflare DNS for api.easyescrow.ai domain [pending]
+### Dependencies: 89.2
+### Description: Set up DNS configuration in Cloudflare to point api.easyescrow.ai to the DigitalOcean App Platform deployment with proper proxy settings.
+### Details:
+Add CNAME record in Cloudflare DNS: 'api.easyescrow.ai' pointing to 'easyescrow-backend-production.ondigitalocean.app', enable proxy status to 'Proxied' for DDoS protection, configure SSL/TLS mode to 'Full (strict)', and verify DNS propagation across multiple resolvers.
+
+## 4. Add custom domain in DigitalOcean App Platform settings [pending]
+### Dependencies: 89.3
+### Description: Configure the custom domain api.easyescrow.ai in DigitalOcean App Platform to complete the domain connection and enable HTTPS.
+### Details:
+Navigate to DO App Platform settings for 'easyescrow-backend-production', add custom domain 'api.easyescrow.ai', verify domain ownership through DNS validation, enable automatic HTTPS certificate generation, and confirm the domain shows as 'Active' status in the domains section.
+
+## 5. Configure security and monitoring settings [pending]
+### Dependencies: 89.4
+### Description: Set up production security configurations including CORS, rate limiting, SSL/TLS settings, and monitoring alerts for the production infrastructure.
+### Details:
+Configure CORS settings to allow only production domains, set up Cloudflare rate limiting rules, enable HTTP/2 and modern TLS versions, configure DO App Platform alerts for high CPU/memory usage and application errors, enable Cloudflare analytics, and set up application logs retention policy with appropriate log levels for production.
+
