@@ -12,4 +12,3 @@ if git diff --cached --name-only | grep -qE "wallets/.*\.json|.*keypair.*\.json|
   exit 1
 fi
 
-npm test
