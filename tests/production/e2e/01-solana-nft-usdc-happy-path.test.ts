@@ -285,17 +285,42 @@ describe('PRODUCTION E2E - Happy Path: NFT-for-USDC Swap', function () {
     const transactionBuffer = Buffer.from(base64Transaction, 'base64');
     const transaction = Transaction.from(transactionBuffer);
     console.log(`   ✅ Deserialized transaction`);
+    console.log(`   🔍 Transaction has ${transaction.instructions.length} instructions`);
+    transaction.instructions.forEach((ix, i) => {
+      console.log(`      Instruction ${i}: ${ix.programId.toString()} (${ix.keys.length} keys)`);
+    });
     
     // Sign with sender
     transaction.sign(wallets.sender);
     console.log(`   ✅ Signed with sender wallet`);
     
-    // Submit to network (skipPreflight: true required for Jito tips on mainnet)
-    const txId = await connection.sendRawTransaction(transaction.serialize(), {
-      skipPreflight: true,
-      maxRetries: 3,
+    // Submit to network via Jito Block Engine (required for mainnet Jito tips)
+    console.log(`   📡 Sending transaction via Jito Block Engine...`);
+    const serializedTx = transaction.serialize().toString('base64');
+    
+    const jitoResponse = await fetch('https://mainnet.block-engine.jito.wtf/api/v1/transactions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'sendTransaction',
+        params: [serializedTx, { encoding: 'base64' }],
+      }),
     });
-    console.log(`   📤 Submitted: ${getExplorerUrl(txId)}`);
+    
+    if (!jitoResponse.ok) {
+      const errorText = await jitoResponse.text();
+      throw new Error(`Jito Block Engine error: ${jitoResponse.status} ${errorText}`);
+    }
+    
+    const jitoResult = await jitoResponse.json();
+    if (jitoResult.error) {
+      throw new Error(`Jito Block Engine error: ${JSON.stringify(jitoResult.error)}`);
+    }
+    
+    const txId = jitoResult.result;
+    console.log(`   📤 Submitted via Jito: ${getExplorerUrl(txId)}`);
     
     // Wait for confirmation
     await connection.confirmTransaction(txId, 'confirmed');
@@ -354,17 +379,42 @@ describe('PRODUCTION E2E - Happy Path: NFT-for-USDC Swap', function () {
     const transactionBuffer = Buffer.from(base64Transaction, 'base64');
     const transaction = Transaction.from(transactionBuffer);
     console.log(`   ✅ Deserialized transaction`);
+    console.log(`   🔍 Transaction has ${transaction.instructions.length} instructions`);
+    transaction.instructions.forEach((ix, i) => {
+      console.log(`      Instruction ${i}: ${ix.programId.toString()} (${ix.keys.length} keys)`);
+    });
     
     // Sign with receiver
     transaction.sign(wallets.receiver);
     console.log(`   ✅ Signed with receiver wallet`);
     
-    // Submit to network (skipPreflight: true required for Jito tips on mainnet)
-    const txId = await connection.sendRawTransaction(transaction.serialize(), {
-      skipPreflight: true,
-      maxRetries: 3,
+    // Submit to network via Jito Block Engine (required for mainnet Jito tips)
+    console.log(`   📡 Sending transaction via Jito Block Engine...`);
+    const serializedTx = transaction.serialize().toString('base64');
+    
+    const jitoResponse = await fetch('https://mainnet.block-engine.jito.wtf/api/v1/transactions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'sendTransaction',
+        params: [serializedTx, { encoding: 'base64' }],
+      }),
     });
-    console.log(`   📤 Submitted: ${getExplorerUrl(txId)}`);
+    
+    if (!jitoResponse.ok) {
+      const errorText = await jitoResponse.text();
+      throw new Error(`Jito Block Engine error: ${jitoResponse.status} ${errorText}`);
+    }
+    
+    const jitoResult = await jitoResponse.json();
+    if (jitoResult.error) {
+      throw new Error(`Jito Block Engine error: ${JSON.stringify(jitoResult.error)}`);
+    }
+    
+    const txId = jitoResult.result;
+    console.log(`   📤 Submitted via Jito: ${getExplorerUrl(txId)}`);
     
     // Wait for confirmation
     await connection.confirmTransaction(txId, 'confirmed');
