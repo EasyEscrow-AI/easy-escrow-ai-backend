@@ -19,15 +19,28 @@
 import { Connection } from '@solana/web3.js';
 
 /**
- * Priority fee levels returned by QuickNode API
+ * Priority fee levels returned by QuickNode API v2
+ * Reference: https://www.quicknode.com/docs/solana/qn_estimatePriorityFees
  */
-interface PriorityFeeEstimate {
-  min: number; // Minimum fee (slowest)
-  low: number; // Low priority
-  medium: number; // Medium priority (recommended)
-  high: number; // High priority
-  veryHigh: number; // Very high priority
-  unsafeMax: number; // Maximum observed (not recommended)
+interface QuickNodePriorityFeeResponse {
+  context: {
+    slot: number;
+  };
+  per_compute_unit: {
+    extreme: number;
+    high: number;
+    medium: number;
+    low: number;
+    percentiles: Record<string, number>;
+  };
+  per_transaction: {
+    extreme: number;
+    high: number;
+    medium: number;
+    low: number;
+    percentiles: Record<string, number>;
+  };
+  recommended: number; // Recommended priority fee (most reliable)
 }
 
 /**
@@ -131,20 +144,25 @@ export class PriorityFeeService {
         throw new Error('Invalid response from qn_estimatePriorityFees');
       }
 
-      const estimates = response.result as PriorityFeeEstimate;
+      const result = response.result as QuickNodePriorityFeeResponse;
 
       console.log('[PriorityFeeService] Priority fee estimates from QuickNode:', {
-        min: estimates.min,
-        low: estimates.low,
-        medium: estimates.medium,
-        high: estimates.high,
-        veryHigh: estimates.veryHigh,
-        unsafeMax: estimates.unsafeMax,
+        recommended: result.recommended,
+        perComputeUnit: {
+          extreme: result.per_compute_unit.extreme,
+          high: result.per_compute_unit.high,
+          medium: result.per_compute_unit.medium,
+          low: result.per_compute_unit.low,
+        },
+        slot: result.context.slot,
       });
 
-      // Use 'high' priority for mainnet (fast confirmation)
-      // Use 'medium' priority for devnet (cost-effective)
-      const recommendedFee = isMainnet ? estimates.high : estimates.medium;
+      // Use recommended fee if available, otherwise fallback to per_compute_unit
+      // For mainnet: use 'high' priority for fast confirmation
+      // For devnet: use 'medium' priority for cost-effectiveness
+      const recommendedFee =
+        result.recommended ||
+        (isMainnet ? result.per_compute_unit.high : result.per_compute_unit.medium);
 
       // Sanity check: ensure fee is reasonable
       const MIN_SAFE_FEE = 1_000; // 1k microlamports
