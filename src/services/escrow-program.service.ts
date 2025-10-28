@@ -373,7 +373,11 @@ export class EscrowProgramService {
         ComputeBudgetProgram.setComputeUnitPrice({ microLamports: priorityFee })
       );
 
+      // Add the escrow initialization instruction
+      transaction.add(instruction);
+
       // Add Jito tip transfer for mainnet (REQUIRED for Jito-enabled RPCs like QuickNode)
+      // IMPORTANT: Jito tip MUST be the LAST instruction in the transaction
       if (isMainnet) {
         // Jito tip accounts (official addresses from Jito Labs)
         const JITO_TIP_ACCOUNTS = [
@@ -400,7 +404,7 @@ export class EscrowProgramService {
           `[EscrowProgramService] Adding Jito tip: ${tipAmount} lamports to ${jitoTipAccount.toString()}`
         );
 
-        // Add tip transfer instruction
+        // Add tip transfer instruction as LAST instruction
         transaction.add(
           SystemProgram.transfer({
             fromPubkey: this.adminKeypair.publicKey,
@@ -409,9 +413,6 @@ export class EscrowProgramService {
           })
         );
       }
-
-      // Add the escrow initialization instruction
-      transaction.add(instruction);
 
       // Sign with admin only
       transaction.feePayer = this.adminKeypair.publicKey;
@@ -519,7 +520,11 @@ export class EscrowProgramService {
         ComputeBudgetProgram.setComputeUnitPrice({ microLamports: priorityFee })
       );
 
+      // Add the instruction
+      transaction.add(instruction);
+
       // Add Jito tip transfer for mainnet (REQUIRED for Jito-enabled RPCs like QuickNode)
+      // IMPORTANT: Jito tip MUST be the LAST instruction in the transaction
       if (isMainnet) {
         const JITO_TIP_ACCOUNTS = [
           '96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5',
@@ -538,6 +543,7 @@ export class EscrowProgramService {
         console.log(
           `[EscrowProgramService] Adding Jito tip: ${tipAmount} lamports to ${jitoTipAccount.toString()}`
         );
+        // Add tip transfer instruction as LAST instruction
         transaction.add(
           SystemProgram.transfer({
             fromPubkey: this.adminKeypair.publicKey,
@@ -546,10 +552,6 @@ export class EscrowProgramService {
           })
         );
       }
-
-
-      // Add the instruction
-      transaction.add(instruction);
 
       transaction.feePayer = this.adminKeypair.publicKey;
       transaction.recentBlockhash = (await this.provider.connection.getLatestBlockhash()).blockhash;
@@ -647,7 +649,11 @@ export class EscrowProgramService {
         ComputeBudgetProgram.setComputeUnitPrice({ microLamports: priorityFee })
       );
 
+      // Add the instruction
+      transaction.add(instruction);
+
       // Add Jito tip transfer for mainnet (REQUIRED for Jito-enabled RPCs like QuickNode)
+      // IMPORTANT: Jito tip MUST be the LAST instruction in the transaction
       if (isMainnet) {
         const JITO_TIP_ACCOUNTS = [
           '96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5',
@@ -666,6 +672,7 @@ export class EscrowProgramService {
         console.log(
           `[EscrowProgramService] Adding Jito tip: ${tipAmount} lamports to ${jitoTipAccount.toString()}`
         );
+        // Add tip transfer instruction as LAST instruction
         transaction.add(
           SystemProgram.transfer({
             fromPubkey: this.adminKeypair.publicKey,
@@ -674,10 +681,6 @@ export class EscrowProgramService {
           })
         );
       }
-
-
-      // Add the instruction
-      transaction.add(instruction);
 
       transaction.feePayer = this.adminKeypair.publicKey;
       transaction.recentBlockhash = (await this.provider.connection.getLatestBlockhash()).blockhash;
