@@ -17,16 +17,37 @@ import { PriorityFeeService } from './priority-fee.service';
 /**
  * Detect Solana network from RPC URL
  * 
+ * IMPORTANT: This function determines network-specific behavior:
+ * - Mainnet: Uses Jito tips (0.001 SOL), higher priority fees (50k μ), skipPreflight=true
+ * - Devnet: No Jito tips, lower priority fees (5k μ), skipPreflight=false
+ * 
  * @param connection - Solana connection
  * @returns true if mainnet-beta, false if devnet/testnet
  */
 function isMainnetNetwork(connection: Connection): boolean {
   const rpcUrl = connection.rpcEndpoint.toLowerCase();
   
-  // Check for mainnet-beta indicators in RPC URL
-  const isMainnet = rpcUrl.includes('mainnet') || rpcUrl.includes('main-net');
+  // CRITICAL: Check for devnet/testnet FIRST to avoid false positives
+  // This prevents URLs like "devnet-mainnet-test.com" from being detected as mainnet
+  if (rpcUrl.includes('devnet') || rpcUrl.includes('testnet')) {
+    console.log(`[EscrowProgramService] Network detection: devnet/testnet (RPC: ${connection.rpcEndpoint})`);
+    return false;
+  }
   
-  console.log(`[EscrowProgramService] Network detection: ${isMainnet ? 'mainnet-beta' : 'devnet'} (RPC: ${connection.rpcEndpoint})`);
+  // Then check for mainnet-beta indicators
+  // Use specific patterns to avoid false positives
+  const isMainnet = 
+    rpcUrl.includes('mainnet-beta') || 
+    rpcUrl.includes('mainnet.beta') ||
+    rpcUrl.includes('api.mainnet') ||
+    // Fallback: check for "mainnet" but only if devnet/testnet already excluded above
+    rpcUrl.includes('mainnet');
+  
+  console.log(
+    `[EscrowProgramService] Network detection: ${
+      isMainnet ? 'mainnet-beta' : 'unknown (assuming devnet)'
+    } (RPC: ${connection.rpcEndpoint})`
+  );
   
   return isMainnet;
 }
