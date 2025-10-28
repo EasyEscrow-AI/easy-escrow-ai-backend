@@ -117,9 +117,15 @@ export class PriorityFeeService {
   ): Promise<number> {
     try {
       // Call QuickNode's priority fee estimation API
-      // This uses the standard Solana RPC but with QuickNode's extension
-      // Pass empty array (no params) - API analyzes recent transactions by default
-      const response = await (connection as any)._rpcRequest('qn_estimatePriorityFees', []);
+      // API requires GetFeesParams with 3 elements: last_n_blocks, account, api_version
+      // Reference: https://www.quicknode.com/docs/solana/qn_estimatePriorityFees
+      const response = await (connection as any)._rpcRequest('qn_estimatePriorityFees', [
+        {
+          last_n_blocks: 100, // Analyze last 100 blocks
+          account: '2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx', // Our escrow program ID for localized estimates
+          api_version: 2, // Use latest API version
+        },
+      ]);
 
       if (!response || !response.result) {
         throw new Error('Invalid response from qn_estimatePriorityFees');
