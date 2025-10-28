@@ -12,6 +12,7 @@ import { config } from '../config';
 import { Escrow } from '../generated/anchor/escrow';
 import { getEscrowIdl } from '../utils/idl-loader';
 import bs58 from 'bs58';
+import { PriorityFeeService } from './priority-fee.service';
 
 /**
  * Load admin keypair from environment based on NODE_ENV
@@ -314,7 +315,12 @@ export class EscrowProgramService {
       // Determine priority fee based on network
       // Mainnet requires higher fees for faster processing and tip account validation
       const isMainnet = process.env.NODE_ENV === 'production';
-      const priorityFee = isMainnet ? 50_000 : 5_000; // 50k microlamports for mainnet, 5k for devnet
+
+      // Fetch dynamic priority fee from QuickNode API (with caching and fallback)
+      const priorityFee = await PriorityFeeService.getRecommendedPriorityFee(
+        this.provider.connection,
+        isMainnet
+      );
 
       // With 300k CU limit: mainnet max fee = 0.015 SOL, devnet max = 0.0015 SOL
       console.log(
@@ -460,7 +466,12 @@ export class EscrowProgramService {
 
       // Determine priority fee based on network
       const isMainnet = process.env.NODE_ENV === 'production';
-      const priorityFee = isMainnet ? 50_000 : 5_000;
+
+      // Fetch dynamic priority fee from QuickNode API (with caching and fallback)
+      const priorityFee = await PriorityFeeService.getRecommendedPriorityFee(
+        this.provider.connection,
+        isMainnet
+      );
 
       // Add compute budget instructions (REQUIRED for mainnet)
       transaction.add(
@@ -581,7 +592,12 @@ export class EscrowProgramService {
 
       // Determine priority fee based on network
       const isMainnet = process.env.NODE_ENV === 'production';
-      const priorityFee = isMainnet ? 50_000 : 5_000;
+
+      // Fetch dynamic priority fee from QuickNode API (with caching and fallback)
+      const priorityFee = await PriorityFeeService.getRecommendedPriorityFee(
+        this.provider.connection,
+        isMainnet
+      );
 
       // Add compute budget instructions (REQUIRED for mainnet)
       transaction.add(
