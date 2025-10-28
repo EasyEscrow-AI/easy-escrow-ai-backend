@@ -228,16 +228,31 @@ export class EscrowProgramService {
         }),
       });
 
+      // Check HTTP response status before attempting to parse JSON
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(
+          `[EscrowProgramService] Jito Block Engine HTTP error: ${response.status} ${response.statusText}`,
+          errorText
+        );
+        throw new Error(
+          `Jito Block Engine HTTP ${response.status}: ${response.statusText}. ${errorText.substring(0, 200)}`
+        );
+      }
+
+      // Parse JSON response
       const result = await response.json() as {
         result?: string;
         error?: { message?: string; [key: string]: any };
       };
       
+      // Check for JSON-RPC error in response
       if (result.error) {
-        console.error('[EscrowProgramService] Jito Block Engine error:', result.error);
+        console.error('[EscrowProgramService] Jito Block Engine RPC error:', result.error);
         throw new Error(`Jito sendTransaction failed: ${result.error.message || JSON.stringify(result.error)}`);
       }
 
+      // Verify we got a transaction signature
       if (!result.result) {
         throw new Error('Jito sendTransaction returned no signature');
       }
