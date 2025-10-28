@@ -15,6 +15,23 @@ import bs58 from 'bs58';
 import { PriorityFeeService } from './priority-fee.service';
 
 /**
+ * Detect Solana network from RPC URL
+ * 
+ * @param connection - Solana connection
+ * @returns true if mainnet-beta, false if devnet/testnet
+ */
+function isMainnetNetwork(connection: Connection): boolean {
+  const rpcUrl = connection.rpcEndpoint.toLowerCase();
+  
+  // Check for mainnet-beta indicators in RPC URL
+  const isMainnet = rpcUrl.includes('mainnet') || rpcUrl.includes('main-net');
+  
+  console.log(`[EscrowProgramService] Network detection: ${isMainnet ? 'mainnet-beta' : 'devnet'} (RPC: ${connection.rpcEndpoint})`);
+  
+  return isMainnet;
+}
+
+/**
  * Load admin keypair from environment based on NODE_ENV
  *
  * Environment-specific variables:
@@ -314,7 +331,7 @@ export class EscrowProgramService {
 
       // Determine priority fee based on network
       // Mainnet requires higher fees for faster processing and tip account validation
-      const isMainnet = process.env.NODE_ENV === 'production';
+      const isMainnet = isMainnetNetwork(this.provider.connection);
 
       // Fetch dynamic priority fee from QuickNode API (with caching and fallback)
       const priorityFee = await PriorityFeeService.getRecommendedPriorityFee(
@@ -465,7 +482,7 @@ export class EscrowProgramService {
       const transaction = new Transaction();
 
       // Determine priority fee based on network
-      const isMainnet = process.env.NODE_ENV === 'production';
+      const isMainnet = isMainnetNetwork(this.provider.connection);
 
       // Fetch dynamic priority fee from QuickNode API (with caching and fallback)
       const priorityFee = await PriorityFeeService.getRecommendedPriorityFee(
@@ -592,7 +609,7 @@ export class EscrowProgramService {
       const transaction = new Transaction();
 
       // Determine priority fee based on network
-      const isMainnet = process.env.NODE_ENV === 'production';
+      const isMainnet = isMainnetNetwork(this.provider.connection);
 
       // Fetch dynamic priority fee from QuickNode API (with caching and fallback)
       const priorityFee = await PriorityFeeService.getRecommendedPriorityFee(
