@@ -12,6 +12,24 @@ import { config } from '../config';
 import { Escrow } from '../generated/anchor/escrow';
 import { getEscrowIdl } from '../utils/idl-loader';
 import bs58 from 'bs58';
+import { PriorityFeeService } from './priority-fee.service';
+
+/**
+ * Detect Solana network from RPC URL
+ * 
+ * @param connection - Solana connection
+ * @returns true if mainnet-beta, false if devnet/testnet
+ */
+function isMainnetNetwork(connection: Connection): boolean {
+  const rpcUrl = connection.rpcEndpoint.toLowerCase();
+  
+  // Check for mainnet-beta indicators in RPC URL
+  const isMainnet = rpcUrl.includes('mainnet') || rpcUrl.includes('main-net');
+  
+  console.log(`[EscrowProgramService] Network detection: ${isMainnet ? 'mainnet-beta' : 'devnet'} (RPC: ${connection.rpcEndpoint})`);
+  
+  return isMainnet;
+}
 
 /**
  * Load admin keypair from environment based on NODE_ENV
@@ -313,8 +331,13 @@ export class EscrowProgramService {
 
       // Determine priority fee based on network
       // Mainnet requires higher fees for faster processing and tip account validation
-      const isMainnet = process.env.NODE_ENV === 'production';
-      const priorityFee = isMainnet ? 50_000 : 5_000; // 50k microlamports for mainnet, 5k for devnet
+      const isMainnet = isMainnetNetwork(this.provider.connection);
+
+      // Fetch dynamic priority fee from QuickNode API (with caching and fallback)
+      const priorityFee = await PriorityFeeService.getRecommendedPriorityFee(
+        this.provider.connection,
+        isMainnet
+      );
 
       // With 300k CU limit: mainnet max fee = 0.015 SOL, devnet max = 0.0015 SOL
       console.log(
@@ -328,6 +351,43 @@ export class EscrowProgramService {
         ComputeBudgetProgram.setComputeUnitLimit({ units: 300_000 }),
         ComputeBudgetProgram.setComputeUnitPrice({ microLamports: priorityFee })
       );
+
+      // Add Jito tip transfer for mainnet (REQUIRED for Jito-enabled RPCs like QuickNode)
+      if (isMainnet) {
+        // Jito tip accounts (official addresses from Jito Labs)
+        const JITO_TIP_ACCOUNTS = [
+          '96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5',
+          'HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe',
+          'Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY',
+          'ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49',
+          'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
+          'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
+          'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
+          '3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT',
+        ];
+
+        // Randomly select a Jito tip account
+        const jitoTipAccount = new PublicKey(
+          JITO_TIP_ACCOUNTS[Math.floor(Math.random() * JITO_TIP_ACCOUNTS.length)]
+        );
+
+        // Tip amount: 0.001 SOL (1,000,000 lamports)
+        // This is the minimum recommended tip for Jito bundles
+        const tipAmount = 1_000_000;
+
+        console.log(
+          `[EscrowProgramService] Adding Jito tip: ${tipAmount} lamports to ${jitoTipAccount.toString()}`
+        );
+
+        // Add tip transfer instruction
+        transaction.add(
+          SystemProgram.transfer({
+            fromPubkey: this.adminKeypair.publicKey,
+            toPubkey: jitoTipAccount,
+            lamports: tipAmount,
+          })
+        );
+      }
 
       // Add the escrow initialization instruction
       transaction.add(instruction);
@@ -422,14 +482,48 @@ export class EscrowProgramService {
       const transaction = new Transaction();
 
       // Determine priority fee based on network
-      const isMainnet = process.env.NODE_ENV === 'production';
-      const priorityFee = isMainnet ? 50_000 : 5_000;
+      const isMainnet = isMainnetNetwork(this.provider.connection);
+
+      // Fetch dynamic priority fee from QuickNode API (with caching and fallback)
+      const priorityFee = await PriorityFeeService.getRecommendedPriorityFee(
+        this.provider.connection,
+        isMainnet
+      );
 
       // Add compute budget instructions (REQUIRED for mainnet)
       transaction.add(
         ComputeBudgetProgram.setComputeUnitLimit({ units: 300_000 }),
         ComputeBudgetProgram.setComputeUnitPrice({ microLamports: priorityFee })
       );
+
+      // Add Jito tip transfer for mainnet (REQUIRED for Jito-enabled RPCs like QuickNode)
+      if (isMainnet) {
+        const JITO_TIP_ACCOUNTS = [
+          '96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5',
+          'HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe',
+          'Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY',
+          'ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49',
+          'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
+          'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
+          'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
+          '3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT',
+        ];
+        const jitoTipAccount = new PublicKey(
+          JITO_TIP_ACCOUNTS[Math.floor(Math.random() * JITO_TIP_ACCOUNTS.length)]
+        );
+        const tipAmount = 1_000_000;
+        console.log(
+          `[EscrowProgramService] Adding Jito tip: ${tipAmount} lamports to ${jitoTipAccount.toString()}`
+        );
+        transaction.add(
+          SystemProgram.transfer({
+            fromPubkey: this.adminKeypair.publicKey,
+            toPubkey: jitoTipAccount,
+            lamports: tipAmount,
+          })
+        );
+      }
+
 
       // Add the instruction
       transaction.add(instruction);
@@ -515,14 +609,48 @@ export class EscrowProgramService {
       const transaction = new Transaction();
 
       // Determine priority fee based on network
-      const isMainnet = process.env.NODE_ENV === 'production';
-      const priorityFee = isMainnet ? 50_000 : 5_000;
+      const isMainnet = isMainnetNetwork(this.provider.connection);
+
+      // Fetch dynamic priority fee from QuickNode API (with caching and fallback)
+      const priorityFee = await PriorityFeeService.getRecommendedPriorityFee(
+        this.provider.connection,
+        isMainnet
+      );
 
       // Add compute budget instructions (REQUIRED for mainnet)
       transaction.add(
         ComputeBudgetProgram.setComputeUnitLimit({ units: 300_000 }),
         ComputeBudgetProgram.setComputeUnitPrice({ microLamports: priorityFee })
       );
+
+      // Add Jito tip transfer for mainnet (REQUIRED for Jito-enabled RPCs like QuickNode)
+      if (isMainnet) {
+        const JITO_TIP_ACCOUNTS = [
+          '96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5',
+          'HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe',
+          'Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY',
+          'ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49',
+          'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
+          'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
+          'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
+          '3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT',
+        ];
+        const jitoTipAccount = new PublicKey(
+          JITO_TIP_ACCOUNTS[Math.floor(Math.random() * JITO_TIP_ACCOUNTS.length)]
+        );
+        const tipAmount = 1_000_000;
+        console.log(
+          `[EscrowProgramService] Adding Jito tip: ${tipAmount} lamports to ${jitoTipAccount.toString()}`
+        );
+        transaction.add(
+          SystemProgram.transfer({
+            fromPubkey: this.adminKeypair.publicKey,
+            toPubkey: jitoTipAccount,
+            lamports: tipAmount,
+          })
+        );
+      }
+
 
       // Add the instruction
       transaction.add(instruction);
