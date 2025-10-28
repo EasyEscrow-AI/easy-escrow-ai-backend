@@ -7,6 +7,7 @@
 
 import devIdl from '../generated/anchor/escrow-idl-dev.json';
 import stagingIdl from '../generated/anchor/escrow-idl-staging.json';
+import productionIdl from '../generated/anchor/escrow-idl-production.json';
 
 /**
  * Environment-to-IDL mapping
@@ -15,7 +16,7 @@ const IDL_MAP = {
   development: devIdl,
   dev: devIdl,
   staging: stagingIdl,
-  production: stagingIdl, // TODO: Update when production IDL is available
+  production: productionIdl,
 } as const;
 
 /**
