@@ -1,16 +1,20 @@
 import { PrismaClient, Agreement, AgreementStatus, Deposit } from '../generated/prisma';
-import { 
-  CreateAgreementDTO, 
-  CreateAgreementResponseDTO, 
-  AgreementResponseDTO, 
+import {
+  CreateAgreementDTO,
+  CreateAgreementResponseDTO,
+  AgreementResponseDTO,
   AgreementQueryDTO,
   AgreementDetailResponseDTO,
   DepositInfoDTO,
-  CancelAgreementResponseDTO
+  CancelAgreementResponseDTO,
 } from '../models/dto/agreement.dto';
 import { initializeEscrow, getSolanaService } from './solana.service';
 import { getMonitoringOrchestrator } from './monitoring-orchestrator.service';
-import { getTransactionLogService, TransactionOperationType, TransactionStatusType } from './transaction-log.service';
+import {
+  getTransactionLogService,
+  TransactionOperationType,
+  TransactionStatusType,
+} from './transaction-log.service';
 import { Decimal } from '@prisma/client/runtime/library';
 import { PublicKey } from '@solana/web3.js';
 import { EscrowProgramService } from './escrow-program.service';
@@ -36,7 +40,7 @@ export const createAgreement = async (
       const { ensureUSDCAccountsExist } = await import('./usdc-account.service');
       const connection = getSolanaService().getConnection();
       const usdcMint = new PublicKey(process.env.USDC_MINT_ADDRESS!);
-      
+
       try {
         await ensureUSDCAccountsExist(
           connection,
@@ -46,10 +50,21 @@ export const createAgreement = async (
         );
         console.log('[AgreementService] ✅ USDC accounts verified/created');
       } catch (accountError) {
-        console.error('[AgreementService] Failed to setup USDC accounts:', accountError);
-        // Continue anyway - the on-chain initialization will fail if accounts truly don't exist
-        // This provides a better error message to the user
-        console.warn('[AgreementService] ⚠️  Continuing without USDC account verification');
+        console.error('[AgreementService] ❌ Failed to setup USDC accounts:', accountError);
+
+        // Fail fast with clear error message
+        // If USDC accounts can't be created, escrow initialization will fail anyway
+        // Better to fail here with the root cause than continue and get a generic error
+        const errorMessage =
+          accountError instanceof Error
+            ? accountError.message
+            : 'Unknown error creating USDC accounts';
+
+        throw new Error(
+          `Failed to create USDC token accounts: ${errorMessage}. ` +
+            `Both seller and buyer must have USDC token accounts for escrow. ` +
+            `Platform attempted to create them but failed. Check wallet addresses and network connectivity.`
+        );
       }
     } else {
       console.log('[AgreementService] Buyer not specified, skipping USDC account verification');
@@ -65,7 +80,7 @@ export const createAgreement = async (
       feeBps: data.feeBps,
       honorRoyalties: data.honorRoyalties,
     });
-    
+
     console.log('[AgreementService] Escrow Result:', JSON.stringify(escrowResult, null, 2));
 
     // 2. Store agreement in database
@@ -124,10 +139,11 @@ export const createAgreement = async (
       expiry: agreement.expiry.toISOString(),
       transactionId: agreement.initTxId!,
     };
-
   } catch (error) {
     console.error('Error creating agreement:', error);
-    throw new Error(`Failed to create agreement: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(
+      `Failed to create agreement: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
   }
 };
 
@@ -167,7 +183,7 @@ export const getAgreementDetailById = async (
       where: { agreementId },
       include: {
         deposits: {
-          orderBy: { detectedAt: 'asc' }
+          orderBy: { detectedAt: 'asc' },
         },
         receipt: true, // Include receipt to get receiptId
       },
@@ -316,7 +332,7 @@ const mapAgreementToDTO = (agreement: any): AgreementResponseDTO => {
  */
 const mapAgreementToDetailDTO = (agreement: any): AgreementDetailResponseDTO => {
   const baseDTO = mapAgreementToDTO(agreement);
-  
+
   // Map deposits
   const deposits: DepositInfoDTO[] = agreement.deposits.map((deposit: any) => ({
     id: deposit.id,
@@ -330,8 +346,12 @@ const mapAgreementToDetailDTO = (agreement: any): AgreementDetailResponseDTO => 
   }));
 
   // Calculate balances
-  const usdcDeposit = agreement.deposits.find((d: any) => d.type === 'USDC' && d.status === 'CONFIRMED');
-  const nftDeposit = agreement.deposits.find((d: any) => d.type === 'NFT' && d.status === 'CONFIRMED');
+  const usdcDeposit = agreement.deposits.find(
+    (d: any) => d.type === 'USDC' && d.status === 'CONFIRMED'
+  );
+  const nftDeposit = agreement.deposits.find(
+    (d: any) => d.type === 'NFT' && d.status === 'CONFIRMED'
+  );
 
   const balances = {
     usdcLocked: !!usdcDeposit,
@@ -342,11 +362,12 @@ const mapAgreementToDetailDTO = (agreement: any): AgreementDetailResponseDTO => 
   // Check expiry and cancellation eligibility
   const now = new Date();
   const isExpired = now > agreement.expiry;
-  const canBeCancelled = isExpired && 
-    (agreement.status === AgreementStatus.PENDING || 
-     agreement.status === AgreementStatus.USDC_LOCKED || 
-     agreement.status === AgreementStatus.NFT_LOCKED ||
-     agreement.status === AgreementStatus.BOTH_LOCKED);
+  const canBeCancelled =
+    isExpired &&
+    (agreement.status === AgreementStatus.PENDING ||
+      agreement.status === AgreementStatus.USDC_LOCKED ||
+      agreement.status === AgreementStatus.NFT_LOCKED ||
+      agreement.status === AgreementStatus.BOTH_LOCKED);
 
   return {
     ...baseDTO,
@@ -414,7 +435,8 @@ export const cancelAgreement = async (
       status: updatedAgreement.status,
       cancelledAt: updatedAgreement.cancelledAt!.toISOString(),
       transactionId: updatedAgreement.cancelTxId || undefined,
-      message: 'Agreement cancelled successfully. Assets will be returned to their respective owners.',
+      message:
+        'Agreement cancelled successfully. Assets will be returned to their respective owners.',
     };
   } catch (error) {
     console.error('Error cancelling agreement:', error);
@@ -448,7 +470,9 @@ export const cleanupExpiredAgreements = async (): Promise<number> => {
  * Build unsigned deposit NFT transaction (PRODUCTION)
  * Client signs and submits this transaction with their wallet
  */
-export const prepareDepositNftTransaction = async (agreementId: string): Promise<{ transaction: string; message: string }> => {
+export const prepareDepositNftTransaction = async (
+  agreementId: string
+): Promise<{ transaction: string; message: string }> => {
   try {
     console.log('[AgreementService] prepareDepositNftTransaction called for:', agreementId);
 
@@ -462,9 +486,14 @@ export const prepareDepositNftTransaction = async (agreementId: string): Promise
     }
 
     // 2. Validate status - allow NFT deposit when PENDING or USDC_LOCKED
-    const allowedStatuses: AgreementStatus[] = [AgreementStatus.PENDING, AgreementStatus.USDC_LOCKED];
+    const allowedStatuses: AgreementStatus[] = [
+      AgreementStatus.PENDING,
+      AgreementStatus.USDC_LOCKED,
+    ];
     if (!allowedStatuses.includes(agreement.status)) {
-      throw new Error(`Cannot deposit NFT: Agreement status is ${agreement.status}. Must be PENDING or USDC_LOCKED.`);
+      throw new Error(
+        `Cannot deposit NFT: Agreement status is ${agreement.status}. Must be PENDING or USDC_LOCKED.`
+      );
     }
 
     // 3. Build unsigned transaction
@@ -488,7 +517,9 @@ export const prepareDepositNftTransaction = async (agreementId: string): Promise
  * Build unsigned deposit USDC transaction (PRODUCTION)
  * Client signs and submits this transaction with their wallet
  */
-export const prepareDepositUsdcTransaction = async (agreementId: string): Promise<{ transaction: string; message: string }> => {
+export const prepareDepositUsdcTransaction = async (
+  agreementId: string
+): Promise<{ transaction: string; message: string }> => {
   try {
     console.log('[AgreementService] prepareDepositUsdcTransaction called for:', agreementId);
 
@@ -502,9 +533,14 @@ export const prepareDepositUsdcTransaction = async (agreementId: string): Promis
     }
 
     // 2. Validate status - allow USDC deposit when PENDING or NFT_LOCKED
-    const allowedStatuses: AgreementStatus[] = [AgreementStatus.PENDING, AgreementStatus.NFT_LOCKED];
+    const allowedStatuses: AgreementStatus[] = [
+      AgreementStatus.PENDING,
+      AgreementStatus.NFT_LOCKED,
+    ];
     if (!allowedStatuses.includes(agreement.status)) {
-      throw new Error(`Cannot deposit USDC: Agreement status is ${agreement.status}. Must be PENDING or NFT_LOCKED.`);
+      throw new Error(
+        `Cannot deposit USDC: Agreement status is ${agreement.status}. Must be PENDING or NFT_LOCKED.`
+      );
     }
 
     if (!agreement.buyer) {
@@ -537,14 +573,16 @@ export const prepareDepositUsdcTransaction = async (agreementId: string): Promis
  * Calls the on-chain deposit_nft instruction
  * @deprecated Use prepareDepositNftTransaction for production (client-side signing)
  */
-export const depositNftToEscrow = async (agreementId: string): Promise<{ transactionId: string }> => {
+export const depositNftToEscrow = async (
+  agreementId: string
+): Promise<{ transactionId: string }> => {
   try {
     console.log('[AgreementService] depositNftToEscrow called for:', agreementId);
 
     // 1. Get agreement from database
     const agreement = await prisma.agreement.findUnique({
       where: { agreementId },
-      include: { deposits: true }
+      include: { deposits: true },
     });
 
     if (!agreement) {
@@ -552,9 +590,14 @@ export const depositNftToEscrow = async (agreementId: string): Promise<{ transac
     }
 
     // 2. Validate status - allow NFT deposit when PENDING or USDC_LOCKED
-    const allowedStatuses: AgreementStatus[] = [AgreementStatus.PENDING, AgreementStatus.USDC_LOCKED];
+    const allowedStatuses: AgreementStatus[] = [
+      AgreementStatus.PENDING,
+      AgreementStatus.USDC_LOCKED,
+    ];
     if (!allowedStatuses.includes(agreement.status)) {
-      throw new Error(`Cannot deposit NFT: Agreement status is ${agreement.status}. Must be PENDING or USDC_LOCKED.`);
+      throw new Error(
+        `Cannot deposit NFT: Agreement status is ${agreement.status}. Must be PENDING or USDC_LOCKED.`
+      );
     }
 
     // 3. Call on-chain deposit_nft instruction
@@ -579,7 +622,7 @@ export const depositNftToEscrow = async (agreementId: string): Promise<{ transac
     return { transactionId: txId };
   } catch (error) {
     console.error('[AgreementService] depositNftToEscrow error:', error);
-    
+
     // Log failure (optional - can skip if txId doesn't exist)
     if (error instanceof Error && error.message) {
       const txLogService = getTransactionLogService();
@@ -605,14 +648,16 @@ export const depositNftToEscrow = async (agreementId: string): Promise<{ transac
  * Deposit USDC into escrow
  * Calls the on-chain deposit_usdc instruction
  */
-export const depositUsdcToEscrow = async (agreementId: string): Promise<{ transactionId: string }> => {
+export const depositUsdcToEscrow = async (
+  agreementId: string
+): Promise<{ transactionId: string }> => {
   try {
     console.log('[AgreementService] depositUsdcToEscrow called for:', agreementId);
 
     // 1. Get agreement from database
     const agreement = await prisma.agreement.findUnique({
       where: { agreementId },
-      include: { deposits: true }
+      include: { deposits: true },
     });
 
     if (!agreement) {
@@ -620,9 +665,14 @@ export const depositUsdcToEscrow = async (agreementId: string): Promise<{ transa
     }
 
     // 2. Validate status - allow USDC deposit when PENDING or NFT_LOCKED
-    const allowedStatuses: AgreementStatus[] = [AgreementStatus.PENDING, AgreementStatus.NFT_LOCKED];
+    const allowedStatuses: AgreementStatus[] = [
+      AgreementStatus.PENDING,
+      AgreementStatus.NFT_LOCKED,
+    ];
     if (!allowedStatuses.includes(agreement.status)) {
-      throw new Error(`Cannot deposit USDC: Agreement status is ${agreement.status}. Must be PENDING or NFT_LOCKED.`);
+      throw new Error(
+        `Cannot deposit USDC: Agreement status is ${agreement.status}. Must be PENDING or NFT_LOCKED.`
+      );
     }
 
     if (!agreement.buyer) {
@@ -655,7 +705,7 @@ export const depositUsdcToEscrow = async (agreementId: string): Promise<{ transa
     return { transactionId: txId };
   } catch (error) {
     console.error('[AgreementService] depositUsdcToEscrow error:', error);
-    
+
     // Log failure (optional - can skip if txId doesn't exist)
     if (error instanceof Error && error.message) {
       const txLogService = getTransactionLogService();
@@ -676,4 +726,3 @@ export const depositUsdcToEscrow = async (agreementId: string): Promise<{ transa
     throw error;
   }
 };
-
