@@ -239,7 +239,7 @@ describe('IdempotencyService', () => {
       // Verify Prisma create was called
       expect(prismaStub.idempotencyKey.create.calledOnce).to.be.true;
       // Verify stored
-      const stored = await prisma.idempotencyKey.findUnique({
+      const stored = await prisma?.idempotencyKey.findUnique({
         where: { key },
       });
 
@@ -262,7 +262,7 @@ describe('IdempotencyService', () => {
       // Verify Prisma deleteMany was called
       expect(prismaStub.idempotencyKey.deleteMany.calledOnce).to.be.true;
       // Verify deleted
-      const deleted = await prisma.idempotencyKey.findUnique({
+      const deleted = await prisma?.idempotencyKey.findUnique({
         where: { key },
       });
 
