@@ -167,6 +167,57 @@ export class EscrowProgramService {
   }
   
   /**
+   * Ensure token account exists, create if it doesn't
+   * This is used for both USDC and NFT token accounts
+   * Admin wallet pays the rent-exemption (~0.002 SOL per account)
+   * 
+   * @param mint - The token mint (USDC or NFT)
+   * @param owner - The owner of the token account
+   * @param tokenType - Description for logging (e.g., "USDC", "NFT")
+   * @returns The token account address
+   */
+  private async ensureTokenAccountExists(
+    mint: PublicKey,
+    owner: PublicKey,
+    tokenType: string = 'Token'
+  ): Promise<PublicKey> {
+    const tokenAccount = await getAssociatedTokenAddress(mint, owner);
+    
+    const accountInfo = await this.provider.connection.getAccountInfo(tokenAccount);
+    
+    if (!accountInfo) {
+      console.log(`[EscrowProgramService] ${tokenType} account does not exist for ${owner.toBase58()}, creating...`);
+      console.log(`[EscrowProgramService] Token Account: ${tokenAccount.toBase58()}`);
+      console.log(`[EscrowProgramService] Mint: ${mint.toBase58()}`);
+      
+      const { createAssociatedTokenAccountInstruction } = await import('@solana/spl-token');
+      const createAtaIx = createAssociatedTokenAccountInstruction(
+        this.adminKeypair.publicKey, // payer (admin pays rent)
+        tokenAccount, // ata address
+        owner, // owner
+        mint // mint
+      );
+      
+      const { Transaction, sendAndConfirmTransaction } = await import('@solana/web3.js');
+      const createAtaTx = new Transaction().add(createAtaIx);
+      
+      const signature = await sendAndConfirmTransaction(
+        this.provider.connection,
+        createAtaTx,
+        [this.adminKeypair]
+      );
+      
+      console.log(`[EscrowProgramService] ${tokenType} account created successfully`);
+      console.log(`[EscrowProgramService] Transaction: ${signature}`);
+      console.log(`[EscrowProgramService] Cost: ~0.002 SOL (rent-exemption, one-time per user)`);
+    } else {
+      console.log(`[EscrowProgramService] ${tokenType} account already exists: ${tokenAccount.toBase58()}`);
+    }
+    
+    return tokenAccount;
+  }
+  
+  /**
    * Initialize escrow agreement on-chain
    * Creates the escrow PDA account with agreement details
    * 
@@ -366,10 +417,11 @@ export class EscrowProgramService {
       // Get escrow ID from PDA
       const escrowId = await this.getEscrowIdFromPDA(escrowPda);
       
-      // Derive buyer's USDC account
-      const buyerUsdcAccount = await getAssociatedTokenAddress(
+      // Ensure buyer's USDC account exists (create if needed)
+      const buyerUsdcAccount = await this.ensureTokenAccountExists(
         usdcMint,
-        buyer
+        buyer,
+        'Buyer USDC'
       );
       
       // Derive escrow's USDC account
@@ -531,10 +583,11 @@ export class EscrowProgramService {
         usdcMint: usdcMint.toString(),
       });
       
-      // Derive buyer's USDC account
-      const buyerUsdcAccount = await getAssociatedTokenAddress(
+      // Ensure buyer's USDC account exists (create if needed)
+      const buyerUsdcAccount = await this.ensureTokenAccountExists(
         usdcMint,
-        buyer
+        buyer,
+        'Buyer USDC'
       );
       
       // Derive escrow's USDC account
@@ -634,7 +687,7 @@ export class EscrowProgramService {
         throw new Error(`PDA mismatch: expected ${derivedPda.toString()}, got ${escrowPda.toString()}`);
       }
       
-      // Derive token accounts
+      // Derive escrow token accounts (no need to create, they're PDAs)
       const escrowUsdcAccount = await getAssociatedTokenAddress(
         usdcMint,
         escrowPda,
@@ -647,19 +700,25 @@ export class EscrowProgramService {
         true
       );
       
-      const sellerUsdcAccount = await getAssociatedTokenAddress(
+      // Ensure seller's USDC account exists (for receiving payment)
+      const sellerUsdcAccount = await this.ensureTokenAccountExists(
         usdcMint,
-        seller
+        seller,
+        'Seller USDC'
       );
       
-      const buyerNftAccount = await getAssociatedTokenAddress(
+      // Ensure buyer's NFT account exists (for receiving NFT)
+      const buyerNftAccount = await this.ensureTokenAccountExists(
         nftMint,
-        buyer
+        buyer,
+        'Buyer NFT'
       );
       
-      const feeCollectorUsdcAccount = await getAssociatedTokenAddress(
+      // Ensure fee collector's USDC account exists (for receiving fees)
+      const feeCollectorUsdcAccount = await this.ensureTokenAccountExists(
         usdcMint,
-        feeCollector
+        feeCollector,
+        'Fee Collector USDC'
       );
       
       console.log('[EscrowProgramService] Token accounts:', {
@@ -669,32 +728,6 @@ export class EscrowProgramService {
         buyerNftAccount: buyerNftAccount.toString(),
         feeCollectorUsdcAccount: feeCollectorUsdcAccount.toString(),
       });
-      
-      // Ensure buyer's NFT ATA exists
-      const buyerNftAccountInfo = await this.provider.connection.getAccountInfo(buyerNftAccount);
-      if (!buyerNftAccountInfo) {
-        console.log('[EscrowProgramService] Creating buyer NFT ATA:', buyerNftAccount.toString());
-        
-        const { createAssociatedTokenAccountInstruction } = await import('@solana/spl-token');
-        const createAtaIx = createAssociatedTokenAccountInstruction(
-          this.adminKeypair.publicKey, // payer
-          buyerNftAccount, // ata
-          buyer, // owner
-          nftMint // mint
-        );
-        
-        const { Transaction, sendAndConfirmTransaction } = await import('@solana/web3.js');
-        const createAtaTx = new Transaction().add(createAtaIx);
-        await sendAndConfirmTransaction(
-          this.provider.connection,
-          createAtaTx,
-          [this.adminKeypair]
-        );
-        
-        console.log('[EscrowProgramService] Buyer NFT ATA created successfully');
-      } else {
-        console.log('[EscrowProgramService] Buyer NFT ATA already exists');
-      }
       
       // Call settle instruction with fee distribution
       // Note: TypeScript types not yet regenerated from updated IDL, using 'as any' to bypass
