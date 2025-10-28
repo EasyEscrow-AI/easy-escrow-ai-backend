@@ -329,6 +329,43 @@ export class EscrowProgramService {
         ComputeBudgetProgram.setComputeUnitPrice({ microLamports: priorityFee })
       );
 
+      // Add Jito tip transfer for mainnet (REQUIRED for Jito-enabled RPCs like QuickNode)
+      if (isMainnet) {
+        // Jito tip accounts (official addresses from Jito Labs)
+        const JITO_TIP_ACCOUNTS = [
+          '96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5',
+          'HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe',
+          'Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY',
+          'ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49',
+          'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
+          'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
+          'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
+          '3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT',
+        ];
+
+        // Randomly select a Jito tip account
+        const jitoTipAccount = new PublicKey(
+          JITO_TIP_ACCOUNTS[Math.floor(Math.random() * JITO_TIP_ACCOUNTS.length)]
+        );
+
+        // Tip amount: 0.001 SOL (1,000,000 lamports)
+        // This is the minimum recommended tip for Jito bundles
+        const tipAmount = 1_000_000;
+
+        console.log(
+          `[EscrowProgramService] Adding Jito tip: ${tipAmount} lamports to ${jitoTipAccount.toString()}`
+        );
+
+        // Add tip transfer instruction
+        transaction.add(
+          SystemProgram.transfer({
+            fromPubkey: this.adminKeypair.publicKey,
+            toPubkey: jitoTipAccount,
+            lamports: tipAmount,
+          })
+        );
+      }
+
       // Add the escrow initialization instruction
       transaction.add(instruction);
 
@@ -431,6 +468,34 @@ export class EscrowProgramService {
         ComputeBudgetProgram.setComputeUnitPrice({ microLamports: priorityFee })
       );
 
+      // Add Jito tip transfer for mainnet (REQUIRED for Jito-enabled RPCs like QuickNode)
+      if (isMainnet) {
+        const JITO_TIP_ACCOUNTS = [
+          '96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5',
+          'HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe',
+          'Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY',
+          'ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49',
+          'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
+          'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
+          'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
+          '3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT',
+        ];
+        const jitoTipAccount = new PublicKey(
+          JITO_TIP_ACCOUNTS[Math.floor(Math.random() * JITO_TIP_ACCOUNTS.length)]
+        );
+        const tipAmount = 1_000_000;
+        console.log(
+          `[EscrowProgramService] Adding Jito tip: ${tipAmount} lamports to ${jitoTipAccount.toString()}`
+        );
+        transaction.add(
+          SystemProgram.transfer({
+            fromPubkey: this.adminKeypair.publicKey,
+            toPubkey: jitoTipAccount,
+            lamports: tipAmount,
+          })
+        );
+      }
+
       // Add the instruction
       transaction.add(instruction);
 
@@ -523,6 +588,34 @@ export class EscrowProgramService {
         ComputeBudgetProgram.setComputeUnitLimit({ units: 300_000 }),
         ComputeBudgetProgram.setComputeUnitPrice({ microLamports: priorityFee })
       );
+
+      // Add Jito tip transfer for mainnet (REQUIRED for Jito-enabled RPCs like QuickNode)
+      if (isMainnet) {
+        const JITO_TIP_ACCOUNTS = [
+          '96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5',
+          'HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe',
+          'Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY',
+          'ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49',
+          'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
+          'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
+          'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
+          '3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT',
+        ];
+        const jitoTipAccount = new PublicKey(
+          JITO_TIP_ACCOUNTS[Math.floor(Math.random() * JITO_TIP_ACCOUNTS.length)]
+        );
+        const tipAmount = 1_000_000;
+        console.log(
+          `[EscrowProgramService] Adding Jito tip: ${tipAmount} lamports to ${jitoTipAccount.toString()}`
+        );
+        transaction.add(
+          SystemProgram.transfer({
+            fromPubkey: this.adminKeypair.publicKey,
+            toPubkey: jitoTipAccount,
+            lamports: tipAmount,
+          })
+        );
+      }
 
       // Add the instruction
       transaction.add(instruction);
