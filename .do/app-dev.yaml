@@ -67,6 +67,14 @@ services:
       - key: PLATFORM_FEE_BPS
         value: "250"
       
+      # Health Check & Monitoring Intervals (Optimized for Development)
+      - key: SOLANA_RPC_HEALTH_CHECK_INTERVAL
+        value: "60000"  # 1 minute - Faster feedback for development
+      - key: HEALTH_CHECK_INTERVAL_MS
+        value: "60000"  # 1 minute - Service health monitoring
+      - key: METRICS_INTERVAL_MS
+        value: "180000"  # 3 minutes - Metrics collection
+      
       # DEV Database (automatically injected by App Platform)
       # DATABASE_URL will be set automatically
       

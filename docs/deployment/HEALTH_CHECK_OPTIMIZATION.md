@@ -51,6 +51,10 @@ Production logs showed excessive health check frequency:
 
 ## ⚙️ Configuration Changes
 
+### All Environments Optimized
+
+We've optimized health check intervals for **all three environments** to match their specific needs.
+
 ### Production Environment Variables
 
 **File:** `production-app.yaml`
@@ -72,22 +76,70 @@ Production logs showed excessive health check frequency:
   scope: RUN_TIME
 ```
 
+### Staging Environment Variables
+
+**File:** `.do/app-staging.yaml`
+
+```yaml
+# Health Check & Monitoring Intervals (Optimized for Staging)
+- key: SOLANA_RPC_HEALTH_CHECK_INTERVAL
+  value: "120000"  # 2 minutes - Moderate for staging testing
+
+- key: HEALTH_CHECK_INTERVAL_MS
+  value: "120000"  # 2 minutes - Service health monitoring
+
+- key: METRICS_INTERVAL_MS
+  value: "300000"  # 5 minutes - Metrics collection
+```
+
+### Development Environment Variables
+
+**File:** `.do/app-dev.yaml`
+
+```yaml
+# Health Check & Monitoring Intervals (Optimized for Development)
+- key: SOLANA_RPC_HEALTH_CHECK_INTERVAL
+  value: "60000"  # 1 minute - Faster feedback for development
+
+- key: HEALTH_CHECK_INTERVAL_MS
+  value: "60000"  # 1 minute - Service health monitoring
+
+- key: METRICS_INTERVAL_MS
+  value: "180000"  # 3 minutes - Metrics collection
+```
+
+### Local Development (.env)
+
+For local development, add these to your `.env` file:
+
+```bash
+SOLANA_RPC_HEALTH_CHECK_INTERVAL=60000   # 1 minute
+HEALTH_CHECK_INTERVAL_MS=60000           # 1 minute
+METRICS_INTERVAL_MS=180000               # 3 minutes
+```
+
 ## 📈 Recommended Intervals by Environment
 
-### Production (Current)
+### Production ✅ **OPTIMIZED**
 - **RPC Health Checks:** 5 minutes (300000ms)
 - **Service Health Checks:** 5 minutes (300000ms)
 - **Metrics Collection:** 10 minutes (600000ms)
+- **Daily Operations:** 1,008 (92% reduction)
+- **Why:** Minimize costs, reduce log noise, still catches issues quickly
 
-### Staging
+### Staging ✅ **OPTIMIZED**
 - **RPC Health Checks:** 2 minutes (120000ms)
 - **Service Health Checks:** 2 minutes (120000ms)
 - **Metrics Collection:** 5 minutes (300000ms)
+- **Daily Operations:** 1,728 (86% reduction)
+- **Why:** Balance between testing feedback and resource usage
 
-### Development/Local
-- **RPC Health Checks:** 30 seconds (30000ms) - Faster feedback
+### Development/Local ✅ **OPTIMIZED**
+- **RPC Health Checks:** 1 minute (60000ms)
 - **Service Health Checks:** 1 minute (60000ms)
-- **Metrics Collection:** 2 minutes (120000ms)
+- **Metrics Collection:** 3 minutes (180000ms)
+- **Daily Operations:** 2,880 (77% reduction)
+- **Why:** Faster feedback for developers, still much better than 30s
 
 ## 🔍 What Gets Checked
 
