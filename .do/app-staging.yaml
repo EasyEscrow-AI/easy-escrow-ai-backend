@@ -73,6 +73,14 @@ services:
       - key: PLATFORM_FEE_BPS
         value: "250"
       
+      # Health Check & Monitoring Intervals (Optimized for Staging)
+      - key: SOLANA_RPC_HEALTH_CHECK_INTERVAL
+        value: "120000"  # 2 minutes - Moderate for staging testing
+      - key: HEALTH_CHECK_INTERVAL_MS
+        value: "120000"  # 2 minutes - Service health monitoring
+      - key: METRICS_INTERVAL_MS
+        value: "300000"  # 5 minutes - Metrics collection
+      
       # Set these via console (secrets)
       # - DATABASE_URL (from easyescrow-staging-postgres)
       # - REDIS_URL (Upstash)

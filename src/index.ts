@@ -33,6 +33,11 @@ try {
 const app: Application = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust proxy - Required for DigitalOcean App Platform (and other reverse proxies)
+// This allows Express to read X-Forwarded-* headers to get real client IP
+// Essential for rate limiting to work correctly
+app.set('trust proxy', true);
+
 // Initialize orchestrator instances (before route handlers)
 // Use environment-based intervals to allow tuning in production
 const monitoringOrchestrator = getMonitoringOrchestrator({

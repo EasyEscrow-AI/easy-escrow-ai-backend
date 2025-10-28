@@ -8,7 +8,7 @@ import {
   DepositInfoDTO,
   CancelAgreementResponseDTO
 } from '../models/dto/agreement.dto';
-import { initializeEscrow } from './solana.service';
+import { initializeEscrow, getSolanaService } from './solana.service';
 import { getMonitoringOrchestrator } from './monitoring-orchestrator.service';
 import { getTransactionLogService, TransactionOperationType, TransactionStatusType } from './transaction-log.service';
 import { Decimal } from '@prisma/client/runtime/library';
@@ -29,6 +29,32 @@ export const createAgreement = async (
   data: CreateAgreementDTO
 ): Promise<CreateAgreementResponseDTO> => {
   try {
+    // 0. Ensure USDC accounts exist for both parties (platform pays if needed)
+    // Only if both seller and buyer are specified (buyer can be optional for some escrow types)
+    if (data.buyer) {
+      console.log('[AgreementService] Ensuring USDC accounts exist...');
+      const { ensureUSDCAccountsExist } = await import('./usdc-account.service');
+      const connection = getSolanaService().getConnection();
+      const usdcMint = new PublicKey(process.env.USDC_MINT_ADDRESS!);
+      
+      try {
+        await ensureUSDCAccountsExist(
+          connection,
+          new PublicKey(data.seller),
+          new PublicKey(data.buyer),
+          usdcMint
+        );
+        console.log('[AgreementService] ✅ USDC accounts verified/created');
+      } catch (accountError) {
+        console.error('[AgreementService] Failed to setup USDC accounts:', accountError);
+        // Continue anyway - the on-chain initialization will fail if accounts truly don't exist
+        // This provides a better error message to the user
+        console.warn('[AgreementService] ⚠️  Continuing without USDC account verification');
+      }
+    } else {
+      console.log('[AgreementService] Buyer not specified, skipping USDC account verification');
+    }
+
     // 1. Initialize escrow on-chain
     const escrowResult = await initializeEscrow({
       nftMint: data.nftMint,
