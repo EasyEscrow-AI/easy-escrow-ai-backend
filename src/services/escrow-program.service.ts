@@ -289,8 +289,18 @@ export class EscrowProgramService {
         console.log(`  Account ${idx}: ${key.pubkey.toString()} - isSigner: ${key.isSigner}, isWritable: ${key.isWritable}`);
       });
       
-      // Create transaction with instruction
-      const transaction = new (await import('@solana/web3.js')).Transaction().add(instruction);
+      // Create transaction with compute budget and instruction
+      const { Transaction, ComputeBudgetProgram } = await import('@solana/web3.js');
+      const transaction = new Transaction();
+      
+      // Add compute budget instructions (required for mainnet, helps with Jito endpoints)
+      transaction.add(
+        ComputeBudgetProgram.setComputeUnitLimit({ units: 300_000 }),
+        ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 5_000 }) // Moderate priority fee
+      );
+      
+      // Add the escrow initialization instruction
+      transaction.add(instruction);
       
       // Sign with admin only
       transaction.feePayer = this.adminKeypair.publicKey;
@@ -299,10 +309,13 @@ export class EscrowProgramService {
       
       console.log('[EscrowProgramService] Transaction signed by admin, sending to network...');
       
-      // Send signed transaction with skipPreflight to bypass simulation
+      // Send signed transaction with skipPreflight to bypass Jito tip requirements
       const txId = await this.provider.connection.sendRawTransaction(
         transaction.serialize(),
-        { skipPreflight: true }
+        { 
+          skipPreflight: true, // Bypass simulation that checks for Jito tips
+          maxRetries: 3
+        }
       );
       
       console.log('[EscrowProgramService] Escrow initialized:', {
@@ -377,17 +390,30 @@ export class EscrowProgramService {
         }
       });
       
-      // Create and sign transaction
-      const { Transaction } = await import('@solana/web3.js');
-      const transaction = new Transaction().add(instruction);
+      // Create and sign transaction with compute budget
+      const { Transaction, ComputeBudgetProgram } = await import('@solana/web3.js');
+      const transaction = new Transaction();
+      
+      // Add compute budget instructions (required for mainnet)
+      transaction.add(
+        ComputeBudgetProgram.setComputeUnitLimit({ units: 300_000 }),
+        ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 5_000 })
+      );
+      
+      // Add the instruction
+      transaction.add(instruction);
+      
       transaction.feePayer = this.adminKeypair.publicKey;
       transaction.recentBlockhash = (await this.provider.connection.getLatestBlockhash()).blockhash;
       transaction.sign(this.adminKeypair);
       
-      // Send transaction
+      // Send transaction with skipPreflight to bypass Jito tip requirements
       const txId = await this.provider.connection.sendRawTransaction(
         transaction.serialize(),
-        { skipPreflight: true }
+        { 
+          skipPreflight: true,
+          maxRetries: 3
+        }
       );
       
       console.log('[EscrowProgramService] NFT deposited, tx:', txId);
@@ -459,17 +485,30 @@ export class EscrowProgramService {
         }
       });
       
-      // Create and sign transaction
-      const { Transaction } = await import('@solana/web3.js');
-      const transaction = new Transaction().add(instruction);
+      // Create and sign transaction with compute budget
+      const { Transaction, ComputeBudgetProgram } = await import('@solana/web3.js');
+      const transaction = new Transaction();
+      
+      // Add compute budget instructions (required for mainnet)
+      transaction.add(
+        ComputeBudgetProgram.setComputeUnitLimit({ units: 300_000 }),
+        ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 5_000 })
+      );
+      
+      // Add the instruction
+      transaction.add(instruction);
+      
       transaction.feePayer = this.adminKeypair.publicKey;
       transaction.recentBlockhash = (await this.provider.connection.getLatestBlockhash()).blockhash;
       transaction.sign(this.adminKeypair);
       
-      // Send transaction
+      // Send transaction with skipPreflight to bypass Jito tip requirements
       const txId = await this.provider.connection.sendRawTransaction(
         transaction.serialize(),
-        { skipPreflight: true }
+        { 
+          skipPreflight: true,
+          maxRetries: 3
+        }
       );
       
       console.log('[EscrowProgramService] USDC deposited, tx:', txId);
