@@ -2897,7 +2897,7 @@
         "description": "Build and deploy production mainnet-ready Solana escrow program. Generate production IDL using existing script. Update Anchor configuration for mainnet deployment. Verify program deployment on mainnet.",
         "details": "Deploy the escrow program to Solana mainnet with production-grade configuration and verification:\n\n**Prerequisites:**\n- Generate new production keypair: `solana-keygen new -o target/deploy/escrow-mainnet-keypair.json --force`\n- Fund deployer wallet with sufficient SOL for mainnet deployment (minimum 5-10 SOL recommended)\n- Configure mainnet RPC endpoint with high rate limits\n\n**Step 1: Update Configuration for Mainnet**\n```toml\n# Create Anchor.mainnet.toml\n[toolchain]\nanchor_version = \"0.29.0\"\nsolana_version = \"1.18.x\"\n\n[programs.mainnet]\nescrow = \"<PRODUCTION_PROGRAM_ID>\"\n\n[provider]\ncluster = \"mainnet\"\nwallet = \"~/.config/solana/mainnet-deployer.json\"\n\n[scripts]\ntest = \"yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts\"\n```\n\n**Step 2: Update Program ID in Source**\n```rust\n// programs/escrow/src/lib.rs\ndeclare_id!(\"<PRODUCTION_PROGRAM_ID>\");\n```\n\n**Step 3: Build Production Program**\n```bash\n# Use pinned toolchain versions for reproducible builds\nsolana-install init 1.18.x\nrustup install 1.75.0\n\n# Build with production configuration\nanchor build --config Anchor.mainnet.toml\n\n# Generate production IDL\nanchor idl build --config Anchor.mainnet.toml\n```\n\n**Step 4: Deploy to Mainnet**\n```bash\n# Verify sufficient balance\nsolana balance --url mainnet-beta\n\n# Deploy program\nanchor deploy --provider.cluster mainnet-beta --config Anchor.mainnet.toml\n\n# Verify deployment\nsolana program show <PROGRAM_ID> --url mainnet-beta\n```\n\n**Step 5: Initialize Production IDL**\n```bash\n# Upload IDL to mainnet\nanchor idl init <PROGRAM_ID> --provider.cluster mainnet-beta --filepath target/idl/escrow.json\n\n# Verify IDL upload\nanchor idl fetch <PROGRAM_ID> --provider.cluster mainnet-beta\n```\n\n**Security Considerations:**\n- Use hardware wallet or secure key management for deployer keypair\n- Verify program bytecode matches expected hash\n- Set upgrade authority to multisig or governance program\n- Enable program freeze protection if needed\n\n**Post-Deployment Configuration:**\n- Update backend environment variables with production program ID\n- Configure monitoring for program account changes\n- Set up alerts for unusual program activity",
         "testStrategy": "1. **Pre-Deployment Verification**: Confirm production keypair generation with `solana address -k target/deploy/escrow-mainnet-keypair.json`, verify deployer wallet has sufficient SOL balance (>5 SOL) using `solana balance --url mainnet-beta`, and validate Anchor.mainnet.toml configuration syntax\n\n2. **Build Verification**: Confirm `anchor build --config Anchor.mainnet.toml` completes successfully with exit code 0, verify program binary exists at `target/deploy/escrow.so`, validate IDL generation with `ls target/idl/escrow.json`, and check program ID consistency between declare_id!, Anchor.mainnet.toml, and keypair\n\n3. **Deployment Verification**: Verify successful deployment with `solana program show <PROGRAM_ID> --url mainnet-beta` showing \"Executable: true\", confirm deployment transaction signature is valid, validate program account exists and is owned by BPF Loader, and verify upgrade authority is set correctly\n\n4. **IDL Verification**: Confirm IDL upload success with `anchor idl fetch <PROGRAM_ID> --provider.cluster mainnet-beta`, validate fetched IDL matches local target/idl/escrow.json, and verify IDL account exists on-chain\n\n5. **Integration Testing**: Update backend configuration with production program ID, test program interaction from backend using mainnet RPC, verify escrow account creation works with production program, and confirm monitoring systems detect the new program deployment\n\n6. **Security Audit**: Verify program bytecode hash matches expected value, confirm upgrade authority configuration, validate no unexpected program modifications, and ensure deployer keypair is secured post-deployment",
-        "status": "in-progress",
+        "status": "done",
         "dependencies": [
           66,
           89,
@@ -2922,7 +2922,7 @@
               1
             ],
             "details": "Install pinned Solana CLI version 1.18.x and Rust 1.75.0, update program ID in lib.rs with production program ID, execute anchor build --config Anchor.mainnet.toml to generate production bytecode, and verify build artifacts are created in target/deploy directory with correct program keypair.\n<info added on 2025-10-27T03:42:54.494Z>\nCreated comprehensive build infrastructure with cross-platform build scripts (build-mainnet.sh for Unix/Mac/Linux and build-mainnet.ps1 for Windows PowerShell), both featuring toolchain verification for Solana 1.18.x, Rust 1.75.0, and Anchor 0.30.1, build cleaning, production compilation with Anchor.mainnet.toml, SHA256 checksum generation, build summaries, and deployment cost estimates. Implemented verify-mainnet-deployment.sh with 10-point comprehensive verification checklist covering configuration files, keypair existence and permissions, program ID consistency, deployer balance validation (minimum 5 SOL), RPC connectivity testing, build artifact verification, git status checks, and security reminders with proper exit codes. Added calculate-deployment-cost.sh for exact SOL requirement calculations based on actual program size, showing breakdown of rent, fees, and buffer costs with minimum vs recommended balances and real-world examples. Created complete scripts/solana/README.md documentation with detailed usage instructions, deployment workflow, SOL requirements table, security notes, and troubleshooting guide. Clarified SOL requirements: typical 250KB program needs ~2.5 SOL for program account rent, ~0.5 SOL for buffer account rent, ~0.1 SOL for IDL account rent, ~0.05 SOL for transaction fees, ~0.01 SOL for priority fees, and ~1.0 SOL error/retry buffer, totaling 4-6 SOL realistically with 5-7 SOL recommended and 10 SOL for maximum safety - 1 SOL would fail on rent requirements alone. All build and verification tools are ready for production deployment with documented next steps: run build script, generate keypairs, update program IDs, rebuild with correct IDs, calculate exact SOL needed, fund deployer with 5-10 SOL, run verification, and deploy to mainnet.\n</info added on 2025-10-27T03:42:54.494Z>\n<info added on 2025-10-27T03:48:29.525Z>\nCorrected deployment cost calculations based on independent research verification. Updated calculate-deployment-cost.sh with accurate Solana mainnet formulas: program account rent uses (size + 128) × 6,960 lamports formula yielding 1.74 SOL for 250KB program (not 2.5-3 SOL), buffer account rent is 3.48 SOL but REFUNDED after deployment, transaction fees are fixed 0.000005 SOL per transaction totaling 0.001 SOL for ~203 transactions (not 0.01-0.05 SOL), and IDL account rent remains accurate at 0.12 SOL. Updated README.md with corrected cost breakdown showing 6.85 SOL upfront requirement with 3.48 SOL refunded post-deployment for net permanent cost of 3.36 SOL. Created comprehensive MAINNET_COST_ANALYSIS.md documentation with verified formulas matching Solana's actual implementation. All cost estimation tools now provide accurate calculations for production deployment planning.\n</info added on 2025-10-27T03:48:29.525Z>",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Confirm build completes without errors, verify program binary exists at target/deploy/escrow.so, validate program keypair matches expected production program ID, and check build reproducibility by comparing bytecode hashes"
           },
           {
@@ -2933,7 +2933,7 @@
               2
             ],
             "details": "Verify deployer wallet has sufficient SOL balance (minimum 5-10 SOL), execute anchor deploy --provider.cluster mainnet-beta --config Anchor.mainnet.toml to deploy program to mainnet, capture deployment transaction signature, and confirm program is deployed successfully with correct program ID.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Verify deployment transaction succeeds with valid signature, confirm program account exists on mainnet using solana program show <PROGRAM_ID> --url mainnet-beta, validate program data matches expected bytecode hash, and check program is executable"
           },
           {
@@ -2944,7 +2944,7 @@
               3
             ],
             "details": "Execute anchor idl build --config Anchor.mainnet.toml to generate production IDL file, upload IDL to mainnet using anchor idl init <PROGRAM_ID> --provider.cluster mainnet-beta --filepath target/idl/escrow.json, and verify IDL is properly associated with the deployed program on mainnet.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Confirm IDL file is generated at target/idl/escrow.json with correct structure, verify IDL upload transaction succeeds, validate IDL can be fetched from mainnet using anchor idl fetch <PROGRAM_ID> --provider.cluster mainnet-beta, and compare fetched IDL matches local version"
           },
           {
@@ -2955,7 +2955,7 @@
               4
             ],
             "details": "Verify program deployment using solana program show command, confirm program bytecode matches expected hash, set up upgrade authority configuration (multisig or governance), enable program freeze protection if needed, and document all production program details including addresses and security configurations.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Validate program account shows correct executable status and data length, verify upgrade authority is properly configured, test program functionality with basic instruction calls, confirm security settings are applied correctly, and document all verification results"
           }
         ]
@@ -2964,7 +2964,7 @@
         "id": 91,
         "title": "Production Wallet Management - Generate Mainnet Wallets",
         "description": "Generate production mainnet wallets for Admin, Sender (testing), and Receiver (testing) roles, document wallet addresses securely, and prepare for manual funding with SOL/USDC/NFT. Fee Collector wallet is cold storage provided by user.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           90,
           89
@@ -2979,7 +2979,7 @@
             "description": "Create the Admin wallet keypair for system operations and program authority on mainnet",
             "dependencies": [],
             "details": "Use solana-keygen to generate admin-wallet.json in wallets/production/ directory with proper permissions (600). Extract and store the public key for environment configuration. This wallet will handle system administration and program authority operations.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Verify admin-wallet.json file exists with 600 permissions, confirm public key extraction works with solana address command, and validate the address format is correct for mainnet"
           },
           {
@@ -2988,7 +2988,7 @@
             "description": "Create the Sender wallet keypair for testing escrow creation and deposit operations on mainnet",
             "dependencies": [],
             "details": "Use solana-keygen to generate sender-wallet.json in wallets/production/ directory with proper permissions (600). Extract and store the public key for environment configuration. This wallet will be used for testing escrow deposits with real USDC and NFTs.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Verify sender-wallet.json file exists with 600 permissions, confirm public key extraction works with solana address command, and validate the address format is correct for mainnet"
           },
           {
@@ -2997,7 +2997,7 @@
             "description": "Create the Receiver wallet keypair for testing escrow settlement and withdrawal operations on mainnet",
             "dependencies": [],
             "details": "Use solana-keygen to generate receiver-wallet.json in wallets/production/ directory with proper permissions (600). Extract and store the public key for environment configuration. This wallet will be used for testing escrow settlements and withdrawals.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Verify receiver-wallet.json file exists with 600 permissions, confirm public key extraction works with solana address command, and validate the address format is correct for mainnet"
           },
           {
@@ -3010,7 +3010,7 @@
               3
             ],
             "details": "Create WALLET_REGISTRY.md and BACKUP_INSTRUCTIONS.md in wallets/production/ directory. Document all wallet purposes, addresses, funding requirements, and security procedures. Set directory permissions to 700 and implement access controls for authorized personnel only.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Verify documentation files exist with correct wallet addresses, confirm directory permissions are set to 700, and validate backup instructions are complete and testable"
           },
           {
@@ -3021,7 +3021,7 @@
               4
             ],
             "details": "Update production .env with MAINNET_PROD_* environment variables including MAINNET_PROD_ADMIN_ADDRESS, MAINNET_PROD_SENDER_ADDRESS, MAINNET_PROD_RECEIVER_ADDRESS, MAINNET_PROD_FEE_COLLECTOR_ADDRESS, and corresponding private key paths. Create funding checklist that references these new variable names and includes verification steps for each wallet funding requirement.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Verify all environment variables use MAINNET_PROD_* naming convention, confirm funding checklist references correct variable names, validate that Fee Collector private key is marked as [NOT_MANAGED_COLD_STORAGE], and test that all wallet addresses are properly mapped to their respective environment variables"
           }
         ]
@@ -3249,7 +3249,7 @@
       ],
       "created": "2025-10-21T00:36:23.178Z",
       "description": "Tasks for master context",
-      "updated": "2025-10-27T03:32:38.997Z"
+      "updated": "2025-10-27T23:47:19.646Z"
     }
   }
 }

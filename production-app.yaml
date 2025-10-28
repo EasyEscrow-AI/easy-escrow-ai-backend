@@ -191,7 +191,17 @@ services:
         scope: RUN_TIME
       
       - key: SOLANA_RPC_HEALTH_CHECK_INTERVAL
-        value: "30000"
+        value: "300000"  # 5 minutes - Reduced from 30s to minimize unnecessary RPC calls
+        scope: RUN_TIME
+      
+      # Monitoring & Health Check Intervals
+      # These control how often background health checks and metrics collection run
+      - key: HEALTH_CHECK_INTERVAL_MS
+        value: "300000"  # 5 minutes - Monitor services health (database, Redis, Solana RPC)
+        scope: RUN_TIME
+      
+      - key: METRICS_INTERVAL_MS
+        value: "600000"  # 10 minutes - Collect and log performance metrics
         scope: RUN_TIME
       
       #
