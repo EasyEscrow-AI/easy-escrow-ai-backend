@@ -507,6 +507,7 @@ export class EscrowProgramService {
         );
       }
 
+
       // Add the instruction
       transaction.add(instruction);
 
@@ -632,6 +633,7 @@ export class EscrowProgramService {
           })
         );
       }
+
 
       // Add the instruction
       transaction.add(instruction);
