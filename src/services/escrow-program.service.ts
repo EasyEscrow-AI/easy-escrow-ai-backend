@@ -829,9 +829,70 @@ export class EscrowProgramService {
         }
       });
 
-      // Create unsigned transaction
-      const { Transaction } = await import('@solana/web3.js');
-      const transaction = new Transaction().add(instruction);
+      // Detect network for priority fees and Jito tips
+      const isMainnet = isMainnetNetwork(this.provider.connection);
+
+      // Get dynamic priority fee
+      const priorityFee = await PriorityFeeService.getRecommendedPriorityFee(
+        this.provider.connection,
+        isMainnet
+      );
+
+      console.log(
+        `[EscrowProgramService] Using priority fee: ${priorityFee} microlamports per CU (${
+          isMainnet ? 'mainnet' : 'devnet'
+        })`
+      );
+
+      // Create unsigned transaction with priority fees
+      const { Transaction, ComputeBudgetProgram } = await import('@solana/web3.js');
+      const transaction = new Transaction();
+
+      // Add compute budget instructions FIRST
+      transaction.add(
+        ComputeBudgetProgram.setComputeUnitLimit({
+          units: 300_000,
+        })
+      );
+
+      transaction.add(
+        ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports: priorityFee,
+        })
+      );
+
+      // Add main escrow instruction
+      transaction.add(instruction);
+
+      // Add Jito tip transfer instruction LAST (mainnet only)
+      if (isMainnet) {
+        // Jito tip accounts (official addresses from Jito Labs)
+        const JITO_TIP_ACCOUNTS = [
+          '96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5',
+          'HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe',
+          'Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY',
+          'ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49',
+          'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
+          'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
+          'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
+          '3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT',
+        ].map((addr) => new PublicKey(addr));
+
+        const tipAmount = 1_000_000; // 0.001 SOL tip
+        const tipAccount = JITO_TIP_ACCOUNTS[Math.floor(Math.random() * JITO_TIP_ACCOUNTS.length)];
+
+        console.log(
+          `[EscrowProgramService] Adding Jito tip: ${tipAmount} lamports to ${tipAccount.toString()}`
+        );
+
+        transaction.add(
+          SystemProgram.transfer({
+            fromPubkey: seller,
+            toPubkey: tipAccount,
+            lamports: tipAmount,
+          })
+        );
+      }
 
       // Set fee payer to seller (who will sign)
       transaction.feePayer = seller;
@@ -919,9 +980,70 @@ export class EscrowProgramService {
         }
       });
 
-      // Create unsigned transaction
-      const { Transaction } = await import('@solana/web3.js');
-      const transaction = new Transaction().add(instruction);
+      // Detect network for priority fees and Jito tips
+      const isMainnet = isMainnetNetwork(this.provider.connection);
+
+      // Get dynamic priority fee
+      const priorityFee = await PriorityFeeService.getRecommendedPriorityFee(
+        this.provider.connection,
+        isMainnet
+      );
+
+      console.log(
+        `[EscrowProgramService] Using priority fee: ${priorityFee} microlamports per CU (${
+          isMainnet ? 'mainnet' : 'devnet'
+        })`
+      );
+
+      // Create unsigned transaction with priority fees
+      const { Transaction, ComputeBudgetProgram } = await import('@solana/web3.js');
+      const transaction = new Transaction();
+
+      // Add compute budget instructions FIRST
+      transaction.add(
+        ComputeBudgetProgram.setComputeUnitLimit({
+          units: 300_000,
+        })
+      );
+
+      transaction.add(
+        ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports: priorityFee,
+        })
+      );
+
+      // Add main escrow instruction
+      transaction.add(instruction);
+
+      // Add Jito tip transfer instruction LAST (mainnet only)
+      if (isMainnet) {
+        // Jito tip accounts (official addresses from Jito Labs)
+        const JITO_TIP_ACCOUNTS = [
+          '96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5',
+          'HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe',
+          'Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY',
+          'ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49',
+          'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
+          'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
+          'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
+          '3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT',
+        ].map((addr) => new PublicKey(addr));
+
+        const tipAmount = 1_000_000; // 0.001 SOL tip
+        const tipAccount = JITO_TIP_ACCOUNTS[Math.floor(Math.random() * JITO_TIP_ACCOUNTS.length)];
+
+        console.log(
+          `[EscrowProgramService] Adding Jito tip: ${tipAmount} lamports to ${tipAccount.toString()}`
+        );
+
+        transaction.add(
+          SystemProgram.transfer({
+            fromPubkey: buyer,
+            toPubkey: tipAccount,
+            lamports: tipAmount,
+          })
+        );
+      }
 
       // Set fee payer to buyer (who will sign)
       transaction.feePayer = buyer;

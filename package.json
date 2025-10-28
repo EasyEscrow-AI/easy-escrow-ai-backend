@@ -28,6 +28,7 @@
     "test:unit:transaction-log": "cross-env NODE_ENV=test mocha --require ts-node/register --no-config tests/unit/transaction-log.service.test.ts --timeout 10000 --reporter spec --colors",
     "test:unit:refund": "cross-env NODE_ENV=test mocha --require ts-node/register --no-config tests/unit/refund.service.test.ts --timeout 10000 --reporter spec --colors",
     "test:unit:token-accounts": "cross-env NODE_ENV=test mocha --require ts-node/register --no-config tests/unit/escrow-program-token-accounts.test.ts --timeout 10000 --reporter spec --colors",
+    "test:unit:jito": "cross-env NODE_ENV=test mocha --require ts-node/register --no-config tests/unit/jito-integration.test.ts --timeout 10000 --reporter spec --colors",
     "test:unit:core-services": "cross-env NODE_ENV=test mocha --require ts-node/register --no-config 'tests/unit/{nft-deposit,usdc-deposit,transaction-log,refund,receipt}.service.test.ts' --timeout 10000 --reporter spec --colors",
     "test:integration": "mocha --require ts-node/register 'tests/integration/**/*.test.ts' --timeout 20000",
     "test:local:e2e": "mocha --require ts-node/register 'tests/local/e2e/**/*.test.ts' --timeout 60000",
