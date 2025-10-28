@@ -399,9 +399,11 @@ export class EscrowProgramService {
 
       console.log('[EscrowProgramService] Transaction signed by admin, sending to network...');
 
-      // Send signed transaction (enable preflight for proper validation on mainnet)
+      // Send signed transaction
+      // IMPORTANT: skipPreflight MUST be true for mainnet transactions with Jito tips
+      // Jito bundle transactions bypass the mempool and simulation fails to validate them
       const txId = await this.provider.connection.sendRawTransaction(transaction.serialize(), {
-        skipPreflight: false, // Enable preflight for proper validation
+        skipPreflight: isMainnet, // Skip preflight on mainnet (Jito tips), enable on devnet
         preflightCommitment: 'confirmed',
         maxRetries: 3,
       });
@@ -532,9 +534,10 @@ export class EscrowProgramService {
       transaction.recentBlockhash = (await this.provider.connection.getLatestBlockhash()).blockhash;
       transaction.sign(this.adminKeypair);
 
-      // Send transaction (enable preflight for proper validation)
+      // Send transaction
+      // IMPORTANT: skipPreflight MUST be true for mainnet transactions with Jito tips
       const txId = await this.provider.connection.sendRawTransaction(transaction.serialize(), {
-        skipPreflight: false,
+        skipPreflight: isMainnet, // Skip preflight on mainnet (Jito tips), enable on devnet
         preflightCommitment: 'confirmed',
         maxRetries: 3,
       });
@@ -659,9 +662,10 @@ export class EscrowProgramService {
       transaction.recentBlockhash = (await this.provider.connection.getLatestBlockhash()).blockhash;
       transaction.sign(this.adminKeypair);
 
-      // Send transaction (enable preflight for proper validation)
+      // Send transaction
+      // IMPORTANT: skipPreflight MUST be true for mainnet transactions with Jito tips
       const txId = await this.provider.connection.sendRawTransaction(transaction.serialize(), {
-        skipPreflight: false,
+        skipPreflight: isMainnet, // Skip preflight on mainnet (Jito tips), enable on devnet
         preflightCommitment: 'confirmed',
         maxRetries: 3,
       });
