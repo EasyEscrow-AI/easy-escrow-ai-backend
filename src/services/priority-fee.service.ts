@@ -118,11 +118,8 @@ export class PriorityFeeService {
     try {
       // Call QuickNode's priority fee estimation API
       // This uses the standard Solana RPC but with QuickNode's extension
-      const response = await (connection as any)._rpcRequest('qn_estimatePriorityFees', [
-        {
-          // No parameters needed - API analyzes recent transactions
-        },
-      ]);
+      // Pass empty array (no params) - API analyzes recent transactions by default
+      const response = await (connection as any)._rpcRequest('qn_estimatePriorityFees', []);
 
       if (!response || !response.result) {
         throw new Error('Invalid response from qn_estimatePriorityFees');
