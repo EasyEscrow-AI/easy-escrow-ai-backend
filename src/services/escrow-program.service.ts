@@ -184,6 +184,73 @@ export class EscrowProgramService {
   }
 
   /**
+   * Send transaction directly to Jito Block Engine (FREE alternative to QuickNode's Lil' JIT add-on)
+   * 
+   * For mainnet: Sends transaction directly to Jito's Block Engine for MEV protection
+   * For devnet: Uses regular RPC (no Jito needed)
+   * 
+   * Cost savings: $0/month vs $89/month for QuickNode Lil' JIT add-on
+   * 
+   * @param transaction - Signed transaction to send
+   * @param isMainnet - Whether this is mainnet (determines Jito vs regular RPC)
+   * @returns Transaction signature
+   */
+  private async sendTransactionViaJito(
+    transaction: any,
+    isMainnet: boolean
+  ): Promise<string> {
+    // For devnet, use regular RPC (no Jito needed, cheaper)
+    if (!isMainnet) {
+      console.log('[EscrowProgramService] Sending via regular RPC (devnet)');
+      return await this.provider.connection.sendRawTransaction(transaction.serialize(), {
+        skipPreflight: false,
+        preflightCommitment: 'confirmed',
+        maxRetries: 3,
+      });
+    }
+
+    // For mainnet, send directly to Jito Block Engine (FREE!)
+    const JITO_BLOCK_ENGINE_MAINNET = 'https://mainnet.block-engine.jito.wtf';
+    
+    const serializedTransaction = transaction.serialize().toString('base64');
+    
+    console.log('[EscrowProgramService] Sending transaction via Jito Block Engine directly (bypassing QuickNode)');
+    
+    try {
+      const response = await fetch(`${JITO_BLOCK_ENGINE_MAINNET}/api/v1/transactions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'sendTransaction',
+          params: [serializedTransaction, { encoding: 'base64' }],
+        }),
+      });
+
+      const result = await response.json() as {
+        result?: string;
+        error?: { message?: string; [key: string]: any };
+      };
+      
+      if (result.error) {
+        console.error('[EscrowProgramService] Jito Block Engine error:', result.error);
+        throw new Error(`Jito sendTransaction failed: ${result.error.message || JSON.stringify(result.error)}`);
+      }
+
+      if (!result.result) {
+        throw new Error('Jito sendTransaction returned no signature');
+      }
+
+      console.log('[EscrowProgramService] ✅ Transaction sent via Jito Block Engine:', result.result);
+      return result.result;
+    } catch (error) {
+      console.error('[EscrowProgramService] Failed to send via Jito Block Engine:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Derive escrow PDA from escrow ID
    */
   private deriveEscrowPDA(escrowId: BN): [PublicKey, number] {
@@ -421,14 +488,9 @@ export class EscrowProgramService {
 
       console.log('[EscrowProgramService] Transaction signed by admin, sending to network...');
 
-      // Send signed transaction
-      // IMPORTANT: skipPreflight MUST be true for mainnet transactions with Jito tips
-      // Jito bundle transactions bypass the mempool and simulation fails to validate them
-      const txId = await this.provider.connection.sendRawTransaction(transaction.serialize(), {
-        skipPreflight: isMainnet, // Skip preflight on mainnet (Jito tips), enable on devnet
-        preflightCommitment: 'confirmed',
-        maxRetries: 3,
-      });
+      // Send transaction via Jito Block Engine (FREE, direct to Jito)
+      // This bypasses QuickNode's $89/m Lil' JIT add-on requirement
+      const txId = await this.sendTransactionViaJito(transaction, isMainnet);
 
       console.log('[EscrowProgramService] Escrow initialized:', {
         pda: escrowPda.toString(),
@@ -557,13 +619,9 @@ export class EscrowProgramService {
       transaction.recentBlockhash = (await this.provider.connection.getLatestBlockhash()).blockhash;
       transaction.sign(this.adminKeypair);
 
-      // Send transaction
-      // IMPORTANT: skipPreflight MUST be true for mainnet transactions with Jito tips
-      const txId = await this.provider.connection.sendRawTransaction(transaction.serialize(), {
-        skipPreflight: isMainnet, // Skip preflight on mainnet (Jito tips), enable on devnet
-        preflightCommitment: 'confirmed',
-        maxRetries: 3,
-      });
+      // Send transaction via Jito Block Engine (FREE, direct to Jito)
+      // This bypasses QuickNode's $89/m Lil' JIT add-on requirement
+      const txId = await this.sendTransactionViaJito(transaction, isMainnet);
 
       console.log('[EscrowProgramService] NFT deposited, tx:', txId);
       return txId;
@@ -686,13 +744,9 @@ export class EscrowProgramService {
       transaction.recentBlockhash = (await this.provider.connection.getLatestBlockhash()).blockhash;
       transaction.sign(this.adminKeypair);
 
-      // Send transaction
-      // IMPORTANT: skipPreflight MUST be true for mainnet transactions with Jito tips
-      const txId = await this.provider.connection.sendRawTransaction(transaction.serialize(), {
-        skipPreflight: isMainnet, // Skip preflight on mainnet (Jito tips), enable on devnet
-        preflightCommitment: 'confirmed',
-        maxRetries: 3,
-      });
+      // Send transaction via Jito Block Engine (FREE, direct to Jito)
+      // This bypasses QuickNode's $89/m Lil' JIT add-on requirement
+      const txId = await this.sendTransactionViaJito(transaction, isMainnet);
 
       console.log('[EscrowProgramService] USDC deposited, tx:', txId);
       return txId;
