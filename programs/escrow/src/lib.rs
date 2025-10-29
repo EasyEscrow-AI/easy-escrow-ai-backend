@@ -4,27 +4,79 @@ use anchor_spl::associated_token::AssociatedToken;
 
 declare_id!("2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx");
 
+/// Authorized admin public keys for different environments
+/// 
+/// These keys are extracted from the wallets/ directory:
+/// - DEVNET: wallets/dev/dev-admin.json
+/// - STAGING: wallets/staging/staging-admin.json
+/// - MAINNET: wallets/production/production-admin.json
+/// 
+/// Only these addresses can initialize escrow agreements, ensuring:
+/// 1. All escrows are tracked in the database
+/// 2. Platform fees are properly controlled
+/// 3. No unauthorized escrow creation
+///
+/// DEVNET: Admin public key for devnet/development
+const DEVNET_ADMIN: &str = "7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u";
+
+/// STAGING: Admin public key for staging environment  
+const STAGING_ADMIN: &str = "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R";
+
+/// MAINNET: Admin public key for production/mainnet
+const MAINNET_ADMIN: &str = "HGrfPKZuKR8BSYYJfZRFfdF1y2ApU9LSf6USQ6tpSDj2";
+
+/// Get the authorized admin public key
+/// 
+/// NOTE: This function currently returns all three admin keys for flexibility.
+/// In production, you may want to compile separate binaries for each environment
+/// or use a single admin key across all environments.
+fn get_authorized_admins() -> Vec<Pubkey> {
+    vec![
+        pubkey!(DEVNET_ADMIN),
+        pubkey!(STAGING_ADMIN),
+        pubkey!(MAINNET_ADMIN),
+    ]
+}
+
 #[program]
 pub mod escrow {
     use super::*;
 
     /// Initialize an escrow agreement
+    /// Platform fee is set during initialization and stored in escrow state
+    /// Only authorized admins can initialize escrows
     pub fn init_agreement(
         ctx: Context<InitAgreement>,
         escrow_id: u64,
         usdc_amount: u64,
         expiry_timestamp: i64,
+        platform_fee_bps: u16,
     ) -> Result<()> {
+        // SECURITY: Only authorized admins can initialize escrows
+        // This prevents:
+        // 1. Unauthorized escrow creation
+        // 2. Bypassing of service tracking
+        // 3. Fee manipulation (fee is set here and stored in state)
+        let admin_pubkey = ctx.accounts.admin.key();
+        let authorized_admins = get_authorized_admins();
+        
+        require!(
+            authorized_admins.contains(&admin_pubkey),
+            EscrowError::UnauthorizedAdmin
+        );
+        
         let escrow = &mut ctx.accounts.escrow_state;
         
         require!(usdc_amount > 0, EscrowError::InvalidAmount);
         require!(expiry_timestamp > Clock::get()?.unix_timestamp, EscrowError::InvalidExpiry);
+        require!(platform_fee_bps <= 10000, EscrowError::InvalidFeeBps);
         
         escrow.escrow_id = escrow_id;
         escrow.buyer = ctx.accounts.buyer.key();
         escrow.seller = ctx.accounts.seller.key();
         escrow.usdc_amount = usdc_amount;
         escrow.nft_mint = ctx.accounts.nft_mint.key();
+        escrow.platform_fee_bps = platform_fee_bps; // Store fee in escrow state
         escrow.buyer_usdc_deposited = false;
         escrow.seller_nft_deposited = false;
         escrow.status = EscrowStatus::Pending;
@@ -92,7 +144,8 @@ pub mod escrow {
     }
 
     /// Settle the escrow and exchange assets with fee distribution
-    pub fn settle(ctx: Context<Settle>, platform_fee_bps: u16) -> Result<()> {
+    /// Uses the platform fee that was set during escrow initialization
+    pub fn settle(ctx: Context<Settle>) -> Result<()> {
         let escrow = &ctx.accounts.escrow_state;
         
         require!(escrow.status == EscrowStatus::Pending, EscrowError::InvalidStatus);
@@ -102,7 +155,10 @@ pub mod escrow {
             Clock::get()?.unix_timestamp <= escrow.expiry_timestamp,
             EscrowError::Expired
         );
-        require!(platform_fee_bps <= 10000, EscrowError::InvalidFeeBps);
+        
+        // Use platform fee from escrow state (set during init by authorized admin)
+        // This prevents users from bypassing fees by calling settle directly
+        let platform_fee_bps = escrow.platform_fee_bps;
         
         let escrow_id = escrow.escrow_id;
         let bump = escrow.bump;
@@ -502,6 +558,12 @@ pub struct EscrowState {
     /// is being traded in this escrow agreement.
     pub nft_mint: Pubkey,
     
+    /// Platform fee in basis points (1 bps = 0.01%)
+    /// Set during initialization by authorized admin
+    /// Range: 0-10000 (0% to 100%)
+    /// This fee is enforced during settlement and cannot be bypassed
+    pub platform_fee_bps: u16,
+    
     pub buyer_usdc_deposited: bool,
     pub seller_nft_deposited: bool,
     pub status: EscrowStatus,
@@ -535,6 +597,9 @@ pub enum EscrowError {
     
     #[msg("Unauthorized to perform this action")]
     Unauthorized,
+    
+    #[msg("Only authorized admin can initialize escrows")]
+    UnauthorizedAdmin,
     
     #[msg("Invalid NFT mint address")]
     InvalidNftMint,
