@@ -1,414 +1,436 @@
 # Asset Recovery Guide
 
-**Date:** October 29, 2025  
-**Status:** ✅ ACTIVE  
-**Feature:** Automatic & Manual Asset Recovery
+**Comprehensive guide for investigating and recovering stuck assets from escrow PDAs**
+
+## Table of Contents
+- [Overview](#overview)
+- [When to Use These Tools](#when-to-use-these-tools)
+- [Investigation Tool](#investigation-tool)
+- [Manual Recovery Tool](#manual-recovery-tool)
+- [Automatic Recovery System](#automatic-recovery-system)
+- [Case Studies](#case-studies)
+- [Troubleshooting](#troubleshooting)
 
 ---
 
 ## Overview
 
-This guide covers the automatic and manual asset recovery systems for failed/stuck escrow agreements. Assets (NFTs and USDC) can get stuck in escrow when settlements fail or agreements expire without proper cleanup.
+The EasyEscrow platform includes multiple layers of asset protection and recovery:
 
----
+1. **Automatic Recovery** - Monitors expired agreements and processes refunds automatically
+2. **Investigation Tool** - Diagnoses why an escrow is stuck
+3. **Manual Recovery** - Admin tool for recovering assets from any stuck escrow
 
-## Table of Contents
-
-- [Automatic Recovery](#automatic-recovery)
-- [Manual Recovery](#manual-recovery)
-- [Recovery Script Usage](#recovery-script-usage)
-- [Database Queries](#database-queries)
-- [Troubleshooting](#troubleshooting)
-
----
-
-## Automatic Recovery
-
-### Settlement Failure Auto-Refund
-
-**Status:** ✅ IMPLEMENTED (October 29, 2025)
-
-When a settlement transaction fails, the system automatically triggers a refund process:
-
-1. **Settlement fails** → Error caught in `SettlementService.executeSettlement()`
-2. **Eligibility check** → Verifies agreement has confirmed deposits
-3. **Background refund** → Executes on-chain refund without blocking error response
-4. **Database update** → Agreement status updated to `REFUNDED`
-5. **Webhook trigger** → `escrow.refunded` event published
-
-**Code Location:** `src/services/settlement.service.ts` (lines 532-567)
-
-```typescript
-// Automatic refund on settlement failure
-if (eligibility.eligible && eligibility.hasDeposits) {
-  refundService.processRefunds(agreement.agreementId)
-    .then((refundResult) => {
-      // Log success or errors
-    });
-}
-```
-
-**Key Features:**
-- ✅ Non-blocking (runs in background)
-- ✅ Automatic retry (3 attempts with exponential backoff)
-- ✅ Proper error logging
-- ✅ Webhook notifications
-
----
-
-## Manual Recovery
-
-### When to Use Manual Recovery
-
-Use the manual recovery script when:
-- Assets are stuck from old failed agreements (before auto-refund was implemented)
-- Automatic refund failed and needs manual intervention
-- Agreement is in an inconsistent state
-- On-chain assets don't match database records
-
-### Affected Statuses
-
-The recovery script handles agreements in these statuses with confirmed deposits:
-- `PENDING` - Agreement created but settlement never attempted
-- `FUNDED` - Deposits confirmed but settlement not triggered
-- `USDC_LOCKED` - Only USDC deposited
-- `NFT_LOCKED` - Only NFT deposited
-- `BOTH_LOCKED` - Both assets deposited but not settled
-- `EXPIRED` - Agreement expired without settlement
-- `CANCELLED` - Manually cancelled but refund not executed
-
----
-
-## Recovery Script Usage
-
-### Script Location
+### Recovery Flow
 
 ```
-scripts/utilities/recover-failed-agreements.ts
+┌─────────────────────┐
+│  Escrow Created     │
+└──────────┬──────────┘
+           │
+           v
+┌─────────────────────┐
+│  Assets Deposited   │
+└──────────┬──────────┘
+           │
+     ┌─────┴─────┐
+     │           │
+     v           v
+┌─────────┐  ┌──────────┐
+│Expires  │  │Completes │
+└────┬────┘  └──────────┘
+     │
+     v
+┌─────────────────────────────────┐
+│ Automatic Recovery System       │
+│                                 │
+│ 1. ExpiryService (60s interval) │
+│    - Marks agreements EXPIRED   │
+│                                 │
+│ 2. RefundOrchestrator (5m)      │
+│    - Processes on-chain refunds │
+│    - Calls cancelIfExpired()    │
+└────────────┬────────────────────┘
+             │
+    ┌────────┴────────┐
+    │                 │
+    v                 v
+┌─────────┐      ┌─────────────┐
+│Success  │      │ Stuck/Failed│
+└─────────┘      └──────┬──────┘
+                        │
+                        v
+           ┌────────────────────────┐
+           │ Manual Investigation   │
+           │ & Recovery Required    │
+           └────────────────────────┘
 ```
 
-### Prerequisites
+---
 
-1. **Environment file** must exist (`.env.staging` or `.env.production`)
-2. **Admin wallet** must be configured with private key
-3. **Database access** must be available
-4. **RPC endpoint** must be accessible
+## When to Use These Tools
 
-### Command Reference
+### Use **Investigation Tool** When:
+- An escrow seems stuck and you want to understand why
+- Assets aren't being returned automatically
+- Database and on-chain states seem mismatched
+- Need to audit the automatic recovery system
 
-#### Dry Run (Preview Only)
+### Use **Manual Recovery Tool** When:
+- Investigation shows escrow is stuck
+- Automatic recovery failed or didn't run
+- Escrow was created before monitoring started
+- Emergency asset recovery needed
 
-**Staging:**
+---
+
+## Investigation Tool
+
+### Purpose
+Diagnoses why a stuck escrow wasn't automatically recovered by analyzing:
+- Database status (tracked/untracked, status, expiry)
+- On-chain status (deposits, expiry, escrow state)
+- Recovery service eligibility
+
+### Usage
+
 ```bash
-npm run recover:staging:dry
-# Or directly:
-npx ts-node scripts/utilities/recover-failed-agreements.ts --dry-run --all --env staging
+# Investigate an escrow PDA
+npx ts-node scripts/utilities/investigate-stuck-escrow.ts <ESCROW_PDA>
+
+# Examples
+npx ts-node scripts/utilities/investigate-stuck-escrow.ts CaMUFXGNf8u11cZXx8rvDWYZ8d99mjxNRreTgwFDEdMh
 ```
+
+### Output Example
+
+```
+🔍 Investigating Stuck Escrow
+
+Escrow PDA: CaMUFXGNf8u11cZXx8rvDWYZ8d99mjxNRreTgwFDEdMh
+Environment: development
+Date: 2025-10-29T04:00:00.000Z
+================================================================================
+
+📊 Step 1: Checking Database Status...
+❌ Agreement NOT found in database
+
+⛓️  Step 2: Checking On-Chain Status...
+✅ Escrow account found on-chain:
+   Buyer: 3qYD5LwHSuxwLi2mECzoVEmH2M7aehNjodUZCdmnCwtY
+   Seller: B7jiNm8TKvaoad3N36pyDeXMSVPmvHLaXZMDC7udhTfr
+   NFT Mint: J8siYrNdXUR7kHAfeHorepcL55WFzSa6YZPYoWPULgAs
+   Status: BOTH_DEPOSITED
+   NFT Deposited: true
+   Token Deposited: true
+   Expiry: 2025-10-28T23:00:00.000Z
+   ⚠️  EXPIRED: 5 hours ago
+
+🔬 Step 3: Analysis...
+
+📋 Analysis Results:
+Is Stuck: ✅ YES
+
+Reasons:
+  1. Escrow exists on-chain but not tracked in database
+  2. Agreement expired 5 hours ago with both assets deposited
+
+Recommendations:
+  1. This escrow was created before database monitoring started
+  2. Use manual recovery script to return assets
+  3. Assets will be returned to: NFT→Seller, USDC→Buyer
+```
+
+### Interpreting Results
+
+The investigation tool will identify one of these scenarios:
+
+1. **Untracked Escrow** (Not in Database)
+   - Escrow created before monitoring started
+   - Use manual recovery to return assets
+
+2. **Status Mismatch** (Expired on-chain, PENDING in DB)
+   - ExpiryService didn't run when it expired
+   - Update database status to EXPIRED
+   - Run orchestrator to process refunds
+
+3. **Awaiting Refund** (EXPIRED with deposits)
+   - Automatically will be processed by RefundService
+   - Check service logs for errors
+   - Manually trigger if needed
+
+4. **Completed Successfully** (Not stuck!)
+   - Escrow settled normally
+   - No action needed
+
+---
+
+## Manual Recovery Tool
+
+### Purpose
+Executes admin cancel to return assets from any stuck escrow PDA to their original depositors.
+
+### Safety Features
+- ✅ Dry-run mode to preview actions
+- ✅ Expiry check (can be overridden with `--force`)
+- ✅ Asset verification before execution
+- ✅ Database status update option
+- ✅ Jito Block Engine integration for mainnet
+- ✅ Comprehensive error handling
+
+### Usage
+
+```bash
+# Basic syntax
+npx ts-node scripts/utilities/manual-recovery.ts <ESCROW_PDA> [OPTIONS]
+
+# Options:
+#   --dry-run       Simulate without executing (safe preview)
+#   --update-db     Update database after successful recovery
+#   --force         Override expiry and asset checks
+```
+
+### Examples
+
+#### 1. Dry Run (Safe Preview)
+```bash
+# Preview what would happen without executing
+NODE_ENV=production npx ts-node scripts/utilities/manual-recovery.ts \
+  CaMUFXGNf8u11cZXx8rvDWYZ8d99mjxNRreTgwFDEdMh \
+  --dry-run
+```
+
+**Output:**
+```
+🔍 DRY RUN MODE - No actual transaction will be executed
+   Would call: adminCancel()
+   Escrow PDA: CaMUFXGNf8u11cZXx8rvDWYZ8d99mjxNRreTgwFDEdMh
+   Buyer: 3qYD5Lw...
+   Seller: B7jiNm8...
+   NFT Mint: J8siYrN...
+   Assets to return:
+     ✅ NFT → Seller
+     ✅ USDC → Buyer
+```
+
+#### 2. Actual Recovery (Production)
+```bash
+# Execute recovery on mainnet
+NODE_ENV=production npx ts-node scripts/utilities/manual-recovery.ts \
+  CaMUFXGNf8u11cZXx8rvDWYZ8d99mjxNRreTgwFDEdMh \
+  --update-db
+```
+
+**Output:**
+```
+✅ Recovery transaction submitted: 46DZ97HAanV5h2m1...
+   View on Solscan: https://solscan.io/tx/46DZ97HAanV5h2m1...
+
+✅ RECOVERY COMPLETE
+   Transaction: 46DZ97HAanV5h2m1...
+   NFT Recovered: true
+   USDC Recovered: true
+   Database Updated: true
+```
+
+#### 3. Force Recovery (Override Checks)
+```bash
+# Force recovery even if not expired
+NODE_ENV=production npx ts-node scripts/utilities/manual-recovery.ts \
+  CaMUFXGNf8u11cZXx8rvDWYZ8d99mjxNRreTgwFDEdMh \
+  --force \
+  --update-db
+```
+
+### Environment Setup
+
+The tool automatically configures itself based on `NODE_ENV`:
+
+**Development/Staging:**
+```bash
+NODE_ENV=development npx ts-node scripts/utilities/manual-recovery.ts ...
+```
+- Uses `.env.development`
+- Devnet/staging RPC
+- Devnet admin keys
 
 **Production:**
 ```bash
-npm run recover:production:dry
-# Or directly:
-npx ts-node scripts/utilities/recover-failed-agreements.ts --dry-run --all --env production
+NODE_ENV=production npx ts-node scripts/utilities/manual-recovery.ts ...
 ```
-
-**What it does:**
-- ✅ Scans database for failed agreements
-- ✅ Verifies assets on-chain
-- ✅ Shows what would be recovered
-- ❌ Does NOT execute transactions
-
-#### Live Recovery (Executes On-Chain)
-
-**⚠️ WARNING:** These commands execute real blockchain transactions!
-
-**Staging (All Failed Agreements):**
-```bash
-npm run recover:staging
-```
-
-**Production (All Failed Agreements):**
-```bash
-npm run recover:production
-```
-
-**Single Agreement (Any Environment):**
-```bash
-npm run recover:agreement <agreement-id> -- --env production
-# Or:
-npx ts-node scripts/utilities/recover-failed-agreements.ts --agreement-id <id> --env production
-```
-
-**Safety Features:**
-- 5-second cancellation window before execution
-- 3-second delay between recoveries (rate limiting)
-- Detailed logging of all actions
-- On-chain verification before refund
+- Uses `.env.production`
+- Mainnet RPC
+- Production admin keys
+- **Jito Block Engine** for transactions
 
 ---
 
-## Recovery Script Output
+## Automatic Recovery System
 
-### Dry Run Example
+### Components
 
-```
-████████████████████████████████████████████████████████████████████████████████
-🚑 ASSET RECOVERY SCRIPT
-████████████████████████████████████████████████████████████████████████████████
-   Environment: PRODUCTION
-   Network: mainnet-beta
-   RPC: https://mainnet.helius-rpc.com/?api-key=...
-   Mode: DRY RUN (preview only)
-████████████████████████████████████████████████████████████████████████████████
+#### 1. ExpiryService
+- **Runs:** Every 60 seconds (configurable)
+- **Checks:** Agreements with `expiry < now` AND status in `[PENDING, FUNDED, USDC_LOCKED, NFT_LOCKED, BOTH_LOCKED]`
+- **Action:** Updates status to `EXPIRED`
 
-🔍 Searching for agreements needing asset recovery...
+#### 2. RefundOrchestrator
+- **Runs:** Every 5 minutes
+- **Processes:** Agreements with status `EXPIRED` that have deposits
+- **Calls:** `RefundService.batchProcessRefunds()`
 
-Found 3 agreement(s) with confirmed deposits in failed/stuck status
+#### 3. RefundService
+- **Validates:** Refund eligibility
+- **Executes:** On-chain cancellation via `cancelIfExpired()` or `adminCancel()`
+- **Updates:** Agreement status to `REFUNDED` on success
 
-📊 Recovery Summary:
-   Total agreements: 3
-   Total deposits: 5
+### Monitoring Automatic Recovery
 
-════════════════════════════════════════════════════════════════════════════════
-📦 Agreement: agr_1234567890
-   Status: EXPIRED
-   Created: 2025-10-28T15:30:00.000Z
-   Expiry: 2025-10-28T16:30:00.000Z
-   Escrow PDA: 7xK...abc
-   Deposits: 2
-
-   On-Chain Assets:
-   - NFT in escrow: ✅ (balance: 1)
-   - USDC in escrow: ✅ (balance: 100000000)
-
-   Database Deposits:
-   1. NFT from 9tY...xyz
-   2. USDC from 8pM...def
-      Amount: 100 USDC
-
-   🔍 DRY RUN - Would execute on-chain refund for this agreement
-════════════════════════════════════════════════════════════════════════════════
-
-...
-
-████████████████████████████████████████████████████████████████████████████████
-📋 FINAL SUMMARY
-████████████████████████████████████████████████████████████████████████████████
-   Successful: 3 / 3
-   Failed: 0 / 3
-   Assets recovered: 5
-████████████████████████████████████████████████████████████████████████████████
-
-💡 TIP: Run without --dry-run to execute actual recovery
+Check service health:
+```bash
+curl https://api.easyescrow.ai/health
 ```
 
-### Live Recovery Example
-
-```
-████████████████████████████████████████████████████████████████████████████████
-🚑 ASSET RECOVERY SCRIPT
-████████████████████████████████████████████████████████████████████████████████
-   Environment: PRODUCTION
-   Network: mainnet-beta
-   RPC: https://mainnet.helius-rpc.com/?api-key=...
-   Mode: LIVE EXECUTION
-████████████████████████████████████████████████████████████████████████████████
-
-⚠️  WARNING: This will execute real blockchain transactions!
-   Press Ctrl+C within 5 seconds to cancel...
-
-   Proceeding with recovery...
-
-...
-
-════════════════════════════════════════════════════════════════════════════════
-📦 Agreement: agr_1234567890
-   Status: EXPIRED
-   ...
-
-   💰 Executing on-chain refund...
-
-   ✅ Refund successful!
-   Transactions: 1
-   1. NFT → 9tY...xyz
-      TX: 5KJ...abc123
-   2. USDC → 8pM...def
-      TX: 5KJ...abc123
-════════════════════════════════════════════════════════════════════════════════
+Response shows recovery system status:
+```json
+{
+  "expiryCancellation": {
+    "status": "running",
+    "services": {
+      "expiry": true,
+      "refund": true,
+      "cancellation": true
+    },
+    "recentErrors": 0
+  }
+}
 ```
 
 ---
 
-## Database Queries
+## Case Studies
 
-### Find Failed Agreements with Assets
+### Case 1: Untracked Expired Escrow
 
-```sql
--- PostgreSQL
-SELECT 
-  a.agreement_id,
-  a.status,
-  a.escrow_pda,
-  a.nft_mint,
-  a.created_at,
-  a.expiry,
-  COUNT(d.id) as deposit_count,
-  COUNT(CASE WHEN d.type = 'NFT' THEN 1 END) as nft_count,
-  COUNT(CASE WHEN d.type = 'USDC' THEN 1 END) as usdc_count,
-  SUM(CASE WHEN d.type = 'USDC' THEN d.amount ELSE 0 END) as total_usdc
-FROM "Agreement" a
-JOIN "Deposit" d ON d.agreement_id = a.agreement_id
-WHERE a.status IN ('PENDING', 'FUNDED', 'USDC_LOCKED', 'NFT_LOCKED', 'BOTH_LOCKED', 'EXPIRED', 'CANCELLED')
-  AND d.status = 'CONFIRMED'
-GROUP BY a.agreement_id
-ORDER BY a.created_at ASC;
+**Scenario:** NFT stuck in escrow PDA created before monitoring started
+
+**Investigation:**
+```bash
+npx ts-node scripts/utilities/investigate-stuck-escrow.ts CaMUFXGNf8u11cZXx8rvDWYZ8d99mjxNRreTgwFDEdMh
 ```
 
-### Check Refund Status
+**Finding:**
+- ❌ Not in database
+- ✅ On-chain: Expired, both assets deposited
+- 📋 Recommendation: Manual recovery
 
-```sql
--- Check if refund was executed
-SELECT 
-  a.agreement_id,
-  a.status,
-  a.cancelled_at,
-  t.tx_id,
-  t.operation_type,
-  t.timestamp
-FROM "Agreement" a
-LEFT JOIN "TransactionLog" t ON t.agreement_id = a.agreement_id AND t.operation_type = 'refund'
-WHERE a.agreement_id = 'agr_1234567890';
+**Recovery:**
+```bash
+# 1. Preview
+NODE_ENV=production npx ts-node scripts/utilities/manual-recovery.ts \
+  CaMUFXGNf8u11cZXx8rvDWYZ8d99mjxNRreTgwFDEdMh \
+  --dry-run
+
+# 2. Execute
+NODE_ENV=production npx ts-node scripts/utilities/manual-recovery.ts \
+  CaMUFXGNf8u11cZXx8rvDWYZ8d99mjxNRreTgwFDEdMh
 ```
 
-### Find Agreements by Date Range
-
-```sql
--- Find failed agreements from specific time period
-SELECT 
-  a.agreement_id,
-  a.status,
-  a.created_at,
-  COUNT(d.id) as deposits
-FROM "Agreement" a
-JOIN "Deposit" d ON d.agreement_id = a.agreement_id
-WHERE a.status IN ('EXPIRED', 'CANCELLED', 'BOTH_LOCKED')
-  AND d.status = 'CONFIRMED'
-  AND a.created_at BETWEEN '2025-10-01' AND '2025-10-31'
-GROUP BY a.agreement_id
-ORDER BY a.created_at DESC;
-```
+**Result:** ✅ NFT returned to seller, USDC returned to buyer
 
 ---
 
-## On-Chain Verification
+### Case 2: Status Mismatch
 
-### Verify Assets Still in Escrow
+**Scenario:** Agreement expired but still shows PENDING in database
 
-Use Solana CLI or Solscan to verify:
+**Investigation:**
+- ✅ Found in database: Status=PENDING
+- ✅ On-chain: Expired 3 hours ago
+- 📋 Analysis: ExpiryService didn't update status
 
+**Fix:**
+1. Update database status:
+   ```sql
+   UPDATE "Agreement" 
+   SET status = 'EXPIRED', "cancelledAt" = NOW()
+   WHERE "agreementId" = 'AGR-...';
+   ```
+
+2. Trigger orchestrator:
+   ```typescript
+   // Via API or service call
+   await orchestrator.processExpiredAgreementRefunds();
+   ```
+
+**Result:** ✅ Automatic refund processed within 5 minutes
+
+---
+
+### Case 3: Awaiting Automatic Refund
+
+**Scenario:** Agreement marked EXPIRED but refund pending
+
+**Investigation:**
+- ✅ Database: Status=EXPIRED, has deposits
+- ✅ On-chain: Still active, assets in escrow
+- 📋 Analysis: In queue for automatic processing
+
+**Action:** Wait for orchestrator (runs every 5 minutes)
+
+**If urgent:** Trigger manually:
 ```bash
-# Check NFT balance in escrow
-solana account <escrow-nft-token-account>
-
-# Check USDC balance in escrow
-solana account <escrow-usdc-token-account>
-
-# View on Solscan (mainnet)
-https://solscan.io/account/<escrow-pda>
-
-# View on Solscan (devnet)
-https://solscan.io/account/<escrow-pda>?cluster=devnet
+NODE_ENV=production npx ts-node scripts/utilities/manual-recovery.ts \
+  <ESCROW_PDA> \
+  --update-db
 ```
 
 ---
 
 ## Troubleshooting
 
-### Recovery Failed: "No assets in escrow"
+### Common Issues
 
-**Cause:** Assets were already recovered or never deposited.
+#### "Escrow PDA not found on-chain"
+**Cause:** Escrow already closed/recovered
 
-**Solution:**
-1. Check on-chain balances manually
-2. Verify database deposit records
-3. Check transaction logs for previous refund attempts
+**Solution:** Check transaction history on Solscan
 
-### Recovery Failed: "Unauthorized"
+#### "Transaction must write lock at least one tip account"
+**Cause:** Jito tip missing for mainnet transaction
 
-**Cause:** Admin wallet not configured correctly.
+**Solution:** ✅ Fixed! The manual recovery tool automatically adds Jito tips for mainnet
 
-**Solution:**
-1. Verify `ADMIN_PRIVATE_KEY` in environment file
-2. Check admin wallet has authority in escrow state
-3. Verify admin wallet matches program's admin
+#### "Agreement not eligible for refunds"
+**Cause:** Status doesn't allow refunds (e.g., SETTLED, REFUNDED)
 
-### Recovery Failed: "Transaction timeout"
+**Solution:** Verify agreement status is correct
 
-**Cause:** Network congestion or RPC issues.
+#### "USDC_MINT_ADDRESS not configured"
+**Cause:** Missing environment variable
 
-**Solution:**
-1. Wait and retry (script has automatic retry with 3 attempts)
-2. Check RPC endpoint status
-3. Try with different RPC endpoint
-4. Increase transaction priority fee (if available)
-
-### Recovery Partial Success
-
-**Cause:** One asset refunded but other failed.
-
-**Solution:**
-1. Run recovery again for same agreement (idempotent)
-2. Check which asset failed in error logs
-3. Manually verify on-chain status
-4. May need to cancel escrow first via admin
-
-### Database Out of Sync
-
-**Cause:** Refund succeeded on-chain but database not updated.
-
-**Solution:**
-```sql
--- Manually update agreement status
-UPDATE "Agreement"
-SET status = 'REFUNDED', cancelled_at = NOW()
-WHERE agreement_id = 'agr_1234567890';
-
--- Mark deposits as refunded
-UPDATE "Deposit"
-SET status = 'REFUNDED'
-WHERE agreement_id = 'agr_1234567890';
-```
-
----
-
-## Testing Recovery
-
-### Test on Staging First
-
-**Always test recovery on staging before production!**
-
+**Solution:** Ensure `.env.production` or `.env.development` has:
 ```bash
-# 1. Dry run to see what would happen
-npm run recover:staging:dry
+# For production
+MAINNET_PROD_USDC_MINT_ADDRESS=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
 
-# 2. Review output carefully
-
-# 3. Execute recovery
-npm run recover:staging
-
-# 4. Verify results
-npm run test:staging:e2e:02-agreement-expiry-refund
+# For development
+DEVNET_STAGING_USDC_MINT_ADDRESS=Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr
 ```
 
-### Create Test Failed Agreement
+#### Database update fails after successful recovery
+**Cause:** Agreement not found in database or prisma connection issue
 
-```bash
-# Create agreement that will fail settlement
-npm run test:staging:e2e:07-edge-cases-validation
-
-# Let it fail, then run recovery
-npm run recover:staging:dry
-```
+**Solution:** 
+1. Transaction still succeeded - assets are recovered!
+2. Manually update database:
+   ```sql
+   UPDATE "Agreement" 
+   SET status = 'CANCELLED', 
+       "cancelTxId" = '<transaction_id>',
+       "cancelledAt" = NOW()
+   WHERE "escrowPda" = '<escrow_pda>';
+   ```
 
 ---
 
@@ -416,50 +438,69 @@ npm run recover:staging:dry
 
 ### Before Recovery
 
-1. ✅ **Always dry run first** - See what will be recovered
-2. ✅ **Backup database** - Create snapshot before production recovery
-3. ✅ **Check RPC status** - Ensure network is stable
-4. ✅ **Verify admin wallet** - Confirm correct wallet is configured
-5. ✅ **Review agreements** - Manually inspect suspicious cases
+1. **Always investigate first:**
+   ```bash
+   npx ts-node scripts/utilities/investigate-stuck-escrow.ts <ESCROW_PDA>
+   ```
+
+2. **Use dry-run to preview:**
+   ```bash
+   npx ts-node scripts/utilities/manual-recovery.ts <ESCROW_PDA> --dry-run
+   ```
+
+3. **Verify assets on Solscan:**
+   - Check NFT token account balance
+   - Check USDC token account balance
+   - Verify escrow PDA ownership
 
 ### During Recovery
 
-1. ✅ **Monitor logs** - Watch for errors or unexpected behavior
-2. ✅ **Check transactions** - Verify each TX on block explorer
-3. ✅ **Don't interrupt** - Let script complete each agreement
-4. ✅ **Rate limiting** - Script has 3s delay between recoveries
+1. **Use correct environment:**
+   - `NODE_ENV=production` for mainnet
+   - `NODE_ENV=development` for devnet/staging
+
+2. **Update database when possible:**
+   - Use `--update-db` flag if agreement exists in database
+
+3. **Save transaction IDs:**
+   - Record all recovery transaction IDs for audit trail
 
 ### After Recovery
 
-1. ✅ **Verify on-chain** - Check assets returned to owners
-2. ✅ **Check database** - Ensure status updated to REFUNDED
-3. ✅ **Review webhooks** - Confirm refund events published
-4. ✅ **Document** - Record what was recovered and why
-5. ✅ **User notification** - Inform affected users if needed
+1. **Verify on Solscan:**
+   - Check transaction succeeded
+   - Verify assets transferred to correct wallets
+
+2. **Check database status:**
+   - Confirm status updated to CANCELLED or REFUNDED
+   - Verify cancelTxId recorded
+
+3. **Document the incident:**
+   - Why was manual recovery needed?
+   - Was it a monitoring gap?
+   - Should automatic recovery be improved?
 
 ---
 
 ## Related Documentation
 
-- [Refund Service Implementation](../architecture/REFUND_EXECUTION_INVESTIGATION.md)
-- [Settlement Service](../architecture/WEBHOOK_SYSTEM.md)
-- [Escrow Program](../architecture/IDL_QUICK_REFERENCE.md)
-- [Production E2E Tests](../testing/PRODUCTION_E2E_TESTS.md)
+- [Escrow Program Service](../architecture/ESCROW_PROGRAM_SERVICE.md)
+- [Jito Integration](../architecture/JITO_INTEGRATION.md)
+- [Recovery Services](../architecture/RECOVERY_SERVICES.md)
+- [Database Schema](../database/SCHEMA.md)
 
 ---
 
 ## Support
 
-If you encounter issues with asset recovery:
+If you encounter issues not covered in this guide:
 
-1. Check this documentation first
-2. Review error logs in detail
-3. Verify on-chain state manually
-4. Test recovery on staging
-5. Contact technical lead if needed
+1. Check production logs: `doctl apps logs <app-id>`
+2. Review on-chain transaction: Solscan
+3. Contact platform admin for assistance
+4. File incident report with details
 
 ---
 
-**Last Updated:** October 29, 2025  
-**Implemented By:** Feature/on-chain-refunds branch
-
+**Last Updated:** October 29, 2025
+**Version:** 1.0.0

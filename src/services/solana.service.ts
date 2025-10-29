@@ -835,9 +835,12 @@ export const initializeEscrow = async (
       nftMint: nftMintPubkey.toString(),
       usdcAmount: usdcAmount.toString(),
       expiryTimestamp: expiryTimestamp.toString(),
+      platformFeeBps: params.feeBps,
     });
     
-    // Initialize escrow on-chain
+    // Initialize escrow on-chain with admin-controlled platform fee
+    // The fee is set during initialization and stored in escrow state
+    // This prevents users from bypassing fees during settlement
     // Note: Using seller as buyer for now since buyer might be optional
     const { pda: anchorEscrowPda, txId } = await escrowService.initAgreement(
       escrowId,
@@ -845,7 +848,8 @@ export const initializeEscrow = async (
       sellerPubkey,
       nftMintPubkey,
       usdcAmount,
-      expiryTimestamp
+      expiryTimestamp,
+      params.feeBps // Platform fee in basis points (set by authorized admin)
     );
     
     console.log('[SolanaService] Escrow initialized on-chain:', {

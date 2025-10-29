@@ -405,7 +405,8 @@ export class EscrowProgramService {
     seller: PublicKey,
     nftMint: PublicKey,
     usdcAmount: BN,
-    expiryTimestamp: BN
+    expiryTimestamp: BN,
+    platformFeeBps: number
   ): Promise<{ pda: PublicKey; txId: string }> {
     try {
       console.log('[EscrowProgramService] Initializing escrow agreement:', {
@@ -415,6 +416,7 @@ export class EscrowProgramService {
         nftMint: nftMint.toString(),
         usdcAmount: usdcAmount.toString(),
         expiryTimestamp: expiryTimestamp.toString(),
+        platformFeeBps: platformFeeBps,
       });
 
       // Derive escrow PDA
@@ -434,8 +436,10 @@ export class EscrowProgramService {
         admin: this.adminKeypair.publicKey.toString(),
       });
 
-      const instruction = await this.program.methods
-        .initAgreement(escrowId, usdcAmount, expiryTimestamp)
+      // Note: TypeScript types not yet regenerated from updated IDL
+      // Using 'as any' to bypass type checking - IDL is correct on-chain
+      const instruction = await (this.program.methods as any)
+        .initAgreement(escrowId, usdcAmount, expiryTimestamp, platformFeeBps)
         .accountsStrict({
           escrowState: escrowPda,
           buyer: buyer, // Actual buyer address (important for settlement constraints!)
@@ -447,7 +451,7 @@ export class EscrowProgramService {
         .instruction();
 
       console.log('[EscrowProgramService] Instruction built, inspecting account metas:');
-      instruction.keys.forEach((key, idx) => {
+      instruction.keys.forEach((key: any, idx: number) => {
         console.log(
           `  Account ${idx}: ${key.pubkey.toString()} - isSigner: ${key.isSigner}, isWritable: ${
             key.isWritable
@@ -457,7 +461,7 @@ export class EscrowProgramService {
 
       // FIX: Manually set buyer and seller as NON-signers (Anchor bug workaround)
       // The buyer and seller accounts should NOT be signers according to the on-chain program
-      instruction.keys.forEach((key) => {
+      instruction.keys.forEach((key: any) => {
         if (key.pubkey.equals(buyer) || key.pubkey.equals(seller)) {
           console.log(
             `[EscrowProgramService] Fixing: Setting ${key.pubkey.toString()} isSigner to false`
@@ -467,7 +471,7 @@ export class EscrowProgramService {
       });
 
       console.log('[EscrowProgramService] After fix, account metas:');
-      instruction.keys.forEach((key, idx) => {
+      instruction.keys.forEach((key: any, idx: number) => {
         console.log(
           `  Account ${idx}: ${key.pubkey.toString()} - isSigner: ${key.isSigner}, isWritable: ${
             key.isWritable
@@ -1131,8 +1135,7 @@ export class EscrowProgramService {
     buyer: PublicKey,
     nftMint: PublicKey,
     usdcMint: PublicKey,
-    feeCollector: PublicKey,
-    platformFeeBps: number
+    feeCollector: PublicKey
   ): Promise<string> {
     try {
       console.log('[EscrowProgramService] Settling escrow:', {
@@ -1142,7 +1145,7 @@ export class EscrowProgramService {
         nftMint: nftMint.toString(),
         usdcMint: usdcMint.toString(),
         feeCollector: feeCollector.toString(),
-        platformFeeBps,
+        note: 'Platform fee is read from escrow state (set during init)',
       });
 
       // Get escrow ID from on-chain account
@@ -1194,10 +1197,12 @@ export class EscrowProgramService {
       const isMainnet = isMainnetNetwork(this.provider.connection);
 
       // Build transaction manually (instead of using .rpc())
+      // Platform fee is now read from escrow state (set during initialization)
+      // This prevents users from bypassing fees by calling settle directly
       // Note: TypeScript types not yet regenerated from updated IDL, using 'as any' to bypass
       // The IDL is correct on-chain, types will be regenerated in next build cycle
       const transaction = await (this.program.methods as any)
-        .settle(platformFeeBps)
+        .settle()
         .accountsPartial({
           escrowState: escrowPda,
           escrowUsdcAccount,

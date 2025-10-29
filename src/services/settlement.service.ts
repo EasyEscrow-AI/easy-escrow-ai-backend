@@ -660,16 +660,16 @@ export class SettlementService {
       });
 
         // Call Anchor program settle instruction with fee distribution
+        // Platform fee is now read from escrow state (set during initialization)
+        // This prevents users from bypassing fees by calling settle directly
         console.log('[SettlementService] 🔗 Calling Anchor program settle() instruction with fee distribution...');
-        const platformFeeBps = agreement.feeBps ?? 100; // Default to 100 bps (1%) if not specified (use nullish coalescing to allow 0)
       const txId = await escrowProgramService.settle(
         escrowPda,
         seller,
         buyer,
         nftMint,
         usdcMint,
-        feeCollector,
-        platformFeeBps
+        feeCollector
       );
 
       console.log('[SettlementService] ✅ Settlement transaction confirmed:', txId);

@@ -237,6 +237,36 @@ describe('PRODUCTION E2E - Happy Path: NFT-for-USDC Swap', function () {
     console.log('   ✅ Agreement in PENDING status (awaiting deposits)\n');
   });
 
+  it('should verify platform fee is stored in escrow state (admin-controlled)', async function () {
+    console.log('🔒 Verifying admin-controlled fee is stored on-chain...\n');
+
+    // Fetch escrow account data from on-chain
+    const escrowPda = new PublicKey(agreement.escrowPda);
+    const accountInfo = await connection.getAccountInfo(escrowPda);
+    
+    expect(accountInfo).to.not.be.null;
+    console.log(`   ✅ Escrow PDA exists on-chain`);
+    
+    // Verify the account is owned by the escrow program
+    const programId = new PublicKey(PRODUCTION_CONFIG.programId);
+    expect(accountInfo!.owner.toBase58()).to.equal(programId.toBase58());
+    console.log(`   ✅ Escrow owned by program: ${programId.toBase58()}`);
+    
+    // Parse escrow state to verify platform_fee_bps is stored
+    // The fee should be at a specific offset in the account data
+    // Anchor discriminator (8) + EscrowState layout: escrow_id (8) + buyer (32) + seller (32) + usdc_amount (8) + nft_mint (32) + platform_fee_bps (2) + ...
+    const dataOffset = 8 + 8 + 32 + 32 + 8 + 32; // Skip discriminator + escrow_id + buyer + seller + usdc_amount + nft_mint
+    const platformFeeBps = accountInfo!.data.readUInt16LE(dataOffset);
+    
+    const expectedFeeBps = PRODUCTION_CONFIG.testAmounts.fee * 10000;
+    console.log(`   Expected Fee: ${expectedFeeBps} bps (${PRODUCTION_CONFIG.testAmounts.fee * 100}%)`);
+    console.log(`   On-chain Fee: ${platformFeeBps} bps (${platformFeeBps / 100}%)`);
+    
+    expect(platformFeeBps).to.equal(expectedFeeBps);
+    console.log(`   ✅ Platform fee correctly stored in escrow state`);
+    console.log(`   ✅ Fee is controlled by admin and cannot be bypassed during settlement\n`);
+  });
+
   it('should create ATAs for escrow PDA', async function () {
     console.log('🏗️  Creating Associated Token Accounts for escrow...\n');
     
