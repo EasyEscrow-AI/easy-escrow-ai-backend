@@ -514,20 +514,28 @@ export class SettlementService {
         error: error instanceof Error ? error.message : 'Unknown error',
       };
 
-      // Store idempotency key even for failed settlements to prevent retries within the idempotency window
+      // Store idempotency key for failed settlements with SHORT TTL to allow retry soon
+      // Failed settlements get 5 minutes (300 seconds) instead of 24 hours
+      // This prevents retry storms while still allowing timely recovery from transient errors
       const idempotencyKey = `settlement_${agreement.agreementId}`;
       const idempotencyService = getIdempotencyService();
+      const FAILED_SETTLEMENT_TTL_SECONDS = 300; // 5 minutes
       
-      await idempotencyService.storeIdempotency(
+      await idempotencyService.storeIdempotencyWithTTL(
         idempotencyKey,
         'SETTLEMENT',
         { agreementId: agreement.agreementId, operation: 'settle' },
         500,
-        errorResult
+        errorResult,
+        FAILED_SETTLEMENT_TTL_SECONDS
       ).catch((storeError) => {
         console.error('[SettlementService] Error storing failed settlement idempotency:', storeError);
         // Ignore storage errors
       });
+      
+      console.log(
+        `[SettlementService] Failed settlement idempotency stored with ${FAILED_SETTLEMENT_TTL_SECONDS}s TTL (${Math.round(FAILED_SETTLEMENT_TTL_SECONDS / 60)} minutes)`
+      );
 
       return errorResult;
     }

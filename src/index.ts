@@ -15,6 +15,7 @@ import {
   getExpiryCancellationOrchestrator,
   getIdempotencyService 
 } from './services';
+import { getStuckAgreementMonitor, AlertSeverity } from './services/stuck-agreement-monitor.service';
 
 // Load environment variables
 dotenv.config();
@@ -67,6 +68,27 @@ const expiryCancellationOrchestrator = getExpiryCancellationOrchestrator({
 const idempotencyService = getIdempotencyService({
   expirationHours: 24, // Keep idempotency keys for 24 hours
   cleanupIntervalMinutes: 60, // Clean up expired keys every hour
+});
+
+const stuckAgreementMonitor = getStuckAgreementMonitor({
+  warningThresholdMinutes: 10, // Warn if stuck for 10 minutes
+  criticalThresholdMinutes: 30, // Critical if stuck for 30 minutes
+  checkIntervalMs: 60000, // Check every minute
+});
+
+// Register alert handlers for stuck agreements
+stuckAgreementMonitor.onAlert((alert) => {
+  const emoji = alert.severity === AlertSeverity.CRITICAL ? '🔴' : '⚠️';
+  console.error(`${emoji} [StuckAgreementAlert] ${alert.severity}: ${alert.message}`);
+  
+  // TODO: In production, send to Slack/email/monitoring service
+  // For now, just log to console with clear formatting
+  if (alert.severity === AlertSeverity.CRITICAL) {
+    console.error(`   🚨 CRITICAL: Agreement requires immediate attention!`);
+    console.error(`   Agreement ID: ${alert.agreementId}`);
+    console.error(`   Status: ${alert.status}`);
+    console.error(`   Time stuck: ${Math.round(alert.timeSinceLastUpdate / 60000)} minutes`);
+  }
 });
 
 // Security Middleware (apply first)
@@ -207,6 +229,10 @@ const gracefulShutdown = async (signal: string) => {
     console.log('Stopping expiry-cancellation orchestrator...');
     await expiryCancellationOrchestrator.stop();
     
+    // Stop stuck agreement monitor
+    console.log('Stopping stuck agreement monitor...');
+    await stuckAgreementMonitor.stop();
+    
     // Stop idempotency service
     console.log('Stopping idempotency service...');
     await idempotencyService.stop();
@@ -264,6 +290,11 @@ const startServer = async () => {
           console.log('Starting idempotency service...');
           await idempotencyService.start();
           console.log('✅ Idempotency service started');
+          
+          // Start stuck agreement monitor
+          console.log('Starting stuck agreement monitor...');
+          await stuckAgreementMonitor.start();
+          console.log('✅ Stuck agreement monitor started');
           
           console.log('✅ All background services started');
         } catch (error) {
