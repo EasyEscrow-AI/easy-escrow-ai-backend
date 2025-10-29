@@ -273,8 +273,11 @@ export async function prepareDepositTransaction(
   // Step 3: Sign transaction
   transaction.sign(signer);
 
-  // Step 4: Submit to network
-  const txId = await connection.sendRawTransaction(transaction.serialize());
+  // Step 4: Submit to network (skipPreflight required for Jito tips on mainnet)
+  const txId = await connection.sendRawTransaction(transaction.serialize(), {
+    skipPreflight: true,
+    maxRetries: 3,
+  });
 
   // Step 5: Wait for confirmation
   await connection.confirmTransaction(txId, 'confirmed');

@@ -215,7 +215,11 @@ describe('PRODUCTION E2E: Agreement Expiry and Refund', function () {
         const transaction = Transaction.from(Buffer.from(depositResponse.data.data.transaction, 'base64'));
         transaction.sign(wallets.sender);
         
-        const txId = await connection.sendRawTransaction(transaction.serialize());
+        // Submit with skipPreflight required for Jito tips on mainnet
+        const txId = await connection.sendRawTransaction(transaction.serialize(), {
+          skipPreflight: true,
+          maxRetries: 3,
+        });
         await connection.confirmTransaction(txId, 'confirmed');
         
         console.log(`   ✅ NFT deposited: ${getExplorerUrl(txId)}`);

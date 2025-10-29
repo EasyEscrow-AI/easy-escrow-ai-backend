@@ -190,8 +190,11 @@ describe('PRODUCTION E2E: Edge Cases and Validation', function () {
         const transaction = Transaction.from(Buffer.from(depositResponse.data.data.transaction, 'base64'));
         transaction.sign(wallets.receiver);
 
-        // This should fail on-chain
-        await connection.sendRawTransaction(transaction.serialize());
+        // This should fail on-chain (skipPreflight needed for Jito tips)
+        await connection.sendRawTransaction(transaction.serialize(), {
+          skipPreflight: true,
+          maxRetries: 3,
+        });
         
         console.log('   ⚠️  Transaction accepted (may fail during confirmation)');
 
@@ -262,8 +265,11 @@ describe('PRODUCTION E2E: Edge Cases and Validation', function () {
         // Sign with WRONG wallet (receiver instead of sender)
         transaction.sign(wallets.receiver); // Wrong signer!
 
-        // This should fail on-chain
-        await connection.sendRawTransaction(transaction.serialize());
+        // This should fail on-chain (skipPreflight needed for Jito tips)
+        await connection.sendRawTransaction(transaction.serialize(), {
+          skipPreflight: true,
+          maxRetries: 3,
+        });
         
         console.log('   ⚠️  Transaction accepted (may fail during confirmation)');
 
