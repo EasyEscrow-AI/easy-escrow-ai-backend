@@ -1190,10 +1190,13 @@ export class EscrowProgramService {
         feeCollectorUsdcAccount: feeCollectorUsdcAccount.toString(),
       });
 
-      // Call settle instruction with fee distribution
+      // Detect network
+      const isMainnet = isMainnetNetwork(this.provider.connection);
+
+      // Build transaction manually (instead of using .rpc())
       // Note: TypeScript types not yet regenerated from updated IDL, using 'as any' to bypass
       // The IDL is correct on-chain, types will be regenerated in next build cycle
-      const tx = await (this.program.methods as any)
+      const transaction = await (this.program.methods as any)
         .settle(platformFeeBps)
         .accountsPartial({
           escrowState: escrowPda,
@@ -1203,11 +1206,56 @@ export class EscrowProgramService {
           buyerNftAccount,
           feeCollectorUsdcAccount,
         })
-        .rpc();
+        .transaction();
 
-      console.log('[EscrowProgramService] Settlement transaction with fee distribution:', tx);
+      // Add Jito tip for mainnet (required to avoid RPC rejection)
+      if (isMainnet) {
+        // Jito tip accounts (randomly select one)
+        const jitoTipAccounts = [
+          '96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5',
+          'HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe',
+          'Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY',
+          'ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49',
+          'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
+          'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
+          'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
+          '3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT',
+        ];
+        const jitoTipAccount = new PublicKey(
+          jitoTipAccounts[Math.floor(Math.random() * jitoTipAccounts.length)]
+        );
+        const tipAmount = 1_000_000; // 0.001 SOL
+        
+        console.log(
+          `[EscrowProgramService] Adding Jito tip: ${tipAmount} lamports to ${jitoTipAccount.toString()}`
+        );
+        
+        // Add tip transfer instruction as LAST instruction
+        transaction.add(
+          SystemProgram.transfer({
+            fromPubkey: this.adminKeypair.publicKey,
+            toPubkey: jitoTipAccount,
+            lamports: tipAmount,
+          })
+        );
+      }
 
-      return tx;
+      // Set transaction properties
+      transaction.feePayer = this.adminKeypair.publicKey;
+      transaction.recentBlockhash = (await this.provider.connection.getLatestBlockhash()).blockhash;
+      
+      // Sign transaction
+      transaction.sign(this.adminKeypair);
+
+      console.log('[EscrowProgramService] Transaction signed, sending to network...');
+
+      // Send via Jito for mainnet, regular RPC for devnet
+      // This bypasses QuickNode's $89/m Lil' JIT add-on requirement
+      const txId = await this.sendTransactionViaJito(transaction, isMainnet);
+
+      console.log('[EscrowProgramService] Settlement transaction with fee distribution:', txId);
+
+      return txId;
     } catch (error) {
       console.error('[EscrowProgramService] Settlement failed:', error);
       throw new Error(
@@ -1218,6 +1266,9 @@ export class EscrowProgramService {
 
   /**
    * Cancel escrow if expired
+   * 
+   * Updated to use Jito Block Engine for mainnet transactions to avoid
+   * "Transaction must write lock at least one tip account" error.
    */
   async cancelIfExpired(
     escrowPda: PublicKey,
@@ -1235,8 +1286,11 @@ export class EscrowProgramService {
       const buyerUsdcAccount = await getAssociatedTokenAddress(usdcMint, buyer);
       const sellerNftAccount = await getAssociatedTokenAddress(nftMint, seller);
 
-      // Call cancelIfExpired instruction
-      const tx = await this.program.methods
+      // Detect network
+      const isMainnet = isMainnetNetwork(this.provider.connection);
+
+      // Build transaction manually (instead of using .rpc())
+      const transaction = await this.program.methods
         .cancelIfExpired()
         .accountsPartial({
           escrowState: escrowPda,
@@ -1245,11 +1299,56 @@ export class EscrowProgramService {
           buyerUsdcAccount,
           sellerNftAccount,
         })
-        .rpc();
+        .transaction();
 
-      console.log('[EscrowProgramService] Cancellation transaction:', tx);
+      // Add Jito tip for mainnet (required to avoid RPC rejection)
+      if (isMainnet) {
+        // Jito tip accounts (randomly select one)
+        const jitoTipAccounts = [
+          '96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5',
+          'HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe',
+          'Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY',
+          'ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49',
+          'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
+          'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
+          'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
+          '3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT',
+        ];
+        const jitoTipAccount = new PublicKey(
+          jitoTipAccounts[Math.floor(Math.random() * jitoTipAccounts.length)]
+        );
+        const tipAmount = 1_000_000; // 0.001 SOL
+        
+        console.log(
+          `[EscrowProgramService] Adding Jito tip: ${tipAmount} lamports to ${jitoTipAccount.toString()}`
+        );
+        
+        // Add tip transfer instruction as LAST instruction
+        transaction.add(
+          SystemProgram.transfer({
+            fromPubkey: this.adminKeypair.publicKey,
+            toPubkey: jitoTipAccount,
+            lamports: tipAmount,
+          })
+        );
+      }
 
-      return tx;
+      // Set transaction properties
+      transaction.feePayer = this.adminKeypair.publicKey;
+      transaction.recentBlockhash = (await this.provider.connection.getLatestBlockhash()).blockhash;
+      
+      // Sign transaction
+      transaction.sign(this.adminKeypair);
+
+      console.log('[EscrowProgramService] Transaction signed, sending to network...');
+
+      // Send via Jito for mainnet, regular RPC for devnet
+      // This bypasses QuickNode's $89/m Lil' JIT add-on requirement
+      const txId = await this.sendTransactionViaJito(transaction, isMainnet);
+
+      console.log('[EscrowProgramService] Cancellation transaction:', txId);
+
+      return txId;
     } catch (error) {
       console.error('[EscrowProgramService] Cancellation failed:', error);
       throw new Error(
@@ -1260,6 +1359,9 @@ export class EscrowProgramService {
 
   /**
    * Admin cancel escrow (emergency)
+   * 
+   * Updated to use Jito Block Engine for mainnet transactions to avoid
+   * "Transaction must write lock at least one tip account" error.
    */
   async adminCancel(
     escrowPda: PublicKey,
@@ -1277,8 +1379,11 @@ export class EscrowProgramService {
       const buyerUsdcAccount = await getAssociatedTokenAddress(usdcMint, buyer);
       const sellerNftAccount = await getAssociatedTokenAddress(nftMint, seller);
 
-      // Call adminCancel instruction
-      const tx = await this.program.methods
+      // Detect network
+      const isMainnet = isMainnetNetwork(this.provider.connection);
+
+      // Build transaction manually (instead of using .rpc())
+      const transaction = await this.program.methods
         .adminCancel()
         .accountsPartial({
           escrowState: escrowPda,
@@ -1288,12 +1393,56 @@ export class EscrowProgramService {
           buyerUsdcAccount,
           sellerNftAccount,
         })
-        .signers([this.adminKeypair])
-        .rpc();
+        .transaction();
 
-      console.log('[EscrowProgramService] Admin cancellation transaction:', tx);
+      // Add Jito tip for mainnet (required to avoid RPC rejection)
+      if (isMainnet) {
+        // Jito tip accounts (randomly select one)
+        const jitoTipAccounts = [
+          '96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5',
+          'HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe',
+          'Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY',
+          'ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49',
+          'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
+          'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
+          'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
+          '3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT',
+        ];
+        const jitoTipAccount = new PublicKey(
+          jitoTipAccounts[Math.floor(Math.random() * jitoTipAccounts.length)]
+        );
+        const tipAmount = 1_000_000; // 0.001 SOL
+        
+        console.log(
+          `[EscrowProgramService] Adding Jito tip: ${tipAmount} lamports to ${jitoTipAccount.toString()}`
+        );
+        
+        // Add tip transfer instruction as LAST instruction
+        transaction.add(
+          SystemProgram.transfer({
+            fromPubkey: this.adminKeypair.publicKey,
+            toPubkey: jitoTipAccount,
+            lamports: tipAmount,
+          })
+        );
+      }
 
-      return tx;
+      // Set transaction properties
+      transaction.feePayer = this.adminKeypair.publicKey;
+      transaction.recentBlockhash = (await this.provider.connection.getLatestBlockhash()).blockhash;
+      
+      // Sign transaction
+      transaction.sign(this.adminKeypair);
+
+      console.log('[EscrowProgramService] Transaction signed, sending to network...');
+
+      // Send via Jito for mainnet, regular RPC for devnet
+      // This bypasses QuickNode's $89/m Lil' JIT add-on requirement
+      const txId = await this.sendTransactionViaJito(transaction, isMainnet);
+
+      console.log('[EscrowProgramService] Admin cancellation transaction:', txId);
+
+      return txId;
     } catch (error) {
       console.error('[EscrowProgramService] Admin cancellation failed:', error);
       throw new Error(
