@@ -6,29 +6,24 @@ declare_id!("2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx");
 
 /// Authorized admin public keys for different environments
 /// 
-/// ⚠️ CRITICAL: Update these with your actual admin public keys before deployment!
+/// These keys are extracted from the wallets/ directory:
+/// - DEVNET: wallets/dev/dev-admin.json
+/// - STAGING: wallets/staging/staging-admin.json
+/// - MAINNET: wallets/production/production-admin.json
 /// 
-/// To get your admin public key from the backend, check the logs when the service starts:
-/// "[EscrowProgramService] Loaded admin keypair from DEVNET_ADMIN_PRIVATE_KEY: <PUBKEY_HERE>"
-/// 
-/// Or generate from keypair file:
-/// ```bash
-/// solana-keygen pubkey <path-to-keypair.json>
-/// ```
-///
-/// ⚠️ WARNING: These are PLACEHOLDER keys - they will NOT work until replaced with your actual admin keys!
+/// Only these addresses can initialize escrow agreements, ensuring:
+/// 1. All escrows are tracked in the database
+/// 2. Platform fees are properly controlled
+/// 3. No unauthorized escrow creation
 ///
 /// DEVNET: Admin public key for devnet/development
-/// Run backend in development mode and copy the logged public key
-const DEVNET_ADMIN: &str = "11111111111111111111111111111112"; // TODO: Replace with your devnet admin pubkey
+const DEVNET_ADMIN: &str = "7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u";
 
 /// STAGING: Admin public key for staging environment  
-/// Run backend in staging mode and copy the logged public key
-const STAGING_ADMIN: &str = "11111111111111111111111111111113"; // TODO: Replace with your staging admin pubkey
+const STAGING_ADMIN: &str = "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R";
 
 /// MAINNET: Admin public key for production/mainnet
-/// ⚠️ ESPECIALLY CRITICAL: Double-check this before mainnet deployment!
-const MAINNET_ADMIN: &str = "11111111111111111111111111111114"; // TODO: Replace with your mainnet admin pubkey
+const MAINNET_ADMIN: &str = "HGrfPKZuKR8BSYYJfZRFfdF1y2ApU9LSf6USQ6tpSDj2";
 
 /// Get the authorized admin public key
 /// 
