@@ -1,11 +1,23 @@
 /**
- * Program IDL in camelCase format in order to be used in JS/TS.
- *
- * Note that this is only a type helper and is not the actual IDL. The original
- * IDL can be found at `target/idl/escrow.json`.
+ * ⚠️ TYPESCRIPT TYPE DEFINITIONS ONLY - NOT RUNTIME IDL ⚠️
+ * 
+ * This file contains TypeScript type definitions for the Escrow program.
+ * It is used ONLY for type-checking and IntelliSense, NOT for runtime interactions.
+ * 
+ * IMPORTANT NOTES:
+ * - The program ID embedded in this file ("4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd") 
+ *   is from the DEV environment and is used ONLY for type definitions.
+ * - The ACTUAL runtime program ID is loaded dynamically from environment-specific IDL files:
+ *   - Development: escrow-idl-dev.json
+ *   - Staging: escrow-idl-staging.json  
+ *   - Production: escrow-idl-production.json
+ * - See src/utils/idl-loader.ts for how the correct IDL is selected at runtime.
+ * 
+ * DO NOT use this file's embedded program ID for runtime operations.
+ * DO NOT modify this file manually - it should be regenerated from the IDL.
  */
 export type Escrow = {
-  "address": "4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd",
+  "address": "4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd", // ⚠️ DEV ID - for types only, not runtime
   "metadata": {
     "name": "escrow",
     "version": "0.1.0",
