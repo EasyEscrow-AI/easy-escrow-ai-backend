@@ -37,6 +37,7 @@ import {
   waitForAgreementStatus,
   getTokenBalance,
   getRandomNFTFromWallet,
+  createTestNFT,
   setupUSDCAccounts,
   verifyReceiverUSDCBalance,
   getInitialBalances,
@@ -125,8 +126,22 @@ describe('PRODUCTION E2E - Happy Path: NFT-for-USDC Swap', function () {
     console.log(`   ✅ All USDC accounts created (platform paid rent)\n`);
   });
 
-  it('should create test NFT for sender', async function () {
-    console.log('🎨 Selecting random NFT from sender wallet...\n');
+  it('should mint a new NFT to sender wallet', async function () {
+    console.log('🎨 Minting new NFT to sender wallet...\n');
+    
+    const newNFT = await createTestNFT(connection, wallets.sender);
+    
+    console.log(`   ✅ Minted new NFT: ${newNFT.metadata.name}`);
+    console.log(`   NFT Mint: ${newNFT.mint.toBase58()}`);
+    console.log(`   Token Account: ${newNFT.tokenAccount.toBase58()}`);
+    console.log(`   Owner: ${wallets.sender.publicKey.toBase58()}\n`);
+    
+    expect(newNFT.mint).to.be.instanceOf(PublicKey);
+    expect(newNFT.tokenAccount).to.be.instanceOf(PublicKey);
+  });
+
+  it('should select random NFT from sender wallet (including newly minted)', async function () {
+    console.log('🎲 Selecting random NFT from sender wallet...\n');
     
     nft = await getRandomNFTFromWallet(connection, wallets.sender);
     
