@@ -251,54 +251,111 @@ export async function createTestNFT(
 ): Promise<TestNFT> {
   console.log('   🎨 Creating real NFT on Mainnet...');
   
-  // Create NFT mint (supply of 1, 0 decimals)
-  const nftMint = await createMint(
-    connection,
-    owner,
-    owner.publicKey, // mint authority
-    null, // freeze authority
-    0 // decimals (NFTs have 0 decimals)
-  );
-  
-  console.log(`   ✅ NFT Mint created: ${nftMint.toBase58()}`);
-  
-  // Wait for mint to be confirmed on-chain
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  
-  // Create token account for owner
-  const tokenAccount = await getOrCreateAssociatedTokenAccount(
-    connection,
-    owner,
-    nftMint,
-    owner.publicKey
-  );
-  
-  console.log(`   ✅ Token account created: ${tokenAccount.address.toBase58()}`);
-  
-  // Mint 1 NFT to owner
-  await mintTo(
-    connection,
-    owner,
-    nftMint,
-    tokenAccount.address,
-    owner.publicKey,
-    1 // mint 1 NFT
-  );
-  
-  console.log(`   ✅ Minted 1 NFT to owner`);
-  
-  // Wait for mint transaction to confirm
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  return {
-    mint: nftMint,
-    tokenAccount: tokenAccount.address,
-    metadata: {
-      name: `PRODUCTION Test NFT ${Date.now()}`,
-      symbol: 'STNFT',
-      uri: 'https://example.com/nft/metadata.json',
-    },
-  };
+  try {
+    // Create NFT mint (supply of 1, 0 decimals) with skipPreflight for mainnet
+    console.log('   📝 Creating NFT mint...');
+    const mintKeypair = Keypair.generate();
+    
+    // Build mint transaction
+    const mintTransaction = new Transaction();
+    
+    // Add compute budget and priority fee for mainnet
+    mintTransaction.add(
+      ComputeBudgetProgram.setComputeUnitLimit({ units: 300_000 }),
+      ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 1000 })
+    );
+    
+    // Add create mint instruction
+    const { SystemProgram } = await import('@solana/web3.js');
+    const { createInitializeMintInstruction, MINT_SIZE, TOKEN_PROGRAM_ID } = await import('@solana/spl-token');
+    
+    const lamports = await connection.getMinimumBalanceForRentExemption(MINT_SIZE);
+    
+    mintTransaction.add(
+      SystemProgram.createAccount({
+        fromPubkey: owner.publicKey,
+        newAccountPubkey: mintKeypair.publicKey,
+        space: MINT_SIZE,
+        lamports,
+        programId: TOKEN_PROGRAM_ID,
+      }),
+      createInitializeMintInstruction(
+        mintKeypair.publicKey,
+        0, // 0 decimals for NFT
+        owner.publicKey, // mint authority
+        null, // freeze authority
+        TOKEN_PROGRAM_ID
+      )
+    );
+    
+    // Send with skipPreflight (required for mainnet Jito)
+    const mintSig = await sendAndConfirmTransaction(
+      connection,
+      mintTransaction,
+      [owner, mintKeypair],
+      {
+        commitment: 'confirmed',
+        skipPreflight: true,
+        maxRetries: 3
+      }
+    );
+    
+    console.log(`   ✅ NFT Mint created: ${mintKeypair.publicKey.toBase58()}`);
+    console.log(`   📤 Mint TX: ${mintSig}`);
+    
+    // Wait for mint to be confirmed on-chain
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // Create token account for owner with skipPreflight
+    console.log('   📝 Creating token account...');
+    const tokenAccount = await getOrCreateAssociatedTokenAccount(
+      connection,
+      owner,
+      mintKeypair.publicKey,
+      owner.publicKey,
+      false, // allowOwnerOffCurve
+      'confirmed',
+      { skipPreflight: true, maxRetries: 3 }
+    );
+    
+    console.log(`   ✅ Token account created: ${tokenAccount.address.toBase58()}`);
+    
+    // Mint 1 NFT to owner with skipPreflight
+    console.log('   📝 Minting NFT...');
+    const mintToSig = await mintTo(
+      connection,
+      owner,
+      mintKeypair.publicKey,
+      tokenAccount.address,
+      owner.publicKey,
+      1, // mint 1 NFT
+      [],
+      { skipPreflight: true, maxRetries: 3 },
+      TOKEN_PROGRAM_ID
+    );
+    
+    console.log(`   ✅ Minted 1 NFT to owner`);
+    console.log(`   📤 Mint-to TX: ${mintToSig}`);
+    
+    // Wait for mint transaction to confirm
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    return {
+      mint: mintKeypair.publicKey,
+      tokenAccount: tokenAccount.address,
+      metadata: {
+        name: `PRODUCTION Test NFT ${Date.now()}`,
+        symbol: 'STNFT',
+        uri: 'https://example.com/nft/metadata.json',
+      },
+    };
+  } catch (error: any) {
+    console.error('   ❌ Failed to create NFT:', error.message);
+    if (error.logs) {
+      console.error('   📋 Error logs:', error.logs);
+    }
+    throw new Error(`Failed to create test NFT: ${error.message}`);
+  }
 }
 
 // ============================================================================
