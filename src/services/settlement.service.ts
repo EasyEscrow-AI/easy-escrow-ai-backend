@@ -529,6 +529,43 @@ export class SettlementService {
         // Ignore storage errors
       });
 
+      // Trigger automatic refund on settlement failure
+      try {
+        console.log(`[SettlementService] Settlement failed - initiating automatic refund for ${agreement.agreementId}`);
+        
+        // Import RefundService
+        const { getRefundService } = await import('./refund.service');
+        const refundService = getRefundService();
+        
+        // Check if refund is eligible (has deposits)
+        const eligibility = await refundService.checkRefundEligibility(agreement.agreementId);
+        
+        if (eligibility.eligible && eligibility.hasDeposits) {
+          console.log(`[SettlementService] Processing automatic refund for failed settlement`);
+          
+          // Process refunds in the background (don't await)
+          refundService.processRefunds(agreement.agreementId)
+            .then((refundResult) => {
+              if (refundResult.success) {
+                console.log(`[SettlementService] ✅ Automatic refund successful for ${agreement.agreementId}`);
+                console.log(`[SettlementService] Refunded ${refundResult.refundedDeposits.length} deposit(s)`);
+              } else {
+                console.error(`[SettlementService] ⚠️ Automatic refund failed for ${agreement.agreementId}:`, refundResult.errors);
+              }
+            })
+            .catch((refundError) => {
+              console.error(`[SettlementService] ⚠️ Error during automatic refund:`, refundError);
+            });
+          
+          console.log(`[SettlementService] Automatic refund initiated in background`);
+        } else {
+          console.log(`[SettlementService] No automatic refund needed: ${eligibility.reason || 'No deposits'}`);
+        }
+      } catch (refundError) {
+        // Log but don't fail the error response
+        console.error('[SettlementService] Failed to initiate automatic refund:', refundError);
+      }
+
       return errorResult;
     }
   }
