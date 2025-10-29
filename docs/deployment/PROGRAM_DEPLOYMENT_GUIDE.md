@@ -1,362 +1,369 @@
 # Solana Program Deployment Guide
 
-**Purpose:** How to deploy the escrow program to different environments and prevent Program ID mismatches.
+## Critical: Multi-Environment Deployment Process
 
----
+This guide covers deploying the Solana escrow program to staging (devnet) and production (mainnet).
 
-## 🎯 Program ID Management Strategy
+## ⚠️ Important Notes
 
-### **Single Source of Truth:**
-The program ID is **declared once in Rust** and **referenced everywhere else** via environment variables.
+- **Staging** runs on devnet with program ID: `AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei`
+- **Production** runs on mainnet with program ID: `2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx`
+- The Rust code `declare_id!()` currently matches **production only**
+- For staging deployments, you need to **upgrade** the existing program, not redeploy
 
-```
-programs/escrow/src/lib.rs:
-  declare_id!("7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV");
-```
+## Prerequisites
 
-This ID is then **set in `.env`** for the backend:
-```
-ESCROW_PROGRAM_ID=4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd
-```
+1. **Anchor CLI installed** (v0.32.1 or compatible)
+2. **Solana CLI installed**
+3. **Correct keypair configured** for deployment
+4. **Sufficient SOL** for deployment costs
+   - Devnet: Free SOL from faucet
+   - Mainnet: ~5-10 SOL for deployment + IDL upload
 
----
+## Before Deploying
 
-## 🔒 Guardrails Against Program ID Mismatches
+### Step 1: Update Admin Public Keys
 
-### 1. **No Dynamic Program Creation**
-❌ **NEVER** generate program IDs dynamically:
-```typescript
-// ❌ BAD - Dynamic generation
-const programId = Keypair.generate().publicKey;
+⚠️ **CRITICAL**: Update admin keys in `programs/escrow/src/lib.rs`:
 
-// ❌ BAD - Hardcoded different ID
-const programId = new PublicKey("SomeOtherAddress...");
-```
-
-✅ **ALWAYS** use environment variable:
-```typescript
-// ✅ GOOD - From environment
-const programId = new PublicKey(process.env.ESCROW_PROGRAM_ID);
-```
-
-### 2. **Configuration Validation**
-The backend validates `ESCROW_PROGRAM_ID` on startup:
-```typescript
-import { validateConfig } from './config/validation';
-
-// In index.ts or main entry point
-validateConfig(); // Throws if ESCROW_PROGRAM_ID is invalid or missing
-```
-
-### 3. **No Fallback Values**
-The code **rejects** placeholder values:
-- `11111111111111111111111111111111` (System program)
-- `YOUR_PROGRAM_ID_HERE`
-- `REPLACE_ME`
-- Empty strings
-
----
-
-## 📋 Deployment Process
-
-### **Step 1: Initial Program Deployment (One-Time Setup)**
-
-#### For Devnet:
-```bash
-# Navigate to program directory
-cd programs/escrow
-
-# Build the program
-cargo build-sbf
-
-# Deploy to devnet (this generates the program ID)
-solana program deploy \
-  --url devnet \
-  --keypair ~/.config/solana/id.json \
-  target/deploy/escrow.so
-
-# Output:
-# Program Id: 7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV
-```
-
-#### For Mainnet-Beta (Production):
-```bash
-# Build for production
-cargo build-sbf
-
-# Deploy to mainnet (CAREFUL - costs SOL)
-solana program deploy \
-  --url mainnet-beta \
-  --keypair ~/.config/solana/id.json \
-  target/deploy/escrow.so
-
-# Output:
-# Program Id: <NEW_MAINNET_ID>
-```
-
-### **Step 2: Update Rust Code with Program ID**
-
-Edit `programs/escrow/src/lib.rs`:
 ```rust
-// Devnet
-declare_id!("7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV");
-
-// Mainnet (when deploying to production)
-declare_id!("MainnetProgramId...");
+const DEVNET_ADMIN: &str = "YOUR_DEVNET_ADMIN_PUBKEY";
+const STAGING_ADMIN: &str = "YOUR_STAGING_ADMIN_PUBKEY"; 
+const MAINNET_ADMIN: &str = "YOUR_MAINNET_ADMIN_PUBKEY";
 ```
 
-### **Step 3: Update Environment Variables**
-
-#### Devnet (`.env`):
+Get your admin public keys:
 ```bash
-ESCROW_PROGRAM_ID=4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd
-SOLANA_RPC_URL=https://api.devnet.solana.com
-SOLANA_NETWORK=devnet
+# From backend logs when service starts:
+# "[EscrowProgramService] Loaded admin keypair: <PUBKEY>"
+
+# Or from keypair file:
+solana-keygen pubkey <keypair.json>
 ```
 
-#### Staging (`.env.staging`):
+### Step 2: Verify Changes
+
+Review program changes:
 ```bash
-ESCROW_PROGRAM_ID=4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd
-SOLANA_RPC_URL=https://api.devnet.solana.com
-SOLANA_NETWORK=devnet
+git diff origin/staging...HEAD programs/escrow/src/lib.rs
 ```
 
-#### Production (`.env.production`):
+Key changes in this deployment:
+- ✅ Added `platform_fee_bps` parameter to `init_agreement`
+- ✅ Removed `platform_fee_bps` parameter from `settle`
+- ✅ Added admin authorization check
+- ✅ Added `platform_fee_bps` field to `EscrowState`
+- ✅ Added `UnauthorizedAdmin` error
+
+## Deployment Process
+
+### Staging Deployment (Devnet)
+
+**1. Configure environment:**
 ```bash
-ESCROW_PROGRAM_ID=<MAINNET_PROGRAM_ID>
-SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
-SOLANA_NETWORK=mainnet-beta
+# Set Solana cluster to devnet
+solana config set --url https://api.devnet.solana.com
+
+# Verify your wallet
+solana address
+
+# Check balance (need ~2 SOL for upgrade)
+solana balance
 ```
 
-### **Step 4: Rebuild and Redeploy Program**
+**2. Build program:**
+```bash
+# From project root
+anchor build
+```
 
-After updating `declare_id!`, rebuild and upgrade:
+**3. Upgrade program (don't redeploy!):**
+
+⚠️ **Important**: Use `anchor upgrade` not `anchor deploy` to preserve the existing program ID.
 
 ```bash
-# Rebuild with new ID
-cargo build-sbf
+# Upgrade the program
+anchor upgrade target/deploy/escrow.so \
+  --program-id AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei \
+  --provider.cluster https://api.devnet.solana.com
+```
 
-# Upgrade existing program (keeps same address)
-solana program deploy \
-  --url devnet \
-  --program-id target/deploy/escrow-keypair.json \
-  --upgrade-authority ~/.config/solana/id.json \
-  target/deploy/escrow.so
+**4. Upload IDL on-chain:**
+```bash
+# Check if IDL exists
+anchor idl fetch AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei \
+  --provider.cluster https://api.devnet.solana.com
+
+# If exists, upgrade it:
+anchor idl upgrade AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei \
+  --filepath target/idl/escrow.json \
+  --provider.cluster https://api.devnet.solana.com
+
+# If doesn't exist, initialize it:
+anchor idl init AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei \
+  --filepath target/idl/escrow.json \
+  --provider.cluster https://api.devnet.solana.com
+```
+
+**5. Verify deployment:**
+```bash
+# Check program account
+solana program show AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei
+
+# Verify IDL
+anchor idl fetch AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei \
+  --provider.cluster https://api.devnet.solana.com
+```
+
+**6. Update backend IDL:**
+```bash
+# Copy updated IDL to backend
+cp target/idl/escrow.json src/generated/anchor/escrow.json
+
+# Rebuild backend
+npm run build
+
+# Restart staging backend
+# (via DigitalOcean or your deployment process)
+```
+
+**7. Run E2E tests:**
+```bash
+npm run test:staging:e2e:01-solana-nft-usdc-happy-path
+npm run test:staging:security:admin
 ```
 
 ---
 
-## 🚀 Environment-Specific Deployments
+### Production Deployment (Mainnet)
 
-### **Devnet (Current - Already Deployed)**
-- **Program ID:** `7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV`
-- **Status:** ✅ Deployed and verified
-- **Purpose:** Development and testing
-- **Cost:** Free (faucet SOL)
+⚠️ **CRITICAL**: Only deploy to mainnet after thorough staging testing!
 
-### **Staging (Future)**
-**Option 1: Use Devnet**
-- Same as development
-- Separate backend deployment
-- Uses same program ID
+**Pre-deployment checklist:**
+- [ ] All staging E2E tests passing
+- [ ] Admin authorization test passing
+- [ ] Fee control verified on staging
+- [ ] Admin public keys configured correctly
+- [ ] Sufficient SOL in deployment wallet (~10 SOL)
+- [ ] Backup of current program (if possible)
 
-**Option 2: Dedicated Testnet**
-- Deploy to `testnet` cluster
-- New program ID
-- Update `.env.staging`
-
-### **Production (Mainnet)**
-**When Ready for Production:**
-
-1. **Deploy to Mainnet:**
+**1. Configure environment:**
 ```bash
-solana program deploy \
-  --url mainnet-beta \
-  --keypair ~/.config/solana/id.json \
-  target/deploy/escrow.so
+# Set Solana cluster to mainnet
+solana config set --url https://api.mainnet-beta.solana.com
+
+# Verify wallet (should have deployment authority)
+solana address
+
+# Check balance
+solana balance
 ```
 
-2. **Save the Program ID:**
-```
-Program Id: <MAINNET_PROGRAM_ID>
-```
-
-3. **Update Production Config:**
+**2. Build program:**
 ```bash
-# .env.production
-ESCROW_PROGRAM_ID=<MAINNET_PROGRAM_ID>
-SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
-SOLANA_NETWORK=mainnet-beta
+# Clean build
+rm -rf target/
+anchor build
+
+# Verify program ID matches production
+grep "declare_id" programs/escrow/src/lib.rs
+# Should show: 2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx
 ```
 
-4. **Update Rust Code:**
-```rust
-#[cfg(feature = "mainnet")]
-declare_id!("<MAINNET_PROGRAM_ID>");
+**3. Upgrade program:**
+```bash
+# Upgrade mainnet program
+anchor upgrade target/deploy/escrow.so \
+  --program-id 2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx \
+  --provider.cluster https://api.mainnet-beta.solana.com
 
-#[cfg(not(feature = "mainnet"))]
-declare_id!("7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV");
+# This will cost ~5-8 SOL
+```
+
+**4. Upload IDL on-chain:**
+```bash
+# Check current IDL
+anchor idl fetch 2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx \
+  --provider.cluster https://api.mainnet-beta.solana.com
+
+# Upgrade IDL
+anchor idl upgrade 2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx \
+  --filepath target/idl/escrow.json \
+  --provider.cluster https://api.mainnet-beta.solana.com
+
+# This will cost ~0.01-0.02 SOL
+```
+
+**5. Verify deployment:**
+```bash
+# Check program
+solana program show 2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx
+
+# Verify IDL
+anchor idl fetch 2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx \
+  --provider.cluster https://api.mainnet-beta.solana.com \
+  --out temp/mainnet-idl.json
+
+# Compare with local
+diff target/idl/escrow.json temp/mainnet-idl.json
+```
+
+**6. Update production backend:**
+```bash
+# Copy IDL
+cp target/idl/escrow.json src/generated/anchor/escrow.json
+
+# Rebuild
+npm run build
+
+# Deploy to production
+# (via your CI/CD or DigitalOcean deployment)
+```
+
+**7. Run production smoke tests:**
+```bash
+# Run critical production tests
+npm run test:production:e2e:01-solana-nft-usdc-happy-path
+```
+
+**8. Monitor:**
+- Check DigitalOcean logs for errors
+- Monitor first few transactions
+- Verify fees are being collected correctly
+
+---
+
+## IDL Management
+
+### Why IDL matters:
+- **On-chain IDL** = Source of truth for client libraries
+- **Backend IDL** = TypeScript types for Anchor integration
+- Both must match the deployed program
+
+### IDL Update Process:
+
+**After every program change:**
+1. Build program: `anchor build` (generates `target/idl/escrow.json`)
+2. Upgrade on-chain IDL: `anchor idl upgrade <program-id>`
+3. Copy to backend: `cp target/idl/escrow.json src/generated/anchor/`
+4. Rebuild backend: `npm run build`
+5. Restart services
+
+### Verifying IDL matches program:
+
+```bash
+# Fetch on-chain IDL
+anchor idl fetch <program-id> --out temp/onchain-idl.json
+
+# Compare with local
+diff target/idl/escrow.json temp/onchain-idl.json
+
+# Should be identical!
 ```
 
 ---
 
-## 🔒 Security Best Practices
+## Common Issues
 
-### 1. **Program Authority Management**
+### Issue: "Program ID mismatch"
+**Solution**: Verify `declare_id!()` in `lib.rs` matches deployed program
+
+### Issue: "Insufficient funds"
+**Solution**: 
+- Devnet: `solana airdrop 2`
+- Mainnet: Transfer SOL to deployment wallet
+
+### Issue: "Program upgrade failed"
+**Solution**: Check you have upgrade authority:
 ```bash
-# Check current upgrade authority
-solana program show <PROGRAM_ID> --url devnet
-
-# Transfer authority to multisig (for mainnet)
-solana program set-upgrade-authority \
-  <PROGRAM_ID> \
-  --new-upgrade-authority <MULTISIG_ADDRESS> \
-  --url mainnet-beta
+solana program show <program-id>
+# Look for "Upgrade Authority"
 ```
 
-### 2. **Keypair Management**
-- **Devnet/Testnet:** Development keypairs OK
-- **Mainnet:** Use hardware wallet or multisig
-- **Never commit:** `escrow-keypair.json` to git
+### Issue: "IDL account not found"
+**Solution**: Use `anchor idl init` instead of `upgrade` for first-time IDL
 
-### 3. **Environment Variables**
+### Issue: "Transaction simulation failed"
+**Solution**: 
+- Build failed: Check Rust compilation errors
+- Authority mismatch: Verify wallet has upgrade authority
+- Insufficient funds: Add more SOL
+
+---
+
+## Rollback Process
+
+If deployment fails or causes issues:
+
+**1. Revert to previous program:**
 ```bash
-# Never commit these to git:
-.env
-.env.production
-.env.staging
+# If you backed up the old .so file:
+anchor upgrade backup/escrow-previous.so \
+  --program-id <program-id>
+```
 
-# Use secrets management:
-# - DigitalOcean App Platform: Environment Variables
-# - AWS: Secrets Manager
-# - Kubernetes: Secrets
+**2. Revert IDL:**
+```bash
+anchor idl upgrade <program-id> \
+  --filepath backup/escrow-previous.json
+```
+
+**3. Revert backend:**
+```bash
+git checkout HEAD^ src/generated/anchor/escrow.json
+npm run build
+# Redeploy backend
 ```
 
 ---
 
-## 🧪 Testing Program ID Configuration
+## Post-Deployment Checklist
 
-### Test 1: Configuration Validation
-```bash
-npm run validate:config
-```
+After successful deployment:
 
-Expected output:
-```
-🔍 Validating configuration...
-✅ Solana configuration valid
-   Program ID: 7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV
-   Network: devnet
-   RPC: https://api.devnet.solana.com
-```
-
-### Test 2: Integration Test
-```bash
-npm run test:integration
-```
-
-Should connect to the program and verify IDL.
-
-### Test 3: E2E Test
-```bash
-npm run test:e2e
-```
-
-Should use the correct program ID for all operations.
+- [ ] Program upgrade confirmed on-chain
+- [ ] IDL uploaded and verified on-chain
+- [ ] Backend IDL updated and rebuilt
+- [ ] Services restarted
+- [ ] E2E tests passing
+- [ ] First transaction successful
+- [ ] Monitoring shows no errors
+- [ ] Fee collection working correctly
+- [ ] Admin authorization working
+- [ ] Document deployment in changelog
 
 ---
 
-## ❌ Common Mistakes to Avoid
+## Environment-Specific Notes
 
-### 1. **Hardcoding Program IDs**
-```typescript
-// ❌ BAD
-const programId = new PublicKey("7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV");
+### Staging (Devnet)
+- **Purpose**: Testing new features before production
+- **RPC**: https://api.devnet.solana.com
+- **Explorer**: https://explorer.solana.com/?cluster=devnet
+- **Cost**: Free (use faucet)
+- **Upgrade frequency**: As needed for testing
 
-// ✅ GOOD
-const programId = new PublicKey(process.env.ESCROW_PROGRAM_ID);
-```
-
-### 2. **Using Fallback IDs**
-```typescript
-// ❌ BAD - Silent failure
-const programId = process.env.ESCROW_PROGRAM_ID || "11111...";
-
-// ✅ GOOD - Fail fast
-if (!process.env.ESCROW_PROGRAM_ID) {
-  throw new Error("ESCROW_PROGRAM_ID required");
-}
-```
-
-### 3. **Generating New IDs**
-```typescript
-// ❌ BAD - Creates new ID every time
-const programKeypair = Keypair.generate();
-
-// ✅ GOOD - Use deployed ID
-const programId = new PublicKey(process.env.ESCROW_PROGRAM_ID);
-```
-
-### 4. **Mismatched `declare_id!` and `.env`**
-```rust
-// Rust
-declare_id!("7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV");
-```
-```bash
-# .env - MUST MATCH
-ESCROW_PROGRAM_ID=4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd
-```
+### Production (Mainnet)
+- **Purpose**: Live customer transactions
+- **RPC**: https://api.mainnet-beta.solana.com
+- **Explorer**: https://explorer.solana.com/
+- **Cost**: 5-10 SOL per upgrade
+- **Upgrade frequency**: Only after thorough staging testing
 
 ---
 
-## 📊 Current Status
+## Security Considerations
 
-| Environment | Program ID | Status | Notes |
-|-------------|------------|--------|-------|
-| **Devnet** | `7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV` | ✅ Deployed | Active development |
-| **Staging** | TBD | ⏳ Pending | Use devnet or deploy to testnet |
-| **Production** | TBD | ⏳ Pending | Deploy to mainnet when ready |
-
----
-
-## 🚀 Quick Reference
-
-### Check Program Status:
-```bash
-solana program show $ESCROW_PROGRAM_ID --url devnet
-```
-
-### Upgrade Program:
-```bash
-solana program deploy \
-  --program-id target/deploy/escrow-keypair.json \
-  --upgrade-authority ~/.config/solana/id.json \
-  target/deploy/escrow.so \
-  --url devnet
-```
-
-### Verify IDL:
-```bash
-anchor idl build -p escrow
-```
+1. **Upgrade Authority**: Keep upgrade authority keypair secure
+2. **Admin Keys**: Update admin public keys before deployment
+3. **Testing**: Always test on staging first
+4. **Monitoring**: Watch for unusual activity after deployment
+5. **Rollback Plan**: Have previous .so file ready
 
 ---
 
-## ✅ Checklist for New Environment
+## Questions?
 
-- [ ] Deploy program to target network
-- [ ] Save program ID
-- [ ] Update `declare_id!` in `lib.rs`
-- [ ] Update `ESCROW_PROGRAM_ID` in `.env`
-- [ ] Rebuild program with new ID
-- [ ] Upgrade deployed program
-- [ ] Run configuration validation
-- [ ] Run integration tests
-- [ ] Run E2E tests
-- [ ] Verify program on explorer
-
----
-
-**Last Updated:** 2025-10-16  
-**Current Devnet Program:** `7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV`
-
+- Check Anchor docs: https://www.anchor-lang.com/docs/cli
+- Solana CLI docs: https://docs.solana.com/cli
+- Ask team for deployment keys/permissions
