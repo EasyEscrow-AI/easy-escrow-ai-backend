@@ -2,7 +2,32 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount, Transfer, Mint};
 use anchor_spl::associated_token::AssociatedToken;
 
-declare_id!("2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx");
+// STAGING/DEVNET Program ID
+// For production deployment, change this to: 2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx
+declare_id!("AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei");
+
+/// Authorized admin public keys for different environments
+/// 
+/// These keys are extracted from the wallets/ directory:
+/// - DEVNET: wallets/dev/dev-admin.json (7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u)
+/// - STAGING: wallets/staging/staging-admin.json (498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R)
+/// - MAINNET: wallets/production/production-admin.json (HGrfPKZuKR8BSYYJfZRFfdF1y2ApU9LSf6USQ6tpSDj2)
+/// 
+/// Only these addresses can initialize escrow agreements, ensuring:
+/// 1. All escrows are tracked in the database
+/// 2. Platform fees are properly controlled
+/// 3. No unauthorized escrow creation
+///
+/// NOTE: This function currently returns all three admin keys for flexibility.
+/// In production, you may want to compile separate binaries for each environment
+/// or use a single admin key across all environments.
+fn get_authorized_admins() -> Vec<Pubkey> {
+    vec![
+        pubkey!("7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u"), // DEVNET
+        pubkey!("498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"), // STAGING
+        pubkey!("HGrfPKZuKR8BSYYJfZRFfdF1y2ApU9LSf6USQ6tpSDj2"), // MAINNET
+    ]
+}
 
 /// Authorized admin public keys for different environments
 /// 
