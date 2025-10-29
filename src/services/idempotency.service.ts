@@ -187,10 +187,48 @@ export class IdempotencyService {
     responseStatus: number,
     responseBody: any
   ): Promise<void> {
+    return this.storeIdempotencyWithTTL(
+      idempotencyKey,
+      endpoint,
+      requestBody,
+      responseStatus,
+      responseBody
+    );
+  }
+
+  /**
+   * Store idempotency key with response data and custom TTL
+   * 
+   * This method allows specifying a custom TTL in seconds for the idempotency key.
+   * Useful for failed operations that should allow retry sooner than successful ones.
+   * 
+   * @param customTTLSeconds - Optional custom TTL in seconds (overrides default)
+   */
+  async storeIdempotencyWithTTL(
+    idempotencyKey: string,
+    endpoint: string,
+    requestBody: any,
+    responseStatus: number,
+    responseBody: any,
+    customTTLSeconds?: number
+  ): Promise<void> {
     try {
       const requestHash = this.generateRequestHash(requestBody);
       const expiresAt = new Date();
-      expiresAt.setHours(expiresAt.getHours() + this.config.expirationHours);
+
+      if (customTTLSeconds !== undefined) {
+        // Use custom TTL in seconds (for failed settlements, retries, etc.)
+        expiresAt.setSeconds(expiresAt.getSeconds() + customTTLSeconds);
+        console.log(
+          `[IdempotencyService] Using custom TTL: ${customTTLSeconds}s (${Math.round(customTTLSeconds / 60)}min) for key: ${idempotencyKey}`
+        );
+      } else {
+        // Use default TTL in hours (for successful operations)
+        expiresAt.setHours(expiresAt.getHours() + this.config.expirationHours);
+        console.log(
+          `[IdempotencyService] Using default TTL: ${this.config.expirationHours}h for key: ${idempotencyKey}`
+        );
+      }
 
       await prisma.idempotencyKey.create({
         data: {
@@ -203,7 +241,7 @@ export class IdempotencyService {
         },
       });
 
-      console.log(`[IdempotencyService] Stored idempotency key: ${idempotencyKey}`);
+      console.log(`[IdempotencyService] Stored idempotency key: ${idempotencyKey} (expires: ${expiresAt.toISOString()})`);
     } catch (error) {
       console.error('[IdempotencyService] Error storing idempotency key:', error);
       throw error;
