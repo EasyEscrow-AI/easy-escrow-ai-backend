@@ -1,5 +1,5 @@
 {
-  "address": "4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd",
+  "address": "2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx",
   "metadata": {
     "name": "escrow",
     "version": "0.1.0",
@@ -524,13 +524,18 @@
         {
           "name": "expiry_timestamp",
           "type": "i64"
+        },
+        {
+          "name": "platform_fee_bps",
+          "type": "u16"
         }
       ]
     },
     {
       "name": "settle",
       "docs": [
-        "Settle the escrow and exchange assets with fee distribution"
+        "Settle the escrow and exchange assets with fee distribution",
+        "Uses the platform fee that was set during escrow initialization"
       ],
       "discriminator": [
         175,
@@ -595,12 +600,7 @@
           "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
         }
       ],
-      "args": [
-        {
-          "name": "platform_fee_bps",
-          "type": "u16"
-        }
-      ]
+      "args": []
     }
   ],
   "accounts": [
@@ -646,31 +646,36 @@
     },
     {
       "code": 6005,
+      "name": "UnauthorizedAdmin",
+      "msg": "Only authorized admin can initialize escrows"
+    },
+    {
+      "code": 6006,
       "name": "InvalidNftMint",
       "msg": "Invalid NFT mint address"
     },
     {
-      "code": 6006,
+      "code": 6007,
       "name": "DepositNotComplete",
       "msg": "Deposits not complete"
     },
     {
-      "code": 6007,
+      "code": 6008,
       "name": "Expired",
       "msg": "Escrow has expired"
     },
     {
-      "code": 6008,
+      "code": 6009,
       "name": "NotExpired",
       "msg": "Escrow has not expired yet"
     },
     {
-      "code": 6009,
+      "code": 6010,
       "name": "InvalidFeeBps",
       "msg": "Invalid fee basis points (must be <= 10000)"
     },
     {
-      "code": 6010,
+      "code": 6011,
       "name": "CalculationOverflow",
       "msg": "Calculation overflow"
     }
@@ -678,6 +683,9 @@
   "types": [
     {
       "name": "EscrowState",
+      "docs": [
+        "Escrow state account storing agreement details"
+      ],
       "type": {
         "kind": "struct",
         "fields": [
@@ -699,7 +707,25 @@
           },
           {
             "name": "nft_mint",
+            "docs": [
+              "The NFT's mint address (unique identifier).",
+              "",
+              "Important: This is NOT \"minting\" (creating) an NFT.",
+              "The NFT must ALREADY EXIST in the seller's wallet.",
+              "This field stores the mint address to identify WHICH specific NFT",
+              "is being traded in this escrow agreement."
+            ],
             "type": "pubkey"
+          },
+          {
+            "name": "platform_fee_bps",
+            "docs": [
+              "Platform fee in basis points (1 bps = 0.01%)",
+              "Set during initialization by authorized admin",
+              "Range: 0-10000 (0% to 100%)",
+              "This fee is enforced during settlement and cannot be bypassed"
+            ],
+            "type": "u16"
           },
           {
             "name": "buyer_usdc_deposited",

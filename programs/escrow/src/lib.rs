@@ -9,22 +9,39 @@ pub mod escrow {
     use super::*;
 
     /// Initialize an escrow agreement
+    /// Only authorized admin can initialize escrows to ensure proper tracking and fee control
     pub fn init_agreement(
         ctx: Context<InitAgreement>,
         escrow_id: u64,
         usdc_amount: u64,
         expiry_timestamp: i64,
+        platform_fee_bps: u16,
     ) -> Result<()> {
+        // SECURITY: Only authorized admin can initialize escrows
+        // This prevents unauthorized escrow creation and ensures:
+        // 1. All escrows are tracked in our database
+        // 2. Platform fees are properly controlled
+        // 3. No bypassing of service fees
+        let admin_pubkey = ctx.accounts.admin.key();
+        let authorized_admin = id(); // Program's declared authority
+        
+        require!(
+            admin_pubkey == authorized_admin,
+            EscrowError::UnauthorizedAdmin
+        );
+        
         let escrow = &mut ctx.accounts.escrow_state;
         
         require!(usdc_amount > 0, EscrowError::InvalidAmount);
         require!(expiry_timestamp > Clock::get()?.unix_timestamp, EscrowError::InvalidExpiry);
+        require!(platform_fee_bps <= 10000, EscrowError::InvalidFeeBps);
         
         escrow.escrow_id = escrow_id;
         escrow.buyer = ctx.accounts.buyer.key();
         escrow.seller = ctx.accounts.seller.key();
         escrow.usdc_amount = usdc_amount;
         escrow.nft_mint = ctx.accounts.nft_mint.key();
+        escrow.platform_fee_bps = platform_fee_bps; // Store fee in escrow state
         escrow.buyer_usdc_deposited = false;
         escrow.seller_nft_deposited = false;
         escrow.status = EscrowStatus::Pending;
@@ -92,7 +109,8 @@ pub mod escrow {
     }
 
     /// Settle the escrow and exchange assets with fee distribution
-    pub fn settle(ctx: Context<Settle>, platform_fee_bps: u16) -> Result<()> {
+    /// Uses the platform fee that was set during escrow initialization
+    pub fn settle(ctx: Context<Settle>) -> Result<()> {
         let escrow = &ctx.accounts.escrow_state;
         
         require!(escrow.status == EscrowStatus::Pending, EscrowError::InvalidStatus);
@@ -102,7 +120,10 @@ pub mod escrow {
             Clock::get()?.unix_timestamp <= escrow.expiry_timestamp,
             EscrowError::Expired
         );
-        require!(platform_fee_bps <= 10000, EscrowError::InvalidFeeBps);
+        
+        // Use platform fee from escrow state (set during init by authorized admin)
+        // This prevents users from bypassing fees by calling settle directly
+        let platform_fee_bps = escrow.platform_fee_bps;
         
         let escrow_id = escrow.escrow_id;
         let bump = escrow.bump;
@@ -502,6 +523,12 @@ pub struct EscrowState {
     /// is being traded in this escrow agreement.
     pub nft_mint: Pubkey,
     
+    /// Platform fee in basis points (1 bps = 0.01%)
+    /// Set during initialization by authorized admin
+    /// Range: 0-10000 (0% to 100%)
+    /// This fee is enforced during settlement and cannot be bypassed
+    pub platform_fee_bps: u16,
+    
     pub buyer_usdc_deposited: bool,
     pub seller_nft_deposited: bool,
     pub status: EscrowStatus,
@@ -535,6 +562,9 @@ pub enum EscrowError {
     
     #[msg("Unauthorized to perform this action")]
     Unauthorized,
+    
+    #[msg("Only authorized admin can initialize escrows")]
+    UnauthorizedAdmin,
     
     #[msg("Invalid NFT mint address")]
     InvalidNftMint,
