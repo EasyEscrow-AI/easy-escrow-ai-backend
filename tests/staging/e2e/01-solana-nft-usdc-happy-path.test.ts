@@ -225,8 +225,8 @@ describe('STAGING E2E - Happy Path: NFT-for-USDC Swap', function () {
     
     // Parse escrow state to verify platform_fee_bps is stored
     // The fee should be at a specific offset in the account data
-    // EscrowState layout: escrow_id (8) + buyer (32) + seller (32) + usdc_amount (8) + nft_mint (32) + platform_fee_bps (2) + ...
-    const dataOffset = 8 + 32 + 32 + 8 + 32; // Skip discriminator + escrow_id + buyer + seller + usdc_amount + nft_mint
+    // Anchor discriminator (8) + EscrowState layout: escrow_id (8) + buyer (32) + seller (32) + usdc_amount (8) + nft_mint (32) + platform_fee_bps (2) + ...
+    const dataOffset = 8 + 8 + 32 + 32 + 8 + 32; // Skip discriminator + escrow_id + buyer + seller + usdc_amount + nft_mint
     const platformFeeBps = accountInfo!.data.readUInt16LE(dataOffset);
     
     const expectedFeeBps = STAGING_CONFIG.testAmounts.fee * 10000;
