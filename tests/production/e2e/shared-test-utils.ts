@@ -288,25 +288,51 @@ export async function createTestNFT(
       )
     );
     
-    // Send with skipPreflight (required for mainnet Jito)
-    const mintSig = await sendAndConfirmTransaction(
-      connection,
-      mintTransaction,
-      [owner, mintKeypair],
-      {
-        commitment: 'confirmed',
-        skipPreflight: true,
-        maxRetries: 3
-      }
-    );
+    // Get recent blockhash
+    const { blockhash } = await connection.getLatestBlockhash('finalized');
+    mintTransaction.recentBlockhash = blockhash;
+    mintTransaction.feePayer = owner.publicKey;
     
+    // Sign transaction
+    mintTransaction.sign(owner, mintKeypair);
+    
+    // Submit via Jito Block Engine (required for mainnet)
+    console.log(`   📡 Sending mint transaction via Jito Block Engine...`);
+    const serializedMintTx = mintTransaction.serialize().toString('base64');
+    
+    const jitoResponse = await fetch('https://mainnet.block-engine.jito.wtf/api/v1/transactions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'sendTransaction',
+        params: [serializedMintTx, { encoding: 'base64' }],
+      }),
+    });
+    
+    if (!jitoResponse.ok) {
+      const errorText = await jitoResponse.text();
+      throw new Error(`Jito Block Engine error: ${jitoResponse.status} ${errorText}`);
+    }
+    
+    const jitoResult = await jitoResponse.json() as { jsonrpc: string; id: number; result?: string; error?: any };
+    if (jitoResult.error) {
+      throw new Error(`Jito Block Engine error: ${JSON.stringify(jitoResult.error)}`);
+    }
+    
+    const mintSig = jitoResult.result!;
     console.log(`   ✅ NFT Mint created: ${mintKeypair.publicKey.toBase58()}`);
     console.log(`   📤 Mint TX: ${mintSig}`);
     
-    // Wait for mint to be confirmed on-chain
+    // Wait for confirmation
+    await connection.confirmTransaction(mintSig, 'confirmed');
+    console.log(`   ✅ Mint transaction confirmed`);
+    
+    // Wait a bit more for the account to be fully available
     await new Promise(resolve => setTimeout(resolve, 2000));
     
-    // Create token account for owner with skipPreflight
+    // Create token account for owner (using standard method with skipPreflight)
     console.log('   📝 Creating token account...');
     const tokenAccount = await getOrCreateAssociatedTokenAccount(
       connection,
@@ -320,22 +346,65 @@ export async function createTestNFT(
     
     console.log(`   ✅ Token account created: ${tokenAccount.address.toBase58()}`);
     
-    // Mint 1 NFT to owner with skipPreflight
-    console.log('   📝 Minting NFT...');
-    const mintToSig = await mintTo(
-      connection,
-      owner,
-      mintKeypair.publicKey,
-      tokenAccount.address,
-      owner.publicKey,
-      1, // mint 1 NFT
-      [],
-      { skipPreflight: true, maxRetries: 3 },
-      TOKEN_PROGRAM_ID
+    // Build mint-to transaction
+    console.log('   📝 Minting NFT to token account...');
+    const mintToTransaction = new Transaction();
+    
+    mintToTransaction.add(
+      ComputeBudgetProgram.setComputeUnitLimit({ units: 200_000 }),
+      ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 1000 })
     );
     
+    const { createMintToInstruction } = await import('@solana/spl-token');
+    mintToTransaction.add(
+      createMintToInstruction(
+        mintKeypair.publicKey, // mint
+        tokenAccount.address, // destination
+        owner.publicKey, // mint authority
+        1, // amount (1 NFT)
+        [],
+        TOKEN_PROGRAM_ID
+      )
+    );
+    
+    // Get recent blockhash and sign
+    const { blockhash: mintToBlockhash } = await connection.getLatestBlockhash('finalized');
+    mintToTransaction.recentBlockhash = mintToBlockhash;
+    mintToTransaction.feePayer = owner.publicKey;
+    mintToTransaction.sign(owner);
+    
+    // Submit via Jito
+    console.log(`   📡 Sending mint-to transaction via Jito Block Engine...`);
+    const serializedMintToTx = mintToTransaction.serialize().toString('base64');
+    
+    const jitoMintToResponse = await fetch('https://mainnet.block-engine.jito.wtf/api/v1/transactions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'sendTransaction',
+        params: [serializedMintToTx, { encoding: 'base64' }],
+      }),
+    });
+    
+    if (!jitoMintToResponse.ok) {
+      const errorText = await jitoMintToResponse.text();
+      throw new Error(`Jito Block Engine error: ${jitoMintToResponse.status} ${errorText}`);
+    }
+    
+    const jitoMintToResult = await jitoMintToResponse.json() as { jsonrpc: string; id: number; result?: string; error?: any };
+    if (jitoMintToResult.error) {
+      throw new Error(`Jito Block Engine error: ${JSON.stringify(jitoMintToResult.error)}`);
+    }
+    
+    const mintToSig = jitoMintToResult.result!;
     console.log(`   ✅ Minted 1 NFT to owner`);
     console.log(`   📤 Mint-to TX: ${mintToSig}`);
+    
+    // Wait for confirmation
+    await connection.confirmTransaction(mintToSig, 'confirmed');
+    console.log(`   ✅ Mint-to transaction confirmed`);
     
     // Wait for mint transaction to confirm
     await new Promise(resolve => setTimeout(resolve, 2000));
