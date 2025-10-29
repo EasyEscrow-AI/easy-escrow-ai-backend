@@ -57,7 +57,12 @@ async function findUntrackedEscrows(): Promise<UntrackeedEscrow[]> {
     {
       filters: [
         {
-          dataSize: 8 + 32 + 32 + 32 + 8 + 32 + 1 + 1 + 1 + 8 + 1 + 32, // EscrowState size
+          // EscrowState size calculation:
+          // 8 (discriminator) + 8 (escrow_id) + 32 (buyer) + 32 (seller) + 
+          // 8 (usdc_amount) + 32 (nft_mint) + 2 (platform_fee_bps) + 
+          // 1 (buyer_usdc_deposited) + 1 (seller_nft_deposited) + 1 (status) + 
+          // 8 (expiry_timestamp) + 1 (bump) + 32 (admin) = 166 bytes
+          dataSize: 8 + 8 + 32 + 32 + 8 + 32 + 2 + 1 + 1 + 1 + 8 + 1 + 32,
         },
       ],
     }
