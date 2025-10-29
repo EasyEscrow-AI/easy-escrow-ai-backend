@@ -162,6 +162,7 @@ export async function getTokenBalance(
 /**
  * Get a random NFT owned by the wallet
  * This is preferred for production tests to avoid creating unnecessary NFTs
+ * Supports ALL SPL Token NFTs (not just Metaplex NFTs)
  */
 export async function getRandomNFTFromWallet(
   connection: Connection,
@@ -170,91 +171,64 @@ export async function getRandomNFTFromWallet(
   console.log('   🔍 Fetching NFTs owned by wallet...');
   console.log(`   Wallet: ${owner.publicKey.toBase58()}`);
   
-  const metaplex = Metaplex.make(connection);
-  
   try {
-    // Find all NFTs owned by the wallet (returns metadata only)
-    const nftsRaw = await metaplex.nfts().findAllByOwner({
-      owner: owner.publicKey,
-    });
-    
-    console.log(`   ✅ Found ${nftsRaw.length} tokens`);
-    
-    if (nftsRaw.length === 0) {
-      throw new Error(
-        `No tokens found in wallet ${owner.publicKey.toBase58()}. ` +
-        `Please ensure the sender wallet has at least one NFT.`
-      );
-    }
-    
-    // Load full NFT data for each token
-    console.log(`   Loading full NFT data...`);
-    const nftsPromises = nftsRaw.map(async (item) => {
-      try {
-        // Get mint address - different property names depending on type
-        const mintAddress = 'mintAddress' in item ? item.mintAddress : item.mint.address;
-        const nft = await metaplex.nfts().load({ metadata: item as any });
-        return nft;
-      } catch (err: any) {
-        const mintAddr = 'mintAddress' in item ? item.mintAddress.toBase58() : item.mint.address.toBase58();
-        console.warn(`   ⚠️  Failed to load NFT ${mintAddr}: ${err.message}`);
-        return null;
-      }
-    });
-    
-    const nftsLoaded = await Promise.all(nftsPromises);
-    const nfts = nftsLoaded.filter((item): item is Nft | Sft => item !== null);
-    
-    console.log(`   ✅ Loaded ${nfts.length} NFTs/SFTs with full data`);
-    
-    if (nfts.length === 0) {
-      throw new Error(
-        `Found ${nftsRaw.length} tokens but none could be loaded. ` +
-        `Please ensure the sender wallet has at least one actual NFT.`
-      );
-    }
-    
-    // Filter for actual NFTs (supply = 1)
-    const actualNfts = nfts.filter(
-      nft => nft.mint.supply.basisPoints.toNumber() === 1
+    // Find all token accounts owned by the wallet
+    // This finds ALL SPL tokens, including NFTs without Metaplex metadata
+    const tokenAccounts = await connection.getParsedTokenAccountsByOwner(
+      owner.publicKey,
+      { programId: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA') }
     );
     
-    if (actualNfts.length === 0) {
+    console.log(`   ✅ Found ${tokenAccounts.value.length} token accounts`);
+    
+    // Filter for NFTs: decimals=0 and amount=1
+    const nftAccounts = tokenAccounts.value.filter(
+      acc => acc.account.data.parsed.info.tokenAmount.decimals === 0 &&
+             acc.account.data.parsed.info.tokenAmount.uiAmount === 1
+    );
+    
+    console.log(`   ✅ Found ${nftAccounts.length} NFTs (decimals=0, amount=1)`);
+    
+    if (nftAccounts.length === 0) {
       throw new Error(
-        `Found ${nfts.length} tokens but none are NFTs (supply=1). ` +
-        `Please ensure the sender wallet has at least one actual NFT.`
+        `No NFTs found in wallet ${owner.publicKey.toBase58()}. ` +
+        `Please ensure the sender wallet has at least one NFT (SPL token with decimals=0 and amount=1).`
       );
     }
-    
-    console.log(`   ✅ Found ${actualNfts.length} actual NFTs (supply=1)`);
     
     // Randomly select an NFT
-    const randomIndex = Math.floor(Math.random() * actualNfts.length);
-    const selectedNft = actualNfts[randomIndex];
+    const randomIndex = Math.floor(Math.random() * nftAccounts.length);
+    const selectedAccount = nftAccounts[randomIndex];
+    const mintAddress = new PublicKey(selectedAccount.account.data.parsed.info.mint);
     
-    console.log(`   🎲 Randomly selected NFT #${randomIndex + 1}/${actualNfts.length}`);
-    console.log(`   NFT Mint: ${selectedNft.mint.address.toBase58()}`);
-    console.log(`   Name: ${selectedNft.name}`);
-    console.log(`   Symbol: ${selectedNft.symbol}`);
+    console.log(`   🎲 Randomly selected NFT #${randomIndex + 1}/${nftAccounts.length}`);
+    console.log(`   NFT Mint: ${mintAddress.toBase58()}`);
+    console.log(`   Token Account: ${selectedAccount.pubkey.toBase58()}`);
     
-    // Get the token account for this NFT
-    const tokenAccount = await getOrCreateAssociatedTokenAccount(
-      connection,
-      owner,
-      selectedNft.mint.address,
-      owner.publicKey
-    );
+    // Try to load Metaplex metadata if available (optional)
+    let metadata = {
+      name: 'Unknown NFT',
+      symbol: 'NFT',
+      uri: '',
+    };
     
-    console.log(`   Token Account: ${tokenAccount.address.toBase58()}`);
+    try {
+      const metaplex = Metaplex.make(connection);
+      const nft = await metaplex.nfts().findByMint({ mintAddress });
+      metadata = {
+        name: nft.name || 'Unknown NFT',
+        symbol: nft.symbol || 'NFT',
+        uri: nft.uri || '',
+      };
+      console.log(`   📋 Loaded Metaplex metadata: ${metadata.name}`);
+    } catch (err) {
+      console.log(`   ℹ️  No Metaplex metadata (using SPL token as-is)`);
+    }
     
     return {
-      mint: selectedNft.mint.address,
-      tokenAccount: tokenAccount.address,
-      metadata: {
-        name: selectedNft.name,
-        symbol: selectedNft.symbol,
-        uri: selectedNft.uri,
-      },
+      mint: mintAddress,
+      tokenAccount: selectedAccount.pubkey,
+      metadata,
     };
   } catch (error: any) {
     console.error('   ❌ Error fetching NFTs:', error.message);
