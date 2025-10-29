@@ -332,19 +332,87 @@ export async function createTestNFT(
     // Wait a bit more for the account to be fully available
     await new Promise(resolve => setTimeout(resolve, 2000));
     
-    // Create token account for owner (using standard method with skipPreflight)
+    // Create token account manually and submit via Jito
     console.log('   📝 Creating token account...');
-    const tokenAccount = await getOrCreateAssociatedTokenAccount(
-      connection,
-      owner,
+    const tokenAccountAddress = await getAssociatedTokenAddress(
       mintKeypair.publicKey,
       owner.publicKey,
-      false, // allowOwnerOffCurve
-      'confirmed',
-      { skipPreflight: true, maxRetries: 3 }
+      false,
+      TOKEN_PROGRAM_ID
     );
     
-    console.log(`   ✅ Token account created: ${tokenAccount.address.toBase58()}`);
+    // Check if account already exists
+    let accountExists = false;
+    try {
+      await getAccount(connection, tokenAccountAddress, 'confirmed');
+      accountExists = true;
+      console.log(`   ✅ Token account already exists: ${tokenAccountAddress.toBase58()}`);
+    } catch (err: any) {
+      if (err.name !== 'TokenAccountNotFoundError') {
+        console.log(`   ⚠️  Error checking account: ${err.message}`);
+      }
+    }
+    
+    if (!accountExists) {
+      // Build token account creation transaction
+      const createAccountTx = new Transaction();
+      
+      createAccountTx.add(
+        ComputeBudgetProgram.setComputeUnitLimit({ units: 200_000 }),
+        ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 1000 })
+      );
+      
+      createAccountTx.add(
+        createAssociatedTokenAccountInstruction(
+          owner.publicKey, // payer
+          tokenAccountAddress, // ATA address
+          owner.publicKey, // owner
+          mintKeypair.publicKey, // mint
+          TOKEN_PROGRAM_ID
+        )
+      );
+      
+      // Get recent blockhash and sign
+      const { blockhash: createAcctBlockhash } = await connection.getLatestBlockhash('finalized');
+      createAccountTx.recentBlockhash = createAcctBlockhash;
+      createAccountTx.feePayer = owner.publicKey;
+      createAccountTx.sign(owner);
+      
+      // Submit via Jito
+      console.log(`   📡 Sending create account transaction via Jito Block Engine...`);
+      const serializedCreateAcctTx = createAccountTx.serialize().toString('base64');
+      
+      const jitoCreateAcctResponse = await fetch('https://mainnet.block-engine.jito.wtf/api/v1/transactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'sendTransaction',
+          params: [serializedCreateAcctTx, { encoding: 'base64' }],
+        }),
+      });
+      
+      if (!jitoCreateAcctResponse.ok) {
+        const errorText = await jitoCreateAcctResponse.text();
+        throw new Error(`Jito Block Engine error: ${jitoCreateAcctResponse.status} ${errorText}`);
+      }
+      
+      const jitoCreateAcctResult = await jitoCreateAcctResponse.json() as { jsonrpc: string; id: number; result?: string; error?: any };
+      if (jitoCreateAcctResult.error) {
+        throw new Error(`Jito Block Engine error: ${JSON.stringify(jitoCreateAcctResult.error)}`);
+      }
+      
+      const createAcctSig = jitoCreateAcctResult.result!;
+      console.log(`   ✅ Token account created: ${tokenAccountAddress.toBase58()}`);
+      console.log(`   📤 Create account TX: ${createAcctSig}`);
+      
+      // Wait for confirmation
+      await connection.confirmTransaction(createAcctSig, 'confirmed');
+      console.log(`   ✅ Create account transaction confirmed`);
+      
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
     
     // Build mint-to transaction
     console.log('   📝 Minting NFT to token account...');
@@ -359,7 +427,7 @@ export async function createTestNFT(
     mintToTransaction.add(
       createMintToInstruction(
         mintKeypair.publicKey, // mint
-        tokenAccount.address, // destination
+        tokenAccountAddress, // destination
         owner.publicKey, // mint authority
         1, // amount (1 NFT)
         [],
@@ -411,7 +479,7 @@ export async function createTestNFT(
     
     return {
       mint: mintKeypair.publicKey,
-      tokenAccount: tokenAccount.address,
+      tokenAccount: tokenAccountAddress,
       metadata: {
         name: `PRODUCTION Test NFT ${Date.now()}`,
         symbol: 'STNFT',
