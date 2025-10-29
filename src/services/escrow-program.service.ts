@@ -327,16 +327,63 @@ export class EscrowProgramService {
         mint // mint
       );
 
-      const { Transaction, sendAndConfirmTransaction } = await import('@solana/web3.js');
-      const createAtaTx = new Transaction().add(createAtaIx);
+      const { Transaction, ComputeBudgetProgram } = await import('@solana/web3.js');
+      const createAtaTx = new Transaction();
+      
+      // Detect network and add appropriate instructions
+      const isMainnet = isMainnetNetwork(this.provider.connection);
+      
+      if (isMainnet) {
+        // Add Jito tip for mainnet
+        const JITO_TIP_AMOUNT = 10_000; // 0.00001 SOL tip
+        const JITO_TIP_ACCOUNTS = [
+          'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL', // Jito tip account 4
+        ];
+        
+        console.log(`[EscrowProgramService] Adding Jito tip: ${JITO_TIP_AMOUNT} lamports`);
+        
+        // Add compute budget instructions
+        createAtaTx.add(
+          ComputeBudgetProgram.setComputeUnitLimit({ units: 200_000 }),
+          ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 50_000 })
+        );
+        
+        // Add main instruction
+        createAtaTx.add(createAtaIx);
+        
+        // Add Jito tip as system transfer
+        const { SystemProgram } = await import('@solana/web3.js');
+        const tipAccount = new PublicKey(JITO_TIP_ACCOUNTS[0]);
+        createAtaTx.add(
+          SystemProgram.transfer({
+            fromPubkey: this.adminKeypair.publicKey,
+            toPubkey: tipAccount,
+            lamports: JITO_TIP_AMOUNT,
+          })
+        );
+      } else {
+        // Devnet: just add the main instruction
+        createAtaTx.add(createAtaIx);
+      }
 
-      const signature = await sendAndConfirmTransaction(this.provider.connection, createAtaTx, [
-        this.adminKeypair,
-      ]);
+      // Get recent blockhash and set fee payer
+      const { blockhash, lastValidBlockHeight } = await this.provider.connection.getLatestBlockhash('finalized');
+      createAtaTx.recentBlockhash = blockhash;
+      createAtaTx.lastValidBlockHeight = lastValidBlockHeight;
+      createAtaTx.feePayer = this.adminKeypair.publicKey;
+
+      // Sign transaction
+      createAtaTx.sign(this.adminKeypair);
+
+      let signature: string;
+      
+      // Send transaction via Jito Block Engine (FREE, direct to Jito)
+      // This bypasses QuickNode's $89/m Lil' JIT add-on requirement
+      signature = await this.sendTransactionViaJito(createAtaTx, isMainnet);
 
       console.log(`[EscrowProgramService] ${tokenType} account created successfully`);
       console.log(`[EscrowProgramService] Transaction: ${signature}`);
-      console.log(`[EscrowProgramService] Cost: ~0.002 SOL (rent-exemption, one-time per user)`);
+      console.log(`[EscrowProgramService] Cost: ~0.002 SOL (rent-exemption, one-time per user)${isMainnet ? ' + Jito tip' : ''}`);
     } else {
       console.log(
         `[EscrowProgramService] ${tokenType} account already exists: ${tokenAccount.toBase58()}`

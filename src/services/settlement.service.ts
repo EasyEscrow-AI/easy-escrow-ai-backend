@@ -514,20 +514,65 @@ export class SettlementService {
         error: error instanceof Error ? error.message : 'Unknown error',
       };
 
-      // Store idempotency key even for failed settlements to prevent retries within the idempotency window
+      // Store idempotency key for failed settlements with SHORT TTL to allow retry soon
+      // Failed settlements get 5 minutes (300 seconds) instead of 24 hours
+      // This prevents retry storms while still allowing timely recovery from transient errors
       const idempotencyKey = `settlement_${agreement.agreementId}`;
       const idempotencyService = getIdempotencyService();
+      const FAILED_SETTLEMENT_TTL_SECONDS = 300; // 5 minutes
       
-      await idempotencyService.storeIdempotency(
+      await idempotencyService.storeIdempotencyWithTTL(
         idempotencyKey,
         'SETTLEMENT',
         { agreementId: agreement.agreementId, operation: 'settle' },
         500,
-        errorResult
+        errorResult,
+        FAILED_SETTLEMENT_TTL_SECONDS
       ).catch((storeError) => {
         console.error('[SettlementService] Error storing failed settlement idempotency:', storeError);
         // Ignore storage errors
       });
+      
+      console.log(
+        `[SettlementService] Failed settlement idempotency stored with ${FAILED_SETTLEMENT_TTL_SECONDS}s TTL (${Math.round(FAILED_SETTLEMENT_TTL_SECONDS / 60)} minutes)`
+      );
+
+      // Trigger automatic refund on settlement failure
+      try {
+        console.log(`[SettlementService] Settlement failed - initiating automatic refund for ${agreement.agreementId}`);
+        
+        // Import RefundService
+        const { getRefundService } = await import('./refund.service');
+        const refundService = getRefundService();
+        
+        // Check if refund is eligible (has deposits)
+        const eligibility = await refundService.checkRefundEligibility(agreement.agreementId);
+        
+        if (eligibility.eligible && eligibility.hasDeposits) {
+          console.log(`[SettlementService] Processing automatic refund for failed settlement`);
+          
+          // Process refunds in the background (don't await)
+          refundService.processRefunds(agreement.agreementId)
+            .then((refundResult) => {
+              if (refundResult.success) {
+                console.log(`[SettlementService] ✅ Automatic refund successful for ${agreement.agreementId}`);
+                console.log(`[SettlementService] Refunded ${refundResult.refundedDeposits.length} deposit(s)`);
+              } else {
+                console.error(`[SettlementService] ⚠️ Automatic refund failed for ${agreement.agreementId}:`, refundResult.errors);
+              }
+            })
+            .catch((refundError) => {
+              console.error(`[SettlementService] ⚠️ Error during automatic refund:`, refundError);
+            });
+          
+          console.log(`[SettlementService] Automatic refund initiated in background`);
+        } else {
+          console.log(`[SettlementService] No automatic refund needed: ${eligibility.reason || 'No deposits'}`);
+        }
+      } catch (refundError) {
+        // Log but don't fail the error response
+        console.error('[SettlementService] Failed to initiate automatic refund:', refundError);
+      }
 
       return errorResult;
     }
@@ -538,7 +583,7 @@ export class SettlementService {
    */
   private async calculateFees(agreement: any): Promise<FeeCalculation> {
     const price = new Decimal(agreement.price.toString());
-    const feeBps = agreement.feeBps;
+    const feeBps = agreement.feeBps ?? 0; // Default to 0 if null/undefined
     const honorRoyalties = agreement.honorRoyalties;
 
     // Calculate platform fee (in basis points)

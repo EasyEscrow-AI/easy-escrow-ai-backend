@@ -46,6 +46,18 @@ import {
   type TestNFT,
 } from './shared-test-utils';
 
+// Type for Jito Block Engine JSON-RPC response
+interface JitoJsonRpcResponse {
+  jsonrpc: string;
+  id: number;
+  result?: string;
+  error?: {
+    code: number;
+    message: string;
+    data?: any;
+  };
+}
+
 describe('PRODUCTION E2E - Happy Path: NFT-for-USDC Swap', function () {
   // Increase timeout for network operations
   this.timeout(180000); // 3 minutes
@@ -314,12 +326,12 @@ describe('PRODUCTION E2E - Happy Path: NFT-for-USDC Swap', function () {
       throw new Error(`Jito Block Engine error: ${jitoResponse.status} ${errorText}`);
     }
     
-    const jitoResult = await jitoResponse.json();
+    const jitoResult = await jitoResponse.json() as JitoJsonRpcResponse;
     if (jitoResult.error) {
       throw new Error(`Jito Block Engine error: ${JSON.stringify(jitoResult.error)}`);
     }
     
-    const txId = jitoResult.result;
+    const txId = jitoResult.result!;
     console.log(`   📤 Submitted via Jito: ${getExplorerUrl(txId)}`);
     
     // Wait for confirmation
@@ -408,12 +420,12 @@ describe('PRODUCTION E2E - Happy Path: NFT-for-USDC Swap', function () {
       throw new Error(`Jito Block Engine error: ${jitoResponse.status} ${errorText}`);
     }
     
-    const jitoResult = await jitoResponse.json();
+    const jitoResult = await jitoResponse.json() as JitoJsonRpcResponse;
     if (jitoResult.error) {
       throw new Error(`Jito Block Engine error: ${JSON.stringify(jitoResult.error)}`);
     }
     
-    const txId = jitoResult.result;
+    const txId = jitoResult.result!;
     console.log(`   📤 Submitted via Jito: ${getExplorerUrl(txId)}`);
     
     // Wait for confirmation
