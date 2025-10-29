@@ -575,7 +575,7 @@ export class SettlementService {
    */
   private async calculateFees(agreement: any): Promise<FeeCalculation> {
     const price = new Decimal(agreement.price.toString());
-    const feeBps = agreement.feeBps;
+    const feeBps = agreement.feeBps ?? 0; // Default to 0 if null/undefined
     const honorRoyalties = agreement.honorRoyalties;
 
     // Calculate platform fee (in basis points)
