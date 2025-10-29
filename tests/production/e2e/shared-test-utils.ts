@@ -288,6 +288,7 @@ export async function createTestNFT(
       )
     );
     
+<<<<<<< HEAD
     // Get recent blockhash
     const { blockhash } = await connection.getLatestBlockhash('finalized');
     mintTransaction.recentBlockhash = blockhash;
