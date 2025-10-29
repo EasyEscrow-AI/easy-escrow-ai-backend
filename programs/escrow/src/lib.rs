@@ -4,12 +4,52 @@ use anchor_spl::associated_token::AssociatedToken;
 
 declare_id!("2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx");
 
+/// Authorized admin public keys for different environments
+/// 
+/// ⚠️ CRITICAL: Update these with your actual admin public keys before deployment!
+/// 
+/// To get your admin public key from the backend, check the logs when the service starts:
+/// "[EscrowProgramService] Loaded admin keypair from DEVNET_ADMIN_PRIVATE_KEY: <PUBKEY_HERE>"
+/// 
+/// Or generate from keypair file:
+/// ```bash
+/// solana-keygen pubkey <path-to-keypair.json>
+/// ```
+///
+/// ⚠️ WARNING: These are PLACEHOLDER keys - they will NOT work until replaced with your actual admin keys!
+///
+/// DEVNET: Admin public key for devnet/development
+/// Run backend in development mode and copy the logged public key
+const DEVNET_ADMIN: &str = "11111111111111111111111111111112"; // TODO: Replace with your devnet admin pubkey
+
+/// STAGING: Admin public key for staging environment  
+/// Run backend in staging mode and copy the logged public key
+const STAGING_ADMIN: &str = "11111111111111111111111111111113"; // TODO: Replace with your staging admin pubkey
+
+/// MAINNET: Admin public key for production/mainnet
+/// ⚠️ ESPECIALLY CRITICAL: Double-check this before mainnet deployment!
+const MAINNET_ADMIN: &str = "11111111111111111111111111111114"; // TODO: Replace with your mainnet admin pubkey
+
+/// Get the authorized admin public key
+/// 
+/// NOTE: This function currently returns all three admin keys for flexibility.
+/// In production, you may want to compile separate binaries for each environment
+/// or use a single admin key across all environments.
+fn get_authorized_admins() -> Vec<Pubkey> {
+    vec![
+        pubkey!(DEVNET_ADMIN),
+        pubkey!(STAGING_ADMIN),
+        pubkey!(MAINNET_ADMIN),
+    ]
+}
+
 #[program]
 pub mod escrow {
     use super::*;
 
     /// Initialize an escrow agreement
-    /// Only authorized admin can initialize escrows to ensure proper tracking and fee control
+    /// Platform fee is set during initialization and stored in escrow state
+    /// Only authorized admins can initialize escrows
     pub fn init_agreement(
         ctx: Context<InitAgreement>,
         escrow_id: u64,
@@ -17,16 +57,16 @@ pub mod escrow {
         expiry_timestamp: i64,
         platform_fee_bps: u16,
     ) -> Result<()> {
-        // SECURITY: Only authorized admin can initialize escrows
-        // This prevents unauthorized escrow creation and ensures:
-        // 1. All escrows are tracked in our database
-        // 2. Platform fees are properly controlled
-        // 3. No bypassing of service fees
+        // SECURITY: Only authorized admins can initialize escrows
+        // This prevents:
+        // 1. Unauthorized escrow creation
+        // 2. Bypassing of service tracking
+        // 3. Fee manipulation (fee is set here and stored in state)
         let admin_pubkey = ctx.accounts.admin.key();
-        let authorized_admin = id(); // Program's declared authority
+        let authorized_admins = get_authorized_admins();
         
         require!(
-            admin_pubkey == authorized_admin,
+            authorized_admins.contains(&admin_pubkey),
             EscrowError::UnauthorizedAdmin
         );
         
