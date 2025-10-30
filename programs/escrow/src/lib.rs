@@ -3,9 +3,21 @@ use anchor_spl::token::{self, Token, TokenAccount, Transfer, Mint};
 use anchor_spl::associated_token::AssociatedToken;
 use solana_security_txt::security_txt;
 
-// PRODUCTION/MAINNET Program ID
-// For staging/devnet deployment, change this to: AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei
+// Environment-specific Program IDs
+// Automatically selected based on build features
+// Build with: anchor build --features <environment>
+
+#[cfg(feature = "mainnet")]
 declare_id!("2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx");
+
+#[cfg(feature = "staging")]
+declare_id!("AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei");
+
+#[cfg(feature = "devnet")]
+declare_id!("GpvN8LB1xXTu9N541x9rrbxD7HwH6xi1Gkp84P7rUAEZ");
+
+#[cfg(feature = "localnet")]
+declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
 // Security contact information embedded in the program
 // This allows security researchers and auditors to easily find contact information
