@@ -61,6 +61,9 @@ RUN npx prisma generate
 # Copy built application from builder stage
 COPY --from=builder /app/dist ./dist
 
+# Copy docs directory for Swagger/OpenAPI specification
+COPY docs ./docs
+
 # Copy generated Prisma client to dist/generated so compiled code can find it
 # dist/config/database.js imports from '../generated/prisma'
 RUN mkdir -p dist/generated && \

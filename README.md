@@ -143,12 +143,12 @@ The escrow program facilitates trustless transactions between buyers and sellers
 |-------------|---------|------------|--------|----------|
 | **DEV** | Devnet | `4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd` | ✅ Active | [View](https://explorer.solana.com/address/4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd?cluster=devnet) |
 | **STAGING** | Devnet | `AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei` | ✅ Active | [View](https://explorer.solana.com/address/AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei?cluster=devnet) |
-| **PROD** | Mainnet | `<TBD>` | ⏸️ Planned | TBD |
+| **PROD** | Mainnet | `2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx` | ✅ LIVE | [View](https://solscan.io/account/2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx) |
 
 See [PROGRAM_IDS.md](docs/environments/PROGRAM_IDS.md) for complete program ID registry.
 
 ### Features
-- **NFT & USDC Escrow**: Secure holding of NFTs and USDC during transactions
+- **NFT & USDC Escrow**: Non-custodial on-chain secure holding of NFTs and USDC during transactions
 - **Automated Settlement**: Exchange assets when both parties fulfill obligations
 - **Time-based Expiry**: Automatic cancellation after deadline
 - **Admin Controls**: Emergency cancellation capability
@@ -369,11 +369,27 @@ anchor deploy  # Requires SOL for deployment
 **Production (DigitalOcean App Platform - Singapore Region):**
 
 Infrastructure deployed in **Singapore (sgp1)** for optimal Asia-Pacific performance:
-- VPC Network (secure networking) - FREE
-- PostgreSQL Clusters (STAGING + PROD) - $30/month
-- Redis via Upstash (managed service) - FREE tier
-- Spaces Object Storage (S3-compatible) - $5/month  
-- App Platform instances - $15/month
+
+**Monthly Costs (USD/AUD):**
+- **Digital Ocean App Servers:**
+  - Dev: $5/m USD (~$8/m AUD)
+  - Staging: $5/m USD (~$8/m AUD)
+  - Production: $15/m USD (~$23/m AUD)
+- **Digital Ocean Droplet Servers:**
+  - Production: $6/m USD (~$9/m AUD)
+- **Digital Ocean PostgreSQL Databases:**
+  - Dev: FREE
+  - Staging: $15/m USD (~$23/m AUD)
+  - Production: $15/m USD (~$23/m AUD)
+- **Digital Ocean Spaces (Object Storage):**
+  - Test storage: $5/m USD (~$8/m AUD)
+  - Production storage: $5/m USD (~$8/m AUD)
+- **Redis Cloud:**
+  - Staging: FREE
+  - Production: $25/m USD (~$39/m AUD)
+- **QuickNode RPC:** $49/m USD (~$75/m AUD)
+
+**Note:** Private VPC (Virtual Private Cloud) is planned for future implementation but not yet deployed.
 
 Quick Deploy:
 ```bash
@@ -393,7 +409,7 @@ doctl apps create --spec .do/app.yaml
 - **[Devnet Deployment Guide](docs/DEVNET_DEPLOYMENT_GUIDE.md)** - E2E testing on devnet ⭐ NEW
 - **[Deployment Summary](docs/DEPLOYMENT_SUMMARY.md)** - Quick reference with credentials
 - [DigitalOcean Setup](docs/DIGITALOCEAN_SETUP.md) - Infrastructure details
-- [Redis Infrastructure](docs/setup/REDIS_INFRASTRUCTURE.md) - Upstash Redis configuration
+- [Redis Infrastructure](docs/setup/REDIS_INFRASTRUCTURE.md) - Redis Cloud configuration
 - [Spaces Setup](docs/SPACES_SETUP.md) - Object storage setup
 
 **Environment References:**
@@ -495,6 +511,18 @@ SOLANA_NETWORK=devnet
 SOLANA_RPC_URL=https://api.devnet.solana.com
 ESCROW_PROGRAM_ID=
 
+# Wallet Configuration (Required)
+# Admin Wallet (for settlement operations)
+DEVNET_ADMIN_PRIVATE_KEY=your_admin_private_key_base58
+DEVNET_ADMIN_ADDRESS=your_admin_public_key
+
+# Fee Collector Wallet (for platform fees)
+DEVNET_FEE_COLLECTOR_PRIVATE_KEY=your_fee_collector_private_key_base58
+DEVNET_FEE_COLLECTOR_ADDRESS=your_fee_collector_public_key
+
+# Platform Fee Collector Address
+PLATFORM_FEE_COLLECTOR_ADDRESS=your_platform_fee_collector_address
+
 # Security
 JWT_SECRET=your_jwt_secret
 API_KEY_SECRET=your_api_key_secret
@@ -505,6 +533,8 @@ REDIS_URL=redis://localhost:6379
 # Platform
 PLATFORM_FEE_BPS=250
 ```
+
+**Important:** Replace wallet private keys and addresses with your actual values. Never commit these to version control.
 
 See `.env.example` for complete configuration options.
 
@@ -538,7 +568,7 @@ See [SECRETS_MANAGEMENT.md](docs/security/SECRETS_MANAGEMENT.md) for complete gu
 - **Admin Controls**: Multi-signature emergency cancellation (planned for mainnet)
 
 ### Infrastructure Security
-- **Private VPC**: Isolated network for production services
+- **Private VPC**: Planned for future implementation (not yet deployed)
 - **Encrypted Secrets**: All secrets encrypted at rest in DigitalOcean
 - **TLS/SSL**: HTTPS enforced for all API endpoints
 - **Database Security**: SSL-required PostgreSQL connections

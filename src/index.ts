@@ -193,10 +193,9 @@ try {
 
 // Root endpoint
 app.get('/', (_req: Request, res: Response) => {
-  res.status(200).json({
+  const response: any = {
     message: 'EasyEscrow.ai Backend API',
     version: '1.0.0',
-    documentation: swaggerPath,
     endpoints: {
       health: '/health',
       agreements: '/v1/agreements',
@@ -205,10 +204,17 @@ app.get('/', (_req: Request, res: Response) => {
       expiryCancellation: '/api/expiry-cancellation',
       webhooks: '/api/webhooks'
     }
-  });
+  };
+  
+  // Only include documentation field if Swagger loaded successfully
+  if (swaggerDocument) {
+    response.documentation = swaggerPath;
+  }
+  
+  res.status(200).json(response);
 });
 
-// Swagger Documentation
+// Swagger Documentation (only if successfully loaded)
 if (swaggerDocument) {
   app.use(swaggerPath, swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
     customCss: '.swagger-ui .topbar { display: none }',
