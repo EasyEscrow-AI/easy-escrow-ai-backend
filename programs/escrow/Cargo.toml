@@ -9,12 +9,18 @@ crate-type = ["cdylib", "lib"]
 name = "escrow"
 
 [features]
-default = []
+default = ["mainnet"]  # Default to mainnet for safety
 cpi = ["no-entrypoint"]
 no-entrypoint = []
 no-idl = []
 no-log-ix-name = []
 idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
+
+# Environment-specific features (mutually exclusive)
+mainnet = []
+devnet = []
+staging = []
+localnet = []
 
 [dependencies]
 anchor-lang = { version = "0.32.1", features = ["init-if-needed"] }
