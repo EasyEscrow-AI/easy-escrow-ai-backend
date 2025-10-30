@@ -1,6 +1,9 @@
 import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
+import swaggerUi from 'swagger-ui-express';
+import YAML from 'yamljs';
 import { connectDatabase, checkDatabaseHealth } from './config/database';
 import { connectRedis, checkRedisHealth, disconnectRedis } from './config/redis';
 import { agreementRoutes, expiryCancellationRoutes, webhookRoutes, receiptRoutes, transactionLogRoutes, healthRoutes } from './routes';
@@ -175,9 +178,11 @@ app.get('/health', async (_req: Request, res: Response) => {
 
 // Root endpoint
 app.get('/', (_req: Request, res: Response) => {
+  const swaggerPath = process.env.SWAGGER_PATH || '/docs';
   res.status(200).json({
     message: 'EasyEscrow.ai Backend API',
     version: '1.0.0',
+    documentation: swaggerPath,
     endpoints: {
       health: '/health',
       agreements: '/v1/agreements',
@@ -188,6 +193,15 @@ app.get('/', (_req: Request, res: Response) => {
     }
   });
 });
+
+// Swagger Documentation
+const swaggerPath = process.env.SWAGGER_PATH || '/docs';
+const swaggerDocument = YAML.load(path.join(__dirname, '../docs/api/openapi.yaml'));
+app.use(swaggerPath, swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'EasyEscrow.ai API Documentation',
+  customfavIcon: '/favicon.ico'
+}));
 
 // API Routes
 app.use(agreementRoutes);
