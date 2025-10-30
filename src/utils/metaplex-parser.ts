@@ -173,9 +173,19 @@ export function parseMetadataAccount(data: Buffer): OnChainMetadata | null {
  * Metaplex strings are stored as: 4-byte length + string data
  */
 function readString(data: Buffer, offset: number): { value: string; newOffset: number } {
+  // Validate we have enough bytes to read the length
+  if (offset + 4 > data.length) {
+    throw new Error(`Buffer overflow: cannot read string length at offset ${offset}, buffer size ${data.length}`);
+  }
+  
   // Read string length (4 bytes, little-endian)
   const length = data.readUInt32LE(offset);
   offset += 4;
+  
+  // Validate the string length is reasonable and within buffer bounds
+  if (length > data.length || offset + length > data.length) {
+    throw new Error(`Buffer overflow: string length ${length} at offset ${offset} exceeds buffer size ${data.length}`);
+  }
   
   // Read string data
   const stringData = data.slice(offset, offset + length);

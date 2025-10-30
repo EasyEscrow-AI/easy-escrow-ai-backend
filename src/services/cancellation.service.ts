@@ -344,9 +344,13 @@ export class CancellationService {
         }
         const usdcMint = new PublicKey(usdcMintAddress);
         
-        // Choose appropriate cancellation method based on agreement status
-        if (agreement.status === AgreementStatus.EXPIRED) {
-          console.log('[CancellationService] Using cancelIfExpired for expired agreement');
+        // Choose appropriate cancellation method based on actual expiry time
+        // Check if the agreement has actually expired (time-based, not status-based)
+        const now = new Date();
+        const isExpired = now > agreement.expiry;
+        
+        if (isExpired) {
+          console.log('[CancellationService] Using cancelIfExpired for time-expired agreement');
           cancelTxId = await escrowService.cancelIfExpired(
             escrowPda,
             buyer,
@@ -355,7 +359,7 @@ export class CancellationService {
             usdcMint
           );
         } else {
-          console.log('[CancellationService] Using adminCancel for cancellation');
+          console.log('[CancellationService] Using adminCancel for non-expired cancellation');
           cancelTxId = await escrowService.adminCancel(
             escrowPda,
             buyer,
