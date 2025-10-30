@@ -176,9 +176,12 @@ app.get('/health', async (_req: Request, res: Response) => {
   });
 });
 
+// Swagger Configuration
+const swaggerPath = process.env.SWAGGER_PATH || '/docs';
+const swaggerDocument = YAML.load(path.join(__dirname, '../docs/api/openapi.yaml'));
+
 // Root endpoint
 app.get('/', (_req: Request, res: Response) => {
-  const swaggerPath = process.env.SWAGGER_PATH || '/docs';
   res.status(200).json({
     message: 'EasyEscrow.ai Backend API',
     version: '1.0.0',
@@ -195,8 +198,6 @@ app.get('/', (_req: Request, res: Response) => {
 });
 
 // Swagger Documentation
-const swaggerPath = process.env.SWAGGER_PATH || '/docs';
-const swaggerDocument = YAML.load(path.join(__dirname, '../docs/api/openapi.yaml'));
 app.use(swaggerPath, swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
   customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: 'EasyEscrow.ai API Documentation',
