@@ -155,7 +155,7 @@ solana program set-upgrade-authority \
 
 - [Staging Strategy](../architecture/STAGING_STRATEGY.md)
 - [Security.txt Implementation](../security/SECURITY_TXT_IMPLEMENTATION.md)
-- [Devnet Deployment Success](../../SECURITY_TXT_DEVNET_DEPLOYMENT_SUCCESS.md)
+- [Devnet Deployment Success](../security/SECURITY_TXT_DEVNET_DEPLOYMENT_SUCCESS.md)
 
 ---
 

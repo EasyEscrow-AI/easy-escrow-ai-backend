@@ -76,10 +76,10 @@ await this.sendTransactionViaJito(transaction, isMainnet);
    - Troubleshooting steps
    - Best practices validation
 
-2. **`PR_JITO_DIRECT_DESCRIPTION.md`**
+2. **`docs/deployment/PR_JITO_DIRECT_DESCRIPTION.md`**
    - Detailed PR description for staging
 
-3. **`PR_MASTER_DESCRIPTION.md`**
+3. **`docs/deployment/PR_MASTER_DESCRIPTION.md`**
    - Production PR description
 
 4. **`docs/JITO_FREE_INTEGRATION_SUMMARY.md`** (this file)
