@@ -318,10 +318,10 @@ Review assets recovered
 
 ## 🔗 Related Documentation
 
-- [Asset Recovery Guide](docs/operations/ASSET_RECOVERY_GUIDE.md) - Complete usage guide
-- [Implementation Details](docs/tasks/ON_CHAIN_REFUNDS_IMPLEMENTATION.md) - Technical deep dive
-- [Test Coverage](TEST_COVERAGE_SUMMARY.md) - Test documentation
-- [Quick Reference](IMPLEMENTATION_SUMMARY.md) - Summary
+- [Asset Recovery Guide](../operations/ASSET_RECOVERY_GUIDE.md) - Complete usage guide
+- [Implementation Details](../tasks/ON_CHAIN_REFUNDS_IMPLEMENTATION.md) - Technical deep dive
+- [Test Coverage](../testing/TEST_COVERAGE_SUMMARY.md) - Test documentation
+- [Quick Reference](../development/IMPLEMENTATION_SUMMARY.md) - Summary
 
 ---
 
@@ -362,8 +362,8 @@ Review assets recovered
 - `docs/operations/ASSET_RECOVERY_GUIDE.md` - Usage guide
 - `docs/tasks/ON_CHAIN_REFUNDS_IMPLEMENTATION.md` - Tech details
 - `tests/unit/settlement-automatic-refund.test.ts` - Unit tests
-- `IMPLEMENTATION_SUMMARY.md` - Quick reference
-- `TEST_COVERAGE_SUMMARY.md` - Test docs
+- `docs/development/IMPLEMENTATION_SUMMARY.md` - Quick reference
+- `docs/testing/TEST_COVERAGE_SUMMARY.md` - Test docs
 
 ### Leveraged Existing (3 files)
 - `src/services/refund.service.ts` - Already had on-chain execution
