@@ -31,6 +31,26 @@ security_txt! {
     auditors: "Pending - Audit scheduled Q1 2026"
 }
 
+/// Compile-time check: Ensure exactly one environment feature is enabled
+/// This prevents security issues from multiple features being enabled simultaneously
+#[cfg(all(feature = "mainnet", feature = "staging"))]
+compile_error!("Cannot enable both 'mainnet' and 'staging' features simultaneously");
+
+#[cfg(all(feature = "mainnet", feature = "devnet"))]
+compile_error!("Cannot enable both 'mainnet' and 'devnet' features simultaneously");
+
+#[cfg(all(feature = "mainnet", feature = "localnet"))]
+compile_error!("Cannot enable both 'mainnet' and 'localnet' features simultaneously");
+
+#[cfg(all(feature = "staging", feature = "devnet"))]
+compile_error!("Cannot enable both 'staging' and 'devnet' features simultaneously");
+
+#[cfg(all(feature = "staging", feature = "localnet"))]
+compile_error!("Cannot enable both 'staging' and 'localnet' features simultaneously");
+
+#[cfg(all(feature = "devnet", feature = "localnet"))]
+compile_error!("Cannot enable both 'devnet' and 'localnet' features simultaneously");
+
 /// Authorized admin public keys for different environments
 /// 
 /// These keys are extracted from the wallets/ directory:
@@ -43,22 +63,28 @@ security_txt! {
 /// 2. Platform fees are properly controlled
 /// 3. No unauthorized escrow creation
 ///
-/// NOTE: The correct admin key is automatically selected based on the build feature.
-/// Each environment binary only includes its own admin key for security.
+/// SECURITY: Compile-time checks ensure only ONE admin key is ever included.
+/// Attempting to build with multiple features will result in a compilation error.
 fn get_authorized_admins() -> Vec<Pubkey> {
-    vec![
-        #[cfg(feature = "mainnet")]
-        pubkey!("HGrfPKZuKR8BSYYJfZRFfdF1y2ApU9LSf6USQ6tpSDj2"), // MAINNET
-        
-        #[cfg(feature = "staging")]
-        pubkey!("498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"), // STAGING
-        
-        #[cfg(feature = "devnet")]
-        pubkey!("7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u"), // DEVNET
-        
-        #[cfg(feature = "localnet")]
-        pubkey!("7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u"), // LOCALNET (uses devnet admin)
-    ]
+    // Use mutually exclusive if-else chain to guarantee only one admin key
+    // This is more secure than independent cfg attributes which could allow multiple keys
+    
+    #[cfg(feature = "mainnet")]
+    return vec![pubkey!("HGrfPKZuKR8BSYYJfZRFfdF1y2ApU9LSf6USQ6tpSDj2")]; // MAINNET
+    
+    #[cfg(feature = "staging")]
+    return vec![pubkey!("498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R")]; // STAGING
+    
+    #[cfg(feature = "devnet")]
+    return vec![pubkey!("7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u")]; // DEVNET
+    
+    #[cfg(feature = "localnet")]
+    return vec![pubkey!("7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u")]; // LOCALNET (uses devnet admin)
+    
+    // This should never be reached due to default feature in Cargo.toml
+    // But if it is, fail safely by returning an empty vec (no admins authorized)
+    #[cfg(not(any(feature = "mainnet", feature = "staging", feature = "devnet", feature = "localnet")))]
+    vec![]
 }
 
 #[program]
