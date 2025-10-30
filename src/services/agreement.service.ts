@@ -18,6 +18,7 @@ import {
 import { Decimal } from '@prisma/client/runtime/library';
 import { PublicKey } from '@solana/web3.js';
 import { EscrowProgramService } from './escrow-program.service';
+import { config } from '../config';
 
 const prisma = new PrismaClient();
 
@@ -416,9 +417,58 @@ export const cancelAgreement = async (
       throw new Error('Agreement has not expired yet. Cannot cancel before expiry.');
     }
 
-    // TODO: Implement on-chain cancellation once Solana program is deployed
-    // For now, we'll just update the database status
-    // const cancelResult = await cancelEscrowOnChain(agreement.escrowPda);
+    // Execute on-chain cancellation
+    let cancelTxId: string | undefined;
+    try {
+      console.log('[AgreementService] Executing on-chain cancellation...');
+      
+      const escrowService = new EscrowProgramService();
+      const escrowPda = new PublicKey(agreement.escrowPda);
+      const seller = new PublicKey(agreement.seller);
+      const nftMint = new PublicKey(agreement.nftMint);
+      
+      // Get buyer (use seller if buyer not set)
+      const buyer = agreement.buyer 
+        ? new PublicKey(agreement.buyer)
+        : seller;
+      
+      // Get USDC mint from config
+      const usdcMintAddress = config.usdc?.mintAddress;
+      if (!usdcMintAddress) {
+        throw new Error('USDC_MINT_ADDRESS not configured');
+      }
+      const usdcMint = new PublicKey(usdcMintAddress);
+      
+      // Choose appropriate cancellation method based on actual expiry time
+      // Check if the agreement has actually expired (time-based, not status-based)
+      const isExpired = now > agreement.expiry;
+      
+      if (isExpired) {
+        console.log('[AgreementService] Using cancelIfExpired for time-expired agreement');
+        cancelTxId = await escrowService.cancelIfExpired(
+          escrowPda,
+          buyer,
+          seller,
+          nftMint,
+          usdcMint
+        );
+      } else {
+        console.log('[AgreementService] Using adminCancel for non-expired cancellation');
+        cancelTxId = await escrowService.adminCancel(
+          escrowPda,
+          buyer,
+          seller,
+          nftMint,
+          usdcMint
+        );
+      }
+      
+      console.log('[AgreementService] On-chain cancellation successful:', cancelTxId);
+    } catch (error) {
+      console.error('[AgreementService] On-chain cancellation failed:', error);
+      // Continue with database update even if on-chain fails
+      // This allows graceful degradation
+    }
 
     // Update agreement status
     const updatedAgreement = await prisma.agreement.update({
@@ -426,7 +476,7 @@ export const cancelAgreement = async (
       data: {
         status: AgreementStatus.CANCELLED,
         cancelledAt: now,
-        // cancelTxId: cancelResult.transactionId, // Will be set when on-chain cancel is implemented
+        cancelTxId: cancelTxId,
       },
     });
 

@@ -116,6 +116,11 @@ function parseMetaplexMetadata(data: Buffer): { name: string; symbol: string; ur
   try {
     let offset = 0;
     
+    // Validate minimum buffer size
+    if (data.length < 65) { // 1 byte key + 64 bytes for authorities
+      return null;
+    }
+    
     // Read key (should be 4 for Metadata)
     const key = data.readUInt8(offset);
     offset += 1;
@@ -127,22 +132,30 @@ function parseMetaplexMetadata(data: Buffer): { name: string; symbol: string; ur
     // Skip update authority (32 bytes) and mint (32 bytes)
     offset += 64;
     
-    // Read name (string with 4-byte length prefix)
-    const nameLength = data.readUInt32LE(offset);
-    offset += 4;
-    const name = data.slice(offset, offset + nameLength).toString('utf8').replace(/\0/g, '').trim();
-    offset += nameLength;
+    // Helper function to safely read a string
+    const readString = (): string => {
+      // Validate we can read the length
+      if (offset + 4 > data.length) {
+        throw new Error('Buffer overflow: cannot read string length');
+      }
+      
+      const length = data.readUInt32LE(offset);
+      offset += 4;
+      
+      // Validate the string data is within buffer bounds
+      if (offset + length > data.length) {
+        throw new Error(`Buffer overflow: string length ${length} exceeds buffer size`);
+      }
+      
+      const str = data.slice(offset, offset + length).toString('utf8').replace(/\0/g, '').trim();
+      offset += length;
+      return str;
+    };
     
-    // Read symbol (string with 4-byte length prefix)
-    const symbolLength = data.readUInt32LE(offset);
-    offset += 4;
-    const symbol = data.slice(offset, offset + symbolLength).toString('utf8').replace(/\0/g, '').trim();
-    offset += symbolLength;
-    
-    // Read uri (string with 4-byte length prefix)
-    const uriLength = data.readUInt32LE(offset);
-    offset += 4;
-    const uri = data.slice(offset, offset + uriLength).toString('utf8').replace(/\0/g, '').trim();
+    // Read name, symbol, and uri with bounds checking
+    const name = readString();
+    const symbol = readString();
+    const uri = readString();
     
     return { name, symbol, uri };
   } catch (error) {
@@ -357,7 +370,6 @@ export async function createTestNFT(
       )
     );
     
-<<<<<<< HEAD
     // Get recent blockhash
     const { blockhash } = await connection.getLatestBlockhash('finalized');
     mintTransaction.recentBlockhash = blockhash;
