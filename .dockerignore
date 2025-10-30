@@ -34,6 +34,8 @@ Dockerfile*
 docs
 *.md
 !README.md
+# Allow Swagger/OpenAPI specification
+!docs/api/openapi.yaml
 
 # CI/CD
 .github
@@ -80,6 +82,8 @@ media
 # Kubernetes
 k8s-*
 *.yaml
+# Allow OpenAPI spec
+!docs/api/openapi.yaml
 
 # Deployment specs
 app-spec-*.yaml

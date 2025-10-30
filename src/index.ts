@@ -1,6 +1,9 @@
 import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
+import swaggerUi from 'swagger-ui-express';
+import YAML from 'yamljs';
 import { connectDatabase, checkDatabaseHealth } from './config/database';
 import { connectRedis, checkRedisHealth, disconnectRedis } from './config/redis';
 import { agreementRoutes, expiryCancellationRoutes, webhookRoutes, receiptRoutes, transactionLogRoutes, healthRoutes } from './routes';
@@ -173,9 +176,24 @@ app.get('/health', async (_req: Request, res: Response) => {
   });
 });
 
+// Swagger Configuration
+const swaggerPath = process.env.SWAGGER_PATH || '/docs';
+let swaggerDocument: any = null;
+
+try {
+  const swaggerFilePath = path.join(__dirname, '../docs/api/openapi.yaml');
+  swaggerDocument = YAML.load(swaggerFilePath);
+  console.log(`✅ Swagger documentation loaded successfully from ${swaggerFilePath}`);
+} catch (error: any) {
+  console.warn('⚠️  Warning: Failed to load Swagger documentation');
+  console.warn(`   Error: ${error.message}`);
+  console.warn(`   Swagger UI will not be available at ${swaggerPath}`);
+  console.warn('   The API will continue to function normally.');
+}
+
 // Root endpoint
 app.get('/', (_req: Request, res: Response) => {
-  res.status(200).json({
+  const response: any = {
     message: 'EasyEscrow.ai Backend API',
     version: '1.0.0',
     endpoints: {
@@ -186,8 +204,34 @@ app.get('/', (_req: Request, res: Response) => {
       expiryCancellation: '/api/expiry-cancellation',
       webhooks: '/api/webhooks'
     }
-  });
+  };
+  
+  // Only include documentation field if Swagger loaded successfully
+  if (swaggerDocument) {
+    response.documentation = swaggerPath;
+  }
+  
+  res.status(200).json(response);
 });
+
+// Swagger Documentation (only if successfully loaded)
+if (swaggerDocument) {
+  app.use(swaggerPath, swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: 'EasyEscrow.ai API Documentation',
+    customfavIcon: '/favicon.ico'
+  }));
+  console.log(`📚 Swagger UI available at ${swaggerPath}`);
+} else {
+  // Provide a helpful error page if someone tries to access the docs
+  app.get(swaggerPath, (_req: Request, res: Response) => {
+    res.status(503).json({
+      error: 'Documentation Unavailable',
+      message: 'Swagger documentation could not be loaded. Please check server logs for details.',
+      timestamp: new Date().toISOString()
+    });
+  });
+}
 
 // API Routes
 app.use(agreementRoutes);

@@ -3,26 +3,18 @@ info:
   title: EasyEscrow.ai API
   version: 1.0.0
   description: |
-    Backend API service for EasyEscrow.ai - A secure escrow platform with Solana blockchain integration.
+    Backend API service for EasyEscrow.ai - Super fast and easy to use digital escrow platform.
     
     ## Features
-    - Create and manage escrow agreements for NFT purchases
-    - Secure USDC and NFT deposit tracking
-    - Automatic settlement when both assets are locked
-    - Expiry and refund handling
-    - Comprehensive webhook notifications
-    - Receipt generation and verification
-    - Transaction logging and monitoring
-    
-    ## Authentication
-    Currently, the API is open for testing purposes. Production deployments will require API key authentication.
-    
-    ## Rate Limiting
-    - Standard endpoints: 100 requests per 15 minutes
-    - Strict endpoints (e.g., agreement creation): 10 requests per 15 minutes
-    
-    ## Idempotency
-    Agreement creation endpoints support idempotency keys via the `X-Idempotency-Key` header to prevent duplicate creations.
+    - Create escrow agreements for NFT <> USDC
+    - On-chain non-custodial functionality (assets secured by Smart Contract)
+    - Automatic atomic settlement when both assets are verified on-chain
+    - Automatic agreement expiry and refund handling (auto return to sender)
+    - Comprehensive webhook notifications (real-time updates)
+    - Receipt generation and on-chain verification of assets
+    - Transaction logging and monitoring to ensure a smooth escrow
+    - Rate Limiting: 10 agreement requests per 15 minutes
+    - Idempotency: Agreement creation endpoints support idempotency keys to prevent duplicates
     
   contact:
     name: EasyEscrow.ai Support
