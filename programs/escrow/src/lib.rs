@@ -43,14 +43,21 @@ security_txt! {
 /// 2. Platform fees are properly controlled
 /// 3. No unauthorized escrow creation
 ///
-/// NOTE: This function currently returns all three admin keys for flexibility.
-/// In production, you may want to compile separate binaries for each environment
-/// or use a single admin key across all environments.
+/// NOTE: The correct admin key is automatically selected based on the build feature.
+/// Each environment binary only includes its own admin key for security.
 fn get_authorized_admins() -> Vec<Pubkey> {
     vec![
-        pubkey!("7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u"), // DEVNET
-        pubkey!("498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"), // STAGING
+        #[cfg(feature = "mainnet")]
         pubkey!("HGrfPKZuKR8BSYYJfZRFfdF1y2ApU9LSf6USQ6tpSDj2"), // MAINNET
+        
+        #[cfg(feature = "staging")]
+        pubkey!("498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"), // STAGING
+        
+        #[cfg(feature = "devnet")]
+        pubkey!("7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u"), // DEVNET
+        
+        #[cfg(feature = "localnet")]
+        pubkey!("7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u"), // LOCALNET (uses devnet admin)
     ]
 }
 
