@@ -69,13 +69,15 @@ export class PriorityFeeService {
    *
    * @param connection - Solana connection to fetch fees from
    * @param isMainnet - Whether this is mainnet (affects fallback values)
+   * @param programId - Optional program ID for localized estimates (uses environment config if not provided)
    * @returns Priority fee in microlamports
    */
   static async getRecommendedPriorityFee(
     connection: Connection,
-    isMainnet: boolean
+    isMainnet: boolean,
+    programId?: string
   ): Promise<number> {
-    const cacheKey = `${connection.rpcEndpoint}-${isMainnet}`;
+    const cacheKey = `${connection.rpcEndpoint}-${isMainnet}-${programId || 'default'}`;
 
     // Check cache first
     const cached = this.cache.get(cacheKey);
@@ -90,7 +92,7 @@ export class PriorityFeeService {
 
     // Fetch fresh fee from API
     try {
-      const fee = await this.fetchPriorityFee(connection, isMainnet);
+      const fee = await this.fetchPriorityFee(connection, isMainnet, programId);
 
       // Cache the result
       this.cache.set(cacheKey, {
@@ -122,19 +124,26 @@ export class PriorityFeeService {
    *
    * @param connection - Solana connection
    * @param isMainnet - Whether this is mainnet
+   * @param programId - Optional program ID for localized estimates (uses environment config if not provided)
    * @returns Recommended priority fee in microlamports
    */
   private static async fetchPriorityFee(
     connection: Connection,
-    isMainnet: boolean
+    isMainnet: boolean,
+    programId?: string
   ): Promise<number> {
     try {
+      // Use provided program ID or get from environment config
+      // This ensures priority fee estimates are based on our specific program's activity
+      // Fallback to mainnet program ID only if not configured (should never happen in production)
+      const targetProgramId = programId || process.env.ESCROW_PROGRAM_ID || '2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx';
+      
       // Call QuickNode's priority fee estimation API
       // API expects 3 separate parameters: last_n_blocks (usize), account (string), api_version (int)
       // Reference: https://www.quicknode.com/docs/solana/qn_estimatePriorityFees
       const response = await (connection as any)._rpcRequest('qn_estimatePriorityFees', [
         100, // last_n_blocks (usize)
-        '2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx', // account (string) - our escrow program for localized estimates
+        targetProgramId, // account (string) - our escrow program for localized estimates
         2, // api_version (int)
       ]);
 
