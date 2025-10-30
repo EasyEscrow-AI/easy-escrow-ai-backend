@@ -8,8 +8,8 @@ echo "🏗️  Building Solana Program for STAGING..."
 echo "Program ID: AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei"
 echo ""
 
-# Build with staging feature
-anchor build --features staging
+# Build with staging feature (pass to cargo via --)
+anchor build -- --features staging
 
 echo ""
 echo "✅ STAGING build completed successfully!"

@@ -15,8 +15,8 @@ Write-Host "🏗️  Building Solana Program for STAGING..." -ForegroundColor Cy
 Write-Host "Program ID: AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei" -ForegroundColor Yellow
 Write-Host ""
 
-# Build with staging feature
-anchor build --features staging
+# Build with staging feature (pass to cargo via --)
+anchor build -- --features staging
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host ""
