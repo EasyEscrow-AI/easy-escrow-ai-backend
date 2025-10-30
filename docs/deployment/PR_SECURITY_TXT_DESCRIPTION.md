@@ -40,8 +40,8 @@ security_txt! {
 - ✅ `docs/security/SECURITY_TXT_IMPLEMENTATION.md` - Implementation guide
 - ✅ `docs/deployment/PRODUCTION_DEPLOYMENT_GUIDE.md` - Updated with verification steps
 - ✅ `docs/deployment/STAGING_AUTHORITY_BACKUP.md` - Wallet discovery documentation
-- ✅ `SECURITY_TXT_BUILD_SUCCESS.md` - Build process documentation
-- ✅ `SECURITY_TXT_DEVNET_DEPLOYMENT_SUCCESS.md` - Deployment verification
+- ✅ `docs/security/SECURITY_TXT_BUILD_SUCCESS.md` - Build process documentation
+- ✅ `docs/security/SECURITY_TXT_DEVNET_DEPLOYMENT_SUCCESS.md` - Deployment verification
 
 ### 3. Wallet Discovery & Backup
 
@@ -197,9 +197,9 @@ The security policy must be hosted at:
 - `docs/security/SECURITY_POLICY.md` - Security policy
 - `docs/security/SECURITY_TXT_IMPLEMENTATION.md` - Implementation guide
 - `docs/deployment/STAGING_AUTHORITY_BACKUP.md` - Wallet documentation
-- `SECURITY_TXT_BUILD_SUCCESS.md` - Build documentation
-- `SECURITY_TXT_DEVNET_DEPLOYMENT_SUCCESS.md` - Deployment documentation
-- `SECURITY_TXT_IMPLEMENTATION_SUMMARY.md` - Overall summary
+- `docs/security/SECURITY_TXT_BUILD_SUCCESS.md` - Build documentation
+- `docs/security/SECURITY_TXT_DEVNET_DEPLOYMENT_SUCCESS.md` - Deployment documentation
+- `docs/security/SECURITY_TXT_IMPLEMENTATION_SUMMARY.md` - Overall summary
 
 ### Not Committed (Gitignored)
 - `wallets/staging/staging-deployer.json` - Authority wallet backup
