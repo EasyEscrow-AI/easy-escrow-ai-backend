@@ -1,4 +1,4 @@
-<img src="media/easyescrow-logo.png" alt="EasyEscrow.ai Logo" width="400">
+<img src="media/easyescrow-logo.png" alt="EasyEscrow.ai Logo" width="800">
 
 # EasyEscrow.ai Backend
 
@@ -6,12 +6,16 @@ Backend service for EasyEscrow.ai - an AI-powered escrow platform with Solana bl
 
 ## Overview
 
-This repository contains:
-- Backend API and services for EasyEscrow.ai
-- Solana smart contract (Anchor program) for secure NFT and USDC escrow transactions
-- Integration layer between backend services and Solana blockchain
-- Real-time deposit monitoring and agreement lifecycle management
-- Automated expiry checking and refund processing
+EasyEscrow.ai is a production-ready escrow platform built on Solana blockchain, featuring:
+
+- **Secure Escrow Smart Contracts**: Anchor-based Solana programs for trustless NFT and USDC transactions
+- **Multi-Environment Support**: Separate deployments for development, staging, and production
+- **Real-Time Monitoring**: Automated deposit detection and agreement lifecycle management
+- **RESTful API**: Comprehensive REST endpoints with OpenAPI/Swagger documentation
+- **Webhook System**: Real-time event notifications for all escrow lifecycle events
+- **Settlement Receipts**: Cryptographically signed receipts for completed transactions
+- **Production Infrastructure**: Deployed on DigitalOcean with PostgreSQL, Redis, and Solana RPC
+- **Security First**: Comprehensive secrets management, rate limiting, and security middleware
 
 ## Project Structure
 
@@ -19,42 +23,73 @@ This repository contains:
 /
 ├── README.md
 ├── SECURITY.md
-├── docs/                      # 📚 Comprehensive documentation (see docs/README.md)
-│   ├── api/                  # API documentation (OpenAPI, webhooks, integration)
-│   ├── setup/                # Setup and installation guides
-│   ├── testing/              # Testing documentation
-│   ├── architecture/         # System architecture and design
-│   └── tasks/                # Task completion reports
+├── docs/                      # 📚 Comprehensive documentation
+│   ├── api/                  # API documentation
+│   │   ├── openapi.yaml      # OpenAPI 3.0 specification
+│   │   ├── README.md         # API overview
+│   │   ├── INTEGRATION_GUIDE.md
+│   │   ├── WEBHOOK_EVENTS.md
+│   │   ├── ERROR_CODES.md
+│   │   └── SWAGGER_IMPLEMENTATION.md
+│   ├── architecture/         # System design
+│   ├── deployment/           # Deployment guides
+│   ├── environments/         # Environment configs
+│   ├── security/             # Security documentation
+│   ├── setup/                # Installation guides
+│   └── testing/              # Testing strategies
 ├── src/                       # Backend TypeScript/Node.js source
-│   ├── config/               # Configuration and database
-│   │   ├── database.ts       # Prisma client setup
+│   ├── config/               # Configuration
+│   │   ├── database.ts       # Prisma client
 │   │   └── index.ts          # Environment config
 │   ├── generated/            # Generated Prisma client
-│   │   └── prisma/
-│   ├── middleware/
-│   ├── models/               # Data models and DTOs
+│   ├── middleware/           # Express middleware
+│   │   ├── auth.middleware.ts
+│   │   ├── rate-limiter.middleware.ts
+│   │   └── security.middleware.ts
+│   ├── models/               # Data models
 │   │   ├── dto/              # Data Transfer Objects
 │   │   └── validators/       # Input validators
-│   ├── routes/
-│   ├── services/
-│   └── utils/
-├── prisma/                    # Database schema and migrations
-│   ├── schema.prisma         # Database schema definition
+│   ├── routes/               # API routes
+│   │   ├── v1/               # API v1 endpoints
+│   │   └── index.ts
+│   ├── services/             # Business logic
+│   │   ├── agreement.service.ts
+│   │   ├── deposit-monitoring.service.ts
+│   │   ├── expiry-cancellation.service.ts
+│   │   ├── receipt.service.ts
+│   │   ├── secrets-management.service.ts
+│   │   ├── solana.service.ts
+│   │   └── webhook.service.ts
+│   ├── utils/                # Utility functions
+│   ├── public/               # Static assets (Swagger UI)
+│   └── index.ts              # Application entry point
+├── prisma/                    # Database
+│   ├── schema.prisma         # Database schema
 │   ├── migrations/           # Migration files
-│   └── seed.ts               # Database seed script
+│   ├── seed.ts               # Dev seed data
+│   └── seed-staging.ts       # Staging seed data
 ├── programs/                  # Solana programs
 │   └── escrow/               # Escrow smart contract
-│       ├── src/
-│       │   └── lib.rs        # Main program logic
+│       ├── src/lib.rs        # Program logic
 │       ├── Cargo.toml
-│       └── README.md         # Program documentation
-├── tests/                     # Anchor tests
-│   └── escrow.ts             # Test suite
+│       └── README.md
+├── tests/                     # Test suites
+│   ├── unit/                 # Unit tests
+│   ├── integration/          # Integration tests
+│   ├── staging/              # Staging E2E tests
+│   ├── production/           # Production tests
+│   ├── escrow.ts             # Anchor tests
+│   └── helpers/              # Test utilities
 ├── scripts/                   # Utility scripts
-│   ├── setup-database.sh     # Database setup (Unix)
-│   └── setup-database.ps1    # Database setup (Windows)
-├── Anchor.toml               # Anchor configuration
-├── Cargo.toml                # Rust workspace config
+│   ├── deployment/           # Deployment automation
+│   ├── development/          # Dev utilities
+│   ├── solana/               # Solana operations
+│   └── testing/              # Test helpers
+├── Anchor.toml               # Dev Anchor config
+├── Anchor.staging.toml       # Staging Anchor config
+├── Anchor.mainnet.toml       # Production Anchor config
+├── docker-compose.yml        # Docker services
+├── Dockerfile                # Production Docker image
 └── package.json              # Node.js dependencies
 ```
 
@@ -100,7 +135,17 @@ anchor deploy
 
 ## Solana Escrow Program
 
-The escrow program facilitates trustless transactions between buyers and sellers:
+The escrow program facilitates trustless transactions between buyers and sellers across multiple environments.
+
+### Multi-Environment Deployment
+
+| Environment | Network | Program ID | Status | Explorer |
+|-------------|---------|------------|--------|----------|
+| **DEV** | Devnet | `4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd` | ✅ Active | [View](https://explorer.solana.com/address/4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd?cluster=devnet) |
+| **STAGING** | Devnet | `AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei` | ✅ Active | [View](https://explorer.solana.com/address/AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei?cluster=devnet) |
+| **PROD** | Mainnet | `<TBD>` | ⏸️ Planned | TBD |
+
+See [PROGRAM_IDS.md](docs/environments/PROGRAM_IDS.md) for complete program ID registry.
 
 ### Features
 - **NFT & USDC Escrow**: Secure holding of NFTs and USDC during transactions
@@ -108,6 +153,7 @@ The escrow program facilitates trustless transactions between buyers and sellers
 - **Time-based Expiry**: Automatic cancellation after deadline
 - **Admin Controls**: Emergency cancellation capability
 - **PDA Security**: Program Derived Addresses ensure secure asset custody
+- **Fee Collection**: Configurable platform fees with optional royalty support
 
 ### Instructions
 - `init_agreement` - Create a new escrow
@@ -121,7 +167,23 @@ For detailed program documentation, see [programs/escrow/README.md](programs/esc
 
 ## Backend API Features
 
-### Agreement Management (Task 28)
+### 🔌 Interactive API Documentation
+
+**Swagger UI** is available at `/docs` for interactive API exploration:
+
+- **Local**: http://localhost:3000/docs
+- **Staging**: https://api-staging.easyescrow.ai/docs
+- **Production**: https://api.easyescrow.ai/docs
+
+Features:
+- Try out API endpoints directly from your browser
+- Complete request/response schemas with examples
+- Authentication testing interface
+- Error code reference
+
+See [SWAGGER_IMPLEMENTATION.md](docs/api/SWAGGER_IMPLEMENTATION.md) for details.
+
+### Agreement Management
 Complete CRUD operations for escrow agreements:
 - **Create Agreement**: Initialize new escrow with NFT and USDC terms
 - **Get Agreement**: Retrieve agreement details by ID
@@ -129,16 +191,14 @@ Complete CRUD operations for escrow agreements:
 - **Update Status**: Modify agreement status through lifecycle
 - **Delete Agreement**: Remove agreements (admin only)
 
-**Endpoints:**
+**Key Endpoints:**
 - `POST /v1/agreements` - Create new agreement
 - `GET /v1/agreements/:id` - Get agreement details
 - `GET /v1/agreements` - List agreements with filters
 - `PUT /v1/agreements/:id/status` - Update agreement status
 - `DELETE /v1/agreements/:id` - Delete agreement
 
-See [TASK_28_COMPLETION.md](docs/tasks/TASK_28_COMPLETION.md) for detailed API documentation.
-
-### Real-Time Deposit Monitoring (Task 25)
+### Real-Time Deposit Monitoring
 Automatic monitoring and processing of deposits:
 - **USDC Deposit Monitoring**: Real-time detection of USDC transfers
 - **NFT Deposit Monitoring**: Automatic NFT ownership verification
@@ -152,9 +212,9 @@ Automatic monitoring and processing of deposits:
 - Health checks and metrics collection
 - Comprehensive error handling and logging
 
-See [TASK_25_COMPLETION.md](docs/tasks/TASK_25_COMPLETION.md) and [DEPOSIT_MONITORING.md](docs/architecture/DEPOSIT_MONITORING.md) for details.
+See [DEPOSIT_MONITORING.md](docs/architecture/DEPOSIT_MONITORING.md) for details.
 
-### Expiry & Cancellation Management (Task 27)
+### Expiry & Cancellation Management
 Automated lifecycle management for agreements:
 - **Expiry Checking**: Background service monitoring agreement deadlines
 - **Refund Processing**: Automatic refund calculation and execution for partial deposits
@@ -162,16 +222,38 @@ Automated lifecycle management for agreements:
 - **Status Engine**: Rule-based automatic status transitions
 - **Orchestration**: Unified service coordinating all expiry/cancellation operations
 
-**API Endpoints:**
+**Key Endpoints:**
 - `GET /api/expiry-cancellation/status` - Get orchestrator status
 - `POST /api/expiry-cancellation/check-expired` - Manual expiry check
 - `GET /api/expiry-cancellation/expiring-soon` - Get agreements about to expire
 - `POST /api/expiry-cancellation/refund/process/:id` - Process refunds
-- `POST /api/expiry-cancellation/cancellation/propose` - Create cancellation proposal
-- `POST /api/expiry-cancellation/cancellation/sign/:id` - Sign proposal
-- `POST /api/expiry-cancellation/cancellation/execute/:id` - Execute cancellation
 
-See [TASK_27_COMPLETION.md](docs/tasks/TASK_27_COMPLETION.md) for complete documentation.
+### Settlement Receipts
+Cryptographically signed receipts for completed transactions:
+- **Receipt Generation**: Automatic creation on settlement
+- **Digital Signatures**: Ed25519 signatures for verification
+- **Receipt Verification**: Public API for signature validation
+- **Transaction Logs**: Complete audit trail of all operations
+
+**Key Endpoints:**
+- `GET /v1/receipts` - List receipts
+- `GET /v1/receipts/{id}` - Get receipt by ID
+- `GET /v1/receipts/agreement/{id}` - Get receipt by agreement
+- `POST /v1/receipts/{id}/verify` - Verify receipt signature
+
+### Webhook System
+Real-time event notifications for all escrow lifecycle events:
+- **Event Types**: ESCROW_FUNDED, ESCROW_ASSET_LOCKED, ESCROW_SETTLED, ESCROW_EXPIRED, ESCROW_REFUNDED
+- **Retry Logic**: Automatic retry with exponential backoff
+- **Signature Verification**: HMAC-SHA256 webhook signatures
+- **Delivery Tracking**: Monitor webhook delivery status
+
+**Management Endpoints:**
+- `GET /api/webhooks/{agreementId}` - Get webhooks for agreement
+- `GET /api/webhooks/status/{webhookId}` - Get webhook delivery status
+- `POST /api/webhooks/retry/{webhookId}` - Retry webhook delivery
+
+See [WEBHOOK_EVENTS.md](docs/api/WEBHOOK_EVENTS.md) and [WEBHOOK_SYSTEM.md](docs/architecture/WEBHOOK_SYSTEM.md) for complete documentation.
 
 ## Development Workflow
 
@@ -198,26 +280,45 @@ The backend will integrate with the deployed Solana program via:
 
 ## Testing
 
-### Backend Tests
+### Test Coverage
+
+The project includes comprehensive test coverage across multiple levels:
+
+| Test Type | Location | Coverage | Purpose |
+|-----------|----------|----------|---------|
+| **Unit Tests** | `tests/unit/` | 80%+ | Service logic, utilities, validators |
+| **Integration Tests** | `tests/integration/` | All endpoints | API routes, database operations |
+| **E2E Tests** | `tests/staging/` | Critical paths | End-to-end workflows on devnet |
+| **On-Chain Tests** | `tests/escrow.ts` | All instructions | Solana program security & functionality |
+
+### Running Tests
+
+#### Backend Tests
 ```bash
-npm test              # Run all tests
-npm run test:watch    # Watch mode
-npm run lint          # Run linter
-npm run type-check    # TypeScript type checking
-npm run validate      # Run all checks (types, lint, tests)
+# Run all tests
+npm test
+
+# Unit tests only
+npm run test:unit
+
+# Integration tests only
+npm run test:integration
+
+# Watch mode (auto-rerun on changes)
+npm run test:watch
+
+# Validation suite (types, lint, tests)
+npm run validate
 ```
 
-### API Testing
-See [TASK_28_TESTS.md](docs/tasks/TASK_28_TESTS.md) for comprehensive API test scenarios and examples.
-
-### Solana Program Tests - Localnet (Recommended for Development)
+#### On-Chain Tests - Localnet (Recommended)
 Fast, free, and deterministic testing on local validator:
 
 ```bash
 # Terminal 1: Start local validator
 npm run localnet:start
 
-# Terminal 2: Setup environment and run tests
+# Terminal 2: Setup and run tests
 npm run localnet:setup
 anchor build && anchor deploy
 npm run test:localnet
@@ -225,11 +326,26 @@ npm run test:localnet
 
 See [LOCALNET_SETUP.md](docs/setup/LOCALNET_SETUP.md) for complete setup guide.
 
-### Solana Program Tests - Devnet
+#### On-Chain Tests - Devnet
 ```bash
 anchor test
 anchor test -- --show-logs  # With detailed logs
 ```
+
+#### E2E Tests - Staging Environment
+```bash
+# Run staging E2E tests
+npm run test:staging
+
+# Run production smoke tests
+npm run test:production
+```
+
+### Test Documentation
+
+- **[TESTING_STRATEGY.md](docs/testing/TESTING_STRATEGY.md)** - Complete testing strategy and best practices
+- **[QUICK_START_E2E_TESTING.md](docs/testing/QUICK_START_E2E_TESTING.md)** - E2E testing guide
+- **[TEST_COVERAGE_SUMMARY.md](docs/testing/TEST_COVERAGE_SUMMARY.md)** - Coverage reports
 
 ## Deployment
 
@@ -392,97 +508,95 @@ PLATFORM_FEE_BPS=250
 
 See `.env.example` for complete configuration options.
 
-## Current Status
+## Security
 
-### Completed ✅
-- ✅ Solana escrow program implemented
-- ✅ Program structure and tests created
-- ✅ Backend project structure setup
-- ✅ Database schema and migrations configured
-- ✅ Models, DTOs, and validators implemented
-- ✅ **Agreement API endpoints** (Task 28)
-- ✅ **Real-time deposit monitoring** (Task 25)
-- ✅ **Expiry and cancellation logic** (Task 27)
-- ✅ **Docker configuration** (Task 33)
-- ✅ Security middleware (CORS, Helmet, rate limiting)
-- ✅ Comprehensive documentation
+EasyEscrow.ai implements comprehensive security measures across all layers:
 
-### In Progress ⏳
-- ⏳ Settlement processing integration
-- ⏳ Webhook delivery system
-- ⏳ On-chain transaction integration
-- ⏳ Frontend development
-- ✅ **Production deployment setup** (Task 34) - DigitalOcean infrastructure ready
+### Secrets Management
+- **No Hardcoded Secrets**: All sensitive data loaded from environment variables
+- **Pre-commit Scanning**: Automatic detection of accidentally committed secrets
+- **Secure Storage**: Integration with DigitalOcean secrets, AWS Secrets Manager, Kubernetes secrets
+- **Keypair Formats**: Support for JSON array, Base58, and Base64 formats
+- **Automatic Validation**: Startup validation of all required secrets
 
-## Next Steps
+See [SECRETS_MANAGEMENT.md](docs/security/SECRETS_MANAGEMENT.md) for complete guide.
 
-1. ~~Install Solana development tools~~ ✅ (see SOLANA_SETUP.md)
-2. ~~Build and test the escrow program~~ ✅
-3. ~~Deploy to Solana devnet~~ ✅
-4. ~~Implement backend API and services~~ ✅
-5. Replace mock on-chain transactions with actual Solana program calls
-6. Complete settlement processing integration
-7. Implement webhook delivery system
-8. Build frontend interface
-9. End-to-end testing with real blockchain transactions
-10. Security audit before mainnet
+### API Security
+- **Rate Limiting**: 100 requests per 15 minutes (standard), 10 requests per 15 minutes (strict endpoints)
+- **CORS Protection**: Configurable origin whitelist
+- **Helmet.js**: Security headers (CSP, HSTS, X-Frame-Options, etc.)
+- **Input Validation**: Comprehensive DTO validation with Joi
+- **Idempotency Keys**: Prevent duplicate transaction processing
+- **Request Signing**: HMAC-SHA256 webhook signatures
+
+### On-Chain Security
+- **PDA Security**: Program Derived Addresses prevent unauthorized access
+- **Account Validation**: Strict validation of all account ownership and data
+- **Amount Verification**: Precise lamport-level amount checking
+- **Double-Spend Prevention**: State checks prevent duplicate deposits/settlements
+- **Time-Lock Protection**: Expiry-based automatic cancellation
+- **Admin Controls**: Multi-signature emergency cancellation (planned for mainnet)
+
+### Infrastructure Security
+- **Private VPC**: Isolated network for production services
+- **Encrypted Secrets**: All secrets encrypted at rest in DigitalOcean
+- **TLS/SSL**: HTTPS enforced for all API endpoints
+- **Database Security**: SSL-required PostgreSQL connections
+- **Redis Security**: Password-protected Redis instances
+- **Audit Logging**: Complete transaction logs for all operations
+
+### Security Documentation
+- [SECRETS_MANAGEMENT.md](docs/security/SECRETS_MANAGEMENT.md) - Comprehensive secrets management guide
+- [SECURITY_POLICY.md](docs/security/SECURITY_POLICY.md) - Security policy and reporting
+- [DIGITALOCEAN_SECRETS_CONFIGURATION.md](docs/DIGITALOCEAN_SECRETS_CONFIGURATION.md) - Platform secrets setup
 
 ## Documentation
 
-📚 **See [docs/README.md](docs/README.md) for comprehensive documentation index**
+📚 **Complete documentation available in [docs/](docs/) directory**
 
 ### Quick Links
 
-**Setup & Getting Started:**
+#### API Documentation
+- **[API Overview](docs/api/README.md)** - Complete API reference
+- **[OpenAPI Specification](docs/api/openapi.yaml)** - OpenAPI 3.0 spec
+- **[Swagger UI](http://localhost:3000/docs)** - Interactive API documentation
+- **[Integration Guide](docs/api/INTEGRATION_GUIDE.md)** - Step-by-step integration
+- **[Webhook Events](docs/api/WEBHOOK_EVENTS.md)** - Real-time event notifications
+- **[Error Codes](docs/api/ERROR_CODES.md)** - Complete error reference
+
+#### Setup & Getting Started
 - [Setup Instructions](docs/setup/SETUP_INSTRUCTIONS.md) - Complete setup guide
 - [Solana Setup](docs/setup/SOLANA_SETUP.md) - Solana development setup
 - [Database Setup](docs/setup/DATABASE_SETUP.md) - Database configuration
-- [Localnet Setup](docs/setup/LOCALNET_SETUP.md) - Local validator testing setup
+- [Localnet Setup](docs/setup/LOCALNET_SETUP.md) - Local validator testing
+- [Environment Variables](docs/environments/ENVIRONMENT_VARIABLES.md) - Configuration reference
 
-**Testing:**
-- [Testing Strategy](docs/testing/TESTING_STRATEGY.md) - Testing approach
+#### Testing
+- [Testing Strategy](docs/testing/TESTING_STRATEGY.md) - Complete testing approach
 - [Quick Start E2E Testing](docs/testing/QUICK_START_E2E_TESTING.md) - E2E test guide
+- [Test Coverage Summary](docs/testing/TEST_COVERAGE_SUMMARY.md) - Coverage reports
 
-**Architecture:**
-- [API Documentation](docs/api/README.md) - Complete API documentation with OpenAPI spec, webhook events, and integration guide
-- [Webhook System](docs/architecture/WEBHOOK_SYSTEM.md) - Webhook implementation
-- [Deposit Monitoring](docs/architecture/DEPOSIT_MONITORING.md) - Deposit monitoring system
+#### Architecture & Design
+- [Deposit Monitoring](docs/architecture/DEPOSIT_MONITORING.md) - Real-time monitoring system
+- [Webhook System](docs/architecture/WEBHOOK_SYSTEM.md) - Event notification architecture
+- [IDL Management](docs/architecture/IDL_MANAGEMENT.md) - Solana IDL handling
+- [Idempotency Implementation](docs/architecture/IDEMPOTENCY_IMPLEMENTATION.md) - Duplicate prevention
 
-**Deployment:**
-- **[Deployment Scripts Guide](docs/DEPLOYMENT_SCRIPTS_GUIDE.md)** - Automated deployment ⭐ NEW
-- **[Deployment Guide](docs/DEPLOYMENT_GUIDE.md)** - Complete deployment guide ⭐
-- **[Devnet Deployment Guide](docs/DEVNET_DEPLOYMENT_GUIDE.md)** - E2E testing setup ⭐ NEW
+#### Deployment
+- [Deployment Guide](docs/DEPLOYMENT_GUIDE.md) - Complete deployment instructions
 - [Docker Deployment](docs/DOCKER_DEPLOYMENT.md) - Docker deployment guide
-- [Docker Cache Elimination](docs/DOCKER_CACHE_ELIMINATION.md) - Fix Docker cache issues ⭐ NEW
-- [Migration Guide](docs/MIGRATION_GUIDE.md) - Database migrations
-- [Environment Variables](docs/ENVIRONMENT_VARIABLES.md) - Complete variable reference
-- **[Environment Template](docs/ENV_TEMPLATE.md)** - Setup guide with devnet wallet config ⭐ NEW
-- **[Devnet Wallet Standardization](docs/DEVNET_WALLET_STANDARDIZATION.md)** - Wallet address sync documentation ⭐ NEW
 - [DigitalOcean Setup](docs/DIGITALOCEAN_SETUP.md) - Infrastructure setup
+- [Environment Setup](docs/environments/ENVIRONMENT_SETUP.md) - Multi-environment configuration
 
-**Security & Secrets Management:**
-- **[Secrets Management Guide](docs/SECRETS_MANAGEMENT.md)** - Comprehensive secrets management 🔒
-- [DigitalOcean Secrets Configuration](docs/DIGITALOCEAN_SECRETS_CONFIGURATION.md) - Platform secrets setup
+#### Security
+- **[Secrets Management](docs/security/SECRETS_MANAGEMENT.md)** - Comprehensive secrets guide
+- [Security Policy](docs/security/SECURITY_POLICY.md) - Security policy and reporting
+- [DigitalOcean Secrets](docs/DIGITALOCEAN_SECRETS_CONFIGURATION.md) - Platform secrets setup
 
-### Task Completion Reports
-- [TASK_25_COMPLETION.md](docs/tasks/TASK_25_COMPLETION.md) - Deposit Monitoring Implementation
-- [TASK_27_COMPLETION.md](docs/tasks/TASK_27_COMPLETION.md) - Expiry & Cancellation Logic
-- [TASK_39_COMPLETION.md](docs/tasks/TASK_39_COMPLETION.md) - Keypair & Secrets Management Implementation
-- [TASK_28_COMPLETION.md](docs/tasks/TASK_28_COMPLETION.md) - Agreement API Endpoints
-- [TASK_28_TESTS.md](docs/tasks/TASK_28_TESTS.md) - API Testing Guide
-- [TASK_30_COMPLETION.md](docs/tasks/TASK_30_COMPLETION.md) - Settlement Receipt Generation
-- [TASK_30_TEST_RESULTS.md](docs/tasks/TASK_30_TEST_RESULTS.md) - Task 30 Test Results
-- [TASK_31_COMPLETION.md](docs/tasks/TASK_31_COMPLETION.md) - Redis Caching and Job Queues
-- [TASK_33_COMPLETION.md](docs/tasks/TASK_33_COMPLETION.md) - Docker Configuration
-- [TASK_35_COMPLETION.md](docs/tasks/TASK_35_COMPLETION.md) - Task 35 Completion
-- [TASK_37_COMPLETION.md](docs/tasks/TASK_37_COMPLETION.md) - Task 37 Completion
-- [TASK_37_SUMMARY.md](docs/tasks/TASK_37_SUMMARY.md) - Task 37 Summary
-- [TASK_38_COMPLETION.md](docs/tasks/TASK_38_COMPLETION.md) - Localnet Testing Setup
-- [PR_TASK_29_SUMMARY.md](docs/tasks/PR_TASK_29_SUMMARY.md) - PR Task 29 Summary
-- [PR_TASK_38_SUMMARY.md](docs/tasks/PR_TASK_38_SUMMARY.md) - PR Task 38 Summary
-- [PR_TASK_40_SUMMARY.md](docs/tasks/PR_TASK_40_SUMMARY.md) - PR Task 40 Summary
-
-For more information, see the [Task Documentation Directory](docs/tasks/)
+#### Environments
+- [Program IDs](docs/environments/PROGRAM_IDS.md) - Program IDs across environments
+- [Environment Variables](docs/environments/ENVIRONMENT_VARIABLES.md) - Configuration reference
+- [Staging Strategy](docs/architecture/STAGING_STRATEGY.md) - Staging environment approach
 
 ### External Resources
 - [Anchor Documentation](https://www.anchor-lang.com/)

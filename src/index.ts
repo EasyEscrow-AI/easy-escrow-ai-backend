@@ -178,7 +178,18 @@ app.get('/health', async (_req: Request, res: Response) => {
 
 // Swagger Configuration
 const swaggerPath = process.env.SWAGGER_PATH || '/docs';
-const swaggerDocument = YAML.load(path.join(__dirname, '../docs/api/openapi.yaml'));
+let swaggerDocument: any = null;
+
+try {
+  const swaggerFilePath = path.join(__dirname, '../docs/api/openapi.yaml');
+  swaggerDocument = YAML.load(swaggerFilePath);
+  console.log(`✅ Swagger documentation loaded successfully from ${swaggerFilePath}`);
+} catch (error: any) {
+  console.warn('⚠️  Warning: Failed to load Swagger documentation');
+  console.warn(`   Error: ${error.message}`);
+  console.warn(`   Swagger UI will not be available at ${swaggerPath}`);
+  console.warn('   The API will continue to function normally.');
+}
 
 // Root endpoint
 app.get('/', (_req: Request, res: Response) => {
@@ -198,11 +209,23 @@ app.get('/', (_req: Request, res: Response) => {
 });
 
 // Swagger Documentation
-app.use(swaggerPath, swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
-  customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: 'EasyEscrow.ai API Documentation',
-  customfavIcon: '/favicon.ico'
-}));
+if (swaggerDocument) {
+  app.use(swaggerPath, swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: 'EasyEscrow.ai API Documentation',
+    customfavIcon: '/favicon.ico'
+  }));
+  console.log(`📚 Swagger UI available at ${swaggerPath}`);
+} else {
+  // Provide a helpful error page if someone tries to access the docs
+  app.get(swaggerPath, (_req: Request, res: Response) => {
+    res.status(503).json({
+      error: 'Documentation Unavailable',
+      message: 'Swagger documentation could not be loaded. Please check server logs for details.',
+      timestamp: new Date().toISOString()
+    });
+  });
+}
 
 // API Routes
 app.use(agreementRoutes);
