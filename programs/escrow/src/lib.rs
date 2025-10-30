@@ -1,10 +1,24 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount, Transfer, Mint};
 use anchor_spl::associated_token::AssociatedToken;
+use solana_security_txt::security_txt;
 
 // PRODUCTION/MAINNET Program ID
 // For staging/devnet deployment, change this to: AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei
 declare_id!("2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx");
+
+// Security contact information embedded in the program
+// This allows security researchers and auditors to easily find contact information
+#[cfg(not(feature = "no-entrypoint"))]
+security_txt! {
+    name: "Easy Escrow",
+    project_url: "https://github.com/easy-escrow/easy-escrow-ai-backend",
+    contacts: "email:security@easyescrow.ai",
+    policy: "https://github.com/easy-escrow/easy-escrow-ai-backend/blob/main/docs/security/SECURITY_POLICY.md",
+    preferred_languages: "en",
+    source_code: "https://github.com/easy-escrow/easy-escrow-ai-backend",
+    auditors: "Pending - Audit scheduled Q1 2026"
+}
 
 /// Authorized admin public keys for different environments
 /// 

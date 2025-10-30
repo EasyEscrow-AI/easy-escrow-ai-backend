@@ -686,6 +686,61 @@ Before going live, verify:
 - [ ] Load testing completed
 - [ ] Backup strategy in place
 - [ ] Incident response plan documented
+- [ ] **Solana Program security.txt verified on Solscan**
+- [ ] **Security contact email (security@easyescrow.ai) is monitored**
+- [ ] **Program verification status confirmed**
+
+---
+
+## Solana Program Security Verification
+
+### Verify security.txt Implementation
+
+After deploying your Solana program to mainnet, verify the security.txt is correctly embedded:
+
+**1. Install Verification Tool:**
+```bash
+cargo install solana-security-txt-cli
+```
+
+**2. Verify Your Program:**
+```bash
+solana-security-txt 2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx --cluster mainnet
+```
+
+**Expected Output:**
+```
+Security Information for Program: 2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Name:                Easy Escrow
+Project URL:         https://github.com/easy-escrow/easy-escrow-ai-backend
+Contacts:            email:security@easyescrow.ai
+Policy:              https://github.com/easy-escrow/easy-escrow-ai-backend/blob/main/docs/security/SECURITY_POLICY.md
+Preferred Languages: en
+Source Code:         https://github.com/easy-escrow/easy-escrow-ai-backend
+Auditors:            Pending - Audit scheduled Q1 2026
+```
+
+**3. Verify on Solscan:**
+
+Visit: https://solscan.io/account/2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx
+
+Confirm the program shows:
+- ✅ **Security.txt: True**
+- Security contact information is visible
+- Links to security policy are accessible
+
+**4. Test Security Contact:**
+
+Send a test email to `security@easyescrow.ai` to ensure:
+- Email is delivered successfully
+- Team receives notifications
+- Auto-response is configured (if applicable)
+
+📚 **See Also:**
+- [Security.txt Implementation Guide](../security/SECURITY_TXT_IMPLEMENTATION.md)
+- [Security Policy](../security/SECURITY_POLICY.md)
+- [Solana Program Verification](https://solana.com/developers/guides/advanced/verified-builds)
 
 ---
 
