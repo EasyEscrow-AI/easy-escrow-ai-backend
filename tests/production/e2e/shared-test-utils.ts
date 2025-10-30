@@ -162,6 +162,7 @@ export async function getTokenBalance(
 /**
  * Get a random NFT owned by the wallet
  * This is preferred for production tests to avoid creating unnecessary NFTs
+ * Supports ALL SPL Token NFTs (not just Metaplex NFTs)
  */
 export async function getRandomNFTFromWallet(
   connection: Connection,
@@ -170,91 +171,64 @@ export async function getRandomNFTFromWallet(
   console.log('   🔍 Fetching NFTs owned by wallet...');
   console.log(`   Wallet: ${owner.publicKey.toBase58()}`);
   
-  const metaplex = Metaplex.make(connection);
-  
   try {
-    // Find all NFTs owned by the wallet (returns metadata only)
-    const nftsRaw = await metaplex.nfts().findAllByOwner({
-      owner: owner.publicKey,
-    });
-    
-    console.log(`   ✅ Found ${nftsRaw.length} tokens`);
-    
-    if (nftsRaw.length === 0) {
-      throw new Error(
-        `No tokens found in wallet ${owner.publicKey.toBase58()}. ` +
-        `Please ensure the sender wallet has at least one NFT.`
-      );
-    }
-    
-    // Load full NFT data for each token
-    console.log(`   Loading full NFT data...`);
-    const nftsPromises = nftsRaw.map(async (item) => {
-      try {
-        // Get mint address - different property names depending on type
-        const mintAddress = 'mintAddress' in item ? item.mintAddress : item.mint.address;
-        const nft = await metaplex.nfts().load({ metadata: item as any });
-        return nft;
-      } catch (err: any) {
-        const mintAddr = 'mintAddress' in item ? item.mintAddress.toBase58() : item.mint.address.toBase58();
-        console.warn(`   ⚠️  Failed to load NFT ${mintAddr}: ${err.message}`);
-        return null;
-      }
-    });
-    
-    const nftsLoaded = await Promise.all(nftsPromises);
-    const nfts = nftsLoaded.filter((item): item is Nft | Sft => item !== null);
-    
-    console.log(`   ✅ Loaded ${nfts.length} NFTs/SFTs with full data`);
-    
-    if (nfts.length === 0) {
-      throw new Error(
-        `Found ${nftsRaw.length} tokens but none could be loaded. ` +
-        `Please ensure the sender wallet has at least one actual NFT.`
-      );
-    }
-    
-    // Filter for actual NFTs (supply = 1)
-    const actualNfts = nfts.filter(
-      nft => nft.mint.supply.basisPoints.toNumber() === 1
+    // Find all token accounts owned by the wallet
+    // This finds ALL SPL tokens, including NFTs without Metaplex metadata
+    const tokenAccounts = await connection.getParsedTokenAccountsByOwner(
+      owner.publicKey,
+      { programId: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA') }
     );
     
-    if (actualNfts.length === 0) {
+    console.log(`   ✅ Found ${tokenAccounts.value.length} token accounts`);
+    
+    // Filter for NFTs: decimals=0 and amount=1
+    const nftAccounts = tokenAccounts.value.filter(
+      acc => acc.account.data.parsed.info.tokenAmount.decimals === 0 &&
+             acc.account.data.parsed.info.tokenAmount.uiAmount === 1
+    );
+    
+    console.log(`   ✅ Found ${nftAccounts.length} NFTs (decimals=0, amount=1)`);
+    
+    if (nftAccounts.length === 0) {
       throw new Error(
-        `Found ${nfts.length} tokens but none are NFTs (supply=1). ` +
-        `Please ensure the sender wallet has at least one actual NFT.`
+        `No NFTs found in wallet ${owner.publicKey.toBase58()}. ` +
+        `Please ensure the sender wallet has at least one NFT (SPL token with decimals=0 and amount=1).`
       );
     }
-    
-    console.log(`   ✅ Found ${actualNfts.length} actual NFTs (supply=1)`);
     
     // Randomly select an NFT
-    const randomIndex = Math.floor(Math.random() * actualNfts.length);
-    const selectedNft = actualNfts[randomIndex];
+    const randomIndex = Math.floor(Math.random() * nftAccounts.length);
+    const selectedAccount = nftAccounts[randomIndex];
+    const mintAddress = new PublicKey(selectedAccount.account.data.parsed.info.mint);
     
-    console.log(`   🎲 Randomly selected NFT #${randomIndex + 1}/${actualNfts.length}`);
-    console.log(`   NFT Mint: ${selectedNft.mint.address.toBase58()}`);
-    console.log(`   Name: ${selectedNft.name}`);
-    console.log(`   Symbol: ${selectedNft.symbol}`);
+    console.log(`   🎲 Randomly selected NFT #${randomIndex + 1}/${nftAccounts.length}`);
+    console.log(`   NFT Mint: ${mintAddress.toBase58()}`);
+    console.log(`   Token Account: ${selectedAccount.pubkey.toBase58()}`);
     
-    // Get the token account for this NFT
-    const tokenAccount = await getOrCreateAssociatedTokenAccount(
-      connection,
-      owner,
-      selectedNft.mint.address,
-      owner.publicKey
-    );
+    // Try to load Metaplex metadata if available (optional)
+    let metadata = {
+      name: 'Unknown NFT',
+      symbol: 'NFT',
+      uri: '',
+    };
     
-    console.log(`   Token Account: ${tokenAccount.address.toBase58()}`);
+    try {
+      const metaplex = Metaplex.make(connection);
+      const nft = await metaplex.nfts().findByMint({ mintAddress });
+      metadata = {
+        name: nft.name || 'Unknown NFT',
+        symbol: nft.symbol || 'NFT',
+        uri: nft.uri || '',
+      };
+      console.log(`   📋 Loaded Metaplex metadata: ${metadata.name}`);
+    } catch (err) {
+      console.log(`   ℹ️  No Metaplex metadata (using SPL token as-is)`);
+    }
     
     return {
-      mint: selectedNft.mint.address,
-      tokenAccount: tokenAccount.address,
-      metadata: {
-        name: selectedNft.name,
-        symbol: selectedNft.symbol,
-        uri: selectedNft.uri,
-      },
+      mint: mintAddress,
+      tokenAccount: selectedAccount.pubkey,
+      metadata,
     };
   } catch (error: any) {
     console.error('   ❌ Error fetching NFTs:', error.message);
@@ -277,54 +251,248 @@ export async function createTestNFT(
 ): Promise<TestNFT> {
   console.log('   🎨 Creating real NFT on Mainnet...');
   
-  // Create NFT mint (supply of 1, 0 decimals)
-  const nftMint = await createMint(
-    connection,
-    owner,
-    owner.publicKey, // mint authority
-    null, // freeze authority
-    0 // decimals (NFTs have 0 decimals)
-  );
-  
-  console.log(`   ✅ NFT Mint created: ${nftMint.toBase58()}`);
-  
-  // Wait for mint to be confirmed on-chain
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  
-  // Create token account for owner
-  const tokenAccount = await getOrCreateAssociatedTokenAccount(
-    connection,
-    owner,
-    nftMint,
-    owner.publicKey
-  );
-  
-  console.log(`   ✅ Token account created: ${tokenAccount.address.toBase58()}`);
-  
-  // Mint 1 NFT to owner
-  await mintTo(
-    connection,
-    owner,
-    nftMint,
-    tokenAccount.address,
-    owner.publicKey,
-    1 // mint 1 NFT
-  );
-  
-  console.log(`   ✅ Minted 1 NFT to owner`);
-  
-  // Wait for mint transaction to confirm
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  return {
-    mint: nftMint,
-    tokenAccount: tokenAccount.address,
-    metadata: {
-      name: `PRODUCTION Test NFT ${Date.now()}`,
-      symbol: 'STNFT',
-      uri: 'https://example.com/nft/metadata.json',
-    },
-  };
+  try {
+    // Create NFT mint (supply of 1, 0 decimals) with skipPreflight for mainnet
+    console.log('   📝 Creating NFT mint...');
+    const mintKeypair = Keypair.generate();
+    
+    // Build mint transaction
+    const mintTransaction = new Transaction();
+    
+    // Add compute budget and priority fee for mainnet
+    mintTransaction.add(
+      ComputeBudgetProgram.setComputeUnitLimit({ units: 300_000 }),
+      ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 1000 })
+    );
+    
+    // Add create mint instruction
+    const { SystemProgram } = await import('@solana/web3.js');
+    const { createInitializeMintInstruction, MINT_SIZE, TOKEN_PROGRAM_ID } = await import('@solana/spl-token');
+    
+    const lamports = await connection.getMinimumBalanceForRentExemption(MINT_SIZE);
+    
+    mintTransaction.add(
+      SystemProgram.createAccount({
+        fromPubkey: owner.publicKey,
+        newAccountPubkey: mintKeypair.publicKey,
+        space: MINT_SIZE,
+        lamports,
+        programId: TOKEN_PROGRAM_ID,
+      }),
+      createInitializeMintInstruction(
+        mintKeypair.publicKey,
+        0, // 0 decimals for NFT
+        owner.publicKey, // mint authority
+        null, // freeze authority
+        TOKEN_PROGRAM_ID
+      )
+    );
+    
+    // Get recent blockhash
+    const { blockhash } = await connection.getLatestBlockhash('finalized');
+    mintTransaction.recentBlockhash = blockhash;
+    mintTransaction.feePayer = owner.publicKey;
+    
+    // Sign transaction
+    mintTransaction.sign(owner, mintKeypair);
+    
+    // Submit via Jito Block Engine (required for mainnet)
+    console.log(`   📡 Sending mint transaction via Jito Block Engine...`);
+    const serializedMintTx = mintTransaction.serialize().toString('base64');
+    
+    const jitoResponse = await fetch('https://mainnet.block-engine.jito.wtf/api/v1/transactions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'sendTransaction',
+        params: [serializedMintTx, { encoding: 'base64' }],
+      }),
+    });
+    
+    if (!jitoResponse.ok) {
+      const errorText = await jitoResponse.text();
+      throw new Error(`Jito Block Engine error: ${jitoResponse.status} ${errorText}`);
+    }
+    
+    const jitoResult = await jitoResponse.json() as { jsonrpc: string; id: number; result?: string; error?: any };
+    if (jitoResult.error) {
+      throw new Error(`Jito Block Engine error: ${JSON.stringify(jitoResult.error)}`);
+    }
+    
+    const mintSig = jitoResult.result!;
+    console.log(`   ✅ NFT Mint created: ${mintKeypair.publicKey.toBase58()}`);
+    console.log(`   📤 Mint TX: ${mintSig}`);
+    
+    // Wait for confirmation
+    await connection.confirmTransaction(mintSig, 'confirmed');
+    console.log(`   ✅ Mint transaction confirmed`);
+    
+    // Wait a bit more for the account to be fully available
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // Create token account manually and submit via Jito
+    console.log('   📝 Creating token account...');
+    const tokenAccountAddress = await getAssociatedTokenAddress(
+      mintKeypair.publicKey,
+      owner.publicKey,
+      false,
+      TOKEN_PROGRAM_ID
+    );
+    
+    // Check if account already exists
+    let accountExists = false;
+    try {
+      await getAccount(connection, tokenAccountAddress, 'confirmed');
+      accountExists = true;
+      console.log(`   ✅ Token account already exists: ${tokenAccountAddress.toBase58()}`);
+    } catch (err: any) {
+      if (err.name !== 'TokenAccountNotFoundError') {
+        console.log(`   ⚠️  Error checking account: ${err.message}`);
+      }
+    }
+    
+    if (!accountExists) {
+      // Build token account creation transaction
+      const createAccountTx = new Transaction();
+      
+      createAccountTx.add(
+        ComputeBudgetProgram.setComputeUnitLimit({ units: 200_000 }),
+        ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 1000 })
+      );
+      
+      createAccountTx.add(
+        createAssociatedTokenAccountInstruction(
+          owner.publicKey, // payer
+          tokenAccountAddress, // ATA address
+          owner.publicKey, // owner
+          mintKeypair.publicKey, // mint
+          TOKEN_PROGRAM_ID
+        )
+      );
+      
+      // Get recent blockhash and sign
+      const { blockhash: createAcctBlockhash } = await connection.getLatestBlockhash('finalized');
+      createAccountTx.recentBlockhash = createAcctBlockhash;
+      createAccountTx.feePayer = owner.publicKey;
+      createAccountTx.sign(owner);
+      
+      // Submit via Jito
+      console.log(`   📡 Sending create account transaction via Jito Block Engine...`);
+      const serializedCreateAcctTx = createAccountTx.serialize().toString('base64');
+      
+      const jitoCreateAcctResponse = await fetch('https://mainnet.block-engine.jito.wtf/api/v1/transactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'sendTransaction',
+          params: [serializedCreateAcctTx, { encoding: 'base64' }],
+        }),
+      });
+      
+      if (!jitoCreateAcctResponse.ok) {
+        const errorText = await jitoCreateAcctResponse.text();
+        throw new Error(`Jito Block Engine error: ${jitoCreateAcctResponse.status} ${errorText}`);
+      }
+      
+      const jitoCreateAcctResult = await jitoCreateAcctResponse.json() as { jsonrpc: string; id: number; result?: string; error?: any };
+      if (jitoCreateAcctResult.error) {
+        throw new Error(`Jito Block Engine error: ${JSON.stringify(jitoCreateAcctResult.error)}`);
+      }
+      
+      const createAcctSig = jitoCreateAcctResult.result!;
+      console.log(`   ✅ Token account created: ${tokenAccountAddress.toBase58()}`);
+      console.log(`   📤 Create account TX: ${createAcctSig}`);
+      
+      // Wait for confirmation
+      await connection.confirmTransaction(createAcctSig, 'confirmed');
+      console.log(`   ✅ Create account transaction confirmed`);
+      
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    
+    // Build mint-to transaction
+    console.log('   📝 Minting NFT to token account...');
+    const mintToTransaction = new Transaction();
+    
+    mintToTransaction.add(
+      ComputeBudgetProgram.setComputeUnitLimit({ units: 200_000 }),
+      ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 1000 })
+    );
+    
+    const { createMintToInstruction } = await import('@solana/spl-token');
+    mintToTransaction.add(
+      createMintToInstruction(
+        mintKeypair.publicKey, // mint
+        tokenAccountAddress, // destination
+        owner.publicKey, // mint authority
+        1, // amount (1 NFT)
+        [],
+        TOKEN_PROGRAM_ID
+      )
+    );
+    
+    // Get recent blockhash and sign
+    const { blockhash: mintToBlockhash } = await connection.getLatestBlockhash('finalized');
+    mintToTransaction.recentBlockhash = mintToBlockhash;
+    mintToTransaction.feePayer = owner.publicKey;
+    mintToTransaction.sign(owner);
+    
+    // Submit via Jito
+    console.log(`   📡 Sending mint-to transaction via Jito Block Engine...`);
+    const serializedMintToTx = mintToTransaction.serialize().toString('base64');
+    
+    const jitoMintToResponse = await fetch('https://mainnet.block-engine.jito.wtf/api/v1/transactions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'sendTransaction',
+        params: [serializedMintToTx, { encoding: 'base64' }],
+      }),
+    });
+    
+    if (!jitoMintToResponse.ok) {
+      const errorText = await jitoMintToResponse.text();
+      throw new Error(`Jito Block Engine error: ${jitoMintToResponse.status} ${errorText}`);
+    }
+    
+    const jitoMintToResult = await jitoMintToResponse.json() as { jsonrpc: string; id: number; result?: string; error?: any };
+    if (jitoMintToResult.error) {
+      throw new Error(`Jito Block Engine error: ${JSON.stringify(jitoMintToResult.error)}`);
+    }
+    
+    const mintToSig = jitoMintToResult.result!;
+    console.log(`   ✅ Minted 1 NFT to owner`);
+    console.log(`   📤 Mint-to TX: ${mintToSig}`);
+    
+    // Wait for confirmation
+    await connection.confirmTransaction(mintToSig, 'confirmed');
+    console.log(`   ✅ Mint-to transaction confirmed`);
+    
+    // Wait for mint transaction to confirm
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    return {
+      mint: mintKeypair.publicKey,
+      tokenAccount: tokenAccountAddress,
+      metadata: {
+        name: `PRODUCTION Test NFT ${Date.now()}`,
+        symbol: 'STNFT',
+        uri: 'https://example.com/nft/metadata.json',
+      },
+    };
+  } catch (error: any) {
+    console.error('   ❌ Failed to create NFT:', error.message);
+    if (error.logs) {
+      console.error('   📋 Error logs:', error.logs);
+    }
+    throw new Error(`Failed to create test NFT: ${error.message}`);
+  }
 }
 
 // ============================================================================
