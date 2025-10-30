@@ -144,8 +144,6 @@
     "security:test:blockchain": "ts-node tests/security/blockchain-security-tests.ts",
     "security:test:dependencies": "pwsh scripts/testing/security/run-security-scans.ps1 -Environment staging",
     "security:test:pentest": "ts-node tests/security/penetration-tests.ts",
-    "program:switch:dev": "powershell -ExecutionPolicy Bypass -File ./scripts/utilities/switch-program-environment.ps1 -Environment dev",
-    "program:switch:staging": "powershell -ExecutionPolicy Bypass -File ./scripts/utilities/switch-program-environment.ps1 -Environment staging",
     "program:build:dev": "powershell -ExecutionPolicy Bypass -File ./scripts/utilities/switch-program-environment.ps1 -Environment dev -Build",
     "program:build:staging": "powershell -ExecutionPolicy Bypass -File ./scripts/utilities/switch-program-environment.ps1 -Environment staging -Build",
     "program:deploy:dev": "powershell -ExecutionPolicy Bypass -File ./scripts/utilities/switch-program-environment.ps1 -Environment dev -Build -Deploy",
@@ -185,7 +183,9 @@
     "express-validator": "^7.2.1",
     "helmet": "^8.1.0",
     "ioredis": "^5.8.1",
-    "prisma": "^6.17.1"
+    "prisma": "^6.17.1",
+    "swagger-ui-express": "^5.0.1",
+    "yamljs": "^0.3.0"
   },
   "devDependencies": {
     "@types/bn.js": "^5.1.0",
@@ -198,6 +198,8 @@
     "@types/pg": "^8.15.5",
     "@types/sinon": "^17.0.4",
     "@types/supertest": "^6.0.3",
+    "@types/swagger-ui-express": "^4.1.8",
+    "@types/yamljs": "^0.2.34",
     "axios": "^1.12.2",
     "chai": "^4.3.4",
     "chalk": "^5.6.2",
