@@ -22,7 +22,6 @@ import {
   getAssociatedTokenAddress,
   createAssociatedTokenAccountInstruction 
 } from '@solana/spl-token';
-import { Metaplex, Nft, Sft } from '@metaplex-foundation/js';
 import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
@@ -98,6 +97,58 @@ export function loadPRODUCTIONWallets(): PRODUCTIONWallets {
  */
 export function generateIdempotencyKey(prefix: string = 'PRODUCTION-e2e'): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+}
+
+/**
+ * Parse Metaplex metadata from on-chain account data (fast, no off-chain fetch)
+ * 
+ * Metaplex Metadata V1 Structure:
+ * - key (1 byte) - should be 4 for Metadata
+ * - update_authority (32 bytes)
+ * - mint (32 bytes)
+ * - name (string with 4-byte length prefix + data)
+ * - symbol (string with 4-byte length prefix + data)
+ * - uri (string with 4-byte length prefix + data)
+ * - seller_fee_basis_points (2 bytes)
+ * - creators (optional)
+ */
+function parseMetaplexMetadata(data: Buffer): { name: string; symbol: string; uri: string } | null {
+  try {
+    let offset = 0;
+    
+    // Read key (should be 4 for Metadata)
+    const key = data.readUInt8(offset);
+    offset += 1;
+    
+    if (key !== 4) {
+      return null;
+    }
+    
+    // Skip update authority (32 bytes) and mint (32 bytes)
+    offset += 64;
+    
+    // Read name (string with 4-byte length prefix)
+    const nameLength = data.readUInt32LE(offset);
+    offset += 4;
+    const name = data.slice(offset, offset + nameLength).toString('utf8').replace(/\0/g, '').trim();
+    offset += nameLength;
+    
+    // Read symbol (string with 4-byte length prefix)
+    const symbolLength = data.readUInt32LE(offset);
+    offset += 4;
+    const symbol = data.slice(offset, offset + symbolLength).toString('utf8').replace(/\0/g, '').trim();
+    offset += symbolLength;
+    
+    // Read uri (string with 4-byte length prefix)
+    const uriLength = data.readUInt32LE(offset);
+    offset += 4;
+    const uri = data.slice(offset, offset + uriLength).toString('utf8').replace(/\0/g, '').trim();
+    
+    return { name, symbol, uri };
+  } catch (error) {
+    console.error('   Error parsing metadata:', error);
+    return null;
+  }
 }
 
 /**
@@ -205,7 +256,7 @@ export async function getRandomNFTFromWallet(
     console.log(`   NFT Mint: ${mintAddress.toBase58()}`);
     console.log(`   Token Account: ${selectedAccount.pubkey.toBase58()}`);
     
-    // Try to load Metaplex metadata if available (optional)
+    // Fetch on-chain metadata only (fast, no off-chain IPFS/Arweave fetch)
     let metadata = {
       name: 'Unknown NFT',
       symbol: 'NFT',
@@ -213,16 +264,34 @@ export async function getRandomNFTFromWallet(
     };
     
     try {
-      const metaplex = Metaplex.make(connection);
-      const nft = await metaplex.nfts().findByMint({ mintAddress });
-      metadata = {
-        name: nft.name || 'Unknown NFT',
-        symbol: nft.symbol || 'NFT',
-        uri: nft.uri || '',
-      };
-      console.log(`   📋 Loaded Metaplex metadata: ${metadata.name}`);
+      // Derive metadata PDA
+      const METADATA_PROGRAM_ID = new PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s');
+      const [metadataPDA] = PublicKey.findProgramAddressSync(
+        [Buffer.from('metadata'), METADATA_PROGRAM_ID.toBuffer(), mintAddress.toBuffer()],
+        METADATA_PROGRAM_ID
+      );
+      
+      // Fetch on-chain account data (fast - no off-chain fetch)
+      const accountInfo = await connection.getAccountInfo(metadataPDA);
+      
+      if (accountInfo) {
+        // Parse basic fields from on-chain data
+        const parsedMetadata = parseMetaplexMetadata(accountInfo.data);
+        if (parsedMetadata) {
+          metadata = {
+            name: parsedMetadata.name || 'Unknown NFT',
+            symbol: parsedMetadata.symbol || 'NFT',
+            uri: parsedMetadata.uri || '',
+          };
+          console.log(`   📋 Loaded on-chain metadata: ${metadata.name} (${(accountInfo.data.length / 1024).toFixed(2)} KB)`);
+        } else {
+          console.log(`   ℹ️  Could not parse metadata (using SPL token as-is)`);
+        }
+      } else {
+        console.log(`   ℹ️  No Metaplex metadata (using SPL token as-is)`);
+      }
     } catch (err) {
-      console.log(`   ℹ️  No Metaplex metadata (using SPL token as-is)`);
+      console.log(`   ℹ️  Error fetching metadata (using SPL token as-is)`);
     }
     
     return {
@@ -288,6 +357,7 @@ export async function createTestNFT(
       )
     );
     
+<<<<<<< HEAD
     // Get recent blockhash
     const { blockhash } = await connection.getLatestBlockhash('finalized');
     mintTransaction.recentBlockhash = blockhash;
