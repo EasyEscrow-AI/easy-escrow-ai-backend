@@ -12,11 +12,10 @@ declare_id!("AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei");
 #[cfg(not(feature = "no-entrypoint"))]
 security_txt! {
     name: "Easy Escrow",
-    project_url: "https://github.com/easy-escrow/easy-escrow-ai-backend",
+    project_url: "https://easyescrow.ai",
     contacts: "email:security@easyescrow.ai",
-    policy: "https://github.com/easy-escrow/easy-escrow-ai-backend/blob/main/docs/security/SECURITY_POLICY.md",
+    policy: "https://easyescrow.ai/security-policy",
     preferred_languages: "en",
-    source_code: "https://github.com/easy-escrow/easy-escrow-ai-backend",
     auditors: "Pending - Audit scheduled Q1 2026"
 }
 
