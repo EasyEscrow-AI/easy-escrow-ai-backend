@@ -11,6 +11,7 @@ import { prisma } from '../config/database';
 import { getSolanaService } from './solana.service';
 import { DepositStatus, AgreementStatus } from '../generated/prisma';
 import { getTransactionLogService, TransactionOperationType, TransactionStatusType } from './transaction-log.service';
+import { fetchOnChainMetadata, OnChainMetadata } from '../utils/metaplex-parser';
 
 /**
  * NFT token account data structure
@@ -322,13 +323,14 @@ export class NftDepositService {
   }
 
   /**
-   * Fetch NFT metadata from on-chain and off-chain sources
+   * Fetch NFT metadata from on-chain sources only (fast, no off-chain fetch)
+   * Performance: ~100ms vs 2-10 seconds for full off-chain fetch
    */
   private async fetchNftMetadata(mintAddress: string): Promise<NftMetadata> {
     try {
-      console.log(`[NftDepositService] Fetching metadata for NFT: ${mintAddress}`);
+      console.log(`[NftDepositService] Fetching on-chain metadata for NFT: ${mintAddress}`);
 
-      // Try to get Metaplex metadata account
+      // Fetch on-chain metadata only (no IPFS/Arweave fetch)
       const metadataAccount = await this.getMetaplexMetadataAccount(mintAddress);
 
       if (!metadataAccount) {
@@ -336,30 +338,16 @@ export class NftDepositService {
         return { mint: mintAddress };
       }
 
-      // If we have a URI, fetch off-chain metadata
-      if (metadataAccount.uri) {
-        try {
-          const offChainMetadata = await this.fetchOffChainMetadata(metadataAccount.uri);
-          return {
-            mint: mintAddress,
-            onChain: metadataAccount,
-            offChain: offChainMetadata,
-          };
-        } catch (error) {
-          console.warn(
-            `[NftDepositService] Failed to fetch off-chain metadata from ${metadataAccount.uri}:`,
-            error
-          );
-          return {
-            mint: mintAddress,
-            onChain: metadataAccount,
-          };
-        }
-      }
-
+      // Return on-chain metadata only (URI is available but not fetched)
       return {
         mint: mintAddress,
-        onChain: metadataAccount,
+        onChain: {
+          name: metadataAccount.name,
+          symbol: metadataAccount.symbol,
+          uri: metadataAccount.uri,
+          sellerFeeBasisPoints: metadataAccount.sellerFeeBasisPoints,
+          creators: metadataAccount.creators || [],
+        },
       };
     } catch (error) {
       console.error(`[NftDepositService] Error fetching NFT metadata:`, error);
@@ -368,52 +356,29 @@ export class NftDepositService {
   }
 
   /**
-   * Get Metaplex metadata account
-   * This is a simplified implementation - in production, use @metaplex-foundation/js
+   * Get Metaplex metadata account (on-chain only, fast)
+   * Uses optimized on-chain parser - no off-chain IPFS/Arweave fetches
    */
   private async getMetaplexMetadataAccount(
     mintAddress: string
-  ): Promise<{
-    name: string;
-    symbol: string;
-    uri: string;
-    sellerFeeBasisPoints: number;
-    creators: any[];
-  } | null> {
+  ): Promise<OnChainMetadata | null> {
     try {
-      // Derive metadata PDA (Program Derived Address)
-      const METADATA_PROGRAM_ID = new PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s');
       const mint = new PublicKey(mintAddress);
-
-      const [metadataPDA] = PublicKey.findProgramAddressSync(
-        [Buffer.from('metadata'), METADATA_PROGRAM_ID.toBuffer(), mint.toBuffer()],
-        METADATA_PROGRAM_ID
-      );
-
-      console.log(`[NftDepositService] Metadata PDA: ${metadataPDA.toBase58()}`);
-
-      // Fetch metadata account
-      const accountInfo = await this.solanaService.getAccountInfo(metadataPDA.toBase58());
-
-      if (!accountInfo) {
-        console.log(`[NftDepositService] No metadata account found`);
-        return null;
+      const connection = this.solanaService.getConnection();
+      
+      console.log(`[NftDepositService] Fetching on-chain metadata for: ${mintAddress}`);
+      
+      // Use optimized on-chain-only parser (fast, no off-chain fetch)
+      const metadata = await fetchOnChainMetadata(connection, mint);
+      
+      if (metadata) {
+        console.log(`[NftDepositService] ✅ Loaded on-chain metadata: ${metadata.name}`);
+        console.log(`[NftDepositService]    Symbol: ${metadata.symbol}, Royalty: ${metadata.sellerFeeBasisPoints / 100}%`);
+      } else {
+        console.log(`[NftDepositService] No Metaplex metadata found`);
       }
-
-      // Parse metadata (simplified - real implementation would use Metaplex deserializer)
-      // For now, we'll return a basic structure
-      console.log(
-        `[NftDepositService] Found metadata account with ${accountInfo.data.length} bytes`
-      );
-
-      // This is a placeholder - in production, properly deserialize Metaplex metadata
-      return {
-        name: 'NFT', // Would parse from account data
-        symbol: '',
-        uri: '', // Would parse from account data
-        sellerFeeBasisPoints: 0,
-        creators: [],
-      };
+      
+      return metadata;
     } catch (error) {
       console.error('[NftDepositService] Error getting Metaplex metadata:', error);
       return null;
@@ -421,37 +386,34 @@ export class NftDepositService {
   }
 
   /**
-   * Fetch off-chain metadata from URI
+   * @deprecated No longer used - we only fetch on-chain metadata for performance
+   * 
+   * Fetch off-chain metadata from URI (SLOW - 2-10 seconds for IPFS/Arweave)
+   * This method is disabled to improve performance. Off-chain metadata is not
+   * required for NFT verification - the on-chain data is sufficient.
    */
-  private async fetchOffChainMetadata(uri: string): Promise<any> {
-    try {
-      console.log(`[NftDepositService] Fetching off-chain metadata from: ${uri}`);
-
-      // Handle IPFS URIs
-      let fetchUrl = uri;
-      if (uri.startsWith('ipfs://')) {
-        // Use public IPFS gateway
-        fetchUrl = uri.replace('ipfs://', 'https://ipfs.io/ipfs/');
-      }
-
-      const response = await fetch(fetchUrl, {
-        headers: {
-          Accept: 'application/json',
-        },
-        signal: AbortSignal.timeout(5000), // 5 second timeout
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const metadata = await response.json();
-      return metadata;
-    } catch (error) {
-      console.error('[NftDepositService] Error fetching off-chain metadata:', error);
-      throw error;
-    }
-  }
+  // private async fetchOffChainMetadata(uri: string): Promise<any> {
+  //   try {
+  //     console.log(`[NftDepositService] Fetching off-chain metadata from: ${uri}`);
+  //     // Handle IPFS URIs
+  //     let fetchUrl = uri;
+  //     if (uri.startsWith('ipfs://')) {
+  //       fetchUrl = uri.replace('ipfs://', 'https://ipfs.io/ipfs/');
+  //     }
+  //     const response = await fetch(fetchUrl, {
+  //       headers: { Accept: 'application/json' },
+  //       signal: AbortSignal.timeout(5000),
+  //     });
+  //     if (!response.ok) {
+  //       throw new Error(`HTTP error! status: ${response.status}`);
+  //     }
+  //     const metadata = await response.json();
+  //     return metadata;
+  //   } catch (error) {
+  //     console.error('[NftDepositService] Error fetching off-chain metadata:', error);
+  //     throw error;
+  //   }
+  // }
 
   /**
    * Update agreement status based on deposit status

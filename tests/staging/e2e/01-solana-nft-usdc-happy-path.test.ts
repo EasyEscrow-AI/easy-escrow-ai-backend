@@ -255,16 +255,34 @@ describe('STAGING E2E - Happy Path: NFT-for-USDC Swap', function () {
     );
     console.log(`   ✅ USDC ATA: ${usdcAta.address.toBase58()}`);
     
-    // Create NFT ATA for escrow
+    // Create NFT ATA for escrow with retry logic (NFT might need time to propagate)
     console.log('   Creating NFT ATA for escrow PDA...');
-    const nftAta = await getOrCreateAssociatedTokenAccount(
-      connection,
-      wallets.sender, // payer
-      nft.mint,
-      escrowPda,
-      true // allowOwnerOffCurve (required for PDAs)
-    );
-    console.log(`   ✅ NFT ATA: ${nftAta.address.toBase58()}\n`);
+    let nftAta;
+    let lastError;
+    
+    for (let i = 0; i < 5; i++) {
+      try {
+        nftAta = await getOrCreateAssociatedTokenAccount(
+          connection,
+          wallets.sender, // payer
+          nft.mint,
+          escrowPda,
+          true // allowOwnerOffCurve (required for PDAs)
+        );
+        console.log(`   ✅ NFT ATA: ${nftAta.address.toBase58()}\n`);
+        break;
+      } catch (error: any) {
+        lastError = error;
+        if (i < 4) {
+          console.log(`   ⚠️  NFT ATA creation failed (attempt ${i + 1}/5), retrying...`);
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      }
+    }
+    
+    if (!nftAta) {
+      throw new Error(`Failed to create NFT ATA after 5 attempts: ${lastError}`);
+    }
     
     // Verify ATAs match the deposit addresses from API
     expect(usdcAta.address.toBase58()).to.equal(agreement.depositAddresses.usdc);

@@ -162,21 +162,56 @@ export async function createTestNFT(
   
   console.log(`   ✅ NFT Mint created: ${nftMint.toBase58()}`);
   
-  // Wait for mint to be confirmed on-chain
-  await new Promise(resolve => setTimeout(resolve, 2000));
+  // Wait for mint to be confirmed on-chain with retry logic
+  console.log('   ⏳ Waiting for mint confirmation...');
+  let mintConfirmed = false;
+  for (let i = 0; i < 10; i++) {
+    try {
+      const mintInfo = await connection.getAccountInfo(nftMint);
+      if (mintInfo !== null) {
+        mintConfirmed = true;
+        console.log(`   ✅ Mint confirmed on-chain (attempt ${i + 1})`);
+        break;
+      }
+    } catch (error) {
+      // Ignore and retry
+    }
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
   
-  // Create token account for owner
-  const tokenAccount = await getOrCreateAssociatedTokenAccount(
-    connection,
-    owner,
-    nftMint,
-    owner.publicKey
-  );
+  if (!mintConfirmed) {
+    throw new Error('Failed to confirm mint creation on-chain');
+  }
   
-  console.log(`   ✅ Token account created: ${tokenAccount.address.toBase58()}`);
+  // Create token account for owner with retry logic
+  console.log('   🏗️  Creating token account...');
+  let tokenAccount;
+  let lastError;
+  
+  for (let i = 0; i < 5; i++) {
+    try {
+      tokenAccount = await getOrCreateAssociatedTokenAccount(
+        connection,
+        owner,
+        nftMint,
+        owner.publicKey
+      );
+      console.log(`   ✅ Token account created: ${tokenAccount.address.toBase58()}`);
+      break;
+    } catch (error: any) {
+      lastError = error;
+      console.log(`   ⚠️  Token account creation failed (attempt ${i + 1}/5), retrying...`);
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+  }
+  
+  if (!tokenAccount) {
+    throw new Error(`Failed to create token account after 5 attempts: ${lastError}`);
+  }
   
   // Mint 1 NFT to owner
-  await mintTo(
+  console.log('   🪙 Minting NFT...');
+  const mintTxSignature = await mintTo(
     connection,
     owner,
     nftMint,
@@ -186,9 +221,15 @@ export async function createTestNFT(
   );
   
   console.log(`   ✅ Minted 1 NFT to owner`);
+  console.log(`   ⏳ Confirming mint transaction...`);
   
   // Wait for mint transaction to confirm
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  await connection.confirmTransaction(mintTxSignature, 'confirmed');
+  console.log(`   ✅ Mint transaction confirmed`);
+  
+  // Verify the token account has the NFT
+  const accountInfo = await getAccount(connection, tokenAccount.address);
+  console.log(`   ✅ Token account balance: ${accountInfo.amount}`);
   
   return {
     mint: nftMint,
