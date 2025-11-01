@@ -31,10 +31,13 @@ jobs:
     envs:
       - key: NODE_ENV
         value: staging
-      # DATABASE_URL will be injected from database reference below
+      # IMPORTANT: Use DIRECT connection for migrations (not pool)
+      # PgBouncer connection pools don't support DDL operations (CREATE TABLE, ALTER TABLE)
+      # Port 25060 = direct connection, Port 25061 = connection pool
       - key: DATABASE_URL
         scope: RUN_AND_BUILD_TIME
-        value: ${easyescrow-staging-postgres.DATABASE_URL}
+        type: SECRET
+        value: ${DATABASE_URL_DIRECT}
 
 # ============================================
 # Services
