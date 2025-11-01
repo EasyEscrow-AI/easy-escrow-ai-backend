@@ -131,21 +131,45 @@ export class MonitoringService {
       console.log('[MonitoringService] Loading pending agreements...');
 
       // Get agreements that need monitoring (PENDING, FUNDED, or partially locked)
-      const agreements = await prisma.agreement.findMany({
-        where: {
-          status: {
-            in: ['PENDING', 'FUNDED', 'USDC_LOCKED', 'NFT_LOCKED'],
-          },
-          expiry: {
-            gt: new Date(), // Not expired
+      // Filter criteria:
+      // - Status: Active states that need deposit monitoring
+      // - Expiry: Not expired yet
+      // - Test data: Exclude test agreements (agreementId starts with 'TEST-' or 'test-')
+      // - Stale data: In non-production, exclude agreements older than 7 days (prevents E2E test pollution)
+      const baseWhere: any = {
+        status: {
+          in: ['PENDING', 'FUNDED', 'USDC_LOCKED', 'NFT_LOCKED'],
+        },
+        expiry: {
+          gt: new Date(), // Not expired
+        },
+        NOT: {
+          agreementId: {
+            startsWith: 'TEST-', // Exclude test data from integration tests
           },
         },
+      };
+      
+      // In staging/development, exclude old stale agreements (likely test data)
+      // Production should monitor all non-expired agreements
+      const isProduction = process.env.NODE_ENV === 'production';
+      if (!isProduction) {
+        const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+        baseWhere.createdAt = {
+          gte: sevenDaysAgo, // Only monitor recent agreements (< 7 days old)
+        };
+        console.log(`[MonitoringService] Staging mode: Excluding agreements older than ${sevenDaysAgo.toISOString()}`);
+      }
+      
+      const agreements = await prisma.agreement.findMany({
+        where: baseWhere,
         select: {
           id: true,
           agreementId: true,
           usdcDepositAddr: true,
           nftDepositAddr: true,
           status: true,
+          createdAt: true,
         },
       });
 
