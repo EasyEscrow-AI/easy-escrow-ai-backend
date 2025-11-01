@@ -183,7 +183,40 @@ let swaggerDocument: any = null;
 try {
   const swaggerFilePath = path.join(__dirname, '../docs/api/openapi.yaml');
   swaggerDocument = YAML.load(swaggerFilePath);
+  
+  // 🔧 Environment-aware server configuration
+  const isProd = process.env.NODE_ENV === 'production';
+  const isStaging = process.env.NODE_ENV === 'staging';
+  
+  if (isProd) {
+    // Production: Only show production server
+    swaggerDocument.servers = [
+      {
+        url: 'https://api.easyescrow.ai',
+        description: 'Production server'
+      }
+    ];
+  } else if (isStaging) {
+    // Staging: Only show staging server
+    swaggerDocument.servers = [
+      {
+        url: 'https://staging-api.easyescrow.ai',
+        description: 'Staging server'
+      }
+    ];
+  } else {
+    // Development: Show localhost
+    swaggerDocument.servers = [
+      {
+        url: 'http://localhost:3000',
+        description: 'Development server'
+      }
+    ];
+  }
+  
   console.log(`✅ Swagger documentation loaded successfully from ${swaggerFilePath}`);
+  console.log(`🌐 Swagger servers configured for environment: ${process.env.NODE_ENV || 'development'}`);
+
 } catch (error: any) {
   console.warn('⚠️  Warning: Failed to load Swagger documentation');
   console.warn(`   Error: ${error.message}`);

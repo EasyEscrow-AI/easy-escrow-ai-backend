@@ -15,6 +15,7 @@ import * as agreementService from '../../src/services/agreement.service';
 import { EscrowProgramService } from '../../src/services/escrow-program.service';
 import { config } from '../../src/config';
 import { Decimal } from '@prisma/client/runtime/library';
+import { mockPrismaForTest, teardownPrismaMock } from '../helpers/prisma-mock';
 
 describe('Agreement Service - Cancellation with On-Chain Integration', () => {
   let escrowServiceStub: sinon.SinonStubbedInstance<EscrowProgramService>;
@@ -36,11 +37,12 @@ describe('Agreement Service - Cancellation with On-Chain Integration', () => {
         findUnique: sinon.stub(),
         update: sinon.stub(),
       },
-      $disconnect: sinon.stub().resolves(),
     };
+    mockPrismaForTest(prismaStub as any);
   });
 
   afterEach(() => {
+    teardownPrismaMock();
     sinon.restore();
   });
 

@@ -154,7 +154,8 @@ describe('EscrowProgramService - Token Account Creation', () => {
       
       // Assert
       expect(tokenAccount).to.be.instanceOf(PublicKey);
-      expect(tokenAccount.toBase58()).to.have.lengthOf(44); // Base58 encoded public key
+      // Base58 encoded public key is typically 44 chars, but can be 43 due to leading zero compression
+      expect(tokenAccount.toBase58().length).to.be.within(43, 44);
     });
 
     it('should support allowOwnerOffCurve for PDA accounts', async () => {
@@ -449,5 +450,6 @@ describe('EscrowProgramService - Token Account Creation', () => {
     });
   });
 });
+
 
 
