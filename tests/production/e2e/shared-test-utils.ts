@@ -831,14 +831,24 @@ export async function cleanupAgreements(agreementIds: string[]): Promise<void> {
   
   for (const agreementId of agreementIds) {
     try {
-      // Try to cancel via admin endpoint (requires admin key)
+      // Try to cancel via admin endpoint (requires x-admin-key header)
+      // Uses first admin key from ADMIN_API_KEYS environment variable
+      const adminKeys = process.env.ADMIN_API_KEYS?.split(',').map(k => k.trim()) || [];
+      const adminKey = adminKeys[0] || '';
+      
+      if (!adminKey) {
+        console.log(`   ⏭️  Skipped: ${agreementId} (no ADMIN_API_KEYS configured)`);
+        skipCount++;
+        continue;
+      }
+      
       const response = await axios.post(
-        `${PRODUCTION_CONFIG.apiBaseUrl}/api/admin/agreements/${agreementId}/cancel`,
+        `${PRODUCTION_CONFIG.apiBaseUrl}/v1/agreements/${agreementId}/cancel`,
         { reason: 'E2E test cleanup' },
         {
           headers: {
             'Content-Type': 'application/json',
-            'x-admin-key': process.env.ADMIN_API_KEY || '',
+            'x-admin-key': adminKey,
           },
           timeout: 10000,
         }
