@@ -867,10 +867,10 @@ export async function archiveAgreements(agreementIds: string[]): Promise<void> {
   } catch (error: any) {
     console.error(`   ❌ Archive failed:`, error?.message || error);
     console.log('');
-  } finally {
-    // Disconnect Prisma client
-    await prisma.$disconnect();
   }
+  // Note: Prisma client is NOT disconnected here because it's a global instance
+  // that may be reused across multiple test files. Prisma automatically handles
+  // cleanup when the Node.js process exits.
 }
 
 /**
