@@ -140,7 +140,9 @@ exports.Prisma.AgreementScalarFieldEnum = {
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   settledAt: 'settledAt',
-  cancelledAt: 'cancelledAt'
+  cancelledAt: 'cancelledAt',
+  archivedAt: 'archivedAt',
+  archiveReason: 'archiveReason'
 };
 
 exports.Prisma.DepositScalarFieldEnum = {
@@ -274,7 +276,8 @@ exports.AgreementStatus = exports.$Enums.AgreementStatus = {
   SETTLED: 'SETTLED',
   EXPIRED: 'EXPIRED',
   CANCELLED: 'CANCELLED',
-  REFUNDED: 'REFUNDED'
+  REFUNDED: 'REFUNDED',
+  ARCHIVED: 'ARCHIVED'
 };
 
 exports.DepositType = exports.$Enums.DepositType = {
