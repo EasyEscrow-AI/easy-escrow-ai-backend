@@ -33,6 +33,7 @@ jobs:
         value: staging
       # Use direct database connection for migrations
       # Migrations require direct connection (not pool) because PgBouncer doesn't support DDL
+      # ${DATABASE_URL} references the secret set via console (port 25060, direct connection)
       - key: DATABASE_URL
         scope: RUN_AND_BUILD_TIME
         type: SECRET
@@ -70,6 +71,11 @@ services:
       failure_threshold: 3
     
     # Environment variables
+    # 
+    # Note: Variables with ${VARIABLE_NAME} syntax reference secrets set via console.
+    # This preserves existing secret values when updating the app spec.
+    # To set/update secrets: DigitalOcean Console → App → Settings → Environment Variables
+    #
     envs:
       - key: NODE_ENV
         value: staging
@@ -100,20 +106,62 @@ services:
       - key: METRICS_INTERVAL_MS
         value: "300000"  # 5 minutes - Metrics collection
       
-      # Set these via console (secrets)
-      # - DATABASE_URL_POOL (connection pool for runtime, port 25061)
-      # - REDIS_URL (Upstash)
-      # - JWT_SECRET
-      # - SOLANA_RPC_URL
-      # - ESCROW_PROGRAM_ID
-      # - USDC_MINT_ADDRESS
-      # - SPACES_ACCESS_KEY_ID
-      # - SPACES_SECRET_ACCESS_KEY
-      # - SPACES_BUCKET (easyescrow-test for dev/staging)
-      # - SPACES_ENDPOINT (https://sgp1.digitaloceanspaces.com)
-      # - SPACES_REGION (sgp1)
-      #
-      # Note: DATABASE_URL (direct connection, port 25060) is used by PRE_DEPLOY migration job only
+      # Database & Cache (Secrets - set via console)
+      - key: DATABASE_URL_POOL
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+        value: ${DATABASE_URL_POOL}
+      - key: REDIS_URL
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+        value: ${REDIS_URL}
+      
+      # Authentication (Secrets - set via console)
+      - key: JWT_SECRET
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+        value: ${JWT_SECRET}
+      
+      # Solana Configuration (Secrets - set via console)
+      - key: SOLANA_RPC_URL
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+        value: ${SOLANA_RPC_URL}
+      - key: ESCROW_PROGRAM_ID
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+        value: ${ESCROW_PROGRAM_ID}
+      - key: USDC_MINT_ADDRESS
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+        value: ${USDC_MINT_ADDRESS}
+      - key: DEVNET_STAGING_ADMIN_PRIVATE_KEY
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+        value: ${DEVNET_STAGING_ADMIN_PRIVATE_KEY}
+      - key: DEVNET_STAGING_ADMIN_ADDRESS
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+        value: ${DEVNET_STAGING_ADMIN_ADDRESS}
+      
+      # DigitalOcean Spaces (Secrets - set via console)
+      - key: SPACES_ACCESS_KEY_ID
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+        value: ${SPACES_ACCESS_KEY_ID}
+      - key: SPACES_SECRET_ACCESS_KEY
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+        value: ${SPACES_SECRET_ACCESS_KEY}
+      - key: SPACES_BUCKET
+        scope: RUN_AND_BUILD_TIME
+        value: ${SPACES_BUCKET}
+      - key: SPACES_ENDPOINT
+        scope: RUN_AND_BUILD_TIME
+        value: ${SPACES_ENDPOINT}
+      - key: SPACES_REGION
+        scope: RUN_AND_BUILD_TIME
+        value: ${SPACES_REGION}
 
 # ============================================
 # Databases
