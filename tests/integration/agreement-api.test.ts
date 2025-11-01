@@ -70,6 +70,7 @@ describe('Agreement API - Integration Tests', () => {
 
       const response = await request(app)
         .post('/v1/agreements')
+        .set('Idempotency-Key', `test-${Date.now()}`)
         .send(testCreateAgreementDTO.valid)
         .expect(201);
 
@@ -103,6 +104,7 @@ describe('Agreement API - Integration Tests', () => {
 
       const response = await request(app)
         .post('/v1/agreements')
+        .set('Idempotency-Key', `test-error-${Date.now()}`)
         .send(testCreateAgreementDTO.valid)
         .expect(500);
 

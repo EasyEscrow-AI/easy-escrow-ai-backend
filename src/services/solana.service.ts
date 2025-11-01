@@ -825,8 +825,12 @@ export const initializeEscrow = async (
     // Convert price to USDC amount (assuming 6 decimals for USDC)
     const usdcAmount = new BN(parseFloat(params.price.toString()) * 1_000_000);
     
-    // Convert expiry to Unix timestamp
-    const expiryTimestamp = new BN(Math.floor(params.expiry.getTime() / 1000));
+    // Convert expiry to Unix timestamp with 60-second buffer
+    // IMPORTANT: Add buffer to account for network delays and avoid 0x1771 (InvalidExpiry) error
+    // The on-chain program validates: expiry_timestamp > Clock::get()?.unix_timestamp
+    // Network latency (2-10 seconds) can cause the timestamp to be in the past by the time it reaches the chain
+    const BUFFER_SECONDS = 60; // 60-second safety buffer
+    const expiryTimestamp = new BN(Math.floor(params.expiry.getTime() / 1000) + BUFFER_SECONDS);
     
     console.log('[SolanaService] Initializing escrow on-chain:', {
       escrowId: escrowId.toString(),

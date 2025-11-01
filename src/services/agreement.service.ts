@@ -1,4 +1,4 @@
-import { PrismaClient, Agreement, AgreementStatus, Deposit } from '../generated/prisma';
+import { Agreement, AgreementStatus, Deposit } from '../generated/prisma';
 import {
   CreateAgreementDTO,
   CreateAgreementResponseDTO,
@@ -19,8 +19,7 @@ import { Decimal } from '@prisma/client/runtime/library';
 import { PublicKey } from '@solana/web3.js';
 import { EscrowProgramService } from './escrow-program.service';
 import { config } from '../config';
-
-const prisma = new PrismaClient();
+import { prisma } from '../config/database';
 
 /**
  * Agreement Service

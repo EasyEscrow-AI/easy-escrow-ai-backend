@@ -1,0 +1,286 @@
+---
+description: Testing guidelines and best practices for running tests in isolation
+globs: tests/**/*.test.ts, package.json
+alwaysApply: false
+---
+
+# Testing Rules and Best Practices
+
+## Running Tests in Isolation
+
+### ⚠️ CRITICAL: Avoid Running All Tests Unintentionally
+
+**DO NOT** use `npm test -- path/to/test.ts` to run a single test file. This command will load ALL test files due to the glob pattern in the test script, even though you specify a path.
+
+### ✅ Correct Way to Run Single Test Files
+
+**Use the dedicated test scripts** or **direct mocha commands** with `--no-config` flag.
+
+#### Option 1: Use Dedicated npm Scripts (Preferred)
+
+```bash
+# Run specific unit test files
+npm run test:unit:expiry-validation
+npm run test:unit:jito
+npm run test:unit:receipt
+npm run test:unit:nft-deposit
+npm run test:unit:usdc-deposit
+npm run test:unit:transaction-log
+npm run test:unit:refund
+npm run test:unit:settlement-refund
+npm run test:unit:token-accounts
+
+# Run all unit tests
+npm run test:unit
+
+# Run integration tests
+npm run test:integration
+
+# Run E2E tests
+npm run test:development:e2e
+npm run test:local:e2e
+```
+
+#### Option 2: Direct Mocha Command (For New/Unlisted Tests)
+
+```bash
+# For unit tests (use NODE_ENV=test and --no-config)
+cross-env NODE_ENV=test mocha --require ts-node/register --no-config tests/unit/your-test-file.test.ts --timeout 10000 --reporter spec --colors
+
+# For integration tests
+mocha --require ts-node/register --no-config tests/integration/your-test.test.ts --timeout 20000
+
+# For E2E tests
+mocha --require ts-node/register --no-config tests/development/e2e/your-test.test.ts --timeout 180000 --reporter spec --colors
+```
+
+**Key flags:**
+- `--no-config`: Prevents loading all test files from mocha config
+- `--require ts-node/register`: Enables TypeScript support
+- `--timeout X`: Sets timeout (unit: 10s, integration: 20s, E2E: 180s)
+- `--reporter spec --colors`: Pretty output with colors
+- `cross-env NODE_ENV=test`: Sets test environment for unit tests
+
+### ❌ WRONG: Commands That Will Run ALL Tests
+
+```bash
+# DON'T DO THIS - will load all tests despite the path
+npm test -- tests/unit/expiry-timestamp-validation.test.ts
+
+# DON'T DO THIS - glob patterns load everything
+npm test tests/unit/*.test.ts
+```
+
+## Adding New Test Scripts to package.json
+
+When you create a new important test file that should be run in isolation, add a dedicated script:
+
+```json
+{
+  "scripts": {
+    "test:unit:your-test-name": "cross-env NODE_ENV=test mocha --require ts-node/register --no-config tests/unit/your-test-file.test.ts --timeout 10000 --reporter spec --colors"
+  }
+}
+```
+
+### Naming Convention for Test Scripts
+
+- **Unit tests**: `test:unit:feature-name`
+- **Integration tests**: `test:integration:feature-name`
+- **E2E tests**: `test:e2e:feature-name` or `test:development:e2e:feature-name`
+- **Staging tests**: `test:staging:feature-name`
+- **Production tests**: `test:production:feature-name`
+
+## Test File Naming Conventions
+
+- **Unit tests**: `tests/unit/feature-name.test.ts` or `tests/unit/service-name.service.test.ts`
+- **Integration tests**: `tests/integration/feature-name.test.ts`
+- **E2E tests**: `tests/development/e2e/feature-name.test.ts`
+- **Staging tests**: `tests/staging/e2e/feature-name.test.ts`
+- **Production tests**: `tests/production/e2e/feature-name.test.ts`
+
+## Test Structure Best Practices
+
+### Unit Test Template
+
+```typescript
+import { expect } from 'chai';
+import sinon from 'sinon';
+
+describe('Feature Name', () => {
+  let sandbox: sinon.SinonSandbox;
+
+  beforeEach(() => {
+    sandbox = sinon.createSandbox();
+  });
+
+  afterEach(() => {
+    sandbox.restore();
+  });
+
+  describe('Specific Functionality', () => {
+    it('should do something specific', () => {
+      // Arrange
+      const input = 'test';
+      
+      // Act
+      const result = someFunction(input);
+      
+      // Assert
+      expect(result).to.equal('expected');
+    });
+  });
+});
+```
+
+### Integration Test Template
+
+```typescript
+import { expect } from 'chai';
+import request from 'supertest';
+import app from '../../src/index';
+
+describe('API Integration Tests', () => {
+  describe('GET /endpoint', () => {
+    it('should return 200 OK', async () => {
+      const response = await request(app)
+        .get('/endpoint')
+        .expect(200);
+
+      expect(response.body).to.have.property('data');
+    });
+  });
+});
+```
+
+## Test Timeout Guidelines
+
+- **Unit tests**: 10,000ms (10 seconds) - fast, isolated tests
+- **Integration tests**: 20,000ms (20 seconds) - API/database interactions
+- **Local E2E tests**: 60,000ms (60 seconds) - full workflows on local network
+- **Development E2E tests**: 180,000ms (3 minutes) - full workflows on devnet
+- **Staging E2E tests**: 180,000ms (3 minutes) - full workflows on devnet
+- **Production E2E tests**: 180,000ms (3 minutes) - full workflows on mainnet
+
+**Increase timeouts if:**
+- Network is slow or congested
+- Running on CI/CD (add 2x multiplier)
+- Testing blockchain transactions (network latency varies)
+
+## CI/CD Test Execution
+
+```bash
+# Run all unit and integration tests (fast feedback)
+npm run test:ci
+
+# Run all tests including E2E (complete validation)
+npm run test:unit && npm run test:integration && npm run test:development:e2e
+```
+
+## Test Environment Variables
+
+Unit tests should use `NODE_ENV=test` to:
+- Use test-specific configuration
+- Mock external services
+- Prevent accidental modifications to real data
+
+```typescript
+// In test files, check environment
+if (process.env.NODE_ENV !== 'test') {
+  throw new Error('This test should only run in test environment');
+}
+```
+
+## Debugging Tests
+
+### Run Single Test with Verbose Output
+
+```bash
+# Add --full-trace for detailed error information
+mocha --require ts-node/register --no-config tests/unit/your-test.test.ts --timeout 10000 --reporter spec --colors --full-trace
+
+# Use --grep to run specific test cases
+mocha --require ts-node/register --no-config tests/unit/your-test.test.ts --grep "specific test case name"
+```
+
+### Common Test Issues
+
+**Issue:** Test loads all files and runs forever
+- **Solution:** Use `--no-config` flag or dedicated npm script
+
+**Issue:** TypeScript compilation errors
+- **Solution:** Ensure `--require ts-node/register` is included
+
+**Issue:** Test timeout
+- **Solution:** Increase timeout with `--timeout` flag or fix slow operations
+
+**Issue:** Import errors (module not found)
+- **Solution:** Check `tsconfig.json` paths and ensure modules are installed
+
+## Test Coverage
+
+```bash
+# Generate coverage report (when configured)
+npm run test:coverage
+```
+
+## Watch Mode for Development
+
+```bash
+# Auto-rerun tests on file changes
+npm run test:watch
+```
+
+**Note:** Watch mode runs all tests. For focused development, use dedicated single-test scripts.
+
+## Agent Instructions
+
+When asked to run a specific test file:
+
+1. **Check if a dedicated npm script exists** in `package.json`
+   - Look for `test:unit:feature-name`, `test:integration:feature-name`, etc.
+   - If it exists, use: `npm run test:unit:feature-name`
+
+2. **If no dedicated script exists**, use direct mocha command:
+   ```bash
+   cross-env NODE_ENV=test mocha --require ts-node/register --no-config path/to/test.test.ts --timeout 10000 --reporter spec --colors
+   ```
+
+3. **Never use** `npm test -- path/to/test.ts` for running a single test
+
+4. **When creating new test files**, add a dedicated npm script if:
+   - The test will be run frequently
+   - The test is critical to a specific feature
+   - The test is part of core functionality
+
+## Examples
+
+### ✅ CORRECT: Running Single Test
+
+```bash
+# Using dedicated script
+npm run test:unit:expiry-validation
+
+# Using direct mocha command
+cross-env NODE_ENV=test mocha --require ts-node/register --no-config tests/unit/expiry-timestamp-validation.test.ts --timeout 10000 --reporter spec --colors
+```
+
+### ❌ INCORRECT: Running Single Test
+
+```bash
+# This will load ALL test files
+npm test -- tests/unit/expiry-timestamp-validation.test.ts
+
+# This won't work as expected
+npm test tests/unit/expiry-timestamp-validation.test.ts
+```
+
+## Related Files
+
+- [package.json](mdc:package.json) - Test scripts configuration
+- [tsconfig.json](mdc:tsconfig.json) - TypeScript configuration for tests
+- [tests/README.md](mdc:tests/README.md) - Additional test documentation
+
+## Summary
+
+**Golden Rule:** Always use `--no-config` flag or dedicated npm scripts when running individual test files to prevent loading all tests.

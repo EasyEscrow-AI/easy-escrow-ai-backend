@@ -43,7 +43,13 @@ describe('QueueService', () => {
     });
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    // Close queue connection to prevent hanging
+    try {
+      await queueService.close();
+    } catch (err) {
+      // Queue might already be closed, ignore
+    }
     sinon.restore();
   });
 
