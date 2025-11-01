@@ -1,0 +1,224 @@
+# ============================================
+# DigitalOcean App Platform Configuration
+# EasyEscrow.ai Backend API - PRODUCTION
+# ============================================
+#
+# PRODUCTION CONFIGURATION
+# Uses managed PostgreSQL cluster and Redis
+# Deploys from master branch with PRE_DEPLOY migrations
+#
+# Create with: doctl apps create --spec .do/production-app.yaml
+# Update with: doctl apps update <app-id> --spec .do/production-app.yaml
+# ============================================
+
+name: easyescrow-backend-production
+region: sgp1
+
+# ============================================
+# Jobs - Run before deployment
+# ============================================
+
+jobs:
+  - name: db-migrate
+    kind: PRE_DEPLOY
+    github:
+      repo: VENTURE-AI-LABS/easy-escrow-ai-backend
+      branch: master
+      deploy_on_push: true
+    dockerfile_path: Dockerfile
+    run_command: npx prisma migrate deploy
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    envs:
+      - key: NODE_ENV
+        value: production
+      # Use direct database connection for migrations
+      # Migrations require direct connection (not pool) because PgBouncer doesn't support DDL
+      # ${DATABASE_URL} references the secret set via console (port 25060, direct connection)
+      - key: DATABASE_URL
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+        value: ${DATABASE_URL}
+
+# ============================================
+# Services
+# ============================================
+
+services:
+  - name: api-production
+    # GitHub repository configuration
+    github:
+      repo: VENTURE-AI-LABS/easy-escrow-ai-backend
+      branch: master
+      deploy_on_push: true
+    
+    # Use Dockerfile for consistency
+    dockerfile_path: Dockerfile
+    
+    # Instance configuration - 2 instances for high availability
+    instance_count: 2
+    instance_size_slug: basic-xs  # $12/month - 1GB RAM, 1 vCPU
+    
+    # HTTP configuration
+    http_port: 8080
+    
+    # Health check
+    health_check:
+      http_path: /health
+      initial_delay_seconds: 60
+      period_seconds: 30
+      timeout_seconds: 20
+      success_threshold: 1
+      failure_threshold: 5
+    
+    # Environment variables
+    # 
+    # Note: Variables with ${VARIABLE_NAME} syntax reference secrets set via console.
+    # This preserves existing secret values when updating the app spec.
+    # To set/update secrets: DigitalOcean Console → App → Settings → Environment Variables
+    #
+    envs:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "8080"
+      - key: SOLANA_NETWORK
+        value: mainnet-beta
+      - key: SOLANA_COMMITMENT
+        value: finalized
+      - key: MONITORING_ENABLED
+        value: "true"
+      - key: WEBHOOK_ENABLED
+        value: "true"
+      - key: CORS_ENABLED
+        value: "true"
+      - key: HELMET_ENABLED
+        value: "true"
+      - key: LOG_LEVEL
+        value: info
+      - key: PLATFORM_FEE_BPS
+        value: "100"  # 1% production fee
+      
+      # Health Check & Monitoring Intervals (Optimized for Production)
+      - key: SOLANA_RPC_HEALTH_CHECK_INTERVAL
+        value: "30000"  # 30 seconds - Aggressive monitoring
+      - key: HEALTH_CHECK_INTERVAL_MS
+        value: "60000"  # 1 minute - Service health monitoring
+      - key: METRICS_INTERVAL_MS
+        value: "180000"  # 3 minutes - Metrics collection
+      
+      # Database & Cache (Secrets - set via console)
+      - key: DATABASE_URL_POOL
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+        value: ${DATABASE_URL_POOL}
+      - key: REDIS_URL
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+        value: ${REDIS_URL}
+      
+      # Authentication (Secrets - set via console)
+      - key: JWT_SECRET
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+        value: ${JWT_SECRET}
+      - key: JWT_EXPIRATION
+        value: "24h"
+      
+      # Solana Configuration (Secrets - set via console)
+      - key: SOLANA_RPC_URL
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+        value: ${SOLANA_RPC_URL}
+      - key: ESCROW_PROGRAM_ID
+        scope: RUN_AND_BUILD_TIME
+        value: ${ESCROW_PROGRAM_ID}
+      - key: USDC_MINT_ADDRESS
+        scope: RUN_AND_BUILD_TIME
+        value: ${USDC_MINT_ADDRESS}
+      - key: MAINNET_PROD_ADMIN_PRIVATE_KEY
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+        value: ${MAINNET_PROD_ADMIN_PRIVATE_KEY}
+      - key: MAINNET_PROD_ADMIN_ADDRESS
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+        value: ${MAINNET_PROD_ADMIN_ADDRESS}
+      
+      # DigitalOcean Spaces (Secrets - set via console)
+      - key: SPACES_ACCESS_KEY_ID
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+        value: ${SPACES_ACCESS_KEY_ID}
+      - key: SPACES_SECRET_ACCESS_KEY
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+        value: ${SPACES_SECRET_ACCESS_KEY}
+      - key: SPACES_BUCKET
+        scope: RUN_AND_BUILD_TIME
+        value: ${SPACES_BUCKET}
+      - key: SPACES_ENDPOINT
+        scope: RUN_AND_BUILD_TIME
+        value: ${SPACES_ENDPOINT}
+      - key: SPACES_REGION
+        scope: RUN_AND_BUILD_TIME
+        value: ${SPACES_REGION}
+      
+      # Webhook Configuration (Optional - set via console if using webhooks)
+      - key: WEBHOOK_URL
+        scope: RUN_AND_BUILD_TIME
+        value: ${WEBHOOK_URL}
+      - key: WEBHOOK_SECRET
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+        value: ${WEBHOOK_SECRET}
+      
+      # CORS Configuration
+      - key: CORS_ORIGIN
+        value: "https://easyescrow.ai,https://www.easyescrow.ai"
+      
+      # Swagger Documentation (Disabled in production for security)
+      - key: ENABLE_SWAGGER
+        value: "false"
+
+# ============================================
+# Databases
+# ============================================
+
+# PostgreSQL cluster created separately
+# Connection via DATABASE_URL and DATABASE_URL_POOL environment variables
+
+databases:
+  - name: easyescrow-production-postgres
+    engine: PG
+    production: true  # Production environment
+    cluster_name: easyescrow-production-postgres
+
+# ============================================
+# Custom Domains
+# ============================================
+
+domains:
+  - domain: api.easyescrow.ai
+    type: PRIMARY
+
+# ============================================
+# Alerts
+# ============================================
+
+alerts:
+  - rule: DEPLOYMENT_FAILED
+  - rule: DOMAIN_FAILED
+  - rule: DEPLOYMENT_LIVE
+  - rule: CPU_UTILIZATION
+    value: 80
+  - rule: MEM_UTILIZATION
+    value: 80
+
+# ============================================
+# Features
+# ============================================
+
+features:
+  - buildpack-stack=ubuntu-22
+
