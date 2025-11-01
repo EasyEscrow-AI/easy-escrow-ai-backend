@@ -300,3 +300,4 @@ For future Solana integrations:
 **Conclusion:** This was a classic example of environment-specific behavior causing test failures. The fix is simple (add `skipPreflight`), but the lesson is valuable: **test in the environment you deploy to**, and **document environment-specific requirements**.
 
 
+

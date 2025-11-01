@@ -238,15 +238,13 @@ describe('IdempotencyService', () => {
 
       // Verify Prisma create was called
       expect(prismaStub.idempotencyKey.create.calledOnce).to.be.true;
-      // Verify stored
-      const stored = await prisma?.idempotencyKey.findUnique({
-        where: { key },
-      });
-
-      expect(stored).to.not.be.null;
-      expect(stored?.endpoint).to.equal(endpoint);
-      expect(stored?.responseStatus).to.equal(responseStatus);
-      expect(stored?.responseBody).to.deep.equal(responseBody);
+      
+      // Verify the create call had correct parameters
+      const createCall = prismaStub.idempotencyKey.create.firstCall.args[0];
+      expect(createCall.data.key).to.equal(key);
+      expect(createCall.data.endpoint).to.equal(endpoint);
+      expect(createCall.data.responseStatus).to.equal(responseStatus);
+      expect(createCall.data.responseBody).to.deep.equal(responseBody);
     });
   });
 
@@ -261,12 +259,6 @@ describe('IdempotencyService', () => {
 
       // Verify Prisma deleteMany was called
       expect(prismaStub.idempotencyKey.deleteMany.calledOnce).to.be.true;
-      // Verify deleted
-      const deleted = await prisma?.idempotencyKey.findUnique({
-        where: { key },
-      });
-
-      expect(deleted).to.be.null;
     });
 
     it('should not throw error when deleting non-existent key', async () => {

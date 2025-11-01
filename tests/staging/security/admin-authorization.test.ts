@@ -78,12 +78,12 @@ describe('STAGING Security - Admin Authorization', function () {
     const programId = new PublicKey(STAGING_CONFIG.programId);
     const provider = new AnchorProvider(
       connection,
-      { publicKey: authorizedAdminKeypair.publicKey, signTransaction: async (tx) => tx, signAllTransactions: async (txs) => txs } as any,
+      { publicKey: authorizedAdminKeypair.publicKey, signTransaction: async (tx: any) => tx, signAllTransactions: async (txs: any) => txs } as any,
       { commitment: 'confirmed' }
     );
 
     const idl = getEscrowIdl();
-    program = new Program(idl, programId, provider);
+    program = new Program(idl, provider as any);
 
     // Verify connectivity
     const version = await connection.getVersion();
@@ -134,13 +134,12 @@ describe('STAGING Security - Admin Authorization', function () {
       const tx = await program.methods
         .initAgreement(escrowId, usdcAmount, expiryTimestamp, platformFeeBps)
         .accounts({
-          escrowState: escrowPda,
           buyer,
           seller,
           nftMint,
           admin: unauthorizedKeypair.publicKey, // ❌ UNAUTHORIZED
           systemProgram: SystemProgram.programId,
-        })
+        } as any)
         .signers([unauthorizedKeypair])
         .rpc();
 
@@ -201,13 +200,12 @@ describe('STAGING Security - Admin Authorization', function () {
       const tx = await program.methods
         .initAgreement(escrowId, usdcAmount, expiryTimestamp, platformFeeBps)
         .accounts({
-          escrowState: escrowPda,
           buyer,
           seller,
           nftMint,
           admin: authorizedAdminKeypair.publicKey, // ✅ AUTHORIZED
           systemProgram: SystemProgram.programId,
-        })
+        } as any)
         .signers([authorizedAdminKeypair])
         .rpc();
 

@@ -381,9 +381,40 @@ export class EscrowProgramService {
       // This bypasses QuickNode's $89/m Lil' JIT add-on requirement
       signature = await this.sendTransactionViaJito(createAtaTx, isMainnet);
 
-      console.log(`[EscrowProgramService] ${tokenType} account created successfully`);
-      console.log(`[EscrowProgramService] Transaction: ${signature}`);
-      console.log(`[EscrowProgramService] Cost: ~0.002 SOL (rent-exemption, one-time per user)${isMainnet ? ' + Jito tip' : ''}`);
+      console.log(`[EscrowProgramService] ${tokenType} account creation transaction sent: ${signature}`);
+      console.log(`[EscrowProgramService] Waiting for confirmation to avoid race condition...`);
+      
+      // CRITICAL: Wait for transaction confirmation before continuing
+      // This prevents race conditions where the account isn't yet initialized when used
+      try {
+        const confirmationStrategy = {
+          signature,
+          blockhash: createAtaTx.recentBlockhash!,
+          lastValidBlockHeight: createAtaTx.lastValidBlockHeight!,
+        };
+        
+        const confirmation = await this.provider.connection.confirmTransaction(
+          confirmationStrategy,
+          'confirmed' // Wait for 'confirmed' commitment level
+        );
+        
+        if (confirmation.value.err) {
+          throw new Error(`ATA creation confirmation failed: ${JSON.stringify(confirmation.value.err)}`);
+        }
+        
+        console.log(`[EscrowProgramService] ✅ ${tokenType} account created and confirmed on-chain`);
+        console.log(`[EscrowProgramService] Transaction: ${signature}`);
+        console.log(`[EscrowProgramService] Cost: ~0.002 SOL (rent-exemption, one-time per user)${isMainnet ? ' + Jito tip' : ''}`);
+      } catch (confirmError) {
+        console.error(`[EscrowProgramService] Failed to confirm ${tokenType} account creation:`, confirmError);
+        // Still log the transaction details for debugging
+        console.log(`[EscrowProgramService] Transaction sent but confirmation failed: ${signature}`);
+        throw new Error(
+          `Failed to confirm ${tokenType} account creation: ${
+            confirmError instanceof Error ? confirmError.message : 'Unknown error'
+          }`
+        );
+      }
     } else {
       console.log(
         `[EscrowProgramService] ${tokenType} account already exists: ${tokenAccount.toBase58()}`

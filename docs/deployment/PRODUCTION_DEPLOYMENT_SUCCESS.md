@@ -608,3 +608,4 @@ The EasyEscrow.ai backend is now fully operational on Solana Mainnet with:
 **Next Action:** Connect frontend and begin user onboarding
 
 
+

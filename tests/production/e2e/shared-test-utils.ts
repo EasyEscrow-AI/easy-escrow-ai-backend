@@ -809,4 +809,82 @@ export function displayBalances(balances: any, label: string = 'Balances') {
   console.log(`   Fee Collector SOL: ${balances.feeCollector.sol.toFixed(4)}, USDC: ${balances.feeCollector.usdc.toFixed(6)}\n`);
 }
 
+// ============================================================================
+// TEST CLEANUP
+// ============================================================================
+
+/**
+ * Cancel agreements for cleanup
+ * Attempts to cancel agreements that were created during E2E tests
+ * Silently ignores errors (e.g. already cancelled, already settled)
+ */
+export async function cleanupAgreements(agreementIds: string[]): Promise<void> {
+  if (agreementIds.length === 0) {
+    return;
+  }
+  
+  console.log(`\n🧹 Cleaning up ${agreementIds.length} test agreements...`);
+  
+  let successCount = 0;
+  let skipCount = 0;
+  let errorCount = 0;
+  
+  for (const agreementId of agreementIds) {
+    try {
+      // Try to cancel via admin endpoint (requires x-admin-key header)
+      // Uses first admin key from ADMIN_API_KEYS environment variable
+      const adminKeys = process.env.ADMIN_API_KEYS?.split(',').map(k => k.trim()) || [];
+      const adminKey = adminKeys[0] || '';
+      
+      if (!adminKey) {
+        console.log(`   ⏭️  Skipped: ${agreementId} (no ADMIN_API_KEYS configured)`);
+        skipCount++;
+        continue;
+      }
+      
+      const response = await axios.post(
+        `${PRODUCTION_CONFIG.apiBaseUrl}/v1/agreements/${agreementId}/cancel`,
+        { reason: 'E2E test cleanup' },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'x-admin-key': adminKey,
+          },
+          timeout: 10000,
+        }
+      );
+      
+      if (response.status === 200 || response.status === 201) {
+        console.log(`   ✅ Cancelled: ${agreementId}`);
+        successCount++;
+      }
+    } catch (error: any) {
+      const status = error?.response?.status;
+      const message = error?.response?.data?.error || error?.message;
+      
+      // Silently skip already cancelled or settled agreements
+      if (
+        message?.includes('already cancelled') ||
+        message?.includes('already settled') ||
+        message?.includes('Cannot cancel') ||
+        status === 400
+      ) {
+        console.log(`   ⏭️  Skipped: ${agreementId} (${message || 'already processed'})`);
+        skipCount++;
+      } else {
+        console.log(`   ⚠️  Failed: ${agreementId} (${message || 'unknown error'})`);
+        errorCount++;
+      }
+    }
+  }
+  
+  console.log(`\n📊 Cleanup Summary:`);
+  console.log(`   ✅ Cancelled: ${successCount}`);
+  console.log(`   ⏭️  Skipped: ${skipCount}`);
+  if (errorCount > 0) {
+    console.log(`   ⚠️  Errors: ${errorCount}`);
+  }
+  console.log('');
+}
+
 
