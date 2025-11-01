@@ -48,13 +48,7 @@ services:
       branch: staging
       deploy_on_push: true
     
-    # Build configuration
-    build_command: npm run build
-    
-    # Runtime configuration
-    run_command: npm start
-    
-    # Use Dockerfile for consistency
+    # Use Dockerfile for consistency (build_command/run_command in Dockerfile)
     dockerfile_path: Dockerfile
     
     # Instance configuration
@@ -130,8 +124,6 @@ databases:
     engine: PG
     production: false  # Staging environment
     cluster_name: easyescrow-staging-postgres
-    db_name: easyescrow_staging
-    db_user: easyescrow_app
 
 # ============================================
 # Custom Domains (Optional)
