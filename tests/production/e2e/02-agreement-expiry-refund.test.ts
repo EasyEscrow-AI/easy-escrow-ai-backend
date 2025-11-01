@@ -37,6 +37,7 @@ import {
   getExplorerUrl,
   getTokenBalance,
   getRandomNFTFromWallet,
+  cleanupAgreements,
 } from './shared-test-utils';
 
 // ============================================================================
@@ -98,11 +99,7 @@ describe('PRODUCTION E2E: Agreement Expiry and Refund', function () {
   // ==========================================================================
 
   after(async function () {
-    if (createdAgreementIds.length > 0) {
-      console.log('\n🧹 Cleanup: Agreement IDs tracked for manual cleanup:');
-      createdAgreementIds.forEach((id) => console.log(`   - ${id}`));
-      console.log('');
-    }
+    await cleanupAgreements(createdAgreementIds);
   });
 
   // ==========================================================================
