@@ -151,14 +151,26 @@ export class MonitoringService {
 
       console.log(`[MonitoringService] Found ${agreements.length} agreements to monitor`);
 
-      // Start monitoring each agreement
+      // Rate limiting: Process subscriptions in batches to avoid hitting RPC rate limits
+      // QuickNode limit: 50 requests/second
+      // Safe batch size: 10 subscriptions per batch with 250ms delay = 40/second max
+      const BATCH_SIZE = 10;
+      const BATCH_DELAY_MS = 250;
+      
+      let accountsToMonitor: Array<{publicKey: string, agreementId: string, type: 'usdc' | 'nft'}> = [];
+      
+      // Collect all accounts that need monitoring
       for (const agreement of agreements) {
         // Monitor USDC deposit address if not yet locked
         if (
           agreement.usdcDepositAddr &&
           !['USDC_LOCKED', 'BOTH_LOCKED'].includes(agreement.status)
         ) {
-          await this.monitorAccount(agreement.usdcDepositAddr, agreement.agreementId, 'usdc');
+          accountsToMonitor.push({
+            publicKey: agreement.usdcDepositAddr,
+            agreementId: agreement.agreementId,
+            type: 'usdc'
+          });
         }
 
         // Monitor NFT deposit address if not yet locked
@@ -166,7 +178,33 @@ export class MonitoringService {
           agreement.nftDepositAddr &&
           !['NFT_LOCKED', 'BOTH_LOCKED'].includes(agreement.status)
         ) {
-          await this.monitorAccount(agreement.nftDepositAddr, agreement.agreementId, 'nft');
+          accountsToMonitor.push({
+            publicKey: agreement.nftDepositAddr,
+            agreementId: agreement.agreementId,
+            type: 'nft'
+          });
+        }
+      }
+      
+      console.log(`[MonitoringService] Rate-limiting ${accountsToMonitor.length} subscriptions in batches of ${BATCH_SIZE}`);
+      
+      // Process accounts in batches with delays
+      for (let i = 0; i < accountsToMonitor.length; i += BATCH_SIZE) {
+        const batch = accountsToMonitor.slice(i, i + BATCH_SIZE);
+        
+        // Process batch in parallel
+        await Promise.all(
+          batch.map(account => 
+            this.monitorAccount(account.publicKey, account.agreementId, account.type)
+              .catch(error => {
+                console.error(`[MonitoringService] Failed to monitor ${account.type} account ${account.publicKey}:`, error);
+              })
+          )
+        );
+        
+        // Delay between batches (except after the last batch)
+        if (i + BATCH_SIZE < accountsToMonitor.length) {
+          await new Promise(resolve => setTimeout(resolve, BATCH_DELAY_MS));
         }
       }
 
