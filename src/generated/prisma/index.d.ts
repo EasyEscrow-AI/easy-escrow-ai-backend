@@ -62,7 +62,8 @@ export namespace $Enums {
   SETTLED: 'SETTLED',
   EXPIRED: 'EXPIRED',
   CANCELLED: 'CANCELLED',
-  REFUNDED: 'REFUNDED'
+  REFUNDED: 'REFUNDED',
+  ARCHIVED: 'ARCHIVED'
 };
 
 export type AgreementStatus = (typeof AgreementStatus)[keyof typeof AgreementStatus]
@@ -1566,6 +1567,8 @@ export namespace Prisma {
     updatedAt: Date | null
     settledAt: Date | null
     cancelledAt: Date | null
+    archivedAt: Date | null
+    archiveReason: string | null
   }
 
   export type AgreementMaxAggregateOutputType = {
@@ -1589,6 +1592,8 @@ export namespace Prisma {
     updatedAt: Date | null
     settledAt: Date | null
     cancelledAt: Date | null
+    archivedAt: Date | null
+    archiveReason: string | null
   }
 
   export type AgreementCountAggregateOutputType = {
@@ -1612,6 +1617,8 @@ export namespace Prisma {
     updatedAt: number
     settledAt: number
     cancelledAt: number
+    archivedAt: number
+    archiveReason: number
     _all: number
   }
 
@@ -1647,6 +1654,8 @@ export namespace Prisma {
     updatedAt?: true
     settledAt?: true
     cancelledAt?: true
+    archivedAt?: true
+    archiveReason?: true
   }
 
   export type AgreementMaxAggregateInputType = {
@@ -1670,6 +1679,8 @@ export namespace Prisma {
     updatedAt?: true
     settledAt?: true
     cancelledAt?: true
+    archivedAt?: true
+    archiveReason?: true
   }
 
   export type AgreementCountAggregateInputType = {
@@ -1693,6 +1704,8 @@ export namespace Prisma {
     updatedAt?: true
     settledAt?: true
     cancelledAt?: true
+    archivedAt?: true
+    archiveReason?: true
     _all?: true
   }
 
@@ -1803,6 +1816,8 @@ export namespace Prisma {
     updatedAt: Date
     settledAt: Date | null
     cancelledAt: Date | null
+    archivedAt: Date | null
+    archiveReason: string | null
     _count: AgreementCountAggregateOutputType | null
     _avg: AgreementAvgAggregateOutputType | null
     _sum: AgreementSumAggregateOutputType | null
@@ -1845,6 +1860,8 @@ export namespace Prisma {
     updatedAt?: boolean
     settledAt?: boolean
     cancelledAt?: boolean
+    archivedAt?: boolean
+    archiveReason?: boolean
     deposits?: boolean | Agreement$depositsArgs<ExtArgs>
     settlement?: boolean | Agreement$settlementArgs<ExtArgs>
     receipt?: boolean | Agreement$receiptArgs<ExtArgs>
@@ -1873,6 +1890,8 @@ export namespace Prisma {
     updatedAt?: boolean
     settledAt?: boolean
     cancelledAt?: boolean
+    archivedAt?: boolean
+    archiveReason?: boolean
   }, ExtArgs["result"]["agreement"]>
 
   export type AgreementSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -1896,6 +1915,8 @@ export namespace Prisma {
     updatedAt?: boolean
     settledAt?: boolean
     cancelledAt?: boolean
+    archivedAt?: boolean
+    archiveReason?: boolean
   }, ExtArgs["result"]["agreement"]>
 
   export type AgreementSelectScalar = {
@@ -1919,9 +1940,11 @@ export namespace Prisma {
     updatedAt?: boolean
     settledAt?: boolean
     cancelledAt?: boolean
+    archivedAt?: boolean
+    archiveReason?: boolean
   }
 
-  export type AgreementOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "agreementId" | "escrowPda" | "nftMint" | "seller" | "buyer" | "price" | "feeBps" | "honorRoyalties" | "status" | "expiry" | "usdcDepositAddr" | "nftDepositAddr" | "initTxId" | "settleTxId" | "cancelTxId" | "createdAt" | "updatedAt" | "settledAt" | "cancelledAt", ExtArgs["result"]["agreement"]>
+  export type AgreementOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "agreementId" | "escrowPda" | "nftMint" | "seller" | "buyer" | "price" | "feeBps" | "honorRoyalties" | "status" | "expiry" | "usdcDepositAddr" | "nftDepositAddr" | "initTxId" | "settleTxId" | "cancelTxId" | "createdAt" | "updatedAt" | "settledAt" | "cancelledAt" | "archivedAt" | "archiveReason", ExtArgs["result"]["agreement"]>
   export type AgreementInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     deposits?: boolean | Agreement$depositsArgs<ExtArgs>
     settlement?: boolean | Agreement$settlementArgs<ExtArgs>
@@ -1961,6 +1984,8 @@ export namespace Prisma {
       updatedAt: Date
       settledAt: Date | null
       cancelledAt: Date | null
+      archivedAt: Date | null
+      archiveReason: string | null
     }, ExtArgs["result"]["agreement"]>
     composites: {}
   }
@@ -2408,6 +2433,8 @@ export namespace Prisma {
     readonly updatedAt: FieldRef<"Agreement", 'DateTime'>
     readonly settledAt: FieldRef<"Agreement", 'DateTime'>
     readonly cancelledAt: FieldRef<"Agreement", 'DateTime'>
+    readonly archivedAt: FieldRef<"Agreement", 'DateTime'>
+    readonly archiveReason: FieldRef<"Agreement", 'String'>
   }
     
 
@@ -9973,7 +10000,9 @@ export namespace Prisma {
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
     settledAt: 'settledAt',
-    cancelledAt: 'cancelledAt'
+    cancelledAt: 'cancelledAt',
+    archivedAt: 'archivedAt',
+    archiveReason: 'archiveReason'
   };
 
   export type AgreementScalarFieldEnum = (typeof AgreementScalarFieldEnum)[keyof typeof AgreementScalarFieldEnum]
@@ -10345,6 +10374,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Agreement"> | Date | string
     settledAt?: DateTimeNullableFilter<"Agreement"> | Date | string | null
     cancelledAt?: DateTimeNullableFilter<"Agreement"> | Date | string | null
+    archivedAt?: DateTimeNullableFilter<"Agreement"> | Date | string | null
+    archiveReason?: StringNullableFilter<"Agreement"> | string | null
     deposits?: DepositListRelationFilter
     settlement?: XOR<SettlementNullableScalarRelationFilter, SettlementWhereInput> | null
     receipt?: XOR<ReceiptNullableScalarRelationFilter, ReceiptWhereInput> | null
@@ -10372,6 +10403,8 @@ export namespace Prisma {
     updatedAt?: SortOrder
     settledAt?: SortOrderInput | SortOrder
     cancelledAt?: SortOrderInput | SortOrder
+    archivedAt?: SortOrderInput | SortOrder
+    archiveReason?: SortOrderInput | SortOrder
     deposits?: DepositOrderByRelationAggregateInput
     settlement?: SettlementOrderByWithRelationInput
     receipt?: ReceiptOrderByWithRelationInput
@@ -10402,6 +10435,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Agreement"> | Date | string
     settledAt?: DateTimeNullableFilter<"Agreement"> | Date | string | null
     cancelledAt?: DateTimeNullableFilter<"Agreement"> | Date | string | null
+    archivedAt?: DateTimeNullableFilter<"Agreement"> | Date | string | null
+    archiveReason?: StringNullableFilter<"Agreement"> | string | null
     deposits?: DepositListRelationFilter
     settlement?: XOR<SettlementNullableScalarRelationFilter, SettlementWhereInput> | null
     receipt?: XOR<ReceiptNullableScalarRelationFilter, ReceiptWhereInput> | null
@@ -10429,6 +10464,8 @@ export namespace Prisma {
     updatedAt?: SortOrder
     settledAt?: SortOrderInput | SortOrder
     cancelledAt?: SortOrderInput | SortOrder
+    archivedAt?: SortOrderInput | SortOrder
+    archiveReason?: SortOrderInput | SortOrder
     _count?: AgreementCountOrderByAggregateInput
     _avg?: AgreementAvgOrderByAggregateInput
     _max?: AgreementMaxOrderByAggregateInput
@@ -10460,6 +10497,8 @@ export namespace Prisma {
     updatedAt?: DateTimeWithAggregatesFilter<"Agreement"> | Date | string
     settledAt?: DateTimeNullableWithAggregatesFilter<"Agreement"> | Date | string | null
     cancelledAt?: DateTimeNullableWithAggregatesFilter<"Agreement"> | Date | string | null
+    archivedAt?: DateTimeNullableWithAggregatesFilter<"Agreement"> | Date | string | null
+    archiveReason?: StringNullableWithAggregatesFilter<"Agreement"> | string | null
   }
 
   export type DepositWhereInput = {
@@ -11044,6 +11083,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     settledAt?: Date | string | null
     cancelledAt?: Date | string | null
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     deposits?: DepositCreateNestedManyWithoutAgreementInput
     settlement?: SettlementCreateNestedOneWithoutAgreementInput
     receipt?: ReceiptCreateNestedOneWithoutAgreementInput
@@ -11071,6 +11112,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     settledAt?: Date | string | null
     cancelledAt?: Date | string | null
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     deposits?: DepositUncheckedCreateNestedManyWithoutAgreementInput
     settlement?: SettlementUncheckedCreateNestedOneWithoutAgreementInput
     receipt?: ReceiptUncheckedCreateNestedOneWithoutAgreementInput
@@ -11098,6 +11141,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     settledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     deposits?: DepositUpdateManyWithoutAgreementNestedInput
     settlement?: SettlementUpdateOneWithoutAgreementNestedInput
     receipt?: ReceiptUpdateOneWithoutAgreementNestedInput
@@ -11125,6 +11170,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     settledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     deposits?: DepositUncheckedUpdateManyWithoutAgreementNestedInput
     settlement?: SettlementUncheckedUpdateOneWithoutAgreementNestedInput
     receipt?: ReceiptUncheckedUpdateOneWithoutAgreementNestedInput
@@ -11152,6 +11199,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     settledAt?: Date | string | null
     cancelledAt?: Date | string | null
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
   }
 
   export type AgreementUpdateManyMutationInput = {
@@ -11175,6 +11224,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     settledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type AgreementUncheckedUpdateManyInput = {
@@ -11198,6 +11249,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     settledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type DepositCreateInput = {
@@ -11989,6 +12042,8 @@ export namespace Prisma {
     updatedAt?: SortOrder
     settledAt?: SortOrder
     cancelledAt?: SortOrder
+    archivedAt?: SortOrder
+    archiveReason?: SortOrder
   }
 
   export type AgreementAvgOrderByAggregateInput = {
@@ -12017,6 +12072,8 @@ export namespace Prisma {
     updatedAt?: SortOrder
     settledAt?: SortOrder
     cancelledAt?: SortOrder
+    archivedAt?: SortOrder
+    archiveReason?: SortOrder
   }
 
   export type AgreementMinOrderByAggregateInput = {
@@ -12040,6 +12097,8 @@ export namespace Prisma {
     updatedAt?: SortOrder
     settledAt?: SortOrder
     cancelledAt?: SortOrder
+    archivedAt?: SortOrder
+    archiveReason?: SortOrder
   }
 
   export type AgreementSumOrderByAggregateInput = {
@@ -13859,6 +13918,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     settledAt?: Date | string | null
     cancelledAt?: Date | string | null
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     settlement?: SettlementCreateNestedOneWithoutAgreementInput
     receipt?: ReceiptCreateNestedOneWithoutAgreementInput
     webhooks?: WebhookCreateNestedManyWithoutAgreementInput
@@ -13885,6 +13946,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     settledAt?: Date | string | null
     cancelledAt?: Date | string | null
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     settlement?: SettlementUncheckedCreateNestedOneWithoutAgreementInput
     receipt?: ReceiptUncheckedCreateNestedOneWithoutAgreementInput
     webhooks?: WebhookUncheckedCreateNestedManyWithoutAgreementInput
@@ -13927,6 +13990,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     settledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     settlement?: SettlementUpdateOneWithoutAgreementNestedInput
     receipt?: ReceiptUpdateOneWithoutAgreementNestedInput
     webhooks?: WebhookUpdateManyWithoutAgreementNestedInput
@@ -13953,6 +14018,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     settledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     settlement?: SettlementUncheckedUpdateOneWithoutAgreementNestedInput
     receipt?: ReceiptUncheckedUpdateOneWithoutAgreementNestedInput
     webhooks?: WebhookUncheckedUpdateManyWithoutAgreementNestedInput
@@ -13979,6 +14046,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     settledAt?: Date | string | null
     cancelledAt?: Date | string | null
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     deposits?: DepositCreateNestedManyWithoutAgreementInput
     receipt?: ReceiptCreateNestedOneWithoutAgreementInput
     webhooks?: WebhookCreateNestedManyWithoutAgreementInput
@@ -14005,6 +14074,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     settledAt?: Date | string | null
     cancelledAt?: Date | string | null
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     deposits?: DepositUncheckedCreateNestedManyWithoutAgreementInput
     receipt?: ReceiptUncheckedCreateNestedOneWithoutAgreementInput
     webhooks?: WebhookUncheckedCreateNestedManyWithoutAgreementInput
@@ -14047,6 +14118,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     settledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     deposits?: DepositUpdateManyWithoutAgreementNestedInput
     receipt?: ReceiptUpdateOneWithoutAgreementNestedInput
     webhooks?: WebhookUpdateManyWithoutAgreementNestedInput
@@ -14073,6 +14146,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     settledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     deposits?: DepositUncheckedUpdateManyWithoutAgreementNestedInput
     receipt?: ReceiptUncheckedUpdateOneWithoutAgreementNestedInput
     webhooks?: WebhookUncheckedUpdateManyWithoutAgreementNestedInput
@@ -14099,6 +14174,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     settledAt?: Date | string | null
     cancelledAt?: Date | string | null
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     deposits?: DepositCreateNestedManyWithoutAgreementInput
     settlement?: SettlementCreateNestedOneWithoutAgreementInput
     webhooks?: WebhookCreateNestedManyWithoutAgreementInput
@@ -14125,6 +14202,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     settledAt?: Date | string | null
     cancelledAt?: Date | string | null
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     deposits?: DepositUncheckedCreateNestedManyWithoutAgreementInput
     settlement?: SettlementUncheckedCreateNestedOneWithoutAgreementInput
     webhooks?: WebhookUncheckedCreateNestedManyWithoutAgreementInput
@@ -14167,6 +14246,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     settledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     deposits?: DepositUpdateManyWithoutAgreementNestedInput
     settlement?: SettlementUpdateOneWithoutAgreementNestedInput
     webhooks?: WebhookUpdateManyWithoutAgreementNestedInput
@@ -14193,6 +14274,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     settledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     deposits?: DepositUncheckedUpdateManyWithoutAgreementNestedInput
     settlement?: SettlementUncheckedUpdateOneWithoutAgreementNestedInput
     webhooks?: WebhookUncheckedUpdateManyWithoutAgreementNestedInput
@@ -14219,6 +14302,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     settledAt?: Date | string | null
     cancelledAt?: Date | string | null
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     deposits?: DepositCreateNestedManyWithoutAgreementInput
     settlement?: SettlementCreateNestedOneWithoutAgreementInput
     receipt?: ReceiptCreateNestedOneWithoutAgreementInput
@@ -14245,6 +14330,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     settledAt?: Date | string | null
     cancelledAt?: Date | string | null
+    archivedAt?: Date | string | null
+    archiveReason?: string | null
     deposits?: DepositUncheckedCreateNestedManyWithoutAgreementInput
     settlement?: SettlementUncheckedCreateNestedOneWithoutAgreementInput
     receipt?: ReceiptUncheckedCreateNestedOneWithoutAgreementInput
@@ -14287,6 +14374,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     settledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     deposits?: DepositUpdateManyWithoutAgreementNestedInput
     settlement?: SettlementUpdateOneWithoutAgreementNestedInput
     receipt?: ReceiptUpdateOneWithoutAgreementNestedInput
@@ -14313,6 +14402,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     settledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
     deposits?: DepositUncheckedUpdateManyWithoutAgreementNestedInput
     settlement?: SettlementUncheckedUpdateOneWithoutAgreementNestedInput
     receipt?: ReceiptUncheckedUpdateOneWithoutAgreementNestedInput
