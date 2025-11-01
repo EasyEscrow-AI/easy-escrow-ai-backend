@@ -31,7 +31,10 @@ jobs:
     envs:
       - key: NODE_ENV
         value: staging
-      # DATABASE_URL inherited from database connection
+      # DATABASE_URL will be injected from database reference below
+      - key: DATABASE_URL
+        scope: RUN_TIME
+        value: ${easyescrow-staging-postgres.DATABASE_URL}
 
 # ============================================
 # Services
