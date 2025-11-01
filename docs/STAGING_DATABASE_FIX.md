@@ -15,22 +15,35 @@ defaultdb    easyescrow-staging-postgres-do-user-11230012-0...      25060    doa
 
 ## Solution
 
-### Step 1: Add DATABASE_URL Secret (DigitalOcean Console)
+We use TWO environment variables with clear naming:
+- `DATABASE_URL` = Direct connection (for migrations)
+- `DATABASE_URL_POOL` = Connection pool (for app runtime)
 
-1. Go to: **DigitalOcean → Apps → easyescrow-backend-staging**
-2. Click: **Settings → Environment Variables**
-3. Click: **Edit** (for the api-staging component)
-4. Add new environment variable:
+### Step 1: Add Environment Variables (DigitalOcean Console)
+
+1. Go to: **DigitalOcean → Apps → easyescrow-backend-staging → Settings → Environment Variables**
+
+#### For the `db-migrate` job (Migrations):
 
    **Key:** `DATABASE_URL`  
    **Value:** 
    ```
    postgresql://staging_user:AVNS_Eat2QwFGOloJzUY0WrF@easyescrow-staging-postgres-do-user-11230012-0.d.db.ondigitalocean.com:25060/easyescrow_staging?sslmode=require
    ```
-   **Encrypted:** ✅ YES (mark as secret)  
-   **Scope:** All components (both api-staging AND db-migrate job)
+   **Encrypted:** ✅ YES  
+   **Scope:** `RUN_AND_BUILD_TIME`
 
-5. Click: **Save**
+#### For the `api-staging` service (App Runtime):
+
+   **Key:** `DATABASE_URL_POOL`  
+   **Value:** 
+   ```
+   postgresql://staging_user:AVNS_Eat2QwFGOloJzUY0WrF@easyescrow-staging-postgres-do-user-11230012-0.d.db.ondigitalocean.com:25061/easyescrow_staging_pool?sslmode=require&pgbouncer=true&connection_limit=5&pool_timeout=10
+   ```
+   **Encrypted:** ✅ YES  
+   **Scope:** `RUN_AND_BUILD_TIME`
+
+2. Click: **Save**
 
 ### Step 2: Deploy Updated App Spec
 
@@ -78,11 +91,34 @@ Datasource "db": PostgreSQL database "easyescrow_staging" at "..."
 
 ## Why This Happened
 
-DigitalOcean managed database references (`${database-name.DATABASE_URL}`) always point to the default system database (`defaultdb`), not custom databases you create.
+1. **Wrong Database**: DigitalOcean managed database references (`${database-name.DATABASE_URL}`) point to the default system database (`defaultdb`), not our custom `easyescrow_staging` database.
 
-When we created the `easyescrow_staging` database, we should have also:
-1. Set an explicit DATABASE_URL environment variable
-2. Not relied on the managed reference
+2. **Wrong Connection Type**: Migrations need a **direct connection** (port 25060), not a **connection pool** (port 25061), because PgBouncer doesn't support DDL operations (CREATE TABLE, ALTER TABLE, etc.).
+
+## Architecture: Two Connections
+
+```
+┌─────────────────────────────────────────────────────┐
+│  PRE_DEPLOY Job (db-migrate)                        │
+│  Uses: DATABASE_URL                                 │
+│  Port: 25060 (direct)                              │
+│  Purpose: Schema migrations (DDL)                  │
+│  ✅ Can CREATE/ALTER tables                        │
+└─────────────────────────────────────────────────────┘
+                        │
+                        ▼
+           [PostgreSQL Database]
+                        │
+                        ▼
+┌─────────────────────────────────────────────────────┐
+│  App Service (api-staging)                          │
+│  Uses: DATABASE_URL_POOL                            │
+│  Port: 25061 (PgBouncer pool)                      │
+│  Purpose: Runtime queries (DML)                    │
+│  ✅ Efficient connection pooling                   │
+│  ✅ Handles high concurrency                       │
+└─────────────────────────────────────────────────────┘
+```
 
 ## Related Files
 

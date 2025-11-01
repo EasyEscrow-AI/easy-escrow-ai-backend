@@ -31,13 +31,12 @@ jobs:
     envs:
       - key: NODE_ENV
         value: staging
-      # IMPORTANT: Use DIRECT connection for migrations (not pool)
-      # PgBouncer connection pools don't support DDL operations (CREATE TABLE, ALTER TABLE)
-      # Port 25060 = direct connection, Port 25061 = connection pool
+      # Use direct database connection for migrations
+      # Migrations require direct connection (not pool) because PgBouncer doesn't support DDL
       - key: DATABASE_URL
         scope: RUN_AND_BUILD_TIME
         type: SECRET
-        value: ${DATABASE_URL_DIRECT}
+        value: ${DATABASE_URL}
 
 # ============================================
 # Services
@@ -102,7 +101,7 @@ services:
         value: "300000"  # 5 minutes - Metrics collection
       
       # Set these via console (secrets)
-      # - DATABASE_URL (from easyescrow-staging-postgres)
+      # - DATABASE_URL_POOL (connection pool for runtime, port 25061)
       # - REDIS_URL (Upstash)
       # - JWT_SECRET
       # - SOLANA_RPC_URL
@@ -113,6 +112,8 @@ services:
       # - SPACES_BUCKET (easyescrow-test for dev/staging)
       # - SPACES_ENDPOINT (https://sgp1.digitaloceanspaces.com)
       # - SPACES_REGION (sgp1)
+      #
+      # Note: DATABASE_URL (direct connection, port 25060) is used by PRE_DEPLOY migration job only
 
 # ============================================
 # Databases

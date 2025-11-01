@@ -36,7 +36,23 @@ function getPrismaClient(): PrismaClient {
   // Create real client on first access (non-test environments)
   if (!_prismaClient) {
     console.log('[Prisma] Initializing Prisma client...');
+    
+    // Use DATABASE_URL_POOL for runtime connections if available (connection pooling)
+    // Fall back to DATABASE_URL for direct connections (used by migrations)
+    const databaseUrl = process.env.DATABASE_URL_POOL || process.env.DATABASE_URL;
+    
+    if (process.env.DATABASE_URL_POOL) {
+      console.log('[Prisma] Using connection pool (DATABASE_URL_POOL)');
+    } else {
+      console.log('[Prisma] Using direct connection (DATABASE_URL)');
+    }
+    
     _prismaClient = global.prisma || new PrismaClient({
+      datasources: {
+        db: {
+          url: databaseUrl
+        }
+      },
       log: process.env.NODE_ENV === 'development' 
         ? ['query', 'info', 'warn', 'error'] 
         : ['error'],
