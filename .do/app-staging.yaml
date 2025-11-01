@@ -14,6 +14,26 @@ name: easyescrow-backend-staging
 region: sgp1
 
 # ============================================
+# Jobs - Run before deployment
+# ============================================
+
+jobs:
+  - name: db-migrate
+    kind: PRE_DEPLOY
+    github:
+      repo: VENTURE-AI-LABS/easy-escrow-ai-backend
+      branch: staging
+      deploy_on_push: true
+    dockerfile_path: Dockerfile
+    run_command: npx prisma migrate deploy
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    envs:
+      - key: NODE_ENV
+        value: staging
+      # DATABASE_URL inherited from database connection
+
+# ============================================
 # Services
 # ============================================
 
