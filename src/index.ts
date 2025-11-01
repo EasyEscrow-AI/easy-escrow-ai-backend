@@ -216,6 +216,7 @@ try {
   
   console.log(`✅ Swagger documentation loaded successfully from ${swaggerFilePath}`);
   console.log(`🌐 Swagger servers configured for environment: ${process.env.NODE_ENV || 'development'}`);
+
 } catch (error: any) {
   console.warn('⚠️  Warning: Failed to load Swagger documentation');
   console.warn(`   Error: ${error.message}`);
