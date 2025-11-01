@@ -33,7 +33,7 @@ jobs:
         value: staging
       # DATABASE_URL will be injected from database reference below
       - key: DATABASE_URL
-        scope: RUN_TIME
+        scope: RUN_AND_BUILD_TIME
         value: ${easyescrow-staging-postgres.DATABASE_URL}
 
 # ============================================
