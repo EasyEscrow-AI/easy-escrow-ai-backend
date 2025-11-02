@@ -781,3 +781,48 @@ export const depositUsdcToEscrow = async (
     throw error;
   }
 };
+
+/**
+ * Archive agreements (admin-only, for test cleanup)
+ * @param agreementIds - Array of agreement IDs to archive
+ * @param reason - Reason for archiving (e.g., "E2E test cleanup")
+ * @returns Count of archived agreements
+ */
+export const archiveAgreements = async (
+  agreementIds: string[],
+  reason: string = 'Manual archive'
+): Promise<{ count: number; archived: string[] }> => {
+  if (agreementIds.length === 0) {
+    return { count: 0, archived: [] };
+  }
+
+  console.log(`[AgreementService] Archiving ${agreementIds.length} agreements...`);
+  console.log(`[AgreementService] Reason: ${reason}`);
+
+  const result = await prisma.agreement.updateMany({
+    where: {
+      agreementId: {
+        in: agreementIds,
+      },
+    },
+    data: {
+      status: AgreementStatus.ARCHIVED,
+      archivedAt: new Date(),
+      archiveReason: reason,
+    },
+  });
+
+  console.log(`[AgreementService] ✅ Archived ${result.count} agreement(s)`);
+
+  if (result.count < agreementIds.length) {
+    const notFound = agreementIds.length - result.count;
+    console.log(
+      `[AgreementService] ℹ️  ${notFound} agreement(s) not found (may have been deleted or already archived)`
+    );
+  }
+
+  return {
+    count: result.count,
+    archived: agreementIds.slice(0, result.count),
+  };
+};
