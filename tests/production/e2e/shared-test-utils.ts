@@ -25,7 +25,7 @@ import {
 import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../../../src/generated/prisma';
 import { PRODUCTION_CONFIG } from './test-config';
 
 // Re-export configuration for use in test files
