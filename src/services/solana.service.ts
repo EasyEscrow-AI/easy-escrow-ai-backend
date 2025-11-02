@@ -14,7 +14,7 @@ import {
   AccountInfo,
   KeyedAccountInfo,
 } from '@solana/web3.js';
-import { getAssociatedTokenAddress } from '@solana/spl-token';
+import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { BN } from '@coral-xyz/anchor';
 import { config } from '../config';
 
@@ -810,6 +810,14 @@ export const initializeEscrow = async (
         throw new ValidationError(
           `NFT mint address ${params.nftMint} does not exist on-chain. ` +
           `Please verify the mint address is correct and deployed to the network.`
+        );
+      }
+      
+      // Verify the account is actually a mint (owned by Token Program)
+      if (mintInfo.owner.toBase58() !== TOKEN_PROGRAM_ID.toBase58()) {
+        throw new ValidationError(
+          `Address ${params.nftMint} is not a valid SPL token mint. ` +
+          `The account exists but is not owned by the Token Program.`
         );
       }
       
