@@ -431,6 +431,16 @@ services:
         type: SECRET
         scope: BUILD_TIME
 
+# ============================================
+# Databases
+# ============================================
+
+databases:
+  - name: easyescrow-production-postgres
+    engine: PG
+    production: true  # Production environment
+    cluster_name: easyescrow-production-postgres
+
 # Custom Domain Configuration
 domains:
   - domain: api.easyescrow.ai
