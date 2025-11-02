@@ -24,6 +24,29 @@ region: sgp1
 # vpc:
 #   id: <production-vpc-id>
 
+#
+# PRE-DEPLOY JOBS (TOP LEVEL)
+# These run BEFORE building and deploying. If any fail, deployment stops.
+#
+jobs:
+  - name: db-migrate
+    kind: PRE_DEPLOY
+    dockerfile_path: Dockerfile
+    github:
+      repo: VENTURE-AI-LABS/easy-escrow-ai-backend
+      branch: master
+      deploy_on_push: true
+    run_command: npx prisma migrate deploy
+    instance_size_slug: basic-xs
+    instance_count: 1
+    envs:
+      - key: NODE_ENV
+        value: production
+        scope: RUN_AND_BUILD_TIME
+      - key: DATABASE_URL
+        type: SECRET
+        scope: RUN_AND_BUILD_TIME
+
 services:
   - name: api
     # Build configuration
@@ -32,98 +55,12 @@ services:
       branch: master
       deploy_on_push: true
     
-    #
-    # PRE-DEPLOY JOBS
-    # These run BEFORE building and deploying. If any fail, deployment stops.
-    #
-    jobs:
-      # Job 1: Run tests and linting
-      - name: pre-deploy-tests
-        kind: PRE_DEPLOY
-        run_command: |
-          #!/bin/bash
-          set -e  # Exit on any error
-          
-          echo "=========================================="
-          echo "   PRE-DEPLOYMENT TESTS & VALIDATION"
-          echo "=========================================="
-          
-          echo ""
-          echo "Step 1: Installing dependencies..."
-          npm ci
-          
-          echo ""
-          echo "Step 2: Running linter..."
-          npm run lint
-          
-          echo ""
-          echo "Step 3: Running unit tests..."
-          npm run test:unit
-          
-          echo ""
-          echo "Step 4: Generating Prisma client..."
-          npm run db:generate
-          
-          echo ""
-          echo "=========================================="
-          echo "   ✅ ALL PRE-DEPLOYMENT CHECKS PASSED"
-          echo "=========================================="
-        
-        environment_slug: node-js
-        instance_size_slug: basic-xxs
-        
-        # Environment variables needed for testing
-        envs:
-          - key: NODE_ENV
-            value: production
-          - key: DATABASE_URL
-            type: SECRET
-            scope: BUILD_TIME
-      
-      # Job 2: Run database migrations
-      - name: run-migrations
-        kind: PRE_DEPLOY
-        run_command: |
-          #!/bin/bash
-          set -e  # Exit on any error
-          
-          echo "=========================================="
-          echo "   DATABASE MIGRATIONS"
-          echo "=========================================="
-          
-          echo ""
-          echo "Installing dependencies..."
-          npm ci
-          
-          echo ""
-          echo "Running Prisma migrations..."
-          npx prisma migrate deploy
-          
-          echo ""
-          echo "Generating Prisma client..."
-          npx prisma generate
-          
-          echo ""
-          echo "=========================================="
-          echo "   ✅ MIGRATIONS COMPLETED SUCCESSFULLY"
-          echo "=========================================="
-        
-        environment_slug: node-js
-        instance_size_slug: basic-xxs
-        
-        envs:
-          - key: NODE_ENV
-            value: production
-          - key: DATABASE_URL
-            type: SECRET
-            scope: BUILD_TIME
-    
     # Use custom Dockerfile for building
     dockerfile_path: Dockerfile
     
-    # Runtime configuration - 2 instances for production high availability
-    instance_count: 2
-    instance_size_slug: basic-xxs
+    # Runtime configuration
+    instance_count: 1
+    instance_size_slug: basic-xs
     
     # Health check - DigitalOcean waits for this before marking deployment successful
     health_check:
@@ -136,10 +73,6 @@ services:
     
     # HTTP configuration
     http_port: 8080
-    
-    # Routes
-    routes:
-      - path: /
     
     #
     # ENVIRONMENT VARIABLES
@@ -282,15 +215,7 @@ services:
       
       - key: DATABASE_POOL_URL
         type: SECRET
-        scope: RUN_TIME
-      
-      - key: DATABASE_POOL_SIZE
-        value: "20"
-        scope: RUN_TIME
-      
-      - key: DATABASE_POOL_TIMEOUT
-        value: "30"
-        scope: RUN_TIME
+        scope: RUN_AND_BUILD_TIME
       
       #
       # Redis Configuration
@@ -298,7 +223,7 @@ services:
       #
       - key: REDIS_URL
         type: SECRET
-        scope: RUN_TIME
+        scope: RUN_AND_BUILD_TIME
       
       #
       # Platform Fee Configuration
@@ -511,13 +436,18 @@ domains:
   - domain: api.easyescrow.ai
     type: PRIMARY
 
+# Ingress configuration for routing
+ingress:
+  rules:
+  - component:
+      name: api
+    match:
+      path:
+        prefix: /
+
 # Alerts - DigitalOcean will notify on these events
 alerts:
   - rule: DEPLOYMENT_FAILED
   - rule: DOMAIN_FAILED
   - rule: DEPLOYMENT_LIVE
-  - rule: CPU_UTILIZATION
-    value: 80
-  - rule: MEM_UTILIZATION
-    value: 80
 
