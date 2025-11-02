@@ -927,6 +927,12 @@ export const initializeEscrow = async (
 
   } catch (error) {
     console.error('[SolanaService] Error initializing escrow:', error);
+    
+    // Re-throw ValidationError without wrapping to preserve prototype chain
+    if (error instanceof ValidationError) {
+      throw error;
+    }
+    
     throw new Error(`Failed to initialize escrow: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 };
