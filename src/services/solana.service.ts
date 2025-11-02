@@ -14,7 +14,7 @@ import {
   AccountInfo,
   KeyedAccountInfo,
 } from '@solana/web3.js';
-import { getAssociatedTokenAddress } from '@solana/spl-token';
+import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { BN } from '@coral-xyz/anchor';
 import { config } from '../config';
 
@@ -813,6 +813,14 @@ export const initializeEscrow = async (
         );
       }
       
+      // Verify the account is actually a mint (owned by Token Program)
+      if (mintInfo.owner.toBase58() !== TOKEN_PROGRAM_ID.toBase58()) {
+        throw new ValidationError(
+          `Address ${params.nftMint} is not a valid SPL token mint. ` +
+          `The account exists but is not owned by the Token Program.`
+        );
+      }
+      
       console.log('[SolanaService] ✅ NFT mint validated on-chain');
     } catch (error) {
       if (error instanceof ValidationError) {
@@ -919,6 +927,12 @@ export const initializeEscrow = async (
 
   } catch (error) {
     console.error('[SolanaService] Error initializing escrow:', error);
+    
+    // Re-throw ValidationError without wrapping to preserve prototype chain
+    if (error instanceof ValidationError) {
+      throw error;
+    }
+    
     throw new Error(`Failed to initialize escrow: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 };

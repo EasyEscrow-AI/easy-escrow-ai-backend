@@ -11,10 +11,12 @@ import {
   depositNftToEscrow,
   depositUsdcToEscrow,
   prepareDepositNftTransaction,
-  prepareDepositUsdcTransaction
+  prepareDepositUsdcTransaction,
+  archiveAgreements
 } from '../services/agreement.service';
 import { CreateAgreementDTO, AgreementQueryDTO } from '../models/dto/agreement.dto';
 import { AgreementStatus } from '../generated/prisma';
+import { ValidationError } from '../services/solana.service';
 
 const router = Router();
 
@@ -373,6 +375,81 @@ router.post(
         success: false,
         error: statusCode === 404 ? 'Not Found' : statusCode === 400 ? 'Bad Request' : 'Internal Server Error',
         message: errorMessage,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * POST /v1/agreements/archive
+ * Archive multiple agreements (admin-only, for test cleanup)
+ * Optional admin authentication
+ */
+router.post(
+  '/v1/agreements/archive',
+  standardRateLimiter,
+  optionalAdminAuth,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { agreementIds, reason } = req.body;
+
+      // Validate input
+      if (!agreementIds || !Array.isArray(agreementIds) || agreementIds.length === 0) {
+        res.status(400).json({
+          success: false,
+          error: 'Bad Request',
+          message: 'agreementIds must be a non-empty array',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Limit to 100 agreements per request to prevent abuse
+      if (agreementIds.length > 100) {
+        res.status(400).json({
+          success: false,
+          error: 'Bad Request',
+          message: 'Cannot archive more than 100 agreements at once',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Validate that all IDs are strings
+      if (!agreementIds.every((id: any) => typeof id === 'string')) {
+        res.status(400).json({
+          success: false,
+          error: 'Bad Request',
+          message: 'All agreement IDs must be strings',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const archiveReason = reason || 'Manual archive via API';
+
+      console.log(`[ArchiveRoute] Archiving ${agreementIds.length} agreements`);
+      console.log(`[ArchiveRoute] Reason: ${archiveReason}`);
+
+      const result = await archiveAgreements(agreementIds, archiveReason);
+
+      res.status(200).json({
+        success: true,
+        data: {
+          archived: result.count,
+          agreementIds: result.archived,
+          reason: archiveReason,
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Error archiving agreements:', error);
+
+      res.status(500).json({
+        success: false,
+        error: 'Internal Server Error',
+        message: error instanceof Error ? error.message : 'Failed to archive agreements',
         timestamp: new Date().toISOString(),
       });
     }
