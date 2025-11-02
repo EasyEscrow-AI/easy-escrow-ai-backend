@@ -83,6 +83,12 @@ export const createAgreement = async (
 
     console.log('[AgreementService] Escrow Result:', JSON.stringify(escrowResult, null, 2));
 
+    // IMPORTANT: Add the same 60-second buffer to DB expiry that was added on-chain
+    // This ensures DB expiry matches on-chain expiry exactly, preventing race conditions
+    // where DB thinks agreement is expired but on-chain still has time remaining
+    const EXPIRY_BUFFER_SECONDS = 60;
+    const bufferedExpiry = new Date(new Date(data.expiry).getTime() + EXPIRY_BUFFER_SECONDS * 1000);
+
     // 2. Store agreement in database
     const agreement = await prisma.agreement.create({
       data: {
@@ -95,7 +101,7 @@ export const createAgreement = async (
         feeBps: data.feeBps,
         honorRoyalties: data.honorRoyalties,
         status: AgreementStatus.PENDING,
-        expiry: new Date(data.expiry),
+        expiry: bufferedExpiry, // Use buffered expiry to match on-chain state
         usdcDepositAddr: escrowResult.depositAddresses.usdc,
         nftDepositAddr: escrowResult.depositAddresses.nft,
         initTxId: escrowResult.transactionId,
