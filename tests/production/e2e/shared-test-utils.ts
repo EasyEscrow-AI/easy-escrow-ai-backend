@@ -842,35 +842,33 @@ export async function archiveAgreements(agreementIds: string[]): Promise<void> {
   console.log(`\n🗄️ Archiving ${agreementIds.length} test agreements...`);
   
   try {
-    // Direct database update - no API, no auth needed!
-    const result = await prisma.agreement.updateMany({
-      where: {
-        agreementId: {
-          in: agreementIds
-        }
+    // Use API endpoint instead of direct database access
+    const response = await axios.post(
+      `${PRODUCTION_CONFIG.apiBaseUrl}/v1/agreements/archive`,
+      {
+        agreementIds,
+        reason: 'E2E test cleanup'
       },
-      data: {
-        status: 'ARCHIVED',
-        archivedAt: new Date(),
-        archiveReason: 'E2E test cleanup'
+      {
+        headers: {
+          'Content-Type': 'application/json'
+        }
       }
-    });
+    );
     
-    console.log(`   ✅ Archived ${result.count} agreement(s)`);
+    const archived = response.data.data.archived;
+    console.log(`   ✅ Archived ${archived} agreement(s)`);
     
-    if (result.count < agreementIds.length) {
-      const notFound = agreementIds.length - result.count;
+    if (archived < agreementIds.length) {
+      const notFound = agreementIds.length - archived;
       console.log(`   ℹ️  ${notFound} agreement(s) not found (may have been deleted or already archived)`);
     }
     
     console.log('');
   } catch (error: any) {
-    console.error(`   ❌ Archive failed:`, error?.message || error);
+    console.error(`   ❌ Archive failed:`, error?.response?.data?.message || error?.message || error);
     console.log('');
   }
-  // Note: Prisma client is NOT disconnected here because it's a global instance
-  // that may be reused across multiple test files. Prisma automatically handles
-  // cleanup when the Node.js process exits.
 }
 
 /**
