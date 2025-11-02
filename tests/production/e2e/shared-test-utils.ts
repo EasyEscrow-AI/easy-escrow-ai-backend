@@ -25,6 +25,7 @@ import {
 import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
+import { PrismaClient } from '../../../src/generated/prisma';
 import { PRODUCTION_CONFIG } from './test-config';
 
 // Re-export configuration for use in test files
@@ -813,78 +814,71 @@ export function displayBalances(balances: any, label: string = 'Balances') {
 // TEST CLEANUP
 // ============================================================================
 
+// Initialize Prisma client for direct database access during cleanup
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL
+    }
+  }
+});
+
 /**
- * Cancel agreements for cleanup
- * Attempts to cancel agreements that were created during E2E tests
- * Silently ignores errors (e.g. already cancelled, already settled)
+ * Archive test agreements for cleanup
+ * Archives (soft deletes) agreements that were created during E2E tests
+ * Uses direct database access - no API authentication needed
+ * 
+ * Archived agreements:
+ * - Status set to ARCHIVED
+ * - Automatically excluded from monitoring service
+ * - Can be queried for analytics
+ * - Can be restored if needed
  */
-export async function cleanupAgreements(agreementIds: string[]): Promise<void> {
+export async function archiveAgreements(agreementIds: string[]): Promise<void> {
   if (agreementIds.length === 0) {
     return;
   }
   
-  console.log(`\n🧹 Cleaning up ${agreementIds.length} test agreements...`);
+  console.log(`\n🗄️ Archiving ${agreementIds.length} test agreements...`);
   
-  let successCount = 0;
-  let skipCount = 0;
-  let errorCount = 0;
-  
-  for (const agreementId of agreementIds) {
-    try {
-      // Try to cancel via admin endpoint (requires x-admin-key header)
-      // Uses first admin key from ADMIN_API_KEYS environment variable
-      const adminKeys = process.env.ADMIN_API_KEYS?.split(',').map(k => k.trim()) || [];
-      const adminKey = adminKeys[0] || '';
-      
-      if (!adminKey) {
-        console.log(`   ⏭️  Skipped: ${agreementId} (no ADMIN_API_KEYS configured)`);
-        skipCount++;
-        continue;
-      }
-      
-      const response = await axios.post(
-        `${PRODUCTION_CONFIG.apiBaseUrl}/v1/agreements/${agreementId}/cancel`,
-        { reason: 'E2E test cleanup' },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'x-admin-key': adminKey,
-          },
-          timeout: 10000,
+  try {
+    // Direct database update - no API, no auth needed!
+    const result = await prisma.agreement.updateMany({
+      where: {
+        agreementId: {
+          in: agreementIds
         }
-      );
-      
-      if (response.status === 200 || response.status === 201) {
-        console.log(`   ✅ Cancelled: ${agreementId}`);
-        successCount++;
+      },
+      data: {
+        status: 'ARCHIVED',
+        archivedAt: new Date(),
+        archiveReason: 'E2E test cleanup'
       }
-    } catch (error: any) {
-      const status = error?.response?.status;
-      const message = error?.response?.data?.error || error?.message;
-      
-      // Silently skip already cancelled or settled agreements
-      if (
-        message?.includes('already cancelled') ||
-        message?.includes('already settled') ||
-        message?.includes('Cannot cancel') ||
-        status === 400
-      ) {
-        console.log(`   ⏭️  Skipped: ${agreementId} (${message || 'already processed'})`);
-        skipCount++;
-      } else {
-        console.log(`   ⚠️  Failed: ${agreementId} (${message || 'unknown error'})`);
-        errorCount++;
-      }
+    });
+    
+    console.log(`   ✅ Archived ${result.count} agreement(s)`);
+    
+    if (result.count < agreementIds.length) {
+      const notFound = agreementIds.length - result.count;
+      console.log(`   ℹ️  ${notFound} agreement(s) not found (may have been deleted or already archived)`);
     }
+    
+    console.log('');
+  } catch (error: any) {
+    console.error(`   ❌ Archive failed:`, error?.message || error);
+    console.log('');
   }
-  
-  console.log(`\n📊 Cleanup Summary:`);
-  console.log(`   ✅ Cancelled: ${successCount}`);
-  console.log(`   ⏭️  Skipped: ${skipCount}`);
-  if (errorCount > 0) {
-    console.log(`   ⚠️  Errors: ${errorCount}`);
-  }
-  console.log('');
+  // Note: Prisma client is NOT disconnected here because it's a global instance
+  // that may be reused across multiple test files. Prisma automatically handles
+  // cleanup when the Node.js process exits.
+}
+
+/**
+ * Legacy function name for backward compatibility
+ * @deprecated Use archiveAgreements instead
+ */
+export async function cleanupAgreements(agreementIds: string[]): Promise<void> {
+  return archiveAgreements(agreementIds);
 }
 
 

@@ -22,6 +22,7 @@ enum AgreementStatus {
   EXPIRED
   CANCELLED
   REFUNDED
+  ARCHIVED
 }
 
 // Enum for deposit type
@@ -76,6 +77,8 @@ model Agreement {
   updatedAt        DateTime         @updatedAt @map("updated_at")
   settledAt        DateTime?        @map("settled_at")
   cancelledAt      DateTime?        @map("cancelled_at")
+  archivedAt       DateTime?        @map("archived_at")
+  archiveReason    String?          @map("archive_reason")
   
   deposits         Deposit[]
   settlement       Settlement?
@@ -88,6 +91,7 @@ model Agreement {
   @@index([status])
   @@index([expiry])
   @@index([createdAt])
+  @@index([archivedAt])
   @@map("agreements")
 }
 
