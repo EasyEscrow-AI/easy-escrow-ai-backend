@@ -42,6 +42,18 @@ router.post(
       });
     } catch (error) {
       console.error('Error creating agreement:', error);
+      
+      // Check if it's a validation error (from on-chain validation)
+      if (error instanceof Error && error.name === 'ValidationError') {
+        res.status(422).json({
+          success: false,
+          error: 'Validation Error',
+          message: error.message,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+      
       res.status(500).json({
         success: false,
         error: 'Internal Server Error',

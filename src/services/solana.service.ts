@@ -19,6 +19,18 @@ import { BN } from '@coral-xyz/anchor';
 import { config } from '../config';
 
 /**
+ * Custom error class for validation errors
+ * Used to distinguish validation errors from other errors
+ */
+export class ValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ValidationError';
+    Object.setPrototypeOf(this, ValidationError.prototype);
+  }
+}
+
+/**
  * Configuration for Solana connection
  */
 interface SolanaConnectionConfig {
@@ -785,6 +797,33 @@ export const initializeEscrow = async (
     const nftMintPubkey = new PublicKey(params.nftMint);
     const sellerPubkey = new PublicKey(params.seller);
     const buyerPubkey = params.buyer ? new PublicKey(params.buyer) : undefined;
+    
+    // Validate NFT mint exists on-chain before proceeding
+    console.log('[SolanaService] Validating NFT mint exists on-chain...');
+    const solanaService = getSolanaService();
+    const connection = solanaService.getConnection();
+    
+    try {
+      const mintInfo = await connection.getAccountInfo(nftMintPubkey);
+      
+      if (!mintInfo) {
+        throw new ValidationError(
+          `NFT mint address ${params.nftMint} does not exist on-chain. ` +
+          `Please verify the mint address is correct and deployed to the network.`
+        );
+      }
+      
+      console.log('[SolanaService] ✅ NFT mint validated on-chain');
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        throw error;
+      }
+      // RPC error or network issue
+      console.error('[SolanaService] Failed to validate NFT mint:', error);
+      throw new ValidationError(
+        `Failed to validate NFT mint address: ${error instanceof Error ? error.message : 'Network error'}`
+      );
+    }
     
     // Get program ID - MUST be set in environment
     if (!config.solana?.escrowProgramId) {

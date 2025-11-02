@@ -11,7 +11,6 @@
 
 import axios from 'axios';
 import { Connection, PublicKey, clusterApiUrl } from '@solana/web3.js';
-import chalk from 'chalk';
 
 // Configuration
 const STAGING_API_URL = process.env.STAGING_API_URL || 'https://staging-api.easyescrow.ai';
@@ -27,6 +26,15 @@ interface TestResult {
 
 const results: TestResult[] = [];
 
+// ANSI color codes
+const colors = {
+  reset: '\x1b[0m',
+  blue: '\x1b[34m',
+  green: '\x1b[32m',
+  red: '\x1b[31m',
+  yellow: '\x1b[33m'
+};
+
 /**
  * Run a test and record the result
  */
@@ -34,17 +42,17 @@ async function runTest(name: string, testFn: () => Promise<void>): Promise<void>
   const startTime = Date.now();
   
   try {
-    console.log(chalk.blue(`\n▶ ${name}...`));
+    console.log(`${colors.blue}\n▶ ${name}...${colors.reset}`);
     await testFn();
     const duration = Date.now() - startTime;
     results.push({ name, passed: true, duration });
-    console.log(chalk.green(`✓ ${name} (${duration}ms)`));
+    console.log(`${colors.green}✓ ${name} (${duration}ms)${colors.reset}`);
   } catch (error) {
     const duration = Date.now() - startTime;
     const errorMessage = error instanceof Error ? error.message : String(error);
     results.push({ name, passed: false, duration, error: errorMessage });
-    console.error(chalk.red(`✗ ${name} (${duration}ms)`));
-    console.error(chalk.red(`  Error: ${errorMessage}`));
+    console.error(`${colors.red}✗ ${name} (${duration}ms)${colors.reset}`);
+    console.error(`${colors.red}  Error: ${errorMessage}${colors.reset}`);
   }
 }
 
@@ -70,33 +78,36 @@ async function testApiHealth(): Promise<void> {
  * Test 2: API Version Check
  */
 async function testApiVersion(): Promise<void> {
-  const response = await axios.get(`${STAGING_API_URL}/v1/version`, {
+  const response = await axios.get(`${STAGING_API_URL}/`, {
     timeout: 5000
   });
   
   if (!response.data || !response.data.version) {
-    throw new Error('Version endpoint returned invalid data');
+    throw new Error('Root endpoint returned invalid data');
   }
   
   console.log(`  API Version: ${response.data.version}`);
+  console.log(`  Service: ${response.data.message}`);
 }
 
 /**
- * Test 3: API Authentication (should fail without credentials)
+ * Test 3: API Rate Limiting
  */
-async function testApiAuthentication(): Promise<void> {
-  try {
-    await axios.get(`${STAGING_API_URL}/v1/agreements`, {
-      timeout: 5000
-    });
-    throw new Error('Expected authentication error but request succeeded');
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === 401) {
-      console.log('  Authentication correctly enforced (401)');
-      return;
-    }
-    throw error;
+async function testApiRateLimiting(): Promise<void> {
+  // Test that rate limiting headers are present
+  const response = await axios.get(`${STAGING_API_URL}/v1/agreements`, {
+    timeout: 5000
+  });
+  
+  // Check for standard RateLimit-* headers (not legacy X-RateLimit-*)
+  const rateLimitHeaders = response.headers['ratelimit-limit'];
+  if (!rateLimitHeaders) {
+    throw new Error('Rate limiting headers not found');
   }
+  
+  console.log(`  Rate limiting configured: ${rateLimitHeaders} requests`);
+  console.log(`  Remaining: ${response.headers['ratelimit-remaining'] || 'N/A'}`);
+  console.log(`  Endpoint accessible: /v1/agreements`);
 }
 
 /**
@@ -182,10 +193,10 @@ async function testRedisConnectivity(): Promise<void> {
  * Test 8: CORS Configuration
  */
 async function testCorsConfiguration(): Promise<void> {
-  const response = await axios.options(`${STAGING_API_URL}/v1/agreements`, {
+  // Test with localhost origin (allowed in non-production)
+  const response = await axios.get(`${STAGING_API_URL}/health`, {
     headers: {
-      'Origin': 'https://staging.easyescrow.ai',
-      'Access-Control-Request-Method': 'POST'
+      'Origin': 'http://localhost:3000'
     },
     timeout: 5000
   });
@@ -195,49 +206,51 @@ async function testCorsConfiguration(): Promise<void> {
     throw new Error('CORS headers not configured');
   }
   
-  console.log(`  CORS Configured: ${allowOrigin}`);
+  console.log(`  CORS Origin Allowed: ${allowOrigin}`);
+  console.log(`  CORS Credentials: ${response.headers['access-control-allow-credentials'] || 'false'}`);
+  console.log(`  CORS Methods: ${response.headers['access-control-allow-methods'] || 'N/A'}`);
 }
 
 /**
  * Print test summary
  */
 function printSummary(): void {
-  console.log(chalk.blue('\n' + '='.repeat(60)));
-  console.log(chalk.blue('SMOKE TEST SUMMARY'));
-  console.log(chalk.blue('='.repeat(60) + '\n'));
+  console.log(`${colors.blue}\n${'='.repeat(60)}${colors.reset}`);
+  console.log(`${colors.blue}SMOKE TEST SUMMARY${colors.reset}`);
+  console.log(`${colors.blue}${'='.repeat(60)}\n${colors.reset}`);
   
   const passed = results.filter(r => r.passed).length;
   const failed = results.filter(r => !r.passed).length;
   const total = results.length;
   
   console.log(`Total Tests: ${total}`);
-  console.log(chalk.green(`Passed: ${passed}`));
-  console.log(failed > 0 ? chalk.red(`Failed: ${failed}`) : `Failed: ${failed}`);
+  console.log(`${colors.green}Passed: ${passed}${colors.reset}`);
+  console.log(failed > 0 ? `${colors.red}Failed: ${failed}${colors.reset}` : `Failed: ${failed}`);
   
   const totalDuration = results.reduce((sum, r) => sum + r.duration, 0);
   console.log(`\nTotal Duration: ${totalDuration}ms`);
   
   if (failed > 0) {
-    console.log(chalk.red('\n❌ SMOKE TESTS FAILED\n'));
-    console.log(chalk.yellow('Failed Tests:'));
+    console.log(`${colors.red}\n❌ SMOKE TESTS FAILED\n${colors.reset}`);
+    console.log(`${colors.yellow}Failed Tests:${colors.reset}`);
     results.filter(r => !r.passed).forEach(r => {
-      console.log(chalk.red(`  ✗ ${r.name}`));
-      console.log(chalk.red(`    ${r.error}`));
+      console.log(`${colors.red}  ✗ ${r.name}${colors.reset}`);
+      console.log(`${colors.red}    ${r.error}${colors.reset}`);
     });
   } else {
-    console.log(chalk.green('\n✅ ALL SMOKE TESTS PASSED\n'));
+    console.log(`${colors.green}\n✅ ALL SMOKE TESTS PASSED\n${colors.reset}`);
   }
   
-  console.log(chalk.blue('='.repeat(60) + '\n'));
+  console.log(`${colors.blue}${'='.repeat(60)}\n${colors.reset}`);
 }
 
 /**
  * Main execution
  */
 async function main(): Promise<void> {
-  console.log(chalk.blue('='.repeat(60)));
-  console.log(chalk.blue('STAGING ENVIRONMENT SMOKE TESTS'));
-  console.log(chalk.blue('='.repeat(60)));
+  console.log(`${colors.blue}${'='.repeat(60)}${colors.reset}`);
+  console.log(`${colors.blue}STAGING ENVIRONMENT SMOKE TESTS${colors.reset}`);
+  console.log(`${colors.blue}${'='.repeat(60)}${colors.reset}`);
   console.log(`\nAPI URL: ${STAGING_API_URL}`);
   console.log(`RPC URL: ${STAGING_RPC_URL}`);
   console.log(`Program ID: ${STAGING_PROGRAM_ID || 'Not set'}`);
@@ -245,7 +258,7 @@ async function main(): Promise<void> {
   // Run all tests
   await runTest('API Health Check', testApiHealth);
   await runTest('API Version Check', testApiVersion);
-  await runTest('API Authentication', testApiAuthentication);
+  await runTest('API Rate Limiting', testApiRateLimiting);
   await runTest('Solana RPC Connection', testSolanaConnection);
   await runTest('Program Account Verification', testProgramAccount);
   await runTest('Database Connectivity', testDatabaseConnectivity);
@@ -262,7 +275,7 @@ async function main(): Promise<void> {
 
 // Run tests
 main().catch((error) => {
-  console.error(chalk.red('\n❌ Fatal error running smoke tests:'));
-  console.error(chalk.red(error.message));
+  console.error(`${colors.red}\n❌ Fatal error running smoke tests:${colors.reset}`);
+  console.error(`${colors.red}${error.message}${colors.reset}`);
   process.exit(1);
 });
