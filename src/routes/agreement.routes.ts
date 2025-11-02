@@ -15,6 +15,7 @@ import {
 } from '../services/agreement.service';
 import { CreateAgreementDTO, AgreementQueryDTO } from '../models/dto/agreement.dto';
 import { AgreementStatus } from '../generated/prisma';
+import { ValidationError } from '../services/solana.service';
 
 const router = Router();
 
@@ -44,7 +45,7 @@ router.post(
       console.error('Error creating agreement:', error);
       
       // Check if it's a validation error (from on-chain validation)
-      if (error instanceof Error && error.name === 'ValidationError') {
+      if (error instanceof ValidationError) {
         res.status(422).json({
           success: false,
           error: 'Validation Error',
