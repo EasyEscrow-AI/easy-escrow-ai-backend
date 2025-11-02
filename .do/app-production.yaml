@@ -1,10 +1,28 @@
 #
-# DigitalOcean App Platform Configuration - PRODUCTION Environment (Initial Creation)
-# Simplified version without PRE_DEPLOY jobs for doctl compatibility
+# DigitalOcean App Platform Configuration - PRODUCTION Environment
+# Native CI/CD Pipeline with Pre-Deploy Testing & Migrations
+#
+# IMPORTANT SECURITY NOTE:
+# This file is SAFE TO COMMIT to Git. All sensitive values use ${VARIABLE_NAME}
+# placeholders or are marked as type: SECRET and configured in DigitalOcean App Platform.
+#
+# NEVER commit actual private keys, passwords, or API keys to this file.
+#
+# This configuration uses MAINNET_PROD_* naming convention for production environment.
+#
+# Deploy with: doctl apps create --spec app-production.yaml
+# Update with: doctl apps update <app-id> --spec app-production.yaml
+#
+# See docs/deployment/PRODUCTION_DEPLOYMENT.md for complete deployment documentation.
 #
 
 name: easyescrow-backend-production
 region: sgp1
+
+# VPC configuration for private database access
+# Configure after VPC is properly set up
+# vpc:
+#   id: <production-vpc-id>
 
 services:
   - name: api
@@ -14,13 +32,98 @@ services:
       branch: master
       deploy_on_push: true
     
+    #
+    # PRE-DEPLOY JOBS
+    # These run BEFORE building and deploying. If any fail, deployment stops.
+    #
+    jobs:
+      # Job 1: Run tests and linting
+      - name: pre-deploy-tests
+        kind: PRE_DEPLOY
+        run_command: |
+          #!/bin/bash
+          set -e  # Exit on any error
+          
+          echo "=========================================="
+          echo "   PRE-DEPLOYMENT TESTS & VALIDATION"
+          echo "=========================================="
+          
+          echo ""
+          echo "Step 1: Installing dependencies..."
+          npm ci
+          
+          echo ""
+          echo "Step 2: Running linter..."
+          npm run lint
+          
+          echo ""
+          echo "Step 3: Running unit tests..."
+          npm run test:unit
+          
+          echo ""
+          echo "Step 4: Generating Prisma client..."
+          npm run db:generate
+          
+          echo ""
+          echo "=========================================="
+          echo "   ✅ ALL PRE-DEPLOYMENT CHECKS PASSED"
+          echo "=========================================="
+        
+        environment_slug: node-js
+        instance_size_slug: basic-xxs
+        
+        # Environment variables needed for testing
+        envs:
+          - key: NODE_ENV
+            value: production
+          - key: DATABASE_URL
+            type: SECRET
+            scope: BUILD_TIME
+      
+      # Job 2: Run database migrations
+      - name: run-migrations
+        kind: PRE_DEPLOY
+        run_command: |
+          #!/bin/bash
+          set -e  # Exit on any error
+          
+          echo "=========================================="
+          echo "   DATABASE MIGRATIONS"
+          echo "=========================================="
+          
+          echo ""
+          echo "Installing dependencies..."
+          npm ci
+          
+          echo ""
+          echo "Running Prisma migrations..."
+          npx prisma migrate deploy
+          
+          echo ""
+          echo "Generating Prisma client..."
+          npx prisma generate
+          
+          echo ""
+          echo "=========================================="
+          echo "   ✅ MIGRATIONS COMPLETED SUCCESSFULLY"
+          echo "=========================================="
+        
+        environment_slug: node-js
+        instance_size_slug: basic-xxs
+        
+        envs:
+          - key: NODE_ENV
+            value: production
+          - key: DATABASE_URL
+            type: SECRET
+            scope: BUILD_TIME
+    
     # Use custom Dockerfile for building
     dockerfile_path: Dockerfile
     
-    # Runtime configuration - start with 1 instance
-    # Note: Horizontal scaling requires Professional tier or higher
-    instance_count: 1
-    instance_size_slug: basic-xs
+    # Runtime configuration - 2 instances for production high availability
+    instance_count: 2
+    instance_size_slug: basic-xxs
     
     # Health check - DigitalOcean waits for this before marking deployment successful
     health_check:
@@ -68,6 +171,8 @@ services:
       
       #
       # Solana RPC Configuration
+      # IMPORTANT: Set actual Mainnet RPC URL in DigitalOcean App Platform console
+      # Recommended: Use Helius, QuickNode, or Triton for production-grade RPC
       #
       - key: SOLANA_RPC_URL
         type: SECRET
@@ -91,17 +196,23 @@ services:
       
       #
       # PRODUCTION Program Configuration
+      # Program ID: 2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx
+      # NOTE: MAINNET_PROD_PROGRAM_ID is for environment identification
+      #       ESCROW_PROGRAM_ID is what the application code expects
+      #       Both must have the same value
       #
       - key: MAINNET_PROD_PROGRAM_ID
-        type: SECRET
+        value: 2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx
         scope: RUN_TIME
       
       - key: ESCROW_PROGRAM_ID
-        type: SECRET
+        value: 2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx
         scope: RUN_TIME
       
       #
-      # PRODUCTION Wallet Configuration
+      # PRODUCTION Wallet Configuration (Base58 Private Keys)
+      # IMPORTANT: All private keys must be stored in DO App Platform as secrets
+      # SECURITY: Never commit actual private keys to this file
       #
       - key: MAINNET_PROD_ADMIN_PRIVATE_KEY
         type: SECRET
@@ -121,6 +232,10 @@ services:
       
       #
       # Token Configuration (Official Circle USDC Mainnet)
+      # NOTE: MAINNET_PROD_USDC_MINT_ADDRESS is for environment identification
+      #       USDC_MINT_ADDRESS is what the application code expects
+      #       Both must have the same value
+      # Circle USDC Mainnet Address: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
       #
       - key: MAINNET_PROD_USDC_MINT_ADDRESS
         value: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
@@ -132,6 +247,8 @@ services:
       
       #
       # Database Configuration
+      # IMPORTANT: Actual connection strings with passwords stored in DO App Platform
+      # Use production database (easyescrow_prod)
       #
       - key: DATABASE_URL
         type: SECRET
@@ -151,6 +268,7 @@ services:
       
       #
       # Redis Configuration
+      # IMPORTANT: Actual Redis URL with password stored in DO App Platform
       #
       - key: REDIS_URL
         type: SECRET
@@ -158,6 +276,7 @@ services:
       
       #
       # Platform Fee Configuration
+      # Production fee: 1% (100 basis points)
       #
       - key: PLATFORM_FEE_BPS
         value: "100"
@@ -192,6 +311,8 @@ services:
       
       #
       # JWT Configuration
+      # IMPORTANT: Strong JWT secret stored in DO App Platform
+      # Generate with: openssl rand -base64 64
       #
       - key: JWT_SECRET
         type: SECRET
@@ -202,7 +323,7 @@ services:
         scope: RUN_TIME
       
       #
-      # API Rate Limiting
+      # API Rate Limiting (More restrictive for production)
       #
       - key: RATE_LIMIT_WINDOW_MS
         value: "900000"
@@ -214,6 +335,7 @@ services:
       
       #
       # CORS Configuration
+      # Note: Only allow production frontend domain
       #
       - key: CORS_ORIGIN
         value: https://easyescrow.ai,https://www.easyescrow.ai
@@ -221,6 +343,8 @@ services:
       
       #
       # Webhook Configuration
+      # IMPORTANT: Actual webhook secret stored in DO App Platform
+      # Generate with: openssl rand -base64 32
       #
       - key: WEBHOOK_SECRET
         type: SECRET
@@ -250,7 +374,7 @@ services:
         scope: RUN_TIME
       
       #
-      # Swagger/Documentation (Disabled in production)
+      # Swagger/Documentation (Disabled in production for security)
       #
       - key: ENABLE_SWAGGER
         value: "false"
@@ -262,6 +386,7 @@ services:
       
       #
       # Monitoring & Analytics
+      # IMPORTANT: Sentry DSN stored in DO App Platform
       #
       - key: SENTRY_DSN
         type: SECRET
@@ -276,7 +401,9 @@ services:
         scope: RUN_TIME
       
       #
-      # Email Configuration
+      # Email Configuration (Production SMTP)
+      # IMPORTANT: Production SMTP credentials stored in DO App Platform
+      # Use SendGrid, AWS SES, or similar production-grade service
       #
       - key: SMTP_HOST
         type: SECRET
@@ -299,7 +426,8 @@ services:
         scope: RUN_TIME
       
       #
-      # S3/Spaces Configuration
+      # S3/Spaces Configuration (Singapore Region)
+      # IMPORTANT: Production Spaces credentials stored in DO App Platform
       #
       - key: DO_SPACES_ENDPOINT
         value: https://sgp1.digitaloceanspaces.com
@@ -322,7 +450,7 @@ services:
         scope: RUN_TIME
       
       #
-      # Logging Configuration
+      # Logging Configuration (JSON format for production)
       #
       - key: LOG_FORMAT
         value: json
@@ -338,6 +466,7 @@ services:
       
       #
       # Notification Configuration
+      # For deployment and alert notifications
       #
       - key: SLACK_WEBHOOK
         type: SECRET
@@ -352,9 +481,13 @@ domains:
   - domain: api.easyescrow.ai
     type: PRIMARY
 
-# Alerts
+# Alerts - DigitalOcean will notify on these events
 alerts:
   - rule: DEPLOYMENT_FAILED
   - rule: DOMAIN_FAILED
   - rule: DEPLOYMENT_LIVE
+  - rule: CPU_UTILIZATION
+    value: 80
+  - rule: MEM_UTILIZATION
+    value: 80
 
