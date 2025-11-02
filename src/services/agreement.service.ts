@@ -8,7 +8,7 @@ import {
   DepositInfoDTO,
   CancelAgreementResponseDTO,
 } from '../models/dto/agreement.dto';
-import { initializeEscrow, getSolanaService } from './solana.service';
+import { initializeEscrow, getSolanaService, ValidationError } from './solana.service';
 import { getMonitoringOrchestrator } from './monitoring-orchestrator.service';
 import {
   getTransactionLogService,
@@ -147,6 +147,13 @@ export const createAgreement = async (
     };
   } catch (error) {
     console.error('Error creating agreement:', error);
+    
+    // Re-throw ValidationError without wrapping to preserve prototype chain
+    // This allows the route handler to catch it with instanceof check
+    if (error instanceof ValidationError) {
+      throw error;
+    }
+    
     throw new Error(
       `Failed to create agreement: ${error instanceof Error ? error.message : 'Unknown error'}`
     );
