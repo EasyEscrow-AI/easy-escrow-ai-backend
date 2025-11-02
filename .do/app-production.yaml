@@ -230,6 +230,32 @@ services:
         type: SECRET
         scope: RUN_TIME
       
+      # Additional wallet configuration for testing/operations
+      - key: MAINNET_PROD_SENDER_PRIVATE_KEY
+        type: SECRET
+        scope: RUN_TIME
+      
+      - key: MAINNET_PROD_SENDER_ADDRESS
+        type: SECRET
+        scope: RUN_TIME
+      
+      - key: MAINNET_PROD_RECEIVER_PRIVATE_KEY
+        type: SECRET
+        scope: RUN_TIME
+      
+      - key: MAINNET_PROD_RECEIVER_ADDRESS
+        type: SECRET
+        scope: RUN_TIME
+      
+      - key: MAINNET_PROD_DEPLOYER_ADDRESS
+        type: SECRET
+        scope: RUN_TIME
+      
+      # Legacy admin key (if needed for backward compatibility)
+      - key: MAINNET_ADMIN_PRIVATE_KEY
+        type: SECRET
+        scope: RUN_TIME
+      
       #
       # Token Configuration (Official Circle USDC Mainnet)
       # NOTE: MAINNET_PROD_USDC_MINT_ADDRESS is for environment identification
@@ -381,7 +407,7 @@ services:
         scope: RUN_TIME
       
       - key: SWAGGER_PATH
-        value: /api/docs
+        value: /docs
         scope: RUN_TIME
       
       #
@@ -434,6 +460,10 @@ services:
         scope: RUN_TIME
       
       - key: DO_SPACES_BUCKET
+        value: easyescrow-production
+        scope: RUN_TIME
+      
+      - key: DO_SPACES_BUCKET_NAME
         value: easyescrow-production
         scope: RUN_TIME
       
