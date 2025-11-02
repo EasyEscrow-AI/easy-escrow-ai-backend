@@ -423,7 +423,10 @@ class CostAnalyzerService {
         }
       }
 
-      const averageDailyCost = daily.reduce((sum, d) => sum + d.totalCost, 0) / daily.length;
+      // Handle empty data case
+      const averageDailyCost = daily.length > 0 
+        ? daily.reduce((sum, d) => sum + d.totalCost, 0) / daily.length 
+        : 0;
       const projectedMonthlyCost = averageDailyCost * 30;
 
       return {

@@ -456,6 +456,7 @@ export class StatusUpdateService {
         AgreementStatus.NFT_LOCKED,
         AgreementStatus.EXPIRED,
         AgreementStatus.CANCELLED,
+        AgreementStatus.ARCHIVED,
       ],
       [AgreementStatus.FUNDED]: [
         AgreementStatus.USDC_LOCKED,
@@ -463,26 +464,31 @@ export class StatusUpdateService {
         AgreementStatus.BOTH_LOCKED,
         AgreementStatus.EXPIRED,
         AgreementStatus.CANCELLED,
+        AgreementStatus.ARCHIVED,
       ],
       [AgreementStatus.USDC_LOCKED]: [
         AgreementStatus.BOTH_LOCKED,
         AgreementStatus.EXPIRED,
         AgreementStatus.CANCELLED,
+        AgreementStatus.ARCHIVED,
       ],
       [AgreementStatus.NFT_LOCKED]: [
         AgreementStatus.BOTH_LOCKED,
         AgreementStatus.EXPIRED,
         AgreementStatus.CANCELLED,
+        AgreementStatus.ARCHIVED,
       ],
       [AgreementStatus.BOTH_LOCKED]: [
         AgreementStatus.SETTLED,
         AgreementStatus.EXPIRED,
         AgreementStatus.CANCELLED,
+        AgreementStatus.ARCHIVED,
       ],
-      [AgreementStatus.SETTLED]: [], // Terminal state
-      [AgreementStatus.EXPIRED]: [AgreementStatus.REFUNDED],
-      [AgreementStatus.CANCELLED]: [AgreementStatus.REFUNDED],
-      [AgreementStatus.REFUNDED]: [], // Terminal state
+      [AgreementStatus.SETTLED]: [AgreementStatus.ARCHIVED], // Can archive completed agreements
+      [AgreementStatus.EXPIRED]: [AgreementStatus.REFUNDED, AgreementStatus.ARCHIVED],
+      [AgreementStatus.CANCELLED]: [AgreementStatus.REFUNDED, AgreementStatus.ARCHIVED],
+      [AgreementStatus.REFUNDED]: [AgreementStatus.ARCHIVED], // Can archive refunded agreements
+      [AgreementStatus.ARCHIVED]: [], // Terminal state - no transitions out
     };
 
     const allowedTransitions = validTransitions[from] || [];
