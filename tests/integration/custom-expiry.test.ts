@@ -212,6 +212,73 @@ describe('Custom Expiry Integration Tests', () => {
       expect(response.body.success).toBe(false);
       expect(response.body.message).toContain('not found');
     });
+
+    test('should reject negative extension (Bug Fix 1)', async () => {
+      const response = await request(API_URL)
+        .post(`/v1/agreements/${testAgreementId}/extend-expiry`)
+        .send({
+          extension: -6 // Trying to shorten by 6 hours
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('positive');
+    });
+
+    test('should reject zero extension (Bug Fix 1)', async () => {
+      const response = await request(API_URL)
+        .post(`/v1/agreements/${testAgreementId}/extend-expiry`)
+        .send({
+          extension: 0
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('positive');
+    });
+
+    test('should reject extension to earlier timestamp (Bug Fix 1)', async () => {
+      // Get current expiry
+      const agreement = await request(API_URL)
+        .get(`/v1/agreements/${testAgreementId}`);
+      
+      const currentExpiry = new Date(agreement.body.data.expiry);
+      const earlierTime = new Date(currentExpiry.getTime() - 3 * 60 * 60 * 1000); // 3 hours earlier
+
+      const response = await request(API_URL)
+        .post(`/v1/agreements/${testAgreementId}/extend-expiry`)
+        .send({
+          extension: earlierTime.toISOString()
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('later than current expiry');
+    });
+
+    test('should reject invalid date format (Bug Fix 2)', async () => {
+      const response = await request(API_URL)
+        .post(`/v1/agreements/${testAgreementId}/extend-expiry`)
+        .send({
+          extension: 'not-a-valid-date'
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('Invalid date');
+    });
+
+    test('should reject malformed ISO date (Bug Fix 2)', async () => {
+      const response = await request(API_URL)
+        .post(`/v1/agreements/${testAgreementId}/extend-expiry`)
+        .send({
+          extension: '2025-13-45T99:99:99Z' // Invalid date
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('Invalid date');
+    });
   });
 
   describe('Database Index Performance', () => {

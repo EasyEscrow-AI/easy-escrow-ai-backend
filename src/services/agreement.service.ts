@@ -939,6 +939,15 @@ export const extendAgreementExpiry = async (
     if (typeof extension === 'number') {
       // Extension in hours from current expiry
       extensionHours = extension;
+      
+      // Validate extension is positive
+      if (extensionHours <= 0) {
+        throw new ValidationError(
+          'Extension duration must be positive (cannot shorten expiry)',
+          { extension: extensionHours }
+        );
+      }
+      
       newExpiry = new Date(agreement.expiry.getTime() + extensionHours * 60 * 60 * 1000);
     } else if (typeof extension === 'string' && ['1h', '6h', '12h', '24h'].includes(extension)) {
       // Preset extension
@@ -947,9 +956,29 @@ export const extendAgreementExpiry = async (
       extensionHours = durationMs / (60 * 60 * 1000);
       newExpiry = new Date(agreement.expiry.getTime() + durationMs);
     } else if (extension instanceof Date || typeof extension === 'string') {
-      // Absolute new expiry time
+      // Absolute new expiry time - validate it's a valid date first
       newExpiry = extension instanceof Date ? extension : new Date(extension);
+      
+      // FIX BUG 2: Check for invalid date
+      if (isNaN(newExpiry.getTime())) {
+        throw new ValidationError(
+          'Invalid date format for expiry extension',
+          { extension }
+        );
+      }
+      
       extensionHours = (newExpiry.getTime() - agreement.expiry.getTime()) / (60 * 60 * 1000);
+      
+      // FIX BUG 1: Ensure new expiry is actually later than current expiry
+      if (newExpiry <= agreement.expiry) {
+        throw new ValidationError(
+          'New expiry must be later than current expiry (cannot shorten agreement)',
+          { 
+            currentExpiry: agreement.expiry.toISOString(),
+            requestedExpiry: newExpiry.toISOString()
+          }
+        );
+      }
     } else {
       throw new ValidationError('Invalid extension format', { extension });
     }
