@@ -25,11 +25,11 @@ export const PRODUCTION_CONFIG = {
   // Official Circle USDC Mainnet Mint
   usdcMint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
   
-  // Test parameters - SMALLER amounts for production testing
-  swapAmount: 0.01, // 0.01 USDC ($0.01 worth) for testing
+  // Test parameters - BETA LIMITS: $1.00 minimum
+  swapAmount: 1.00, // 1.00 USDC ($1.00 worth) - BETA minimum
   feePercentage: 0.01, // 1% platform fee
   testAmounts: {
-    swap: 0.01, // 0.01 USDC
+    swap: 1.00, // 1.00 USDC - BETA minimum limit
     fee: 0.01, // 1%
     minSOL: 0.01, // Minimum SOL balance for testing
   },
