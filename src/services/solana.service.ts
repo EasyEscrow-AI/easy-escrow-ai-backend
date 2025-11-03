@@ -23,9 +23,12 @@ import { config } from '../config';
  * Used to distinguish validation errors from other errors
  */
 export class ValidationError extends Error {
-  constructor(message: string) {
+  public details?: Record<string, any>;
+  
+  constructor(message: string, details?: Record<string, any>) {
     super(message);
     this.name = 'ValidationError';
+    this.details = details;
     Object.setPrototypeOf(this, ValidationError.prototype);
   }
 }

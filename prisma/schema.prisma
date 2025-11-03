@@ -92,6 +92,9 @@ model Agreement {
   @@index([expiry])
   @@index([createdAt])
   @@index([archivedAt])
+  // Composite indexes for scalability and batch processing
+  @@index([status, expiry], name: "idx_status_expiry")
+  @@index([expiry, seller, buyer], name: "idx_expiry_seller_buyer")
   @@map("agreements")
 }
 
