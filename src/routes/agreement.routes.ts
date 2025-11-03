@@ -12,7 +12,8 @@ import {
   depositUsdcToEscrow,
   prepareDepositNftTransaction,
   prepareDepositUsdcTransaction,
-  archiveAgreements
+  archiveAgreements,
+  extendAgreementExpiry
 } from '../services/agreement.service';
 import { CreateAgreementDTO, AgreementQueryDTO } from '../models/dto/agreement.dto';
 import { AgreementStatus } from '../generated/prisma';
@@ -450,6 +451,79 @@ router.post(
         success: false,
         error: 'Internal Server Error',
         message: error instanceof Error ? error.message : 'Failed to archive agreements',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * POST /v1/agreements/:agreementId/extend-expiry
+ * Extend agreement expiry before expiration
+ * 
+ * Supports:
+ * - Duration in hours (number 1-24)
+ * - Preset strings ('1h', '6h', '12h', '24h')
+ * - Absolute timestamp (ISO 8601)
+ * 
+ * Constraints:
+ * - Agreement must not be expired, settled, cancelled, or refunded
+ * - New expiry must not exceed 24 hours from now
+ * - Only seller or buyer can extend (if requesterAddress provided)
+ */
+router.post(
+  '/v1/agreements/:agreementId/extend-expiry',
+  standardRateLimiter,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { agreementId } = req.params;
+      const { extension, requesterAddress } = req.body;
+
+      // Validate required field
+      if (!extension) {
+        res.status(400).json({
+          success: false,
+          error: 'Bad Request',
+          message: 'Extension duration is required',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Extend expiry
+      const result = await extendAgreementExpiry(agreementId, extension, requesterAddress);
+
+      res.status(200).json({
+        success: true,
+        data: {
+          agreementId: result.agreementId,
+          oldExpiry: result.oldExpiry.toISOString(),
+          newExpiry: result.newExpiry.toISOString(),
+          extensionHours: result.extensionHours,
+          message: `Successfully extended expiry by ${result.extensionHours.toFixed(1)} hours`,
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Error extending expiry:', error);
+
+      // Handle ValidationError with 400 status
+      if (error instanceof ValidationError) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation Error',
+          message: error.message,
+          details: error.details,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Generic error
+      res.status(500).json({
+        success: false,
+        error: 'Internal Server Error',
+        message: error instanceof Error ? error.message : 'Failed to extend expiry',
         timestamp: new Date().toISOString(),
       });
     }

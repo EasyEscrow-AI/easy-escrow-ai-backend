@@ -73,6 +73,14 @@ export const createAgreement = async (
 
     // 1. Parse and validate expiry (supports multiple formats: timestamp, duration, preset)
     const expiryInput = data.expiry || data.expiryDurationHours;
+    
+    if (!expiryInput) {
+      throw new ValidationError(
+        'Expiry is required. Provide either "expiry" or "expiryDurationHours".',
+        { data }
+      );
+    }
+    
     const expiryValidation = validateExpiry(expiryInput);
     
     if (!expiryValidation.valid || !expiryValidation.expiryDate) {
@@ -847,4 +855,163 @@ export const archiveAgreements = async (
     count: result.count,
     archived: agreementIds.slice(0, result.count),
   };
+};
+
+/**
+ * Extend agreement expiry
+ */
+export const extendAgreementExpiry = async (
+  agreementId: string,
+  extension: number | string | Date,
+  requesterAddress?: string
+): Promise<{
+  agreementId: string;
+  oldExpiry: Date;
+  newExpiry: Date;
+  extensionHours: number;
+}> => {
+  try {
+    // 1. Fetch the agreement
+    const agreement = await prisma.agreement.findUnique({
+      where: { agreementId },
+    });
+
+    if (!agreement) {
+      throw new ValidationError('Agreement not found', { agreementId });
+    }
+
+    // 2. Validate agreement state
+    if (agreement.status === AgreementStatus.SETTLED) {
+      throw new ValidationError('Cannot extend expiry of settled agreement', {
+        agreementId,
+        status: agreement.status,
+      });
+    }
+
+    if (agreement.status === AgreementStatus.CANCELLED) {
+      throw new ValidationError('Cannot extend expiry of cancelled agreement', {
+        agreementId,
+        status: agreement.status,
+      });
+    }
+
+    if (agreement.status === AgreementStatus.EXPIRED) {
+      throw new ValidationError('Cannot extend expiry of expired agreement', {
+        agreementId,
+        status: agreement.status,
+      });
+    }
+
+    if (agreement.status === AgreementStatus.REFUNDED) {
+      throw new ValidationError('Cannot extend expiry of refunded agreement', {
+        agreementId,
+        status: agreement.status,
+      });
+    }
+
+    // 3. Check if agreement already expired
+    const now = new Date();
+    if (agreement.expiry <= now) {
+      throw new ValidationError('Agreement has already expired', {
+        agreementId,
+        expiry: agreement.expiry.toISOString(),
+      });
+    }
+
+    // 4. Validate authorization (if requester provided)
+    if (requesterAddress) {
+      const isAuthorized =
+        requesterAddress === agreement.seller ||
+        (agreement.buyer && requesterAddress === agreement.buyer);
+
+      if (!isAuthorized) {
+        throw new ValidationError('Not authorized to extend this agreement', {
+          agreementId,
+          requester: requesterAddress,
+        });
+      }
+    }
+
+    // 5. Calculate new expiry based on extension type
+    let newExpiry: Date;
+    let extensionHours: number;
+
+    if (typeof extension === 'number') {
+      // Extension in hours from current expiry
+      extensionHours = extension;
+      newExpiry = new Date(agreement.expiry.getTime() + extensionHours * 60 * 60 * 1000);
+    } else if (typeof extension === 'string' && ['1h', '6h', '12h', '24h'].includes(extension)) {
+      // Preset extension
+      const { presetToDuration } = await import('../models/validators/expiry.validator');
+      const durationMs = presetToDuration(extension as any);
+      extensionHours = durationMs / (60 * 60 * 1000);
+      newExpiry = new Date(agreement.expiry.getTime() + durationMs);
+    } else if (extension instanceof Date || typeof extension === 'string') {
+      // Absolute new expiry time
+      newExpiry = extension instanceof Date ? extension : new Date(extension);
+      extensionHours = (newExpiry.getTime() - agreement.expiry.getTime()) / (60 * 60 * 1000);
+    } else {
+      throw new ValidationError('Invalid extension format', { extension });
+    }
+
+    // 6. Validate new expiry constraints
+    const { validateExpiryTimestamp, EXPIRY_CONSTANTS } = await import(
+      '../models/validators/expiry.validator'
+    );
+
+    // New expiry must be in the future
+    if (newExpiry <= now) {
+      throw new ValidationError('New expiry must be in the future', {
+        newExpiry: newExpiry.toISOString(),
+      });
+    }
+
+    // New expiry must not exceed 24 hours from now
+    const maxExpiry = new Date(now.getTime() + EXPIRY_CONSTANTS.MAX_DURATION_MS);
+    if (newExpiry > maxExpiry) {
+      throw new ValidationError(
+        `New expiry cannot exceed ${EXPIRY_CONSTANTS.MAX_DURATION_HOURS} hours from now`,
+        {
+          newExpiry: newExpiry.toISOString(),
+          maxExpiry: maxExpiry.toISOString(),
+        }
+      );
+    }
+
+    // 7. Update agreement expiry in database (with same 60-second buffer)
+    const EXPIRY_BUFFER_SECONDS = 60;
+    const bufferedNewExpiry = new Date(newExpiry.getTime() + EXPIRY_BUFFER_SECONDS * 1000);
+
+    const updatedAgreement = await prisma.agreement.update({
+      where: { agreementId },
+      data: {
+        expiry: bufferedNewExpiry,
+        updatedAt: now,
+      },
+    });
+
+    console.log(
+      `[AgreementService] ✅ Extended expiry for agreement ${agreementId}: ` +
+        `${agreement.expiry.toISOString()} → ${updatedAgreement.expiry.toISOString()} ` +
+        `(+${extensionHours.toFixed(1)} hours)`
+    );
+
+    return {
+      agreementId: updatedAgreement.agreementId,
+      oldExpiry: agreement.expiry,
+      newExpiry: updatedAgreement.expiry,
+      extensionHours,
+    };
+  } catch (error) {
+    console.error('Error extending agreement expiry:', error);
+
+    // Re-throw ValidationError without wrapping
+    if (error instanceof ValidationError) {
+      throw error;
+    }
+
+    throw new Error(
+      `Failed to extend agreement expiry: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
+  }
 };

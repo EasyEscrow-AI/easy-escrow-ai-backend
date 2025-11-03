@@ -290,6 +290,119 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /v1/agreements/{agreementId}/extend-expiry:
+    post:
+      tags:
+        - Agreements
+      summary: Extend agreement expiry
+      description: |
+        Extends the expiry time of an existing agreement that hasn't expired yet.
+        
+        **Supported Extension Formats:**
+        - **Duration in hours** (number 1-24): Extends from current expiry
+        - **Preset string**: "1h", "6h", "12h", "24h"
+        - **Absolute timestamp**: ISO 8601 format (sets new specific expiry time)
+        
+        **Constraints:**
+        - Agreement must not be expired, settled, cancelled, or refunded
+        - New expiry must be in the future
+        - New expiry cannot exceed 24 hours from current time
+        - Only seller or buyer can extend (if requesterAddress provided)
+        
+        **Rate Limited**: 10 requests per 15 minutes
+      parameters:
+        - $ref: '#/components/parameters/AgreementId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - extension
+              properties:
+                extension:
+                  oneOf:
+                    - type: number
+                      minimum: 1
+                      maximum: 24
+                    - type: string
+                      enum: ["1h", "6h", "12h", "24h"]
+                    - type: string
+                      format: date-time
+                  description: |
+                    Extension duration or new expiry time.
+                    - Number: Hours to add from current expiry (1-24)
+                    - Preset: "1h", "6h", "12h", "24h" from current expiry
+                    - Timestamp: New absolute expiry time (ISO 8601)
+                  example: "6h"
+                requesterAddress:
+                  type: string
+                  description: Optional wallet address of the requester (seller or buyer). If provided, authorization is verified.
+                  example: "4qxZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9"
+            examples:
+              presetExtension:
+                summary: Extend by preset duration
+                value:
+                  extension: "6h"
+                  requesterAddress: "4qxZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9"
+              numericExtension:
+                summary: Extend by number of hours
+                value:
+                  extension: 12
+              absoluteExtension:
+                summary: Set new absolute expiry
+                value:
+                  extension: "2025-11-04T18:00:00Z"
+                  requesterAddress: "5rxZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9"
+      responses:
+        '200':
+          description: Expiry extended successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      agreementId:
+                        type: string
+                        example: "abc123"
+                      oldExpiry:
+                        type: string
+                        format: date-time
+                        example: "2025-11-03T12:00:00.000Z"
+                      newExpiry:
+                        type: string
+                        format: date-time
+                        example: "2025-11-03T18:00:00.000Z"
+                      extensionHours:
+                        type: number
+                        example: 6
+                      message:
+                        type: string
+                        example: "Successfully extended expiry by 6.0 hours"
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2025-11-03T10:00:00.000Z"
+        '400':
+          description: Bad request (invalid extension, expired agreement, invalid state, or unauthorized)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   /v1/receipts:
     get:
       tags:
