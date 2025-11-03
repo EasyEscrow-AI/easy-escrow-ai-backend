@@ -1,0 +1,56 @@
+name: Daily Database Backup
+
+on:
+  schedule:
+    # Every day at 2 AM UTC
+    - cron: '0 2 * * *'
+  
+  # Allow manual trigger
+  workflow_dispatch:
+
+jobs:
+  backup:
+    name: Backup Databases to S3
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install PostgreSQL Client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Complete Backup
+        env:
+          DIGITAL_OCEAN_API_KEY: ${{ secrets.DIGITAL_OCEAN_API_KEY }}
+          AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+          AWS_S3_KEY: ${{ secrets.AWS_S3_KEY }}
+          AWS_S3_SECRET: ${{ secrets.AWS_S3_SECRET }}
+          AWS_S3_REGION: ${{ secrets.AWS_S3_REGION }}
+        run: |
+          echo "🚀 Starting daily backup..."
+          npm run backup:complete
+          echo "✅ Backup completed successfully!"
+
+      - name: Cleanup Old Temp Files
+        if: always()
+        run: npm run backup:cleanup:all
+
+      - name: Notify on Failure
+        if: failure()
+        run: |
+          echo "❌ Backup failed! Check logs above."
+          exit 1
+
