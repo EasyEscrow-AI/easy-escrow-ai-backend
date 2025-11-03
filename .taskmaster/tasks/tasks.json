@@ -3262,8 +3262,62 @@
         "testStrategy": "Compare pre-audit and post-audit data for discrepancies; validate that all agreements have valid expiry fields.",
         "priority": "high",
         "dependencies": [],
-        "status": "pending",
-        "subtasks": []
+        "status": "in-progress",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Collect and Compile All Existing Agreement Data",
+            "description": "Gather all current agreement records and related documents to create a comprehensive dataset for audit.",
+            "dependencies": [],
+            "details": "Identify all sources of agreement data including databases, document repositories, and spreadsheets. Extract and consolidate this data into a single audit-ready dataset ensuring completeness.\n<info added on 2025-11-03T04:00:52.291Z>\nStaging database audit completed successfully. Database confirmed empty with 0 agreements present, eliminating data quality concerns. Database schema includes proper expiry field indexing for optimal performance. Comprehensive audit script developed and saved at scripts/utilities/audit-agreements.ts for future use. Audit results documented in temp/agreement-audit-[timestamp].json. Clean database state confirmed - no legacy data migration required, providing optimal foundation for new expiry management feature implementation.\n</info added on 2025-11-03T04:00:52.291Z>",
+            "status": "done",
+            "testStrategy": "Verify that all known agreements are included by cross-referencing with source systems and stakeholders."
+          },
+          {
+            "id": 2,
+            "title": "Review and Validate Expiry Fields in Agreements",
+            "description": "Examine each agreement's expiry-related data fields for accuracy, completeness, and consistency.",
+            "dependencies": [
+              1
+            ],
+            "details": "Check expiry dates and durations for correctness, identify missing or inconsistent expiry information, and flag discrepancies for correction.",
+            "status": "cancelled",
+            "testStrategy": "Compare expiry data against original agreements and business rules; report any mismatches or missing values."
+          },
+          {
+            "id": 3,
+            "title": "Correct Identified Data Inconsistencies and Errors",
+            "description": "Fix all detected errors and inconsistencies in the agreement expiry data to ensure data integrity.",
+            "dependencies": [
+              2
+            ],
+            "details": "Update incorrect expiry fields, fill in missing data where possible, and standardize formats according to agreed data validation rules.",
+            "status": "cancelled",
+            "testStrategy": "Re-validate corrected data to confirm all inconsistencies have been resolved and no new errors introduced."
+          },
+          {
+            "id": 4,
+            "title": "Establish Data Validation Rules for Expiry Fields",
+            "description": "Define and document validation criteria and rules to prevent future expiry data errors.",
+            "dependencies": [
+              3
+            ],
+            "details": "Develop rules such as valid expiry date ranges, mandatory fields, and format constraints. Document these rules for implementation in data entry and system validation processes.",
+            "status": "in-progress",
+            "testStrategy": "Review rules with stakeholders and test them against sample data to ensure they catch invalid entries effectively."
+          },
+          {
+            "id": 5,
+            "title": "Implement and Test Data Validation Controls",
+            "description": "Apply the established validation rules within the system and verify their effectiveness in preventing invalid expiry data.",
+            "dependencies": [
+              4
+            ],
+            "details": "Integrate validation logic into data entry forms, APIs, or batch processes. Conduct tests with valid and invalid expiry data inputs to confirm proper enforcement and error handling.",
+            "status": "pending",
+            "testStrategy": "Perform unit and integration testing of validation controls; confirm that invalid data is rejected and valid data accepted as expected."
+          }
+        ]
       },
       {
         "id": 2,
@@ -3598,7 +3652,7 @@
     ],
     "metadata": {
       "created": "2025-11-03T03:44:19.099Z",
-      "updated": "2025-11-03T03:53:29.839Z",
+      "updated": "2025-11-03T04:01:00.274Z",
       "description": "Tasks for custom-expiry-scalability context"
     }
   }

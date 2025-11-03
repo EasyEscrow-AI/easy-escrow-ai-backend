@@ -31,4 +31,5 @@ export * from './dto/webhook.dto';
 // Export validators
 export * from './validators/agreement.validator';
 export * from './validators/solana.validator';
+export * from './validators/expiry.validator';
 
