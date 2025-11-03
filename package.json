@@ -31,6 +31,7 @@
     "test:unit:token-accounts": "cross-env NODE_ENV=test mocha --require ts-node/register --no-config tests/unit/escrow-program-token-accounts.test.ts --timeout 10000 --reporter spec --colors",
     "test:unit:jito": "cross-env NODE_ENV=test mocha --require ts-node/register --no-config tests/unit/jito-integration.test.ts --timeout 10000 --reporter spec --colors",
     "test:unit:expiry-validation": "cross-env NODE_ENV=test mocha --require ts-node/register --no-config tests/unit/expiry-timestamp-validation.test.ts --timeout 10000 --reporter spec --colors",
+    "test:unit:amount-validation": "cross-env NODE_ENV=test mocha --require ts-node/register --no-config tests/unit/amount-validation.test.ts --timeout 10000 --reporter spec --colors",
     "test:unit:core-services": "cross-env NODE_ENV=test mocha --require ts-node/register --no-config 'tests/unit/{nft-deposit,usdc-deposit,transaction-log,refund,receipt}.service.test.ts' --timeout 10000 --reporter spec --colors",
     "test:integration": "mocha --require ts-node/register --no-config 'tests/integration/**/*.test.ts' --timeout 20000 --exit",
     "test:integration:resource-tracking": "mocha --require ts-node/register --no-config tests/integration/resource-tracking.test.ts --timeout 30000 --reporter spec --colors --exit",

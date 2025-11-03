@@ -9,6 +9,7 @@ Backend service for EasyEscrow.ai - an AI-powered escrow platform with Solana bl
 EasyEscrow.ai is a production-ready escrow platform built on Solana blockchain, featuring:
 
 - **Secure Escrow Smart Contracts**: Anchor-based Solana programs for trustless NFT and USDC transactions
+- **BETA Launch Limits**: $1.00 - $10,000.00 transaction limits for stable rollout ([see docs](docs/BETA_LIMITS.md))
 - **Multi-Environment Support**: Separate deployments for development, staging, and production
 - **Real-Time Monitoring**: Automated deposit detection and agreement lifecycle management
 - **RESTful API**: Comprehensive REST endpoints with OpenAPI/Swagger documentation
