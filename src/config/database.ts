@@ -14,6 +14,13 @@ declare global {
 let _prismaClient: PrismaClient | null = null;
 
 /**
+ * Separate Prisma Client instance for batch operations
+ * Uses a larger connection pool to handle high-volume batch processing
+ * without impacting user-facing API performance
+ */
+let _batchPrismaClient: PrismaClient | null = null;
+
+/**
  * Get or create Prisma client (lazy initialization)
  * In test environment, uses mock client if available
  */
@@ -39,12 +46,24 @@ function getPrismaClient(): PrismaClient {
     
     // Use DATABASE_URL_POOL for runtime connections if available (connection pooling)
     // Fall back to DATABASE_URL for direct connections (used by migrations)
-    const databaseUrl = process.env.DATABASE_URL_POOL || process.env.DATABASE_URL;
+    let databaseUrl = process.env.DATABASE_URL_POOL || process.env.DATABASE_URL;
+    
+    // Add connection pool parameters for scalability
+    // Supports 10,000+ escrows/day with increased pool size
+    const connectionLimit = parseInt(process.env.DB_CONNECTION_LIMIT || '30', 10);
+    const poolTimeout = parseInt(process.env.DB_POOL_TIMEOUT || '30', 10);
+    const connectionTimeout = parseInt(process.env.DB_CONNECTION_TIMEOUT || '5', 10);
+    
+    // Append connection pool parameters to URL if not already present
+    if (databaseUrl && !databaseUrl.includes('connection_limit')) {
+      const separator = databaseUrl.includes('?') ? '&' : '?';
+      databaseUrl += `${separator}connection_limit=${connectionLimit}&pool_timeout=${poolTimeout}&connect_timeout=${connectionTimeout}`;
+    }
     
     if (process.env.DATABASE_URL_POOL) {
-      console.log('[Prisma] Using connection pool (DATABASE_URL_POOL)');
+      console.log(`[Prisma] Using connection pool (DATABASE_URL_POOL) with limit: ${connectionLimit}`);
     } else {
-      console.log('[Prisma] Using direct connection (DATABASE_URL)');
+      console.log(`[Prisma] Using direct connection (DATABASE_URL) with limit: ${connectionLimit}`);
     }
     
     _prismaClient = global.prisma || new PrismaClient({
@@ -67,12 +86,71 @@ function getPrismaClient(): PrismaClient {
 }
 
 /**
+ * Get or create Batch Prisma client (lazy initialization)
+ * Uses a larger connection pool for batch operations
+ * Isolates batch operations from user-facing API traffic
+ */
+function getBatchPrismaClient(): PrismaClient {
+  // Use same client in test environment
+  if (process.env.NODE_ENV === 'test') {
+    return getPrismaClient();
+  }
+
+  // Create batch client on first access (non-test environments)
+  if (!_batchPrismaClient) {
+    console.log('[Prisma] Initializing Batch Prisma client...');
+    
+    let databaseUrl = process.env.DATABASE_URL_POOL || process.env.DATABASE_URL;
+    
+    // Use larger connection pool for batch operations
+    // Default: 50 connections (vs 30 for main pool)
+    const connectionLimit = parseInt(process.env.DB_BATCH_CONNECTION_LIMIT || '50', 10);
+    const poolTimeout = parseInt(process.env.DB_BATCH_POOL_TIMEOUT || '60', 10); // Longer timeout for batch
+    const connectionTimeout = parseInt(process.env.DB_BATCH_CONNECTION_TIMEOUT || '10', 10);
+    
+    // Append connection pool parameters to URL if not already present
+    if (databaseUrl && !databaseUrl.includes('connection_limit')) {
+      const separator = databaseUrl.includes('?') ? '&' : '?';
+      databaseUrl += `${separator}connection_limit=${connectionLimit}&pool_timeout=${poolTimeout}&connect_timeout=${connectionTimeout}`;
+    }
+    
+    console.log(`[Prisma] Batch client using connection pool with limit: ${connectionLimit}`);
+    
+    _batchPrismaClient = new PrismaClient({
+      datasources: {
+        db: {
+          url: databaseUrl
+        }
+      },
+      log: process.env.NODE_ENV === 'development' 
+        ? ['query', 'info', 'warn', 'error'] 
+        : ['error'],
+    });
+  }
+  
+  return _batchPrismaClient;
+}
+
+/**
  * Export Prisma client with Proxy for lazy loading
  * This allows existing code to work unchanged while enabling lazy initialization
  */
 export const prisma = new Proxy({} as PrismaClient, {
   get(target, prop) {
     const client = getPrismaClient();
+    const value = (client as any)[prop];
+    return typeof value === 'function' ? value.bind(client) : value;
+  }
+});
+
+/**
+ * Export Batch Prisma client with Proxy for lazy loading
+ * Use this client for batch operations (expiry checks, refunds, etc.)
+ * Isolates high-volume batch operations from user-facing API traffic
+ */
+export const batchPrisma = new Proxy({} as PrismaClient, {
+  get(target, prop) {
+    const client = getBatchPrismaClient();
     const value = (client as any)[prop];
     return typeof value === 'function' ? value.bind(client) : value;
   }
@@ -115,9 +193,19 @@ export const connectDatabase = async (): Promise<void> => {
  */
 export const disconnectDatabase = async (): Promise<void> => {
   try {
+    const promises: Promise<void>[] = [];
+    
     if (_prismaClient) {
-      await _prismaClient.$disconnect();
-      console.log('✅ Database disconnected successfully');
+      promises.push(_prismaClient.$disconnect());
+    }
+    
+    if (_batchPrismaClient) {
+      promises.push(_batchPrismaClient.$disconnect());
+    }
+    
+    if (promises.length > 0) {
+      await Promise.all(promises);
+      console.log('✅ Database disconnected successfully (all clients)');
     }
   } catch (error) {
     console.error('❌ Database disconnection failed:', error);
@@ -138,8 +226,8 @@ export const checkDatabaseHealth = async (): Promise<boolean> => {
   }
 };
 
-// Export getter function for advanced use cases
-export { getPrismaClient };
+// Export getter functions for advanced use cases
+export { getPrismaClient, getBatchPrismaClient };
 
 export default prisma;
 

@@ -3,12 +3,15 @@
  * 
  * Handles refund calculations and processing for agreements with partial deposits.
  * Processes USDC and NFT refunds when agreements are cancelled or expired.
+ * 
+ * Uses a separate connection pool (batchPrisma) to isolate batch operations
+ * from user-facing API traffic for better performance and scalability.
  */
 
 import { AgreementStatus, DepositType, DepositStatus } from '../generated/prisma';
 import { Decimal } from '@prisma/client/runtime/library';
 import { PublicKey, Transaction, SystemProgram } from '@solana/web3.js';
-import { prisma } from '../config/database';
+import { batchPrisma as prisma } from '../config/database';
 import { getSolanaService } from './solana.service';
 import { WebhookEventsService } from './webhook-events.service';
 import { getTransactionLogService, TransactionOperationType, TransactionStatusType } from './transaction-log.service';

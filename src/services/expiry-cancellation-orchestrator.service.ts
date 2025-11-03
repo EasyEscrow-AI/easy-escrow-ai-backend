@@ -101,10 +101,15 @@ export class ExpiryCancellationOrchestrator {
   private refundProcessingTimer?: NodeJS.Timeout;
 
   constructor(config?: OrchestratorConfig) {
+    // Batch sizes can be configured via environment variables
+    // Increased defaults for better throughput (up from 10 and 50)
+    const defaultRefundBatchSize = parseInt(process.env.REFUND_BATCH_SIZE || '50', 10);
+    const defaultExpiryBatchSize = parseInt(process.env.EXPIRY_BATCH_SIZE || '200', 10);
+    
     this.config = {
       expiryCheckIntervalMs: config?.expiryCheckIntervalMs || 60000, // 1 minute
       autoProcessRefunds: config?.autoProcessRefunds ?? true,
-      refundProcessingBatchSize: config?.refundProcessingBatchSize || 10,
+      refundProcessingBatchSize: config?.refundProcessingBatchSize || defaultRefundBatchSize,
       enableMonitoring: config?.enableMonitoring ?? true,
       multisigConfig: config?.multisigConfig || {},
     };
@@ -112,7 +117,7 @@ export class ExpiryCancellationOrchestrator {
     // Initialize services
     this.expiryService = getExpiryService({
       checkIntervalMs: this.config.expiryCheckIntervalMs,
-      batchSize: 50,
+      batchSize: defaultExpiryBatchSize,
     });
 
     this.refundService = getRefundService();
