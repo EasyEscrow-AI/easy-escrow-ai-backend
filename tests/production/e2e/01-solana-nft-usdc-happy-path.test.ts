@@ -182,17 +182,19 @@ describe('PRODUCTION E2E - Happy Path: NFT-for-USDC Swap', function () {
   it('should create escrow agreement via API', async function () {
     console.log('📝 Creating escrow agreement...\n');
 
-    const expiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
+    const expiry = new Date(Date.now() + 61 * 60 * 1000); // 61 minutes (1 hour + buffer for request time)
     const idempotencyKey = generateIdempotencyKey();
 
     const requestBody = {
       nftMint: nft.mint.toString(),
       price: PRODUCTION_CONFIG.testAmounts.swap,
+      assetType: 'USDC', // Required field
       seller: wallets.sender.publicKey.toString(),
       buyer: wallets.receiver.publicKey.toString(),
       expiry: expiry.toISOString(),
       feeBps: PRODUCTION_CONFIG.testAmounts.fee * 10000, // Convert to basis points
       honorRoyalties: false,
+      description: 'PRODUCTION E2E Test - Happy Path',
     };
 
     console.log('   Request:');
