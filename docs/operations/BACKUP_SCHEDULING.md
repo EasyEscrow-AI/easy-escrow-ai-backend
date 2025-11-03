@@ -2,22 +2,101 @@
 
 This guide explains how to schedule automated backups for your DigitalOcean databases.
 
-## 🎯 Recommended Approach: GitHub Actions
+## 🎯 Recommended Approach: App Platform Cron
 
-**Best Practice**: Use GitHub Actions for scheduled backups instead of in-app cron jobs.
+**Best Practice**: Use App Platform cron for scheduled backups due to DigitalOcean database firewall restrictions.
 
-### Why GitHub Actions?
+### Why App Platform Cron?
 
-| Feature | GitHub Actions | In-App Cron |
-|---------|---------------|-------------|
-| **Reliability** | ✅ Independent service | ❌ Depends on app health |
-| **Scaling** | ✅ Single execution | ❌ Runs on each instance |
-| **Resource Impact** | ✅ No impact on users | ❌ Consumes app resources |
-| **Monitoring** | ✅ Built-in logs & alerts | ⚠️ Manual setup needed |
-| **Cost** | ✅ Free for public repos | ⚠️ Uses app compute time |
-| **Maintenance** | ✅ Easy to update | ⚠️ Requires app restart |
+| Feature | App Platform Cron | GitHub Actions |
+|---------|-------------------|----------------|
+| **Database Access** | ✅ Direct (no firewall) | ❌ Blocked by firewall |
+| **Setup Complexity** | ✅ Simple | ⚠️ Requires IP whitelisting |
+| **Security** | ✅ Internal network | ⚠️ External access needed |
+| **Resource Impact** | ⚠️ Uses app resources | ✅ Separate compute |
+| **Reliability** | ✅ Same as app | ✅ GitHub infrastructure |
+| **Monitoring** | ⚠️ App logs | ✅ GitHub Actions UI |
+| **Cost** | ✅ Included | ✅ Free |
+
+**Key Advantage**: App Platform apps are **already in the DigitalOcean network** with database access, avoiding firewall issues entirely.
 
 ---
+
+## 🚀 App Platform Cron Setup (Recommended)
+
+### How It Works
+
+The backup scheduler runs **inside your production app** as a background service:
+
+```
+Production App → Backup Scheduler → Database Dumps → AWS S3
+```
+
+**No external access needed!** Everything stays within the DigitalOcean network.
+
+### Features
+
+- ✅ **Automatic**: Runs weekly (Sunday 2 AM) without manual intervention
+- ✅ **Leader Election**: Only one instance runs backups (multi-instance safe)
+- ✅ **Built-in**: Already integrated in `src/index.ts`
+- ✅ **Monitored**: View logs in App Platform console
+- ✅ **Zero Setup**: Works out of the box in production
+
+### Configuration
+
+**Already configured!** The scheduler is enabled when:
+- `NODE_ENV=production`
+- All required env vars are set (DIGITAL_OCEAN_API_KEY, AWS_S3_*)
+
+**View Logs**:
+1. Go to DigitalOcean App Platform Console
+2. Select your app → **Logs**
+3. Search for: "Scheduled Backup Started"
+
+**Customize Schedule**:
+
+Edit `src/index.ts` (line ~380):
+```typescript
+// Change from weekly to daily
+backupScheduler.startWeeklyBackup();  // ❌ Remove
+backupScheduler.startDailyBackup();   // ✅ Add
+```
+
+Or customize in `src/services/backup-scheduler.service.ts`:
+```typescript
+// Sunday 2 AM
+cron.schedule('0 2 * * 0', ...)
+
+// Daily 2 AM
+cron.schedule('0 2 * * *', ...)
+
+// Every 6 hours
+cron.schedule('0 */6 * * *', ...)
+```
+
+**Manual Trigger** (for testing):
+```bash
+# SSH into app container
+doctl apps ssh <app-id>
+
+# Run backup
+npm run backup:complete
+```
+
+📚 **Full Documentation**: [App Platform Backup Cron Guide](./APP_PLATFORM_BACKUP_CRON.md)
+
+---
+
+## 🔄 Alternative: GitHub Actions (Requires Firewall Configuration)
+
+**Note**: GitHub Actions cannot access DigitalOcean databases by default due to firewall restrictions. You must either:
+1. Open database firewall to all IPs (⚠️ security risk)
+2. Use GitHub's IP ranges (frequently changes)
+3. Use a proxy with static IP (complex)
+
+**We recommend App Platform Cron instead.**
+
+If you still want to use GitHub Actions:
 
 ## 🚀 GitHub Actions Setup
 
