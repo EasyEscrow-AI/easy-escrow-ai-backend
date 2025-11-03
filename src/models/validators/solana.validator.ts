@@ -23,7 +23,17 @@ export const isValidTransactionSignature = (signature: string): boolean => {
 };
 
 /**
- * Validate USDC amount (must be positive and within reasonable bounds)
+ * BETA Launch Limits: $1.00 minimum, $10,000.00 maximum
+ * These limits will be reassessed after BETA period
+ */
+export const ESCROW_LIMITS = {
+  MIN_USDC: 1.0,      // $1.00 minimum
+  MAX_USDC: 10000.0,  // $10,000.00 maximum
+} as const;
+
+/**
+ * Validate USDC amount (must be positive and within BETA launch bounds)
+ * BETA Limits: $1.00 - $10,000.00
  */
 export const isValidUSDCAmount = (amount: number | string | Decimal): boolean => {
   let numAmount: number;
@@ -36,7 +46,9 @@ export const isValidUSDCAmount = (amount: number | string | Decimal): boolean =>
     numAmount = amount;
   }
   
-  return !isNaN(numAmount) && numAmount > 0 && numAmount < 1e15; // Max 1 quadrillion USDC
+  return !isNaN(numAmount) && 
+         numAmount >= ESCROW_LIMITS.MIN_USDC && 
+         numAmount <= ESCROW_LIMITS.MAX_USDC;
 };
 
 /**
