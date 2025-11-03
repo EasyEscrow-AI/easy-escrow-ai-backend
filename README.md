@@ -9,6 +9,7 @@ Backend service for EasyEscrow.ai - an AI-powered escrow platform with Solana bl
 EasyEscrow.ai is a production-ready escrow platform built on Solana blockchain, featuring:
 
 - **Secure Escrow Smart Contracts**: Anchor-based Solana programs for trustless NFT and USDC transactions
+- **BETA Launch Limits**: $1.00 - $10,000.00 transaction limits for stable rollout ([see docs](docs/BETA_LIMITS.md))
 - **Multi-Environment Support**: Separate deployments for development, staging, and production
 - **Real-Time Monitoring**: Automated deposit detection and agreement lifecycle management
 - **RESTful API**: Comprehensive REST endpoints with OpenAPI/Swagger documentation
@@ -351,18 +352,30 @@ npm run test:production
 
 ### Solana Program Deployment
 
-**Devnet (Testing):**
+⚠️ **CRITICAL:** We use **STATIC program IDs**. Always verify you're upgrading existing programs, not creating new ones!
+
+**Staging (Devnet):**
 ```bash
-solana config set --url devnet
-solana airdrop 2
-anchor deploy
+# Build for staging
+npm run solana:build:staging
+
+# Deploy (script includes safety checks)
+./scripts/deployment/staging/deploy-to-staging.ps1
 ```
 
-**Mainnet (Production):**
+**Production (Mainnet):**
 ```bash
-solana config set --url mainnet-beta
-anchor deploy  # Requires SOL for deployment
+# Build for mainnet
+npm run solana:build:mainnet
+
+# Deploy (script includes safety checks)
+./scripts/deployment/production/deploy-to-production.ps1
 ```
+
+**Safety Checks:**
+- Scripts validate program ID before deployment
+- Blocks accidental new program creation
+- See [PROGRAM_DEPLOYMENT_SAFETY.md](docs/deployment/PROGRAM_DEPLOYMENT_SAFETY.md) for details
 
 ### Backend Deployment
 

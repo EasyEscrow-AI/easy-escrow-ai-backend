@@ -87,6 +87,12 @@ fn get_authorized_admins() -> Vec<Pubkey> {
     vec![]
 }
 
+/// BETA Launch Limits: $1.00 minimum, $3,000.00 maximum
+/// These limits will be reassessed after BETA period
+/// USDC has 6 decimals: 1 USDC = 1_000_000 lamports
+const MIN_USDC_AMOUNT: u64 = 1_000_000;      // $1.00
+const MAX_USDC_AMOUNT: u64 = 3_000_000_000;  // $3,000.00
+
 #[program]
 pub mod escrow {
     use super::*;
@@ -116,7 +122,9 @@ pub mod escrow {
         
         let escrow = &mut ctx.accounts.escrow_state;
         
-        require!(usdc_amount > 0, EscrowError::InvalidAmount);
+        // Validate USDC amount is within BETA launch limits
+        require!(usdc_amount >= MIN_USDC_AMOUNT, EscrowError::AmountTooLow);
+        require!(usdc_amount <= MAX_USDC_AMOUNT, EscrowError::AmountTooHigh);
         require!(expiry_timestamp > Clock::get()?.unix_timestamp, EscrowError::InvalidExpiry);
         require!(platform_fee_bps <= 10000, EscrowError::InvalidFeeBps);
         
@@ -634,6 +642,12 @@ pub enum EscrowStatus {
 pub enum EscrowError {
     #[msg("Invalid amount provided")]
     InvalidAmount,
+    
+    #[msg("Amount below minimum: $1.00 (BETA limit)")]
+    AmountTooLow,
+    
+    #[msg("Amount exceeds maximum: $3,000.00 (BETA limit)")]
+    AmountTooHigh,
     
     #[msg("Invalid expiry timestamp")]
     InvalidExpiry,

@@ -4,6 +4,7 @@ import {
   isValidUSDCAmount,
   isValidFeeBps,
   isValidNFTMint,
+  ESCROW_LIMITS,
 } from './solana.validator';
 import { validateExpiry, EXPIRY_CONSTANTS } from './expiry.validator';
 
@@ -33,7 +34,7 @@ export const validateCreateAgreement = (
   } else if (!isValidUSDCAmount(data.price)) {
     errors.push({ 
       field: 'price', 
-      message: 'Price must be a positive number' 
+      message: `Price must be between $${ESCROW_LIMITS.MIN_USDC.toFixed(2)} and $${ESCROW_LIMITS.MAX_USDC.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (BETA limits)` 
     });
   }
 
