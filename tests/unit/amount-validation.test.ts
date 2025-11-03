@@ -3,7 +3,7 @@
  * 
  * Tests for escrow value limits:
  * - Minimum: $1.00
- * - Maximum: $10,000.00
+ * - Maximum: $3,000.00
  * 
  * These limits will be reassessed after BETA period
  */
@@ -18,8 +18,8 @@ describe('BETA Launch Escrow Amount Limits', () => {
       expect(ESCROW_LIMITS.MIN_USDC).to.equal(1.0);
     });
 
-    it('should have maximum limit of $10,000.00', () => {
-      expect(ESCROW_LIMITS.MAX_USDC).to.equal(10000.0);
+    it('should have maximum limit of $3,000.00', () => {
+      expect(ESCROW_LIMITS.MAX_USDC).to.equal(3000.0);
     });
   });
 
@@ -50,23 +50,23 @@ describe('BETA Launch Escrow Amount Limits', () => {
     });
   });
 
-  describe('Maximum Amount Validation ($10,000.00)', () => {
-    it('should reject amounts above $10,000.00', () => {
-      expect(isValidUSDCAmount(10000.01)).to.be.false;
-      expect(isValidUSDCAmount(10001.00)).to.be.false;
-      expect(isValidUSDCAmount(50000.00)).to.be.false;
-      expect(isValidUSDCAmount(100000.00)).to.be.false;
+  describe('Maximum Amount Validation ($3,000.00)', () => {
+    it('should reject amounts above $3,000.00', () => {
+      expect(isValidUSDCAmount(3000.01)).to.be.false;
+      expect(isValidUSDCAmount(3001.00)).to.be.false;
+      expect(isValidUSDCAmount(5000.00)).to.be.false;
+      expect(isValidUSDCAmount(10000.00)).to.be.false;
     });
 
-    it('should accept exactly $10,000.00', () => {
-      expect(isValidUSDCAmount(10000.0)).to.be.true;
-      expect(isValidUSDCAmount(10000.00)).to.be.true;
+    it('should accept exactly $3,000.00', () => {
+      expect(isValidUSDCAmount(3000.0)).to.be.true;
+      expect(isValidUSDCAmount(3000.00)).to.be.true;
     });
 
-    it('should accept amounts just below $10,000.00', () => {
-      expect(isValidUSDCAmount(9999.99)).to.be.true;
-      expect(isValidUSDCAmount(9999.00)).to.be.true;
-      expect(isValidUSDCAmount(9500.00)).to.be.true;
+    it('should accept amounts just below $3,000.00', () => {
+      expect(isValidUSDCAmount(2999.99)).to.be.true;
+      expect(isValidUSDCAmount(2999.00)).to.be.true;
+      expect(isValidUSDCAmount(2500.00)).to.be.true;
     });
   });
 
@@ -77,15 +77,15 @@ describe('BETA Launch Escrow Amount Limits', () => {
       expect(isValidUSDCAmount(100.00)).to.be.true;
       expect(isValidUSDCAmount(500.00)).to.be.true;
       expect(isValidUSDCAmount(1000.00)).to.be.true;
-      expect(isValidUSDCAmount(5000.00)).to.be.true;
-      expect(isValidUSDCAmount(10000.00)).to.be.true;
+      expect(isValidUSDCAmount(2500.00)).to.be.true;
+      expect(isValidUSDCAmount(3000.00)).to.be.true;
     });
 
     it('should handle decimal precision correctly', () => {
       expect(isValidUSDCAmount(1.23)).to.be.true;
       expect(isValidUSDCAmount(99.99)).to.be.true;
       expect(isValidUSDCAmount(999.99)).to.be.true;
-      expect(isValidUSDCAmount(9999.99)).to.be.true;
+      expect(isValidUSDCAmount(2999.99)).to.be.true;
     });
   });
 
@@ -94,12 +94,12 @@ describe('BETA Launch Escrow Amount Limits', () => {
       expect(isValidUSDCAmount('1.00')).to.be.true;
       expect(isValidUSDCAmount('100.00')).to.be.true;
       expect(isValidUSDCAmount('1000.00')).to.be.true;
-      expect(isValidUSDCAmount('10000.00')).to.be.true;
+      expect(isValidUSDCAmount('3000.00')).to.be.true;
     });
 
     it('should reject string amounts outside range', () => {
       expect(isValidUSDCAmount('0.99')).to.be.false;
-      expect(isValidUSDCAmount('10000.01')).to.be.false;
+      expect(isValidUSDCAmount('3000.01')).to.be.false;
     });
 
     it('should reject invalid string formats', () => {
@@ -114,17 +114,17 @@ describe('BETA Launch Escrow Amount Limits', () => {
       expect(isValidUSDCAmount(new Decimal('1.00'))).to.be.true;
       expect(isValidUSDCAmount(new Decimal('100.00'))).to.be.true;
       expect(isValidUSDCAmount(new Decimal('1000.00'))).to.be.true;
-      expect(isValidUSDCAmount(new Decimal('10000.00'))).to.be.true;
+      expect(isValidUSDCAmount(new Decimal('3000.00'))).to.be.true;
     });
 
     it('should reject Decimal amounts outside range', () => {
       expect(isValidUSDCAmount(new Decimal('0.99'))).to.be.false;
-      expect(isValidUSDCAmount(new Decimal('10000.01'))).to.be.false;
+      expect(isValidUSDCAmount(new Decimal('3000.01'))).to.be.false;
     });
 
     it('should handle Decimal precision correctly', () => {
       expect(isValidUSDCAmount(new Decimal('1.234567'))).to.be.true;
-      expect(isValidUSDCAmount(new Decimal('9999.999999'))).to.be.true;
+      expect(isValidUSDCAmount(new Decimal('2999.999999'))).to.be.true;
     });
   });
 
@@ -160,7 +160,7 @@ describe('BETA Launch Escrow Amount Limits', () => {
       // This test serves as documentation that these limits are temporary
       // and will be reassessed after BETA
       expect(ESCROW_LIMITS.MIN_USDC).to.equal(1.0);
-      expect(ESCROW_LIMITS.MAX_USDC).to.equal(10000.0);
+      expect(ESCROW_LIMITS.MAX_USDC).to.equal(3000.0);
     });
 
     it('should use realistic BETA amounts', () => {
@@ -170,8 +170,8 @@ describe('BETA Launch Escrow Amount Limits', () => {
         5.00,    // Small transaction
         50.00,   // Medium transaction
         500.00,  // Larger transaction
-        5000.00, // High-value transaction
-        10000.00 // Maximum test
+        2000.00, // High-value transaction
+        3000.00  // Maximum test
       ];
 
       betaTestAmounts.forEach(amount => {

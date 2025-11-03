@@ -28,7 +28,7 @@ export const isValidTransactionSignature = (signature: string): boolean => {
  */
 export const ESCROW_LIMITS = {
   MIN_USDC: 1.0,      // $1.00 minimum
-  MAX_USDC: 10000.0,  // $10,000.00 maximum
+  MAX_USDC: 3000.0,   // $3,000.00 maximum
 } as const;
 
 /**

@@ -87,11 +87,11 @@ fn get_authorized_admins() -> Vec<Pubkey> {
     vec![]
 }
 
-/// BETA Launch Limits: $1.00 minimum, $10,000.00 maximum
+/// BETA Launch Limits: $1.00 minimum, $3,000.00 maximum
 /// These limits will be reassessed after BETA period
 /// USDC has 6 decimals: 1 USDC = 1_000_000 lamports
-const MIN_USDC_AMOUNT: u64 = 1_000_000;        // $1.00
-const MAX_USDC_AMOUNT: u64 = 10_000_000_000;   // $10,000.00
+const MIN_USDC_AMOUNT: u64 = 1_000_000;      // $1.00
+const MAX_USDC_AMOUNT: u64 = 3_000_000_000;  // $3,000.00
 
 #[program]
 pub mod escrow {
@@ -646,7 +646,7 @@ pub enum EscrowError {
     #[msg("Amount below minimum: $1.00 (BETA limit)")]
     AmountTooLow,
     
-    #[msg("Amount exceeds maximum: $10,000.00 (BETA limit)")]
+    #[msg("Amount exceeds maximum: $3,000.00 (BETA limit)")]
     AmountTooHigh,
     
     #[msg("Invalid expiry timestamp")]

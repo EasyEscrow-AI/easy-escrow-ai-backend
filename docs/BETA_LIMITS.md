@@ -19,7 +19,7 @@ These limits apply to all escrow agreements and are enforced both at the API lev
 | Limit Type | Amount | Reason |
 |------------|--------|--------|
 | **Minimum** | $1.00 USD | Ensures meaningful transactions, prevents spam/abuse |
-| **Maximum** | $10,000.00 USD | Risk management during BETA, gradual scaling approach |
+| **Maximum** | $3,000.00 USD | Conservative risk management during BETA, gradual scaling approach |
 
 ---
 
@@ -32,7 +32,7 @@ These limits apply to all escrow agreements and are enforced both at the API lev
 ```typescript
 export const ESCROW_LIMITS = {
   MIN_USDC: 1.0,      // $1.00 minimum
-  MAX_USDC: 10000.0,  // $10,000.00 maximum
+  MAX_USDC: 3000.0,   // $3,000.00 maximum
 } as const;
 ```
 
@@ -40,7 +40,7 @@ The `isValidUSDCAmount()` function validates amounts against these limits before
 
 **Error Message:**
 ```
-Price must be between $1.00 and $10,000.00 (BETA limits)
+Price must be between $1.00 and $3,000.00 (BETA limits)
 ```
 
 ### Smart Contract Validation
@@ -50,8 +50,8 @@ Price must be between $1.00 and $10,000.00 (BETA limits)
 USDC has 6 decimals, so amounts are represented in lamports:
 
 ```rust
-const MIN_USDC_AMOUNT: u64 = 1_000_000;        // $1.00
-const MAX_USDC_AMOUNT: u64 = 10_000_000_000;   // $10,000.00
+const MIN_USDC_AMOUNT: u64 = 1_000_000;      // $1.00
+const MAX_USDC_AMOUNT: u64 = 3_000_000_000;  // $3,000.00
 ```
 
 The smart contract enforces these limits during escrow initialization:
@@ -63,7 +63,7 @@ require!(usdc_amount <= MAX_USDC_AMOUNT, EscrowError::AmountTooHigh);
 
 **On-Chain Error Messages:**
 - `AmountTooLow`: "Amount below minimum: $1.00 (BETA limit)"
-- `AmountTooHigh`: "Amount exceeds maximum: $10,000.00 (BETA limit)"
+- `AmountTooHigh`: "Amount exceeds maximum: $3,000.00 (BETA limit)"
 
 ---
 
@@ -73,7 +73,7 @@ require!(usdc_amount <= MAX_USDC_AMOUNT, EscrowError::AmountTooHigh);
 
 Comprehensive test suite covering:
 - ✅ Minimum limit validation ($1.00)
-- ✅ Maximum limit validation ($10,000.00)
+- ✅ Maximum limit validation ($3,000.00)
 - ✅ Boundary value testing (exactly at limits)
 - ✅ Valid range testing
 - ✅ Edge cases (NaN, Infinity, negative values)
@@ -220,7 +220,7 @@ Remember: **1 USDC = 1,000,000 lamports (6 decimals)**
 **Examples:**
 - $1.00 = 1,000,000 lamports
 - $100.50 = 100,500,000 lamports
-- $10,000.00 = 10,000,000,000 lamports
+- $3,000.00 = 3,000,000,000 lamports
 
 ---
 
