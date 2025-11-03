@@ -162,17 +162,24 @@ class DigitalOceanBackup {
   }
 
   /**
-   * Create a deployment for an app (serves as a snapshot)
+   * Get the active/latest deployment for an app
+   * This is read-only and doesn't create new deployments
    */
-  async createAppDeployment(appId: string): Promise<any> {
+  async getActiveDeployment(appId: string): Promise<any> {
     try {
-      console.log(`Creating deployment for app ${appId}...`);
-      const response = await this.apiRequest('POST', `/apps/${appId}/deployments`, {
-        force_build: false,
-      });
-      return response.deployment;
+      console.log(`Getting active deployment for app ${appId}...`);
+      const response = await this.apiRequest('GET', `/apps/${appId}/deployments`);
+      const deployments = response.deployments || [];
+      
+      if (deployments.length === 0) {
+        throw new Error('No deployments found');
+      }
+      
+      // Get the most recent active deployment
+      const activeDeployment = deployments.find((d: any) => d.phase === 'ACTIVE') || deployments[0];
+      return activeDeployment;
     } catch (error) {
-      throw new Error(`Failed to create app deployment: ${error}`);
+      throw new Error(`Failed to get app deployment: ${error}`);
     }
   }
 
@@ -412,7 +419,7 @@ class DigitalOceanBackup {
         console.log(`  • ${app.spec.name} (${app.id})`);
         
         if (options.dryRun) {
-          console.log('    [DRY RUN] Would create deployment\n');
+          console.log('    [DRY RUN] Would record active deployment\n');
           result.apps.push({
             id: app.id,
             name: app.spec.name,
@@ -420,8 +427,8 @@ class DigitalOceanBackup {
           });
         } else {
           try {
-            const deployment = await this.createAppDeployment(app.id);
-            console.log(`    ✅ Created deployment: ${deployment.id}\n`);
+            const deployment = await this.getActiveDeployment(app.id);
+            console.log(`    ✅ Recorded active deployment: ${deployment.id}\n`);
             result.apps.push({
               id: app.id,
               name: app.spec.name,
