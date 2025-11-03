@@ -20,6 +20,7 @@ import { PublicKey } from '@solana/web3.js';
 import { EscrowProgramService } from './escrow-program.service';
 import { config } from '../config';
 import { prisma } from '../config/database';
+import { validateExpiry } from '../models/validators/expiry.validator';
 
 /**
  * Agreement Service
@@ -70,13 +71,27 @@ export const createAgreement = async (
       console.log('[AgreementService] Buyer not specified, skipping USDC account verification');
     }
 
-    // 1. Initialize escrow on-chain
+    // 1. Parse and validate expiry (supports multiple formats: timestamp, duration, preset)
+    const expiryInput = data.expiry || data.expiryDurationHours;
+    const expiryValidation = validateExpiry(expiryInput);
+    
+    if (!expiryValidation.valid || !expiryValidation.expiryDate) {
+      throw new ValidationError(
+        expiryValidation.error || 'Invalid expiry value',
+        { expiry: expiryInput }
+      );
+    }
+
+    const expiryDate = expiryValidation.expiryDate;
+    console.log(`[AgreementService] Parsed expiry: ${expiryDate.toISOString()} (${expiryValidation.durationHours?.toFixed(1)} hours from now)`);
+
+    // 2. Initialize escrow on-chain
     const escrowResult = await initializeEscrow({
       nftMint: data.nftMint,
       price: data.price,
       seller: data.seller,
       buyer: data.buyer,
-      expiry: new Date(data.expiry),
+      expiry: expiryDate,
       feeBps: data.feeBps,
       honorRoyalties: data.honorRoyalties,
     });
@@ -87,9 +102,9 @@ export const createAgreement = async (
     // This ensures DB expiry matches on-chain expiry exactly, preventing race conditions
     // where DB thinks agreement is expired but on-chain still has time remaining
     const EXPIRY_BUFFER_SECONDS = 60;
-    const bufferedExpiry = new Date(new Date(data.expiry).getTime() + EXPIRY_BUFFER_SECONDS * 1000);
+    const bufferedExpiry = new Date(expiryDate.getTime() + EXPIRY_BUFFER_SECONDS * 1000);
 
-    // 2. Store agreement in database
+    // 3. Store agreement in database
     const agreement = await prisma.agreement.create({
       data: {
         agreementId: generateAgreementId(),
@@ -108,7 +123,7 @@ export const createAgreement = async (
       },
     });
 
-    // 2a. Log the initialization transaction
+    // 3a. Log the initialization transaction
     try {
       const transactionLogService = getTransactionLogService();
       await transactionLogService.captureTransaction({
@@ -122,7 +137,7 @@ export const createAgreement = async (
       console.error('Failed to log init transaction:', logError);
     }
 
-    // 3. Trigger monitoring reload to start monitoring this agreement
+    // 4. Trigger monitoring reload to start monitoring this agreement
     try {
       const orchestrator = getMonitoringOrchestrator();
       if (orchestrator.isServiceRunning()) {
@@ -134,7 +149,7 @@ export const createAgreement = async (
       console.error('Failed to trigger monitoring reload:', monitoringError);
     }
 
-    // 4. Return response
+    // 5. Return response
     return {
       agreementId: agreement.agreementId,
       escrowPda: agreement.escrowPda,
