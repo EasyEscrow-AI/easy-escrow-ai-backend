@@ -19,6 +19,7 @@ import {
   getIdempotencyService 
 } from './services';
 import { getStuckAgreementMonitor, AlertSeverity } from './services/stuck-agreement-monitor.service';
+import { backupScheduler } from './services/backup-scheduler.service';
 
 // Load environment variables
 dotenv.config();
@@ -372,6 +373,20 @@ const startServer = async () => {
           console.log('Starting stuck agreement monitor...');
           await stuckAgreementMonitor.start();
           console.log('✅ Stuck agreement monitor started');
+          
+          // Start backup scheduler (production only)
+          if (process.env.NODE_ENV === 'production') {
+            console.log('Starting backup scheduler...');
+            backupScheduler.startWeeklyBackup(); // Weekly backups on Sunday at 2 AM
+            const status = backupScheduler.getStatus();
+            if (status.isLeader) {
+              console.log(`✅ Backup scheduler started (${status.activeJobs} job(s))`);
+            } else {
+              console.log('⏭️  Backup scheduler - follower instance (not running backups)');
+            }
+          } else {
+            console.log('⏭️  Backup scheduler skipped (not in production)');
+          }
           
           console.log('✅ All background services started');
         } catch (error) {
