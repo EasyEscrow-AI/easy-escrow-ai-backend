@@ -3740,7 +3740,7 @@
               2
             ],
             "details": "Integrate testing of custom expiry API endpoints to validate correct expiry handling across the entire system. Conduct end-to-end testing scenarios that include monitoring dashboard accuracy verification and alerting system validation. Ensure all components work together seamlessly under various load conditions.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Test complete user workflows from agreement creation to expiry processing; validate API endpoint responses, monitoring dashboard accuracy, and alert triggering under various scenarios including normal and error conditions."
           },
           {
@@ -3762,7 +3762,7 @@
     ],
     "metadata": {
       "created": "2025-11-03T03:44:19.099Z",
-      "updated": "2025-11-03T04:20:32.029Z",
+      "updated": "2025-11-03T04:22:03.582Z",
       "description": "Tasks for custom-expiry-scalability context"
     }
   }
