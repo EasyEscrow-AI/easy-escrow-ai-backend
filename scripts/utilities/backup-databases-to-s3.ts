@@ -262,13 +262,20 @@ class DatabaseBackupS3 {
     try {
       console.log(`    📦 Creating database dump...`);
       
-      // Build connection URL
-      const connectionUrl = `postgresql://${database.connection.user}:${database.connection.password}@${database.connection.host}:${database.connection.port}/${database.connection.database}?sslmode=require`;
-      
-      // Use pg_dump with custom format and compression
-      const command = `pg_dump -Fc -Z${compression} "${connectionUrl}" -f "${filePath}"`;
+      // Use pg_dump with separate parameters (safer than URL with embedded credentials)
+      // This prevents shell injection and handles special characters in passwords
+      const command = `pg_dump -Fc -Z${compression} -f "${filePath}"`;
       
       await execAsync(command, {
+        env: {
+          ...process.env,
+          PGHOST: database.connection.host,
+          PGPORT: String(database.connection.port),
+          PGDATABASE: database.connection.database,
+          PGUSER: database.connection.user,
+          PGPASSWORD: database.connection.password,
+          PGSSLMODE: 'require',
+        },
         maxBuffer: 1024 * 1024 * 500, // 500MB buffer
         timeout: 600000, // 10 minute timeout
       });

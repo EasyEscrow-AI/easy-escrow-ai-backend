@@ -96,9 +96,8 @@ function Backup-Database {
         Write-Host "  • Engine: $($db.engine) $($db.version)" -ForegroundColor White
         Write-Host ""
         
-        # Build connection string
+        # Get connection details
         $conn = $db.connection
-        $connString = "postgresql://${($conn.user)}:${($conn.password)}@${($conn.host)}:${($conn.port)}/${($conn.database)}?sslmode=require"
         
         # Create output directory
         $outputDir = "temp\db-backups"
@@ -115,12 +114,19 @@ function Backup-Database {
         Write-Host "   This may take a few minutes..." -ForegroundColor Yellow
         Write-Host ""
         
-        # Run pg_dump in Docker container
+        # Run pg_dump in Docker container with environment variables (safer than connection URL)
+        # This prevents shell injection and handles special characters in passwords
         $absolutePath = (Resolve-Path $outputDir).Path
         docker run --rm `
+            -e PGHOST=$($conn.host) `
+            -e PGPORT=$($conn.port) `
+            -e PGDATABASE=$($conn.database) `
+            -e PGUSER=$($conn.user) `
+            -e PGPASSWORD=$($conn.password) `
+            -e PGSSLMODE=require `
             -v "${absolutePath}:/backup" `
             postgres:15-alpine `
-            pg_dump -Fc -Z1 "$connString" -f "/backup/$filename"
+            pg_dump -Fc -Z1 -f "/backup/$filename"
         
         if ($LASTEXITCODE -eq 0) {
             $fileSize = (Get-Item $outputPath).Length / 1MB
