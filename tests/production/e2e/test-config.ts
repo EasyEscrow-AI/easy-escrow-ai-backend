@@ -41,12 +41,20 @@ export const PRODUCTION_CONFIG = {
     polling: 2000, // 2 seconds between status polls
   },
   
-  // Wallet paths
+  // Wallet paths (load keypairs from these files)
   walletPaths: {
     sender: 'wallets/production/production-sender.json',
     receiver: 'wallets/production/production-receiver.json',
     admin: 'wallets/production/production-admin.json',
     feeCollector: 'wallets/production/production-fee-collector.json',
+  },
+  
+  // Public keys of our controlled wallets (for API tests that don't need keypairs)
+  // ALWAYS use these addresses in tests, NOT random/exchange addresses!
+  testWallets: {
+    sender: 'B7jiNm8TKvaoad3N36pyDeXMSVPmvHLaXZMDC7udhTfr',    // From mainnet-sender.json
+    receiver: '3qYD5LwHSuxwLi2mECzoVEmH2M7aehNjodUZCdmnCwtY',  // From mainnet-receiver.json
+    admin: 'HGrfPKZuKR8BSYYJfZRFfdF1y2ApU9LSf6USQ6tpSDj2',     // From mainnet-admin.json
   },
   
   // IDL path
