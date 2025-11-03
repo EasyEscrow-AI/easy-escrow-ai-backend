@@ -3472,7 +3472,7 @@
         "testStrategy": "Run performance tests; verify query latency improvement.",
         "priority": "high",
         "dependencies": [],
-        "status": "in-progress",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -3485,7 +3485,7 @@
         "dependencies": [
           9
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -3498,7 +3498,7 @@
         "dependencies": [
           10
         ],
-        "status": "pending",
+        "status": "deferred",
         "subtasks": []
       },
       {
@@ -3511,7 +3511,7 @@
         "dependencies": [
           11
         ],
-        "status": "pending",
+        "status": "deferred",
         "subtasks": []
       },
       {
@@ -3524,7 +3524,7 @@
         "dependencies": [
           12
         ],
-        "status": "pending",
+        "status": "deferred",
         "subtasks": []
       },
       {
@@ -3537,7 +3537,7 @@
         "dependencies": [
           13
         ],
-        "status": "pending",
+        "status": "deferred",
         "subtasks": []
       },
       {
@@ -3547,10 +3547,8 @@
         "details": "Update batch processing configuration. Test with different batch sizes.",
         "testStrategy": "Test batch processing with increased batch sizes; verify performance.",
         "priority": "high",
-        "dependencies": [
-          14
-        ],
-        "status": "pending",
+        "dependencies": [],
+        "status": "in-progress",
         "subtasks": []
       },
       {
@@ -3704,7 +3702,7 @@
     ],
     "metadata": {
       "created": "2025-11-03T03:44:19.099Z",
-      "updated": "2025-11-03T04:12:13.697Z",
+      "updated": "2025-11-03T04:13:22.412Z",
       "description": "Tasks for custom-expiry-scalability context"
     }
   }

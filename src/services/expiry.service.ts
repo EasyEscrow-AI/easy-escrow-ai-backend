@@ -40,10 +40,17 @@ export class ExpiryService {
   private lastCheckTime: Date | null = null;
 
   constructor(config?: Partial<ExpiryCheckConfig>) {
+    // Batch size can be configured via environment or constructor
+    // Default: 200 (up from 50) for better throughput
+    // Recommended range: 200-500 depending on system resources
+    const defaultBatchSize = parseInt(process.env.EXPIRY_BATCH_SIZE || '200', 10);
+    
     this.config = {
       checkIntervalMs: config?.checkIntervalMs || 60000, // Default: 1 minute
-      batchSize: config?.batchSize || 50, // Default: 50 agreements per batch
+      batchSize: config?.batchSize || defaultBatchSize,
     };
+    
+    console.log(`[ExpiryService] Initialized with batch size: ${this.config.batchSize}`);
   }
 
   /**
