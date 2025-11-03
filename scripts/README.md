@@ -89,6 +89,12 @@ scripts/
 - `run-with-timeout.ps1` - PowerShell timeout wrapper for commands
 - `run-with-timeout.ts` - TypeScript timeout wrapper for commands
 
+#### Backup Utilities (`utilities/`)
+- `backup-digitalocean.ts` - TypeScript backup utility for DigitalOcean resources
+- `backup-digitalocean.ps1` - PowerShell wrapper for backup utility
+- **Quick Start:** `npm run backup:list` to see all backupable resources
+- **See:** [BACKUP_README.md](utilities/BACKUP_README.md) for complete documentation
+
 #### General Utilities (`utilities/`)
 - `install-solana-tools.ps1` - Install Solana development tools
 - `generate-missing-tasks.js` - Generate missing task files
@@ -133,6 +139,63 @@ PowerShell implementation of the timeout utility for Windows users.
 ```
 
 **See:** [TIMEOUT_UTILITIES.md](../docs/TIMEOUT_UTILITIES.md) for complete documentation.
+
+## DigitalOcean Backup Utilities
+
+### Quick Start
+
+```bash
+# 1. Set API key in .env
+echo "DIGITAL_OCEAN_API_KEY=dop_v1_xxxxxxxx" >> .env
+
+# 2. List all backupable resources
+npm run backup:list
+
+# 3. Test backup (dry run)
+npm run backup:all:dry-run
+
+# 4. Execute full backup
+npm run backup:all
+```
+
+### Available Commands
+
+```bash
+# List all resources
+npm run backup:list          # TypeScript
+npm run backup:list:ps       # PowerShell
+
+# Backup everything
+npm run backup:all           # TypeScript
+npm run backup:all:ps        # PowerShell
+
+# Backup with dry run
+npm run backup:all:dry-run   # TypeScript
+npm run backup:all:dry-run:ps # PowerShell
+
+# Backup only apps
+npm run backup:apps          # TypeScript
+npm run backup:apps:ps       # PowerShell
+
+# Backup only databases
+npm run backup:databases     # TypeScript
+npm run backup:databases:ps  # PowerShell
+```
+
+### What Gets Backed Up
+
+**App Platform Applications:**
+- Creates deployment snapshots
+- Includes source code, config, env vars (not secrets)
+- Free, kept indefinitely
+
+**Managed Databases:**
+- Creates on-demand backups
+- Complete database dump
+- Retention: 7-90 days depending on plan
+- Included in database pricing
+
+**See:** [BACKUP_README.md](utilities/BACKUP_README.md) and [DIGITALOCEAN_BACKUP_GUIDE.md](../docs/operations/DIGITALOCEAN_BACKUP_GUIDE.md) for complete documentation.
 
 ## Quick Start Guide
 
