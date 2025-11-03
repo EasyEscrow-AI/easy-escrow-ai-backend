@@ -21,6 +21,7 @@ $anchorConfig = "Anchor.staging.toml"
 # See docs/PROGRAM_IDS.md for full registry
 $programId = "AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei"
 $deployerKeypair = "wallets/staging/staging-deployer.json"
+$programKeypair = "wallets/staging/escrow-program-keypair.json"  # CRITICAL: Use environment-specific program keypair!
 $programSo = "target/deploy/escrow.so"
 $programIdl = "target/idl/escrow.json"
 
@@ -42,6 +43,30 @@ if (-not (Test-Path $deployerKeypair)) {
     exit 1
 }
 Write-Host "  ✅ Deployer keypair found: $deployerKeypair" -ForegroundColor Green
+
+# Check program keypair exists
+if (-not (Test-Path $programKeypair)) {
+    Write-Host "❌ Program keypair not found: $programKeypair" -ForegroundColor Red
+    Write-Host "   CRITICAL: This keypair defines the program ID!" -ForegroundColor Red
+    exit 1
+}
+Write-Host "  ✅ Program keypair found: $programKeypair" -ForegroundColor Green
+
+# SAFETY CHECK: Verify program keypair generates the expected program ID
+Write-Host ""
+Write-Host "🛡️  SAFETY CHECK: Verifying program ID..." -ForegroundColor Yellow
+$actualProgramId = solana-keygen pubkey $programKeypair 2>&1
+if ($actualProgramId -ne $programId) {
+    Write-Host "❌ CRITICAL ERROR: Program keypair mismatch!" -ForegroundColor Red
+    Write-Host "   Expected Program ID: $programId" -ForegroundColor Red
+    Write-Host "   Keypair generates:   $actualProgramId" -ForegroundColor Red
+    Write-Host "" -ForegroundColor Red
+    Write-Host "   THIS WOULD DEPLOY A NEW PROGRAM!" -ForegroundColor Red
+    Write-Host "   Deployment BLOCKED to prevent accidental new program creation." -ForegroundColor Red
+    exit 1
+}
+Write-Host "  ✅ Program ID verified: $programId" -ForegroundColor Green
+Write-Host ""
 
 # Check program artifacts exist
 if (-not (Test-Path $programSo)) {
@@ -138,7 +163,7 @@ if ($DryRun) {
     Write-Host "🔍 DRY RUN MODE - No deployment will occur" -ForegroundColor Yellow
     Write-Host ""
     Write-Host "Would execute:" -ForegroundColor Cyan
-    Write-Host "  anchor deploy -C $anchorConfig --provider.cluster devnet --provider.wallet $deployerKeypair" -ForegroundColor White
+    Write-Host "  solana program deploy $programSo --program-id $programId --keypair $deployerKeypair --url devnet" -ForegroundColor White
     Write-Host ""
     Write-Host "Run without -DryRun to deploy" -ForegroundColor Yellow
     exit 0
@@ -152,12 +177,10 @@ Write-Host ""
 $deployStart = Get-Date
 
 try {
-    # Set environment to use devnet
-    $env:ANCHOR_PROVIDER_URL = "https://api.devnet.solana.com"
-    
-    # Deploy using Anchor
-    Write-Host "Executing: anchor deploy -C $anchorConfig --provider.cluster devnet --provider.wallet $deployerKeypair" -ForegroundColor Gray
-    anchor deploy -C $anchorConfig --provider.cluster devnet --provider.wallet $deployerKeypair
+    # CRITICAL: Deploy with explicit program ID to upgrade EXISTING program
+    # This prevents accidental deployment of a new program
+    Write-Host "Executing: solana program deploy $programSo --program-id $programId --keypair $deployerKeypair --url devnet" -ForegroundColor Gray
+    solana program deploy $programSo --program-id $programId --keypair $deployerKeypair --url devnet
     
     if ($LASTEXITCODE -ne 0) {
         throw "Deployment failed with exit code $LASTEXITCODE"
