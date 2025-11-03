@@ -1,0 +1,121 @@
+# Custom Expiry and High-Volume Scalability Feature
+
+## Overview
+Implement custom expiry times (up to 24 hours) for escrow agreements and optimize batch processing to support 10,000+ agreements per day with efficient monitoring and alerting.
+
+## Background
+Current system allows user-specified expiry but lacks optimization for high volumes. Analysis shows 24-hour expiry is MORE scalable than short expiry times due to lower database churn. System needs enhanced batch processing, connection pooling, monitoring metrics, and infrastructure improvements.
+
+## Technical Requirements
+
+### 1. API Enhancements for Custom Expiry
+- Add expiry duration validation to agreement creation endpoints (1 hour to 24 hours)
+- Implement expiry duration presets (1h, 6h, 12h, 24h) with custom duration option
+- Add API documentation for expiry parameter with examples
+- Return expiry timestamp in agreement responses for client-side countdown timers
+- Add expiry extension endpoint for extending agreements before expiration
+- Implement expiry policies per agreement type or user tier
+
+### 2. Database Schema and Indexing
+- Add composite index on (status, expiry) for expiry service queries
+- Add index on (expiry, seller, buyer) for user-specific expiry queries
+- Implement database partitioning strategy for agreements (monthly partitions)
+- Add database statistics maintenance scheduling (ANALYZE after bulk operations)
+- Optimize foreign key indexes for cascading operations
+- Add soft-delete flag (deleted_at) for compliance with audit retention
+
+### 3. Batch Processing Optimizations
+- Increase expiry service batch size from 50 to 200-500 (configurable)
+- Implement dynamic batch sizing based on execution time (target 30-60 seconds per batch)
+- Add batch processing metrics (throughput, latency, error rate)
+- Implement two-phase batching (identify expired, then process in smaller chunks)
+- Add batch scheduling during off-peak hours (configurable time windows)
+- Implement exponential backoff with jitter for failed batch operations
+- Add dead-letter queue for permanently failed expiry operations
+
+### 4. Connection Pooling and Database Performance
+- Increase PostgreSQL connection pool size (20-50 connections for high volume)
+- Configure separate connection pool for batch operations (isolation from user traffic)
+- Implement PgBouncer or pgpool-II for connection pooling at infrastructure layer
+- Add prepared statement caching for frequently executed queries
+- Optimize multi-row INSERT/UPDATE operations for batch processing
+- Implement connection pool monitoring (active, idle, waiting connections)
+- Add connection pool auto-scaling based on demand metrics
+
+### 5. Monitoring and Alerting Infrastructure
+- Implement comprehensive batch processing metrics (execution time, throughput, error rate)
+- Add database query performance monitoring (p50, p95, p99 latency)
+- Implement expiry service backlog monitoring (count of expired agreements waiting)
+- Add queue depth monitoring for all processing queues
+- Implement real-time alerting for SLO violations (burn rate analysis)
+- Add distributed tracing for transaction lifecycle (from creation to settlement)
+- Implement anomaly detection for unusual transaction patterns
+- Add capacity forecasting based on transaction volume trends
+
+### 6. Performance Dashboards and Visualization
+- Create real-time dashboard showing active agreements by expiry time
+- Implement batch processing performance dashboard (throughput, latency trends)
+- Add database performance dashboard (query latency, connection pool utilization)
+- Create resource utilization dashboard (CPU, memory, disk I/O)
+- Implement SLO compliance dashboard with burn rate visualizations
+- Add incident correlation dashboard linking metrics across services
+
+### 7. Scalability and Infrastructure
+- Implement horizontal scaling for expiry service workers (multiple instances)
+- Add load balancing for batch processing workers
+- Implement Redis caching for frequently accessed agreement data
+- Add WebSocket connection pooling for deposit monitoring
+- Implement rate limiting for batch operations to prevent overwhelming database
+- Add circuit breaker pattern for external service calls (RPC, notifications)
+- Implement graceful degradation for non-critical operations under load
+
+### 8. Settlement and Monitoring Service Optimizations
+- Optimize settlement service polling (maintain 15-second interval, optimize queries)
+- Reduce stuck agreement monitor frequency (5 minutes for high volumes)
+- Implement settlement batch processing (group multiple settlements)
+- Add settlement timeout handling with retry logic
+- Optimize deposit monitoring WebSocket subscriptions (connection pooling)
+- Implement monitoring service auto-scaling based on active agreement count
+
+### 9. Error Handling and Resilience
+- Implement comprehensive retry strategies with exponential backoff
+- Add error categorization (transient vs permanent failures)
+- Implement dead-letter queues for failed operations
+- Add automatic recovery workflows for common failure scenarios
+- Implement idempotency keys for all critical operations
+- Add transaction correlation IDs for distributed tracing
+- Implement circuit breakers for external dependencies
+
+### 10. Testing and Validation
+- Load testing with 10,000+ agreements/day simulation
+- Stress testing batch processing with various expiry distributions
+- Database performance testing under peak loads
+- Failover testing for batch processing workers
+- Monitoring system validation (alert accuracy, false positive rate)
+- End-to-end integration testing with custom expiry times
+- Capacity testing for 50,000 and 100,000 agreements/day scenarios
+
+## Success Metrics
+- System supports 10,000+ agreements/day with 24-hour expiry
+- Batch processing completes within defined time windows (< 5 minutes per cycle)
+- Database query p95 latency < 100ms for agreement operations
+- Expiry service processes backlog within 5 minutes under normal load
+- Zero data loss during batch processing or expiry operations
+- Alert false positive rate < 5%
+- System maintains 99.9% uptime during high-volume periods
+
+## Technical Constraints
+- PostgreSQL database (optimize queries, not change database)
+- Node.js/TypeScript runtime (leverage async patterns, worker threads if needed)
+- Solana blockchain (maintain existing RPC patterns, optimize WebSocket usage)
+- Maintain backwards compatibility with existing API clients
+- Zero downtime deployment requirement
+
+## Implementation Phases
+Phase 1: Database optimizations and indexing
+Phase 2: Batch processing enhancements and monitoring
+Phase 3: Connection pooling and performance tuning
+Phase 4: Monitoring infrastructure and dashboards
+Phase 5: Load testing and validation
+Phase 6: Production deployment with gradual rollout
+
