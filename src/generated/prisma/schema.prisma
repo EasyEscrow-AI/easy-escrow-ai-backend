@@ -22,6 +22,7 @@ enum AgreementStatus {
   EXPIRED
   CANCELLED
   REFUNDED
+  ARCHIVED
 }
 
 // Enum for deposit type
@@ -76,6 +77,8 @@ model Agreement {
   updatedAt       DateTime        @updatedAt @map("updated_at")
   settledAt       DateTime?       @map("settled_at")
   cancelledAt     DateTime?       @map("cancelled_at")
+  archivedAt      DateTime?       @map("archived_at")
+  archiveReason   String?         @map("archive_reason")
 
   deposits   Deposit[]
   settlement Settlement?
@@ -88,6 +91,10 @@ model Agreement {
   @@index([status])
   @@index([expiry])
   @@index([createdAt])
+  @@index([archivedAt])
+  // Composite indexes for scalability and batch processing
+  @@index([status, expiry], name: "idx_status_expiry")
+  @@index([expiry, seller, buyer], name: "idx_expiry_seller_buyer")
   @@map("agreements")
 }
 
@@ -106,7 +113,7 @@ model Deposit {
   detectedAt   DateTime      @default(now()) @map("detected_at")
   confirmedAt  DateTime?     @map("confirmed_at")
 
-  agreement Agreement @relation(fields: [agreementId], references: [id], onDelete: Cascade)
+  agreement Agreement @relation(fields: [agreementId], references: [agreementId], onDelete: Cascade)
 
   @@index([agreementId])
   @@index([type])
@@ -150,7 +157,7 @@ model Settlement {
   royaltyRecipient String?  @map("royalty_recipient")
   settledAt        DateTime @default(now()) @map("settled_at")
 
-  agreement Agreement @relation(fields: [agreementId], references: [id], onDelete: Cascade)
+  agreement Agreement @relation(fields: [agreementId], references: [agreementId], onDelete: Cascade)
 
   @@index([agreementId])
   @@index([buyer])
@@ -183,7 +190,7 @@ model Receipt {
   settledAt   DateTime @map("settled_at")
   generatedAt DateTime @default(now()) @map("generated_at")
 
-  agreement Agreement @relation(fields: [agreementId], references: [id], onDelete: Cascade)
+  agreement Agreement @relation(fields: [agreementId], references: [agreementId], onDelete: Cascade)
 
   @@index([agreementId])
   @@index([buyer])
@@ -232,7 +239,7 @@ model Webhook {
   createdAt        DateTime              @default(now()) @map("created_at")
   scheduledFor     DateTime              @default(now()) @map("scheduled_for")
 
-  agreement Agreement @relation(fields: [agreementId], references: [id], onDelete: Cascade)
+  agreement Agreement @relation(fields: [agreementId], references: [agreementId], onDelete: Cascade)
 
   @@index([agreementId])
   @@index([eventType])

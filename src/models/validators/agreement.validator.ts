@@ -3,9 +3,9 @@ import {
   isValidSolanaAddress,
   isValidUSDCAmount,
   isValidFeeBps,
-  isValidExpiry,
   isValidNFTMint,
 } from './solana.validator';
+import { validateExpiry, EXPIRY_CONSTANTS } from './expiry.validator';
 
 export interface ValidationError {
   field: string;
@@ -13,7 +13,7 @@ export interface ValidationError {
 }
 
 /**
- * Validate agreement creation data
+ * Validate agreement creation data with enhanced expiry validation
  */
 export const validateCreateAgreement = (
   data: CreateAgreementDTO
@@ -49,14 +49,26 @@ export const validateCreateAgreement = (
     errors.push({ field: 'buyer', message: 'Invalid buyer address' });
   }
 
-  // Validate expiry
-  if (!data.expiry) {
-    errors.push({ field: 'expiry', message: 'Expiry date is required' });
-  } else if (!isValidExpiry(data.expiry)) {
+  // Validate expiry with enhanced custom duration support
+  if (!data.expiry && !data.expiryDurationHours) {
     errors.push({ 
       field: 'expiry', 
-      message: 'Expiry date must be in the future' 
+      message: 'Expiry date or duration is required' 
     });
+  } else {
+    // Prioritize expiry over expiryDurationHours if both provided
+    const expiryInput = data.expiry || data.expiryDurationHours;
+    
+    if (expiryInput !== undefined) {
+      const validation = validateExpiry(expiryInput as Date | string | number);
+      
+      if (!validation.valid) {
+        errors.push({ 
+          field: 'expiry', 
+          message: validation.error || 'Invalid expiry value'
+        });
+      }
+    }
   }
 
   // Validate fee BPS

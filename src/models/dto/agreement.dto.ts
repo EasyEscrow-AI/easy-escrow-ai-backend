@@ -1,5 +1,6 @@
 import { Decimal } from '@prisma/client/runtime/library';
 import { AgreementStatus } from '../../generated/prisma';
+import { ExpiryPreset } from '../validators/expiry.validator';
 
 /**
  * DTO for creating a new agreement
@@ -19,7 +20,31 @@ export interface CreateAgreementDTO {
   price: string | number | Decimal;
   seller: string;
   buyer?: string;
-  expiry: Date | string;
+  
+  /**
+   * Agreement expiry time. Supports multiple formats:
+   * - ISO 8601 timestamp string (absolute time)
+   * - Date object (absolute time)
+   * - Duration in hours (number between 1-24)
+   * - Preset string: '1h', '6h', '12h', '24h'
+   * 
+   * Examples:
+   * - "2025-11-04T12:00:00Z" (absolute time)
+   * - 12 (12 hours from now)
+   * - "6h" (6 hours from now)
+   * 
+   * Constraints:
+   * - Minimum: 1 hour from creation
+   * - Maximum: 24 hours from creation
+   */
+  expiry: Date | string | number | ExpiryPreset;
+  
+  /**
+   * Optional: Explicit duration in hours (alternative to expiry)
+   * If both expiry and expiryDurationHours are provided, expiry takes precedence
+   */
+  expiryDurationHours?: number;
+  
   feeBps: number;
   honorRoyalties: boolean;
 }

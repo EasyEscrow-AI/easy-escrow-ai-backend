@@ -7,6 +7,7 @@ info:
     
     ## Features
     - Create escrow agreements for NFT <> USDC
+    - **Custom expiry times (1-24 hours)** with flexible input formats (presets, duration, timestamps)
     - On-chain non-custodial functionality (assets secured by Smart Contract)
     - Automatic atomic settlement when both assets are verified on-chain
     - Automatic agreement expiry and refund handling (auto return to sender)
@@ -15,6 +16,13 @@ info:
     - Transaction logging and monitoring to ensure a smooth escrow
     - Rate Limiting: 10 agreement requests per 15 minutes
     - Idempotency: Agreement creation endpoints support idempotency keys to prevent duplicates
+    
+    ## Custom Expiry Times
+    Agreements support flexible expiry specifications:
+    - **Presets**: "1h", "6h", "12h", "24h" (recommended for simplicity)
+    - **Duration**: Number of hours (1-24) from creation time
+    - **Absolute**: ISO 8601 timestamp for specific expiry time
+    - **Constraints**: Minimum 1 hour, maximum 24 hours from creation
     
   contact:
     name: EasyEscrow.ai Support
@@ -124,6 +132,51 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateAgreementRequest'
+            examples:
+              presetExpiry:
+                summary: Using expiry preset (recommended)
+                description: Quick and easy - specify expiry as a preset string
+                value:
+                  nftMint: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+                  price: "1000000000"
+                  seller: "4qxZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9"
+                  buyer: "5rxZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9"
+                  expiry: "12h"
+                  feeBps: 250
+                  honorRoyalties: true
+              durationInHours:
+                summary: Using duration in hours
+                description: Specify expiry as a number of hours (1-24)
+                value:
+                  nftMint: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+                  price: "1000000000"
+                  seller: "4qxZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9"
+                  buyer: "5rxZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9"
+                  expiry: 6
+                  feeBps: 250
+                  honorRoyalties: true
+              absoluteTimestamp:
+                summary: Using absolute timestamp
+                description: Specify expiry as an ISO 8601 timestamp
+                value:
+                  nftMint: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+                  price: "1000000000"
+                  seller: "4qxZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9"
+                  buyer: "5rxZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9"
+                  expiry: "2025-11-04T12:00:00Z"
+                  feeBps: 250
+                  honorRoyalties: true
+              alternativeField:
+                summary: Using expiryDurationHours field
+                description: Alternative field for specifying duration
+                value:
+                  nftMint: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+                  price: "1000000000"
+                  seller: "4qxZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9"
+                  buyer: "5rxZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9"
+                  expiryDurationHours: 24
+                  feeBps: 250
+                  honorRoyalties: true
       responses:
         '201':
           description: Agreement created successfully
@@ -234,6 +287,119 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
           $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /v1/agreements/{agreementId}/extend-expiry:
+    post:
+      tags:
+        - Agreements
+      summary: Extend agreement expiry
+      description: |
+        Extends the expiry time of an existing agreement that hasn't expired yet.
+        
+        **Supported Extension Formats:**
+        - **Duration in hours** (number 1-24): Extends from current expiry
+        - **Preset string**: "1h", "6h", "12h", "24h"
+        - **Absolute timestamp**: ISO 8601 format (sets new specific expiry time)
+        
+        **Constraints:**
+        - Agreement must not be expired, settled, cancelled, or refunded
+        - New expiry must be in the future
+        - New expiry cannot exceed 24 hours from current time
+        - Only seller or buyer can extend (if requesterAddress provided)
+        
+        **Rate Limited**: 10 requests per 15 minutes
+      parameters:
+        - $ref: '#/components/parameters/AgreementId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - extension
+              properties:
+                extension:
+                  oneOf:
+                    - type: number
+                      minimum: 1
+                      maximum: 24
+                    - type: string
+                      enum: ["1h", "6h", "12h", "24h"]
+                    - type: string
+                      format: date-time
+                  description: |
+                    Extension duration or new expiry time.
+                    - Number: Hours to add from current expiry (1-24)
+                    - Preset: "1h", "6h", "12h", "24h" from current expiry
+                    - Timestamp: New absolute expiry time (ISO 8601)
+                  example: "6h"
+                requesterAddress:
+                  type: string
+                  description: Optional wallet address of the requester (seller or buyer). If provided, authorization is verified.
+                  example: "4qxZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9"
+            examples:
+              presetExtension:
+                summary: Extend by preset duration
+                value:
+                  extension: "6h"
+                  requesterAddress: "4qxZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9"
+              numericExtension:
+                summary: Extend by number of hours
+                value:
+                  extension: 12
+              absoluteExtension:
+                summary: Set new absolute expiry
+                value:
+                  extension: "2025-11-04T18:00:00Z"
+                  requesterAddress: "5rxZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9"
+      responses:
+        '200':
+          description: Expiry extended successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      agreementId:
+                        type: string
+                        example: "abc123"
+                      oldExpiry:
+                        type: string
+                        format: date-time
+                        example: "2025-11-03T12:00:00.000Z"
+                      newExpiry:
+                        type: string
+                        format: date-time
+                        example: "2025-11-03T18:00:00.000Z"
+                      extensionHours:
+                        type: number
+                        example: 6
+                      message:
+                        type: string
+                        example: "Successfully extended expiry by 6.0 hours"
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2025-11-03T10:00:00.000Z"
+        '400':
+          description: Bad request (invalid extension, expired agreement, invalid state, or unauthorized)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
@@ -1054,10 +1220,40 @@ components:
           description: Buyer wallet public key (optional, can be set later)
           example: "5rxZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9"
         expiry:
-          type: string
-          format: date-time
-          description: Agreement expiry date (ISO 8601)
-          example: "2024-12-31T23:59:59Z"
+          oneOf:
+            - type: string
+              format: date-time
+            - type: number
+            - type: string
+              enum: ["1h", "6h", "12h", "24h"]
+          description: |
+            Agreement expiry time. Supports multiple formats for flexibility:
+            
+            **Format Options:**
+            - **ISO 8601 timestamp** (absolute time): "2025-11-04T12:00:00Z"
+            - **Duration in hours** (number 1-24): 12
+            - **Preset string**: "1h", "6h", "12h", "24h"
+            
+            **Constraints:**
+            - Minimum duration: 1 hour from creation
+            - Maximum duration: 24 hours from creation
+            - Expiry must be in the future
+            
+            **Examples:**
+            - Absolute: "2025-11-04T12:00:00Z" (expires at specific time)
+            - Duration: 12 (expires 12 hours from now)
+            - Preset: "6h" (expires 6 hours from now)
+            
+            **Note:** A 60-second buffer is added on-chain to prevent clock skew issues.
+          example: "12h"
+        expiryDurationHours:
+          type: number
+          minimum: 1
+          maximum: 24
+          description: |
+            Optional: Explicit duration in hours (alternative to expiry field).
+            If both expiry and expiryDurationHours are provided, expiry takes precedence.
+          example: 6
         feeBps:
           type: integer
           description: Platform fee in basis points (100 = 1%)
