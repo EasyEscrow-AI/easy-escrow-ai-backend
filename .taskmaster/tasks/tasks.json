@@ -3394,7 +3394,7 @@
         "dependencies": [
           6
         ],
-        "status": "in-progress",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -3402,7 +3402,7 @@
             "description": "Define the API endpoint path, HTTP method, and request/response formats for extending agreement expiry.",
             "dependencies": [],
             "details": "Create a RESTful endpoint using a clear, noun-based path such as POST /agreements/{id}/expiry-extension. Define the request body to include the extension duration or preset identifier. Specify response formats and HTTP status codes for success and error cases.",
-            "status": "in-progress",
+            "status": "done",
             "testStrategy": "Verify endpoint accepts valid requests and returns appropriate status codes and responses."
           },
           {
@@ -3413,7 +3413,7 @@
               1
             ],
             "details": "Implement server-side validation to check that the requested expiry extension does not exceed predefined maximum limits. Verify that the user has permission to extend the specified agreement. Sanitize inputs to prevent injection attacks.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Test with valid and invalid durations, unauthorized users, and malformed inputs to confirm proper validation and error handling."
           },
           {
@@ -3424,7 +3424,7 @@
               2
             ],
             "details": "Calculate the new expiry timestamp by adding the extension duration to the current expiry. Update the agreement record atomically to prevent race conditions. Ensure database constraints and triggers are respected.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Check database records after extension requests to confirm expiry dates are updated correctly."
           },
           {
@@ -3435,7 +3435,7 @@
               3
             ],
             "details": "Return 400 Bad Request for invalid inputs, 403 Forbidden for unauthorized access, 404 Not Found if agreement does not exist, and 200 OK with updated expiry on success. Include descriptive error messages in JSON format.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Simulate error scenarios and verify correct status codes and error messages are returned."
           },
           {
@@ -3446,7 +3446,7 @@
               4
             ],
             "details": "Create unit tests for validation logic and database update functions. Write integration tests that send HTTP requests to the endpoint with various valid and invalid inputs. Confirm that expiry dates update correctly and errors are handled as expected.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Run test suite to ensure all tests pass and cover edge cases for expiry extension."
           }
         ]
@@ -3461,7 +3461,7 @@
         "dependencies": [
           7
         ],
-        "status": "pending",
+        "status": "deferred",
         "subtasks": []
       },
       {
@@ -3471,10 +3471,8 @@
         "details": "Add index to PostgreSQL database. Test query performance with and without index.",
         "testStrategy": "Run performance tests; verify query latency improvement.",
         "priority": "high",
-        "dependencies": [
-          8
-        ],
-        "status": "pending",
+        "dependencies": [],
+        "status": "in-progress",
         "subtasks": []
       },
       {
@@ -3706,7 +3704,7 @@
     ],
     "metadata": {
       "created": "2025-11-03T03:44:19.099Z",
-      "updated": "2025-11-03T04:08:41.775Z",
+      "updated": "2025-11-03T04:12:13.697Z",
       "description": "Tasks for custom-expiry-scalability context"
     }
   }
