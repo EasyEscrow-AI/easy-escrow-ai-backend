@@ -3,11 +3,13 @@
  * 
  * Monitors and checks expiry timestamps for active escrow agreements.
  * Runs as a background service to identify and trigger actions on expired agreements.
+ * 
+ * Uses a separate connection pool (batchPrisma) to isolate batch operations
+ * from user-facing API traffic for better performance and scalability.
  */
 
-import { PrismaClient, AgreementStatus, DepositType } from '../generated/prisma';
-
-const prisma = new PrismaClient();
+import { AgreementStatus, DepositType } from '../generated/prisma';
+import { batchPrisma as prisma } from '../config/database';
 
 /**
  * Configuration for expiry checking

@@ -3548,7 +3548,7 @@
         "testStrategy": "Test batch processing with increased batch sizes; verify performance.",
         "priority": "high",
         "dependencies": [],
-        "status": "in-progress",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -3561,7 +3561,7 @@
         "dependencies": [
           15
         ],
-        "status": "pending",
+        "status": "deferred",
         "subtasks": []
       },
       {
@@ -3574,7 +3574,7 @@
         "dependencies": [
           16
         ],
-        "status": "pending",
+        "status": "deferred",
         "subtasks": []
       },
       {
@@ -3587,7 +3587,7 @@
         "dependencies": [
           17
         ],
-        "status": "pending",
+        "status": "deferred",
         "subtasks": []
       },
       {
@@ -3600,7 +3600,7 @@
         "dependencies": [
           18
         ],
-        "status": "pending",
+        "status": "deferred",
         "subtasks": []
       },
       {
@@ -3613,7 +3613,7 @@
         "dependencies": [
           19
         ],
-        "status": "pending",
+        "status": "deferred",
         "subtasks": []
       },
       {
@@ -3626,7 +3626,7 @@
         "dependencies": [
           20
         ],
-        "status": "pending",
+        "status": "deferred",
         "subtasks": []
       },
       {
@@ -3636,10 +3636,8 @@
         "details": "Update connection pool configuration. Test with high-volume load.",
         "testStrategy": "Test connection pool performance under high load.",
         "priority": "high",
-        "dependencies": [
-          21
-        ],
-        "status": "pending",
+        "dependencies": [],
+        "status": "in-progress",
         "subtasks": []
       },
       {
@@ -3702,7 +3700,7 @@
     ],
     "metadata": {
       "created": "2025-11-03T03:44:19.099Z",
-      "updated": "2025-11-03T04:13:22.412Z",
+      "updated": "2025-11-03T04:17:44.386Z",
       "description": "Tasks for custom-expiry-scalability context"
     }
   }
