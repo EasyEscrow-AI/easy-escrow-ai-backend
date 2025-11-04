@@ -18,8 +18,9 @@ This document outlines the phased deployment strategy for migrating from USDC-ba
 ## Pre-Migration Checklist
 
 ### Development Environment
-- [ ] All existing USDC escrow agreements settled or cancelled
-- [ ] Backup current program state
+- [ ] **TRUNCATE DATABASE** - Full database reset (no users, no impact)
+- [ ] Backup current program state (for reference)
+- [ ] Run Prisma migrations on fresh database
 - [ ] Deploy new SOL program to devnet
 - [ ] Verify IDL has no USDC references
 - [ ] Update backend configuration
@@ -27,8 +28,9 @@ This document outlines the phased deployment strategy for migrating from USDC-ba
 - [ ] Verify E2E tests pass
 
 ### Staging Environment
-- [ ] All existing USDC escrow agreements settled or cancelled
-- [ ] Backup current program state and database
+- [ ] **TRUNCATE DATABASE** - Full database reset (no users, no impact)
+- [ ] Backup current program state and database (for reference)
+- [ ] Run Prisma migrations on fresh database
 - [ ] Deploy new SOL program to staging devnet
 - [ ] Update staging backend configuration
 - [ ] Run full integration test suite
@@ -36,13 +38,16 @@ This document outlines the phased deployment strategy for migrating from USDC-ba
 - [ ] Verify monitoring and alerting
 
 ### Production Environment
-- [ ] All existing USDC escrow agreements settled or cancelled
-- [ ] Final backup of program state and database
+- [ ] **TRUNCATE DATABASE** - Full database reset (no users, no impact)
+- [ ] Final backup of program state and database (for reference)
+- [ ] Run Prisma migrations on fresh database
 - [ ] Schedule maintenance window (if needed)
 - [ ] Deploy new SOL program to mainnet
 - [ ] Update production backend configuration
 - [ ] Run smoke tests
 - [ ] Monitor closely for 24-48 hours
+
+**Note:** Since the platform has **no active users**, complete database truncation is the recommended approach. This provides a clean slate for SOL-based agreements and eliminates any potential USDC-related data inconsistencies.
 
 ## Deployment Phases
 
@@ -100,16 +105,31 @@ solana program show <PROGRAM_ID> --url devnet
 
 ### Phase 2: Staging (Week 2)
 
-#### Day 1: Pre-Deployment
+#### Day 1: Pre-Deployment & Database Reset
 **Tasks:**
-- Settle/cancel all existing USDC agreements in staging
-- Backup staging database
+- Backup staging database (for reference)
+- **TRUNCATE staging database** - Full reset
+- Run Prisma migrations on fresh database
 - Backup current program state
 - Prepare rollback plan
 - Update monitoring dashboards
 
+**Database Reset Commands:**
+```bash
+# Backup (safety)
+pg_dump -h <staging-host> -U <user> -d <database> > backup_staging_pre_sol.sql
+
+# Truncate via Prisma
+cd /path/to/backend
+npx prisma migrate reset --force --skip-seed
+
+# Verify empty
+psql -h <staging-host> -c "SELECT COUNT(*) FROM \"Agreement\";"
+```
+
 **Success Criteria:**
-- Zero active USDC agreements
+- Database completely empty (zero agreements, zero deposits)
+- Fresh migrations applied successfully
 - Backups verified and accessible
 - Rollback plan documented and tested
 
@@ -171,22 +191,40 @@ anchor deploy --provider.cluster devnet --program-name escrow
 
 ### Phase 3: Production (Week 3)
 
-#### Day 1-2: Pre-Deployment Preparation
+#### Day 1-2: Pre-Deployment Preparation & Database Reset
 **Tasks:**
-- Notify users of upcoming changes (if applicable)
-- Settle/cancel all existing USDC agreements in production
-- Final backup of production database
+- Notify stakeholders of maintenance window (no user impact - no users)
+- Final backup of production database (for reference)
+- **TRUNCATE production database** - Full reset
+- Run Prisma migrations on fresh database
 - Backup current production program state
 - Review rollback procedures with team
 - Prepare incident response plan
 
+**Database Reset Commands:**
+```bash
+# PRODUCTION - Execute with caution
+# Backup (safety)
+pg_dump -h <prod-host> -U <user> -d <database> > backup_production_pre_sol_$(date +%Y%m%d).sql
+
+# Truncate via Prisma
+cd /path/to/backend
+NODE_ENV=production npx prisma migrate reset --force --skip-seed
+
+# Verify empty
+psql -h <prod-host> -c "SELECT COUNT(*) FROM \"Agreement\";"
+psql -h <prod-host> -c "SELECT COUNT(*) FROM \"Deposit\";"
+```
+
 **Critical Checks:**
-- ✅ Zero active USDC agreements in production
+- ✅ **Database completely empty** (verified via SQL queries)
+- ✅ Fresh migrations applied to production database
 - ✅ All backups verified and tested
-- ✅ Rollback plan ready
+- ✅ Rollback plan ready (includes database restore)
 - ✅ Team briefed on deployment
 - ✅ Monitoring dashboards prepared
 - ✅ Incident response team on standby
+- ✅ No user impact (confirmed: zero active users)
 
 #### Day 3: Production Deployment
 
@@ -304,13 +342,93 @@ psql < backup_production_YYYYMMDD.sql
 
 ## Data Migration
 
-### No Database Schema Changes Required
+### Database Truncation Strategy (Recommended)
+
+**Decision:** Complete database truncation for all environments.
 
 **Rationale:**
-- New swap types use same `Agreement` table structure
-- `price` field can represent SOL amount (just different decimals)
-- `Deposit` table already generic (type field supports new types)
-- Add new deposit types: `SOL`, `NFT_BUYER` (for NFT<>NFT swaps)
+- ✅ **No active users** - Zero risk to existing users
+- ✅ Clean slate eliminates USDC data inconsistencies
+- ✅ Ensures all agreements use new SOL schema from day 1
+- ✅ Simpler than complex data migration scripts
+- ✅ Faster deployment with less risk
+- ✅ No partial migration edge cases
+
+### Truncation Procedure
+
+**For Each Environment (Dev, Staging, Production):**
+
+1. **Backup Current State (Safety):**
+   ```bash
+   # Backup entire database
+   pg_dump -h <host> -U <user> -d <database> > backup_pre_sol_migration_$(date +%Y%m%d).sql
+   
+   # Verify backup
+   pg_restore --list backup_pre_sol_migration_$(date +%Y%m%d).sql
+   ```
+
+2. **Truncate Database:**
+   ```bash
+   # Option 1: Full reset via Prisma (recommended)
+   npx prisma migrate reset --force --skip-seed
+   
+   # Option 2: Manual truncation (if needed)
+   psql -h <host> -U <user> -d <database> -c "TRUNCATE TABLE \"Agreement\", \"Deposit\", \"Webhook\", \"TransactionLog\" CASCADE;"
+   ```
+
+3. **Run Fresh Migrations:**
+   ```bash
+   # Deploy schema
+   npx prisma migrate deploy
+   
+   # Generate Prisma client
+   npx prisma generate
+   ```
+
+4. **Update Seed Data (Optional):**
+   ```bash
+   # Seed with SOL-based test data
+   npm run seed
+   ```
+
+5. **Verification:**
+   ```sql
+   -- Verify tables are empty
+   SELECT COUNT(*) FROM "Agreement";
+   SELECT COUNT(*) FROM "Deposit";
+   
+   -- Should both return 0
+   ```
+
+### Schema Updates (If Needed)
+
+While truncation is recommended, minimal schema changes may still be required:
+
+**Prisma Schema Update (if needed):**
+```prisma
+enum DepositType {
+  USDC      // Legacy (for historical reference only)
+  NFT       // Existing
+  SOL       // NEW - SOL deposits
+  NFT_BUYER // NEW - Buyer's NFT in NFT<>NFT swaps
+}
+
+model Agreement {
+  // ... existing fields ...
+  
+  // Optional: Add swap type tracking
+  swapType String? // "NFT_FOR_SOL", "NFT_FOR_NFT_WITH_FEE", "NFT_FOR_NFT_PLUS_SOL"
+}
+```
+
+**Migration Script:**
+```bash
+# Create migration for new enum values
+npx prisma migrate dev --name add_sol_deposit_types
+
+# Deploy to other environments
+npx prisma migrate deploy
+```
 
 ### Configuration Updates
 
