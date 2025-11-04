@@ -699,19 +699,23 @@ pub mod escrow {
                     ctx.accounts.escrow_state.platform_fee_bps,
                 )?;
 
-                // Transfer SOL: Must do all lamport modifications atomically
+                // Transfer SOL: ALL borrows must be held simultaneously for Solana validation
                 // NOTE: Cannot use SystemProgram::transfer() from PDA with data
+                // Must manually adjust lamports while holding all borrows
                 {
-                    let total_transfer = platform_fee.checked_add(seller_receives)
-                        .ok_or(EscrowError::CalculationOverflow)?;
-                    
-                    // Subtract total from escrow
-                    **ctx.accounts.escrow_state.to_account_info().try_borrow_mut_lamports()? -= total_transfer;
+                    let escrow_account = ctx.accounts.escrow_state.to_account_info();
+                    let fee_collector_account = ctx.accounts.platform_fee_collector.to_account_info();
+                    let seller_account = ctx.accounts.seller.to_account_info();
+
+                    let mut escrow_lamports = escrow_account.try_borrow_mut_lamports()?;
+                    let mut fee_collector_lamports = fee_collector_account.try_borrow_mut_lamports()?;
+                    let mut seller_lamports = seller_account.try_borrow_mut_lamports()?;
+
+                    **escrow_lamports -= platform_fee;
+                    **escrow_lamports -= seller_receives;
+                    **fee_collector_lamports += platform_fee;
+                    **seller_lamports += seller_receives;
                 }
-                
-                // Add to recipients
-                **ctx.accounts.platform_fee_collector.to_account_info().try_borrow_mut_lamports()? += platform_fee;
-                **ctx.accounts.seller.to_account_info().try_borrow_mut_lamports()? += seller_receives;
 
                 // Transfer NFT A from escrow to buyer
                 let nft_transfer_ctx = CpiContext::new_with_signer(
@@ -739,8 +743,17 @@ pub mod escrow {
                 // Transfer platform fee (SOL) to fee collector
                 let platform_fee = ctx.accounts.escrow_state.sol_amount; // Full amount is the fee
                 // NOTE: Cannot use SystemProgram::transfer() from PDA with data
-                **ctx.accounts.escrow_state.to_account_info().try_borrow_mut_lamports()? -= platform_fee;
-                **ctx.accounts.platform_fee_collector.to_account_info().try_borrow_mut_lamports()? += platform_fee;
+                // Must hold both borrows simultaneously for Solana validation
+                {
+                    let escrow_account = ctx.accounts.escrow_state.to_account_info();
+                    let fee_collector_account = ctx.accounts.platform_fee_collector.to_account_info();
+
+                    let mut escrow_lamports = escrow_account.try_borrow_mut_lamports()?;
+                    let mut fee_collector_lamports = fee_collector_account.try_borrow_mut_lamports()?;
+
+                    **escrow_lamports -= platform_fee;
+                    **fee_collector_lamports += platform_fee;
+                }
 
                 // Transfer NFT A from escrow to buyer
                 let nft_a_transfer_ctx = CpiContext::new_with_signer(
@@ -790,19 +803,23 @@ pub mod escrow {
                     ctx.accounts.escrow_state.platform_fee_bps,
                 )?;
 
-                // Transfer SOL: Must do all lamport modifications atomically
+                // Transfer SOL: ALL borrows must be held simultaneously for Solana validation
                 // NOTE: Cannot use SystemProgram::transfer() from PDA with data
+                // Must manually adjust lamports while holding all borrows
                 {
-                    let total_transfer = platform_fee.checked_add(seller_sol_amount)
-                        .ok_or(EscrowError::CalculationOverflow)?;
-                    
-                    // Subtract total from escrow
-                    **ctx.accounts.escrow_state.to_account_info().try_borrow_mut_lamports()? -= total_transfer;
+                    let escrow_account = ctx.accounts.escrow_state.to_account_info();
+                    let fee_collector_account = ctx.accounts.platform_fee_collector.to_account_info();
+                    let seller_account = ctx.accounts.seller.to_account_info();
+
+                    let mut escrow_lamports = escrow_account.try_borrow_mut_lamports()?;
+                    let mut fee_collector_lamports = fee_collector_account.try_borrow_mut_lamports()?;
+                    let mut seller_lamports = seller_account.try_borrow_mut_lamports()?;
+
+                    **escrow_lamports -= platform_fee;
+                    **escrow_lamports -= seller_sol_amount;
+                    **fee_collector_lamports += platform_fee;
+                    **seller_lamports += seller_sol_amount;
                 }
-                
-                // Add to recipients
-                **ctx.accounts.platform_fee_collector.to_account_info().try_borrow_mut_lamports()? += platform_fee;
-                **ctx.accounts.seller.to_account_info().try_borrow_mut_lamports()? += seller_sol_amount;
 
                 // Transfer NFT A from escrow to buyer
                 let nft_a_transfer_ctx = CpiContext::new_with_signer(
