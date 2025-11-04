@@ -7,7 +7,7 @@
 
 import { AnchorProvider, Program, BN, Wallet } from '@coral-xyz/anchor';
 import { Connection, Keypair, PublicKey, SystemProgram } from '@solana/web3.js';
-import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { config } from '../config';
 import { Escrow } from '../generated/anchor/escrow';
 import { getEscrowIdl } from '../utils/idl-loader';
@@ -1300,6 +1300,117 @@ export class EscrowProgramService {
       console.error('[EscrowProgramService] Settlement failed:', error);
       throw new Error(
         `Failed to settle escrow: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+  }
+
+  /**
+   * Settle V2 escrow - transfer NFT and SOL with platform fees
+   * For SOL-based swap types (NFT_FOR_SOL, NFT_FOR_NFT_WITH_FEE, NFT_FOR_NFT_PLUS_SOL)
+   */
+  async settleV2(
+    escrowPda: PublicKey,
+    seller: PublicKey,
+    buyer: PublicKey,
+    nftMint: PublicKey,
+    feeCollector: PublicKey
+  ): Promise<string> {
+    try {
+      console.log('[EscrowProgramService] Settling V2 escrow:', {
+        escrowPda: escrowPda.toString(),
+        seller: seller.toString(),
+        buyer: buyer.toString(),
+        nftMint: nftMint.toString(),
+        feeCollector: feeCollector.toString(),
+        note: 'SOL and fees handled on-chain by settle_v2 instruction',
+      });
+
+      // Derive escrow NFT account (seller's NFT held in escrow)
+      const escrowNftAccount = await getAssociatedTokenAddress(
+        nftMint,
+        escrowPda,
+        true // allowOwnerOffCurve - for PDAs
+      );
+
+      // Ensure buyer's NFT account exists (for receiving NFT)
+      const buyerNftAccount = await this.ensureTokenAccountExists(nftMint, buyer, 'Buyer NFT');
+
+      console.log('[EscrowProgramService] Token accounts:', {
+        escrowNftAccount: escrowNftAccount.toString(),
+        buyerNftAccount: buyerNftAccount.toString(),
+      });
+
+      // Detect network
+      const isMainnet = isMainnetNetwork(this.provider.connection);
+
+      // Build settle_v2 transaction
+      // Note: Anchor converts snake_case to camelCase
+      const transaction = await (this.program.methods as any)
+        .settleV2()
+        .accountsStrict({
+          caller: this.adminKeypair.publicKey,
+          escrowState: escrowPda,
+          seller,
+          platformFeeCollector: feeCollector,
+          escrowNftAccount,
+          buyerNftAccount,
+          buyer,
+          nftMint,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .transaction();
+
+      // Add Jito tip for mainnet
+      if (isMainnet) {
+        const jitoTipAccounts = [
+          '96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5',
+          'HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe',
+          'Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY',
+          'ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49',
+          'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
+          'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
+          'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
+          '3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT',
+        ];
+        const jitoTipAccount = new PublicKey(
+          jitoTipAccounts[Math.floor(Math.random() * jitoTipAccounts.length)]
+        );
+        const tipAmount = 1_000_000; // 0.001 SOL
+        
+        console.log(
+          `[EscrowProgramService] Adding Jito tip: ${tipAmount} lamports to ${jitoTipAccount.toString()}`
+        );
+        
+        transaction.add(
+          SystemProgram.transfer({
+            fromPubkey: this.adminKeypair.publicKey,
+            toPubkey: jitoTipAccount,
+            lamports: tipAmount,
+          })
+        );
+      }
+
+      // Set transaction properties
+      transaction.feePayer = this.adminKeypair.publicKey;
+      transaction.recentBlockhash = (await this.provider.connection.getLatestBlockhash()).blockhash;
+      
+      // Sign transaction
+      transaction.sign(this.adminKeypair);
+
+      console.log('[EscrowProgramService] V2 settlement transaction signed, sending to network...');
+
+      // Send via Jito for mainnet, regular RPC for devnet
+      const txId = await this.sendTransactionViaJito(transaction, isMainnet);
+
+      console.log('[EscrowProgramService] V2 settlement transaction complete:', txId);
+
+      return txId;
+    } catch (error) {
+      console.error('[EscrowProgramService] V2 settlement failed:', error);
+      throw new Error(
+        `Failed to settle V2 escrow: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
     }
   }
