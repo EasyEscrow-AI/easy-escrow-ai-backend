@@ -1052,10 +1052,11 @@ export class EscrowProgramService {
         .accountsStrict({
           escrowState: escrowPda,
           seller,
+          sellerNftAccount: sellerTokenAccount,
+          escrowNftAccount: escrowTokenAccount,
           nftMint,
-          sellerTokenAccount,
-          escrowTokenAccount,
           tokenProgram: TOKEN_PROGRAM_ID,
+          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
           systemProgram: SystemProgram.programId,
         })
         .instruction();
