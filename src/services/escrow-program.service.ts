@@ -1501,10 +1501,11 @@ export class EscrowProgramService {
 
       // Build settle_v2 transaction
       // Note: Anchor converts snake_case to camelCase
+      // Note: settle_v2 is permissionless - anyone can trigger settlement
       const transaction = await (this.program.methods as any)
         .settleV2()
         .accountsStrict({
-          caller: this.adminKeypair.publicKey,
+          caller: this.adminKeypair.publicKey, // Permissionless - admin can trigger
           escrowState: escrowPda,
           seller,
           platformFeeCollector: feeCollector,

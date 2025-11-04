@@ -662,6 +662,7 @@ pub mod escrow {
 
     /// Settle the escrow and distribute assets
     /// Handles both NFT<>SOL and NFT<>NFT with SOL fee swap types
+    /// Permissionless: Anyone can trigger settlement once both deposits are confirmed
     pub fn settle_v2<'info>(ctx: Context<'_, '_, '_, 'info, SettleV2<'info>>) -> Result<()> {
         // Validate escrow status
         require!(
@@ -669,12 +670,9 @@ pub mod escrow {
             EscrowError::InvalidStatus
         );
 
-        // Verify caller is either buyer or seller
-        let caller = ctx.accounts.caller.key();
-        require!(
-            caller == ctx.accounts.escrow_state.buyer || caller == ctx.accounts.escrow_state.seller,
-            EscrowError::Unauthorized
-        );
+        // NOTE: Settlement is permissionless - anyone can trigger it
+        // The contract validates that all deposits are present before settling
+        // This allows automated backend settlement or user-triggered settlement
 
         // Prepare PDA signer seeds
         let escrow_id_bytes = ctx.accounts.escrow_state.escrow_id.to_le_bytes();
