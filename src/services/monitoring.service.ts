@@ -2,13 +2,14 @@
  * Monitoring Service
  *
  * Orchestrates monitoring of Solana escrow accounts for deposits.
- * Coordinates USDC and NFT deposit detection, validation, and database updates.
+ * Coordinates USDC, NFT, and SOL deposit detection, validation, and database updates.
  */
 
 import { AccountInfo, Context } from '@solana/web3.js';
 import { getSolanaService } from './solana.service';
 import { getUsdcDepositService } from './usdc-deposit.service';
 import { getNftDepositService } from './nft-deposit.service';
+import { getSolDepositService } from './sol-deposit.service';
 import { prisma } from '../config/database';
 
 /**
@@ -26,7 +27,7 @@ interface MonitoringConfig {
 interface MonitoredAccount {
   publicKey: string;
   agreementId: string;
-  accountType: 'usdc' | 'nft';
+  accountType: 'usdc' | 'nft' | 'sol';
   subscriptionId?: number;
 }
 
@@ -40,6 +41,7 @@ export class MonitoringService {
   private solanaService: ReturnType<typeof getSolanaService>;
   private usdcDepositService: ReturnType<typeof getUsdcDepositService>;
   private nftDepositService: ReturnType<typeof getNftDepositService>;
+  private solDepositService: ReturnType<typeof getSolDepositService>;
   private monitoredAccounts: Map<string, MonitoredAccount> = new Map();
   private isRunning: boolean = false;
   private config: Required<MonitoringConfig>;
@@ -49,6 +51,7 @@ export class MonitoringService {
     this.solanaService = getSolanaService();
     this.usdcDepositService = getUsdcDepositService();
     this.nftDepositService = getNftDepositService();
+    this.solDepositService = getSolDepositService();
 
     this.config = {
       pollingInterval: monitoringConfig?.pollingInterval || (() => {
@@ -168,6 +171,8 @@ export class MonitoringService {
           agreementId: true,
           usdcDepositAddr: true,
           nftDepositAddr: true,
+          escrowPda: true,
+          swapType: true,
           status: true,
           createdAt: true,
         },
@@ -181,32 +186,63 @@ export class MonitoringService {
       const BATCH_SIZE = 10;
       const BATCH_DELAY_MS = 250;
       
-      let accountsToMonitor: Array<{publicKey: string, agreementId: string, type: 'usdc' | 'nft'}> = [];
+      let accountsToMonitor: Array<{publicKey: string, agreementId: string, type: 'usdc' | 'nft' | 'sol'}> = [];
       
       // Collect all accounts that need monitoring
       for (const agreement of agreements) {
-        // Monitor USDC deposit address if not yet locked
-        if (
-          agreement.usdcDepositAddr &&
-          !['USDC_LOCKED', 'BOTH_LOCKED'].includes(agreement.status)
-        ) {
-          accountsToMonitor.push({
-            publicKey: agreement.usdcDepositAddr,
-            agreementId: agreement.agreementId,
-            type: 'usdc'
-          });
-        }
+        // Determine if this is a v2 (SOL-based) agreement
+        const isV2 = agreement.swapType && ['NFT_FOR_SOL', 'NFT_FOR_NFT_WITH_FEE', 'NFT_FOR_NFT_PLUS_SOL'].includes(agreement.swapType);
 
-        // Monitor NFT deposit address if not yet locked
-        if (
-          agreement.nftDepositAddr &&
-          !['NFT_LOCKED', 'BOTH_LOCKED'].includes(agreement.status)
-        ) {
-          accountsToMonitor.push({
-            publicKey: agreement.nftDepositAddr,
-            agreementId: agreement.agreementId,
-            type: 'nft'
-          });
+        if (isV2) {
+          // V2: Monitor escrow PDA for SOL deposits
+          if (
+            agreement.escrowPda &&
+            (agreement.swapType === 'NFT_FOR_SOL' || agreement.swapType === 'NFT_FOR_NFT_PLUS_SOL') &&
+            !['USDC_LOCKED', 'BOTH_LOCKED'].includes(agreement.status)
+          ) {
+            accountsToMonitor.push({
+              publicKey: agreement.escrowPda,
+              agreementId: agreement.agreementId,
+              type: 'sol'
+            });
+            console.log(`[MonitoringService] Monitoring SOL deposits for v2 agreement: ${agreement.agreementId}`);
+          }
+
+          // V2: Monitor seller NFT
+          if (
+            agreement.nftDepositAddr &&
+            !['NFT_LOCKED', 'BOTH_LOCKED'].includes(agreement.status)
+          ) {
+            accountsToMonitor.push({
+              publicKey: agreement.nftDepositAddr,
+              agreementId: agreement.agreementId,
+              type: 'nft'
+            });
+          }
+        } else {
+          // V1 (Legacy USDC): Monitor USDC deposit address if not yet locked
+          if (
+            agreement.usdcDepositAddr &&
+            !['USDC_LOCKED', 'BOTH_LOCKED'].includes(agreement.status)
+          ) {
+            accountsToMonitor.push({
+              publicKey: agreement.usdcDepositAddr,
+              agreementId: agreement.agreementId,
+              type: 'usdc'
+            });
+          }
+
+          // V1: Monitor NFT deposit address if not yet locked
+          if (
+            agreement.nftDepositAddr &&
+            !['NFT_LOCKED', 'BOTH_LOCKED'].includes(agreement.status)
+          ) {
+            accountsToMonitor.push({
+              publicKey: agreement.nftDepositAddr,
+              agreementId: agreement.agreementId,
+              type: 'nft'
+            });
+          }
         }
       }
       
@@ -345,7 +381,7 @@ export class MonitoringService {
     publicKey: string,
     accountInfo: AccountInfo<Buffer> | null,
     context: Context,
-    accountType: 'usdc' | 'nft',
+    accountType: 'usdc' | 'nft' | 'sol',
     agreementId: string
   ): Promise<void> {
     try {
@@ -364,6 +400,8 @@ export class MonitoringService {
         await this.handleUsdcAccountChange(publicKey, accountInfo, context, agreementId);
       } else if (accountType === 'nft') {
         await this.handleNftAccountChange(publicKey, accountInfo, context, agreementId);
+      } else if (accountType === 'sol') {
+        await this.handleSolAccountChange(publicKey, accountInfo, context, agreementId);
       }
     } catch (error) {
       console.error(
@@ -459,6 +497,50 @@ export class MonitoringService {
       }
     } catch (error) {
       console.error(`[MonitoringService] Error in NFT account change handler:`, error);
+    }
+  }
+
+  /**
+   * Handle SOL account change (for v2 SOL-based escrows)
+   */
+  private async handleSolAccountChange(
+    publicKey: string,
+    accountInfo: AccountInfo<Buffer>,
+    context: Context,
+    agreementId: string
+  ): Promise<void> {
+    console.log(`[MonitoringService] Processing SOL account change (v2 escrow)`);
+    console.log(`[MonitoringService] Escrow PDA: ${publicKey}, Agreement: ${agreementId}`);
+
+    try {
+      const result = await this.solDepositService.handleSolAccountChange(
+        publicKey,
+        accountInfo,
+        context,
+        agreementId
+      );
+
+      if (result.success) {
+        console.log(
+          `[MonitoringService] Successfully processed SOL deposit: ${result.amount} SOL`
+        );
+
+        // Stop monitoring when deposit is confirmed
+        if (result.depositId && result.status === 'CONFIRMED') {
+          console.log(
+            `[MonitoringService] SOL deposit confirmed, stopping monitoring of escrow PDA: ${publicKey}`
+          );
+          await this.stopMonitoringAccount(publicKey);
+        } else if (result.depositId && result.status === 'PENDING') {
+          console.log(
+            `[MonitoringService] SOL deposit pending, continuing to monitor escrow PDA: ${publicKey}`
+          );
+        }
+      } else {
+        console.error(`[MonitoringService] Failed to process SOL deposit: ${result.error}`);
+      }
+    } catch (error) {
+      console.error(`[MonitoringService] Error in SOL account change handler:`, error);
     }
   }
 
