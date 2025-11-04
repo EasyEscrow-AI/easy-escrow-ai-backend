@@ -283,7 +283,7 @@ export class MonitoringService {
   async monitorAccount(
     publicKey: string,
     agreementId: string,
-    accountType: 'usdc' | 'nft'
+    accountType: 'usdc' | 'nft' | 'sol'
   ): Promise<void> {
     // Check if already monitoring
     if (this.monitoredAccounts.has(publicKey)) {

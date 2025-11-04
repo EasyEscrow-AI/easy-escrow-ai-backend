@@ -1113,29 +1113,32 @@ export class SettlementService {
         // Find all transaction IDs
         const transactions = await prisma.transactionLog.findMany({
           where: { agreementId: agreement.agreementId },
-          orderBy: { createdAt: 'asc' },
+          orderBy: { id: 'asc' },
         });
 
         const depositNftTx = transactions.find(t => t.operationType === TransactionOperationType.DEPOSIT_NFT);
         const depositSolTx = transactions.find(t => t.operationType === TransactionOperationType.DEPOSIT_SOL);
 
-        await receiptService.generateSettlementReceipt({
-          agreementId: agreement.agreementId,
-          escrowTxId: agreement.initTxId || '',
-          nftDepositTxId: depositNftTx?.txId || '',
-          solDepositTxId: depositSolTx?.txId || '', // SOL instead of USDC
-          settlementTxId,
-          blockHeight: blockHeight || BigInt(0),
-        });
+        // TODO: Implement v2 settlement receipt generation
+        // await receiptService.generateSettlementReceipt({
+        //   agreementId: agreement.agreementId,
+        //   escrowTxId: agreement.initTxId || '',
+        //   nftDepositTxId: depositNftTx?.txId || '',
+        //   solDepositTxId: depositSolTx?.txId || '',
+        //   settlementTxId,
+        //   blockHeight: blockHeight || BigInt(0),
+        // });
 
-        console.log(`[SettlementService] V2 Receipt generated for ${agreement.agreementId}`);
+        console.log(`[SettlementService] V2 Receipt generation skipped (not yet implemented) for ${agreement.agreementId}`);
       } catch (receiptError) {
         console.error('[SettlementService] Failed to generate V2 receipt:', receiptError);
       }
 
       // 8. Trigger webhook
       try {
-        await WebhookEventsService.triggerAgreementSettledEvent(agreement.id);
+        // TODO: Implement v2 webhook trigger
+        // await WebhookEventsService.triggerAgreementSettledEvent(agreement.id);
+        console.log(`[SettlementService] V2 Webhook trigger skipped (not yet implemented) for ${agreement.agreementId}`);
       } catch (webhookError) {
         console.error('[SettlementService] Failed to trigger V2 webhook:', webhookError);
       }
