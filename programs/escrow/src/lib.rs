@@ -1150,9 +1150,76 @@ pub fn settle_v2<'info>(ctx: Context<'_, '_, '_, 'info, SettleV2<'info>>) -> Res
 
             msg!("NFT<>NFT settled: Platform fee {} SOL", platform_fee);
         },
-        _ => {
-            return Err(EscrowError::InvalidSwapType.into());
-        }
+        SwapType::NftForNftPlusSol => {
+            // Validate deposits
+            require!(
+                ctx.accounts.escrow_state.buyer_sol_deposited && 
+                ctx.accounts.escrow_state.buyer_nft_deposited && 
+                ctx.accounts.escrow_state.seller_nft_deposited,
+                EscrowError::DepositNotComplete
+            );
+
+            // Calculate platform fee and seller's SOL amount
+            let (platform_fee, seller_sol_amount) = calculate_platform_fee(
+                ctx.accounts.escrow_state.sol_amount,
+                ctx.accounts.escrow_state.platform_fee_bps,
+            )?;
+
+            // Transfer platform fee (SOL) to fee collector
+            let fee_transfer_ctx = CpiContext::new_with_signer(
+                ctx.accounts.system_program.to_account_info(),
+                anchor_lang::system_program::Transfer {
+                    from: ctx.accounts.escrow_state.to_account_info(),
+                    to: ctx.accounts.platform_fee_collector.to_account_info(),
+                },
+                signer,
+            );
+            anchor_lang::system_program::transfer(fee_transfer_ctx, platform_fee)?;
+
+            // Transfer remaining SOL to seller
+            let seller_sol_transfer_ctx = CpiContext::new_with_signer(
+                ctx.accounts.system_program.to_account_info(),
+                anchor_lang::system_program::Transfer {
+                    from: ctx.accounts.escrow_state.to_account_info(),
+                    to: ctx.accounts.seller.to_account_info(),
+                },
+                signer,
+            );
+            anchor_lang::system_program::transfer(seller_sol_transfer_ctx, seller_sol_amount)?;
+
+            // Transfer NFT A from escrow to buyer
+            let nft_a_transfer_ctx = CpiContext::new_with_signer(
+                ctx.accounts.token_program.to_account_info(),
+                Transfer {
+                    from: ctx.accounts.escrow_nft_account.to_account_info(),
+                    to: ctx.accounts.buyer_nft_account.to_account_info(),
+                    authority: ctx.accounts.escrow_state.to_account_info(),
+                },
+                signer,
+            );
+            token::transfer(nft_a_transfer_ctx, 1)?;
+
+            // Transfer NFT B from escrow to seller
+            // Get escrow NFT B account and seller NFT B account from remaining accounts
+            require!(
+                ctx.remaining_accounts.len() >= 2,
+                EscrowError::InvalidSwapParameters
+            );
+
+            let nft_b_transfer_accounts = Transfer {
+                from: ctx.remaining_accounts[0].to_account_info(),
+                to: ctx.remaining_accounts[1].to_account_info(),
+                authority: ctx.accounts.escrow_state.to_account_info(),
+            };
+            let nft_b_transfer_ctx = CpiContext::new_with_signer(
+                ctx.accounts.token_program.to_account_info(),
+                nft_b_transfer_accounts,
+                signer,
+            );
+            token::transfer(nft_b_transfer_ctx, 1)?;
+
+            msg!("NFT<>NFT+SOL settled: Platform fee {} SOL, Seller received {} SOL", platform_fee, seller_sol_amount);
+        },
     }
 
     // Mark escrow as completed
