@@ -36,7 +36,11 @@ export function isValidSwapType(value: any): value is SwapTypeString {
  * @returns True if SOL amount is required
  */
 export function requiresSol(swapType: SwapType | SwapTypeString): boolean {
-  return swapType === 'NFT_FOR_SOL' || swapType === 'NFT_FOR_NFT_PLUS_SOL';
+  // All swap types require SOL in some form:
+  // - NFT_FOR_SOL: buyer pays SOL to seller
+  // - NFT_FOR_NFT_WITH_FEE: buyer pays SOL platform fee
+  // - NFT_FOR_NFT_PLUS_SOL: buyer pays SOL to seller + platform fee
+  return swapType === 'NFT_FOR_SOL' || swapType === 'NFT_FOR_NFT_WITH_FEE' || swapType === 'NFT_FOR_NFT_PLUS_SOL';
 }
 
 /**
