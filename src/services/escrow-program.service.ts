@@ -1730,8 +1730,9 @@ export class EscrowProgramService {
       });
 
       // Build instruction
+      // Note: deposit_sol takes NO parameters - amount is read from escrow state
       const instruction = await (this.program.methods as any)
-        .depositSol(solAmount)
+        .depositSol()
         .accountsStrict({
           escrowState: escrowPda,
           buyer,
@@ -1815,8 +1816,9 @@ export class EscrowProgramService {
       });
 
       // Build deposit_sol instruction
+      // Note: deposit_sol takes NO parameters - amount is read from escrow state
       const instruction = await (this.program.methods as any)
-        .depositSol(solAmount)
+        .depositSol()
         .accountsStrict({
           escrowState: escrowPda,
           buyer,
