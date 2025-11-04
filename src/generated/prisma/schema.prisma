@@ -25,10 +25,25 @@ enum AgreementStatus {
   ARCHIVED
 }
 
+// Enum for swap type (SOL migration)
+enum SwapType {
+  NFT_FOR_SOL // NFT <> SOL: Direct exchange
+  NFT_FOR_NFT_WITH_FEE // NFT <> NFT: Buyer pays separate SOL fee
+  NFT_FOR_NFT_PLUS_SOL // NFT <> NFT+SOL: Fee extracted from SOL amount
+}
+
+// Enum for fee payer (SOL migration)
+enum FeePayer {
+  BUYER // Default: Buyer pays the platform fee
+  SELLER // Alternative: Seller pays the platform fee
+}
+
 // Enum for deposit type
 enum DepositType {
-  USDC
-  NFT
+  USDC // Legacy: USDC deposits
+  NFT // NFT deposits (seller's NFT A or buyer's NFT B)
+  SOL // SOL deposits from buyer
+  NFT_BUYER // Buyer's NFT deposit (for NFT<>NFT swaps)
 }
 
 // Enum for deposit status
@@ -80,6 +95,12 @@ model Agreement {
   archivedAt      DateTime?       @map("archived_at")
   archiveReason   String?         @map("archive_reason")
 
+  // SOL Migration fields
+  swapType  SwapType? @map("swap_type") // Type of swap (NFT<>SOL, NFT<>NFT, etc.)
+  solAmount Decimal?  @map("sol_amount") @db.Decimal(20, 9) // SOL amount (lamports stored as decimal)
+  nftBMint  String?   @map("nft_b_mint") // Buyer's NFT mint (for NFT<>NFT swaps)
+  feePayer  FeePayer? @default(BUYER) @map("fee_payer") // Who pays the platform fee
+
   deposits   Deposit[]
   settlement Settlement?
   receipt    Receipt?
@@ -92,6 +113,8 @@ model Agreement {
   @@index([expiry])
   @@index([createdAt])
   @@index([archivedAt])
+  @@index([nftBMint]) // Index for NFT B lookups
+  @@index([swapType]) // Index for filtering by swap type
   // Composite indexes for scalability and batch processing
   @@index([status, expiry], name: "idx_status_expiry")
   @@index([expiry, seller, buyer], name: "idx_expiry_seller_buyer")
