@@ -1573,6 +1573,7 @@ export class EscrowProgramService {
       const feePayerEnum = { [feePayer.toLowerCase()]: {} };
 
       // Build instruction
+      // Note: Anchor converts snake_case (Rust) to camelCase (TypeScript)
       const instruction = await (this.program.methods as any)
         .initAgreementV2(
           escrowId,
@@ -1585,11 +1586,11 @@ export class EscrowProgramService {
           feePayerEnum
         )
         .accountsStrict({
-          escrow_state: escrowPda,
+          escrowState: escrowPda, // Anchor converts escrow_state -> escrowState
           buyer,
           seller,
           admin: this.adminKeypair.publicKey,
-          system_program: SystemProgram.programId,
+          systemProgram: SystemProgram.programId, // Anchor converts system_program -> systemProgram
         })
         .instruction();
 
