@@ -163,6 +163,7 @@ describe('STAGING E2E - V2: NFT-for-NFT + SOL Payment', function () {
       solAmount: SOL_PAYMENT.toString(), // SOL payment to seller (includes platform fee)
       feeBps: PLATFORM_FEE_BPS,
       feePayer: 'BUYER',
+      honorRoyalties: false,
       expiry,
     };
 

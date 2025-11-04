@@ -148,6 +148,7 @@ describe('STAGING E2E - V2: NFT-for-SOL Swap (Happy Path)', function () {
       solAmount: SOL_AMOUNT.toString(),
       feeBps: PLATFORM_FEE_BPS,
       feePayer: 'BUYER',
+      honorRoyalties: false,
       expiry,
     };
 
