@@ -160,7 +160,7 @@ describe('STAGING E2E - V2: NFT-for-NFT + SOL Payment', function () {
       buyer: wallets.receiver.publicKey.toBase58(),
       swapType: 'NFT_FOR_NFT_PLUS_SOL',
       nftBMint: nftB.mint.toBase58(), // Buyer's NFT
-      solAmount: SOL_PAYMENT.toString(), // SOL payment to seller (includes platform fee)
+      solAmount: (SOL_PAYMENT * LAMPORTS_PER_SOL).toString(), // SOL payment in lamports
       feeBps: PLATFORM_FEE_BPS,
       feePayer: 'BUYER',
       honorRoyalties: false,

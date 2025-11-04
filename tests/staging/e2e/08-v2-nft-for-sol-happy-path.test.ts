@@ -145,7 +145,7 @@ describe('STAGING E2E - V2: NFT-for-SOL Swap (Happy Path)', function () {
       seller: wallets.sender.publicKey.toBase58(),
       buyer: wallets.receiver.publicKey.toBase58(),
       swapType: 'NFT_FOR_SOL',
-      solAmount: SOL_AMOUNT.toString(),
+      solAmount: (SOL_AMOUNT * LAMPORTS_PER_SOL).toString(), // Convert SOL to lamports
       feeBps: PLATFORM_FEE_BPS,
       feePayer: 'BUYER',
       honorRoyalties: false,
@@ -155,7 +155,7 @@ describe('STAGING E2E - V2: NFT-for-SOL Swap (Happy Path)', function () {
     console.log('   Request payload:');
     console.log(`     NFT: ${agreementData.nftMint}`);
     console.log(`     Swap Type: ${agreementData.swapType}`);
-    console.log(`     SOL Amount: ${agreementData.solAmount} SOL`);
+    console.log(`     SOL Amount: ${SOL_AMOUNT} SOL (${agreementData.solAmount} lamports)`);
     console.log(`     Fee Payer: ${agreementData.feePayer}\n`);
 
     let response;
