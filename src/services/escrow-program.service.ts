@@ -1568,9 +1568,28 @@ export class EscrowProgramService {
       const [escrowPda] = this.deriveEscrowPDA(escrowId);
       console.log('[EscrowProgramService] Escrow PDA:', escrowPda.toString());
 
-      // Map string swap type to enum
-      const swapTypeEnum = { [swapType.toLowerCase()]: {} };
-      const feePayerEnum = { [feePayer.toLowerCase()]: {} };
+      // Map string swap type to Anchor enum format (PascalCase)
+      // NFT_FOR_SOL -> NftForSol, BUYER -> Buyer
+      const swapTypeMap: Record<string, string> = {
+        'NFT_FOR_SOL': 'NftForSol',
+        'NFT_FOR_NFT_WITH_FEE': 'NftForNftWithFee',
+        'NFT_FOR_NFT_PLUS_SOL': 'NftForNftPlusSol',
+      };
+      const feePayerMap: Record<string, string> = {
+        'BUYER': 'Buyer',
+        'SELLER': 'Seller',
+      };
+      
+      const swapTypeVariant = swapTypeMap[swapType];
+      const feePayerVariant = feePayerMap[feePayer];
+      
+      if (!swapTypeVariant || !feePayerVariant) {
+        throw new Error(`Invalid swap type or fee payer: ${swapType}, ${feePayer}`);
+      }
+      
+      // Anchor expects enum as { variantName: {} }
+      const swapTypeEnum = { [swapTypeVariant.charAt(0).toLowerCase() + swapTypeVariant.slice(1)]: {} };
+      const feePayerEnum = { [feePayerVariant.charAt(0).toLowerCase() + feePayerVariant.slice(1)]: {} };
 
       // Build instruction
       // Note: Anchor converts snake_case (Rust) to camelCase (TypeScript)
