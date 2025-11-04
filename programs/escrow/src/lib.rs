@@ -90,7 +90,9 @@ fn get_authorized_admins() -> Vec<Pubkey> {
 /// BETA Launch Limits: $1.00 minimum, $3,000.00 maximum
 /// These limits will be reassessed after BETA period
 /// USDC has 6 decimals: 1 USDC = 1_000_000 lamports
+#[cfg(feature = "usdc")]
 const MIN_USDC_AMOUNT: u64 = 1_000_000;      // $1.00
+#[cfg(feature = "usdc")]
 const MAX_USDC_AMOUNT: u64 = 3_000_000_000;  // $3,000.00
 
 #[program]
@@ -100,6 +102,8 @@ pub mod escrow {
     /// Initialize an escrow agreement
     /// Platform fee is set during initialization and stored in escrow state
     /// Only authorized admins can initialize escrows
+    /// FEATURE: usdc - This instruction is only available when the usdc feature is enabled
+    #[cfg(feature = "usdc")]
     pub fn init_agreement(
         ctx: Context<InitAgreement>,
         escrow_id: u64,
@@ -145,6 +149,8 @@ pub mod escrow {
     }
 
     /// Deposit USDC into escrow
+    /// FEATURE: usdc - This instruction is only available when the usdc feature is enabled
+    #[cfg(feature = "usdc")]
     pub fn deposit_usdc(ctx: Context<DepositUsdc>) -> Result<()> {
         let escrow = &mut ctx.accounts.escrow_state;
         
@@ -202,6 +208,8 @@ pub mod escrow {
 
     /// Settle the escrow and exchange assets with fee distribution
     /// Uses the platform fee that was set during escrow initialization
+    /// FEATURE: usdc - This instruction is only available when the usdc feature is enabled
+    #[cfg(feature = "usdc")]
     pub fn settle(ctx: Context<Settle>) -> Result<()> {
         let escrow = &ctx.accounts.escrow_state;
         
@@ -289,6 +297,8 @@ pub mod escrow {
     }
 
     /// Cancel escrow if expired
+    /// FEATURE: usdc - This instruction is only available when the usdc feature is enabled
+    #[cfg(feature = "usdc")]
     pub fn cancel_if_expired(ctx: Context<CancelIfExpired>) -> Result<()> {
         let escrow = &ctx.accounts.escrow_state;
         
@@ -347,6 +357,8 @@ pub mod escrow {
     }
 
     /// Admin cancel escrow (emergency)
+    /// FEATURE: usdc - This instruction is only available when the usdc feature is enabled
+    #[cfg(feature = "usdc")]
     pub fn admin_cancel(ctx: Context<AdminCancel>) -> Result<()> {
         let escrow = &ctx.accounts.escrow_state;
         
@@ -407,6 +419,8 @@ pub mod escrow {
 
 // Account Structures
 
+/// FEATURE: usdc - This account structure is only available when the usdc feature is enabled
+#[cfg(feature = "usdc")]
 #[derive(Accounts)]
 #[instruction(escrow_id: u64)]
 pub struct InitAgreement<'info> {
@@ -434,6 +448,8 @@ pub struct InitAgreement<'info> {
     pub system_program: Program<'info, System>,
 }
 
+/// FEATURE: usdc - This account structure is only available when the usdc feature is enabled
+#[cfg(feature = "usdc")]
 #[derive(Accounts)]
 pub struct DepositUsdc<'info> {
     #[account(
@@ -500,6 +516,8 @@ pub struct DepositNft<'info> {
     pub system_program: Program<'info, System>,
 }
 
+/// FEATURE: usdc - This account structure is only available when the usdc feature is enabled
+#[cfg(feature = "usdc")]
 #[derive(Accounts)]
 pub struct Settle<'info> {
     #[account(
@@ -534,6 +552,8 @@ pub struct Settle<'info> {
     pub token_program: Program<'info, Token>,
 }
 
+/// FEATURE: usdc - This account structure is only available when the usdc feature is enabled
+#[cfg(feature = "usdc")]
 #[derive(Accounts)]
 pub struct CancelIfExpired<'info> {
     #[account(
@@ -564,6 +584,8 @@ pub struct CancelIfExpired<'info> {
     pub token_program: Program<'info, Token>,
 }
 
+/// FEATURE: usdc - This account structure is only available when the usdc feature is enabled
+#[cfg(feature = "usdc")]
 #[derive(Accounts)]
 pub struct AdminCancel<'info> {
     #[account(

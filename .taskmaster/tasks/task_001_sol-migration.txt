@@ -295,3 +295,55 @@ Test scenario:
 
 Verify: Transaction success, fee correctly extracted from SOL amount, proper asset transfers, escrow state cleanup.
 
+## 16. Prepare Database Reset for SOL Migration [pending]
+### Dependencies: 1.3
+### Description: Truncate and reset all databases (development, staging, production) to start fresh with SOL-based schema. No user impact as platform has no active users.
+### Details:
+**Rationale:** With no active users, complete database reset is the cleanest migration path.
+
+**Databases to Reset:**
+- Development database (local/devnet)
+- Staging database (devnet)
+- Production database (mainnet)
+
+**Actions Required:**
+1. **Backup existing data** (for reference/rollback safety)
+   - Run full pg_dump for each environment
+   - Store backups in secure location
+   - Verify backup integrity
+
+2. **Drop and recreate tables** or **TRUNCATE all tables**
+   - Clear Agreement table
+   - Clear Deposit table
+   - Clear any related tables (webhooks, logs, etc.)
+   - Reset auto-increment sequences
+
+3. **Update Prisma schema if needed:**
+   - Add SOL-related fields if missing
+   - Update DepositType enum to include SOL, NFT_BUYER
+   - Remove USDC-specific constraints if any
+
+4. **Run fresh migrations:**
+   ```bash
+   npx prisma migrate reset --force
+   npx prisma migrate deploy
+   npx prisma generate
+   ```
+
+5. **Re-seed database with new test data:**
+   - Update seed scripts for SOL instead of USDC
+   - Generate test NFTs and SOL amounts
+   - Create sample escrow data if needed
+
+**Timing:**
+- Development: Immediately before Phase 2 implementation starts
+- Staging: Before deploying SOL program to staging
+- Production: During production deployment window (Week 3)
+
+**Verification:**
+- Confirm all tables are empty (except system tables)
+- Verify schema matches Prisma schema
+- Test fresh agreement creation with SOL
+
+**Benefit:** Clean slate eliminates any USDC-related data inconsistencies and ensures all agreements use new SOL schema from day 1.
+
