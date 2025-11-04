@@ -111,10 +111,11 @@ export class SolDepositService {
 
       // Get SOL balance (account lamports)
       const solBalance = BigInt(accountInfo.lamports);
-      const expectedAmount = agreement.solAmount ? BigInt(agreement.solAmount.toString()) * BigInt(LAMPORTS_PER_SOL) : BigInt(0);
+      // Note: agreement.solAmount is already stored in lamports
+      const expectedAmount = agreement.solAmount ? BigInt(agreement.solAmount.toString()) : BigInt(0);
 
-      console.log(`[SolDepositService] Escrow PDA balance: ${solBalance} lamports (${lamportsToSol(solBalance)} SOL)`);
-      console.log(`[SolDepositService] Expected amount: ${expectedAmount} lamports (${lamportsToSol(expectedAmount)} SOL)`);
+      console.log(`[SolDepositService] Escrow PDA balance: ${solBalance} lamports (${Number(solBalance) / LAMPORTS_PER_SOL} SOL)`);
+      console.log(`[SolDepositService] Expected amount: ${expectedAmount} lamports (${Number(expectedAmount) / LAMPORTS_PER_SOL} SOL)`);
 
       // Check if sufficient SOL has been deposited
       // Note: PDA might have rent-exempt amount + deposit, so we check if balance >= expected
