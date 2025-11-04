@@ -17,6 +17,7 @@ import {
 } from './transaction-log.service';
 import { Decimal } from '@prisma/client/runtime/library';
 import { PublicKey } from '@solana/web3.js';
+import { getAssociatedTokenAddress } from '@solana/spl-token';
 import { EscrowProgramService } from './escrow-program.service';
 import { config } from '../config';
 import { prisma } from '../config/database';
@@ -37,7 +38,7 @@ export const createAgreement = async (
   try {
     // Default to NFT_FOR_SOL if not specified
     const swapType = data.swapType || SwapType.NFT_FOR_SOL;
-    const feePayer = data.feePayer || FeePayer.BUYER;
+    const feePayer = data.feePayer ?? FeePayer.BUYER; // Use nullish coalescing to ensure always has value
 
     console.log('[AgreementService] Creating agreement with swap type:', swapType);
 
@@ -112,16 +113,18 @@ export const createAgreement = async (
     });
 
     // 6. Derive NFT deposit addresses (ATAs)
-    const sellerNftAta = await getSolanaService().getAssociatedTokenAddress(
+    const sellerNftAta = await getAssociatedTokenAddress(
       new PublicKey(data.nftMint),
-      escrowResult.pda
+      escrowResult.pda,
+      true // allowOwnerOffCurve for PDAs
     );
 
     let buyerNftAta: PublicKey | undefined;
     if (nftBMint) {
-      buyerNftAta = await getSolanaService().getAssociatedTokenAddress(
+      buyerNftAta = await getAssociatedTokenAddress(
         nftBMint,
-        escrowResult.pda
+        escrowResult.pda,
+        true // allowOwnerOffCurve for PDAs
       );
     }
 
@@ -141,7 +144,8 @@ export const createAgreement = async (
         feePayer: feePayer,
         
         // Legacy field for backward compatibility (deprecated)
-        price: data.price ? new Decimal(data.price.toString()) : (solAmount ? new Decimal(solAmount.toString()) : null),
+        // Price is required in schema, so default to 0 if not provided and no solAmount
+        price: data.price ? new Decimal(data.price.toString()) : (solAmount ? new Decimal(solAmount.toString()) : new Decimal('0')),
         
         feeBps: data.feeBps,
         honorRoyalties: data.honorRoyalties,
@@ -1012,7 +1016,6 @@ export const depositSolToEscrow = async (
       agreementId,
       operationType: 'DEPOSIT_SOL' as any, // Add to TransactionOperationType enum
       status: TransactionStatusType.CONFIRMED,
-      amount: agreement.solAmount?.toString() || '0',
     });
 
     return { transactionId: txId };

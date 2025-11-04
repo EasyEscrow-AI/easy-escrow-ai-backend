@@ -183,17 +183,18 @@ export const validateCreateAgreement = (
 
   // Use comprehensive swap type validation from utility
   try {
-    validateSwapParametersOrThrow({
-      swapType,
+    validateSwapParametersOrThrow(swapType, {
       solAmount: data.solAmount,
-      nftAMint: data.nftMint,
       nftBMint: data.nftBMint,
     });
   } catch (error) {
     if (error instanceof SwapTypeValidationError) {
-      errors.push({
-        field: error.field || 'swapType',
-        message: error.message,
+      // Add all validation errors to the errors array
+      error.errors.forEach((errMsg) => {
+        errors.push({
+          field: 'swapType',
+          message: errMsg,
+        });
       });
     }
   }
