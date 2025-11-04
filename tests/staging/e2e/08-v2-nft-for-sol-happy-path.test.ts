@@ -67,10 +67,10 @@ describe('STAGING E2E - V2: NFT-for-SOL Swap (Happy Path)', function () {
     feeCollector: { sol: number };
   };
 
-  const SOL_AMOUNT = 1.5; // 1.5 SOL payment
+  const SOL_AMOUNT = 0.1; // 0.1 SOL payment
   const PLATFORM_FEE_BPS = 100; // 1%
-  const EXPECTED_FEE = SOL_AMOUNT * (PLATFORM_FEE_BPS / 10000); // 0.015 SOL
-  const EXPECTED_SELLER_RECEIVES = SOL_AMOUNT - EXPECTED_FEE; // 1.485 SOL
+  const EXPECTED_FEE = SOL_AMOUNT * (PLATFORM_FEE_BPS / 10000); // 0.001 SOL
+  const EXPECTED_SELLER_RECEIVES = SOL_AMOUNT - EXPECTED_FEE; // 0.099 SOL
 
   // Transaction tracking
   const transactions: Array<{
@@ -87,7 +87,7 @@ describe('STAGING E2E - V2: NFT-for-SOL Swap (Happy Path)', function () {
     console.log(`   Network: ${STAGING_CONFIG.network}`);
     console.log(`   API: ${STAGING_CONFIG.apiBaseUrl}`);
     console.log(`   Swap Type: NFT_FOR_SOL`);
-    console.log(`   SOL Amount: ${SOL_AMOUNT} SOL`);
+    console.log(`   SOL Amount: ${SOL_AMOUNT} SOL (reduced for devnet conservation)`);
     console.log(`   Platform Fee: ${PLATFORM_FEE_BPS / 100}%`);
     console.log('='.repeat(80) + '\n');
 

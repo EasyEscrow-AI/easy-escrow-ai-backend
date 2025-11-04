@@ -69,10 +69,10 @@ describe('STAGING E2E - V2: NFT-for-NFT + SOL Payment', function () {
     feeCollector: { sol: number };
   };
 
-  const SOL_PAYMENT = 2.0; // 2 SOL payment to seller (includes fee)
+  const SOL_PAYMENT = 0.2; // 0.2 SOL payment to seller (includes fee)
   const PLATFORM_FEE_BPS = 100; // 1%
-  const EXPECTED_FEE = SOL_PAYMENT * (PLATFORM_FEE_BPS / 10000); // 0.02 SOL
-  const EXPECTED_SELLER_RECEIVES = SOL_PAYMENT - EXPECTED_FEE; // 1.98 SOL
+  const EXPECTED_FEE = SOL_PAYMENT * (PLATFORM_FEE_BPS / 10000); // 0.002 SOL
+  const EXPECTED_SELLER_RECEIVES = SOL_PAYMENT - EXPECTED_FEE; // 0.198 SOL
 
   // Transaction tracking
   const transactions: Array<{
@@ -89,7 +89,7 @@ describe('STAGING E2E - V2: NFT-for-NFT + SOL Payment', function () {
     console.log(`   Network: ${STAGING_CONFIG.network}`);
     console.log(`   API: ${STAGING_CONFIG.apiBaseUrl}`);
     console.log(`   Swap Type: NFT_FOR_NFT_PLUS_SOL`);
-    console.log(`   SOL Payment: ${SOL_PAYMENT} SOL (${EXPECTED_FEE.toFixed(4)} SOL fee)`);
+    console.log(`   SOL Payment: ${SOL_PAYMENT} SOL (${EXPECTED_FEE.toFixed(4)} SOL fee) - reduced for devnet`);
     console.log(`   Seller Receives: ${EXPECTED_SELLER_RECEIVES.toFixed(4)} SOL (after fee)`);
     console.log('='.repeat(80) + '\n');
 
