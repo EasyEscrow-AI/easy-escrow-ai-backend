@@ -653,7 +653,17 @@ export const prepareDepositNftTransaction = async (
     const seller = new PublicKey(agreement.seller);
     const nftMint = new PublicKey(agreement.nftMint);
 
-    const result = await escrowService.buildDepositNftTransaction(escrowPda, seller, nftMint);
+    // Detect v1 vs v2 based on presence of swapType field
+    const isV2 = agreement.swapType !== null;
+
+    let result;
+    if (isV2) {
+      console.log('[AgreementService] Detected v2 agreement, using depositSellerNft instruction');
+      result = await escrowService.buildDepositSellerNftTransaction(escrowPda, seller, nftMint);
+    } else {
+      console.log('[AgreementService] Detected v1 agreement, using depositNft instruction');
+      result = await escrowService.buildDepositNftTransaction(escrowPda, seller, nftMint);
+    }
 
     console.log('[AgreementService] Unsigned NFT deposit transaction prepared');
 
@@ -751,13 +761,23 @@ export const depositNftToEscrow = async (
       );
     }
 
-    // 3. Call on-chain deposit_nft instruction
+    // 3. Call on-chain deposit_nft instruction (v1 or v2)
     const escrowService = new EscrowProgramService();
     const escrowPda = new PublicKey(agreement.escrowPda);
     const seller = new PublicKey(agreement.seller);
     const nftMint = new PublicKey(agreement.nftMint);
 
-    const txId = await escrowService.depositNft(escrowPda, seller, nftMint);
+    // Detect v1 vs v2 based on presence of swapType field
+    const isV2 = agreement.swapType !== null;
+
+    let txId;
+    if (isV2) {
+      console.log('[AgreementService] Detected v2 agreement, calling depositSellerNft');
+      txId = await escrowService.depositSellerNft(escrowPda, seller, nftMint);
+    } else {
+      console.log('[AgreementService] Detected v1 agreement, calling depositNft');
+      txId = await escrowService.depositNft(escrowPda, seller, nftMint);
+    }
 
     console.log('[AgreementService] NFT deposit transaction:', txId);
 
