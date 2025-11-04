@@ -199,6 +199,10 @@ describe('STAGING E2E - V2: NFT-for-SOL Swap (Happy Path)', function () {
   it('should prepare and submit NFT deposit transaction', async function () {
     console.log('🎨 Depositing NFT to escrow...\n');
 
+    // Wait to avoid rate limiting
+    console.log('   ⏳ Waiting 3 seconds to avoid rate limiting...');
+    await new Promise(resolve => setTimeout(resolve, 3000));
+
     // Prepare unsigned transaction
     const prepareResponse = await axios.post(
       `${STAGING_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}/deposit-nft/prepare`
@@ -251,6 +255,10 @@ describe('STAGING E2E - V2: NFT-for-SOL Swap (Happy Path)', function () {
 
   it('should prepare and submit SOL deposit transaction', async function () {
     console.log('💎 Depositing SOL to escrow...\n');
+
+    // Wait to avoid rate limiting
+    console.log('   ⏳ Waiting 3 seconds to avoid rate limiting...');
+    await new Promise(resolve => setTimeout(resolve, 3000));
 
     // Prepare unsigned transaction
     const prepareResponse = await axios.post(
