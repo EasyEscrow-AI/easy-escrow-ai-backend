@@ -178,10 +178,10 @@ describe('STAGING E2E - V2: NFT-for-NFT + SOL Payment', function () {
       `${STAGING_CONFIG.apiBaseUrl}/v1/agreements`,
       agreementData,
       {
-        headers: {
-          'Content-Type': 'application/json',
-          'x-idempotency-key': idempotencyKey,
-        },
+      headers: {
+        'Content-Type': 'application/json',
+        'idempotency-key': idempotencyKey,
+      },
       }
     );
 

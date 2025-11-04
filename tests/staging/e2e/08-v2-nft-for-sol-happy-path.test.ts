@@ -157,16 +157,24 @@ describe('STAGING E2E - V2: NFT-for-SOL Swap (Happy Path)', function () {
     console.log(`     SOL Amount: ${agreementData.solAmount} SOL`);
     console.log(`     Fee Payer: ${agreementData.feePayer}\n`);
 
-    const response = await axios.post(
-      `${STAGING_CONFIG.apiBaseUrl}/v1/agreements`,
-      agreementData,
-      {
+    let response;
+    try {
+      response = await axios.post(
+        `${STAGING_CONFIG.apiBaseUrl}/v1/agreements`,
+        agreementData,
+        {
         headers: {
           'Content-Type': 'application/json',
-          'x-idempotency-key': idempotencyKey,
+          'idempotency-key': idempotencyKey,
         },
-      }
-    );
+        }
+      );
+    } catch (error: any) {
+      console.error('   ❌ Agreement creation failed!');
+      console.error('   Status:', error.response?.status);
+      console.error('   Error:', JSON.stringify(error.response?.data, null, 2));
+      throw error;
+    }
 
     expect(response.status).to.equal(201);
     expect(response.data.success).to.be.true;
