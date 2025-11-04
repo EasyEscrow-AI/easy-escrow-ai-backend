@@ -125,7 +125,7 @@ describe('STAGING E2E - V2: NFT-for-NFT + SOL Payment', function () {
   it('should create NFT A for the seller', async function () {
     console.log('🎨 Creating NFT A for seller...\n');
 
-    nftA = await createTestNFT(connection, wallets.sender, 'V2 Test NFT A (Seller)');
+    nftA = await createTestNFT(connection, wallets.sender);
 
     console.log(`   ✅ NFT A Created: ${nftA.mint.toBase58()}`);
     console.log(`   Token Account: ${nftA.tokenAccount.toBase58()}`);
@@ -138,7 +138,7 @@ describe('STAGING E2E - V2: NFT-for-NFT + SOL Payment', function () {
   it('should create NFT B for the buyer', async function () {
     console.log('🎨 Creating NFT B for buyer...\n');
 
-    nftB = await createTestNFT(connection, wallets.receiver, 'V2 Test NFT B (Buyer)');
+    nftB = await createTestNFT(connection, wallets.receiver);
 
     console.log(`   ✅ NFT B Created: ${nftB.mint.toBase58()}`);
     console.log(`   Token Account: ${nftB.tokenAccount.toBase58()}`);

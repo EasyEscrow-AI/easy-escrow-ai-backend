@@ -123,7 +123,7 @@ describe('STAGING E2E - V2: NFT-for-SOL Swap (Happy Path)', function () {
   it('should create a test NFT for the seller', async function () {
     console.log('🎨 Creating test NFT for seller...\n');
 
-    nft = await createTestNFT(connection, wallets.sender, 'V2 Test NFT');
+    nft = await createTestNFT(connection, wallets.sender);
 
     console.log(`   ✅ NFT Created: ${nft.mint.toBase58()}`);
     console.log(`   Token Account: ${nft.tokenAccount.toBase58()}`);
@@ -302,10 +302,10 @@ describe('STAGING E2E - V2: NFT-for-SOL Swap (Happy Path)', function () {
 
     // Wait for SETTLED status (up to 2 minutes)
     const settledAgreement = await waitForAgreementStatus(
-      STAGING_CONFIG.apiBaseUrl,
       agreement.agreementId,
       'SETTLED',
-      120000 // 2 minutes
+      120, // 120 attempts x 1000ms = 2 minutes
+      1000 // 1 second interval
     );
 
     expect(settledAgreement.status).to.equal('SETTLED');
