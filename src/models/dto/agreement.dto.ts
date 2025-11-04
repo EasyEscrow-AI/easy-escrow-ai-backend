@@ -1,5 +1,5 @@
 import { Decimal } from '@prisma/client/runtime/library';
-import { AgreementStatus } from '../../generated/prisma';
+import { AgreementStatus, SwapType, FeePayer } from '../../generated/prisma';
 import { ExpiryPreset } from '../validators/expiry.validator';
 
 /**
@@ -7,7 +7,17 @@ import { ExpiryPreset } from '../validators/expiry.validator';
  */
 export interface CreateAgreementDTO {
   /**
-   * The NFT's mint address (unique identifier).
+   * Type of swap transaction. Determines required fields and fee structure.
+   * - NFT_FOR_SOL: Direct NFT for SOL exchange (requires solAmount)
+   * - NFT_FOR_NFT_WITH_FEE: NFT for NFT with separate SOL fee (requires nftBMint)
+   * - NFT_FOR_NFT_PLUS_SOL: NFT for NFT + SOL with fee extracted (requires both)
+   * 
+   * Default: NFT_FOR_SOL (if not specified)
+   */
+  swapType?: SwapType;
+  
+  /**
+   * Seller's NFT mint address (NFT A - always required).
    * 
    * Important: This is NOT "minting" (creating) an NFT.
    * The NFT must ALREADY EXIST in the seller's wallet.
@@ -17,9 +27,39 @@ export interface CreateAgreementDTO {
    */
   nftMint: string;
   
-  price: string | number | Decimal;
+  /**
+   * Buyer's NFT mint address (NFT B - required for NFT<>NFT swaps).
+   * Only used when swapType is NFT_FOR_NFT_WITH_FEE or NFT_FOR_NFT_PLUS_SOL.
+   * 
+   * Example: "8xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+   */
+  nftBMint?: string;
+  
+  /**
+   * SOL amount in lamports (1 SOL = 1,000,000,000 lamports).
+   * Required for NFT_FOR_SOL and NFT_FOR_NFT_PLUS_SOL swap types.
+   * 
+   * BETA Limits: 0.01 SOL (10,000,000 lamports) to 15 SOL (15,000,000,000 lamports)
+   * 
+   * Example: "500000000" (0.5 SOL)
+   */
+  solAmount?: string | number;
+  
+  /**
+   * @deprecated Use solAmount instead. Price field kept for backward compatibility.
+   * Will be removed in future versions.
+   */
+  price?: string | number | Decimal;
+  
   seller: string;
   buyer?: string;
+  
+  /**
+   * Who pays the platform fee.
+   * - BUYER: Buyer pays the fee (default)
+   * - SELLER: Seller pays the fee
+   */
+  feePayer?: FeePayer;
   
   /**
    * Agreement expiry time. Supports multiple formats:
@@ -56,20 +96,50 @@ export interface AgreementResponseDTO {
   agreementId: string;
   
   /**
-   * The NFT's mint address (unique identifier of the NFT being traded).
-   * This identifies which specific NFT is part of this agreement.
+   * Type of swap transaction
+   */
+  swapType?: SwapType;
+  
+  /**
+   * Seller's NFT mint address (NFT A - always present).
+   * This identifies which specific NFT the seller is trading.
    */
   nftMint: string;
   
-  price: string;
+  /**
+   * Buyer's NFT mint address (NFT B - present for NFT<>NFT swaps).
+   */
+  nftBMint?: string;
+  
+  /**
+   * SOL amount in lamports (present for SOL-based swaps).
+   */
+  solAmount?: string;
+  
+  /**
+   * @deprecated Use solAmount instead. Kept for backward compatibility.
+   */
+  price?: string;
+  
   seller: string;
   buyer?: string;
+  
+  /**
+   * Who pays the platform fee
+   */
+  feePayer?: FeePayer;
+  
   status: AgreementStatus;
   expiry: string;
   feeBps: number;
   honorRoyalties: boolean;
   escrowPda: string;
+  
+  /**
+   * @deprecated USDC deposit address. No longer used for SOL-based swaps.
+   */
   usdcDepositAddr?: string;
+  
   nftDepositAddr?: string;
   initTxId?: string;        // Escrow initialization transaction
   settleTxId?: string;      // Settlement transaction (when status = SETTLED)
@@ -87,9 +157,15 @@ export interface AgreementResponseDTO {
 export interface CreateAgreementResponseDTO {
   agreementId: string;
   escrowPda: string;
+  swapType: SwapType;
   depositAddresses: {
-    usdc: string;
+    /**
+     * @deprecated USDC deposit address. No longer used for SOL-based swaps.
+     * For SOL deposits, send directly to escrowPda.
+     */
+    usdc?: string;
     nft: string;
+    nftB?: string; // For NFT<>NFT swaps
   };
   expiry: string;
   transactionId: string;
@@ -100,13 +176,19 @@ export interface CreateAgreementResponseDTO {
  */
 export interface AgreementQueryDTO {
   status?: AgreementStatus;
+  swapType?: SwapType;
   seller?: string;
   buyer?: string;
   
   /**
-   * Filter by NFT mint address (to find agreements for a specific NFT).
+   * Filter by seller's NFT mint address (to find agreements for a specific NFT).
    */
   nftMint?: string;
+  
+  /**
+   * Filter by buyer's NFT mint address (for NFT<>NFT swaps).
+   */
+  nftBMint?: string;
   
   page?: number;
   limit?: number;
@@ -118,10 +200,20 @@ export interface AgreementQueryDTO {
 export interface AgreementBalanceDTO {
   agreementId: string;
   status: AgreementStatus;
+  swapType: SwapType;
   balances: {
-    usdcLocked: boolean;
+    /**
+     * @deprecated Use solLocked instead
+     */
+    usdcLocked?: boolean;
+    solLocked?: boolean;
     nftLocked: boolean;
-    expectedUsdcAmount: string;
+    nftBLocked?: boolean; // For NFT<>NFT swaps
+    /**
+     * @deprecated Use expectedSolAmount instead
+     */
+    expectedUsdcAmount?: string;
+    expectedSolAmount?: string;
   };
   deadline: string;
 }
@@ -131,9 +223,10 @@ export interface AgreementBalanceDTO {
  */
 export interface DepositInfoDTO {
   id: string;
-  type: 'USDC' | 'NFT';
+  type: 'USDC' | 'NFT' | 'SOL' | 'NFT_BUYER';
   depositor: string;
-  amount?: string;
+  amount?: string; // For USDC/SOL deposits (in base units)
+  tokenMint?: string; // For NFT deposits
   status: 'PENDING' | 'CONFIRMED' | 'FAILED';
   txId?: string;
   detectedAt: string;
@@ -146,9 +239,18 @@ export interface DepositInfoDTO {
 export interface AgreementDetailResponseDTO extends AgreementResponseDTO {
   deposits: DepositInfoDTO[];
   balances: {
-    usdcLocked: boolean;
+    /**
+     * @deprecated Use solLocked instead
+     */
+    usdcLocked?: boolean;
+    solLocked?: boolean;
     nftLocked: boolean;
+    nftBLocked?: boolean; // For NFT<>NFT swaps
+    /**
+     * @deprecated Use actualSolAmount instead
+     */
     actualUsdcAmount?: string;
+    actualSolAmount?: string;
   };
   isExpired: boolean;
   canBeCancelled: boolean;
