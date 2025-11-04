@@ -1109,6 +1109,31 @@ export const archiveAgreements = async (
 };
 
 /**
+ * Delete agreement (primarily for test cleanup)
+ * @param agreementId - Agreement ID to delete
+ * @throws Error if agreement not found
+ */
+export const deleteAgreement = async (agreementId: string): Promise<void> => {
+  console.log(`[AgreementService] Deleting agreement: ${agreementId}`);
+
+  // Check if agreement exists
+  const agreement = await prisma.agreement.findUnique({
+    where: { agreementId },
+  });
+
+  if (!agreement) {
+    throw new Error(`Agreement ${agreementId} not found`);
+  }
+
+  // Delete agreement (cascades to related records via Prisma)
+  await prisma.agreement.delete({
+    where: { agreementId },
+  });
+
+  console.log(`[AgreementService] ✅ Agreement deleted: ${agreementId}`);
+};
+
+/**
  * Extend agreement expiry
  */
 export const extendAgreementExpiry = async (

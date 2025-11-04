@@ -79,6 +79,29 @@ describe('STAGING E2E - V2: NFT-for-SOL Swap (Happy Path)', function () {
     timestamp: number;
   }> = [];
 
+  // Cleanup hook - runs after all tests (pass or fail)
+  after(async function () {
+    if (agreement?.agreementId) {
+      try {
+        console.log(`\n🧹 Cleaning up test agreement: ${agreement.agreementId}`);
+        await axios.delete(
+          `${STAGING_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}`,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+        console.log('✅ Test agreement deleted successfully');
+      } catch (error: any) {
+        // Only log if not a 404 (already deleted)
+        if (error.response?.status !== 404) {
+          console.warn('⚠️  Failed to cleanup test agreement:', error.message);
+        }
+      }
+    }
+  });
+
   before(async function () {
     console.log('\n' + '='.repeat(80));
     console.log('🚀 STAGING E2E Test - V2 NFT-for-SOL Swap');

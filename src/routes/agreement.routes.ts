@@ -640,5 +640,52 @@ router.post(
   }
 );
 
+/**
+ * DELETE /v1/agreements/:agreementId
+ * Delete an agreement (primarily for test cleanup)
+ * No rate limiting for internal test cleanup
+ */
+router.delete(
+  '/v1/agreements/:agreementId',
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { agreementId } = req.params;
+
+      // Import delete function dynamically to avoid circular dependency
+      const { deleteAgreement } = await import('../services/agreement.service');
+      
+      await deleteAgreement(agreementId);
+
+      res.status(200).json({
+        success: true,
+        message: 'Agreement deleted successfully',
+        data: { agreementId },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Error deleting agreement:', error);
+
+      // Handle not found
+      if (error instanceof Error && error.message.includes('not found')) {
+        res.status(404).json({
+          success: false,
+          error: 'Not Found',
+          message: error.message,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Generic error
+      res.status(500).json({
+        success: false,
+        error: 'Internal Server Error',
+        message: error instanceof Error ? error.message : 'Failed to delete agreement',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
 export default router;
 
