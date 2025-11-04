@@ -344,13 +344,28 @@ export const updateAgreementStatus = async (
 };
 
 /**
- * Delete agreement
+ * Delete agreement (primarily for test cleanup)
+ * @param agreementId - Agreement ID to delete
+ * @throws Error if agreement not found
  */
 export const deleteAgreement = async (agreementId: string): Promise<void> => {
+  console.log(`[AgreementService] Deleting agreement: ${agreementId}`);
+
+  // Check if agreement exists
+  const agreement = await prisma.agreement.findUnique({
+    where: { agreementId },
+  });
+
+  if (!agreement) {
+    throw new Error(`Agreement ${agreementId} not found`);
+  }
+
   try {
+    // Delete agreement (cascades to related records via Prisma)
     await prisma.agreement.delete({
       where: { agreementId },
     });
+    console.log(`[AgreementService] ✅ Agreement deleted: ${agreementId}`);
   } catch (error) {
     console.error('Error deleting agreement:', error);
     throw new Error('Failed to delete agreement');
@@ -1106,31 +1121,6 @@ export const archiveAgreements = async (
     count: result.count,
     archived: agreementIds.slice(0, result.count),
   };
-};
-
-/**
- * Delete agreement (primarily for test cleanup)
- * @param agreementId - Agreement ID to delete
- * @throws Error if agreement not found
- */
-export const deleteAgreement = async (agreementId: string): Promise<void> => {
-  console.log(`[AgreementService] Deleting agreement: ${agreementId}`);
-
-  // Check if agreement exists
-  const agreement = await prisma.agreement.findUnique({
-    where: { agreementId },
-  });
-
-  if (!agreement) {
-    throw new Error(`Agreement ${agreementId} not found`);
-  }
-
-  // Delete agreement (cascades to related records via Prisma)
-  await prisma.agreement.delete({
-    where: { agreementId },
-  });
-
-  console.log(`[AgreementService] ✅ Agreement deleted: ${agreementId}`);
 };
 
 /**
