@@ -1578,18 +1578,18 @@ export class EscrowProgramService {
           escrowId,
           swapTypeEnum,
           solAmount || null,
-          nftBMint || null,
+          nftMint, // nft_a_mint parameter (seller's NFT)
+          nftBMint || null, // nft_b_mint parameter (buyer's NFT for certain swap types)
           expiryTimestamp,
           platformFeeBps,
           feePayerEnum
         )
         .accountsStrict({
-          escrowState: escrowPda,
+          escrow_state: escrowPda,
           buyer,
           seller,
-          nftMint,
           admin: this.adminKeypair.publicKey,
-          systemProgram: SystemProgram.programId,
+          system_program: SystemProgram.programId,
         })
         .instruction();
 
