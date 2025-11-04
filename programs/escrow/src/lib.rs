@@ -699,14 +699,18 @@ pub mod escrow {
                     ctx.accounts.escrow_state.platform_fee_bps,
                 )?;
 
-                // Transfer platform fee (SOL) to fee collector
+                // Transfer SOL: Must do all lamport modifications atomically
                 // NOTE: Cannot use SystemProgram::transfer() from PDA with data
-                // Must manually adjust lamports
-                **ctx.accounts.escrow_state.to_account_info().try_borrow_mut_lamports()? -= platform_fee;
+                {
+                    let total_transfer = platform_fee.checked_add(seller_receives)
+                        .ok_or(EscrowError::CalculationOverflow)?;
+                    
+                    // Subtract total from escrow
+                    **ctx.accounts.escrow_state.to_account_info().try_borrow_mut_lamports()? -= total_transfer;
+                }
+                
+                // Add to recipients
                 **ctx.accounts.platform_fee_collector.to_account_info().try_borrow_mut_lamports()? += platform_fee;
-
-                // Transfer remaining SOL to seller
-                **ctx.accounts.escrow_state.to_account_info().try_borrow_mut_lamports()? -= seller_receives;
                 **ctx.accounts.seller.to_account_info().try_borrow_mut_lamports()? += seller_receives;
 
                 // Transfer NFT A from escrow to buyer
@@ -735,7 +739,6 @@ pub mod escrow {
                 // Transfer platform fee (SOL) to fee collector
                 let platform_fee = ctx.accounts.escrow_state.sol_amount; // Full amount is the fee
                 // NOTE: Cannot use SystemProgram::transfer() from PDA with data
-                // Must manually adjust lamports
                 **ctx.accounts.escrow_state.to_account_info().try_borrow_mut_lamports()? -= platform_fee;
                 **ctx.accounts.platform_fee_collector.to_account_info().try_borrow_mut_lamports()? += platform_fee;
 
@@ -787,14 +790,18 @@ pub mod escrow {
                     ctx.accounts.escrow_state.platform_fee_bps,
                 )?;
 
-                // Transfer platform fee (SOL) to fee collector
+                // Transfer SOL: Must do all lamport modifications atomically
                 // NOTE: Cannot use SystemProgram::transfer() from PDA with data
-                // Must manually adjust lamports
-                **ctx.accounts.escrow_state.to_account_info().try_borrow_mut_lamports()? -= platform_fee;
+                {
+                    let total_transfer = platform_fee.checked_add(seller_sol_amount)
+                        .ok_or(EscrowError::CalculationOverflow)?;
+                    
+                    // Subtract total from escrow
+                    **ctx.accounts.escrow_state.to_account_info().try_borrow_mut_lamports()? -= total_transfer;
+                }
+                
+                // Add to recipients
                 **ctx.accounts.platform_fee_collector.to_account_info().try_borrow_mut_lamports()? += platform_fee;
-
-                // Transfer remaining SOL to seller
-                **ctx.accounts.escrow_state.to_account_info().try_borrow_mut_lamports()? -= seller_sol_amount;
                 **ctx.accounts.seller.to_account_info().try_borrow_mut_lamports()? += seller_sol_amount;
 
                 // Transfer NFT A from escrow to buyer
