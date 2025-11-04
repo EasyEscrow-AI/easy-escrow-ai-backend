@@ -703,5 +703,692 @@ pub enum EscrowError {
     
     #[msg("Calculation overflow")]
     CalculationOverflow,
+    
+    #[msg("Invalid swap type for this operation")]
+    InvalidSwapType,
+    
+    #[msg("SOL amount below minimum: 0.01 SOL (BETA limit)")]
+    SolAmountTooLow,
+    
+    #[msg("SOL amount exceeds maximum: 15 SOL (BETA limit)")]
+    SolAmountTooHigh,
+    
+    #[msg("Invalid parameter combination for swap type")]
+    InvalidSwapParameters,
+}
+
+// ============================================================================
+// SOL-Based Escrow Implementation (V2)
+// ============================================================================
+
+/// BETA Launch Limits for SOL: 0.01 SOL minimum, 15 SOL maximum
+/// SOL has 9 decimals: 1 SOL = 1_000_000_000 lamports
+const MIN_SOL_AMOUNT: u64 = 10_000_000;      // 0.01 SOL (~$2 at $200/SOL)
+const MAX_SOL_AMOUNT: u64 = 15_000_000_000;  // 15 SOL (~$3000 at $200/SOL)
+
+/// Swap type determines how the escrow settlement works
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, InitSpace, Debug)]
+pub enum SwapType {
+    NftForSol,        // NFT <> SOL: Direct exchange
+    NftForNftWithFee, // NFT <> NFT: Buyer pays separate SOL fee
+    NftForNftPlusSol, // NFT <> NFT+SOL: Fee extracted from SOL amount
+}
+
+/// Who pays the platform fee
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, InitSpace, Debug)]
+pub enum FeePayer {
+    Buyer,  // Default: Buyer pays the fee
+    Seller, // Alternative: Seller pays the fee
+}
+
+/// Updated escrow state for SOL-based swaps
+#[account]
+#[derive(InitSpace)]
+pub struct EscrowStateV2 {
+    pub escrow_id: u64,
+    pub buyer: Pubkey,
+    pub seller: Pubkey,
+    
+    /// Swap type determines which fields are used
+    pub swap_type: SwapType,
+    
+    /// SOL amount (if applicable to swap type)
+    pub sol_amount: u64,
+    
+    /// NFT mints (one or two depending on swap type)
+    pub nft_a_mint: Pubkey,        // Seller's NFT (always present)
+    pub nft_b_mint: Option<Pubkey>, // Buyer's NFT (only for NFT<>NFT swaps)
+    
+    /// Platform fee configuration
+    pub platform_fee_bps: u16,
+    pub fee_payer: FeePayer,
+    
+    /// Deposit tracking
+    pub buyer_sol_deposited: bool,
+    pub buyer_nft_deposited: bool,
+    pub seller_nft_deposited: bool,
+    
+    /// Status and metadata
+    pub status: EscrowStatus,
+    pub expiry_timestamp: i64,
+    pub bump: u8,
+    pub admin: Pubkey,
+}
+
+// ============================================================================
+// Instructions - NFT <> SOL Swap (Subtask 1.5)
+// ============================================================================
+
+/// Initialize a new SOL-based escrow agreement
+/// Admin-only operation to ensure all escrows are tracked in the database
+pub fn init_agreement_v2(
+    ctx: Context<InitAgreementV2>,
+    escrow_id: u64,
+    swap_type: SwapType,
+    sol_amount: Option<u64>,
+    nft_a_mint: Pubkey,
+    nft_b_mint: Option<Pubkey>,
+    expiry_timestamp: i64,
+    platform_fee_bps: u16,
+    fee_payer: FeePayer,
+) -> Result<()> {
+    // Validate admin authorization
+    let authorized_admins = get_authorized_admins();
+    require!(
+        authorized_admins.contains(&ctx.accounts.admin.key()),
+        EscrowError::UnauthorizedAdmin
+    );
+
+    // Validate fee basis points (0-10000 = 0%-100%)
+    require!(platform_fee_bps <= 10000, EscrowError::InvalidFeeBps);
+
+    // Validate expiry timestamp
+    let clock = Clock::get()?;
+    require!(
+        expiry_timestamp > clock.unix_timestamp,
+        EscrowError::InvalidExpiry
+    );
+
+    // Validate parameters based on swap type
+    match swap_type {
+        SwapType::NftForSol => {
+            // For NFT<>SOL: must have sol_amount, no nft_b_mint
+            require!(sol_amount.is_some(), EscrowError::InvalidSwapParameters);
+            require!(nft_b_mint.is_none(), EscrowError::InvalidSwapParameters);
+            
+            let amount = sol_amount.unwrap();
+            require!(amount >= MIN_SOL_AMOUNT, EscrowError::SolAmountTooLow);
+            require!(amount <= MAX_SOL_AMOUNT, EscrowError::SolAmountTooHigh);
+        },
+        SwapType::NftForNftWithFee => {
+            // For NFT<>NFT with fee: must have nft_b_mint, sol_amount is fee
+            require!(nft_b_mint.is_some(), EscrowError::InvalidSwapParameters);
+            require!(sol_amount.is_some(), EscrowError::InvalidSwapParameters);
+            
+            let fee = sol_amount.unwrap();
+            require!(fee >= MIN_SOL_AMOUNT, EscrowError::SolAmountTooLow);
+            require!(fee <= MAX_SOL_AMOUNT, EscrowError::SolAmountTooHigh);
+        },
+        SwapType::NftForNftPlusSol => {
+            // For NFT<>NFT+SOL: must have nft_b_mint and sol_amount
+            require!(nft_b_mint.is_some(), EscrowError::InvalidSwapParameters);
+            require!(sol_amount.is_some(), EscrowError::InvalidSwapParameters);
+            
+            let amount = sol_amount.unwrap();
+            require!(amount >= MIN_SOL_AMOUNT, EscrowError::SolAmountTooLow);
+            require!(amount <= MAX_SOL_AMOUNT, EscrowError::SolAmountTooHigh);
+        },
+    }
+
+    // Initialize escrow state
+    let escrow_state = &mut ctx.accounts.escrow_state;
+    escrow_state.escrow_id = escrow_id;
+    escrow_state.buyer = ctx.accounts.buyer.key();
+    escrow_state.seller = ctx.accounts.seller.key();
+    escrow_state.swap_type = swap_type;
+    escrow_state.sol_amount = sol_amount.unwrap_or(0);
+    escrow_state.nft_a_mint = nft_a_mint;
+    escrow_state.nft_b_mint = nft_b_mint;
+    escrow_state.platform_fee_bps = platform_fee_bps;
+    escrow_state.fee_payer = fee_payer;
+    escrow_state.buyer_sol_deposited = false;
+    escrow_state.buyer_nft_deposited = false;
+    escrow_state.seller_nft_deposited = false;
+    escrow_state.status = EscrowStatus::Pending;
+    escrow_state.expiry_timestamp = expiry_timestamp;
+    escrow_state.bump = ctx.bumps.escrow_state;
+    escrow_state.admin = ctx.accounts.admin.key();
+
+    msg!("Escrow agreement initialized: ID {}", escrow_id);
+    msg!("Swap type: {:?}", swap_type);
+    msg!("SOL amount: {}", sol_amount.unwrap_or(0));
+
+    Ok(())
+}
+
+/// Buyer deposits SOL into the escrow PDA
+/// For NftForSol and NftForNftPlusSol swap types
+pub fn deposit_sol(ctx: Context<DepositSol>) -> Result<()> {
+    // Validate escrow status
+    require!(
+        ctx.accounts.escrow_state.status == EscrowStatus::Pending,
+        EscrowError::InvalidStatus
+    );
+
+    // Verify not already deposited
+    require!(
+        !ctx.accounts.escrow_state.buyer_sol_deposited,
+        EscrowError::AlreadyDeposited
+    );
+
+    // Validate swap type requires SOL
+    require!(
+        ctx.accounts.escrow_state.swap_type == SwapType::NftForSol || 
+        ctx.accounts.escrow_state.swap_type == SwapType::NftForNftPlusSol ||
+        ctx.accounts.escrow_state.swap_type == SwapType::NftForNftWithFee,
+        EscrowError::InvalidSwapType
+    );
+
+    // Verify buyer authority
+    require!(
+        ctx.accounts.buyer.key() == ctx.accounts.escrow_state.buyer,
+        EscrowError::Unauthorized
+    );
+
+    // Extract sol_amount before transfer
+    let sol_amount = ctx.accounts.escrow_state.sol_amount;
+
+    // Transfer SOL from buyer to escrow PDA using system program
+    let transfer_ctx = CpiContext::new(
+        ctx.accounts.system_program.to_account_info(),
+        anchor_lang::system_program::Transfer {
+            from: ctx.accounts.buyer.to_account_info(),
+            to: ctx.accounts.escrow_state.to_account_info(),
+        },
+    );
+    anchor_lang::system_program::transfer(transfer_ctx, sol_amount)?;
+
+    // Mark SOL as deposited
+    ctx.accounts.escrow_state.buyer_sol_deposited = true;
+
+    msg!("SOL deposited: {} lamports", sol_amount);
+
+    Ok(())
+}
+
+/// Seller deposits NFT A into the escrow
+/// Used for all swap types (seller always deposits NFT A)
+pub fn deposit_seller_nft(ctx: Context<DepositSellerNft>) -> Result<()> {
+    let escrow_state = &mut ctx.accounts.escrow_state;
+
+    // Validate escrow status
+    require!(
+        escrow_state.status == EscrowStatus::Pending,
+        EscrowError::InvalidStatus
+    );
+
+    // Verify not already deposited
+    require!(
+        !escrow_state.seller_nft_deposited,
+        EscrowError::AlreadyDeposited
+    );
+
+    // Verify seller authority
+    require!(
+        ctx.accounts.seller.key() == escrow_state.seller,
+        EscrowError::Unauthorized
+    );
+
+    // Verify NFT mint matches
+    require!(
+        ctx.accounts.nft_mint.key() == escrow_state.nft_a_mint,
+        EscrowError::InvalidNftMint
+    );
+
+    // Transfer NFT from seller to escrow using token program
+    let transfer_ctx = CpiContext::new(
+        ctx.accounts.token_program.to_account_info(),
+        Transfer {
+            from: ctx.accounts.seller_nft_account.to_account_info(),
+            to: ctx.accounts.escrow_nft_account.to_account_info(),
+            authority: ctx.accounts.seller.to_account_info(),
+        },
+    );
+    token::transfer(transfer_ctx, 1)?; // NFTs have amount = 1
+
+    // Mark seller NFT as deposited
+    escrow_state.seller_nft_deposited = true;
+
+    msg!("Seller NFT deposited: {}", escrow_state.nft_a_mint);
+
+    Ok(())
+}
+
+/// Settle the escrow and distribute assets
+/// For NFT<>SOL swap: Transfer NFT to buyer, SOL (minus fee) to seller
+pub fn settle_v2(ctx: Context<SettleV2>) -> Result<()> {
+    // Validate escrow status
+    require!(
+        ctx.accounts.escrow_state.status == EscrowStatus::Pending,
+        EscrowError::InvalidStatus
+    );
+
+    // Validate all required deposits are complete based on swap type
+    match ctx.accounts.escrow_state.swap_type {
+        SwapType::NftForSol => {
+            require!(
+                ctx.accounts.escrow_state.buyer_sol_deposited && ctx.accounts.escrow_state.seller_nft_deposited,
+                EscrowError::DepositNotComplete
+            );
+        },
+        _ => {
+            return Err(EscrowError::InvalidSwapType.into());
+        }
+    }
+
+    // Verify caller is either buyer or seller
+    let caller = ctx.accounts.caller.key();
+    require!(
+        caller == ctx.accounts.escrow_state.buyer || caller == ctx.accounts.escrow_state.seller,
+        EscrowError::Unauthorized
+    );
+
+    // Calculate platform fee
+    let (platform_fee, recipient_amount) = calculate_platform_fee(
+        ctx.accounts.escrow_state.sol_amount,
+        ctx.accounts.escrow_state.platform_fee_bps,
+    )?;
+
+    // Prepare PDA signer seeds
+    let escrow_id_bytes = ctx.accounts.escrow_state.escrow_id.to_le_bytes();
+    let bump = ctx.accounts.escrow_state.bump;
+    let seeds = &[
+        b"escrow",
+        escrow_id_bytes.as_ref(),
+        &[bump],
+    ];
+    let signer = &[&seeds[..]];
+
+    // Transfer platform fee (SOL) to fee collector
+    let fee_transfer_ctx = CpiContext::new_with_signer(
+        ctx.accounts.system_program.to_account_info(),
+        anchor_lang::system_program::Transfer {
+            from: ctx.accounts.escrow_state.to_account_info(),
+            to: ctx.accounts.platform_fee_collector.to_account_info(),
+        },
+        signer,
+    );
+    anchor_lang::system_program::transfer(fee_transfer_ctx, platform_fee)?;
+
+    // Transfer remaining SOL to seller
+    let seller_transfer_ctx = CpiContext::new_with_signer(
+        ctx.accounts.system_program.to_account_info(),
+        anchor_lang::system_program::Transfer {
+            from: ctx.accounts.escrow_state.to_account_info(),
+            to: ctx.accounts.seller.to_account_info(),
+        },
+        signer,
+    );
+    anchor_lang::system_program::transfer(seller_transfer_ctx, recipient_amount)?;
+
+    // Transfer NFT from escrow to buyer
+    let nft_transfer_ctx = CpiContext::new_with_signer(
+        ctx.accounts.token_program.to_account_info(),
+        Transfer {
+            from: ctx.accounts.escrow_nft_account.to_account_info(),
+            to: ctx.accounts.buyer_nft_account.to_account_info(),
+            authority: ctx.accounts.escrow_state.to_account_info(),
+        },
+        signer,
+    );
+    token::transfer(nft_transfer_ctx, 1)?; // NFTs have amount = 1
+
+    // Mark escrow as completed
+    ctx.accounts.escrow_state.status = EscrowStatus::Completed;
+
+    msg!("Escrow settled successfully");
+    msg!("Platform fee: {} lamports", platform_fee);
+    msg!("Seller received: {} lamports", recipient_amount);
+
+    Ok(())
+}
+
+/// Cancel expired escrow and return assets to original owners
+pub fn cancel_if_expired_v2(ctx: Context<CancelIfExpiredV2>) -> Result<()> {
+    // Validate escrow status
+    require!(
+        ctx.accounts.escrow_state.status == EscrowStatus::Pending,
+        EscrowError::InvalidStatus
+    );
+
+    // Check if escrow has expired
+    let clock = Clock::get()?;
+    require!(
+        clock.unix_timestamp > ctx.accounts.escrow_state.expiry_timestamp,
+        EscrowError::NotExpired
+    );
+
+    // Prepare PDA signer seeds
+    let escrow_id_bytes = ctx.accounts.escrow_state.escrow_id.to_le_bytes();
+    let bump = ctx.accounts.escrow_state.bump;
+    let seeds = &[
+        b"escrow",
+        escrow_id_bytes.as_ref(),
+        &[bump],
+    ];
+    let signer = &[&seeds[..]];
+
+    // Return SOL to buyer if deposited (for NftForSol swap)
+    if ctx.accounts.escrow_state.buyer_sol_deposited && ctx.accounts.escrow_state.swap_type == SwapType::NftForSol {
+        let sol_amount = ctx.accounts.escrow_state.sol_amount;
+        let sol_transfer_ctx = CpiContext::new_with_signer(
+            ctx.accounts.system_program.to_account_info(),
+            anchor_lang::system_program::Transfer {
+                from: ctx.accounts.escrow_state.to_account_info(),
+                to: ctx.accounts.buyer.to_account_info(),
+            },
+            signer,
+        );
+        anchor_lang::system_program::transfer(sol_transfer_ctx, sol_amount)?;
+        msg!("Returned {} lamports to buyer", sol_amount);
+    }
+
+    // Return NFT to seller if deposited
+    if ctx.accounts.escrow_state.seller_nft_deposited {
+        let nft_mint = ctx.accounts.escrow_state.nft_a_mint;
+        let nft_transfer_ctx = CpiContext::new_with_signer(
+            ctx.accounts.token_program.to_account_info(),
+            Transfer {
+                from: ctx.accounts.escrow_nft_account.to_account_info(),
+                to: ctx.accounts.seller_nft_account.to_account_info(),
+                authority: ctx.accounts.escrow_state.to_account_info(),
+            },
+            signer,
+        );
+        token::transfer(nft_transfer_ctx, 1)?;
+        msg!("Returned NFT to seller: {}", nft_mint);
+    }
+
+    // Mark escrow as cancelled
+    let escrow_id = ctx.accounts.escrow_state.escrow_id;
+    ctx.accounts.escrow_state.status = EscrowStatus::Cancelled;
+
+    msg!("Escrow cancelled due to expiry: ID {}", escrow_id);
+
+    Ok(())
+}
+
+/// Admin emergency cancel with full refunds
+pub fn admin_cancel_v2(ctx: Context<AdminCancelV2>) -> Result<()> {
+    // Validate escrow status
+    require!(
+        ctx.accounts.escrow_state.status == EscrowStatus::Pending,
+        EscrowError::InvalidStatus
+    );
+
+    // Validate admin authorization
+    require!(
+        ctx.accounts.admin.key() == ctx.accounts.escrow_state.admin,
+        EscrowError::Unauthorized
+    );
+
+    // Prepare PDA signer seeds
+    let escrow_id_bytes = ctx.accounts.escrow_state.escrow_id.to_le_bytes();
+    let bump = ctx.accounts.escrow_state.bump;
+    let seeds = &[
+        b"escrow",
+        escrow_id_bytes.as_ref(),
+        &[bump],
+    ];
+    let signer = &[&seeds[..]];
+
+    // Return SOL to buyer if deposited (for NftForSol swap)
+    if ctx.accounts.escrow_state.buyer_sol_deposited && ctx.accounts.escrow_state.swap_type == SwapType::NftForSol {
+        let sol_amount = ctx.accounts.escrow_state.sol_amount;
+        let sol_transfer_ctx = CpiContext::new_with_signer(
+            ctx.accounts.system_program.to_account_info(),
+            anchor_lang::system_program::Transfer {
+                from: ctx.accounts.escrow_state.to_account_info(),
+                to: ctx.accounts.buyer.to_account_info(),
+            },
+            signer,
+        );
+        anchor_lang::system_program::transfer(sol_transfer_ctx, sol_amount)?;
+        msg!("Admin refund: Returned {} lamports to buyer", sol_amount);
+    }
+
+    // Return NFT to seller if deposited
+    if ctx.accounts.escrow_state.seller_nft_deposited {
+        let nft_mint = ctx.accounts.escrow_state.nft_a_mint;
+        let nft_transfer_ctx = CpiContext::new_with_signer(
+            ctx.accounts.token_program.to_account_info(),
+            Transfer {
+                from: ctx.accounts.escrow_nft_account.to_account_info(),
+                to: ctx.accounts.seller_nft_account.to_account_info(),
+                authority: ctx.accounts.escrow_state.to_account_info(),
+            },
+            signer,
+        );
+        token::transfer(nft_transfer_ctx, 1)?;
+        msg!("Admin refund: Returned NFT to seller: {}", nft_mint);
+    }
+
+    // Mark escrow as cancelled
+    let escrow_id = ctx.accounts.escrow_state.escrow_id;
+    ctx.accounts.escrow_state.status = EscrowStatus::Cancelled;
+
+    msg!("Admin cancelled escrow: ID {}", escrow_id);
+
+    Ok(())
+}
+
+// ============================================================================
+// Account Structures - NFT <> SOL Swap (Subtask 1.5)
+// ============================================================================
+
+#[derive(Accounts)]
+#[instruction(escrow_id: u64)]
+pub struct InitAgreementV2<'info> {
+    #[account(mut)]
+    pub admin: Signer<'info>,
+    
+    /// CHECK: Buyer address verified in state
+    pub buyer: UncheckedAccount<'info>,
+    
+    /// CHECK: Seller address verified in state
+    pub seller: UncheckedAccount<'info>,
+    
+    #[account(
+        init,
+        payer = admin,
+        space = 8 + EscrowStateV2::INIT_SPACE,
+        seeds = [b"escrow", escrow_id.to_le_bytes().as_ref()],
+        bump
+    )]
+    pub escrow_state: Account<'info, EscrowStateV2>,
+    
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct DepositSol<'info> {
+    #[account(mut)]
+    pub buyer: Signer<'info>,
+    
+    #[account(
+        mut,
+        seeds = [b"escrow", escrow_state.escrow_id.to_le_bytes().as_ref()],
+        bump = escrow_state.bump,
+    )]
+    pub escrow_state: Account<'info, EscrowStateV2>,
+    
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct DepositSellerNft<'info> {
+    #[account(mut)]
+    pub seller: Signer<'info>,
+    
+    #[account(
+        mut,
+        seeds = [b"escrow", escrow_state.escrow_id.to_le_bytes().as_ref()],
+        bump = escrow_state.bump,
+    )]
+    pub escrow_state: Account<'info, EscrowStateV2>,
+    
+    #[account(
+        mut,
+        constraint = seller_nft_account.owner == seller.key()
+    )]
+    pub seller_nft_account: Account<'info, TokenAccount>,
+    
+    #[account(
+        init_if_needed,
+        payer = seller,
+        associated_token::mint = nft_mint,
+        associated_token::authority = escrow_state,
+    )]
+    pub escrow_nft_account: Account<'info, TokenAccount>,
+    
+    pub nft_mint: Account<'info, Mint>,
+    
+    pub token_program: Program<'info, Token>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct SettleV2<'info> {
+    #[account(mut)]
+    pub caller: Signer<'info>,
+    
+    #[account(
+        mut,
+        seeds = [b"escrow", escrow_state.escrow_id.to_le_bytes().as_ref()],
+        bump = escrow_state.bump,
+    )]
+    pub escrow_state: Account<'info, EscrowStateV2>,
+    
+    /// CHECK: Seller receives SOL
+    #[account(
+        mut,
+        constraint = seller.key() == escrow_state.seller
+    )]
+    pub seller: UncheckedAccount<'info>,
+    
+    /// CHECK: Platform fee collector address
+    #[account(mut)]
+    pub platform_fee_collector: UncheckedAccount<'info>,
+    
+    #[account(
+        mut,
+        constraint = escrow_nft_account.mint == escrow_state.nft_a_mint
+    )]
+    pub escrow_nft_account: Account<'info, TokenAccount>,
+    
+    #[account(
+        init_if_needed,
+        payer = caller,
+        associated_token::mint = nft_mint,
+        associated_token::authority = buyer,
+    )]
+    pub buyer_nft_account: Account<'info, TokenAccount>,
+    
+    /// CHECK: Buyer receives NFT
+    pub buyer: UncheckedAccount<'info>,
+    
+    pub nft_mint: Account<'info, Mint>,
+    
+    pub token_program: Program<'info, Token>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct CancelIfExpiredV2<'info> {
+    #[account(
+        mut,
+        seeds = [b"escrow", escrow_state.escrow_id.to_le_bytes().as_ref()],
+        bump = escrow_state.bump,
+    )]
+    pub escrow_state: Account<'info, EscrowStateV2>,
+    
+    /// CHECK: Buyer receives refund if deposited
+    #[account(
+        mut,
+        constraint = buyer.key() == escrow_state.buyer
+    )]
+    pub buyer: UncheckedAccount<'info>,
+    
+    #[account(
+        mut,
+        constraint = seller_nft_account.owner == escrow_state.seller
+    )]
+    pub seller_nft_account: Account<'info, TokenAccount>,
+    
+    #[account(
+        mut,
+        constraint = escrow_nft_account.mint == escrow_state.nft_a_mint
+    )]
+    pub escrow_nft_account: Account<'info, TokenAccount>,
+    
+    pub token_program: Program<'info, Token>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct AdminCancelV2<'info> {
+    #[account(mut)]
+    pub admin: Signer<'info>,
+    
+    #[account(
+        mut,
+        seeds = [b"escrow", escrow_state.escrow_id.to_le_bytes().as_ref()],
+        bump = escrow_state.bump,
+    )]
+    pub escrow_state: Account<'info, EscrowStateV2>,
+    
+    /// CHECK: Buyer receives refund if deposited
+    #[account(
+        mut,
+        constraint = buyer.key() == escrow_state.buyer
+    )]
+    pub buyer: UncheckedAccount<'info>,
+    
+    #[account(
+        mut,
+        constraint = seller_nft_account.owner == escrow_state.seller
+    )]
+    pub seller_nft_account: Account<'info, TokenAccount>,
+    
+    #[account(
+        mut,
+        constraint = escrow_nft_account.mint == escrow_state.nft_a_mint
+    )]
+    pub escrow_nft_account: Account<'info, TokenAccount>,
+    
+    pub token_program: Program<'info, Token>,
+    pub system_program: Program<'info, System>,
+}
+
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
+/// Calculate platform fee and recipient amount
+/// Returns (platform_fee, recipient_amount)
+fn calculate_platform_fee(total_amount: u64, fee_bps: u16) -> Result<(u64, u64)> {
+    let platform_fee = (total_amount as u128)
+        .checked_mul(fee_bps as u128)
+        .ok_or(EscrowError::CalculationOverflow)?
+        .checked_div(10000)
+        .ok_or(EscrowError::CalculationOverflow)? as u64;
+    
+    let recipient_amount = total_amount
+        .checked_sub(platform_fee)
+        .ok_or(EscrowError::CalculationOverflow)?;
+    
+    Ok((platform_fee, recipient_amount))
 }
 
