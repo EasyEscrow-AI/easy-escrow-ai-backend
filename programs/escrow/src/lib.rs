@@ -699,9 +699,30 @@ pub mod escrow {
                     ctx.accounts.escrow_state.platform_fee_bps,
                 )?;
 
-                // Transfer SOL: ALL borrows must be held simultaneously for Solana validation
+                // Transfer SOL using direct lamport manipulation
                 // NOTE: Cannot use SystemProgram::transfer() from PDA with data
-                // Must manually adjust lamports while holding all borrows
+                // Research: https://osec.io/blog/2025-05-14-king-of-the-sol/
+                
+                // Get rent-exempt minimum for this account
+                let rent = Rent::get()?;
+                let escrow_account_info = ctx.accounts.escrow_state.to_account_info();
+                let min_rent_exempt = rent.minimum_balance(escrow_account_info.data_len());
+                
+                // Calculate transferable amount (current balance minus rent-exempt minimum)
+                let current_balance = escrow_account_info.lamports();
+                let transferable = current_balance.checked_sub(min_rent_exempt)
+                    .ok_or(EscrowError::InsufficientFunds)?;
+                
+                // Verify we have enough to cover both transfers
+                let total_to_transfer = platform_fee.checked_add(seller_receives)
+                    .ok_or(EscrowError::CalculationOverflow)?;
+                
+                require!(
+                    transferable >= total_to_transfer,
+                    EscrowError::InsufficientFunds
+                );
+                
+                // Perform direct lamport transfers while holding all borrows
                 {
                     let escrow_account = ctx.accounts.escrow_state.to_account_info();
                     let fee_collector_account = ctx.accounts.platform_fee_collector.to_account_info();
@@ -711,8 +732,11 @@ pub mod escrow {
                     let mut fee_collector_lamports = fee_collector_account.try_borrow_mut_lamports()?;
                     let mut seller_lamports = seller_account.try_borrow_mut_lamports()?;
 
+                    // Subtract from escrow (preserving rent-exempt minimum)
                     **escrow_lamports -= platform_fee;
                     **escrow_lamports -= seller_receives;
+                    
+                    // Add to recipients
                     **fee_collector_lamports += platform_fee;
                     **seller_lamports += seller_receives;
                 }
@@ -742,8 +766,23 @@ pub mod escrow {
 
                 // Transfer platform fee (SOL) to fee collector
                 let platform_fee = ctx.accounts.escrow_state.sol_amount; // Full amount is the fee
-                // NOTE: Cannot use SystemProgram::transfer() from PDA with data
-                // Must hold both borrows simultaneously for Solana validation
+                
+                // Get rent-exempt minimum for this account
+                let rent = Rent::get()?;
+                let escrow_account_info = ctx.accounts.escrow_state.to_account_info();
+                let min_rent_exempt = rent.minimum_balance(escrow_account_info.data_len());
+                
+                // Calculate transferable amount
+                let current_balance = escrow_account_info.lamports();
+                let transferable = current_balance.checked_sub(min_rent_exempt)
+                    .ok_or(EscrowError::InsufficientFunds)?;
+                
+                require!(
+                    transferable >= platform_fee,
+                    EscrowError::InsufficientFunds
+                );
+                
+                // Perform direct lamport transfer
                 {
                     let escrow_account = ctx.accounts.escrow_state.to_account_info();
                     let fee_collector_account = ctx.accounts.platform_fee_collector.to_account_info();
@@ -803,9 +842,27 @@ pub mod escrow {
                     ctx.accounts.escrow_state.platform_fee_bps,
                 )?;
 
-                // Transfer SOL: ALL borrows must be held simultaneously for Solana validation
-                // NOTE: Cannot use SystemProgram::transfer() from PDA with data
-                // Must manually adjust lamports while holding all borrows
+                // Transfer SOL using direct lamport manipulation
+                // Get rent-exempt minimum for this account
+                let rent = Rent::get()?;
+                let escrow_account_info = ctx.accounts.escrow_state.to_account_info();
+                let min_rent_exempt = rent.minimum_balance(escrow_account_info.data_len());
+                
+                // Calculate transferable amount
+                let current_balance = escrow_account_info.lamports();
+                let transferable = current_balance.checked_sub(min_rent_exempt)
+                    .ok_or(EscrowError::InsufficientFunds)?;
+                
+                // Verify we have enough to cover both transfers
+                let total_to_transfer = platform_fee.checked_add(seller_sol_amount)
+                    .ok_or(EscrowError::CalculationOverflow)?;
+                
+                require!(
+                    transferable >= total_to_transfer,
+                    EscrowError::InsufficientFunds
+                );
+                
+                // Perform direct lamport transfers while holding all borrows
                 {
                     let escrow_account = ctx.accounts.escrow_state.to_account_info();
                     let fee_collector_account = ctx.accounts.platform_fee_collector.to_account_info();
@@ -1333,6 +1390,9 @@ pub enum EscrowError {
     
     #[msg("SOL amount exceeds maximum: 15 SOL (BETA limit)")]
     SolAmountTooHigh,
+    
+    #[msg("Insufficient funds in escrow account after accounting for rent exemption")]
+    InsufficientFunds,
     
     #[msg("Invalid parameter combination for swap type")]
     InvalidSwapParameters,
