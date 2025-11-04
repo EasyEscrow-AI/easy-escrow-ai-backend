@@ -77,8 +77,14 @@ export class SettlementService {
   constructor(settlementConfig?: SettlementConfig) {
     this.solanaService = getSolanaService();
 
+    // Use faster polling for devnet/staging (3s), slower for production (15s)
+    const defaultPollingInterval = process.env.NODE_ENV === 'production' ? 15000 : 3000;
+    const envPollingInterval = process.env.SETTLEMENT_POLL_INTERVAL_MS 
+      ? parseInt(process.env.SETTLEMENT_POLL_INTERVAL_MS, 10) 
+      : defaultPollingInterval;
+
     this.config = {
-      pollingInterval: settlementConfig?.pollingInterval || 15000, // 15 seconds
+      pollingInterval: settlementConfig?.pollingInterval || envPollingInterval,
       maxRetries: settlementConfig?.maxRetries || 3,
       retryDelayMs: settlementConfig?.retryDelayMs || 2000,
       platformFeeCollectorAddress: settlementConfig?.platformFeeCollectorAddress || 
@@ -86,7 +92,7 @@ export class SettlementService {
         '11111111111111111111111111111111', // Fallback address
     };
 
-    console.log('[SettlementService] Initialized');
+    console.log(`[SettlementService] Initialized with ${this.config.pollingInterval}ms polling interval`);
   }
 
   /**
