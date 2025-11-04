@@ -929,7 +929,8 @@ export const prepareDepositSolTransaction = async (
     const escrowService = new EscrowProgramService();
     const escrowPda = new PublicKey(agreement.escrowPda);
     const buyer = new PublicKey(agreement.buyer);
-    const solAmount = new BN(agreement.solAmount);
+    // Convert Prisma Decimal to string before passing to BN
+    const solAmount = new BN(agreement.solAmount.toString());
 
     const result = await escrowService.buildDepositSolTransaction(escrowPda, buyer, solAmount);
 
@@ -997,7 +998,8 @@ export const depositSolToEscrow = async (
     const escrowService = new EscrowProgramService();
     const escrowPda = new PublicKey(agreement.escrowPda);
     const buyer = new PublicKey(agreement.buyer);
-    const solAmount = new BN(agreement.solAmount);
+    // Convert Prisma Decimal to string before passing to BN
+    const solAmount = new BN(agreement.solAmount.toString());
 
     const txId = await escrowService.depositSol(escrowPda, buyer, solAmount);
 
