@@ -10,8 +10,10 @@ import {
   listAgreements,
   depositNftToEscrow,
   depositUsdcToEscrow,
+  depositSolToEscrow,
   prepareDepositNftTransaction,
   prepareDepositUsdcTransaction,
+  prepareDepositSolTransaction,
   archiveAgreements,
   extendAgreementExpiry
 } from '../services/agreement.service';
@@ -105,15 +107,17 @@ router.get('/v1/agreements/:agreementId', standardRateLimiter, async (req: Reque
 
 /**
  * GET /v1/agreements
- * List agreements with filters
+ * List agreements with filters (supports SOL-based swap types)
  */
 router.get('/v1/agreements', standardRateLimiter, async (req: Request, res: Response): Promise<void> => {
   try {
     const filters: AgreementQueryDTO = {
       status: req.query.status as AgreementStatus | undefined,
+      swapType: req.query.swap_type as any, // SwapType from Prisma
       seller: req.query.seller as string | undefined,
       buyer: req.query.buyer as string | undefined,
       nftMint: req.query.nft_mint as string | undefined,
+      nftBMint: req.query.nft_b_mint as string | undefined,
       page: req.query.page ? parseInt(req.query.page as string, 10) : undefined,
       limit: req.query.limit ? parseInt(req.query.limit as string, 10) : undefined,
     };
@@ -368,6 +372,112 @@ router.post(
         errorMessage.includes('Cannot deposit') || 
         errorMessage.includes('status is') ||
         errorMessage.includes('No buyer')
+      ) {
+        statusCode = 400;
+      }
+
+      res.status(statusCode).json({
+        success: false,
+        error: statusCode === 404 ? 'Not Found' : statusCode === 400 ? 'Bad Request' : 'Internal Server Error',
+        message: errorMessage,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * POST /v1/agreements/:agreementId/deposit-sol/prepare
+ * PRODUCTION ENDPOINT: Returns unsigned transaction for client-side signing
+ * Client must sign with buyer's wallet and submit to network
+ * For NFT_FOR_SOL and NFT_FOR_NFT_PLUS_SOL swap types
+ */
+router.post(
+  '/v1/agreements/:agreementId/deposit-sol/prepare',
+  standardRateLimiter,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { agreementId } = req.params;
+
+      console.log('[AgreementRoutes] POST /deposit-sol/prepare for:', agreementId);
+
+      const result = await prepareDepositSolTransaction(agreementId);
+
+      res.status(200).json({
+        success: true,
+        data: result,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('[AgreementRoutes] Error preparing SOL deposit transaction:', error);
+
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+      // Determine status code based on error message
+      let statusCode = 500;
+      if (
+        errorMessage.includes('not found') || 
+        errorMessage.includes('does not exist')
+      ) {
+        statusCode = 404;
+      } else if (
+        errorMessage.includes('Cannot deposit') ||
+        errorMessage.includes('Invalid') ||
+        errorMessage.includes('No buyer') ||
+        errorMessage.includes('swap type')
+      ) {
+        statusCode = 400;
+      }
+
+      res.status(statusCode).json({
+        success: false,
+        error: statusCode === 404 ? 'Not Found' : statusCode === 400 ? 'Bad Request' : 'Internal Server Error',
+        message: errorMessage,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * POST /v1/agreements/:agreementId/deposit-sol
+ * @deprecated Use /deposit-sol/prepare for production (client-side signing)
+ * Deposit SOL into escrow by calling the on-chain deposit_sol instruction
+ * This properly sets the buyer_sol_deposited flag on-chain
+ */
+router.post(
+  '/v1/agreements/:agreementId/deposit-sol',
+  standardRateLimiter,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { agreementId } = req.params;
+
+      console.log('[AgreementRoutes] POST /deposit-sol for:', agreementId);
+
+      const result = await depositSolToEscrow(agreementId);
+
+      res.status(200).json({
+        success: true,
+        data: result,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('[AgreementRoutes] Error depositing SOL:', error);
+
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+      // Determine status code based on error message
+      let statusCode = 500;
+      if (
+        errorMessage.includes('not found') || 
+        errorMessage.includes('does not exist')
+      ) {
+        statusCode = 404;
+      } else if (
+        errorMessage.includes('Cannot deposit') ||
+        errorMessage.includes('Invalid') ||
+        errorMessage.includes('No buyer') ||
+        errorMessage.includes('swap type')
       ) {
         statusCode = 400;
       }

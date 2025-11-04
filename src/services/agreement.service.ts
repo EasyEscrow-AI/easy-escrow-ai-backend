@@ -875,6 +875,170 @@ export const depositUsdcToEscrow = async (
 };
 
 /**
+ * Build unsigned deposit SOL transaction (PRODUCTION)
+ * Client signs and submits this transaction with their wallet
+ */
+export const prepareDepositSolTransaction = async (
+  agreementId: string
+): Promise<{ transaction: string; message: string }> => {
+  try {
+    console.log('[AgreementService] prepareDepositSolTransaction called for:', agreementId);
+
+    // 1. Get agreement from database
+    const agreement = await prisma.agreement.findUnique({
+      where: { agreementId },
+    });
+
+    if (!agreement) {
+      throw new Error(`Agreement not found: ${agreementId}`);
+    }
+
+    // 2. Validate agreement has buyer
+    if (!agreement.buyer) {
+      throw new Error('Cannot deposit SOL: No buyer assigned to agreement');
+    }
+
+    // 3. Validate swap type supports SOL
+    if (
+      agreement.swapType !== 'NFT_FOR_SOL' &&
+      agreement.swapType !== 'NFT_FOR_NFT_PLUS_SOL'
+    ) {
+      throw new Error(
+        `Cannot deposit SOL: Agreement swap type is ${agreement.swapType}. ` +
+          `SOL deposits only allowed for NFT_FOR_SOL and NFT_FOR_NFT_PLUS_SOL swaps.`
+      );
+    }
+
+    // 4. Validate status - allow SOL deposit when PENDING or NFT_LOCKED (seller deposited)
+    const allowedStatuses: AgreementStatus[] = [
+      AgreementStatus.PENDING,
+      AgreementStatus.NFT_LOCKED,
+    ];
+    if (!allowedStatuses.includes(agreement.status)) {
+      throw new Error(
+        `Cannot deposit SOL: Agreement status is ${agreement.status}. Must be PENDING or NFT_LOCKED.`
+      );
+    }
+
+    // 5. Validate solAmount exists
+    if (!agreement.solAmount) {
+      throw new Error('Cannot deposit SOL: Agreement has no solAmount specified');
+    }
+
+    // 6. Build unsigned transaction
+    const escrowService = new EscrowProgramService();
+    const escrowPda = new PublicKey(agreement.escrowPda);
+    const buyer = new PublicKey(agreement.buyer);
+    const solAmount = new BN(agreement.solAmount);
+
+    const result = await escrowService.buildDepositSolTransaction(escrowPda, buyer, solAmount);
+
+    console.log('[AgreementService] Unsigned SOL deposit transaction prepared');
+
+    return result;
+  } catch (error) {
+    console.error('[AgreementService] prepareDepositSolTransaction error:', error);
+    throw error;
+  }
+};
+
+/**
+ * Deposit SOL to escrow (server-side signing)
+ * @deprecated Use prepareDepositSolTransaction for production (client-side signing)
+ */
+export const depositSolToEscrow = async (
+  agreementId: string
+): Promise<{ transactionId: string }> => {
+  try {
+    console.log('[AgreementService] depositSolToEscrow called for:', agreementId);
+
+    // 1. Get agreement from database
+    const agreement = await prisma.agreement.findUnique({
+      where: { agreementId },
+      include: { deposits: true },
+    });
+
+    if (!agreement) {
+      throw new Error(`Agreement not found: ${agreementId}`);
+    }
+
+    // 2. Validate buyer exists
+    if (!agreement.buyer) {
+      throw new Error('Cannot deposit SOL: No buyer assigned');
+    }
+
+    // 3. Validate swap type
+    if (
+      agreement.swapType !== 'NFT_FOR_SOL' &&
+      agreement.swapType !== 'NFT_FOR_NFT_PLUS_SOL'
+    ) {
+      throw new Error(
+        `Cannot deposit SOL: Agreement swap type is ${agreement.swapType}`
+      );
+    }
+
+    // 4. Validate status
+    const allowedStatuses: AgreementStatus[] = [
+      AgreementStatus.PENDING,
+      AgreementStatus.NFT_LOCKED,
+    ];
+    if (!allowedStatuses.includes(agreement.status)) {
+      throw new Error(
+        `Cannot deposit SOL: Agreement status is ${agreement.status}. Must be PENDING or NFT_LOCKED.`
+      );
+    }
+
+    // 5. Validate solAmount exists
+    if (!agreement.solAmount) {
+      throw new Error('Cannot deposit SOL: Agreement has no solAmount specified');
+    }
+
+    // 6. Call on-chain deposit_sol instruction
+    const escrowService = new EscrowProgramService();
+    const escrowPda = new PublicKey(agreement.escrowPda);
+    const buyer = new PublicKey(agreement.buyer);
+    const solAmount = new BN(agreement.solAmount);
+
+    const txId = await escrowService.depositSol(escrowPda, buyer, solAmount);
+
+    console.log('[AgreementService] SOL deposit transaction:', txId);
+
+    // 6. Log transaction
+    const txLogService = getTransactionLogService();
+    await txLogService.captureTransaction({
+      txId,
+      agreementId,
+      operationType: 'DEPOSIT_SOL' as any, // Add to TransactionOperationType enum
+      status: TransactionStatusType.CONFIRMED,
+      amount: agreement.solAmount?.toString() || '0',
+    });
+
+    return { transactionId: txId };
+  } catch (error: any) {
+    console.error('[AgreementService] depositSolToEscrow error:', error);
+
+    // Log failure (optional)
+    if (error instanceof Error && error.message) {
+      const txLogService = getTransactionLogService();
+      try {
+        await txLogService.captureTransaction({
+          txId: `failed-sol-${Date.now()}`,
+          agreementId,
+          operationType: 'DEPOSIT_SOL' as any,
+          status: TransactionStatusType.FAILED,
+          errorMessage: error.message,
+        });
+      } catch (logError) {
+        // Ignore logging errors
+        console.error('[AgreementService] Failed to log SOL deposit error:', logError);
+      }
+    }
+
+    throw error;
+  }
+};
+
+/**
  * Archive agreements (admin-only, for test cleanup)
  * @param agreementIds - Array of agreement IDs to archive
  * @param reason - Reason for archiving (e.g., "E2E test cleanup")
