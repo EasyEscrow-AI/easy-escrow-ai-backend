@@ -836,6 +836,162 @@ export class SettlementService {
       platformFeeCollector: this.config.platformFeeCollectorAddress,
     };
   }
+
+  /**
+   * =================================
+   * V2 METHODS - SOL-BASED SETTLEMENTS
+   * =================================
+   */
+
+  /**
+   * Calculate fees for SOL-based settlements
+   * Similar to calculateFees but works with SOL amounts in lamports
+   */
+  async calculateFeesV2(agreement: any): Promise<{
+    platformFee: Decimal;
+    creatorRoyalty: Decimal;
+    sellerReceived: Decimal;
+    totalDeductions: Decimal;
+    solAmount: Decimal;
+  }> {
+    // For V2, use solAmount instead of price
+    const solAmount = new Decimal(agreement.solAmount?.toString() || '0');
+    const feeBps = agreement.feeBps ?? 0;
+    const honorRoyalties = agreement.honorRoyalties;
+
+    console.log('[SettlementService] V2 Fee calculation:', {
+      solAmount: solAmount.toString(),
+      feeBps,
+      swapType: agreement.swapType,
+      honorRoyalties,
+    });
+
+    // Calculate platform fee (in basis points)
+    const platformFee = solAmount.mul(feeBps).div(10000);
+
+    let creatorRoyalty = new Decimal(0);
+
+    // Calculate creator royalty if enabled
+    if (honorRoyalties) {
+      try {
+        const nftMetadata = await this.fetchNftMetadata(agreement.nftMint);
+        if (nftMetadata && nftMetadata.sellerFeeBasisPoints) {
+          creatorRoyalty = solAmount.mul(nftMetadata.sellerFeeBasisPoints).div(10000);
+        }
+      } catch (error) {
+        console.error('[SettlementService] V2 Error fetching NFT metadata:', error);
+        // Continue without royalties if metadata fetch fails
+      }
+    }
+
+    // Calculate amount seller receives
+    const totalDeductions = platformFee.add(creatorRoyalty);
+    const sellerReceived = solAmount.sub(totalDeductions);
+
+    // Ensure seller receives at least 0
+    if (sellerReceived.lt(0)) {
+      throw new Error('V2: Fees exceed SOL amount, settlement cannot proceed');
+    }
+
+    return {
+      platformFee,
+      creatorRoyalty,
+      sellerReceived,
+      totalDeductions,
+      solAmount,
+    };
+  }
+
+  /**
+   * Execute on-chain settlement for V2 (SOL-based) escrow
+   * Supports NFT<>SOL, NFT<>NFT with SOL fee, and NFT<>NFT+SOL swap types
+   */
+  async executeOnChainSettlementV2(
+    agreement: any,
+    feeCalculation: Awaited<ReturnType<typeof this.calculateFeesV2>>
+  ): Promise<string> {
+    console.log('[SettlementService] Executing V2 (SOL-based) on-chain settlement...');
+
+    try {
+      const escrowProgramService = getEscrowProgramService();
+
+      // Parse public keys
+      const escrowPda = new PublicKey(agreement.escrowPda);
+      const seller = new PublicKey(agreement.seller);
+      const buyer = new PublicKey(agreement.buyer!);
+      const nftMint = new PublicKey(agreement.nftMint);
+      const feeCollector = new PublicKey(this.config.platformFeeCollectorAddress);
+
+      // Parse NFT B mint if present (for NFT<>NFT swaps)
+      const nftBMint = agreement.nftBMint ? new PublicKey(agreement.nftBMint) : undefined;
+
+      console.log('[SettlementService] V2 Settlement parties:', {
+        escrowPda: escrowPda.toString(),
+        seller: seller.toString(),
+        buyer: buyer.toString(),
+        nftMint: nftMint.toString(),
+        nftBMint: nftBMint?.toString() || 'N/A',
+        feeCollector: feeCollector.toString(),
+        swapType: agreement.swapType,
+        platformFee: feeCalculation.platformFee.toString(),
+        sellerReceived: feeCalculation.sellerReceived.toString(),
+      });
+
+      // Call v2 settlement instruction
+      const txId = await escrowProgramService.settleV2({
+        escrowPda,
+        buyer,
+        seller,
+        nftMint,
+        platformFeeCollector: feeCollector,
+        swapType: agreement.swapType as 'NFT_FOR_SOL' | 'NFT_FOR_NFT_WITH_FEE' | 'NFT_FOR_NFT_PLUS_SOL',
+        nftBMint,
+      });
+
+      console.log('[SettlementService] V2 Settlement transaction confirmed:', txId);
+      return txId;
+    } catch (error) {
+      console.error('[SettlementService] V2 On-chain settlement failed:', error);
+      throw new Error(
+        `Failed to execute V2 on-chain settlement: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`
+      );
+    }
+  }
+
+  /**
+   * Record settlement in database for V2 (SOL-based) escrows
+   */
+  async recordSettlementV2(
+    agreement: any,
+    feeCalculation: Awaited<ReturnType<typeof this.calculateFeesV2>>,
+    txId: string
+  ): Promise<void> {
+    try {
+      await prisma.settlement.create({
+        data: {
+          agreementId: agreement.agreementId,
+          nftMint: agreement.nftMint,
+          price: feeCalculation.solAmount, // Store SOL amount as price
+          platformFee: feeCalculation.platformFee,
+          creatorRoyalty: feeCalculation.creatorRoyalty,
+          sellerReceived: feeCalculation.sellerReceived,
+          settleTxId: txId,
+          blockHeight: BigInt(0), // Will be updated by transaction monitoring
+          buyer: agreement.buyer!,
+          seller: agreement.seller,
+          feeCollector: this.config.platformFeeCollectorAddress,
+          settledAt: new Date(),
+        },
+      });
+
+      console.log('[SettlementService] V2 Settlement recorded in database');
+    } catch (error) {
+      console.error('[SettlementService] Failed to record V2 settlement:', error);
+      throw error;
+    }
+  }
 }
 
 // Singleton instance

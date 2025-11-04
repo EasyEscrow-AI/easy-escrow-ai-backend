@@ -1,0 +1,349 @@
+# Task ID: 1
+# Title: Replace USDC with SOL in Solana Escrow Program and Implement SOL-Based Swap Types
+# Status: pending
+# Dependencies: None
+# Priority: high
+# Description: Refactor the Solana escrow smart contract and all related integrations to remove USDC and support SOL-based swaps for NFT<>SOL, NFT<>NFT (with SOL fee), and NFT<>NFT+SOL (fee from SOL). This is the foundational task that enables SOL-based escrow functionality across the platform.
+# Details:
+1. **Smart Contract Refactor:** Remove all USDC token references and SPL token handling related to USDC. Implement native SOL handling for escrow swaps using Solana's system program for SOL transfers. 
+
+2. **Swap Types Implementation:**
+  - NFT <> SOL: Enable direct escrow swaps where NFTs are exchanged for SOL.
+  - NFT <> NFT with SOL fee: Support NFT-for-NFT swaps where the buyer pays a commission fee in SOL.
+  - NFT <> NFT+SOL: Support swaps where the buyer pays an additional SOL fee deducted from the SOL amount.
+
+3. **Backend Integration:** Update backend logic to interact with the modified escrow program, handling SOL transfers and NFT escrow states accordingly.
+
+4. **API Endpoints:** Modify API endpoints to reflect the new swap types and fee structures, ensuring clear parameters for SOL amounts and fee payer defaults.
+
+5. **Frontend Integration:** Update UI components to support SOL-based swaps, display fees in SOL, and handle user wallet interactions for SOL payments.
+
+6. **Documentation:** Revise all technical and user documentation to remove USDC references and explain the new SOL-based swap mechanisms and fee policies.
+
+7. **Phased Deployment:** Implement the changes in development, then staging, and finally production environments, ensuring stability and correctness at each phase.
+
+8. **Best Practices:** Use Anchor framework for smart contract development to leverage security and testing features. Follow Solana's native SOL transfer patterns and ensure proper handling of lamports. Implement comprehensive error handling and state validation.
+
+# Test Strategy:
+- Develop comprehensive end-to-end tests covering all three swap types under happy path scenarios:
+  * NFT <> SOL swap: Verify escrow creation, SOL transfer, NFT transfer, and escrow closure.
+  * NFT <> NFT swap with SOL fee: Verify NFT exchanges and SOL fee payment by buyer.
+  * NFT <> NFT+SOL swap: Verify combined NFT and SOL transfer with fee deduction.
+- Test default commission payer behavior (buyer pays commission).
+- Perform integration tests for backend and API endpoints to validate correct data flow and SOL handling.
+- Conduct frontend UI tests to ensure correct user interactions and SOL fee displays.
+- Execute phased deployment testing: full test suite run and pass in development, then staging, before production rollout.
+- Include negative and edge case tests to ensure robustness against invalid inputs or failed transfers.
+
+# Subtasks:
+## 1. Audit Current USDC Implementation in Solana Escrow Program [done]
+### Dependencies: None
+### Description: Perform a comprehensive audit of the existing Solana escrow smart contract and related integrations to identify all references and handling of USDC tokens, including SPL token logic and fee mechanisms.
+### Details:
+Review smart contract code, backend logic, API endpoints, and frontend components to locate USDC-specific code paths and data structures. Document all points where USDC is used for escrow swaps and fees.
+<info added on 2025-11-04T00:50:15.332Z>
+AUDIT COMPLETE - USDC Implementation Findings
+
+**Solana Program Analysis (programs/escrow/src/lib.rs):**
+
+**USDC References Found:**
+
+1. **Constants (Lines 92-94):**
+   - MIN_USDC_AMOUNT: u64 = 1_000_000 (minimum $1.00)
+   - MAX_USDC_AMOUNT: u64 = 3_000_000_000 (maximum $3,000.00)
+   - Comments reference USDC decimals
+
+2. **Instructions (Public API):**
+   - `init_agreement()` - Takes `usdc_amount: u64` parameter (Line 106)
+   - `deposit_usdc()` - Entire function for USDC deposits (Lines 148-171)
+   - `settle()` - USDC transfers and fee distribution (Lines 205-289)
+   - `cancel_if_expired()` - Returns USDC to buyer (Lines 292-347)
+   - `admin_cancel()` - Returns USDC to buyer (Lines 350-405)
+
+3. **Account Structures (Public Interface):**
+   - `DepositUsdc` struct (Lines 438-468) - Has USDC-specific accounts
+   - `Settle` struct - Has `escrow_usdc_account`, `seller_usdc_account`, `fee_collector_usdc_account` (Lines 503-535)
+   - `CancelIfExpired` struct - Has USDC accounts (Lines 538-565)
+   - `AdminCancel` struct - Has USDC accounts (Lines 568-597)
+
+4. **State Account:**
+   - `EscrowState.usdc_amount: u64` field (Line 608)
+   - `buyer_usdc_deposited: bool` flag (Line 624)
+
+5. **Error Messages:**
+   - AmountTooLow - "$1.00 (BETA limit)" message (Line 647)
+   - AmountTooHigh - "$3,000.00 (BETA limit)" message (Line 650)
+
+6. **ATA/Token Utilities (KEEP THESE):**
+   - Uses `anchor_spl::token` (Line 2)
+   - Uses `anchor_spl::associated_token::AssociatedToken` (Line 3)
+   - Token transfer logic using CPI (multiple locations)
+   - Associated token account creation with `init_if_needed` (Lines 456-460, 489-493)
+
+**Current Architecture:**
+- Single swap type: NFT <> USDC only
+- Buyer deposits USDC
+- Seller deposits NFT
+- Settlement transfers USDC to seller (minus platform fee) and NFT to buyer
+- Platform fee is paid in USDC
+- Uses SPL Token program for USDC handling
+
+**Next Steps:**
+Need to design SOL-based architecture supporting three swap types:
+1. NFT <> SOL
+2. NFT <> NFT (fee in SOL)
+3. NFT <> NFT+SOL (fee from SOL amount)
+</info added on 2025-11-04T00:50:15.332Z>
+<info added on 2025-11-04T00:50:42.243Z>
+**BACKEND SERVICES AUDIT COMPLETED:**
+
+Found 19 backend service files with USDC references:
+
+**Key Backend Services:**
+1. **usdc-account.service.ts** - ATA account creation and management (KEEP utility functions)
+2. **usdc-deposit.service.ts** - USDC deposit monitoring and validation
+3. **escrow-program.service.ts** - Escrow program interactions
+4. **agreement.service.ts** - Agreement creation with USDC
+5. **settlement.service.ts** - Settlement with USDC transfers
+6. **cancellation.service.ts** - Refunding USDC
+7. **refund.service.ts** - USDC refund logic
+
+**Database Schema** (needs review):
+- Agreement table likely has USDC-specific fields
+- Deposit table has USDC deposit records
+- Price fields stored as decimals
+
+**API Endpoints** (need to check):
+- Agreement creation endpoints
+- Deposit endpoints  
+- Settlement endpoints
+
+**Configuration:**
+- config.usdc.mintAddress
+- Environment variables for USDC mint addresses per network
+
+**Complete Audit Summary:**
+- Solana Program: 5 instructions, 4 account structs, 2 state fields need modification
+- Backend: 19 service files, multiple database tables
+- ATA utilities: MUST be preserved for future use
+- Public interfaces: MUST remove USDC from IDL/instructions
+</info added on 2025-11-04T00:50:42.243Z>
+
+## 2. Design SOL-Based Architecture for All Swap Types [done]
+### Dependencies: 1.1
+### Description: Design the architecture and data flow for supporting native SOL in escrow swaps, covering NFT<>SOL, NFT<>NFT with SOL fee, and NFT<>NFT+SOL swap types.
+### Details:
+Define how SOL transfers will be handled using Solana's system program, how fees will be calculated and deducted, and how escrow states will be managed for each swap type. Plan account structures and program instructions accordingly.
+<info added on 2025-11-04T00:52:26.938Z>
+SOL-based architecture design completed with comprehensive documentation in `docs/architecture/SOL_MIGRATION_ARCHITECTURE.md`. The architecture supports three distinct swap types: NftForSol (direct NFT-SOL exchange), NftForNftWithFee (NFT-NFT with separate SOL fee), and NftForNftPlusSol (NFT-NFT+SOL with fee extracted from SOL amount). 
+
+New state structure includes SwapType enum, sol_amount field replacing usdc_amount, optional nft_b_mint for buyer's NFT, deposit tracking flags, and FeePayer enum. Seven new instructions designed: init_agreement_v2, deposit_sol, deposit_buyer_nft, deposit_seller_nft, settle_v2, cancel_if_expired_v2, and admin_cancel_v2.
+
+SOL transfers utilize Solana's system program for direct lamports transfers to/from PDA, providing ~49,000 compute units savings versus USDC. Beta limits set at 0.01-15 SOL range. Feature flag strategy implemented with USDC code behind conditional compilation, ensuring clean separation for legal compliance while maintaining internal ATA utilities.
+
+Security features include locked fee BPS at initialization, admin-only escrow creation, atomic settlement, proper PDA signer seeds, and rent-exempt checks. Architecture is complete and implementation-ready.
+</info added on 2025-11-04T00:52:26.938Z>
+
+## 3. Plan Migration Strategy and Backwards Compatibility [done]
+### Dependencies: 1.2
+### Description: Develop a migration and deployment plan to transition from USDC-based escrow to SOL-based escrow, ensuring minimal disruption and considering backwards compatibility if needed.
+### Details:
+Outline phased deployment steps for development, staging, and production environments. Define fallback or compatibility mechanisms if legacy USDC swaps must coexist temporarily.
+<info added on 2025-11-04T02:49:28.331Z>
+Migration strategy completed with comprehensive deployment documentation created at `docs/deployment/SOL_MIGRATION_DEPLOYMENT_STRATEGY.md`. The strategy implements a hard cutover approach with feature-flagged USDC handling and follows a structured 4-week timeline across three deployment phases.
+
+**Deployment Timeline:**
+- Week 1 (Development): Code implementation and testing with gate requirement of all tests passing
+- Week 2 (Staging): Full deployment and comprehensive testing with 48-hour stability gate
+- Week 3 (Production): Live deployment with close monitoring and smoke test gate requirements
+- Week 4 (Stabilization): Performance monitoring and optimization with success metrics validation
+
+**Key Migration Requirements:**
+- All existing USDC escrow agreements must be settled or cancelled prior to migration initiation
+- Complete system backups required at each deployment phase
+- Gradual rollout implementation with continuous monitoring
+- 24-48 hour observation periods between phases
+
+**Risk Mitigation Strategy:**
+Six major deployment risks identified with corresponding mitigation plans. Rollback procedures established for backend systems, though Solana program requires hotfix deployment as on-chain rollback is not supported.
+
+**Success Metrics Defined:**
+- Transaction success rate exceeding 99%
+- Zero user fund loss tolerance
+- Full functionality verification for all three swap types (NFT<>SOL, NFT<>NFT with SOL fee, NFT<>NFT+SOL)
+- Performance benchmark compliance
+
+The deployment strategy includes production-ready implementation commands, stakeholder communication templates, and comprehensive reference documentation for execution teams.
+</info added on 2025-11-04T02:49:28.331Z>
+
+## 4. Remove USDC Token Handling Code from Solana Program [pending]
+### Dependencies: 1.1, 1.2
+### Description: Refactor the Solana escrow smart contract to remove all USDC token references and SPL token handling related to USDC.
+### Details:
+Delete or disable code managing USDC token accounts, vaults, and transfers. Remove USDC-specific fee logic and update program instructions to exclude USDC parameters.
+<info added on 2025-11-04T00:46:43.122Z>
+CRITICAL REQUIREMENT UPDATE: Preserve ATA utility functions and SPL Token integration code for future USDC reintegration. Remove USDC only from public interfaces due to legal audit requirements.
+
+**Preservation Strategy:**
+- Keep all internal ATA utility functions (get_associated_token_address, create_ata, etc.) intact
+- Maintain generic SPL Token program integration code for future token support
+- Preserve token account handling logic that can be reused
+
+**Public Interface Removal:**
+- Comment out or use feature flags for USDC instruction handlers (do not delete)
+- Remove USDC-specific instruction variants from IDL definitions
+- Eliminate USDC mint address constants from public structs
+- Remove USDC references from account validation logic
+- Hide USDC-specific error codes from public interface
+
+**Implementation Approach:**
+- Use conditional compilation or feature flags to disable USDC public endpoints
+- Ensure IDL generation excludes all USDC references
+- Mark USDC-related public instructions as conditionally compiled
+- Maintain clean separation between internal utilities and public API
+</info added on 2025-11-04T00:46:43.122Z>
+
+## 5. Implement NFT <> SOL Swap Logic in Smart Contract [pending]
+### Dependencies: 1.4
+### Description: Develop smart contract logic to enable direct escrow swaps where NFTs are exchanged for native SOL using Solana's system program.
+### Details:
+Implement escrow initialization, SOL deposit and withdrawal handling, NFT transfer, and escrow closure for NFT<>SOL swaps. Ensure proper lamport handling and security checks.
+
+## 6. Implement NFT <> NFT Swap with SOL Fee Logic [pending]
+### Dependencies: 1.5
+### Description: Add smart contract support for NFT-for-NFT swaps where the buyer pays a commission fee in SOL.
+### Details:
+Implement logic to escrow two NFTs and collect SOL fee from the buyer. Ensure fee calculation, fee transfer, and NFT exchanges occur atomically and securely.
+
+## 7. Implement NFT <> NFT+SOL Swap with Fee Extraction Logic [pending]
+### Dependencies: 1.6
+### Description: Develop smart contract functionality for swaps where the buyer pays an additional SOL fee deducted from the SOL amount in the swap.
+### Details:
+Handle escrow of NFTs plus SOL amount, deduct fee from SOL, transfer NFTs and net SOL accordingly, and close escrow state properly.
+
+## 8. Update Backend to Handle SOL Transfers and Escrow States [pending]
+### Dependencies: 1.4, 1.5, 1.6, 1.7
+### Description: Modify backend services to interact with the updated escrow program, managing SOL transfers and NFT escrow states according to new swap types.
+### Details:
+Refactor backend logic for transaction building, SOL payment processing, escrow state tracking, and error handling aligned with smart contract changes.
+
+## 9. Modify API Endpoints for New Swap Types and Fee Structures [pending]
+### Dependencies: 1.8
+### Description: Update API endpoints to support SOL-based swap types, including parameters for SOL amounts, fee payer defaults, and swap configurations.
+### Details:
+Redesign API request and response schemas to reflect SOL usage, fee calculations, and swap options. Ensure backward compatibility or deprecation notices as needed.
+
+## 10. Update Frontend UI Components for SOL-Based Swaps [pending]
+### Dependencies: 1.9
+### Description: Revise frontend components to support SOL-based escrow swaps, display fees in SOL, and handle user wallet interactions for SOL payments.
+### Details:
+Implement UI changes for selecting swap types, inputting SOL amounts, showing fee details, and integrating with Solana wallets for SOL transactions.
+
+## 11. Revise Documentation to Reflect SOL-Based Swap Mechanisms [pending]
+### Dependencies: 1.10
+### Description: Update all technical and user documentation to remove USDC references and explain the new SOL-based swap types, fee policies, and usage instructions.
+### Details:
+Rewrite smart contract docs, API specs, backend guides, and user manuals to describe SOL escrow functionality and fee structures clearly.
+
+## 12. Phased Deployment and Monitoring of SOL-Based Escrow Program [pending]
+### Dependencies: 1.11
+### Description: Deploy the updated escrow program and integrations through development, staging, and production environments, ensuring stability and correctness at each phase.
+### Details:
+Perform deployments incrementally, run full test suites, monitor for errors or regressions, and fix issues before progressing to next environment.
+
+## 13. Create E2E Test for NFT <> SOL Swap (Buyer Pays Fee) [pending]
+### Dependencies: 1.7, 1.8
+### Description: Develop comprehensive end-to-end test covering the happy path for NFT <> SOL escrow swap where the buyer pays the commission fee in SOL.
+### Details:
+Test scenario: 
+1. Seller lists NFT for X SOL
+2. Buyer accepts and pays X SOL + platform fee
+3. Platform fee is deducted and sent to fee collector
+4. NFT is transferred to buyer
+5. Net SOL amount is transferred to seller
+6. Escrow account is closed
+
+Verify: Transaction success, correct fee calculation, proper asset transfers, escrow state cleanup.
+
+## 14. Create E2E Test for NFT <> NFT Swap with SOL Fee (Buyer Pays) [pending]
+### Dependencies: 1.7, 1.8
+### Description: Develop comprehensive end-to-end test covering the happy path for NFT <> NFT escrow swap where the buyer pays the commission fee in SOL.
+### Details:
+Test scenario:
+1. Seller lists NFT A for NFT B
+2. Buyer accepts with NFT B + platform fee in SOL
+3. Platform fee is deducted from buyer's SOL and sent to fee collector
+4. NFT A is transferred to buyer
+5. NFT B is transferred to seller
+6. Escrow account is closed
+
+Verify: Transaction success, correct fee calculation in SOL, proper NFT exchanges, escrow state cleanup.
+
+## 15. Create E2E Test for NFT <> NFT+SOL Swap (Fee from SOL) [pending]
+### Dependencies: 1.7, 1.8
+### Description: Develop comprehensive end-to-end test covering the happy path for NFT <> NFT+SOL escrow swap where the commission fee is deducted from the SOL amount in the swap.
+### Details:
+Test scenario:
+1. Seller lists NFT A for NFT B + Y SOL
+2. Buyer accepts with NFT B + Y SOL
+3. Platform fee is deducted from the Y SOL amount
+4. NFT A is transferred to buyer
+5. NFT B is transferred to seller
+6. Net SOL amount (Y - fee) is transferred to seller
+7. Fee is sent to platform fee collector
+8. Escrow account is closed
+
+Verify: Transaction success, fee correctly extracted from SOL amount, proper asset transfers, escrow state cleanup.
+
+## 16. Prepare Database Reset for SOL Migration [pending]
+### Dependencies: 1.3
+### Description: Truncate and reset all databases (development, staging, production) to start fresh with SOL-based schema. No user impact as platform has no active users.
+### Details:
+**Rationale:** With no active users, complete database reset is the cleanest migration path.
+
+**Databases to Reset:**
+- Development database (local/devnet)
+- Staging database (devnet)
+- Production database (mainnet)
+
+**Actions Required:**
+1. **Backup existing data** (for reference/rollback safety)
+   - Run full pg_dump for each environment
+   - Store backups in secure location
+   - Verify backup integrity
+
+2. **Drop and recreate tables** or **TRUNCATE all tables**
+   - Clear Agreement table
+   - Clear Deposit table
+   - Clear any related tables (webhooks, logs, etc.)
+   - Reset auto-increment sequences
+
+3. **Update Prisma schema if needed:**
+   - Add SOL-related fields if missing
+   - Update DepositType enum to include SOL, NFT_BUYER
+   - Remove USDC-specific constraints if any
+
+4. **Run fresh migrations:**
+   ```bash
+   npx prisma migrate reset --force
+   npx prisma migrate deploy
+   npx prisma generate
+   ```
+
+5. **Re-seed database with new test data:**
+   - Update seed scripts for SOL instead of USDC
+   - Generate test NFTs and SOL amounts
+   - Create sample escrow data if needed
+
+**Timing:**
+- Development: Immediately before Phase 2 implementation starts
+- Staging: Before deploying SOL program to staging
+- Production: During production deployment window (Week 3)
+
+**Verification:**
+- Confirm all tables are empty (except system tables)
+- Verify schema matches Prisma schema
+- Test fresh agreement creation with SOL
+
+**Benefit:** Clean slate eliminates any USDC-related data inconsistencies and ensures all agreements use new SOL schema from day 1.
+

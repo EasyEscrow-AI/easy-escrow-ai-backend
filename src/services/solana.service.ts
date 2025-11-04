@@ -937,3 +937,147 @@ export const validateSolanaAddress = (address: string): boolean => {
     return false;
   }
 };
+
+/**
+ * =================================
+ * SOL TRANSFER UTILITIES (V2)
+ * =================================
+ */
+
+/**
+ * Get SOL balance for an address
+ * @param address - Wallet address to check balance for
+ * @param connection - Optional Solana connection (uses default if not provided)
+ * @returns Balance in lamports
+ */
+export const getSolBalance = async (
+  address: string | PublicKey,
+  connection?: Connection
+): Promise<number> => {
+  try {
+    const conn = connection || getSolanaService().getConnection();
+    const pubkey = typeof address === 'string' ? new PublicKey(address) : address;
+    
+    const balance = await conn.getBalance(pubkey);
+    console.log(`[SolanaService] SOL balance for ${pubkey.toBase58()}: ${balance} lamports (${lamportsToSol(balance)} SOL)`);
+    
+    return balance;
+  } catch (error) {
+    console.error(`[SolanaService] Failed to get SOL balance:`, error);
+    throw new Error(`Failed to get SOL balance: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+};
+
+/**
+ * Convert lamports to SOL (with 9 decimal places)
+ * @param lamports - Amount in lamports
+ * @returns Amount in SOL
+ */
+export const lamportsToSol = (lamports: number | BN): number => {
+  const lamportsNum = typeof lamports === 'number' ? lamports : lamports.toNumber();
+  return lamportsNum / 1_000_000_000;
+};
+
+/**
+ * Convert SOL to lamports
+ * @param sol - Amount in SOL
+ * @returns Amount in lamports as BN
+ */
+export const solToLamports = (sol: number): BN => {
+  return new BN(Math.floor(sol * 1_000_000_000));
+};
+
+/**
+ * Validate SOL amount for escrow (beta limits: 0.01 - 15 SOL)
+ * @param lamports - Amount in lamports
+ * @returns Validation result with error message if invalid
+ */
+export const validateSolAmount = (
+  lamports: number | BN
+): { valid: boolean; error?: string } => {
+  const MIN_SOL = 0.01; // 10_000_000 lamports
+  const MAX_SOL = 15.0;   // 15_000_000_000 lamports
+  
+  const lamportsNum = typeof lamports === 'number' ? lamports : lamports.toNumber();
+  const solAmount = lamportsToSol(lamportsNum);
+  
+  if (lamportsNum < MIN_SOL * 1_000_000_000) {
+    return {
+      valid: false,
+      error: `SOL amount below minimum: ${MIN_SOL} SOL (BETA limit). Provided: ${solAmount} SOL`
+    };
+  }
+  
+  if (lamportsNum > MAX_SOL * 1_000_000_000) {
+    return {
+      valid: false,
+      error: `SOL amount exceeds maximum: ${MAX_SOL} SOL (BETA limit). Provided: ${solAmount} SOL`
+    };
+  }
+  
+  return { valid: true };
+};
+
+/**
+ * Check if an address has sufficient SOL balance
+ * @param address - Wallet address to check
+ * @param requiredLamports - Required amount in lamports
+ * @param connection - Optional Solana connection
+ * @returns True if balance is sufficient, false otherwise
+ */
+export const hasSufficientSolBalance = async (
+  address: string | PublicKey,
+  requiredLamports: number | BN,
+  connection?: Connection
+): Promise<boolean> => {
+  try {
+    const balance = await getSolBalance(address, connection);
+    const required = typeof requiredLamports === 'number' ? requiredLamports : requiredLamports.toNumber();
+    
+    const sufficient = balance >= required;
+    console.log(`[SolanaService] Balance check: ${balance} >= ${required}? ${sufficient}`);
+    
+    return sufficient;
+  } catch (error) {
+    console.error(`[SolanaService] Failed to check SOL balance:`, error);
+    return false;
+  }
+};
+
+/**
+ * Calculate platform fee from SOL amount
+ * @param solAmount - Total SOL amount in lamports
+ * @param feeBps - Fee in basis points (100 bps = 1%)
+ * @returns Fee amount in lamports
+ */
+export const calculateSolPlatformFee = (
+  solAmount: number | BN,
+  feeBps: number
+): BN => {
+  if (feeBps < 0 || feeBps > 10000) {
+    throw new Error(`Invalid fee basis points: ${feeBps}. Must be 0-10000`);
+  }
+  
+  const amount = typeof solAmount === 'number' ? new BN(solAmount) : solAmount;
+  
+  // fee = amount * feeBps / 10000
+  const fee = amount.mul(new BN(feeBps)).div(new BN(10000));
+  
+  return fee;
+};
+
+/**
+ * Calculate seller's net SOL amount after platform fee
+ * @param solAmount - Total SOL amount in lamports
+ * @param feeBps - Fee in basis points
+ * @returns Net amount seller receives in lamports
+ */
+export const calculateSellerNetSol = (
+  solAmount: number | BN,
+  feeBps: number
+): BN => {
+  const amount = typeof solAmount === 'number' ? new BN(solAmount) : solAmount;
+  const fee = calculateSolPlatformFee(amount, feeBps);
+  
+  return amount.sub(fee);
+};

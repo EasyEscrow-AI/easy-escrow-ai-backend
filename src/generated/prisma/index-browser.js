@@ -142,7 +142,11 @@ exports.Prisma.AgreementScalarFieldEnum = {
   settledAt: 'settledAt',
   cancelledAt: 'cancelledAt',
   archivedAt: 'archivedAt',
-  archiveReason: 'archiveReason'
+  archiveReason: 'archiveReason',
+  swapType: 'swapType',
+  solAmount: 'solAmount',
+  nftBMint: 'nftBMint',
+  feePayer: 'feePayer'
 };
 
 exports.Prisma.DepositScalarFieldEnum = {
@@ -280,9 +284,22 @@ exports.AgreementStatus = exports.$Enums.AgreementStatus = {
   ARCHIVED: 'ARCHIVED'
 };
 
+exports.SwapType = exports.$Enums.SwapType = {
+  NFT_FOR_SOL: 'NFT_FOR_SOL',
+  NFT_FOR_NFT_WITH_FEE: 'NFT_FOR_NFT_WITH_FEE',
+  NFT_FOR_NFT_PLUS_SOL: 'NFT_FOR_NFT_PLUS_SOL'
+};
+
+exports.FeePayer = exports.$Enums.FeePayer = {
+  BUYER: 'BUYER',
+  SELLER: 'SELLER'
+};
+
 exports.DepositType = exports.$Enums.DepositType = {
   USDC: 'USDC',
-  NFT: 'NFT'
+  NFT: 'NFT',
+  SOL: 'SOL',
+  NFT_BUYER: 'NFT_BUYER'
 };
 
 exports.DepositStatus = exports.$Enums.DepositStatus = {

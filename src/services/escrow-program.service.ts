@@ -731,7 +731,9 @@ export class EscrowProgramService {
   }
 
   /**
-   * Deposit USDC into escrow
+   * Deposit USDC into escrow (LEGACY - DEPRECATED)
+   * @deprecated This method uses USDC instructions that are feature-flagged out.
+   * Use depositSol() for SOL-based swaps instead.
    * Called by the buyer to deposit USDC into the escrow PDA
    */
   async depositUsdc(escrowPda: PublicKey, buyer: PublicKey, usdcMint: PublicKey): Promise<string> {
@@ -761,7 +763,8 @@ export class EscrowProgramService {
       });
 
       // Build deposit_usdc instruction
-      const instruction = await this.program.methods
+      // @ts-ignore - Legacy USDC method (feature-flagged out)
+      const instruction = await (this.program.methods as any)
         .depositUsdc()
         .accountsStrict({
           escrowState: escrowPda,
@@ -776,7 +779,7 @@ export class EscrowProgramService {
         .instruction();
 
       // FIX: Manually set buyer as NON-signer (same Anchor bug workaround)
-      instruction.keys.forEach((key) => {
+      instruction.keys.forEach((key: any) => {
         if (key.pubkey.equals(buyer)) {
           console.log(
             `[EscrowProgramService] Fixing: Setting ${key.pubkey.toString()} isSigner to false`
@@ -1038,7 +1041,8 @@ export class EscrowProgramService {
       });
 
       // Build deposit_usdc instruction
-      const instruction = await this.program.methods
+      // @ts-ignore - Legacy USDC method (feature-flagged out)
+      const instruction = await (this.program.methods as any)
         .depositUsdc()
         .accountsStrict({
           escrowState: escrowPda,
@@ -1053,7 +1057,7 @@ export class EscrowProgramService {
         .instruction();
 
       // FIX: Manually set buyer as NON-signer (Anchor SDK bug workaround)
-      instruction.keys.forEach((key) => {
+      instruction.keys.forEach((key: any) => {
         if (key.pubkey.equals(buyer)) {
           console.log(
             `[EscrowProgramService] Fixing: Setting ${key.pubkey.toString()} isSigner to false`
@@ -1326,7 +1330,8 @@ export class EscrowProgramService {
       const isMainnet = isMainnetNetwork(this.provider.connection);
 
       // Build transaction manually (instead of using .rpc())
-      const transaction = await this.program.methods
+      // @ts-ignore - Legacy USDC method (feature-flagged out)
+      const transaction = await (this.program.methods as any)
         .cancelIfExpired()
         .accountsPartial({
           escrowState: escrowPda,
@@ -1419,7 +1424,8 @@ export class EscrowProgramService {
       const isMainnet = isMainnetNetwork(this.provider.connection);
 
       // Build transaction manually (instead of using .rpc())
-      const transaction = await this.program.methods
+      // @ts-ignore - Legacy USDC method (feature-flagged out)
+      const transaction = await (this.program.methods as any)
         .adminCancel()
         .accountsPartial({
           escrowState: escrowPda,
@@ -1483,6 +1489,967 @@ export class EscrowProgramService {
       console.error('[EscrowProgramService] Admin cancellation failed:', error);
       throw new Error(
         `Failed to admin cancel escrow: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+  }
+
+  /**
+   * ========================================
+   * V2 METHODS - SOL-BASED ESCROW SWAPS
+   * ========================================
+   */
+
+  /**
+   * Initialize a new SOL-based escrow agreement (V2)
+   * Supports three swap types:
+   * - NFT_FOR_SOL: Direct NFT <> SOL exchange
+   * - NFT_FOR_NFT_WITH_FEE: NFT <> NFT with buyer paying separate SOL fee
+   * - NFT_FOR_NFT_PLUS_SOL: NFT <> NFT with buyer providing SOL (fee extracted from it)
+   */
+  async initAgreementV2(params: {
+    escrowId: BN;
+    buyer: PublicKey;
+    seller: PublicKey;
+    nftMint: PublicKey;
+    swapType: 'NFT_FOR_SOL' | 'NFT_FOR_NFT_WITH_FEE' | 'NFT_FOR_NFT_PLUS_SOL';
+    solAmount?: BN; // Required for NFT_FOR_SOL and NFT_FOR_NFT_PLUS_SOL
+    nftBMint?: PublicKey; // Required for NFT_FOR_NFT_WITH_FEE and NFT_FOR_NFT_PLUS_SOL
+    expiryTimestamp: BN;
+    platformFeeBps: number;
+    feePayer?: 'BUYER' | 'SELLER'; // Defaults to BUYER
+  }): Promise<{ pda: PublicKey; txId: string }> {
+    try {
+      const {
+        escrowId,
+        buyer,
+        seller,
+        nftMint,
+        swapType,
+        solAmount,
+        nftBMint,
+        expiryTimestamp,
+        platformFeeBps,
+        feePayer = 'BUYER',
+      } = params;
+
+      console.log('[EscrowProgramService] Initializing V2 escrow agreement:', {
+        escrowId: escrowId.toString(),
+        buyer: buyer.toString(),
+        seller: seller.toString(),
+        nftMint: nftMint.toString(),
+        swapType,
+        solAmount: solAmount?.toString() || 'N/A',
+        nftBMint: nftBMint?.toString() || 'N/A',
+        expiryTimestamp: expiryTimestamp.toString(),
+        platformFeeBps,
+        feePayer,
+      });
+
+      // Validate parameters based on swap type
+      if (
+        (swapType === 'NFT_FOR_SOL' || swapType === 'NFT_FOR_NFT_PLUS_SOL') &&
+        !solAmount
+      ) {
+        throw new Error(
+          `solAmount is required for swap type ${swapType}`
+        );
+      }
+
+      if (
+        (swapType === 'NFT_FOR_NFT_WITH_FEE' || swapType === 'NFT_FOR_NFT_PLUS_SOL') &&
+        !nftBMint
+      ) {
+        throw new Error(
+          `nftBMint is required for swap type ${swapType}`
+        );
+      }
+
+      // Derive escrow PDA
+      const [escrowPda] = this.deriveEscrowPDA(escrowId);
+      console.log('[EscrowProgramService] Escrow PDA:', escrowPda.toString());
+
+      // Map string swap type to enum
+      const swapTypeEnum = { [swapType.toLowerCase()]: {} };
+      const feePayerEnum = { [feePayer.toLowerCase()]: {} };
+
+      // Build instruction
+      const instruction = await (this.program.methods as any)
+        .initAgreementV2(
+          escrowId,
+          swapTypeEnum,
+          solAmount || null,
+          nftBMint || null,
+          expiryTimestamp,
+          platformFeeBps,
+          feePayerEnum
+        )
+        .accountsStrict({
+          escrowState: escrowPda,
+          buyer,
+          seller,
+          nftMint,
+          admin: this.adminKeypair.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .instruction();
+
+      console.log('[EscrowProgramService] V2 Instruction built');
+
+      // Fix: Set buyer and seller as NON-signers (Anchor bug workaround)
+      instruction.keys.forEach((key: any) => {
+        if (key.pubkey.equals(buyer) || key.pubkey.equals(seller)) {
+          key.isSigner = false;
+        }
+      });
+
+      // Create transaction with compute budget and instruction
+      const { Transaction, ComputeBudgetProgram } = await import('@solana/web3.js');
+      const transaction = new Transaction();
+
+      // Determine priority fee based on network
+      const isMainnet = isMainnetNetwork(this.provider.connection);
+
+      // Fetch dynamic priority fee
+      const priorityFee = await PriorityFeeService.getRecommendedPriorityFee(
+        this.provider.connection,
+        isMainnet
+      );
+
+      console.log(
+        `[EscrowProgramService] Using priority fee: ${priorityFee} microlamports per CU (${
+          isMainnet ? 'mainnet' : 'devnet'
+        })`
+      );
+
+      // Add compute budget instructions
+      transaction.add(
+        ComputeBudgetProgram.setComputeUnitLimit({ units: 300_000 }),
+        ComputeBudgetProgram.setComputeUnitPrice({ microLamports: priorityFee })
+      );
+
+      // Add the escrow initialization instruction
+      transaction.add(instruction);
+
+      // Add Jito tip for mainnet
+      if (isMainnet) {
+        const JITO_TIP_ACCOUNTS = [
+          '96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5',
+          'HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe',
+          'Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY',
+          'ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49',
+          'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
+          'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
+          'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
+          '3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT',
+        ];
+
+        const jitoTipAccount = new PublicKey(
+          JITO_TIP_ACCOUNTS[Math.floor(Math.random() * JITO_TIP_ACCOUNTS.length)]
+        );
+        const tipAmount = 1_000_000; // 0.001 SOL
+
+        console.log(
+          `[EscrowProgramService] Adding Jito tip: ${tipAmount} lamports to ${jitoTipAccount.toString()}`
+        );
+
+        transaction.add(
+          SystemProgram.transfer({
+            fromPubkey: this.adminKeypair.publicKey,
+            toPubkey: jitoTipAccount,
+            lamports: tipAmount,
+          })
+        );
+      }
+
+      // Sign with admin only
+      transaction.feePayer = this.adminKeypair.publicKey;
+      transaction.recentBlockhash = (
+        await this.provider.connection.getLatestBlockhash()
+      ).blockhash;
+      transaction.sign(this.adminKeypair);
+
+      console.log(
+        '[EscrowProgramService] V2 Transaction signed by admin, sending to network...'
+      );
+
+      // Send transaction via Jito Block Engine
+      const txId = await this.sendTransactionViaJito(transaction, isMainnet);
+
+      console.log('[EscrowProgramService] V2 Escrow initialized:', {
+        pda: escrowPda.toString(),
+        txId: txId,
+        swapType,
+      });
+
+      return { pda: escrowPda, txId: txId };
+    } catch (error) {
+      console.error('[EscrowProgramService] Failed to initialize V2 agreement:', error);
+      throw new Error(
+        `Failed to initialize V2 escrow agreement: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`
+      );
+    }
+  }
+
+  /**
+   * Deposit SOL into escrow (V2)
+   * Used for NFT_FOR_SOL and NFT_FOR_NFT_PLUS_SOL swap types
+   * Buyer deposits SOL which is held in the escrow PDA
+   */
+  async depositSol(
+    escrowPda: PublicKey,
+    buyer: PublicKey,
+    solAmount: BN
+  ): Promise<string> {
+    try {
+      console.log('[EscrowProgramService] Depositing SOL:', {
+        escrowPda: escrowPda.toString(),
+        buyer: buyer.toString(),
+        solAmount: solAmount.toString(),
+      });
+
+      // Build instruction
+      const instruction = await (this.program.methods as any)
+        .depositSol(solAmount)
+        .accountsStrict({
+          escrowState: escrowPda,
+          buyer,
+          systemProgram: SystemProgram.programId,
+        })
+        .instruction();
+
+      // Create transaction
+      const { Transaction, ComputeBudgetProgram } = await import('@solana/web3.js');
+      const transaction = new Transaction();
+
+      const isMainnet = isMainnetNetwork(this.provider.connection);
+      const priorityFee = await PriorityFeeService.getRecommendedPriorityFee(
+        this.provider.connection,
+        isMainnet
+      );
+
+      transaction.add(
+        ComputeBudgetProgram.setComputeUnitLimit({ units: 200_000 }),
+        ComputeBudgetProgram.setComputeUnitPrice({ microLamports: priorityFee })
+      );
+
+      transaction.add(instruction);
+
+      if (isMainnet) {
+        const JITO_TIP_ACCOUNTS = [
+          '96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5',
+          'HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe',
+          'Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY',
+          'ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49',
+          'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
+          'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
+          'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
+          '3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT',
+        ];
+
+        const jitoTipAccount = new PublicKey(
+          JITO_TIP_ACCOUNTS[Math.floor(Math.random() * JITO_TIP_ACCOUNTS.length)]
+        );
+        transaction.add(
+          SystemProgram.transfer({
+            fromPubkey: this.adminKeypair.publicKey,
+            toPubkey: jitoTipAccount,
+            lamports: 1_000_000,
+          })
+        );
+      }
+
+      transaction.feePayer = this.adminKeypair.publicKey;
+      transaction.recentBlockhash = (
+        await this.provider.connection.getLatestBlockhash()
+      ).blockhash;
+      transaction.sign(this.adminKeypair);
+
+      const txId = await this.sendTransactionViaJito(transaction, isMainnet);
+
+      console.log('[EscrowProgramService] SOL deposited:', txId);
+      return txId;
+    } catch (error) {
+      console.error('[EscrowProgramService] Failed to deposit SOL:', error);
+      throw new Error(
+        `Failed to deposit SOL: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+  }
+
+  /**
+   * Deposit Seller's NFT (NFT A) into escrow (V2)
+   * Used for all swap types - seller always deposits their NFT
+   */
+  async depositSellerNft(
+    escrowPda: PublicKey,
+    seller: PublicKey,
+    nftMint: PublicKey
+  ): Promise<string> {
+    try {
+      console.log('[EscrowProgramService] Depositing Seller NFT:', {
+        escrowPda: escrowPda.toString(),
+        seller: seller.toString(),
+        nftMint: nftMint.toString(),
+      });
+
+      // Derive token accounts
+      const sellerTokenAccount = await getAssociatedTokenAddress(
+        nftMint,
+        seller,
+        false,
+        TOKEN_PROGRAM_ID
+      );
+
+      const escrowTokenAccount = await getAssociatedTokenAddress(
+        nftMint,
+        escrowPda,
+        true,
+        TOKEN_PROGRAM_ID
+      );
+
+      // Build instruction
+      const instruction = await (this.program.methods as any)
+        .depositSellerNft()
+        .accountsStrict({
+          escrowState: escrowPda,
+          seller,
+          nftMint,
+          sellerTokenAccount,
+          escrowTokenAccount,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .instruction();
+
+      // Create transaction
+      const { Transaction, ComputeBudgetProgram } = await import('@solana/web3.js');
+      const transaction = new Transaction();
+
+      const isMainnet = isMainnetNetwork(this.provider.connection);
+      const priorityFee = await PriorityFeeService.getRecommendedPriorityFee(
+        this.provider.connection,
+        isMainnet
+      );
+
+      transaction.add(
+        ComputeBudgetProgram.setComputeUnitLimit({ units: 250_000 }),
+        ComputeBudgetProgram.setComputeUnitPrice({ microLamports: priorityFee })
+      );
+
+      transaction.add(instruction);
+
+      if (isMainnet) {
+        const JITO_TIP_ACCOUNTS = [
+          '96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5',
+          'HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe',
+          'Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY',
+          'ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49',
+          'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
+          'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
+          'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
+          '3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT',
+        ];
+
+        const jitoTipAccount = new PublicKey(
+          JITO_TIP_ACCOUNTS[Math.floor(Math.random() * JITO_TIP_ACCOUNTS.length)]
+        );
+        transaction.add(
+          SystemProgram.transfer({
+            fromPubkey: this.adminKeypair.publicKey,
+            toPubkey: jitoTipAccount,
+            lamports: 1_000_000,
+          })
+        );
+      }
+
+      transaction.feePayer = this.adminKeypair.publicKey;
+      transaction.recentBlockhash = (
+        await this.provider.connection.getLatestBlockhash()
+      ).blockhash;
+      transaction.sign(this.adminKeypair);
+
+      const txId = await this.sendTransactionViaJito(transaction, isMainnet);
+
+      console.log('[EscrowProgramService] Seller NFT deposited:', txId);
+      return txId;
+    } catch (error) {
+      console.error('[EscrowProgramService] Failed to deposit seller NFT:', error);
+      throw new Error(
+        `Failed to deposit seller NFT: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`
+      );
+    }
+  }
+
+  /**
+   * Deposit Buyer's NFT (NFT B) into escrow (V2)
+   * Used for NFT_FOR_NFT_WITH_FEE and NFT_FOR_NFT_PLUS_SOL swap types
+   */
+  async depositBuyerNft(
+    escrowPda: PublicKey,
+    buyer: PublicKey,
+    nftBMint: PublicKey
+  ): Promise<string> {
+    try {
+      console.log('[EscrowProgramService] Depositing Buyer NFT:', {
+        escrowPda: escrowPda.toString(),
+        buyer: buyer.toString(),
+        nftBMint: nftBMint.toString(),
+      });
+
+      // Derive token accounts
+      const buyerTokenAccount = await getAssociatedTokenAddress(
+        nftBMint,
+        buyer,
+        false,
+        TOKEN_PROGRAM_ID
+      );
+
+      const escrowTokenAccountB = await getAssociatedTokenAddress(
+        nftBMint,
+        escrowPda,
+        true,
+        TOKEN_PROGRAM_ID
+      );
+
+      // Build instruction with remaining_accounts
+      const instruction = await (this.program.methods as any)
+        .depositBuyerNft()
+        .accountsStrict({
+          escrowState: escrowPda,
+          buyer,
+          systemProgram: SystemProgram.programId,
+        })
+        .remainingAccounts([
+          // NFT B mint (read-only)
+          { pubkey: nftBMint, isSigner: false, isWritable: false },
+          // Buyer's NFT B token account (writable, source)
+          { pubkey: buyerTokenAccount, isSigner: false, isWritable: true },
+          // Escrow's NFT B token account (writable, destination)
+          { pubkey: escrowTokenAccountB, isSigner: false, isWritable: true },
+          // Token program
+          { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+        ])
+        .instruction();
+
+      // Create transaction
+      const { Transaction, ComputeBudgetProgram } = await import('@solana/web3.js');
+      const transaction = new Transaction();
+
+      const isMainnet = isMainnetNetwork(this.provider.connection);
+      const priorityFee = await PriorityFeeService.getRecommendedPriorityFee(
+        this.provider.connection,
+        isMainnet
+      );
+
+      transaction.add(
+        ComputeBudgetProgram.setComputeUnitLimit({ units: 250_000 }),
+        ComputeBudgetProgram.setComputeUnitPrice({ microLamports: priorityFee })
+      );
+
+      transaction.add(instruction);
+
+      if (isMainnet) {
+        const JITO_TIP_ACCOUNTS = [
+          '96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5',
+          'HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe',
+          'Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY',
+          'ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49',
+          'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
+          'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
+          'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
+          '3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT',
+        ];
+
+        const jitoTipAccount = new PublicKey(
+          JITO_TIP_ACCOUNTS[Math.floor(Math.random() * JITO_TIP_ACCOUNTS.length)]
+        );
+        transaction.add(
+          SystemProgram.transfer({
+            fromPubkey: this.adminKeypair.publicKey,
+            toPubkey: jitoTipAccount,
+            lamports: 1_000_000,
+          })
+        );
+      }
+
+      transaction.feePayer = this.adminKeypair.publicKey;
+      transaction.recentBlockhash = (
+        await this.provider.connection.getLatestBlockhash()
+      ).blockhash;
+      transaction.sign(this.adminKeypair);
+
+      const txId = await this.sendTransactionViaJito(transaction, isMainnet);
+
+      console.log('[EscrowProgramService] Buyer NFT deposited:', txId);
+      return txId;
+    } catch (error) {
+      console.error('[EscrowProgramService] Failed to deposit buyer NFT:', error);
+      throw new Error(
+        `Failed to deposit buyer NFT: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`
+      );
+    }
+  }
+
+  /**
+   * Settle V2 escrow and distribute assets
+   * Handles all three swap types with proper remaining_accounts for NFT transfers
+   */
+  async settleV2(params: {
+    escrowPda: PublicKey;
+    buyer: PublicKey;
+    seller: PublicKey;
+    nftMint: PublicKey; // Seller's NFT (NFT A)
+    platformFeeCollector: PublicKey;
+    swapType: 'NFT_FOR_SOL' | 'NFT_FOR_NFT_WITH_FEE' | 'NFT_FOR_NFT_PLUS_SOL';
+    nftBMint?: PublicKey; // Buyer's NFT (for NFT<>NFT swaps)
+  }): Promise<string> {
+    try {
+      const { escrowPda, buyer, seller, nftMint, platformFeeCollector, swapType, nftBMint } =
+        params;
+
+      console.log('[EscrowProgramService] Settling V2 escrow:', {
+        escrowPda: escrowPda.toString(),
+        buyer: buyer.toString(),
+        seller: seller.toString(),
+        nftMint: nftMint.toString(),
+        swapType,
+        nftBMint: nftBMint?.toString() || 'N/A',
+      });
+
+      // Derive token accounts for NFT A (seller's NFT)
+      const escrowNftAccount = await getAssociatedTokenAddress(
+        nftMint,
+        escrowPda,
+        true,
+        TOKEN_PROGRAM_ID
+      );
+
+      const buyerNftAccount = await getAssociatedTokenAddress(
+        nftMint,
+        buyer,
+        false,
+        TOKEN_PROGRAM_ID
+      );
+
+      // Build remaining_accounts array based on swap type
+      const remainingAccounts: any[] = [
+        // NFT A mint (seller's NFT) - always needed
+        { pubkey: nftMint, isSigner: false, isWritable: false },
+        // Escrow's NFT A token account (source)
+        { pubkey: escrowNftAccount, isSigner: false, isWritable: true },
+        // Buyer's NFT A token account (destination)
+        { pubkey: buyerNftAccount, isSigner: false, isWritable: true },
+        // Token program
+        { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+      ];
+
+      // For NFT<>NFT swaps, add NFT B accounts
+      if (
+        (swapType === 'NFT_FOR_NFT_WITH_FEE' || swapType === 'NFT_FOR_NFT_PLUS_SOL') &&
+        nftBMint
+      ) {
+        const escrowNftBAccount = await getAssociatedTokenAddress(
+          nftBMint,
+          escrowPda,
+          true,
+          TOKEN_PROGRAM_ID
+        );
+
+        const sellerNftBAccount = await getAssociatedTokenAddress(
+          nftBMint,
+          seller,
+          false,
+          TOKEN_PROGRAM_ID
+        );
+
+        remainingAccounts.push(
+          // NFT B mint (buyer's NFT)
+          { pubkey: nftBMint, isSigner: false, isWritable: false },
+          // Escrow's NFT B token account (source)
+          { pubkey: escrowNftBAccount, isSigner: false, isWritable: true },
+          // Seller's NFT B token account (destination)
+          { pubkey: sellerNftBAccount, isSigner: false, isWritable: true },
+          // Token program (again, for second NFT transfer)
+          { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false }
+        );
+      }
+
+      // Build instruction
+      const instruction = await (this.program.methods as any)
+        .settleV2()
+        .accountsStrict({
+          escrowState: escrowPda,
+          buyer,
+          seller,
+          platformFeeCollector,
+          systemProgram: SystemProgram.programId,
+        })
+        .remainingAccounts(remainingAccounts)
+        .instruction();
+
+      // Create transaction
+      const { Transaction, ComputeBudgetProgram } = await import('@solana/web3.js');
+      const transaction = new Transaction();
+
+      const isMainnet = isMainnetNetwork(this.provider.connection);
+      const priorityFee = await PriorityFeeService.getRecommendedPriorityFee(
+        this.provider.connection,
+        isMainnet
+      );
+
+      // Higher compute units for settlement (handles SOL + NFT transfers)
+      transaction.add(
+        ComputeBudgetProgram.setComputeUnitLimit({ units: 350_000 }),
+        ComputeBudgetProgram.setComputeUnitPrice({ microLamports: priorityFee })
+      );
+
+      transaction.add(instruction);
+
+      if (isMainnet) {
+        const JITO_TIP_ACCOUNTS = [
+          '96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5',
+          'HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe',
+          'Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY',
+          'ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49',
+          'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
+          'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
+          'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
+          '3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT',
+        ];
+
+        const jitoTipAccount = new PublicKey(
+          JITO_TIP_ACCOUNTS[Math.floor(Math.random() * JITO_TIP_ACCOUNTS.length)]
+        );
+        transaction.add(
+          SystemProgram.transfer({
+            fromPubkey: this.adminKeypair.publicKey,
+            toPubkey: jitoTipAccount,
+            lamports: 1_000_000,
+          })
+        );
+      }
+
+      transaction.feePayer = this.adminKeypair.publicKey;
+      transaction.recentBlockhash = (
+        await this.provider.connection.getLatestBlockhash()
+      ).blockhash;
+      transaction.sign(this.adminKeypair);
+
+      const txId = await this.sendTransactionViaJito(transaction, isMainnet);
+
+      console.log('[EscrowProgramService] V2 Escrow settled:', txId);
+      return txId;
+    } catch (error) {
+      console.error('[EscrowProgramService] Failed to settle V2 escrow:', error);
+      throw new Error(
+        `Failed to settle V2 escrow: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`
+      );
+    }
+  }
+
+  /**
+   * Cancel expired V2 escrow and refund assets
+   * Handles refunding both SOL and NFTs based on swap type
+   */
+  async cancelIfExpiredV2(params: {
+    escrowPda: PublicKey;
+    buyer: PublicKey;
+    seller: PublicKey;
+    nftMint: PublicKey;
+    swapType: 'NFT_FOR_SOL' | 'NFT_FOR_NFT_WITH_FEE' | 'NFT_FOR_NFT_PLUS_SOL';
+    nftBMint?: PublicKey;
+  }): Promise<string> {
+    try {
+      const { escrowPda, buyer, seller, nftMint, swapType, nftBMint } = params;
+
+      console.log('[EscrowProgramService] Canceling expired V2 escrow:', {
+        escrowPda: escrowPda.toString(),
+        buyer: buyer.toString(),
+        seller: seller.toString(),
+        nftMint: nftMint.toString(),
+        swapType,
+        nftBMint: nftBMint?.toString() || 'N/A',
+      });
+
+      // Build remaining_accounts for refunds
+      const remainingAccounts: any[] = [];
+
+      // Add NFT A accounts (seller's NFT to refund)
+      const escrowNftAccount = await getAssociatedTokenAddress(
+        nftMint,
+        escrowPda,
+        true,
+        TOKEN_PROGRAM_ID
+      );
+
+      const sellerNftAccount = await getAssociatedTokenAddress(
+        nftMint,
+        seller,
+        false,
+        TOKEN_PROGRAM_ID
+      );
+
+      remainingAccounts.push(
+        { pubkey: nftMint, isSigner: false, isWritable: false },
+        { pubkey: escrowNftAccount, isSigner: false, isWritable: true },
+        { pubkey: sellerNftAccount, isSigner: false, isWritable: true },
+        { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false }
+      );
+
+      // For NFT<>NFT swaps, add NFT B accounts (buyer's NFT to refund)
+      if (
+        (swapType === 'NFT_FOR_NFT_WITH_FEE' || swapType === 'NFT_FOR_NFT_PLUS_SOL') &&
+        nftBMint
+      ) {
+        const escrowNftBAccount = await getAssociatedTokenAddress(
+          nftBMint,
+          escrowPda,
+          true,
+          TOKEN_PROGRAM_ID
+        );
+
+        const buyerNftBAccount = await getAssociatedTokenAddress(
+          nftBMint,
+          buyer,
+          false,
+          TOKEN_PROGRAM_ID
+        );
+
+        remainingAccounts.push(
+          { pubkey: nftBMint, isSigner: false, isWritable: false },
+          { pubkey: escrowNftBAccount, isSigner: false, isWritable: true },
+          { pubkey: buyerNftBAccount, isSigner: false, isWritable: true },
+          { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false }
+        );
+      }
+
+      // Build instruction
+      const instruction = await (this.program.methods as any)
+        .cancelIfExpiredV2()
+        .accountsStrict({
+          escrowState: escrowPda,
+          buyer,
+          seller,
+          systemProgram: SystemProgram.programId,
+        })
+        .remainingAccounts(remainingAccounts)
+        .instruction();
+
+      // Create transaction
+      const { Transaction, ComputeBudgetProgram } = await import('@solana/web3.js');
+      const transaction = new Transaction();
+
+      const isMainnet = isMainnetNetwork(this.provider.connection);
+      const priorityFee = await PriorityFeeService.getRecommendedPriorityFee(
+        this.provider.connection,
+        isMainnet
+      );
+
+      transaction.add(
+        ComputeBudgetProgram.setComputeUnitLimit({ units: 300_000 }),
+        ComputeBudgetProgram.setComputeUnitPrice({ microLamports: priorityFee })
+      );
+
+      transaction.add(instruction);
+
+      if (isMainnet) {
+        const JITO_TIP_ACCOUNTS = [
+          '96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5',
+          'HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe',
+          'Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY',
+          'ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49',
+          'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
+          'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
+          'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
+          '3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT',
+        ];
+
+        const jitoTipAccount = new PublicKey(
+          JITO_TIP_ACCOUNTS[Math.floor(Math.random() * JITO_TIP_ACCOUNTS.length)]
+        );
+        transaction.add(
+          SystemProgram.transfer({
+            fromPubkey: this.adminKeypair.publicKey,
+            toPubkey: jitoTipAccount,
+            lamports: 1_000_000,
+          })
+        );
+      }
+
+      transaction.feePayer = this.adminKeypair.publicKey;
+      transaction.recentBlockhash = (
+        await this.provider.connection.getLatestBlockhash()
+      ).blockhash;
+      transaction.sign(this.adminKeypair);
+
+      const txId = await this.sendTransactionViaJito(transaction, isMainnet);
+
+      console.log('[EscrowProgramService] Expired V2 escrow canceled:', txId);
+      return txId;
+    } catch (error) {
+      console.error('[EscrowProgramService] Failed to cancel expired V2 escrow:', error);
+      throw new Error(
+        `Failed to cancel expired V2 escrow: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`
+      );
+    }
+  }
+
+  /**
+   * Admin cancel V2 escrow with full refunds
+   * Emergency cancellation with asset refunds for all swap types
+   */
+  async adminCancelV2(params: {
+    escrowPda: PublicKey;
+    buyer: PublicKey;
+    seller: PublicKey;
+    nftMint: PublicKey;
+    swapType: 'NFT_FOR_SOL' | 'NFT_FOR_NFT_WITH_FEE' | 'NFT_FOR_NFT_PLUS_SOL';
+    nftBMint?: PublicKey;
+  }): Promise<string> {
+    try {
+      const { escrowPda, buyer, seller, nftMint, swapType, nftBMint } = params;
+
+      console.log('[EscrowProgramService] Admin canceling V2 escrow:', {
+        escrowPda: escrowPda.toString(),
+        buyer: buyer.toString(),
+        seller: seller.toString(),
+        nftMint: nftMint.toString(),
+        swapType,
+        nftBMint: nftBMint?.toString() || 'N/A',
+      });
+
+      // Build remaining_accounts (same as cancelIfExpiredV2)
+      const remainingAccounts: any[] = [];
+
+      // Add NFT A accounts
+      const escrowNftAccount = await getAssociatedTokenAddress(
+        nftMint,
+        escrowPda,
+        true,
+        TOKEN_PROGRAM_ID
+      );
+
+      const sellerNftAccount = await getAssociatedTokenAddress(
+        nftMint,
+        seller,
+        false,
+        TOKEN_PROGRAM_ID
+      );
+
+      remainingAccounts.push(
+        { pubkey: nftMint, isSigner: false, isWritable: false },
+        { pubkey: escrowNftAccount, isSigner: false, isWritable: true },
+        { pubkey: sellerNftAccount, isSigner: false, isWritable: true },
+        { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false }
+      );
+
+      // Add NFT B accounts if needed
+      if (
+        (swapType === 'NFT_FOR_NFT_WITH_FEE' || swapType === 'NFT_FOR_NFT_PLUS_SOL') &&
+        nftBMint
+      ) {
+        const escrowNftBAccount = await getAssociatedTokenAddress(
+          nftBMint,
+          escrowPda,
+          true,
+          TOKEN_PROGRAM_ID
+        );
+
+        const buyerNftBAccount = await getAssociatedTokenAddress(
+          nftBMint,
+          buyer,
+          false,
+          TOKEN_PROGRAM_ID
+        );
+
+        remainingAccounts.push(
+          { pubkey: nftBMint, isSigner: false, isWritable: false },
+          { pubkey: escrowNftBAccount, isSigner: false, isWritable: true },
+          { pubkey: buyerNftBAccount, isSigner: false, isWritable: true },
+          { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false }
+        );
+      }
+
+      // Build instruction
+      const instruction = await (this.program.methods as any)
+        .adminCancelV2()
+        .accountsStrict({
+          escrowState: escrowPda,
+          buyer,
+          seller,
+          admin: this.adminKeypair.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .remainingAccounts(remainingAccounts)
+        .instruction();
+
+      // Create transaction
+      const { Transaction, ComputeBudgetProgram } = await import('@solana/web3.js');
+      const transaction = new Transaction();
+
+      const isMainnet = isMainnetNetwork(this.provider.connection);
+      const priorityFee = await PriorityFeeService.getRecommendedPriorityFee(
+        this.provider.connection,
+        isMainnet
+      );
+
+      transaction.add(
+        ComputeBudgetProgram.setComputeUnitLimit({ units: 300_000 }),
+        ComputeBudgetProgram.setComputeUnitPrice({ microLamports: priorityFee })
+      );
+
+      transaction.add(instruction);
+
+      if (isMainnet) {
+        const JITO_TIP_ACCOUNTS = [
+          '96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5',
+          'HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe',
+          'Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY',
+          'ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49',
+          'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
+          'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
+          'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
+          '3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT',
+        ];
+
+        const jitoTipAccount = new PublicKey(
+          JITO_TIP_ACCOUNTS[Math.floor(Math.random() * JITO_TIP_ACCOUNTS.length)]
+        );
+        transaction.add(
+          SystemProgram.transfer({
+            fromPubkey: this.adminKeypair.publicKey,
+            toPubkey: jitoTipAccount,
+            lamports: 1_000_000,
+          })
+        );
+      }
+
+      transaction.feePayer = this.adminKeypair.publicKey;
+      transaction.recentBlockhash = (
+        await this.provider.connection.getLatestBlockhash()
+      ).blockhash;
+      transaction.sign(this.adminKeypair);
+
+      const txId = await this.sendTransactionViaJito(transaction, isMainnet);
+
+      console.log('[EscrowProgramService] V2 Escrow admin canceled:', txId);
+      return txId;
+    } catch (error) {
+      console.error('[EscrowProgramService] Failed to admin cancel V2 escrow:', error);
+      throw new Error(
+        `Failed to admin cancel V2 escrow: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`
       );
     }
   }
