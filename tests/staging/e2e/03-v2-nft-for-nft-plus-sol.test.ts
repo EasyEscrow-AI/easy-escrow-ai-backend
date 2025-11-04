@@ -233,8 +233,8 @@ describe('STAGING E2E - V2: NFT-for-NFT + SOL Payment', function () {
     console.log('🎨 Depositing NFT A to escrow...\n');
 
     // Wait to avoid rate limiting
-    console.log('   ⏳ Waiting 3 seconds to avoid rate limiting...');
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    console.log('   ⏳ Waiting 10 seconds to avoid rate limiting...');
+    await new Promise(resolve => setTimeout(resolve, 10000));
 
     const prepareResponse = await axios.post(
       `${STAGING_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}/deposit-nft/prepare`
@@ -274,8 +274,8 @@ describe('STAGING E2E - V2: NFT-for-NFT + SOL Payment', function () {
     console.log('💎 Depositing SOL payment to escrow...\n');
 
     // Wait to avoid rate limiting
-    console.log('   ⏳ Waiting 3 seconds to avoid rate limiting...');
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    console.log('   ⏳ Waiting 10 seconds to avoid rate limiting...');
+    await new Promise(resolve => setTimeout(resolve, 10000));
 
     const prepareResponse = await axios.post(
       `${STAGING_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}/deposit-sol/prepare`
