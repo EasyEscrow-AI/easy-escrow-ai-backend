@@ -153,7 +153,7 @@ export const createAgreement = async (
         expiry: bufferedExpiry,
         
         // Deposit addresses
-        usdcDepositAddr: null, // No longer used for SOL swaps
+        usdcDepositAddr: null, // DEPRECATED: V2 uses SOL sent directly to escrowPda, not USDC token accounts
         nftDepositAddr: sellerNftAta.toString(),
         
         initTxId: escrowResult.txId,

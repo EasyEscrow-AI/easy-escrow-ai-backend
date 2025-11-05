@@ -1,8 +1,10 @@
 /**
  * Settlement Service
  *
- * Detects when both NFT and USDC are locked, validates the agreement,
+ * Detects when both NFT and SOL are locked, validates the agreement,
  * and executes atomic settlement on-chain with platform fees and optional royalties.
+ * 
+ * NOTE: Legacy USDC support is deprecated but kept for backwards compatibility.
  */
 
 import { PublicKey, Transaction, SystemProgram, Keypair, sendAndConfirmTransaction } from '@solana/web3.js';
@@ -272,7 +274,7 @@ export class SettlementService {
       return await this.executeSettlementV2(agreement);
     }
 
-    console.log(`[SettlementService] Using V1 (USDC-based) settlement flow`);
+    console.log(`[SettlementService] Using V1 (LEGACY - USDC-based) settlement flow - DEPRECATED`);
 
     try {
       // 0. Check idempotency to prevent double-settlement
@@ -412,7 +414,7 @@ export class SettlementService {
       // Declare variables outside try block for catch block access
       let transactions: any[] = [];
       let depositNftTx: any = undefined;
-      let depositUsdcTx: any = undefined;
+      let depositUsdcTx: any = undefined; // LEGACY - for V1 USDC-based swaps only
       
       try {
         const receiptService = getReceiptService();
@@ -434,13 +436,13 @@ export class SettlementService {
           tx.operationType === 'DEPOSIT_NFT' || tx.operationType === 'deposit'
         );
         depositUsdcTx = transactions.find(tx => 
-          tx.operationType === 'DEPOSIT_USDC' || tx.operationType === 'deposit'
+          tx.operationType === 'DEPOSIT_USDC' || tx.operationType === 'deposit' // LEGACY - V1 only
         );
 
         console.log(`[SettlementService] Found transaction logs:`, {
           total: transactions.length,
           depositNft: depositNftTx?.txId || 'not found',
-          depositUsdc: depositUsdcTx?.txId || 'not found',
+          depositUsdc: depositUsdcTx?.txId || 'not found', // LEGACY - V1 only
           settlement: settlementTxId,
         });
         
@@ -454,7 +456,7 @@ export class SettlementService {
           seller: agreement.seller,
           escrowTxId: agreement.initTxId || '',
           depositNftTxId: depositNftTx?.txId,     // NEW: NFT deposit transaction
-          depositUsdcTxId: depositUsdcTx?.txId,   // NEW: USDC deposit transaction
+          depositUsdcTxId: depositUsdcTx?.txId,   // LEGACY: USDC deposit transaction (V1 only)
           settlementTxId: settlementTxId,
           createdAt: agreement.createdAt,
           settledAt: new Date(),
@@ -659,7 +661,8 @@ export class SettlementService {
       const nftMint = new PublicKey(agreement.nftMint);
       const feeCollector = new PublicKey(this.config.platformFeeCollectorAddress);
 
-      // Get USDC mint address from config
+      // LEGACY: USDC mint address (V1 only - kept for backwards compatibility)
+      // NOTE: V2 uses SOL directly, not USDC
       const usdcMintStr = config.usdc?.mintAddress || 'Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr'; // Devnet USDC
       const usdcMint = new PublicKey(usdcMintStr);
 
@@ -690,7 +693,7 @@ export class SettlementService {
       console.log('[SettlementService] ✅ Settlement transaction confirmed:', txId);
       console.log('[SettlementService] Settlement completed with fee distribution:');
       console.log('[SettlementService]   ✅ NFT transferred from escrow to buyer');
-      console.log('[SettlementService]   ✅ USDC transferred to seller (minus fee)');
+      console.log('[SettlementService]   ✅ SOL transferred to seller (minus fee)');
       console.log('[SettlementService]   ✅ Platform fee transferred to fee collector');
       console.log(`[SettlementService]   Explorer: https://explorer.solana.com/tx/${txId}?cluster=devnet`);
 

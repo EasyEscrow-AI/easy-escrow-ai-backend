@@ -2,7 +2,9 @@
  * Monitoring Service
  *
  * Orchestrates monitoring of Solana escrow accounts for deposits.
- * Coordinates USDC, NFT, and SOL deposit detection, validation, and database updates.
+ * Coordinates NFT and SOL deposit detection, validation, and database updates.
+ * 
+ * NOTE: USDC monitoring is deprecated but kept for backwards compatibility (V1 only).
  */
 
 import { AccountInfo, Context } from '@solana/web3.js';

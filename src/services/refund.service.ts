@@ -2,7 +2,9 @@
  * Refund Service
  * 
  * Handles refund calculations and processing for agreements with partial deposits.
- * Processes USDC and NFT refunds when agreements are cancelled or expired.
+ * Processes SOL and NFT refunds when agreements are cancelled or expired.
+ * 
+ * NOTE: USDC refund logic is deprecated but kept for backwards compatibility (V1 only).
  * 
  * Uses a separate connection pool (batchPrisma) to isolate batch operations
  * from user-facing API traffic for better performance and scalability.
@@ -24,10 +26,10 @@ export interface RefundCalculation {
   refunds: Array<{
     depositor: string;
     type: DepositType;
-    amount?: string; // For USDC
+    amount?: string; // For SOL/USDC (legacy)
     tokenAccount?: string; // For NFT
   }>;
-  totalUsdcRefund: string;
+  totalUsdcRefund: string; // DEPRECATED: Use totalSolRefund for V2
   nftRefundCount: number;
   eligible: boolean;
   reason?: string;

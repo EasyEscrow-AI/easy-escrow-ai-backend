@@ -726,8 +726,11 @@ export const deriveEscrowPDA = async (
 };
 
 /**
- * Derive deposit addresses (USDC and NFT token accounts)
+ * Derive deposit addresses for NFT token accounts
  * Creates Associated Token Accounts (ATAs) for the escrow PDA
+ * 
+ * NOTE: USDC deposits are deprecated in V2. SOL is sent directly to escrowPda.
+ * This function kept for backwards compatibility.
  */
 export const deriveDepositAddresses = async (
   escrowPda: PublicKey,
@@ -766,10 +769,11 @@ export const initializeEscrow = async (
       throw new Error('[SolanaService] Configuration error: config.solana is undefined');
     }
 
-    // Validate config.usdc exists
-    if (!config?.usdc) {
-      throw new Error('[SolanaService] Configuration error: config.usdc is undefined');
-    }
+    // LEGACY: USDC config validation (V1 only)
+    // NOTE: V2 doesn't use USDC config, but kept for backwards compatibility
+    // if (!config?.usdc) {
+    //   throw new Error('[SolanaService] Configuration error: config.usdc is undefined');
+    // }
 
     const rpcUrl = config.solana?.rpcUrl;
     
