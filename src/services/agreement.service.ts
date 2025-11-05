@@ -1044,7 +1044,40 @@ export const depositSolToEscrow = async (
 
     console.log('[AgreementService] SOL deposit transaction:', txId);
 
-    // 6. Log transaction
+    // 7. Update agreement status immediately
+    // Check if NFT is already deposited to determine new status
+    const nftDeposit = agreement.deposits.find(
+      (d) => d.type === 'NFT' && d.status === 'CONFIRMED'
+    );
+
+    const newStatus = nftDeposit ? AgreementStatus.BOTH_LOCKED : AgreementStatus.USDC_LOCKED;
+    
+    await prisma.agreement.update({
+      where: { id: agreement.id },
+      data: {
+        status: newStatus,
+        updatedAt: new Date(),
+      },
+    });
+
+    console.log(`[AgreementService] Agreement ${agreementId} status updated to: ${newStatus}`);
+
+    // 8. Record SOL deposit in deposits table
+    await prisma.deposit.create({
+      data: {
+        agreementId,
+        type: 'SOL',
+        depositor: agreement.buyer,
+        amount: new Decimal(agreement.solAmount.toString()).div(1e9), // Convert lamports to SOL
+        status: 'CONFIRMED',
+        detectedAt: new Date(),
+        confirmedAt: new Date(),
+      },
+    });
+
+    console.log('[AgreementService] SOL deposit recorded in database');
+
+    // 9. Log transaction
     const txLogService = getTransactionLogService();
     await txLogService.captureTransaction({
       txId,
