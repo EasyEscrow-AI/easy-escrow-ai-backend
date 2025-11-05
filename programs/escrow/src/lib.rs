@@ -2266,7 +2266,8 @@ pub struct SettleV2<'info> {
     )]
     pub buyer_nft_account: Account<'info, TokenAccount>,
     
-    /// CHECK: Buyer receives NFT
+    /// CHECK: Buyer receives NFT (mut required for init_if_needed constraint)
+    #[account(mut)]
     pub buyer: UncheckedAccount<'info>,
     
     pub nft_mint: Account<'info, Mint>,

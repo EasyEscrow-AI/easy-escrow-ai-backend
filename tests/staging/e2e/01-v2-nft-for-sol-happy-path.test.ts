@@ -338,13 +338,13 @@ describe('STAGING E2E - V2: NFT-for-SOL Swap (Happy Path)', function () {
   it('should wait for automatic settlement', async function () {
     console.log('⏳ Waiting for automatic settlement...\n');
     console.log('   Monitoring service should detect both deposits and trigger settlement');
-    console.log('   This may take up to 2 minutes...\n');
+    console.log('   Expected settlement time: 3-10 seconds (polling interval: 3s)\n');
 
-    // Wait for SETTLED status (up to 2 minutes)
+    // Wait for SETTLED status (up to 30 seconds)
     const settledAgreement = await waitForAgreementStatus(
       agreement.agreementId,
       'SETTLED',
-      120, // 120 attempts x 1000ms = 2 minutes
+      30, // 30 attempts x 1000ms = 30 seconds
       1000 // 1 second interval
     );
 
