@@ -730,10 +730,10 @@ pub mod escrow {
                 // Perform direct lamport transfers SEQUENTIALLY (one at a time)
                 // Transfer 1: escrow -> fee_collector
                 {
+                    let fee_collector_account = ctx.accounts.platform_fee_collector.to_account_info();
+                    
                     let mut escrow_lamports = escrow_account.try_borrow_mut_lamports()?;
-                    let mut fee_collector_lamports = ctx.accounts.platform_fee_collector
-                        .to_account_info()
-                        .try_borrow_mut_lamports()?;
+                    let mut fee_collector_lamports = fee_collector_account.try_borrow_mut_lamports()?;
 
                     **escrow_lamports = escrow_lamports.checked_sub(platform_fee)
                         .ok_or(EscrowError::InsufficientFunds)?;
@@ -743,10 +743,10 @@ pub mod escrow {
                 
                 // Transfer 2: escrow -> seller
                 {
+                    let seller_account = ctx.accounts.seller.to_account_info();
+                    
                     let mut escrow_lamports = escrow_account.try_borrow_mut_lamports()?;
-                    let mut seller_lamports = ctx.accounts.seller
-                        .to_account_info()
-                        .try_borrow_mut_lamports()?;
+                    let mut seller_lamports = seller_account.try_borrow_mut_lamports()?;
 
                     **escrow_lamports = escrow_lamports.checked_sub(seller_receives)
                         .ok_or(EscrowError::InsufficientFunds)?;
@@ -799,10 +799,10 @@ pub mod escrow {
                 // Perform direct lamport transfer
                 let escrow_account = ctx.accounts.escrow_state.to_account_info();
                 {
+                    let fee_collector_account = ctx.accounts.platform_fee_collector.to_account_info();
+                    
                     let mut escrow_lamports = escrow_account.try_borrow_mut_lamports()?;
-                    let mut fee_collector_lamports = ctx.accounts.platform_fee_collector
-                        .to_account_info()
-                        .try_borrow_mut_lamports()?;
+                    let mut fee_collector_lamports = fee_collector_account.try_borrow_mut_lamports()?;
 
                     **escrow_lamports = escrow_lamports.checked_sub(platform_fee)
                         .ok_or(EscrowError::InsufficientFunds)?;
@@ -886,10 +886,10 @@ pub mod escrow {
                 // Perform direct lamport transfers SEQUENTIALLY (one at a time)
                 // Transfer 1: escrow -> fee_collector
                 {
+                    let fee_collector_account = ctx.accounts.platform_fee_collector.to_account_info();
+                    
                     let mut escrow_lamports = escrow_account.try_borrow_mut_lamports()?;
-                    let mut fee_collector_lamports = ctx.accounts.platform_fee_collector
-                        .to_account_info()
-                        .try_borrow_mut_lamports()?;
+                    let mut fee_collector_lamports = fee_collector_account.try_borrow_mut_lamports()?;
 
                     **escrow_lamports = escrow_lamports.checked_sub(platform_fee)
                         .ok_or(EscrowError::InsufficientFunds)?;
@@ -899,10 +899,10 @@ pub mod escrow {
                 
                 // Transfer 2: escrow -> seller
                 {
+                    let seller_account = ctx.accounts.seller.to_account_info();
+                    
                     let mut escrow_lamports = escrow_account.try_borrow_mut_lamports()?;
-                    let mut seller_lamports = ctx.accounts.seller
-                        .to_account_info()
-                        .try_borrow_mut_lamports()?;
+                    let mut seller_lamports = seller_account.try_borrow_mut_lamports()?;
 
                     **escrow_lamports = escrow_lamports.checked_sub(seller_sol_amount)
                         .ok_or(EscrowError::InsufficientFunds)?;
