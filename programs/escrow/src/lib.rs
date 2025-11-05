@@ -1773,27 +1773,60 @@ pub fn settle_v2<'info>(ctx: Context<'_, '_, '_, 'info, SettleV2<'info>>) -> Res
                 ctx.accounts.escrow_state.platform_fee_bps,
             )?;
 
-            // Transfer platform fee (SOL) to fee collector
-            let fee_transfer_ctx = CpiContext::new_with_signer(
-                ctx.accounts.system_program.to_account_info(),
-                anchor_lang::system_program::Transfer {
-                    from: ctx.accounts.escrow_state.to_account_info(),
-                    to: ctx.accounts.platform_fee_collector.to_account_info(),
-                },
-                signer,
+            // Transfer SOL using direct lamport manipulation
+            // NOTE: Cannot use SystemProgram::transfer() from PDA with data
+            // Research: https://osec.io/blog/2025-05-14-king-of-the-sol/
+            
+            // Get rent-exempt minimum for this account
+            let rent = Rent::get()?;
+            let escrow_account_info = ctx.accounts.escrow_state.to_account_info();
+            let min_rent_exempt = rent.minimum_balance(escrow_account_info.data_len());
+            
+            // Calculate transferable amount (current balance minus rent-exempt minimum)
+            let current_balance = escrow_account_info.lamports();
+            let transferable = current_balance.checked_sub(min_rent_exempt)
+                .ok_or(EscrowError::InsufficientFunds)?;
+            
+            // Verify we have enough to cover both transfers
+            let total_to_transfer = platform_fee.checked_add(seller_receives)
+                .ok_or(EscrowError::CalculationOverflow)?;
+            
+            require!(
+                transferable >= total_to_transfer,
+                EscrowError::InsufficientFunds
             );
-            anchor_lang::system_program::transfer(fee_transfer_ctx, platform_fee)?;
+            
+            // CRITICAL FIX: Get escrow_account reference ONCE to avoid RefCell tracking issues
+            // Research: https://github.com/solana-labs/solana/issues/20311
+            // Multiple to_account_info() calls create separate references that don't sync properly
+            let escrow_account = ctx.accounts.escrow_state.to_account_info();
+            
+            // Perform direct lamport transfers SEQUENTIALLY (one at a time)
+            // Transfer 1: escrow -> fee_collector
+            {
+                let fee_collector_account = ctx.accounts.platform_fee_collector.to_account_info();
+                
+                let mut escrow_lamports = escrow_account.try_borrow_mut_lamports()?;
+                let mut fee_collector_lamports = fee_collector_account.try_borrow_mut_lamports()?;
 
-            // Transfer remaining SOL to seller
-            let seller_transfer_ctx = CpiContext::new_with_signer(
-                ctx.accounts.system_program.to_account_info(),
-                anchor_lang::system_program::Transfer {
-                    from: ctx.accounts.escrow_state.to_account_info(),
-                    to: ctx.accounts.seller.to_account_info(),
-                },
-                signer,
-            );
-            anchor_lang::system_program::transfer(seller_transfer_ctx, seller_receives)?;
+                **escrow_lamports = escrow_lamports.checked_sub(platform_fee)
+                    .ok_or(EscrowError::InsufficientFunds)?;
+                **fee_collector_lamports = fee_collector_lamports.checked_add(platform_fee)
+                    .ok_or(EscrowError::CalculationOverflow)?;
+            } // Borrows released here
+            
+            // Transfer 2: escrow -> seller
+            {
+                let seller_account = ctx.accounts.seller.to_account_info();
+                
+                let mut escrow_lamports = escrow_account.try_borrow_mut_lamports()?;
+                let mut seller_lamports = seller_account.try_borrow_mut_lamports()?;
+
+                **escrow_lamports = escrow_lamports.checked_sub(seller_receives)
+                    .ok_or(EscrowError::InsufficientFunds)?;
+                **seller_lamports = seller_lamports.checked_add(seller_receives)
+                    .ok_or(EscrowError::CalculationOverflow)?;
+            } // Borrows released here
 
             // Transfer NFT A from escrow to buyer
             let nft_transfer_ctx = CpiContext::new_with_signer(
@@ -1818,17 +1851,41 @@ pub fn settle_v2<'info>(ctx: Context<'_, '_, '_, 'info, SettleV2<'info>>) -> Res
                 EscrowError::DepositNotComplete
             );
 
-            // Transfer platform fee (SOL) to fee collector
+            // Transfer platform fee (SOL) using direct lamport manipulation
+            // NOTE: Cannot use SystemProgram::transfer() from PDA with data
             let platform_fee = ctx.accounts.escrow_state.sol_amount; // Full amount is the fee
-            let fee_transfer_ctx = CpiContext::new_with_signer(
-                ctx.accounts.system_program.to_account_info(),
-                anchor_lang::system_program::Transfer {
-                    from: ctx.accounts.escrow_state.to_account_info(),
-                    to: ctx.accounts.platform_fee_collector.to_account_info(),
-                },
-                signer,
+            
+            // Get rent-exempt minimum for this account
+            let rent = Rent::get()?;
+            let escrow_account_info = ctx.accounts.escrow_state.to_account_info();
+            let min_rent_exempt = rent.minimum_balance(escrow_account_info.data_len());
+            
+            // Calculate transferable amount (current balance minus rent-exempt minimum)
+            let current_balance = escrow_account_info.lamports();
+            let transferable = current_balance.checked_sub(min_rent_exempt)
+                .ok_or(EscrowError::InsufficientFunds)?;
+            
+            // Verify we have enough for the fee
+            require!(
+                transferable >= platform_fee,
+                EscrowError::InsufficientFunds
             );
-            anchor_lang::system_program::transfer(fee_transfer_ctx, platform_fee)?;
+            
+            // CRITICAL FIX: Get escrow_account reference ONCE to avoid RefCell tracking issues
+            let escrow_account = ctx.accounts.escrow_state.to_account_info();
+            
+            // Transfer: escrow -> fee_collector
+            {
+                let fee_collector_account = ctx.accounts.platform_fee_collector.to_account_info();
+                
+                let mut escrow_lamports = escrow_account.try_borrow_mut_lamports()?;
+                let mut fee_collector_lamports = fee_collector_account.try_borrow_mut_lamports()?;
+
+                **escrow_lamports = escrow_lamports.checked_sub(platform_fee)
+                    .ok_or(EscrowError::InsufficientFunds)?;
+                **fee_collector_lamports = fee_collector_lamports.checked_add(platform_fee)
+                    .ok_or(EscrowError::CalculationOverflow)?;
+            } // Borrows released here
 
             // Transfer NFT A from escrow to buyer
             let nft_a_transfer_ctx = CpiContext::new_with_signer(
@@ -1878,27 +1935,57 @@ pub fn settle_v2<'info>(ctx: Context<'_, '_, '_, 'info, SettleV2<'info>>) -> Res
                 ctx.accounts.escrow_state.platform_fee_bps,
             )?;
 
-            // Transfer platform fee (SOL) to fee collector
-            let fee_transfer_ctx = CpiContext::new_with_signer(
-                ctx.accounts.system_program.to_account_info(),
-                anchor_lang::system_program::Transfer {
-                    from: ctx.accounts.escrow_state.to_account_info(),
-                    to: ctx.accounts.platform_fee_collector.to_account_info(),
-                },
-                signer,
+            // Transfer SOL using direct lamport manipulation
+            // NOTE: Cannot use SystemProgram::transfer() from PDA with data
+            
+            // Get rent-exempt minimum for this account
+            let rent = Rent::get()?;
+            let escrow_account_info = ctx.accounts.escrow_state.to_account_info();
+            let min_rent_exempt = rent.minimum_balance(escrow_account_info.data_len());
+            
+            // Calculate transferable amount (current balance minus rent-exempt minimum)
+            let current_balance = escrow_account_info.lamports();
+            let transferable = current_balance.checked_sub(min_rent_exempt)
+                .ok_or(EscrowError::InsufficientFunds)?;
+            
+            // Verify we have enough to cover both transfers
+            let total_to_transfer = platform_fee.checked_add(seller_sol_amount)
+                .ok_or(EscrowError::CalculationOverflow)?;
+            
+            require!(
+                transferable >= total_to_transfer,
+                EscrowError::InsufficientFunds
             );
-            anchor_lang::system_program::transfer(fee_transfer_ctx, platform_fee)?;
+            
+            // CRITICAL FIX: Get escrow_account reference ONCE to avoid RefCell tracking issues
+            let escrow_account = ctx.accounts.escrow_state.to_account_info();
+            
+            // Perform direct lamport transfers SEQUENTIALLY (one at a time)
+            // Transfer 1: escrow -> fee_collector
+            {
+                let fee_collector_account = ctx.accounts.platform_fee_collector.to_account_info();
+                
+                let mut escrow_lamports = escrow_account.try_borrow_mut_lamports()?;
+                let mut fee_collector_lamports = fee_collector_account.try_borrow_mut_lamports()?;
 
-            // Transfer remaining SOL to seller
-            let seller_sol_transfer_ctx = CpiContext::new_with_signer(
-                ctx.accounts.system_program.to_account_info(),
-                anchor_lang::system_program::Transfer {
-                    from: ctx.accounts.escrow_state.to_account_info(),
-                    to: ctx.accounts.seller.to_account_info(),
-                },
-                signer,
-            );
-            anchor_lang::system_program::transfer(seller_sol_transfer_ctx, seller_sol_amount)?;
+                **escrow_lamports = escrow_lamports.checked_sub(platform_fee)
+                    .ok_or(EscrowError::InsufficientFunds)?;
+                **fee_collector_lamports = fee_collector_lamports.checked_add(platform_fee)
+                    .ok_or(EscrowError::CalculationOverflow)?;
+            } // Borrows released here
+            
+            // Transfer 2: escrow -> seller
+            {
+                let seller_account = ctx.accounts.seller.to_account_info();
+                
+                let mut escrow_lamports = escrow_account.try_borrow_mut_lamports()?;
+                let mut seller_lamports = seller_account.try_borrow_mut_lamports()?;
+
+                **escrow_lamports = escrow_lamports.checked_sub(seller_sol_amount)
+                    .ok_or(EscrowError::InsufficientFunds)?;
+                **seller_lamports = seller_lamports.checked_add(seller_sol_amount)
+                    .ok_or(EscrowError::CalculationOverflow)?;
+            } // Borrows released here
 
             // Transfer NFT A from escrow to buyer
             let nft_a_transfer_ctx = CpiContext::new_with_signer(
