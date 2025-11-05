@@ -722,30 +722,37 @@ pub mod escrow {
                     EscrowError::InsufficientFunds
                 );
                 
+                // CRITICAL FIX: Get escrow_account reference ONCE to avoid RefCell tracking issues
+                // Research: https://github.com/solana-labs/solana/issues/20311
+                // Multiple to_account_info() calls create separate references that don't sync properly
+                let escrow_account = ctx.accounts.escrow_state.to_account_info();
+                
                 // Perform direct lamport transfers SEQUENTIALLY (one at a time)
                 // Transfer 1: escrow -> fee_collector
                 {
-                    let escrow_account = ctx.accounts.escrow_state.to_account_info();
-                    let fee_collector_account = ctx.accounts.platform_fee_collector.to_account_info();
-
                     let mut escrow_lamports = escrow_account.try_borrow_mut_lamports()?;
-                    let mut fee_collector_lamports = fee_collector_account.try_borrow_mut_lamports()?;
+                    let mut fee_collector_lamports = ctx.accounts.platform_fee_collector
+                        .to_account_info()
+                        .try_borrow_mut_lamports()?;
 
-                    **escrow_lamports -= platform_fee;
-                    **fee_collector_lamports += platform_fee;
-                }
+                    **escrow_lamports = escrow_lamports.checked_sub(platform_fee)
+                        .ok_or(EscrowError::InsufficientFunds)?;
+                    **fee_collector_lamports = fee_collector_lamports.checked_add(platform_fee)
+                        .ok_or(EscrowError::CalculationOverflow)?;
+                } // Borrows released here
                 
                 // Transfer 2: escrow -> seller
                 {
-                    let escrow_account = ctx.accounts.escrow_state.to_account_info();
-                    let seller_account = ctx.accounts.seller.to_account_info();
-
                     let mut escrow_lamports = escrow_account.try_borrow_mut_lamports()?;
-                    let mut seller_lamports = seller_account.try_borrow_mut_lamports()?;
+                    let mut seller_lamports = ctx.accounts.seller
+                        .to_account_info()
+                        .try_borrow_mut_lamports()?;
 
-                    **escrow_lamports -= seller_receives;
-                    **seller_lamports += seller_receives;
-                }
+                    **escrow_lamports = escrow_lamports.checked_sub(seller_receives)
+                        .ok_or(EscrowError::InsufficientFunds)?;
+                    **seller_lamports = seller_lamports.checked_add(seller_receives)
+                        .ok_or(EscrowError::CalculationOverflow)?;
+                } // Borrows released here
 
                 // Transfer NFT A from escrow to buyer
                 let nft_transfer_ctx = CpiContext::new_with_signer(
@@ -788,17 +795,20 @@ pub mod escrow {
                     EscrowError::InsufficientFunds
                 );
                 
+                // CRITICAL FIX: Get escrow_account reference ONCE to avoid RefCell tracking issues
                 // Perform direct lamport transfer
+                let escrow_account = ctx.accounts.escrow_state.to_account_info();
                 {
-                    let escrow_account = ctx.accounts.escrow_state.to_account_info();
-                    let fee_collector_account = ctx.accounts.platform_fee_collector.to_account_info();
-
                     let mut escrow_lamports = escrow_account.try_borrow_mut_lamports()?;
-                    let mut fee_collector_lamports = fee_collector_account.try_borrow_mut_lamports()?;
+                    let mut fee_collector_lamports = ctx.accounts.platform_fee_collector
+                        .to_account_info()
+                        .try_borrow_mut_lamports()?;
 
-                    **escrow_lamports -= platform_fee;
-                    **fee_collector_lamports += platform_fee;
-                }
+                    **escrow_lamports = escrow_lamports.checked_sub(platform_fee)
+                        .ok_or(EscrowError::InsufficientFunds)?;
+                    **fee_collector_lamports = fee_collector_lamports.checked_add(platform_fee)
+                        .ok_or(EscrowError::CalculationOverflow)?;
+                } // Borrow released here
 
                 // Transfer NFT A from escrow to buyer
                 let nft_a_transfer_ctx = CpiContext::new_with_signer(
@@ -868,30 +878,37 @@ pub mod escrow {
                     EscrowError::InsufficientFunds
                 );
                 
+                // CRITICAL FIX: Get escrow_account reference ONCE to avoid RefCell tracking issues
+                // Research: https://github.com/solana-labs/solana/issues/20311
+                // Multiple to_account_info() calls create separate references that don't sync properly
+                let escrow_account = ctx.accounts.escrow_state.to_account_info();
+                
                 // Perform direct lamport transfers SEQUENTIALLY (one at a time)
                 // Transfer 1: escrow -> fee_collector
                 {
-                    let escrow_account = ctx.accounts.escrow_state.to_account_info();
-                    let fee_collector_account = ctx.accounts.platform_fee_collector.to_account_info();
-
                     let mut escrow_lamports = escrow_account.try_borrow_mut_lamports()?;
-                    let mut fee_collector_lamports = fee_collector_account.try_borrow_mut_lamports()?;
+                    let mut fee_collector_lamports = ctx.accounts.platform_fee_collector
+                        .to_account_info()
+                        .try_borrow_mut_lamports()?;
 
-                    **escrow_lamports -= platform_fee;
-                    **fee_collector_lamports += platform_fee;
-                }
+                    **escrow_lamports = escrow_lamports.checked_sub(platform_fee)
+                        .ok_or(EscrowError::InsufficientFunds)?;
+                    **fee_collector_lamports = fee_collector_lamports.checked_add(platform_fee)
+                        .ok_or(EscrowError::CalculationOverflow)?;
+                } // Borrows released here
                 
                 // Transfer 2: escrow -> seller
                 {
-                    let escrow_account = ctx.accounts.escrow_state.to_account_info();
-                    let seller_account = ctx.accounts.seller.to_account_info();
-
                     let mut escrow_lamports = escrow_account.try_borrow_mut_lamports()?;
-                    let mut seller_lamports = seller_account.try_borrow_mut_lamports()?;
+                    let mut seller_lamports = ctx.accounts.seller
+                        .to_account_info()
+                        .try_borrow_mut_lamports()?;
 
-                    **escrow_lamports -= seller_sol_amount;
-                    **seller_lamports += seller_sol_amount;
-                }
+                    **escrow_lamports = escrow_lamports.checked_sub(seller_sol_amount)
+                        .ok_or(EscrowError::InsufficientFunds)?;
+                    **seller_lamports = seller_lamports.checked_add(seller_sol_amount)
+                        .ok_or(EscrowError::CalculationOverflow)?;
+                } // Borrows released here
 
                 // Transfer NFT A from escrow to buyer
                 let nft_a_transfer_ctx = CpiContext::new_with_signer(
