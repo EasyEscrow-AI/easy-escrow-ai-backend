@@ -452,35 +452,29 @@ export class RefundService {
       
       // Get USDC mint from config
       const { config } = await import('../config');
-      const usdcMintAddress = config.usdc.mintAddress;
-      if (!usdcMintAddress) {
-        throw new Error('USDC_MINT_ADDRESS not configured (check DEVNET_STAGING_USDC_MINT_ADDRESS or USDC_MINT_ADDRESS in environment)');
-      }
-      const usdcMint = new PublicKey(usdcMintAddress);
-      
       // Choose appropriate cancellation method based on agreement status
       let txId: string;
       
       if (agreement.status === AgreementStatus.EXPIRED) {
         // Use cancelIfExpired for expired agreements
         console.log(`[RefundService] Using cancelIfExpired for expired agreement`);
-        txId = await escrowService.cancelIfExpired(
+        txId = await escrowService.cancelIfExpired({
           escrowPda,
           buyer,
           seller,
           nftMint,
-          usdcMint
-        );
+          swapType: (agreement.swapType as 'NFT_FOR_SOL' | 'NFT_FOR_NFT_WITH_FEE' | 'NFT_FOR_NFT_PLUS_SOL') || 'NFT_FOR_SOL',
+        });
       } else {
         // Use adminCancel for other cancellation scenarios
         console.log(`[RefundService] Using adminCancel for ${agreement.status} agreement`);
-        txId = await escrowService.adminCancel(
+        txId = await escrowService.adminCancel({
           escrowPda,
           buyer,
           seller,
           nftMint,
-          usdcMint
-        );
+          swapType: (agreement.swapType as 'NFT_FOR_SOL' | 'NFT_FOR_NFT_WITH_FEE' | 'NFT_FOR_NFT_PLUS_SOL') || 'NFT_FOR_SOL',
+        });
       }
       
       console.log(`[RefundService] On-chain refund transaction submitted:`, txId);

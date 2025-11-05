@@ -687,7 +687,7 @@ export default SolanaService;
 export interface EscrowPDAResult {
   escrowPda: string;
   depositAddresses: {
-    usdc: string;
+    usdc: undefined; // Deprecated - SOL sent directly to escrowPda
     nft: string;
   };
   transactionId: string;
@@ -731,17 +731,10 @@ export const deriveEscrowPDA = async (
  */
 export const deriveDepositAddresses = async (
   escrowPda: PublicKey,
-  usdcMint: PublicKey,
   nftMint: PublicKey
-): Promise<{ usdc: string; nft: string }> => {
+): Promise<{ usdc: undefined; nft: string }> => {
   // Derive Associated Token Account addresses for the escrow PDA
-  // These are the proper SPL token accounts that can receive tokens
-  const usdcAta = await getAssociatedTokenAddress(
-    usdcMint,
-    escrowPda,
-    true // allowOwnerOffCurve - PDAs are off-curve
-  );
-
+  // Note: USDC deposits are deprecated - SOL is sent directly to escrowPda
   const nftAta = await getAssociatedTokenAddress(
     nftMint,
     escrowPda,
@@ -750,14 +743,12 @@ export const deriveDepositAddresses = async (
 
   console.log('[SolanaService] Derived deposit addresses:', {
     escrowPda: escrowPda.toString(),
-    usdcMint: usdcMint.toString(),
     nftMint: nftMint.toString(),
-    usdcAta: usdcAta.toString(),
     nftAta: nftAta.toString(),
   });
 
   return {
-    usdc: usdcAta.toString(),
+    usdc: undefined, // Deprecated - SOL sent directly to escrowPda
     nft: nftAta.toString(),
   };
 };
@@ -845,15 +836,6 @@ export const initializeEscrow = async (
       buyerPubkey
     );
 
-    // Get USDC mint address (use devnet USDC for testing)
-    const usdcMintStr = config.usdc?.mintAddress || 'Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr'; // Devnet USDC
-    console.log('[SolanaService] USDC Config:', {
-      configured: config.usdc?.mintAddress,
-      using: usdcMintStr,
-      isDefault: !config.usdc?.mintAddress
-    });
-    const usdcMint = new PublicKey(usdcMintStr);
-
     // Generate a unique escrow ID (timestamp-based)
     // This will be used to derive the PDA on-chain
     const escrowId = new BN(Date.now());
@@ -864,8 +846,8 @@ export const initializeEscrow = async (
     const { getEscrowProgramService } = await import('./escrow-program.service');
     const escrowService = getEscrowProgramService();
     
-    // Convert price to USDC amount (assuming 6 decimals for USDC)
-    const usdcAmount = new BN(parseFloat(params.price.toString()) * 1_000_000);
+    // Convert price to SOL amount in lamports (1 SOL = 1,000,000,000 lamports)
+    const solAmount = new BN(parseFloat(params.price.toString()) * 1_000_000_000);
     
     // Convert expiry to Unix timestamp with 60-second buffer
     // IMPORTANT: Add buffer to account for network delays and avoid 0x1771 (InvalidExpiry) error
@@ -879,7 +861,7 @@ export const initializeEscrow = async (
       buyer: buyerPubkey?.toString() || sellerPubkey.toString(),
       seller: sellerPubkey.toString(),
       nftMint: nftMintPubkey.toString(),
-      usdcAmount: usdcAmount.toString(),
+      solAmount: solAmount.toString(),
       expiryTimestamp: expiryTimestamp.toString(),
       platformFeeBps: params.feeBps,
     });
@@ -888,15 +870,16 @@ export const initializeEscrow = async (
     // The fee is set during initialization and stored in escrow state
     // This prevents users from bypassing fees during settlement
     // Note: Using seller as buyer for now since buyer might be optional
-    const { pda: anchorEscrowPda, txId } = await escrowService.initAgreement(
+    const { pda: anchorEscrowPda, txId } = await escrowService.initAgreement({
       escrowId,
-      buyerPubkey || sellerPubkey, // Use seller if buyer not specified
-      sellerPubkey,
-      nftMintPubkey,
-      usdcAmount,
+      buyer: buyerPubkey || sellerPubkey, // Use seller if buyer not specified
+      seller: sellerPubkey,
+      nftMint: nftMintPubkey,
+      swapType: 'NFT_FOR_SOL',
+      solAmount,
       expiryTimestamp,
-      params.feeBps // Platform fee in basis points (set by authorized admin)
-    );
+      platformFeeBps: params.feeBps, // Platform fee in basis points (set by authorized admin)
+    });
     
     console.log('[SolanaService] Escrow initialized on-chain:', {
       escrowPda: anchorEscrowPda.toString(),
@@ -906,7 +889,6 @@ export const initializeEscrow = async (
     // Derive deposit addresses using the Anchor-derived PDA
     const depositAddresses = await deriveDepositAddresses(
       anchorEscrowPda,
-      usdcMint,
       nftMintPubkey
     );
     

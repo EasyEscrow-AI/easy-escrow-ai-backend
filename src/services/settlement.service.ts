@@ -684,7 +684,6 @@ export class SettlementService {
         seller,
         buyer,
         nftMint,
-        usdcMint,
         feeCollector
       );
 

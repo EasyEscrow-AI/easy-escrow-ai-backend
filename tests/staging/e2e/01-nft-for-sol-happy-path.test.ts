@@ -160,8 +160,8 @@ describe('STAGING E2E - NFT-for-SOL Swap (Happy Path)', function () {
   it('should create an NFT-for-SOL escrow agreement', async function () {
     console.log('📝 Creating escrow agreement (NFT_FOR_SOL)...\n');
 
-    const idempotencyKey = generateIdempotencyKey('v2-nft-sol-test');
-    const expiry = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24 hours
+    const idempotencyKey = generateIdempotencyKey('nft-sol-test');
+    const expiry = new Date(Date.now() + 62 * 60 * 1000).toISOString(); // 1 hour 2 minutes (add buffer for network latency + staging server validation bug)
 
     const agreementData = {
       nftMint: nft.mint.toBase58(),
