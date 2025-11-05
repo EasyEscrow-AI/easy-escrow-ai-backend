@@ -1771,32 +1771,25 @@ pub fn settle_v2<'info>(ctx: Context<'_, '_, '_, 'info, SettleV2<'info>>) -> Res
             // NOTE: Cannot use SystemProgram::transfer() from PDA with data
             // Research: https://osec.io/blog/2025-05-14-king-of-the-sol/
             
-            // Get rent-exempt minimum for this account
-            let rent = Rent::get()?;
-            let escrow_account_info = ctx.accounts.escrow_state.to_account_info();
-            let min_rent_exempt = rent.minimum_balance(escrow_account_info.data_len());
+            // CRITICAL: Get account references ONCE - multiple to_account_info() calls break RefCell
+            let escrow_account = ctx.accounts.escrow_state.to_account_info();
+            let fee_collector_account = ctx.accounts.platform_fee_collector.to_account_info();
+            let seller_account = ctx.accounts.seller.to_account_info();
             
-            // Calculate transferable amount (current balance minus rent-exempt minimum)
-            let current_balance = escrow_account_info.lamports();
+            // Calculate rent and transferable amount
+            let rent = Rent::get()?;
+            let min_rent_exempt = rent.minimum_balance(escrow_account.data_len());
+            let current_balance = escrow_account.lamports();
             let transferable = current_balance.checked_sub(min_rent_exempt)
                 .ok_or(EscrowError::InsufficientFunds)?;
             
-            // CRITICAL: Calculate fee from TRANSFERABLE amount, not sol_amount
-            // This ensures we don't try to transfer more than available after rent
+            // Calculate fee from TRANSFERABLE amount (not sol_amount)
             let (platform_fee, seller_receives) = calculate_platform_fee(
                 transferable,
                 ctx.accounts.escrow_state.platform_fee_bps,
             )?;
             
-            // CRITICAL FIX: Get escrow_account reference ONCE to avoid RefCell tracking issues
-            // Research: https://github.com/solana-labs/solana/issues/20311
-            // Multiple to_account_info() calls create separate references that don't sync properly
-            let escrow_account = ctx.accounts.escrow_state.to_account_info();
-            let fee_collector_account = ctx.accounts.platform_fee_collector.to_account_info();
-            let seller_account = ctx.accounts.seller.to_account_info();
-            
             // Perform ATOMIC lamport transfers (all borrows held simultaneously)
-            // This ensures Solana runtime sees balanced transaction
             let mut escrow_lamports = escrow_account.try_borrow_mut_lamports()?;
             let mut fee_collector_lamports = fee_collector_account.try_borrow_mut_lamports()?;
             let mut seller_lamports = seller_account.try_borrow_mut_lamports()?;
@@ -1841,23 +1834,19 @@ pub fn settle_v2<'info>(ctx: Context<'_, '_, '_, 'info, SettleV2<'info>>) -> Res
             // Transfer platform fee (SOL) using direct lamport manipulation
             // NOTE: Cannot use SystemProgram::transfer() from PDA with data
             
-            // Get rent-exempt minimum for this account
-            let rent = Rent::get()?;
-            let escrow_account_info = ctx.accounts.escrow_state.to_account_info();
-            let min_rent_exempt = rent.minimum_balance(escrow_account_info.data_len());
+            // CRITICAL: Get account references ONCE
+            let escrow_account = ctx.accounts.escrow_state.to_account_info();
+            let fee_collector_account = ctx.accounts.platform_fee_collector.to_account_info();
             
-            // Calculate transferable amount (current balance minus rent-exempt minimum)
-            let current_balance = escrow_account_info.lamports();
+            // Calculate rent and transferable amount
+            let rent = Rent::get()?;
+            let min_rent_exempt = rent.minimum_balance(escrow_account.data_len());
+            let current_balance = escrow_account.lamports();
             let transferable = current_balance.checked_sub(min_rent_exempt)
                 .ok_or(EscrowError::InsufficientFunds)?;
             
-            // CRITICAL: Use TRANSFERABLE amount as fee, not sol_amount
-            // Full transferable amount goes to fee collector
+            // Use TRANSFERABLE amount as fee (full amount goes to fee collector)
             let platform_fee = transferable;
-            
-            // CRITICAL FIX: Get escrow_account reference ONCE to avoid RefCell tracking issues
-            let escrow_account = ctx.accounts.escrow_state.to_account_info();
-            let fee_collector_account = ctx.accounts.platform_fee_collector.to_account_info();
             
             // Perform ATOMIC lamport transfer
             let mut escrow_lamports = escrow_account.try_borrow_mut_lamports()?;
@@ -1915,27 +1904,23 @@ pub fn settle_v2<'info>(ctx: Context<'_, '_, '_, 'info, SettleV2<'info>>) -> Res
             // Transfer SOL using direct lamport manipulation
             // NOTE: Cannot use SystemProgram::transfer() from PDA with data
             
-            // Get rent-exempt minimum for this account
-            let rent = Rent::get()?;
-            let escrow_account_info = ctx.accounts.escrow_state.to_account_info();
-            let min_rent_exempt = rent.minimum_balance(escrow_account_info.data_len());
+            // CRITICAL: Get account references ONCE
+            let escrow_account = ctx.accounts.escrow_state.to_account_info();
+            let fee_collector_account = ctx.accounts.platform_fee_collector.to_account_info();
+            let seller_account = ctx.accounts.seller.to_account_info();
             
-            // Calculate transferable amount (current balance minus rent-exempt minimum)
-            let current_balance = escrow_account_info.lamports();
+            // Calculate rent and transferable amount
+            let rent = Rent::get()?;
+            let min_rent_exempt = rent.minimum_balance(escrow_account.data_len());
+            let current_balance = escrow_account.lamports();
             let transferable = current_balance.checked_sub(min_rent_exempt)
                 .ok_or(EscrowError::InsufficientFunds)?;
             
-            // CRITICAL: Calculate fee from TRANSFERABLE amount, not sol_amount
-            // This ensures we don't try to transfer more than available after rent
+            // Calculate fee from TRANSFERABLE amount
             let (platform_fee, seller_sol_amount) = calculate_platform_fee(
                 transferable,
                 ctx.accounts.escrow_state.platform_fee_bps,
             )?;
-            
-            // CRITICAL FIX: Get escrow_account reference ONCE to avoid RefCell tracking issues
-            let escrow_account = ctx.accounts.escrow_state.to_account_info();
-            let fee_collector_account = ctx.accounts.platform_fee_collector.to_account_info();
-            let seller_account = ctx.accounts.seller.to_account_info();
             
             // Perform ATOMIC lamport transfers (all borrows held simultaneously)
             let mut escrow_lamports = escrow_account.try_borrow_mut_lamports()?;
