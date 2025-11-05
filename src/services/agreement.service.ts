@@ -30,7 +30,7 @@ import BN from 'bn.js';
  */
 
 /**
- * Create a new agreement using SOL-based escrow v2
+ * Create a new agreement using SOL-based escrow
  */
 export const createAgreement = async (
   data: CreateAgreementDTO
@@ -91,9 +91,9 @@ export const createAgreement = async (
       console.log(`[AgreementService] Buyer NFT (NFT B): ${nftBMint.toString()}`);
     }
 
-    // 5. Initialize escrow on-chain using v2 method
+    // 5. Initialize escrow on-chain
     const escrowProgramService = new EscrowProgramService();
-    const escrowResult = await escrowProgramService.initAgreementV2({
+    const escrowResult = await escrowProgramService.initAgreement({
       escrowId,
       buyer: new PublicKey(data.buyer || data.seller), // Use seller as fallback if no buyer specified
       seller: new PublicKey(data.seller),
@@ -106,7 +106,7 @@ export const createAgreement = async (
       feePayer: feePayer as 'BUYER' | 'SELLER',
     });
 
-    console.log('[AgreementService] V2 Escrow Result:', {
+    console.log('[AgreementService] Escrow Result:', {
       pda: escrowResult.pda.toString(),
       txId: escrowResult.txId,
       swapType,

@@ -1,17 +1,17 @@
 /**
- * STAGING E2E Test - V2 Scenario 1: NFT for SOL Happy Path
+ * STAGING E2E Test - Scenario 1: NFT for SOL Happy Path
  * 
  * Complete NFT-for-SOL swap with settlement and fee distribution.
- * Tests the v2 escrow with SOL-based payments.
+ * Tests the SOL-based escrow payments.
  * 
  * Flow:
- * 1. Create v2 escrow agreement (NFT_FOR_SOL)
+ * 1. Create escrow agreement (NFT_FOR_SOL)
  * 2. Deposit NFT from seller
  * 3. Deposit SOL from buyer
  * 4. Automatic settlement
  * 5. Verify NFT transfer and SOL distribution with fees
  * 
- * Run: npm run test:staging:e2e:v2-nft-sol
+ * Run: npm run test:staging:e2e:nft-sol
  */
 
 // Load .env.staging file BEFORE any other imports
@@ -54,7 +54,7 @@ interface TestAgreement {
   transactionId: string;
 }
 
-describe('STAGING E2E - V2: NFT-for-SOL Swap (Happy Path)', function () {
+describe('STAGING E2E - NFT-for-SOL Swap (Happy Path)', function () {
   this.timeout(300000); // 5 minutes for settlement
 
   let connection: Connection;
@@ -104,7 +104,7 @@ describe('STAGING E2E - V2: NFT-for-SOL Swap (Happy Path)', function () {
 
   before(async function () {
     console.log('\n' + '='.repeat(80));
-    console.log('🚀 STAGING E2E Test - V2 NFT-for-SOL Swap');
+    console.log('🚀 STAGING E2E Test - NFT-for-SOL Swap');
     console.log('='.repeat(80));
     console.log(`   Environment: STAGING`);
     console.log(`   Network: ${STAGING_CONFIG.network}`);
@@ -157,8 +157,8 @@ describe('STAGING E2E - V2: NFT-for-SOL Swap (Happy Path)', function () {
     expect(tokenAccountInfo.amount.toString()).to.equal('1', 'Seller should own 1 NFT');
   });
 
-  it('should create a v2 NFT-for-SOL escrow agreement', async function () {
-    console.log('📝 Creating V2 escrow agreement (NFT_FOR_SOL)...\n');
+  it('should create an NFT-for-SOL escrow agreement', async function () {
+    console.log('📝 Creating escrow agreement (NFT_FOR_SOL)...\n');
 
     const idempotencyKey = generateIdempotencyKey('v2-nft-sol-test');
     const expiry = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24 hours
@@ -208,7 +208,7 @@ describe('STAGING E2E - V2: NFT-for-SOL Swap (Happy Path)', function () {
 
     agreement = response.data.data;
     transactions.push({
-      description: 'Create Agreement (init_agreement_v2)',
+      description: 'Create Agreement',
       txId: agreement.transactionId,
       timestamp: Date.now(),
     });
@@ -352,7 +352,7 @@ describe('STAGING E2E - V2: NFT-for-SOL Swap (Happy Path)', function () {
     expect(settledAgreement.settleTxId).to.exist;
 
     transactions.push({
-      description: 'Settlement (settle_v2)',
+      description: 'Settlement',
       txId: settledAgreement.settleTxId!,
       timestamp: Date.now(),
     });
@@ -446,7 +446,7 @@ describe('STAGING E2E - V2: NFT-for-SOL Swap (Happy Path)', function () {
     });
 
     console.log('='.repeat(80));
-    console.log('✅ V2 NFT-for-SOL E2E TEST PASSED!');
+    console.log('✅ NFT-for-SOL E2E TEST PASSED!');
     console.log('='.repeat(80) + '\n');
   });
 });

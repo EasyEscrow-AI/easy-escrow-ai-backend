@@ -1010,8 +1010,8 @@ export class EscrowProgramService {
   }
 
   /**
-   * Build unsigned deposit SELLER NFT transaction for V2 escrows (client-side signing)
-   * Uses deposit_seller_nft instruction for v2 EscrowStateV2
+   * Build unsigned deposit SELLER NFT transaction (client-side signing)
+   * Uses deposit_seller_nft instruction for EscrowState
    * PRODUCTION APPROACH: Returns transaction that client must sign
    */
   async buildDepositSellerNftTransaction(
@@ -1020,7 +1020,7 @@ export class EscrowProgramService {
     nftMint: PublicKey
   ): Promise<{ transaction: string; message: string }> {
     try {
-      console.log('[EscrowProgramService] Building unsigned v2 deposit seller NFT transaction:', {
+      console.log('[EscrowProgramService] Building unsigned deposit seller NFT transaction:', {
         escrowPda: escrowPda.toString(),
         seller: seller.toString(),
         nftMint: nftMint.toString(),
@@ -1041,7 +1041,7 @@ export class EscrowProgramService {
         TOKEN_PROGRAM_ID
       );
 
-      console.log('[EscrowProgramService] V2 NFT accounts:', {
+      console.log('[EscrowProgramService] NFT accounts:', {
         sellerTokenAccount: sellerTokenAccount.toString(),
         escrowTokenAccount: escrowTokenAccount.toString(),
       });
@@ -1065,7 +1065,7 @@ export class EscrowProgramService {
       instruction.keys.forEach((key: any) => {
         if (key.pubkey.equals(seller)) {
           console.log(
-            `[EscrowProgramService] V2: Setting ${key.pubkey.toString()} isSigner to false`
+            `[EscrowProgramService] Setting ${key.pubkey.toString()} isSigner to false`
           );
           key.isSigner = false;
         }
@@ -1081,7 +1081,7 @@ export class EscrowProgramService {
       );
 
       console.log(
-        `[EscrowProgramService] V2: Using priority fee: ${priorityFee} microlamports per CU (${
+        `[EscrowProgramService] Using priority fee: ${priorityFee} microlamports per CU (${
           isMainnet ? 'mainnet' : 'devnet'
         })`
       );
@@ -1123,7 +1123,7 @@ export class EscrowProgramService {
         const tipAmount = 1_000_000; // 0.001 SOL tip
 
         console.log(
-          `[EscrowProgramService] V2: Adding Jito tip: ${tipAmount} lamports to ${randomTipAccount.toString()}`
+          `[EscrowProgramService] Adding Jito tip: ${tipAmount} lamports to ${randomTipAccount.toString()}`
         );
 
         transaction.add(
@@ -1149,16 +1149,16 @@ export class EscrowProgramService {
       });
       const base64Transaction = serialized.toString('base64');
 
-      console.log('[EscrowProgramService] V2: Unsigned seller NFT deposit transaction built');
+      console.log('[EscrowProgramService] Unsigned seller NFT deposit transaction built');
 
       return {
         transaction: base64Transaction,
-        message: 'V2 transaction ready for client signing. Seller must sign and submit.',
+        message: 'Transaction ready for client signing. Seller must sign and submit.',
       };
     } catch (error) {
-      console.error('[EscrowProgramService] Failed to build v2 deposit seller NFT transaction:', error);
+      console.error('[EscrowProgramService] Failed to build deposit seller NFT transaction:', error);
       throw new Error(
-        `Failed to build v2 deposit seller NFT transaction: ${
+        `Failed to build deposit seller NFT transaction: ${
           error instanceof Error ? error.message : 'Unknown error'
         }`
       );
@@ -1461,10 +1461,10 @@ export class EscrowProgramService {
   }
 
   /**
-   * Settle V2 escrow - transfer NFT and SOL with platform fees
+   * Settle escrow - transfer NFT and SOL with platform fees
    * For SOL-based swap types (NFT_FOR_SOL, NFT_FOR_NFT_WITH_FEE, NFT_FOR_NFT_PLUS_SOL)
    */
-  async settleV2(
+  async settle(
     escrowPda: PublicKey,
     seller: PublicKey,
     buyer: PublicKey,
@@ -1472,7 +1472,7 @@ export class EscrowProgramService {
     feeCollector: PublicKey
   ): Promise<string> {
     try {
-      console.log('[EscrowProgramService] Settling V2 escrow:', {
+      console.log('[EscrowProgramService] Settling escrow:', {
         escrowPda: escrowPda.toString(),
         seller: seller.toString(),
         buyer: buyer.toString(),
@@ -1556,18 +1556,18 @@ export class EscrowProgramService {
       // Sign transaction
       transaction.sign(this.adminKeypair);
 
-      console.log('[EscrowProgramService] V2 settlement transaction signed, sending to network...');
+      console.log('[EscrowProgramService] Settlement transaction signed, sending to network...');
 
       // Send via Jito for mainnet, regular RPC for devnet
       const txId = await this.sendTransactionViaJito(transaction, isMainnet);
 
-      console.log('[EscrowProgramService] V2 settlement transaction complete:', txId);
+      console.log('[EscrowProgramService] Settlement transaction complete:', txId);
 
       return txId;
     } catch (error) {
-      console.error('[EscrowProgramService] V2 settlement failed:', error);
+      console.error('[EscrowProgramService] Settlement failed:', error);
       throw new Error(
-        `Failed to settle V2 escrow: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to settle escrow: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
     }
   }
@@ -1763,18 +1763,18 @@ export class EscrowProgramService {
 
   /**
    * ========================================
-   * V2 METHODS - SOL-BASED ESCROW SWAPS
+   * SOL-BASED ESCROW SWAP METHODS
    * ========================================
    */
 
   /**
-   * Initialize a new SOL-based escrow agreement (V2)
+   * Initialize a new SOL-based escrow agreement
    * Supports three swap types:
    * - NFT_FOR_SOL: Direct NFT <> SOL exchange
    * - NFT_FOR_NFT_WITH_FEE: NFT <> NFT with buyer paying separate SOL fee
    * - NFT_FOR_NFT_PLUS_SOL: NFT <> NFT with buyer providing SOL (fee extracted from it)
    */
-  async initAgreementV2(params: {
+  async initAgreement(params: {
     escrowId: BN;
     buyer: PublicKey;
     seller: PublicKey;
@@ -1800,7 +1800,7 @@ export class EscrowProgramService {
         feePayer = 'BUYER',
       } = params;
 
-      console.log('[EscrowProgramService] Initializing V2 escrow agreement:', {
+      console.log('[EscrowProgramService] Initializing escrow agreement:', {
         escrowId: escrowId.toString(),
         buyer: buyer.toString(),
         seller: seller.toString(),
@@ -1963,7 +1963,7 @@ export class EscrowProgramService {
       // Send transaction via Jito Block Engine
       const txId = await this.sendTransactionViaJito(transaction, isMainnet);
 
-      console.log('[EscrowProgramService] V2 Escrow initialized:', {
+      console.log('[EscrowProgramService] Escrow initialized:', {
         pda: escrowPda.toString(),
         txId: txId,
         swapType,
@@ -1971,9 +1971,9 @@ export class EscrowProgramService {
 
       return { pda: escrowPda, txId: txId };
     } catch (error) {
-      console.error('[EscrowProgramService] Failed to initialize V2 agreement:', error);
+      console.error('[EscrowProgramService] Failed to initialize agreement:', error);
       throw new Error(
-        `Failed to initialize V2 escrow agreement: ${
+        `Failed to initialize escrow agreement: ${
           error instanceof Error ? error.message : 'Unknown error'
         }`
       );
@@ -1981,7 +1981,7 @@ export class EscrowProgramService {
   }
 
   /**
-   * Deposit SOL into escrow (V2)
+   * Deposit SOL into escrow
    * Used for NFT_FOR_SOL and NFT_FOR_NFT_PLUS_SOL swap types
    * Buyer deposits SOL which is held in the escrow PDA
    */
@@ -2200,7 +2200,7 @@ export class EscrowProgramService {
   }
 
   /**
-   * Deposit Seller's NFT (NFT A) into escrow (V2)
+   * Deposit Seller's NFT (NFT A) into escrow
    * Used for all swap types - seller always deposits their NFT
    */
   async depositSellerNft(
@@ -2306,7 +2306,7 @@ export class EscrowProgramService {
   }
 
   /**
-   * Deposit Buyer's NFT (NFT B) into escrow (V2)
+   * Deposit Buyer's NFT (NFT B) into escrow
    * Used for NFT_FOR_NFT_WITH_FEE and NFT_FOR_NFT_PLUS_SOL swap types
    */
   async depositBuyerNft(
@@ -2418,10 +2418,10 @@ export class EscrowProgramService {
   }
 
   /**
-   * Cancel expired V2 escrow and refund assets
+   * Cancel expired escrow and refund assets
    * Handles refunding both SOL and NFTs based on swap type
    */
-  async cancelIfExpiredV2(params: {
+  async cancelIfExpired(params: {
     escrowPda: PublicKey;
     buyer: PublicKey;
     seller: PublicKey;
@@ -2432,7 +2432,7 @@ export class EscrowProgramService {
     try {
       const { escrowPda, buyer, seller, nftMint, swapType, nftBMint } = params;
 
-      console.log('[EscrowProgramService] Canceling expired V2 escrow:', {
+      console.log('[EscrowProgramService] Canceling expired escrow:', {
         escrowPda: escrowPda.toString(),
         buyer: buyer.toString(),
         seller: seller.toString(),
@@ -2554,12 +2554,12 @@ export class EscrowProgramService {
 
       const txId = await this.sendTransactionViaJito(transaction, isMainnet);
 
-      console.log('[EscrowProgramService] Expired V2 escrow canceled:', txId);
+      console.log('[EscrowProgramService] Expired escrow canceled:', txId);
       return txId;
     } catch (error) {
-      console.error('[EscrowProgramService] Failed to cancel expired V2 escrow:', error);
+      console.error('[EscrowProgramService] Failed to cancel expired escrow:', error);
       throw new Error(
-        `Failed to cancel expired V2 escrow: ${
+        `Failed to cancel expired escrow: ${
           error instanceof Error ? error.message : 'Unknown error'
         }`
       );
@@ -2567,10 +2567,10 @@ export class EscrowProgramService {
   }
 
   /**
-   * Admin cancel V2 escrow with full refunds
+   * Admin cancel escrow with full refunds
    * Emergency cancellation with asset refunds for all swap types
    */
-  async adminCancelV2(params: {
+  async adminCancel(params: {
     escrowPda: PublicKey;
     buyer: PublicKey;
     seller: PublicKey;
@@ -2581,7 +2581,7 @@ export class EscrowProgramService {
     try {
       const { escrowPda, buyer, seller, nftMint, swapType, nftBMint } = params;
 
-      console.log('[EscrowProgramService] Admin canceling V2 escrow:', {
+      console.log('[EscrowProgramService] Admin canceling escrow:', {
         escrowPda: escrowPda.toString(),
         buyer: buyer.toString(),
         seller: seller.toString(),
@@ -2704,12 +2704,12 @@ export class EscrowProgramService {
 
       const txId = await this.sendTransactionViaJito(transaction, isMainnet);
 
-      console.log('[EscrowProgramService] V2 Escrow admin canceled:', txId);
+      console.log('[EscrowProgramService] Escrow admin canceled:', txId);
       return txId;
     } catch (error) {
-      console.error('[EscrowProgramService] Failed to admin cancel V2 escrow:', error);
+      console.error('[EscrowProgramService] Failed to admin cancel escrow:', error);
       throw new Error(
-        `Failed to admin cancel V2 escrow: ${
+        `Failed to admin cancel escrow: ${
           error instanceof Error ? error.message : 'Unknown error'
         }`
       );

@@ -953,9 +953,9 @@ export class SettlementService {
         sellerReceived: feeCalculation.sellerReceived.toString(),
       });
 
-      // Call v2 settlement instruction
-      // Note: settle_v2 reads swap type and all parameters from escrow state
-      const txId = await escrowProgramService.settleV2(
+      // Call settlement instruction
+      // Note: settle reads swap type and all parameters from escrow state
+      const txId = await escrowProgramService.settle(
         escrowPda,
         seller,
         buyer,
