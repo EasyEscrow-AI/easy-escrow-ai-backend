@@ -1767,12 +1767,6 @@ pub fn settle_v2<'info>(ctx: Context<'_, '_, '_, 'info, SettleV2<'info>>) -> Res
                 EscrowError::DepositNotComplete
             );
 
-            // Calculate platform fee
-            let (platform_fee, seller_receives) = calculate_platform_fee(
-                ctx.accounts.escrow_state.sol_amount,
-                ctx.accounts.escrow_state.platform_fee_bps,
-            )?;
-
             // Transfer SOL using direct lamport manipulation
             // NOTE: Cannot use SystemProgram::transfer() from PDA with data
             // Research: https://osec.io/blog/2025-05-14-king-of-the-sol/
@@ -1787,14 +1781,12 @@ pub fn settle_v2<'info>(ctx: Context<'_, '_, '_, 'info, SettleV2<'info>>) -> Res
             let transferable = current_balance.checked_sub(min_rent_exempt)
                 .ok_or(EscrowError::InsufficientFunds)?;
             
-            // Verify we have enough to cover both transfers
-            let total_to_transfer = platform_fee.checked_add(seller_receives)
-                .ok_or(EscrowError::CalculationOverflow)?;
-            
-            require!(
-                transferable >= total_to_transfer,
-                EscrowError::InsufficientFunds
-            );
+            // CRITICAL: Calculate fee from TRANSFERABLE amount, not sol_amount
+            // This ensures we don't try to transfer more than available after rent
+            let (platform_fee, seller_receives) = calculate_platform_fee(
+                transferable,
+                ctx.accounts.escrow_state.platform_fee_bps,
+            )?;
             
             // CRITICAL FIX: Get escrow_account reference ONCE to avoid RefCell tracking issues
             // Research: https://github.com/solana-labs/solana/issues/20311
@@ -1848,7 +1840,6 @@ pub fn settle_v2<'info>(ctx: Context<'_, '_, '_, 'info, SettleV2<'info>>) -> Res
 
             // Transfer platform fee (SOL) using direct lamport manipulation
             // NOTE: Cannot use SystemProgram::transfer() from PDA with data
-            let platform_fee = ctx.accounts.escrow_state.sol_amount; // Full amount is the fee
             
             // Get rent-exempt minimum for this account
             let rent = Rent::get()?;
@@ -1860,11 +1851,9 @@ pub fn settle_v2<'info>(ctx: Context<'_, '_, '_, 'info, SettleV2<'info>>) -> Res
             let transferable = current_balance.checked_sub(min_rent_exempt)
                 .ok_or(EscrowError::InsufficientFunds)?;
             
-            // Verify we have enough for the fee
-            require!(
-                transferable >= platform_fee,
-                EscrowError::InsufficientFunds
-            );
+            // CRITICAL: Use TRANSFERABLE amount as fee, not sol_amount
+            // Full transferable amount goes to fee collector
+            let platform_fee = transferable;
             
             // CRITICAL FIX: Get escrow_account reference ONCE to avoid RefCell tracking issues
             let escrow_account = ctx.accounts.escrow_state.to_account_info();
@@ -1923,12 +1912,6 @@ pub fn settle_v2<'info>(ctx: Context<'_, '_, '_, 'info, SettleV2<'info>>) -> Res
                 EscrowError::DepositNotComplete
             );
 
-            // Calculate platform fee and seller's SOL amount
-            let (platform_fee, seller_sol_amount) = calculate_platform_fee(
-                ctx.accounts.escrow_state.sol_amount,
-                ctx.accounts.escrow_state.platform_fee_bps,
-            )?;
-
             // Transfer SOL using direct lamport manipulation
             // NOTE: Cannot use SystemProgram::transfer() from PDA with data
             
@@ -1942,14 +1925,12 @@ pub fn settle_v2<'info>(ctx: Context<'_, '_, '_, 'info, SettleV2<'info>>) -> Res
             let transferable = current_balance.checked_sub(min_rent_exempt)
                 .ok_or(EscrowError::InsufficientFunds)?;
             
-            // Verify we have enough to cover both transfers
-            let total_to_transfer = platform_fee.checked_add(seller_sol_amount)
-                .ok_or(EscrowError::CalculationOverflow)?;
-            
-            require!(
-                transferable >= total_to_transfer,
-                EscrowError::InsufficientFunds
-            );
+            // CRITICAL: Calculate fee from TRANSFERABLE amount, not sol_amount
+            // This ensures we don't try to transfer more than available after rent
+            let (platform_fee, seller_sol_amount) = calculate_platform_fee(
+                transferable,
+                ctx.accounts.escrow_state.platform_fee_bps,
+            )?;
             
             // CRITICAL FIX: Get escrow_account reference ONCE to avoid RefCell tracking issues
             let escrow_account = ctx.accounts.escrow_state.to_account_info();
