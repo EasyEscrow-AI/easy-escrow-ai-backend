@@ -917,7 +917,8 @@
           }
         },
         {
-          "name": "buyer"
+          "name": "buyer",
+          "writable": true
         },
         {
           "name": "nft_mint"
