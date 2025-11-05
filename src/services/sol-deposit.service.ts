@@ -39,14 +39,14 @@ function lamportsToSol(lamports: bigint): string {
 /**
  * SOL Deposit Service Class
  *
- * Handles SOL deposit detection, validation, and database updates for v2 escrow.
+ * Handles SOL deposit detection, validation, and database updates for SOL-based escrow.
  */
 export class SolDepositService {
   private solanaService: ReturnType<typeof getSolanaService>;
 
   constructor() {
     this.solanaService = getSolanaService();
-    console.log(`[SolDepositService] Initialized for v2 SOL-based escrow`);
+    console.log(`[SolDepositService] Initialized for SOL-based escrow`);
   }
 
   /**

@@ -190,11 +190,11 @@ export class MonitoringService {
       
       // Collect all accounts that need monitoring
       for (const agreement of agreements) {
-        // Determine if this is a v2 (SOL-based) agreement
-        const isV2 = agreement.swapType && ['NFT_FOR_SOL', 'NFT_FOR_NFT_WITH_FEE', 'NFT_FOR_NFT_PLUS_SOL'].includes(agreement.swapType);
+        // Determine if this is a SOL-based agreement
+        const isSOLBased = agreement.swapType && ['NFT_FOR_SOL', 'NFT_FOR_NFT_WITH_FEE', 'NFT_FOR_NFT_PLUS_SOL'].includes(agreement.swapType);
 
-        if (isV2) {
-          // V2: Monitor escrow PDA for SOL deposits
+        if (isSOLBased) {
+          // Monitor escrow PDA for SOL deposits
           if (
             agreement.escrowPda &&
             (agreement.swapType === 'NFT_FOR_SOL' || agreement.swapType === 'NFT_FOR_NFT_PLUS_SOL') &&
@@ -205,10 +205,10 @@ export class MonitoringService {
               agreementId: agreement.agreementId,
               type: 'sol'
             });
-            console.log(`[MonitoringService] Monitoring SOL deposits for v2 agreement: ${agreement.agreementId}`);
+            console.log(`[MonitoringService] Monitoring SOL deposits for agreement: ${agreement.agreementId}`);
           }
 
-          // V2: Monitor seller NFT
+          // Monitor seller NFT
           if (
             agreement.nftDepositAddr &&
             !['NFT_LOCKED', 'BOTH_LOCKED'].includes(agreement.status)
@@ -501,7 +501,7 @@ export class MonitoringService {
   }
 
   /**
-   * Handle SOL account change (for v2 SOL-based escrows)
+   * Handle SOL account change (for SOL-based escrows)
    */
   private async handleSolAccountChange(
     publicKey: string,
