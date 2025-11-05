@@ -21,7 +21,6 @@ export const standardRateLimiter = rateLimit({
   },
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-  validate: { trustProxy: false }, // Skip trust proxy validation (running behind DO proxy)
   handler: (req: Request, res: Response) => {
     res.status(429).json({
       error: 'Too Many Requests',
@@ -46,7 +45,6 @@ export const strictRateLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  validate: { trustProxy: false }, // Skip trust proxy validation (running behind DO proxy)
   skipSuccessfulRequests: false, // Count all requests
   handler: (req: Request, res: Response) => {
     res.status(429).json({
@@ -72,7 +70,6 @@ export const authRateLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  validate: { trustProxy: false }, // Skip trust proxy validation (running behind DO proxy)
   skipSuccessfulRequests: true, // Don't count successful requests
   handler: (req: Request, res: Response) => {
     res.status(429).json({

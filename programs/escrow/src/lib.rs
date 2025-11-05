@@ -722,22 +722,28 @@ pub mod escrow {
                     EscrowError::InsufficientFunds
                 );
                 
-                // Perform direct lamport transfers while holding all borrows
+                // Perform direct lamport transfers SEQUENTIALLY (one at a time)
+                // Transfer 1: escrow -> fee_collector
                 {
                     let escrow_account = ctx.accounts.escrow_state.to_account_info();
                     let fee_collector_account = ctx.accounts.platform_fee_collector.to_account_info();
-                    let seller_account = ctx.accounts.seller.to_account_info();
 
                     let mut escrow_lamports = escrow_account.try_borrow_mut_lamports()?;
                     let mut fee_collector_lamports = fee_collector_account.try_borrow_mut_lamports()?;
+
+                    **escrow_lamports -= platform_fee;
+                    **fee_collector_lamports += platform_fee;
+                }
+                
+                // Transfer 2: escrow -> seller
+                {
+                    let escrow_account = ctx.accounts.escrow_state.to_account_info();
+                    let seller_account = ctx.accounts.seller.to_account_info();
+
+                    let mut escrow_lamports = escrow_account.try_borrow_mut_lamports()?;
                     let mut seller_lamports = seller_account.try_borrow_mut_lamports()?;
 
-                    // Subtract from escrow (preserving rent-exempt minimum)
-                    **escrow_lamports -= platform_fee;
                     **escrow_lamports -= seller_receives;
-                    
-                    // Add to recipients
-                    **fee_collector_lamports += platform_fee;
                     **seller_lamports += seller_receives;
                 }
 
@@ -862,19 +868,28 @@ pub mod escrow {
                     EscrowError::InsufficientFunds
                 );
                 
-                // Perform direct lamport transfers while holding all borrows
+                // Perform direct lamport transfers SEQUENTIALLY (one at a time)
+                // Transfer 1: escrow -> fee_collector
                 {
                     let escrow_account = ctx.accounts.escrow_state.to_account_info();
                     let fee_collector_account = ctx.accounts.platform_fee_collector.to_account_info();
-                    let seller_account = ctx.accounts.seller.to_account_info();
 
                     let mut escrow_lamports = escrow_account.try_borrow_mut_lamports()?;
                     let mut fee_collector_lamports = fee_collector_account.try_borrow_mut_lamports()?;
-                    let mut seller_lamports = seller_account.try_borrow_mut_lamports()?;
 
                     **escrow_lamports -= platform_fee;
-                    **escrow_lamports -= seller_sol_amount;
                     **fee_collector_lamports += platform_fee;
+                }
+                
+                // Transfer 2: escrow -> seller
+                {
+                    let escrow_account = ctx.accounts.escrow_state.to_account_info();
+                    let seller_account = ctx.accounts.seller.to_account_info();
+
+                    let mut escrow_lamports = escrow_account.try_borrow_mut_lamports()?;
+                    let mut seller_lamports = seller_account.try_borrow_mut_lamports()?;
+
+                    **escrow_lamports -= seller_sol_amount;
                     **seller_lamports += seller_sol_amount;
                 }
 

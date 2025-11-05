@@ -223,8 +223,8 @@ describe('STAGING E2E - V2: NFT-for-SOL Swap (Happy Path)', function () {
     console.log('🎨 Depositing NFT to escrow...\n');
 
     // Wait to avoid rate limiting
-    console.log('   ⏳ Waiting 10 seconds to avoid rate limiting...');
-    await new Promise(resolve => setTimeout(resolve, 10000));
+    console.log('   ⏳ Waiting 5 seconds to avoid rate limiting...');
+    await new Promise(resolve => setTimeout(resolve, 5000));
 
     // Prepare unsigned transaction
     const prepareResponse = await axios.post(
@@ -280,8 +280,8 @@ describe('STAGING E2E - V2: NFT-for-SOL Swap (Happy Path)', function () {
     console.log('💎 Depositing SOL to escrow...\n');
 
     // Wait to avoid rate limiting
-    console.log('   ⏳ Waiting 10 seconds to avoid rate limiting...');
-    await new Promise(resolve => setTimeout(resolve, 10000));
+    console.log('   ⏳ Waiting 5 seconds to avoid rate limiting...');
+    await new Promise(resolve => setTimeout(resolve, 5000));
 
     // Prepare unsigned transaction
     const prepareResponse = await axios.post(
