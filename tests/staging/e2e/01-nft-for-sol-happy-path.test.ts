@@ -345,9 +345,9 @@ describe('STAGING E2E - NFT-for-SOL Swap (Happy Path)', function () {
     console.log(`   ✅ SOL Deposited`);
     console.log(`   Transaction: ${getExplorerUrl(txId, 'tx')}\n`);
 
-    // Wait a moment for transaction to propagate
-    console.log('   ⏳ Waiting 3 seconds for transaction to propagate...');
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    // Wait for transaction to fully propagate and account to be created
+    console.log('   ⏳ Waiting 10 seconds for sol_vault account creation...');
+    await new Promise(resolve => setTimeout(resolve, 10000));
 
     // Manually trigger deposit validation (faster than waiting for WebSocket subscription)
     console.log('   🔍 Manually validating SOL deposit...');
@@ -356,6 +356,17 @@ describe('STAGING E2E - NFT-for-SOL Swap (Happy Path)', function () {
     );
 
     console.log(`   Validation result:`, JSON.stringify(validateResponse.data, null, 2));
+    
+    // If validation failed, wait longer and try again
+    if (!validateResponse.data.data.validations.sol.success) {
+      console.log('   ⚠️  First validation failed, waiting 10 more seconds and retrying...');
+      await new Promise(resolve => setTimeout(resolve, 10000));
+      
+      const retryResponse = await axios.post(
+        `${STAGING_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}/validate-deposits`
+      );
+      console.log(`   Retry validation result:`, JSON.stringify(retryResponse.data, null, 2));
+    }
 
     // Check updated status
     const statusResponse = await axios.get(

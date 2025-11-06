@@ -229,17 +229,29 @@ export class SolDepositService {
       // Derive sol_vault PDA (SOL is stored here, not in escrow PDA)
       const solVaultPda = await this.solanaService.deriveSolVaultPda(agreement.escrowPda);
       console.log(`[SolDepositService] Checking sol_vault balance: ${solVaultPda}`);
+      console.log(`[SolDepositService] Explorer: https://explorer.solana.com/address/${solVaultPda}?cluster=devnet`);
 
       // Fetch sol_vault PDA account
       const accountInfo = await this.solanaService.getConnection().getAccountInfo(new PublicKey(solVaultPda));
 
       if (!accountInfo) {
-        console.log(`[SolDepositService] sol_vault PDA not found yet: ${solVaultPda}`);
+        console.log(`[SolDepositService] ⚠️  sol_vault PDA not found: ${solVaultPda}`);
+        console.log(`[SolDepositService] This means the deposit_sol instruction hasn't created the account yet or failed`);
+        
+        // Also check if escrow PDA has SOL balance as a fallback
+        const escrowPda = new PublicKey(agreement.escrowPda);
+        const escrowAccountInfo = await this.solanaService.getConnection().getAccountInfo(escrowPda);
+        if (escrowAccountInfo) {
+          console.log(`[SolDepositService] Escrow PDA balance: ${escrowAccountInfo.lamports} lamports`);
+        }
+        
         return {
           success: false,
-          error: 'SOL vault PDA account not found (deposit may not have occurred yet)',
+          error: `SOL vault PDA account not found: ${solVaultPda}. Check transaction succeeded and created the account.`,
         };
       }
+      
+      console.log(`[SolDepositService] ✅ sol_vault PDA found with balance: ${accountInfo.lamports} lamports`);
 
       // Process the account change (triggers deposit recording)
       return await this.handleSolAccountChange(
