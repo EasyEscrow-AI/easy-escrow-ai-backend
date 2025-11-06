@@ -48,6 +48,7 @@ export class MonitoringService {
   private isRunning: boolean = false;
   private config: Required<MonitoringConfig>;
   private pollingTimer?: NodeJS.Timeout;
+  private agreementReloadTimer?: NodeJS.Timeout;
 
   constructor(monitoringConfig?: MonitoringConfig) {
     this.solanaService = getSolanaService();
@@ -112,6 +113,12 @@ export class MonitoringService {
       if (this.pollingTimer) {
         clearInterval(this.pollingTimer);
         this.pollingTimer = undefined;
+      }
+
+      // Stop agreement reloading
+      if (this.agreementReloadTimer) {
+        clearInterval(this.agreementReloadTimer);
+        this.agreementReloadTimer = undefined;
       }
 
       // Unsubscribe from all accounts
@@ -547,7 +554,7 @@ export class MonitoringService {
   }
 
   /**
-   * Start fallback polling for reliability
+   * Start fallback polling for reliability and periodic agreement reloading
    */
   private startPolling(): void {
     console.log(
@@ -557,6 +564,18 @@ export class MonitoringService {
     this.pollingTimer = setInterval(async () => {
       await this.pollAccounts();
     }, this.config.pollingInterval);
+
+    // Periodically reload pending agreements (every 30 seconds)
+    // This ensures new agreements created after service startup are monitored
+    console.log('[MonitoringService] Starting periodic agreement reload (interval: 30s)');
+    this.agreementReloadTimer = setInterval(async () => {
+      try {
+        console.log('[MonitoringService] Reloading pending agreements...');
+        await this.loadPendingAgreements();
+      } catch (error) {
+        console.error('[MonitoringService] Error reloading agreements:', error);
+      }
+    }, 30000); // 30 seconds
   }
 
   /**
