@@ -26,7 +26,7 @@
 // Import all test scenarios in execution order
 // Each import registers its test suite with Mocha
 
-import './01-solana-nft-usdc-happy-path.test';      // 11 tests, ~46s
+import './01-nft-for-sol-happy-path.test';      // 11 tests, ~46s
 import './02-agreement-expiry-refund.test';         //  2 tests, ~30s
 import './03-admin-cancellation.test';              //  1 test,  ~15s
 import './04-zero-fee-transactions.test';           //  1 test,  ~10s
