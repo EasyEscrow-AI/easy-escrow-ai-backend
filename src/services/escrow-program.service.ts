@@ -1180,7 +1180,7 @@ export class EscrowProgramService {
       // Note: Anchor converts snake_case to camelCase
       // Note: settle_v2 is permissionless - anyone can trigger settlement
       const transaction = await (this.program.methods as any)
-        .settleV2()
+        .settle()
         .accountsStrict({
           caller: this.adminKeypair.publicKey, // Permissionless - admin can trigger
           escrowState: escrowPda,
@@ -1351,7 +1351,7 @@ export class EscrowProgramService {
       // Build instruction
       // Note: Anchor converts snake_case (Rust) to camelCase (TypeScript)
       const instruction = await (this.program.methods as any)
-        .initAgreementV2(
+        .initAgreement(
           escrowId,
           swapTypeEnum,
           solAmount || null,
@@ -1984,7 +1984,7 @@ export class EscrowProgramService {
 
       // Build instruction
       const instruction = await (this.program.methods as any)
-        .cancelIfExpiredV2()
+        .cancelIfExpired()
         .accountsStrict({
           escrowState: escrowPda,
           buyer,
@@ -2133,7 +2133,7 @@ export class EscrowProgramService {
 
       // Build instruction
       const instruction = await (this.program.methods as any)
-        .adminCancelV2()
+        .adminCancel()
         .accountsStrict({
           escrowState: escrowPda,
           buyer,

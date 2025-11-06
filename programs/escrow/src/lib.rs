@@ -176,7 +176,9 @@ pub mod escrow {
         Ok(())
     }
 
-    /// Deposit NFT into escrow
+    /// Deposit NFT into escrow (LEGACY - USDC-based)
+    /// FEATURE: usdc - This instruction is only available when the usdc feature is enabled
+    #[cfg(feature = "usdc")]
     pub fn deposit_nft(ctx: Context<DepositNft>) -> Result<()> {
         let escrow = &mut ctx.accounts.escrow_state;
         
@@ -417,13 +419,13 @@ pub mod escrow {
     }
 
     // ============================================================================
-    // V2 INSTRUCTIONS - SOL-BASED ESCROW (All Swap Types)
+    // SOL-BASED ESCROW INSTRUCTIONS (All Swap Types)
     // ============================================================================
 
     /// Initialize a new SOL-based escrow agreement
     /// Admin-only operation to ensure all escrows are tracked in the database
-    pub fn init_agreement_v2(
-        ctx: Context<InitAgreementV2>,
+    pub fn init_agreement(
+        ctx: Context<InitAgreement>,
         escrow_id: u64,
         swap_type: SwapType,
         sol_amount: Option<u64>,
@@ -663,7 +665,7 @@ pub mod escrow {
     /// Settle the escrow and distribute assets
     /// Handles both NFT<>SOL and NFT<>NFT with SOL fee swap types
     /// Permissionless: Anyone can trigger settlement once both deposits are confirmed
-    pub fn settle_v2<'info>(ctx: Context<'_, '_, '_, 'info, SettleV2<'info>>) -> Result<()> {
+    pub fn settle<'info>(ctx: Context<'_, '_, '_, 'info, Settle<'info>>) -> Result<()> {
         // Validate escrow status
         require!(
             ctx.accounts.escrow_state.status == EscrowStatus::Pending,
@@ -954,7 +956,7 @@ pub mod escrow {
     }
 
     /// Cancel expired escrow and return assets to original owners
-    pub fn cancel_if_expired_v2<'info>(ctx: Context<'_, '_, '_, 'info, CancelIfExpiredV2<'info>>) -> Result<()> {
+    pub fn cancel_if_expired<'info>(ctx: Context<'_, '_, '_, 'info, CancelIfExpired<'info>>) -> Result<()> {
         // Validate escrow status
         require!(
             ctx.accounts.escrow_state.status == EscrowStatus::Pending,
@@ -1041,7 +1043,7 @@ pub mod escrow {
     }
 
     /// Admin emergency cancel with full refunds
-    pub fn admin_cancel_v2<'info>(ctx: Context<'_, '_, '_, 'info, AdminCancelV2<'info>>) -> Result<()> {
+    pub fn admin_cancel<'info>(ctx: Context<'_, '_, '_, 'info, AdminCancel<'info>>) -> Result<()> {
         // Validate escrow status
         require!(
             ctx.accounts.escrow_state.status == EscrowStatus::Pending,
@@ -1193,6 +1195,8 @@ pub struct DepositUsdc<'info> {
     pub system_program: Program<'info, System>,
 }
 
+/// FEATURE: usdc - This account structure is only available when the usdc feature is enabled
+#[cfg(feature = "usdc")]
 #[derive(Accounts)]
 pub struct DepositNft<'info> {
     #[account(
@@ -1328,9 +1332,11 @@ pub struct AdminCancel<'info> {
     pub token_program: Program<'info, Token>,
 }
 
-// State Account
+// State Account (LEGACY - USDC-based)
 
-/// Escrow state account storing agreement details
+/// LEGACY: Escrow state account for USDC-based escrow (deprecated)
+/// FEATURE: usdc - This state is only available when the usdc feature is enabled
+#[cfg(feature = "usdc")]
 #[account]
 #[derive(InitSpace)]
 pub struct EscrowState {
@@ -1431,7 +1437,7 @@ pub enum EscrowError {
 }
 
 // ============================================================================
-// SOL-Based Escrow Implementation (V2)
+// SOL-Based Escrow Implementation
 // ============================================================================
 
 /// BETA Launch Limits for SOL: 0.01 SOL minimum, 15 SOL maximum
@@ -1454,10 +1460,10 @@ pub enum FeePayer {
     Seller, // Alternative: Seller pays the fee
 }
 
-/// Updated escrow state for SOL-based swaps
+/// Escrow state account for SOL-based swaps
 #[account]
 #[derive(InitSpace)]
-pub struct EscrowStateV2 {
+pub struct EscrowState {
     pub escrow_id: u64,
     pub buyer: Pubkey,
     pub seller: Pubkey,
@@ -1494,8 +1500,8 @@ pub struct EscrowStateV2 {
 
 /// Initialize a new SOL-based escrow agreement
 /// Admin-only operation to ensure all escrows are tracked in the database
-pub fn init_agreement_v2(
-    ctx: Context<InitAgreementV2>,
+pub fn init_agreement(
+    ctx: Context<InitAgreement>,
     escrow_id: u64,
     swap_type: SwapType,
     sol_amount: Option<u64>,
@@ -1734,7 +1740,7 @@ pub fn deposit_buyer_nft(ctx: Context<DepositBuyerNft>) -> Result<()> {
 
 /// Settle the escrow and distribute assets
 /// Handles both NFT<>SOL and NFT<>NFT with SOL fee swap types
-pub fn settle_v2<'info>(ctx: Context<'_, '_, '_, 'info, SettleV2<'info>>) -> Result<()> {
+pub fn settle<'info>(ctx: Context<'_, '_, '_, 'info, Settle<'info>>) -> Result<()> {
     // Validate escrow status
     require!(
         ctx.accounts.escrow_state.status == EscrowStatus::Pending,
@@ -1771,23 +1777,29 @@ pub fn settle_v2<'info>(ctx: Context<'_, '_, '_, 'info, SettleV2<'info>>) -> Res
             // NOTE: Cannot use SystemProgram::transfer() from PDA with data
             // Research: https://osec.io/blog/2025-05-14-king-of-the-sol/
             
-            // CRITICAL: Get account references ONCE - multiple to_account_info() calls break RefCell
+            // Calculate fee from deposited SOL amount
+            let sol_amount = ctx.accounts.escrow_state.sol_amount;
+            let (platform_fee, seller_receives) = calculate_platform_fee(
+                sol_amount,
+                ctx.accounts.escrow_state.platform_fee_bps,
+            )?;
+            
+            // Get account references ONCE - multiple to_account_info() calls break RefCell
             let escrow_account = ctx.accounts.escrow_state.to_account_info();
             let fee_collector_account = ctx.accounts.platform_fee_collector.to_account_info();
             let seller_account = ctx.accounts.seller.to_account_info();
             
-            // Calculate rent and transferable amount
+            // Verify escrow has enough balance (including rent-exempt minimum)
             let rent = Rent::get()?;
             let min_rent_exempt = rent.minimum_balance(escrow_account.data_len());
             let current_balance = escrow_account.lamports();
             let transferable = current_balance.checked_sub(min_rent_exempt)
                 .ok_or(EscrowError::InsufficientFunds)?;
             
-            // Calculate fee from TRANSFERABLE amount (not sol_amount)
-            let (platform_fee, seller_receives) = calculate_platform_fee(
-                transferable,
-                ctx.accounts.escrow_state.platform_fee_bps,
-            )?;
+            require!(
+                transferable >= sol_amount,
+                EscrowError::InsufficientFunds
+            );
             
             // Perform ATOMIC lamport transfers (all borrows held simultaneously)
             let mut escrow_lamports = escrow_account.try_borrow_mut_lamports()?;
@@ -1834,19 +1846,24 @@ pub fn settle_v2<'info>(ctx: Context<'_, '_, '_, 'info, SettleV2<'info>>) -> Res
             // Transfer platform fee (SOL) using direct lamport manipulation
             // NOTE: Cannot use SystemProgram::transfer() from PDA with data
             
-            // CRITICAL: Get account references ONCE
+            // Full deposited SOL amount goes to platform as fee
+            let platform_fee = ctx.accounts.escrow_state.sol_amount;
+            
+            // Get account references ONCE
             let escrow_account = ctx.accounts.escrow_state.to_account_info();
             let fee_collector_account = ctx.accounts.platform_fee_collector.to_account_info();
             
-            // Calculate rent and transferable amount
+            // Verify escrow has enough balance (including rent-exempt minimum)
             let rent = Rent::get()?;
             let min_rent_exempt = rent.minimum_balance(escrow_account.data_len());
             let current_balance = escrow_account.lamports();
             let transferable = current_balance.checked_sub(min_rent_exempt)
                 .ok_or(EscrowError::InsufficientFunds)?;
             
-            // Use TRANSFERABLE amount as fee (full amount goes to fee collector)
-            let platform_fee = transferable;
+            require!(
+                transferable >= platform_fee,
+                EscrowError::InsufficientFunds
+            );
             
             // Perform ATOMIC lamport transfer
             let mut escrow_lamports = escrow_account.try_borrow_mut_lamports()?;
@@ -1904,23 +1921,29 @@ pub fn settle_v2<'info>(ctx: Context<'_, '_, '_, 'info, SettleV2<'info>>) -> Res
             // Transfer SOL using direct lamport manipulation
             // NOTE: Cannot use SystemProgram::transfer() from PDA with data
             
-            // CRITICAL: Get account references ONCE
+            // Calculate fee from deposited SOL amount
+            let sol_amount = ctx.accounts.escrow_state.sol_amount;
+            let (platform_fee, seller_sol_amount) = calculate_platform_fee(
+                sol_amount,
+                ctx.accounts.escrow_state.platform_fee_bps,
+            )?;
+            
+            // Get account references ONCE
             let escrow_account = ctx.accounts.escrow_state.to_account_info();
             let fee_collector_account = ctx.accounts.platform_fee_collector.to_account_info();
             let seller_account = ctx.accounts.seller.to_account_info();
             
-            // Calculate rent and transferable amount
+            // Verify escrow has enough balance (including rent-exempt minimum)
             let rent = Rent::get()?;
             let min_rent_exempt = rent.minimum_balance(escrow_account.data_len());
             let current_balance = escrow_account.lamports();
             let transferable = current_balance.checked_sub(min_rent_exempt)
                 .ok_or(EscrowError::InsufficientFunds)?;
             
-            // Calculate fee from TRANSFERABLE amount
-            let (platform_fee, seller_sol_amount) = calculate_platform_fee(
-                transferable,
-                ctx.accounts.escrow_state.platform_fee_bps,
-            )?;
+            require!(
+                transferable >= sol_amount,
+                EscrowError::InsufficientFunds
+            );
             
             // Perform ATOMIC lamport transfers (all borrows held simultaneously)
             let mut escrow_lamports = escrow_account.try_borrow_mut_lamports()?;
@@ -1985,7 +2008,7 @@ pub fn settle_v2<'info>(ctx: Context<'_, '_, '_, 'info, SettleV2<'info>>) -> Res
 }
 
 /// Cancel expired escrow and return assets to original owners
-pub fn cancel_if_expired_v2<'info>(ctx: Context<'_, '_, '_, 'info, CancelIfExpiredV2<'info>>) -> Result<()> {
+pub fn cancel_if_expired<'info>(ctx: Context<'_, '_, '_, 'info, CancelIfExpired<'info>>) -> Result<()> {
     // Validate escrow status
     require!(
         ctx.accounts.escrow_state.status == EscrowStatus::Pending,
@@ -2072,7 +2095,7 @@ pub fn cancel_if_expired_v2<'info>(ctx: Context<'_, '_, '_, 'info, CancelIfExpir
 }
 
 /// Admin emergency cancel with full refunds
-pub fn admin_cancel_v2<'info>(ctx: Context<'_, '_, '_, 'info, AdminCancelV2<'info>>) -> Result<()> {
+pub fn admin_cancel<'info>(ctx: Context<'_, '_, '_, 'info, AdminCancel<'info>>) -> Result<()> {
     // Validate escrow status
     require!(
         ctx.accounts.escrow_state.status == EscrowStatus::Pending,
@@ -2163,7 +2186,7 @@ pub fn admin_cancel_v2<'info>(ctx: Context<'_, '_, '_, 'info, AdminCancelV2<'inf
 
 #[derive(Accounts)]
 #[instruction(escrow_id: u64)]
-pub struct InitAgreementV2<'info> {
+pub struct InitAgreement<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
     
@@ -2176,11 +2199,11 @@ pub struct InitAgreementV2<'info> {
     #[account(
         init,
         payer = admin,
-        space = 8 + EscrowStateV2::INIT_SPACE,
+        space = 8 + EscrowState::INIT_SPACE,
         seeds = [b"escrow", escrow_id.to_le_bytes().as_ref()],
         bump
     )]
-    pub escrow_state: Account<'info, EscrowStateV2>,
+    pub escrow_state: Account<'info, EscrowState>,
     
     pub system_program: Program<'info, System>,
 }
@@ -2195,7 +2218,7 @@ pub struct DepositSol<'info> {
         seeds = [b"escrow", escrow_state.escrow_id.to_le_bytes().as_ref()],
         bump = escrow_state.bump,
     )]
-    pub escrow_state: Account<'info, EscrowStateV2>,
+    pub escrow_state: Account<'info, EscrowState>,
     
     pub system_program: Program<'info, System>,
 }
@@ -2210,7 +2233,7 @@ pub struct DepositSellerNft<'info> {
         seeds = [b"escrow", escrow_state.escrow_id.to_le_bytes().as_ref()],
         bump = escrow_state.bump,
     )]
-    pub escrow_state: Account<'info, EscrowStateV2>,
+    pub escrow_state: Account<'info, EscrowState>,
     
     #[account(
         mut,
@@ -2247,7 +2270,7 @@ pub struct DepositBuyerNft<'info> {
         seeds = [b"escrow", escrow_state.escrow_id.to_le_bytes().as_ref()],
         bump = escrow_state.bump,
     )]
-    pub escrow_state: Account<'info, EscrowStateV2>,
+    pub escrow_state: Account<'info, EscrowState>,
     
     #[account(
         mut,
@@ -2271,7 +2294,7 @@ pub struct DepositBuyerNft<'info> {
 }
 
 #[derive(Accounts)]
-pub struct SettleV2<'info> {
+pub struct Settle<'info> {
     #[account(mut)]
     pub caller: Signer<'info>,
     
@@ -2280,7 +2303,7 @@ pub struct SettleV2<'info> {
         seeds = [b"escrow", escrow_state.escrow_id.to_le_bytes().as_ref()],
         bump = escrow_state.bump,
     )]
-    pub escrow_state: Account<'info, EscrowStateV2>,
+    pub escrow_state: Account<'info, EscrowState>,
     
     /// CHECK: Seller receives SOL
     #[account(
@@ -2319,13 +2342,13 @@ pub struct SettleV2<'info> {
 }
 
 #[derive(Accounts)]
-pub struct CancelIfExpiredV2<'info> {
+pub struct CancelIfExpired<'info> {
     #[account(
         mut,
         seeds = [b"escrow", escrow_state.escrow_id.to_le_bytes().as_ref()],
         bump = escrow_state.bump,
     )]
-    pub escrow_state: Account<'info, EscrowStateV2>,
+    pub escrow_state: Account<'info, EscrowState>,
     
     /// CHECK: Buyer receives refund if deposited
     #[account(
@@ -2351,7 +2374,7 @@ pub struct CancelIfExpiredV2<'info> {
 }
 
 #[derive(Accounts)]
-pub struct AdminCancelV2<'info> {
+pub struct AdminCancel<'info> {
     #[account(mut)]
     pub admin: Signer<'info>,
     
@@ -2360,7 +2383,7 @@ pub struct AdminCancelV2<'info> {
         seeds = [b"escrow", escrow_state.escrow_id.to_le_bytes().as_ref()],
         bump = escrow_state.bump,
     )]
-    pub escrow_state: Account<'info, EscrowStateV2>,
+    pub escrow_state: Account<'info, EscrowState>,
     
     /// CHECK: Buyer receives refund if deposited
     #[account(
