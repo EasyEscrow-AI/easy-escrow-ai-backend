@@ -88,6 +88,7 @@
     "staging:cleanup": "ts-node scripts/cleanup-staging-agreements.ts",
     "staging:cleanup:dry-run": "ts-node scripts/cleanup-staging-agreements.ts -- --dry-run",
     "staging:cleanup:1day": "ts-node scripts/cleanup-staging-agreements.ts -- --days=1",
+    "staging:cleanup:all": "ts-node scripts/cleanup-staging-agreements.ts -- --all",
     "staging:list": "ts-node scripts/list-staging-agreements.ts",
     "test:staging:smoke": "ts-node scripts/testing/smoke-tests.ts",
     "test:staging:smoke:ci": "ts-node scripts/testing/smoke-tests.ts",

@@ -22,6 +22,7 @@ interface CleanupOptions {
   dryRun?: boolean;
   apiUrl?: string;
   deleteMode?: boolean; // When true, permanently DELETE instead of ARCHIVE
+  all?: boolean; // When true, target ALL PENDING agreements regardless of age
 }
 
 interface Agreement {
@@ -38,6 +39,7 @@ async function cleanupStagingAgreements(options: CleanupOptions = {}) {
     daysOld = 7,
     dryRun = false,
     deleteMode = false,
+    all = false,
     apiUrl = 'https://easyescrow-backend-staging-mwx9s.ondigitalocean.app'
   } = options;
 
@@ -45,17 +47,24 @@ async function cleanupStagingAgreements(options: CleanupOptions = {}) {
   console.log('🧹 STAGING AGREEMENT CLEANUP');
   console.log('='.repeat(80));
   console.log(`API URL: ${apiUrl}`);
-  console.log(`Target: PENDING agreements older than ${daysOld} days`);
+  if (all) {
+    console.log(`Target: ALL PENDING agreements (regardless of age)`);
+  } else {
+    console.log(`Target: PENDING agreements older than ${daysOld} days`);
+  }
   console.log(`Action: ${deleteMode ? 'DELETE (permanent)' : 'ARCHIVE (preserved for audit)'}`);
   console.log(`Dry Run: ${dryRun ? 'YES (no changes)' : 'NO (will modify)'}`);
   console.log('='.repeat(80) + '\n');
 
   try {
-    // Calculate cutoff date
+    // Calculate cutoff date (ignored if --all flag is used)
     const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - daysOld);
-
-    console.log(`Fetching agreements created before: ${cutoffDate.toISOString()}\n`);
+    if (!all) {
+      cutoffDate.setDate(cutoffDate.getDate() - daysOld);
+      console.log(`Fetching agreements created before: ${cutoffDate.toISOString()}\n`);
+    } else {
+      console.log(`Fetching ALL PENDING agreements...\n`);
+    }
 
     // Fetch all agreements (we'll filter by date locally)
     const response = await axios.get<{ success: boolean; data: Agreement[] }>(
@@ -77,16 +86,19 @@ async function cleanupStagingAgreements(options: CleanupOptions = {}) {
 
     // Filter agreements that are:
     // 1. In PENDING status (never completed)
-    // 2. Older than cutoff date
+    // 2. Older than cutoff date (or ALL if --all flag is set)
     const oldPendingAgreements = allAgreements.filter(agreement => {
+      if (agreement.status !== 'PENDING') return false;
+      
+      // If --all flag is set, include all PENDING agreements
+      if (all) return true;
+      
+      // Otherwise, filter by age
       const createdAt = new Date(agreement.createdAt);
-      return (
-        agreement.status === 'PENDING' &&
-        createdAt < cutoffDate
-      );
+      return createdAt < cutoffDate;
     });
 
-    console.log(`🔍 Found ${oldPendingAgreements.length} old PENDING agreements to clean up\n`);
+    console.log(`🔍 Found ${oldPendingAgreements.length} ${all ? '' : 'old '}PENDING agreements to clean up\n`);
 
     if (oldPendingAgreements.length === 0) {
       console.log('✅ No agreements to clean up. All done!');
@@ -217,6 +229,8 @@ for (const arg of args) {
     options.dryRun = true;
   } else if (arg === '--delete') {
     options.deleteMode = true;
+  } else if (arg === '--all') {
+    options.all = true;
   } else if (arg.startsWith('--api-url=')) {
     options.apiUrl = arg.split('=')[1];
   } else if (arg === '--help') {
@@ -228,6 +242,7 @@ Use --delete flag only if you need to permanently remove them.
 
 Options:
   --days=<number>    Target agreements older than N days (default: 7)
+  --all              Target ALL PENDING agreements regardless of age
   --dry-run          Preview what would be changed without making changes
   --delete           PERMANENTLY DELETE instead of ARCHIVE (use with caution!)
   --api-url=<url>    Custom API URL (default: staging)
@@ -244,14 +259,17 @@ Examples:
   # Preview what would be archived (no changes)
   npm run staging:cleanup -- --dry-run
 
+  # Archive ALL PENDING agreements (regardless of age)
+  npm run staging:cleanup -- --all
+
   # Archive agreements older than 1 day
   npm run staging:cleanup -- --days=1
 
   # Preview with custom threshold
   npm run staging:cleanup -- --days=3 --dry-run
 
-  # Permanently delete (use with extreme caution!)
-  npm run staging:cleanup -- --delete --days=7
+  # Permanently delete ALL (use with extreme caution!)
+  npm run staging:cleanup -- --all --delete
 
 Why Archive Instead of Delete?
   • Preserves failed test data for analysis
