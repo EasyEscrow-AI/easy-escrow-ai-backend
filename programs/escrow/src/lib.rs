@@ -509,7 +509,7 @@ pub mod escrow {
         Ok(())
     }
 
-    /// Buyer deposits SOL into the escrow PDA
+    /// Buyer deposits SOL into the SOL vault PDA
     /// For NftForSol and NftForNftPlusSol swap types
     pub fn deposit_sol(ctx: Context<DepositSol>) -> Result<()> {
         // Validate escrow status
@@ -541,12 +541,14 @@ pub mod escrow {
         // Extract sol_amount before transfer
         let sol_amount = ctx.accounts.escrow_state.sol_amount;
 
-        // Transfer SOL from buyer to escrow PDA using system program
+        // Transfer SOL from buyer to SOL vault PDA (NOT the state PDA)
+        // This mirrors the USDC design where tokens go to a separate account
+        // System Program can transfer to zero-data PDAs (unlike data-bearing PDAs)
         let transfer_ctx = CpiContext::new(
             ctx.accounts.system_program.to_account_info(),
             anchor_lang::system_program::Transfer {
                 from: ctx.accounts.buyer.to_account_info(),
-                to: ctx.accounts.escrow_state.to_account_info(),
+                to: ctx.accounts.sol_vault.to_account_info(),
             },
         );
         anchor_lang::system_program::transfer(transfer_ctx, sol_amount)?;
@@ -554,7 +556,7 @@ pub mod escrow {
         // Mark SOL as deposited
         ctx.accounts.escrow_state.buyer_sol_deposited = true;
 
-        msg!("SOL deposited: {} lamports", sol_amount);
+        msg!("SOL deposited to vault: {} lamports", sol_amount);
 
         Ok(())
     }
