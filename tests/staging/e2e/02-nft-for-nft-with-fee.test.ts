@@ -111,7 +111,7 @@ describe('STAGING E2E - V2: NFT-for-NFT with SOL Fee', function () {
     console.log(`   Network: ${STAGING_CONFIG.network}`);
     console.log(`   API: ${STAGING_CONFIG.apiBaseUrl}`);
     console.log(`   Swap Type: NFT_FOR_NFT_WITH_FEE`);
-    console.log(`   Platform Fee: ${PLATFORM_FEE_SOL} SOL (${PLATFORM_FEE_BPS / 100}%)`);
+    console.log(`   Total Platform Fee: ${TOTAL_PLATFORM_FEE} SOL (${FEE_PER_PARTY} SOL per party)`);
     console.log('='.repeat(80) + '\n');
 
     connection = new Connection(STAGING_CONFIG.rpcUrl, 'confirmed');
