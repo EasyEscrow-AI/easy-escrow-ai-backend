@@ -175,7 +175,7 @@ describe('STAGING E2E - V2: NFT-for-NFT + SOL Payment', function () {
     console.log('📝 Creating V2 escrow agreement (NFT_FOR_NFT_PLUS_SOL)...\n');
 
     const idempotencyKey = generateIdempotencyKey('v2-nft-nft-sol-test');
-    const expiry = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    // Expiry omitted - uses default of 5 minutes
 
     const agreementData = {
       nftMint: nftA.mint.toBase58(), // Seller's NFT
@@ -187,7 +187,7 @@ describe('STAGING E2E - V2: NFT-for-NFT + SOL Payment', function () {
       feeBps: PLATFORM_FEE_BPS,
       feePayer: 'BUYER',
       honorRoyalties: false,
-      expiry,
+      // expiry omitted - uses default of 5 minutes
     };
 
     console.log('   Request payload:');

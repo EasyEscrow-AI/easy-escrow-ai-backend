@@ -100,7 +100,7 @@ describe('STAGING E2E: Concurrent Operations', function () {
     try {
       // Create multiple agreements concurrently
       console.log('   Creating 5 agreements concurrently...');
-      const expiry = new Date(Date.now() + 61 * 60 * 1000); // 61 minutes
+      const expiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
       
       const agreementPromises = nfts.map((nft, index) => 
         axios.post(

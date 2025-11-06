@@ -115,8 +115,8 @@ describe('STAGING E2E: Agreement Expiry and Refund', function () {
     // Create test NFT
     expiryNft = await createTestNFT(connection, wallets.sender);
     
-    // Create agreement with 1-hour+ expiry (minimum required is 1 hour, add buffer)
-    const expiry = new Date(Date.now() + (61 * 60 * 1000)); // 61 minutes from now
+    // Create agreement with 5-minute expiry (using default)
+    const expiry = new Date(Date.now() + (5 * 60 * 1000)); // 5 minutes from now (explicit for this test)
     const idempotencyKey = generateIdempotencyKey();
 
     const requestBody = {
