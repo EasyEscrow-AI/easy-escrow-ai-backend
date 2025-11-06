@@ -977,6 +977,69 @@ export const prepareDepositSolTransaction = async (
 };
 
 /**
+ * Build unsigned deposit seller SOL fee transaction (PRODUCTION)
+ * For NFT_FOR_NFT_WITH_FEE swap type - seller pays 0.005 SOL
+ * Client signs and submits this transaction with seller's wallet
+ */
+export const prepareDepositSellerSolFeeTransaction = async (
+  agreementId: string
+): Promise<{ transaction: string; message: string }> => {
+  try {
+    console.log('[AgreementService] prepareDepositSellerSolFeeTransaction called for:', agreementId);
+
+    // 1. Get agreement from database
+    const agreement = await prisma.agreement.findUnique({
+      where: { agreementId },
+    });
+
+    if (!agreement) {
+      throw new Error(`Agreement not found: ${agreementId}`);
+    }
+
+    // 2. Validate swap type is NFT_FOR_NFT_WITH_FEE
+    if (agreement.swapType !== 'NFT_FOR_NFT_WITH_FEE') {
+      throw new Error(
+        `Cannot deposit seller SOL fee: Agreement swap type is ${agreement.swapType}. ` +
+          `Seller SOL fee deposits only allowed for NFT_FOR_NFT_WITH_FEE swaps.`
+      );
+    }
+
+    // 3. Validate status - allow seller fee deposit when PENDING or NFT_LOCKED
+    const allowedStatuses: AgreementStatus[] = [
+      AgreementStatus.PENDING,
+      AgreementStatus.NFT_LOCKED,
+      AgreementStatus.USDC_LOCKED, // In case buyer deposited first
+    ];
+    if (!allowedStatuses.includes(agreement.status)) {
+      throw new Error(
+        `Cannot deposit seller SOL fee: Agreement status is ${agreement.status}. Must be PENDING, NFT_LOCKED, or USDC_LOCKED.`
+      );
+    }
+
+    // 4. Validate solAmount exists
+    if (!agreement.solAmount) {
+      throw new Error('Cannot deposit seller SOL fee: Agreement has no solAmount specified');
+    }
+
+    // 5. Build unsigned transaction
+    const escrowService = new EscrowProgramService();
+    const escrowPda = new PublicKey(agreement.escrowPda);
+    const seller = new PublicKey(agreement.seller);
+    // Convert Prisma Decimal to string before passing to BN
+    const feeAmount = new BN(agreement.solAmount.toString());
+
+    const result = await escrowService.buildDepositSellerSolFeeTransaction(escrowPda, seller, feeAmount);
+
+    console.log('[AgreementService] Unsigned seller SOL fee deposit transaction prepared');
+
+    return result;
+  } catch (error) {
+    console.error('[AgreementService] prepareDepositSellerSolFeeTransaction error:', error);
+    throw error;
+  }
+};
+
+/**
  * Deposit SOL to escrow (server-side signing)
  * @deprecated Use prepareDepositSolTransaction for production (client-side signing)
  */

@@ -1849,6 +1849,139 @@ export class EscrowProgramService {
   }
 
   /**
+   * Build unsigned deposit seller SOL fee transaction for client-side signing
+   * For NFT_FOR_NFT_WITH_FEE swap type - seller pays 0.005 SOL
+   * PRODUCTION APPROACH: Returns transaction that seller must sign
+   */
+  async buildDepositSellerSolFeeTransaction(
+    escrowPda: PublicKey,
+    seller: PublicKey,
+    feeAmount: BN
+  ): Promise<{ transaction: string; message: string }> {
+    try {
+      console.log('[EscrowProgramService] Building unsigned deposit seller SOL fee transaction:', {
+        escrowPda: escrowPda.toString(),
+        seller: seller.toString(),
+        feeAmount: feeAmount.toString(),
+      });
+
+      // Fetch escrow state to get escrow ID for sol_vault derivation
+      const escrowState = await this.program.account.escrowState.fetch(escrowPda);
+      const escrowId = escrowState.escrowId;
+
+      // Derive sol_vault PDA
+      const [solVaultPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from('sol_vault'), escrowId.toArrayLike(Buffer, 'le', 8)],
+        this.programId
+      );
+
+      console.log('[EscrowProgramService] Derived sol_vault PDA:', solVaultPda.toString());
+
+      // Build deposit_seller_sol_fee instruction
+      const instruction = await (this.program.methods as any)
+        .depositSellerSolFee()
+        .accountsStrict({
+          seller,
+          escrowState: escrowPda,
+          solVault: solVaultPda,
+          systemProgram: SystemProgram.programId,
+        })
+        .instruction();
+
+      // FIX: Manually set seller as NON-signer (Anchor SDK bug workaround)
+      instruction.keys.forEach((key: any) => {
+        if (key.pubkey.equals(seller)) {
+          console.log(
+            `[EscrowProgramService] Fixing: Setting ${key.pubkey.toString()} isSigner to false`
+          );
+          key.isSigner = false;
+        }
+      });
+
+      // Detect network for priority fees and Jito tips
+      const isMainnet = isMainnetNetwork(this.provider.connection);
+
+      // Get dynamic priority fee
+      const priorityFee = await PriorityFeeService.getRecommendedPriorityFee(
+        this.provider.connection,
+        isMainnet
+      );
+
+      console.log(
+        `[EscrowProgramService] Using priority fee: ${priorityFee} microlamports per CU (${
+          isMainnet ? 'mainnet' : 'devnet'
+        })`
+      );
+
+      // Create unsigned transaction with priority fees
+      const { Transaction, ComputeBudgetProgram } = await import('@solana/web3.js');
+      const transaction = new Transaction();
+
+      // Add compute budget instructions FIRST
+      transaction.add(
+        ComputeBudgetProgram.setComputeUnitLimit({
+          units: 200_000,
+        })
+      );
+
+      transaction.add(
+        ComputeBudgetProgram.setComputeUnitPrice({
+          microLamports: priorityFee,
+        })
+      );
+
+      // Add main deposit instruction
+      transaction.add(instruction);
+
+      // Conditionally add Jito tip for mainnet
+      if (isMainnet) {
+        const tipAmount = 1_000_000; // 0.001 SOL tip
+        const tipAccount = JITO_TIP_ACCOUNTS[Math.floor(Math.random() * JITO_TIP_ACCOUNTS.length)];
+
+        console.log(
+          `[EscrowProgramService] Adding Jito tip: ${tipAmount} lamports to ${tipAccount.toString()}`
+        );
+
+        transaction.add(
+          SystemProgram.transfer({
+            fromPubkey: seller,
+            toPubkey: tipAccount,
+            lamports: tipAmount,
+          })
+        );
+      }
+
+      // Set fee payer to seller (who will sign)
+      transaction.feePayer = seller;
+
+      // Get recent blockhash
+      const { blockhash } = await this.provider.connection.getLatestBlockhash();
+      transaction.recentBlockhash = blockhash;
+
+      // Serialize transaction to base64 (unsigned)
+      const serialized = transaction.serialize({
+        requireAllSignatures: false, // Don't require signatures yet
+        verifySignatures: false,
+      });
+      const base64Transaction = serialized.toString('base64');
+
+      console.log('[EscrowProgramService] Unsigned seller SOL fee deposit transaction built');
+
+      return {
+        transaction: base64Transaction,
+        message: 'Transaction ready for client signing. Seller must sign and submit.',
+      };
+    } catch (error) {
+      console.error('[EscrowProgramService] Failed to build deposit seller SOL fee transaction:', error);
+      throw new Error(
+        `Failed to build deposit seller SOL fee transaction: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`
+      );
+    }
+  }
+
+  /**
    * Deposit Seller's NFT (NFT A) into escrow
    * Used for all swap types - seller always deposits their NFT
    */

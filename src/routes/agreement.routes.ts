@@ -14,6 +14,7 @@ import {
   prepareDepositNftTransaction,
   prepareDepositUsdcTransaction,
   prepareDepositSolTransaction,
+  prepareDepositSellerSolFeeTransaction,
   archiveAgreements,
   extendAgreementExpiry
 } from '../services/agreement.service';
@@ -425,6 +426,58 @@ router.post(
         errorMessage.includes('Cannot deposit') ||
         errorMessage.includes('Invalid') ||
         errorMessage.includes('No buyer') ||
+        errorMessage.includes('swap type')
+      ) {
+        statusCode = 400;
+      }
+
+      res.status(statusCode).json({
+        success: false,
+        error: statusCode === 404 ? 'Not Found' : statusCode === 400 ? 'Bad Request' : 'Internal Server Error',
+        message: errorMessage,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * POST /v1/agreements/:agreementId/deposit-seller-sol-fee/prepare
+ * PRODUCTION ENDPOINT: Returns unsigned transaction for client-side signing
+ * Client must sign with seller's wallet and submit to network
+ * For NFT_FOR_NFT_WITH_FEE swap type - seller pays 0.005 SOL
+ */
+router.post(
+  '/v1/agreements/:agreementId/deposit-seller-sol-fee/prepare',
+  standardRateLimiter,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { agreementId } = req.params;
+
+      console.log('[AgreementRoutes] POST /deposit-seller-sol-fee/prepare for:', agreementId);
+
+      const result = await prepareDepositSellerSolFeeTransaction(agreementId);
+
+      res.status(200).json({
+        success: true,
+        data: result,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('[AgreementRoutes] Error preparing seller SOL fee deposit transaction:', error);
+
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+      // Determine status code based on error message
+      let statusCode = 500;
+      if (
+        errorMessage.includes('not found') || 
+        errorMessage.includes('does not exist')
+      ) {
+        statusCode = 404;
+      } else if (
+        errorMessage.includes('Cannot deposit') ||
+        errorMessage.includes('Invalid') ||
         errorMessage.includes('swap type')
       ) {
         statusCode = 400;
