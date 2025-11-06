@@ -20,6 +20,7 @@ import {
 import { CreateAgreementDTO, AgreementQueryDTO } from '../models/dto/agreement.dto';
 import { AgreementStatus } from '../generated/prisma';
 import { ValidationError } from '../services/solana.service';
+import { prisma } from '../config/database';
 
 const router = Router();
 
@@ -486,6 +487,80 @@ router.post(
         success: false,
         error: statusCode === 404 ? 'Not Found' : statusCode === 400 ? 'Bad Request' : 'Internal Server Error',
         message: errorMessage,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * POST /v1/agreements/:agreementId/validate-deposits
+ * Manually validate deposits by checking on-chain balances
+ * Useful for triggering detection when WebSocket subscriptions are slow
+ */
+router.post(
+  '/v1/agreements/:agreementId/validate-deposits',
+  standardRateLimiter,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { agreementId } = req.params;
+
+      console.log('[AgreementRoutes] POST /validate-deposits for:', agreementId);
+
+      // Get agreement to determine swap type
+      const agreement = await prisma.agreement.findUnique({
+        where: { agreementId },
+        include: { deposits: true },
+      });
+
+      if (!agreement) {
+        res.status(404).json({
+          success: false,
+          error: 'Not Found',
+          message: 'Agreement not found',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const results: any = {
+        agreementId,
+        swapType: agreement.swapType,
+        validations: {},
+      };
+
+      // Validate SOL deposits for SOL-based swaps
+      if (agreement.swapType === 'NFT_FOR_SOL' || agreement.swapType === 'NFT_FOR_NFT_PLUS_SOL') {
+        const { getSolDepositService } = await import('../services/sol-deposit.service');
+        const solDepositService = getSolDepositService();
+        
+        const solResult = await solDepositService.validateSolDeposit(agreementId);
+        results.validations.sol = solResult;
+        
+        if (solResult.success) {
+          console.log(`[AgreementRoutes] SOL deposit validated: ${solResult.amount} SOL`);
+        }
+      }
+
+      // Refresh agreement status
+      const updatedAgreement = await prisma.agreement.findUnique({
+        where: { agreementId },
+      });
+
+      results.currentStatus = updatedAgreement?.status;
+
+      res.status(200).json({
+        success: true,
+        data: results,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('[AgreementRoutes] Error validating deposits:', error);
+
+      res.status(500).json({
+        success: false,
+        error: 'Internal Server Error',
+        message: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString(),
       });
     }

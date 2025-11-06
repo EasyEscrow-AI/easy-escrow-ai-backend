@@ -192,7 +192,7 @@ export class SolDepositService {
   }
 
   /**
-   * Validate SOL deposit by checking escrow PDA balance
+   * Validate SOL deposit by checking sol_vault PDA balance
    * Used for manual verification or polling-based detection
    */
   async validateSolDeposit(agreementId: string): Promise<SolDepositResult> {
@@ -226,20 +226,24 @@ export class SolDepositService {
         };
       }
 
-      // Fetch escrow PDA account
-      const escrowPda = new PublicKey(agreement.escrowPda);
-      const accountInfo = await this.solanaService.getConnection().getAccountInfo(escrowPda);
+      // Derive sol_vault PDA (SOL is stored here, not in escrow PDA)
+      const solVaultPda = await this.solanaService.deriveSolVaultPda(agreement.escrowPda);
+      console.log(`[SolDepositService] Checking sol_vault balance: ${solVaultPda}`);
+
+      // Fetch sol_vault PDA account
+      const accountInfo = await this.solanaService.getConnection().getAccountInfo(new PublicKey(solVaultPda));
 
       if (!accountInfo) {
+        console.log(`[SolDepositService] sol_vault PDA not found yet: ${solVaultPda}`);
         return {
           success: false,
-          error: 'Escrow PDA account not found',
+          error: 'SOL vault PDA account not found (deposit may not have occurred yet)',
         };
       }
 
       // Process the account change (triggers deposit recording)
       return await this.handleSolAccountChange(
-        escrowPda.toBase58(),
+        solVaultPda,
         accountInfo,
         { slot: 0 } as Context, // Slot not available in manual validation
         agreementId

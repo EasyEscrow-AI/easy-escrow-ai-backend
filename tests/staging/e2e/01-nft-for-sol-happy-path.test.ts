@@ -345,15 +345,26 @@ describe('STAGING E2E - NFT-for-SOL Swap (Happy Path)', function () {
     console.log(`   ✅ SOL Deposited`);
     console.log(`   Transaction: ${getExplorerUrl(txId, 'tx')}\n`);
 
-    // Wait for monitoring to detect deposit
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    // Wait a moment for transaction to propagate
+    console.log('   ⏳ Waiting 3 seconds for transaction to propagate...');
+    await new Promise(resolve => setTimeout(resolve, 3000));
 
+    // Manually trigger deposit validation (faster than waiting for WebSocket subscription)
+    console.log('   🔍 Manually validating SOL deposit...');
+    const validateResponse = await axios.post(
+      `${STAGING_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}/validate-deposits`
+    );
+
+    console.log(`   Validation result:`, JSON.stringify(validateResponse.data, null, 2));
+
+    // Check updated status
     const statusResponse = await axios.get(
       `${STAGING_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}`
     );
 
     console.log(`   Agreement Status: ${statusResponse.data.data.status}`);
-    expect(['BOTH_LOCKED', 'USDC_LOCKED']).to.include(statusResponse.data.data.status);
+    // After SOL deposit on NFT_FOR_SOL, status should be BOTH_LOCKED (both NFT and SOL deposited)
+    expect(statusResponse.data.data.status).to.equal('BOTH_LOCKED', 'Status should be BOTH_LOCKED after both deposits');
   });
 
   it('should wait for automatic settlement', async function () {
