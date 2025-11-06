@@ -892,6 +892,26 @@
       "code": 6018,
       "name": "InvalidSwapParameters",
       "msg": "Invalid parameter combination for swap type"
+    },
+    {
+      "code": 6019,
+      "name": "InsufficientFeeCollectorRent",
+      "msg": "Fee collector account would not be rent-exempt after receiving fee"
+    },
+    {
+      "code": 6020,
+      "name": "InsufficientSellerRent",
+      "msg": "Seller account would not be rent-exempt after receiving payment"
+    },
+    {
+      "code": 6021,
+      "name": "InsufficientEscrowRent",
+      "msg": "Escrow account would not be rent-exempt after transfers"
+    },
+    {
+      "code": 6022,
+      "name": "ExecutableAccountNotAllowed",
+      "msg": "Executable accounts (programs) cannot send or receive lamports"
     }
   ],
   "types": [

@@ -9,7 +9,7 @@ crate-type = ["cdylib", "lib"]
 name = "escrow"
 
 [features]
-default = ["mainnet"]  # Default to mainnet for safety
+default = []  # No default environment - must be explicitly specified at build time
 cpi = ["no-entrypoint"]
 no-entrypoint = []
 no-idl = []
@@ -17,6 +17,7 @@ no-log-ix-name = []
 idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
 
 # Environment-specific features (mutually exclusive)
+# Build with: anchor build -- --features <environment>
 mainnet = []
 devnet = []
 staging = []
