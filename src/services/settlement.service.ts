@@ -169,13 +169,16 @@ export class SettlementService {
   private async checkAndSettleAgreements(): Promise<void> {
     try {
       console.log('[SettlementService] 🔍 Checking for agreements ready to settle...');
+      
+      const now = new Date();
+      console.log(`[SettlementService] Current time: ${now.toISOString()}`);
 
       // Find agreements with both assets locked
       const readyAgreements = await prisma.agreement.findMany({
         where: {
           status: AgreementStatus.BOTH_LOCKED,
           expiry: {
-            gt: new Date(), // Not expired
+            gt: now, // Not expired
           },
         },
         include: {
@@ -187,6 +190,14 @@ export class SettlementService {
       console.log(
         `[SettlementService] Found ${readyAgreements.length} agreements ready to settle: [${ids}]`
       );
+      
+      // Debug: Check if ANY BOTH_LOCKED agreements exist (ignore expiry)
+      const allBothLocked = await prisma.agreement.count({
+        where: {
+          status: AgreementStatus.BOTH_LOCKED,
+        },
+      });
+      console.log(`[SettlementService] DEBUG: Total BOTH_LOCKED agreements (ignoring expiry): ${allBothLocked}`);
 
       // Process each agreement
       for (const agreement of readyAgreements) {
