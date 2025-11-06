@@ -268,18 +268,41 @@ describe('STAGING E2E - V2: NFT-for-NFT with SOL Fee', function () {
   it('should deposit NFT B (buyer)', async function () {
     console.log('🎨 Depositing NFT B to escrow...\n');
 
-    // Note: For buyer's NFT deposit, we'd need a separate endpoint or use the same prepare endpoint
-    // For now, we'll create the transaction manually
+    try {
+      const prepareResponse = await axios.post(
+        `${STAGING_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}/deposit-nft-buyer/prepare`
+      );
 
-    // The buyer deposits their NFT to the nftB deposit address
-    // This would typically use a /deposit-nft-buyer/prepare endpoint (not yet implemented)
-    // For this test, we'll skip the actual deposit and just note it
-    
-    console.log('   ⚠️  NFT B deposit endpoint not yet implemented');
-    console.log('   In production, this would call /deposit-nft-buyer/prepare');
-    console.log('   Skipping for now - settlement will be manual\n');
+      expect(prepareResponse.status).to.equal(200);
+      expect(prepareResponse.data.success).to.be.true;
 
-    // TODO: Implement buyer NFT deposit when endpoint is ready
+      const transactionBuffer = Buffer.from(prepareResponse.data.data.transaction, 'base64');
+      const transaction = Transaction.from(transactionBuffer);
+
+      const { blockhash } = await connection.getLatestBlockhash();
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = wallets.receiver.publicKey;  // Buyer signs
+      transaction.sign(wallets.receiver);
+
+      const txId = await connection.sendRawTransaction(transaction.serialize(), {
+        skipPreflight: false,
+        preflightCommitment: 'confirmed',
+      });
+
+      await connection.confirmTransaction(txId, 'confirmed');
+
+      transactions.push({
+        description: 'Deposit NFT B (deposit_buyer_nft)',
+        txId,
+        timestamp: Date.now(),
+      });
+
+      console.log(`   ✅ NFT B Deposited`);
+      console.log(`   Transaction: ${getExplorerUrl(txId, 'tx')}\n`);
+    } catch (error: any) {
+      console.error('   ❌ NFT B deposit failed:', error.response?.data || error.message);
+      throw error;
+    }
   });
 
   it('should deposit SOL fee (buyer)', async function () {
