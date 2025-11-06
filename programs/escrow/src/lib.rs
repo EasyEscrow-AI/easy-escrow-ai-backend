@@ -753,16 +753,17 @@ pub mod escrow {
                     EscrowError::InsufficientSellerRent
                 );
                 
-                // Check sol_vault will remain rent-exempt after transfers
-                // NOTE: For SOL-based swaps, SOL is held in sol_vault (zero-data PDA), not escrow_state
-                let vault_balance_after = ctx.accounts.sol_vault.to_account_info().lamports()
-                    .checked_sub(platform_fee)
-                    .and_then(|b| b.checked_sub(seller_receives))
-                    .ok_or(EscrowError::InsufficientFunds)?;
+                // Check sol_vault will have sufficient funds for transfers
+                // NOTE: sol_vault is a zero-data PDA, so 0 lamports remaining is fine (no rent requirement)
+                // We just need to verify we have enough to make the transfers
+                let vault_balance = ctx.accounts.sol_vault.to_account_info().lamports();
+                let total_to_transfer = platform_fee
+                    .checked_add(seller_receives)
+                    .ok_or(EscrowError::CalculationOverflow)?;
                     
                 require!(
-                    rent.is_exempt(vault_balance_after, ctx.accounts.sol_vault.to_account_info().data_len()),
-                    EscrowError::InsufficientEscrowRent
+                    vault_balance >= total_to_transfer,
+                    EscrowError::InsufficientFunds
                 );
                 
                 msg!("Rent exemption validation passed - all accounts will remain rent-exempt");
