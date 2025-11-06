@@ -136,8 +136,13 @@ function loadAdminKeypair(): Keypair {
  */
 export class EscrowProgramService {
   private provider: AnchorProvider;
-  private program: Program<Escrow>;
+  public program: Program<Escrow>; // Made public for access from other services
   private adminKeypair: Keypair;
+  
+  // Public getter for programId
+  public get programId(): PublicKey {
+    return this.program.programId;
+  }
 
   constructor() {
     // Load admin keypair from environment
