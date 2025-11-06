@@ -77,7 +77,13 @@ export class MonitoringService {
       return;
     }
 
-    console.log('[MonitoringService] Starting monitoring service...');
+    console.log('[STARTUP] 🚀 MonitoringService initializing...');
+    console.log('[STARTUP] Configuration:', {
+      pollingInterval: this.config.pollingInterval,
+      maxRetries: this.config.maxRetries,
+      retryDelayMs: this.config.retryDelayMs,
+      environment: process.env.NODE_ENV || 'development',
+    });
 
     try {
       // Start Solana service
@@ -90,9 +96,10 @@ export class MonitoringService {
       this.startPolling();
 
       this.isRunning = true;
-      console.log('[MonitoringService] Monitoring service started successfully');
+      console.log('[STARTUP] ✅ MonitoringService started successfully');
+      console.log('[STARTUP] Monitoring', this.monitoredAccounts.size, 'accounts');
     } catch (error) {
-      console.error('[MonitoringService] Failed to start monitoring service:', error);
+      console.error('[STARTUP] ❌ Failed to start monitoring service:', error);
       throw error;
     }
   }
@@ -184,10 +191,17 @@ export class MonitoringService {
           swapType: true,
           status: true,
           createdAt: true,
+          expiry: true,
         },
       });
 
-      console.log(`[MonitoringService] Found ${agreements.length} agreements to monitor`);
+      const agreementIds = agreements.map(a => a.agreementId).join(', ') || '∅';
+      console.log(`[MonitoringService] Found ${agreements.length} agreements to monitor: [${agreementIds}]`);
+      
+      // Log details of each agreement
+      agreements.forEach(agreement => {
+        console.log(`[MonitoringService]   • ${agreement.agreementId} | Status: ${agreement.status} | Type: ${agreement.swapType || 'V1'} | Expiry: ${agreement.expiry.toISOString()}`);
+      });
 
       // Rate limiting: Process subscriptions in batches to avoid hitting RPC rate limits
       // QuickNode limit: 50 requests/second
@@ -568,12 +582,14 @@ export class MonitoringService {
     // Periodically reload pending agreements (every 5 seconds)
     // This ensures new agreements created after service startup are monitored quickly
     // and reduces the race condition window for deposit detection
-    console.log('[MonitoringService] Starting periodic agreement reload (interval: 5s)');
+    console.log('[MonitoringService] 🔄 Starting periodic agreement reload (interval: 5s)');
     this.agreementReloadTimer = setInterval(async () => {
       try {
+        console.log('[MonitoringService] 🔄 Periodic reload: checking for new agreements...');
         await this.loadPendingAgreements();
+        console.log(`[MonitoringService] 🔄 Reload complete. Currently monitoring ${this.monitoredAccounts.size} accounts`);
       } catch (error) {
-        console.error('[MonitoringService] Error reloading agreements:', error);
+        console.error('[MonitoringService] ❌ Error reloading agreements:', error);
       }
     }, 5000); // 5 seconds
   }

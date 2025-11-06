@@ -168,7 +168,7 @@ export class SettlementService {
    */
   private async checkAndSettleAgreements(): Promise<void> {
     try {
-      console.log('[SettlementService] Checking for agreements ready to settle...');
+      console.log('[SettlementService] 🔍 Checking for agreements ready to settle...');
 
       // Find agreements with both assets locked
       const readyAgreements = await prisma.agreement.findMany({
@@ -183,48 +183,65 @@ export class SettlementService {
         },
       });
 
+      const ids = readyAgreements.map(a => a.agreementId).join(', ') || '∅';
       console.log(
-        `[SettlementService] Found ${readyAgreements.length} agreements ready to settle`
+        `[SettlementService] Found ${readyAgreements.length} agreements ready to settle: [${ids}]`
       );
 
       // Process each agreement
       for (const agreement of readyAgreements) {
         try {
           console.log(
-            `[SettlementService] Processing settlement for agreement: ${agreement.agreementId}`
+            `[SettlementService] ▶️ Processing settlement for agreement: ${agreement.agreementId} (expiry: ${agreement.expiry.toISOString()})`
           );
 
           // Validate expiration before settlement
-          if (!this.validateNotExpired(agreement)) {
+          const notExpired = this.validateNotExpired(agreement);
+          console.log(`[SettlementService] validateNotExpired=${notExpired} for ${agreement.agreementId}`);
+          
+          if (!notExpired) {
             console.log(
-              `[SettlementService] Agreement ${agreement.agreementId} has expired, marking as EXPIRED`
+              `[SettlementService] ⏰ Agreement ${agreement.agreementId} has expired, marking as EXPIRED`
             );
             await this.markAgreementExpired(agreement.id);
             continue;
           }
 
+          console.log(`[SettlementService] 🚀 Executing settlement for ${agreement.agreementId}...`);
+          
           // Execute settlement
           const result = await this.executeSettlement(agreement);
 
           if (result.success) {
             console.log(
-              `[SettlementService] Successfully settled agreement ${agreement.agreementId}`
+              `[SettlementService] ✅ Successfully settled agreement ${agreement.agreementId}`
             );
           } else {
             console.error(
-              `[SettlementService] Failed to settle agreement ${agreement.agreementId}: ${result.error}`
+              `[SettlementService] ❌ Failed to settle agreement ${agreement.agreementId}: ${result.error}`
             );
+            
+            // Optional: persist failure state so the record doesn't sit forever in BOTH_LOCKED
+            // Uncomment if you want to track persistent failures:
+            // await prisma.agreement.update({
+            //   where: { id: agreement.id },
+            //   data: { 
+            //     status: 'SETTLEMENT_FAILED' as any,
+            //     failureReason: String(result.error ?? 'unknown') 
+            //   },
+            // });
           }
-        } catch (error) {
+        } catch (error: any) {
+          // Capture raw program logs if present
+          const logs = error?.logs ? `\nProgram logs:\n${error.logs.join('\n')}` : '';
           console.error(
-            `[SettlementService] Error processing agreement ${agreement.agreementId}:`,
-            error
+            `[SettlementService] ❌ Exception during settlement for ${agreement.agreementId}: ${error?.message || error}${logs}`
           );
           // Continue processing other agreements
         }
       }
     } catch (error) {
-      console.error('[SettlementService] Error checking agreements:', error);
+      console.error('[SettlementService] ❌ Error checking agreements:', error);
     }
   }
 

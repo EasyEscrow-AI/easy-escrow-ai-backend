@@ -356,14 +356,15 @@ const startServer = async () => {
           console.log('Starting background services...');
           
           // Start monitoring orchestrator
-          console.log('Starting monitoring orchestrator...');
+          console.log('[STARTUP] 🚀 Starting monitoring orchestrator...');
+          console.log('[STARTUP] This includes MonitoringService and SettlementService');
           await monitoringOrchestrator.start();
-          console.log('✅ Monitoring orchestrator started');
+          console.log('[STARTUP] ✅ Monitoring orchestrator started successfully');
           
           // Start expiry-cancellation orchestrator
-          console.log('Starting expiry-cancellation orchestrator...');
+          console.log('[STARTUP] 🚀 Starting expiry-cancellation orchestrator...');
           await expiryCancellationOrchestrator.start();
-          console.log('✅ Expiry-cancellation orchestrator started');
+          console.log('[STARTUP] ✅ Expiry-cancellation orchestrator started successfully');
           
           // Start idempotency service
           console.log('Starting idempotency service...');
