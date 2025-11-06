@@ -4,7 +4,7 @@
     "name": "escrow",
     "version": "0.1.0",
     "spec": "0.1.0",
-    "description": "Solana Escrow Program for NFT and USDC transactions"
+    "description": "Solana Escrow Program for NFT transactions"
   },
   "instructions": [
     {
@@ -42,6 +42,36 @@
                   114,
                   111,
                   119
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "escrow_state.escrow_id",
+                "account": "EscrowState"
+              }
+            ]
+          }
+        },
+        {
+          "name": "sol_vault",
+          "docs": [
+            "SOL vault PDA - refunds SOL to buyer if deposited"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  111,
+                  108,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
                 ]
               },
               {
@@ -105,6 +135,36 @@
                   114,
                   111,
                   119
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "escrow_state.escrow_id",
+                "account": "EscrowState"
+              }
+            ]
+          }
+        },
+        {
+          "name": "sol_vault",
+          "docs": [
+            "SOL vault PDA - refunds SOL to buyer if deposited"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  111,
+                  108,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
                 ]
               },
               {
@@ -455,9 +515,92 @@
       "args": []
     },
     {
+      "name": "deposit_seller_sol_fee",
+      "docs": [
+        "Seller deposits SOL fee into the SOL vault PDA",
+        "For NftForNftWithFee swap type only - seller pays 0.005 SOL fee"
+      ],
+      "discriminator": [
+        241,
+        47,
+        17,
+        240,
+        80,
+        82,
+        79,
+        177
+      ],
+      "accounts": [
+        {
+          "name": "seller",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "escrow_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "escrow_state.escrow_id",
+                "account": "EscrowState"
+              }
+            ]
+          }
+        },
+        {
+          "name": "sol_vault",
+          "docs": [
+            "SOL vault PDA - receives seller's fee deposit"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  111,
+                  108,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "escrow_state.escrow_id",
+                "account": "EscrowState"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "deposit_sol",
       "docs": [
-        "Buyer deposits SOL into the escrow PDA",
+        "Buyer deposits SOL into the SOL vault PDA",
         "For NftForSol and NftForNftPlusSol swap types"
       ],
       "discriminator": [
@@ -490,6 +633,36 @@
                   114,
                   111,
                   119
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "escrow_state.escrow_id",
+                "account": "EscrowState"
+              }
+            ]
+          }
+        },
+        {
+          "name": "sol_vault",
+          "docs": [
+            "SOL vault PDA - receives SOL deposit from buyer"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  111,
+                  108,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
                 ]
               },
               {
@@ -549,6 +722,36 @@
                   114,
                   111,
                   119
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "escrow_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "sol_vault",
+          "docs": [
+            "SOL vault PDA - separate zero-data account for holding SOL lamports",
+            "This mirrors the USDC design where tokens are held in a separate account",
+            "System Program can transfer from zero-data PDAs (unlike data-bearing PDAs)"
+          ],
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  111,
+                  108,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
                 ]
               },
               {
@@ -647,6 +850,36 @@
                   114,
                   111,
                   119
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "escrow_state.escrow_id",
+                "account": "EscrowState"
+              }
+            ]
+          }
+        },
+        {
+          "name": "sol_vault",
+          "docs": [
+            "SOL vault PDA - holds SOL to be distributed during settlement"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  111,
+                  108,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
                 ]
               },
               {
@@ -892,6 +1125,26 @@
       "code": 6018,
       "name": "InvalidSwapParameters",
       "msg": "Invalid parameter combination for swap type"
+    },
+    {
+      "code": 6019,
+      "name": "InsufficientFeeCollectorRent",
+      "msg": "Fee collector account would not be rent-exempt after receiving fee"
+    },
+    {
+      "code": 6020,
+      "name": "InsufficientSellerRent",
+      "msg": "Seller account would not be rent-exempt after receiving payment"
+    },
+    {
+      "code": 6021,
+      "name": "InsufficientEscrowRent",
+      "msg": "Escrow account would not be rent-exempt after transfers"
+    },
+    {
+      "code": 6022,
+      "name": "ExecutableAccountNotAllowed",
+      "msg": "Executable accounts (programs) cannot send or receive lamports"
     }
   ],
   "types": [
@@ -974,6 +1227,10 @@
           },
           {
             "name": "seller_nft_deposited",
+            "type": "bool"
+          },
+          {
+            "name": "seller_sol_deposited",
             "type": "bool"
           },
           {
