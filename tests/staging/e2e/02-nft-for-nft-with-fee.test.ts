@@ -191,7 +191,7 @@ describe('STAGING E2E - V2: NFT-for-NFT with SOL Fee', function () {
     console.log(`     NFT A (Seller): ${agreementData.nftMint}`);
     console.log(`     NFT B (Buyer): ${agreementData.nftBMint}`);
     console.log(`     Swap Type: ${agreementData.swapType}`);
-    console.log(`     Platform Fee: ${agreementData.solAmount} SOL`);
+    console.log(`     Platform Fee: ${PLATFORM_FEE_SOL} SOL (${agreementData.solAmount} lamports)`);
     console.log(`     Fee Payer: ${agreementData.feePayer}\n`);
 
     const response = await axios.post(
@@ -209,7 +209,7 @@ describe('STAGING E2E - V2: NFT-for-NFT with SOL Fee', function () {
     expect(response.data.success).to.be.true;
     expect(response.data.data).to.have.property('agreementId');
     expect(response.data.data.swapType).to.equal('NFT_FOR_NFT_WITH_FEE');
-    expect(response.data.data.depositAddresses).to.have.property('nftB', 'Should have buyer NFT deposit address');
+    expect(response.data.data.depositAddresses, 'Should have buyer NFT deposit address').to.have.property('nftB');
 
     agreement = response.data.data;
     transactions.push({
@@ -227,10 +227,6 @@ describe('STAGING E2E - V2: NFT-for-NFT with SOL Fee', function () {
 
   it('should deposit NFT A (seller)', async function () {
     console.log('🎨 Depositing NFT A to escrow...\n');
-
-    // Wait to avoid rate limiting
-    console.log('   ⏳ Waiting 5 seconds to avoid rate limiting...');
-    await new Promise(resolve => setTimeout(resolve, 5000));
 
     const prepareResponse = await axios.post(
       `${STAGING_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}/deposit-nft/prepare`
@@ -286,44 +282,43 @@ describe('STAGING E2E - V2: NFT-for-NFT with SOL Fee', function () {
   it('should deposit SOL fee (buyer)', async function () {
     console.log('💎 Depositing SOL fee to escrow...\n');
 
-    // Wait to avoid rate limiting
-    console.log('   ⏳ Waiting 5 seconds to avoid rate limiting...');
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    try {
+      const prepareResponse = await axios.post(
+        `${STAGING_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}/deposit-sol/prepare`
+      );
 
-    const prepareResponse = await axios.post(
-      `${STAGING_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}/deposit-sol/prepare`
-    );
+      expect(prepareResponse.status).to.equal(200);
+      expect(prepareResponse.data.success).to.be.true;
 
-    expect(prepareResponse.status).to.equal(200);
-    expect(prepareResponse.data.success).to.be.true;
+      console.log(`   Platform Fee: ${PLATFORM_FEE_SOL} SOL`);
 
-    console.log(`   Platform Fee: ${PLATFORM_FEE_SOL} SOL`);
+      const transactionBuffer = Buffer.from(prepareResponse.data.data.transaction, 'base64');
+      const transaction = Transaction.from(transactionBuffer);
 
-    const transactionBuffer = Buffer.from(prepareResponse.data.data.transaction, 'base64');
-    const transaction = Transaction.from(transactionBuffer);
+      const { blockhash } = await connection.getLatestBlockhash();
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = wallets.receiver.publicKey;
+      transaction.sign(wallets.receiver);
 
-    const { blockhash } = await connection.getLatestBlockhash();
-    transaction.recentBlockhash = blockhash;
-    transaction.feePayer = wallets.receiver.publicKey;
-    transaction.sign(wallets.receiver);
+      const txId = await connection.sendRawTransaction(transaction.serialize(), {
+        skipPreflight: false,
+        preflightCommitment: 'confirmed',
+      });
 
-    const txId = await connection.sendRawTransaction(transaction.serialize(), {
-      skipPreflight: false,
-      preflightCommitment: 'confirmed',
-    });
+      await connection.confirmTransaction(txId, 'confirmed');
 
-    await connection.confirmTransaction(txId, 'confirmed');
+      transactions.push({
+        description: 'Deposit SOL Fee (deposit_sol)',
+        txId,
+        timestamp: Date.now(),
+      });
 
-    transactions.push({
-      description: 'Deposit SOL Fee (deposit_sol)',
-      txId,
-      timestamp: Date.now(),
-    });
-
-    console.log(`   ✅ SOL Fee Deposited`);
-    console.log(`   Transaction: ${getExplorerUrl(txId, 'tx')}\n`);
-
-    await new Promise(resolve => setTimeout(resolve, 5000));
+      console.log(`   ✅ SOL Fee Deposited`);
+      console.log(`   Transaction: ${getExplorerUrl(txId, 'tx')}\n`);
+    } catch (error: any) {
+      console.error('   ❌ SOL deposit failed:', error.response?.data || error.message);
+      throw error;
+    }
   });
 
   it('should check agreement status', async function () {

@@ -933,11 +933,12 @@ export const prepareDepositSolTransaction = async (
     // 3. Validate swap type supports SOL
     if (
       agreement.swapType !== 'NFT_FOR_SOL' &&
-      agreement.swapType !== 'NFT_FOR_NFT_PLUS_SOL'
+      agreement.swapType !== 'NFT_FOR_NFT_PLUS_SOL' &&
+      agreement.swapType !== 'NFT_FOR_NFT_WITH_FEE'
     ) {
       throw new Error(
         `Cannot deposit SOL: Agreement swap type is ${agreement.swapType}. ` +
-          `SOL deposits only allowed for NFT_FOR_SOL and NFT_FOR_NFT_PLUS_SOL swaps.`
+          `SOL deposits only allowed for NFT_FOR_SOL, NFT_FOR_NFT_PLUS_SOL, and NFT_FOR_NFT_WITH_FEE swaps.`
       );
     }
 
