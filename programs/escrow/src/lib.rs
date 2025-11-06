@@ -464,12 +464,14 @@ pub mod escrow {
                 require!(amount <= MAX_SOL_AMOUNT, EscrowError::SolAmountTooHigh);
             },
             SwapType::NftForNftWithFee => {
-                // For NFT<>NFT with fee: must have nft_b_mint, sol_amount is fee
+                // For NFT<>NFT with fee: must have nft_b_mint, sol_amount is buyer's fee portion
+                // DUAL FLAT FEE: Buyer pays sol_amount, seller pays same amount (0.005 SOL each)
                 require!(nft_b_mint.is_some(), EscrowError::InvalidSwapParameters);
                 require!(sol_amount.is_some(), EscrowError::InvalidSwapParameters);
                 
                 let fee = sol_amount.unwrap();
-                require!(fee >= MIN_SOL_AMOUNT, EscrowError::SolAmountTooLow);
+                // Minimum is 0.005 SOL (5_000_000 lamports) for NFT-only swaps
+                require!(fee >= 5_000_000, EscrowError::SolAmountTooLow);
                 require!(fee <= MAX_SOL_AMOUNT, EscrowError::SolAmountTooHigh);
             },
             SwapType::NftForNftPlusSol => {
@@ -497,6 +499,7 @@ pub mod escrow {
         escrow_state.buyer_sol_deposited = false;
         escrow_state.buyer_nft_deposited = false;
         escrow_state.seller_nft_deposited = false;
+        escrow_state.seller_sol_deposited = false;
         escrow_state.status = EscrowStatus::Pending;
         escrow_state.expiry_timestamp = expiry_timestamp;
         escrow_state.bump = ctx.bumps.escrow_state;
@@ -664,6 +667,54 @@ pub mod escrow {
         Ok(())
     }
 
+    /// Seller deposits SOL fee into the SOL vault PDA
+    /// For NftForNftWithFee swap type only - seller pays 0.005 SOL fee
+    pub fn deposit_seller_sol_fee(ctx: Context<DepositSellerSolFee>) -> Result<()> {
+        // Validate escrow status
+        require!(
+            ctx.accounts.escrow_state.status == EscrowStatus::Pending,
+            EscrowError::InvalidStatus
+        );
+
+        // Verify not already deposited
+        require!(
+            !ctx.accounts.escrow_state.seller_sol_deposited,
+            EscrowError::AlreadyDeposited
+        );
+
+        // Validate swap type requires seller fee
+        require!(
+            ctx.accounts.escrow_state.swap_type == SwapType::NftForNftWithFee,
+            EscrowError::InvalidSwapType
+        );
+
+        // Verify seller authority
+        require!(
+            ctx.accounts.seller.key() == ctx.accounts.escrow_state.seller,
+            EscrowError::Unauthorized
+        );
+
+        // Extract sol_amount (seller's fee portion)
+        let seller_fee = ctx.accounts.escrow_state.sol_amount;
+
+        // Transfer SOL from seller to SOL vault PDA
+        let transfer_ctx = CpiContext::new(
+            ctx.accounts.system_program.to_account_info(),
+            anchor_lang::system_program::Transfer {
+                from: ctx.accounts.seller.to_account_info(),
+                to: ctx.accounts.sol_vault.to_account_info(),
+            },
+        );
+        anchor_lang::system_program::transfer(transfer_ctx, seller_fee)?;
+
+        // Mark seller SOL as deposited
+        ctx.accounts.escrow_state.seller_sol_deposited = true;
+
+        msg!("Seller fee deposited to vault: {} lamports", seller_fee);
+
+        Ok(())
+    }
+
     /// Settle the escrow and distribute assets
     /// Handles both NFT<>SOL and NFT<>NFT with SOL fee swap types
     /// Permissionless: Anyone can trigger settlement once both deposits are confirmed
@@ -825,46 +876,48 @@ pub mod escrow {
                 msg!("NFT<>SOL settled: Platform fee {} SOL, Seller received {} SOL", platform_fee, seller_receives);
             },
             SwapType::NftForNftWithFee => {
-                // Validate deposits
+                // Validate deposits (all 4 required)
                 require!(
                     ctx.accounts.escrow_state.buyer_sol_deposited && 
+                    ctx.accounts.escrow_state.seller_sol_deposited &&  // NEW: Require seller's fee
                     ctx.accounts.escrow_state.buyer_nft_deposited && 
                     ctx.accounts.escrow_state.seller_nft_deposited,
                     EscrowError::DepositNotComplete
                 );
 
-                // Transfer platform fee (SOL) to fee collector
-                let platform_fee = ctx.accounts.escrow_state.sol_amount; // Full amount is the fee
-                
-                // Get rent-exempt minimum for this account
-                let rent = Rent::get()?;
-                let escrow_account_info = ctx.accounts.escrow_state.to_account_info();
-                let min_rent_exempt = rent.minimum_balance(escrow_account_info.data_len());
-                
-                // Calculate transferable amount
-                let current_balance = escrow_account_info.lamports();
-                let transferable = current_balance.checked_sub(min_rent_exempt)
-                    .ok_or(EscrowError::InsufficientFunds)?;
-                
-                require!(
-                    transferable >= platform_fee,
-                    EscrowError::InsufficientFunds
-                );
-                
-                // CRITICAL FIX: Get escrow_account reference ONCE to avoid RefCell tracking issues
-                // Perform direct lamport transfer
-                let escrow_account = ctx.accounts.escrow_state.to_account_info();
-                {
-                    let fee_collector_account = ctx.accounts.platform_fee_collector.to_account_info();
-                    
-                    let mut escrow_lamports = escrow_account.try_borrow_mut_lamports()?;
-                    let mut fee_collector_lamports = fee_collector_account.try_borrow_mut_lamports()?;
+                // DUAL FLAT FEE STRUCTURE for pure NFT swaps
+                // Buyer pays: 0.005 SOL (sol_amount)
+                // Seller pays: 0.005 SOL (sol_amount)
+                // Total in vault: 0.01 SOL
+                let buyer_fee = ctx.accounts.escrow_state.sol_amount;  // 5_000_000 lamports (0.005 SOL)
+                let seller_fee = ctx.accounts.escrow_state.sol_amount; // 5_000_000 lamports (0.005 SOL)
+                let total_platform_fee = buyer_fee.checked_add(seller_fee)
+                    .ok_or(EscrowError::CalculationOverflow)?; // 10_000_000 lamports (0.01 SOL)
 
-                    **escrow_lamports = escrow_lamports.checked_sub(platform_fee)
-                        .ok_or(EscrowError::InsufficientFunds)?;
-                    **fee_collector_lamports = fee_collector_lamports.checked_add(platform_fee)
-                        .ok_or(EscrowError::CalculationOverflow)?;
-                } // Borrow released here
+                msg!("NFT<>NFT dual flat fee collection:");
+                msg!("  Buyer fee: {} lamports (0.005 SOL)", buyer_fee);
+                msg!("  Seller fee: {} lamports (0.005 SOL)", seller_fee);
+                msg!("  Total platform fee: {} lamports (0.01 SOL)", total_platform_fee);
+
+                // Vault PDA signer seeds
+                let escrow_id_bytes = ctx.accounts.escrow_state.escrow_id.to_le_bytes();
+                let vault_signer_seeds: &[&[&[u8]]] = &[&[
+                    b"sol_vault",
+                    escrow_id_bytes.as_ref(),
+                    &[ctx.bumps.sol_vault],
+                ]];
+
+                // Transfer entire fee from sol_vault to fee_collector
+                let fee_transfer_ctx = CpiContext::new_with_signer(
+                    ctx.accounts.system_program.to_account_info(),
+                    anchor_lang::system_program::Transfer {
+                        from: ctx.accounts.sol_vault.to_account_info(),
+                        to: ctx.accounts.platform_fee_collector.to_account_info(),
+                    },
+                    vault_signer_seeds,
+                );
+                anchor_lang::system_program::transfer(fee_transfer_ctx, total_platform_fee)?;
+                msg!("Platform fee transferred from vault: {} lamports", total_platform_fee);
 
                 // Transfer NFT A from escrow to buyer
                 let nft_a_transfer_ctx = CpiContext::new_with_signer(
@@ -897,7 +950,7 @@ pub mod escrow {
                 );
                 token::transfer(nft_b_transfer_ctx, 1)?;
 
-                msg!("NFT<>NFT settled: Platform fee {} SOL", platform_fee);
+                msg!("NFT<>NFT settled: Total platform fee {} lamports (buyer: {} + seller: {})", total_platform_fee, buyer_fee, seller_fee);
             },
             SwapType::NftForNftPlusSol => {
                 // Validate deposits
@@ -1550,6 +1603,7 @@ pub struct EscrowState {
     pub buyer_sol_deposited: bool,
     pub buyer_nft_deposited: bool,
     pub seller_nft_deposited: bool,
+    pub seller_sol_deposited: bool,  // NEW: Tracks seller's fee deposit for NftForNftWithFee
     
     /// Status and metadata
     pub status: EscrowStatus,
@@ -1604,12 +1658,14 @@ pub fn init_agreement(
             require!(amount <= MAX_SOL_AMOUNT, EscrowError::SolAmountTooHigh);
         },
         SwapType::NftForNftWithFee => {
-            // For NFT<>NFT with fee: must have nft_b_mint, sol_amount is fee
+            // For NFT<>NFT with fee: must have nft_b_mint, sol_amount is buyer's fee portion
+            // DUAL FLAT FEE: Buyer pays sol_amount, seller pays same amount (0.005 SOL each)
             require!(nft_b_mint.is_some(), EscrowError::InvalidSwapParameters);
             require!(sol_amount.is_some(), EscrowError::InvalidSwapParameters);
             
             let fee = sol_amount.unwrap();
-            require!(fee >= MIN_SOL_AMOUNT, EscrowError::SolAmountTooLow);
+            // Minimum is 0.005 SOL (5_000_000 lamports) for NFT-only swaps
+            require!(fee >= 5_000_000, EscrowError::SolAmountTooLow);
             require!(fee <= MAX_SOL_AMOUNT, EscrowError::SolAmountTooHigh);
         },
         SwapType::NftForNftPlusSol => {
@@ -2393,6 +2449,31 @@ pub struct DepositBuyerNft<'info> {
     
     pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,
+    pub system_program: Program<'info, System>,
+}
+
+/// Seller deposits SOL fee for NftForNftWithFee
+#[derive(Accounts)]
+pub struct DepositSellerSolFee<'info> {
+    #[account(mut)]
+    pub seller: Signer<'info>,
+    
+    #[account(
+        mut,
+        seeds = [b"escrow", escrow_state.escrow_id.to_le_bytes().as_ref()],
+        bump = escrow_state.bump,
+    )]
+    pub escrow_state: Account<'info, EscrowState>,
+    
+    /// SOL vault PDA - receives seller's fee deposit
+    /// CHECK: Validated via seeds, receives SOL transfer
+    #[account(
+        mut,
+        seeds = [b"sol_vault", escrow_state.escrow_id.to_le_bytes().as_ref()],
+        bump
+    )]
+    pub sol_vault: SystemAccount<'info>,
+    
     pub system_program: Program<'info, System>,
 }
 

@@ -1603,6 +1603,107 @@ export class EscrowProgramService {
   }
 
   /**
+   * Seller deposits SOL fee for NFT_FOR_NFT_WITH_FEE swap type
+   * Both buyer and seller pay 0.005 SOL each
+   */
+  async depositSellerSolFee(
+    escrowPda: PublicKey,
+    seller: PublicKey,
+    feeAmount: BN
+  ): Promise<string> {
+    try {
+      console.log('[EscrowProgramService] Depositing seller SOL fee:', {
+        escrowPda: escrowPda.toString(),
+        seller: seller.toString(),
+        feeAmount: feeAmount.toString(),
+      });
+
+      // Fetch escrow state to get escrow ID for sol_vault derivation
+      const escrowState = await this.program.account.escrowState.fetch(escrowPda);
+      const escrowId = escrowState.escrowId;
+
+      // Derive sol_vault PDA
+      const [solVaultPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from('sol_vault'), escrowId.toArrayLike(Buffer, 'le', 8)],
+        this.programId
+      );
+
+      console.log('[EscrowProgramService] Derived sol_vault PDA:', solVaultPda.toString());
+
+      // Build instruction for deposit_seller_sol_fee
+      const instruction = await (this.program.methods as any)
+        .depositSellerSolFee()
+        .accountsStrict({
+          seller,
+          escrowState: escrowPda,
+          solVault: solVaultPda,
+          systemProgram: SystemProgram.programId,
+        })
+        .instruction();
+
+      // Create transaction
+      const { Transaction, ComputeBudgetProgram } = await import('@solana/web3.js');
+      const transaction = new Transaction();
+
+      const isMainnet = isMainnetNetwork(this.provider.connection);
+      const priorityFee = await PriorityFeeService.getRecommendedPriorityFee(
+        this.provider.connection,
+        isMainnet
+      );
+
+      transaction.add(
+        ComputeBudgetProgram.setComputeUnitLimit({ units: 200_000 }),
+        ComputeBudgetProgram.setComputeUnitPrice({ microLamports: priorityFee })
+      );
+
+      transaction.add(instruction);
+
+      if (isMainnet) {
+        const JITO_TIP_ACCOUNTS = [
+          '96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5',
+          'HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe',
+          'Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY',
+          'ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49',
+          'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
+          'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
+          'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
+          '3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT',
+        ];
+
+        const jitoTipAccount = new PublicKey(
+          JITO_TIP_ACCOUNTS[Math.floor(Math.random() * JITO_TIP_ACCOUNTS.length)]
+        );
+        transaction.add(
+          SystemProgram.transfer({
+            fromPubkey: this.adminKeypair.publicKey,
+            toPubkey: jitoTipAccount,
+            lamports: 1_000_000,
+          })
+        );
+      }
+
+      transaction.feePayer = this.adminKeypair.publicKey;
+      const latestBlockhash = await this.provider.connection.getLatestBlockhash('confirmed');
+      transaction.recentBlockhash = latestBlockhash.blockhash;
+
+      // Sign and send
+      transaction.partialSign(this.adminKeypair);
+      const txId = await this.provider.sendAndConfirm(transaction, [], {
+        skipPreflight: false,
+        commitment: 'confirmed',
+      });
+
+      console.log('[EscrowProgramService] Seller SOL fee deposited successfully:', txId);
+      return txId;
+    } catch (error) {
+      console.error('[EscrowProgramService] Failed to deposit seller SOL fee:', error);
+      throw new Error(
+        `Failed to deposit seller SOL fee: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+  }
+
+  /**
    * Build unsigned deposit SOL transaction for client-side signing
    * PRODUCTION APPROACH: Returns transaction that client must sign
    */

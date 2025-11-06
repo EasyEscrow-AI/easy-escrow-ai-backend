@@ -69,7 +69,8 @@ describe('STAGING E2E - V2: NFT-for-NFT with SOL Fee', function () {
     feeCollector: { sol: number };
   };
 
-  const PLATFORM_FEE_SOL = 0.01; // 0.01 SOL platform fee
+  const FEE_PER_PARTY = 0.005; // 0.005 SOL per party (buyer + seller)
+  const TOTAL_PLATFORM_FEE = 0.01; // 0.01 SOL total (0.005 SOL × 2)
   const PLATFORM_FEE_BPS = 100; // 1%
 
   // Transaction tracking
@@ -139,7 +140,7 @@ describe('STAGING E2E - V2: NFT-for-NFT with SOL Fee', function () {
     console.log(`   Buyer SOL: ${initialBalances.buyer.sol.toFixed(4)} SOL`);
     console.log(`   Fee Collector SOL: ${initialBalances.feeCollector.sol.toFixed(4)} SOL\n`);
 
-    expect(buyerBalance).to.be.greaterThan(PLATFORM_FEE_SOL * LAMPORTS_PER_SOL, 'Buyer needs sufficient SOL for fee');
+    expect(buyerBalance).to.be.greaterThan(FEE_PER_PARTY * LAMPORTS_PER_SOL, 'Buyer needs sufficient SOL for fee');
   });
 
   it('should create NFT A for the seller', async function () {
@@ -180,7 +181,7 @@ describe('STAGING E2E - V2: NFT-for-NFT with SOL Fee', function () {
       buyer: wallets.receiver.publicKey.toBase58(),
       swapType: 'NFT_FOR_NFT_WITH_FEE',
       nftBMint: nftB.mint.toBase58(), // Buyer's NFT
-      solAmount: (PLATFORM_FEE_SOL * LAMPORTS_PER_SOL).toString(), // Platform fee in lamports
+      solAmount: (FEE_PER_PARTY * LAMPORTS_PER_SOL).toString(), // Buyer's fee portion in lamports
       feeBps: PLATFORM_FEE_BPS,
       feePayer: 'BUYER',
       honorRoyalties: false,
@@ -191,7 +192,9 @@ describe('STAGING E2E - V2: NFT-for-NFT with SOL Fee', function () {
     console.log(`     NFT A (Seller): ${agreementData.nftMint}`);
     console.log(`     NFT B (Buyer): ${agreementData.nftBMint}`);
     console.log(`     Swap Type: ${agreementData.swapType}`);
-    console.log(`     Platform Fee: ${PLATFORM_FEE_SOL} SOL (${agreementData.solAmount} lamports)`);
+    console.log(`     Buyer Fee: ${FEE_PER_PARTY} SOL (${agreementData.solAmount} lamports)`);
+    console.log(`     Seller Fee: ${FEE_PER_PARTY} SOL (same amount)`);
+    console.log(`     Total Platform Fee: ${TOTAL_PLATFORM_FEE} SOL`);
     console.log(`     Fee Payer: ${agreementData.feePayer}\n`);
 
     const response = await axios.post(
@@ -280,7 +283,7 @@ describe('STAGING E2E - V2: NFT-for-NFT with SOL Fee', function () {
   });
 
   it('should deposit SOL fee (buyer)', async function () {
-    console.log('💎 Depositing SOL fee to escrow...\n');
+    console.log('💎 Depositing buyer SOL fee to escrow...\n');
 
     try {
       const prepareResponse = await axios.post(
@@ -290,7 +293,7 @@ describe('STAGING E2E - V2: NFT-for-NFT with SOL Fee', function () {
       expect(prepareResponse.status).to.equal(200);
       expect(prepareResponse.data.success).to.be.true;
 
-      console.log(`   Platform Fee: ${PLATFORM_FEE_SOL} SOL`);
+      console.log(`   Buyer Fee: ${FEE_PER_PARTY} SOL`);
 
       const transactionBuffer = Buffer.from(prepareResponse.data.data.transaction, 'base64');
       const transaction = Transaction.from(transactionBuffer);
@@ -313,10 +316,52 @@ describe('STAGING E2E - V2: NFT-for-NFT with SOL Fee', function () {
         timestamp: Date.now(),
       });
 
-      console.log(`   ✅ SOL Fee Deposited`);
+      console.log(`   ✅ Buyer SOL Fee Deposited`);
       console.log(`   Transaction: ${getExplorerUrl(txId, 'tx')}\n`);
     } catch (error: any) {
-      console.error('   ❌ SOL deposit failed:', error.response?.data || error.message);
+      console.error('   ❌ Buyer SOL deposit failed:', error.response?.data || error.message);
+      throw error;
+    }
+  });
+
+  it('should deposit SOL fee (seller)', async function () {
+    console.log('💎 Depositing seller SOL fee to escrow...\n');
+
+    try {
+      const prepareResponse = await axios.post(
+        `${STAGING_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}/deposit-seller-sol-fee/prepare`
+      );
+
+      expect(prepareResponse.status).to.equal(200);
+      expect(prepareResponse.data.success).to.be.true;
+
+      console.log(`   Seller Fee: ${FEE_PER_PARTY} SOL`);
+
+      const transactionBuffer = Buffer.from(prepareResponse.data.data.transaction, 'base64');
+      const transaction = Transaction.from(transactionBuffer);
+
+      const { blockhash } = await connection.getLatestBlockhash();
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = wallets.sender.publicKey;  // Seller signs
+      transaction.sign(wallets.sender);
+
+      const txId = await connection.sendRawTransaction(transaction.serialize(), {
+        skipPreflight: false,
+        preflightCommitment: 'confirmed',
+      });
+
+      await connection.confirmTransaction(txId, 'confirmed');
+
+      transactions.push({
+        description: 'Deposit Seller SOL Fee (deposit_seller_sol_fee)',
+        txId,
+        timestamp: Date.now(),
+      });
+
+      console.log(`   ✅ Seller SOL Fee Deposited`);
+      console.log(`   Transaction: ${getExplorerUrl(txId, 'tx')}\n`);
+    } catch (error: any) {
+      console.error('   ❌ Seller SOL deposit failed:', error.response?.data || error.message);
       throw error;
     }
   });
@@ -339,8 +384,8 @@ describe('STAGING E2E - V2: NFT-for-NFT with SOL Fee', function () {
     expect(statusResponse.data.data.status).to.be.oneOf(['NFT_LOCKED', 'USDC_LOCKED', 'PENDING']);
   });
 
-  it('should verify SOL fee was collected', async function () {
-    console.log('💰 Verifying SOL fee collection...\n');
+  it('should verify dual SOL fees were collected', async function () {
+    console.log('💰 Verifying dual SOL fee collection...\n');
 
     const sellerBalance = await connection.getBalance(wallets.sender.publicKey);
     const buyerBalance = await connection.getBalance(wallets.receiver.publicKey);
@@ -353,20 +398,32 @@ describe('STAGING E2E - V2: NFT-for-NFT with SOL Fee', function () {
     };
 
     const buyerDelta = finalBalances.buyer.sol - initialBalances.buyer.sol;
+    const sellerDelta = finalBalances.seller.sol - initialBalances.seller.sol;
 
     console.log('   Buyer Balance Change:');
     console.log(`     Initial: ${initialBalances.buyer.sol.toFixed(4)} SOL`);
     console.log(`     Final: ${finalBalances.buyer.sol.toFixed(4)} SOL`);
-    console.log(`     Delta: ${buyerDelta.toFixed(4)} SOL\n`);
+    console.log(`     Delta: ${buyerDelta.toFixed(4)} SOL`);
+    console.log(`     Expected: ~-${FEE_PER_PARTY} SOL (plus tx fees)\n`);
 
-    // Buyer should have paid the fee + transaction costs
-    const TX_FEE_TOLERANCE = 0.02; // 0.02 SOL tolerance
+    console.log('   Seller Balance Change:');
+    console.log(`     Initial: ${initialBalances.seller.sol.toFixed(4)} SOL`);
+    console.log(`     Final: ${finalBalances.seller.sol.toFixed(4)} SOL`);
+    console.log(`     Delta: ${sellerDelta.toFixed(4)} SOL`);
+    console.log(`     Expected: ~-${FEE_PER_PARTY} SOL (plus tx fees)\n`);
+
+    // Both buyer and seller should have paid their fee portion + transaction costs
+    const TX_FEE_TOLERANCE = 0.02; // 0.02 SOL tolerance per party
     expect(buyerDelta).to.be.lessThan(
-      -PLATFORM_FEE_SOL + TX_FEE_TOLERANCE,
-      `Buyer should have paid ~${PLATFORM_FEE_SOL} SOL fee (plus tx fees)`
+      -FEE_PER_PARTY + TX_FEE_TOLERANCE,
+      `Buyer should have paid ~${FEE_PER_PARTY} SOL fee (plus tx fees)`
+    );
+    expect(sellerDelta).to.be.lessThan(
+      -FEE_PER_PARTY + TX_FEE_TOLERANCE,
+      `Seller should have paid ~${FEE_PER_PARTY} SOL fee (plus tx fees)`
     );
 
-    console.log('   ✅ SOL fee payment verified\n');
+    console.log('   ✅ Dual SOL fee payments verified (both parties paid)\n');
   });
 
   it('should display transaction summary', async function () {

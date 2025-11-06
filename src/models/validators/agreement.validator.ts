@@ -96,20 +96,27 @@ export const validateCreateAgreement = (
     }
   }
 
-  // For NFT_FOR_NFT_WITH_FEE, solAmount represents the platform fee
+  // For NFT_FOR_NFT_WITH_FEE, solAmount must be exactly 5_000_000 lamports (0.005 SOL)
+  // This is the BUYER's portion of the dual flat fee (seller pays same amount)
   if (swapType === SwapType.NFT_FOR_NFT_WITH_FEE) {
+    const REQUIRED_FEE_PER_PARTY = 5_000_000; // 0.005 SOL
+    
     if (!data.solAmount && data.solAmount !== 0) {
       errors.push({ 
         field: 'solAmount', 
-        message: 'Platform fee amount (in SOL) is required for NFT_FOR_NFT_WITH_FEE swap type' 
+        message: `Fee amount is required for NFT_FOR_NFT_WITH_FEE swap type. Must be exactly ${REQUIRED_FEE_PER_PARTY} lamports (0.005 SOL) per party.` 
       });
-    } else if (!isValidSolAmount(data.solAmount)) {
-      const minSol = SOL_LIMITS.MIN / 1_000_000_000;
-      const maxSol = SOL_LIMITS.MAX / 1_000_000_000;
-      errors.push({ 
-        field: 'solAmount', 
-        message: `Platform fee must be between ${minSol} SOL and ${maxSol} SOL (BETA limits)` 
-      });
+    } else {
+      const solAmountNum = typeof data.solAmount === 'string' 
+        ? parseInt(data.solAmount, 10) 
+        : data.solAmount;
+      
+      if (solAmountNum !== REQUIRED_FEE_PER_PARTY) {
+        errors.push({ 
+          field: 'solAmount', 
+          message: `For NFT_FOR_NFT_WITH_FEE, solAmount must be exactly ${REQUIRED_FEE_PER_PARTY} lamports (0.005 SOL). This is the fee per party (both buyer and seller pay this amount).` 
+        });
+      }
     }
   }
 
