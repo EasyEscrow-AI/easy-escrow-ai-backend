@@ -243,9 +243,9 @@ describe('STAGING E2E - NFT-for-SOL Swap (Happy Path)', function () {
   it('should prepare and submit NFT deposit transaction', async function () {
     console.log('🎨 Depositing NFT to escrow...\n');
 
-    // Wait to avoid rate limiting
-    console.log('   ⏳ Waiting 5 seconds to avoid rate limiting...');
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    // Small delay to avoid rate limiting
+    console.log('   ⏳ Waiting 2 seconds to avoid rate limiting...');
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
     // Prepare unsigned transaction
     const prepareResponse = await axios.post(
@@ -300,9 +300,9 @@ describe('STAGING E2E - NFT-for-SOL Swap (Happy Path)', function () {
   it('should prepare and submit SOL deposit transaction', async function () {
     console.log('💎 Depositing SOL to escrow...\n');
 
-    // Wait to avoid rate limiting
-    console.log('   ⏳ Waiting 5 seconds to avoid rate limiting...');
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    // Small delay to avoid rate limiting
+    console.log('   ⏳ Waiting 2 seconds to avoid rate limiting...');
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
     // Prepare unsigned transaction
     const prepareResponse = await axios.post(
@@ -345,22 +345,18 @@ describe('STAGING E2E - NFT-for-SOL Swap (Happy Path)', function () {
     console.log(`   ✅ SOL Deposited`);
     console.log(`   Transaction: ${getExplorerUrl(txId, 'tx')}\n`);
 
-    // Wait for transaction to fully propagate and account to be created
-    console.log('   ⏳ Waiting 10 seconds for sol_vault account creation...');
-    await new Promise(resolve => setTimeout(resolve, 10000));
-
-    // Manually trigger deposit validation (faster than waiting for WebSocket subscription)
-    console.log('   🔍 Manually validating SOL deposit...');
+    // Manually trigger deposit validation immediately (transaction should be confirmed already)
+    console.log('   🔍 Validating SOL deposit...');
     const validateResponse = await axios.post(
       `${STAGING_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}/validate-deposits`
     );
 
     console.log(`   Validation result:`, JSON.stringify(validateResponse.data, null, 2));
     
-    // If validation failed, wait longer and try again
+    // If validation failed, wait and retry once
     if (!validateResponse.data.data.validations.sol.success) {
-      console.log('   ⚠️  First validation failed, waiting 10 more seconds and retrying...');
-      await new Promise(resolve => setTimeout(resolve, 10000));
+      console.log('   ⚠️  First validation failed, waiting 5 seconds and retrying...');
+      await new Promise(resolve => setTimeout(resolve, 5000));
       
       const retryResponse = await axios.post(
         `${STAGING_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}/validate-deposits`
