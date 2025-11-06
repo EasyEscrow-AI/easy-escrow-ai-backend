@@ -221,7 +221,7 @@ export class MonitoringService {
           // The vault architecture uses a separate zero-data PDA for holding SOL
           if (
             agreement.escrowPda &&
-            (agreement.swapType === 'NFT_FOR_SOL' || agreement.swapType === 'NFT_FOR_NFT_PLUS_SOL') &&
+            (agreement.swapType === 'NFT_FOR_SOL' || agreement.swapType === 'NFT_FOR_NFT_PLUS_SOL' || agreement.swapType === 'NFT_FOR_NFT_WITH_FEE') &&
             !['USDC_LOCKED', 'BOTH_LOCKED'].includes(agreement.status)
           ) {
             try {
@@ -233,8 +233,14 @@ export class MonitoringService {
                 type: 'sol'
               });
               console.log(`[MonitoringService] Monitoring SOL vault ${solVaultPda} for agreement: ${agreement.agreementId}`);
-            } catch (error) {
-              console.error(`[MonitoringService] Failed to derive SOL vault for ${agreement.agreementId}:`, error);
+            } catch (error: any) {
+              // Handle IDL mismatch errors (old agreements with incompatible program version)
+              if (error.message && error.message.includes('IDL_MISMATCH')) {
+                console.warn(`[MonitoringService] Skipping old agreement ${agreement.agreementId}: Created with older program version`);
+                // Optionally: Mark agreement for archival in production
+              } else {
+                console.error(`[MonitoringService] Failed to derive SOL vault for ${agreement.agreementId}:`, error);
+              }
             }
           }
 

@@ -746,17 +746,25 @@ export const deriveSolVaultPda = async (
   
   const escrowPda = new PublicKey(escrowPdaString);
   
-  // Fetch escrow state to get escrow ID
-  const escrowState = await escrowService.program.account.escrowState.fetch(escrowPda);
-  const escrowId = escrowState.escrowId;
-  
-  // Derive sol_vault PDA using same program ID
-  const [solVaultPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('sol_vault'), escrowId.toArrayLike(Buffer, 'le', 8)],
-    escrowService.programId
-  );
-  
-  return solVaultPda.toString();
+  try {
+    // Fetch escrow state to get escrow ID
+    const escrowState = await escrowService.program.account.escrowState.fetch(escrowPda);
+    const escrowId = escrowState.escrowId;
+    
+    // Derive sol_vault PDA using same program ID
+    const [solVaultPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from('sol_vault'), escrowId.toArrayLike(Buffer, 'le', 8)],
+      escrowService.programId
+    );
+    
+    return solVaultPda.toString();
+  } catch (error: any) {
+    // Handle deserialization errors for old escrow accounts created with previous program version
+    if (error.message && error.message.includes('Cannot read properties of null')) {
+      throw new Error(`IDL_MISMATCH: Escrow account ${escrowPdaString} was created with an older program version and cannot be deserialized. This agreement should be archived.`);
+    }
+    throw error;
+  }
 };
 
 /**
