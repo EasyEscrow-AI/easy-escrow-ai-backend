@@ -23,7 +23,7 @@ declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 // This allows security researchers and auditors to easily find contact information
 #[cfg(not(feature = "no-entrypoint"))]
 security_txt! {
-    name: "Easy Escrow",
+    name: "easyescrow.ai",
     project_url: "https://easyescrow.ai",
     contacts: "email:security@easyescrow.ai",
     policy: "https://easyescrow.ai/security-policy",
