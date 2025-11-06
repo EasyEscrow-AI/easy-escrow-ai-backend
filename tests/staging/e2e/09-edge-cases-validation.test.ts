@@ -91,7 +91,7 @@ describe('STAGING E2E: Edge Cases and Validation', function () {
     console.log('❌ Testing wrong mint address...\n');
     
     const invalidMint = Keypair.generate().publicKey; // Random invalid mint
-    const expiry = new Date(Date.now() + 60 * 60 * 1000);
+    const expiry = new Date(Date.now() + 61 * 60 * 1000); // 61 minutes
     const idempotencyKey = generateIdempotencyKey();
 
     try {
@@ -99,10 +99,12 @@ describe('STAGING E2E: Edge Cases and Validation', function () {
         `${STAGING_CONFIG.apiBaseUrl}/v1/agreements`,
         {
           nftMint: invalidMint.toString(),
-          price: STAGING_CONFIG.swapAmount,
+          swapType: 'NFT_FOR_SOL',
+          solAmount: (STAGING_CONFIG.swapAmount * 1_000_000_000).toString(),
           seller: wallets.sender.publicKey.toString(),
           buyer: wallets.receiver.publicKey.toString(),
           expiry: expiry.toISOString(),
+          feePayer: 'BUYER',
           feeBps: 100,
           honorRoyalties: false,
         },
@@ -140,16 +142,18 @@ describe('STAGING E2E: Edge Cases and Validation', function () {
     
     // Create agreement first
     const testNft = await createTestNFT(connection, wallets.sender);
-    const expiry = new Date(Date.now() + 60 * 60 * 1000);
+    const expiry = new Date(Date.now() + 61 * 60 * 1000); // 61 minutes
     
     try {
       const createResponse = await axios.post(
         `${STAGING_CONFIG.apiBaseUrl}/v1/agreements`,
         {
           nftMint: testNft.mint.toString(),
-          price: 999999, // Very large amount to ensure insufficient funds
+          swapType: 'NFT_FOR_SOL',
+          solAmount: (999999 * 1_000_000_000).toString(), // Very large amount to ensure insufficient funds
           seller: wallets.sender.publicKey.toString(),
           buyer: wallets.receiver.publicKey.toString(),
+          feePayer: 'BUYER',
           expiry: expiry.toISOString(),
           feeBps: 100,
           honorRoyalties: false,

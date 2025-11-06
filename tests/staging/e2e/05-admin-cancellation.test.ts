@@ -92,7 +92,7 @@ describe('STAGING E2E: Admin Cancellation', function () {
     
     // Create a new agreement for cancellation test
     const testNft = await createTestNFT(connection, wallets.sender);
-    const expiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    const expiry = new Date(Date.now() + 61 * 60 * 1000); // 61 minutes (minimum 1 hour)
     const idempotencyKey = generateIdempotencyKey();
 
     try {
@@ -101,11 +101,13 @@ describe('STAGING E2E: Admin Cancellation', function () {
         `${STAGING_CONFIG.apiBaseUrl}/v1/agreements`,
         {
           nftMint: testNft.mint.toString(),
-          price: STAGING_CONFIG.swapAmount,
+          swapType: 'NFT_FOR_SOL',
+          solAmount: (STAGING_CONFIG.swapAmount * 1_000_000_000).toString(), // Convert to lamports
           seller: wallets.sender.publicKey.toString(),
           buyer: wallets.receiver.publicKey.toString(),
           expiry: expiry.toISOString(),
           feeBps: 100,
+          feePayer: 'BUYER',
           honorRoyalties: false,
         },
         {
