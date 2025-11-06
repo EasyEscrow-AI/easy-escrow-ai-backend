@@ -565,17 +565,17 @@ export class MonitoringService {
       await this.pollAccounts();
     }, this.config.pollingInterval);
 
-    // Periodically reload pending agreements (every 30 seconds)
-    // This ensures new agreements created after service startup are monitored
-    console.log('[MonitoringService] Starting periodic agreement reload (interval: 30s)');
+    // Periodically reload pending agreements (every 5 seconds)
+    // This ensures new agreements created after service startup are monitored quickly
+    // and reduces the race condition window for deposit detection
+    console.log('[MonitoringService] Starting periodic agreement reload (interval: 5s)');
     this.agreementReloadTimer = setInterval(async () => {
       try {
-        console.log('[MonitoringService] Reloading pending agreements...');
         await this.loadPendingAgreements();
       } catch (error) {
         console.error('[MonitoringService] Error reloading agreements:', error);
       }
-    }, 30000); // 30 seconds
+    }, 5000); // 5 seconds
   }
 
   /**
