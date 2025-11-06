@@ -2130,24 +2130,19 @@ export class EscrowProgramService {
         TOKEN_PROGRAM_ID
       );
 
-      // Build instruction with remaining_accounts
+      // Build instruction with proper accounts
       const instruction = await (this.program.methods as any)
         .depositBuyerNft()
         .accountsStrict({
-          escrowState: escrowPda,
           buyer,
+          escrowState: escrowPda,
+          buyerNftAccount: buyerTokenAccount,
+          escrowNftBAccount: escrowTokenAccountB,
+          nftMint: nftBMint,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
           systemProgram: SystemProgram.programId,
         })
-        .remainingAccounts([
-          // NFT B mint (read-only)
-          { pubkey: nftBMint, isSigner: false, isWritable: false },
-          // Buyer's NFT B token account (writable, source)
-          { pubkey: buyerTokenAccount, isSigner: false, isWritable: true },
-          // Escrow's NFT B token account (writable, destination)
-          { pubkey: escrowTokenAccountB, isSigner: false, isWritable: true },
-          // Token program
-          { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-        ])
         .instruction();
 
       // Create transaction
@@ -2252,20 +2247,15 @@ export class EscrowProgramService {
       const instruction = await (this.program.methods as any)
         .depositBuyerNft()
         .accountsStrict({
-          escrowState: escrowPda,
           buyer,
+          escrowState: escrowPda,
+          buyerNftAccount: buyerTokenAccount,
+          escrowNftBAccount: escrowTokenAccountB,
+          nftMint: nftBMint,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
           systemProgram: SystemProgram.programId,
         })
-        .remainingAccounts([
-          // NFT B mint (read-only)
-          { pubkey: nftBMint, isSigner: false, isWritable: false },
-          // Buyer's NFT B token account (writable, source)
-          { pubkey: buyerTokenAccount, isSigner: false, isWritable: true },
-          // Escrow's NFT B token account (writable, destination)
-          { pubkey: escrowTokenAccountB, isSigner: false, isWritable: true },
-          // Token program
-          { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-        ])
         .instruction();
 
       // FIX: Manually set buyer as NON-signer (Anchor SDK bug workaround)
