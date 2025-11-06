@@ -724,7 +724,8 @@ pub mod escrow {
                 let rent = Rent::get()?;
                 
                 msg!("Balances before settlement:");
-                msg!("  Escrow: {} lamports", ctx.accounts.escrow_state.to_account_info().lamports());
+                msg!("  SOL Vault: {} lamports", ctx.accounts.sol_vault.to_account_info().lamports());
+                msg!("  Escrow State: {} lamports", ctx.accounts.escrow_state.to_account_info().lamports());
                 msg!("  Fee collector: {} lamports", ctx.accounts.platform_fee_collector.to_account_info().lamports());
                 msg!("  Seller: {} lamports", ctx.accounts.seller.to_account_info().lamports());
                 
@@ -752,14 +753,15 @@ pub mod escrow {
                     EscrowError::InsufficientSellerRent
                 );
                 
-                // Check escrow will remain rent-exempt after transfers
-                let escrow_balance_after = ctx.accounts.escrow_state.to_account_info().lamports()
+                // Check sol_vault will remain rent-exempt after transfers
+                // NOTE: For SOL-based swaps, SOL is held in sol_vault (zero-data PDA), not escrow_state
+                let vault_balance_after = ctx.accounts.sol_vault.to_account_info().lamports()
                     .checked_sub(platform_fee)
                     .and_then(|b| b.checked_sub(seller_receives))
                     .ok_or(EscrowError::InsufficientFunds)?;
                     
                 require!(
-                    rent.is_exempt(escrow_balance_after, ctx.accounts.escrow_state.to_account_info().data_len()),
+                    rent.is_exempt(vault_balance_after, ctx.accounts.sol_vault.to_account_info().data_len()),
                     EscrowError::InsufficientEscrowRent
                 );
                 
