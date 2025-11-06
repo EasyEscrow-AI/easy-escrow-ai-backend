@@ -1519,13 +1519,26 @@ export class EscrowProgramService {
         solAmount: solAmount.toString(),
       });
 
+      // Fetch escrow state to get escrow ID for sol_vault derivation
+      const escrowState = await this.program.account.escrowState.fetch(escrowPda);
+      const escrowId = escrowState.escrowId;
+
+      // Derive sol_vault PDA
+      const [solVaultPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from('sol_vault'), escrowId.toArrayLike(Buffer, 'le', 8)],
+        this.programId
+      );
+
+      console.log('[EscrowProgramService] Derived sol_vault PDA:', solVaultPda.toString());
+
       // Build instruction
       // Note: deposit_sol takes NO parameters - amount is read from escrow state
       const instruction = await (this.program.methods as any)
         .depositSol()
         .accountsStrict({
-          escrowState: escrowPda,
           buyer,
+          escrowState: escrowPda,
+          solVault: solVaultPda,
           systemProgram: SystemProgram.programId,
         })
         .instruction();
@@ -1605,13 +1618,26 @@ export class EscrowProgramService {
         solAmount: solAmount.toString(),
       });
 
+      // Fetch escrow state to get escrow ID for sol_vault derivation
+      const escrowState = await this.program.account.escrowState.fetch(escrowPda);
+      const escrowId = escrowState.escrowId;
+
+      // Derive sol_vault PDA
+      const [solVaultPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from('sol_vault'), escrowId.toArrayLike(Buffer, 'le', 8)],
+        this.programId
+      );
+
+      console.log('[EscrowProgramService] Derived sol_vault PDA:', solVaultPda.toString());
+
       // Build deposit_sol instruction
       // Note: deposit_sol takes NO parameters - amount is read from escrow state
       const instruction = await (this.program.methods as any)
         .depositSol()
         .accountsStrict({
-          escrowState: escrowPda,
           buyer,
+          escrowState: escrowPda,
+          solVault: solVaultPda,
           systemProgram: SystemProgram.programId,
         })
         .instruction();
