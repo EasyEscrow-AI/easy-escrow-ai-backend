@@ -1040,6 +1040,76 @@ export const prepareDepositSellerSolFeeTransaction = async (
 };
 
 /**
+ * Build unsigned deposit buyer NFT transaction (PRODUCTION)
+ * For NFT_FOR_NFT_WITH_FEE and NFT_FOR_NFT_PLUS_SOL swap types - buyer deposits NFT B
+ * Client signs and submits this transaction with buyer's wallet
+ */
+export const prepareDepositBuyerNftTransaction = async (
+  agreementId: string
+): Promise<{ transaction: string; message: string }> => {
+  try {
+    console.log('[AgreementService] prepareDepositBuyerNftTransaction called for:', agreementId);
+
+    // 1. Get agreement from database
+    const agreement = await prisma.agreement.findUnique({
+      where: { agreementId },
+    });
+
+    if (!agreement) {
+      throw new Error(`Agreement not found: ${agreementId}`);
+    }
+
+    // 2. Validate buyer exists
+    if (!agreement.buyer) {
+      throw new Error('Cannot deposit buyer NFT: No buyer assigned to agreement');
+    }
+
+    // 3. Validate swap type requires buyer NFT
+    if (
+      agreement.swapType !== 'NFT_FOR_NFT_WITH_FEE' &&
+      agreement.swapType !== 'NFT_FOR_NFT_PLUS_SOL'
+    ) {
+      throw new Error(
+        `Cannot deposit buyer NFT: Agreement swap type is ${agreement.swapType}. ` +
+          `Buyer NFT deposits only allowed for NFT_FOR_NFT_WITH_FEE and NFT_FOR_NFT_PLUS_SOL swaps.`
+      );
+    }
+
+    // 4. Validate NFT B mint exists
+    if (!agreement.nftBMint) {
+      throw new Error('Cannot deposit buyer NFT: Agreement has no nftBMint specified');
+    }
+
+    // 5. Validate status - allow buyer NFT deposit when PENDING or NFT_LOCKED (seller deposited)
+    const allowedStatuses: AgreementStatus[] = [
+      AgreementStatus.PENDING,
+      AgreementStatus.NFT_LOCKED,
+      AgreementStatus.USDC_LOCKED, // In case seller deposited SOL fee first
+    ];
+    if (!allowedStatuses.includes(agreement.status)) {
+      throw new Error(
+        `Cannot deposit buyer NFT: Agreement status is ${agreement.status}. Must be PENDING, NFT_LOCKED, or USDC_LOCKED.`
+      );
+    }
+
+    // 6. Build unsigned transaction
+    const escrowService = new EscrowProgramService();
+    const escrowPda = new PublicKey(agreement.escrowPda);
+    const buyer = new PublicKey(agreement.buyer);
+    const nftBMint = new PublicKey(agreement.nftBMint);
+
+    const result = await escrowService.buildDepositBuyerNftTransaction(escrowPda, buyer, nftBMint);
+
+    console.log('[AgreementService] Unsigned buyer NFT deposit transaction prepared');
+
+    return result;
+  } catch (error) {
+    console.error('[AgreementService] prepareDepositBuyerNftTransaction error:', error);
+    throw error;
+  }
+};
+
+/**
  * Deposit SOL to escrow (server-side signing)
  * @deprecated Use prepareDepositSolTransaction for production (client-side signing)
  */

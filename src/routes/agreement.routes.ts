@@ -12,6 +12,7 @@ import {
   depositUsdcToEscrow,
   depositSolToEscrow,
   prepareDepositNftTransaction,
+  prepareDepositBuyerNftTransaction,
   prepareDepositUsdcTransaction,
   prepareDepositSolTransaction,
   prepareDepositSellerSolFeeTransaction,
@@ -232,6 +233,58 @@ router.post(
       } else if (
         errorMessage.includes('Cannot deposit') || 
         errorMessage.includes('status is')
+      ) {
+        statusCode = 400;
+      }
+
+      res.status(statusCode).json({
+        success: false,
+        error: statusCode === 404 ? 'Not Found' : statusCode === 400 ? 'Bad Request' : 'Internal Server Error',
+        message: errorMessage,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * POST /v1/agreements/:agreementId/deposit-nft-buyer/prepare
+ * PRODUCTION ENDPOINT: Returns unsigned transaction for client-side signing
+ * Client must sign with buyer's wallet and submit to network
+ * For NFT_FOR_NFT_WITH_FEE and NFT_FOR_NFT_PLUS_SOL swap types (buyer deposits NFT B)
+ */
+router.post(
+  '/v1/agreements/:agreementId/deposit-nft-buyer/prepare',
+  standardRateLimiter,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { agreementId } = req.params;
+
+      console.log('[AgreementRoutes] POST /deposit-nft-buyer/prepare for:', agreementId);
+
+      const result = await prepareDepositBuyerNftTransaction(agreementId);
+
+      res.status(200).json({
+        success: true,
+        data: result,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('[AgreementRoutes] Error preparing buyer NFT deposit transaction:', error);
+      
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
+      let statusCode = 500;
+      if (
+        errorMessage.includes('not found') || 
+        errorMessage.includes('does not exist')
+      ) {
+        statusCode = 404;
+      } else if (
+        errorMessage.includes('Cannot deposit') ||
+        errorMessage.includes('Invalid') ||
+        errorMessage.includes('No buyer') ||
+        errorMessage.includes('swap type')
       ) {
         statusCode = 400;
       }
