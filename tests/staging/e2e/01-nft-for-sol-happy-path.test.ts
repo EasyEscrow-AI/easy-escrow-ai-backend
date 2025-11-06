@@ -374,8 +374,9 @@ describe('STAGING E2E - NFT-for-SOL Swap (Happy Path)', function () {
     );
 
     console.log(`   Agreement Status: ${statusResponse.data.data.status}`);
-    // After SOL deposit on NFT_FOR_SOL, status should be BOTH_LOCKED (both NFT and SOL deposited)
-    expect(statusResponse.data.data.status).to.equal('BOTH_LOCKED', 'Status should be BOTH_LOCKED after both deposits');
+    // After SOL deposit on NFT_FOR_SOL, status should be BOTH_LOCKED or SETTLED
+    // (Settlement can happen very quickly, so by the time we check it might already be SETTLED)
+    expect(['BOTH_LOCKED', 'SETTLED']).to.include(statusResponse.data.data.status, 'Status should be BOTH_LOCKED or SETTLED after both deposits');
   });
 
   it('should wait for automatic settlement', async function () {
