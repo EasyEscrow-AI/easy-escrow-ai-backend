@@ -705,21 +705,16 @@ pub mod escrow {
                 msg!("  Platform fee: {} lamports", platform_fee);
                 msg!("  Seller receives: {} lamports", seller_receives);
 
-                // Transfer SOL using direct lamport manipulation
+                // Transfer SOL using Anchor v0.32 helper methods
                 // NOTE: Cannot use SystemProgram::transfer() from PDA with data
                 // Research: https://osec.io/blog/2025-05-14-king-of-the-sol/
-                
-                // Get account references ONCE to avoid RefCell issues
-                let escrow_account = ctx.accounts.escrow_state.to_account_info();
-                let fee_collector_account = ctx.accounts.platform_fee_collector.to_account_info();
-                let seller_account = ctx.accounts.seller.to_account_info();
+                // Research: https://www.anchor-lang.com/docs/updates/release-notes/0-32-0
                 
                 // CRITICAL: Verify no executable accounts (programs cannot send/receive lamports)
-                // Research: https://osec.io/blog/2025-05-14-king-of-the-sol/
                 require!(
-                    !escrow_account.executable 
-                    && !fee_collector_account.executable 
-                    && !seller_account.executable,
+                    !ctx.accounts.escrow_state.to_account_info().executable 
+                    && !ctx.accounts.platform_fee_collector.to_account_info().executable 
+                    && !ctx.accounts.seller.to_account_info().executable,
                     EscrowError::ExecutableAccountNotAllowed
                 );
                 
@@ -727,78 +722,88 @@ pub mod escrow {
                 let rent = Rent::get()?;
                 
                 msg!("Balances before settlement:");
-                msg!("  Escrow: {} lamports", escrow_account.lamports());
-                msg!("  Fee collector: {} lamports", fee_collector_account.lamports());
-                msg!("  Seller: {} lamports", seller_account.lamports());
+                msg!("  Escrow: {} lamports", ctx.accounts.escrow_state.to_account_info().lamports());
+                msg!("  Fee collector: {} lamports", ctx.accounts.platform_fee_collector.to_account_info().lamports());
+                msg!("  Seller: {} lamports", ctx.accounts.seller.to_account_info().lamports());
                 
                 // CRITICAL: Validate rent exemption BEFORE any transfers
                 // Research: Most common cause of "sum of account balances do not match" error
                 // All accounts must remain rent-exempt after transfers
                 
                 // Check fee collector will be rent-exempt after receiving fee
-                let fee_collector_balance_after = fee_collector_account.lamports()
+                let fee_collector_balance_after = ctx.accounts.platform_fee_collector.to_account_info().lamports()
                     .checked_add(platform_fee)
                     .ok_or(EscrowError::CalculationOverflow)?;
                     
                 require!(
-                    rent.is_exempt(fee_collector_balance_after, fee_collector_account.data_len()),
+                    rent.is_exempt(fee_collector_balance_after, ctx.accounts.platform_fee_collector.to_account_info().data_len()),
                     EscrowError::InsufficientFeeCollectorRent
                 );
                 
                 // Check seller will be rent-exempt after receiving payment
-                let seller_balance_after = seller_account.lamports()
+                let seller_balance_after = ctx.accounts.seller.to_account_info().lamports()
                     .checked_add(seller_receives)
                     .ok_or(EscrowError::CalculationOverflow)?;
                     
                 require!(
-                    rent.is_exempt(seller_balance_after, seller_account.data_len()),
+                    rent.is_exempt(seller_balance_after, ctx.accounts.seller.to_account_info().data_len()),
                     EscrowError::InsufficientSellerRent
                 );
                 
                 // Check escrow will remain rent-exempt after transfers
-                let escrow_balance_after = escrow_account.lamports()
+                let escrow_balance_after = ctx.accounts.escrow_state.to_account_info().lamports()
                     .checked_sub(platform_fee)
                     .and_then(|b| b.checked_sub(seller_receives))
                     .ok_or(EscrowError::InsufficientFunds)?;
                     
                 require!(
-                    rent.is_exempt(escrow_balance_after, escrow_account.data_len()),
+                    rent.is_exempt(escrow_balance_after, ctx.accounts.escrow_state.to_account_info().data_len()),
                     EscrowError::InsufficientEscrowRent
                 );
                 
                 msg!("Rent exemption validation passed - all accounts will remain rent-exempt");
                 
-                // Perform direct lamport transfers SEQUENTIALLY (one at a time)
-                // Transfer 1: escrow -> fee_collector
-                {
-                    let fee_collector_account = ctx.accounts.platform_fee_collector.to_account_info();
-                    
-                    let mut escrow_lamports = escrow_account.try_borrow_mut_lamports()?;
-                    let mut fee_collector_lamports = fee_collector_account.try_borrow_mut_lamports()?;
-
-                    **escrow_lamports = escrow_lamports.checked_sub(platform_fee)
-                        .ok_or(EscrowError::InsufficientFunds)?;
-                    **fee_collector_lamports = fee_collector_lamports.checked_add(platform_fee)
-                        .ok_or(EscrowError::CalculationOverflow)?;
-                } // Borrows released here
+                // SOL VAULT ARCHITECTURE: Transfer FROM vault PDA (zero-data, like USDC account)
+                // This mirrors the USDC design where tokens are held in a separate account
+                // System Program CPI works for zero-data PDAs (unlike data-bearing PDAs)
                 
-                // Transfer 2: escrow -> seller
-                {
-                    let seller_account = ctx.accounts.seller.to_account_info();
-                    
-                    let mut escrow_lamports = escrow_account.try_borrow_mut_lamports()?;
-                    let mut seller_lamports = seller_account.try_borrow_mut_lamports()?;
-
-                    **escrow_lamports = escrow_lamports.checked_sub(seller_receives)
-                        .ok_or(EscrowError::InsufficientFunds)?;
-                    **seller_lamports = seller_lamports.checked_add(seller_receives)
-                        .ok_or(EscrowError::CalculationOverflow)?;
-                } // Borrows released here
+                // Vault PDA signer seeds (different from state PDA!)
+                let escrow_id_bytes = ctx.accounts.escrow_state.escrow_id.to_le_bytes();
+                let vault_signer_seeds: &[&[&[u8]]] = &[&[
+                    b"sol_vault",
+                    escrow_id_bytes.as_ref(),
+                    &[ctx.bumps.sol_vault],  // Use vault's bump, not state's bump!
+                ]];
                 
-                msg!("Balances after settlement:");
-                msg!("  Escrow: {} lamports", escrow_account.lamports());
-                msg!("  Fee collector: {} lamports", fee_collector_account.lamports());
-                msg!("  Seller: {} lamports", seller_account.lamports());
+                msg!("Transferring {} lamports from SOL vault to recipients", ctx.accounts.escrow_state.sol_amount);
+                msg!("  Platform fee: {} lamports", platform_fee);
+                msg!("  Seller receives: {} lamports", seller_receives);
+                
+                // Transfer 1: vault -> fee_collector using System Program CPI
+                let fee_transfer_ctx = CpiContext::new_with_signer(
+                    ctx.accounts.system_program.to_account_info(),
+                    anchor_lang::system_program::Transfer {
+                        from: ctx.accounts.sol_vault.to_account_info(),
+                        to: ctx.accounts.platform_fee_collector.to_account_info(),
+                    },
+                    vault_signer_seeds,
+                );
+                anchor_lang::system_program::transfer(fee_transfer_ctx, platform_fee)?;
+                msg!("Platform fee transferred: {} lamports", platform_fee);
+                
+                // Transfer 2: vault -> seller using System Program CPI
+                let seller_transfer_ctx = CpiContext::new_with_signer(
+                    ctx.accounts.system_program.to_account_info(),
+                    anchor_lang::system_program::Transfer {
+                        from: ctx.accounts.sol_vault.to_account_info(),
+                        to: ctx.accounts.seller.to_account_info(),
+                    },
+                    vault_signer_seeds,
+                );
+                anchor_lang::system_program::transfer(seller_transfer_ctx, seller_receives)?;
+                msg!("Seller payment transferred: {} lamports", seller_receives);
+                
+                msg!("SOL settlement complete - all transfers successful");
 
                 // Transfer NFT A from escrow to buyer
                 let nft_transfer_ctx = CpiContext::new_with_signer(
@@ -991,9 +996,7 @@ pub mod escrow {
             },
         }
 
-        // Mark escrow as completed
-        ctx.accounts.escrow_state.status = EscrowStatus::Completed;
-
+        // Escrow status already marked as Completed earlier in the function
         msg!("Escrow settlement completed successfully");
 
         Ok(())
@@ -1673,12 +1676,14 @@ pub fn deposit_sol(ctx: Context<DepositSol>) -> Result<()> {
     // Extract sol_amount before transfer
     let sol_amount = ctx.accounts.escrow_state.sol_amount;
 
-    // Transfer SOL from buyer to escrow PDA using system program
+    // Transfer SOL from buyer to SOL vault PDA (NOT the state PDA)
+    // This mirrors the USDC design where tokens go to a separate account
+    // System Program can transfer to zero-data PDAs (unlike data-bearing PDAs)
     let transfer_ctx = CpiContext::new(
         ctx.accounts.system_program.to_account_info(),
         anchor_lang::system_program::Transfer {
             from: ctx.accounts.buyer.to_account_info(),
-            to: ctx.accounts.escrow_state.to_account_info(),
+            to: ctx.accounts.sol_vault.to_account_info(),
         },
     );
     anchor_lang::system_program::transfer(transfer_ctx, sol_amount)?;
@@ -1686,7 +1691,7 @@ pub fn deposit_sol(ctx: Context<DepositSol>) -> Result<()> {
     // Mark SOL as deposited
     ctx.accounts.escrow_state.buyer_sol_deposited = true;
 
-    msg!("SOL deposited: {} lamports", sol_amount);
+    msg!("SOL deposited to vault: {} lamports", sol_amount);
 
     Ok(())
 }
@@ -2088,19 +2093,28 @@ pub fn cancel_if_expired<'info>(ctx: Context<'_, '_, '_, 'info, CancelIfExpired<
     ];
     let signer = &[&seeds[..]];
 
-    // Return SOL to buyer if deposited
+    // Return SOL to buyer if deposited (from vault PDA, not state PDA)
     if ctx.accounts.escrow_state.buyer_sol_deposited {
         let sol_amount = ctx.accounts.escrow_state.sol_amount;
+        
+        // Vault PDA signer seeds (different from state PDA!)
+        let escrow_id_bytes_vault = ctx.accounts.escrow_state.escrow_id.to_le_bytes();
+        let vault_signer_seeds: &[&[&[u8]]] = &[&[
+            b"sol_vault",
+            escrow_id_bytes_vault.as_ref(),
+            &[ctx.bumps.sol_vault],
+        ]];
+        
         let sol_transfer_ctx = CpiContext::new_with_signer(
             ctx.accounts.system_program.to_account_info(),
             anchor_lang::system_program::Transfer {
-                from: ctx.accounts.escrow_state.to_account_info(),
+                from: ctx.accounts.sol_vault.to_account_info(),
                 to: ctx.accounts.buyer.to_account_info(),
             },
-            signer,
+            vault_signer_seeds,
         );
         anchor_lang::system_program::transfer(sol_transfer_ctx, sol_amount)?;
-        msg!("Returned {} lamports to buyer", sol_amount);
+        msg!("Returned {} lamports to buyer from SOL vault", sol_amount);
     }
 
     // Return NFT A to seller if deposited
@@ -2174,19 +2188,28 @@ pub fn admin_cancel<'info>(ctx: Context<'_, '_, '_, 'info, AdminCancel<'info>>) 
     ];
     let signer = &[&seeds[..]];
 
-    // Return SOL to buyer if deposited
+    // Return SOL to buyer if deposited (from vault PDA, not state PDA)
     if ctx.accounts.escrow_state.buyer_sol_deposited {
         let sol_amount = ctx.accounts.escrow_state.sol_amount;
+        
+        // Vault PDA signer seeds (different from state PDA!)
+        let escrow_id_bytes_vault = ctx.accounts.escrow_state.escrow_id.to_le_bytes();
+        let vault_signer_seeds: &[&[&[u8]]] = &[&[
+            b"sol_vault",
+            escrow_id_bytes_vault.as_ref(),
+            &[ctx.bumps.sol_vault],
+        ]];
+        
         let sol_transfer_ctx = CpiContext::new_with_signer(
             ctx.accounts.system_program.to_account_info(),
             anchor_lang::system_program::Transfer {
-                from: ctx.accounts.escrow_state.to_account_info(),
+                from: ctx.accounts.sol_vault.to_account_info(),
                 to: ctx.accounts.buyer.to_account_info(),
             },
-            signer,
+            vault_signer_seeds,
         );
         anchor_lang::system_program::transfer(sol_transfer_ctx, sol_amount)?;
-        msg!("Admin refund: Returned {} lamports to buyer", sol_amount);
+        msg!("Admin refund: Returned {} lamports to buyer from SOL vault", sol_amount);
     }
 
     // Return NFT A to seller if deposited
@@ -2261,6 +2284,16 @@ pub struct InitAgreement<'info> {
     )]
     pub escrow_state: Account<'info, EscrowState>,
     
+    /// SOL vault PDA - separate zero-data account for holding SOL lamports
+    /// This mirrors the USDC design where tokens are held in a separate account
+    /// System Program can transfer from zero-data PDAs (unlike data-bearing PDAs)
+    /// CHECK: Zero-data PDA initialized and funded by buyer during deposit
+    #[account(
+        seeds = [b"sol_vault", escrow_id.to_le_bytes().as_ref()],
+        bump
+    )]
+    pub sol_vault: SystemAccount<'info>,
+    
     pub system_program: Program<'info, System>,
 }
 
@@ -2275,6 +2308,15 @@ pub struct DepositSol<'info> {
         bump = escrow_state.bump,
     )]
     pub escrow_state: Account<'info, EscrowState>,
+    
+    /// SOL vault PDA - receives SOL deposit from buyer
+    /// CHECK: Validated via seeds, buyer transfers SOL here
+    #[account(
+        mut,
+        seeds = [b"sol_vault", escrow_state.escrow_id.to_le_bytes().as_ref()],
+        bump
+    )]
+    pub sol_vault: SystemAccount<'info>,
     
     pub system_program: Program<'info, System>,
 }
@@ -2361,6 +2403,15 @@ pub struct Settle<'info> {
     )]
     pub escrow_state: Account<'info, EscrowState>,
     
+    /// SOL vault PDA - holds SOL to be distributed during settlement
+    /// CHECK: Validated via seeds, System Program transfers from here
+    #[account(
+        mut,
+        seeds = [b"sol_vault", escrow_state.escrow_id.to_le_bytes().as_ref()],
+        bump
+    )]
+    pub sol_vault: SystemAccount<'info>,
+    
     /// CHECK: Seller receives SOL
     #[account(
         mut,
@@ -2406,6 +2457,15 @@ pub struct CancelIfExpired<'info> {
     )]
     pub escrow_state: Account<'info, EscrowState>,
     
+    /// SOL vault PDA - refunds SOL to buyer if deposited
+    /// CHECK: Validated via seeds, System Program transfers from here
+    #[account(
+        mut,
+        seeds = [b"sol_vault", escrow_state.escrow_id.to_le_bytes().as_ref()],
+        bump
+    )]
+    pub sol_vault: SystemAccount<'info>,
+    
     /// CHECK: Buyer receives refund if deposited
     #[account(
         mut,
@@ -2440,6 +2500,15 @@ pub struct AdminCancel<'info> {
         bump = escrow_state.bump,
     )]
     pub escrow_state: Account<'info, EscrowState>,
+    
+    /// SOL vault PDA - refunds SOL to buyer if deposited
+    /// CHECK: Validated via seeds, System Program transfers from here
+    #[account(
+        mut,
+        seeds = [b"sol_vault", escrow_state.escrow_id.to_le_bytes().as_ref()],
+        bump
+    )]
+    pub sol_vault: SystemAccount<'info>,
     
     /// CHECK: Buyer receives refund if deposited
     #[account(

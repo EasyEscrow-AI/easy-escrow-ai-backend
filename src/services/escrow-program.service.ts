@@ -1146,7 +1146,8 @@ export class EscrowProgramService {
     seller: PublicKey,
     buyer: PublicKey,
     nftMint: PublicKey,
-    feeCollector: PublicKey
+    feeCollector: PublicKey,
+    escrowId?: BN // Optional for backward compatibility, will fetch from chain if not provided
   ): Promise<string> {
     try {
       console.log('[EscrowProgramService] Settling escrow:', {
@@ -1155,8 +1156,25 @@ export class EscrowProgramService {
         buyer: buyer.toString(),
         nftMint: nftMint.toString(),
         feeCollector: feeCollector.toString(),
-        note: 'SOL and fees handled on-chain by settle_v2 instruction',
+        note: 'SOL and fees handled on-chain via sol_vault PDA',
       });
+
+      // Get escrowId - either from parameter or fetch from on-chain state
+      let escrowIdBN: BN;
+      if (escrowId) {
+        escrowIdBN = escrowId;
+      } else {
+        // Fetch escrow state to get escrowId
+        const escrowState = await this.program.account.escrowState.fetch(escrowPda);
+        escrowIdBN = escrowState.escrowId;
+      }
+      
+      // Derive SOL vault PDA
+      const [solVaultPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from('sol_vault'), escrowIdBN.toArrayLike(Buffer, 'le', 8)],
+        this.programId
+      );
+      console.log('[EscrowProgramService] SOL vault PDA:', solVaultPda.toString());
 
       // Derive escrow NFT account (seller's NFT held in escrow)
       const escrowNftAccount = await getAssociatedTokenAddress(
@@ -1176,14 +1194,15 @@ export class EscrowProgramService {
       // Detect network
       const isMainnet = isMainnetNetwork(this.provider.connection);
 
-      // Build settle_v2 transaction
+      // Build settle transaction
       // Note: Anchor converts snake_case to camelCase
-      // Note: settle_v2 is permissionless - anyone can trigger settlement
+      // Note: settle is permissionless - anyone can trigger settlement
       const transaction = await (this.program.methods as any)
         .settle()
         .accountsStrict({
           caller: this.adminKeypair.publicKey, // Permissionless - admin can trigger
           escrowState: escrowPda,
+          solVault: solVaultPda, // NEW: Separate vault PDA holding SOL
           seller,
           platformFeeCollector: feeCollector,
           escrowNftAccount,
@@ -1325,6 +1344,14 @@ export class EscrowProgramService {
       const [escrowPda] = this.deriveEscrowPDA(escrowId);
       console.log('[EscrowProgramService] Escrow PDA:', escrowPda.toString());
 
+      // Derive SOL vault PDA - separate zero-data account for holding SOL
+      // This mirrors the USDC design where tokens are held in a separate account
+      const [solVaultPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from('sol_vault'), escrowId.toArrayLike(Buffer, 'le', 8)],
+        this.programId
+      );
+      console.log('[EscrowProgramService] SOL vault PDA:', solVaultPda.toString());
+
       // Map string swap type to Anchor enum format (PascalCase)
       // NFT_FOR_SOL -> NftForSol, BUYER -> Buyer
       const swapTypeMap: Record<string, string> = {
@@ -1365,6 +1392,7 @@ export class EscrowProgramService {
           escrowState: escrowPda, // Anchor converts escrow_state -> escrowState
           buyer,
           seller,
+          solVault: solVaultPda, // NEW: Separate PDA for holding SOL lamports
           admin: this.adminKeypair.publicKey,
           systemProgram: SystemProgram.programId, // Anchor converts system_program -> systemProgram
         })
@@ -1917,9 +1945,10 @@ export class EscrowProgramService {
     nftMint: PublicKey;
     swapType: 'NFT_FOR_SOL' | 'NFT_FOR_NFT_WITH_FEE' | 'NFT_FOR_NFT_PLUS_SOL';
     nftBMint?: PublicKey;
+    escrowId?: BN; // Optional, will fetch from chain if not provided
   }): Promise<string> {
     try {
-      const { escrowPda, buyer, seller, nftMint, swapType, nftBMint } = params;
+      const { escrowPda, buyer, seller, nftMint, swapType, nftBMint, escrowId } = params;
 
       console.log('[EscrowProgramService] Canceling expired escrow:', {
         escrowPda: escrowPda.toString(),
@@ -1929,6 +1958,22 @@ export class EscrowProgramService {
         swapType,
         nftBMint: nftBMint?.toString() || 'N/A',
       });
+
+      // Get escrowId - either from parameter or fetch from on-chain state
+      let escrowIdBN: BN;
+      if (escrowId) {
+        escrowIdBN = escrowId;
+      } else {
+        const escrowState = await this.program.account.escrowState.fetch(escrowPda);
+        escrowIdBN = escrowState.escrowId;
+      }
+      
+      // Derive SOL vault PDA
+      const [solVaultPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from('sol_vault'), escrowIdBN.toArrayLike(Buffer, 'le', 8)],
+        this.programId
+      );
+      console.log('[EscrowProgramService] SOL vault PDA for cancel:', solVaultPda.toString());
 
       // Build remaining_accounts for refunds
       const remainingAccounts: any[] = [];
@@ -1987,6 +2032,7 @@ export class EscrowProgramService {
         .cancelIfExpired()
         .accountsStrict({
           escrowState: escrowPda,
+          solVault: solVaultPda, // NEW: Vault PDA for SOL refunds
           buyer,
           seller,
           systemProgram: SystemProgram.programId,
@@ -2066,9 +2112,10 @@ export class EscrowProgramService {
     nftMint: PublicKey;
     swapType: 'NFT_FOR_SOL' | 'NFT_FOR_NFT_WITH_FEE' | 'NFT_FOR_NFT_PLUS_SOL';
     nftBMint?: PublicKey;
+    escrowId?: BN; // Optional, will fetch from chain if not provided
   }): Promise<string> {
     try {
-      const { escrowPda, buyer, seller, nftMint, swapType, nftBMint } = params;
+      const { escrowPda, buyer, seller, nftMint, swapType, nftBMint, escrowId } = params;
 
       console.log('[EscrowProgramService] Admin canceling escrow:', {
         escrowPda: escrowPda.toString(),
@@ -2078,6 +2125,22 @@ export class EscrowProgramService {
         swapType,
         nftBMint: nftBMint?.toString() || 'N/A',
       });
+
+      // Get escrowId - either from parameter or fetch from on-chain state
+      let escrowIdBN: BN;
+      if (escrowId) {
+        escrowIdBN = escrowId;
+      } else {
+        const escrowState = await this.program.account.escrowState.fetch(escrowPda);
+        escrowIdBN = escrowState.escrowId;
+      }
+      
+      // Derive SOL vault PDA
+      const [solVaultPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from('sol_vault'), escrowIdBN.toArrayLike(Buffer, 'le', 8)],
+        this.programId
+      );
+      console.log('[EscrowProgramService] SOL vault PDA for admin cancel:', solVaultPda.toString());
 
       // Build remaining_accounts (same as cancelIfExpiredV2)
       const remainingAccounts: any[] = [];
@@ -2135,10 +2198,11 @@ export class EscrowProgramService {
       const instruction = await (this.program.methods as any)
         .adminCancel()
         .accountsStrict({
+          admin: this.adminKeypair.publicKey,
           escrowState: escrowPda,
+          solVault: solVaultPda, // NEW: Vault PDA for SOL refunds
           buyer,
           seller,
-          admin: this.adminKeypair.publicKey,
           systemProgram: SystemProgram.programId,
         })
         .remainingAccounts(remainingAccounts)

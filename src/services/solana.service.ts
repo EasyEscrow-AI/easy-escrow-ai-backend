@@ -653,6 +653,14 @@ export class SolanaService {
       return null;
     }
   }
+
+  /**
+   * Derive SOL vault PDA from escrow PDA
+   * The vault is a separate zero-data PDA that holds SOL for settlement
+   */
+  public async deriveSolVaultPda(escrowPdaString: string): Promise<string> {
+    return deriveSolVaultPda(escrowPdaString);
+  }
 }
 
 // Singleton instance
@@ -723,6 +731,32 @@ export const deriveEscrowPDA = async (
   }
 
   return PublicKey.findProgramAddress(seeds, programId);
+};
+
+/**
+ * Derive SOL vault PDA from escrow PDA
+ * The vault is a separate zero-data PDA that holds SOL for settlement
+ * Seeds: [b"sol_vault", escrow_id.to_le_bytes()]
+ */
+export const deriveSolVaultPda = async (
+  escrowPdaString: string
+): Promise<string> => {
+  const { getEscrowProgramService } = await import('./escrow-program.service');
+  const escrowService = getEscrowProgramService();
+  
+  const escrowPda = new PublicKey(escrowPdaString);
+  
+  // Fetch escrow state to get escrow ID
+  const escrowState = await escrowService.program.account.escrowState.fetch(escrowPda);
+  const escrowId = escrowState.escrowId;
+  
+  // Derive sol_vault PDA using same program ID
+  const [solVaultPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('sol_vault'), escrowId.toArrayLike(Buffer, 'le', 8)],
+    escrowService.programId
+  );
+  
+  return solVaultPda.toString();
 };
 
 /**

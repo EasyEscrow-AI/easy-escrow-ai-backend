@@ -217,18 +217,25 @@ export class MonitoringService {
         const isSOLBased = agreement.swapType && ['NFT_FOR_SOL', 'NFT_FOR_NFT_WITH_FEE', 'NFT_FOR_NFT_PLUS_SOL'].includes(agreement.swapType);
 
         if (isSOLBased) {
-          // Monitor escrow PDA for SOL deposits
+          // Monitor SOL vault PDA for SOL deposits (NOT the escrow state PDA)
+          // The vault architecture uses a separate zero-data PDA for holding SOL
           if (
             agreement.escrowPda &&
             (agreement.swapType === 'NFT_FOR_SOL' || agreement.swapType === 'NFT_FOR_NFT_PLUS_SOL') &&
             !['USDC_LOCKED', 'BOTH_LOCKED'].includes(agreement.status)
           ) {
-            accountsToMonitor.push({
-              publicKey: agreement.escrowPda,
-              agreementId: agreement.agreementId,
-              type: 'sol'
-            });
-            console.log(`[MonitoringService] Monitoring SOL deposits for agreement: ${agreement.agreementId}`);
+            try {
+              // Derive sol_vault PDA using solanaService helper
+              const solVaultPda = await this.solanaService.deriveSolVaultPda(agreement.escrowPda);
+              accountsToMonitor.push({
+                publicKey: solVaultPda,
+                agreementId: agreement.agreementId,
+                type: 'sol'
+              });
+              console.log(`[MonitoringService] Monitoring SOL vault ${solVaultPda} for agreement: ${agreement.agreementId}`);
+            } catch (error) {
+              console.error(`[MonitoringService] Failed to derive SOL vault for ${agreement.agreementId}:`, error);
+            }
           }
 
           // Monitor seller NFT

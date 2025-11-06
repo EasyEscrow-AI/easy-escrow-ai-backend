@@ -1,35 +1,38 @@
 // scripts/settle-once.ts
 // Manual settlement script to bypass monitoring and test settle instruction directly
 //
-// Usage:
+// Usage: npx ts-node scripts/settle-once.ts <ESCROW_PDA> <SELLER> <BUYER> <FEE_COLLECTOR> <NFT_MINT> [--dryRun]
+// Example:
 //   npx ts-node scripts/settle-once.ts \
-//     --rpc https://api.devnet.solana.com \
-//     --idl ./target/idl/escrow.json \
-//     --program AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei \
-//     --payer ./wallets/staging/staging-admin.json \
-//     --escrow BZANsRJa5mcBFEwHvgxigTi2LxMDcSvw33twbBzvi7gm \
-//     --seller AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z \
-//     --buyer 5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4 \
-//     --feeCollector 8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ \
-//     --nftMint FKsTLGQkjbEZUC9D2uJ4EpyjVdadidbeVmXSzAzAs2Tg
+//     8Yrn6G4fEfveWLUMqCxUPf3Er8TxoPMYZXj5gyqAcyoW \
+//     AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z \
+//     5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4 \
+//     8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ \
+//     Dxy1WYL7opVun3A46T5d39NvmMqGndSrfpXPmgV2h8ac \
+//     --dryRun
 
 import fs from "fs";
 import * as anchor from "@coral-xyz/anchor";
-import { web3, BN, Program } from "@coral-xyz/anchor";
-import yargs from "yargs";
-import { hideBin } from "yargs/helpers";
+import { web3, Program } from "@coral-xyz/anchor";
 
-const { argv } = yargs(hideBin(process.argv)) as any
-  .option("rpc", { type: "string", demandOption: true })
-  .option("idl", { type: "string", demandOption: true })
-  .option("program", { type: "string", demandOption: true })
-  .option("payer", { type: "string", demandOption: true })
-  .option("escrow", { type: "string", demandOption: true })
-  .option("seller", { type: "string", demandOption: true })
-  .option("buyer", { type: "string", demandOption: true })
-  .option("feeCollector", { type: "string", demandOption: true })
-  .option("nftMint", { type: "string", demandOption: true })
-  .option("dryRun", { type: "boolean", default: false });
+// Parse command line arguments
+if (process.argv.length < 7) {
+  console.error("Usage: npx ts-node scripts/settle-once.ts <ESCROW_PDA> <SELLER> <BUYER> <FEE_COLLECTOR> <NFT_MINT> [--dryRun]");
+  process.exit(1);
+}
+
+const escrowPda = process.argv[2];
+const sellerPubkey = process.argv[3];
+const buyerPubkey = process.argv[4];
+const feeCollectorPubkey = process.argv[5];
+const nftMintPubkey = process.argv[6];
+const dryRun = process.argv.includes("--dryRun");
+
+// Staging defaults
+const rpcUrl = "https://api.devnet.solana.com";
+const idlPath = "./src/generated/anchor/escrow-idl-staging.json";
+const programId = "AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei";
+const payerPath = "./wallets/staging/staging-admin.json";
 
 function loadKeypair(path: string): web3.Keypair {
   const secret = JSON.parse(fs.readFileSync(path, "utf8"));
@@ -53,8 +56,8 @@ async function getAssociatedTokenAddress(
 }
 
 (async () => {
-  const payer = loadKeypair(String(argv.payer));
-  const connection = new web3.Connection(String(argv.rpc), {
+  const payer = loadKeypair(payerPath);
+  const connection = new web3.Connection(rpcUrl, {
     commitment: "confirmed",
   });
   const wallet = new anchor.Wallet(payer);
@@ -64,29 +67,29 @@ async function getAssociatedTokenAddress(
   });
   anchor.setProvider(provider);
 
-  const idl = JSON.parse(fs.readFileSync(String(argv.idl), "utf8"));
-  const programId = new web3.PublicKey(String(argv.program));
-  const program = new anchor.Program(idl, programId, provider) as Program;
+  const idl = JSON.parse(fs.readFileSync(idlPath, "utf8"));
+  const programIdPk = new web3.PublicKey(programId);
+  const program = new anchor.Program(idl as any, provider);
 
   console.log("🔧 Manual Settlement Script");
   console.log("=".repeat(80));
-  console.log("Program:", programId.toBase58());
-  console.log("Escrow PDA:", String(argv.escrow));
-  console.log("Seller:", String(argv.seller));
-  console.log("Buyer:", String(argv.buyer));
-  console.log("Fee Collector:", String(argv.feeCollector));
-  console.log("NFT Mint:", String(argv.nftMint));
-  console.log("Dry Run:", argv.dryRun);
+  console.log("Program:", programIdPk.toBase58());
+  console.log("Escrow PDA:", escrowPda);
+  console.log("Seller:", sellerPubkey);
+  console.log("Buyer:", buyerPubkey);
+  console.log("Fee Collector:", feeCollectorPubkey);
+  console.log("NFT Mint:", nftMintPubkey);
+  console.log("Dry Run:", dryRun);
   console.log("=".repeat(80));
 
-  const escrowPda = new web3.PublicKey(String(argv.escrow));
-  const seller = new web3.PublicKey(String(argv.seller));
-  const buyer = new web3.PublicKey(String(argv.buyer));
-  const feeCollector = new web3.PublicKey(String(argv.feeCollector));
-  const nftMint = new web3.PublicKey(String(argv.nftMint));
+  const escrowPdaPk = new web3.PublicKey(escrowPda);
+  const seller = new web3.PublicKey(sellerPubkey);
+  const buyer = new web3.PublicKey(buyerPubkey);
+  const feeCollector = new web3.PublicKey(feeCollectorPubkey);
+  const nftMint = new web3.PublicKey(nftMintPubkey);
 
   // Derive token accounts
-  const escrowNftAccount = await getAssociatedTokenAddress(nftMint, escrowPda);
+  const escrowNftAccount = await getAssociatedTokenAddress(nftMint, escrowPdaPk);
   const buyerNftAccount = await getAssociatedTokenAddress(nftMint, buyer);
 
   console.log("\n📦 Derived Accounts:");
@@ -99,7 +102,7 @@ async function getAssociatedTokenAddress(
 
   const accounts = {
     caller: payer.publicKey,
-    escrowState: escrowPda,
+    escrowState: escrowPdaPk,
     seller: seller,
     platformFeeCollector: feeCollector,
     escrowNftAccount: escrowNftAccount,
@@ -122,7 +125,7 @@ async function getAssociatedTokenAddress(
 
   try {
     console.log("\n🔍 Fetching escrow state...");
-    const escrowAccount = await connection.getAccountInfo(escrowPda);
+    const escrowAccount = await connection.getAccountInfo(escrowPdaPk);
     if (escrowAccount) {
       console.log("Escrow balance:", escrowAccount.lamports, "lamports");
       console.log("Escrow data length:", escrowAccount.data.length, "bytes");
@@ -132,7 +135,7 @@ async function getAssociatedTokenAddress(
     }
 
     // 1) Simulate (to get full logs)
-    if (argv.dryRun) {
+    if (dryRun) {
       console.log("\n🧪 Running simulation...");
       try {
         const sim = await (program.methods as any)

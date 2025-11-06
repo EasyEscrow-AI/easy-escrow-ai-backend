@@ -83,7 +83,28 @@ describe('STAGING E2E - NFT-for-SOL Swap (Happy Path)', function () {
   after(async function () {
     if (agreement?.agreementId) {
       try {
-        console.log(`\n🧹 Cleaning up test agreement: ${agreement.agreementId}`);
+        // Check agreement status before cleanup
+        const statusResponse = await axios.get(
+          `${STAGING_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}`,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+        
+        const currentStatus = statusResponse.data.status;
+        
+        // Don't cleanup BOTH_LOCKED agreements - let monitoring service settle them
+        if (currentStatus === 'BOTH_LOCKED') {
+          console.log(`\n⏸️  Skipping cleanup for agreement: ${agreement.agreementId}`);
+          console.log(`   Status: ${currentStatus}`);
+          console.log(`   Reason: Leaving for monitoring service to process settlement`);
+          console.log(`   ⚠️  Manual cleanup required: DELETE ${STAGING_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}`);
+          return;
+        }
+        
+        console.log(`\n🧹 Cleaning up test agreement: ${agreement.agreementId} (Status: ${currentStatus})`);
         await axios.delete(
           `${STAGING_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}`,
           {
