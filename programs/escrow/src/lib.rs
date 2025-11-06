@@ -701,33 +701,72 @@ pub mod escrow {
                     ctx.accounts.escrow_state.platform_fee_bps,
                 )?;
 
+                msg!("Settlement transfers:");
+                msg!("  Platform fee: {} lamports", platform_fee);
+                msg!("  Seller receives: {} lamports", seller_receives);
+
                 // Transfer SOL using direct lamport manipulation
                 // NOTE: Cannot use SystemProgram::transfer() from PDA with data
                 // Research: https://osec.io/blog/2025-05-14-king-of-the-sol/
                 
-                // Get rent-exempt minimum for this account
-                let rent = Rent::get()?;
-                let escrow_account_info = ctx.accounts.escrow_state.to_account_info();
-                let min_rent_exempt = rent.minimum_balance(escrow_account_info.data_len());
+                // Get account references ONCE to avoid RefCell issues
+                let escrow_account = ctx.accounts.escrow_state.to_account_info();
+                let fee_collector_account = ctx.accounts.platform_fee_collector.to_account_info();
+                let seller_account = ctx.accounts.seller.to_account_info();
                 
-                // Calculate transferable amount (current balance minus rent-exempt minimum)
-                let current_balance = escrow_account_info.lamports();
-                let transferable = current_balance.checked_sub(min_rent_exempt)
-                    .ok_or(EscrowError::InsufficientFunds)?;
-                
-                // Verify we have enough to cover both transfers
-                let total_to_transfer = platform_fee.checked_add(seller_receives)
-                    .ok_or(EscrowError::CalculationOverflow)?;
-                
+                // CRITICAL: Verify no executable accounts (programs cannot send/receive lamports)
+                // Research: https://osec.io/blog/2025-05-14-king-of-the-sol/
                 require!(
-                    transferable >= total_to_transfer,
-                    EscrowError::InsufficientFunds
+                    !escrow_account.executable 
+                    && !fee_collector_account.executable 
+                    && !seller_account.executable,
+                    EscrowError::ExecutableAccountNotAllowed
                 );
                 
-                // CRITICAL FIX: Get escrow_account reference ONCE to avoid RefCell tracking issues
-                // Research: https://github.com/solana-labs/solana/issues/20311
-                // Multiple to_account_info() calls create separate references that don't sync properly
-                let escrow_account = ctx.accounts.escrow_state.to_account_info();
+                // Get rent for validation
+                let rent = Rent::get()?;
+                
+                msg!("Balances before settlement:");
+                msg!("  Escrow: {} lamports", escrow_account.lamports());
+                msg!("  Fee collector: {} lamports", fee_collector_account.lamports());
+                msg!("  Seller: {} lamports", seller_account.lamports());
+                
+                // CRITICAL: Validate rent exemption BEFORE any transfers
+                // Research: Most common cause of "sum of account balances do not match" error
+                // All accounts must remain rent-exempt after transfers
+                
+                // Check fee collector will be rent-exempt after receiving fee
+                let fee_collector_balance_after = fee_collector_account.lamports()
+                    .checked_add(platform_fee)
+                    .ok_or(EscrowError::CalculationOverflow)?;
+                    
+                require!(
+                    rent.is_exempt(fee_collector_balance_after, fee_collector_account.data_len()),
+                    EscrowError::InsufficientFeeCollectorRent
+                );
+                
+                // Check seller will be rent-exempt after receiving payment
+                let seller_balance_after = seller_account.lamports()
+                    .checked_add(seller_receives)
+                    .ok_or(EscrowError::CalculationOverflow)?;
+                    
+                require!(
+                    rent.is_exempt(seller_balance_after, seller_account.data_len()),
+                    EscrowError::InsufficientSellerRent
+                );
+                
+                // Check escrow will remain rent-exempt after transfers
+                let escrow_balance_after = escrow_account.lamports()
+                    .checked_sub(platform_fee)
+                    .and_then(|b| b.checked_sub(seller_receives))
+                    .ok_or(EscrowError::InsufficientFunds)?;
+                    
+                require!(
+                    rent.is_exempt(escrow_balance_after, escrow_account.data_len()),
+                    EscrowError::InsufficientEscrowRent
+                );
+                
+                msg!("Rent exemption validation passed - all accounts will remain rent-exempt");
                 
                 // Perform direct lamport transfers SEQUENTIALLY (one at a time)
                 // Transfer 1: escrow -> fee_collector
@@ -755,6 +794,11 @@ pub mod escrow {
                     **seller_lamports = seller_lamports.checked_add(seller_receives)
                         .ok_or(EscrowError::CalculationOverflow)?;
                 } // Borrows released here
+                
+                msg!("Balances after settlement:");
+                msg!("  Escrow: {} lamports", escrow_account.lamports());
+                msg!("  Fee collector: {} lamports", fee_collector_account.lamports());
+                msg!("  Seller: {} lamports", seller_account.lamports());
 
                 // Transfer NFT A from escrow to buyer
                 let nft_transfer_ctx = CpiContext::new_with_signer(
@@ -1434,6 +1478,18 @@ pub enum EscrowError {
     
     #[msg("Invalid parameter combination for swap type")]
     InvalidSwapParameters,
+    
+    #[msg("Fee collector account would not be rent-exempt after receiving fee")]
+    InsufficientFeeCollectorRent,
+    
+    #[msg("Seller account would not be rent-exempt after receiving payment")]
+    InsufficientSellerRent,
+    
+    #[msg("Escrow account would not be rent-exempt after transfers")]
+    InsufficientEscrowRent,
+    
+    #[msg("Executable accounts (programs) cannot send or receive lamports")]
+    ExecutableAccountNotAllowed,
 }
 
 // ============================================================================
