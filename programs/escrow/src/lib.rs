@@ -94,7 +94,7 @@ const MIN_USDC_AMOUNT: u64 = 1_000_000;      // $1.00
 const MAX_USDC_AMOUNT: u64 = 3_000_000_000;  // $3,000.00
 
 #[program]
-pub mod escrow {
+pub mod easyescrow {
     use super::*;
 
     /// Initialize an escrow agreement
