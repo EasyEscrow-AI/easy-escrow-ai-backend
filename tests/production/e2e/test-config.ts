@@ -14,7 +14,9 @@ export const PRODUCTION_CONFIG = {
   
   // Network
   network: 'mainnet-beta' as const,
-  rpcUrl: process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com',
+  // IMPORTANT: Use PUBLIC RPC for client-signed transactions (no Jito tips needed)
+  // Backend uses Jito-enabled RPC for server-signed transactions
+  rpcUrl: 'https://api.mainnet-beta.solana.com', // Public Solana RPC (no Jito requirement)
   
   // API endpoint (defaults to PRODUCTION deployment)
   apiBaseUrl: process.env.PRODUCTION_API_BASE_URL || 'https://api.easyescrow.ai',
