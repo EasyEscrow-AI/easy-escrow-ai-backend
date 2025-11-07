@@ -1001,7 +1001,8 @@ pub mod escrow {
             },
         }
 
-        // Escrow status already marked as Completed earlier in the function
+        // NOTE: Escrow status is NOT updated here (permissionless settlement)
+        // Backend monitoring service will detect the settlement and update status
         msg!("Escrow settlement completed successfully");
 
         Ok(())
@@ -1032,16 +1033,25 @@ pub mod escrow {
         ];
         let signer = &[&seeds[..]];
 
-        // Return SOL to buyer if deposited
+        // Return SOL to buyer if deposited (from sol_vault PDA, not escrow_state)
         if ctx.accounts.escrow_state.buyer_sol_deposited {
             let sol_amount = ctx.accounts.escrow_state.sol_amount;
+            
+            // Vault PDA signer seeds (different from state PDA!)
+            let escrow_id_bytes_vault = ctx.accounts.escrow_state.escrow_id.to_le_bytes();
+            let vault_signer_seeds: &[&[&[u8]]] = &[&[
+                b"sol_vault",
+                escrow_id_bytes_vault.as_ref(),
+                &[ctx.bumps.sol_vault],
+            ]];
+            
             let sol_transfer_ctx = CpiContext::new_with_signer(
                 ctx.accounts.system_program.to_account_info(),
                 anchor_lang::system_program::Transfer {
-                    from: ctx.accounts.escrow_state.to_account_info(),
+                    from: ctx.accounts.sol_vault.to_account_info(),
                     to: ctx.accounts.buyer.to_account_info(),
                 },
-                signer,
+                vault_signer_seeds,
             );
             anchor_lang::system_program::transfer(sol_transfer_ctx, sol_amount)?;
             msg!("Returned {} lamports to buyer", sol_amount);
@@ -1118,16 +1128,25 @@ pub mod escrow {
         ];
         let signer = &[&seeds[..]];
 
-        // Return SOL to buyer if deposited
+        // Return SOL to buyer if deposited (from sol_vault PDA, not escrow_state)
         if ctx.accounts.escrow_state.buyer_sol_deposited {
             let sol_amount = ctx.accounts.escrow_state.sol_amount;
+            
+            // Vault PDA signer seeds (different from state PDA!)
+            let escrow_id_bytes_vault = ctx.accounts.escrow_state.escrow_id.to_le_bytes();
+            let vault_signer_seeds: &[&[&[u8]]] = &[&[
+                b"sol_vault",
+                escrow_id_bytes_vault.as_ref(),
+                &[ctx.bumps.sol_vault],
+            ]];
+            
             let sol_transfer_ctx = CpiContext::new_with_signer(
                 ctx.accounts.system_program.to_account_info(),
                 anchor_lang::system_program::Transfer {
-                    from: ctx.accounts.escrow_state.to_account_info(),
+                    from: ctx.accounts.sol_vault.to_account_info(),
                     to: ctx.accounts.buyer.to_account_info(),
                 },
-                signer,
+                vault_signer_seeds,
             );
             anchor_lang::system_program::transfer(sol_transfer_ctx, sol_amount)?;
             msg!("Admin refund: Returned {} lamports to buyer", sol_amount);
