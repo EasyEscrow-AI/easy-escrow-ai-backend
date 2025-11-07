@@ -1452,12 +1452,6 @@ pub enum EscrowError {
     #[msg("Invalid amount provided")]
     InvalidAmount,
     
-    #[msg("Amount below minimum: $1.00 (BETA limit)")]
-    AmountTooLow,
-    
-    #[msg("Amount exceeds maximum: $3,000.00 (BETA limit)")]
-    AmountTooHigh,
-    
     #[msg("Invalid expiry timestamp")]
     InvalidExpiry,
     
@@ -1517,6 +1511,12 @@ pub enum EscrowError {
     
     #[msg("Executable accounts (programs) cannot send or receive lamports")]
     ExecutableAccountNotAllowed,
+    
+    #[msg("Amount below minimum: $1.00 (BETA limit)")]
+    AmountTooLow,
+    
+    #[msg("Amount exceeds maximum: $3,000.00 (BETA limit)")]
+    AmountTooHigh,
 }
 
 // ============================================================================
