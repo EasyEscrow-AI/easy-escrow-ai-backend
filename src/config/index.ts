@@ -42,7 +42,9 @@ export const config = {
     url: process.env.REDIS_URL || 'redis://localhost:6379',
   },
   
-  // USDC Configuration
+  // USDC Configuration (LEGACY - KEPT FOR FUTURE USDC SUPPORT)
+  // NOTE: V2 uses SOL deposits, not USDC. This config is kept for backwards
+  // compatibility and potential future USDC support.
   usdc: {
     mintAddress: process.env.DEVNET_STAGING_USDC_MINT_ADDRESS || process.env.USDC_MINT_ADDRESS || '',
   },

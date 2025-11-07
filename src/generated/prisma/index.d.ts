@@ -69,9 +69,28 @@ export namespace $Enums {
 export type AgreementStatus = (typeof AgreementStatus)[keyof typeof AgreementStatus]
 
 
+export const SwapType: {
+  NFT_FOR_SOL: 'NFT_FOR_SOL',
+  NFT_FOR_NFT_WITH_FEE: 'NFT_FOR_NFT_WITH_FEE',
+  NFT_FOR_NFT_PLUS_SOL: 'NFT_FOR_NFT_PLUS_SOL'
+};
+
+export type SwapType = (typeof SwapType)[keyof typeof SwapType]
+
+
+export const FeePayer: {
+  BUYER: 'BUYER',
+  SELLER: 'SELLER'
+};
+
+export type FeePayer = (typeof FeePayer)[keyof typeof FeePayer]
+
+
 export const DepositType: {
   USDC: 'USDC',
-  NFT: 'NFT'
+  NFT: 'NFT',
+  SOL: 'SOL',
+  NFT_BUYER: 'NFT_BUYER'
 };
 
 export type DepositType = (typeof DepositType)[keyof typeof DepositType]
@@ -111,6 +130,14 @@ export type WebhookDeliveryStatus = (typeof WebhookDeliveryStatus)[keyof typeof 
 export type AgreementStatus = $Enums.AgreementStatus
 
 export const AgreementStatus: typeof $Enums.AgreementStatus
+
+export type SwapType = $Enums.SwapType
+
+export const SwapType: typeof $Enums.SwapType
+
+export type FeePayer = $Enums.FeePayer
+
+export const FeePayer: typeof $Enums.FeePayer
 
 export type DepositType = $Enums.DepositType
 
@@ -1539,11 +1566,13 @@ export namespace Prisma {
   export type AgreementAvgAggregateOutputType = {
     price: Decimal | null
     feeBps: number | null
+    solAmount: Decimal | null
   }
 
   export type AgreementSumAggregateOutputType = {
     price: Decimal | null
     feeBps: number | null
+    solAmount: Decimal | null
   }
 
   export type AgreementMinAggregateOutputType = {
@@ -1569,6 +1598,10 @@ export namespace Prisma {
     cancelledAt: Date | null
     archivedAt: Date | null
     archiveReason: string | null
+    swapType: $Enums.SwapType | null
+    solAmount: Decimal | null
+    nftBMint: string | null
+    feePayer: $Enums.FeePayer | null
   }
 
   export type AgreementMaxAggregateOutputType = {
@@ -1594,6 +1627,10 @@ export namespace Prisma {
     cancelledAt: Date | null
     archivedAt: Date | null
     archiveReason: string | null
+    swapType: $Enums.SwapType | null
+    solAmount: Decimal | null
+    nftBMint: string | null
+    feePayer: $Enums.FeePayer | null
   }
 
   export type AgreementCountAggregateOutputType = {
@@ -1619,6 +1656,10 @@ export namespace Prisma {
     cancelledAt: number
     archivedAt: number
     archiveReason: number
+    swapType: number
+    solAmount: number
+    nftBMint: number
+    feePayer: number
     _all: number
   }
 
@@ -1626,11 +1667,13 @@ export namespace Prisma {
   export type AgreementAvgAggregateInputType = {
     price?: true
     feeBps?: true
+    solAmount?: true
   }
 
   export type AgreementSumAggregateInputType = {
     price?: true
     feeBps?: true
+    solAmount?: true
   }
 
   export type AgreementMinAggregateInputType = {
@@ -1656,6 +1699,10 @@ export namespace Prisma {
     cancelledAt?: true
     archivedAt?: true
     archiveReason?: true
+    swapType?: true
+    solAmount?: true
+    nftBMint?: true
+    feePayer?: true
   }
 
   export type AgreementMaxAggregateInputType = {
@@ -1681,6 +1728,10 @@ export namespace Prisma {
     cancelledAt?: true
     archivedAt?: true
     archiveReason?: true
+    swapType?: true
+    solAmount?: true
+    nftBMint?: true
+    feePayer?: true
   }
 
   export type AgreementCountAggregateInputType = {
@@ -1706,6 +1757,10 @@ export namespace Prisma {
     cancelledAt?: true
     archivedAt?: true
     archiveReason?: true
+    swapType?: true
+    solAmount?: true
+    nftBMint?: true
+    feePayer?: true
     _all?: true
   }
 
@@ -1818,6 +1873,10 @@ export namespace Prisma {
     cancelledAt: Date | null
     archivedAt: Date | null
     archiveReason: string | null
+    swapType: $Enums.SwapType | null
+    solAmount: Decimal | null
+    nftBMint: string | null
+    feePayer: $Enums.FeePayer | null
     _count: AgreementCountAggregateOutputType | null
     _avg: AgreementAvgAggregateOutputType | null
     _sum: AgreementSumAggregateOutputType | null
@@ -1862,6 +1921,10 @@ export namespace Prisma {
     cancelledAt?: boolean
     archivedAt?: boolean
     archiveReason?: boolean
+    swapType?: boolean
+    solAmount?: boolean
+    nftBMint?: boolean
+    feePayer?: boolean
     deposits?: boolean | Agreement$depositsArgs<ExtArgs>
     settlement?: boolean | Agreement$settlementArgs<ExtArgs>
     receipt?: boolean | Agreement$receiptArgs<ExtArgs>
@@ -1892,6 +1955,10 @@ export namespace Prisma {
     cancelledAt?: boolean
     archivedAt?: boolean
     archiveReason?: boolean
+    swapType?: boolean
+    solAmount?: boolean
+    nftBMint?: boolean
+    feePayer?: boolean
   }, ExtArgs["result"]["agreement"]>
 
   export type AgreementSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -1917,6 +1984,10 @@ export namespace Prisma {
     cancelledAt?: boolean
     archivedAt?: boolean
     archiveReason?: boolean
+    swapType?: boolean
+    solAmount?: boolean
+    nftBMint?: boolean
+    feePayer?: boolean
   }, ExtArgs["result"]["agreement"]>
 
   export type AgreementSelectScalar = {
@@ -1942,9 +2013,13 @@ export namespace Prisma {
     cancelledAt?: boolean
     archivedAt?: boolean
     archiveReason?: boolean
+    swapType?: boolean
+    solAmount?: boolean
+    nftBMint?: boolean
+    feePayer?: boolean
   }
 
-  export type AgreementOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "agreementId" | "escrowPda" | "nftMint" | "seller" | "buyer" | "price" | "feeBps" | "honorRoyalties" | "status" | "expiry" | "usdcDepositAddr" | "nftDepositAddr" | "initTxId" | "settleTxId" | "cancelTxId" | "createdAt" | "updatedAt" | "settledAt" | "cancelledAt" | "archivedAt" | "archiveReason", ExtArgs["result"]["agreement"]>
+  export type AgreementOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "agreementId" | "escrowPda" | "nftMint" | "seller" | "buyer" | "price" | "feeBps" | "honorRoyalties" | "status" | "expiry" | "usdcDepositAddr" | "nftDepositAddr" | "initTxId" | "settleTxId" | "cancelTxId" | "createdAt" | "updatedAt" | "settledAt" | "cancelledAt" | "archivedAt" | "archiveReason" | "swapType" | "solAmount" | "nftBMint" | "feePayer", ExtArgs["result"]["agreement"]>
   export type AgreementInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     deposits?: boolean | Agreement$depositsArgs<ExtArgs>
     settlement?: boolean | Agreement$settlementArgs<ExtArgs>
@@ -1986,6 +2061,10 @@ export namespace Prisma {
       cancelledAt: Date | null
       archivedAt: Date | null
       archiveReason: string | null
+      swapType: $Enums.SwapType | null
+      solAmount: Prisma.Decimal | null
+      nftBMint: string | null
+      feePayer: $Enums.FeePayer | null
     }, ExtArgs["result"]["agreement"]>
     composites: {}
   }
@@ -2435,6 +2514,10 @@ export namespace Prisma {
     readonly cancelledAt: FieldRef<"Agreement", 'DateTime'>
     readonly archivedAt: FieldRef<"Agreement", 'DateTime'>
     readonly archiveReason: FieldRef<"Agreement", 'String'>
+    readonly swapType: FieldRef<"Agreement", 'SwapType'>
+    readonly solAmount: FieldRef<"Agreement", 'Decimal'>
+    readonly nftBMint: FieldRef<"Agreement", 'String'>
+    readonly feePayer: FieldRef<"Agreement", 'FeePayer'>
   }
     
 
@@ -10002,7 +10085,11 @@ export namespace Prisma {
     settledAt: 'settledAt',
     cancelledAt: 'cancelledAt',
     archivedAt: 'archivedAt',
-    archiveReason: 'archiveReason'
+    archiveReason: 'archiveReason',
+    swapType: 'swapType',
+    solAmount: 'solAmount',
+    nftBMint: 'nftBMint',
+    feePayer: 'feePayer'
   };
 
   export type AgreementScalarFieldEnum = (typeof AgreementScalarFieldEnum)[keyof typeof AgreementScalarFieldEnum]
@@ -10250,6 +10337,34 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'SwapType'
+   */
+  export type EnumSwapTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SwapType'>
+    
+
+
+  /**
+   * Reference to a field of type 'SwapType[]'
+   */
+  export type ListEnumSwapTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SwapType[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'FeePayer'
+   */
+  export type EnumFeePayerFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'FeePayer'>
+    
+
+
+  /**
+   * Reference to a field of type 'FeePayer[]'
+   */
+  export type ListEnumFeePayerFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'FeePayer[]'>
+    
+
+
+  /**
    * Reference to a field of type 'DepositType'
    */
   export type EnumDepositTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DepositType'>
@@ -10376,6 +10491,10 @@ export namespace Prisma {
     cancelledAt?: DateTimeNullableFilter<"Agreement"> | Date | string | null
     archivedAt?: DateTimeNullableFilter<"Agreement"> | Date | string | null
     archiveReason?: StringNullableFilter<"Agreement"> | string | null
+    swapType?: EnumSwapTypeNullableFilter<"Agreement"> | $Enums.SwapType | null
+    solAmount?: DecimalNullableFilter<"Agreement"> | Decimal | DecimalJsLike | number | string | null
+    nftBMint?: StringNullableFilter<"Agreement"> | string | null
+    feePayer?: EnumFeePayerNullableFilter<"Agreement"> | $Enums.FeePayer | null
     deposits?: DepositListRelationFilter
     settlement?: XOR<SettlementNullableScalarRelationFilter, SettlementWhereInput> | null
     receipt?: XOR<ReceiptNullableScalarRelationFilter, ReceiptWhereInput> | null
@@ -10405,6 +10524,10 @@ export namespace Prisma {
     cancelledAt?: SortOrderInput | SortOrder
     archivedAt?: SortOrderInput | SortOrder
     archiveReason?: SortOrderInput | SortOrder
+    swapType?: SortOrderInput | SortOrder
+    solAmount?: SortOrderInput | SortOrder
+    nftBMint?: SortOrderInput | SortOrder
+    feePayer?: SortOrderInput | SortOrder
     deposits?: DepositOrderByRelationAggregateInput
     settlement?: SettlementOrderByWithRelationInput
     receipt?: ReceiptOrderByWithRelationInput
@@ -10437,6 +10560,10 @@ export namespace Prisma {
     cancelledAt?: DateTimeNullableFilter<"Agreement"> | Date | string | null
     archivedAt?: DateTimeNullableFilter<"Agreement"> | Date | string | null
     archiveReason?: StringNullableFilter<"Agreement"> | string | null
+    swapType?: EnumSwapTypeNullableFilter<"Agreement"> | $Enums.SwapType | null
+    solAmount?: DecimalNullableFilter<"Agreement"> | Decimal | DecimalJsLike | number | string | null
+    nftBMint?: StringNullableFilter<"Agreement"> | string | null
+    feePayer?: EnumFeePayerNullableFilter<"Agreement"> | $Enums.FeePayer | null
     deposits?: DepositListRelationFilter
     settlement?: XOR<SettlementNullableScalarRelationFilter, SettlementWhereInput> | null
     receipt?: XOR<ReceiptNullableScalarRelationFilter, ReceiptWhereInput> | null
@@ -10466,6 +10593,10 @@ export namespace Prisma {
     cancelledAt?: SortOrderInput | SortOrder
     archivedAt?: SortOrderInput | SortOrder
     archiveReason?: SortOrderInput | SortOrder
+    swapType?: SortOrderInput | SortOrder
+    solAmount?: SortOrderInput | SortOrder
+    nftBMint?: SortOrderInput | SortOrder
+    feePayer?: SortOrderInput | SortOrder
     _count?: AgreementCountOrderByAggregateInput
     _avg?: AgreementAvgOrderByAggregateInput
     _max?: AgreementMaxOrderByAggregateInput
@@ -10499,6 +10630,10 @@ export namespace Prisma {
     cancelledAt?: DateTimeNullableWithAggregatesFilter<"Agreement"> | Date | string | null
     archivedAt?: DateTimeNullableWithAggregatesFilter<"Agreement"> | Date | string | null
     archiveReason?: StringNullableWithAggregatesFilter<"Agreement"> | string | null
+    swapType?: EnumSwapTypeNullableWithAggregatesFilter<"Agreement"> | $Enums.SwapType | null
+    solAmount?: DecimalNullableWithAggregatesFilter<"Agreement"> | Decimal | DecimalJsLike | number | string | null
+    nftBMint?: StringNullableWithAggregatesFilter<"Agreement"> | string | null
+    feePayer?: EnumFeePayerNullableWithAggregatesFilter<"Agreement"> | $Enums.FeePayer | null
   }
 
   export type DepositWhereInput = {
@@ -11085,6 +11220,10 @@ export namespace Prisma {
     cancelledAt?: Date | string | null
     archivedAt?: Date | string | null
     archiveReason?: string | null
+    swapType?: $Enums.SwapType | null
+    solAmount?: Decimal | DecimalJsLike | number | string | null
+    nftBMint?: string | null
+    feePayer?: $Enums.FeePayer | null
     deposits?: DepositCreateNestedManyWithoutAgreementInput
     settlement?: SettlementCreateNestedOneWithoutAgreementInput
     receipt?: ReceiptCreateNestedOneWithoutAgreementInput
@@ -11114,6 +11253,10 @@ export namespace Prisma {
     cancelledAt?: Date | string | null
     archivedAt?: Date | string | null
     archiveReason?: string | null
+    swapType?: $Enums.SwapType | null
+    solAmount?: Decimal | DecimalJsLike | number | string | null
+    nftBMint?: string | null
+    feePayer?: $Enums.FeePayer | null
     deposits?: DepositUncheckedCreateNestedManyWithoutAgreementInput
     settlement?: SettlementUncheckedCreateNestedOneWithoutAgreementInput
     receipt?: ReceiptUncheckedCreateNestedOneWithoutAgreementInput
@@ -11143,6 +11286,10 @@ export namespace Prisma {
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
+    swapType?: NullableEnumSwapTypeFieldUpdateOperationsInput | $Enums.SwapType | null
+    solAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    nftBMint?: NullableStringFieldUpdateOperationsInput | string | null
+    feePayer?: NullableEnumFeePayerFieldUpdateOperationsInput | $Enums.FeePayer | null
     deposits?: DepositUpdateManyWithoutAgreementNestedInput
     settlement?: SettlementUpdateOneWithoutAgreementNestedInput
     receipt?: ReceiptUpdateOneWithoutAgreementNestedInput
@@ -11172,6 +11319,10 @@ export namespace Prisma {
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
+    swapType?: NullableEnumSwapTypeFieldUpdateOperationsInput | $Enums.SwapType | null
+    solAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    nftBMint?: NullableStringFieldUpdateOperationsInput | string | null
+    feePayer?: NullableEnumFeePayerFieldUpdateOperationsInput | $Enums.FeePayer | null
     deposits?: DepositUncheckedUpdateManyWithoutAgreementNestedInput
     settlement?: SettlementUncheckedUpdateOneWithoutAgreementNestedInput
     receipt?: ReceiptUncheckedUpdateOneWithoutAgreementNestedInput
@@ -11201,6 +11352,10 @@ export namespace Prisma {
     cancelledAt?: Date | string | null
     archivedAt?: Date | string | null
     archiveReason?: string | null
+    swapType?: $Enums.SwapType | null
+    solAmount?: Decimal | DecimalJsLike | number | string | null
+    nftBMint?: string | null
+    feePayer?: $Enums.FeePayer | null
   }
 
   export type AgreementUpdateManyMutationInput = {
@@ -11226,6 +11381,10 @@ export namespace Prisma {
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
+    swapType?: NullableEnumSwapTypeFieldUpdateOperationsInput | $Enums.SwapType | null
+    solAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    nftBMint?: NullableStringFieldUpdateOperationsInput | string | null
+    feePayer?: NullableEnumFeePayerFieldUpdateOperationsInput | $Enums.FeePayer | null
   }
 
   export type AgreementUncheckedUpdateManyInput = {
@@ -11251,6 +11410,10 @@ export namespace Prisma {
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
+    swapType?: NullableEnumSwapTypeFieldUpdateOperationsInput | $Enums.SwapType | null
+    solAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    nftBMint?: NullableStringFieldUpdateOperationsInput | string | null
+    feePayer?: NullableEnumFeePayerFieldUpdateOperationsInput | $Enums.FeePayer | null
   }
 
   export type DepositCreateInput = {
@@ -11986,6 +12149,31 @@ export namespace Prisma {
     not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
   }
 
+  export type EnumSwapTypeNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.SwapType | EnumSwapTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.SwapType[] | ListEnumSwapTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.SwapType[] | ListEnumSwapTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumSwapTypeNullableFilter<$PrismaModel> | $Enums.SwapType | null
+  }
+
+  export type DecimalNullableFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalNullableFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+  }
+
+  export type EnumFeePayerNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.FeePayer | EnumFeePayerFieldRefInput<$PrismaModel> | null
+    in?: $Enums.FeePayer[] | ListEnumFeePayerFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.FeePayer[] | ListEnumFeePayerFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumFeePayerNullableFilter<$PrismaModel> | $Enums.FeePayer | null
+  }
+
   export type DepositListRelationFilter = {
     every?: DepositWhereInput
     some?: DepositWhereInput
@@ -12044,11 +12232,16 @@ export namespace Prisma {
     cancelledAt?: SortOrder
     archivedAt?: SortOrder
     archiveReason?: SortOrder
+    swapType?: SortOrder
+    solAmount?: SortOrder
+    nftBMint?: SortOrder
+    feePayer?: SortOrder
   }
 
   export type AgreementAvgOrderByAggregateInput = {
     price?: SortOrder
     feeBps?: SortOrder
+    solAmount?: SortOrder
   }
 
   export type AgreementMaxOrderByAggregateInput = {
@@ -12074,6 +12267,10 @@ export namespace Prisma {
     cancelledAt?: SortOrder
     archivedAt?: SortOrder
     archiveReason?: SortOrder
+    swapType?: SortOrder
+    solAmount?: SortOrder
+    nftBMint?: SortOrder
+    feePayer?: SortOrder
   }
 
   export type AgreementMinOrderByAggregateInput = {
@@ -12099,11 +12296,16 @@ export namespace Prisma {
     cancelledAt?: SortOrder
     archivedAt?: SortOrder
     archiveReason?: SortOrder
+    swapType?: SortOrder
+    solAmount?: SortOrder
+    nftBMint?: SortOrder
+    feePayer?: SortOrder
   }
 
   export type AgreementSumOrderByAggregateInput = {
     price?: SortOrder
     feeBps?: SortOrder
+    solAmount?: SortOrder
   }
 
   export type StringWithAggregatesFilter<$PrismaModel = never> = {
@@ -12220,14 +12422,17 @@ export namespace Prisma {
     _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
-  export type EnumDepositTypeFilter<$PrismaModel = never> = {
-    equals?: $Enums.DepositType | EnumDepositTypeFieldRefInput<$PrismaModel>
-    in?: $Enums.DepositType[] | ListEnumDepositTypeFieldRefInput<$PrismaModel>
-    notIn?: $Enums.DepositType[] | ListEnumDepositTypeFieldRefInput<$PrismaModel>
-    not?: NestedEnumDepositTypeFilter<$PrismaModel> | $Enums.DepositType
+  export type EnumSwapTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.SwapType | EnumSwapTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.SwapType[] | ListEnumSwapTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.SwapType[] | ListEnumSwapTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumSwapTypeNullableWithAggregatesFilter<$PrismaModel> | $Enums.SwapType | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumSwapTypeNullableFilter<$PrismaModel>
+    _max?: NestedEnumSwapTypeNullableFilter<$PrismaModel>
   }
 
-  export type DecimalNullableFilter<$PrismaModel = never> = {
+  export type DecimalNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
     in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
     notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
@@ -12235,7 +12440,29 @@ export namespace Prisma {
     lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
     gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
     gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    not?: NestedDecimalNullableFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+    not?: NestedDecimalNullableWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedDecimalNullableFilter<$PrismaModel>
+    _sum?: NestedDecimalNullableFilter<$PrismaModel>
+    _min?: NestedDecimalNullableFilter<$PrismaModel>
+    _max?: NestedDecimalNullableFilter<$PrismaModel>
+  }
+
+  export type EnumFeePayerNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.FeePayer | EnumFeePayerFieldRefInput<$PrismaModel> | null
+    in?: $Enums.FeePayer[] | ListEnumFeePayerFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.FeePayer[] | ListEnumFeePayerFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumFeePayerNullableWithAggregatesFilter<$PrismaModel> | $Enums.FeePayer | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumFeePayerNullableFilter<$PrismaModel>
+    _max?: NestedEnumFeePayerNullableFilter<$PrismaModel>
+  }
+
+  export type EnumDepositTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.DepositType | EnumDepositTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.DepositType[] | ListEnumDepositTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.DepositType[] | ListEnumDepositTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumDepositTypeFilter<$PrismaModel> | $Enums.DepositType
   }
 
   export type EnumDepositStatusFilter<$PrismaModel = never> = {
@@ -12345,22 +12572,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumDepositTypeFilter<$PrismaModel>
     _max?: NestedEnumDepositTypeFilter<$PrismaModel>
-  }
-
-  export type DecimalNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
-    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
-    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
-    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    not?: NestedDecimalNullableWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _avg?: NestedDecimalNullableFilter<$PrismaModel>
-    _sum?: NestedDecimalNullableFilter<$PrismaModel>
-    _min?: NestedDecimalNullableFilter<$PrismaModel>
-    _max?: NestedDecimalNullableFilter<$PrismaModel>
   }
 
   export type EnumDepositStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -12932,6 +13143,22 @@ export namespace Prisma {
     set?: Date | string | null
   }
 
+  export type NullableEnumSwapTypeFieldUpdateOperationsInput = {
+    set?: $Enums.SwapType | null
+  }
+
+  export type NullableDecimalFieldUpdateOperationsInput = {
+    set?: Decimal | DecimalJsLike | number | string | null
+    increment?: Decimal | DecimalJsLike | number | string
+    decrement?: Decimal | DecimalJsLike | number | string
+    multiply?: Decimal | DecimalJsLike | number | string
+    divide?: Decimal | DecimalJsLike | number | string
+  }
+
+  export type NullableEnumFeePayerFieldUpdateOperationsInput = {
+    set?: $Enums.FeePayer | null
+  }
+
   export type DepositUpdateManyWithoutAgreementNestedInput = {
     create?: XOR<DepositCreateWithoutAgreementInput, DepositUncheckedCreateWithoutAgreementInput> | DepositCreateWithoutAgreementInput[] | DepositUncheckedCreateWithoutAgreementInput[]
     connectOrCreate?: DepositCreateOrConnectWithoutAgreementInput | DepositCreateOrConnectWithoutAgreementInput[]
@@ -13036,14 +13263,6 @@ export namespace Prisma {
 
   export type EnumDepositTypeFieldUpdateOperationsInput = {
     set?: $Enums.DepositType
-  }
-
-  export type NullableDecimalFieldUpdateOperationsInput = {
-    set?: Decimal | DecimalJsLike | number | string | null
-    increment?: Decimal | DecimalJsLike | number | string
-    decrement?: Decimal | DecimalJsLike | number | string
-    multiply?: Decimal | DecimalJsLike | number | string
-    divide?: Decimal | DecimalJsLike | number | string
   }
 
   export type EnumDepositStatusFieldUpdateOperationsInput = {
@@ -13216,6 +13435,31 @@ export namespace Prisma {
     not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
   }
 
+  export type NestedEnumSwapTypeNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.SwapType | EnumSwapTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.SwapType[] | ListEnumSwapTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.SwapType[] | ListEnumSwapTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumSwapTypeNullableFilter<$PrismaModel> | $Enums.SwapType | null
+  }
+
+  export type NestedDecimalNullableFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalNullableFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+  }
+
+  export type NestedEnumFeePayerNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.FeePayer | EnumFeePayerFieldRefInput<$PrismaModel> | null
+    in?: $Enums.FeePayer[] | ListEnumFeePayerFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.FeePayer[] | ListEnumFeePayerFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumFeePayerNullableFilter<$PrismaModel> | $Enums.FeePayer | null
+  }
+
   export type NestedStringWithAggregatesFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -13350,14 +13594,17 @@ export namespace Prisma {
     _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
-  export type NestedEnumDepositTypeFilter<$PrismaModel = never> = {
-    equals?: $Enums.DepositType | EnumDepositTypeFieldRefInput<$PrismaModel>
-    in?: $Enums.DepositType[] | ListEnumDepositTypeFieldRefInput<$PrismaModel>
-    notIn?: $Enums.DepositType[] | ListEnumDepositTypeFieldRefInput<$PrismaModel>
-    not?: NestedEnumDepositTypeFilter<$PrismaModel> | $Enums.DepositType
+  export type NestedEnumSwapTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.SwapType | EnumSwapTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.SwapType[] | ListEnumSwapTypeFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.SwapType[] | ListEnumSwapTypeFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumSwapTypeNullableWithAggregatesFilter<$PrismaModel> | $Enums.SwapType | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumSwapTypeNullableFilter<$PrismaModel>
+    _max?: NestedEnumSwapTypeNullableFilter<$PrismaModel>
   }
 
-  export type NestedDecimalNullableFilter<$PrismaModel = never> = {
+  export type NestedDecimalNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
     in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
     notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
@@ -13365,7 +13612,29 @@ export namespace Prisma {
     lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
     gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
     gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    not?: NestedDecimalNullableFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+    not?: NestedDecimalNullableWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedDecimalNullableFilter<$PrismaModel>
+    _sum?: NestedDecimalNullableFilter<$PrismaModel>
+    _min?: NestedDecimalNullableFilter<$PrismaModel>
+    _max?: NestedDecimalNullableFilter<$PrismaModel>
+  }
+
+  export type NestedEnumFeePayerNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.FeePayer | EnumFeePayerFieldRefInput<$PrismaModel> | null
+    in?: $Enums.FeePayer[] | ListEnumFeePayerFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.FeePayer[] | ListEnumFeePayerFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumFeePayerNullableWithAggregatesFilter<$PrismaModel> | $Enums.FeePayer | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumFeePayerNullableFilter<$PrismaModel>
+    _max?: NestedEnumFeePayerNullableFilter<$PrismaModel>
+  }
+
+  export type NestedEnumDepositTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.DepositType | EnumDepositTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.DepositType[] | ListEnumDepositTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.DepositType[] | ListEnumDepositTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumDepositTypeFilter<$PrismaModel> | $Enums.DepositType
   }
 
   export type NestedEnumDepositStatusFilter<$PrismaModel = never> = {
@@ -13394,22 +13663,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumDepositTypeFilter<$PrismaModel>
     _max?: NestedEnumDepositTypeFilter<$PrismaModel>
-  }
-
-  export type NestedDecimalNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
-    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
-    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | ListDecimalFieldRefInput<$PrismaModel> | null
-    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    not?: NestedDecimalNullableWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _avg?: NestedDecimalNullableFilter<$PrismaModel>
-    _sum?: NestedDecimalNullableFilter<$PrismaModel>
-    _min?: NestedDecimalNullableFilter<$PrismaModel>
-    _max?: NestedDecimalNullableFilter<$PrismaModel>
   }
 
   export type NestedEnumDepositStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -13920,6 +14173,10 @@ export namespace Prisma {
     cancelledAt?: Date | string | null
     archivedAt?: Date | string | null
     archiveReason?: string | null
+    swapType?: $Enums.SwapType | null
+    solAmount?: Decimal | DecimalJsLike | number | string | null
+    nftBMint?: string | null
+    feePayer?: $Enums.FeePayer | null
     settlement?: SettlementCreateNestedOneWithoutAgreementInput
     receipt?: ReceiptCreateNestedOneWithoutAgreementInput
     webhooks?: WebhookCreateNestedManyWithoutAgreementInput
@@ -13948,6 +14205,10 @@ export namespace Prisma {
     cancelledAt?: Date | string | null
     archivedAt?: Date | string | null
     archiveReason?: string | null
+    swapType?: $Enums.SwapType | null
+    solAmount?: Decimal | DecimalJsLike | number | string | null
+    nftBMint?: string | null
+    feePayer?: $Enums.FeePayer | null
     settlement?: SettlementUncheckedCreateNestedOneWithoutAgreementInput
     receipt?: ReceiptUncheckedCreateNestedOneWithoutAgreementInput
     webhooks?: WebhookUncheckedCreateNestedManyWithoutAgreementInput
@@ -13992,6 +14253,10 @@ export namespace Prisma {
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
+    swapType?: NullableEnumSwapTypeFieldUpdateOperationsInput | $Enums.SwapType | null
+    solAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    nftBMint?: NullableStringFieldUpdateOperationsInput | string | null
+    feePayer?: NullableEnumFeePayerFieldUpdateOperationsInput | $Enums.FeePayer | null
     settlement?: SettlementUpdateOneWithoutAgreementNestedInput
     receipt?: ReceiptUpdateOneWithoutAgreementNestedInput
     webhooks?: WebhookUpdateManyWithoutAgreementNestedInput
@@ -14020,6 +14285,10 @@ export namespace Prisma {
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
+    swapType?: NullableEnumSwapTypeFieldUpdateOperationsInput | $Enums.SwapType | null
+    solAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    nftBMint?: NullableStringFieldUpdateOperationsInput | string | null
+    feePayer?: NullableEnumFeePayerFieldUpdateOperationsInput | $Enums.FeePayer | null
     settlement?: SettlementUncheckedUpdateOneWithoutAgreementNestedInput
     receipt?: ReceiptUncheckedUpdateOneWithoutAgreementNestedInput
     webhooks?: WebhookUncheckedUpdateManyWithoutAgreementNestedInput
@@ -14048,6 +14317,10 @@ export namespace Prisma {
     cancelledAt?: Date | string | null
     archivedAt?: Date | string | null
     archiveReason?: string | null
+    swapType?: $Enums.SwapType | null
+    solAmount?: Decimal | DecimalJsLike | number | string | null
+    nftBMint?: string | null
+    feePayer?: $Enums.FeePayer | null
     deposits?: DepositCreateNestedManyWithoutAgreementInput
     receipt?: ReceiptCreateNestedOneWithoutAgreementInput
     webhooks?: WebhookCreateNestedManyWithoutAgreementInput
@@ -14076,6 +14349,10 @@ export namespace Prisma {
     cancelledAt?: Date | string | null
     archivedAt?: Date | string | null
     archiveReason?: string | null
+    swapType?: $Enums.SwapType | null
+    solAmount?: Decimal | DecimalJsLike | number | string | null
+    nftBMint?: string | null
+    feePayer?: $Enums.FeePayer | null
     deposits?: DepositUncheckedCreateNestedManyWithoutAgreementInput
     receipt?: ReceiptUncheckedCreateNestedOneWithoutAgreementInput
     webhooks?: WebhookUncheckedCreateNestedManyWithoutAgreementInput
@@ -14120,6 +14397,10 @@ export namespace Prisma {
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
+    swapType?: NullableEnumSwapTypeFieldUpdateOperationsInput | $Enums.SwapType | null
+    solAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    nftBMint?: NullableStringFieldUpdateOperationsInput | string | null
+    feePayer?: NullableEnumFeePayerFieldUpdateOperationsInput | $Enums.FeePayer | null
     deposits?: DepositUpdateManyWithoutAgreementNestedInput
     receipt?: ReceiptUpdateOneWithoutAgreementNestedInput
     webhooks?: WebhookUpdateManyWithoutAgreementNestedInput
@@ -14148,6 +14429,10 @@ export namespace Prisma {
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
+    swapType?: NullableEnumSwapTypeFieldUpdateOperationsInput | $Enums.SwapType | null
+    solAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    nftBMint?: NullableStringFieldUpdateOperationsInput | string | null
+    feePayer?: NullableEnumFeePayerFieldUpdateOperationsInput | $Enums.FeePayer | null
     deposits?: DepositUncheckedUpdateManyWithoutAgreementNestedInput
     receipt?: ReceiptUncheckedUpdateOneWithoutAgreementNestedInput
     webhooks?: WebhookUncheckedUpdateManyWithoutAgreementNestedInput
@@ -14176,6 +14461,10 @@ export namespace Prisma {
     cancelledAt?: Date | string | null
     archivedAt?: Date | string | null
     archiveReason?: string | null
+    swapType?: $Enums.SwapType | null
+    solAmount?: Decimal | DecimalJsLike | number | string | null
+    nftBMint?: string | null
+    feePayer?: $Enums.FeePayer | null
     deposits?: DepositCreateNestedManyWithoutAgreementInput
     settlement?: SettlementCreateNestedOneWithoutAgreementInput
     webhooks?: WebhookCreateNestedManyWithoutAgreementInput
@@ -14204,6 +14493,10 @@ export namespace Prisma {
     cancelledAt?: Date | string | null
     archivedAt?: Date | string | null
     archiveReason?: string | null
+    swapType?: $Enums.SwapType | null
+    solAmount?: Decimal | DecimalJsLike | number | string | null
+    nftBMint?: string | null
+    feePayer?: $Enums.FeePayer | null
     deposits?: DepositUncheckedCreateNestedManyWithoutAgreementInput
     settlement?: SettlementUncheckedCreateNestedOneWithoutAgreementInput
     webhooks?: WebhookUncheckedCreateNestedManyWithoutAgreementInput
@@ -14248,6 +14541,10 @@ export namespace Prisma {
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
+    swapType?: NullableEnumSwapTypeFieldUpdateOperationsInput | $Enums.SwapType | null
+    solAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    nftBMint?: NullableStringFieldUpdateOperationsInput | string | null
+    feePayer?: NullableEnumFeePayerFieldUpdateOperationsInput | $Enums.FeePayer | null
     deposits?: DepositUpdateManyWithoutAgreementNestedInput
     settlement?: SettlementUpdateOneWithoutAgreementNestedInput
     webhooks?: WebhookUpdateManyWithoutAgreementNestedInput
@@ -14276,6 +14573,10 @@ export namespace Prisma {
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
+    swapType?: NullableEnumSwapTypeFieldUpdateOperationsInput | $Enums.SwapType | null
+    solAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    nftBMint?: NullableStringFieldUpdateOperationsInput | string | null
+    feePayer?: NullableEnumFeePayerFieldUpdateOperationsInput | $Enums.FeePayer | null
     deposits?: DepositUncheckedUpdateManyWithoutAgreementNestedInput
     settlement?: SettlementUncheckedUpdateOneWithoutAgreementNestedInput
     webhooks?: WebhookUncheckedUpdateManyWithoutAgreementNestedInput
@@ -14304,6 +14605,10 @@ export namespace Prisma {
     cancelledAt?: Date | string | null
     archivedAt?: Date | string | null
     archiveReason?: string | null
+    swapType?: $Enums.SwapType | null
+    solAmount?: Decimal | DecimalJsLike | number | string | null
+    nftBMint?: string | null
+    feePayer?: $Enums.FeePayer | null
     deposits?: DepositCreateNestedManyWithoutAgreementInput
     settlement?: SettlementCreateNestedOneWithoutAgreementInput
     receipt?: ReceiptCreateNestedOneWithoutAgreementInput
@@ -14332,6 +14637,10 @@ export namespace Prisma {
     cancelledAt?: Date | string | null
     archivedAt?: Date | string | null
     archiveReason?: string | null
+    swapType?: $Enums.SwapType | null
+    solAmount?: Decimal | DecimalJsLike | number | string | null
+    nftBMint?: string | null
+    feePayer?: $Enums.FeePayer | null
     deposits?: DepositUncheckedCreateNestedManyWithoutAgreementInput
     settlement?: SettlementUncheckedCreateNestedOneWithoutAgreementInput
     receipt?: ReceiptUncheckedCreateNestedOneWithoutAgreementInput
@@ -14376,6 +14685,10 @@ export namespace Prisma {
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
+    swapType?: NullableEnumSwapTypeFieldUpdateOperationsInput | $Enums.SwapType | null
+    solAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    nftBMint?: NullableStringFieldUpdateOperationsInput | string | null
+    feePayer?: NullableEnumFeePayerFieldUpdateOperationsInput | $Enums.FeePayer | null
     deposits?: DepositUpdateManyWithoutAgreementNestedInput
     settlement?: SettlementUpdateOneWithoutAgreementNestedInput
     receipt?: ReceiptUpdateOneWithoutAgreementNestedInput
@@ -14404,6 +14717,10 @@ export namespace Prisma {
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     archivedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     archiveReason?: NullableStringFieldUpdateOperationsInput | string | null
+    swapType?: NullableEnumSwapTypeFieldUpdateOperationsInput | $Enums.SwapType | null
+    solAmount?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    nftBMint?: NullableStringFieldUpdateOperationsInput | string | null
+    feePayer?: NullableEnumFeePayerFieldUpdateOperationsInput | $Enums.FeePayer | null
     deposits?: DepositUncheckedUpdateManyWithoutAgreementNestedInput
     settlement?: SettlementUncheckedUpdateOneWithoutAgreementNestedInput
     receipt?: ReceiptUncheckedUpdateOneWithoutAgreementNestedInput

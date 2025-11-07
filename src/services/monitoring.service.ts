@@ -2,13 +2,16 @@
  * Monitoring Service
  *
  * Orchestrates monitoring of Solana escrow accounts for deposits.
- * Coordinates USDC and NFT deposit detection, validation, and database updates.
+ * Coordinates NFT and SOL deposit detection, validation, and database updates.
+ * 
+ * NOTE: USDC monitoring is deprecated but kept for backwards compatibility (V1 only).
  */
 
 import { AccountInfo, Context } from '@solana/web3.js';
 import { getSolanaService } from './solana.service';
 import { getUsdcDepositService } from './usdc-deposit.service';
 import { getNftDepositService } from './nft-deposit.service';
+import { getSolDepositService } from './sol-deposit.service';
 import { prisma } from '../config/database';
 
 /**
@@ -26,7 +29,7 @@ interface MonitoringConfig {
 interface MonitoredAccount {
   publicKey: string;
   agreementId: string;
-  accountType: 'usdc' | 'nft';
+  accountType: 'usdc' | 'nft' | 'sol';
   subscriptionId?: number;
 }
 
@@ -40,15 +43,18 @@ export class MonitoringService {
   private solanaService: ReturnType<typeof getSolanaService>;
   private usdcDepositService: ReturnType<typeof getUsdcDepositService>;
   private nftDepositService: ReturnType<typeof getNftDepositService>;
+  private solDepositService: ReturnType<typeof getSolDepositService>;
   private monitoredAccounts: Map<string, MonitoredAccount> = new Map();
   private isRunning: boolean = false;
   private config: Required<MonitoringConfig>;
   private pollingTimer?: NodeJS.Timeout;
+  private agreementReloadTimer?: NodeJS.Timeout;
 
   constructor(monitoringConfig?: MonitoringConfig) {
     this.solanaService = getSolanaService();
     this.usdcDepositService = getUsdcDepositService();
     this.nftDepositService = getNftDepositService();
+    this.solDepositService = getSolDepositService();
 
     this.config = {
       pollingInterval: monitoringConfig?.pollingInterval || (() => {
@@ -71,7 +77,13 @@ export class MonitoringService {
       return;
     }
 
-    console.log('[MonitoringService] Starting monitoring service...');
+    console.log('[STARTUP] 🚀 MonitoringService initializing...');
+    console.log('[STARTUP] Configuration:', {
+      pollingInterval: this.config.pollingInterval,
+      maxRetries: this.config.maxRetries,
+      retryDelayMs: this.config.retryDelayMs,
+      environment: process.env.NODE_ENV || 'development',
+    });
 
     try {
       // Start Solana service
@@ -84,9 +96,10 @@ export class MonitoringService {
       this.startPolling();
 
       this.isRunning = true;
-      console.log('[MonitoringService] Monitoring service started successfully');
+      console.log('[STARTUP] ✅ MonitoringService started successfully');
+      console.log('[STARTUP] Monitoring', this.monitoredAccounts.size, 'accounts');
     } catch (error) {
-      console.error('[MonitoringService] Failed to start monitoring service:', error);
+      console.error('[STARTUP] ❌ Failed to start monitoring service:', error);
       throw error;
     }
   }
@@ -107,6 +120,12 @@ export class MonitoringService {
       if (this.pollingTimer) {
         clearInterval(this.pollingTimer);
         this.pollingTimer = undefined;
+      }
+
+      // Stop agreement reloading
+      if (this.agreementReloadTimer) {
+        clearInterval(this.agreementReloadTimer);
+        this.agreementReloadTimer = undefined;
       }
 
       // Unsubscribe from all accounts
@@ -168,12 +187,21 @@ export class MonitoringService {
           agreementId: true,
           usdcDepositAddr: true,
           nftDepositAddr: true,
+          escrowPda: true,
+          swapType: true,
           status: true,
           createdAt: true,
+          expiry: true,
         },
       });
 
-      console.log(`[MonitoringService] Found ${agreements.length} agreements to monitor`);
+      const agreementIds = agreements.map(a => a.agreementId).join(', ') || '∅';
+      console.log(`[MonitoringService] Found ${agreements.length} agreements to monitor: [${agreementIds}]`);
+      
+      // Log details of each agreement
+      agreements.forEach(agreement => {
+        console.log(`[MonitoringService]   • ${agreement.agreementId} | Status: ${agreement.status} | Type: ${agreement.swapType || 'V1'} | Expiry: ${agreement.expiry.toISOString()}`);
+      });
 
       // Rate limiting: Process subscriptions in batches to avoid hitting RPC rate limits
       // QuickNode limit: 50 requests/second
@@ -181,32 +209,76 @@ export class MonitoringService {
       const BATCH_SIZE = 10;
       const BATCH_DELAY_MS = 250;
       
-      let accountsToMonitor: Array<{publicKey: string, agreementId: string, type: 'usdc' | 'nft'}> = [];
+      let accountsToMonitor: Array<{publicKey: string, agreementId: string, type: 'usdc' | 'nft' | 'sol'}> = [];
       
       // Collect all accounts that need monitoring
       for (const agreement of agreements) {
-        // Monitor USDC deposit address if not yet locked
-        if (
-          agreement.usdcDepositAddr &&
-          !['USDC_LOCKED', 'BOTH_LOCKED'].includes(agreement.status)
-        ) {
-          accountsToMonitor.push({
-            publicKey: agreement.usdcDepositAddr,
-            agreementId: agreement.agreementId,
-            type: 'usdc'
-          });
-        }
+        // Determine if this is a SOL-based agreement
+        const isSOLBased = agreement.swapType && ['NFT_FOR_SOL', 'NFT_FOR_NFT_WITH_FEE', 'NFT_FOR_NFT_PLUS_SOL'].includes(agreement.swapType);
 
-        // Monitor NFT deposit address if not yet locked
-        if (
-          agreement.nftDepositAddr &&
-          !['NFT_LOCKED', 'BOTH_LOCKED'].includes(agreement.status)
-        ) {
-          accountsToMonitor.push({
-            publicKey: agreement.nftDepositAddr,
-            agreementId: agreement.agreementId,
-            type: 'nft'
-          });
+        if (isSOLBased) {
+          // Monitor SOL vault PDA for SOL deposits (NOT the escrow state PDA)
+          // The vault architecture uses a separate zero-data PDA for holding SOL
+          if (
+            agreement.escrowPda &&
+            (agreement.swapType === 'NFT_FOR_SOL' || agreement.swapType === 'NFT_FOR_NFT_PLUS_SOL' || agreement.swapType === 'NFT_FOR_NFT_WITH_FEE') &&
+            !['USDC_LOCKED', 'BOTH_LOCKED'].includes(agreement.status)
+          ) {
+            try {
+              // Derive sol_vault PDA using solanaService helper
+              const solVaultPda = await this.solanaService.deriveSolVaultPda(agreement.escrowPda);
+              accountsToMonitor.push({
+                publicKey: solVaultPda,
+                agreementId: agreement.agreementId,
+                type: 'sol'
+              });
+              console.log(`[MonitoringService] Monitoring SOL vault ${solVaultPda} for agreement: ${agreement.agreementId}`);
+            } catch (error: any) {
+              // Handle IDL mismatch errors (old agreements with incompatible program version)
+              if (error.message && error.message.includes('IDL_MISMATCH')) {
+                console.warn(`[MonitoringService] Skipping old agreement ${agreement.agreementId}: Created with older program version`);
+                // Optionally: Mark agreement for archival in production
+              } else {
+                console.error(`[MonitoringService] Failed to derive SOL vault for ${agreement.agreementId}:`, error);
+              }
+            }
+          }
+
+          // Monitor seller NFT
+          if (
+            agreement.nftDepositAddr &&
+            !['NFT_LOCKED', 'BOTH_LOCKED'].includes(agreement.status)
+          ) {
+            accountsToMonitor.push({
+              publicKey: agreement.nftDepositAddr,
+              agreementId: agreement.agreementId,
+              type: 'nft'
+            });
+          }
+        } else {
+          // V1 (Legacy USDC): Monitor USDC deposit address if not yet locked
+          if (
+            agreement.usdcDepositAddr &&
+            !['USDC_LOCKED', 'BOTH_LOCKED'].includes(agreement.status)
+          ) {
+            accountsToMonitor.push({
+              publicKey: agreement.usdcDepositAddr,
+              agreementId: agreement.agreementId,
+              type: 'usdc'
+            });
+          }
+
+          // V1: Monitor NFT deposit address if not yet locked
+          if (
+            agreement.nftDepositAddr &&
+            !['NFT_LOCKED', 'BOTH_LOCKED'].includes(agreement.status)
+          ) {
+            accountsToMonitor.push({
+              publicKey: agreement.nftDepositAddr,
+              agreementId: agreement.agreementId,
+              type: 'nft'
+            });
+          }
         }
       }
       
@@ -247,7 +319,7 @@ export class MonitoringService {
   async monitorAccount(
     publicKey: string,
     agreementId: string,
-    accountType: 'usdc' | 'nft'
+    accountType: 'usdc' | 'nft' | 'sol'
   ): Promise<void> {
     // Check if already monitoring
     if (this.monitoredAccounts.has(publicKey)) {
@@ -345,7 +417,7 @@ export class MonitoringService {
     publicKey: string,
     accountInfo: AccountInfo<Buffer> | null,
     context: Context,
-    accountType: 'usdc' | 'nft',
+    accountType: 'usdc' | 'nft' | 'sol',
     agreementId: string
   ): Promise<void> {
     try {
@@ -364,6 +436,8 @@ export class MonitoringService {
         await this.handleUsdcAccountChange(publicKey, accountInfo, context, agreementId);
       } else if (accountType === 'nft') {
         await this.handleNftAccountChange(publicKey, accountInfo, context, agreementId);
+      } else if (accountType === 'sol') {
+        await this.handleSolAccountChange(publicKey, accountInfo, context, agreementId);
       }
     } catch (error) {
       console.error(
@@ -463,7 +537,51 @@ export class MonitoringService {
   }
 
   /**
-   * Start fallback polling for reliability
+   * Handle SOL account change (for SOL-based escrows)
+   */
+  private async handleSolAccountChange(
+    publicKey: string,
+    accountInfo: AccountInfo<Buffer>,
+    context: Context,
+    agreementId: string
+  ): Promise<void> {
+    console.log(`[MonitoringService] Processing SOL account change (v2 escrow)`);
+    console.log(`[MonitoringService] Escrow PDA: ${publicKey}, Agreement: ${agreementId}`);
+
+    try {
+      const result = await this.solDepositService.handleSolAccountChange(
+        publicKey,
+        accountInfo,
+        context,
+        agreementId
+      );
+
+      if (result.success) {
+        console.log(
+          `[MonitoringService] Successfully processed SOL deposit: ${result.amount} SOL`
+        );
+
+        // Stop monitoring when deposit is confirmed
+        if (result.depositId && result.status === 'CONFIRMED') {
+          console.log(
+            `[MonitoringService] SOL deposit confirmed, stopping monitoring of escrow PDA: ${publicKey}`
+          );
+          await this.stopMonitoringAccount(publicKey);
+        } else if (result.depositId && result.status === 'PENDING') {
+          console.log(
+            `[MonitoringService] SOL deposit pending, continuing to monitor escrow PDA: ${publicKey}`
+          );
+        }
+      } else {
+        console.error(`[MonitoringService] Failed to process SOL deposit: ${result.error}`);
+      }
+    } catch (error) {
+      console.error(`[MonitoringService] Error in SOL account change handler:`, error);
+    }
+  }
+
+  /**
+   * Start fallback polling for reliability and periodic agreement reloading
    */
   private startPolling(): void {
     console.log(
@@ -473,6 +591,20 @@ export class MonitoringService {
     this.pollingTimer = setInterval(async () => {
       await this.pollAccounts();
     }, this.config.pollingInterval);
+
+    // Periodically reload pending agreements (every 5 seconds)
+    // This ensures new agreements created after service startup are monitored quickly
+    // and reduces the race condition window for deposit detection
+    console.log('[MonitoringService] 🔄 Starting periodic agreement reload (interval: 5s)');
+    this.agreementReloadTimer = setInterval(async () => {
+      try {
+        console.log('[MonitoringService] 🔄 Periodic reload: checking for new agreements...');
+        await this.loadPendingAgreements();
+        console.log(`[MonitoringService] 🔄 Reload complete. Currently monitoring ${this.monitoredAccounts.size} accounts`);
+      } catch (error) {
+        console.error('[MonitoringService] ❌ Error reloading agreements:', error);
+      }
+    }, 5000); // 5 seconds
   }
 
   /**

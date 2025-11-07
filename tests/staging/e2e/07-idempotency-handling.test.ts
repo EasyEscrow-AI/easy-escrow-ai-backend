@@ -91,16 +91,18 @@ describe('STAGING E2E: Idempotency Handling', function () {
     
     // Create NFT once, use same NFT for both requests
     const testNft = await createTestNFT(connection, wallets.sender);
-    const expiry = new Date(Date.now() + 60 * 60 * 1000);
+    const expiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
     const idempotencyKey = generateIdempotencyKey();
 
     // Fixed request body (same for both requests)
     const requestBody = {
       nftMint: testNft.mint.toString(),
-      price: STAGING_CONFIG.swapAmount,
+      swapType: 'NFT_FOR_SOL',
+      solAmount: (STAGING_CONFIG.swapAmount * 1_000_000_000).toString(),
       seller: wallets.sender.publicKey.toString(),
       buyer: wallets.receiver.publicKey.toString(),
       expiry: expiry.toISOString(), // Same expiry for both
+      feePayer: 'BUYER',
       feeBps: 100,
       honorRoyalties: false,
     };

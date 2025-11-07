@@ -41,7 +41,8 @@ const PORT = process.env.PORT || 3000;
 // Trust proxy - Required for DigitalOcean App Platform (and other reverse proxies)
 // This allows Express to read X-Forwarded-* headers to get real client IP
 // Essential for rate limiting to work correctly
-app.set('trust proxy', true);
+// DigitalOcean App Platform has exactly 1 load balancer - trust 1 hop
+app.set('trust proxy', 1);
 
 // Initialize orchestrator instances (before route handlers)
 // Use environment-based intervals to allow tuning in production
@@ -355,14 +356,15 @@ const startServer = async () => {
           console.log('Starting background services...');
           
           // Start monitoring orchestrator
-          console.log('Starting monitoring orchestrator...');
+          console.log('[STARTUP] 🚀 Starting monitoring orchestrator...');
+          console.log('[STARTUP] This includes MonitoringService and SettlementService');
           await monitoringOrchestrator.start();
-          console.log('✅ Monitoring orchestrator started');
+          console.log('[STARTUP] ✅ Monitoring orchestrator started successfully');
           
           // Start expiry-cancellation orchestrator
-          console.log('Starting expiry-cancellation orchestrator...');
+          console.log('[STARTUP] 🚀 Starting expiry-cancellation orchestrator...');
           await expiryCancellationOrchestrator.start();
-          console.log('✅ Expiry-cancellation orchestrator started');
+          console.log('[STARTUP] ✅ Expiry-cancellation orchestrator started successfully');
           
           // Start idempotency service
           console.log('Starting idempotency service...');

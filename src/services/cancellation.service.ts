@@ -337,13 +337,6 @@ export class CancellationService {
           ? new PublicKey(agreement.buyer)
           : seller;
         
-        // Get USDC mint from config
-        const usdcMintAddress = config.usdc?.mintAddress;
-        if (!usdcMintAddress) {
-          throw new Error('USDC_MINT_ADDRESS not configured');
-        }
-        const usdcMint = new PublicKey(usdcMintAddress);
-        
         // Choose appropriate cancellation method based on actual expiry time
         // Check if the agreement has actually expired (time-based, not status-based)
         const now = new Date();
@@ -351,22 +344,22 @@ export class CancellationService {
         
         if (isExpired) {
           console.log('[CancellationService] Using cancelIfExpired for time-expired agreement');
-          cancelTxId = await escrowService.cancelIfExpired(
+          cancelTxId = await escrowService.cancelIfExpired({
             escrowPda,
             buyer,
             seller,
             nftMint,
-            usdcMint
-          );
+            swapType: (agreement.swapType as 'NFT_FOR_SOL' | 'NFT_FOR_NFT_WITH_FEE' | 'NFT_FOR_NFT_PLUS_SOL') || 'NFT_FOR_SOL',
+          });
         } else {
           console.log('[CancellationService] Using adminCancel for non-expired cancellation');
-          cancelTxId = await escrowService.adminCancel(
+          cancelTxId = await escrowService.adminCancel({
             escrowPda,
             buyer,
             seller,
             nftMint,
-            usdcMint
-          );
+            swapType: (agreement.swapType as 'NFT_FOR_SOL' | 'NFT_FOR_NFT_WITH_FEE' | 'NFT_FOR_NFT_PLUS_SOL') || 'NFT_FOR_SOL',
+          });
         }
         
         console.log('[CancellationService] On-chain cancellation successful:', cancelTxId);

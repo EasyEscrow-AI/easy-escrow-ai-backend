@@ -1,8 +1,10 @@
 /**
  * Settlement Service
  *
- * Detects when both NFT and USDC are locked, validates the agreement,
+ * Detects when both NFT and SOL are locked, validates the agreement,
  * and executes atomic settlement on-chain with platform fees and optional royalties.
+ * 
+ * NOTE: Legacy USDC support is deprecated but kept for backwards compatibility.
  */
 
 import { PublicKey, Transaction, SystemProgram, Keypair, sendAndConfirmTransaction } from '@solana/web3.js';
@@ -77,8 +79,14 @@ export class SettlementService {
   constructor(settlementConfig?: SettlementConfig) {
     this.solanaService = getSolanaService();
 
+    // Use faster polling for devnet/staging (3s), slower for production (15s)
+    const defaultPollingInterval = process.env.NODE_ENV === 'production' ? 15000 : 3000;
+    const envPollingInterval = process.env.SETTLEMENT_POLL_INTERVAL_MS 
+      ? parseInt(process.env.SETTLEMENT_POLL_INTERVAL_MS, 10) 
+      : defaultPollingInterval;
+
     this.config = {
-      pollingInterval: settlementConfig?.pollingInterval || 15000, // 15 seconds
+      pollingInterval: settlementConfig?.pollingInterval || envPollingInterval,
       maxRetries: settlementConfig?.maxRetries || 3,
       retryDelayMs: settlementConfig?.retryDelayMs || 2000,
       platformFeeCollectorAddress: settlementConfig?.platformFeeCollectorAddress || 
@@ -86,7 +94,7 @@ export class SettlementService {
         '11111111111111111111111111111111', // Fallback address
     };
 
-    console.log('[SettlementService] Initialized');
+    console.log(`[SettlementService] Initialized with ${this.config.pollingInterval}ms polling interval`);
   }
 
   /**
@@ -160,14 +168,17 @@ export class SettlementService {
    */
   private async checkAndSettleAgreements(): Promise<void> {
     try {
-      console.log('[SettlementService] Checking for agreements ready to settle...');
+      console.log('[SettlementService] 🔍 Checking for agreements ready to settle...');
+      
+      const now = new Date();
+      console.log(`[SettlementService] Current time: ${now.toISOString()}`);
 
       // Find agreements with both assets locked
       const readyAgreements = await prisma.agreement.findMany({
         where: {
           status: AgreementStatus.BOTH_LOCKED,
           expiry: {
-            gt: new Date(), // Not expired
+            gt: now, // Not expired
           },
         },
         include: {
@@ -175,48 +186,73 @@ export class SettlementService {
         },
       });
 
+      const ids = readyAgreements.map(a => a.agreementId).join(', ') || '∅';
       console.log(
-        `[SettlementService] Found ${readyAgreements.length} agreements ready to settle`
+        `[SettlementService] Found ${readyAgreements.length} agreements ready to settle: [${ids}]`
       );
+      
+      // Debug: Check if ANY BOTH_LOCKED agreements exist (ignore expiry)
+      const allBothLocked = await prisma.agreement.count({
+        where: {
+          status: AgreementStatus.BOTH_LOCKED,
+        },
+      });
+      console.log(`[SettlementService] DEBUG: Total BOTH_LOCKED agreements (ignoring expiry): ${allBothLocked}`);
 
       // Process each agreement
       for (const agreement of readyAgreements) {
         try {
           console.log(
-            `[SettlementService] Processing settlement for agreement: ${agreement.agreementId}`
+            `[SettlementService] ▶️ Processing settlement for agreement: ${agreement.agreementId} (expiry: ${agreement.expiry.toISOString()})`
           );
 
           // Validate expiration before settlement
-          if (!this.validateNotExpired(agreement)) {
+          const notExpired = this.validateNotExpired(agreement);
+          console.log(`[SettlementService] validateNotExpired=${notExpired} for ${agreement.agreementId}`);
+          
+          if (!notExpired) {
             console.log(
-              `[SettlementService] Agreement ${agreement.agreementId} has expired, marking as EXPIRED`
+              `[SettlementService] ⏰ Agreement ${agreement.agreementId} has expired, marking as EXPIRED`
             );
             await this.markAgreementExpired(agreement.id);
             continue;
           }
 
+          console.log(`[SettlementService] 🚀 Executing settlement for ${agreement.agreementId}...`);
+          
           // Execute settlement
           const result = await this.executeSettlement(agreement);
 
           if (result.success) {
             console.log(
-              `[SettlementService] Successfully settled agreement ${agreement.agreementId}`
+              `[SettlementService] ✅ Successfully settled agreement ${agreement.agreementId}`
             );
           } else {
             console.error(
-              `[SettlementService] Failed to settle agreement ${agreement.agreementId}: ${result.error}`
+              `[SettlementService] ❌ Failed to settle agreement ${agreement.agreementId}: ${result.error}`
             );
+            
+            // Optional: persist failure state so the record doesn't sit forever in BOTH_LOCKED
+            // Uncomment if you want to track persistent failures:
+            // await prisma.agreement.update({
+            //   where: { id: agreement.id },
+            //   data: { 
+            //     status: 'SETTLEMENT_FAILED' as any,
+            //     failureReason: String(result.error ?? 'unknown') 
+            //   },
+            // });
           }
-        } catch (error) {
+        } catch (error: any) {
+          // Capture raw program logs if present
+          const logs = error?.logs ? `\nProgram logs:\n${error.logs.join('\n')}` : '';
           console.error(
-            `[SettlementService] Error processing agreement ${agreement.agreementId}:`,
-            error
+            `[SettlementService] ❌ Exception during settlement for ${agreement.agreementId}: ${error?.message || error}${logs}`
           );
           // Continue processing other agreements
         }
       }
     } catch (error) {
-      console.error('[SettlementService] Error checking agreements:', error);
+      console.error('[SettlementService] ❌ Error checking agreements:', error);
     }
   }
 
@@ -257,6 +293,16 @@ export class SettlementService {
    */
   async executeSettlement(agreement: any): Promise<SettlementResult> {
     console.log(`[SettlementService] Executing settlement for agreement ${agreement.agreementId}`);
+
+    // Check if this is a v2 (SOL-based) agreement
+    const isV2 = agreement.swapType && ['NFT_FOR_SOL', 'NFT_FOR_NFT_WITH_FEE', 'NFT_FOR_NFT_PLUS_SOL'].includes(agreement.swapType);
+    
+    if (isV2) {
+      console.log(`[SettlementService] Detected V2 agreement (${agreement.swapType}), using V2 settlement flow`);
+      return await this.executeSettlementV2(agreement);
+    }
+
+    console.log(`[SettlementService] Using V1 (LEGACY - USDC-based) settlement flow - DEPRECATED`);
 
     try {
       // 0. Check idempotency to prevent double-settlement
@@ -396,7 +442,7 @@ export class SettlementService {
       // Declare variables outside try block for catch block access
       let transactions: any[] = [];
       let depositNftTx: any = undefined;
-      let depositUsdcTx: any = undefined;
+      let depositUsdcTx: any = undefined; // LEGACY - for V1 USDC-based swaps only
       
       try {
         const receiptService = getReceiptService();
@@ -418,13 +464,13 @@ export class SettlementService {
           tx.operationType === 'DEPOSIT_NFT' || tx.operationType === 'deposit'
         );
         depositUsdcTx = transactions.find(tx => 
-          tx.operationType === 'DEPOSIT_USDC' || tx.operationType === 'deposit'
+          tx.operationType === 'DEPOSIT_USDC' || tx.operationType === 'deposit' // LEGACY - V1 only
         );
 
         console.log(`[SettlementService] Found transaction logs:`, {
           total: transactions.length,
           depositNft: depositNftTx?.txId || 'not found',
-          depositUsdc: depositUsdcTx?.txId || 'not found',
+          depositUsdc: depositUsdcTx?.txId || 'not found', // LEGACY - V1 only
           settlement: settlementTxId,
         });
         
@@ -438,7 +484,7 @@ export class SettlementService {
           seller: agreement.seller,
           escrowTxId: agreement.initTxId || '',
           depositNftTxId: depositNftTx?.txId,     // NEW: NFT deposit transaction
-          depositUsdcTxId: depositUsdcTx?.txId,   // NEW: USDC deposit transaction
+          depositUsdcTxId: depositUsdcTx?.txId,   // LEGACY: USDC deposit transaction (V1 only)
           settlementTxId: settlementTxId,
           createdAt: agreement.createdAt,
           settledAt: new Date(),
@@ -643,7 +689,8 @@ export class SettlementService {
       const nftMint = new PublicKey(agreement.nftMint);
       const feeCollector = new PublicKey(this.config.platformFeeCollectorAddress);
 
-      // Get USDC mint address from config
+      // LEGACY: USDC mint address (V1 only - kept for backwards compatibility)
+      // NOTE: V2 uses SOL directly, not USDC
       const usdcMintStr = config.usdc?.mintAddress || 'Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr'; // Devnet USDC
       const usdcMint = new PublicKey(usdcMintStr);
 
@@ -668,14 +715,13 @@ export class SettlementService {
         seller,
         buyer,
         nftMint,
-        usdcMint,
         feeCollector
       );
 
       console.log('[SettlementService] ✅ Settlement transaction confirmed:', txId);
       console.log('[SettlementService] Settlement completed with fee distribution:');
       console.log('[SettlementService]   ✅ NFT transferred from escrow to buyer');
-      console.log('[SettlementService]   ✅ USDC transferred to seller (minus fee)');
+      console.log('[SettlementService]   ✅ SOL transferred to seller (minus fee)');
       console.log('[SettlementService]   ✅ Platform fee transferred to fee collector');
       console.log(`[SettlementService]   Explorer: https://explorer.solana.com/tx/${txId}?cluster=devnet`);
 
@@ -835,6 +881,345 @@ export class SettlementService {
       pollingInterval: this.config.pollingInterval,
       platformFeeCollector: this.config.platformFeeCollectorAddress,
     };
+  }
+
+  /**
+   * =================================
+   * V2 METHODS - SOL-BASED SETTLEMENTS
+   * =================================
+   */
+
+  /**
+   * Calculate fees for SOL-based settlements
+   * Similar to calculateFees but works with SOL amounts in lamports
+   */
+  async calculateFeesV2(agreement: any): Promise<{
+    platformFee: Decimal;
+    creatorRoyalty: Decimal;
+    sellerReceived: Decimal;
+    totalDeductions: Decimal;
+    solAmount: Decimal;
+  }> {
+    // For V2, use solAmount instead of price
+    const solAmount = new Decimal(agreement.solAmount?.toString() || '0');
+    const feeBps = agreement.feeBps ?? 0;
+    const honorRoyalties = agreement.honorRoyalties;
+
+    console.log('[SettlementService] V2 Fee calculation:', {
+      solAmount: solAmount.toString(),
+      feeBps,
+      swapType: agreement.swapType,
+      honorRoyalties,
+    });
+
+    // Calculate platform fee (in basis points)
+    const platformFee = solAmount.mul(feeBps).div(10000);
+
+    let creatorRoyalty = new Decimal(0);
+
+    // Calculate creator royalty if enabled
+    if (honorRoyalties) {
+      try {
+        const nftMetadata = await this.fetchNftMetadata(agreement.nftMint);
+        if (nftMetadata && nftMetadata.sellerFeeBasisPoints) {
+          creatorRoyalty = solAmount.mul(nftMetadata.sellerFeeBasisPoints).div(10000);
+        }
+      } catch (error) {
+        console.error('[SettlementService] V2 Error fetching NFT metadata:', error);
+        // Continue without royalties if metadata fetch fails
+      }
+    }
+
+    // Calculate amount seller receives
+    const totalDeductions = platformFee.add(creatorRoyalty);
+    const sellerReceived = solAmount.sub(totalDeductions);
+
+    // Ensure seller receives at least 0
+    if (sellerReceived.lt(0)) {
+      throw new Error('V2: Fees exceed SOL amount, settlement cannot proceed');
+    }
+
+    return {
+      platformFee,
+      creatorRoyalty,
+      sellerReceived,
+      totalDeductions,
+      solAmount,
+    };
+  }
+
+  /**
+   * Execute on-chain settlement for V2 (SOL-based) escrow
+   * Supports NFT<>SOL, NFT<>NFT with SOL fee, and NFT<>NFT+SOL swap types
+   */
+  async executeOnChainSettlementV2(
+    agreement: any,
+    feeCalculation: Awaited<ReturnType<typeof this.calculateFeesV2>>
+  ): Promise<string> {
+    console.log('[SettlementService] Executing V2 (SOL-based) on-chain settlement...');
+
+    try {
+      const escrowProgramService = getEscrowProgramService();
+
+      // Parse public keys
+      const escrowPda = new PublicKey(agreement.escrowPda);
+      const seller = new PublicKey(agreement.seller);
+      const buyer = new PublicKey(agreement.buyer!);
+      const nftMint = new PublicKey(agreement.nftMint);
+      const feeCollector = new PublicKey(this.config.platformFeeCollectorAddress);
+
+      // Parse NFT B mint if present (for NFT<>NFT swaps)
+      const nftBMint = agreement.nftBMint ? new PublicKey(agreement.nftBMint) : undefined;
+
+      console.log('[SettlementService] V2 Settlement parties:', {
+        escrowPda: escrowPda.toString(),
+        seller: seller.toString(),
+        buyer: buyer.toString(),
+        nftMint: nftMint.toString(),
+        nftBMint: nftBMint?.toString() || 'N/A',
+        feeCollector: feeCollector.toString(),
+        swapType: agreement.swapType,
+        platformFee: feeCalculation.platformFee.toString(),
+        sellerReceived: feeCalculation.sellerReceived.toString(),
+      });
+
+      // Call settlement instruction
+      // Note: settle reads swap type and all parameters from escrow state
+      const txId = await escrowProgramService.settle(
+        escrowPda,
+        seller,
+        buyer,
+        nftMint,
+        feeCollector
+      );
+
+      console.log('[SettlementService] V2 Settlement transaction confirmed:', txId);
+      return txId;
+    } catch (error) {
+      console.error('[SettlementService] V2 On-chain settlement failed:', error);
+      throw new Error(
+        `Failed to execute V2 on-chain settlement: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`
+      );
+    }
+  }
+
+  /**
+   * Execute complete V2 settlement flow
+   * Similar to executeSettlement but for SOL-based agreements
+   */
+  async executeSettlementV2(agreement: any): Promise<SettlementResult> {
+    console.log(`[SettlementService] Executing V2 settlement for agreement ${agreement.agreementId}`);
+
+    try {
+      // 0. Check idempotency to prevent double-settlement
+      const idempotencyKey = `settlement_v2_${agreement.agreementId}`;
+      const idempotencyService = getIdempotencyService();
+      
+      const idempotencyCheck = await idempotencyService.checkIdempotency(
+        idempotencyKey,
+        'SETTLEMENT_V2',
+        { agreementId: agreement.agreementId, operation: 'settle_v2', swapType: agreement.swapType }
+      );
+
+      if (idempotencyCheck.isDuplicate) {
+        console.log(
+          `[SettlementService] V2 Settlement already processed for agreement ${agreement.agreementId}, skipping`
+        );
+        
+        // Return cached result if available
+        if (idempotencyCheck.existingResponse?.body) {
+          return idempotencyCheck.existingResponse.body as SettlementResult;
+        }
+        
+        // Query database for existing settlement
+        const existingSettlement = await prisma.settlement.findUnique({
+          where: { agreementId: agreement.agreementId },
+        });
+
+        if (existingSettlement) {
+          return {
+            success: true,
+            agreementId: agreement.agreementId,
+            transactionId: existingSettlement.settleTxId,
+            platformFee: existingSettlement.platformFee.toString(),
+            creatorRoyalty: existingSettlement.creatorRoyalty?.toString() || '0',
+            sellerReceived: existingSettlement.sellerReceived.toString(),
+          };
+        }
+
+        return {
+          success: true,
+          agreementId: agreement.agreementId,
+        };
+      }
+
+      // 1. Calculate fees
+      const feeCalculation = await this.calculateFeesV2(agreement);
+
+      console.log(`[SettlementService] V2 Fee calculation:`, {
+        platformFee: feeCalculation.platformFee.toString(),
+        creatorRoyalty: feeCalculation.creatorRoyalty.toString(),
+        sellerReceived: feeCalculation.sellerReceived.toString(),
+      });
+
+      // 2. Execute on-chain settlement
+      const settlementTxId = await this.executeOnChainSettlementV2(agreement, feeCalculation);
+
+      console.log(`[SettlementService] V2 Settlement transaction: ${settlementTxId}`);
+
+      // 3. Get block height
+      const blockHeight = await this.getTransactionBlockHeight(settlementTxId);
+
+      // 4. Log transaction
+      try {
+        const transactionLogService = getTransactionLogService();
+        await transactionLogService.captureTransaction({
+          txId: settlementTxId,
+          operationType: TransactionOperationType.SETTLE,
+          agreementId: agreement.agreementId,
+          status: TransactionStatusType.CONFIRMED,
+          blockHeight: blockHeight || undefined,
+        });
+      } catch (logError) {
+        console.error('[SettlementService] Failed to log V2 settlement transaction:', logError);
+      }
+
+      // 5. Create settlement record
+      await prisma.settlement.create({
+        data: {
+          agreementId: agreement.agreementId,
+          nftMint: agreement.nftMint,
+          price: agreement.solAmount || new Decimal('0'), // Store SOL amount in price field for v2
+          platformFee: feeCalculation.platformFee,
+          creatorRoyalty: feeCalculation.creatorRoyalty.gt(0) ? feeCalculation.creatorRoyalty : null,
+          sellerReceived: feeCalculation.sellerReceived,
+          settleTxId: settlementTxId,
+          blockHeight: blockHeight || BigInt(0),
+          buyer: agreement.buyer!,
+          seller: agreement.seller,
+          feeCollector: this.config.platformFeeCollectorAddress,
+          royaltyRecipient: feeCalculation.creatorRoyalty.gt(0) ? await this.getCreatorAddress(agreement) : null,
+          settledAt: new Date(),
+        },
+      });
+
+      // 6. Update agreement status
+      await prisma.agreement.update({
+        where: { id: agreement.id },
+        data: {
+          status: AgreementStatus.SETTLED,
+          settleTxId: settlementTxId,
+          settledAt: new Date(),
+          updatedAt: new Date(),
+        },
+      });
+
+      console.log(`[SettlementService] V2 Settlement completed successfully for ${agreement.agreementId}`);
+
+      const settlementResult: SettlementResult = {
+        success: true,
+        agreementId: agreement.agreementId,
+        transactionId: settlementTxId,
+        platformFee: feeCalculation.platformFee.toString(),
+        creatorRoyalty: feeCalculation.creatorRoyalty.toString(),
+        sellerReceived: feeCalculation.sellerReceived.toString(),
+      };
+
+      // Store idempotency key
+      await idempotencyService.storeIdempotency(
+        idempotencyKey,
+        'SETTLEMENT_V2',
+        { agreementId: agreement.agreementId, operation: 'settle_v2', swapType: agreement.swapType },
+        200,
+        settlementResult
+      ).catch((error) => {
+        console.error('[SettlementService] Error storing V2 idempotency key:', error);
+      });
+
+      // 7. Generate receipt (similar to v1 but adapted for SOL)
+      try {
+        const receiptService = getReceiptService();
+        
+        if (!agreement.initTxId) {
+          console.warn(`[SettlementService] Agreement ${agreement.agreementId} has no initTxId`);
+        }
+
+        // Find all transaction IDs
+        const transactions = await prisma.transactionLog.findMany({
+          where: { agreementId: agreement.agreementId },
+          orderBy: { id: 'asc' },
+        });
+
+        const depositNftTx = transactions.find(t => t.operationType === TransactionOperationType.DEPOSIT_NFT);
+        const depositSolTx = transactions.find(t => t.operationType === TransactionOperationType.DEPOSIT_SOL);
+
+        // TODO: Implement v2 settlement receipt generation
+        // await receiptService.generateSettlementReceipt({
+        //   agreementId: agreement.agreementId,
+        //   escrowTxId: agreement.initTxId || '',
+        //   nftDepositTxId: depositNftTx?.txId || '',
+        //   solDepositTxId: depositSolTx?.txId || '',
+        //   settlementTxId,
+        //   blockHeight: blockHeight || BigInt(0),
+        // });
+
+        console.log(`[SettlementService] V2 Receipt generation skipped (not yet implemented) for ${agreement.agreementId}`);
+      } catch (receiptError) {
+        console.error('[SettlementService] Failed to generate V2 receipt:', receiptError);
+      }
+
+      // 8. Trigger webhook
+      try {
+        // TODO: Implement v2 webhook trigger
+        // await WebhookEventsService.triggerAgreementSettledEvent(agreement.id);
+        console.log(`[SettlementService] V2 Webhook trigger skipped (not yet implemented) for ${agreement.agreementId}`);
+      } catch (webhookError) {
+        console.error('[SettlementService] Failed to trigger V2 webhook:', webhookError);
+      }
+
+      return settlementResult;
+    } catch (error) {
+      console.error('[SettlementService] V2 Settlement failed:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  }
+
+  /**
+   * Record settlement in database for V2 (SOL-based) escrows
+   */
+  async recordSettlementV2(
+    agreement: any,
+    feeCalculation: Awaited<ReturnType<typeof this.calculateFeesV2>>,
+    txId: string
+  ): Promise<void> {
+    try {
+      await prisma.settlement.create({
+        data: {
+          agreementId: agreement.agreementId,
+          nftMint: agreement.nftMint,
+          price: feeCalculation.solAmount, // Store SOL amount as price
+          platformFee: feeCalculation.platformFee,
+          creatorRoyalty: feeCalculation.creatorRoyalty,
+          sellerReceived: feeCalculation.sellerReceived,
+          settleTxId: txId,
+          blockHeight: BigInt(0), // Will be updated by transaction monitoring
+          buyer: agreement.buyer!,
+          seller: agreement.seller,
+          feeCollector: this.config.platformFeeCollectorAddress,
+          settledAt: new Date(),
+        },
+      });
+
+      console.log('[SettlementService] V2 Settlement recorded in database');
+    } catch (error) {
+      console.error('[SettlementService] Failed to record V2 settlement:', error);
+      throw error;
+    }
   }
 }
 

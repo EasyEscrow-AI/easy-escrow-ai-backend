@@ -100,17 +100,19 @@ describe('STAGING E2E: Concurrent Operations', function () {
     try {
       // Create multiple agreements concurrently
       console.log('   Creating 5 agreements concurrently...');
-      const expiry = new Date(Date.now() + 60 * 60 * 1000);
+      const expiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
       
       const agreementPromises = nfts.map((nft, index) => 
         axios.post(
           `${STAGING_CONFIG.apiBaseUrl}/v1/agreements`,
           {
             nftMint: nft.mint.toString(),
-            price: STAGING_CONFIG.swapAmount,
+            swapType: 'NFT_FOR_SOL',
+            solAmount: (STAGING_CONFIG.swapAmount * 1_000_000_000).toString(),
             seller: wallets.sender.publicKey.toString(),
             buyer: wallets.receiver.publicKey.toString(),
             expiry: expiry.toISOString(),
+            feePayer: 'BUYER',
             feeBps: 100,
             honorRoyalties: false,
           },

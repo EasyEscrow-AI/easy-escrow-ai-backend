@@ -10,14 +10,19 @@ import {
   listAgreements,
   depositNftToEscrow,
   depositUsdcToEscrow,
+  depositSolToEscrow,
   prepareDepositNftTransaction,
+  prepareDepositBuyerNftTransaction,
   prepareDepositUsdcTransaction,
+  prepareDepositSolTransaction,
+  prepareDepositSellerSolFeeTransaction,
   archiveAgreements,
   extendAgreementExpiry
 } from '../services/agreement.service';
 import { CreateAgreementDTO, AgreementQueryDTO } from '../models/dto/agreement.dto';
 import { AgreementStatus } from '../generated/prisma';
 import { ValidationError } from '../services/solana.service';
+import { prisma } from '../config/database';
 
 const router = Router();
 
@@ -105,15 +110,17 @@ router.get('/v1/agreements/:agreementId', standardRateLimiter, async (req: Reque
 
 /**
  * GET /v1/agreements
- * List agreements with filters
+ * List agreements with filters (supports SOL-based swap types)
  */
 router.get('/v1/agreements', standardRateLimiter, async (req: Request, res: Response): Promise<void> => {
   try {
     const filters: AgreementQueryDTO = {
       status: req.query.status as AgreementStatus | undefined,
+      swapType: req.query.swap_type as any, // SwapType from Prisma
       seller: req.query.seller as string | undefined,
       buyer: req.query.buyer as string | undefined,
       nftMint: req.query.nft_mint as string | undefined,
+      nftBMint: req.query.nft_b_mint as string | undefined,
       page: req.query.page ? parseInt(req.query.page as string, 10) : undefined,
       limit: req.query.limit ? parseInt(req.query.limit as string, 10) : undefined,
     };
@@ -226,6 +233,58 @@ router.post(
       } else if (
         errorMessage.includes('Cannot deposit') || 
         errorMessage.includes('status is')
+      ) {
+        statusCode = 400;
+      }
+
+      res.status(statusCode).json({
+        success: false,
+        error: statusCode === 404 ? 'Not Found' : statusCode === 400 ? 'Bad Request' : 'Internal Server Error',
+        message: errorMessage,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * POST /v1/agreements/:agreementId/deposit-nft-buyer/prepare
+ * PRODUCTION ENDPOINT: Returns unsigned transaction for client-side signing
+ * Client must sign with buyer's wallet and submit to network
+ * For NFT_FOR_NFT_WITH_FEE and NFT_FOR_NFT_PLUS_SOL swap types (buyer deposits NFT B)
+ */
+router.post(
+  '/v1/agreements/:agreementId/deposit-nft-buyer/prepare',
+  standardRateLimiter,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { agreementId } = req.params;
+
+      console.log('[AgreementRoutes] POST /deposit-nft-buyer/prepare for:', agreementId);
+
+      const result = await prepareDepositBuyerNftTransaction(agreementId);
+
+      res.status(200).json({
+        success: true,
+        data: result,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('[AgreementRoutes] Error preparing buyer NFT deposit transaction:', error);
+      
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
+      let statusCode = 500;
+      if (
+        errorMessage.includes('not found') || 
+        errorMessage.includes('does not exist')
+      ) {
+        statusCode = 404;
+      } else if (
+        errorMessage.includes('Cannot deposit') ||
+        errorMessage.includes('Invalid') ||
+        errorMessage.includes('No buyer') ||
+        errorMessage.includes('swap type')
       ) {
         statusCode = 400;
       }
@@ -383,6 +442,238 @@ router.post(
 );
 
 /**
+ * POST /v1/agreements/:agreementId/deposit-sol/prepare
+ * PRODUCTION ENDPOINT: Returns unsigned transaction for client-side signing
+ * Client must sign with buyer's wallet and submit to network
+ * For NFT_FOR_SOL and NFT_FOR_NFT_PLUS_SOL swap types
+ */
+router.post(
+  '/v1/agreements/:agreementId/deposit-sol/prepare',
+  standardRateLimiter,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { agreementId } = req.params;
+
+      console.log('[AgreementRoutes] POST /deposit-sol/prepare for:', agreementId);
+
+      const result = await prepareDepositSolTransaction(agreementId);
+
+      res.status(200).json({
+        success: true,
+        data: result,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('[AgreementRoutes] Error preparing SOL deposit transaction:', error);
+
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+      // Determine status code based on error message
+      let statusCode = 500;
+      if (
+        errorMessage.includes('not found') || 
+        errorMessage.includes('does not exist')
+      ) {
+        statusCode = 404;
+      } else if (
+        errorMessage.includes('Cannot deposit') ||
+        errorMessage.includes('Invalid') ||
+        errorMessage.includes('No buyer') ||
+        errorMessage.includes('swap type')
+      ) {
+        statusCode = 400;
+      }
+
+      res.status(statusCode).json({
+        success: false,
+        error: statusCode === 404 ? 'Not Found' : statusCode === 400 ? 'Bad Request' : 'Internal Server Error',
+        message: errorMessage,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * POST /v1/agreements/:agreementId/deposit-seller-sol-fee/prepare
+ * PRODUCTION ENDPOINT: Returns unsigned transaction for client-side signing
+ * Client must sign with seller's wallet and submit to network
+ * For NFT_FOR_NFT_WITH_FEE swap type - seller pays 0.005 SOL
+ */
+router.post(
+  '/v1/agreements/:agreementId/deposit-seller-sol-fee/prepare',
+  standardRateLimiter,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { agreementId } = req.params;
+
+      console.log('[AgreementRoutes] POST /deposit-seller-sol-fee/prepare for:', agreementId);
+
+      const result = await prepareDepositSellerSolFeeTransaction(agreementId);
+
+      res.status(200).json({
+        success: true,
+        data: result,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('[AgreementRoutes] Error preparing seller SOL fee deposit transaction:', error);
+
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+      // Determine status code based on error message
+      let statusCode = 500;
+      if (
+        errorMessage.includes('not found') || 
+        errorMessage.includes('does not exist')
+      ) {
+        statusCode = 404;
+      } else if (
+        errorMessage.includes('Cannot deposit') ||
+        errorMessage.includes('Invalid') ||
+        errorMessage.includes('swap type')
+      ) {
+        statusCode = 400;
+      }
+
+      res.status(statusCode).json({
+        success: false,
+        error: statusCode === 404 ? 'Not Found' : statusCode === 400 ? 'Bad Request' : 'Internal Server Error',
+        message: errorMessage,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * POST /v1/agreements/:agreementId/deposit-sol
+ * @deprecated Use /deposit-sol/prepare for production (client-side signing)
+ * Deposit SOL into escrow by calling the on-chain deposit_sol instruction
+ * This properly sets the buyer_sol_deposited flag on-chain
+ */
+router.post(
+  '/v1/agreements/:agreementId/deposit-sol',
+  standardRateLimiter,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { agreementId } = req.params;
+
+      console.log('[AgreementRoutes] POST /deposit-sol for:', agreementId);
+
+      const result = await depositSolToEscrow(agreementId);
+
+      res.status(200).json({
+        success: true,
+        data: result,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('[AgreementRoutes] Error depositing SOL:', error);
+
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+      // Determine status code based on error message
+      let statusCode = 500;
+      if (
+        errorMessage.includes('not found') || 
+        errorMessage.includes('does not exist')
+      ) {
+        statusCode = 404;
+      } else if (
+        errorMessage.includes('Cannot deposit') ||
+        errorMessage.includes('Invalid') ||
+        errorMessage.includes('No buyer') ||
+        errorMessage.includes('swap type')
+      ) {
+        statusCode = 400;
+      }
+
+      res.status(statusCode).json({
+        success: false,
+        error: statusCode === 404 ? 'Not Found' : statusCode === 400 ? 'Bad Request' : 'Internal Server Error',
+        message: errorMessage,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * POST /v1/agreements/:agreementId/validate-deposits
+ * Manually validate deposits by checking on-chain balances
+ * Useful for triggering detection when WebSocket subscriptions are slow
+ */
+router.post(
+  '/v1/agreements/:agreementId/validate-deposits',
+  standardRateLimiter,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { agreementId } = req.params;
+
+      console.log('[AgreementRoutes] POST /validate-deposits for:', agreementId);
+
+      // Get agreement to determine swap type
+      const agreement = await prisma.agreement.findUnique({
+        where: { agreementId },
+        include: { deposits: true },
+      });
+
+      if (!agreement) {
+        res.status(404).json({
+          success: false,
+          error: 'Not Found',
+          message: 'Agreement not found',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const results: any = {
+        agreementId,
+        swapType: agreement.swapType,
+        validations: {},
+      };
+
+      // Validate SOL deposits for SOL-based swaps
+      if (agreement.swapType === 'NFT_FOR_SOL' || agreement.swapType === 'NFT_FOR_NFT_PLUS_SOL') {
+        const { getSolDepositService } = await import('../services/sol-deposit.service');
+        const solDepositService = getSolDepositService();
+        
+        const solResult = await solDepositService.validateSolDeposit(agreementId);
+        results.validations.sol = solResult;
+        
+        if (solResult.success) {
+          console.log(`[AgreementRoutes] SOL deposit validated: ${solResult.amount} SOL`);
+        }
+      }
+
+      // Refresh agreement status
+      const updatedAgreement = await prisma.agreement.findUnique({
+        where: { agreementId },
+      });
+
+      results.currentStatus = updatedAgreement?.status;
+
+      res.status(200).json({
+        success: true,
+        data: results,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('[AgreementRoutes] Error validating deposits:', error);
+
+      res.status(500).json({
+        success: false,
+        error: 'Internal Server Error',
+        message: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
  * POST /v1/agreements/archive
  * Archive multiple agreements (admin-only, for test cleanup)
  * Optional admin authentication
@@ -524,6 +815,53 @@ router.post(
         success: false,
         error: 'Internal Server Error',
         message: error instanceof Error ? error.message : 'Failed to extend expiry',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * DELETE /v1/agreements/:agreementId
+ * Delete an agreement (primarily for test cleanup)
+ * No rate limiting for internal test cleanup
+ */
+router.delete(
+  '/v1/agreements/:agreementId',
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { agreementId } = req.params;
+
+      // Import delete function dynamically to avoid circular dependency
+      const { deleteAgreement } = await import('../services/agreement.service');
+      
+      await deleteAgreement(agreementId);
+
+      res.status(200).json({
+        success: true,
+        message: 'Agreement deleted successfully',
+        data: { agreementId },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Error deleting agreement:', error);
+
+      // Handle not found
+      if (error instanceof Error && error.message.includes('not found')) {
+        res.status(404).json({
+          success: false,
+          error: 'Not Found',
+          message: error.message,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Generic error
+      res.status(500).json({
+        success: false,
+        error: 'Internal Server Error',
+        message: error instanceof Error ? error.message : 'Failed to delete agreement',
         timestamp: new Date().toISOString(),
       });
     }
