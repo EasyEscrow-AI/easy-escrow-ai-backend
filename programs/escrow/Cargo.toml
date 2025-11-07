@@ -1,12 +1,12 @@
 [package]
-name = "escrow"
+name = "easyescrow"
 version = "0.1.0"
-description = "Solana Escrow Program for NFT and USDC transactions"
+description = "Solana Escrow Program for NFT transactions"
 edition = "2021"
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "escrow"
+name = "easyescrow"
 
 [features]
 default = ["mainnet"]  # Default to mainnet for safety
