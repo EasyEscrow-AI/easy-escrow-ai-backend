@@ -151,7 +151,7 @@ export const validateCreateAgreement = (
   // Validate expiry with enhanced custom duration support
   // If neither expiry nor expiryDurationHours provided, default to 5 minutes (handled by validateExpiry)
   // Prioritize expiry over expiryDurationHours if both provided
-  const expiryInput = data.expiry || data.expiryDurationHours;
+  const expiryInput = data.expiry ?? data.expiryDurationHours;
   
   // validateExpiry now handles undefined and applies default (5 minutes)
   const validation = validateExpiry(expiryInput as Date | string | number | undefined);

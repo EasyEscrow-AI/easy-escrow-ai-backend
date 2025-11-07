@@ -44,7 +44,7 @@ export const createAgreement = async (
 
     // 1. Parse and validate expiry (supports multiple formats: timestamp, duration, preset)
     // If neither expiry nor expiryDurationHours provided, defaults to 5 minutes
-    const expiryInput = data.expiry || data.expiryDurationHours;
+    const expiryInput = data.expiry ?? data.expiryDurationHours;
     
     // validateExpiry now handles undefined and applies default (5 minutes)
     const expiryValidation = validateExpiry(expiryInput);
