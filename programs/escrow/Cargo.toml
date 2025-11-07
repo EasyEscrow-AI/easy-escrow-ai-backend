@@ -1,15 +1,15 @@
 [package]
-name = "easyescrow-ai"
+name = "easyescrow"
 version = "0.1.0"
 description = "Solana Escrow Program for NFT transactions"
 edition = "2021"
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "escrow"
+name = "easyescrow"
 
 [features]
-default = []  # No default environment - must be explicitly specified at build time
+default = ["mainnet"]  # Default to mainnet for safety
 cpi = ["no-entrypoint"]
 no-entrypoint = []
 no-idl = []
@@ -17,15 +17,10 @@ no-log-ix-name = []
 idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
 
 # Environment-specific features (mutually exclusive)
-# Build with: anchor build -- --features <environment>
 mainnet = []
 devnet = []
 staging = []
 localnet = []
-
-# USDC support (disabled by default for legal compliance)
-# Enable with: anchor build -- --features usdc
-usdc = []
 
 [dependencies]
 anchor-lang = { version = "0.32.1", features = ["init-if-needed"] }

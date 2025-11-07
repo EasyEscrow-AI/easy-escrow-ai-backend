@@ -83,7 +83,8 @@ export function validateSwapParameters(
       errors.push(`SOL amount is required for ${swapType} swap type`);
     }
   } else {
-    // NFT_FOR_NFT_WITH_FEE shouldn't have SOL amount
+    // For swap types that don't require SOL (none currently, but future-proofing)
+    // Currently all swap types (NFT_FOR_SOL, NFT_FOR_NFT_WITH_FEE, NFT_FOR_NFT_PLUS_SOL) require SOL
     if (params.solAmount && params.solAmount !== '0') {
       errors.push(`SOL amount should not be provided for ${swapType} swap type`);
     }
