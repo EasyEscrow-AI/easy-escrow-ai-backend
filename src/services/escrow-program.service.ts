@@ -207,11 +207,23 @@ export class EscrowProgramService {
     // For devnet, use regular RPC (no Jito needed, cheaper)
     if (!isMainnet) {
       console.log('[EscrowProgramService] Sending via regular RPC (devnet)');
-      return await this.provider.connection.sendRawTransaction(transaction.serialize(), {
+      const txId = await this.provider.connection.sendRawTransaction(transaction.serialize(), {
         skipPreflight: false,
         preflightCommitment: 'confirmed',
         maxRetries: 3,
       });
+      
+      // Wait for confirmation
+      console.log('[EscrowProgramService] Waiting for transaction confirmation...');
+      const confirmation = await this.provider.connection.confirmTransaction(txId, 'confirmed');
+      
+      if (confirmation.value.err) {
+        console.error('[EscrowProgramService] Transaction failed on-chain:', confirmation.value.err);
+        throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}`);
+      }
+      
+      console.log('[EscrowProgramService] ✅ Transaction confirmed on-chain');
+      return txId;
     }
 
     // For mainnet, send directly to Jito Block Engine (FREE!)
@@ -263,6 +275,20 @@ export class EscrowProgramService {
       }
 
       console.log('[EscrowProgramService] ✅ Transaction sent via Jito Block Engine:', result.result);
+      
+      // CRITICAL: Wait for confirmation to ensure transaction actually succeeded
+      console.log('[EscrowProgramService] Waiting for transaction confirmation...');
+      const confirmation = await this.provider.connection.confirmTransaction(
+        result.result,
+        'confirmed'
+      );
+      
+      if (confirmation.value.err) {
+        console.error('[EscrowProgramService] Transaction failed on-chain:', confirmation.value.err);
+        throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}`);
+      }
+      
+      console.log('[EscrowProgramService] ✅ Transaction confirmed on-chain');
       return result.result;
     } catch (error) {
       console.error('[EscrowProgramService] Failed to send via Jito Block Engine:', error);
