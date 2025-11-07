@@ -42,7 +42,7 @@ function loadAdminKeypair(): Keypair {
   let envName = 'DEVNET_ADMIN_PRIVATE_KEY'; // default to devnet
   
   if (nodeEnv === 'production' || nodeEnv === 'mainnet') {
-    envName = 'MAINNET_ADMIN_PRIVATE_KEY';
+    envName = 'MAINNET_PROD_ADMIN_PRIVATE_KEY';
   } else if (nodeEnv === 'staging') {
     envName = 'DEVNET_STAGING_ADMIN_PRIVATE_KEY';
   }
