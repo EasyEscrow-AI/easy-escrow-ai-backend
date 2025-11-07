@@ -258,10 +258,10 @@ describe('PRODUCTION E2E - NFT-for-SOL Swap (Happy Path) [WITH TIMING]', functio
     // Sign with seller
     transaction.sign(wallets.sender);
 
-    // Send transaction (use skipPreflight: true to bypass Jito tip requirement on mainnet)
+    // Send transaction
     const txId = await connection.sendRawTransaction(transaction.serialize(), {
-      skipPreflight: true,
-      maxRetries: 3,
+      skipPreflight: false,
+      preflightCommitment: 'confirmed',
     });
 
     // Confirm transaction
@@ -313,10 +313,10 @@ describe('PRODUCTION E2E - NFT-for-SOL Swap (Happy Path) [WITH TIMING]', functio
     // Sign with buyer
     transaction.sign(wallets.receiver);
 
-    // Send transaction (use skipPreflight: true to bypass Jito tip requirement on mainnet)
+    // Send transaction
     const txId = await connection.sendRawTransaction(transaction.serialize(), {
-      skipPreflight: true,
-      maxRetries: 3,
+      skipPreflight: false,
+      preflightCommitment: 'confirmed',
     });
 
     // Confirm transaction
