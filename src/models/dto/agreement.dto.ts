@@ -65,19 +65,23 @@ export interface CreateAgreementDTO {
    * Agreement expiry time. Supports multiple formats:
    * - ISO 8601 timestamp string (absolute time)
    * - Date object (absolute time)
-   * - Duration in hours (number between 1-24)
-   * - Preset string: '1h', '6h', '12h', '24h'
+   * - Duration in hours (number between 0.0833-24, where 0.0833 = 5 minutes)
+   * - Preset string: '5m', '1h', '6h', '12h', '24h'
+   * - Optional: If not provided, defaults to 5 minutes from creation
    * 
    * Examples:
    * - "2025-11-04T12:00:00Z" (absolute time)
    * - 12 (12 hours from now)
+   * - "5m" (5 minutes from now - default)
    * - "6h" (6 hours from now)
+   * - undefined (uses default: 5 minutes from now)
    * 
    * Constraints:
-   * - Minimum: 1 hour from creation
+   * - Minimum: 5 minutes from creation
    * - Maximum: 24 hours from creation
+   * - Default: 5 minutes (when not specified)
    */
-  expiry: Date | string | number | ExpiryPreset;
+  expiry?: Date | string | number | ExpiryPreset;
   
   /**
    * Optional: Explicit duration in hours (alternative to expiry)

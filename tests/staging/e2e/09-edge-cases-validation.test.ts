@@ -91,7 +91,7 @@ describe('STAGING E2E: Edge Cases and Validation', function () {
     console.log('❌ Testing wrong mint address...\n');
     
     const invalidMint = Keypair.generate().publicKey; // Random invalid mint
-    const expiry = new Date(Date.now() + 61 * 60 * 1000); // 61 minutes
+    const expiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
     const idempotencyKey = generateIdempotencyKey();
 
     try {
@@ -142,7 +142,7 @@ describe('STAGING E2E: Edge Cases and Validation', function () {
     
     // Create agreement first
     const testNft = await createTestNFT(connection, wallets.sender);
-    const expiry = new Date(Date.now() + 61 * 60 * 1000); // 61 minutes
+    const expiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
     
     try {
       const createResponse = await axios.post(
@@ -221,7 +221,7 @@ describe('STAGING E2E: Edge Cases and Validation', function () {
     
     // Create agreement
     const testNft = await createTestNFT(connection, wallets.sender);
-    const expiry = new Date(Date.now() + 60 * 60 * 1000);
+    const expiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
     
     try {
       const createResponse = await axios.post(

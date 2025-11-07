@@ -149,25 +149,18 @@ export const validateCreateAgreement = (
   }
 
   // Validate expiry with enhanced custom duration support
-  if (!data.expiry && !data.expiryDurationHours) {
+  // If neither expiry nor expiryDurationHours provided, default to 5 minutes (handled by validateExpiry)
+  // Prioritize expiry over expiryDurationHours if both provided
+  const expiryInput = data.expiry ?? data.expiryDurationHours;
+  
+  // validateExpiry now handles undefined and applies default (5 minutes)
+  const validation = validateExpiry(expiryInput as Date | string | number | undefined);
+  
+  if (!validation.valid) {
     errors.push({ 
       field: 'expiry', 
-      message: 'Expiry date or duration is required' 
+      message: validation.error || 'Invalid expiry value'
     });
-  } else {
-    // Prioritize expiry over expiryDurationHours if both provided
-    const expiryInput = data.expiry || data.expiryDurationHours;
-    
-    if (expiryInput !== undefined) {
-      const validation = validateExpiry(expiryInput as Date | string | number);
-      
-      if (!validation.valid) {
-        errors.push({ 
-          field: 'expiry', 
-          message: validation.error || 'Invalid expiry value'
-        });
-      }
-    }
   }
 
   // Validate fee BPS

@@ -91,7 +91,7 @@ describe('STAGING E2E: Zero-Fee Transactions', function () {
     
     // Create agreement with 0 fee
     const testNft = await createTestNFT(connection, wallets.sender);
-    const expiry = new Date(Date.now() + 61 * 60 * 1000); // 61 minutes
+    const expiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
     const idempotencyKey = generateIdempotencyKey();
 
     try {

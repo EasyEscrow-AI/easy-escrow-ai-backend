@@ -1,8 +1,10 @@
 /**
- * STAGING E2E Test - Scenario 1: NFT for SOL Happy Path
+ * PRODUCTION E2E Test - Scenario 1: NFT for SOL Happy Path
  * 
  * Complete NFT-for-SOL swap with settlement and fee distribution.
  * Tests the SOL-based escrow payments.
+ * 
+ * **WITH TIMING**: Measures total escrow swap duration from creation to settlement.
  * 
  * Flow:
  * 1. Create escrow agreement (NFT_FOR_SOL)
@@ -11,34 +13,35 @@
  * 4. Automatic settlement
  * 5. Verify NFT transfer and SOL distribution with fees
  * 
- * Run: npm run test:staging:e2e:nft-sol
+ * Run: npm run test:production:e2e:nft-sol
  */
 
-// Load .env.staging file BEFORE any other imports
+// Load .env.production file BEFORE any other imports
 import dotenv from 'dotenv';
 import path from 'path';
 
-const envPath = path.resolve(process.cwd(), '.env.staging');
+const envPath = path.resolve(process.cwd(), '.env.production');
 const result = dotenv.config({ path: envPath, override: true });
 
 if (result.error) {
-  throw new Error(`Failed to load .env.staging: ${result.error}`);
+  throw new Error(`Failed to load .env.production: ${result.error}`);
 }
 
-import { describe, it, before } from 'mocha';
+import { describe, it, before, after } from 'mocha';
 import { expect } from 'chai';
 import { Connection, PublicKey, LAMPORTS_PER_SOL, Transaction, SystemProgram } from '@solana/web3.js';
 import { getOrCreateAssociatedTokenAccount, getAccount } from '@solana/spl-token';
 import axios from 'axios';
-import { STAGING_CONFIG } from './test-config';
+import { PRODUCTION_CONFIG } from './test-config';
 import {
-  loadStagingWallets,
+  loadPRODUCTIONWallets,
   generateIdempotencyKey,
   getExplorerUrl,
   waitForAgreementStatus,
-  createTestNFT,
-  type StagingWallets,
+  getRandomNFTFromWallet,
+  type PRODUCTIONWallets,
   type TestNFT,
+  archiveAgreements,
 } from './shared-test-utils';
 
 interface TestAgreement {
@@ -54,11 +57,11 @@ interface TestAgreement {
   transactionId: string;
 }
 
-describe('STAGING E2E - NFT-for-SOL Swap (Happy Path)', function () {
+describe('PRODUCTION E2E - NFT-for-SOL Swap (Happy Path) [WITH TIMING]', function () {
   this.timeout(300000); // 5 minutes for settlement
 
   let connection: Connection;
-  let wallets: StagingWallets;
+  let wallets: PRODUCTIONWallets;
   let nft: TestNFT;
   let agreement: TestAgreement;
   let initialBalances: {
@@ -67,10 +70,15 @@ describe('STAGING E2E - NFT-for-SOL Swap (Happy Path)', function () {
     feeCollector: { sol: number };
   };
 
-  const SOL_AMOUNT = 0.1; // 0.1 SOL payment
+  const SOL_AMOUNT = 0.01; // 0.01 SOL payment (~$2 at $200/SOL)
   const PLATFORM_FEE_BPS = 100; // 1%
-  const EXPECTED_FEE = SOL_AMOUNT * (PLATFORM_FEE_BPS / 10000); // 0.001 SOL
-  const EXPECTED_SELLER_RECEIVES = SOL_AMOUNT - EXPECTED_FEE; // 0.099 SOL
+  const EXPECTED_FEE = SOL_AMOUNT * (PLATFORM_FEE_BPS / 10000); // 0.0001 SOL
+  const EXPECTED_SELLER_RECEIVES = SOL_AMOUNT - EXPECTED_FEE; // 0.0099 SOL
+
+  // ⏱️ TIMING METRICS
+  let agreementCreationTime: number = 0;
+  let settlementCompletionTime: number = 0;
+  let totalSwapDuration: number = 0;
 
   // Transaction tracking
   const transactions: Array<{
@@ -79,64 +87,43 @@ describe('STAGING E2E - NFT-for-SOL Swap (Happy Path)', function () {
     timestamp: number;
   }> = [];
 
+  // Track agreement IDs for cleanup
+  const agreementIds: string[] = [];
+
   // Cleanup hook - runs after all tests (pass or fail)
   after(async function () {
-    if (agreement?.agreementId) {
-      try {
-        // Check agreement status before cleanup
-        const statusResponse = await axios.get(
-          `${STAGING_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}`,
-          {
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          }
-        );
-        
-        const currentStatus = statusResponse.data.status;
-        
-        // Don't cleanup BOTH_LOCKED agreements - let monitoring service settle them
-        if (currentStatus === 'BOTH_LOCKED') {
-          console.log(`\n⏸️  Skipping cleanup for agreement: ${agreement.agreementId}`);
-          console.log(`   Status: ${currentStatus}`);
-          console.log(`   Reason: Leaving for monitoring service to process settlement`);
-          console.log(`   ⚠️  Manual cleanup required: DELETE ${STAGING_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}`);
-          return;
-        }
-        
-        console.log(`\n🧹 Cleaning up test agreement: ${agreement.agreementId} (Status: ${currentStatus})`);
-        await axios.delete(
-          `${STAGING_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}`,
-          {
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          }
-        );
-        console.log('✅ Test agreement deleted successfully');
-      } catch (error: any) {
-        // Only log if not a 404 (already deleted)
-        if (error.response?.status !== 404) {
-          console.warn('⚠️  Failed to cleanup test agreement:', error.message);
-        }
-      }
+    if (agreementIds.length > 0) {
+      console.log(`\n🧹 Cleaning up ${agreementIds.length} test agreement(s)...`);
+      await archiveAgreements(agreementIds);
+    }
+
+    // Display timing metrics
+    if (agreementCreationTime > 0 && settlementCompletionTime > 0) {
+      console.log('\n' + '='.repeat(80));
+      console.log('⏱️  TIMING METRICS');
+      console.log('='.repeat(80));
+      console.log(`   Agreement Creation: ${new Date(agreementCreationTime).toISOString()}`);
+      console.log(`   Settlement Complete: ${new Date(settlementCompletionTime).toISOString()}`);
+      console.log(`   Total Swap Duration: ${(totalSwapDuration / 1000).toFixed(2)}s`);
+      console.log('='.repeat(80) + '\n');
     }
   });
 
   before(async function () {
     console.log('\n' + '='.repeat(80));
-    console.log('🚀 STAGING E2E Test - NFT-for-SOL Swap');
+    console.log('🚀 PRODUCTION E2E Test - NFT-for-SOL Swap [WITH TIMING]');
     console.log('='.repeat(80));
-    console.log(`   Environment: STAGING`);
-    console.log(`   Network: ${STAGING_CONFIG.network}`);
-    console.log(`   API: ${STAGING_CONFIG.apiBaseUrl}`);
+    console.log(`   Environment: PRODUCTION`);
+    console.log(`   Network: ${PRODUCTION_CONFIG.network}`);
+    console.log(`   API: ${PRODUCTION_CONFIG.apiBaseUrl}`);
     console.log(`   Swap Type: NFT_FOR_SOL`);
-    console.log(`   SOL Amount: ${SOL_AMOUNT} SOL (reduced for devnet conservation)`);
+    console.log(`   SOL Amount: ${SOL_AMOUNT} SOL`);
     console.log(`   Platform Fee: ${PLATFORM_FEE_BPS / 100}%`);
+    console.log(`   ⏱️  Timing: ENABLED (measuring end-to-end duration)`);
     console.log('='.repeat(80) + '\n');
 
-    connection = new Connection(STAGING_CONFIG.rpcUrl, 'confirmed');
-    wallets = loadStagingWallets();
+    connection = new Connection(PRODUCTION_CONFIG.rpcUrl, 'confirmed');
+    wallets = loadPRODUCTIONWallets();
 
     console.log('📋 Test Participants:');
     console.log(`   Seller: ${wallets.sender.publicKey.toBase58()}`);
@@ -164,13 +151,14 @@ describe('STAGING E2E - NFT-for-SOL Swap (Happy Path)', function () {
     expect(buyerBalance).to.be.greaterThan(SOL_AMOUNT * LAMPORTS_PER_SOL, 'Buyer needs sufficient SOL for payment');
   });
 
-  it('should create a test NFT for the seller', async function () {
-    console.log('🎨 Creating test NFT for seller...\n');
+  it('should select a random NFT from seller wallet', async function () {
+    console.log('🎨 Selecting random NFT from seller wallet...\n');
 
-    nft = await createTestNFT(connection, wallets.sender);
+    nft = await getRandomNFTFromWallet(connection, wallets.sender);
 
-    console.log(`   ✅ NFT Created: ${nft.mint.toBase58()}`);
+    console.log(`   ✅ NFT Selected: ${nft.mint.toBase58()}`);
     console.log(`   Token Account: ${nft.tokenAccount.toBase58()}`);
+    console.log(`   Name: ${nft.metadata.name}`);
     console.log(`   Explorer: ${getExplorerUrl(nft.mint.toBase58(), 'address')}\n`);
 
     // Verify NFT ownership
@@ -181,7 +169,7 @@ describe('STAGING E2E - NFT-for-SOL Swap (Happy Path)', function () {
   it('should create an NFT-for-SOL escrow agreement', async function () {
     console.log('📝 Creating escrow agreement (NFT_FOR_SOL)...\n');
 
-    const idempotencyKey = generateIdempotencyKey('nft-sol-test');
+    const idempotencyKey = generateIdempotencyKey('prod-nft-sol-test');
     // Expiry omitted - uses default of 5 minutes
 
     const agreementData = {
@@ -202,10 +190,14 @@ describe('STAGING E2E - NFT-for-SOL Swap (Happy Path)', function () {
     console.log(`     SOL Amount: ${SOL_AMOUNT} SOL (${agreementData.solAmount} lamports)`);
     console.log(`     Fee Payer: ${agreementData.feePayer}\n`);
 
+    // ⏱️ START TIMER
+    agreementCreationTime = Date.now();
+    console.log(`   ⏱️  Timer started: ${new Date(agreementCreationTime).toISOString()}\n`);
+
     let response;
     try {
       response = await axios.post(
-        `${STAGING_CONFIG.apiBaseUrl}/v1/agreements`,
+        `${PRODUCTION_CONFIG.apiBaseUrl}/v1/agreements`,
         agreementData,
         {
         headers: {
@@ -228,6 +220,8 @@ describe('STAGING E2E - NFT-for-SOL Swap (Happy Path)', function () {
     expect(response.data.data.swapType).to.equal('NFT_FOR_SOL');
 
     agreement = response.data.data;
+    agreementIds.push(agreement.agreementId);
+    
     transactions.push({
       description: 'Create Agreement',
       txId: agreement.transactionId,
@@ -245,7 +239,7 @@ describe('STAGING E2E - NFT-for-SOL Swap (Happy Path)', function () {
 
     // Prepare unsigned transaction
     const prepareResponse = await axios.post(
-      `${STAGING_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}/deposit-nft/prepare`
+      `${PRODUCTION_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}/deposit-nft/prepare`
     );
 
     expect(prepareResponse.status).to.equal(200);
@@ -286,7 +280,7 @@ describe('STAGING E2E - NFT-for-SOL Swap (Happy Path)', function () {
     await new Promise(resolve => setTimeout(resolve, 3000)); // Wait for backend to process
 
     const statusResponse = await axios.get(
-      `${STAGING_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}`
+      `${PRODUCTION_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}`
     );
 
     console.log(`   Agreement Status: ${statusResponse.data.data.status}`);
@@ -298,7 +292,7 @@ describe('STAGING E2E - NFT-for-SOL Swap (Happy Path)', function () {
 
     // Prepare unsigned transaction
     const prepareResponse = await axios.post(
-      `${STAGING_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}/deposit-sol/prepare`
+      `${PRODUCTION_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}/deposit-sol/prepare`
     );
 
     expect(prepareResponse.status).to.equal(200);
@@ -337,10 +331,10 @@ describe('STAGING E2E - NFT-for-SOL Swap (Happy Path)', function () {
     console.log(`   ✅ SOL Deposited`);
     console.log(`   Transaction: ${getExplorerUrl(txId, 'tx')}\n`);
 
-    // Manually trigger deposit validation immediately (transaction should be confirmed already)
+    // Manually trigger deposit validation immediately
     console.log('   🔍 Validating SOL deposit...');
     const validateResponse = await axios.post(
-      `${STAGING_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}/validate-deposits`
+      `${PRODUCTION_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}/validate-deposits`
     );
 
     console.log(`   Validation result:`, JSON.stringify(validateResponse.data, null, 2));
@@ -351,19 +345,18 @@ describe('STAGING E2E - NFT-for-SOL Swap (Happy Path)', function () {
       await new Promise(resolve => setTimeout(resolve, 5000));
       
       const retryResponse = await axios.post(
-        `${STAGING_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}/validate-deposits`
+        `${PRODUCTION_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}/validate-deposits`
       );
       console.log(`   Retry validation result:`, JSON.stringify(retryResponse.data, null, 2));
     }
 
     // Check updated status
     const statusResponse = await axios.get(
-      `${STAGING_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}`
+      `${PRODUCTION_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}`
     );
 
     console.log(`   Agreement Status: ${statusResponse.data.data.status}`);
     // After SOL deposit on NFT_FOR_SOL, status should be BOTH_LOCKED or SETTLED
-    // (Settlement can happen very quickly, so by the time we check it might already be SETTLED)
     expect(['BOTH_LOCKED', 'SETTLED']).to.include(statusResponse.data.data.status, 'Status should be BOTH_LOCKED or SETTLED after both deposits');
   });
 
@@ -372,21 +365,28 @@ describe('STAGING E2E - NFT-for-SOL Swap (Happy Path)', function () {
     console.log('   Monitoring service should detect both deposits and trigger settlement');
     console.log('   Expected settlement time: 3-10 seconds (polling interval: 3s)\n');
 
-    // Wait for SETTLED status (up to 30 seconds)
+    // Wait for SETTLED status (up to 45 seconds for production)
     const settledAgreement = await waitForAgreementStatus(
       agreement.agreementId,
       'SETTLED',
-      30, // 30 attempts x 1000ms = 30 seconds
+      45, // 45 attempts x 1000ms = 45 seconds
       1000 // 1 second interval
     );
 
     expect(settledAgreement.status).to.equal('SETTLED');
     expect(settledAgreement.settleTxId).to.exist;
 
+    // ⏱️ STOP TIMER
+    settlementCompletionTime = Date.now();
+    totalSwapDuration = settlementCompletionTime - agreementCreationTime;
+    
+    console.log(`   ⏱️  Timer stopped: ${new Date(settlementCompletionTime).toISOString()}`);
+    console.log(`   ⏱️  Total Duration: ${(totalSwapDuration / 1000).toFixed(2)}s\n`);
+
     transactions.push({
       description: 'Settlement',
       txId: settledAgreement.settleTxId!,
-      timestamp: Date.now(),
+      timestamp: settlementCompletionTime,
     });
 
     console.log(`   ✅ Settlement Complete!`);
@@ -466,7 +466,7 @@ describe('STAGING E2E - NFT-for-SOL Swap (Happy Path)', function () {
     console.log(`   Expected Seller Receives: ${EXPECTED_SELLER_RECEIVES.toFixed(4)} SOL`);
   });
 
-  it('should display transaction summary', async function () {
+  it('should display transaction summary with timing metrics', async function () {
     console.log('\n' + '='.repeat(80));
     console.log('📊 TRANSACTION SUMMARY');
     console.log('='.repeat(80) + '\n');
@@ -477,6 +477,12 @@ describe('STAGING E2E - NFT-for-SOL Swap (Happy Path)', function () {
       console.log(`   Time: ${new Date(tx.timestamp).toISOString()}\n`);
     });
 
+    console.log('='.repeat(80));
+    console.log('⏱️  TIMING METRICS');
+    console.log('='.repeat(80));
+    console.log(`   Agreement Created: ${new Date(agreementCreationTime).toISOString()}`);
+    console.log(`   Settlement Complete: ${new Date(settlementCompletionTime).toISOString()}`);
+    console.log(`   Total Swap Duration: ${(totalSwapDuration / 1000).toFixed(2)} seconds`);
     console.log('='.repeat(80));
     console.log('✅ NFT-for-SOL E2E TEST PASSED!');
     console.log('='.repeat(80) + '\n');

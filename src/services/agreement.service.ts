@@ -43,15 +43,10 @@ export const createAgreement = async (
     console.log('[AgreementService] Creating agreement with swap type:', swapType);
 
     // 1. Parse and validate expiry (supports multiple formats: timestamp, duration, preset)
-    const expiryInput = data.expiry || data.expiryDurationHours;
+    // If neither expiry nor expiryDurationHours provided, defaults to 5 minutes
+    const expiryInput = data.expiry ?? data.expiryDurationHours;
     
-    if (!expiryInput) {
-      throw new ValidationError(
-        'Expiry is required. Provide either "expiry" or "expiryDurationHours".',
-        { data }
-      );
-    }
-    
+    // validateExpiry now handles undefined and applies default (5 minutes)
     const expiryValidation = validateExpiry(expiryInput);
     
     if (!expiryValidation.valid || !expiryValidation.expiryDate) {

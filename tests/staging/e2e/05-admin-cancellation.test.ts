@@ -92,7 +92,7 @@ describe('STAGING E2E: Admin Cancellation', function () {
     
     // Create a new agreement for cancellation test
     const testNft = await createTestNFT(connection, wallets.sender);
-    const expiry = new Date(Date.now() + 61 * 60 * 1000); // 61 minutes (minimum 1 hour)
+    const expiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes (using minimum)
     const idempotencyKey = generateIdempotencyKey();
 
     try {

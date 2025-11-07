@@ -1,8 +1,10 @@
 /**
- * STAGING E2E Test - V2 Scenario 3: NFT for NFT + SOL Payment
+ * PRODUCTION E2E Test - Scenario 3: NFT for NFT + SOL Payment
  * 
  * Complete NFT-for-NFT swap where buyer also pays SOL to the seller.
  * Tests the v2 escrow with NFT exchange and SOL payment to seller + platform fee.
+ * 
+ * **WITH TIMING**: Measures total escrow swap duration from creation to settlement.
  * 
  * Flow:
  * 1. Create v2 escrow agreement (NFT_FOR_NFT_PLUS_SOL)
@@ -12,34 +14,35 @@
  * 5. Automatic settlement
  * 6. Verify both NFTs swapped, SOL paid to seller, and fee collected
  * 
- * Run: npm run test:staging:e2e:v2-nft-nft-sol
+ * Run: npm run test:production:e2e:nft-nft-sol
  */
 
-// Load .env.staging file BEFORE any other imports
+// Load .env.production file BEFORE any other imports
 import dotenv from 'dotenv';
 import path from 'path';
 
-const envPath = path.resolve(process.cwd(), '.env.staging');
+const envPath = path.resolve(process.cwd(), '.env.production');
 const result = dotenv.config({ path: envPath, override: true });
 
 if (result.error) {
-  throw new Error(`Failed to load .env.staging: ${result.error}`);
+  throw new Error(`Failed to load .env.production: ${result.error}`);
 }
 
-import { describe, it, before } from 'mocha';
+import { describe, it, before, after } from 'mocha';
 import { expect } from 'chai';
 import { Connection, PublicKey, LAMPORTS_PER_SOL, Transaction } from '@solana/web3.js';
 import { getOrCreateAssociatedTokenAccount, getAccount } from '@solana/spl-token';
 import axios from 'axios';
-import { STAGING_CONFIG } from './test-config';
+import { PRODUCTION_CONFIG } from './test-config';
 import {
-  loadStagingWallets,
+  loadPRODUCTIONWallets,
   generateIdempotencyKey,
   getExplorerUrl,
   waitForAgreementStatus,
-  createTestNFT,
-  type StagingWallets,
+  getRandomNFTFromWallet,
+  type PRODUCTIONWallets,
   type TestNFT,
+  archiveAgreements,
 } from './shared-test-utils';
 
 interface TestAgreement {
@@ -55,11 +58,11 @@ interface TestAgreement {
   transactionId: string;
 }
 
-describe('STAGING E2E - V2: NFT-for-NFT + SOL Payment', function () {
+describe('PRODUCTION E2E - NFT-for-NFT + SOL Payment (Happy Path) [WITH TIMING]', function () {
   this.timeout(300000); // 5 minutes
 
   let connection: Connection;
-  let wallets: StagingWallets;
+  let wallets: PRODUCTIONWallets;
   let nftA: TestNFT; // Seller's NFT
   let nftB: TestNFT; // Buyer's NFT
   let agreement: TestAgreement;
@@ -69,10 +72,15 @@ describe('STAGING E2E - V2: NFT-for-NFT + SOL Payment', function () {
     feeCollector: { sol: number };
   };
 
-  const SOL_PAYMENT = 0.2; // 0.2 SOL payment to seller (includes fee)
+  const SOL_PAYMENT = 0.01; // 0.01 SOL payment to seller (~$2 at $200/SOL)
   const PLATFORM_FEE_BPS = 100; // 1%
-  const EXPECTED_FEE = SOL_PAYMENT * (PLATFORM_FEE_BPS / 10000); // 0.002 SOL
-  const EXPECTED_SELLER_RECEIVES = SOL_PAYMENT - EXPECTED_FEE; // 0.198 SOL
+  const EXPECTED_FEE = SOL_PAYMENT * (PLATFORM_FEE_BPS / 10000); // 0.0001 SOL
+  const EXPECTED_SELLER_RECEIVES = SOL_PAYMENT - EXPECTED_FEE; // 0.0099 SOL
+
+  // ⏱️ TIMING METRICS
+  let agreementCreationTime: number = 0;
+  let settlementCompletionTime: number = 0;
+  let totalSwapDuration: number = 0;
 
   // Transaction tracking
   const transactions: Array<{
@@ -81,43 +89,43 @@ describe('STAGING E2E - V2: NFT-for-NFT + SOL Payment', function () {
     timestamp: number;
   }> = [];
 
+  // Track agreement IDs for cleanup
+  const agreementIds: string[] = [];
+
   // Cleanup hook - runs after all tests (pass or fail)
   after(async function () {
-    if (agreement?.agreementId) {
-      try {
-        console.log(`\n🧹 Cleaning up test agreement: ${agreement.agreementId}`);
-        await axios.delete(
-          `${STAGING_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}`,
-          {
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          }
-        );
-        console.log('✅ Test agreement deleted successfully');
-      } catch (error: any) {
-        // Only log if not a 404 (already deleted)
-        if (error.response?.status !== 404) {
-          console.warn('⚠️  Failed to cleanup test agreement:', error.message);
-        }
-      }
+    if (agreementIds.length > 0) {
+      console.log(`\n🧹 Cleaning up ${agreementIds.length} test agreement(s)...`);
+      await archiveAgreements(agreementIds);
+    }
+
+    // Display timing metrics
+    if (agreementCreationTime > 0 && settlementCompletionTime > 0) {
+      console.log('\n' + '='.repeat(80));
+      console.log('⏱️  TIMING METRICS');
+      console.log('='.repeat(80));
+      console.log(`   Agreement Creation: ${new Date(agreementCreationTime).toISOString()}`);
+      console.log(`   Settlement Complete: ${new Date(settlementCompletionTime).toISOString()}`);
+      console.log(`   Total Swap Duration: ${(totalSwapDuration / 1000).toFixed(2)}s`);
+      console.log('='.repeat(80) + '\n');
     }
   });
 
   before(async function () {
     console.log('\n' + '='.repeat(80));
-    console.log('🚀 STAGING E2E Test - V2 NFT-for-NFT + SOL Payment');
+    console.log('🚀 PRODUCTION E2E Test - NFT-for-NFT + SOL Payment [WITH TIMING]');
     console.log('='.repeat(80));
-    console.log(`   Environment: STAGING`);
-    console.log(`   Network: ${STAGING_CONFIG.network}`);
-    console.log(`   API: ${STAGING_CONFIG.apiBaseUrl}`);
+    console.log(`   Environment: PRODUCTION`);
+    console.log(`   Network: ${PRODUCTION_CONFIG.network}`);
+    console.log(`   API: ${PRODUCTION_CONFIG.apiBaseUrl}`);
     console.log(`   Swap Type: NFT_FOR_NFT_PLUS_SOL`);
-    console.log(`   SOL Payment: ${SOL_PAYMENT} SOL (${EXPECTED_FEE.toFixed(4)} SOL fee) - reduced for devnet`);
+    console.log(`   SOL Payment: ${SOL_PAYMENT} SOL (${EXPECTED_FEE.toFixed(4)} SOL fee)`);
     console.log(`   Seller Receives: ${EXPECTED_SELLER_RECEIVES.toFixed(4)} SOL (after fee)`);
+    console.log(`   ⏱️  Timing: ENABLED (measuring end-to-end duration)`);
     console.log('='.repeat(80) + '\n');
 
-    connection = new Connection(STAGING_CONFIG.rpcUrl, 'confirmed');
-    wallets = loadStagingWallets();
+    connection = new Connection(PRODUCTION_CONFIG.rpcUrl, 'confirmed');
+    wallets = loadPRODUCTIONWallets();
 
     console.log('📋 Test Participants:');
     console.log(`   Seller: ${wallets.sender.publicKey.toBase58()}`);
@@ -145,26 +153,28 @@ describe('STAGING E2E - V2: NFT-for-NFT + SOL Payment', function () {
     expect(buyerBalance).to.be.greaterThan(SOL_PAYMENT * LAMPORTS_PER_SOL, 'Buyer needs sufficient SOL for payment');
   });
 
-  it('should create NFT A for the seller', async function () {
-    console.log('🎨 Creating NFT A for seller...\n');
+  it('should select NFT A from seller wallet', async function () {
+    console.log('🎨 Selecting NFT A from seller wallet...\n');
 
-    nftA = await createTestNFT(connection, wallets.sender);
+    nftA = await getRandomNFTFromWallet(connection, wallets.sender);
 
-    console.log(`   ✅ NFT A Created: ${nftA.mint.toBase58()}`);
+    console.log(`   ✅ NFT A Selected: ${nftA.mint.toBase58()}`);
     console.log(`   Token Account: ${nftA.tokenAccount.toBase58()}`);
+    console.log(`   Name: ${nftA.metadata.name}`);
     console.log(`   Explorer: ${getExplorerUrl(nftA.mint.toBase58(), 'address')}\n`);
 
     const tokenAccountInfo = await getAccount(connection, nftA.tokenAccount);
     expect(tokenAccountInfo.amount.toString()).to.equal('1', 'Seller should own 1 NFT A');
   });
 
-  it('should create NFT B for the buyer', async function () {
-    console.log('🎨 Creating NFT B for buyer...\n');
+  it('should select NFT B from buyer wallet', async function () {
+    console.log('🎨 Selecting NFT B from buyer wallet...\n');
 
-    nftB = await createTestNFT(connection, wallets.receiver);
+    nftB = await getRandomNFTFromWallet(connection, wallets.receiver);
 
-    console.log(`   ✅ NFT B Created: ${nftB.mint.toBase58()}`);
+    console.log(`   ✅ NFT B Selected: ${nftB.mint.toBase58()}`);
     console.log(`   Token Account: ${nftB.tokenAccount.toBase58()}`);
+    console.log(`   Name: ${nftB.metadata.name}`);
     console.log(`   Explorer: ${getExplorerUrl(nftB.mint.toBase58(), 'address')}\n`);
 
     const tokenAccountInfo = await getAccount(connection, nftB.tokenAccount);
@@ -174,7 +184,7 @@ describe('STAGING E2E - V2: NFT-for-NFT + SOL Payment', function () {
   it('should create a v2 NFT-for-NFT+SOL escrow agreement', async function () {
     console.log('📝 Creating V2 escrow agreement (NFT_FOR_NFT_PLUS_SOL)...\n');
 
-    const idempotencyKey = generateIdempotencyKey('v2-nft-nft-sol-test');
+    const idempotencyKey = generateIdempotencyKey('prod-nft-nft-sol-test');
     // Expiry omitted - uses default of 5 minutes
 
     const agreementData = {
@@ -198,8 +208,12 @@ describe('STAGING E2E - V2: NFT-for-NFT + SOL Payment', function () {
     console.log(`     Platform Fee: ${EXPECTED_FEE.toFixed(4)} SOL (${PLATFORM_FEE_BPS / 100}%)`);
     console.log(`     Fee Payer: ${agreementData.feePayer}\n`);
 
+    // ⏱️ START TIMER
+    agreementCreationTime = Date.now();
+    console.log(`   ⏱️  Timer started: ${new Date(agreementCreationTime).toISOString()}\n`);
+
     const response = await axios.post(
-      `${STAGING_CONFIG.apiBaseUrl}/v1/agreements`,
+      `${PRODUCTION_CONFIG.apiBaseUrl}/v1/agreements`,
       agreementData,
       {
       headers: {
@@ -216,6 +230,8 @@ describe('STAGING E2E - V2: NFT-for-NFT + SOL Payment', function () {
     expect(response.data.data.depositAddresses, 'Should have buyer NFT deposit address').to.have.property('nftB');
 
     agreement = response.data.data;
+    agreementIds.push(agreement.agreementId);
+    
     transactions.push({
       description: 'Create Agreement (init_agreement_v2)',
       txId: agreement.transactionId,
@@ -233,7 +249,7 @@ describe('STAGING E2E - V2: NFT-for-NFT + SOL Payment', function () {
     console.log('🎨 Depositing NFT A to escrow...\n');
 
     const prepareResponse = await axios.post(
-      `${STAGING_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}/deposit-nft/prepare`
+      `${PRODUCTION_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}/deposit-nft/prepare`
     );
 
     expect(prepareResponse.status).to.equal(200);
@@ -266,11 +282,48 @@ describe('STAGING E2E - V2: NFT-for-NFT + SOL Payment', function () {
     await new Promise(resolve => setTimeout(resolve, 3000));
   });
 
+  it('should deposit NFT B (buyer)', async function () {
+    console.log('🎨 Depositing NFT B to escrow...\n');
+
+    const prepareResponse = await axios.post(
+      `${PRODUCTION_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}/deposit-nft-b/prepare`
+    );
+
+    expect(prepareResponse.status).to.equal(200);
+    expect(prepareResponse.data.success).to.be.true;
+
+    const transactionBuffer = Buffer.from(prepareResponse.data.data.transaction, 'base64');
+    const transaction = Transaction.from(transactionBuffer);
+
+    const { blockhash } = await connection.getLatestBlockhash();
+    transaction.recentBlockhash = blockhash;
+    transaction.feePayer = wallets.receiver.publicKey;
+    transaction.sign(wallets.receiver);
+
+    const txId = await connection.sendRawTransaction(transaction.serialize(), {
+      skipPreflight: false,
+      preflightCommitment: 'confirmed',
+    });
+
+    await connection.confirmTransaction(txId, 'confirmed');
+
+    transactions.push({
+      description: 'Deposit NFT B (deposit_buyer_nft)',
+      txId,
+      timestamp: Date.now(),
+    });
+
+    console.log(`   ✅ NFT B Deposited`);
+    console.log(`   Transaction: ${getExplorerUrl(txId, 'tx')}\n`);
+
+    await new Promise(resolve => setTimeout(resolve, 3000));
+  });
+
   it('should deposit SOL payment (buyer)', async function () {
     console.log('💎 Depositing SOL payment to escrow...\n');
 
     const prepareResponse = await axios.post(
-      `${STAGING_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}/deposit-sol/prepare`
+      `${PRODUCTION_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}/deposit-sol/prepare`
     );
 
     expect(prepareResponse.status).to.equal(200);
@@ -303,6 +356,14 @@ describe('STAGING E2E - V2: NFT-for-NFT + SOL Payment', function () {
     console.log(`   ✅ SOL Payment Deposited`);
     console.log(`   Transaction: ${getExplorerUrl(txId, 'tx')}\n`);
 
+    // Manually trigger deposit validation
+    console.log('   🔍 Validating deposits...');
+    const validateResponse = await axios.post(
+      `${PRODUCTION_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}/validate-deposits`
+    );
+
+    console.log(`   Validation result:`, JSON.stringify(validateResponse.data, null, 2));
+    
     await new Promise(resolve => setTimeout(resolve, 5000));
   });
 
@@ -310,7 +371,7 @@ describe('STAGING E2E - V2: NFT-for-NFT + SOL Payment', function () {
     console.log('📊 Checking agreement status...\n');
 
     const statusResponse = await axios.get(
-      `${STAGING_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}`
+      `${PRODUCTION_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}`
     );
 
     console.log(`   Current Status: ${statusResponse.data.data.status}`);
@@ -319,13 +380,83 @@ describe('STAGING E2E - V2: NFT-for-NFT + SOL Payment', function () {
     console.log(`   NFT B Locked: ${statusResponse.data.data.nftBLocked || false}`);
     console.log(`   SOL Locked: ${statusResponse.data.data.solLocked || false}\n`);
 
-    // Since NFT B deposit is not implemented yet, we won't reach BOTH_LOCKED
-    // But we can verify NFT A and SOL deposits were detected
-    expect(statusResponse.data.data.status).to.be.oneOf(['NFT_LOCKED', 'USDC_LOCKED', 'PENDING', 'BOTH_LOCKED']);
+    // After all deposits, status should be BOTH_LOCKED or SETTLED
+    expect(['BOTH_LOCKED', 'SETTLED']).to.include(statusResponse.data.data.status, 'Status should be BOTH_LOCKED or SETTLED after all deposits');
   });
 
-  it('should verify SOL payment and fee distribution (partial)', async function () {
-    console.log('💰 Verifying SOL balances...\n');
+  it('should wait for automatic settlement', async function () {
+    console.log('⏳ Waiting for automatic settlement...\n');
+    console.log('   Monitoring service should detect all deposits and trigger settlement');
+    console.log('   Expected settlement time: 3-10 seconds (polling interval: 3s)\n');
+
+    // Wait for SETTLED status (up to 45 seconds for production)
+    const settledAgreement = await waitForAgreementStatus(
+      agreement.agreementId,
+      'SETTLED',
+      45, // 45 attempts x 1000ms = 45 seconds
+      1000 // 1 second interval
+    );
+
+    expect(settledAgreement.status).to.equal('SETTLED');
+    expect(settledAgreement.settleTxId).to.exist;
+
+    // ⏱️ STOP TIMER
+    settlementCompletionTime = Date.now();
+    totalSwapDuration = settlementCompletionTime - agreementCreationTime;
+    
+    console.log(`   ⏱️  Timer stopped: ${new Date(settlementCompletionTime).toISOString()}`);
+    console.log(`   ⏱️  Total Duration: ${(totalSwapDuration / 1000).toFixed(2)}s\n`);
+
+    transactions.push({
+      description: 'Settlement (settle_v2)',
+      txId: settledAgreement.settleTxId!,
+      timestamp: settlementCompletionTime,
+    });
+
+    console.log(`   ✅ Settlement Complete!`);
+    console.log(`   Transaction: ${getExplorerUrl(settledAgreement.settleTxId!, 'tx')}\n`);
+  });
+
+  it('should verify NFT A was transferred to buyer', async function () {
+    console.log('🔍 Verifying NFT A transfer to buyer...\n');
+
+    // Check buyer's NFT A account
+    const buyerNftAAccount = await getOrCreateAssociatedTokenAccount(
+      connection,
+      wallets.receiver,
+      nftA.mint,
+      wallets.receiver.publicKey
+    );
+
+    const tokenAccountInfo = await getAccount(connection, buyerNftAAccount.address);
+    expect(tokenAccountInfo.amount.toString()).to.equal('1', 'Buyer should now own NFT A');
+
+    console.log(`   ✅ NFT A transferred to buyer`);
+    console.log(`   Buyer's NFT A Account: ${buyerNftAAccount.address.toBase58()}`);
+    console.log(`   Amount: ${tokenAccountInfo.amount.toString()}\n`);
+  });
+
+  it('should verify NFT B was transferred to seller', async function () {
+    console.log('🔍 Verifying NFT B transfer to seller...\n');
+
+    // Check seller's NFT B account
+    const sellerNftBAccount = await getOrCreateAssociatedTokenAccount(
+      connection,
+      wallets.sender,
+      nftB.mint,
+      wallets.sender.publicKey
+    );
+
+    const tokenAccountInfo = await getAccount(connection, sellerNftBAccount.address);
+    expect(tokenAccountInfo.amount.toString()).to.equal('1', 'Seller should now own NFT B');
+
+    console.log(`   ✅ NFT B transferred to seller`);
+    console.log(`   Seller's NFT B Account: ${sellerNftBAccount.address.toBase58()}`);
+    console.log(`   Amount: ${tokenAccountInfo.amount.toString()}\n`);
+  });
+
+  it('should verify SOL payment and fee distribution', async function () {
+    console.log('💰 Verifying SOL payment and fee distribution...\n');
 
     const sellerBalance = await connection.getBalance(wallets.sender.publicKey);
     const buyerBalance = await connection.getBalance(wallets.receiver.publicKey);
@@ -342,19 +473,30 @@ describe('STAGING E2E - V2: NFT-for-NFT + SOL Payment', function () {
     const feeCollectorDelta = finalBalances.feeCollector.sol - initialBalances.feeCollector.sol;
 
     console.log('   Balance Changes:');
-    console.log(`     Seller: ${sellerDelta >= 0 ? '+' : ''}${sellerDelta.toFixed(4)} SOL`);
-    console.log(`     Buyer: ${buyerDelta >= 0 ? '+' : ''}${buyerDelta.toFixed(4)} SOL`);
-    console.log(`     Fee Collector: ${feeCollectorDelta >= 0 ? '+' : ''}${feeCollectorDelta.toFixed(4)} SOL\n`);
+    console.log(`     Seller: ${sellerDelta >= 0 ? '+' : ''}${sellerDelta.toFixed(4)} SOL (expected: ~${EXPECTED_SELLER_RECEIVES.toFixed(4)} SOL)`);
+    console.log(`     Buyer: ${buyerDelta >= 0 ? '+' : ''}${buyerDelta.toFixed(4)} SOL (expected: ~${-SOL_PAYMENT.toFixed(4)} SOL)`);
+    console.log(`     Fee Collector: ${feeCollectorDelta >= 0 ? '+' : ''}${feeCollectorDelta.toFixed(4)} SOL (expected: ~${EXPECTED_FEE.toFixed(4)} SOL)\n`);
+
+    // Seller should have received SOL minus platform fee (with some tolerance for tx fees)
+    const TX_FEE_TOLERANCE = 0.002; // 0.002 SOL tolerance for transaction fees
+    expect(sellerDelta).to.be.greaterThan(
+      EXPECTED_SELLER_RECEIVES - TX_FEE_TOLERANCE,
+      `Seller should have received ~${EXPECTED_SELLER_RECEIVES.toFixed(4)} SOL (after fee, minus tx costs)`
+    );
 
     // Buyer should have paid the SOL + transaction costs
-    const TX_FEE_TOLERANCE = 0.02; // 0.02 SOL tolerance
     expect(buyerDelta).to.be.lessThan(
       -SOL_PAYMENT + TX_FEE_TOLERANCE,
       `Buyer should have paid ~${SOL_PAYMENT} SOL (plus tx fees)`
     );
 
-    console.log('   ✅ SOL payment verified (deposited to escrow)\n');
-    console.log('   ⚠️  Note: Settlement will distribute to seller after both NFTs deposited');
+    // Fee collector should have received the platform fee
+    expect(feeCollectorDelta).to.be.greaterThan(
+      EXPECTED_FEE - TX_FEE_TOLERANCE,
+      `Fee collector should have received ~${EXPECTED_FEE.toFixed(4)} SOL platform fee`
+    );
+
+    console.log('   ✅ SOL payment and fee distribution verified\n');
   });
 
   it('should display transaction summary', async function () {
@@ -369,13 +511,11 @@ describe('STAGING E2E - V2: NFT-for-NFT + SOL Payment', function () {
     });
 
     console.log('='.repeat(80));
-    console.log('⚠️  V2 NFT-for-NFT+SOL E2E TEST PARTIALLY COMPLETE');
-    console.log('   Note: Buyer NFT deposit endpoint not yet implemented');
-    console.log('   Core functionality (NFT A + SOL payment) verified ✅');
-    console.log(`   Expected Distribution on Settlement:`);
-    console.log(`     - Seller receives: ${EXPECTED_SELLER_RECEIVES.toFixed(4)} SOL + NFT B`);
-    console.log(`     - Buyer receives: NFT A`);
-    console.log(`     - Fee Collector receives: ${EXPECTED_FEE.toFixed(4)} SOL`);
+    console.log('✅ NFT-for-NFT+SOL E2E TEST COMPLETE');
+    console.log('   - Both NFTs successfully swapped');
+    console.log(`   - Seller received: ${EXPECTED_SELLER_RECEIVES.toFixed(4)} SOL + NFT B`);
+    console.log(`   - Buyer received: NFT A (paid ${SOL_PAYMENT} SOL)`);
+    console.log(`   - Fee Collector received: ${EXPECTED_FEE.toFixed(4)} SOL`);
     console.log('='.repeat(80) + '\n');
   });
 });
