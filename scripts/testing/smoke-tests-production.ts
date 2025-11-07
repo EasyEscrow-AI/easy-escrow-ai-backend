@@ -256,7 +256,7 @@ async function testCorsConfiguration(): Promise<void> {
   // Test with production frontend origin
   const response = await axios.get(`${PRODUCTION_API_URL}/health`, {
     headers: {
-      'Origin': 'https://easyescrow.xyz'
+      'Origin': 'https://easyescrow.ai'
     },
     timeout: 10000
   });
@@ -322,7 +322,7 @@ async function testSecurityHeaders(): Promise<void> {
  * Test 11: API Swagger Documentation
  */
 async function testSwaggerDocs(): Promise<void> {
-  const response = await axios.get(`${PRODUCTION_API_URL}/api-docs/`, {
+  const response = await axios.get(`${PRODUCTION_API_URL}/docs`, {
     timeout: 10000,
     validateStatus: (status) => status === 200 || status === 301 || status === 302
   });
@@ -332,7 +332,7 @@ async function testSwaggerDocs(): Promise<void> {
   }
   
   console.log('  Swagger documentation: Accessible');
-  console.log(`  URL: ${PRODUCTION_API_URL}/api-docs/`);
+  console.log(`  URL: ${PRODUCTION_API_URL}/docs`);
 }
 
 /**
