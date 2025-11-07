@@ -25,10 +25,25 @@ enum AgreementStatus {
   ARCHIVED
 }
 
+// Enum for swap type (SOL migration)
+enum SwapType {
+  NFT_FOR_SOL // NFT <> SOL: Direct exchange
+  NFT_FOR_NFT_WITH_FEE // NFT <> NFT: Buyer pays separate SOL fee
+  NFT_FOR_NFT_PLUS_SOL // NFT <> NFT+SOL: Fee extracted from SOL amount
+}
+
+// Enum for fee payer (SOL migration)
+enum FeePayer {
+  BUYER // Default: Buyer pays the platform fee
+  SELLER // Alternative: Seller pays the platform fee
+}
+
 // Enum for deposit type
 enum DepositType {
-  USDC
-  NFT
+  USDC // Legacy: USDC deposits
+  NFT // NFT deposits (seller's NFT A or buyer's NFT B)
+  SOL // SOL deposits from buyer
+  NFT_BUYER // Buyer's NFT deposit (for NFT<>NFT swaps)
 }
 
 // Enum for deposit status
@@ -57,34 +72,40 @@ enum WebhookDeliveryStatus {
 
 // Main Agreements table
 model Agreement {
-  id               String           @id @default(uuid())
-  agreementId      String           @unique @map("agreement_id")
-  escrowPda        String           @map("escrow_pda")
-  nftMint          String           @map("nft_mint")
-  seller           String
-  buyer            String?
-  price            Decimal          @db.Decimal(20, 9)
-  feeBps           Int              @map("fee_bps")
-  honorRoyalties   Boolean          @default(false) @map("honor_royalties")
-  status           AgreementStatus  @default(PENDING)
-  expiry           DateTime
-  usdcDepositAddr  String?          @map("usdc_deposit_addr")
-  nftDepositAddr   String?          @map("nft_deposit_addr")
-  initTxId         String?          @map("init_tx_id")
-  settleTxId       String?          @map("settle_tx_id")
-  cancelTxId       String?          @map("cancel_tx_id")
-  createdAt        DateTime         @default(now()) @map("created_at")
-  updatedAt        DateTime         @updatedAt @map("updated_at")
-  settledAt        DateTime?        @map("settled_at")
-  cancelledAt      DateTime?        @map("cancelled_at")
-  archivedAt       DateTime?        @map("archived_at")
-  archiveReason    String?          @map("archive_reason")
-  
-  deposits         Deposit[]
-  settlement       Settlement?
-  receipt          Receipt?
-  webhooks         Webhook[]
-  
+  id              String          @id @default(uuid())
+  agreementId     String          @unique @map("agreement_id")
+  escrowPda       String          @map("escrow_pda")
+  nftMint         String          @map("nft_mint")
+  seller          String
+  buyer           String?
+  price           Decimal         @db.Decimal(20, 9)
+  feeBps          Int             @map("fee_bps")
+  honorRoyalties  Boolean         @default(false) @map("honor_royalties")
+  status          AgreementStatus @default(PENDING)
+  expiry          DateTime
+  usdcDepositAddr String?         @map("usdc_deposit_addr")
+  nftDepositAddr  String?         @map("nft_deposit_addr")
+  initTxId        String?         @map("init_tx_id")
+  settleTxId      String?         @map("settle_tx_id")
+  cancelTxId      String?         @map("cancel_tx_id")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+  settledAt       DateTime?       @map("settled_at")
+  cancelledAt     DateTime?       @map("cancelled_at")
+  archivedAt      DateTime?       @map("archived_at")
+  archiveReason   String?         @map("archive_reason")
+
+  // SOL Migration fields
+  swapType  SwapType? @map("swap_type") // Type of swap (NFT<>SOL, NFT<>NFT, etc.)
+  solAmount Decimal?  @map("sol_amount") @db.Decimal(20, 9) // SOL amount (lamports stored as decimal)
+  nftBMint  String?   @map("nft_b_mint") // Buyer's NFT mint (for NFT<>NFT swaps)
+  feePayer  FeePayer? @default(BUYER) @map("fee_payer") // Who pays the platform fee
+
+  deposits   Deposit[]
+  settlement Settlement?
+  receipt    Receipt?
+  webhooks   Webhook[]
+
   @@index([agreementId])
   @@index([seller])
   @@index([buyer])
@@ -92,6 +113,8 @@ model Agreement {
   @@index([expiry])
   @@index([createdAt])
   @@index([archivedAt])
+  @@index([nftBMint]) // Index for NFT B lookups
+  @@index([swapType]) // Index for filtering by swap type
   // Composite indexes for scalability and batch processing
   @@index([status, expiry], name: "idx_status_expiry")
   @@index([expiry, seller, buyer], name: "idx_expiry_seller_buyer")
@@ -100,21 +123,21 @@ model Agreement {
 
 // Deposits table
 model Deposit {
-  id            String         @id @default(uuid())
-  agreementId   String         @map("agreement_id")
-  type          DepositType
-  depositor     String
-  amount        Decimal?       @db.Decimal(20, 9)
-  tokenAccount  String?        @map("token_account")
-  status        DepositStatus  @default(PENDING)
-  txId          String?        @map("tx_id")
-  blockHeight   BigInt?        @map("block_height")
-  nftMetadata   Json?          @map("nft_metadata")
-  detectedAt    DateTime       @default(now()) @map("detected_at")
-  confirmedAt   DateTime?      @map("confirmed_at")
-  
-  agreement     Agreement      @relation(fields: [agreementId], references: [agreementId], onDelete: Cascade)
-  
+  id           String        @id @default(uuid())
+  agreementId  String        @map("agreement_id")
+  type         DepositType
+  depositor    String
+  amount       Decimal?      @db.Decimal(20, 9)
+  tokenAccount String?       @map("token_account")
+  status       DepositStatus @default(PENDING)
+  txId         String?       @map("tx_id")
+  blockHeight  BigInt?       @map("block_height")
+  nftMetadata  Json?         @map("nft_metadata")
+  detectedAt   DateTime      @default(now()) @map("detected_at")
+  confirmedAt  DateTime?     @map("confirmed_at")
+
+  agreement Agreement @relation(fields: [agreementId], references: [agreementId], onDelete: Cascade)
+
   @@index([agreementId])
   @@index([type])
   @@index([status])
@@ -142,23 +165,23 @@ model IdempotencyKey {
 
 // Settlements table
 model Settlement {
-  id                String     @id @default(uuid())
-  agreementId       String     @unique @map("agreement_id")
-  nftMint           String     @map("nft_mint")
-  price             Decimal    @db.Decimal(20, 9)
-  platformFee       Decimal    @db.Decimal(20, 9) @map("platform_fee")
-  creatorRoyalty    Decimal?   @db.Decimal(20, 9) @map("creator_royalty")
-  sellerReceived    Decimal    @db.Decimal(20, 9) @map("seller_received")
-  settleTxId        String     @map("settle_tx_id")
-  blockHeight       BigInt     @map("block_height")
-  buyer             String
-  seller            String
-  feeCollector      String?    @map("fee_collector")
-  royaltyRecipient  String?    @map("royalty_recipient")
-  settledAt         DateTime   @default(now()) @map("settled_at")
-  
-  agreement         Agreement  @relation(fields: [agreementId], references: [agreementId], onDelete: Cascade)
-  
+  id               String   @id @default(uuid())
+  agreementId      String   @unique @map("agreement_id")
+  nftMint          String   @map("nft_mint")
+  price            Decimal  @db.Decimal(20, 9)
+  platformFee      Decimal  @map("platform_fee") @db.Decimal(20, 9)
+  creatorRoyalty   Decimal? @map("creator_royalty") @db.Decimal(20, 9)
+  sellerReceived   Decimal  @map("seller_received") @db.Decimal(20, 9)
+  settleTxId       String   @map("settle_tx_id")
+  blockHeight      BigInt   @map("block_height")
+  buyer            String
+  seller           String
+  feeCollector     String?  @map("fee_collector")
+  royaltyRecipient String?  @map("royalty_recipient")
+  settledAt        DateTime @default(now()) @map("settled_at")
+
+  agreement Agreement @relation(fields: [agreementId], references: [agreementId], onDelete: Cascade)
+
   @@index([agreementId])
   @@index([buyer])
   @@index([seller])
@@ -169,29 +192,29 @@ model Settlement {
 
 // Receipts table
 model Receipt {
-  id              String     @id @default(uuid())
-  agreementId     String     @unique @map("agreement_id")
-  nftMint         String     @map("nft_mint")
-  price           Decimal    @db.Decimal(20, 9)
-  platformFee     Decimal    @db.Decimal(20, 9) @map("platform_fee")
-  creatorRoyalty  Decimal?   @db.Decimal(20, 9) @map("creator_royalty")
-  buyer           String
-  seller          String
-  
+  id             String   @id @default(uuid())
+  agreementId    String   @unique @map("agreement_id")
+  nftMint        String   @map("nft_mint")
+  price          Decimal  @db.Decimal(20, 9)
+  platformFee    Decimal  @map("platform_fee") @db.Decimal(20, 9)
+  creatorRoyalty Decimal? @map("creator_royalty") @db.Decimal(20, 9)
+  buyer          String
+  seller         String
+
   // All transaction IDs for complete audit trail
-  escrowTxId      String     @map("escrow_tx_id")       // Init/creation transaction
-  depositNftTxId  String?    @map("deposit_nft_tx_id")  // NFT deposit transaction
-  depositUsdcTxId String?    @map("deposit_usdc_tx_id") // USDC deposit transaction
-  settlementTxId  String     @map("settlement_tx_id")    // Final settlement transaction
-  
-  receiptHash     String     @unique @map("receipt_hash")
-  signature       String
-  createdAt       DateTime   @map("created_at")
-  settledAt       DateTime   @map("settled_at")
-  generatedAt     DateTime   @default(now()) @map("generated_at")
-  
-  agreement       Agreement  @relation(fields: [agreementId], references: [agreementId], onDelete: Cascade)
-  
+  escrowTxId      String  @map("escrow_tx_id") // Init/creation transaction
+  depositNftTxId  String? @map("deposit_nft_tx_id") // NFT deposit transaction
+  depositUsdcTxId String? @map("deposit_usdc_tx_id") // USDC deposit transaction
+  settlementTxId  String  @map("settlement_tx_id") // Final settlement transaction
+
+  receiptHash String   @unique @map("receipt_hash")
+  signature   String
+  createdAt   DateTime @map("created_at")
+  settledAt   DateTime @map("settled_at")
+  generatedAt DateTime @default(now()) @map("generated_at")
+
+  agreement Agreement @relation(fields: [agreementId], references: [agreementId], onDelete: Cascade)
+
   @@index([agreementId])
   @@index([buyer])
   @@index([seller])
@@ -203,16 +226,16 @@ model Receipt {
 
 // Transaction logs table
 model TransactionLog {
-  id            String    @id @default(uuid())
-  agreementId   String?   @map("agreement_id")
-  txId          String    @unique @map("tx_id")
-  operationType String    @map("operation_type")
-  blockHeight   BigInt?   @map("block_height")
+  id            String   @id @default(uuid())
+  agreementId   String?  @map("agreement_id")
+  txId          String   @unique @map("tx_id")
+  operationType String   @map("operation_type")
+  blockHeight   BigInt?  @map("block_height")
   slot          BigInt?
   status        String
-  errorMessage  String?   @map("error_message")
-  timestamp     DateTime  @default(now())
-  
+  errorMessage  String?  @map("error_message")
+  timestamp     DateTime @default(now())
+
   @@index([agreementId])
   @@index([txId])
   @@index([operationType])
@@ -223,24 +246,24 @@ model TransactionLog {
 
 // Webhooks table
 model Webhook {
-  id                String                @id @default(uuid())
-  agreementId       String                @map("agreement_id")
-  eventType         WebhookEventType      @map("event_type")
-  targetUrl         String                @map("target_url")
-  payload           Json
-  status            WebhookDeliveryStatus @default(PENDING)
-  attempts          Int                   @default(0)
-  maxAttempts       Int                   @default(5) @map("max_attempts")
-  lastAttemptAt     DateTime?             @map("last_attempt_at")
-  lastResponseCode  Int?                  @map("last_response_code")
-  lastResponseBody  String?               @map("last_response_body")
-  deliveredAt       DateTime?             @map("delivered_at")
-  signature         String?
-  createdAt         DateTime              @default(now()) @map("created_at")
-  scheduledFor      DateTime              @default(now()) @map("scheduled_for")
-  
-  agreement         Agreement             @relation(fields: [agreementId], references: [agreementId], onDelete: Cascade)
-  
+  id               String                @id @default(uuid())
+  agreementId      String                @map("agreement_id")
+  eventType        WebhookEventType      @map("event_type")
+  targetUrl        String                @map("target_url")
+  payload          Json
+  status           WebhookDeliveryStatus @default(PENDING)
+  attempts         Int                   @default(0)
+  maxAttempts      Int                   @default(5) @map("max_attempts")
+  lastAttemptAt    DateTime?             @map("last_attempt_at")
+  lastResponseCode Int?                  @map("last_response_code")
+  lastResponseBody String?               @map("last_response_body")
+  deliveredAt      DateTime?             @map("delivered_at")
+  signature        String?
+  createdAt        DateTime              @default(now()) @map("created_at")
+  scheduledFor     DateTime              @default(now()) @map("scheduled_for")
+
+  agreement Agreement @relation(fields: [agreementId], references: [agreementId], onDelete: Cascade)
+
   @@index([agreementId])
   @@index([eventType])
   @@index([status])

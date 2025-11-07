@@ -1,8 +1,14 @@
 /**
- * USDC Account Management Service
+ * USDC Account Management Service (LEGACY - KEPT FOR FUTURE USDC SUPPORT)
  * 
  * Handles automatic creation of USDC token accounts for users
  * Platform pays rent to provide seamless UX
+ * 
+ * NOTE: This service is currently not used in production (V2 uses SOL, no token accounts needed).
+ * We're keeping it for potential future USDC support if we decide to re-enable
+ * USDC-based escrows alongside SOL-based escrows.
+ * 
+ * @deprecated V2 uses SOL deposits directly to escrowPda, not USDC token accounts
  */
 
 import {

@@ -19,10 +19,11 @@ info:
     
     ## Custom Expiry Times
     Agreements support flexible expiry specifications:
-    - **Presets**: "1h", "6h", "12h", "24h" (recommended for simplicity)
-    - **Duration**: Number of hours (1-24) from creation time
+    - **Presets**: "5m", "1h", "6h", "12h", "24h" (recommended for simplicity)
+    - **Duration**: Number of hours (0.0833-24, where 0.0833 = 5 minutes) from creation time
     - **Absolute**: ISO 8601 timestamp for specific expiry time
-    - **Constraints**: Minimum 1 hour, maximum 24 hours from creation
+    - **Default**: 5 minutes (when not specified)
+    - **Constraints**: Minimum 5 minutes, maximum 24 hours from creation
     
   contact:
     name: EasyEscrow.ai Support
@@ -1225,33 +1226,38 @@ components:
               format: date-time
             - type: number
             - type: string
-              enum: ["1h", "6h", "12h", "24h"]
+              enum: ["5m", "1h", "6h", "12h", "24h"]
           description: |
             Agreement expiry time. Supports multiple formats for flexibility:
             
             **Format Options:**
             - **ISO 8601 timestamp** (absolute time): "2025-11-04T12:00:00Z"
-            - **Duration in hours** (number 1-24): 12
-            - **Preset string**: "1h", "6h", "12h", "24h"
+            - **Duration in hours** (number 0.0833-24, where 0.0833 = 5 minutes): 12
+            - **Preset string**: "5m", "1h", "6h", "12h", "24h"
+            - **Optional**: If not provided, defaults to 5 minutes from creation
             
             **Constraints:**
-            - Minimum duration: 1 hour from creation
+            - Minimum duration: 5 minutes from creation
             - Maximum duration: 24 hours from creation
+            - Default: 5 minutes (when not specified)
             - Expiry must be in the future
             
             **Examples:**
             - Absolute: "2025-11-04T12:00:00Z" (expires at specific time)
             - Duration: 12 (expires 12 hours from now)
+            - Preset: "5m" (expires 5 minutes from now - default)
             - Preset: "6h" (expires 6 hours from now)
+            - Omitted: Uses default of 5 minutes from now
             
             **Note:** A 60-second buffer is added on-chain to prevent clock skew issues.
-          example: "12h"
+          example: "5m"
         expiryDurationHours:
           type: number
-          minimum: 1
+          minimum: 0.0833
           maximum: 24
           description: |
             Optional: Explicit duration in hours (alternative to expiry field).
+            Minimum is 0.0833 hours (5 minutes). Default is 0.0833 hours (5 minutes) if not provided.
             If both expiry and expiryDurationHours are provided, expiry takes precedence.
           example: 6
         feeBps:

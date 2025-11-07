@@ -2,8 +2,15 @@ import { Request, Response, NextFunction } from 'express';
 import { PublicKey } from '@solana/web3.js';
 
 /**
- * USDC Mint Allowlist Middleware
+ * USDC Mint Allowlist Middleware (LEGACY - KEPT FOR FUTURE USDC SUPPORT)
+ * 
  * Validates that only approved USDC mint addresses are accepted
+ * 
+ * NOTE: This middleware is currently not used in production (V2 uses SOL).
+ * We're keeping it for potential future USDC support if we decide to re-enable
+ * USDC-based escrows alongside SOL-based escrows.
+ * 
+ * @deprecated V2 uses SOL deposits, not USDC
  */
 
 /**

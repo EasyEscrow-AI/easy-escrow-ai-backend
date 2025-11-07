@@ -653,6 +653,14 @@ export class SolanaService {
       return null;
     }
   }
+
+  /**
+   * Derive SOL vault PDA from escrow PDA
+   * The vault is a separate zero-data PDA that holds SOL for settlement
+   */
+  public async deriveSolVaultPda(escrowPdaString: string): Promise<string> {
+    return deriveSolVaultPda(escrowPdaString);
+  }
 }
 
 // Singleton instance
@@ -687,7 +695,7 @@ export default SolanaService;
 export interface EscrowPDAResult {
   escrowPda: string;
   depositAddresses: {
-    usdc: string;
+    usdc: undefined; // Deprecated - SOL sent directly to escrowPda
     nft: string;
   };
   transactionId: string;
@@ -726,22 +734,52 @@ export const deriveEscrowPDA = async (
 };
 
 /**
- * Derive deposit addresses (USDC and NFT token accounts)
+ * Derive SOL vault PDA from escrow PDA
+ * The vault is a separate zero-data PDA that holds SOL for settlement
+ * Seeds: [b"sol_vault", escrow_id.to_le_bytes()]
+ */
+export const deriveSolVaultPda = async (
+  escrowPdaString: string
+): Promise<string> => {
+  const { getEscrowProgramService } = await import('./escrow-program.service');
+  const escrowService = getEscrowProgramService();
+  
+  const escrowPda = new PublicKey(escrowPdaString);
+  
+  try {
+    // Fetch escrow state to get escrow ID
+    const escrowState = await escrowService.program.account.escrowState.fetch(escrowPda);
+    const escrowId = escrowState.escrowId;
+    
+    // Derive sol_vault PDA using same program ID
+    const [solVaultPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from('sol_vault'), escrowId.toArrayLike(Buffer, 'le', 8)],
+      escrowService.programId
+    );
+    
+    return solVaultPda.toString();
+  } catch (error: any) {
+    // Handle deserialization errors for old escrow accounts created with previous program version
+    if (error.message && error.message.includes('Cannot read properties of null')) {
+      throw new Error(`IDL_MISMATCH: Escrow account ${escrowPdaString} was created with an older program version and cannot be deserialized. This agreement should be archived.`);
+    }
+    throw error;
+  }
+};
+
+/**
+ * Derive deposit addresses for NFT token accounts
  * Creates Associated Token Accounts (ATAs) for the escrow PDA
+ * 
+ * NOTE: USDC deposits are deprecated in V2. SOL is sent directly to escrowPda.
+ * This function kept for backwards compatibility.
  */
 export const deriveDepositAddresses = async (
   escrowPda: PublicKey,
-  usdcMint: PublicKey,
   nftMint: PublicKey
-): Promise<{ usdc: string; nft: string }> => {
+): Promise<{ usdc: undefined; nft: string }> => {
   // Derive Associated Token Account addresses for the escrow PDA
-  // These are the proper SPL token accounts that can receive tokens
-  const usdcAta = await getAssociatedTokenAddress(
-    usdcMint,
-    escrowPda,
-    true // allowOwnerOffCurve - PDAs are off-curve
-  );
-
+  // Note: USDC deposits are deprecated - SOL is sent directly to escrowPda
   const nftAta = await getAssociatedTokenAddress(
     nftMint,
     escrowPda,
@@ -750,14 +788,12 @@ export const deriveDepositAddresses = async (
 
   console.log('[SolanaService] Derived deposit addresses:', {
     escrowPda: escrowPda.toString(),
-    usdcMint: usdcMint.toString(),
     nftMint: nftMint.toString(),
-    usdcAta: usdcAta.toString(),
     nftAta: nftAta.toString(),
   });
 
   return {
-    usdc: usdcAta.toString(),
+    usdc: undefined, // Deprecated - SOL sent directly to escrowPda
     nft: nftAta.toString(),
   };
 };
@@ -775,10 +811,11 @@ export const initializeEscrow = async (
       throw new Error('[SolanaService] Configuration error: config.solana is undefined');
     }
 
-    // Validate config.usdc exists
-    if (!config?.usdc) {
-      throw new Error('[SolanaService] Configuration error: config.usdc is undefined');
-    }
+    // LEGACY: USDC config validation (V1 only)
+    // NOTE: V2 doesn't use USDC config, but kept for backwards compatibility
+    // if (!config?.usdc) {
+    //   throw new Error('[SolanaService] Configuration error: config.usdc is undefined');
+    // }
 
     const rpcUrl = config.solana?.rpcUrl;
     
@@ -845,15 +882,6 @@ export const initializeEscrow = async (
       buyerPubkey
     );
 
-    // Get USDC mint address (use devnet USDC for testing)
-    const usdcMintStr = config.usdc?.mintAddress || 'Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr'; // Devnet USDC
-    console.log('[SolanaService] USDC Config:', {
-      configured: config.usdc?.mintAddress,
-      using: usdcMintStr,
-      isDefault: !config.usdc?.mintAddress
-    });
-    const usdcMint = new PublicKey(usdcMintStr);
-
     // Generate a unique escrow ID (timestamp-based)
     // This will be used to derive the PDA on-chain
     const escrowId = new BN(Date.now());
@@ -864,8 +892,8 @@ export const initializeEscrow = async (
     const { getEscrowProgramService } = await import('./escrow-program.service');
     const escrowService = getEscrowProgramService();
     
-    // Convert price to USDC amount (assuming 6 decimals for USDC)
-    const usdcAmount = new BN(parseFloat(params.price.toString()) * 1_000_000);
+    // Convert price to SOL amount in lamports (1 SOL = 1,000,000,000 lamports)
+    const solAmount = new BN(parseFloat(params.price.toString()) * 1_000_000_000);
     
     // Convert expiry to Unix timestamp with 60-second buffer
     // IMPORTANT: Add buffer to account for network delays and avoid 0x1771 (InvalidExpiry) error
@@ -879,7 +907,7 @@ export const initializeEscrow = async (
       buyer: buyerPubkey?.toString() || sellerPubkey.toString(),
       seller: sellerPubkey.toString(),
       nftMint: nftMintPubkey.toString(),
-      usdcAmount: usdcAmount.toString(),
+      solAmount: solAmount.toString(),
       expiryTimestamp: expiryTimestamp.toString(),
       platformFeeBps: params.feeBps,
     });
@@ -888,15 +916,16 @@ export const initializeEscrow = async (
     // The fee is set during initialization and stored in escrow state
     // This prevents users from bypassing fees during settlement
     // Note: Using seller as buyer for now since buyer might be optional
-    const { pda: anchorEscrowPda, txId } = await escrowService.initAgreement(
+    const { pda: anchorEscrowPda, txId } = await escrowService.initAgreement({
       escrowId,
-      buyerPubkey || sellerPubkey, // Use seller if buyer not specified
-      sellerPubkey,
-      nftMintPubkey,
-      usdcAmount,
+      buyer: buyerPubkey || sellerPubkey, // Use seller if buyer not specified
+      seller: sellerPubkey,
+      nftMint: nftMintPubkey,
+      swapType: 'NFT_FOR_SOL',
+      solAmount,
       expiryTimestamp,
-      params.feeBps // Platform fee in basis points (set by authorized admin)
-    );
+      platformFeeBps: params.feeBps, // Platform fee in basis points (set by authorized admin)
+    });
     
     console.log('[SolanaService] Escrow initialized on-chain:', {
       escrowPda: anchorEscrowPda.toString(),
@@ -906,7 +935,6 @@ export const initializeEscrow = async (
     // Derive deposit addresses using the Anchor-derived PDA
     const depositAddresses = await deriveDepositAddresses(
       anchorEscrowPda,
-      usdcMint,
       nftMintPubkey
     );
     
@@ -936,4 +964,148 @@ export const validateSolanaAddress = (address: string): boolean => {
   } catch {
     return false;
   }
+};
+
+/**
+ * =================================
+ * SOL TRANSFER UTILITIES (V2)
+ * =================================
+ */
+
+/**
+ * Get SOL balance for an address
+ * @param address - Wallet address to check balance for
+ * @param connection - Optional Solana connection (uses default if not provided)
+ * @returns Balance in lamports
+ */
+export const getSolBalance = async (
+  address: string | PublicKey,
+  connection?: Connection
+): Promise<number> => {
+  try {
+    const conn = connection || getSolanaService().getConnection();
+    const pubkey = typeof address === 'string' ? new PublicKey(address) : address;
+    
+    const balance = await conn.getBalance(pubkey);
+    console.log(`[SolanaService] SOL balance for ${pubkey.toBase58()}: ${balance} lamports (${lamportsToSol(balance)} SOL)`);
+    
+    return balance;
+  } catch (error) {
+    console.error(`[SolanaService] Failed to get SOL balance:`, error);
+    throw new Error(`Failed to get SOL balance: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+};
+
+/**
+ * Convert lamports to SOL (with 9 decimal places)
+ * @param lamports - Amount in lamports
+ * @returns Amount in SOL
+ */
+export const lamportsToSol = (lamports: number | BN): number => {
+  const lamportsNum = typeof lamports === 'number' ? lamports : lamports.toNumber();
+  return lamportsNum / 1_000_000_000;
+};
+
+/**
+ * Convert SOL to lamports
+ * @param sol - Amount in SOL
+ * @returns Amount in lamports as BN
+ */
+export const solToLamports = (sol: number): BN => {
+  return new BN(Math.floor(sol * 1_000_000_000));
+};
+
+/**
+ * Validate SOL amount for escrow (beta limits: 0.01 - 15 SOL)
+ * @param lamports - Amount in lamports
+ * @returns Validation result with error message if invalid
+ */
+export const validateSolAmount = (
+  lamports: number | BN
+): { valid: boolean; error?: string } => {
+  const MIN_SOL = 0.01; // 10_000_000 lamports
+  const MAX_SOL = 15.0;   // 15_000_000_000 lamports
+  
+  const lamportsNum = typeof lamports === 'number' ? lamports : lamports.toNumber();
+  const solAmount = lamportsToSol(lamportsNum);
+  
+  if (lamportsNum < MIN_SOL * 1_000_000_000) {
+    return {
+      valid: false,
+      error: `SOL amount below minimum: ${MIN_SOL} SOL (BETA limit). Provided: ${solAmount} SOL`
+    };
+  }
+  
+  if (lamportsNum > MAX_SOL * 1_000_000_000) {
+    return {
+      valid: false,
+      error: `SOL amount exceeds maximum: ${MAX_SOL} SOL (BETA limit). Provided: ${solAmount} SOL`
+    };
+  }
+  
+  return { valid: true };
+};
+
+/**
+ * Check if an address has sufficient SOL balance
+ * @param address - Wallet address to check
+ * @param requiredLamports - Required amount in lamports
+ * @param connection - Optional Solana connection
+ * @returns True if balance is sufficient, false otherwise
+ */
+export const hasSufficientSolBalance = async (
+  address: string | PublicKey,
+  requiredLamports: number | BN,
+  connection?: Connection
+): Promise<boolean> => {
+  try {
+    const balance = await getSolBalance(address, connection);
+    const required = typeof requiredLamports === 'number' ? requiredLamports : requiredLamports.toNumber();
+    
+    const sufficient = balance >= required;
+    console.log(`[SolanaService] Balance check: ${balance} >= ${required}? ${sufficient}`);
+    
+    return sufficient;
+  } catch (error) {
+    console.error(`[SolanaService] Failed to check SOL balance:`, error);
+    return false;
+  }
+};
+
+/**
+ * Calculate platform fee from SOL amount
+ * @param solAmount - Total SOL amount in lamports
+ * @param feeBps - Fee in basis points (100 bps = 1%)
+ * @returns Fee amount in lamports
+ */
+export const calculateSolPlatformFee = (
+  solAmount: number | BN,
+  feeBps: number
+): BN => {
+  if (feeBps < 0 || feeBps > 10000) {
+    throw new Error(`Invalid fee basis points: ${feeBps}. Must be 0-10000`);
+  }
+  
+  const amount = typeof solAmount === 'number' ? new BN(solAmount) : solAmount;
+  
+  // fee = amount * feeBps / 10000
+  const fee = amount.mul(new BN(feeBps)).div(new BN(10000));
+  
+  return fee;
+};
+
+/**
+ * Calculate seller's net SOL amount after platform fee
+ * @param solAmount - Total SOL amount in lamports
+ * @param feeBps - Fee in basis points
+ * @returns Net amount seller receives in lamports
+ */
+export const calculateSellerNetSol = (
+  solAmount: number | BN,
+  feeBps: number
+): BN => {
+  const amount = typeof solAmount === 'number' ? new BN(solAmount) : solAmount;
+  const fee = calculateSolPlatformFee(amount, feeBps);
+  
+  return amount.sub(fee);
 };

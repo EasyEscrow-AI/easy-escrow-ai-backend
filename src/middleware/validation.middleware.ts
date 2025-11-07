@@ -20,8 +20,17 @@ export const validateAgreementCreation = async (
 ): Promise<void> => {
   try {
     const data: CreateAgreementDTO = {
-      nftMint: req.body.nft_mint || req.body.nftMint,
+      // Swap type parameters
+      swapType: req.body.swap_type || req.body.swapType,
+      nftMint: req.body.nft_mint || req.body.nftMint, // Seller's NFT (NFT A)
+      nftBMint: req.body.nft_b_mint || req.body.nftBMint, // Buyer's NFT (NFT B)
+      solAmount: req.body.sol_amount || req.body.solAmount,
+      feePayer: req.body.fee_payer || req.body.feePayer,
+      
+      // Backward compatibility
       price: req.body.price,
+      
+      // Standard fields
       seller: req.body.seller,
       buyer: req.body.buyer,
       expiry: req.body.expiry,
@@ -46,20 +55,42 @@ export const validateAgreementCreation = async (
     }
 
     // Step 2: On-chain validation - CRITICAL FIX for Error 3007
-    // Verify the NFT mint is actually a valid token mint owned by Token Program
+    // Verify the NFT mints are actually valid token mints owned by Token Program
+    const solanaService = getSolanaService();
+    const connection = solanaService.getConnection();
+    
+    // Validate seller's NFT (NFT A - always required)
     if (data.nftMint) {
-      const solanaService = getSolanaService();
-      const connection = solanaService.getConnection();
       const mintValidation = await isValidNFTMintOnChain(data.nftMint, connection);
       
       if (!mintValidation.valid) {
         res.status(400).json({
           error: 'Validation Error',
-          message: 'Invalid NFT mint',
+          message: 'Invalid seller NFT mint',
           details: [
             {
               field: 'nftMint',
-              message: mintValidation.error || 'Invalid NFT mint address'
+              message: mintValidation.error || 'Invalid seller NFT mint address'
+            }
+          ],
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+    }
+    
+    // Validate buyer's NFT (NFT B - required for NFT<>NFT swaps)
+    if (data.nftBMint) {
+      const mintValidation = await isValidNFTMintOnChain(data.nftBMint, connection);
+      
+      if (!mintValidation.valid) {
+        res.status(400).json({
+          error: 'Validation Error',
+          message: 'Invalid buyer NFT mint',
+          details: [
+            {
+              field: 'nftBMint',
+              message: mintValidation.error || 'Invalid buyer NFT mint address'
             }
           ],
           timestamp: new Date().toISOString(),

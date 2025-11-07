@@ -29,6 +29,7 @@ interface MonitoringMetrics {
   totalDepositsDetected: number;
   usdcDepositsDetected: number;
   nftDepositsDetected: number;
+  solDepositsDetected: number;
   failedDeposits: number;
   accountChangesProcessed: number;
   lastActivityTime?: Date;
@@ -70,6 +71,7 @@ export class MonitoringOrchestratorService {
     totalDepositsDetected: 0,
     usdcDepositsDetected: 0,
     nftDepositsDetected: 0,
+    solDepositsDetected: 0,
     failedDeposits: 0,
     accountChangesProcessed: 0,
   };

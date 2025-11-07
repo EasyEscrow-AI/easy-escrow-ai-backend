@@ -1,8 +1,14 @@
 /**
- * USDC Deposit Service
+ * USDC Deposit Service (LEGACY - KEPT FOR FUTURE USDC SUPPORT)
  *
  * Handles detection and validation of USDC deposits to escrow accounts.
  * Monitors SPL token account changes, validates amounts, and updates database.
+ * 
+ * NOTE: This service is currently not used in production (V2 uses SOL).
+ * We're keeping it for potential future USDC support if we decide to re-enable
+ * USDC-based escrows alongside SOL-based escrows.
+ * 
+ * @deprecated V2 uses SOL deposits, not USDC
  */
 
 import { PublicKey, AccountInfo, Context } from '@solana/web3.js';

@@ -1,4 +1,4 @@
-import { Agreement, AgreementStatus, Deposit } from '../generated/prisma';
+import { Agreement, AgreementStatus, Deposit, SwapType, FeePayer } from '../generated/prisma';
 import {
   CreateAgreementDTO,
   CreateAgreementResponseDTO,
@@ -17,10 +17,12 @@ import {
 } from './transaction-log.service';
 import { Decimal } from '@prisma/client/runtime/library';
 import { PublicKey } from '@solana/web3.js';
+import { getAssociatedTokenAddress } from '@solana/spl-token';
 import { EscrowProgramService } from './escrow-program.service';
 import { config } from '../config';
 import { prisma } from '../config/database';
 import { validateExpiry } from '../models/validators/expiry.validator';
+import BN from 'bn.js';
 
 /**
  * Agreement Service
@@ -28,59 +30,23 @@ import { validateExpiry } from '../models/validators/expiry.validator';
  */
 
 /**
- * Create a new agreement
+ * Create a new agreement using SOL-based escrow
  */
 export const createAgreement = async (
   data: CreateAgreementDTO
 ): Promise<CreateAgreementResponseDTO> => {
   try {
-    // 0. Ensure USDC accounts exist for both parties (platform pays if needed)
-    // Only if both seller and buyer are specified (buyer can be optional for some escrow types)
-    if (data.buyer) {
-      console.log('[AgreementService] Ensuring USDC accounts exist...');
-      const { ensureUSDCAccountsExist } = await import('./usdc-account.service');
-      const connection = getSolanaService().getConnection();
-      const usdcMint = new PublicKey(process.env.USDC_MINT_ADDRESS!);
+    // Default to NFT_FOR_SOL if not specified
+    const swapType = data.swapType || SwapType.NFT_FOR_SOL;
+    const feePayer = data.feePayer ?? FeePayer.BUYER; // Use nullish coalescing to ensure always has value
 
-      try {
-        await ensureUSDCAccountsExist(
-          connection,
-          new PublicKey(data.seller),
-          new PublicKey(data.buyer),
-          usdcMint
-        );
-        console.log('[AgreementService] ✅ USDC accounts verified/created');
-      } catch (accountError) {
-        console.error('[AgreementService] ❌ Failed to setup USDC accounts:', accountError);
-
-        // Fail fast with clear error message
-        // If USDC accounts can't be created, escrow initialization will fail anyway
-        // Better to fail here with the root cause than continue and get a generic error
-        const errorMessage =
-          accountError instanceof Error
-            ? accountError.message
-            : 'Unknown error creating USDC accounts';
-
-        throw new Error(
-          `Failed to create USDC token accounts: ${errorMessage}. ` +
-            `Both seller and buyer must have USDC token accounts for escrow. ` +
-            `Platform attempted to create them but failed. Check wallet addresses and network connectivity.`
-        );
-      }
-    } else {
-      console.log('[AgreementService] Buyer not specified, skipping USDC account verification');
-    }
+    console.log('[AgreementService] Creating agreement with swap type:', swapType);
 
     // 1. Parse and validate expiry (supports multiple formats: timestamp, duration, preset)
-    const expiryInput = data.expiry || data.expiryDurationHours;
+    // If neither expiry nor expiryDurationHours provided, defaults to 5 minutes
+    const expiryInput = data.expiry ?? data.expiryDurationHours;
     
-    if (!expiryInput) {
-      throw new ValidationError(
-        'Expiry is required. Provide either "expiry" or "expiryDurationHours".',
-        { data }
-      );
-    }
-    
+    // validateExpiry now handles undefined and applies default (5 minutes)
     const expiryValidation = validateExpiry(expiryInput);
     
     if (!expiryValidation.valid || !expiryValidation.expiryDate) {
@@ -93,86 +59,145 @@ export const createAgreement = async (
     const expiryDate = expiryValidation.expiryDate;
     console.log(`[AgreementService] Parsed expiry: ${expiryDate.toISOString()} (${expiryValidation.durationHours?.toFixed(1)} hours from now)`);
 
-    // 2. Initialize escrow on-chain
-    const escrowResult = await initializeEscrow({
-      nftMint: data.nftMint,
-      price: data.price,
-      seller: data.seller,
-      buyer: data.buyer,
-      expiry: expiryDate,
-      feeBps: data.feeBps,
-      honorRoyalties: data.honorRoyalties,
-    });
+    // 2. Generate unique escrow ID
+    const escrowId = new BN(Date.now());
 
-    console.log('[AgreementService] Escrow Result:', JSON.stringify(escrowResult, null, 2));
-
-    // IMPORTANT: Add the same 60-second buffer to DB expiry that was added on-chain
-    // This ensures DB expiry matches on-chain expiry exactly, preventing race conditions
-    // where DB thinks agreement is expired but on-chain still has time remaining
+    // 3. Convert expiry to Unix timestamp with 60-second buffer
     const EXPIRY_BUFFER_SECONDS = 60;
+    const expiryTimestamp = Math.floor(expiryDate.getTime() / 1000) + EXPIRY_BUFFER_SECONDS;
     const bufferedExpiry = new Date(expiryDate.getTime() + EXPIRY_BUFFER_SECONDS * 1000);
 
-    // 3. Store agreement in database
+    // 4. Prepare swap-specific parameters
+    let solAmount: BN | undefined;
+    let nftBMint: PublicKey | undefined;
+
+    // Convert SOL amount to lamports if provided
+    if (data.solAmount !== undefined) {
+      const solAmountNum = typeof data.solAmount === 'string' 
+        ? parseInt(data.solAmount, 10) 
+        : data.solAmount;
+      solAmount = new BN(solAmountNum);
+      console.log(`[AgreementService] SOL amount: ${solAmount.toString()} lamports`);
+    }
+
+    // Parse buyer's NFT mint if provided (for NFT<>NFT swaps)
+    if (data.nftBMint) {
+      nftBMint = new PublicKey(data.nftBMint);
+      console.log(`[AgreementService] Buyer NFT (NFT B): ${nftBMint.toString()}`);
+    }
+
+    // 5. Initialize escrow on-chain
+    const escrowProgramService = new EscrowProgramService();
+    const escrowResult = await escrowProgramService.initAgreement({
+      escrowId,
+      buyer: new PublicKey(data.buyer || data.seller), // Use seller as fallback if no buyer specified
+      seller: new PublicKey(data.seller),
+      nftMint: new PublicKey(data.nftMint),
+      swapType: swapType as 'NFT_FOR_SOL' | 'NFT_FOR_NFT_WITH_FEE' | 'NFT_FOR_NFT_PLUS_SOL',
+      solAmount,
+      nftBMint,
+      expiryTimestamp: new BN(expiryTimestamp),
+      platformFeeBps: data.feeBps,
+      feePayer: feePayer as 'BUYER' | 'SELLER',
+    });
+
+    console.log('[AgreementService] Escrow Result:', {
+      pda: escrowResult.pda.toString(),
+      txId: escrowResult.txId,
+      swapType,
+    });
+
+    // 6. Derive NFT deposit addresses (ATAs)
+    const sellerNftAta = await getAssociatedTokenAddress(
+      new PublicKey(data.nftMint),
+      escrowResult.pda,
+      true // allowOwnerOffCurve for PDAs
+    );
+
+    let buyerNftAta: PublicKey | undefined;
+    if (nftBMint) {
+      buyerNftAta = await getAssociatedTokenAddress(
+        nftBMint,
+        escrowResult.pda,
+        true // allowOwnerOffCurve for PDAs
+      );
+    }
+
+    // 7. Store agreement in database with SOL fields
     const agreement = await prisma.agreement.create({
       data: {
         agreementId: generateAgreementId(),
-        escrowPda: escrowResult.escrowPda,
+        escrowPda: escrowResult.pda.toString(),
         nftMint: data.nftMint,
         seller: data.seller,
         buyer: data.buyer || null,
-        price: new Decimal(data.price.toString()),
+        
+        // SOL-based fields
+        swapType: swapType,
+        solAmount: solAmount ? new Decimal(solAmount.toString()) : null,
+        nftBMint: data.nftBMint || null,
+        feePayer: feePayer,
+        
+        // Legacy field for backward compatibility (deprecated)
+        // Price is required in schema, so default to 0 if not provided and no solAmount
+        price: data.price ? new Decimal(data.price.toString()) : (solAmount ? new Decimal(solAmount.toString()) : new Decimal('0')),
+        
         feeBps: data.feeBps,
         honorRoyalties: data.honorRoyalties,
         status: AgreementStatus.PENDING,
-        expiry: bufferedExpiry, // Use buffered expiry to match on-chain state
-        usdcDepositAddr: escrowResult.depositAddresses.usdc,
-        nftDepositAddr: escrowResult.depositAddresses.nft,
-        initTxId: escrowResult.transactionId,
+        expiry: bufferedExpiry,
+        
+        // Deposit addresses
+        usdcDepositAddr: null, // DEPRECATED: V2 uses SOL sent directly to escrowPda, not USDC token accounts
+        nftDepositAddr: sellerNftAta.toString(),
+        
+        initTxId: escrowResult.txId,
       },
     });
 
-    // 3a. Log the initialization transaction
+    console.log(`[AgreementService] ✅ Agreement created: ${agreement.agreementId}`);
+
+    // 8. Log the initialization transaction
     try {
       const transactionLogService = getTransactionLogService();
       await transactionLogService.captureTransaction({
-        txId: escrowResult.transactionId,
+        txId: escrowResult.txId,
         operationType: TransactionOperationType.INIT_ESCROW,
         agreementId: agreement.agreementId,
         status: TransactionStatusType.CONFIRMED,
       });
     } catch (logError) {
-      // Log error but don't fail the agreement creation
-      console.error('Failed to log init transaction:', logError);
+      console.error('[AgreementService] Failed to log init transaction:', logError);
     }
 
-    // 4. Trigger monitoring reload to start monitoring this agreement
+    // 9. Trigger monitoring reload to start monitoring this agreement
     try {
       const orchestrator = getMonitoringOrchestrator();
       if (orchestrator.isServiceRunning()) {
         await orchestrator.reloadAgreements();
-        console.log(`Started monitoring for agreement: ${agreement.agreementId}`);
+        console.log(`[AgreementService] Started monitoring for agreement: ${agreement.agreementId}`);
       }
     } catch (monitoringError) {
-      // Log error but don't fail the agreement creation
-      console.error('Failed to trigger monitoring reload:', monitoringError);
+      console.error('[AgreementService] Failed to trigger monitoring reload:', monitoringError);
     }
 
-    // 5. Return response
+    // 10. Return response
     return {
       agreementId: agreement.agreementId,
       escrowPda: agreement.escrowPda,
+      swapType: agreement.swapType!,
       depositAddresses: {
-        usdc: agreement.usdcDepositAddr!,
+        usdc: undefined, // Deprecated - SOL sent directly to escrowPda
         nft: agreement.nftDepositAddr!,
+        nftB: buyerNftAta?.toString(), // For NFT<>NFT swaps
       },
       expiry: agreement.expiry.toISOString(),
       transactionId: agreement.initTxId!,
     };
   } catch (error) {
-    console.error('Error creating agreement:', error);
+    console.error('[AgreementService] Error creating agreement:', error);
     
     // Re-throw ValidationError without wrapping to preserve prototype chain
-    // This allows the route handler to catch it with instanceof check
     if (error instanceof ValidationError) {
       throw error;
     }
@@ -249,6 +274,7 @@ export const listAgreements = async (
 
     const where: any = {};
 
+    // Standard filters
     if (filters.status) {
       where.status = filters.status;
     }
@@ -258,8 +284,16 @@ export const listAgreements = async (
     if (filters.buyer) {
       where.buyer = filters.buyer;
     }
+    
+    // SOL-based filters
+    if (filters.swapType) {
+      where.swapType = filters.swapType;
+    }
     if (filters.nftMint) {
       where.nftMint = filters.nftMint;
+    }
+    if (filters.nftBMint) {
+      where.nftBMint = filters.nftBMint;
     }
 
     const [agreements, total] = await Promise.all([
@@ -305,13 +339,28 @@ export const updateAgreementStatus = async (
 };
 
 /**
- * Delete agreement
+ * Delete agreement (primarily for test cleanup)
+ * @param agreementId - Agreement ID to delete
+ * @throws Error if agreement not found
  */
 export const deleteAgreement = async (agreementId: string): Promise<void> => {
+  console.log(`[AgreementService] Deleting agreement: ${agreementId}`);
+
+  // Check if agreement exists
+  const agreement = await prisma.agreement.findUnique({
+    where: { agreementId },
+  });
+
+  if (!agreement) {
+    throw new Error(`Agreement ${agreementId} not found`);
+  }
+
   try {
+    // Delete agreement (cascades to related records via Prisma)
     await prisma.agreement.delete({
       where: { agreementId },
     });
+    console.log(`[AgreementService] ✅ Agreement deleted: ${agreementId}`);
   } catch (error) {
     console.error('Error deleting agreement:', error);
     throw new Error('Failed to delete agreement');
@@ -341,8 +390,17 @@ const generateAgreementId = (): string => {
 const mapAgreementToDTO = (agreement: any): AgreementResponseDTO => {
   return {
     agreementId: agreement.agreementId,
+    
+    // SOL-based fields
+    swapType: agreement.swapType || undefined,
     nftMint: agreement.nftMint,
-    price: agreement.price.toString(),
+    nftBMint: agreement.nftBMint || undefined,
+    solAmount: agreement.solAmount?.toString() || undefined,
+    feePayer: agreement.feePayer || undefined,
+    
+    // Deprecated USDC field (backward compatibility)
+    price: agreement.price?.toString() || undefined,
+    
     seller: agreement.seller,
     buyer: agreement.buyer || undefined,
     status: agreement.status,
@@ -350,8 +408,11 @@ const mapAgreementToDTO = (agreement: any): AgreementResponseDTO => {
     feeBps: agreement.feeBps,
     honorRoyalties: agreement.honorRoyalties,
     escrowPda: agreement.escrowPda,
+    
+    // Deprecated USDC deposit address
     usdcDepositAddr: agreement.usdcDepositAddr || undefined,
     nftDepositAddr: agreement.nftDepositAddr || undefined,
+    
     initTxId: agreement.initTxId || undefined,
     settleTxId: agreement.settleTxId || undefined,
     cancelTxId: agreement.cancelTxId || undefined,
@@ -369,29 +430,44 @@ const mapAgreementToDTO = (agreement: any): AgreementResponseDTO => {
 const mapAgreementToDetailDTO = (agreement: any): AgreementDetailResponseDTO => {
   const baseDTO = mapAgreementToDTO(agreement);
 
-  // Map deposits
+  // Map deposits with SOL and NFT_BUYER support
   const deposits: DepositInfoDTO[] = agreement.deposits.map((deposit: any) => ({
     id: deposit.id,
     type: deposit.type,
     depositor: deposit.depositor,
     amount: deposit.amount?.toString(),
+    tokenMint: deposit.tokenAccount ? undefined : deposit.nftMetadata?.mint, // For NFT deposits
     status: deposit.status,
     txId: deposit.txId || undefined,
     detectedAt: deposit.detectedAt.toISOString(),
     confirmedAt: deposit.confirmedAt?.toISOString(),
   }));
 
-  // Calculate balances
-  const usdcDeposit = agreement.deposits.find(
-    (d: any) => d.type === 'USDC' && d.status === 'CONFIRMED'
+  // Calculate balances for SOL-based swaps
+  const solDeposit = agreement.deposits.find(
+    (d: any) => d.type === 'SOL' && d.status === 'CONFIRMED'
   );
   const nftDeposit = agreement.deposits.find(
     (d: any) => d.type === 'NFT' && d.status === 'CONFIRMED'
   );
+  const nftBDeposit = agreement.deposits.find(
+    (d: any) => d.type === 'NFT_BUYER' && d.status === 'CONFIRMED'
+  );
+  
+  // Legacy USDC deposit for backward compatibility
+  const usdcDeposit = agreement.deposits.find(
+    (d: any) => d.type === 'USDC' && d.status === 'CONFIRMED'
+  );
 
   const balances = {
-    usdcLocked: !!usdcDeposit,
+    // SOL-based balances
+    solLocked: !!solDeposit,
     nftLocked: !!nftDeposit,
+    nftBLocked: !!nftBDeposit,
+    actualSolAmount: solDeposit?.amount?.toString(),
+    
+    // Deprecated USDC balances (backward compatibility)
+    usdcLocked: !!usdcDeposit,
     actualUsdcAmount: usdcDeposit?.amount?.toString(),
   };
 
@@ -467,35 +543,28 @@ export const cancelAgreement = async (
         ? new PublicKey(agreement.buyer)
         : seller;
       
-      // Get USDC mint from config
-      const usdcMintAddress = config.usdc?.mintAddress;
-      if (!usdcMintAddress) {
-        throw new Error('USDC_MINT_ADDRESS not configured');
-      }
-      const usdcMint = new PublicKey(usdcMintAddress);
-      
       // Choose appropriate cancellation method based on actual expiry time
       // Check if the agreement has actually expired (time-based, not status-based)
       const isExpired = now > agreement.expiry;
       
       if (isExpired) {
         console.log('[AgreementService] Using cancelIfExpired for time-expired agreement');
-        cancelTxId = await escrowService.cancelIfExpired(
+        cancelTxId = await escrowService.cancelIfExpired({
           escrowPda,
           buyer,
           seller,
           nftMint,
-          usdcMint
-        );
+          swapType: (agreement.swapType as 'NFT_FOR_SOL' | 'NFT_FOR_NFT_WITH_FEE' | 'NFT_FOR_NFT_PLUS_SOL') || 'NFT_FOR_SOL',
+        });
       } else {
         console.log('[AgreementService] Using adminCancel for non-expired cancellation');
-        cancelTxId = await escrowService.adminCancel(
+        cancelTxId = await escrowService.adminCancel({
           escrowPda,
           buyer,
           seller,
           nftMint,
-          usdcMint
-        );
+          swapType: (agreement.swapType as 'NFT_FOR_SOL' | 'NFT_FOR_NFT_WITH_FEE' | 'NFT_FOR_NFT_PLUS_SOL') || 'NFT_FOR_SOL',
+        });
       }
       
       console.log('[AgreementService] On-chain cancellation successful:', cancelTxId);
@@ -587,7 +656,17 @@ export const prepareDepositNftTransaction = async (
     const seller = new PublicKey(agreement.seller);
     const nftMint = new PublicKey(agreement.nftMint);
 
-    const result = await escrowService.buildDepositNftTransaction(escrowPda, seller, nftMint);
+    // Detect v1 vs v2 based on presence of swapType field
+    const isV2 = agreement.swapType !== null;
+
+    let result;
+    if (isV2) {
+      console.log('[AgreementService] Detected v2 agreement, using depositSellerNft instruction');
+      result = await escrowService.buildDepositSellerNftTransaction(escrowPda, seller, nftMint);
+    } else {
+      console.log('[AgreementService] Detected v1 agreement, using depositNft instruction');
+      result = await escrowService.buildDepositNftTransaction(escrowPda, seller, nftMint);
+    }
 
     console.log('[AgreementService] Unsigned NFT deposit transaction prepared');
 
@@ -685,13 +764,23 @@ export const depositNftToEscrow = async (
       );
     }
 
-    // 3. Call on-chain deposit_nft instruction
+    // 3. Call on-chain deposit_nft instruction (v1 or v2)
     const escrowService = new EscrowProgramService();
     const escrowPda = new PublicKey(agreement.escrowPda);
     const seller = new PublicKey(agreement.seller);
     const nftMint = new PublicKey(agreement.nftMint);
 
-    const txId = await escrowService.depositNft(escrowPda, seller, nftMint);
+    // Detect v1 vs v2 based on presence of swapType field
+    const isV2 = agreement.swapType !== null;
+
+    let txId;
+    if (isV2) {
+      console.log('[AgreementService] Detected v2 agreement, calling depositSellerNft');
+      txId = await escrowService.depositSellerNft(escrowPda, seller, nftMint);
+    } else {
+      console.log('[AgreementService] Detected v1 agreement, calling depositNft');
+      txId = await escrowService.depositNft(escrowPda, seller, nftMint);
+    }
 
     console.log('[AgreementService] NFT deposit transaction:', txId);
 
@@ -805,6 +894,338 @@ export const depositUsdcToEscrow = async (
       } catch (logError) {
         // Ignore logging errors
         console.error('[AgreementService] Failed to log USDC deposit error:', logError);
+      }
+    }
+
+    throw error;
+  }
+};
+
+/**
+ * Build unsigned deposit SOL transaction (PRODUCTION)
+ * Client signs and submits this transaction with their wallet
+ */
+export const prepareDepositSolTransaction = async (
+  agreementId: string
+): Promise<{ transaction: string; message: string }> => {
+  try {
+    console.log('[AgreementService] prepareDepositSolTransaction called for:', agreementId);
+
+    // 1. Get agreement from database
+    const agreement = await prisma.agreement.findUnique({
+      where: { agreementId },
+    });
+
+    if (!agreement) {
+      throw new Error(`Agreement not found: ${agreementId}`);
+    }
+
+    // 2. Validate agreement has buyer
+    if (!agreement.buyer) {
+      throw new Error('Cannot deposit SOL: No buyer assigned to agreement');
+    }
+
+    // 3. Validate swap type supports SOL
+    if (
+      agreement.swapType !== 'NFT_FOR_SOL' &&
+      agreement.swapType !== 'NFT_FOR_NFT_PLUS_SOL' &&
+      agreement.swapType !== 'NFT_FOR_NFT_WITH_FEE'
+    ) {
+      throw new Error(
+        `Cannot deposit SOL: Agreement swap type is ${agreement.swapType}. ` +
+          `SOL deposits only allowed for NFT_FOR_SOL, NFT_FOR_NFT_PLUS_SOL, and NFT_FOR_NFT_WITH_FEE swaps.`
+      );
+    }
+
+    // 4. Validate status - allow SOL deposit when PENDING or NFT_LOCKED (seller deposited)
+    const allowedStatuses: AgreementStatus[] = [
+      AgreementStatus.PENDING,
+      AgreementStatus.NFT_LOCKED,
+    ];
+    if (!allowedStatuses.includes(agreement.status)) {
+      throw new Error(
+        `Cannot deposit SOL: Agreement status is ${agreement.status}. Must be PENDING or NFT_LOCKED.`
+      );
+    }
+
+    // 5. Validate solAmount exists
+    if (!agreement.solAmount) {
+      throw new Error('Cannot deposit SOL: Agreement has no solAmount specified');
+    }
+
+    // 6. Build unsigned transaction
+    const escrowService = new EscrowProgramService();
+    const escrowPda = new PublicKey(agreement.escrowPda);
+    const buyer = new PublicKey(agreement.buyer);
+    // Convert Prisma Decimal to string before passing to BN
+    const solAmount = new BN(agreement.solAmount.toString());
+
+    const result = await escrowService.buildDepositSolTransaction(escrowPda, buyer, solAmount);
+
+    console.log('[AgreementService] Unsigned SOL deposit transaction prepared');
+
+    return result;
+  } catch (error) {
+    console.error('[AgreementService] prepareDepositSolTransaction error:', error);
+    throw error;
+  }
+};
+
+/**
+ * Build unsigned deposit seller SOL fee transaction (PRODUCTION)
+ * For NFT_FOR_NFT_WITH_FEE swap type - seller pays 0.005 SOL
+ * Client signs and submits this transaction with seller's wallet
+ */
+export const prepareDepositSellerSolFeeTransaction = async (
+  agreementId: string
+): Promise<{ transaction: string; message: string }> => {
+  try {
+    console.log('[AgreementService] prepareDepositSellerSolFeeTransaction called for:', agreementId);
+
+    // 1. Get agreement from database
+    const agreement = await prisma.agreement.findUnique({
+      where: { agreementId },
+    });
+
+    if (!agreement) {
+      throw new Error(`Agreement not found: ${agreementId}`);
+    }
+
+    // 2. Validate swap type is NFT_FOR_NFT_WITH_FEE
+    if (agreement.swapType !== 'NFT_FOR_NFT_WITH_FEE') {
+      throw new Error(
+        `Cannot deposit seller SOL fee: Agreement swap type is ${agreement.swapType}. ` +
+          `Seller SOL fee deposits only allowed for NFT_FOR_NFT_WITH_FEE swaps.`
+      );
+    }
+
+    // 3. Validate status - allow seller fee deposit when PENDING or NFT_LOCKED
+    const allowedStatuses: AgreementStatus[] = [
+      AgreementStatus.PENDING,
+      AgreementStatus.NFT_LOCKED,
+      AgreementStatus.USDC_LOCKED, // In case buyer deposited first
+    ];
+    if (!allowedStatuses.includes(agreement.status)) {
+      throw new Error(
+        `Cannot deposit seller SOL fee: Agreement status is ${agreement.status}. Must be PENDING, NFT_LOCKED, or USDC_LOCKED.`
+      );
+    }
+
+    // 4. Validate solAmount exists
+    if (!agreement.solAmount) {
+      throw new Error('Cannot deposit seller SOL fee: Agreement has no solAmount specified');
+    }
+
+    // 5. Build unsigned transaction
+    const escrowService = new EscrowProgramService();
+    const escrowPda = new PublicKey(agreement.escrowPda);
+    const seller = new PublicKey(agreement.seller);
+    // Convert Prisma Decimal to string before passing to BN
+    const feeAmount = new BN(agreement.solAmount.toString());
+
+    const result = await escrowService.buildDepositSellerSolFeeTransaction(escrowPda, seller, feeAmount);
+
+    console.log('[AgreementService] Unsigned seller SOL fee deposit transaction prepared');
+
+    return result;
+  } catch (error) {
+    console.error('[AgreementService] prepareDepositSellerSolFeeTransaction error:', error);
+    throw error;
+  }
+};
+
+/**
+ * Build unsigned deposit buyer NFT transaction (PRODUCTION)
+ * For NFT_FOR_NFT_WITH_FEE and NFT_FOR_NFT_PLUS_SOL swap types - buyer deposits NFT B
+ * Client signs and submits this transaction with buyer's wallet
+ */
+export const prepareDepositBuyerNftTransaction = async (
+  agreementId: string
+): Promise<{ transaction: string; message: string }> => {
+  try {
+    console.log('[AgreementService] prepareDepositBuyerNftTransaction called for:', agreementId);
+
+    // 1. Get agreement from database
+    const agreement = await prisma.agreement.findUnique({
+      where: { agreementId },
+    });
+
+    if (!agreement) {
+      throw new Error(`Agreement not found: ${agreementId}`);
+    }
+
+    // 2. Validate buyer exists
+    if (!agreement.buyer) {
+      throw new Error('Cannot deposit buyer NFT: No buyer assigned to agreement');
+    }
+
+    // 3. Validate swap type requires buyer NFT
+    if (
+      agreement.swapType !== 'NFT_FOR_NFT_WITH_FEE' &&
+      agreement.swapType !== 'NFT_FOR_NFT_PLUS_SOL'
+    ) {
+      throw new Error(
+        `Cannot deposit buyer NFT: Agreement swap type is ${agreement.swapType}. ` +
+          `Buyer NFT deposits only allowed for NFT_FOR_NFT_WITH_FEE and NFT_FOR_NFT_PLUS_SOL swaps.`
+      );
+    }
+
+    // 4. Validate NFT B mint exists
+    if (!agreement.nftBMint) {
+      throw new Error('Cannot deposit buyer NFT: Agreement has no nftBMint specified');
+    }
+
+    // 5. Validate status - allow buyer NFT deposit when PENDING or NFT_LOCKED (seller deposited)
+    const allowedStatuses: AgreementStatus[] = [
+      AgreementStatus.PENDING,
+      AgreementStatus.NFT_LOCKED,
+      AgreementStatus.USDC_LOCKED, // In case seller deposited SOL fee first
+    ];
+    if (!allowedStatuses.includes(agreement.status)) {
+      throw new Error(
+        `Cannot deposit buyer NFT: Agreement status is ${agreement.status}. Must be PENDING, NFT_LOCKED, or USDC_LOCKED.`
+      );
+    }
+
+    // 6. Build unsigned transaction
+    const escrowService = new EscrowProgramService();
+    const escrowPda = new PublicKey(agreement.escrowPda);
+    const buyer = new PublicKey(agreement.buyer);
+    const nftBMint = new PublicKey(agreement.nftBMint);
+
+    const result = await escrowService.buildDepositBuyerNftTransaction(escrowPda, buyer, nftBMint);
+
+    console.log('[AgreementService] Unsigned buyer NFT deposit transaction prepared');
+
+    return result;
+  } catch (error) {
+    console.error('[AgreementService] prepareDepositBuyerNftTransaction error:', error);
+    throw error;
+  }
+};
+
+/**
+ * Deposit SOL to escrow (server-side signing)
+ * @deprecated Use prepareDepositSolTransaction for production (client-side signing)
+ */
+export const depositSolToEscrow = async (
+  agreementId: string
+): Promise<{ transactionId: string }> => {
+  try {
+    console.log('[AgreementService] depositSolToEscrow called for:', agreementId);
+
+    // 1. Get agreement from database
+    const agreement = await prisma.agreement.findUnique({
+      where: { agreementId },
+      include: { deposits: true },
+    });
+
+    if (!agreement) {
+      throw new Error(`Agreement not found: ${agreementId}`);
+    }
+
+    // 2. Validate buyer exists
+    if (!agreement.buyer) {
+      throw new Error('Cannot deposit SOL: No buyer assigned');
+    }
+
+    // 3. Validate swap type
+    if (
+      agreement.swapType !== 'NFT_FOR_SOL' &&
+      agreement.swapType !== 'NFT_FOR_NFT_PLUS_SOL'
+    ) {
+      throw new Error(
+        `Cannot deposit SOL: Agreement swap type is ${agreement.swapType}`
+      );
+    }
+
+    // 4. Validate status
+    const allowedStatuses: AgreementStatus[] = [
+      AgreementStatus.PENDING,
+      AgreementStatus.NFT_LOCKED,
+    ];
+    if (!allowedStatuses.includes(agreement.status)) {
+      throw new Error(
+        `Cannot deposit SOL: Agreement status is ${agreement.status}. Must be PENDING or NFT_LOCKED.`
+      );
+    }
+
+    // 5. Validate solAmount exists
+    if (!agreement.solAmount) {
+      throw new Error('Cannot deposit SOL: Agreement has no solAmount specified');
+    }
+
+    // 6. Call on-chain deposit_sol instruction
+    const escrowService = new EscrowProgramService();
+    const escrowPda = new PublicKey(agreement.escrowPda);
+    const buyer = new PublicKey(agreement.buyer);
+    // Convert Prisma Decimal to string before passing to BN
+    const solAmount = new BN(agreement.solAmount.toString());
+
+    const txId = await escrowService.depositSol(escrowPda, buyer, solAmount);
+
+    console.log('[AgreementService] SOL deposit transaction:', txId);
+
+    // 7. Update agreement status immediately
+    // Check if NFT is already deposited to determine new status
+    const nftDeposit = agreement.deposits.find(
+      (d) => d.type === 'NFT' && d.status === 'CONFIRMED'
+    );
+
+    const newStatus = nftDeposit ? AgreementStatus.BOTH_LOCKED : AgreementStatus.USDC_LOCKED;
+    
+    await prisma.agreement.update({
+      where: { id: agreement.id },
+      data: {
+        status: newStatus,
+        updatedAt: new Date(),
+      },
+    });
+
+    console.log(`[AgreementService] Agreement ${agreementId} status updated to: ${newStatus}`);
+
+    // 8. Record SOL deposit in deposits table
+    await prisma.deposit.create({
+      data: {
+        agreementId,
+        type: 'SOL',
+        depositor: agreement.buyer,
+        amount: new Decimal(agreement.solAmount.toString()).div(1e9), // Convert lamports to SOL
+        status: 'CONFIRMED',
+        detectedAt: new Date(),
+        confirmedAt: new Date(),
+      },
+    });
+
+    console.log('[AgreementService] SOL deposit recorded in database');
+
+    // 9. Log transaction
+    const txLogService = getTransactionLogService();
+    await txLogService.captureTransaction({
+      txId,
+      agreementId,
+      operationType: 'DEPOSIT_SOL' as any, // Add to TransactionOperationType enum
+      status: TransactionStatusType.CONFIRMED,
+    });
+
+    return { transactionId: txId };
+  } catch (error: any) {
+    console.error('[AgreementService] depositSolToEscrow error:', error);
+
+    // Log failure (optional)
+    if (error instanceof Error && error.message) {
+      const txLogService = getTransactionLogService();
+      try {
+        await txLogService.captureTransaction({
+          txId: `failed-sol-${Date.now()}`,
+          agreementId,
+          operationType: 'DEPOSIT_SOL' as any,
+          status: TransactionStatusType.FAILED,
+          errorMessage: error.message,
+        });
+      } catch (logError) {
+        // Ignore logging errors
+        console.error('[AgreementService] Failed to log SOL deposit error:', logError);
       }
     }
 

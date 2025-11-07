@@ -2,26 +2,30 @@
  * Expiry Validation Rules
  * 
  * Enforces custom expiry duration constraints for agreements:
- * - Minimum: 1 hour
- * - Maximum: 24 hours  
+ * - Minimum: 5 minutes
+ * - Maximum: 24 hours
+ * - Default: 5 minutes (when not specified)
  * - Supports both duration and absolute timestamp
  * - Provides preset durations for common use cases
  */
 
 export const EXPIRY_CONSTANTS = {
   // Duration limits in milliseconds
-  MIN_DURATION_MS: 60 * 60 * 1000, // 1 hour
+  MIN_DURATION_MS: 5 * 60 * 1000, // 5 minutes
   MAX_DURATION_MS: 24 * 60 * 60 * 1000, // 24 hours
+  DEFAULT_DURATION_MS: 5 * 60 * 1000, // 5 minutes (default when not specified)
 
   // Duration limits in hours (for convenience)
-  MIN_DURATION_HOURS: 1,
+  MIN_DURATION_HOURS: 5 / 60, // 0.0833... hours (5 minutes)
   MAX_DURATION_HOURS: 24,
+  DEFAULT_DURATION_HOURS: 5 / 60, // 0.0833... hours (5 minutes)
 
   // On-chain buffer for clock skew/latency (60 seconds as per design)
   ON_CHAIN_BUFFER_MS: 60 * 1000,
 
   // Preset durations (in milliseconds)
   PRESETS: {
+    FIVE_MINUTES: 5 * 60 * 1000,
     ONE_HOUR: 60 * 60 * 1000,
     SIX_HOURS: 6 * 60 * 60 * 1000,
     TWELVE_HOURS: 12 * 60 * 60 * 1000,
@@ -29,7 +33,7 @@ export const EXPIRY_CONSTANTS = {
   } as const,
 
   // Preset names for API
-  PRESET_NAMES: ['1h', '6h', '12h', '24h'] as const,
+  PRESET_NAMES: ['5m', '1h', '6h', '12h', '24h'] as const,
 } as const;
 
 export type ExpiryPreset = (typeof EXPIRY_CONSTANTS.PRESET_NAMES)[number];
@@ -46,6 +50,8 @@ export interface ExpiryValidationResult {
  */
 export function presetToDuration(preset: ExpiryPreset): number {
   switch (preset) {
+    case '5m':
+      return EXPIRY_CONSTANTS.PRESETS.FIVE_MINUTES;
     case '1h':
       return EXPIRY_CONSTANTS.PRESETS.ONE_HOUR;
     case '6h':
@@ -110,7 +116,7 @@ export function validateExpiryTimestamp(
   if (durationMs < EXPIRY_CONSTANTS.MIN_DURATION_MS) {
     return {
       valid: false,
-      error: `Expiry duration must be at least ${EXPIRY_CONSTANTS.MIN_DURATION_HOURS} hour`,
+      error: `Expiry duration must be at least 5 minutes`,
       durationHours,
     };
   }
@@ -140,7 +146,7 @@ export function createExpiryFromDuration(
   if (!isValidExpiryDuration(durationHours)) {
     return {
       valid: false,
-      error: `Duration must be between ${EXPIRY_CONSTANTS.MIN_DURATION_HOURS} and ${EXPIRY_CONSTANTS.MAX_DURATION_HOURS} hours`,
+      error: `Duration must be at least 5 minutes (0.0833 hours) and not exceed ${EXPIRY_CONSTANTS.MAX_DURATION_HOURS} hours`,
       durationHours,
     };
   }
@@ -224,17 +230,37 @@ export function formatDuration(durationHours: number): string {
 }
 
 /**
+ * Get default expiry date (5 minutes from now)
+ */
+export function getDefaultExpiry(now: Date = new Date()): Date {
+  return new Date(now.getTime() + EXPIRY_CONSTANTS.DEFAULT_DURATION_MS);
+}
+
+/**
  * Comprehensive expiry validation (supports multiple input formats)
  * 
  * Accepts:
  * - Absolute Date/timestamp
  * - Duration in hours (number)
- * - Preset string ('1h', '6h', '12h', '24h')
+ * - Preset string ('5m', '1h', '6h', '12h', '24h')
+ * 
+ * If no input provided, returns default expiry (5 minutes from now)
  */
 export function validateExpiry(
-  input: Date | string | number,
+  input: Date | string | number | undefined,
   now: Date = new Date()
 ): ExpiryValidationResult {
+  // Handle undefined/null - use default
+  if (input === undefined || input === null) {
+    const expiryDate = getDefaultExpiry(now);
+    const durationHours = EXPIRY_CONSTANTS.DEFAULT_DURATION_HOURS;
+    return {
+      valid: true,
+      expiryDate,
+      durationHours,
+    };
+  }
+
   // Handle preset strings
   if (typeof input === 'string' && isValidPreset(input)) {
     const expiryDate = createExpiryFromPreset(input, now);
