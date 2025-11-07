@@ -15,9 +15,9 @@ import axios from 'axios';
 import { Connection, PublicKey } from '@solana/web3.js';
 
 // Configuration
-const PRODUCTION_API_URL = process.env.PRODUCTION_API_URL || 'https://api.easyescrow.xyz';
+const PRODUCTION_API_URL = process.env.PRODUCTION_API_URL || 'https://api.easyescrow.ai';
 const PRODUCTION_RPC_URL = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
-const PRODUCTION_PROGRAM_ID = process.env.ESCROW_PROGRAM_ID || 'HqM2YpP1SdRXfNsuS2EvZyyBvKYoA5x7fR3cGxbQN5Ry';
+const PRODUCTION_PROGRAM_ID = process.env.ESCROW_PROGRAM_ID || '2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx'; // Production mainnet program
 const PRODUCTION_USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'; // Official Circle USDC
 
 interface TestResult {
