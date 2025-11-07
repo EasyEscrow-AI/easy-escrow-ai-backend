@@ -15,9 +15,9 @@ import axios from 'axios';
 import { Connection, PublicKey } from '@solana/web3.js';
 
 // Configuration
-const PRODUCTION_API_URL = process.env.PRODUCTION_API_URL || 'https://api.easyescrow.xyz';
+const PRODUCTION_API_URL = process.env.PRODUCTION_API_URL || 'https://api.easyescrow.ai';
 const PRODUCTION_RPC_URL = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
-const PRODUCTION_PROGRAM_ID = process.env.ESCROW_PROGRAM_ID || 'HqM2YpP1SdRXfNsuS2EvZyyBvKYoA5x7fR3cGxbQN5Ry';
+const PRODUCTION_PROGRAM_ID = process.env.ESCROW_PROGRAM_ID || '2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx'; // Production mainnet program
 const PRODUCTION_USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'; // Official Circle USDC
 
 interface TestResult {
@@ -256,7 +256,7 @@ async function testCorsConfiguration(): Promise<void> {
   // Test with production frontend origin
   const response = await axios.get(`${PRODUCTION_API_URL}/health`, {
     headers: {
-      'Origin': 'https://easyescrow.xyz'
+      'Origin': 'https://easyescrow.ai'
     },
     timeout: 10000
   });
@@ -322,7 +322,7 @@ async function testSecurityHeaders(): Promise<void> {
  * Test 11: API Swagger Documentation
  */
 async function testSwaggerDocs(): Promise<void> {
-  const response = await axios.get(`${PRODUCTION_API_URL}/api-docs/`, {
+  const response = await axios.get(`${PRODUCTION_API_URL}/docs`, {
     timeout: 10000,
     validateStatus: (status) => status === 200 || status === 301 || status === 302
   });
@@ -332,7 +332,7 @@ async function testSwaggerDocs(): Promise<void> {
   }
   
   console.log('  Swagger documentation: Accessible');
-  console.log(`  URL: ${PRODUCTION_API_URL}/api-docs/`);
+  console.log(`  URL: ${PRODUCTION_API_URL}/docs`);
 }
 
 /**
