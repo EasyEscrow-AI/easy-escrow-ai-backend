@@ -2311,16 +2311,13 @@ pub struct InitAgreement<'info> {
     /// SOL vault PDA - separate zero-data account for holding SOL lamports
     /// This mirrors the USDC design where tokens are held in a separate account
     /// System Program can transfer from zero-data PDAs (unlike data-bearing PDAs)
-    /// Uses init_if_needed to handle both new and existing PDAs (e.g., after previous settlement)
-    /// CHECK: Zero-data PDA, funded by buyer during deposit
+    /// Uses UncheckedAccount to handle both new and existing PDAs (reused after settlement)
+    /// CHECK: Zero-data PDA validated via seeds, initialized during first deposit if needed
     #[account(
-        init_if_needed,
-        payer = admin,
-        space = 0,  // Zero-data PDA for holding lamports only
         seeds = [b"sol_vault", escrow_id.to_le_bytes().as_ref()],
         bump
     )]
-    pub sol_vault: SystemAccount<'info>,
+    pub sol_vault: UncheckedAccount<'info>,
     
     pub system_program: Program<'info, System>,
 }
