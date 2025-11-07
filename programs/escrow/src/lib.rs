@@ -94,7 +94,7 @@ const MIN_USDC_AMOUNT: u64 = 1_000_000;      // $1.00
 const MAX_USDC_AMOUNT: u64 = 3_000_000_000;  // $3,000.00
 
 #[program]
-pub mod escrow {
+pub mod easyescrow {
     use super::*;
 
     /// Initialize an escrow agreement
@@ -643,12 +643,6 @@ pub enum EscrowError {
     #[msg("Invalid amount provided")]
     InvalidAmount,
     
-    #[msg("Amount below minimum: $1.00 (BETA limit)")]
-    AmountTooLow,
-    
-    #[msg("Amount exceeds maximum: $3,000.00 (BETA limit)")]
-    AmountTooHigh,
-    
     #[msg("Invalid expiry timestamp")]
     InvalidExpiry,
     
@@ -681,5 +675,11 @@ pub enum EscrowError {
     
     #[msg("Calculation overflow")]
     CalculationOverflow,
+    
+    #[msg("Amount below minimum: $1.00 (BETA limit)")]
+    AmountTooLow,
+    
+    #[msg("Amount exceeds maximum: $3,000.00 (BETA limit)")]
+    AmountTooHigh,
 }
 
