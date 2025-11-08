@@ -59,7 +59,7 @@ interface TestNFT {
 }
 
 describe('STAGING E2E: Agreement Expiry and Refund', function () {
-  this.timeout(180000); // 3 minutes
+  this.timeout(300000); // 5 minutes (2min expiry + 30s buffer + 70s backend processing)
 
   let connection: Connection;
   let wallets: {
@@ -109,14 +109,14 @@ describe('STAGING E2E: Agreement Expiry and Refund', function () {
   // TEST: CREATE AGREEMENT WITH 15-SECOND EXPIRY
   // ==========================================================================
 
-  it('should create agreement with 1-hour expiry', async function () {
-    console.log('⏰ Creating agreement with 1-hour expiry...\n');
+  it('should create agreement with 2-minute expiry', async function () {
+    console.log('⏰ Creating agreement with 2-minute expiry...\n');
     
     // Create test NFT
     expiryNft = await createTestNFT(connection, wallets.sender);
     
-    // Create agreement with 5-minute expiry (using default)
-    const expiry = new Date(Date.now() + (5 * 60 * 1000)); // 5 minutes from now (explicit for this test)
+    // Create agreement with 2-minute expiry for practical testing
+    const expiry = new Date(Date.now() + (2 * 60 * 1000)); // 2 minutes from now
     const idempotencyKey = generateIdempotencyKey();
 
     const requestBody = {
@@ -154,7 +154,7 @@ describe('STAGING E2E: Agreement Expiry and Refund', function () {
 
       console.log(`   ✅ Expiry agreement created: ${expiryAgreement.agreementId}`);
       console.log(`   Expires at: ${expiry.toISOString()}`);
-      console.log(`   Expires in: 1 hour\n`);
+      console.log(`   Expires in: 2 minutes\n`);
       
       expect(response.data.success).to.be.true;
       expect(expiryAgreement.agreementId).to.be.a('string');
@@ -232,40 +232,69 @@ describe('STAGING E2E: Agreement Expiry and Refund', function () {
         console.log('   Continuing with expiry test...\n');
       }
       
-      // Note: Cannot wait 1 hour for actual expiry in test
-      // Skipping actual expiry wait - this would require either:
-      // - A test-only endpoint to force expiry
-      // - Or a 1-hour wait (not practical for automated tests)
-      console.log('   ℹ️  Skipping 1-hour expiry wait (not practical for automated tests)');
-      console.log('   In production, expiry would be checked automatically every 60 seconds\n');
+      // ** WAIT FOR ACTUAL EXPIRY **
+      console.log('   ⏳ Waiting for agreement to expire (2 minutes + 30s buffer)...');
+      const waitTimeMs = (2 * 60 * 1000) + 30000; // 2 minutes + 30 seconds buffer
+      const startTime = Date.now();
       
-      // Note: Since we can't wait for actual expiry, this test now just verifies creation
-      // In a real scenario, the expiry check would run automatically every 60 seconds
-      console.log('   ℹ️  Expiry handling may need implementation');
+      // Show countdown
+      const interval = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        const remaining = Math.ceil((waitTimeMs - elapsed) / 1000);
+        if (remaining > 0) {
+          process.stdout.write(`\r   ⏳ Time remaining: ${remaining}s  `);
+        }
+      }, 1000);
       
-      // Verify agreement still exists and is in expected state
-      console.log('   Checking agreement status...');
+      await new Promise(resolve => setTimeout(resolve, waitTimeMs));
+      clearInterval(interval);
+      console.log('\r   ✅ Expiry wait completed\n');
+      
+      // Wait additional time for backend expiry service to detect and process
+      console.log('   ⏳ Waiting for backend to detect expiry and process refunds...');
+      await new Promise(resolve => setTimeout(resolve, 70000)); // Wait 70s (expiry check runs every 60s)
+      console.log('   ✅ Backend processing time elapsed\n');
+      
+      // ** VERIFY STATUS CHANGED TO EXPIRED/REFUNDED **
+      console.log('   🔍 Checking agreement status after expiry...');
       const agreementData = await axios.get(
         `${STAGING_CONFIG.apiBaseUrl}/v1/agreements/${expiryAgreement.agreementId}`
       );
       
-      const status = agreementData.data.data.status;
-      console.log(`   Current status: ${status}`);
-      console.log(`   Agreement will expire in ~1 hour from creation\n`);
+      const finalStatus = agreementData.data.data.status;
+      console.log(`   Final Status: ${finalStatus}`);
       
-      // Since we can't test actual expiry in a reasonable timeframe,
-      // just verify the agreement was created successfully with expiry set
-      // In production, automatic expiry would be handled by the backend service
-      const expectedStatuses = ['PENDING', 'NFT_LOCKED'];
-      const statusOk = expectedStatuses.includes(status);
+      const validExpiryStatuses = ['EXPIRED', 'CANCELLED', 'REFUNDED'];
+      expect(validExpiryStatuses).to.include(
+        finalStatus,
+        `Agreement should be expired/refunded, got: ${finalStatus}`
+      );
+      console.log('   ✅ Status correctly reflects expiry\n');
       
-      if (statusOk) {
-        console.log('   ✅ Agreement created successfully with expiry timestamp');
-        console.log('   ✅ Actual expiry testing requires 1-hour wait (skipped for test speed)');
-      } else {
-        console.log(`   ⚠️  Unexpected status: ${status}`);
-      }
+      // ** CRITICAL CHECK ** Verify NFT was returned to seller on-chain
+      console.log('   🔍 Verifying NFT refund on-chain...');
+      const finalNftBalance = await getTokenBalance(connection, expiryNft.tokenAccount);
+      console.log(`   Seller NFT Balance: ${finalNftBalance}`);
+      console.log(`   Initial Balance: ${initialNftBalance}`);
       
+      expect(finalNftBalance).to.equal(
+        initialNftBalance,
+        `🚨 CRITICAL: NFT was NOT returned to seller! Expected ${initialNftBalance}, got ${finalNftBalance}`
+      );
+      console.log('   ✅ NFT successfully returned to seller after expiry\n');
+      
+      // Verify escrow no longer holds the NFT
+      const escrowNftBalance = await getTokenBalance(connection, new PublicKey(expiryAgreement.depositAddresses.nft));
+      console.log(`   Escrow NFT Balance: ${escrowNftBalance}`);
+      expect(escrowNftBalance).to.equal(0, 'Escrow should no longer hold the NFT');
+      console.log('   ✅ NFT removed from escrow\n');
+      
+      console.log('='.repeat(70));
+      console.log('✅ EXPIRY AND REFUND VERIFIED ON-CHAIN');
+      console.log('='.repeat(70));
+      console.log(`   ✅ Agreement expired: ${finalStatus}`);
+      console.log(`   ✅ NFT returned: ${finalNftBalance}/${initialNftBalance}`);
+      console.log(`   ✅ Escrow cleaned: ${escrowNftBalance} NFT remaining`);
       console.log('   ✅ Expiry test completed\n');
       
     } catch (error: any) {
