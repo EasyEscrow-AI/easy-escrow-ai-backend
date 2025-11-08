@@ -81,6 +81,7 @@ const stuckAgreementMonitor = getStuckAgreementMonitor({
   checkIntervalMs: 60000, // Check every minute
   autoRefundEnabled: true, // ✅ NEW: Automatically refund stuck agreements
   autoRefundThresholdMinutes: 15, // ✅ NEW: Auto-refund after 15 minutes
+  maxAgeHours: 24, // ✅ NEW: Only check agreements updated within last 24 hours (prevents accumulation)
 });
 
 // Register alert handlers for stuck agreements
