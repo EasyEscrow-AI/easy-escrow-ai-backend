@@ -1,0 +1,355 @@
+---
+description: Guide for building Solana programs on Windows with path workarounds
+globs: programs/**/*.rs, Anchor.toml
+alwaysApply: false
+---
+
+# Solana Program Build Guide (Windows)
+
+## Critical: Windows Path Length Limitation
+
+**Problem:** Building Solana programs from the project root on Windows fails with:
+```
+error: couldn't read \\?\C:\...\target\sbf-solana-solana\release\build\serde_core-...\out/private.rs: 
+The filename, directory name, or volume label syntax is incorrect. (os error 123)
+```
+
+**Root Cause:** Windows has path length limitations that cause Cargo build artifacts in deeply nested directories to exceed the maximum path length.
+
+**Solution:** Build from the **programs/escrow** directory instead of the project root.
+
+---
+
+## Building the Solana Program
+
+### ✅ Correct Method (Windows)
+
+**1. Navigate to program directory:**
+```powershell
+cd C:\websites\VENTURE\easy-escrow-ai-backend\programs\escrow
+```
+
+**2. Set HOME environment variable:**
+```powershell
+$env:HOME = $env:USERPROFILE
+```
+
+**3. Build the program:**
+```powershell
+cargo build-sbf
+```
+
+**Output Location:**
+- Program binary: `../../target/deploy/easyescrow.so`
+- Build completes in ~45-60 seconds
+
+**Verification:**
+```powershell
+cd ../..
+ls target/deploy/easyescrow.so
+# Should show file size ~320KB
+```
+
+---
+
+## Generating the IDL
+
+### Important: IDL Generation Requires Separate Command
+
+The `cargo build-sbf` command **only builds the program binary**, it does **not** generate the IDL.
+
+**1. Navigate back to project root:**
+```powershell
+cd C:\websites\VENTURE\easy-escrow-ai-backend
+```
+
+**2. Set HOME environment variable:**
+```powershell
+$env:HOME = $env:USERPROFILE
+```
+
+**3. Generate IDL:**
+```powershell
+anchor idl build
+```
+
+**Output Location:**
+- IDL file: `target/idl/escrow.json`
+- Includes full JSON IDL for the program
+
+**Save IDL to file (if needed):**
+```powershell
+anchor idl build | Set-Content -Path "target/idl/escrow.json"
+```
+
+**Verification:**
+```powershell
+Test-Path target/idl/escrow.json
+# Should return: True
+
+Get-Content target/idl/escrow.json -Head 10
+# Should show JSON starting with {"address": "2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx",...}
+```
+
+---
+
+## Complete Build & Deploy Workflow
+
+### 1. Build Program Binary
+
+```powershell
+# Navigate to program directory
+cd C:\websites\VENTURE\easy-escrow-ai-backend\programs\escrow
+
+# Set environment
+$env:HOME = $env:USERPROFILE
+
+# Build program
+cargo build-sbf
+
+# Return to project root
+cd ../..
+```
+
+### 2. Generate IDL
+
+```powershell
+# Ensure you're in project root
+cd C:\websites\VENTURE\easy-escrow-ai-backend
+
+# Set environment
+$env:HOME = $env:USERPROFILE
+
+# Generate IDL
+anchor idl build
+```
+
+### 3. Deploy to Mainnet
+
+```powershell
+# Configure Solana for mainnet
+solana config set --url https://api.mainnet-beta.solana.com
+
+# Check deployer balance
+solana balance wallets/production/mainnet-deployer.json
+
+# Deploy program upgrade
+anchor upgrade target/deploy/easyescrow.so `
+  --program-id 2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx `
+  --provider.cluster mainnet `
+  --provider.wallet wallets/production/mainnet-deployer.json
+
+# Upload IDL to blockchain
+anchor idl upgrade 2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx `
+  --filepath target/idl/escrow.json `
+  --provider.cluster mainnet `
+  --provider.wallet wallets/production/mainnet-deployer.json
+```
+
+### 4. Update Backend IDL
+
+```powershell
+# Copy IDL to backend
+Copy-Item -Path "target\idl\escrow.json" `
+  -Destination "src\generated\anchor\escrow-idl-production.json" `
+  -Force
+
+# Verify copy
+Get-Content src\generated\anchor\escrow-idl-production.json -Head 5
+```
+
+### 5. Verify Deployment
+
+```powershell
+# Check program on-chain
+solana program show 2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx --url mainnet-beta
+
+# Expected output:
+# Program Id: 2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx
+# Owner: BPFLoaderUpgradeab1e11111111111111111111111
+# Last Deployed In Slot: <recent slot>
+# Data Length: <program size> bytes
+# Balance: ~2.0-2.5 SOL
+```
+
+---
+
+## ❌ Common Mistakes
+
+### Mistake 1: Building from Project Root
+```powershell
+# ❌ DON'T DO THIS on Windows
+cd C:\websites\VENTURE\easy-escrow-ai-backend
+anchor build  # Will fail with error 123
+```
+
+**Correct:**
+```powershell
+# ✅ DO THIS instead
+cd C:\websites\VENTURE\easy-escrow-ai-backend\programs\escrow
+cargo build-sbf
+```
+
+### Mistake 2: Forgetting to Generate IDL
+```powershell
+# ❌ Assuming cargo build-sbf generates IDL
+cd programs/escrow
+cargo build-sbf
+# This only builds the .so file, NO IDL is generated
+```
+
+**Correct:**
+```powershell
+# ✅ Generate IDL separately
+cd C:\websites\VENTURE\easy-escrow-ai-backend
+anchor idl build
+```
+
+### Mistake 3: Using Wrong Anchor Command
+```powershell
+# ❌ These fail on Windows due to path issues
+anchor build
+anchor build --features mainnet
+```
+
+**Correct:**
+```powershell
+# ✅ Use cargo build-sbf from program directory
+cd programs/escrow
+cargo build-sbf
+cd ../..
+anchor idl build
+```
+
+---
+
+## Troubleshooting
+
+### Issue: "Can't get home directory path: environment variable not found"
+
+**Solution:**
+```powershell
+$env:HOME = $env:USERPROFILE
+```
+
+Add this before **every** `cargo` or `anchor` command.
+
+### Issue: "couldn't read \\?\C:\...\out/private.rs: error 123"
+
+**Solution:** You're building from the wrong directory.
+```powershell
+# Navigate to program directory first
+cd programs/escrow
+cargo build-sbf
+```
+
+### Issue: "target/idl/escrow.json not found"
+
+**Solution:** You didn't generate the IDL.
+```powershell
+# From project root
+anchor idl build
+```
+
+### Issue: "Program upgrade failed"
+
+**Check:**
+1. Correct wallet has upgrade authority:
+   ```powershell
+   solana program show 2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx --url mainnet-beta | Select-String "Authority"
+   ```
+
+2. Wallet has sufficient SOL:
+   ```powershell
+   solana balance wallets/production/mainnet-deployer.json --url mainnet-beta
+   # Need ~5-10 SOL for deployment + IDL upload
+   ```
+
+3. Program binary was built:
+   ```powershell
+   Test-Path target/deploy/easyescrow.so
+   ```
+
+---
+
+## Environment-Specific Notes
+
+### Staging (Devnet)
+```powershell
+# Deploy to staging
+anchor upgrade target/deploy/easyescrow.so `
+  --program-id AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei `
+  --provider.cluster devnet `
+  --provider.wallet wallets/staging/staging-deployer.json
+
+# Upload IDL
+anchor idl upgrade AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei `
+  --filepath target/idl/escrow.json `
+  --provider.cluster devnet `
+  --provider.wallet wallets/staging/staging-deployer.json
+```
+
+### Production (Mainnet)
+```powershell
+# Deploy to production
+anchor upgrade target/deploy/easyescrow.so `
+  --program-id 2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx `
+  --provider.cluster mainnet `
+  --provider.wallet wallets/production/mainnet-deployer.json
+
+# Upload IDL
+anchor idl upgrade 2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx `
+  --filepath target/idl/escrow.json `
+  --provider.cluster mainnet `
+  --provider.wallet wallets/production/mainnet-deployer.json
+```
+
+---
+
+## Quick Reference
+
+| Task | Command | Directory |
+|------|---------|-----------|
+| **Build Program** | `cargo build-sbf` | `programs/escrow/` |
+| **Generate IDL** | `anchor idl build` | Project root |
+| **Deploy Mainnet** | `anchor upgrade target/deploy/easyescrow.so --program-id 2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx --provider.cluster mainnet --provider.wallet wallets/production/mainnet-deployer.json` | Project root |
+| **Upload IDL** | `anchor idl upgrade 2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx --filepath target/idl/escrow.json --provider.cluster mainnet --provider.wallet wallets/production/mainnet-deployer.json` | Project root |
+
+---
+
+## Agent Instructions
+
+When building Solana programs:
+
+1. **Always use the relative path workaround on Windows**:
+   - Navigate to `programs/escrow/`
+   - Run `cargo build-sbf`
+   - Return to project root
+
+2. **Always generate IDL separately**:
+   - From project root
+   - Run `anchor idl build`
+
+3. **Always set $env:HOME before cargo/anchor commands**:
+   ```powershell
+   $env:HOME = $env:USERPROFILE
+   ```
+
+4. **Never use `anchor build` from project root on Windows** - it will fail
+
+5. **Always verify artifacts exist**:
+   - Program: `target/deploy/easyescrow.so`
+   - IDL: `target/idl/escrow.json`
+
+6. **After deployment, always update backend IDL**:
+   ```powershell
+   Copy-Item target\idl\escrow.json src\generated\anchor\escrow-idl-production.json -Force
+   ```
+
+---
+
+## Related Documentation
+
+- [PROGRAM_DEPLOYMENT_GUIDE.md](mdc:docs/deployment/PROGRAM_DEPLOYMENT_GUIDE.md)
+- [PRODUCTION_PROGRAM_UPGRADE_2025-11-07.md](mdc:docs/deployment/PRODUCTION_PROGRAM_UPGRADE_2025-11-07.md)
+- [PROGRAM_DEPLOYMENT_SAFETY.md](mdc:docs/deployment/PROGRAM_DEPLOYMENT_SAFETY.md)
