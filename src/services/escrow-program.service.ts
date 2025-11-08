@@ -2494,18 +2494,20 @@ export class EscrowProgramService {
         );
       }
 
-      // Build instruction
+      // Build instruction matching new IDL structure
+      // New program structure has seller_nft_account and escrow_nft_account as required accounts
       const instruction = await (this.program.methods as any)
         .adminCancel()
         .accountsStrict({
           admin: this.adminKeypair.publicKey,
           escrowState: escrowPda,
-          solVault: solVaultPda, // NEW: Vault PDA for SOL refunds
+          solVault: solVaultPda,
           buyer,
-          seller,
+          sellerNftAccount, // Now required (was in remainingAccounts)
+          escrowNftAccount, // Now required (was in remainingAccounts)
+          tokenProgram: TOKEN_PROGRAM_ID, // Now required
           systemProgram: SystemProgram.programId,
         })
-        .remainingAccounts(remainingAccounts)
         .instruction();
 
       // Create transaction
