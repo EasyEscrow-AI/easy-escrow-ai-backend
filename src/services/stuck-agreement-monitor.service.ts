@@ -2,11 +2,14 @@
  * Stuck Agreement Monitor Service
  * 
  * Monitors for agreements that are stuck in BOTH_LOCKED status for an unusually long time
- * and alerts when settlement appears to be failing repeatedly
+ * and alerts when settlement appears to be failing repeatedly.
+ * 
+ * NEW: Automatically processes refunds for stuck agreements to return assets to senders.
  */
 
 import { prisma } from '../config/database';
 import { AgreementStatus } from '../generated/prisma';
+import { getRefundService } from './refund.service';
 
 /**
  * Alert severity levels
@@ -35,6 +38,8 @@ interface MonitorConfig {
   warningThresholdMinutes?: number; // Warning if stuck for this long
   criticalThresholdMinutes?: number; // Critical if stuck for this long
   checkIntervalMs?: number; // How often to check (milliseconds)
+  autoRefundEnabled?: boolean; // Enable automatic refund processing
+  autoRefundThresholdMinutes?: number; // Auto-refund after this many minutes
 }
 
 /**
@@ -45,12 +50,15 @@ export class StuckAgreementMonitorService {
   private monitorTimer?: NodeJS.Timeout;
   private isRunning: boolean = false;
   private alertCallbacks: Array<(alert: StuckAgreementAlert) => void> = [];
+  private refundAttempts: Set<string> = new Set(); // Track refund attempts to avoid duplicates
 
   constructor(config?: MonitorConfig) {
     this.config = {
       warningThresholdMinutes: config?.warningThresholdMinutes || 10, // 10 minutes
       criticalThresholdMinutes: config?.criticalThresholdMinutes || 30, // 30 minutes
       checkIntervalMs: config?.checkIntervalMs || 60000, // 1 minute
+      autoRefundEnabled: config?.autoRefundEnabled ?? true, // Enabled by default
+      autoRefundThresholdMinutes: config?.autoRefundThresholdMinutes || 15, // 15 minutes
     };
   }
 
@@ -68,6 +76,8 @@ export class StuckAgreementMonitorService {
       warningThreshold: `${this.config.warningThresholdMinutes} minutes`,
       criticalThreshold: `${this.config.criticalThresholdMinutes} minutes`,
       checkInterval: `${this.config.checkIntervalMs / 1000} seconds`,
+      autoRefundEnabled: this.config.autoRefundEnabled,
+      autoRefundThreshold: `${this.config.autoRefundThresholdMinutes} minutes`,
     });
 
     // Run initial check
@@ -171,9 +181,84 @@ export class StuckAgreementMonitorService {
 
         // Trigger alert callbacks
         this.triggerAlert(alert);
+
+        // ** AUTOMATIC REFUND PROCESSING **
+        // If auto-refund is enabled and agreement has been stuck long enough, process refund
+        const autoRefundThreshold = new Date(
+          now.getTime() - this.config.autoRefundThresholdMinutes * 60 * 1000
+        );
+        
+        if (
+          this.config.autoRefundEnabled &&
+          agreement.updatedAt < autoRefundThreshold &&
+          !this.refundAttempts.has(agreement.agreementId)
+        ) {
+          console.log(
+            `[StuckAgreementMonitor] 🔄 Agreement ${agreement.agreementId} stuck for ${minutesSinceUpdate} minutes - initiating automatic refund`
+          );
+          
+          // Mark as attempted (prevent duplicate attempts)
+          this.refundAttempts.add(agreement.agreementId);
+          
+          // Process refund in background (don't block monitoring)
+          this.processAutomaticRefund(agreement.agreementId).catch((refundError) => {
+            console.error(
+              `[StuckAgreementMonitor] ⚠️ Automatic refund failed for ${agreement.agreementId}:`,
+              refundError
+            );
+            // Remove from attempts so it can be retried in next cycle
+            this.refundAttempts.delete(agreement.agreementId);
+          });
+        }
       }
     } catch (error) {
       console.error('[StuckAgreementMonitor] Error checking for stuck agreements:', error);
+    }
+  }
+
+  /**
+   * Process automatic refund for stuck agreement
+   */
+  private async processAutomaticRefund(agreementId: string): Promise<void> {
+    try {
+      console.log(`[StuckAgreementMonitor] 🔄 Starting automatic refund for ${agreementId}`);
+      
+      const refundService = getRefundService();
+      
+      // Check refund eligibility
+      const eligibility = await refundService.checkRefundEligibility(agreementId);
+      
+      if (!eligibility.eligible) {
+        console.log(
+          `[StuckAgreementMonitor] ℹ️  Agreement ${agreementId} not eligible for refund: ${eligibility.reason}`
+        );
+        return;
+      }
+      
+      console.log(
+        `[StuckAgreementMonitor] ✅ Agreement ${agreementId} eligible for refund - processing...`
+      );
+      
+      // Process refunds
+      const result = await refundService.processRefunds(agreementId);
+      
+      if (result.success) {
+        console.log(
+          `[StuckAgreementMonitor] ✅ Automatic refund successful for ${agreementId} - ${result.refundedDeposits} deposit(s) refunded`
+        );
+      } else {
+        console.error(
+          `[StuckAgreementMonitor] ❌ Automatic refund failed for ${agreementId}:`,
+          result.errors
+        );
+        throw new Error(`Refund failed: ${result.errors?.join(', ')}`);
+      }
+    } catch (error) {
+      console.error(
+        `[StuckAgreementMonitor] ❌ Error processing automatic refund for ${agreementId}:`,
+        error
+      );
+      throw error;
     }
   }
 
