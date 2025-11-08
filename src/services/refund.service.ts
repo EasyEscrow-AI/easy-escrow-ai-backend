@@ -262,7 +262,8 @@ export class RefundService {
         throw new Error(`Agreement ${agreementId} not found`);
       }
 
-      // Process each deposit refund
+      // Process each deposit refund with rate limiting to prevent Jito 429 errors
+      // Jito Block Engine limits: 1 transaction per second
       for (const deposit of agreement.deposits) {
         try {
           const txId = await this.processDepositRefund(
@@ -281,6 +282,11 @@ export class RefundService {
             type: deposit.type,
             txId,
           });
+
+          // CRITICAL: Add 2-second delay between Jito transactions to prevent rate limiting
+          // Jito limit: 1 tx/second, we use 2 seconds to be safe
+          console.log('[RefundService] Waiting 2s before next refund (Jito rate limiting)...');
+          await new Promise(resolve => setTimeout(resolve, 2000));
 
           // Log the refund transaction
           try {
@@ -301,6 +307,10 @@ export class RefundService {
             depositId: deposit.id,
             error: error instanceof Error ? error.message : 'Unknown error',
           });
+
+          // Also add delay after errors to prevent cascading rate limits
+          console.log('[RefundService] Waiting 2s after error (Jito rate limiting)...');
+          await new Promise(resolve => setTimeout(resolve, 2000));
         }
       }
 
