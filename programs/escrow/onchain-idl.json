@@ -1,0 +1,791 @@
+{
+  "accounts": [
+    {
+      "discriminator": [
+        19,
+        90,
+        148,
+        111,
+        55,
+        130,
+        229,
+        108
+      ],
+      "name": "EscrowState"
+    }
+  ],
+  "address": "2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx",
+  "errors": [
+    {
+      "code": 6000,
+      "msg": "Invalid amount provided",
+      "name": "InvalidAmount"
+    },
+    {
+      "code": 6001,
+      "msg": "Invalid expiry timestamp",
+      "name": "InvalidExpiry"
+    },
+    {
+      "code": 6002,
+      "msg": "Invalid escrow status for this operation",
+      "name": "InvalidStatus"
+    },
+    {
+      "code": 6003,
+      "msg": "Assets already deposited",
+      "name": "AlreadyDeposited"
+    },
+    {
+      "code": 6004,
+      "msg": "Unauthorized to perform this action",
+      "name": "Unauthorized"
+    },
+    {
+      "code": 6005,
+      "msg": "Only authorized admin can initialize escrows",
+      "name": "UnauthorizedAdmin"
+    },
+    {
+      "code": 6006,
+      "msg": "Invalid NFT mint address",
+      "name": "InvalidNftMint"
+    },
+    {
+      "code": 6007,
+      "msg": "Deposits not complete",
+      "name": "DepositNotComplete"
+    },
+    {
+      "code": 6008,
+      "msg": "Escrow has expired",
+      "name": "Expired"
+    },
+    {
+      "code": 6009,
+      "msg": "Escrow has not expired yet",
+      "name": "NotExpired"
+    },
+    {
+      "code": 6010,
+      "msg": "Invalid fee basis points (must be <= 10000)",
+      "name": "InvalidFeeBps"
+    },
+    {
+      "code": 6011,
+      "msg": "Calculation overflow",
+      "name": "CalculationOverflow"
+    },
+    {
+      "code": 6012,
+      "msg": "Amount below minimum: $1.00 (BETA limit)",
+      "name": "AmountTooLow"
+    },
+    {
+      "code": 6013,
+      "msg": "Amount exceeds maximum: $3,000.00 (BETA limit)",
+      "name": "AmountTooHigh"
+    }
+  ],
+  "instructions": [
+    {
+      "accounts": [
+        {
+          "name": "escrow_state",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "account": "EscrowState",
+                "kind": "account",
+                "path": "escrow_state.escrow_id"
+              }
+            ]
+          },
+          "writable": true
+        },
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "escrow_usdc_account",
+          "writable": true
+        },
+        {
+          "name": "escrow_nft_account",
+          "writable": true
+        },
+        {
+          "name": "buyer_usdc_account",
+          "writable": true
+        },
+        {
+          "name": "seller_nft_account",
+          "writable": true
+        },
+        {
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+          "name": "token_program"
+        }
+      ],
+      "args": [],
+      "discriminator": [
+        34,
+        225,
+        37,
+        131,
+        38,
+        121,
+        43,
+        237
+      ],
+      "docs": [
+        "Admin cancel escrow (emergency)"
+      ],
+      "name": "admin_cancel"
+    },
+    {
+      "accounts": [
+        {
+          "name": "escrow_state",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "account": "EscrowState",
+                "kind": "account",
+                "path": "escrow_state.escrow_id"
+              }
+            ]
+          },
+          "writable": true
+        },
+        {
+          "name": "escrow_usdc_account",
+          "writable": true
+        },
+        {
+          "name": "escrow_nft_account",
+          "writable": true
+        },
+        {
+          "name": "buyer_usdc_account",
+          "writable": true
+        },
+        {
+          "name": "seller_nft_account",
+          "writable": true
+        },
+        {
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+          "name": "token_program"
+        }
+      ],
+      "args": [],
+      "discriminator": [
+        172,
+        1,
+        191,
+        137,
+        223,
+        156,
+        3,
+        166
+      ],
+      "docs": [
+        "Cancel escrow if expired"
+      ],
+      "name": "cancel_if_expired"
+    },
+    {
+      "accounts": [
+        {
+          "name": "escrow_state",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "account": "EscrowState",
+                "kind": "account",
+                "path": "escrow_state.escrow_id"
+              }
+            ]
+          },
+          "writable": true
+        },
+        {
+          "name": "seller",
+          "signer": true,
+          "writable": true
+        },
+        {
+          "name": "seller_nft_account",
+          "writable": true
+        },
+        {
+          "name": "escrow_nft_account",
+          "pda": {
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            },
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "escrow_state"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "nft_mint"
+              }
+            ]
+          },
+          "writable": true
+        },
+        {
+          "name": "nft_mint"
+        },
+        {
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+          "name": "token_program"
+        },
+        {
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
+          "name": "associated_token_program"
+        },
+        {
+          "address": "11111111111111111111111111111111",
+          "name": "system_program"
+        }
+      ],
+      "args": [],
+      "discriminator": [
+        93,
+        226,
+        132,
+        166,
+        141,
+        9,
+        48,
+        101
+      ],
+      "docs": [
+        "Deposit NFT into escrow"
+      ],
+      "name": "deposit_nft"
+    },
+    {
+      "accounts": [
+        {
+          "name": "escrow_state",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "account": "EscrowState",
+                "kind": "account",
+                "path": "escrow_state.escrow_id"
+              }
+            ]
+          },
+          "writable": true
+        },
+        {
+          "name": "buyer",
+          "signer": true,
+          "writable": true
+        },
+        {
+          "name": "buyer_usdc_account",
+          "writable": true
+        },
+        {
+          "name": "escrow_usdc_account",
+          "pda": {
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            },
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "escrow_state"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "usdc_mint"
+              }
+            ]
+          },
+          "writable": true
+        },
+        {
+          "name": "usdc_mint"
+        },
+        {
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+          "name": "token_program"
+        },
+        {
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
+          "name": "associated_token_program"
+        },
+        {
+          "address": "11111111111111111111111111111111",
+          "name": "system_program"
+        }
+      ],
+      "args": [],
+      "discriminator": [
+        184,
+        148,
+        250,
+        169,
+        224,
+        213,
+        34,
+        126
+      ],
+      "docs": [
+        "Deposit USDC into escrow"
+      ],
+      "name": "deposit_usdc"
+    },
+    {
+      "accounts": [
+        {
+          "name": "escrow_state",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "escrow_id"
+              }
+            ]
+          },
+          "writable": true
+        },
+        {
+          "name": "buyer"
+        },
+        {
+          "name": "seller"
+        },
+        {
+          "name": "nft_mint"
+        },
+        {
+          "docs": [
+            "Admin pays for escrow account creation"
+          ],
+          "name": "admin",
+          "signer": true,
+          "writable": true
+        },
+        {
+          "address": "11111111111111111111111111111111",
+          "name": "system_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "escrow_id",
+          "type": "u64"
+        },
+        {
+          "name": "usdc_amount",
+          "type": "u64"
+        },
+        {
+          "name": "expiry_timestamp",
+          "type": "i64"
+        },
+        {
+          "name": "platform_fee_bps",
+          "type": "u16"
+        }
+      ],
+      "discriminator": [
+        162,
+        60,
+        0,
+        175,
+        214,
+        172,
+        200,
+        106
+      ],
+      "docs": [
+        "Initialize an escrow agreement",
+        "Platform fee is set during initialization and stored in escrow state",
+        "Only authorized admins can initialize escrows"
+      ],
+      "name": "init_agreement"
+    },
+    {
+      "accounts": [
+        {
+          "name": "escrow_state",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "account": "EscrowState",
+                "kind": "account",
+                "path": "escrow_state.escrow_id"
+              }
+            ]
+          },
+          "writable": true
+        },
+        {
+          "name": "escrow_usdc_account",
+          "writable": true
+        },
+        {
+          "name": "escrow_nft_account",
+          "writable": true
+        },
+        {
+          "name": "seller_usdc_account",
+          "writable": true
+        },
+        {
+          "name": "buyer_nft_account",
+          "writable": true
+        },
+        {
+          "docs": [
+            "Platform fee collector USDC account"
+          ],
+          "name": "fee_collector_usdc_account",
+          "writable": true
+        },
+        {
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+          "name": "token_program"
+        }
+      ],
+      "args": [],
+      "discriminator": [
+        175,
+        42,
+        185,
+        87,
+        144,
+        131,
+        102,
+        212
+      ],
+      "docs": [
+        "Settle the escrow and exchange assets with fee distribution",
+        "Uses the platform fee that was set during escrow initialization"
+      ],
+      "name": "settle"
+    }
+  ],
+  "metadata": {
+    "description": "Solana Escrow Program for NFT transactions",
+    "name": "easyescrow",
+    "spec": "0.1.0",
+    "version": "0.1.0"
+  },
+  "types": [
+    {
+      "docs": [
+        "Escrow state account storing agreement details"
+      ],
+      "name": "EscrowState",
+      "type": {
+        "fields": [
+          {
+            "name": "escrow_id",
+            "type": "u64"
+          },
+          {
+            "name": "buyer",
+            "type": "pubkey"
+          },
+          {
+            "name": "seller",
+            "type": "pubkey"
+          },
+          {
+            "name": "usdc_amount",
+            "type": "u64"
+          },
+          {
+            "docs": [
+              "The NFT's mint address (unique identifier).",
+              "",
+              "Important: This is NOT \"minting\" (creating) an NFT.",
+              "The NFT must ALREADY EXIST in the seller's wallet.",
+              "This field stores the mint address to identify WHICH specific NFT",
+              "is being traded in this escrow agreement."
+            ],
+            "name": "nft_mint",
+            "type": "pubkey"
+          },
+          {
+            "docs": [
+              "Platform fee in basis points (1 bps = 0.01%)",
+              "Set during initialization by authorized admin",
+              "Range: 0-10000 (0% to 100%)",
+              "This fee is enforced during settlement and cannot be bypassed"
+            ],
+            "name": "platform_fee_bps",
+            "type": "u16"
+          },
+          {
+            "name": "buyer_usdc_deposited",
+            "type": "bool"
+          },
+          {
+            "name": "seller_nft_deposited",
+            "type": "bool"
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "EscrowStatus"
+              }
+            }
+          },
+          {
+            "name": "expiry_timestamp",
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "admin",
+            "type": "pubkey"
+          }
+        ],
+        "kind": "struct"
+      }
+    },
+    {
+      "name": "EscrowStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Pending"
+          },
+          {
+            "name": "Completed"
+          },
+          {
+            "name": "Cancelled"
+          }
+        ]
+      }
+    }
+  ]
+}
