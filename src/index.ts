@@ -79,6 +79,8 @@ const stuckAgreementMonitor = getStuckAgreementMonitor({
   warningThresholdMinutes: 10, // Warn if stuck for 10 minutes
   criticalThresholdMinutes: 30, // Critical if stuck for 30 minutes
   checkIntervalMs: 60000, // Check every minute
+  autoRefundEnabled: true, // ✅ NEW: Automatically refund stuck agreements
+  autoRefundThresholdMinutes: 15, // ✅ NEW: Auto-refund after 15 minutes
 });
 
 // Register alert handlers for stuck agreements
