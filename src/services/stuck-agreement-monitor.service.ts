@@ -132,10 +132,14 @@ export class StuckAgreementMonitorService {
         now.getTime() - this.config.criticalThresholdMinutes * 60 * 1000
       );
 
-      // Find agreements stuck in BOTH_LOCKED status
+      // Find agreements stuck in BOTH_LOCKED or ARCHIVED status
+      // ARCHIVED is included because test cleanup marks failed agreements as ARCHIVED
+      // but they may still have stuck assets in escrow PDAs
       const stuckAgreements = await prisma.agreement.findMany({
         where: {
-          status: AgreementStatus.BOTH_LOCKED,
+          status: {
+            in: [AgreementStatus.BOTH_LOCKED, AgreementStatus.ARCHIVED],
+          },
           updatedAt: {
             lt: warningThreshold, // Updated before warning threshold
           },
