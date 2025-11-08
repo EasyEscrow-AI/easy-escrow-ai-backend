@@ -5,9 +5,39 @@ info:
   description: |
     Backend API service for EasyEscrow.ai - Super fast and easy to use digital escrow platform.
     
-    ## Features
-    - Create escrow agreements for NFT <> USDC
-    - **Custom expiry times (1-24 hours)** with flexible input formats (presets, duration, timestamps)
+    ## Supported Swap Types
+    
+    EasyEscrow.ai currently supports **three types of escrow swaps** on the **Solana blockchain**:
+    
+    ### 1. NFT <> SOL
+    Direct exchange of an NFT for SOL payment.
+    - **Seller provides:** NFT (Traditional NFT)
+    - **Buyer provides:** SOL
+    - **Platform fee:** 2.5% (250 basis points) - deducted from seller's proceeds
+    - **Min/Max:** Minimum $1.00 USD equivalent, Maximum $3,000.00 USD equivalent (BETA limits)
+    
+    ### 2. NFT <> NFT (with SOL fee)
+    Exchange of two NFTs with a separate SOL fee payment.
+    - **Seller provides:** NFT A (Traditional NFT)
+    - **Buyer provides:** NFT B (Traditional NFT) + SOL platform fee
+    - **Platform fee:** 2.5% (250 basis points) - paid separately in SOL by buyer
+    - **Min/Max:** Platform fee based on agreed NFT valuation
+    
+    ### 3. NFT + SOL <> NFT
+    Exchange of an NFT plus SOL payment for another NFT.
+    - **Seller provides:** NFT A (Traditional NFT) + SOL
+    - **Buyer provides:** NFT B (Traditional NFT)
+    - **Platform fee:** 2.5% (250 basis points) - deducted from SOL amount
+    - **Min/Max:** Minimum $1.00 USD equivalent in SOL, Maximum $3,000.00 USD equivalent (BETA limits)
+    
+    ## Blockchain Support
+    - ✅ **Solana blockchain** (Devnet, Mainnet)
+    - ✅ **Traditional NFTs** (Metaplex standard)
+    - 🔜 **Compressed NFTs (cNFTs)** - Coming soon
+    - 🔜 **Additional blockchains** - Coming soon
+    
+    ## Additional Features
+    - **Custom expiry times (5 minutes - 24 hours)** with flexible input formats (presets, duration, timestamps)
     - On-chain non-custodial functionality (assets secured by Smart Contract)
     - Automatic atomic settlement when both assets are verified on-chain
     - Automatic agreement expiry and refund handling (auto return to sender)
@@ -120,8 +150,13 @@ paths:
         - Agreements
       summary: Create a new escrow agreement
       description: |
-        Creates a new escrow agreement for an NFT purchase. This initializes the escrow on the Solana blockchain
-        and generates deposit addresses for USDC and NFT.
+        Creates a new escrow agreement for NFT swaps. This initializes the escrow on the Solana blockchain
+        and generates deposit addresses for the required assets (NFT, SOL, and/or second NFT depending on swap type).
+        
+        **Supported Swap Types:**
+        - NFT <> SOL (NFT_FOR_SOL)
+        - NFT <> NFT with fee (NFT_FOR_NFT_WITH_FEE)
+        - NFT + SOL <> NFT (NFT_FOR_NFT_PLUS_SOL)
         
         **Rate Limited**: 10 requests per 15 minutes
         **Idempotency**: Supports X-Idempotency-Key header
@@ -134,48 +169,42 @@ paths:
             schema:
               $ref: '#/components/schemas/CreateAgreementRequest'
             examples:
-              presetExpiry:
-                summary: Using expiry preset (recommended)
-                description: Quick and easy - specify expiry as a preset string
+              nftForSol:
+                summary: NFT <> SOL Swap
+                description: Direct exchange of NFT for SOL payment
                 value:
+                  swapType: "NFT_FOR_SOL"
                   nftMint: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
-                  price: "1000000000"
+                  solAmount: "1000000000"
                   seller: "4qxZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9"
                   buyer: "5rxZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9"
                   expiry: "12h"
                   feeBps: 250
                   honorRoyalties: true
-              durationInHours:
-                summary: Using duration in hours
-                description: Specify expiry as a number of hours (1-24)
+              nftForNftWithFee:
+                summary: NFT <> NFT (with SOL fee)
+                description: Exchange two NFTs with separate SOL fee payment
                 value:
+                  swapType: "NFT_FOR_NFT_WITH_FEE"
                   nftMint: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
-                  price: "1000000000"
+                  nftBMint: "8xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+                  solAmount: "25000000"
                   seller: "4qxZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9"
                   buyer: "5rxZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9"
-                  expiry: 6
+                  expiry: "6h"
                   feeBps: 250
                   honorRoyalties: true
-              absoluteTimestamp:
-                summary: Using absolute timestamp
-                description: Specify expiry as an ISO 8601 timestamp
+              nftPlusSolForNft:
+                summary: NFT + SOL <> NFT
+                description: Exchange NFT plus SOL for another NFT
                 value:
+                  swapType: "NFT_FOR_NFT_PLUS_SOL"
                   nftMint: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
-                  price: "1000000000"
+                  nftBMint: "8xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+                  solAmount: "500000000"
                   seller: "4qxZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9"
                   buyer: "5rxZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9"
-                  expiry: "2025-11-04T12:00:00Z"
-                  feeBps: 250
-                  honorRoyalties: true
-              alternativeField:
-                summary: Using expiryDurationHours field
-                description: Alternative field for specifying duration
-                value:
-                  nftMint: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
-                  price: "1000000000"
-                  seller: "4qxZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9"
-                  buyer: "5rxZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9"
-                  expiryDurationHours: 24
+                  expiry: "24h"
                   feeBps: 250
                   honorRoyalties: true
       responses:
@@ -1069,7 +1098,7 @@ components:
             description: Filter by agreement ID
           operationType:
             type: string
-            enum: [INIT_ESCROW, DEPOSIT_USDC, DEPOSIT_NFT, SETTLE, CANCEL, REFUND]
+            enum: [INIT_ESCROW, DEPOSIT_SOL, DEPOSIT_NFT_A, DEPOSIT_NFT_B, SETTLE, CANCEL, REFUND]
             description: Filter by operation type
           status:
             type: string
@@ -1114,19 +1143,23 @@ components:
       enum:
         - PENDING_INIT
         - PENDING_DEPOSITS
-        - USDC_LOCKED
-        - NFT_LOCKED
+        - SOL_LOCKED
+        - NFT_A_LOCKED
+        - NFT_B_LOCKED
         - BOTH_LOCKED
+        - ALL_LOCKED
         - SETTLED
         - EXPIRED
         - CANCELLED
       description: |
         Agreement status:
         - PENDING_INIT: Agreement is being initialized on-chain
-        - PENDING_DEPOSITS: Waiting for deposits
-        - USDC_LOCKED: USDC has been deposited
-        - NFT_LOCKED: NFT has been deposited
-        - BOTH_LOCKED: Both USDC and NFT are locked, ready for settlement
+        - PENDING_DEPOSITS: Waiting for required deposits
+        - SOL_LOCKED: SOL has been deposited (for NFT<>SOL or NFT+SOL<>NFT swaps)
+        - NFT_A_LOCKED: Seller's NFT has been deposited
+        - NFT_B_LOCKED: Buyer's NFT has been deposited (for NFT<>NFT swaps)
+        - BOTH_LOCKED: Two required assets are locked
+        - ALL_LOCKED: All required assets are locked, ready for settlement
         - SETTLED: Agreement has been successfully settled
         - EXPIRED: Agreement has expired without settlement
         - CANCELLED: Agreement has been cancelled
@@ -1190,16 +1223,16 @@ components:
       type: object
       required:
         - nftMint
-        - price
         - seller
         - expiry
         - feeBps
         - honorRoyalties
+        - swapType
       properties:
         nftMint:
           type: string
           description: |
-            The NFT's mint address (unique identifier).
+            The seller's NFT mint address (NFT A - unique identifier).
             
             Important: This is NOT "minting" (creating) an NFT.
             The NFT must ALREADY EXIST in the seller's wallet.
@@ -1207,10 +1240,39 @@ components:
             
             In Solana, a "mint" is the account that defines a token type. For NFTs,
             the mint address serves as the unique identifier (like a serial number or contract address).
+            
+            **Supported:** Traditional NFTs (Metaplex standard)
+            **Coming soon:** Compressed NFTs (cNFTs)
           example: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
-        price:
+        nftBMint:
           type: string
-          description: Price in USDC (as string to preserve precision)
+          description: |
+            The buyer's NFT mint address (NFT B - unique identifier).
+            Required for NFT_FOR_NFT_WITH_FEE and NFT_FOR_NFT_PLUS_SOL swap types.
+            
+            The NFT must ALREADY EXIST in the buyer's wallet.
+            
+            **Supported:** Traditional NFTs (Metaplex standard)
+            **Coming soon:** Compressed NFTs (cNFTs)
+          example: "8xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+        swapType:
+          type: string
+          enum: ['NFT_FOR_SOL', 'NFT_FOR_NFT_WITH_FEE', 'NFT_FOR_NFT_PLUS_SOL']
+          default: 'NFT_FOR_SOL'
+          description: |
+            Type of swap to execute:
+            - **NFT_FOR_SOL**: Direct exchange of NFT for SOL (default)
+            - **NFT_FOR_NFT_WITH_FEE**: Exchange two NFTs with separate SOL fee payment
+            - **NFT_FOR_NFT_PLUS_SOL**: Exchange NFT + SOL for another NFT
+          example: "NFT_FOR_SOL"
+        solAmount:
+          type: string
+          description: |
+            Amount of SOL in lamports (as string to preserve precision).
+            Required for NFT_FOR_SOL and NFT_FOR_NFT_PLUS_SOL swap types.
+            1 SOL = 1,000,000,000 lamports.
+            
+            For NFT_FOR_NFT_WITH_FEE, this represents the platform fee amount.
           example: "1000000000"
         seller:
           type: string
@@ -1289,12 +1351,18 @@ components:
             depositAddresses:
               type: object
               properties:
-                usdc:
+                nftA:
                   type: string
-                  example: "UsdcDepositAddress..."
-                nft:
+                  description: Deposit address for seller's NFT
+                  example: "NftADepositAddress..."
+                sol:
                   type: string
-                  example: "NftDepositAddress..."
+                  description: Deposit address for SOL (if required by swap type)
+                  example: "SolDepositAddress..."
+                nftB:
+                  type: string
+                  description: Deposit address for buyer's NFT (if required by swap type)
+                  example: "NftBDepositAddress..."
             expiry:
               type: string
               format: date-time
@@ -1347,11 +1415,18 @@ components:
       properties:
         agreementId:
           type: string
+        swapType:
+          type: string
+          enum: ['NFT_FOR_SOL', 'NFT_FOR_NFT_WITH_FEE', 'NFT_FOR_NFT_PLUS_SOL']
         nftMint:
           type: string
-          description: The NFT's mint address (unique identifier of the NFT being traded)
-        price:
+          description: The seller's NFT mint address (NFT A)
+        nftBMint:
           type: string
+          description: The buyer's NFT mint address (NFT B) - only for NFT<>NFT swaps
+        solAmount:
+          type: string
+          description: Amount of SOL in lamports
         seller:
           type: string
         buyer:
@@ -1367,10 +1442,15 @@ components:
           type: boolean
         escrowPda:
           type: string
-        usdcDepositAddr:
+        nftADepositAddr:
           type: string
-        nftDepositAddr:
+          description: Deposit address for seller's NFT
+        solDepositAddr:
           type: string
+          description: Deposit address for SOL
+        nftBDepositAddr:
+          type: string
+          description: Deposit address for buyer's NFT (NFT<>NFT swaps only)
         createdAt:
           type: string
           format: date-time
@@ -1392,7 +1472,7 @@ components:
                     type: string
                   type:
                     type: string
-                    enum: [USDC, NFT]
+                    enum: [SOL, NFT_A, NFT_B]
                   depositor:
                     type: string
                   amount:
@@ -1411,11 +1491,13 @@ components:
             balances:
               type: object
               properties:
-                usdcLocked:
+                solLocked:
                   type: boolean
-                nftLocked:
+                nftALocked:
                   type: boolean
-                actualUsdcAmount:
+                nftBLocked:
+                  type: boolean
+                actualSolAmount:
                   type: string
             isExpired:
               type: boolean
@@ -1459,15 +1541,24 @@ components:
           type: string
         agreementId:
           type: string
+        swapType:
+          type: string
+          enum: ['NFT_FOR_SOL', 'NFT_FOR_NFT_WITH_FEE', 'NFT_FOR_NFT_PLUS_SOL']
         nftMint:
           type: string
-          description: The NFT's mint address (identifier of the NFT that was traded)
-        price:
+          description: The seller's NFT mint address (NFT A)
+        nftBMint:
           type: string
+          description: The buyer's NFT mint address (NFT B) - for NFT<>NFT swaps
+        solAmount:
+          type: string
+          description: Amount of SOL exchanged (in lamports)
         platformFee:
           type: string
+          description: Platform fee amount (in SOL lamports)
         creatorRoyalty:
           type: string
+          description: Creator royalty amount (in SOL lamports)
         buyer:
           type: string
         seller:
@@ -1555,7 +1646,7 @@ components:
           type: string
         operationType:
           type: string
-          enum: [INIT_ESCROW, DEPOSIT_USDC, DEPOSIT_NFT, SETTLE, CANCEL, REFUND]
+          enum: [INIT_ESCROW, DEPOSIT_SOL, DEPOSIT_NFT_A, DEPOSIT_NFT_B, SETTLE, CANCEL, REFUND]
         agreementId:
           type: string
         status:
