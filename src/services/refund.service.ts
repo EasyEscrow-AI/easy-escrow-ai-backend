@@ -168,6 +168,8 @@ export class RefundService {
       const hasDeposits = agreement.deposits.length > 0;
 
       // Check if agreement status allows refunds
+      // ARCHIVED is included because test cleanup marks failed agreements as ARCHIVED
+      // but they may still have stuck assets in escrow PDAs that need to be refunded
       const refundableStatuses: AgreementStatus[] = [
         AgreementStatus.EXPIRED,
         AgreementStatus.CANCELLED,
@@ -176,6 +178,7 @@ export class RefundService {
         AgreementStatus.USDC_LOCKED,
         AgreementStatus.NFT_LOCKED,
         AgreementStatus.BOTH_LOCKED,
+        AgreementStatus.ARCHIVED, // Allow refunds for archived agreements with stuck assets
       ];
 
       if (!refundableStatuses.includes(agreement.status)) {
