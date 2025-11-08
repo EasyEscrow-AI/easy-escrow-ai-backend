@@ -73,8 +73,8 @@ function loadAdminKeypair(): Keypair {
       envValue = process.env.DEVNET_STAGING_ADMIN_PRIVATE_KEY;
       break;
     case 'production':
-      envName = 'MAINNET_PROD_ADMIN_PRIVATE_KEY';
-      envValue = process.env.MAINNET_PROD_ADMIN_PRIVATE_KEY;
+      envName = 'MAINNET_ADMIN_PRIVATE_KEY';
+      envValue = process.env.MAINNET_ADMIN_PRIVATE_KEY;
       break;
     case 'development':
     case 'test':
