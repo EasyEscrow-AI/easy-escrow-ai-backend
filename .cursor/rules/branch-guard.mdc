@@ -1,6 +1,6 @@
 ---
 alwaysApply: true
-description: "Keep agent work off master; sync before push; open PRs"
+description: "Keep agent work off master; sync before push; open PRs; NEVER auto-merge"
 ---
 
 You are working ONLY on a non-default branch (never on master).
@@ -14,3 +14,43 @@ Before each push:
    - Ask for human guidance (do NOT guess)
 3) Never force-push.
 4) Open or update a PR targeting master with a concise changelog.
+
+## 🚨 CRITICAL: NEVER AUTO-MERGE PULL REQUESTS
+
+**You MUST NEVER automatically merge PRs into master.**
+
+### ❌ What NOT to Do:
+- ❌ NEVER use `gh pr merge` to merge PRs into master
+- ❌ NEVER use `--admin` flag to bypass branch protections
+- ❌ NEVER use `--squash`, `--merge`, or `--rebase` flags with `gh pr merge`
+- ❌ NEVER merge PRs automatically regardless of urgency or criticality
+
+### ✅ What TO Do:
+1. Create the feature branch
+2. Make changes and commit
+3. Push the branch
+4. Create the PR using `gh pr create`
+5. **STOP** - Wait for human review and manual merge
+6. Only proceed with next work after human has merged the PR
+
+### Why This Rule Exists:
+- Human needs to review all changes before they go to master
+- Master branch protections require human approval
+- Code quality and security checks must be manually verified
+- Deployment decisions are made by humans, not automated
+
+### Examples:
+
+#### ❌ WRONG:
+```bash
+gh pr create --base master --head fix/bug
+gh pr merge --squash --delete-branch --admin  # ❌ NEVER DO THIS
+```
+
+#### ✅ CORRECT:
+```bash
+gh pr create --base master --head fix/bug
+# Stop here - wait for human to review and merge
+```
+
+**Remember:** Creating PRs is fine. Merging them is NOT your job.
