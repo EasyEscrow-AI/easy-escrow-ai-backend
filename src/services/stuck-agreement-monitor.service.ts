@@ -40,6 +40,7 @@ interface MonitorConfig {
   checkIntervalMs?: number; // How often to check (milliseconds)
   autoRefundEnabled?: boolean; // Enable automatic refund processing
   autoRefundThresholdMinutes?: number; // Auto-refund after this many minutes
+  maxAgeHours?: number; // Maximum age of agreements to check (prevents old agreements from accumulating)
 }
 
 /**
@@ -59,6 +60,7 @@ export class StuckAgreementMonitorService {
       checkIntervalMs: config?.checkIntervalMs || 60000, // 1 minute
       autoRefundEnabled: config?.autoRefundEnabled ?? true, // Enabled by default
       autoRefundThresholdMinutes: config?.autoRefundThresholdMinutes || 15, // 15 minutes
+      maxAgeHours: config?.maxAgeHours || 24, // Only check agreements updated within last 24 hours
     };
   }
 
@@ -78,6 +80,7 @@ export class StuckAgreementMonitorService {
       checkInterval: `${this.config.checkIntervalMs / 1000} seconds`,
       autoRefundEnabled: this.config.autoRefundEnabled,
       autoRefundThreshold: `${this.config.autoRefundThresholdMinutes} minutes`,
+      maxAge: `${this.config.maxAgeHours} hours`,
     });
 
     // Run initial check
@@ -131,11 +134,15 @@ export class StuckAgreementMonitorService {
       const criticalThreshold = new Date(
         now.getTime() - this.config.criticalThresholdMinutes * 60 * 1000
       );
+      const maxAgeThreshold = new Date(
+        now.getTime() - this.config.maxAgeHours * 60 * 60 * 1000
+      );
 
       // Find agreements stuck in any status with deposits
       // Includes partial deposits (NFT_LOCKED, USDC_LOCKED) and complete deposits (BOTH_LOCKED)
       // ARCHIVED is included because test cleanup marks failed agreements as ARCHIVED
       // but they may still have stuck assets in escrow PDAs
+      // Only checks agreements updated within maxAgeHours to prevent old agreements from accumulating
       const stuckAgreements = await prisma.agreement.findMany({
         where: {
           status: {
@@ -148,6 +155,7 @@ export class StuckAgreementMonitorService {
           },
           updatedAt: {
             lt: warningThreshold, // Updated before warning threshold
+            gte: maxAgeThreshold, // But not older than maxAge (prevents accumulation)
           },
         },
         select: {
