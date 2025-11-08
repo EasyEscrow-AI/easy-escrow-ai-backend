@@ -2341,7 +2341,7 @@ pub struct DepositSol<'info> {
         seeds = [b"sol_vault", escrow_state.escrow_id.to_le_bytes().as_ref()],
         bump
     )]
-    pub sol_vault: SystemAccount<'info>,
+    pub sol_vault: UncheckedAccount<'info>,
     
     pub system_program: Program<'info, System>,
 }
@@ -2435,7 +2435,7 @@ pub struct Settle<'info> {
         seeds = [b"sol_vault", escrow_state.escrow_id.to_le_bytes().as_ref()],
         bump
     )]
-    pub sol_vault: SystemAccount<'info>,
+    pub sol_vault: UncheckedAccount<'info>,
     
     /// CHECK: Seller receives SOL
     #[account(
@@ -2489,7 +2489,7 @@ pub struct CancelIfExpired<'info> {
         seeds = [b"sol_vault", escrow_state.escrow_id.to_le_bytes().as_ref()],
         bump
     )]
-    pub sol_vault: SystemAccount<'info>,
+    pub sol_vault: UncheckedAccount<'info>,
     
     /// CHECK: Buyer receives refund if deposited
     #[account(
@@ -2533,7 +2533,7 @@ pub struct AdminCancel<'info> {
         seeds = [b"sol_vault", escrow_state.escrow_id.to_le_bytes().as_ref()],
         bump
     )]
-    pub sol_vault: SystemAccount<'info>,
+    pub sol_vault: UncheckedAccount<'info>,
     
     /// CHECK: Buyer receives refund if deposited
     #[account(
