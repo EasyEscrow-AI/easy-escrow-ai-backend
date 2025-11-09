@@ -218,15 +218,23 @@ export class StuckAgreementMonitorService {
           // Mark as attempted (prevent duplicate attempts)
           this.refundAttempts.add(agreement.agreementId);
           
-          // Process refund in background (don't block monitoring)
-          this.processAutomaticRefund(agreement.agreementId).catch((refundError) => {
+          // CRITICAL: Process refund SEQUENTIALLY (await) to prevent Jito rate limiting
+          // Previously this was fire-and-forget which caused multiple agreements
+          // to process refunds in parallel, overwhelming Jito's 1 tx/second limit
+          try {
+            await this.processAutomaticRefund(agreement.agreementId);
+          } catch (refundError) {
             console.error(
               `[StuckAgreementMonitor] ⚠️ Automatic refund failed for ${agreement.agreementId}:`,
               refundError
             );
             // Remove from attempts so it can be retried in next cycle
             this.refundAttempts.delete(agreement.agreementId);
-          });
+          }
+          
+          // Add delay between agreements to further prevent rate limiting
+          console.log('[StuckAgreementMonitor] Waiting 3s before processing next agreement...');
+          await new Promise(resolve => setTimeout(resolve, 3000));
         }
       }
     } catch (error) {
