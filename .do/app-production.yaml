@@ -260,6 +260,12 @@ services:
         value: "60000"
         scope: RUN_TIME
       
+      # Disable WebSocket monitoring to avoid RPC rate limits (429 errors)
+      # System will use polling-only mode for monitoring deposits
+      - key: DISABLE_WS_MONITORING
+        value: "true"
+        scope: RUN_TIME
+      
       #
       # JWT Configuration
       # IMPORTANT: Strong JWT secret stored in DO App Platform
