@@ -332,21 +332,49 @@ export class MonitoringService {
         `[MonitoringService] Starting to monitor ${accountType} account: ${publicKey}`
       );
 
-      // Subscribe to account changes
-      const subscriptionId = await this.solanaService.subscribeToAccount(
-        publicKey,
-        async (accountInfo, context) => {
-          await this.handleAccountChange(
-            publicKey,
-            accountInfo,
-            context,
-            accountType,
-            agreementId
-          );
-        }
-      );
+      let subscriptionId: number | undefined;
 
-      // Store monitored account info
+      // Check if WebSocket monitoring is disabled (e.g., due to rate limits)
+      const disableWsMonitoring = process.env.DISABLE_WS_MONITORING === 'true';
+      
+      if (disableWsMonitoring) {
+        console.log('[MonitoringService] ⚠️ WebSocket monitoring disabled, using polling only');
+      } else {
+        // Try to subscribe to account changes via WebSocket
+        try {
+          subscriptionId = await this.solanaService.subscribeToAccount(
+            publicKey,
+            async (accountInfo, context) => {
+              await this.handleAccountChange(
+                publicKey,
+                accountInfo,
+                context,
+                accountType,
+                agreementId
+              );
+            }
+          );
+          console.log(`[MonitoringService] ✅ WebSocket subscription created for ${publicKey}`);
+        } catch (wsError: any) {
+          // Handle WebSocket subscription failures gracefully
+          const errorMessage = wsError?.message || String(wsError);
+          
+          if (errorMessage.includes('429') || errorMessage.includes('rate limit')) {
+            console.warn(
+              `[MonitoringService] ⚠️ WebSocket rate limit hit for ${publicKey}, falling back to polling only`
+            );
+          } else {
+            console.warn(
+              `[MonitoringService] ⚠️ WebSocket subscription failed for ${publicKey}: ${errorMessage}`
+            );
+            console.warn('[MonitoringService] Falling back to polling only');
+          }
+          // Don't throw error - continue with polling-only monitoring
+          subscriptionId = undefined;
+        }
+      }
+
+      // Store monitored account info (with or without WebSocket subscription)
       this.monitoredAccounts.set(publicKey, {
         publicKey,
         agreementId,
@@ -354,8 +382,9 @@ export class MonitoringService {
         subscriptionId,
       });
 
+      const monitoringMode = subscriptionId !== undefined ? 'WebSocket + Polling' : 'Polling only';
       console.log(
-        `[MonitoringService] Successfully monitoring ${accountType} account: ${publicKey}`
+        `[MonitoringService] ✅ Successfully monitoring ${accountType} account: ${publicKey} (${monitoringMode})`
       );
     } catch (error) {
       console.error(`[MonitoringService] Failed to monitor account ${publicKey}:`, error);
