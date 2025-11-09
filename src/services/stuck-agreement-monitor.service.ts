@@ -270,14 +270,14 @@ export class StuckAgreementMonitorService {
       
       if (result.success) {
         console.log(
-          `[StuckAgreementMonitor] ✅ Automatic refund successful for ${agreementId} - ${result.refundedDeposits} deposit(s) refunded`
+          `[StuckAgreementMonitor] ✅ Automatic refund successful for ${agreementId} - ${result.refundedDeposits.length} deposit(s) refunded`
         );
       } else {
         console.error(
           `[StuckAgreementMonitor] ❌ Automatic refund failed for ${agreementId}:`,
           result.errors
         );
-        throw new Error(`Refund failed: ${result.errors?.join(', ')}`);
+        throw new Error(`Refund failed: ${result.errors?.map(e => `${e.depositId}: ${e.error}`).join('; ')}`);
       }
     } catch (error) {
       console.error(
