@@ -188,10 +188,9 @@ export class MonitoringService {
           agreementId: true,
           usdcDepositAddr: true,
           nftDepositAddr: true,
-          nftBDepositAddr: true, // Buyer's NFT deposit address for NFT<>NFT swaps
+          nftBDepositAddr: true, // Escrow's NFT B token account for NFT<>NFT swaps
           nftBMint: true,        // Needed for deriving NFT B address if not stored
-          buyer: true,           // Needed for deriving NFT B address if not stored
-          escrowPda: true,
+          escrowPda: true,       // Needed for deriving NFT B address if not stored
           swapType: true,
           status: true,
           createdAt: true,
@@ -272,15 +271,15 @@ export class MonitoringService {
               nftBDepositAddr = agreement.nftBDepositAddr;
               console.log(`[MonitoringService] Using stored NFT B deposit address for ${agreement.agreementId}: ${nftBDepositAddr}`);
             }
-            // Fallback: Derive from nftBMint and buyer address
-            else if (agreement.nftBMint && agreement.buyer) {
+            // Fallback: Derive from nftBMint and escrowPda (where NFT is actually deposited)
+            else if (agreement.nftBMint && agreement.escrowPda) {
               try {
                 const derivedAddr = await getAssociatedTokenAddress(
                   new PublicKey(agreement.nftBMint),
-                  new PublicKey(agreement.buyer)
+                  new PublicKey(agreement.escrowPda)  // Escrow PDA, not buyer wallet
                 );
                 nftBDepositAddr = derivedAddr.toString();
-                console.log(`[MonitoringService] Derived NFT B deposit address for ${agreement.agreementId}: ${nftBDepositAddr}`);
+                console.log(`[MonitoringService] Derived escrow NFT B deposit address for ${agreement.agreementId}: ${nftBDepositAddr}`);
               } catch (error) {
                 console.error(`[MonitoringService] Failed to derive NFT B deposit address for ${agreement.agreementId}:`, error);
               }
