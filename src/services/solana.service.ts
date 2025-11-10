@@ -767,6 +767,8 @@ export const deriveSolVaultPda = async (
     if (error.message && error.message.includes('Cannot read properties of null')) {
       throw new Error(`IDL_MISMATCH: Escrow account ${escrowPdaString} was created with an older program version and cannot be deserialized. This agreement should be archived.`);
     }
+    // Pass through the original error for proper handling upstream
+    // Common case: "Account does not exist or has no data" for newly created agreements
     throw error;
   }
 };
