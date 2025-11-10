@@ -15,9 +15,10 @@ datasource db {
 enum AgreementStatus {
   PENDING
   FUNDED
-  USDC_LOCKED
-  NFT_LOCKED
-  BOTH_LOCKED
+  USDC_LOCKED // Legacy: V1 USDC-based escrows
+  SOL_LOCKED // V2: Buyer's SOL deposited, waiting for NFT(s)
+  NFT_LOCKED // NFT deposited, waiting for SOL/USDC
+  BOTH_LOCKED // All deposits complete, ready for settlement
   SETTLED
   EXPIRED
   CANCELLED

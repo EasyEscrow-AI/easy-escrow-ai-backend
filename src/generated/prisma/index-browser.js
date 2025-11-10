@@ -275,6 +275,7 @@ exports.AgreementStatus = exports.$Enums.AgreementStatus = {
   PENDING: 'PENDING',
   FUNDED: 'FUNDED',
   USDC_LOCKED: 'USDC_LOCKED',
+  SOL_LOCKED: 'SOL_LOCKED',
   NFT_LOCKED: 'NFT_LOCKED',
   BOTH_LOCKED: 'BOTH_LOCKED',
   SETTLED: 'SETTLED',

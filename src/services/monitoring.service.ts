@@ -157,7 +157,7 @@ export class MonitoringService {
       // - Stale data: In non-production, exclude agreements older than 7 days (prevents E2E test pollution)
       const baseWhere: any = {
         status: {
-          in: ['PENDING', 'FUNDED', 'USDC_LOCKED', 'NFT_LOCKED'],
+          in: ['PENDING', 'FUNDED', 'USDC_LOCKED', 'SOL_LOCKED', 'NFT_LOCKED'], // Include SOL_LOCKED for V2
         },
         expiry: {
           gt: new Date(), // Not expired
@@ -222,7 +222,7 @@ export class MonitoringService {
           if (
             agreement.escrowPda &&
             (agreement.swapType === 'NFT_FOR_SOL' || agreement.swapType === 'NFT_FOR_NFT_PLUS_SOL' || agreement.swapType === 'NFT_FOR_NFT_WITH_FEE') &&
-            !['USDC_LOCKED', 'BOTH_LOCKED'].includes(agreement.status)
+            !['SOL_LOCKED', 'BOTH_LOCKED'].includes(agreement.status)
           ) {
             try {
               // Derive sol_vault PDA using solanaService helper
