@@ -2703,18 +2703,41 @@ export class EscrowProgramService {
     try {
       console.log('[EscrowProgramService] Closing escrow account:', escrowPda.toString());
 
-      // Fetch escrow state to validate terminal status
-      const escrowState = await this.program.account.escrowState.fetch(escrowPda);
-      console.log('[EscrowProgramService] Escrow status:', escrowState.status);
+      // Fetch escrow state with retry logic to handle timing issues
+      // After settlement, the on-chain state may not be immediately available due to:
+      // - RPC node cache invalidation delay
+      // - Network propagation time
+      // - Transaction confirmation vs. account state update timing
+      const maxRetries = 3;
+      const retryDelayMs = 2000; // 2 seconds between retries
+      let escrowState: any;
+      let status: any;
+      let isCompleted = false;
+      let isCancelled = false;
 
-      // Validate terminal state
-      // Status is an enum object: { pending: {} } | { completed: {} } | { cancelled: {} }
-      const status = escrowState.status as any;
-      const isCompleted = status.completed !== undefined;
-      const isCancelled = status.cancelled !== undefined;
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        escrowState = await this.program.account.escrowState.fetch(escrowPda);
+        console.log(`[EscrowProgramService] Escrow status (attempt ${attempt}/${maxRetries}):`, escrowState.status);
+
+        // Validate terminal state
+        // Status is an enum object: { pending: {} } | { completed: {} } | { cancelled: {} }
+        status = escrowState.status as any;
+        isCompleted = status.completed !== undefined;
+        isCancelled = status.cancelled !== undefined;
+
+        if (isCompleted || isCancelled) {
+          // Terminal state reached
+          break;
+        }
+
+        if (attempt < maxRetries) {
+          console.log(`[EscrowProgramService] Status still pending, waiting ${retryDelayMs}ms before retry...`);
+          await new Promise(resolve => setTimeout(resolve, retryDelayMs));
+        }
+      }
       
       if (!isCompleted && !isCancelled) {
-        throw new Error(`Cannot close escrow in status: ${JSON.stringify(status)}`);
+        throw new Error(`Cannot close escrow in status: ${JSON.stringify(status)} after ${maxRetries} attempts. The escrow state may not have propagated yet.`);
       }
 
       // Build close instruction
