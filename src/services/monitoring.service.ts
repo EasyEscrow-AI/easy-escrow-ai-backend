@@ -157,7 +157,7 @@ export class MonitoringService {
       // - Stale data: In non-production, exclude agreements older than 7 days (prevents E2E test pollution)
       const baseWhere: any = {
         status: {
-          in: ['PENDING', 'FUNDED', 'USDC_LOCKED', 'NFT_LOCKED'],
+          in: ['PENDING', 'FUNDED', 'USDC_LOCKED', 'SOL_LOCKED', 'NFT_LOCKED'], // Include SOL_LOCKED for V2
         },
         expiry: {
           gt: new Date(), // Not expired
