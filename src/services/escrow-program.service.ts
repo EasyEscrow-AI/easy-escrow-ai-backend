@@ -2390,10 +2390,7 @@ export class EscrowProgramService {
       );
       console.log('[EscrowProgramService] SOL vault PDA for cancel:', solVaultPda.toString());
 
-      // Build remaining_accounts for refunds
-      const remainingAccounts: any[] = [];
-
-      // Add NFT A accounts (seller's NFT to refund)
+      // Derive NFT A accounts (seller's NFT to refund) - now required in accountsStrict
       const escrowNftAccount = await getAssociatedTokenAddress(
         nftMint,
         escrowPda,
@@ -2408,14 +2405,25 @@ export class EscrowProgramService {
         TOKEN_PROGRAM_ID
       );
 
-      remainingAccounts.push(
-        { pubkey: nftMint, isSigner: false, isWritable: false },
-        { pubkey: escrowNftAccount, isSigner: false, isWritable: true },
-        { pubkey: sellerNftAccount, isSigner: false, isWritable: true },
-        { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false }
-      );
+      // Build instruction matching new IDL structure
+      // NFT A (seller's NFT): Now required accounts in accountsStrict
+      // NFT B (buyer's NFT): Still uses remainingAccounts for NFT_FOR_NFT swaps
+      const instructionBuilder = (this.program.methods as any)
+        .cancelIfExpired()
+        .accountsStrict({
+          escrowState: escrowPda,
+          solVault: solVaultPda,
+          buyer,
+          seller, // Required for seller SOL refunds in NFT_FOR_NFT_WITH_FEE
+          sellerNftAccount, // NFT A: Now required
+          escrowNftAccount, // NFT A: Now required
+          tokenProgram: TOKEN_PROGRAM_ID, // Now required
+          systemProgram: SystemProgram.programId,
+        });
 
-      // For NFT<>NFT swaps, add NFT B accounts (buyer's NFT to refund)
+      // Build remaining accounts for NFT B (buyer's NFT in NFT_FOR_NFT swaps)
+      const remainingAccountsForNftB: any[] = [];
+
       if (
         (swapType === 'NFT_FOR_NFT_WITH_FEE' || swapType === 'NFT_FOR_NFT_PLUS_SOL') &&
         nftBMint
@@ -2434,7 +2442,7 @@ export class EscrowProgramService {
           TOKEN_PROGRAM_ID
         );
 
-        remainingAccounts.push(
+        remainingAccountsForNftB.push(
           { pubkey: nftBMint, isSigner: false, isWritable: false },
           { pubkey: escrowNftBAccount, isSigner: false, isWritable: true },
           { pubkey: buyerNftBAccount, isSigner: false, isWritable: true },
@@ -2442,18 +2450,12 @@ export class EscrowProgramService {
         );
       }
 
-      // Build instruction
-      const instruction = await (this.program.methods as any)
-        .cancelIfExpired()
-        .accountsStrict({
-          escrowState: escrowPda,
-          solVault: solVaultPda, // NEW: Vault PDA for SOL refunds
-          buyer,
-          seller,
-          systemProgram: SystemProgram.programId,
-        })
-        .remainingAccounts(remainingAccounts)
-        .instruction();
+      // Add remaining accounts for NFT B if this is an NFT_FOR_NFT swap
+      if (remainingAccountsForNftB.length > 0) {
+        instructionBuilder.remainingAccounts(remainingAccountsForNftB);
+      }
+
+      const instruction = await instructionBuilder.instruction();
 
       // Create transaction
       const { Transaction, ComputeBudgetProgram } = await import('@solana/web3.js');
@@ -2613,6 +2615,7 @@ export class EscrowProgramService {
           escrowState: escrowPda,
           solVault: solVaultPda,
           buyer,
+          seller, // ADDED: Required for seller SOL refunds in NFT_FOR_NFT_WITH_FEE
           sellerNftAccount, // NFT A: Now required (was in remainingAccounts)
           escrowNftAccount, // NFT A: Now required (was in remainingAccounts)
           tokenProgram: TOKEN_PROGRAM_ID, // Now required
