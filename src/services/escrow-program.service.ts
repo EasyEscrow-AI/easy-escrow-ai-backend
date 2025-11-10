@@ -213,9 +213,15 @@ export class EscrowProgramService {
         maxRetries: 3,
       });
       
-      // Wait for confirmation
-      console.log('[EscrowProgramService] Waiting for transaction confirmation...');
-      const confirmation = await this.provider.connection.confirmTransaction(txId, 'confirmed');
+      // Wait for confirmation with timeout (60 seconds for devnet)
+      console.log('[EscrowProgramService] Waiting for transaction confirmation (timeout: 60s)...');
+      
+      const confirmationPromise = this.provider.connection.confirmTransaction(txId, 'confirmed');
+      const timeoutPromise = new Promise<never>((_, reject) => 
+        setTimeout(() => reject(new Error('Transaction confirmation timeout after 60 seconds')), 60000)
+      );
+      
+      const confirmation = await Promise.race([confirmationPromise, timeoutPromise]);
       
       if (confirmation.value.err) {
         console.error('[EscrowProgramService] Transaction failed on-chain:', confirmation.value.err);
@@ -277,11 +283,20 @@ export class EscrowProgramService {
       console.log('[EscrowProgramService] ✅ Transaction sent via Jito Block Engine:', result.result);
       
       // CRITICAL: Wait for confirmation to ensure transaction actually succeeded
-      console.log('[EscrowProgramService] Waiting for transaction confirmation...');
-      const confirmation = await this.provider.connection.confirmTransaction(
+      // Use longer timeout for mainnet (90 seconds) due to Jito bundling and network congestion
+      console.log('[EscrowProgramService] Waiting for transaction confirmation (timeout: 90s)...');
+      
+      const confirmationPromise = this.provider.connection.confirmTransaction(
         result.result,
         'confirmed'
       );
+      
+      // Add custom timeout of 90 seconds for mainnet Jito transactions
+      const timeoutPromise = new Promise<never>((_, reject) => 
+        setTimeout(() => reject(new Error('Transaction confirmation timeout after 90 seconds')), 90000)
+      );
+      
+      const confirmation = await Promise.race([confirmationPromise, timeoutPromise]);
       
       if (confirmation.value.err) {
         console.error('[EscrowProgramService] Transaction failed on-chain:', confirmation.value.err);

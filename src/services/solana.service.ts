@@ -145,9 +145,13 @@ export class SolanaService {
     const commitment = connectionConfig?.commitment || 'confirmed';
     
     // HTTP/HTTPS connection for transactions
+    // Use 90 seconds for mainnet (Jito bundling + network congestion), 60 seconds for devnet
+    const isMainnet = rpcUrl.toLowerCase().includes('mainnet');
+    const confirmTimeout = isMainnet ? 90000 : 60000;
+    
     const httpConnectionConfig: ConnectionConfig = {
       commitment,
-      confirmTransactionInitialTimeout: connectionConfig?.confirmTransactionInitialTimeout || 60000,
+      confirmTransactionInitialTimeout: connectionConfig?.confirmTransactionInitialTimeout || confirmTimeout,
     };
     
     // Initialize primary connection
