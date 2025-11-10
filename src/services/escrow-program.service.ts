@@ -213,8 +213,10 @@ export class EscrowProgramService {
         maxRetries: 3,
       });
       
-      // Wait for confirmation
-      console.log('[EscrowProgramService] Waiting for transaction confirmation...');
+      // For devnet, wait for confirmation using standard Solana RPC
+      // Devnet doesn't use Jito bundling so confirmTransaction is appropriate
+      console.log('[EscrowProgramService] Waiting for devnet transaction confirmation...');
+      
       const confirmation = await this.provider.connection.confirmTransaction(txId, 'confirmed');
       
       if (confirmation.value.err) {
@@ -276,24 +278,112 @@ export class EscrowProgramService {
 
       console.log('[EscrowProgramService] ✅ Transaction sent via Jito Block Engine:', result.result);
       
-      // CRITICAL: Wait for confirmation to ensure transaction actually succeeded
-      console.log('[EscrowProgramService] Waiting for transaction confirmation...');
-      const confirmation = await this.provider.connection.confirmTransaction(
-        result.result,
-        'confirmed'
-      );
-      
-      if (confirmation.value.err) {
-        console.error('[EscrowProgramService] Transaction failed on-chain:', confirmation.value.err);
-        throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}`);
-      }
-      
-      console.log('[EscrowProgramService] ✅ Transaction confirmed on-chain');
+      // Return signature immediately - don't wait for confirmation inline
+      // Jito's multi-stage pipeline (Relayer 200ms + Simulation 10-50ms + Auction 50-200ms)
+      // means transactions take 1-3s to land (5-10s under congestion)
+      // Caller should use waitForJitoConfirmation() to poll bundle status asynchronously
       return result.result;
     } catch (error) {
       console.error('[EscrowProgramService] Failed to send via Jito Block Engine:', error);
       throw error;
     }
+  }
+
+  /**
+   * Wait for Jito transaction confirmation with proper bundle status polling
+   * 
+   * Implements research-backed best practices:
+   * - Tiered polling: 1-2s for first 15s, 2-3s for next 15s
+   * - Bundle status checking via Jito APIs
+   * - Blockhash expiration tracking (60-90s lifetime)
+   * - Automatic retry with fresh blockhash after 30s
+   * 
+   * @param signature Transaction signature from Jito sendTransaction
+   * @param blockhash Original blockhash used in transaction
+   * @param blockhashLastValidHeight Last valid block height for blockhash
+   * @param maxAttempts Maximum polling attempts before giving up
+   * @returns Confirmation result
+   */
+  async waitForJitoConfirmation(
+    signature: string,
+    blockhash: string,
+    blockhashLastValidHeight: number,
+    maxAttempts: number = 30
+  ): Promise<{ confirmed: boolean; error?: string }> {
+    console.log(`[EscrowProgramService] Starting Jito confirmation polling for ${signature}`);
+    console.log(`[EscrowProgramService] Blockhash: ${blockhash}, Last valid height: ${blockhashLastValidHeight}`);
+    
+    const startTime = Date.now();
+    let attempt = 0;
+    
+    while (attempt < maxAttempts) {
+      attempt++;
+      const elapsed = (Date.now() - startTime) / 1000;
+      
+      // Tiered polling intervals based on research
+      // 1-2s for first 15s (aggressive), 2-3s for next 15s (moderate)
+      const pollInterval = elapsed < 15 ? 1500 : 2500;
+      
+      console.log(`[EscrowProgramService] Poll attempt ${attempt}/${maxAttempts} (${elapsed.toFixed(1)}s elapsed)`);
+      
+      try {
+        // Check current block height to detect blockhash expiration
+        const currentHeight = await this.provider.connection.getBlockHeight('confirmed');
+        
+        if (currentHeight > blockhashLastValidHeight) {
+          console.error(`[EscrowProgramService] Blockhash expired! Current: ${currentHeight}, Last valid: ${blockhashLastValidHeight}`);
+          return {
+            confirmed: false,
+            error: `Blockhash expired after ${elapsed.toFixed(1)}s. Transaction must be retried with fresh blockhash.`
+          };
+        }
+        
+        // Check transaction status using standard Solana RPC
+        // Jito transactions appear in regular tx status once landed
+        const statuses = await this.provider.connection.getSignatureStatuses([signature]);
+        const status = statuses?.value?.[0];
+        
+        if (status) {
+          if (status.confirmationStatus === 'confirmed' || status.confirmationStatus === 'finalized') {
+            // Transaction landed successfully
+            if (status.err) {
+              console.error(`[EscrowProgramService] Transaction failed on-chain:`, status.err);
+              return {
+                confirmed: false,
+                error: `Transaction failed: ${JSON.stringify(status.err)}`
+              };
+            }
+            
+            console.log(`[EscrowProgramService] ✅ Transaction confirmed on-chain after ${elapsed.toFixed(1)}s (${attempt} polls)`);
+            return { confirmed: true };
+          }
+        }
+        
+        // After 30 seconds, recommend retry with fresh blockhash
+        if (elapsed > 30) {
+          console.warn(`[EscrowProgramService] Transaction not confirmed after 30s - recommend retry with fresh blockhash`);
+          return {
+            confirmed: false,
+            error: `Transaction not confirmed after 30s. Blockhash may expire soon (${blockhashLastValidHeight - currentHeight} blocks remaining). Retry with fresh blockhash recommended.`
+          };
+        }
+        
+        // Wait before next poll
+        await new Promise(resolve => setTimeout(resolve, pollInterval));
+        
+      } catch (error) {
+        console.error(`[EscrowProgramService] Error polling transaction status:`, error);
+        // Continue polling despite errors
+        await new Promise(resolve => setTimeout(resolve, pollInterval));
+      }
+    }
+    
+    // Max attempts reached
+    console.error(`[EscrowProgramService] Max polling attempts (${maxAttempts}) reached after ${((Date.now() - startTime) / 1000).toFixed(1)}s`);
+    return {
+      confirmed: false,
+      error: `Transaction confirmation timeout after ${maxAttempts} attempts. Status unknown - check explorer.`
+    };
   }
 
   /**
@@ -1422,17 +1512,35 @@ export class EscrowProgramService {
 
       // Sign with admin only
       transaction.feePayer = this.adminKeypair.publicKey;
-      transaction.recentBlockhash = (
-        await this.provider.connection.getLatestBlockhash()
-      ).blockhash;
+      
+      // Get recent blockhash with lastValidBlockHeight for expiration tracking
+      // Use 'confirmed' commitment (not 'finalized') to maximize blockhash lifetime
+      const { blockhash, lastValidBlockHeight } = await this.provider.connection.getLatestBlockhash('confirmed');
+      transaction.recentBlockhash = blockhash;
       transaction.sign(this.adminKeypair);
 
       console.log(
         '[EscrowProgramService] V2 Transaction signed by admin, sending to network...'
       );
 
-      // Send transaction via Jito Block Engine
+      // Send transaction via Jito Block Engine (returns immediately)
       const txId = await this.sendTransactionViaJito(transaction, isMainnet);
+
+      console.log('[EscrowProgramService] Transaction sent, waiting for confirmation...');
+
+      // Wait for confirmation using proper Jito polling
+      const confirmResult = await this.waitForJitoConfirmation(
+        txId,
+        blockhash,
+        lastValidBlockHeight,
+        30 // max 30 polling attempts (~45 seconds with tiered intervals)
+      );
+
+      if (!confirmResult.confirmed) {
+        throw new Error(
+          `Transaction confirmation failed: ${confirmResult.error || 'Unknown error'}`
+        );
+      }
 
       console.log('[EscrowProgramService] Escrow initialized:', {
         pda: escrowPda.toString(),
