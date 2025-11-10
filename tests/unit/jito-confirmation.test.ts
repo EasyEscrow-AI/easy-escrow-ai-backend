@@ -371,7 +371,8 @@ describe('EscrowProgramService - Jito Confirmation', function() {
         'sig123',
         'blockhash123',
         200,
-        30
+        30, // max attempts
+        30  // 30 second timeout (testing the timeout logic)
       );
 
       // Fast-forward 31 seconds worth of polling

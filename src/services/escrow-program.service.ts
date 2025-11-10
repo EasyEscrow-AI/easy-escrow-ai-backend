@@ -296,19 +296,21 @@ export class EscrowProgramService {
    * - Tiered polling: 1-2s for first 15s, 2-3s for next 15s
    * - Bundle status checking via Jito APIs
    * - Blockhash expiration tracking (60-90s lifetime)
-   * - Automatic retry with fresh blockhash after 30s
+   * - Automatic retry with fresh blockhash after timeout
    * 
    * @param signature Transaction signature from Jito sendTransaction
    * @param blockhash Original blockhash used in transaction
    * @param blockhashLastValidHeight Last valid block height for blockhash
    * @param maxAttempts Maximum polling attempts before giving up
+   * @param timeoutSeconds Timeout in seconds before recommending fresh blockhash (default: 60 for mainnet)
    * @returns Confirmation result
    */
   async waitForJitoConfirmation(
     signature: string,
     blockhash: string,
     blockhashLastValidHeight: number,
-    maxAttempts: number = 30
+    maxAttempts: number = 30,
+    timeoutSeconds: number = 60
   ): Promise<{ confirmed: boolean; error?: string }> {
     console.log(`[EscrowProgramService] Starting Jito confirmation polling for ${signature}`);
     console.log(`[EscrowProgramService] Blockhash: ${blockhash}, Last valid height: ${blockhashLastValidHeight}`);
@@ -359,12 +361,12 @@ export class EscrowProgramService {
           }
         }
         
-        // After 30 seconds, recommend retry with fresh blockhash
-        if (elapsed > 30) {
-          console.warn(`[EscrowProgramService] Transaction not confirmed after 30s - recommend retry with fresh blockhash`);
+        // After timeout, recommend retry with fresh blockhash
+        if (elapsed > timeoutSeconds) {
+          console.warn(`[EscrowProgramService] Transaction not confirmed after ${timeoutSeconds}s - recommend retry with fresh blockhash`);
           return {
             confirmed: false,
-            error: `Transaction not confirmed after 30s. Blockhash may expire soon (${blockhashLastValidHeight - currentHeight} blocks remaining). Retry with fresh blockhash recommended.`
+            error: `Transaction not confirmed after ${timeoutSeconds}s. Blockhash may expire soon (${blockhashLastValidHeight - currentHeight} blocks remaining). Retry with fresh blockhash recommended.`
           };
         }
         
@@ -1529,11 +1531,14 @@ export class EscrowProgramService {
       console.log('[EscrowProgramService] Transaction sent, waiting for confirmation...');
 
       // Wait for confirmation using proper Jito polling
+      // Mainnet: 60s timeout (handles network congestion), Devnet: 30s timeout
+      const timeoutSeconds = isMainnet ? 60 : 30;
       const confirmResult = await this.waitForJitoConfirmation(
         txId,
         blockhash,
         lastValidBlockHeight,
-        30 // max 30 polling attempts (~45 seconds with tiered intervals)
+        30, // max 30 polling attempts (~45 seconds with tiered intervals)
+        timeoutSeconds // timeout before recommending fresh blockhash
       );
 
       if (!confirmResult.confirmed) {
