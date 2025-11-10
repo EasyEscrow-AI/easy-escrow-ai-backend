@@ -124,11 +124,13 @@ export class SolDepositService {
         console.log(`[SolDepositService] Found ${solDeposits.length} SOL deposit(s) in database`);
         
         if (solDeposits.length === 0) {
-          console.warn(`[SolDepositService] WARNING: Vault balance = ${Number(solBalance) / LAMPORTS_PER_SOL} SOL, but no SOL deposits recorded! API endpoints may have failed.`);
+          console.log(`[SolDepositService] INFO: No deposits recorded in database for NFT_FOR_NFT_WITH_FEE (expected - deposits not tracked, only vault balance)`);
+        } else {
+          console.log(`[SolDepositService] ${solDeposits.length} deposit(s) found, but using vault balance for status calculation`);
         }
 
-        // Don't record a new deposit - API endpoints should have done this
-        // Just use the vault balance for status calculation
+        // Don't record a new deposit - client-side signed transactions don't need database tracking
+        // Use vault balance for status calculation (more reliable for NFT_FOR_NFT_WITH_FEE)
         solAmount = lamportsToSol(expectedAmount);
       } else {
         // NFT_FOR_SOL or NFT_FOR_NFT_PLUS_SOL: Record deposit as fallback
