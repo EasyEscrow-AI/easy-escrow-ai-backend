@@ -214,9 +214,13 @@ export class NftDepositService {
         select: {
           id: true,
           agreementId: true,
+          swapType: true,
           nftMint: true,
+          nftBMint: true,
           seller: true,
+          buyer: true,
           nftDepositAddr: true,
+          nftBDepositAddr: true,
           status: true,
         },
       });
@@ -232,17 +236,35 @@ export class NftDepositService {
       const mintAddress = tokenAccountData.mint.toBase58();
       console.log(`[NftDepositService] Detected NFT deposit with mint: ${mintAddress}`);
 
-      // Validate mint matches expected NFT
-      const expectedMint = agreement.nftMint;
-      if (mintAddress !== expectedMint) {
+      // Determine which NFT this is (A or B) based on the deposit address
+      const isNftA = publicKey === agreement.nftDepositAddr;
+      const isNftB = publicKey === agreement.nftBDepositAddr;
+
+      if (!isNftA && !isNftB) {
         console.error(
-          `[NftDepositService] Mint mismatch: got ${mintAddress}, expected ${expectedMint}`
+          `[NftDepositService] Deposit address mismatch: ${publicKey} does not match NFT A (${agreement.nftDepositAddr}) or NFT B (${agreement.nftBDepositAddr})`
         );
         return {
           success: false,
-          error: 'NFT mint does not match expected mint',
+          error: 'Deposit address does not match agreement',
         };
       }
+
+      // Validate mint matches expected NFT (A or B)
+      const expectedMint = isNftA ? agreement.nftMint : agreement.nftBMint;
+      const nftLabel = isNftA ? 'NFT A (seller)' : 'NFT B (buyer)';
+      
+      if (mintAddress !== expectedMint) {
+        console.error(
+          `[NftDepositService] Mint mismatch for ${nftLabel}: got ${mintAddress}, expected ${expectedMint}`
+        );
+        return {
+          success: false,
+          error: `NFT mint does not match expected ${nftLabel} mint`,
+        };
+      }
+
+      console.log(`[NftDepositService] ✅ Validated ${nftLabel} deposit: ${mintAddress}`);
 
       // Fetch and validate NFT metadata
       let metadata: NftMetadata | null = null;
@@ -260,11 +282,14 @@ export class NftDepositService {
       // Determine deposit status based on amount
       const depositStatus: DepositStatus = tokenAccountData.amount === BigInt(1) ? 'CONFIRMED' : 'PENDING';
 
+      // Determine deposit type based on which NFT this is
+      const depositType = isNftA ? 'NFT' : 'NFT_BUYER';
+
       // Create deposit record
       const deposit = await prisma.deposit.create({
         data: {
           agreementId: agreement.agreementId,
-          type: 'NFT',
+          type: depositType,
           depositor: tokenAccountData.owner.toBase58(),
           amount: null, // NFTs don't have a USD amount
           tokenAccount: publicKey,
@@ -275,7 +300,7 @@ export class NftDepositService {
         },
       });
 
-      console.log(`[NftDepositService] Created deposit record: ${deposit.id}`);
+      console.log(`[NftDepositService] Created ${depositType} deposit record: ${deposit.id}`);
 
       // Create transaction log for confirmed NFT deposit
       if (depositStatus === 'CONFIRMED') {
@@ -420,36 +445,93 @@ export class NftDepositService {
    */
   private async updateAgreementStatus(agreementId: string, currentStatus: string): Promise<void> {
     try {
-      // Check if USDC is also deposited
-      const usdcDeposit = await prisma.deposit.findFirst({
-        where: {
-          agreementId,
-          type: 'USDC',
-          status: 'CONFIRMED',
+      // Get agreement details to determine swap type
+      const agreement = await prisma.agreement.findUnique({
+        where: { id: agreementId },
+        select: {
+          swapType: true,
+          deposits: {
+            where: { status: 'CONFIRMED' },
+            select: { type: true },
+          },
         },
       });
 
-      let newStatus: AgreementStatus;
-      if (usdcDeposit) {
-        // Both USDC and NFT are locked
-        newStatus = 'BOTH_LOCKED' as AgreementStatus;
-      } else if (currentStatus === 'PENDING' || currentStatus === 'FUNDED') {
-        // Only NFT is locked
-        newStatus = 'NFT_LOCKED' as AgreementStatus;
-      } else if (currentStatus === 'USDC_LOCKED') {
-        // USDC was already locked, now NFT is also locked
-        newStatus = 'BOTH_LOCKED' as AgreementStatus;
-      } else {
-        // Don't change status
+      if (!agreement) {
+        console.error(`[NftDepositService] Agreement not found for status update: ${agreementId}`);
         return;
       }
 
-      await prisma.agreement.update({
-        where: { id: agreementId },
-        data: { status: newStatus },
-      });
+      // Count confirmed deposits by type
+      const hasNftA = agreement.deposits.some(d => d.type === 'NFT');
+      const hasNftB = agreement.deposits.some(d => d.type === 'NFT_BUYER');
+      const hasSOL = agreement.deposits.some(d => d.type === 'SOL');
+      const hasUSDC = agreement.deposits.some(d => d.type === 'USDC');
 
-      console.log(`[NftDepositService] Updated agreement status to: ${newStatus}`);
+      let newStatus: AgreementStatus | null = null;
+
+      // Determine new status based on swap type
+      switch (agreement.swapType) {
+        case 'NFT_FOR_USDC':
+          // V1 USDC-based swap
+          if (hasUSDC && hasNftA) {
+            newStatus = 'BOTH_LOCKED' as AgreementStatus;
+          } else if (hasUSDC) {
+            newStatus = 'USDC_LOCKED' as AgreementStatus;
+          } else if (hasNftA) {
+            newStatus = 'NFT_LOCKED' as AgreementStatus;
+          }
+          break;
+
+        case 'NFT_FOR_SOL':
+          // V2 SOL-based swap (NFT A for SOL)
+          if (hasSOL && hasNftA) {
+            newStatus = 'BOTH_LOCKED' as AgreementStatus;
+          } else if (hasSOL) {
+            newStatus = 'SOL_LOCKED' as AgreementStatus;
+          } else if (hasNftA) {
+            newStatus = 'NFT_LOCKED' as AgreementStatus;
+          }
+          break;
+
+        case 'NFT_FOR_NFT_WITH_FEE':
+          // V2 NFT<>NFT swap with SOL fee
+          if (hasNftA && hasNftB && hasSOL) {
+            newStatus = 'BOTH_LOCKED' as AgreementStatus;
+          } else if (hasSOL) {
+            newStatus = 'SOL_LOCKED' as AgreementStatus;
+          } else if (hasNftA) {
+            newStatus = 'NFT_LOCKED' as AgreementStatus;
+          }
+          break;
+
+        case 'NFT_FOR_NFT_PLUS_SOL':
+          // V2 NFT<>NFT+SOL swap
+          if (hasNftA && hasNftB && hasSOL) {
+            newStatus = 'BOTH_LOCKED' as AgreementStatus;
+          } else if (hasSOL) {
+            newStatus = 'SOL_LOCKED' as AgreementStatus;
+          } else if (hasNftA) {
+            newStatus = 'NFT_LOCKED' as AgreementStatus;
+          }
+          break;
+
+        default:
+          console.warn(`[NftDepositService] Unknown swap type: ${agreement.swapType}`);
+          return;
+      }
+
+      // Only update if status changed
+      if (newStatus && newStatus !== currentStatus) {
+        await prisma.agreement.update({
+          where: { id: agreementId },
+          data: { status: newStatus },
+        });
+
+        console.log(`[NftDepositService] Updated agreement status: ${currentStatus} → ${newStatus}`);
+      } else {
+        console.log(`[NftDepositService] Status unchanged: ${currentStatus}`);
+      }
     } catch (error) {
       console.error('[NftDepositService] Error updating agreement status:', error);
       throw error;
