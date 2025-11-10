@@ -246,7 +246,6 @@ describe('STAGING E2E: Admin Cancel with On-Chain Refund Verification', function
       await waitForAgreementStatus(
         testAgreement.agreementId,
         'NFT_LOCKED',
-        STAGING_CONFIG.apiBaseUrl,
         10,
         3000
       );
@@ -310,7 +309,6 @@ describe('STAGING E2E: Admin Cancel with On-Chain Refund Verification', function
       await waitForAgreementStatus(
         testAgreement.agreementId,
         'BOTH_LOCKED',
-        STAGING_CONFIG.apiBaseUrl,
         10,
         3000
       );
