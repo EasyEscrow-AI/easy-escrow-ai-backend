@@ -241,6 +241,14 @@ export class MonitoringService {
               if (error.message && error.message.includes('IDL_MISMATCH')) {
                 console.warn(`[MonitoringService] Skipping old agreement ${agreement.agreementId}: Created with older program version`);
                 // Optionally: Mark agreement for archival in production
+              } else if (error.message && (error.message.includes('Account does not exist') || error.message.includes('has no data'))) {
+                // Expected for newly created agreements - escrow account not yet confirmed on-chain
+                if (agreement.status === 'PENDING') {
+                  console.log(`[MonitoringService] Escrow account not yet confirmed for ${agreement.agreementId}, will retry on next monitoring cycle`);
+                } else {
+                  // Unexpected for non-PENDING agreements - this is a real issue
+                  console.error(`[MonitoringService] Failed to derive SOL vault for ${agreement.agreementId} (status: ${agreement.status}):`, error);
+                }
               } else {
                 console.error(`[MonitoringService] Failed to derive SOL vault for ${agreement.agreementId}:`, error);
               }
