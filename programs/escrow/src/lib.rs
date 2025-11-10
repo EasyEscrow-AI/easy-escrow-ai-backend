@@ -885,37 +885,35 @@ pub mod escrow {
                 );
 
                 // Transfer platform fee (SOL) to fee collector
-                let platform_fee = ctx.accounts.escrow_state.sol_amount; // Full amount is the fee
+                // CRITICAL: Both parties deposited to sol_vault, so transfer FROM sol_vault!
+                let platform_fee = ctx.accounts.escrow_state.sol_amount; // Full amount is the fee (0.01 SOL total)
                 
-                // Get rent-exempt minimum for this account
-                let rent = Rent::get()?;
-                let escrow_account_info = ctx.accounts.escrow_state.to_account_info();
-                let min_rent_exempt = rent.minimum_balance(escrow_account_info.data_len());
-                
-                // Calculate transferable amount
-                let current_balance = escrow_account_info.lamports();
-                let transferable = current_balance.checked_sub(min_rent_exempt)
-                    .ok_or(EscrowError::InsufficientFunds)?;
-                
+                // Validate sol_vault has sufficient funds
+                let vault_balance = ctx.accounts.sol_vault.to_account_info().lamports();
                 require!(
-                    transferable >= platform_fee,
+                    vault_balance >= platform_fee,
                     EscrowError::InsufficientFunds
                 );
                 
-                // CRITICAL FIX: Get escrow_account reference ONCE to avoid RefCell tracking issues
-                // Perform direct lamport transfer
-                let escrow_account = ctx.accounts.escrow_state.to_account_info();
-                {
-                    let fee_collector_account = ctx.accounts.platform_fee_collector.to_account_info();
-                    
-                    let mut escrow_lamports = escrow_account.try_borrow_mut_lamports()?;
-                    let mut fee_collector_lamports = fee_collector_account.try_borrow_mut_lamports()?;
-
-                    **escrow_lamports = escrow_lamports.checked_sub(platform_fee)
-                        .ok_or(EscrowError::InsufficientFunds)?;
-                    **fee_collector_lamports = fee_collector_lamports.checked_add(platform_fee)
-                        .ok_or(EscrowError::CalculationOverflow)?;
-                } // Borrow released here
+                // Vault PDA signer seeds (transfer FROM sol_vault, not escrow_state!)
+                let escrow_id_bytes = ctx.accounts.escrow_state.escrow_id.to_le_bytes();
+                let vault_signer_seeds: &[&[&[u8]]] = &[&[
+                    b"sol_vault",
+                    escrow_id_bytes.as_ref(),
+                    &[ctx.bumps.sol_vault],  // Use vault's bump!
+                ]];
+                
+                // Transfer platform fee from sol_vault to fee_collector using System Program CPI
+                let fee_transfer_ctx = CpiContext::new_with_signer(
+                    ctx.accounts.system_program.to_account_info(),
+                    anchor_lang::system_program::Transfer {
+                        from: ctx.accounts.sol_vault.to_account_info(),
+                        to: ctx.accounts.platform_fee_collector.to_account_info(),
+                    },
+                    vault_signer_seeds,
+                );
+                anchor_lang::system_program::transfer(fee_transfer_ctx, platform_fee)?;
+                msg!("Platform fee transferred from sol_vault: {} lamports", platform_fee);
 
                 // Transfer NFT A from escrow to buyer
                 let nft_a_transfer_ctx = CpiContext::new_with_signer(
