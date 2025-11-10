@@ -2716,23 +2716,36 @@ export class EscrowProgramService {
       let isCancelled = false;
 
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        escrowState = await this.program.account.escrowState.fetch(escrowPda);
-        console.log(`[EscrowProgramService] Escrow status (attempt ${attempt}/${maxRetries}):`, escrowState.status);
+        try {
+          escrowState = await this.program.account.escrowState.fetch(escrowPda);
+          console.log(`[EscrowProgramService] Escrow status (attempt ${attempt}/${maxRetries}):`, escrowState.status);
 
-        // Validate terminal state
-        // Status is an enum object: { pending: {} } | { completed: {} } | { cancelled: {} }
-        status = escrowState.status as any;
-        isCompleted = status.completed !== undefined;
-        isCancelled = status.cancelled !== undefined;
+          // Validate terminal state
+          // Status is an enum object: { pending: {} } | { completed: {} } | { cancelled: {} }
+          status = escrowState.status as any;
+          isCompleted = status.completed !== undefined;
+          isCancelled = status.cancelled !== undefined;
 
-        if (isCompleted || isCancelled) {
-          // Terminal state reached
-          break;
-        }
+          if (isCompleted || isCancelled) {
+            // Terminal state reached
+            break;
+          }
 
-        if (attempt < maxRetries) {
-          console.log(`[EscrowProgramService] Status still pending, waiting ${retryDelayMs}ms before retry...`);
-          await new Promise(resolve => setTimeout(resolve, retryDelayMs));
+          if (attempt < maxRetries) {
+            console.log(`[EscrowProgramService] Status still pending, waiting ${retryDelayMs}ms before retry...`);
+            await new Promise(resolve => setTimeout(resolve, retryDelayMs));
+          }
+        } catch (fetchError: any) {
+          // Handle transient RPC errors (network issues, timeouts, etc.)
+          console.warn(`[EscrowProgramService] Failed to fetch escrow state (attempt ${attempt}/${maxRetries}):`, fetchError.message);
+          
+          if (attempt < maxRetries) {
+            console.log(`[EscrowProgramService] Retrying after ${retryDelayMs}ms...`);
+            await new Promise(resolve => setTimeout(resolve, retryDelayMs));
+          } else {
+            // All retries exhausted, throw the fetch error
+            throw new Error(`Failed to fetch escrow state after ${maxRetries} attempts: ${fetchError.message}`);
+          }
         }
       }
       
