@@ -222,7 +222,7 @@ export class MonitoringService {
           if (
             agreement.escrowPda &&
             (agreement.swapType === 'NFT_FOR_SOL' || agreement.swapType === 'NFT_FOR_NFT_PLUS_SOL' || agreement.swapType === 'NFT_FOR_NFT_WITH_FEE') &&
-            !['USDC_LOCKED', 'BOTH_LOCKED'].includes(agreement.status)
+            !['SOL_LOCKED', 'BOTH_LOCKED'].includes(agreement.status)
           ) {
             try {
               // Derive sol_vault PDA using solanaService helper

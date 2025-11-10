@@ -196,8 +196,8 @@ export class SolDepositService {
         console.log(`[SolDepositService] All deposits complete, updating status to BOTH_LOCKED`);
       } else {
         // Only SOL deposited (waiting for NFT(s))
-        newStatus = AgreementStatus.USDC_LOCKED; // Reusing USDC_LOCKED for SOL (buyer funds locked)
-        console.log(`[SolDepositService] SOL deposited, waiting for NFT deposits, updating status to USDC_LOCKED`);
+        newStatus = AgreementStatus.SOL_LOCKED; // V2: Buyer's SOL deposited
+        console.log(`[SolDepositService] SOL deposited, waiting for NFT deposits, updating status to SOL_LOCKED`);
       }
 
       // Update agreement status
