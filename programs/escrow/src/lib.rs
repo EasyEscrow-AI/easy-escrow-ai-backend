@@ -496,6 +496,7 @@ pub mod escrow {
         escrow_state.platform_fee_bps = platform_fee_bps;
         escrow_state.fee_payer = fee_payer;
         escrow_state.buyer_sol_deposited = false;
+        escrow_state.seller_sol_deposited = false;  // NEW: Initialize seller SOL deposit flag
         escrow_state.buyer_nft_deposited = false;
         escrow_state.seller_nft_deposited = false;
         escrow_state.status = EscrowStatus::Pending;
@@ -558,6 +559,54 @@ pub mod escrow {
         ctx.accounts.escrow_state.buyer_sol_deposited = true;
 
         msg!("SOL deposited to vault: {} lamports", sol_amount);
+
+        Ok(())
+    }
+
+    /// Seller deposits SOL fee into the escrow (for NFT_FOR_NFT_WITH_FEE)
+    /// Both parties contribute 50% of the platform fee
+    pub fn deposit_seller_sol_fee(ctx: Context<DepositSellerSolFee>) -> Result<()> {
+        // Validate escrow status
+        require!(
+            ctx.accounts.escrow_state.status == EscrowStatus::Pending,
+            EscrowError::InvalidStatus
+        );
+
+        // Verify not already deposited
+        require!(
+            !ctx.accounts.escrow_state.seller_sol_deposited,
+            EscrowError::AlreadyDeposited
+        );
+
+        // Validate swap type is NFT_FOR_NFT_WITH_FEE (only type where seller pays SOL)
+        require!(
+            ctx.accounts.escrow_state.swap_type == SwapType::NftForNftWithFee,
+            EscrowError::InvalidSwapType
+        );
+
+        // Verify seller authority
+        require!(
+            ctx.accounts.seller.key() == ctx.accounts.escrow_state.seller,
+            EscrowError::Unauthorized
+        );
+
+        // Extract sol_amount before transfer
+        let sol_amount = ctx.accounts.escrow_state.sol_amount;
+
+        // Transfer SOL from seller to SOL vault PDA
+        let transfer_ctx = CpiContext::new(
+            ctx.accounts.system_program.to_account_info(),
+            anchor_lang::system_program::Transfer {
+                from: ctx.accounts.seller.to_account_info(),
+                to: ctx.accounts.sol_vault.to_account_info(),
+            },
+        );
+        anchor_lang::system_program::transfer(transfer_ctx, sol_amount)?;
+
+        // Mark seller SOL as deposited
+        ctx.accounts.escrow_state.seller_sol_deposited = true;
+
+        msg!("Seller SOL fee deposited to vault: {} lamports", sol_amount);
 
         Ok(())
     }
@@ -826,46 +875,45 @@ pub mod escrow {
                 msg!("NFT<>SOL settled: Platform fee {} SOL, Seller received {} SOL", platform_fee, seller_receives);
             },
             SwapType::NftForNftWithFee => {
-                // Validate deposits
+                // Validate deposits - both parties must deposit SOL fee + their NFTs
                 require!(
                     ctx.accounts.escrow_state.buyer_sol_deposited && 
+                    ctx.accounts.escrow_state.seller_sol_deposited &&  // NEW: Require seller SOL deposit
                     ctx.accounts.escrow_state.buyer_nft_deposited && 
                     ctx.accounts.escrow_state.seller_nft_deposited,
                     EscrowError::DepositNotComplete
                 );
 
                 // Transfer platform fee (SOL) to fee collector
-                let platform_fee = ctx.accounts.escrow_state.sol_amount; // Full amount is the fee
+                // CRITICAL: Both parties deposited to sol_vault, so transfer FROM sol_vault!
+                let platform_fee = ctx.accounts.escrow_state.sol_amount; // Full amount is the fee (0.01 SOL total)
                 
-                // Get rent-exempt minimum for this account
-                let rent = Rent::get()?;
-                let escrow_account_info = ctx.accounts.escrow_state.to_account_info();
-                let min_rent_exempt = rent.minimum_balance(escrow_account_info.data_len());
-                
-                // Calculate transferable amount
-                let current_balance = escrow_account_info.lamports();
-                let transferable = current_balance.checked_sub(min_rent_exempt)
-                    .ok_or(EscrowError::InsufficientFunds)?;
-                
+                // Validate sol_vault has sufficient funds
+                let vault_balance = ctx.accounts.sol_vault.to_account_info().lamports();
                 require!(
-                    transferable >= platform_fee,
+                    vault_balance >= platform_fee,
                     EscrowError::InsufficientFunds
                 );
                 
-                // CRITICAL FIX: Get escrow_account reference ONCE to avoid RefCell tracking issues
-                // Perform direct lamport transfer
-                let escrow_account = ctx.accounts.escrow_state.to_account_info();
-                {
-                    let fee_collector_account = ctx.accounts.platform_fee_collector.to_account_info();
-                    
-                    let mut escrow_lamports = escrow_account.try_borrow_mut_lamports()?;
-                    let mut fee_collector_lamports = fee_collector_account.try_borrow_mut_lamports()?;
-
-                    **escrow_lamports = escrow_lamports.checked_sub(platform_fee)
-                        .ok_or(EscrowError::InsufficientFunds)?;
-                    **fee_collector_lamports = fee_collector_lamports.checked_add(platform_fee)
-                        .ok_or(EscrowError::CalculationOverflow)?;
-                } // Borrow released here
+                // Vault PDA signer seeds (transfer FROM sol_vault, not escrow_state!)
+                let escrow_id_bytes = ctx.accounts.escrow_state.escrow_id.to_le_bytes();
+                let vault_signer_seeds: &[&[&[u8]]] = &[&[
+                    b"sol_vault",
+                    escrow_id_bytes.as_ref(),
+                    &[ctx.bumps.sol_vault],  // Use vault's bump!
+                ]];
+                
+                // Transfer platform fee from sol_vault to fee_collector using System Program CPI
+                let fee_transfer_ctx = CpiContext::new_with_signer(
+                    ctx.accounts.system_program.to_account_info(),
+                    anchor_lang::system_program::Transfer {
+                        from: ctx.accounts.sol_vault.to_account_info(),
+                        to: ctx.accounts.platform_fee_collector.to_account_info(),
+                    },
+                    vault_signer_seeds,
+                );
+                anchor_lang::system_program::transfer(fee_transfer_ctx, platform_fee)?;
+                msg!("Platform fee transferred from sol_vault: {} lamports", platform_fee);
 
                 // Transfer NFT A from escrow to buyer
                 let nft_a_transfer_ctx = CpiContext::new_with_signer(
@@ -1058,6 +1106,30 @@ pub mod escrow {
             msg!("Returned {} lamports to buyer", sol_amount);
         }
 
+        // Return SOL to seller if deposited (for NFT_FOR_NFT_WITH_FEE - seller's half of fee)
+        if ctx.accounts.escrow_state.seller_sol_deposited {
+            let sol_amount = ctx.accounts.escrow_state.sol_amount;
+            
+            // Vault PDA signer seeds
+            let escrow_id_bytes_vault = ctx.accounts.escrow_state.escrow_id.to_le_bytes();
+            let vault_signer_seeds: &[&[&[u8]]] = &[&[
+                b"sol_vault",
+                escrow_id_bytes_vault.as_ref(),
+                &[ctx.bumps.sol_vault],
+            ]];
+            
+            let sol_transfer_ctx = CpiContext::new_with_signer(
+                ctx.accounts.system_program.to_account_info(),
+                anchor_lang::system_program::Transfer {
+                    from: ctx.accounts.sol_vault.to_account_info(),
+                    to: ctx.accounts.seller.to_account_info(),
+                },
+                vault_signer_seeds,
+            );
+            anchor_lang::system_program::transfer(sol_transfer_ctx, sol_amount)?;
+            msg!("Returned {} lamports to seller", sol_amount);
+        }
+
         // Return NFT A to seller if deposited
         if ctx.accounts.escrow_state.seller_nft_deposited {
             let nft_mint = ctx.accounts.escrow_state.nft_a_mint;
@@ -1152,6 +1224,30 @@ pub mod escrow {
             );
             anchor_lang::system_program::transfer(sol_transfer_ctx, sol_amount)?;
             msg!("Admin refund: Returned {} lamports to buyer", sol_amount);
+        }
+
+        // Return SOL to seller if deposited (for NFT_FOR_NFT_WITH_FEE - seller's half of fee)
+        if ctx.accounts.escrow_state.seller_sol_deposited {
+            let sol_amount = ctx.accounts.escrow_state.sol_amount;
+            
+            // Vault PDA signer seeds
+            let escrow_id_bytes_vault = ctx.accounts.escrow_state.escrow_id.to_le_bytes();
+            let vault_signer_seeds: &[&[&[u8]]] = &[&[
+                b"sol_vault",
+                escrow_id_bytes_vault.as_ref(),
+                &[ctx.bumps.sol_vault],
+            ]];
+            
+            let sol_transfer_ctx = CpiContext::new_with_signer(
+                ctx.accounts.system_program.to_account_info(),
+                anchor_lang::system_program::Transfer {
+                    from: ctx.accounts.sol_vault.to_account_info(),
+                    to: ctx.accounts.seller.to_account_info(),
+                },
+                vault_signer_seeds,
+            );
+            anchor_lang::system_program::transfer(sol_transfer_ctx, sol_amount)?;
+            msg!("Admin refund: Returned {} lamports to seller", sol_amount);
         }
 
         // Return NFT A to seller if deposited
@@ -1569,6 +1665,7 @@ pub struct EscrowState {
     
     /// Deposit tracking
     pub buyer_sol_deposited: bool,
+    pub seller_sol_deposited: bool,  // NEW: For NFT_FOR_NFT_WITH_FEE (both parties pay fee)
     pub buyer_nft_deposited: bool,
     pub seller_nft_deposited: bool,
     
@@ -2350,6 +2447,30 @@ pub struct DepositSol<'info> {
 }
 
 #[derive(Accounts)]
+pub struct DepositSellerSolFee<'info> {
+    #[account(mut)]
+    pub seller: Signer<'info>,
+    
+    #[account(
+        mut,
+        seeds = [b"escrow", escrow_state.escrow_id.to_le_bytes().as_ref()],
+        bump = escrow_state.bump,
+    )]
+    pub escrow_state: Account<'info, EscrowState>,
+    
+    /// SOL vault PDA - receives SOL fee from seller
+    /// CHECK: Validated via seeds, seller transfers SOL here
+    #[account(
+        mut,
+        seeds = [b"sol_vault", escrow_state.escrow_id.to_le_bytes().as_ref()],
+        bump
+    )]
+    pub sol_vault: UncheckedAccount<'info>,
+    
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
 pub struct DepositSellerNft<'info> {
     #[account(mut)]
     pub seller: Signer<'info>,
@@ -2485,7 +2606,7 @@ pub struct CancelIfExpired<'info> {
     )]
     pub escrow_state: Account<'info, EscrowState>,
     
-    /// SOL vault PDA - refunds SOL to buyer if deposited
+    /// SOL vault PDA - refunds SOL to buyer and seller if deposited
     /// CHECK: Validated via seeds, System Program transfers from here
     #[account(
         mut,
@@ -2500,6 +2621,13 @@ pub struct CancelIfExpired<'info> {
         constraint = buyer.key() == escrow_state.buyer
     )]
     pub buyer: UncheckedAccount<'info>,
+    
+    /// CHECK: Seller receives refund if deposited (for NFT_FOR_NFT_WITH_FEE)
+    #[account(
+        mut,
+        constraint = seller.key() == escrow_state.seller
+    )]
+    pub seller: UncheckedAccount<'info>,
     
     #[account(
         mut,
@@ -2529,7 +2657,7 @@ pub struct AdminCancel<'info> {
     )]
     pub escrow_state: Account<'info, EscrowState>,
     
-    /// SOL vault PDA - refunds SOL to buyer if deposited
+    /// SOL vault PDA - refunds SOL to buyer and seller if deposited
     /// CHECK: Validated via seeds, System Program transfers from here
     #[account(
         mut,
@@ -2544,6 +2672,13 @@ pub struct AdminCancel<'info> {
         constraint = buyer.key() == escrow_state.buyer
     )]
     pub buyer: UncheckedAccount<'info>,
+    
+    /// CHECK: Seller receives refund if deposited (for NFT_FOR_NFT_WITH_FEE)
+    #[account(
+        mut,
+        constraint = seller.key() == escrow_state.seller
+    )]
+    pub seller: UncheckedAccount<'info>,
     
     #[account(
         mut,
