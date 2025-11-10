@@ -134,81 +134,7 @@ export class NftDepositService {
         }
       }
 
-      // Check if deposit already exists
-      const existingDeposit = await prisma.deposit.findFirst({
-        where: {
-          agreement: {
-            id: agreementId,
-          },
-          type: 'NFT',
-          status: {
-            in: ['CONFIRMED', 'PENDING'],
-          },
-        },
-      });
-
-      if (existingDeposit) {
-        console.log(`[NftDepositService] Deposit already exists for agreement: ${agreementId}`);
-
-        // Update if status is PENDING
-        if (existingDeposit.status === 'PENDING' && tokenAccountData.amount === BigInt(1)) {
-          console.log(`[NftDepositService] Updating pending deposit to CONFIRMED`);
-          await prisma.deposit.update({
-            where: { id: existingDeposit.id },
-            data: {
-              status: 'CONFIRMED',
-              confirmedAt: new Date(),
-              blockHeight: BigInt(context.slot),
-            },
-          });
-
-          // Create transaction log for confirmed NFT deposit
-          try {
-            const agreement = await prisma.agreement.findUnique({
-              where: { id: agreementId },
-              select: { agreementId: true },
-            });
-            
-            if (agreement) {
-              const transactionLogService = getTransactionLogService();
-              // Pass slot from context to help find the exact transaction
-              const txSignature = await this.solanaService.getRecentTransactionSignature(publicKey, context.slot);
-              
-              if (txSignature) {
-                await transactionLogService.captureTransaction({
-                  txId: txSignature,
-                  operationType: TransactionOperationType.DEPOSIT_NFT,
-                  agreementId: agreement.agreementId,
-                  status: TransactionStatusType.CONFIRMED,
-                  blockHeight: BigInt(context.slot),
-                });
-                console.log(`[NftDepositService] ✅ Transaction log created for NFT deposit: ${txSignature}`);
-              } else {
-                console.error(`[NftDepositService] ❌ Failed to retrieve transaction signature for NFT deposit at slot ${context.slot}`);
-              }
-            }
-          } catch (logError) {
-            console.error(`[NftDepositService] Error creating transaction log:`, logError);
-            // Don't fail the deposit if transaction log creation fails
-          }
-
-          return {
-            success: true,
-            depositId: existingDeposit.id,
-            mint: tokenAccountData.mint.toBase58(),
-            status: 'CONFIRMED' as DepositStatus, // Include status
-          };
-        }
-
-        return {
-          success: true,
-          depositId: existingDeposit.id,
-          mint: tokenAccountData.mint.toBase58(),
-          status: existingDeposit.status as DepositStatus, // Include status
-        };
-      }
-
-      // Get agreement details
+      // Get agreement details first to determine deposit type
       const agreement = await prisma.agreement.findUnique({
         where: { agreementId: agreementId },
         select: {
@@ -266,6 +192,83 @@ export class NftDepositService {
 
       console.log(`[NftDepositService] ✅ Validated ${nftLabel} deposit: ${mintAddress}`);
 
+      // Determine deposit type based on which NFT this is
+      const depositType = isNftA ? 'NFT' : 'NFT_BUYER';
+
+      // Check if deposit already exists (use correct deposit type)
+      const existingDeposit = await prisma.deposit.findFirst({
+        where: {
+          agreement: {
+            id: agreementId,
+          },
+          type: depositType,
+          status: {
+            in: ['CONFIRMED', 'PENDING'],
+          },
+        },
+      });
+
+      if (existingDeposit) {
+        console.log(`[NftDepositService] Deposit already exists for agreement: ${agreementId}, type: ${depositType} (${nftLabel})`);
+
+        // Update if status is PENDING
+        if (existingDeposit.status === 'PENDING' && tokenAccountData.amount === BigInt(1)) {
+          console.log(`[NftDepositService] Updating pending ${nftLabel} deposit to CONFIRMED`);
+          await prisma.deposit.update({
+            where: { id: existingDeposit.id },
+            data: {
+              status: 'CONFIRMED',
+              confirmedAt: new Date(),
+              blockHeight: BigInt(context.slot),
+            },
+          });
+
+          // Create transaction log for confirmed NFT deposit
+          try {
+            const agreement = await prisma.agreement.findUnique({
+              where: { id: agreementId },
+              select: { agreementId: true },
+            });
+            
+            if (agreement) {
+              const transactionLogService = getTransactionLogService();
+              // Pass slot from context to help find the exact transaction
+              const txSignature = await this.solanaService.getRecentTransactionSignature(publicKey, context.slot);
+              
+              if (txSignature) {
+                await transactionLogService.captureTransaction({
+                  txId: txSignature,
+                  operationType: TransactionOperationType.DEPOSIT_NFT,
+                  agreementId: agreement.agreementId,
+                  status: TransactionStatusType.CONFIRMED,
+                  blockHeight: BigInt(context.slot),
+                });
+                console.log(`[NftDepositService] ✅ Transaction log created for NFT deposit: ${txSignature}`);
+              } else {
+                console.error(`[NftDepositService] ❌ Failed to retrieve transaction signature for NFT deposit at slot ${context.slot}`);
+              }
+            }
+          } catch (logError) {
+            console.error(`[NftDepositService] Error creating transaction log:`, logError);
+            // Don't fail the deposit if transaction log creation fails
+          }
+
+          return {
+            success: true,
+            depositId: existingDeposit.id,
+            mint: tokenAccountData.mint.toBase58(),
+            status: 'CONFIRMED' as DepositStatus, // Include status
+          };
+        }
+
+        return {
+          success: true,
+          depositId: existingDeposit.id,
+          mint: tokenAccountData.mint.toBase58(),
+          status: existingDeposit.status as DepositStatus, // Include status
+        };
+      }
+
       // Fetch and validate NFT metadata
       let metadata: NftMetadata | null = null;
       try {
@@ -281,9 +284,6 @@ export class NftDepositService {
 
       // Determine deposit status based on amount
       const depositStatus: DepositStatus = tokenAccountData.amount === BigInt(1) ? 'CONFIRMED' : 'PENDING';
-
-      // Determine deposit type based on which NFT this is
-      const depositType = isNftA ? 'NFT' : 'NFT_BUYER';
 
       // Create deposit record
       const deposit = await prisma.deposit.create({
@@ -500,7 +500,7 @@ export class NftDepositService {
             newStatus = 'BOTH_LOCKED' as AgreementStatus;
           } else if (hasSOL) {
             newStatus = 'SOL_LOCKED' as AgreementStatus;
-          } else if (hasNftA) {
+          } else if (hasNftA || hasNftB) {
             newStatus = 'NFT_LOCKED' as AgreementStatus;
           }
           break;
@@ -511,7 +511,7 @@ export class NftDepositService {
             newStatus = 'BOTH_LOCKED' as AgreementStatus;
           } else if (hasSOL) {
             newStatus = 'SOL_LOCKED' as AgreementStatus;
-          } else if (hasNftA) {
+          } else if (hasNftA || hasNftB) {
             newStatus = 'NFT_LOCKED' as AgreementStatus;
           }
           break;
