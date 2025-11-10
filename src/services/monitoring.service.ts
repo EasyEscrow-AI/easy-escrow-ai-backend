@@ -7,7 +7,8 @@
  * NOTE: USDC monitoring is deprecated but kept for backwards compatibility (V1 only).
  */
 
-import { AccountInfo, Context } from '@solana/web3.js';
+import { AccountInfo, Context, PublicKey } from '@solana/web3.js';
+import { getAssociatedTokenAddress } from '@solana/spl-token';
 import { getSolanaService } from './solana.service';
 import { getUsdcDepositService } from './usdc-deposit.service';
 import { getNftDepositService } from './nft-deposit.service';
@@ -244,7 +245,7 @@ export class MonitoringService {
             }
           }
 
-          // Monitor seller NFT
+          // Monitor seller NFT (NFT A)
           if (
             agreement.nftDepositAddr &&
             !['NFT_LOCKED', 'BOTH_LOCKED'].includes(agreement.status)
@@ -254,6 +255,32 @@ export class MonitoringService {
               agreementId: agreement.agreementId,
               type: 'nft'
             });
+          }
+
+          // Monitor buyer NFT (NFT B) for NFT-for-NFT swaps
+          // Derive the buyer's token account from nftBMint and buyer address
+          if (
+            (agreement.swapType === 'NFT_FOR_NFT_WITH_FEE' || agreement.swapType === 'NFT_FOR_NFT_PLUS_SOL') &&
+            !['NFT_LOCKED', 'BOTH_LOCKED'].includes(agreement.status) &&
+            agreement.nftBMint &&
+            agreement.buyer
+          ) {
+            try {
+              const nftBDepositAddr = await getAssociatedTokenAddress(
+                new PublicKey(agreement.nftBMint),
+                new PublicKey(agreement.buyer)
+              );
+              
+              accountsToMonitor.push({
+                publicKey: nftBDepositAddr.toString(),
+                agreementId: agreement.agreementId,
+                type: 'nft'
+              });
+              
+              console.log(`[MonitoringService] Monitoring NFT B account ${nftBDepositAddr.toString()} for agreement: ${agreement.agreementId}`);
+            } catch (error) {
+              console.error(`[MonitoringService] Failed to derive NFT B deposit address for ${agreement.agreementId}:`, error);
+            }
           }
         } else {
           // V1 (Legacy USDC): Monitor USDC deposit address if not yet locked
