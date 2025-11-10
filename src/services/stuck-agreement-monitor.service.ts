@@ -196,9 +196,7 @@ export class StuckAgreementMonitorService {
           timestamp: now,
         };
 
-        console.log(`[StuckAgreementMonitor] ${severity}: ${alert.message}`);
-
-        // Trigger alert callbacks
+        // Trigger alert callbacks (logging handled by callback in index.ts to avoid duplicate logs)
         this.triggerAlert(alert);
 
         // ** AUTOMATIC REFUND PROCESSING **
