@@ -421,7 +421,8 @@ export class SettlementService {
       if (agreement.escrowPda) {
         try {
           console.log(`[SettlementService] Closing V1 escrow account to recover rent: ${agreement.escrowPda}`);
-          const closeTxId = await this.escrowProgramService.closeEscrow(new PublicKey(agreement.escrowPda));
+          const escrowProgramService = getEscrowProgramService();
+          const closeTxId = await escrowProgramService.closeEscrow(new PublicKey(agreement.escrowPda));
           console.log(`[SettlementService] V1 escrow account closed, rent recovered. Tx: ${closeTxId}`);
         } catch (error: any) {
           // Log but don't fail settlement - rent recovery is optional
@@ -1134,7 +1135,8 @@ export class SettlementService {
       // 7. Close escrow account and recover rent
       try {
         console.log(`[SettlementService] Closing escrow account to recover rent: ${agreement.escrowPda}`);
-        const closeTxId = await this.escrowProgramService.closeEscrow(new PublicKey(agreement.escrowPda));
+        const escrowProgramService = getEscrowProgramService();
+        const closeTxId = await escrowProgramService.closeEscrow(new PublicKey(agreement.escrowPda));
         console.log(`[SettlementService] Escrow account closed, rent recovered. Tx: ${closeTxId}`);
       } catch (error: any) {
         // Log but don't fail settlement - rent recovery is optional
