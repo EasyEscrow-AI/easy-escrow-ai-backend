@@ -126,6 +126,14 @@
       ],
       "accounts": [
         {
+          "name": "caller",
+          "docs": [
+            "Caller who triggers the cancellation (receives rent refund as reward for cleanup)"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
           "name": "escrow_state",
           "writable": true,
           "pda": {
@@ -202,6 +210,62 @@
         {
           "name": "system_program",
           "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "close_escrow",
+      "docs": [
+        "Close escrow account and recover rent-exempt reserve",
+        "Can only be called after escrow reaches terminal state (Completed or Cancelled)",
+        "Returns rent to admin wallet (who paid for account creation)"
+      ],
+      "discriminator": [
+        139,
+        171,
+        94,
+        146,
+        191,
+        91,
+        144,
+        50
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "docs": [
+            "Admin who created the escrow (receives rent refund)"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "escrow_state",
+          "docs": [
+            "Escrow state account (will be closed)"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "escrow_state.escrow_id",
+                "account": "EscrowState"
+              }
+            ]
+          }
         }
       ],
       "args": []

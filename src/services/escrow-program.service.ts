@@ -2692,6 +2692,78 @@ export class EscrowProgramService {
   }
 
   /**
+   * Close escrow account and recover rent-exempt reserve
+   * Can only be called after escrow reaches terminal state (Completed or Cancelled)
+   * Returns rent to admin wallet (who paid for account creation)
+   * 
+   * @param escrowPda - Escrow PDA address
+   * @returns Transaction signature
+   */
+  async closeEscrow(escrowPda: PublicKey): Promise<string> {
+    try {
+      console.log('[EscrowProgramService] Closing escrow account:', escrowPda.toString());
+
+      // Fetch escrow state to validate terminal status
+      const escrowState = await this.program.account.escrowState.fetch(escrowPda);
+      console.log('[EscrowProgramService] Escrow status:', escrowState.status);
+
+      // Validate terminal state
+      if (!['Completed', 'Cancelled'].includes((escrowState.status as any).toString())) {
+        throw new Error(`Cannot close escrow in status: ${(escrowState.status as any).toString()}`);
+      }
+
+      // Build close instruction
+      const instruction = await (this.program.methods as any)
+        .closeEscrow()
+        .accountsStrict({
+          admin: this.adminKeypair.publicKey,
+          escrowState: escrowPda,
+        })
+        .instruction();
+
+      // Create transaction
+      const { Transaction } = await import('@solana/web3.js');
+      const transaction = new Transaction().add(instruction);
+
+      // Get recent blockhash
+      const { blockhash, lastValidBlockHeight } =
+        await this.provider.connection.getLatestBlockhash('finalized');
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = this.adminKeypair.publicKey;
+
+      // Sign transaction
+      transaction.sign(this.adminKeypair);
+
+      // Send and confirm transaction
+      const signature = await this.provider.connection.sendRawTransaction(
+        transaction.serialize(),
+        {
+          skipPreflight: false,
+          maxRetries: 3,
+        }
+      );
+
+      console.log('[EscrowProgramService] Close escrow transaction sent:', signature);
+
+      // Confirm transaction
+      await this.provider.connection.confirmTransaction(
+        {
+          signature,
+          blockhash,
+          lastValidBlockHeight,
+        },
+        'confirmed'
+      );
+
+      console.log('[EscrowProgramService] Escrow account closed successfully');
+      return signature;
+    } catch (error: any) {
+      console.error('[EscrowProgramService] Failed to close escrow:', error);
+      throw new Error(`Failed to close escrow account: ${error.message}`);
+    }
+  }
+
+  /**
    * Get connection
    */
   getConnection(): Connection {

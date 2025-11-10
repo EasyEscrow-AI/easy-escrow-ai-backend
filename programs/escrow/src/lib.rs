@@ -1052,21 +1052,8 @@ pub mod escrow {
 
         // NOTE: Escrow status is NOT updated here (permissionless settlement)
         // Backend monitoring service will detect the settlement and update status
+        // Account will be closed separately via close_escrow() instruction after status update
         msg!("Escrow settlement completed successfully");
-
-        // Close escrow account and recover rent (0.00230376 SOL)
-        // This returns the rent-exempt reserve to the admin wallet (who paid for account creation)
-        let escrow_lamports = ctx.accounts.escrow_state.to_account_info().lamports();
-        let admin_pubkey = ctx.accounts.escrow_state.admin;
-        msg!("Closing escrow account and recovering {} lamports rent to admin {}", escrow_lamports, admin_pubkey);
-        
-        **ctx.accounts.escrow_state.to_account_info().lamports.borrow_mut() = 0;
-        
-        // Find admin account and return rent
-        // Admin must be one of: seller, buyer, or platform_fee_collector (who is the admin wallet)
-        **ctx.accounts.platform_fee_collector.to_account_info().lamports.borrow_mut() += escrow_lamports;
-        
-        msg!("Rent recovered: {} lamports returned to admin", escrow_lamports);
 
         Ok(())
     }
@@ -1187,16 +1174,9 @@ pub mod escrow {
         ctx.accounts.escrow_state.status = EscrowStatus::Cancelled;
 
         msg!("Escrow cancelled due to expiry: ID {}", escrow_id);
-
-        // Close escrow account and recover rent (0.00230376 SOL)
-        // Rent is returned to the caller as a reward for cleaning up expired escrows
-        let escrow_lamports = ctx.accounts.escrow_state.to_account_info().lamports();
-        msg!("Closing escrow account and recovering {} lamports rent to caller", escrow_lamports);
         
-        **ctx.accounts.escrow_state.to_account_info().lamports.borrow_mut() = 0;
-        **ctx.accounts.caller.to_account_info().lamports.borrow_mut() += escrow_lamports;
-        
-        msg!("Rent recovered: {} lamports returned to caller as cleanup reward", escrow_lamports);
+        // NOTE: Account will be closed separately via close_escrow() instruction
+        // This allows backend to read the cancelled status before closure
 
         Ok(())
     }
@@ -1317,12 +1297,36 @@ pub mod escrow {
         ctx.accounts.escrow_state.status = EscrowStatus::Cancelled;
 
         msg!("Admin cancelled escrow: ID {}", escrow_id);
-
-        // Close escrow account and recover rent (0.00230376 SOL)
-        // This returns the rent-exempt reserve to the admin wallet (who paid for account creation)
-        let escrow_lamports = ctx.accounts.escrow_state.to_account_info().lamports();
-        msg!("Closing escrow account and recovering {} lamports rent to admin", escrow_lamports);
         
+        // NOTE: Account will be closed separately via close_escrow() instruction
+        // This allows backend to read the cancelled status before closure
+
+        Ok(())
+    }
+
+    /// Close escrow account and recover rent-exempt reserve
+    /// Can only be called after escrow reaches terminal state (Completed or Cancelled)
+    /// Returns rent to admin wallet (who paid for account creation)
+    pub fn close_escrow(ctx: Context<CloseEscrow>) -> Result<()> {
+        // Validate escrow is in terminal state
+        require!(
+            ctx.accounts.escrow_state.status == EscrowStatus::Completed ||
+            ctx.accounts.escrow_state.status == EscrowStatus::Cancelled,
+            EscrowError::InvalidStatus
+        );
+
+        // Validate admin authorization (only admin who created it can close)
+        require!(
+            ctx.accounts.admin.key() == ctx.accounts.escrow_state.admin,
+            EscrowError::Unauthorized
+        );
+
+        let escrow_id = ctx.accounts.escrow_state.escrow_id;
+        let escrow_lamports = ctx.accounts.escrow_state.to_account_info().lamports();
+        
+        msg!("Closing escrow {} and recovering {} lamports rent", escrow_id, escrow_lamports);
+        
+        // Close account and return rent to admin
         **ctx.accounts.escrow_state.to_account_info().lamports.borrow_mut() = 0;
         **ctx.accounts.admin.to_account_info().lamports.borrow_mut() += escrow_lamports;
         
@@ -2732,6 +2736,23 @@ pub struct AdminCancel<'info> {
     
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
+}
+
+/// Close escrow account and recover rent
+/// Only callable after escrow reaches terminal state (Completed or Cancelled)
+#[derive(Accounts)]
+pub struct CloseEscrow<'info> {
+    /// Admin who created the escrow (receives rent refund)
+    #[account(mut)]
+    pub admin: Signer<'info>,
+    
+    /// Escrow state account (will be closed)
+    #[account(
+        mut,
+        seeds = [b"escrow", escrow_state.escrow_id.to_le_bytes().as_ref()],
+        bump = escrow_state.bump,
+    )]
+    pub escrow_state: Account<'info, EscrowState>,
 }
 
 // ============================================================================
