@@ -418,6 +418,7 @@ const mapAgreementToDTO = (agreement: any): AgreementResponseDTO => {
     // Deprecated USDC deposit address
     usdcDepositAddr: agreement.usdcDepositAddr || undefined,
     nftDepositAddr: agreement.nftDepositAddr || undefined,
+    nftBDepositAddr: agreement.nftBDepositAddr || undefined, // Escrow's NFT B token account for NFT<>NFT swaps
     
     initTxId: agreement.initTxId || undefined,
     settleTxId: agreement.settleTxId || undefined,
