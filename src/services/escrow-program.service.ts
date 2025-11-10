@@ -1241,16 +1241,18 @@ export class EscrowProgramService {
       const isMainnet = isMainnetNetwork(this.provider.connection);
 
       // Build settle transaction
-      // Note: Anchor converts snake_case to camelCase
+      // CRITICAL: Use .accounts() instead of .accountsStrict() to ensure proper writable metadata
+      // .accountsStrict() was NOT applying IDL's writable:true flags, causing ConstraintMut error
+      // Anchor SDK will automatically apply writable flags from IDL when using .accounts()
       // Note: settle is permissionless - anyone can trigger settlement
       const transaction = await (this.program.methods as any)
         .settle()
-        .accountsStrict({
+        .accounts({
           caller: this.adminKeypair.publicKey, // Permissionless - admin can trigger
           escrowState: escrowPda,
           solVault: solVaultPda, // NEW: Separate vault PDA holding SOL
           seller,
-          platformFeeCollector: feeCollector,
+          platformFeeCollector: feeCollector, // Must be writable to receive platform fee
           escrowNftAccount,
           buyerNftAccount,
           buyer,
