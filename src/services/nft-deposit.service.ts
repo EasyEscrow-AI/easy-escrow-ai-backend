@@ -472,17 +472,6 @@ export class NftDepositService {
 
       // Determine new status based on swap type
       switch (agreement.swapType) {
-        case 'NFT_FOR_USDC':
-          // V1 USDC-based swap
-          if (hasUSDC && hasNftA) {
-            newStatus = 'BOTH_LOCKED' as AgreementStatus;
-          } else if (hasUSDC) {
-            newStatus = 'USDC_LOCKED' as AgreementStatus;
-          } else if (hasNftA) {
-            newStatus = 'NFT_LOCKED' as AgreementStatus;
-          }
-          break;
-
         case 'NFT_FOR_SOL':
           // V2 SOL-based swap (NFT A for SOL)
           if (hasSOL && hasNftA) {
