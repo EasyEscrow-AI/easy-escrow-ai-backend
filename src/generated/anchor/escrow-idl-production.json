@@ -55,7 +55,7 @@
         {
           "name": "sol_vault",
           "docs": [
-            "SOL vault PDA - refunds SOL to buyer if deposited"
+            "SOL vault PDA - refunds SOL to buyer and seller if deposited"
           ],
           "writable": true,
           "pda": {
@@ -84,6 +84,10 @@
         },
         {
           "name": "buyer",
+          "writable": true
+        },
+        {
+          "name": "seller",
           "writable": true
         },
         {
@@ -148,7 +152,7 @@
         {
           "name": "sol_vault",
           "docs": [
-            "SOL vault PDA - refunds SOL to buyer if deposited"
+            "SOL vault PDA - refunds SOL to buyer and seller if deposited"
           ],
           "writable": true,
           "pda": {
@@ -177,6 +181,10 @@
         },
         {
           "name": "buyer",
+          "writable": true
+        },
+        {
+          "name": "seller",
           "writable": true
         },
         {
@@ -506,6 +514,89 @@
         {
           "name": "associated_token_program",
           "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "deposit_seller_sol_fee",
+      "docs": [
+        "Seller deposits SOL fee into the escrow (for NFT_FOR_NFT_WITH_FEE)",
+        "Both parties contribute 50% of the platform fee"
+      ],
+      "discriminator": [
+        241,
+        47,
+        17,
+        240,
+        80,
+        82,
+        79,
+        177
+      ],
+      "accounts": [
+        {
+          "name": "seller",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "escrow_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "escrow_state.escrow_id",
+                "account": "EscrowState"
+              }
+            ]
+          }
+        },
+        {
+          "name": "sol_vault",
+          "docs": [
+            "SOL vault PDA - receives SOL fee from seller"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  111,
+                  108,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "escrow_state.escrow_id",
+                "account": "EscrowState"
+              }
+            ]
+          }
         },
         {
           "name": "system_program",
@@ -1137,6 +1228,10 @@
             "docs": [
               "Deposit tracking"
             ],
+            "type": "bool"
+          },
+          {
+            "name": "seller_sol_deposited",
             "type": "bool"
           },
           {
