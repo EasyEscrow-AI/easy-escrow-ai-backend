@@ -187,7 +187,6 @@ export class MonitoringService {
           agreementId: true,
           usdcDepositAddr: true,
           nftDepositAddr: true,
-          nftBDepositAddr: true, // Buyer's NFT for NFT-for-NFT swaps
           escrowPda: true,
           swapType: true,
           status: true,
@@ -245,26 +244,13 @@ export class MonitoringService {
             }
           }
 
-          // Monitor seller NFT (NFT A)
+          // Monitor seller NFT
           if (
             agreement.nftDepositAddr &&
             !['NFT_LOCKED', 'BOTH_LOCKED'].includes(agreement.status)
           ) {
             accountsToMonitor.push({
               publicKey: agreement.nftDepositAddr,
-              agreementId: agreement.agreementId,
-              type: 'nft'
-            });
-          }
-
-          // Monitor buyer NFT (NFT B) for NFT-for-NFT swaps
-          if (
-            agreement.nftBDepositAddr &&
-            (agreement.swapType === 'NFT_FOR_NFT_WITH_FEE' || agreement.swapType === 'NFT_FOR_NFT_PLUS_SOL') &&
-            !['NFT_LOCKED', 'BOTH_LOCKED'].includes(agreement.status)
-          ) {
-            accountsToMonitor.push({
-              publicKey: agreement.nftBDepositAddr,
               agreementId: agreement.agreementId,
               type: 'nft'
             });

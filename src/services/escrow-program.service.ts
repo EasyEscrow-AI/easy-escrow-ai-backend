@@ -2411,6 +2411,7 @@ export class EscrowProgramService {
       const instructionBuilder = (this.program.methods as any)
         .cancelIfExpired()
         .accountsStrict({
+          caller: this.adminKeypair.publicKey, // Caller receives rent refund as cleanup reward
           escrowState: escrowPda,
           solVault: solVaultPda,
           buyer,
