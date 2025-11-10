@@ -74,7 +74,7 @@ describe('PRODUCTION E2E - NFT-for-NFT with SOL Fee [WITH TIMING]', function () 
   };
 
   const FEE_PER_PARTY = 0.005; // 0.005 SOL per party (buyer + seller)
-  const TOTAL_PLATFORM_FEE = 0.01; // 0.01 SOL total (0.005 SOL × 2)
+  const TOTAL_PLATFORM_FEE = 0.01; // 0.01 SOL total platform fee
   const PLATFORM_FEE_BPS = 100; // 1%
 
   // ⏱️ TIMING METRICS
@@ -191,7 +191,7 @@ describe('PRODUCTION E2E - NFT-for-NFT with SOL Fee [WITH TIMING]', function () 
       buyer: wallets.receiver.publicKey.toBase58(),
       swapType: 'NFT_FOR_NFT_WITH_FEE',
       nftBMint: nftB.mint.toBase58(),
-      solAmount: (FEE_PER_PARTY * LAMPORTS_PER_SOL).toString(),
+      solAmount: (FEE_PER_PARTY * LAMPORTS_PER_SOL).toString(), // 0.005 SOL per party
       feeBps: PLATFORM_FEE_BPS,
       feePayer: 'BUYER',
       honorRoyalties: false,
@@ -201,9 +201,7 @@ describe('PRODUCTION E2E - NFT-for-NFT with SOL Fee [WITH TIMING]', function () 
     console.log(`     NFT A (Seller): ${agreementData.nftMint}`);
     console.log(`     NFT B (Buyer): ${agreementData.nftBMint}`);
     console.log(`     Swap Type: ${agreementData.swapType}`);
-    console.log(`     Buyer Fee: ${FEE_PER_PARTY} SOL`);
-    console.log(`     Seller Fee: ${FEE_PER_PARTY} SOL`);
-    console.log(`     Total Platform Fee: ${TOTAL_PLATFORM_FEE} SOL\n`);
+    console.log(`     Platform Fee: ${FEE_PER_PARTY} SOL per party (${TOTAL_PLATFORM_FEE} SOL total)\n`);
 
     // ⏱️ START TIMER
     agreementCreationTime = Date.now();
