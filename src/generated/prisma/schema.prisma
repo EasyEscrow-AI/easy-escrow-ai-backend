@@ -85,7 +85,8 @@ model Agreement {
   status          AgreementStatus @default(PENDING)
   expiry          DateTime
   usdcDepositAddr String?         @map("usdc_deposit_addr")
-  nftDepositAddr  String?         @map("nft_deposit_addr")
+  nftDepositAddr  String?         @map("nft_deposit_addr") // Seller's NFT (NFT A) deposit address
+  nftBDepositAddr String?         @map("nft_b_deposit_addr") // Buyer's NFT (NFT B) deposit address (for NFT<>NFT swaps)
   initTxId        String?         @map("init_tx_id")
   settleTxId      String?         @map("settle_tx_id")
   cancelTxId      String?         @map("cancel_tx_id")

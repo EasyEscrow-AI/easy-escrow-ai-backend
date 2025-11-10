@@ -7,7 +7,8 @@
  * NOTE: USDC monitoring is deprecated but kept for backwards compatibility (V1 only).
  */
 
-import { AccountInfo, Context } from '@solana/web3.js';
+import { AccountInfo, Context, PublicKey } from '@solana/web3.js';
+import { getAssociatedTokenAddress } from '@solana/spl-token';
 import { getSolanaService } from './solana.service';
 import { getUsdcDepositService } from './usdc-deposit.service';
 import { getNftDepositService } from './nft-deposit.service';
@@ -187,7 +188,9 @@ export class MonitoringService {
           agreementId: true,
           usdcDepositAddr: true,
           nftDepositAddr: true,
-          nftBDepositAddr: true, // Buyer's NFT for NFT-for-NFT swaps
+          nftBDepositAddr: true, // Buyer's NFT deposit address for NFT<>NFT swaps
+          nftBMint: true,        // Needed for deriving NFT B address if not stored
+          buyer: true,           // Needed for deriving NFT B address if not stored
           escrowPda: true,
           swapType: true,
           status: true,
@@ -259,15 +262,40 @@ export class MonitoringService {
 
           // Monitor buyer NFT (NFT B) for NFT-for-NFT swaps
           if (
-            agreement.nftBDepositAddr &&
             (agreement.swapType === 'NFT_FOR_NFT_WITH_FEE' || agreement.swapType === 'NFT_FOR_NFT_PLUS_SOL') &&
             !['NFT_LOCKED', 'BOTH_LOCKED'].includes(agreement.status)
           ) {
-            accountsToMonitor.push({
-              publicKey: agreement.nftBDepositAddr,
-              agreementId: agreement.agreementId,
-              type: 'nft'
-            });
+            let nftBDepositAddr: string | null = null;
+
+            // Try to use database field first
+            if (agreement.nftBDepositAddr) {
+              nftBDepositAddr = agreement.nftBDepositAddr;
+              console.log(`[MonitoringService] Using stored NFT B deposit address for ${agreement.agreementId}: ${nftBDepositAddr}`);
+            }
+            // Fallback: Derive from nftBMint and buyer address
+            else if (agreement.nftBMint && agreement.buyer) {
+              try {
+                const derivedAddr = await getAssociatedTokenAddress(
+                  new PublicKey(agreement.nftBMint),
+                  new PublicKey(agreement.buyer)
+                );
+                nftBDepositAddr = derivedAddr.toString();
+                console.log(`[MonitoringService] Derived NFT B deposit address for ${agreement.agreementId}: ${nftBDepositAddr}`);
+              } catch (error) {
+                console.error(`[MonitoringService] Failed to derive NFT B deposit address for ${agreement.agreementId}:`, error);
+              }
+            }
+
+            // Add to monitoring if we have an address
+            if (nftBDepositAddr) {
+              accountsToMonitor.push({
+                publicKey: nftBDepositAddr,
+                agreementId: agreement.agreementId,
+                type: 'nft'
+              });
+            } else {
+              console.warn(`[MonitoringService] No NFT B deposit address available for ${agreement.agreementId}`);
+            }
           }
         } else {
           // V1 (Legacy USDC): Monitor USDC deposit address if not yet locked

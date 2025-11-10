@@ -336,6 +336,21 @@ export class RefundService {
           // Log webhook error but don't fail the refund
           console.error('[RefundService] Failed to publish webhook event:', webhookError);
         }
+
+        // Close escrow account and recover rent after successful refund
+        if (updatedAgreement.escrowPda) {
+          try {
+            console.log(`[RefundService] Closing escrow account to recover rent: ${updatedAgreement.escrowPda}`);
+            const escrowProgramService = (await import('./escrow-program.service')).getEscrowProgramService();
+            const { PublicKey } = await import('@solana/web3.js');
+            const closeTxId = await escrowProgramService.closeEscrow(new PublicKey(updatedAgreement.escrowPda));
+            console.log(`[RefundService] Escrow account closed, rent recovered. Tx: ${closeTxId}`);
+          } catch (error: any) {
+            // Log but don't fail refund - rent recovery is optional
+            console.error(`[RefundService] Failed to close escrow account: ${error.message}`);
+            console.error('[RefundService] Refund succeeded, but rent recovery failed (non-critical)');
+          }
+        }
       }
 
       console.log(`[RefundService] Refund processing completed for ${agreementId}:`, {

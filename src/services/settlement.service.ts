@@ -417,6 +417,20 @@ export class SettlementService {
 
       console.log(`[SettlementService] Settlement completed successfully for ${agreement.agreementId}`);
 
+      // 6. Close escrow account and recover rent (V1 USDC)
+      if (agreement.escrowPda) {
+        try {
+          console.log(`[SettlementService] Closing V1 escrow account to recover rent: ${agreement.escrowPda}`);
+          const escrowProgramService = getEscrowProgramService();
+          const closeTxId = await escrowProgramService.closeEscrow(new PublicKey(agreement.escrowPda));
+          console.log(`[SettlementService] V1 escrow account closed, rent recovered. Tx: ${closeTxId}`);
+        } catch (error: any) {
+          // Log but don't fail settlement - rent recovery is optional
+          console.error(`[SettlementService] Failed to close V1 escrow account: ${error.message}`);
+          console.error('[SettlementService] Settlement succeeded, but rent recovery failed (non-critical)');
+        }
+      }
+
       const settlementResult: SettlementResult = {
         success: true,
         agreementId: agreement.agreementId,
@@ -1117,6 +1131,18 @@ export class SettlementService {
       });
 
       console.log(`[SettlementService] V2 Settlement completed successfully for ${agreement.agreementId}`);
+
+      // 7. Close escrow account and recover rent
+      try {
+        console.log(`[SettlementService] Closing escrow account to recover rent: ${agreement.escrowPda}`);
+        const escrowProgramService = getEscrowProgramService();
+        const closeTxId = await escrowProgramService.closeEscrow(new PublicKey(agreement.escrowPda));
+        console.log(`[SettlementService] Escrow account closed, rent recovered. Tx: ${closeTxId}`);
+      } catch (error: any) {
+        // Log but don't fail settlement - rent recovery is optional
+        console.error(`[SettlementService] Failed to close escrow account: ${error.message}`);
+        console.error('[SettlementService] Settlement succeeded, but rent recovery failed (non-critical)');
+      }
 
       const settlementResult: SettlementResult = {
         success: true,
