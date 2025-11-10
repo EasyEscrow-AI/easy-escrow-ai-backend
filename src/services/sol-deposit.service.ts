@@ -79,7 +79,8 @@ export class SolDepositService {
       // Validate this is a SOL-based swap type
       if (
         agreement.swapType !== 'NFT_FOR_SOL' &&
-        agreement.swapType !== 'NFT_FOR_NFT_PLUS_SOL'
+        agreement.swapType !== 'NFT_FOR_NFT_PLUS_SOL' &&
+        agreement.swapType !== 'NFT_FOR_NFT_WITH_FEE' // ADDED: Monitor vault for fee deposits
       ) {
         console.log(`[SolDepositService] Skipping: Agreement ${agreementId} is not a SOL-based swap (${agreement.swapType})`);
         return {
@@ -144,20 +145,35 @@ export class SolDepositService {
       console.log(`[SolDepositService] ✅ SOL deposit recorded: ${deposit.id}, Amount: ${solAmount} SOL`);
 
       // Update agreement status based on what's been deposited
-      const nftDeposit = agreement.deposits.find(
+      // For NFT_FOR_NFT_WITH_FEE: Need 2 NFTs + sol_vault has full fee amount
+      // For NFT_FOR_SOL/NFT_FOR_NFT_PLUS_SOL: Need 1 NFT + SOL
+      const nftDeposits = agreement.deposits.filter(
         (d) => d.type === 'NFT' && d.status === DepositStatus.CONFIRMED
       );
 
       let newStatus: AgreementStatus = agreement.status;
 
-      if (nftDeposit) {
-        // Both NFT and SOL deposited
-        newStatus = AgreementStatus.BOTH_LOCKED;
-        console.log(`[SolDepositService] Both NFT and SOL deposited, updating status to BOTH_LOCKED`);
+      // Determine if all required deposits are complete
+      let allDepositsComplete = false;
+      
+      if (agreement.swapType === 'NFT_FOR_NFT_WITH_FEE') {
+        // NFT<>NFT with Fee: Requires 2 NFTs + sol_vault balance = full fee (0.01 SOL)
+        allDepositsComplete = nftDeposits.length >= 2 && solBalance >= expectedAmount;
+        console.log(`[SolDepositService] NFT_FOR_NFT_WITH_FEE: ${nftDeposits.length}/2 NFTs deposited, vault balance: ${Number(solBalance) / LAMPORTS_PER_SOL} SOL (expected: ${Number(expectedAmount) / LAMPORTS_PER_SOL} SOL)`);
       } else {
-        // Only SOL deposited
+        // NFT_FOR_SOL or NFT_FOR_NFT_PLUS_SOL: Requires 1 NFT + SOL
+        allDepositsComplete = nftDeposits.length >= 1;
+        console.log(`[SolDepositService] ${agreement.swapType}: ${nftDeposits.length}/1 NFT deposited, SOL deposited`);
+      }
+
+      if (allDepositsComplete) {
+        // All required deposits are complete
+        newStatus = AgreementStatus.BOTH_LOCKED;
+        console.log(`[SolDepositService] All deposits complete, updating status to BOTH_LOCKED`);
+      } else {
+        // Only SOL deposited (waiting for NFT(s))
         newStatus = AgreementStatus.USDC_LOCKED; // Reusing USDC_LOCKED for SOL (buyer funds locked)
-        console.log(`[SolDepositService] SOL deposited, updating status to USDC_LOCKED (buyer funds locked)`);
+        console.log(`[SolDepositService] SOL deposited, waiting for NFT deposits, updating status to USDC_LOCKED`);
       }
 
       // Update agreement status
