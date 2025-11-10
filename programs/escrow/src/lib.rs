@@ -464,12 +464,13 @@ pub mod escrow {
                 require!(amount <= MAX_SOL_AMOUNT, EscrowError::SolAmountTooHigh);
             },
             SwapType::NftForNftWithFee => {
-                // For NFT<>NFT with fee: must have nft_b_mint, sol_amount is fee
+                // For NFT<>NFT with fee: must have nft_b_mint, sol_amount is platform fee
+                // No minimum on fees - minimum only applies to transaction values
                 require!(nft_b_mint.is_some(), EscrowError::InvalidSwapParameters);
                 require!(sol_amount.is_some(), EscrowError::InvalidSwapParameters);
                 
                 let fee = sol_amount.unwrap();
-                require!(fee >= MIN_SOL_AMOUNT, EscrowError::SolAmountTooLow);
+                require!(fee > 0, EscrowError::InvalidAmount);
                 require!(fee <= MAX_SOL_AMOUNT, EscrowError::SolAmountTooHigh);
             },
             SwapType::NftForNftPlusSol => {
@@ -1106,7 +1107,8 @@ pub mod escrow {
 
     /// Admin emergency cancel with full refunds
     pub fn admin_cancel<'info>(ctx: Context<'_, '_, '_, 'info, AdminCancel<'info>>) -> Result<()> {
-        // Validate escrow status
+        // Validate escrow status - allow cancel for Pending (includes escrows with deposits)
+        // Cannot cancel if already Completed or Cancelled
         require!(
             ctx.accounts.escrow_state.status == EscrowStatus::Pending,
             EscrowError::InvalidStatus
@@ -1623,12 +1625,13 @@ pub fn init_agreement(
             require!(amount <= MAX_SOL_AMOUNT, EscrowError::SolAmountTooHigh);
         },
         SwapType::NftForNftWithFee => {
-            // For NFT<>NFT with fee: must have nft_b_mint, sol_amount is fee
+            // For NFT<>NFT with fee: must have nft_b_mint, sol_amount is platform fee
+            // No minimum on fees - minimum only applies to transaction values
             require!(nft_b_mint.is_some(), EscrowError::InvalidSwapParameters);
             require!(sol_amount.is_some(), EscrowError::InvalidSwapParameters);
             
             let fee = sol_amount.unwrap();
-            require!(fee >= MIN_SOL_AMOUNT, EscrowError::SolAmountTooLow);
+            require!(fee > 0, EscrowError::InvalidAmount);
             require!(fee <= MAX_SOL_AMOUNT, EscrowError::SolAmountTooHigh);
         },
         SwapType::NftForNftPlusSol => {
