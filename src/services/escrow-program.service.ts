@@ -2708,8 +2708,13 @@ export class EscrowProgramService {
       console.log('[EscrowProgramService] Escrow status:', escrowState.status);
 
       // Validate terminal state
-      if (!['Completed', 'Cancelled'].includes((escrowState.status as any).toString())) {
-        throw new Error(`Cannot close escrow in status: ${(escrowState.status as any).toString()}`);
+      // Status is an enum object: { pending: {} } | { completed: {} } | { cancelled: {} }
+      const status = escrowState.status as any;
+      const isCompleted = status.completed !== undefined;
+      const isCancelled = status.cancelled !== undefined;
+      
+      if (!isCompleted && !isCancelled) {
+        throw new Error(`Cannot close escrow in status: ${JSON.stringify(status)}`);
       }
 
       // Build close instruction
