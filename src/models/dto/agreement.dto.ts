@@ -144,7 +144,17 @@ export interface AgreementResponseDTO {
    */
   usdcDepositAddr?: string;
   
+  /**
+   * Seller's NFT (NFT A) deposit address (escrow's token account for NFT A).
+   */
   nftDepositAddr?: string;
+  
+  /**
+   * Buyer's NFT (NFT B) deposit address (escrow's token account for NFT B).
+   * Present only for NFT<>NFT swaps.
+   */
+  nftBDepositAddr?: string;
+  
   initTxId?: string;        // Escrow initialization transaction
   settleTxId?: string;      // Settlement transaction (when status = SETTLED)
   cancelTxId?: string;      // Cancellation transaction (when status = CANCELLED)
