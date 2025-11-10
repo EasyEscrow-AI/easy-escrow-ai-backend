@@ -134,6 +134,7 @@ exports.Prisma.AgreementScalarFieldEnum = {
   expiry: 'expiry',
   usdcDepositAddr: 'usdcDepositAddr',
   nftDepositAddr: 'nftDepositAddr',
+  nftBDepositAddr: 'nftBDepositAddr',
   initTxId: 'initTxId',
   settleTxId: 'settleTxId',
   cancelTxId: 'cancelTxId',

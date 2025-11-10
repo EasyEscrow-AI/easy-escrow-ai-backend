@@ -115,12 +115,16 @@ export const createAgreement = async (
     );
 
     let buyerNftAta: PublicKey | undefined;
-    if (nftBMint) {
+    let buyerNftBDepositAddr: string | null = null;
+    if (nftBMint && data.buyer) {
+      // Derive buyer's NFT B token account (where buyer deposits their NFT)
       buyerNftAta = await getAssociatedTokenAddress(
         nftBMint,
-        escrowResult.pda,
+        new PublicKey(data.buyer),
         true // allowOwnerOffCurve for PDAs
       );
+      buyerNftBDepositAddr = buyerNftAta.toString();
+      console.log(`[AgreementService] Derived buyer NFT B deposit address: ${buyerNftBDepositAddr}`);
     }
 
     // 7. Store agreement in database with SOL fields
@@ -149,7 +153,8 @@ export const createAgreement = async (
         
         // Deposit addresses
         usdcDepositAddr: null, // DEPRECATED: V2 uses SOL sent directly to escrowPda, not USDC token accounts
-        nftDepositAddr: sellerNftAta.toString(),
+        nftDepositAddr: sellerNftAta.toString(),       // Seller's NFT A deposit address
+        nftBDepositAddr: buyerNftBDepositAddr,         // Buyer's NFT B deposit address (for NFT<>NFT swaps)
         
         initTxId: escrowResult.txId,
       },

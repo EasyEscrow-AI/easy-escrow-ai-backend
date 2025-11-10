@@ -1590,6 +1590,7 @@ export namespace Prisma {
     expiry: Date | null
     usdcDepositAddr: string | null
     nftDepositAddr: string | null
+    nftBDepositAddr: string | null
     initTxId: string | null
     settleTxId: string | null
     cancelTxId: string | null
@@ -1619,6 +1620,7 @@ export namespace Prisma {
     expiry: Date | null
     usdcDepositAddr: string | null
     nftDepositAddr: string | null
+    nftBDepositAddr: string | null
     initTxId: string | null
     settleTxId: string | null
     cancelTxId: string | null
@@ -1648,6 +1650,7 @@ export namespace Prisma {
     expiry: number
     usdcDepositAddr: number
     nftDepositAddr: number
+    nftBDepositAddr: number
     initTxId: number
     settleTxId: number
     cancelTxId: number
@@ -1691,6 +1694,7 @@ export namespace Prisma {
     expiry?: true
     usdcDepositAddr?: true
     nftDepositAddr?: true
+    nftBDepositAddr?: true
     initTxId?: true
     settleTxId?: true
     cancelTxId?: true
@@ -1720,6 +1724,7 @@ export namespace Prisma {
     expiry?: true
     usdcDepositAddr?: true
     nftDepositAddr?: true
+    nftBDepositAddr?: true
     initTxId?: true
     settleTxId?: true
     cancelTxId?: true
@@ -1749,6 +1754,7 @@ export namespace Prisma {
     expiry?: true
     usdcDepositAddr?: true
     nftDepositAddr?: true
+    nftBDepositAddr?: true
     initTxId?: true
     settleTxId?: true
     cancelTxId?: true
@@ -1865,6 +1871,7 @@ export namespace Prisma {
     expiry: Date
     usdcDepositAddr: string | null
     nftDepositAddr: string | null
+    nftBDepositAddr: string | null
     initTxId: string | null
     settleTxId: string | null
     cancelTxId: string | null
@@ -1913,6 +1920,7 @@ export namespace Prisma {
     expiry?: boolean
     usdcDepositAddr?: boolean
     nftDepositAddr?: boolean
+    nftBDepositAddr?: boolean
     initTxId?: boolean
     settleTxId?: boolean
     cancelTxId?: boolean
@@ -1947,6 +1955,7 @@ export namespace Prisma {
     expiry?: boolean
     usdcDepositAddr?: boolean
     nftDepositAddr?: boolean
+    nftBDepositAddr?: boolean
     initTxId?: boolean
     settleTxId?: boolean
     cancelTxId?: boolean
@@ -1976,6 +1985,7 @@ export namespace Prisma {
     expiry?: boolean
     usdcDepositAddr?: boolean
     nftDepositAddr?: boolean
+    nftBDepositAddr?: boolean
     initTxId?: boolean
     settleTxId?: boolean
     cancelTxId?: boolean
@@ -2005,6 +2015,7 @@ export namespace Prisma {
     expiry?: boolean
     usdcDepositAddr?: boolean
     nftDepositAddr?: boolean
+    nftBDepositAddr?: boolean
     initTxId?: boolean
     settleTxId?: boolean
     cancelTxId?: boolean
@@ -2020,7 +2031,7 @@ export namespace Prisma {
     feePayer?: boolean
   }
 
-  export type AgreementOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "agreementId" | "escrowPda" | "nftMint" | "seller" | "buyer" | "price" | "feeBps" | "honorRoyalties" | "status" | "expiry" | "usdcDepositAddr" | "nftDepositAddr" | "initTxId" | "settleTxId" | "cancelTxId" | "createdAt" | "updatedAt" | "settledAt" | "cancelledAt" | "archivedAt" | "archiveReason" | "swapType" | "solAmount" | "nftBMint" | "feePayer", ExtArgs["result"]["agreement"]>
+  export type AgreementOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "agreementId" | "escrowPda" | "nftMint" | "seller" | "buyer" | "price" | "feeBps" | "honorRoyalties" | "status" | "expiry" | "usdcDepositAddr" | "nftDepositAddr" | "nftBDepositAddr" | "initTxId" | "settleTxId" | "cancelTxId" | "createdAt" | "updatedAt" | "settledAt" | "cancelledAt" | "archivedAt" | "archiveReason" | "swapType" | "solAmount" | "nftBMint" | "feePayer", ExtArgs["result"]["agreement"]>
   export type AgreementInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     deposits?: boolean | Agreement$depositsArgs<ExtArgs>
     settlement?: boolean | Agreement$settlementArgs<ExtArgs>
@@ -2053,6 +2064,7 @@ export namespace Prisma {
       expiry: Date
       usdcDepositAddr: string | null
       nftDepositAddr: string | null
+      nftBDepositAddr: string | null
       initTxId: string | null
       settleTxId: string | null
       cancelTxId: string | null
@@ -2506,6 +2518,7 @@ export namespace Prisma {
     readonly expiry: FieldRef<"Agreement", 'DateTime'>
     readonly usdcDepositAddr: FieldRef<"Agreement", 'String'>
     readonly nftDepositAddr: FieldRef<"Agreement", 'String'>
+    readonly nftBDepositAddr: FieldRef<"Agreement", 'String'>
     readonly initTxId: FieldRef<"Agreement", 'String'>
     readonly settleTxId: FieldRef<"Agreement", 'String'>
     readonly cancelTxId: FieldRef<"Agreement", 'String'>
@@ -10078,6 +10091,7 @@ export namespace Prisma {
     expiry: 'expiry',
     usdcDepositAddr: 'usdcDepositAddr',
     nftDepositAddr: 'nftDepositAddr',
+    nftBDepositAddr: 'nftBDepositAddr',
     initTxId: 'initTxId',
     settleTxId: 'settleTxId',
     cancelTxId: 'cancelTxId',
@@ -10483,6 +10497,7 @@ export namespace Prisma {
     expiry?: DateTimeFilter<"Agreement"> | Date | string
     usdcDepositAddr?: StringNullableFilter<"Agreement"> | string | null
     nftDepositAddr?: StringNullableFilter<"Agreement"> | string | null
+    nftBDepositAddr?: StringNullableFilter<"Agreement"> | string | null
     initTxId?: StringNullableFilter<"Agreement"> | string | null
     settleTxId?: StringNullableFilter<"Agreement"> | string | null
     cancelTxId?: StringNullableFilter<"Agreement"> | string | null
@@ -10516,6 +10531,7 @@ export namespace Prisma {
     expiry?: SortOrder
     usdcDepositAddr?: SortOrderInput | SortOrder
     nftDepositAddr?: SortOrderInput | SortOrder
+    nftBDepositAddr?: SortOrderInput | SortOrder
     initTxId?: SortOrderInput | SortOrder
     settleTxId?: SortOrderInput | SortOrder
     cancelTxId?: SortOrderInput | SortOrder
@@ -10552,6 +10568,7 @@ export namespace Prisma {
     expiry?: DateTimeFilter<"Agreement"> | Date | string
     usdcDepositAddr?: StringNullableFilter<"Agreement"> | string | null
     nftDepositAddr?: StringNullableFilter<"Agreement"> | string | null
+    nftBDepositAddr?: StringNullableFilter<"Agreement"> | string | null
     initTxId?: StringNullableFilter<"Agreement"> | string | null
     settleTxId?: StringNullableFilter<"Agreement"> | string | null
     cancelTxId?: StringNullableFilter<"Agreement"> | string | null
@@ -10585,6 +10602,7 @@ export namespace Prisma {
     expiry?: SortOrder
     usdcDepositAddr?: SortOrderInput | SortOrder
     nftDepositAddr?: SortOrderInput | SortOrder
+    nftBDepositAddr?: SortOrderInput | SortOrder
     initTxId?: SortOrderInput | SortOrder
     settleTxId?: SortOrderInput | SortOrder
     cancelTxId?: SortOrderInput | SortOrder
@@ -10622,6 +10640,7 @@ export namespace Prisma {
     expiry?: DateTimeWithAggregatesFilter<"Agreement"> | Date | string
     usdcDepositAddr?: StringNullableWithAggregatesFilter<"Agreement"> | string | null
     nftDepositAddr?: StringNullableWithAggregatesFilter<"Agreement"> | string | null
+    nftBDepositAddr?: StringNullableWithAggregatesFilter<"Agreement"> | string | null
     initTxId?: StringNullableWithAggregatesFilter<"Agreement"> | string | null
     settleTxId?: StringNullableWithAggregatesFilter<"Agreement"> | string | null
     cancelTxId?: StringNullableWithAggregatesFilter<"Agreement"> | string | null
@@ -11212,6 +11231,7 @@ export namespace Prisma {
     expiry: Date | string
     usdcDepositAddr?: string | null
     nftDepositAddr?: string | null
+    nftBDepositAddr?: string | null
     initTxId?: string | null
     settleTxId?: string | null
     cancelTxId?: string | null
@@ -11245,6 +11265,7 @@ export namespace Prisma {
     expiry: Date | string
     usdcDepositAddr?: string | null
     nftDepositAddr?: string | null
+    nftBDepositAddr?: string | null
     initTxId?: string | null
     settleTxId?: string | null
     cancelTxId?: string | null
@@ -11278,6 +11299,7 @@ export namespace Prisma {
     expiry?: DateTimeFieldUpdateOperationsInput | Date | string
     usdcDepositAddr?: NullableStringFieldUpdateOperationsInput | string | null
     nftDepositAddr?: NullableStringFieldUpdateOperationsInput | string | null
+    nftBDepositAddr?: NullableStringFieldUpdateOperationsInput | string | null
     initTxId?: NullableStringFieldUpdateOperationsInput | string | null
     settleTxId?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -11311,6 +11333,7 @@ export namespace Prisma {
     expiry?: DateTimeFieldUpdateOperationsInput | Date | string
     usdcDepositAddr?: NullableStringFieldUpdateOperationsInput | string | null
     nftDepositAddr?: NullableStringFieldUpdateOperationsInput | string | null
+    nftBDepositAddr?: NullableStringFieldUpdateOperationsInput | string | null
     initTxId?: NullableStringFieldUpdateOperationsInput | string | null
     settleTxId?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -11344,6 +11367,7 @@ export namespace Prisma {
     expiry: Date | string
     usdcDepositAddr?: string | null
     nftDepositAddr?: string | null
+    nftBDepositAddr?: string | null
     initTxId?: string | null
     settleTxId?: string | null
     cancelTxId?: string | null
@@ -11373,6 +11397,7 @@ export namespace Prisma {
     expiry?: DateTimeFieldUpdateOperationsInput | Date | string
     usdcDepositAddr?: NullableStringFieldUpdateOperationsInput | string | null
     nftDepositAddr?: NullableStringFieldUpdateOperationsInput | string | null
+    nftBDepositAddr?: NullableStringFieldUpdateOperationsInput | string | null
     initTxId?: NullableStringFieldUpdateOperationsInput | string | null
     settleTxId?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -11402,6 +11427,7 @@ export namespace Prisma {
     expiry?: DateTimeFieldUpdateOperationsInput | Date | string
     usdcDepositAddr?: NullableStringFieldUpdateOperationsInput | string | null
     nftDepositAddr?: NullableStringFieldUpdateOperationsInput | string | null
+    nftBDepositAddr?: NullableStringFieldUpdateOperationsInput | string | null
     initTxId?: NullableStringFieldUpdateOperationsInput | string | null
     settleTxId?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -12224,6 +12250,7 @@ export namespace Prisma {
     expiry?: SortOrder
     usdcDepositAddr?: SortOrder
     nftDepositAddr?: SortOrder
+    nftBDepositAddr?: SortOrder
     initTxId?: SortOrder
     settleTxId?: SortOrder
     cancelTxId?: SortOrder
@@ -12259,6 +12286,7 @@ export namespace Prisma {
     expiry?: SortOrder
     usdcDepositAddr?: SortOrder
     nftDepositAddr?: SortOrder
+    nftBDepositAddr?: SortOrder
     initTxId?: SortOrder
     settleTxId?: SortOrder
     cancelTxId?: SortOrder
@@ -12288,6 +12316,7 @@ export namespace Prisma {
     expiry?: SortOrder
     usdcDepositAddr?: SortOrder
     nftDepositAddr?: SortOrder
+    nftBDepositAddr?: SortOrder
     initTxId?: SortOrder
     settleTxId?: SortOrder
     cancelTxId?: SortOrder
@@ -14165,6 +14194,7 @@ export namespace Prisma {
     expiry: Date | string
     usdcDepositAddr?: string | null
     nftDepositAddr?: string | null
+    nftBDepositAddr?: string | null
     initTxId?: string | null
     settleTxId?: string | null
     cancelTxId?: string | null
@@ -14197,6 +14227,7 @@ export namespace Prisma {
     expiry: Date | string
     usdcDepositAddr?: string | null
     nftDepositAddr?: string | null
+    nftBDepositAddr?: string | null
     initTxId?: string | null
     settleTxId?: string | null
     cancelTxId?: string | null
@@ -14245,6 +14276,7 @@ export namespace Prisma {
     expiry?: DateTimeFieldUpdateOperationsInput | Date | string
     usdcDepositAddr?: NullableStringFieldUpdateOperationsInput | string | null
     nftDepositAddr?: NullableStringFieldUpdateOperationsInput | string | null
+    nftBDepositAddr?: NullableStringFieldUpdateOperationsInput | string | null
     initTxId?: NullableStringFieldUpdateOperationsInput | string | null
     settleTxId?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -14277,6 +14309,7 @@ export namespace Prisma {
     expiry?: DateTimeFieldUpdateOperationsInput | Date | string
     usdcDepositAddr?: NullableStringFieldUpdateOperationsInput | string | null
     nftDepositAddr?: NullableStringFieldUpdateOperationsInput | string | null
+    nftBDepositAddr?: NullableStringFieldUpdateOperationsInput | string | null
     initTxId?: NullableStringFieldUpdateOperationsInput | string | null
     settleTxId?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -14309,6 +14342,7 @@ export namespace Prisma {
     expiry: Date | string
     usdcDepositAddr?: string | null
     nftDepositAddr?: string | null
+    nftBDepositAddr?: string | null
     initTxId?: string | null
     settleTxId?: string | null
     cancelTxId?: string | null
@@ -14341,6 +14375,7 @@ export namespace Prisma {
     expiry: Date | string
     usdcDepositAddr?: string | null
     nftDepositAddr?: string | null
+    nftBDepositAddr?: string | null
     initTxId?: string | null
     settleTxId?: string | null
     cancelTxId?: string | null
@@ -14389,6 +14424,7 @@ export namespace Prisma {
     expiry?: DateTimeFieldUpdateOperationsInput | Date | string
     usdcDepositAddr?: NullableStringFieldUpdateOperationsInput | string | null
     nftDepositAddr?: NullableStringFieldUpdateOperationsInput | string | null
+    nftBDepositAddr?: NullableStringFieldUpdateOperationsInput | string | null
     initTxId?: NullableStringFieldUpdateOperationsInput | string | null
     settleTxId?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -14421,6 +14457,7 @@ export namespace Prisma {
     expiry?: DateTimeFieldUpdateOperationsInput | Date | string
     usdcDepositAddr?: NullableStringFieldUpdateOperationsInput | string | null
     nftDepositAddr?: NullableStringFieldUpdateOperationsInput | string | null
+    nftBDepositAddr?: NullableStringFieldUpdateOperationsInput | string | null
     initTxId?: NullableStringFieldUpdateOperationsInput | string | null
     settleTxId?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -14453,6 +14490,7 @@ export namespace Prisma {
     expiry: Date | string
     usdcDepositAddr?: string | null
     nftDepositAddr?: string | null
+    nftBDepositAddr?: string | null
     initTxId?: string | null
     settleTxId?: string | null
     cancelTxId?: string | null
@@ -14485,6 +14523,7 @@ export namespace Prisma {
     expiry: Date | string
     usdcDepositAddr?: string | null
     nftDepositAddr?: string | null
+    nftBDepositAddr?: string | null
     initTxId?: string | null
     settleTxId?: string | null
     cancelTxId?: string | null
@@ -14533,6 +14572,7 @@ export namespace Prisma {
     expiry?: DateTimeFieldUpdateOperationsInput | Date | string
     usdcDepositAddr?: NullableStringFieldUpdateOperationsInput | string | null
     nftDepositAddr?: NullableStringFieldUpdateOperationsInput | string | null
+    nftBDepositAddr?: NullableStringFieldUpdateOperationsInput | string | null
     initTxId?: NullableStringFieldUpdateOperationsInput | string | null
     settleTxId?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -14565,6 +14605,7 @@ export namespace Prisma {
     expiry?: DateTimeFieldUpdateOperationsInput | Date | string
     usdcDepositAddr?: NullableStringFieldUpdateOperationsInput | string | null
     nftDepositAddr?: NullableStringFieldUpdateOperationsInput | string | null
+    nftBDepositAddr?: NullableStringFieldUpdateOperationsInput | string | null
     initTxId?: NullableStringFieldUpdateOperationsInput | string | null
     settleTxId?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -14597,6 +14638,7 @@ export namespace Prisma {
     expiry: Date | string
     usdcDepositAddr?: string | null
     nftDepositAddr?: string | null
+    nftBDepositAddr?: string | null
     initTxId?: string | null
     settleTxId?: string | null
     cancelTxId?: string | null
@@ -14629,6 +14671,7 @@ export namespace Prisma {
     expiry: Date | string
     usdcDepositAddr?: string | null
     nftDepositAddr?: string | null
+    nftBDepositAddr?: string | null
     initTxId?: string | null
     settleTxId?: string | null
     cancelTxId?: string | null
@@ -14677,6 +14720,7 @@ export namespace Prisma {
     expiry?: DateTimeFieldUpdateOperationsInput | Date | string
     usdcDepositAddr?: NullableStringFieldUpdateOperationsInput | string | null
     nftDepositAddr?: NullableStringFieldUpdateOperationsInput | string | null
+    nftBDepositAddr?: NullableStringFieldUpdateOperationsInput | string | null
     initTxId?: NullableStringFieldUpdateOperationsInput | string | null
     settleTxId?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -14709,6 +14753,7 @@ export namespace Prisma {
     expiry?: DateTimeFieldUpdateOperationsInput | Date | string
     usdcDepositAddr?: NullableStringFieldUpdateOperationsInput | string | null
     nftDepositAddr?: NullableStringFieldUpdateOperationsInput | string | null
+    nftBDepositAddr?: NullableStringFieldUpdateOperationsInput | string | null
     initTxId?: NullableStringFieldUpdateOperationsInput | string | null
     settleTxId?: NullableStringFieldUpdateOperationsInput | string | null
     cancelTxId?: NullableStringFieldUpdateOperationsInput | string | null

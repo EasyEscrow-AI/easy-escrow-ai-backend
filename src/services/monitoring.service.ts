@@ -188,6 +188,9 @@ export class MonitoringService {
           agreementId: true,
           usdcDepositAddr: true,
           nftDepositAddr: true,
+          nftBDepositAddr: true, // Buyer's NFT deposit address for NFT<>NFT swaps
+          nftBMint: true,        // Needed for deriving NFT B address if not stored
+          buyer: true,           // Needed for deriving NFT B address if not stored
           escrowPda: true,
           swapType: true,
           status: true,
@@ -258,28 +261,40 @@ export class MonitoringService {
           }
 
           // Monitor buyer NFT (NFT B) for NFT-for-NFT swaps
-          // Derive the buyer's token account from nftBMint and buyer address
           if (
             (agreement.swapType === 'NFT_FOR_NFT_WITH_FEE' || agreement.swapType === 'NFT_FOR_NFT_PLUS_SOL') &&
-            !['NFT_LOCKED', 'BOTH_LOCKED'].includes(agreement.status) &&
-            agreement.nftBMint &&
-            agreement.buyer
+            !['NFT_LOCKED', 'BOTH_LOCKED'].includes(agreement.status)
           ) {
-            try {
-              const nftBDepositAddr = await getAssociatedTokenAddress(
-                new PublicKey(agreement.nftBMint),
-                new PublicKey(agreement.buyer)
-              );
-              
+            let nftBDepositAddr: string | null = null;
+
+            // Try to use database field first
+            if (agreement.nftBDepositAddr) {
+              nftBDepositAddr = agreement.nftBDepositAddr;
+              console.log(`[MonitoringService] Using stored NFT B deposit address for ${agreement.agreementId}: ${nftBDepositAddr}`);
+            }
+            // Fallback: Derive from nftBMint and buyer address
+            else if (agreement.nftBMint && agreement.buyer) {
+              try {
+                const derivedAddr = await getAssociatedTokenAddress(
+                  new PublicKey(agreement.nftBMint),
+                  new PublicKey(agreement.buyer)
+                );
+                nftBDepositAddr = derivedAddr.toString();
+                console.log(`[MonitoringService] Derived NFT B deposit address for ${agreement.agreementId}: ${nftBDepositAddr}`);
+              } catch (error) {
+                console.error(`[MonitoringService] Failed to derive NFT B deposit address for ${agreement.agreementId}:`, error);
+              }
+            }
+
+            // Add to monitoring if we have an address
+            if (nftBDepositAddr) {
               accountsToMonitor.push({
-                publicKey: nftBDepositAddr.toString(),
+                publicKey: nftBDepositAddr,
                 agreementId: agreement.agreementId,
                 type: 'nft'
               });
-              
-              console.log(`[MonitoringService] Monitoring NFT B account ${nftBDepositAddr.toString()} for agreement: ${agreement.agreementId}`);
-            } catch (error) {
-              console.error(`[MonitoringService] Failed to derive NFT B deposit address for ${agreement.agreementId}:`, error);
+            } else {
+              console.warn(`[MonitoringService] No NFT B deposit address available for ${agreement.agreementId}`);
             }
           }
         } else {
