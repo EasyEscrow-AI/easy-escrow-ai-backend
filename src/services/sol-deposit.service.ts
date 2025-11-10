@@ -174,7 +174,7 @@ export class SolDepositService {
       // For NFT_FOR_NFT_WITH_FEE: Need 2 NFTs + sol_vault has full fee amount
       // For NFT_FOR_SOL/NFT_FOR_NFT_PLUS_SOL: Need 1 NFT + SOL
       const nftDeposits = agreement.deposits.filter(
-        (d) => d.type === 'NFT' && d.status === DepositStatus.CONFIRMED
+        (d) => (d.type === 'NFT' || d.type === 'NFT_BUYER') && d.status === DepositStatus.CONFIRMED
       );
 
       let newStatus: AgreementStatus = agreement.status;
@@ -182,12 +182,14 @@ export class SolDepositService {
       // Determine if all required deposits are complete
       let allDepositsComplete = false;
       
-      if (agreement.swapType === 'NFT_FOR_NFT_WITH_FEE') {
-        // NFT<>NFT with Fee: Requires 2 NFTs + sol_vault balance = full fee (0.01 SOL)
-        allDepositsComplete = nftDeposits.length >= 2 && solBalance >= expectedAmount;
-        console.log(`[SolDepositService] NFT_FOR_NFT_WITH_FEE: ${nftDeposits.length}/2 NFTs deposited, vault balance: ${Number(solBalance) / LAMPORTS_PER_SOL} SOL (expected: ${Number(expectedAmount) / LAMPORTS_PER_SOL} SOL)`);
+      if (agreement.swapType === 'NFT_FOR_NFT_WITH_FEE' || agreement.swapType === 'NFT_FOR_NFT_PLUS_SOL') {
+        // NFT<>NFT swaps: Requires 2 NFTs (NFT + NFT_BUYER) + SOL requirements
+        const hasNftA = agreement.deposits.some(d => d.type === 'NFT' && d.status === DepositStatus.CONFIRMED);
+        const hasNftB = agreement.deposits.some(d => d.type === 'NFT_BUYER' && d.status === DepositStatus.CONFIRMED);
+        allDepositsComplete = hasNftA && hasNftB && solBalance >= expectedAmount;
+        console.log(`[SolDepositService] ${agreement.swapType}: NFT A: ${hasNftA}, NFT B: ${hasNftB}, ${nftDeposits.length}/2 total NFTs deposited, vault balance: ${Number(solBalance) / LAMPORTS_PER_SOL} SOL (expected: ${Number(expectedAmount) / LAMPORTS_PER_SOL} SOL)`);
       } else {
-        // NFT_FOR_SOL or NFT_FOR_NFT_PLUS_SOL: Requires 1 NFT + SOL
+        // NFT_FOR_SOL: Requires 1 NFT + SOL
         allDepositsComplete = nftDeposits.length >= 1;
         console.log(`[SolDepositService] ${agreement.swapType}: ${nftDeposits.length}/1 NFT deposited, SOL deposited`);
       }
