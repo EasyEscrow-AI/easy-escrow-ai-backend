@@ -286,7 +286,7 @@ describe('PRODUCTION E2E - NFT-for-NFT + SOL Payment (Happy Path) [WITH TIMING]'
     console.log('🎨 Depositing NFT B to escrow...\n');
 
     const prepareResponse = await axios.post(
-      `${PRODUCTION_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}/deposit-nft-b/prepare`
+      `${PRODUCTION_CONFIG.apiBaseUrl}/v1/agreements/${agreement.agreementId}/deposit-nft-buyer/prepare`
     );
 
     expect(prepareResponse.status).to.equal(200);
