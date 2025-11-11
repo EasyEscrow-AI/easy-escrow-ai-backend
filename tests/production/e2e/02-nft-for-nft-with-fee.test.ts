@@ -191,7 +191,7 @@ describe('PRODUCTION E2E - NFT-for-NFT with SOL Fee [WITH TIMING]', function () 
       buyer: wallets.receiver.publicKey.toBase58(),
       swapType: 'NFT_FOR_NFT_WITH_FEE',
       nftBMint: nftB.mint.toBase58(),
-      solAmount: (FEE_PER_PARTY * LAMPORTS_PER_SOL).toString(), // 0.005 SOL per party
+      solAmount: FEE_PER_PARTY * LAMPORTS_PER_SOL, // 0.005 SOL per party (number type accepted)
       feeBps: PLATFORM_FEE_BPS,
       feePayer: 'BUYER',
       honorRoyalties: false,

@@ -193,7 +193,7 @@ describe('PRODUCTION E2E - NFT-for-NFT + SOL Payment (Happy Path) [WITH TIMING]'
       buyer: wallets.receiver.publicKey.toBase58(),
       swapType: 'NFT_FOR_NFT_PLUS_SOL',
       nftBMint: nftB.mint.toBase58(), // Buyer's NFT
-      solAmount: (SOL_PAYMENT * LAMPORTS_PER_SOL).toString(), // SOL payment in lamports
+      solAmount: SOL_PAYMENT * LAMPORTS_PER_SOL, // SOL payment in lamports (number type accepted)
       feeBps: PLATFORM_FEE_BPS,
       feePayer: 'BUYER',
       honorRoyalties: false,
