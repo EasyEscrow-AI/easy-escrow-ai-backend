@@ -77,14 +77,18 @@ export function validateSwapParameters(
 ): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
 
-  // Check if SOL amount is required
-  if (requiresSol(swapType)) {
+  // Special case: NFT_FOR_NFT_WITH_FEE has backend-calculated solAmount
+  // Client can optionally provide it, but backend ignores it and calculates authoritatively
+  if (swapType === 'NFT_FOR_NFT_WITH_FEE') {
+    // solAmount is optional - backend calculates total platform fee (0.01 SOL)
+    // No validation needed here
+  } else if (requiresSol(swapType)) {
+    // For other swap types, SOL amount is required
     if (!params.solAmount || params.solAmount === '0') {
       errors.push(`SOL amount is required for ${swapType} swap type`);
     }
   } else {
     // For swap types that don't require SOL (none currently, but future-proofing)
-    // Currently all swap types (NFT_FOR_SOL, NFT_FOR_NFT_WITH_FEE, NFT_FOR_NFT_PLUS_SOL) require SOL
     if (params.solAmount && params.solAmount !== '0') {
       errors.push(`SOL amount should not be provided for ${swapType} swap type`);
     }
