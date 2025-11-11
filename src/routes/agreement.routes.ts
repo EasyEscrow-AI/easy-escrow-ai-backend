@@ -152,8 +152,10 @@ router.get('/v1/agreements', standardRateLimiter, async (req: Request, res: Resp
 /**
  * POST /v1/agreements/:agreementId/cancel
  * Cancel an agreement
- * - Regular users: Only allows cancellation of expired agreements that haven't been settled
- * - Admin users: Can cancel any agreement (except settled/refunded) using x-admin-key header
+ * - Anyone can cancel anytime (before or after expiry) as long as not settled/refunded
+ * - Before expiry: Backend uses adminCancel method (signed with admin key)
+ * - After expiry: Backend uses cancelIfExpired method
+ * - Admin users can optionally use x-admin-key header (same behavior, just explicit)
  */
 router.post(
   '/v1/agreements/:agreementId/cancel', 

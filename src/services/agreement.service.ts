@@ -512,8 +512,9 @@ const mapAgreementToDetailDTO = (agreement: any): AgreementDetailResponseDTO => 
   // Check expiry and cancellation eligibility
   const now = new Date();
   const isExpired = now > agreement.expiry;
+  // NOTE: Admin and seller can cancel anytime (not just after expiry)
+  // Backend uses adminCancel method when not expired, cancelIfExpired when expired
   const canBeCancelled =
-    isExpired &&
     (agreement.status === AgreementStatus.PENDING ||
       agreement.status === AgreementStatus.SOL_LOCKED ||
       agreement.status === AgreementStatus.USDC_LOCKED || // Legacy V1
@@ -532,7 +533,10 @@ const mapAgreementToDetailDTO = (agreement: any): AgreementDetailResponseDTO => 
 };
 
 /**
- * Cancel an agreement (only if expired and not already settled/cancelled)
+ * Cancel an agreement (anytime before settlement, even if not expired)
+ * - Admin and seller can cancel anytime
+ * - Uses adminCancel method before expiry (backend signs with admin key)
+ * - Uses cancelIfExpired method after expiry (public method)
  */
 export const cancelAgreement = async (
   agreementId: string,
@@ -561,11 +565,10 @@ export const cancelAgreement = async (
       throw new Error('Agreement is already refunded');
     }
 
-    // Check if expired (unless admin override is enabled)
+    // NOTE: Admin and seller can cancel anytime (no expiry check needed)
+    // - Before expiry: Uses adminCancel method (backend signs with admin key)
+    // - After expiry: Uses cancelIfExpired method (anyone can call)
     const now = new Date();
-    if (!isAdminOverride && now <= agreement.expiry) {
-      throw new Error('Agreement has not expired yet. Cannot cancel before expiry.');
-    }
 
     // Execute on-chain cancellation
     let cancelTxId: string | undefined;
