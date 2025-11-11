@@ -126,8 +126,8 @@ export async function confirmTransactionResilient(
     // Attempt normal confirmation (30s default timeout)
     await connection.confirmTransaction(txId, commitment);
   } catch (error: any) {
-    // If timeout error, check if transaction actually succeeded
-    if (error.name === 'TransactionExpiredTimeoutError' || error.message?.includes('not confirmed')) {
+    // Only handle specific timeout errors - don't mask other failures
+    if (error.name === 'TransactionExpiredTimeoutError') {
       console.warn(`   ⚠️  RPC confirmation timeout for ${txId.slice(0, 8)}... - checking transaction status...`);
       
       // Fetch transaction to check actual status
