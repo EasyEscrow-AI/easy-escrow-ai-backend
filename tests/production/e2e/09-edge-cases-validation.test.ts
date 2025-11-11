@@ -96,7 +96,8 @@ describe('PRODUCTION E2E: Edge Cases and Validation', function () {
         `${PRODUCTION_CONFIG.apiBaseUrl}/v1/agreements`,
         {
           nftMint: invalidMint.toString(),
-          price: PRODUCTION_CONFIG.swapAmount,
+          swapType: 'NFT_FOR_SOL',
+          solAmount: parseInt(PRODUCTION_CONFIG.swapAmount) * 1_000_000_000, // Convert SOL to lamports
           seller: wallets.sender.publicKey.toString(),
           buyer: wallets.receiver.publicKey.toString(),
           expiry: expiry.toISOString(),
@@ -224,7 +225,8 @@ describe('PRODUCTION E2E: Edge Cases and Validation', function () {
         `${PRODUCTION_CONFIG.apiBaseUrl}/v1/agreements`,
         {
           nftMint: testNft.mint.toString(),
-          price: PRODUCTION_CONFIG.swapAmount,
+          swapType: 'NFT_FOR_SOL',
+          solAmount: parseInt(PRODUCTION_CONFIG.swapAmount) * 1_000_000_000, // Convert SOL to lamports
           seller: wallets.sender.publicKey.toString(),
           buyer: wallets.receiver.publicKey.toString(),
           expiry: expiry.toISOString(),

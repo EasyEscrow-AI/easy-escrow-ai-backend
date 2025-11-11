@@ -94,7 +94,8 @@ describe('PRODUCTION E2E: Idempotency Handling', function () {
     // Fixed request body (same for both requests)
     const requestBody = {
       nftMint: testNft.mint.toString(),
-      price: PRODUCTION_CONFIG.swapAmount,
+      swapType: 'NFT_FOR_SOL',
+      solAmount: parseInt(PRODUCTION_CONFIG.swapAmount) * 1_000_000_000, // Convert SOL to lamports
       seller: wallets.sender.publicKey.toString(),
       buyer: wallets.receiver.publicKey.toString(),
       expiry: expiry.toISOString(), // Same expiry for both
