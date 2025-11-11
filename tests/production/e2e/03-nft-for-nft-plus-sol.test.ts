@@ -478,22 +478,25 @@ describe('PRODUCTION E2E - NFT-for-NFT + SOL Payment (Happy Path) [WITH TIMING]'
     console.log(`     Fee Collector: ${feeCollectorDelta >= 0 ? '+' : ''}${feeCollectorDelta.toFixed(4)} SOL (expected: ~${EXPECTED_FEE.toFixed(4)} SOL)\n`);
 
     // Seller should have received SOL minus platform fee (with some tolerance for tx fees)
-    // NOTE: Tolerance accounts for seller's NFT deposit transaction fee (~0.002-0.003 SOL)
-    const TX_FEE_TOLERANCE = 0.003; // 0.003 SOL tolerance for transaction fees
+    // NOTE: Seller pays tx fees for NFT deposit, reducing net balance change
+    const SELLER_TX_FEE_TOLERANCE = 0.003; // Accounts for seller's NFT deposit tx fee
     expect(sellerDelta).to.be.greaterThan(
-      EXPECTED_SELLER_RECEIVES - TX_FEE_TOLERANCE,
+      EXPECTED_SELLER_RECEIVES - SELLER_TX_FEE_TOLERANCE,
       `Seller should have received ~${EXPECTED_SELLER_RECEIVES.toFixed(4)} SOL (after fee, minus tx costs)`
     );
 
     // Buyer should have paid the SOL + transaction costs
+    const BUYER_TX_FEE_TOLERANCE = 0.003; // Accounts for buyer's deposit tx fees
     expect(buyerDelta).to.be.lessThan(
-      -SOL_PAYMENT + TX_FEE_TOLERANCE,
+      -SOL_PAYMENT + BUYER_TX_FEE_TOLERANCE,
       `Buyer should have paid ~${SOL_PAYMENT} SOL (plus tx fees)`
     );
 
     // Fee collector should have received the platform fee
+    // NOTE: Fee collector only RECEIVES fees, doesn't pay tx fees, so minimal tolerance
+    const FEE_COLLECTOR_TOLERANCE = 0.00001; // Small tolerance for RPC timing/precision
     expect(feeCollectorDelta).to.be.greaterThan(
-      EXPECTED_FEE - TX_FEE_TOLERANCE,
+      EXPECTED_FEE - FEE_COLLECTOR_TOLERANCE,
       `Fee collector should have received ~${EXPECTED_FEE.toFixed(4)} SOL platform fee`
     );
 
