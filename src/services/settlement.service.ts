@@ -417,18 +417,9 @@ export class SettlementService {
 
       console.log(`[SettlementService] Settlement completed successfully for ${agreement.agreementId}`);
 
-      // 6. Close escrow account and recover rent (V1 USDC)
+      // 6. Schedule asynchronous rent recovery for V1 (non-blocking)
       if (agreement.escrowPda) {
-        try {
-          console.log(`[SettlementService] Closing V1 escrow account to recover rent: ${agreement.escrowPda}`);
-          const escrowProgramService = getEscrowProgramService();
-          const closeTxId = await escrowProgramService.closeEscrow(new PublicKey(agreement.escrowPda));
-          console.log(`[SettlementService] V1 escrow account closed, rent recovered. Tx: ${closeTxId}`);
-        } catch (error: any) {
-          // Log but don't fail settlement - rent recovery is optional
-          console.error(`[SettlementService] Failed to close V1 escrow account: ${error.message}`);
-          console.error('[SettlementService] Settlement succeeded, but rent recovery failed (non-critical)');
-        }
+        this.scheduleRentRecovery(agreement.agreementId, agreement.escrowPda);
       }
 
       const settlementResult: SettlementResult = {
@@ -1132,17 +1123,9 @@ export class SettlementService {
 
       console.log(`[SettlementService] V2 Settlement completed successfully for ${agreement.agreementId}`);
 
-      // 7. Close escrow account and recover rent
-      try {
-        console.log(`[SettlementService] Closing escrow account to recover rent: ${agreement.escrowPda}`);
-        const escrowProgramService = getEscrowProgramService();
-        const closeTxId = await escrowProgramService.closeEscrow(new PublicKey(agreement.escrowPda));
-        console.log(`[SettlementService] Escrow account closed, rent recovered. Tx: ${closeTxId}`);
-      } catch (error: any) {
-        // Log but don't fail settlement - rent recovery is optional
-        console.error(`[SettlementService] Failed to close escrow account: ${error.message}`);
-        console.error('[SettlementService] Settlement succeeded, but rent recovery failed (non-critical)');
-      }
+      // 7. Schedule asynchronous rent recovery (non-blocking)
+      // Run in background after a delay to allow on-chain state propagation
+      this.scheduleRentRecovery(agreement.agreementId, agreement.escrowPda);
 
       const settlementResult: SettlementResult = {
         success: true,
@@ -1245,6 +1228,56 @@ export class SettlementService {
     } catch (error) {
       console.error('[SettlementService] Failed to record V2 settlement:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Schedule asynchronous rent recovery with retries
+   * Runs in background without blocking settlement flow
+   * 
+   * Strategy:
+   * - Initial delay: 20 seconds (allow on-chain state propagation)
+   * - Max retries: 10 attempts
+   * - Retry delay: 10 seconds between attempts
+   * - Total window: ~120 seconds (2 minutes)
+   */
+  private scheduleRentRecovery(agreementId: string, escrowPda: string): void {
+    console.log(`[SettlementService] Scheduling rent recovery for ${agreementId} (escrow: ${escrowPda})`);
+    
+    // Run in background after initial delay
+    setTimeout(async () => {
+      await this.executeRentRecoveryWithRetries(agreementId, escrowPda);
+    }, 20000); // 20 second initial delay
+  }
+
+  /**
+   * Execute rent recovery with automatic retries
+   */
+  private async executeRentRecoveryWithRetries(agreementId: string, escrowPda: string): Promise<void> {
+    const maxRetries = 10;
+    const retryDelayMs = 10000; // 10 seconds between retries
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`[SettlementService] Attempting rent recovery for ${agreementId} (attempt ${attempt}/${maxRetries})`);
+        
+        const escrowProgramService = getEscrowProgramService();
+        const closeTxId = await escrowProgramService.closeEscrow(new PublicKey(escrowPda));
+        
+        console.log(`[SettlementService] ✅ Rent recovery successful for ${agreementId}. Tx: ${closeTxId}`);
+        return; // Success - exit retry loop
+        
+      } catch (error: any) {
+        console.error(`[SettlementService] Rent recovery attempt ${attempt}/${maxRetries} failed for ${agreementId}:`, error.message);
+        
+        if (attempt < maxRetries) {
+          console.log(`[SettlementService] Retrying rent recovery in ${retryDelayMs / 1000}s...`);
+          await new Promise(resolve => setTimeout(resolve, retryDelayMs));
+        } else {
+          console.error(`[SettlementService] ❌ Rent recovery failed permanently for ${agreementId} after ${maxRetries} attempts`);
+          console.error(`[SettlementService] Manual rent recovery may be needed for escrow: ${escrowPda}`);
+        }
+      }
     }
   }
 }
