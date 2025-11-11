@@ -2708,8 +2708,8 @@ export class EscrowProgramService {
       // - RPC node cache invalidation delay
       // - Network propagation time
       // - Transaction confirmation vs. account state update timing
-      const maxRetries = 3;
-      const retryDelayMs = 2000; // 2 seconds between retries
+      const maxRetries = 5;
+      const retryDelayMs = 3000; // 3 seconds between retries (up to 15s total wait)
       let escrowState: any;
       let status: any;
       let isCompleted = false;
