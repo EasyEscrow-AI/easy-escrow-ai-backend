@@ -71,31 +71,38 @@ export const createAgreement = async (
     let solAmount: BN | undefined;
     let nftBMint: PublicKey | undefined;
 
-    // Convert SOL amount to lamports if provided
-    if (data.solAmount !== undefined) {
+    // For NFT_FOR_NFT_WITH_FEE, backend is authoritative on total platform fee
+    // Client's solAmount is ignored for this swap type to prevent premature settlement
+    if (swapType === SwapType.NFT_FOR_NFT_WITH_FEE) {
+      const feeBps = data.feeBps ?? 100; // Default 1% if not provided
+      const LAMPORTS_PER_SOL = 1000000000;
+      
+      // Platform fee is split between buyer and seller (0.005 SOL each for 1% = 0.01 SOL total)
+      // Calculate: (feeBps / 10000) * 1 SOL as base, but minimum 0.01 SOL for operational reasons
+      const platformFeeLamports = Math.max(
+        Math.floor((feeBps / 10000) * LAMPORTS_PER_SOL),
+        10000000 // Minimum 0.01 SOL
+      );
+      solAmount = new BN(platformFeeLamports);
+      console.log(`[AgreementService] NFT_FOR_NFT_WITH_FEE: Platform fee (solAmount): ${solAmount.toString()} lamports (${platformFeeLamports / LAMPORTS_PER_SOL} SOL) [BACKEND AUTHORITATIVE]`);
+      
+      // Log warning if client sent a different value
+      if (data.solAmount !== undefined) {
+        const clientValue = typeof data.solAmount === 'string' ? parseInt(data.solAmount, 10) : data.solAmount;
+        console.warn(`[AgreementService] NFT_FOR_NFT_WITH_FEE: Ignoring client solAmount=${clientValue}, using calculated total fee=${platformFeeLamports}`);
+      }
+    } 
+    // Convert SOL amount to lamports if provided (for other swap types)
+    else if (data.solAmount !== undefined) {
       const solAmountNum = typeof data.solAmount === 'string' 
         ? parseInt(data.solAmount, 10) 
         : data.solAmount;
       solAmount = new BN(solAmountNum);
       console.log(`[AgreementService] SOL amount: ${solAmount.toString()} lamports`);
-    } else if (swapType === SwapType.NFT_FOR_NFT_WITH_FEE || swapType === SwapType.NFT_FOR_NFT_PLUS_SOL) {
-      // For NFT-for-NFT swaps, calculate platform fee as the SOL amount
-      // This is needed for proper settlement validation in sol-deposit.service
-      const feeBps = data.feeBps ?? 100; // Default 1% if not provided
-      const LAMPORTS_PER_SOL = 1000000000;
-      
-      if (swapType === SwapType.NFT_FOR_NFT_WITH_FEE) {
-        // Platform fee is split between buyer and seller (0.005 SOL each for 1% = 0.01 SOL total)
-        // Calculate: (feeBps / 10000) * 1 SOL as base, but minimum 0.01 SOL for operational reasons
-        const platformFeeLamports = Math.max(
-          Math.floor((feeBps / 10000) * LAMPORTS_PER_SOL),
-          10000000 // Minimum 0.01 SOL
-        );
-        solAmount = new BN(platformFeeLamports);
-        console.log(`[AgreementService] NFT_FOR_NFT_WITH_FEE: Platform fee (solAmount): ${solAmount.toString()} lamports (${platformFeeLamports / LAMPORTS_PER_SOL} SOL)`);
-      }
+    } else if (swapType === SwapType.NFT_FOR_NFT_PLUS_SOL) {
       // Note: NFT_FOR_NFT_PLUS_SOL should have solAmount provided by client (SOL amount + fee)
       // If not provided, we don't auto-calculate it since we don't know the intended SOL amount
+      console.warn(`[AgreementService] NFT_FOR_NFT_PLUS_SOL: No solAmount provided by client`);
     }
 
     // Parse buyer's NFT mint if provided (for NFT<>NFT swaps)
