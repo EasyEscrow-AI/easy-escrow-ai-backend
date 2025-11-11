@@ -478,7 +478,8 @@ describe('PRODUCTION E2E - NFT-for-NFT + SOL Payment (Happy Path) [WITH TIMING]'
     console.log(`     Fee Collector: ${feeCollectorDelta >= 0 ? '+' : ''}${feeCollectorDelta.toFixed(4)} SOL (expected: ~${EXPECTED_FEE.toFixed(4)} SOL)\n`);
 
     // Seller should have received SOL minus platform fee (with some tolerance for tx fees)
-    const TX_FEE_TOLERANCE = 0.002; // 0.002 SOL tolerance for transaction fees
+    // NOTE: Tolerance accounts for seller's NFT deposit transaction fee (~0.002-0.003 SOL)
+    const TX_FEE_TOLERANCE = 0.003; // 0.003 SOL tolerance for transaction fees
     expect(sellerDelta).to.be.greaterThan(
       EXPECTED_SELLER_RECEIVES - TX_FEE_TOLERANCE,
       `Seller should have received ~${EXPECTED_SELLER_RECEIVES.toFixed(4)} SOL (after fee, minus tx costs)`
