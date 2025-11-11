@@ -274,10 +274,25 @@ describe('PRODUCTION E2E - NFT-for-NFT + SOL Payment (Happy Path) [WITH TIMING]'
     } catch (error: any) {
       if (error.name === 'TransactionExpiredTimeoutError') {
         console.warn(`   ⚠️  RPC confirmation timeout - verifying transaction status...`);
-        const tx = await connection.getTransaction(txId, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 });
-        if (!tx || tx.meta?.err) {
-          throw new Error(`Transaction failed: ${tx?.meta?.err ? JSON.stringify(tx.meta.err) : 'not found'}`);
+        
+        // First attempt to fetch transaction
+        let tx = await connection.getTransaction(txId, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 });
+        
+        // If not found, wait and retry (transaction may still be indexing)
+        if (!tx) {
+          console.warn(`   ⚠️  Transaction not found yet, waiting 5s for indexing...`);
+          await new Promise(resolve => setTimeout(resolve, 5000));
+          tx = await connection.getTransaction(txId, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 });
         }
+        
+        // Check final result
+        if (!tx) {
+          throw new Error(`Transaction not found after retry. May have been dropped: ${txId}`);
+        }
+        if (tx.meta?.err) {
+          throw new Error(`Transaction failed: ${JSON.stringify(tx.meta.err)}`);
+        }
+        
         console.log(`   ✅ Transaction succeeded (verified via fallback check)`);
       } else {
         throw error;
@@ -325,10 +340,25 @@ describe('PRODUCTION E2E - NFT-for-NFT + SOL Payment (Happy Path) [WITH TIMING]'
     } catch (error: any) {
       if (error.name === 'TransactionExpiredTimeoutError') {
         console.warn(`   ⚠️  RPC confirmation timeout - verifying transaction status...`);
-        const tx = await connection.getTransaction(txId, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 });
-        if (!tx || tx.meta?.err) {
-          throw new Error(`Transaction failed: ${tx?.meta?.err ? JSON.stringify(tx.meta.err) : 'not found'}`);
+        
+        // First attempt to fetch transaction
+        let tx = await connection.getTransaction(txId, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 });
+        
+        // If not found, wait and retry (transaction may still be indexing)
+        if (!tx) {
+          console.warn(`   ⚠️  Transaction not found yet, waiting 5s for indexing...`);
+          await new Promise(resolve => setTimeout(resolve, 5000));
+          tx = await connection.getTransaction(txId, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 });
         }
+        
+        // Check final result
+        if (!tx) {
+          throw new Error(`Transaction not found after retry. May have been dropped: ${txId}`);
+        }
+        if (tx.meta?.err) {
+          throw new Error(`Transaction failed: ${JSON.stringify(tx.meta.err)}`);
+        }
+        
         console.log(`   ✅ Transaction succeeded (verified via fallback check)`);
       } else {
         throw error;
@@ -379,10 +409,25 @@ describe('PRODUCTION E2E - NFT-for-NFT + SOL Payment (Happy Path) [WITH TIMING]'
     } catch (error: any) {
       if (error.name === 'TransactionExpiredTimeoutError') {
         console.warn(`   ⚠️  RPC confirmation timeout - verifying transaction status...`);
-        const tx = await connection.getTransaction(txId, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 });
-        if (!tx || tx.meta?.err) {
-          throw new Error(`Transaction failed: ${tx?.meta?.err ? JSON.stringify(tx.meta.err) : 'not found'}`);
+        
+        // First attempt to fetch transaction
+        let tx = await connection.getTransaction(txId, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 });
+        
+        // If not found, wait and retry (transaction may still be indexing)
+        if (!tx) {
+          console.warn(`   ⚠️  Transaction not found yet, waiting 5s for indexing...`);
+          await new Promise(resolve => setTimeout(resolve, 5000));
+          tx = await connection.getTransaction(txId, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 });
         }
+        
+        // Check final result
+        if (!tx) {
+          throw new Error(`Transaction not found after retry. May have been dropped: ${txId}`);
+        }
+        if (tx.meta?.err) {
+          throw new Error(`Transaction failed: ${JSON.stringify(tx.meta.err)}`);
+        }
+        
         console.log(`   ✅ Transaction succeeded (verified via fallback check)`);
       } else {
         throw error;
