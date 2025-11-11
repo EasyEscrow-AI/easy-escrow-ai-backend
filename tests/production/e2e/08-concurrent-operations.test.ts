@@ -104,7 +104,8 @@ describe('PRODUCTION E2E: Concurrent Operations', function () {
           `${PRODUCTION_CONFIG.apiBaseUrl}/v1/agreements`,
           {
             nftMint: nft.mint.toString(),
-            price: PRODUCTION_CONFIG.swapAmount,
+            swapType: 'NFT_FOR_SOL',
+            solAmount: PRODUCTION_CONFIG.swapAmount * 1_000_000_000, // Convert SOL to lamports (number type accepted)
             seller: wallets.sender.publicKey.toString(),
             buyer: wallets.receiver.publicKey.toString(),
             expiry: expiry.toISOString(),

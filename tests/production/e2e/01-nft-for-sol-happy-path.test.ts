@@ -177,7 +177,7 @@ describe('PRODUCTION E2E - NFT-for-SOL Swap (Happy Path) [WITH TIMING]', functio
       seller: wallets.sender.publicKey.toBase58(),
       buyer: wallets.receiver.publicKey.toBase58(),
       swapType: 'NFT_FOR_SOL',
-      solAmount: (SOL_AMOUNT * LAMPORTS_PER_SOL).toString(), // Convert SOL to lamports
+      solAmount: SOL_AMOUNT * LAMPORTS_PER_SOL, // Convert SOL to lamports (number type accepted)
       feeBps: PLATFORM_FEE_BPS,
       feePayer: 'BUYER',
       honorRoyalties: false,

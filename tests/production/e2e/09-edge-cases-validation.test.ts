@@ -91,7 +91,7 @@ describe('PRODUCTION E2E: Edge Cases and Validation', function () {
     const expiry = new Date(Date.now() + 60 * 60 * 1000);
     const idempotencyKey = generateIdempotencyKey();
 
-    try{
+    try {
       await axios.post(
         `${PRODUCTION_CONFIG.apiBaseUrl}/v1/agreements`,
         {
@@ -145,7 +145,8 @@ describe('PRODUCTION E2E: Edge Cases and Validation', function () {
         `${PRODUCTION_CONFIG.apiBaseUrl}/v1/agreements`,
         {
           nftMint: testNft.mint.toString(),
-          price: 999999, // Very large amount to ensure insufficient funds
+          swapType: 'NFT_FOR_SOL',
+          solAmount: 999999 * 1_000_000_000, // Very large amount in lamports to ensure insufficient funds
           seller: wallets.sender.publicKey.toString(),
           buyer: wallets.receiver.publicKey.toString(),
           expiry: expiry.toISOString(),
