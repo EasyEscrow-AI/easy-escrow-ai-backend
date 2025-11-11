@@ -96,28 +96,26 @@ export const validateCreateAgreement = (
     }
   }
 
-  // For NFT_FOR_NFT_WITH_FEE, solAmount must be exactly 5_000_000 lamports (0.005 SOL)
-  // This is the BUYER's portion of the dual flat fee (seller pays same amount)
+  // For NFT_FOR_NFT_WITH_FEE, solAmount is OPTIONAL
+  // Backend is authoritative and calculates total platform fee (0.01 SOL)
+  // Client can send solAmount but it will be ignored in favor of backend calculation
+  // This prevents clients from manipulating the validation amount
   if (swapType === SwapType.NFT_FOR_NFT_WITH_FEE) {
-    const REQUIRED_FEE_PER_PARTY = 5_000_000; // 0.005 SOL
-    
-    if (!data.solAmount && data.solAmount !== 0) {
-      errors.push({ 
-        field: 'solAmount', 
-        message: `Fee amount is required for NFT_FOR_NFT_WITH_FEE swap type. Must be exactly ${REQUIRED_FEE_PER_PARTY} lamports (0.005 SOL) per party.` 
-      });
-    } else {
+    // If client sends solAmount, validate it's a reasonable number (not required though)
+    if (data.solAmount !== undefined && data.solAmount !== null) {
       const solAmountNum = typeof data.solAmount === 'string' 
         ? parseInt(data.solAmount, 10) 
         : data.solAmount;
       
-      if (solAmountNum !== REQUIRED_FEE_PER_PARTY) {
+      // Just validate it's a positive number if provided (backend will ignore it anyway)
+      if (solAmountNum < 0 || !Number.isFinite(solAmountNum)) {
         errors.push({ 
           field: 'solAmount', 
-          message: `For NFT_FOR_NFT_WITH_FEE, solAmount must be exactly ${REQUIRED_FEE_PER_PARTY} lamports (0.005 SOL). This is the fee per party (both buyer and seller pay this amount).` 
+          message: `If provided, solAmount must be a valid positive number. Note: Backend calculates total fee authoritatively for NFT_FOR_NFT_WITH_FEE.` 
         });
       }
     }
+    // Note: No error if solAmount is not provided - backend calculates it
   }
 
   // Backward compatibility: Check for deprecated price field
