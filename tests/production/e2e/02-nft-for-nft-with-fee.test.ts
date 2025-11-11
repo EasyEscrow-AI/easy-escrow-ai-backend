@@ -261,7 +261,36 @@ describe('PRODUCTION E2E - NFT-for-NFT with SOL Fee [WITH TIMING]', function () 
       preflightCommitment: 'confirmed',
     });
 
-    await connection.confirmTransaction(txId, 'confirmed');
+    // Resilient confirmation - RPC can be slow but transaction may succeed
+    try {
+      await connection.confirmTransaction(txId, 'confirmed');
+    } catch (error: any) {
+      if (error.name === 'TransactionExpiredTimeoutError') {
+        console.warn(`   ⚠️  RPC confirmation timeout - verifying transaction status...`);
+        
+        // First attempt to fetch transaction
+        let tx = await connection.getTransaction(txId, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 });
+        
+        // If not found, wait and retry (transaction may still be indexing)
+        if (!tx) {
+          console.warn(`   ⚠️  Transaction not found yet, waiting 5s for indexing...`);
+          await new Promise(resolve => setTimeout(resolve, 5000));
+          tx = await connection.getTransaction(txId, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 });
+        }
+        
+        // Check final result
+        if (!tx) {
+          throw new Error(`Transaction not found after retry. May have been dropped: ${txId}`);
+        }
+        if (tx.meta?.err) {
+          throw new Error(`Transaction failed: ${JSON.stringify(tx.meta.err)}`);
+        }
+        
+        console.log(`   ✅ Transaction succeeded (verified via fallback check)`);
+      } else {
+        throw error;
+      }
+    }
 
     transactions.push({
       description: 'Deposit NFT A (deposit_seller_nft)',
@@ -296,7 +325,36 @@ describe('PRODUCTION E2E - NFT-for-NFT with SOL Fee [WITH TIMING]', function () 
       preflightCommitment: 'confirmed',
     });
 
-    await connection.confirmTransaction(txId, 'confirmed');
+    // Resilient confirmation - RPC can be slow but transaction may succeed
+    try {
+      await connection.confirmTransaction(txId, 'confirmed');
+    } catch (error: any) {
+      if (error.name === 'TransactionExpiredTimeoutError') {
+        console.warn(`   ⚠️  RPC confirmation timeout - verifying transaction status...`);
+        
+        // First attempt to fetch transaction
+        let tx = await connection.getTransaction(txId, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 });
+        
+        // If not found, wait and retry (transaction may still be indexing)
+        if (!tx) {
+          console.warn(`   ⚠️  Transaction not found yet, waiting 5s for indexing...`);
+          await new Promise(resolve => setTimeout(resolve, 5000));
+          tx = await connection.getTransaction(txId, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 });
+        }
+        
+        // Check final result
+        if (!tx) {
+          throw new Error(`Transaction not found after retry. May have been dropped: ${txId}`);
+        }
+        if (tx.meta?.err) {
+          throw new Error(`Transaction failed: ${JSON.stringify(tx.meta.err)}`);
+        }
+        
+        console.log(`   ✅ Transaction succeeded (verified via fallback check)`);
+      } else {
+        throw error;
+      }
+    }
 
     transactions.push({
       description: 'Deposit NFT B (deposit_buyer_nft)',
@@ -333,7 +391,36 @@ describe('PRODUCTION E2E - NFT-for-NFT with SOL Fee [WITH TIMING]', function () 
       preflightCommitment: 'confirmed',
     });
 
-    await connection.confirmTransaction(txId, 'confirmed');
+    // Resilient confirmation - RPC can be slow but transaction may succeed
+    try {
+      await connection.confirmTransaction(txId, 'confirmed');
+    } catch (error: any) {
+      if (error.name === 'TransactionExpiredTimeoutError') {
+        console.warn(`   ⚠️  RPC confirmation timeout - verifying transaction status...`);
+        
+        // First attempt to fetch transaction
+        let tx = await connection.getTransaction(txId, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 });
+        
+        // If not found, wait and retry (transaction may still be indexing)
+        if (!tx) {
+          console.warn(`   ⚠️  Transaction not found yet, waiting 5s for indexing...`);
+          await new Promise(resolve => setTimeout(resolve, 5000));
+          tx = await connection.getTransaction(txId, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 });
+        }
+        
+        // Check final result
+        if (!tx) {
+          throw new Error(`Transaction not found after retry. May have been dropped: ${txId}`);
+        }
+        if (tx.meta?.err) {
+          throw new Error(`Transaction failed: ${JSON.stringify(tx.meta.err)}`);
+        }
+        
+        console.log(`   ✅ Transaction succeeded (verified via fallback check)`);
+      } else {
+        throw error;
+      }
+    }
 
     transactions.push({
       description: 'Deposit SOL Fee (deposit_sol)',
@@ -370,7 +457,36 @@ describe('PRODUCTION E2E - NFT-for-NFT with SOL Fee [WITH TIMING]', function () 
       preflightCommitment: 'confirmed',
     });
 
-    await connection.confirmTransaction(txId, 'confirmed');
+    // Resilient confirmation - RPC can be slow but transaction may succeed
+    try {
+      await connection.confirmTransaction(txId, 'confirmed');
+    } catch (error: any) {
+      if (error.name === 'TransactionExpiredTimeoutError') {
+        console.warn(`   ⚠️  RPC confirmation timeout - verifying transaction status...`);
+        
+        // First attempt to fetch transaction
+        let tx = await connection.getTransaction(txId, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 });
+        
+        // If not found, wait and retry (transaction may still be indexing)
+        if (!tx) {
+          console.warn(`   ⚠️  Transaction not found yet, waiting 5s for indexing...`);
+          await new Promise(resolve => setTimeout(resolve, 5000));
+          tx = await connection.getTransaction(txId, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 });
+        }
+        
+        // Check final result
+        if (!tx) {
+          throw new Error(`Transaction not found after retry. May have been dropped: ${txId}`);
+        }
+        if (tx.meta?.err) {
+          throw new Error(`Transaction failed: ${JSON.stringify(tx.meta.err)}`);
+        }
+        
+        console.log(`   ✅ Transaction succeeded (verified via fallback check)`);
+      } else {
+        throw error;
+      }
+    }
 
     transactions.push({
       description: 'Deposit Seller SOL Fee (deposit_seller_sol_fee)',
