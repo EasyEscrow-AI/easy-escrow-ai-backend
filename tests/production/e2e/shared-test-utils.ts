@@ -101,6 +101,78 @@ export function generateIdempotencyKey(prefix: string = 'PRODUCTION-e2e'): strin
 }
 
 /**
+ * Confirm transaction with resilience to RPC timeouts
+ * 
+ * Solana RPC can be slow to confirm transactions, causing timeouts even when
+ * the transaction succeeds. This function handles timeouts gracefully by:
+ * 1. Attempting normal confirmation
+ * 2. If timeout occurs, checking if transaction actually succeeded
+ * 3. Only throwing if transaction genuinely failed
+ * 
+ * This prevents false test failures due to network timing issues.
+ * 
+ * @param connection - Solana connection
+ * @param txId - Transaction signature
+ * @param commitment - Commitment level (default: 'confirmed')
+ * @returns Promise that resolves when transaction is confirmed
+ * @throws Error only if transaction truly failed (not for slow confirmation)
+ */
+export async function confirmTransactionResilient(
+  connection: Connection,
+  txId: string,
+  commitment: 'confirmed' | 'finalized' = 'confirmed'
+): Promise<void> {
+  try {
+    // Attempt normal confirmation (30s default timeout)
+    await connection.confirmTransaction(txId, commitment);
+  } catch (error: any) {
+    // Only handle specific timeout errors - don't mask other failures
+    if (error.name === 'TransactionExpiredTimeoutError') {
+      console.warn(`   ⚠️  RPC confirmation timeout for ${txId.slice(0, 8)}... - checking transaction status...`);
+      
+      // Fetch transaction to check actual status
+      const tx = await connection.getTransaction(txId, {
+        commitment,
+        maxSupportedTransactionVersion: 0,
+      });
+      
+      if (tx) {
+        if (tx.meta?.err) {
+          // Transaction failed on-chain
+          throw new Error(`Transaction failed: ${JSON.stringify(tx.meta.err)}`);
+        }
+        // Transaction succeeded, just slow confirmation
+        console.log(`   ✅ Transaction succeeded (confirmed via fallback check)`);
+        return;
+      } else {
+        // Transaction not found - might be too new, wait and retry
+        console.warn(`   ⚠️  Transaction not found, waiting 5s and retrying...`);
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        
+        const retryTx = await connection.getTransaction(txId, {
+          commitment,
+          maxSupportedTransactionVersion: 0,
+        });
+        
+        if (retryTx) {
+          if (retryTx.meta?.err) {
+            throw new Error(`Transaction failed: ${JSON.stringify(retryTx.meta.err)}`);
+          }
+          console.log(`   ✅ Transaction succeeded (confirmed via fallback check after retry)`);
+          return;
+        }
+        
+        // Still not found after retry - likely dropped/failed
+        throw new Error(`Transaction not found after retry. May have been dropped or failed: ${txId}`);
+      }
+    }
+    
+    // Non-timeout error - rethrow
+    throw error;
+  }
+}
+
+/**
  * Parse Metaplex metadata from on-chain account data (fast, no off-chain fetch)
  * 
  * Metaplex Metadata V1 Structure:
