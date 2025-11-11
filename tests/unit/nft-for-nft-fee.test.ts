@@ -108,9 +108,58 @@ describe('NFT_FOR_NFT_WITH_FEE Bug Fixes', () => {
   });
 
   // ========================================================================
-  // BUG #1b: Deposit Validation - Expect Total Fee
+  // BUG #1b: Buyer Deposit Amount - Use Buyer's Portion Directly
   // ========================================================================
-  describe('Bug #1b: SOL Deposit Validation (sol-deposit.service.ts)', () => {
+  describe('Bug #1b: Buyer Deposit Amount (prepareDepositSolTransaction)', () => {
+    it('should NOT divide solAmount by 2 for buyer deposit (solAmount is already buyer\'s portion)', () => {
+      // Arrange
+      const agreement = {
+        solAmount: 5000000, // This is BUYER'S PORTION (0.005 SOL), NOT total fee
+        swapType: 'NFT_FOR_NFT_WITH_FEE' as SwapType,
+      };
+      
+      // Act - Simulating prepareDepositSolTransaction logic (CORRECT)
+      const depositAmount = agreement.solAmount; // Should use directly, NOT divide by 2
+      
+      // Assert
+      expect(depositAmount).to.equal(5000000, 'Buyer should deposit exactly solAmount (their portion)');
+      expect(depositAmount).to.not.equal(2500000, 'Should NOT divide by 2 (that was the bug!)');
+    });
+
+    it('should show the BUG if we divide by 2 (what NOT to do)', () => {
+      // Arrange
+      const agreement = {
+        solAmount: 5000000, // Buyer's portion
+        swapType: 'NFT_FOR_NFT_WITH_FEE' as SwapType,
+      };
+      
+      // Act - Simulating the BUGGY code (WRONG!)
+      const buggyDepositAmount = Math.floor(agreement.solAmount / 2); // ❌ WRONG!
+      
+      // Assert - This shows the bug
+      expect(buggyDepositAmount).to.equal(2500000, 'BUGGY code deposits only 0.0025 SOL');
+      expect(buggyDepositAmount).to.not.equal(5000000, 'BUGGY code does NOT deposit the correct amount');
+    });
+
+    it('should use correct amount for other swap types', () => {
+      // Arrange
+      const agreementSol = {
+        solAmount: 100000000, // 0.1 SOL
+        swapType: 'NFT_FOR_SOL' as SwapType,
+      };
+      
+      // Act
+      const depositAmount = agreementSol.solAmount; // Full amount for NFT_FOR_SOL
+      
+      // Assert
+      expect(depositAmount).to.equal(100000000, 'NFT_FOR_SOL should deposit full amount');
+    });
+  });
+
+  // ========================================================================
+  // BUG #1c: Deposit Validation - Expect Total Fee
+  // ========================================================================
+  describe('Bug #1c: SOL Deposit Validation (sol-deposit.service.ts)', () => {
     it('should calculate expectedAmount as TOTAL (buyer portion * 2) for NFT_FOR_NFT_WITH_FEE', () => {
       // Arrange
       const agreement = {

@@ -1000,16 +1000,15 @@ export const prepareDepositSolTransaction = async (
     const buyer = new PublicKey(agreement.buyer);
     
     // Calculate deposit amount based on swap type
-    // For NFT_FOR_NFT_WITH_FEE, agreement.solAmount is the TOTAL platform fee (0.01 SOL)
-    // Buyer deposits HALF of this (0.005 SOL), seller deposits the other half
-    let depositAmount: BN;
+    // CRITICAL: For NFT_FOR_NFT_WITH_FEE, agreement.solAmount is BUYER'S PORTION ONLY (0.005 SOL)
+    // NOT the total fee! The smart contract reads this value from on-chain state.
+    // Seller deposits their half separately via deposit_seller_sol_fee.
+    const depositAmount = new BN(agreement.solAmount.toString());
+    
     if (agreement.swapType === 'NFT_FOR_NFT_WITH_FEE') {
-      const totalFee = new BN(agreement.solAmount.toString());
-      depositAmount = totalFee.divn(2); // Buyer pays half
-      console.log(`[AgreementService] NFT_FOR_NFT_WITH_FEE: Buyer deposits half of total fee: ${depositAmount.toString()} lamports (${depositAmount.toNumber() / 1000000000} SOL)`);
+      console.log(`[AgreementService] NFT_FOR_NFT_WITH_FEE: Buyer deposits their portion: ${depositAmount.toString()} lamports (${depositAmount.toNumber() / 1000000000} SOL)`);
     } else {
       // For NFT_FOR_SOL and NFT_FOR_NFT_PLUS_SOL, buyer deposits full amount
-      depositAmount = new BN(agreement.solAmount.toString());
       console.log(`[AgreementService] ${agreement.swapType}: Buyer deposits full amount: ${depositAmount.toString()} lamports`);
     }
 
