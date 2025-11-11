@@ -261,7 +261,21 @@ describe('PRODUCTION E2E - NFT-for-NFT with SOL Fee [WITH TIMING]', function () 
       preflightCommitment: 'confirmed',
     });
 
-    await connection.confirmTransaction(txId, 'confirmed');
+    // Resilient confirmation - RPC can be slow but transaction may succeed
+    try {
+      await connection.confirmTransaction(txId, 'confirmed');
+    } catch (error: any) {
+      if (error.name === 'TransactionExpiredTimeoutError') {
+        console.warn(`   ⚠️  RPC confirmation timeout - verifying transaction status...`);
+        const tx = await connection.getTransaction(txId, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 });
+        if (!tx || tx.meta?.err) {
+          throw new Error(`Transaction failed: ${tx?.meta?.err ? JSON.stringify(tx.meta.err) : 'not found'}`);
+        }
+        console.log(`   ✅ Transaction succeeded (verified via fallback check)`);
+      } else {
+        throw error;
+      }
+    }
 
     transactions.push({
       description: 'Deposit NFT A (deposit_seller_nft)',
@@ -296,7 +310,21 @@ describe('PRODUCTION E2E - NFT-for-NFT with SOL Fee [WITH TIMING]', function () 
       preflightCommitment: 'confirmed',
     });
 
-    await connection.confirmTransaction(txId, 'confirmed');
+    // Resilient confirmation - RPC can be slow but transaction may succeed
+    try {
+      await connection.confirmTransaction(txId, 'confirmed');
+    } catch (error: any) {
+      if (error.name === 'TransactionExpiredTimeoutError') {
+        console.warn(`   ⚠️  RPC confirmation timeout - verifying transaction status...`);
+        const tx = await connection.getTransaction(txId, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 });
+        if (!tx || tx.meta?.err) {
+          throw new Error(`Transaction failed: ${tx?.meta?.err ? JSON.stringify(tx.meta.err) : 'not found'}`);
+        }
+        console.log(`   ✅ Transaction succeeded (verified via fallback check)`);
+      } else {
+        throw error;
+      }
+    }
 
     transactions.push({
       description: 'Deposit NFT B (deposit_buyer_nft)',
@@ -333,7 +361,21 @@ describe('PRODUCTION E2E - NFT-for-NFT with SOL Fee [WITH TIMING]', function () 
       preflightCommitment: 'confirmed',
     });
 
-    await connection.confirmTransaction(txId, 'confirmed');
+    // Resilient confirmation - RPC can be slow but transaction may succeed
+    try {
+      await connection.confirmTransaction(txId, 'confirmed');
+    } catch (error: any) {
+      if (error.name === 'TransactionExpiredTimeoutError') {
+        console.warn(`   ⚠️  RPC confirmation timeout - verifying transaction status...`);
+        const tx = await connection.getTransaction(txId, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 });
+        if (!tx || tx.meta?.err) {
+          throw new Error(`Transaction failed: ${tx?.meta?.err ? JSON.stringify(tx.meta.err) : 'not found'}`);
+        }
+        console.log(`   ✅ Transaction succeeded (verified via fallback check)`);
+      } else {
+        throw error;
+      }
+    }
 
     transactions.push({
       description: 'Deposit SOL Fee (deposit_sol)',
@@ -370,7 +412,21 @@ describe('PRODUCTION E2E - NFT-for-NFT with SOL Fee [WITH TIMING]', function () 
       preflightCommitment: 'confirmed',
     });
 
-    await connection.confirmTransaction(txId, 'confirmed');
+    // Resilient confirmation - RPC can be slow but transaction may succeed
+    try {
+      await connection.confirmTransaction(txId, 'confirmed');
+    } catch (error: any) {
+      if (error.name === 'TransactionExpiredTimeoutError') {
+        console.warn(`   ⚠️  RPC confirmation timeout - verifying transaction status...`);
+        const tx = await connection.getTransaction(txId, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 });
+        if (!tx || tx.meta?.err) {
+          throw new Error(`Transaction failed: ${tx?.meta?.err ? JSON.stringify(tx.meta.err) : 'not found'}`);
+        }
+        console.log(`   ✅ Transaction succeeded (verified via fallback check)`);
+      } else {
+        throw error;
+      }
+    }
 
     transactions.push({
       description: 'Deposit Seller SOL Fee (deposit_seller_sol_fee)',
