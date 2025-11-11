@@ -97,7 +97,7 @@ describe('PRODUCTION E2E: Zero-Fee Transactions', function () {
         {
           nftMint: testNft.mint.toString(),
           swapType: 'NFT_FOR_SOL',
-          solAmount: parseFloat(PRODUCTION_CONFIG.swapAmount) * 1_000_000_000, // Convert SOL to lamports
+          solAmount: (PRODUCTION_CONFIG.swapAmount * 1_000_000_000).toString(), // Convert SOL to lamports string
           seller: wallets.sender.publicKey.toString(),
           buyer: wallets.receiver.publicKey.toString(),
           expiry: expiry.toISOString(),
