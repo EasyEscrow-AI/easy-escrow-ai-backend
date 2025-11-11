@@ -81,10 +81,15 @@ export const createAgreement = async (
       // Calculate: (feeBps / 10000) * 1 SOL as base, but minimum 0.01 SOL for operational reasons
       const platformFeeLamports = Math.max(
         Math.floor((feeBps / 10000) * LAMPORTS_PER_SOL),
-        10000000 // Minimum 0.01 SOL
+        10000000 // Minimum 0.01 SOL total fee
       );
-      solAmount = new BN(platformFeeLamports);
-      console.log(`[AgreementService] NFT_FOR_NFT_WITH_FEE: Platform fee (solAmount): ${solAmount.toString()} lamports (${platformFeeLamports / LAMPORTS_PER_SOL} SOL) [BACKEND AUTHORITATIVE]`);
+      // CRITICAL: solAmount in escrow state = buyer's portion only (half of total platform fee)
+      // The smart contract's deposit_sol instruction reads this value and requires the buyer
+      // to transfer exactly this amount. Seller deposits their half via deposit_seller_sol_fee.
+      const buyerPortion = Math.floor(platformFeeLamports / 2); // Half for buyer
+      solAmount = new BN(buyerPortion);
+      console.log(`[AgreementService] NFT_FOR_NFT_WITH_FEE: Buyer portion (solAmount): ${solAmount.toString()} lamports (${buyerPortion / LAMPORTS_PER_SOL} SOL) [BACKEND AUTHORITATIVE]`);
+      console.log(`[AgreementService] NFT_FOR_NFT_WITH_FEE: Total platform fee: ${platformFeeLamports} lamports (${platformFeeLamports / LAMPORTS_PER_SOL} SOL)`);
       
       // Log warning if client sent a different value
       if (data.solAmount !== undefined) {
@@ -993,6 +998,9 @@ export const prepareDepositSolTransaction = async (
     const escrowPda = new PublicKey(agreement.escrowPda);
     const buyer = new PublicKey(agreement.buyer);
     // Convert Prisma Decimal to string before passing to BN
+    // Note: For NFT_FOR_NFT_WITH_FEE, agreement.solAmount is already set to buyer's portion (0.005 SOL)
+    // during agreement creation. The smart contract's deposit_sol instruction reads solAmount from
+    // the on-chain escrow state, so we cannot override it here. The amount must be correct at creation.
     const solAmount = new BN(agreement.solAmount.toString());
 
     const result = await escrowService.buildDepositSolTransaction(escrowPda, buyer, solAmount);
