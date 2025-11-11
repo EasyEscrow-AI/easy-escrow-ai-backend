@@ -992,10 +992,22 @@ export const prepareDepositSolTransaction = async (
     const escrowService = new EscrowProgramService();
     const escrowPda = new PublicKey(agreement.escrowPda);
     const buyer = new PublicKey(agreement.buyer);
-    // Convert Prisma Decimal to string before passing to BN
-    const solAmount = new BN(agreement.solAmount.toString());
+    
+    // Calculate deposit amount based on swap type
+    // For NFT_FOR_NFT_WITH_FEE, agreement.solAmount is the TOTAL platform fee (0.01 SOL)
+    // Buyer deposits HALF of this (0.005 SOL), seller deposits the other half
+    let depositAmount: BN;
+    if (agreement.swapType === 'NFT_FOR_NFT_WITH_FEE') {
+      const totalFee = new BN(agreement.solAmount.toString());
+      depositAmount = totalFee.divn(2); // Buyer pays half
+      console.log(`[AgreementService] NFT_FOR_NFT_WITH_FEE: Buyer deposits half of total fee: ${depositAmount.toString()} lamports (${depositAmount.toNumber() / 1000000000} SOL)`);
+    } else {
+      // For NFT_FOR_SOL and NFT_FOR_NFT_PLUS_SOL, buyer deposits full amount
+      depositAmount = new BN(agreement.solAmount.toString());
+      console.log(`[AgreementService] ${agreement.swapType}: Buyer deposits full amount: ${depositAmount.toString()} lamports`);
+    }
 
-    const result = await escrowService.buildDepositSolTransaction(escrowPda, buyer, solAmount);
+    const result = await escrowService.buildDepositSolTransaction(escrowPda, buyer, depositAmount);
 
     console.log('[AgreementService] Unsigned SOL deposit transaction prepared');
 
