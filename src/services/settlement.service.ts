@@ -933,7 +933,9 @@ export class SettlementService {
     let creatorRoyalty = new Decimal(0);
 
     // Calculate creator royalty if enabled
-    if (honorRoyalties) {
+    // CRITICAL: For NFT_FOR_NFT_WITH_FEE, skip royalties - no sale is happening (just an exchange)
+    // The solAmount is platform fee, not a sale price
+    if (honorRoyalties && agreement.swapType !== 'NFT_FOR_NFT_WITH_FEE') {
       try {
         const nftMetadata = await this.fetchNftMetadata(agreement.nftMint);
         if (nftMetadata && nftMetadata.sellerFeeBasisPoints) {

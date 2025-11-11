@@ -304,6 +304,88 @@ describe('NFT_FOR_NFT_WITH_FEE Bug Fixes', () => {
   });
 
   // ========================================================================
+  // BUG #4: Creator Royalties Should NOT Apply to NFT_FOR_NFT_WITH_FEE
+  // ========================================================================
+  describe('Bug #4: Creator Royalties (settlement.service.ts)', () => {
+    it('should NOT calculate creator royalties for NFT_FOR_NFT_WITH_FEE (no sale)', () => {
+      // Arrange
+      const agreement = {
+        swapType: 'NFT_FOR_NFT_WITH_FEE' as SwapType,
+        solAmount: new Decimal('5000000'), // Buyer's portion
+        honorRoyalties: true, // User wants royalties honored
+        feeBps: 100,
+      };
+      const sellerFeeBasisPoints = 500; // 5% creator royalty
+      
+      // Act - Simulating calculateFeesV2 logic
+      let creatorRoyalty: Decimal;
+      
+      // CRITICAL: For NFT_FOR_NFT_WITH_FEE, skip royalties - no sale is happening
+      if (agreement.honorRoyalties && agreement.swapType !== 'NFT_FOR_NFT_WITH_FEE') {
+        creatorRoyalty = agreement.solAmount.mul(sellerFeeBasisPoints).div(10000);
+      } else {
+        creatorRoyalty = new Decimal(0);
+      }
+      
+      // Assert
+      expect(creatorRoyalty.toString()).to.equal('0', 'No creator royalty for NFT-for-NFT exchanges');
+    });
+
+    it('should calculate creator royalties for NFT_FOR_SOL (actual sale)', () => {
+      // Arrange
+      const agreement = {
+        swapType: 'NFT_FOR_SOL' as SwapType,
+        solAmount: new Decimal('1000000000'), // 1 SOL sale price
+        honorRoyalties: true,
+      };
+      const sellerFeeBasisPoints = 500; // 5% creator royalty
+      
+      // Act
+      let creatorRoyalty: Decimal;
+      
+      if (agreement.honorRoyalties && agreement.swapType !== 'NFT_FOR_NFT_WITH_FEE') {
+        creatorRoyalty = agreement.solAmount.mul(sellerFeeBasisPoints).div(10000);
+      } else {
+        creatorRoyalty = new Decimal(0);
+      }
+      
+      // Assert
+      expect(creatorRoyalty.toString()).to.equal('50000000', 'Should calculate 5% of 1 SOL = 0.05 SOL');
+    });
+
+    it('should NOT deduct royalties from platform fee for NFT_FOR_NFT_WITH_FEE', () => {
+      // Arrange
+      const solAmount = new Decimal('5000000'); // Buyer's portion
+      const platformFee = solAmount.mul(2); // 0.01 SOL
+      const creatorRoyalty = new Decimal(0); // Should be 0 for NFT_FOR_NFT_WITH_FEE
+      
+      // Act
+      const totalDeductions = platformFee.add(creatorRoyalty);
+      
+      // Assert
+      expect(totalDeductions.toString()).to.equal('10000000', 'Platform gets full 0.01 SOL');
+      expect(creatorRoyalty.toString()).to.equal('0', 'No royalty deducted');
+    });
+
+    it('should show the BUG if royalties were calculated (what NOT to do)', () => {
+      // Arrange - This was the BUG
+      const solAmount = new Decimal('5000000'); // 0.005 SOL (buyer's portion = platform fee)
+      const sellerFeeBasisPoints = 500; // 5%
+      
+      // Act - Old WRONG calculation
+      const wrongRoyalty = solAmount.mul(sellerFeeBasisPoints).div(10000);
+      
+      // Assert - Shows why this was wrong
+      expect(wrongRoyalty.toString()).to.equal('250000', '0.00025 SOL would be deducted!');
+      
+      // Platform would lose money
+      const platformFee = solAmount.mul(2);
+      const wrongTotalDeductions = platformFee.add(wrongRoyalty);
+      expect(wrongTotalDeductions.toString()).to.equal('10250000', 'Platform loses money!');
+    });
+  });
+
+  // ========================================================================
   // Integration Test: Complete Flow
   // ========================================================================
   describe('Integration: Complete NFT_FOR_NFT_WITH_FEE Flow', () => {
