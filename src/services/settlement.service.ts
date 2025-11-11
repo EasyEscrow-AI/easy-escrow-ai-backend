@@ -918,12 +918,24 @@ export class SettlementService {
     });
 
     // Calculate platform fee (in basis points)
-    const platformFee = solAmount.mul(feeBps).div(10000);
+    // CRITICAL: For NFT_FOR_NFT_WITH_FEE, solAmount = buyer's portion (half of total fee)
+    // But the TOTAL platform fee should be recorded (buyer portion * 2)
+    let platformFee: Decimal;
+    if (agreement.swapType === 'NFT_FOR_NFT_WITH_FEE') {
+      // solAmount is buyer's portion, total fee is double
+      platformFee = solAmount.mul(2);
+      console.log(`[SettlementService] NFT_FOR_NFT_WITH_FEE: Buyer portion: ${solAmount.toString()}, Total platform fee: ${platformFee.toString()}`);
+    } else {
+      // For other swap types, calculate fee as percentage of sale price
+      platformFee = solAmount.mul(feeBps).div(10000);
+    }
 
     let creatorRoyalty = new Decimal(0);
 
     // Calculate creator royalty if enabled
-    if (honorRoyalties) {
+    // CRITICAL: For NFT_FOR_NFT_WITH_FEE, skip royalties - no sale is happening (just an exchange)
+    // The solAmount is platform fee, not a sale price
+    if (honorRoyalties && agreement.swapType !== 'NFT_FOR_NFT_WITH_FEE') {
       try {
         const nftMetadata = await this.fetchNftMetadata(agreement.nftMint);
         if (nftMetadata && nftMetadata.sellerFeeBasisPoints) {
@@ -936,12 +948,24 @@ export class SettlementService {
     }
 
     // Calculate amount seller receives
-    const totalDeductions = platformFee.add(creatorRoyalty);
-    const sellerReceived = solAmount.sub(totalDeductions);
+    // CRITICAL: For NFT_FOR_NFT_WITH_FEE, seller receives NFT B, not SOL
+    // So sellerReceived should be 0
+    let sellerReceived: Decimal;
+    let totalDeductions: Decimal;
+    
+    if (agreement.swapType === 'NFT_FOR_NFT_WITH_FEE') {
+      sellerReceived = new Decimal(0);
+      totalDeductions = platformFee.add(creatorRoyalty);
+      console.log(`[SettlementService] NFT_FOR_NFT_WITH_FEE: Seller receives NFT B (not SOL), sellerReceived: 0`);
+    } else {
+      // For other swap types, seller receives: solAmount - fees
+      totalDeductions = platformFee.add(creatorRoyalty);
+      sellerReceived = solAmount.sub(totalDeductions);
 
-    // Ensure seller receives at least 0
-    if (sellerReceived.lt(0)) {
-      throw new Error('V2: Fees exceed SOL amount, settlement cannot proceed');
+      // Ensure seller receives at least 0
+      if (sellerReceived.lt(0)) {
+        throw new Error('V2: Fees exceed SOL amount, settlement cannot proceed');
+      }
     }
 
     return {
