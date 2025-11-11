@@ -1014,12 +1014,15 @@ export class SettlementService {
 
       // Call settlement instruction
       // Note: settle reads swap type and all parameters from escrow state
+      // For NFT<>NFT swaps, also pass nftBMint to enable NFT B transfer
       const txId = await escrowProgramService.settle(
         escrowPda,
         seller,
         buyer,
         nftMint,
-        feeCollector
+        feeCollector,
+        undefined, // escrowId (optional, will be fetched from chain)
+        nftBMint   // nftBMint (optional, for NFT<>NFT swaps)
       );
 
       console.log('[SettlementService] V2 Settlement transaction confirmed:', txId);

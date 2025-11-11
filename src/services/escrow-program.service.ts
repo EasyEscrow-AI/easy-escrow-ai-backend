@@ -1193,7 +1193,8 @@ export class EscrowProgramService {
     buyer: PublicKey,
     nftMint: PublicKey,
     feeCollector: PublicKey,
-    escrowId?: BN // Optional for backward compatibility, will fetch from chain if not provided
+    escrowId?: BN, // Optional for backward compatibility, will fetch from chain if not provided
+    nftBMint?: PublicKey // Optional: Required for NFT_FOR_NFT swaps (buyer's NFT)
   ): Promise<string> {
     try {
       console.log('[EscrowProgramService] Settling escrow:', {
@@ -1245,7 +1246,7 @@ export class EscrowProgramService {
       // .accountsStrict() was NOT applying IDL's writable:true flags, causing ConstraintMut error
       // Anchor SDK will automatically apply writable flags from IDL when using .accounts()
       // Note: settle is permissionless - anyone can trigger settlement
-      const transaction = await (this.program.methods as any)
+      const instructionBuilder = (this.program.methods as any)
         .settle()
         .accounts({
           caller: this.adminKeypair.publicKey, // Permissionless - admin can trigger
@@ -1260,8 +1261,42 @@ export class EscrowProgramService {
           tokenProgram: TOKEN_PROGRAM_ID,
           associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
           systemProgram: SystemProgram.programId,
-        })
-        .transaction();
+        });
+
+      // Add remaining accounts for NFT B (buyer's NFT in NFT_FOR_NFT swaps)
+      if (nftBMint) {
+        console.log('[EscrowProgramService] Adding NFT B accounts for settlement:', nftBMint.toString());
+        
+        const escrowNftBAccount = await getAssociatedTokenAddress(
+          nftBMint,
+          escrowPda,
+          true,
+          TOKEN_PROGRAM_ID
+        );
+
+        const sellerNftBAccount = await getAssociatedTokenAddress(
+          nftBMint,
+          seller,
+          false,
+          TOKEN_PROGRAM_ID
+        );
+
+        console.log('[EscrowProgramService] NFT B Token accounts:', {
+          escrowNftBAccount: escrowNftBAccount.toString(),
+          sellerNftBAccount: sellerNftBAccount.toString(),
+        });
+
+        // Add remaining accounts - ORDER MATTERS! Must match smart contract expectations
+        // Same order as cancelIfExpired and adminCancel
+        instructionBuilder.remainingAccounts([
+          { pubkey: nftBMint, isSigner: false, isWritable: false },          // 1. NFT B mint
+          { pubkey: escrowNftBAccount, isSigner: false, isWritable: true },  // 2. Source: Escrow's NFT B account
+          { pubkey: sellerNftBAccount, isSigner: false, isWritable: true },  // 3. Destination: Seller's NFT B account
+          { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },  // 4. Token program
+        ]);
+      }
+
+      const transaction = await instructionBuilder.transaction();
 
       // Add Jito tip for mainnet
       if (isMainnet) {
