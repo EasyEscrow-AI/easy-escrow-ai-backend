@@ -76,9 +76,13 @@ export function isValidPreset(preset: string): preset is ExpiryPreset {
  * Validate expiry duration in hours
  */
 export function isValidExpiryDuration(durationHours: number): boolean {
+  // BYPASS: Allow short expiry durations for E2E testing
+  const isE2ETesting = process.env.ENABLE_E2E_TESTING === 'true';
+  const minDuration = isE2ETesting ? 0 : EXPIRY_CONSTANTS.MIN_DURATION_HOURS;
+  
   return (
     Number.isFinite(durationHours) &&
-    durationHours >= EXPIRY_CONSTANTS.MIN_DURATION_HOURS &&
+    durationHours >= minDuration &&
     durationHours <= EXPIRY_CONSTANTS.MAX_DURATION_HOURS
   );
 }
@@ -113,7 +117,10 @@ export function validateExpiryTimestamp(
   const durationHours = durationMs / (1000 * 60 * 60);
 
   // Check if duration is within allowed range
-  if (durationMs < EXPIRY_CONSTANTS.MIN_DURATION_MS) {
+  // BYPASS: Allow short expiry durations for E2E testing (e.g., 15 seconds for expiry tests)
+  const isE2ETesting = process.env.ENABLE_E2E_TESTING === 'true';
+  
+  if (!isE2ETesting && durationMs < EXPIRY_CONSTANTS.MIN_DURATION_MS) {
     return {
       valid: false,
       error: `Expiry duration must be at least 5 minutes`,
@@ -144,9 +151,12 @@ export function createExpiryFromDuration(
   now: Date = new Date()
 ): ExpiryValidationResult {
   if (!isValidExpiryDuration(durationHours)) {
+    const isE2ETesting = process.env.ENABLE_E2E_TESTING === 'true';
+    const minDurationMsg = isE2ETesting ? 'positive' : 'at least 5 minutes (0.0833 hours)';
+    
     return {
       valid: false,
-      error: `Duration must be at least 5 minutes (0.0833 hours) and not exceed ${EXPIRY_CONSTANTS.MAX_DURATION_HOURS} hours`,
+      error: `Duration must be ${minDurationMsg} and not exceed ${EXPIRY_CONSTANTS.MAX_DURATION_HOURS} hours`,
       durationHours,
     };
   }
