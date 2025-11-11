@@ -140,8 +140,9 @@ export class StuckAgreementMonitorService {
 
       // Find agreements stuck in any status with deposits
       // Includes partial deposits (NFT_LOCKED, SOL_LOCKED/USDC_LOCKED) and complete deposits (BOTH_LOCKED)
-      // ARCHIVED is included because test cleanup marks failed agreements as ARCHIVED
-      // but they may still have stuck assets in escrow PDAs
+      // ARCHIVED is included because agreements can be archived WITH deposits still in escrow
+      // (e.g., test cleanup, failed settlement). We skip ARCHIVED without deposits (normal cleanup)
+      // but alert CRITICAL for ARCHIVED with deposits (stuck funds!)
       // Only checks agreements updated within maxAgeHours to prevent old agreements from accumulating
       const stuckAgreements = await prisma.agreement.findMany({
         where: {
@@ -166,6 +167,13 @@ export class StuckAgreementMonitorService {
           escrowPda: true,
           nftMint: true,
           price: true,
+          deposits: {
+            select: {
+              id: true,
+              type: true,
+              status: true,
+            },
+          },
         },
       });
 
@@ -183,16 +191,33 @@ export class StuckAgreementMonitorService {
         const timeSinceUpdate = now.getTime() - agreement.updatedAt.getTime();
         const minutesSinceUpdate = Math.round(timeSinceUpdate / 60000);
 
+        // Check if agreement has deposits
+        const hasDeposits = agreement.deposits && agreement.deposits.length > 0;
+
+        // For ARCHIVED agreements without deposits, skip (normal cleanup, not stuck)
+        if (agreement.status === AgreementStatus.ARCHIVED && !hasDeposits) {
+          console.log(
+            `[StuckAgreementMonitor] ℹ️  Agreement ${agreement.agreementId} is ARCHIVED with no deposits (normal cleanup) - skipping alert`
+          );
+          continue; // Skip to next agreement
+        }
+
         // Determine severity
-        const isCritical = agreement.updatedAt < criticalThreshold;
+        // ARCHIVED with deposits is always CRITICAL (stuck funds!)
+        const isCritical = agreement.updatedAt < criticalThreshold || 
+                          (agreement.status === AgreementStatus.ARCHIVED && hasDeposits);
         const severity = isCritical ? AlertSeverity.CRITICAL : AlertSeverity.WARNING;
+
+        const depositInfo = hasDeposits 
+          ? ` - ${agreement.deposits.length} deposit(s) stuck!` 
+          : ' - no deposits';
 
         const alert: StuckAgreementAlert = {
           agreementId: agreement.agreementId,
           status: agreement.status,
           timeSinceLastUpdate: timeSinceUpdate,
           severity,
-          message: `Agreement ${agreement.agreementId} stuck in ${agreement.status} for ${minutesSinceUpdate} minutes (Escrow PDA: ${agreement.escrowPda})`,
+          message: `Agreement ${agreement.agreementId} stuck in ${agreement.status} for ${minutesSinceUpdate} minutes (Escrow PDA: ${agreement.escrowPda})${depositInfo}`,
           timestamp: now,
         };
 
