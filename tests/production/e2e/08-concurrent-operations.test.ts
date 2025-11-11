@@ -4,10 +4,13 @@
  * Tests race condition prevention and concurrent request handling.
  * 
  * Test Flow:
- * 1. Create 5 NFTs
- * 2. Create 5 agreements concurrently
+ * 1. Create 3 NFTs
+ * 2. Create 3 agreements concurrently
  * 3. Verify all have unique IDs
  * 4. Verify no race conditions
+ * 
+ * Note: Reduced from 5 to 3 to avoid RPC rate limiting (429 errors)
+ * while still testing concurrency effectively.
  * 
  * Run: npm run test:PRODUCTION:e2e:07-concurrent-operations:verbose
  */
@@ -88,7 +91,7 @@ describe('PRODUCTION E2E: Concurrent Operations', function () {
     console.log('⚡ Testing concurrent operations...\n');
     
     // Create multiple NFTs for concurrent agreements
-    const nftPromises = Array(5).fill(null).map(() => 
+    const nftPromises = Array(3).fill(null).map(() => 
       getRandomNFTFromWallet(connection, wallets.sender)
     );
     const nfts = await Promise.all(nftPromises);
@@ -96,7 +99,7 @@ describe('PRODUCTION E2E: Concurrent Operations', function () {
 
     try {
       // Create multiple agreements concurrently
-      console.log('   Creating 5 agreements concurrently...');
+      console.log('   Creating 3 agreements concurrently...');
       const expiry = new Date(Date.now() + 60 * 60 * 1000);
       
       const agreementPromises = nfts.map((nft, index) => 
@@ -124,7 +127,7 @@ describe('PRODUCTION E2E: Concurrent Operations', function () {
       const responses = await Promise.all(agreementPromises);
       
       // Verify all succeeded
-      expect(responses.length).to.equal(5);
+      expect(responses.length).to.equal(3);
       responses.forEach((response, index) => {
         expect(response.status).to.equal(201);
         expect(response.data.success).to.be.true;
@@ -135,7 +138,7 @@ describe('PRODUCTION E2E: Concurrent Operations', function () {
       // Verify all agreements have unique IDs
       const agreementIds = responses.map(r => r.data.data.agreementId);
       const uniqueIds = new Set(agreementIds);
-      expect(uniqueIds.size).to.equal(5);
+      expect(uniqueIds.size).to.equal(3);
       console.log('   ✅ All agreements have unique IDs');
       console.log('   ✅ No race conditions detected\n');
 
