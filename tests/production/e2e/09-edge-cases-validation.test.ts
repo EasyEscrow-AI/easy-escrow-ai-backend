@@ -91,13 +91,13 @@ describe('PRODUCTION E2E: Edge Cases and Validation', function () {
     const expiry = new Date(Date.now() + 60 * 60 * 1000);
     const idempotencyKey = generateIdempotencyKey();
 
-    try {
+    try{
       await axios.post(
         `${PRODUCTION_CONFIG.apiBaseUrl}/v1/agreements`,
         {
           nftMint: invalidMint.toString(),
           swapType: 'NFT_FOR_SOL',
-          solAmount: parseFloat(PRODUCTION_CONFIG.swapAmount) * 1_000_000_000, // Convert SOL to lamports
+          solAmount: PRODUCTION_CONFIG.swapAmount * 1_000_000_000, // Convert SOL to lamports (number type accepted)
           seller: wallets.sender.publicKey.toString(),
           buyer: wallets.receiver.publicKey.toString(),
           expiry: expiry.toISOString(),
@@ -226,7 +226,7 @@ describe('PRODUCTION E2E: Edge Cases and Validation', function () {
         {
           nftMint: testNft.mint.toString(),
           swapType: 'NFT_FOR_SOL',
-          solAmount: parseFloat(PRODUCTION_CONFIG.swapAmount) * 1_000_000_000, // Convert SOL to lamports
+          solAmount: PRODUCTION_CONFIG.swapAmount * 1_000_000_000, // Convert SOL to lamports (number type accepted)
           seller: wallets.sender.publicKey.toString(),
           buyer: wallets.receiver.publicKey.toString(),
           expiry: expiry.toISOString(),

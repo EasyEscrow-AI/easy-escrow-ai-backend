@@ -99,7 +99,7 @@ describe('PRODUCTION E2E: Admin Cancellation', function () {
         {
           nftMint: testNft.mint.toString(),
           swapType: 'NFT_FOR_SOL',
-          solAmount: parseFloat(PRODUCTION_CONFIG.swapAmount) * 1_000_000_000, // Convert SOL to lamports
+          solAmount: PRODUCTION_CONFIG.swapAmount * 1_000_000_000, // Convert SOL to lamports (number type accepted)
           seller: wallets.sender.publicKey.toString(),
           buyer: wallets.receiver.publicKey.toString(),
           expiry: expiry.toISOString(),
