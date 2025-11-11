@@ -92,7 +92,16 @@ export class SolDepositService {
       // Get SOL balance (account lamports)
       const solBalance = BigInt(accountInfo.lamports);
       // Note: agreement.solAmount is already stored in lamports
-      const expectedAmount = agreement.solAmount ? BigInt(agreement.solAmount.toString()) : BigInt(0);
+      // CRITICAL: For NFT_FOR_NFT_WITH_FEE, agreement.solAmount = buyer's portion (half)
+      // But we need to check for TOTAL platform fee (both buyer and seller portions)
+      let expectedAmount: bigint;
+      if (agreement.swapType === 'NFT_FOR_NFT_WITH_FEE') {
+        const buyerPortion = agreement.solAmount ? BigInt(agreement.solAmount.toString()) : BigInt(0);
+        expectedAmount = buyerPortion * BigInt(2); // Total = buyer's portion * 2
+        console.log(`[SolDepositService] NFT_FOR_NFT_WITH_FEE: Buyer portion in DB: ${buyerPortion} lamports, Expected total: ${expectedAmount} lamports`);
+      } else {
+        expectedAmount = agreement.solAmount ? BigInt(agreement.solAmount.toString()) : BigInt(0);
+      }
 
       console.log(`[SolDepositService] Escrow PDA balance: ${solBalance} lamports (${Number(solBalance) / LAMPORTS_PER_SOL} SOL)`);
       console.log(`[SolDepositService] Expected amount: ${expectedAmount} lamports (${Number(expectedAmount) / LAMPORTS_PER_SOL} SOL)`);

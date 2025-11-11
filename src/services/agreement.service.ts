@@ -81,13 +81,19 @@ export const createAgreement = async (
       // Calculate: (feeBps / 10000) * 1 SOL as base, but minimum 0.01 SOL for operational reasons
       const platformFeeLamports = Math.max(
         Math.floor((feeBps / 10000) * LAMPORTS_PER_SOL),
-        10000000 // Minimum 0.01 SOL
+        10000000 // Minimum 0.01 SOL total platform fee
       );
-      solAmount = new BN(platformFeeLamports);
-      console.log(`[AgreementService] NFT_FOR_NFT_WITH_FEE: Platform fee (solAmount): ${solAmount.toString()} lamports (${platformFeeLamports / LAMPORTS_PER_SOL} SOL) [BACKEND AUTHORITATIVE]`);
+      // CRITICAL: Set solAmount to BUYER'S PORTION ONLY (half of total)
+      // The smart contract's deposit_sol instruction reads this value from escrow state
+      // and requires the buyer to transfer exactly this amount.
+      // Seller deposits their half separately via deposit_seller_sol_fee.
+      const buyerPortion = Math.floor(platformFeeLamports / 2);
+      solAmount = new BN(buyerPortion);
+      console.log(`[AgreementService] NFT_FOR_NFT_WITH_FEE: Buyer portion (solAmount): ${solAmount.toString()} lamports (${buyerPortion / LAMPORTS_PER_SOL} SOL) [BACKEND AUTHORITATIVE]`);
+      console.log(`[AgreementService] NFT_FOR_NFT_WITH_FEE: Total platform fee: ${platformFeeLamports} lamports (${platformFeeLamports / LAMPORTS_PER_SOL} SOL)`);
       
       // Log warning if client sent a different value
-      if (data.solAmount !== undefined) {
+    if (data.solAmount !== undefined) {
         const clientValue = typeof data.solAmount === 'string' ? parseInt(data.solAmount, 10) : data.solAmount;
         console.warn(`[AgreementService] NFT_FOR_NFT_WITH_FEE: Ignoring client solAmount=${clientValue}, using calculated total fee=${platformFeeLamports}`);
       }
