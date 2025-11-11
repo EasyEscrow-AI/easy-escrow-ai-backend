@@ -929,14 +929,15 @@ pub mod escrow {
 
                 // Transfer NFT B from escrow to seller
                 // Get escrow NFT B account and seller NFT B account from remaining accounts
+                // Backend provides: [0]=mint, [1]=escrow_account, [2]=seller_account, [3]=token_program
                 require!(
-                    ctx.remaining_accounts.len() >= 2,
+                    ctx.remaining_accounts.len() >= 4,
                     EscrowError::InvalidSwapParameters
                 );
 
                 let nft_b_transfer_accounts = Transfer {
-                    from: ctx.remaining_accounts[0].to_account_info(),
-                    to: ctx.remaining_accounts[1].to_account_info(),
+                    from: ctx.remaining_accounts[1].to_account_info(),  // Escrow NFT B account
+                    to: ctx.remaining_accounts[2].to_account_info(),    // Seller NFT B account
                     authority: ctx.accounts.escrow_state.to_account_info(),
                 };
                 let nft_b_transfer_ctx = CpiContext::new_with_signer(
@@ -1029,14 +1030,15 @@ pub mod escrow {
 
                 // Transfer NFT B from escrow to seller
                 // Get escrow NFT B account and seller NFT B account from remaining accounts
+                // Backend provides: [0]=mint, [1]=escrow_account, [2]=seller_account, [3]=token_program
                 require!(
-                    ctx.remaining_accounts.len() >= 2,
+                    ctx.remaining_accounts.len() >= 4,
                     EscrowError::InvalidSwapParameters
                 );
 
                 let nft_b_transfer_accounts = Transfer {
-                    from: ctx.remaining_accounts[0].to_account_info(),
-                    to: ctx.remaining_accounts[1].to_account_info(),
+                    from: ctx.remaining_accounts[1].to_account_info(),  // Escrow NFT B account
+                    to: ctx.remaining_accounts[2].to_account_info(),    // Seller NFT B account
                     authority: ctx.accounts.escrow_state.to_account_info(),
                 };
                 let nft_b_transfer_ctx = CpiContext::new_with_signer(
@@ -2113,14 +2115,15 @@ pub fn settle<'info>(ctx: Context<'_, '_, '_, 'info, Settle<'info>>) -> Result<(
 
             // Transfer NFT B from escrow to seller
             // Get escrow NFT B account and seller NFT B account from remaining accounts
+            // Backend provides: [0]=mint, [1]=escrow_account, [2]=seller_account, [3]=token_program
             require!(
-                ctx.remaining_accounts.len() >= 2,
+                ctx.remaining_accounts.len() >= 4,
                 EscrowError::InvalidSwapParameters
             );
 
             let nft_b_transfer_accounts = Transfer {
-                from: ctx.remaining_accounts[0].to_account_info(),
-                to: ctx.remaining_accounts[1].to_account_info(),
+                from: ctx.remaining_accounts[1].to_account_info(),  // Escrow NFT B account
+                to: ctx.remaining_accounts[2].to_account_info(),    // Seller NFT B account
                 authority: ctx.accounts.escrow_state.to_account_info(),
             };
             let nft_b_transfer_ctx = CpiContext::new_with_signer(
@@ -2201,14 +2204,15 @@ pub fn settle<'info>(ctx: Context<'_, '_, '_, 'info, Settle<'info>>) -> Result<(
 
             // Transfer NFT B from escrow to seller
             // Get escrow NFT B account and seller NFT B account from remaining accounts
+            // Backend provides: [0]=mint, [1]=escrow_account, [2]=seller_account, [3]=token_program
             require!(
-                ctx.remaining_accounts.len() >= 2,
+                ctx.remaining_accounts.len() >= 4,
                 EscrowError::InvalidSwapParameters
             );
 
             let nft_b_transfer_accounts = Transfer {
-                from: ctx.remaining_accounts[0].to_account_info(),
-                to: ctx.remaining_accounts[1].to_account_info(),
+                from: ctx.remaining_accounts[1].to_account_info(),  // Escrow NFT B account
+                to: ctx.remaining_accounts[2].to_account_info(),    // Seller NFT B account
                 authority: ctx.accounts.escrow_state.to_account_info(),
             };
             let nft_b_transfer_ctx = CpiContext::new_with_signer(
