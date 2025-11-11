@@ -1286,11 +1286,13 @@ export class EscrowProgramService {
           sellerNftBAccount: sellerNftBAccount.toString(),
         });
 
-        // Add remaining accounts (similar to cancelIfExpired logic)
+        // Add remaining accounts - ORDER MATTERS! Must match smart contract expectations
+        // Same order as cancelIfExpired and adminCancel
         instructionBuilder.remainingAccounts([
-          { pubkey: escrowNftBAccount, isSigner: false, isWritable: true }, // Source: Escrow's NFT B account
-          { pubkey: sellerNftBAccount, isSigner: false, isWritable: true }, // Destination: Seller's NFT B account
-          { pubkey: nftBMint, isSigner: false, isWritable: false },          // NFT B mint
+          { pubkey: nftBMint, isSigner: false, isWritable: false },          // 1. NFT B mint
+          { pubkey: escrowNftBAccount, isSigner: false, isWritable: true },  // 2. Source: Escrow's NFT B account
+          { pubkey: sellerNftBAccount, isSigner: false, isWritable: true },  // 3. Destination: Seller's NFT B account
+          { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },  // 4. Token program
         ]);
       }
 
