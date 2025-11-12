@@ -402,11 +402,15 @@ export async function getRandomNFTFromWallet(
  * it returns a cached NFT without making any RPC calls. This prevents 429 rate limit errors.
  * 
  * Falls back to live fetching if cache is not available (for individual test execution).
+ * 
+ * @param owner - Keypair of the wallet owner (required for fallback fetching)
  */
 export async function getRandomNFTOptimized(
   connection: Connection,
-  walletAddress: PublicKey
-): Promise<{ mint: PublicKey; tokenAccount: PublicKey; metadata?: { name: string; symbol: string; uri: string } }> {
+  owner: Keypair
+): Promise<TestNFT> {
+  const walletAddress = owner.publicKey;
+  
   // Check if cache is ready
   if (nftCache.isReady()) {
     console.log('   🎲 Using cached NFT list (avoiding RPC call)');
@@ -416,7 +420,7 @@ export async function getRandomNFTOptimized(
 
   // Fallback to live fetching (for individual test execution)
   console.log('   🔄 Cache not available, fetching NFTs from RPC...');
-  return getRandomNFTFromWallet(connection, walletAddress);
+  return getRandomNFTFromWallet(connection, owner);
 }
 
 /**
