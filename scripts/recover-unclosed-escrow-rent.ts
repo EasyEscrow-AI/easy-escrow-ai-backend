@@ -62,9 +62,6 @@ async function findUnclosedEscrows() {
       status: {
         in: TERMINAL_STATUSES,
       },
-      escrowPda: {
-        not: null,
-      },
     },
     select: {
       id: true,
