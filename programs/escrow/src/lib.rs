@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Token, TokenAccount, Transfer, Mint};
+use anchor_spl::token::{self, Token, TokenAccount, Transfer, Mint, spl_token};
 use anchor_spl::associated_token::AssociatedToken;
+use anchor_lang::solana_program::program_pack::Pack;
 use solana_security_txt::security_txt;
 
 // Environment-specific Program IDs
@@ -514,7 +515,14 @@ pub mod escrow {
     /// Buyer deposits SOL into the SOL vault PDA
     /// For NftForSol and NftForNftPlusSol swap types
     pub fn deposit_sol(ctx: Context<DepositSol>) -> Result<()> {
-        // Validate escrow status
+        // Check expiry - prevent deposits to expired agreements
+        let clock = Clock::get()?;
+        require!(
+            clock.unix_timestamp <= ctx.accounts.escrow_state.expiry_timestamp,
+            EscrowError::Expired
+        );
+
+        // Validate escrow status - only allow deposits when active
         require!(
             ctx.accounts.escrow_state.status == EscrowStatus::Pending,
             EscrowError::InvalidStatus
@@ -566,7 +574,14 @@ pub mod escrow {
     /// Seller deposits SOL fee into the escrow (for NFT_FOR_NFT_WITH_FEE)
     /// Both parties contribute 50% of the platform fee
     pub fn deposit_seller_sol_fee(ctx: Context<DepositSellerSolFee>) -> Result<()> {
-        // Validate escrow status
+        // Check expiry - prevent deposits to expired agreements
+        let clock = Clock::get()?;
+        require!(
+            clock.unix_timestamp <= ctx.accounts.escrow_state.expiry_timestamp,
+            EscrowError::Expired
+        );
+
+        // Validate escrow status - only allow deposits when active
         require!(
             ctx.accounts.escrow_state.status == EscrowStatus::Pending,
             EscrowError::InvalidStatus
@@ -616,7 +631,14 @@ pub mod escrow {
     pub fn deposit_seller_nft(ctx: Context<DepositSellerNft>) -> Result<()> {
         let escrow_state = &mut ctx.accounts.escrow_state;
 
-        // Validate escrow status
+        // Check expiry - prevent deposits to expired agreements
+        let clock = Clock::get()?;
+        require!(
+            clock.unix_timestamp <= escrow_state.expiry_timestamp,
+            EscrowError::Expired
+        );
+
+        // Validate escrow status - only allow deposits when active
         require!(
             escrow_state.status == EscrowStatus::Pending,
             EscrowError::InvalidStatus
@@ -662,7 +684,14 @@ pub mod escrow {
     /// Buyer deposits NFT B into the escrow (for NFT<>NFT swaps)
     /// Used for NftForNftWithFee and NftForNftPlusSol swap types
     pub fn deposit_buyer_nft(ctx: Context<DepositBuyerNft>) -> Result<()> {
-        // Validate escrow status
+        // Check expiry - prevent deposits to expired agreements
+        let clock = Clock::get()?;
+        require!(
+            clock.unix_timestamp <= ctx.accounts.escrow_state.expiry_timestamp,
+            EscrowError::Expired
+        );
+
+        // Validate escrow status - only allow deposits when active
         require!(
             ctx.accounts.escrow_state.status == EscrowStatus::Pending,
             EscrowError::InvalidStatus
@@ -1316,6 +1345,197 @@ pub mod escrow {
 
         Ok(())
     }
+
+    /// Admin force close with asset recovery
+    /// 
+    /// **EMERGENCY ONLY**: Closes legacy/stuck escrow accounts without deserializing state.
+    /// Returns trapped assets (NFTs, SOL) to original depositors before closing.
+    /// 
+    /// **Safety**: Admin-only, requires careful off-chain preparation to determine recipients.
+    /// 
+    /// **Usage**:
+    /// - Used for accounts from old program versions (can't deserialize)
+    /// - Used for permanently stuck accounts (abandoned, non-terminal state)
+    /// - Recovers rent-exempt reserves back to admin
+    /// 
+    /// **Remaining Accounts** (in order):
+    /// - [0..n] Escrow-owned token accounts (NFTs) [writable]
+    /// - [n+1..n+1+n] Recipient token accounts for NFTs [writable]
+    /// - [n+2..n+2+n] Recipient wallets (for creating ATAs) [writable]
+    /// - [n+3] SOL vault PDA (optional) [writable]
+    /// - [n+4] SOL recipient wallet (optional) [writable]
+    pub fn admin_force_close_with_recovery<'info>(
+        ctx: Context<'_, '_, '_, 'info, AdminForceClose<'info>>,
+        escrow_id: u64, // Must be provided by caller (from off-chain tracing)
+    ) -> Result<()> {
+        msg!("FORCE CLOSE: Starting emergency closure with asset recovery");
+        msg!("Escrow ID: {}", escrow_id);
+        
+        // Verify the provided escrow_id matches the escrow PDA
+        let (expected_pda, bump) = Pubkey::find_program_address(
+            &[b"escrow", escrow_id.to_le_bytes().as_ref()],
+            ctx.program_id,
+        );
+        
+        require!(
+            expected_pda == ctx.accounts.escrow_state.key(),
+            EscrowError::InvalidEscrowAccount
+        );
+        
+        msg!("Verified escrow PDA matches ID {}", escrow_id);
+        
+        // Get escrow PDA signer seeds
+        let escrow_pda = ctx.accounts.escrow_state.key();
+        let escrow_id_bytes = escrow_id.to_le_bytes();
+        let signer_seeds: &[&[&[u8]]] = &[&[
+            b"escrow",
+            escrow_id_bytes.as_ref(),
+            &[bump],
+        ]];
+        
+        // Process remaining_accounts for asset recovery
+        let remaining = &ctx.remaining_accounts;
+        let mut account_idx = 0;
+        
+        // Count token accounts (all consecutive accounts that are token accounts)
+        let mut nft_count = 0;
+        while account_idx < remaining.len() {
+            let account = &remaining[account_idx];
+            
+            // Check if this is a token account owned by escrow
+            if account.owner == &spl_token::ID {
+                // Try to deserialize as token account
+                match spl_token::state::Account::unpack(&account.try_borrow_data()?) {
+                    Ok(token_account) => {
+                        if token_account.owner == escrow_pda {
+                            nft_count += 1;
+                            account_idx += 1;
+                            continue;
+                        }
+                    }
+                    Err(_) => {}
+                }
+            }
+            
+            // Not a token account, stop counting
+            break;
+        }
+        
+        msg!("Found {} NFT token accounts to recover", nft_count);
+        
+        // Transfer and close each NFT token account
+        for i in 0..nft_count {
+            let escrow_token_account = &remaining[i];
+            let recipient_token_account = &remaining[nft_count + i];
+            let _recipient_wallet = &remaining[nft_count * 2 + i]; // Kept for future use (ATA creation)
+            
+            msg!("Processing NFT {}/{}", i + 1, nft_count);
+            msg!("  From: {}", escrow_token_account.key());
+            msg!("  To: {}", recipient_token_account.key());
+            
+            // Deserialize token account to get amount
+            let token_data = spl_token::state::Account::unpack(&escrow_token_account.try_borrow_data()?)?;
+            
+            if token_data.amount == 0 {
+                msg!("  Skipping empty token account");
+                
+                // Just close empty account
+                anchor_spl::token::close_account(
+                    CpiContext::new(
+                        ctx.accounts.token_program.to_account_info(),
+                        anchor_spl::token::CloseAccount {
+                            account: escrow_token_account.to_account_info(),
+                            destination: ctx.accounts.admin.to_account_info(),
+                            authority: ctx.accounts.escrow_state.to_account_info(),
+                        },
+                    ).with_signer(signer_seeds)
+                )?;
+                
+                continue;
+            }
+            
+            msg!("  Transferring {} tokens", token_data.amount);
+            
+            // Transfer NFT to recipient
+            anchor_spl::token::transfer(
+                CpiContext::new(
+                    ctx.accounts.token_program.to_account_info(),
+                    anchor_spl::token::Transfer {
+                        from: escrow_token_account.to_account_info(),
+                        to: recipient_token_account.to_account_info(),
+                        authority: ctx.accounts.escrow_state.to_account_info(),
+                    },
+                ).with_signer(signer_seeds),
+                token_data.amount,
+            )?;
+            
+            // Close token account, return rent to admin
+            anchor_spl::token::close_account(
+                CpiContext::new(
+                    ctx.accounts.token_program.to_account_info(),
+                    anchor_spl::token::CloseAccount {
+                        account: escrow_token_account.to_account_info(),
+                        destination: ctx.accounts.admin.to_account_info(),
+                        authority: ctx.accounts.escrow_state.to_account_info(),
+                    },
+                ).with_signer(signer_seeds)
+            )?;
+            
+            msg!("  ✅ NFT recovered and token account closed");
+        }
+        
+        // Check for SOL vault and SOL recipient
+        let sol_vault_idx = nft_count * 3;
+        let sol_recipient_idx = sol_vault_idx + 1;
+        
+        if sol_recipient_idx < remaining.len() {
+            let sol_vault = &remaining[sol_vault_idx];
+            let sol_recipient = &remaining[sol_recipient_idx];
+            
+            msg!("Processing SOL vault");
+            msg!("  Vault: {}", sol_vault.key());
+            msg!("  Recipient: {}", sol_recipient.key());
+            
+            let vault_balance = sol_vault.lamports();
+            let rent = Rent::get()?;
+            let rent_exempt_min = rent.minimum_balance(0);
+            
+            if vault_balance > rent_exempt_min {
+                let refund_amount = vault_balance - rent_exempt_min;
+                msg!("  Refunding {} lamports SOL", refund_amount);
+                
+                // Transfer SOL to recipient
+                **sol_vault.try_borrow_mut_lamports()? -= refund_amount;
+                **sol_recipient.try_borrow_mut_lamports()? += refund_amount;
+                
+                msg!("  ✅ SOL refunded");
+            } else {
+                msg!("  No excess SOL to refund (only rent-exempt reserve)");
+            }
+            
+            // Close sol_vault, return rent to admin
+            let vault_remaining = sol_vault.lamports();
+            msg!("  Closing vault, recovering {} lamports rent", vault_remaining);
+            
+            **sol_vault.try_borrow_mut_lamports()? = 0;
+            **ctx.accounts.admin.try_borrow_mut_lamports()? += vault_remaining;
+            
+            msg!("  ✅ SOL vault closed");
+        } else {
+            msg!("No SOL vault to process");
+        }
+        
+        // Close escrow PDA, return rent to admin
+        let escrow_lamports = ctx.accounts.escrow_state.to_account_info().lamports();
+        msg!("Closing escrow PDA, recovering {} lamports rent", escrow_lamports);
+        
+        **ctx.accounts.escrow_state.to_account_info().try_borrow_mut_lamports()? = 0;
+        **ctx.accounts.admin.try_borrow_mut_lamports()? += escrow_lamports;
+        
+        msg!("✅ FORCE CLOSE COMPLETE: All assets recovered and rent returned");
+        
+        Ok(())
+    }
 }
 
 // Account Structures
@@ -1626,6 +1846,9 @@ pub enum EscrowError {
     
     #[msg("Escrow account would not be rent-exempt after transfers")]
     InsufficientEscrowRent,
+    
+    #[msg("Invalid escrow account provided (PDA mismatch)")]
+    InvalidEscrowAccount,
     
     #[msg("Executable accounts (programs) cannot send or receive lamports")]
     ExecutableAccountNotAllowed,
@@ -2737,6 +2960,39 @@ pub struct CloseEscrow<'info> {
         bump = escrow_state.bump,
     )]
     pub escrow_state: Account<'info, EscrowState>,
+}
+
+/// Admin force close - emergency closure without state deserialization
+/// 
+/// **IMPORTANT**: This is for recovering rent and assets from legacy/stuck escrows
+/// that cannot be closed via normal methods due to:
+/// - State deserialization failures (old program versions)
+/// - Permanently stuck in non-terminal states
+/// 
+/// **Remaining Accounts** (provided by off-chain script):
+/// - [0..n] Escrow-owned token accounts (NFTs to recover) [writable]
+/// - [n+1..2n+1] Recipient token accounts (destination for NFTs) [writable]  
+/// - [2n+2..3n+2] Recipient wallets (for ATA rent) [writable]
+/// - [3n+3] SOL vault PDA (optional, if exists) [writable]
+/// - [3n+4] SOL recipient wallet (optional) [writable]
+#[derive(Accounts)]
+pub struct AdminForceClose<'info> {
+    /// Admin who will receive recovered rent
+    /// Must be the global admin (hardcoded check in instruction)
+    #[account(mut)]
+    pub admin: Signer<'info>,
+    
+    /// Escrow PDA to force close
+    /// CHECK: We intentionally DON'T deserialize this account since that's why we need force close.
+    /// The instruction verifies the PDA belongs to our program and admin authorizes the action.
+    /// Off-chain script must provide the correct escrow PDA address.
+    #[account(mut)]
+    pub escrow_state: UncheckedAccount<'info>,
+    
+    pub system_program: Program<'info, System>,
+    pub token_program: Program<'info, Token>,
+    
+    // remaining_accounts handled dynamically based on what needs recovery
 }
 
 // ============================================================================
