@@ -87,7 +87,7 @@ describe('PRODUCTION E2E: Idempotency Handling', function () {
     console.log('🔄 Testing idempotency...\n');
     
     // Create NFT once, use same NFT for both requests
-    const testNft = await getRandomNFTFromWallet(connection, wallets.sender);
+    const testNft = await getRandomNFTOptimized(connection, wallets.sender);
     const expiry = new Date(Date.now() + 60 * 60 * 1000);
     const idempotencyKey = generateIdempotencyKey();
 

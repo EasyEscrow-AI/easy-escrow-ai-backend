@@ -89,7 +89,7 @@ describe('PRODUCTION E2E: Concurrent Operations', function () {
     
     // Create multiple NFTs for concurrent agreements
     const nftPromises = Array(5).fill(null).map(() => 
-      getRandomNFTFromWallet(connection, wallets.sender)
+      getRandomNFTOptimized(connection, wallets.sender)
     );
     const nfts = await Promise.all(nftPromises);
     console.log(`   ✅ Created ${nfts.length} test NFTs`);

@@ -110,7 +110,7 @@ describe('PRODUCTION E2E: Agreement Expiry and Refund', function () {
     console.log('⏰ Creating agreement with 15-second expiry...\n');
     
     // Create test NFT
-    expiryNft = await getRandomNFTFromWallet(connection, wallets.sender);
+    expiryNft = await getRandomNFTOptimized(connection, wallets.sender);
     
     // Create agreement with 15-second expiry
     const expiry = new Date(Date.now() + 15 * 1000); // 15 seconds from now

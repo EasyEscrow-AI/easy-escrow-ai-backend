@@ -39,7 +39,7 @@ import {
   generateIdempotencyKey,
   getExplorerUrl,
   waitForAgreementStatus,
-  getRandomNFTFromWallet,
+  getRandomNFTOptimized,
   type PRODUCTIONWallets,
   type TestNFT,
   archiveAgreements,
@@ -156,7 +156,7 @@ describe('PRODUCTION E2E - NFT-for-NFT + SOL Payment (Happy Path) [WITH TIMING]'
   it('should select NFT A from seller wallet', async function () {
     console.log('🎨 Selecting NFT A from seller wallet...\n');
 
-    nftA = await getRandomNFTFromWallet(connection, wallets.sender);
+    nftA = await getRandomNFTOptimized(connection, wallets.sender);
 
     console.log(`   ✅ NFT A Selected: ${nftA.mint.toBase58()}`);
     console.log(`   Token Account: ${nftA.tokenAccount.toBase58()}`);
@@ -170,7 +170,7 @@ describe('PRODUCTION E2E - NFT-for-NFT + SOL Payment (Happy Path) [WITH TIMING]'
   it('should select NFT B from buyer wallet', async function () {
     console.log('🎨 Selecting NFT B from buyer wallet...\n');
 
-    nftB = await getRandomNFTFromWallet(connection, wallets.receiver);
+    nftB = await getRandomNFTOptimized(connection, wallets.receiver);
 
     console.log(`   ✅ NFT B Selected: ${nftB.mint.toBase58()}`);
     console.log(`   Token Account: ${nftB.tokenAccount.toBase58()}`);
