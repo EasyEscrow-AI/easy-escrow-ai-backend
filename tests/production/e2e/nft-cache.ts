@@ -24,6 +24,9 @@ class NFTCache {
 
   /**
    * Initialize cache by fetching NFTs from wallet
+   * 
+   * Uses getParsedTokenAccountsByOwner to correctly fetch decimals from mint accounts.
+   * This is the same approach as getRandomNFTFromWallet() - we're just caching the results.
    */
   async initialize(
     connection: Connection,
@@ -41,8 +44,9 @@ class NFTCache {
     console.log(`   Wallet: ${walletAddress.toString()}`);
 
     try {
-      // Fetch all token accounts owned by wallet (SINGLE RPC CALL)
-      const tokenAccounts = await connection.getTokenAccountsByOwner(
+      // Use getParsedTokenAccountsByOwner to get decimals from mint accounts (SINGLE RPC CALL)
+      // This correctly fetches decimals from the mint, not the token account
+      const tokenAccounts = await connection.getParsedTokenAccountsByOwner(
         walletAddress,
         { programId: TOKEN_PROGRAM_ID }
       );
@@ -53,18 +57,18 @@ class NFTCache {
       const nfts: CachedNFT[] = [];
 
       for (const { pubkey, account } of tokenAccounts.value) {
-        const accountData = account.data;
+        const parsedInfo = account.data.parsed?.info;
         
-        // Parse token account data (SPL Token layout)
-        const decimals = accountData[44]; // Offset 44: decimals
-        const amount = Number(
-          accountData.readBigUInt64LE(64) // Offset 64: amount (8 bytes)
-        );
+        if (!parsedInfo) {
+          continue; // Skip if parsing failed
+        }
+
+        const decimals = parsedInfo.tokenAmount?.decimals;
+        const amount = Number(parsedInfo.tokenAmount?.amount || '0');
 
         // NFT criteria: decimals=0, amount=1
         if (decimals === 0 && amount === 1) {
-          // Extract mint address (offset 0: 32 bytes)
-          const mintAddress = new PublicKey(accountData.slice(0, 32));
+          const mintAddress = new PublicKey(parsedInfo.mint);
 
           nfts.push({
             mint: mintAddress,
