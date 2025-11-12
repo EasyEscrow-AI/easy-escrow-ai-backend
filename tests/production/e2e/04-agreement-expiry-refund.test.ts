@@ -36,7 +36,7 @@ import {
   generateIdempotencyKey,
   getExplorerUrl,
   getTokenBalance,
-  getRandomNFTFromWallet,
+  getRandomNFTOptimized,
   cleanupAgreements,
 } from './shared-test-utils';
 

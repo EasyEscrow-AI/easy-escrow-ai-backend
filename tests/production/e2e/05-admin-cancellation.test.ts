@@ -31,7 +31,7 @@ import {
   PRODUCTION_CONFIG,
   loadPRODUCTIONWallets,
   generateIdempotencyKey,
-  getRandomNFTFromWallet,
+  getRandomNFTOptimized,
   cleanupAgreements,
 } from './shared-test-utils';
 
