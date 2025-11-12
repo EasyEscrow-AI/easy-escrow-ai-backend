@@ -38,7 +38,7 @@ import {
   generateIdempotencyKey,
   getExplorerUrl,
   waitForAgreementStatus,
-  getRandomNFTFromWallet,
+  getRandomNFTOptimized,
   type PRODUCTIONWallets,
   type TestNFT,
   archiveAgreements,
@@ -154,7 +154,7 @@ describe('PRODUCTION E2E - NFT-for-SOL Swap (Happy Path) [WITH TIMING]', functio
   it('should select a random NFT from seller wallet', async function () {
     console.log('🎨 Selecting random NFT from seller wallet...\n');
 
-    nft = await getRandomNFTFromWallet(connection, wallets.sender);
+    nft = await getRandomNFTOptimized(connection, wallets.sender);
 
     console.log(`   ✅ NFT Selected: ${nft.mint.toBase58()}`);
     console.log(`   Token Account: ${nft.tokenAccount.toBase58()}`);

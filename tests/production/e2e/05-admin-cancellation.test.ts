@@ -31,7 +31,7 @@ import {
   PRODUCTION_CONFIG,
   loadPRODUCTIONWallets,
   generateIdempotencyKey,
-  getRandomNFTFromWallet,
+  getRandomNFTOptimized,
   cleanupAgreements,
 } from './shared-test-utils';
 
@@ -88,7 +88,7 @@ describe('PRODUCTION E2E: Admin Cancellation', function () {
     console.log('🛑 Testing admin cancellation...\n');
     
     // Create a new agreement for cancellation test
-    const testNft = await getRandomNFTFromWallet(connection, wallets.sender);
+    const testNft = await getRandomNFTOptimized(connection, wallets.sender);
     const expiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
     const idempotencyKey = generateIdempotencyKey();
 

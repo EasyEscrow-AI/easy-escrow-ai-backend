@@ -30,7 +30,7 @@ import {
   PRODUCTION_CONFIG,
   loadPRODUCTIONWallets,
   generateIdempotencyKey,
-  getRandomNFTFromWallet,
+  getRandomNFTOptimized,
   cleanupAgreements,
 } from './shared-test-utils';
 
@@ -87,7 +87,7 @@ describe('PRODUCTION E2E: Zero-Fee Transactions', function () {
     console.log('💸 Testing zero-fee transactions...\n');
     
     // Create agreement with 0 fee
-    const testNft = await getRandomNFTFromWallet(connection, wallets.sender);
+    const testNft = await getRandomNFTOptimized(connection, wallets.sender);
     const expiry = new Date(Date.now() + 60 * 60 * 1000);
     const idempotencyKey = generateIdempotencyKey();
 
