@@ -415,7 +415,17 @@ export async function getRandomNFTOptimized(
   if (nftCache.isReady()) {
     console.log('   🎲 Using cached NFT list (avoiding RPC call)');
     const cachedNFT = await getRandomNFTFromCache(connection, walletAddress);
-    return cachedNFT;
+    
+    // Ensure metadata is present (required by TestNFT interface)
+    return {
+      mint: cachedNFT.mint,
+      tokenAccount: cachedNFT.tokenAccount,
+      metadata: cachedNFT.metadata || {
+        name: 'Unknown NFT',
+        symbol: 'NFT',
+        uri: '',
+      },
+    };
   }
 
   // Fallback to live fetching (for individual test execution)
