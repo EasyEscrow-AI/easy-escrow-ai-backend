@@ -25,6 +25,38 @@
  * Total Tests: 20+ test cases
  */
 
+import { Connection, PublicKey } from '@solana/web3.js';
+import { nftCache } from './nft-cache';
+import { PRODUCTION_CONFIG } from './test-config';
+
+// Global setup - Initialize NFT cache ONCE before all tests
+before(async function() {
+  this.timeout(30000); // 30 seconds for NFT cache initialization
+  
+  console.log('\n================================================================================');
+  console.log('🚀 Initializing NFT Cache (prevents RPC rate limiting)');
+  console.log('================================================================================\n');
+  
+  const connection = new Connection(PRODUCTION_CONFIG.rpcUrl, 'confirmed');
+  const senderWallet = new PublicKey('B7jiNm8TKvaoad3N36pyDeXMSVPmvHLaXZMDC7udhTfr');
+  
+  try {
+    await nftCache.initialize(connection, senderWallet);
+    const nftCount = nftCache.getCount(senderWallet);
+    console.log(`   ✅ NFT Cache Ready: ${nftCount} NFTs available for tests`);
+    console.log('   ✅ Tests will now reuse cached NFT list (no more RPC calls for NFT fetching)\n');
+  } catch (error: any) {
+    console.error('   ❌ Failed to initialize NFT cache:', error.message);
+    throw error;
+  }
+});
+
+// Global teardown - Clear cache after all tests
+after(() => {
+  console.log('\n   🧹 Cleaning up NFT cache...');
+  nftCache.clear();
+});
+
 // Import all test scenarios in execution order
 // Each import registers its test suite with Mocha
 

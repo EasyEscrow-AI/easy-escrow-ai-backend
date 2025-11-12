@@ -27,6 +27,7 @@ import fs from 'fs';
 import path from 'path';
 import { PrismaClient } from '../../../src/generated/prisma';
 import { PRODUCTION_CONFIG } from './test-config';
+import { nftCache, getRandomNFTFromCache } from './nft-cache';
 
 // Re-export configuration for use in test files
 export { PRODUCTION_CONFIG };
@@ -392,6 +393,30 @@ export async function getRandomNFTFromWallet(
       `Ensure the wallet has NFTs and RPC endpoint is working.`
     );
   }
+}
+
+/**
+ * Get random NFT from wallet (OPTIMIZED - uses cache to avoid RPC rate limits)
+ * 
+ * This function checks the NFT cache first. If the cache is initialized (from the global before hook),
+ * it returns a cached NFT without making any RPC calls. This prevents 429 rate limit errors.
+ * 
+ * Falls back to live fetching if cache is not available (for individual test execution).
+ */
+export async function getRandomNFTOptimized(
+  connection: Connection,
+  walletAddress: PublicKey
+): Promise<{ mint: PublicKey; tokenAccount: PublicKey; metadata?: { name: string; symbol: string; uri: string } }> {
+  // Check if cache is ready
+  if (nftCache.isReady()) {
+    console.log('   🎲 Using cached NFT list (avoiding RPC call)');
+    const cachedNFT = await getRandomNFTFromCache(connection, walletAddress);
+    return cachedNFT;
+  }
+
+  // Fallback to live fetching (for individual test execution)
+  console.log('   🔄 Cache not available, fetching NFTs from RPC...');
+  return getRandomNFTFromWallet(connection, walletAddress);
 }
 
 /**
