@@ -518,7 +518,7 @@ pub mod escrow {
         // Check expiry - prevent deposits to expired agreements
         let clock = Clock::get()?;
         require!(
-            clock.unix_timestamp <= ctx.accounts.escrow_state.expiry,
+            clock.unix_timestamp <= ctx.accounts.escrow_state.expiry_timestamp,
             EscrowError::Expired
         );
 
@@ -577,7 +577,7 @@ pub mod escrow {
         // Check expiry - prevent deposits to expired agreements
         let clock = Clock::get()?;
         require!(
-            clock.unix_timestamp <= ctx.accounts.escrow_state.expiry,
+            clock.unix_timestamp <= ctx.accounts.escrow_state.expiry_timestamp,
             EscrowError::Expired
         );
 
@@ -634,8 +634,8 @@ pub mod escrow {
         // Check expiry - prevent deposits to expired agreements
         let clock = Clock::get()?;
         require!(
-            clock.unix_timestamp <= escrow_state.expiry,
-            EscrowError::EscrowExpired
+            clock.unix_timestamp <= escrow_state.expiry_timestamp,
+            EscrowError::Expired
         );
 
         // Validate escrow status - only allow deposits when active
@@ -687,7 +687,7 @@ pub mod escrow {
         // Check expiry - prevent deposits to expired agreements
         let clock = Clock::get()?;
         require!(
-            clock.unix_timestamp <= ctx.accounts.escrow_state.expiry,
+            clock.unix_timestamp <= ctx.accounts.escrow_state.expiry_timestamp,
             EscrowError::Expired
         );
 
