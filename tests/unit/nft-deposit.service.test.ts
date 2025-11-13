@@ -211,6 +211,8 @@ describe('NFT Deposit Service - Unit Tests', () => {
         id: agreementId,
         agreementId: 'AGR-TEST-001',
         swapType: 'NFT_FOR_SOL',
+        nftMint,
+        nftDepositAddr: publicKey, // Add deposit address for validation
         deposits: [],
       };
 
@@ -242,9 +244,20 @@ describe('NFT Deposit Service - Unit Tests', () => {
       const existingDeposit = {
         id: 'existing-deposit-123',
         status: 'CONFIRMED',
+        type: 'NFT',
+      };
+
+      const mockAgreement = {
+        id: agreementId,
+        agreementId: 'AGR-TEST-001',
+        swapType: 'NFT_FOR_SOL',
+        nftMint,
+        nftDepositAddr: publicKey, // Add deposit address for validation
+        deposits: [existingDeposit], // Include existing confirmed deposit
       };
 
       prismaStub.deposit.findFirst.resolves(existingDeposit);
+      prismaStub.agreement.findUnique.resolves(mockAgreement);
 
       const accountInfo = createMockAccountInfo(BigInt(1));
       const result = await nftDepositService.handleNftAccountChange(
@@ -558,15 +571,15 @@ describe('NFT Deposit Service - Unit Tests', () => {
         agreementId: 'AGR-TEST-001',
         nftMint,  // Use the valid nftMint from describe block
         seller: 'SellerAddress',
-        nftDepositAddr: 'DepositAddress',
-        status: 'USDC_LOCKED',
+        nftDepositAddr: publicKey, // Use publicKey variable instead of hardcoded string
+        status: 'PENDING', // Start from PENDING, not USDC_LOCKED
         swapType: 'NFT_FOR_SOL',
-        deposits: [],
+        deposits: [], // Initially empty
       };
 
       const mockUsdcDeposit = {
         id: 'usdc-deposit-123',
-        type: 'USDC',
+        type: 'SOL', // For NFT_FOR_SOL swapType, it should be SOL not USDC
         status: 'CONFIRMED',
       };
 
@@ -580,7 +593,8 @@ describe('NFT Deposit Service - Unit Tests', () => {
         deposits: [mockUsdcDeposit, mockNftDeposit],
       });
       prismaStub.deposit.create.resolves(mockNftDeposit);
-      prismaStub.deposit.findFirst.onSecondCall().resolves(mockUsdcDeposit); // USDC is deposited
+      prismaStub.deposit.findFirst.onSecondCall().resolves(null); // For SOL check (not USDC)
+      prismaStub.deposit.findFirst.onThirdCall().resolves(mockUsdcDeposit); // For final check with all deposits
       prismaStub.agreement.update.resolves({ ...mockAgreement, status: 'BOTH_LOCKED' });
       solanaServiceStub.getRecentTransactionSignature.resolves('tx-sig');
 
@@ -608,7 +622,7 @@ describe('NFT Deposit Service - Unit Tests', () => {
       AccountLayout.encode(mockData, accountInfo.data);
 
       await nftDepositService.handleNftAccountChange(
-        'DepositAddress',
+        publicKey, // Use publicKey variable, not hardcoded 'DepositAddress'
         accountInfo,
         { slot: 100 },
         agreementId
