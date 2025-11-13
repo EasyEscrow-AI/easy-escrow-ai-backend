@@ -502,6 +502,7 @@ describe('NFT Deposit Service - Unit Tests', () => {
   describe('Agreement Status Updates', () => {
     const agreementId = 'test-agreement-id';
     const nftMint = 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB'; // Valid Solana NFT mint address
+    const publicKey = '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU'; // Add publicKey for this scope
 
     it('should update status to NFT_LOCKED when only NFT is deposited', async () => {
       const mockAgreement = {
