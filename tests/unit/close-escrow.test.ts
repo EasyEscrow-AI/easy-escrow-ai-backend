@@ -20,9 +20,12 @@ describe('CloseEscrow Functionality', () => {
   let mockProvider: any;
   let mockConnection: any;
   let service: any;
+  let clock: sinon.SinonFakeTimers;
 
   beforeEach(() => {
     sandbox = sinon.createSandbox();
+    // Use fake timers to avoid real delays in retry logic
+    clock = sinon.useFakeTimers();
 
     // Mock connection
     mockConnection = {
@@ -63,6 +66,7 @@ describe('CloseEscrow Functionality', () => {
   });
 
   afterEach(() => {
+    clock.restore();
     sandbox.restore();
   });
 
@@ -134,8 +138,17 @@ describe('CloseEscrow Functionality', () => {
         escrowId: '123',
       });
 
+      // Execute closeEscrow and advance timers for retries
+      const promise = service.closeEscrow(escrowPda);
+      
+      // Advance fake timers through all 5 retries (2000ms * 4 delays between 5 attempts)
+      await clock.tickAsync(2000); // After 1st attempt
+      await clock.tickAsync(2000); // After 2nd attempt
+      await clock.tickAsync(2000); // After 3rd attempt
+      await clock.tickAsync(2000); // After 4th attempt
+
       try {
-        await service.closeEscrow(escrowPda);
+        await promise;
         expect.fail('Should have thrown error for Pending status');
       } catch (error: any) {
         expect(error.message).to.include('Cannot close escrow in status');
@@ -152,8 +165,17 @@ describe('CloseEscrow Functionality', () => {
         escrowId: '123',
       });
 
+      // Execute closeEscrow and advance timers for retries
+      const promise = service.closeEscrow(escrowPda);
+      
+      // Advance fake timers through all retries
+      await clock.tickAsync(2000);
+      await clock.tickAsync(2000);
+      await clock.tickAsync(2000);
+      await clock.tickAsync(2000);
+
       try {
-        await service.closeEscrow(escrowPda);
+        await promise;
         expect.fail('Should have thrown error for BothLocked status');
       } catch (error: any) {
         expect(error.message).to.include('Cannot close escrow in status');
@@ -170,8 +192,17 @@ describe('CloseEscrow Functionality', () => {
         new Error('Account does not exist or has no data')
       );
 
+      // Execute closeEscrow and advance timers for retries (method retries on errors)
+      const promise = service.closeEscrow(escrowPda);
+      
+      // Advance fake timers through all retries
+      await clock.tickAsync(2000);
+      await clock.tickAsync(2000);
+      await clock.tickAsync(2000);
+      await clock.tickAsync(2000);
+
       try {
-        await service.closeEscrow(escrowPda);
+        await promise;
         expect.fail('Should have thrown error for non-existent account');
       } catch (error: any) {
         expect(error.message).to.include('Failed to close escrow account');
@@ -221,8 +252,17 @@ describe('CloseEscrow Functionality', () => {
         new Error('Account does not exist or has no data')
       );
 
+      // Execute closeEscrow and advance timers for retries
+      const promise = service.closeEscrow(escrowPda);
+      
+      // Advance fake timers through all retries
+      await clock.tickAsync(2000);
+      await clock.tickAsync(2000);
+      await clock.tickAsync(2000);
+      await clock.tickAsync(2000);
+
       try {
-        await service.closeEscrow(escrowPda);
+        await promise;
         expect.fail('Should have thrown error');
       } catch (error: any) {
         expect(error.message).to.include('Failed to close escrow account');
@@ -321,8 +361,9 @@ describe('CloseEscrow Functionality', () => {
     it('should handle toString() format', async () => {
       const escrowPda = new PublicKey('9EDki2GWuetAiuJAqPxsdRhT2WycZSXLp9Mz7jjqukZP');
 
-      // Mock status with custom toString()
+      // Mock status with custom toString() and completed property
       const mockStatus = {
+        completed: {}, // Must have this for terminal state check
         toString: () => 'Completed',
       };
 
