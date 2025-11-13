@@ -25,9 +25,10 @@
  * Total Tests: 20+ test cases
  */
 
-import { Connection, PublicKey } from '@solana/web3.js';
+import { Connection } from '@solana/web3.js';
 import { nftCache } from './nft-cache';
 import { PRODUCTION_CONFIG } from './test-config';
+import { loadPRODUCTIONWallets } from './shared-test-utils';
 
 // Global setup - Initialize NFT cache ONCE before all tests
 before(async function() {
@@ -38,8 +39,14 @@ before(async function() {
   console.log('================================================================================\n');
   
   const connection = new Connection(PRODUCTION_CONFIG.rpcUrl, 'confirmed');
-  const senderWallet = new PublicKey('B7jiNm8TKvaoad3N36pyDeXMSVPmvHLaXZMDC7udhTfr');
-  const receiverWallet = new PublicKey('3qYD5LwHSuxwLi2mECzoVEmH2M7aehNjodUZCdmnCwtY');
+  
+  // Load wallets from production wallet files (no hardcoded addresses!)
+  const wallets = loadPRODUCTIONWallets();
+  const senderWallet = wallets.sender.publicKey;
+  const receiverWallet = wallets.receiver.publicKey;
+  
+  console.log(`   🔑 Sender wallet: ${senderWallet.toString()}`);
+  console.log(`   🔑 Receiver wallet: ${receiverWallet.toString()}\n`);
   
   try {
     // Initialize cache for sender wallet (seller)
