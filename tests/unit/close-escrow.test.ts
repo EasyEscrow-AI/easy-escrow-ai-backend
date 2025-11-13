@@ -39,6 +39,10 @@ describe('CloseEscrow Functionality', () => {
       connection: mockConnection,
     };
 
+    // Create a real keypair for proper transaction signing
+    const { Keypair } = require('@solana/web3.js');
+    const realKeypair = Keypair.generate();
+
     // Mock program with account fetch and methods
     mockProgram = {
       account: {
@@ -49,14 +53,11 @@ describe('CloseEscrow Functionality', () => {
       methods: {},
     };
 
-    // Create minimal service instance
+    // Create minimal service instance with real keypair
     service = {
       program: mockProgram,
       provider: mockProvider,
-      adminKeypair: {
-        publicKey: new PublicKey('HGrfPKZuKR8BSYYJfZRFfdF1y2ApU9LSf6USQ6tpSDj2'),
-        secretKey: new Uint8Array(64),
-      },
+      adminKeypair: realKeypair, // Use real keypair for proper transaction signing
       closeEscrow: EscrowProgramService.prototype.closeEscrow,
     };
   });

@@ -107,6 +107,8 @@ describe('NFT Deposit Service - Unit Tests', () => {
         seller: 'SellerAddress',
         nftDepositAddr: publicKey,
         status: 'PENDING',
+        swapType: 'NFT_FOR_SOL', // Add swapType for status update logic
+        deposits: [], // Add deposits array (initially empty, will be checked after create)
       };
 
       const mockDeposit = {
@@ -118,6 +120,11 @@ describe('NFT Deposit Service - Unit Tests', () => {
 
       prismaStub.deposit.findFirst.resolves(null); // No existing deposit
       prismaStub.agreement.findUnique.resolves(mockAgreement);
+      // After deposit is created, mock should include the new deposit
+      prismaStub.agreement.findUnique.onSecondCall().resolves({
+        ...mockAgreement,
+        deposits: [mockDeposit],
+      });
       prismaStub.deposit.create.resolves(mockDeposit);
       prismaStub.deposit.findFirst.onSecondCall().resolves(null); // For USDC check
       solanaServiceStub.getRecentTransactionSignature.resolves('tx-signature-123');
@@ -197,15 +204,23 @@ describe('NFT Deposit Service - Unit Tests', () => {
       const existingDeposit = {
         id: 'existing-deposit-123',
         status: 'PENDING',
+        type: 'NFT',
       };
 
       const mockAgreement = {
         id: agreementId,
         agreementId: 'AGR-TEST-001',
+        swapType: 'NFT_FOR_SOL',
+        deposits: [],
       };
 
       prismaStub.deposit.findFirst.resolves(existingDeposit);
       prismaStub.agreement.findUnique.resolves(mockAgreement);
+      // After update, mock should include the updated deposit
+      prismaStub.agreement.findUnique.onSecondCall().resolves({
+        ...mockAgreement,
+        deposits: [{ ...existingDeposit, status: 'CONFIRMED' }],
+      });
       prismaStub.deposit.update.resolves({ ...existingDeposit, status: 'CONFIRMED' });
       solanaServiceStub.getRecentTransactionSignature.resolves('tx-signature-update');
 
@@ -270,6 +285,8 @@ describe('NFT Deposit Service - Unit Tests', () => {
         seller: 'SellerAddress',
         nftDepositAddr: publicKey,
         status: 'PENDING',
+        swapType: 'NFT_FOR_SOL',
+        deposits: [],
       };
 
       const mockDeposit = {
@@ -281,6 +298,11 @@ describe('NFT Deposit Service - Unit Tests', () => {
 
       prismaStub.deposit.findFirst.resolves(null);
       prismaStub.agreement.findUnique.resolves(mockAgreement);
+      // After deposit is created, mock should include the new deposit
+      prismaStub.agreement.findUnique.onSecondCall().resolves({
+        ...mockAgreement,
+        deposits: [mockDeposit],
+      });
       prismaStub.deposit.create.resolves(mockDeposit);
       prismaStub.deposit.findFirst.onSecondCall().resolves(null);
       solanaServiceStub.getRecentTransactionSignature.resolves('tx-signature');
@@ -307,6 +329,8 @@ describe('NFT Deposit Service - Unit Tests', () => {
         seller: 'SellerAddress',
         nftDepositAddr: publicKey,
         status: 'PENDING',
+        swapType: 'NFT_FOR_SOL',
+        deposits: [],
       };
 
       const mockDeposit = {
@@ -318,6 +342,11 @@ describe('NFT Deposit Service - Unit Tests', () => {
 
       prismaStub.deposit.findFirst.resolves(null);
       prismaStub.agreement.findUnique.resolves(mockAgreement);
+      // After deposit is created, mock should include the new deposit
+      prismaStub.agreement.findUnique.onSecondCall().resolves({
+        ...mockAgreement,
+        deposits: [mockDeposit],
+      });
       prismaStub.deposit.create.resolves(mockDeposit);
       prismaStub.deposit.findFirst.onSecondCall().resolves(null);
       solanaServiceStub.getRecentTransactionSignature.resolves(null); // No signature found
@@ -469,11 +498,20 @@ describe('NFT Deposit Service - Unit Tests', () => {
         seller: 'SellerAddress',
         nftDepositAddr: 'DepositAddress',
         status: 'PENDING',
+        swapType: 'NFT_FOR_SOL',
+        deposits: [],
       };
+
+      const mockDeposit = { id: 'deposit-123', type: 'NFT', status: 'CONFIRMED' };
 
       prismaStub.deposit.findFirst.onFirstCall().resolves(null); // First call: check existing NFT deposit
       prismaStub.agreement.findUnique.resolves(mockAgreement);
-      prismaStub.deposit.create.resolves({ id: 'deposit-123' });
+      // After deposit is created, mock should include the new deposit
+      prismaStub.agreement.findUnique.onSecondCall().resolves({
+        ...mockAgreement,
+        deposits: [mockDeposit],
+      });
+      prismaStub.deposit.create.resolves(mockDeposit);
       prismaStub.deposit.findFirst.onSecondCall().resolves(null); // Second call: check USDC deposit
       prismaStub.agreement.update.resolves({ ...mockAgreement, status: 'NFT_LOCKED' });
       solanaServiceStub.getRecentTransactionSignature.resolves('tx-sig');
@@ -522,6 +560,8 @@ describe('NFT Deposit Service - Unit Tests', () => {
         seller: 'SellerAddress',
         nftDepositAddr: 'DepositAddress',
         status: 'USDC_LOCKED',
+        swapType: 'NFT_FOR_SOL',
+        deposits: [],
       };
 
       const mockUsdcDeposit = {
@@ -530,9 +570,16 @@ describe('NFT Deposit Service - Unit Tests', () => {
         status: 'CONFIRMED',
       };
 
+      const mockNftDeposit = { id: 'deposit-123', type: 'NFT', status: 'CONFIRMED' };
+
       prismaStub.deposit.findFirst.onFirstCall().resolves(null); // Check existing NFT deposit
       prismaStub.agreement.findUnique.resolves(mockAgreement);
-      prismaStub.deposit.create.resolves({ id: 'deposit-123' });
+      // After NFT deposit is created, mock should include both deposits
+      prismaStub.agreement.findUnique.onSecondCall().resolves({
+        ...mockAgreement,
+        deposits: [mockUsdcDeposit, mockNftDeposit],
+      });
+      prismaStub.deposit.create.resolves(mockNftDeposit);
       prismaStub.deposit.findFirst.onSecondCall().resolves(mockUsdcDeposit); // USDC is deposited
       prismaStub.agreement.update.resolves({ ...mockAgreement, status: 'BOTH_LOCKED' });
       solanaServiceStub.getRecentTransactionSignature.resolves('tx-sig');
