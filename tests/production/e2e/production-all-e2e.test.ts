@@ -25,26 +25,44 @@
  * Total Tests: 20+ test cases
  */
 
-import { Connection, PublicKey } from '@solana/web3.js';
+import { Connection } from '@solana/web3.js';
 import { nftCache } from './nft-cache';
 import { PRODUCTION_CONFIG } from './test-config';
+import { loadPRODUCTIONWallets } from './shared-test-utils';
 
 // Global setup - Initialize NFT cache ONCE before all tests
 before(async function() {
-  this.timeout(30000); // 30 seconds for NFT cache initialization
+  this.timeout(60000); // 60 seconds for NFT cache initialization (2 wallets)
   
   console.log('\n================================================================================');
   console.log('🚀 Initializing NFT Cache (prevents RPC rate limiting)');
   console.log('================================================================================\n');
   
   const connection = new Connection(PRODUCTION_CONFIG.rpcUrl, 'confirmed');
-  const senderWallet = new PublicKey('B7jiNm8TKvaoad3N36pyDeXMSVPmvHLaXZMDC7udhTfr');
+  
+  // Load wallets from production wallet files (no hardcoded addresses!)
+  const wallets = loadPRODUCTIONWallets();
+  const senderWallet = wallets.sender.publicKey;
+  const receiverWallet = wallets.receiver.publicKey;
+  
+  console.log(`   🔑 Sender wallet: ${senderWallet.toString()}`);
+  console.log(`   🔑 Receiver wallet: ${receiverWallet.toString()}\n`);
   
   try {
+    // Initialize cache for sender wallet (seller)
+    console.log('   📦 Caching NFTs for Sender/Seller wallet...');
     await nftCache.initialize(connection, senderWallet);
-    const nftCount = nftCache.getCount(senderWallet);
-    console.log(`   ✅ NFT Cache Ready: ${nftCount} NFTs available for tests`);
-    console.log('   ✅ Tests will now reuse cached NFT list (no more RPC calls for NFT fetching)\n');
+    const senderNftCount = nftCache.getCount(senderWallet);
+    console.log(`   ✅ Sender: ${senderNftCount} NFTs cached`);
+    
+    // Initialize cache for receiver wallet (buyer) - needed for Test 03 (NFT-for-NFT + SOL)
+    console.log('   📦 Caching NFTs for Receiver/Buyer wallet...');
+    await nftCache.initialize(connection, receiverWallet);
+    const receiverNftCount = nftCache.getCount(receiverWallet);
+    console.log(`   ✅ Receiver: ${receiverNftCount} NFTs cached`);
+    
+    console.log(`   ✅ NFT Cache Ready: ${senderNftCount + receiverNftCount} total NFTs available for tests`);
+    console.log('   ✅ Tests will now reuse cached NFT lists (no more RPC calls for NFT fetching)\n');
   } catch (error: any) {
     console.error('   ❌ Failed to initialize NFT cache:', error.message);
     throw error;
