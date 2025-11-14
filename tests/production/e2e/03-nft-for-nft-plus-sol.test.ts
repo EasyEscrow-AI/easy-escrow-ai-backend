@@ -2,12 +2,12 @@
  * PRODUCTION E2E Test - Scenario 3: NFT for NFT + SOL Payment
  * 
  * Complete NFT-for-NFT swap where buyer also pays SOL to the seller.
- * Tests the v2 escrow with NFT exchange and SOL payment to seller + platform fee.
+ * Tests the escrow with NFT exchange and SOL payment to seller + platform fee.
  * 
  * **WITH TIMING**: Measures total escrow swap duration from creation to settlement.
  * 
  * Flow:
- * 1. Create v2 escrow agreement (NFT_FOR_NFT_PLUS_SOL)
+ * 1. Create escrow agreement (NFT_FOR_NFT_PLUS_SOL)
  * 2. Deposit NFT A from seller
  * 3. Deposit NFT B from buyer
  * 4. Deposit SOL (to seller + fee) from buyer
@@ -181,8 +181,8 @@ describe('PRODUCTION E2E - NFT-for-NFT + SOL Payment (Happy Path) [WITH TIMING]'
     expect(tokenAccountInfo.amount.toString()).to.equal('1', 'Buyer should own 1 NFT B');
   });
 
-  it('should create a v2 NFT-for-NFT+SOL escrow agreement', async function () {
-    console.log('📝 Creating V2 escrow agreement (NFT_FOR_NFT_PLUS_SOL)...\n');
+  it('should create an NFT-for-NFT+SOL escrow agreement', async function () {
+    console.log('📝 Creating escrow agreement (NFT_FOR_NFT_PLUS_SOL)...\n');
 
     const idempotencyKey = generateIdempotencyKey('prod-nft-nft-sol-test');
     // Expiry omitted - uses default of 5 minutes
@@ -233,7 +233,7 @@ describe('PRODUCTION E2E - NFT-for-NFT + SOL Payment (Happy Path) [WITH TIMING]'
     agreementIds.push(agreement.agreementId);
     
     transactions.push({
-      description: 'Create Agreement (init_agreement_v2)',
+      description: 'Create Agreement (init_agreement)',
       txId: agreement.transactionId,
       timestamp: Date.now(),
     });
@@ -495,7 +495,7 @@ describe('PRODUCTION E2E - NFT-for-NFT + SOL Payment (Happy Path) [WITH TIMING]'
     console.log(`   ⏱️  Total Duration: ${(totalSwapDuration / 1000).toFixed(2)}s\n`);
 
     transactions.push({
-      description: 'Settlement (settle_v2)',
+      description: 'Settlement (settle)',
       txId: settledAgreement.settleTxId!,
       timestamp: settlementCompletionTime,
     });

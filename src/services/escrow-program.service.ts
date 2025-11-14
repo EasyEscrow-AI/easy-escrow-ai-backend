@@ -963,7 +963,7 @@ export class EscrowProgramService {
         escrowTokenAccount: escrowTokenAccount.toString(),
       });
 
-      // Build deposit_seller_nft instruction (v2)
+      // Build deposit_seller_nft instruction
       const instruction = await (this.program.methods as any)
         .depositSellerNft()
         .accountsStrict({
@@ -1569,7 +1569,7 @@ export class EscrowProgramService {
         );
       }
 
-      console.log('[EscrowProgramService] ✅ V2 Instruction built successfully');
+      console.log('[EscrowProgramService] ✅ Instruction built successfully');
       console.log('[EscrowProgramService] Instruction keys count:', instruction.keys.length);
       console.log('[EscrowProgramService] Instruction data length:', instruction.data.length);
 
@@ -1655,7 +1655,7 @@ export class EscrowProgramService {
       transaction.sign(this.adminKeypair);
 
       console.log(
-        '[EscrowProgramService] V2 Transaction signed by admin, sending to network...'
+        '[EscrowProgramService] Transaction signed by admin, sending to network...'
       );
 
       // Send transaction via Jito Block Engine (returns immediately)

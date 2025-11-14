@@ -2,12 +2,12 @@
  * PRODUCTION E2E Test - Scenario 2: NFT for NFT with SOL Fee
  * 
  * Complete NFT-for-NFT swap where buyer pays a SOL platform fee.
- * Tests the v2 escrow with NFT exchange and SOL fee payment.
+ * Tests the escrow with NFT exchange and SOL fee payment.
  * 
  * **WITH TIMING**: Measures total escrow swap duration from creation to settlement.
  * 
  * Flow:
- * 1. Create v2 escrow agreement (NFT_FOR_NFT_WITH_FEE)
+ * 1. Create escrow agreement (NFT_FOR_NFT_WITH_FEE)
  * 2. Deposit NFT A from seller
  * 3. Deposit NFT B from buyer
  * 4. Deposit SOL fee from buyer
@@ -180,8 +180,8 @@ describe('PRODUCTION E2E - NFT-for-NFT with SOL Fee [WITH TIMING]', function () 
     expect(tokenAccountInfo.amount.toString()).to.equal('1', 'Buyer should own 1 NFT B');
   });
 
-  it('should create a v2 NFT-for-NFT escrow agreement with SOL fee', async function () {
-    console.log('📝 Creating V2 escrow agreement (NFT_FOR_NFT_WITH_FEE)...\n');
+  it('should create an NFT-for-NFT escrow agreement with SOL fee', async function () {
+    console.log('📝 Creating escrow agreement (NFT_FOR_NFT_WITH_FEE)...\n');
 
     const idempotencyKey = generateIdempotencyKey('prod-nft-nft-fee-test');
 
@@ -226,7 +226,7 @@ describe('PRODUCTION E2E - NFT-for-NFT with SOL Fee [WITH TIMING]', function () 
     agreementIds.push(agreement.agreementId);
     
     transactions.push({
-      description: 'Create Agreement (init_agreement_v2)',
+      description: 'Create Agreement (init_agreement)',
       txId: agreement.transactionId,
       timestamp: Date.now(),
     });
