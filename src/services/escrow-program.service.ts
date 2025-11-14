@@ -1479,6 +1479,8 @@ export class EscrowProgramService {
       const feePayerEnum = { [feePayerVariant.charAt(0).toLowerCase() + feePayerVariant.slice(1)]: {} };
 
       // Build accounts object - NFT B accounts are optional
+      // For NFT<>SOL swaps, pass NFT A accounts as placeholders (program won't use them)
+      // Note: nftBMint and escrowNftBAccount are UncheckedAccount in Rust, so they accept any PublicKey
       const accounts: any = {
         escrowState: escrowPda, // Anchor converts escrow_state -> escrowState
         buyer,
@@ -1486,29 +1488,52 @@ export class EscrowProgramService {
         solVault: solVaultPda, // Separate PDA for holding SOL lamports
         nftAMint: nftMint, // NFT A mint (seller's NFT)
         escrowNftAccount: escrowNftAAccount, // Escrow NFT A account
-        nftBMint: nftBMint || escrowNftAAccount, // NFT B mint (or dummy for NFT<>SOL)
-        escrowNftBAccount: escrowNftBAccount || escrowNftAAccount, // Escrow NFT B account (or dummy for NFT<>SOL)
+        nftBMint: nftBMint || nftMint, // NFT B mint (or NFT A mint as placeholder for NFT<>SOL)
+        escrowNftBAccount: escrowNftBAccount || escrowNftAAccount, // Escrow NFT B account (or NFT A account as placeholder for NFT<>SOL)
         admin: this.adminKeypair.publicKey,
         tokenProgram: TOKEN_PROGRAM_ID,
         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
         systemProgram: SystemProgram.programId, // Anchor converts system_program -> systemProgram
       };
 
+      console.log('[EscrowProgramService] Accounts for initAgreement:', {
+        escrowState: escrowPda.toString(),
+        nftAMint: nftMint.toString(),
+        escrowNftAccount: escrowNftAAccount.toString(),
+        nftBMint: (nftBMint || nftMint).toString(),
+        escrowNftBAccount: (escrowNftBAccount || escrowNftAAccount).toString(),
+        hasNftB: !!nftBMint,
+      });
+
       // Build instruction
       // Note: Anchor converts snake_case (Rust) to camelCase (TypeScript)
-      const instruction = await (this.program.methods as any)
-        .initAgreement(
-          escrowId,
-          swapTypeEnum,
-          solAmount || null,
-          nftMint, // nft_a_mint parameter (seller's NFT)
-          nftBMint || null, // nft_b_mint parameter (buyer's NFT for certain swap types)
-          expiryTimestamp,
-          platformFeeBps,
-          feePayerEnum
-        )
-        .accountsStrict(accounts)
-        .instruction();
+      // escrow_nft_account has PDA definition in IDL, but we pass it explicitly for init_if_needed
+      let instruction;
+      try {
+        instruction = await (this.program.methods as any)
+          .initAgreement(
+            escrowId,
+            swapTypeEnum,
+            solAmount || null,
+            nftMint, // nft_a_mint parameter (seller's NFT)
+            nftBMint || null, // nft_b_mint parameter (buyer's NFT for certain swap types)
+            expiryTimestamp,
+            platformFeeBps,
+            feePayerEnum
+          )
+          .accountsStrict(accounts)
+          .instruction();
+      } catch (instructionError: any) {
+        console.error('[EscrowProgramService] Failed to build instruction:', instructionError);
+        console.error('[EscrowProgramService] Error details:', {
+          message: instructionError?.message,
+          stack: instructionError?.stack,
+          accounts: Object.keys(accounts),
+        });
+        throw new Error(
+          `Failed to build initAgreement instruction: ${instructionError?.message || 'Unknown error'}`
+        );
+      }
 
       console.log('[EscrowProgramService] V2 Instruction built');
 
