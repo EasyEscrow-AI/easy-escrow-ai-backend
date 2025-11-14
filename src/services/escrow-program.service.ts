@@ -1481,15 +1481,16 @@ export class EscrowProgramService {
       // Build accounts object - NFT B accounts are optional
       // For NFT<>SOL swaps, pass NFT A accounts as placeholders (program won't use them)
       // Note: nftBMint and escrowNftBAccount are UncheckedAccount in Rust, so they accept any PublicKey
-      // CRITICAL: escrow_nft_b_account must be a valid account address, even if unused for NFT<>SOL swaps
-      // Using SystemProgram as placeholder would fail validation, so we use NFT A accounts which are valid
+      // CRITICAL: escrow_nft_account has PDA definition in IDL with init_if_needed
+      // We pass it explicitly - Anchor will validate it matches PDA derivation
+      // escrow_nft_b_account must be a valid account address, even if unused for NFT<>SOL swaps
       const accounts: any = {
         escrowState: escrowPda, // Anchor converts escrow_state -> escrowState
         buyer,
         seller,
         solVault: solVaultPda, // Separate PDA for holding SOL lamports
-        nftAMint: nftMint, // NFT A mint (seller's NFT)
-        escrowNftAccount: escrowNftAAccount, // Escrow NFT A account (PDA-derived, will be created if needed)
+        nftAMint: nftMint, // NFT A mint (seller's NFT) - used by Anchor to derive escrow_nft_account PDA
+        escrowNftAccount: escrowNftAAccount, // Escrow NFT A account (PDA-derived, Anchor validates it matches)
         // For NFT<>SOL: pass NFT A accounts as placeholders (program checks nft_b_mint.is_some() before using)
         // For NFT<>NFT: pass actual NFT B accounts
         nftBMint: nftBMint || nftMint, // NFT B mint (or NFT A mint as placeholder for NFT<>SOL)
@@ -1515,11 +1516,14 @@ export class EscrowProgramService {
         nftBMint: (nftBMint || nftMint).toString(),
         escrowNftBAccount: (escrowNftBAccount || escrowNftAAccount).toString(),
         hasNftB: !!nftBMint,
+        usingAccountsMethod: true, // Using .accounts() instead of .accountsStrict() for PDA handling
       });
 
       // Build instruction
       // Note: Anchor converts snake_case (Rust) to camelCase (TypeScript)
-      // escrow_nft_account has PDA definition in IDL, but we pass it explicitly for init_if_needed
+      // escrow_nft_account has PDA definition in IDL with init_if_needed
+      // Use .accounts() instead of .accountsStrict() to allow Anchor to handle PDA derivation
+      // Anchor will automatically derive escrow_nft_account PDA based on escrow_state and nft_a_mint
       let instruction;
       try {
         instruction = await (this.program.methods as any)
@@ -1533,7 +1537,7 @@ export class EscrowProgramService {
             platformFeeBps,
             feePayerEnum
           )
-          .accountsStrict(accounts)
+          .accounts(accounts)
           .instruction();
       } catch (instructionError: any) {
         console.error('[EscrowProgramService] Failed to build instruction:', instructionError);
