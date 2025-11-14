@@ -1537,6 +1537,32 @@ export class EscrowProgramService {
       });
       console.log('[EscrowProgramService] =====================================');
 
+      // Prepare instruction parameters with explicit logging
+      const initAgreementParams = [
+        escrowId,
+        swapTypeEnum,
+        solAmount || null,
+        nftMint, // nft_a_mint parameter (seller's NFT)
+        nftBMint || null, // nft_b_mint parameter (buyer's NFT for certain swap types)
+        expiryTimestamp,
+        platformFeeBps,
+        feePayerEnum
+      ];
+
+      console.log('[EscrowProgramService] ===== Instruction Parameters (DETAILED) =====');
+      console.log('[EscrowProgramService] [0] escrowId:', escrowId.toString(), typeof escrowId);
+      console.log('[EscrowProgramService] [1] swapTypeEnum:', JSON.stringify(swapTypeEnum), typeof swapTypeEnum);
+      console.log('[EscrowProgramService] [2] solAmount:', solAmount?.toString() || 'null', typeof (solAmount || null));
+      console.log('[EscrowProgramService] [3] nftMint (nft_a_mint):', nftMint.toString(), typeof nftMint);
+      console.log('[EscrowProgramService] [4] nftBMint (nft_b_mint):', 
+        nftBMint ? nftBMint.toString() : 'null', 
+        nftBMint ? 'PublicKey' : typeof (nftBMint || null),
+        'isPublicKey:', nftBMint instanceof PublicKey);
+      console.log('[EscrowProgramService] [5] expiryTimestamp:', expiryTimestamp.toString(), typeof expiryTimestamp);
+      console.log('[EscrowProgramService] [6] platformFeeBps:', platformFeeBps, typeof platformFeeBps);
+      console.log('[EscrowProgramService] [7] feePayerEnum:', JSON.stringify(feePayerEnum), typeof feePayerEnum);
+      console.log('[EscrowProgramService] =====================================');
+
       // Build instruction
       // Note: Anchor converts snake_case (Rust) to camelCase (TypeScript)
       // escrow_nft_account has PDA definition in IDL with init_if_needed
@@ -1545,16 +1571,7 @@ export class EscrowProgramService {
       let instruction;
       try {
         instruction = await (this.program.methods as any)
-          .initAgreement(
-            escrowId,
-            swapTypeEnum,
-            solAmount || null,
-            nftMint, // nft_a_mint parameter (seller's NFT)
-            nftBMint || null, // nft_b_mint parameter (buyer's NFT for certain swap types)
-            expiryTimestamp,
-            platformFeeBps,
-            feePayerEnum
-          )
+          .initAgreement(...initAgreementParams)
           .accounts(accounts)
           .instruction();
       } catch (instructionError: any) {
