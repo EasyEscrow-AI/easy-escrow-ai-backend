@@ -1481,20 +1481,32 @@ export class EscrowProgramService {
       // Build accounts object - NFT B accounts are optional
       // For NFT<>SOL swaps, pass NFT A accounts as placeholders (program won't use them)
       // Note: nftBMint and escrowNftBAccount are UncheckedAccount in Rust, so they accept any PublicKey
+      // CRITICAL: escrow_nft_b_account must be a valid account address, even if unused for NFT<>SOL swaps
+      // Using SystemProgram as placeholder would fail validation, so we use NFT A accounts which are valid
       const accounts: any = {
         escrowState: escrowPda, // Anchor converts escrow_state -> escrowState
         buyer,
         seller,
         solVault: solVaultPda, // Separate PDA for holding SOL lamports
         nftAMint: nftMint, // NFT A mint (seller's NFT)
-        escrowNftAccount: escrowNftAAccount, // Escrow NFT A account
+        escrowNftAccount: escrowNftAAccount, // Escrow NFT A account (PDA-derived, will be created if needed)
+        // For NFT<>SOL: pass NFT A accounts as placeholders (program checks nft_b_mint.is_some() before using)
+        // For NFT<>NFT: pass actual NFT B accounts
         nftBMint: nftBMint || nftMint, // NFT B mint (or NFT A mint as placeholder for NFT<>SOL)
-        escrowNftBAccount: escrowNftBAccount || escrowNftAAccount, // Escrow NFT B account (or NFT A account as placeholder for NFT<>SOL)
+        escrowNftBAccount: escrowNftBAccount || escrowNftAAccount, // Escrow NFT B account (or NFT A account as placeholder)
         admin: this.adminKeypair.publicKey,
         tokenProgram: TOKEN_PROGRAM_ID,
         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
         systemProgram: SystemProgram.programId, // Anchor converts system_program -> systemProgram
       };
+      
+      // Validate that we have NFT B accounts for NFT<>NFT swaps
+      if (swapType !== 'NFT_FOR_SOL' && !nftBMint) {
+        throw new Error(`nftBMint is required for swap type ${swapType}`);
+      }
+      if (swapType !== 'NFT_FOR_SOL' && !escrowNftBAccount) {
+        throw new Error(`escrowNftBAccount is required for swap type ${swapType}`);
+      }
 
       console.log('[EscrowProgramService] Accounts for initAgreement:', {
         escrowState: escrowPda.toString(),
