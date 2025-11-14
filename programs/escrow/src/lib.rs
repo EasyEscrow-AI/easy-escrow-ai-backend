@@ -2753,6 +2753,7 @@ pub struct InitAgreement<'info> {
     /// Escrow NFT B account (buyer's NFT held in escrow)
     /// Created by admin during agreement initialization for NFT<>NFT swaps
     /// CHECK: Optional - only created/used for NFT<>NFT swap types
+    #[account(mut)]
     pub escrow_nft_b_account: UncheckedAccount<'info>,
     
     pub token_program: Program<'info, Token>,

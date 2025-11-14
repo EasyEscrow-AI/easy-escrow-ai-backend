@@ -867,7 +867,8 @@
           "docs": [
             "Escrow NFT B account (buyer's NFT held in escrow)",
             "Created by admin during agreement initialization for NFT<>NFT swaps"
-          ]
+          ],
+          "writable": true
         },
         {
           "name": "token_program",
