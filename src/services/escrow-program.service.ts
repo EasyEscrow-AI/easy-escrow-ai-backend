@@ -1435,6 +1435,26 @@ export class EscrowProgramService {
       );
       console.log('[EscrowProgramService] SOL vault PDA:', solVaultPda.toString());
 
+      // Derive escrow NFT A account (seller's NFT held in escrow)
+      // Created by admin during agreement initialization
+      const escrowNftAAccount = await getAssociatedTokenAddress(
+        nftMint,
+        escrowPda,
+        true // allowOwnerOffCurve for PDAs
+      );
+      console.log('[EscrowProgramService] Escrow NFT A account:', escrowNftAAccount.toString());
+
+      // Derive escrow NFT B account (buyer's NFT held in escrow) - only for NFT<>NFT swaps
+      let escrowNftBAccount: PublicKey | undefined;
+      if (nftBMint) {
+        escrowNftBAccount = await getAssociatedTokenAddress(
+          nftBMint,
+          escrowPda,
+          true // allowOwnerOffCurve for PDAs
+        );
+        console.log('[EscrowProgramService] Escrow NFT B account:', escrowNftBAccount.toString());
+      }
+
       // Map string swap type to Anchor enum format (PascalCase)
       // NFT_FOR_SOL -> NftForSol, BUYER -> Buyer
       const swapTypeMap: Record<string, string> = {
@@ -1458,6 +1478,22 @@ export class EscrowProgramService {
       const swapTypeEnum = { [swapTypeVariant.charAt(0).toLowerCase() + swapTypeVariant.slice(1)]: {} };
       const feePayerEnum = { [feePayerVariant.charAt(0).toLowerCase() + feePayerVariant.slice(1)]: {} };
 
+      // Build accounts object - NFT B accounts are optional
+      const accounts: any = {
+        escrowState: escrowPda, // Anchor converts escrow_state -> escrowState
+        buyer,
+        seller,
+        solVault: solVaultPda, // Separate PDA for holding SOL lamports
+        nftAMint: nftMint, // NFT A mint (seller's NFT)
+        escrowNftAccount: escrowNftAAccount, // Escrow NFT A account
+        nftBMint: nftBMint || escrowNftAAccount, // NFT B mint (or dummy for NFT<>SOL)
+        escrowNftBAccount: escrowNftBAccount || escrowNftAAccount, // Escrow NFT B account (or dummy for NFT<>SOL)
+        admin: this.adminKeypair.publicKey,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId, // Anchor converts system_program -> systemProgram
+      };
+
       // Build instruction
       // Note: Anchor converts snake_case (Rust) to camelCase (TypeScript)
       const instruction = await (this.program.methods as any)
@@ -1471,14 +1507,7 @@ export class EscrowProgramService {
           platformFeeBps,
           feePayerEnum
         )
-        .accountsStrict({
-          escrowState: escrowPda, // Anchor converts escrow_state -> escrowState
-          buyer,
-          seller,
-          solVault: solVaultPda, // NEW: Separate PDA for holding SOL lamports
-          admin: this.adminKeypair.publicKey,
-          systemProgram: SystemProgram.programId, // Anchor converts system_program -> systemProgram
-        })
+        .accountsStrict(accounts)
         .instruction();
 
       console.log('[EscrowProgramService] V2 Instruction built');
