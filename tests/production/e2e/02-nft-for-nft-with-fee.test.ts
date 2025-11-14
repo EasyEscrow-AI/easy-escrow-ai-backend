@@ -531,6 +531,10 @@ describe('PRODUCTION E2E - NFT-for-NFT with SOL Fee [WITH TIMING]', function () 
   it('should verify NFTs were swapped', async function () {
     console.log('🔍 Verifying NFT swap...\n');
 
+    // Wait a bit for RPC to fully confirm and index the settlement transaction
+    console.log('   ⏳ Waiting 2s for RPC confirmation...');
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
     // Check seller received NFT B
     const sellerNftBAccount = await getOrCreateAssociatedTokenAccount(
       connection,
@@ -539,7 +543,7 @@ describe('PRODUCTION E2E - NFT-for-NFT with SOL Fee [WITH TIMING]', function () 
       wallets.sender.publicKey
     );
 
-    const sellerNftBBalance = await connection.getTokenAccountBalance(sellerNftBAccount.address);
+    const sellerNftBBalance = await connection.getTokenAccountBalance(sellerNftBAccount.address, 'confirmed');
     console.log(`   Seller NFT B Balance: ${sellerNftBBalance.value.uiAmount}`);
     expect(sellerNftBBalance.value.uiAmount).to.equal(1, 'Seller should have received NFT B');
 
@@ -551,7 +555,7 @@ describe('PRODUCTION E2E - NFT-for-NFT with SOL Fee [WITH TIMING]', function () 
       wallets.receiver.publicKey
     );
 
-    const buyerNftABalance = await connection.getTokenAccountBalance(buyerNftAAccount.address);
+    const buyerNftABalance = await connection.getTokenAccountBalance(buyerNftAAccount.address, 'confirmed');
     console.log(`   Buyer NFT A Balance: ${buyerNftABalance.value.uiAmount}`);
     expect(buyerNftABalance.value.uiAmount).to.equal(1, 'Buyer should have received NFT A');
 
