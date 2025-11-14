@@ -2010,6 +2010,7 @@ pub fn init_agreement(
     escrow_state.platform_fee_bps = platform_fee_bps;
     escrow_state.fee_payer = fee_payer;
     escrow_state.buyer_sol_deposited = false;
+    escrow_state.seller_sol_deposited = false;
     escrow_state.buyer_nft_deposited = false;
     escrow_state.seller_nft_deposited = false;
     escrow_state.status = EscrowStatus::Pending;
@@ -2017,9 +2018,54 @@ pub fn init_agreement(
     escrow_state.bump = ctx.bumps.escrow_state;
     escrow_state.admin = ctx.accounts.admin.key();
 
+    // NFT A escrow account is created automatically via init_if_needed constraint
+    // NFT B escrow account needs to be created manually for NFT<>NFT swaps
+    if nft_b_mint.is_some() {
+        // Validate NFT B mint matches the provided account
+        require!(
+            ctx.accounts.nft_b_mint.key() == nft_b_mint.unwrap(),
+            EscrowError::InvalidNftMint
+        );
+
+        // Check if NFT B escrow account exists, create if not
+        // Account doesn't exist if it has no lamports (rent-exempt accounts have lamports)
+        let escrow_nft_b_account_info = ctx.accounts.escrow_nft_b_account.to_account_info();
+        let account_exists = escrow_nft_b_account_info.lamports() > 0 
+            && escrow_nft_b_account_info.data_len() > 0;
+        
+        if !account_exists {
+            // Account doesn't exist, create it via CPI to Associated Token Program
+            let escrow_id_bytes = escrow_id.to_le_bytes();
+            let escrow_signer_seeds: &[&[&[u8]]] = &[&[
+                b"escrow",
+                escrow_id_bytes.as_ref(),
+                &[ctx.bumps.escrow_state],
+            ]];
+
+            let create_ata_ctx = CpiContext::new_with_signer(
+                ctx.accounts.associated_token_program.to_account_info(),
+                anchor_spl::associated_token::Create {
+                    payer: ctx.accounts.admin.to_account_info(),
+                    associated_token: escrow_nft_b_account_info,
+                    authority: ctx.accounts.escrow_state.to_account_info(),
+                    mint: ctx.accounts.nft_b_mint.to_account_info(),
+                    system_program: ctx.accounts.system_program.to_account_info(),
+                    token_program: ctx.accounts.token_program.to_account_info(),
+                },
+                escrow_signer_seeds,
+            );
+            anchor_spl::associated_token::create(create_ata_ctx)?;
+
+            msg!("NFT B escrow account created: {}", ctx.accounts.escrow_nft_b_account.key());
+        } else {
+            msg!("NFT B escrow account already exists: {}", ctx.accounts.escrow_nft_b_account.key());
+        }
+    }
+
     msg!("Escrow agreement initialized: ID {}", escrow_id);
     msg!("Swap type: {:?}", swap_type);
     msg!("SOL amount: {}", sol_amount.unwrap_or(0));
+    msg!("NFT A escrow account: {}", ctx.accounts.escrow_nft_account.key());
 
     Ok(())
 }
@@ -2157,6 +2203,12 @@ pub fn deposit_buyer_nft(ctx: Context<DepositBuyerNft>) -> Result<()> {
         .ok_or(EscrowError::InvalidNftMint)?;
     require!(
         ctx.accounts.nft_mint.key() == expected_nft_b,
+        EscrowError::InvalidNftMint
+    );
+
+    // Verify escrow NFT B account mint matches
+    require!(
+        ctx.accounts.escrow_nft_b_account.mint == expected_nft_b,
         EscrowError::InvalidNftMint
     );
 
@@ -2681,6 +2733,30 @@ pub struct InitAgreement<'info> {
     )]
     pub sol_vault: UncheckedAccount<'info>,
     
+    /// NFT A mint (seller's NFT) - used to create escrow NFT A account
+    pub nft_a_mint: Account<'info, Mint>,
+    
+    /// Escrow NFT A account (seller's NFT held in escrow)
+    /// Created by admin during agreement initialization to avoid charging users for infrastructure
+    #[account(
+        init_if_needed,
+        payer = admin,
+        associated_token::mint = nft_a_mint,
+        associated_token::authority = escrow_state,
+    )]
+    pub escrow_nft_account: Account<'info, TokenAccount>,
+    
+    /// NFT B mint (buyer's NFT) - only needed for NFT<>NFT swaps
+    /// CHECK: Optional - only validated/used for NFT<>NFT swap types
+    pub nft_b_mint: UncheckedAccount<'info>,
+    
+    /// Escrow NFT B account (buyer's NFT held in escrow)
+    /// Created by admin during agreement initialization for NFT<>NFT swaps
+    /// CHECK: Optional - only created/used for NFT<>NFT swap types
+    pub escrow_nft_b_account: UncheckedAccount<'info>,
+    
+    pub token_program: Program<'info, Token>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
 }
 
@@ -2750,11 +2826,12 @@ pub struct DepositSellerNft<'info> {
     )]
     pub seller_nft_account: Account<'info, TokenAccount>,
     
+    /// Escrow NFT A account (seller's NFT held in escrow)
+    /// Created by admin during agreement initialization - account must already exist
     #[account(
-        init_if_needed,
-        payer = seller,
-        associated_token::mint = nft_mint,
-        associated_token::authority = escrow_state,
+        mut,
+        constraint = escrow_nft_account.mint == escrow_state.nft_a_mint,
+        constraint = escrow_nft_account.owner == escrow_state.key()
     )]
     pub escrow_nft_account: Account<'info, TokenAccount>,
     
@@ -2787,11 +2864,11 @@ pub struct DepositBuyerNft<'info> {
     )]
     pub buyer_nft_account: Account<'info, TokenAccount>,
     
+    /// Escrow NFT B account (buyer's NFT held in escrow)
+    /// Created by admin during agreement initialization - account must already exist
     #[account(
-        init_if_needed,
-        payer = buyer,
-        associated_token::mint = nft_mint,
-        associated_token::authority = escrow_state,
+        mut,
+        constraint = escrow_nft_b_account.owner == escrow_state.key()
     )]
     pub escrow_nft_b_account: Account<'info, TokenAccount>,
     
