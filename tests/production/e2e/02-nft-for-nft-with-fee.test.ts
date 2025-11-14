@@ -207,16 +207,25 @@ describe('PRODUCTION E2E - NFT-for-NFT with SOL Fee [WITH TIMING]', function () 
     agreementCreationTime = Date.now();
     console.log(`   ⏱️  Timer started: ${new Date(agreementCreationTime).toISOString()}\n`);
 
-    const response = await axios.post(
-      `${PRODUCTION_CONFIG.apiBaseUrl}/v1/agreements`,
-      agreementData,
-      {
-      headers: {
-        'Content-Type': 'application/json',
-        'idempotency-key': idempotencyKey,
-      },
-      }
-    );
+    let response;
+    try {
+      response = await axios.post(
+        `${PRODUCTION_CONFIG.apiBaseUrl}/v1/agreements`,
+        agreementData,
+        {
+        headers: {
+          'Content-Type': 'application/json',
+          'idempotency-key': idempotencyKey,
+        },
+        }
+      );
+    } catch (axiosError: any) {
+      console.error('   ❌ API Error:');
+      console.error('   Status:', axiosError.response?.status);
+      console.error('   Error Data:', JSON.stringify(axiosError.response?.data, null, 2));
+      console.error('   Headers:', JSON.stringify(axiosError.response?.headers, null, 2));
+      throw axiosError; // Re-throw to fail the test
+    }
 
     expect(response.status).to.equal(201);
     expect(response.data.success).to.be.true;

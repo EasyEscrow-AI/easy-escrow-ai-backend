@@ -25,6 +25,9 @@
       "accounts": [
         {
           "name": "admin",
+          "docs": [
+            "Admin who authorized the cancellation"
+          ],
           "writable": true,
           "signer": true
         },
@@ -92,10 +95,16 @@
         },
         {
           "name": "seller_nft_account",
+          "docs": [
+            "Seller NFT A account (refund destination for seller's NFT)"
+          ],
           "writable": true
         },
         {
           "name": "escrow_nft_account",
+          "docs": [
+            "Escrow NFT A account (seller's NFT held in escrow)"
+          ],
           "writable": true
         },
         {
@@ -110,9 +119,80 @@
       "args": []
     },
     {
+      "name": "admin_force_close_with_recovery",
+      "docs": [
+        "Admin force close with asset recovery",
+        "",
+        "**EMERGENCY ONLY**: Closes legacy/stuck escrow accounts without deserializing state.",
+        "Returns trapped assets (NFTs, SOL) to original depositors before closing.",
+        "",
+        "**Safety**: Admin-only, requires careful off-chain preparation to determine recipients.",
+        "",
+        "**Usage**:",
+        "- Used for accounts from old program versions (can't deserialize)",
+        "- Used for permanently stuck accounts (abandoned, non-terminal state)",
+        "- Recovers rent-exempt reserves back to admin",
+        "",
+        "**Remaining Accounts** (in order):",
+        "- [0..n] Escrow-owned token accounts (NFTs) [writable]",
+        "- [n+1..n+1+n] Recipient token accounts for NFTs [writable]",
+        "- [n+2..n+2+n] Recipient wallets (for creating ATAs) [writable]",
+        "- [n+3] SOL vault PDA (optional) [writable]",
+        "- [n+4] SOL recipient wallet (optional) [writable]"
+      ],
+      "discriminator": [
+        68,
+        252,
+        176,
+        126,
+        99,
+        74,
+        157,
+        126
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "docs": [
+            "Admin who will receive recovered rent",
+            "Must be the global admin (hardcoded check in instruction)"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "escrow_state",
+          "docs": [
+            "Escrow PDA to force close",
+            "The instruction verifies the PDA belongs to our program and admin authorizes the action.",
+            "Off-chain script must provide the correct escrow PDA address."
+          ],
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": [
+        {
+          "name": "escrow_id",
+          "type": "u64"
+        }
+      ]
+    },
+    {
       "name": "cancel_if_expired",
       "docs": [
-        "Cancel expired escrow and return assets to original owners"
+        "Cancel expired escrow and return assets to original owners",
+        "",
+        "**Remaining Accounts** (for NFT<>NFT swaps):",
+        "- [0] Escrow NFT B account (buyer's NFT held in escrow) [writable]",
+        "- [1] Buyer NFT B account (refund destination for NFT B) [writable]"
       ],
       "discriminator": [
         172,
@@ -197,10 +277,16 @@
         },
         {
           "name": "seller_nft_account",
+          "docs": [
+            "Seller NFT A account (refund destination for seller's NFT)"
+          ],
           "writable": true
         },
         {
           "name": "escrow_nft_account",
+          "docs": [
+            "Escrow NFT A account (seller's NFT held in escrow)"
+          ],
           "writable": true
         },
         {
@@ -322,93 +408,11 @@
         },
         {
           "name": "escrow_nft_b_account",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "account",
-                "path": "escrow_state"
-              },
-              {
-                "kind": "const",
-                "value": [
-                  6,
-                  221,
-                  246,
-                  225,
-                  215,
-                  101,
-                  161,
-                  147,
-                  217,
-                  203,
-                  225,
-                  70,
-                  206,
-                  235,
-                  121,
-                  172,
-                  28,
-                  180,
-                  133,
-                  237,
-                  95,
-                  91,
-                  55,
-                  145,
-                  58,
-                  140,
-                  245,
-                  133,
-                  126,
-                  255,
-                  0,
-                  169
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "nft_mint"
-              }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
-              ]
-            }
-          }
+          "docs": [
+            "Escrow NFT B account (buyer's NFT held in escrow)",
+            "Created by admin during agreement initialization - account must already exist"
+          ],
+          "writable": true
         },
         {
           "name": "nft_mint"
@@ -480,93 +484,11 @@
         },
         {
           "name": "escrow_nft_account",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "account",
-                "path": "escrow_state"
-              },
-              {
-                "kind": "const",
-                "value": [
-                  6,
-                  221,
-                  246,
-                  225,
-                  215,
-                  101,
-                  161,
-                  147,
-                  217,
-                  203,
-                  225,
-                  70,
-                  206,
-                  235,
-                  121,
-                  172,
-                  28,
-                  180,
-                  133,
-                  237,
-                  95,
-                  91,
-                  55,
-                  145,
-                  58,
-                  140,
-                  245,
-                  133,
-                  126,
-                  255,
-                  0,
-                  169
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "nft_mint"
-              }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
-              ]
-            }
-          }
+          "docs": [
+            "Escrow NFT A account (seller's NFT held in escrow)",
+            "Created by admin during agreement initialization - account must already exist"
+          ],
+          "writable": true
         },
         {
           "name": "nft_mint"
@@ -835,6 +757,127 @@
           }
         },
         {
+          "name": "nft_a_mint",
+          "docs": [
+            "NFT A mint (seller's NFT) - used to create escrow NFT A account"
+          ]
+        },
+        {
+          "name": "escrow_nft_account",
+          "docs": [
+            "Escrow NFT A account (seller's NFT held in escrow)",
+            "Created by admin during agreement initialization to avoid charging users for infrastructure"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "escrow_state"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "nft_a_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "nft_b_mint",
+          "docs": [
+            "NFT B mint (buyer's NFT) - only needed for NFT<>NFT swaps"
+          ]
+        },
+        {
+          "name": "escrow_nft_b_account",
+          "docs": [
+            "Escrow NFT B account (buyer's NFT held in escrow)",
+            "Created by admin during agreement initialization for NFT<>NFT swaps"
+          ]
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
           "name": "system_program",
           "address": "11111111111111111111111111111111"
         }
@@ -890,8 +933,14 @@
       "name": "settle",
       "docs": [
         "Settle the escrow and distribute assets",
-        "Handles both NFT<>SOL and NFT<>NFT with SOL fee swap types",
-        "Permissionless: Anyone can trigger settlement once both deposits are confirmed"
+        "Handles NFT<>SOL, NFT<>NFT with fee, and NFT<>NFT+SOL swap types",
+        "Permissionless: Anyone can trigger settlement once both deposits are confirmed",
+        "",
+        "**Remaining Accounts** (for NFT<>NFT swaps):",
+        "- [0] NFT B mint (buyer's NFT)",
+        "- [1] Escrow NFT B account (buyer's NFT held in escrow) [writable]",
+        "- [2] Seller NFT B account (destination for NFT B) [writable]",
+        "- [3] Token program (for NFT B transfer)"
       ],
       "discriminator": [
         175,
@@ -973,10 +1022,16 @@
         },
         {
           "name": "escrow_nft_account",
+          "docs": [
+            "Escrow NFT A account (seller's NFT held in escrow)"
+          ],
           "writable": true
         },
         {
           "name": "buyer_nft_account",
+          "docs": [
+            "Buyer NFT A account (destination for seller's NFT)"
+          ],
           "writable": true,
           "pda": {
             "seeds": [
@@ -1070,7 +1125,10 @@
           "writable": true
         },
         {
-          "name": "nft_mint"
+          "name": "nft_mint",
+          "docs": [
+            "NFT A mint (seller's NFT being traded)"
+          ]
         },
         {
           "name": "token_program",
@@ -1206,16 +1264,21 @@
     },
     {
       "code": 6020,
+      "name": "InvalidEscrowAccount",
+      "msg": "Invalid escrow account provided (PDA mismatch)"
+    },
+    {
+      "code": 6021,
       "name": "ExecutableAccountNotAllowed",
       "msg": "Executable accounts (programs) cannot send or receive lamports"
     },
     {
-      "code": 6021,
+      "code": 6022,
       "name": "AmountTooLow",
       "msg": "Amount below minimum: $1.00 (BETA limit)"
     },
     {
-      "code": 6022,
+      "code": 6023,
       "name": "AmountTooHigh",
       "msg": "Amount exceeds maximum: $3,000.00 (BETA limit)"
     }
