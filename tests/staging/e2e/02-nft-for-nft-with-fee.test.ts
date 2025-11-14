@@ -1,18 +1,18 @@
 /**
- * STAGING E2E Test - V2 Scenario 2: NFT for NFT with SOL Fee
+ * STAGING E2E Test - Scenario 2: NFT for NFT with SOL Fee
  * 
  * Complete NFT-for-NFT swap where buyer pays a SOL platform fee.
- * Tests the v2 escrow with NFT exchange and SOL fee payment.
+ * Tests the escrow with NFT exchange and SOL fee payment.
  * 
  * Flow:
- * 1. Create v2 escrow agreement (NFT_FOR_NFT_WITH_FEE)
+ * 1. Create escrow agreement (NFT_FOR_NFT_WITH_FEE)
  * 2. Deposit NFT A from seller
  * 3. Deposit NFT B from buyer
  * 4. Deposit SOL fee from buyer
  * 5. Automatic settlement
  * 6. Verify both NFTs swapped and fee collected
  * 
- * Run: npm run test:staging:e2e:v2-nft-nft-fee
+ * Run: npm run test:staging:e2e:nft-nft-fee
  */
 
 // Load .env.staging file BEFORE any other imports
@@ -55,7 +55,7 @@ interface TestAgreement {
   transactionId: string;
 }
 
-describe('STAGING E2E - V2: NFT-for-NFT with SOL Fee', function () {
+describe('STAGING E2E - NFT-for-NFT with SOL Fee', function () {
   this.timeout(300000); // 5 minutes
 
   let connection: Connection;
@@ -105,7 +105,7 @@ describe('STAGING E2E - V2: NFT-for-NFT with SOL Fee', function () {
 
   before(async function () {
     console.log('\n' + '='.repeat(80));
-    console.log('🚀 STAGING E2E Test - V2 NFT-for-NFT with SOL Fee');
+    console.log('🚀 STAGING E2E Test - NFT-for-NFT with SOL Fee');
     console.log('='.repeat(80));
     console.log(`   Environment: STAGING`);
     console.log(`   Network: ${STAGING_CONFIG.network}`);
@@ -169,10 +169,10 @@ describe('STAGING E2E - V2: NFT-for-NFT with SOL Fee', function () {
     expect(tokenAccountInfo.amount.toString()).to.equal('1', 'Buyer should own 1 NFT B');
   });
 
-  it('should create a v2 NFT-for-NFT escrow agreement with SOL fee', async function () {
-    console.log('📝 Creating V2 escrow agreement (NFT_FOR_NFT_WITH_FEE)...\n');
+  it('should create an NFT-for-NFT escrow agreement with SOL fee', async function () {
+    console.log('📝 Creating escrow agreement (NFT_FOR_NFT_WITH_FEE)...\n');
 
-    const idempotencyKey = generateIdempotencyKey('v2-nft-nft-fee-test');
+    const idempotencyKey = generateIdempotencyKey('nft-nft-fee-test');
     // Expiry omitted - uses default of 5 minutes
 
     const agreementData = {
@@ -216,7 +216,7 @@ describe('STAGING E2E - V2: NFT-for-NFT with SOL Fee', function () {
 
     agreement = response.data.data;
     transactions.push({
-      description: 'Create Agreement (init_agreement_v2)',
+      description: 'Create Agreement (init_agreement)',
       txId: agreement.transactionId,
       timestamp: Date.now(),
     });
@@ -461,7 +461,7 @@ describe('STAGING E2E - V2: NFT-for-NFT with SOL Fee', function () {
     });
 
     console.log('='.repeat(80));
-    console.log('⚠️  V2 NFT-for-NFT E2E TEST PARTIALLY COMPLETE');
+    console.log('⚠️  NFT-for-NFT E2E TEST PARTIALLY COMPLETE');
     console.log('   Note: Buyer NFT deposit endpoint not yet implemented');
     console.log('   Core functionality (NFT A + SOL fee) verified ✅');
     console.log('='.repeat(80) + '\n');

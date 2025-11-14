@@ -1,11 +1,11 @@
 /**
- * STAGING E2E Test - V2 Scenario 3: NFT for NFT + SOL Payment
+ * STAGING E2E Test - Scenario 3: NFT for NFT + SOL Payment
  * 
  * Complete NFT-for-NFT swap where buyer also pays SOL to the seller.
- * Tests the v2 escrow with NFT exchange and SOL payment to seller + platform fee.
+ * Tests the escrow with NFT exchange and SOL payment to seller + platform fee.
  * 
  * Flow:
- * 1. Create v2 escrow agreement (NFT_FOR_NFT_PLUS_SOL)
+ * 1. Create escrow agreement (NFT_FOR_NFT_PLUS_SOL)
  * 2. Deposit NFT A from seller
  * 3. Deposit NFT B from buyer
  * 4. Deposit SOL (to seller + fee) from buyer
@@ -55,7 +55,7 @@ interface TestAgreement {
   transactionId: string;
 }
 
-describe('STAGING E2E - V2: NFT-for-NFT + SOL Payment', function () {
+describe('STAGING E2E - NFT-for-NFT + SOL Payment', function () {
   this.timeout(300000); // 5 minutes
 
   let connection: Connection;
@@ -106,7 +106,7 @@ describe('STAGING E2E - V2: NFT-for-NFT + SOL Payment', function () {
 
   before(async function () {
     console.log('\n' + '='.repeat(80));
-    console.log('🚀 STAGING E2E Test - V2 NFT-for-NFT + SOL Payment');
+    console.log('🚀 STAGING E2E Test - NFT-for-NFT + SOL Payment');
     console.log('='.repeat(80));
     console.log(`   Environment: STAGING`);
     console.log(`   Network: ${STAGING_CONFIG.network}`);
@@ -217,7 +217,7 @@ describe('STAGING E2E - V2: NFT-for-NFT + SOL Payment', function () {
 
     agreement = response.data.data;
     transactions.push({
-      description: 'Create Agreement (init_agreement_v2)',
+      description: 'Create Agreement (init_agreement)',
       txId: agreement.transactionId,
       timestamp: Date.now(),
     });
@@ -369,7 +369,7 @@ describe('STAGING E2E - V2: NFT-for-NFT + SOL Payment', function () {
     });
 
     console.log('='.repeat(80));
-    console.log('⚠️  V2 NFT-for-NFT+SOL E2E TEST PARTIALLY COMPLETE');
+    console.log('⚠️  NFT-for-NFT+SOL E2E TEST PARTIALLY COMPLETE');
     console.log('   Note: Buyer NFT deposit endpoint not yet implemented');
     console.log('   Core functionality (NFT A + SOL payment) verified ✅');
     console.log(`   Expected Distribution on Settlement:`);
