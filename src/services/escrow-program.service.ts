@@ -1509,15 +1509,33 @@ export class EscrowProgramService {
         throw new Error(`escrowNftBAccount is required for swap type ${swapType}`);
       }
 
-      console.log('[EscrowProgramService] Accounts for initAgreement:', {
+      console.log('[EscrowProgramService] ===== initAgreement Details =====');
+      console.log('[EscrowProgramService] Parameters:', {
+        escrowId: escrowId.toString(),
+        swapType,
+        swapTypeEnum: JSON.stringify(swapTypeEnum),
+        solAmount: solAmount?.toString(),
+        nftMint: nftMint.toString(),
+        nftBMint: nftBMint?.toString() || 'null',
+        expiryTimestamp: expiryTimestamp.toString(),
+        platformFeeBps,
+        feePayer,
+        feePayerEnum: JSON.stringify(feePayerEnum),
+      });
+      console.log('[EscrowProgramService] Accounts:', {
         escrowState: escrowPda.toString(),
+        buyer: buyer.toString(),
+        seller: seller.toString(),
+        solVault: solVaultPda.toString(),
         nftAMint: nftMint.toString(),
         escrowNftAccount: escrowNftAAccount.toString(),
         nftBMint: (nftBMint || nftMint).toString(),
         escrowNftBAccount: (escrowNftBAccount || escrowNftAAccount).toString(),
+        admin: this.adminKeypair.publicKey.toString(),
         hasNftB: !!nftBMint,
-        usingAccountsMethod: true, // Using .accounts() instead of .accountsStrict() for PDA handling
+        usingAccountsMethod: true,
       });
+      console.log('[EscrowProgramService] =====================================');
 
       // Build instruction
       // Note: Anchor converts snake_case (Rust) to camelCase (TypeScript)
@@ -1551,13 +1569,21 @@ export class EscrowProgramService {
         );
       }
 
-      console.log('[EscrowProgramService] V2 Instruction built');
+      console.log('[EscrowProgramService] ✅ V2 Instruction built successfully');
+      console.log('[EscrowProgramService] Instruction keys count:', instruction.keys.length);
+      console.log('[EscrowProgramService] Instruction data length:', instruction.data.length);
 
       // Fix: Set buyer and seller as NON-signers (Anchor bug workaround)
       instruction.keys.forEach((key: any) => {
         if (key.pubkey.equals(buyer) || key.pubkey.equals(seller)) {
+          console.log('[EscrowProgramService] Setting non-signer:', key.pubkey.toString());
           key.isSigner = false;
         }
+      });
+      
+      console.log('[EscrowProgramService] Final instruction keys:');
+      instruction.keys.forEach((key: any, index: number) => {
+        console.log(`  [${index}] ${key.pubkey.toString()} - signer:${key.isSigner}, writable:${key.isWritable}`);
       });
 
       // Create transaction with compute budget and instruction
