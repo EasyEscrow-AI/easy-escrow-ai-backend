@@ -744,8 +744,14 @@ pub mod escrow {
     }
 
     /// Settle the escrow and distribute assets
-    /// Handles both NFT<>SOL and NFT<>NFT with SOL fee swap types
+    /// Handles NFT<>SOL, NFT<>NFT with fee, and NFT<>NFT+SOL swap types
     /// Permissionless: Anyone can trigger settlement once both deposits are confirmed
+    /// 
+    /// **Remaining Accounts** (for NFT<>NFT swaps):
+    /// - [0] NFT B mint (buyer's NFT)
+    /// - [1] Escrow NFT B account (buyer's NFT held in escrow) [writable]
+    /// - [2] Seller NFT B account (destination for NFT B) [writable]
+    /// - [3] Token program (for NFT B transfer)
     pub fn settle<'info>(ctx: Context<'_, '_, '_, 'info, Settle<'info>>) -> Result<()> {
         // Validate escrow status
         require!(
@@ -914,8 +920,11 @@ pub mod escrow {
                 );
 
                 // Transfer platform fee (SOL) to fee collector
-                // CRITICAL: Both parties deposited to sol_vault, so transfer FROM sol_vault!
-                let platform_fee = ctx.accounts.escrow_state.sol_amount; // Full amount is the fee (0.01 SOL total)
+                // CRITICAL: sol_amount stores buyer's portion (half), but BOTH parties deposited
+                // Total fee = sol_amount * 2 (e.g., 0.005 * 2 = 0.01 SOL)
+                let platform_fee = ctx.accounts.escrow_state.sol_amount
+                    .checked_mul(2)
+                    .ok_or(EscrowError::CalculationOverflow)?;
                 
                 // Validate sol_vault has sufficient funds
                 let vault_balance = ctx.accounts.sol_vault.to_account_info().lamports();
@@ -1070,6 +1079,10 @@ pub mod escrow {
     }
 
     /// Cancel expired escrow and return assets to original owners
+    /// 
+    /// **Remaining Accounts** (for NFT<>NFT swaps):
+    /// - [0] Escrow NFT B account (buyer's NFT held in escrow) [writable]
+    /// - [1] Buyer NFT B account (refund destination for NFT B) [writable]
     pub fn cancel_if_expired<'info>(ctx: Context<'_, '_, '_, 'info, CancelIfExpired<'info>>) -> Result<()> {
         // Validate escrow status
         require!(
@@ -2534,6 +2547,10 @@ pub fn cancel_if_expired<'info>(ctx: Context<'_, '_, '_, 'info, CancelIfExpired<
 }
 
 /// Admin emergency cancel with full refunds
+/// 
+/// **Remaining Accounts** (for NFT<>NFT swaps):
+/// - [0] Escrow NFT B account (buyer's NFT held in escrow) [writable]
+/// - [1] Buyer NFT B account (refund destination for NFT B) [writable]
 pub fn admin_cancel<'info>(ctx: Context<'_, '_, '_, 'info, AdminCancel<'info>>) -> Result<()> {
     // Validate escrow status
     require!(
@@ -2817,12 +2834,14 @@ pub struct Settle<'info> {
     #[account(mut)]
     pub platform_fee_collector: UncheckedAccount<'info>,
     
+    /// Escrow NFT A account (seller's NFT held in escrow)
     #[account(
         mut,
         constraint = escrow_nft_account.mint == escrow_state.nft_a_mint
     )]
     pub escrow_nft_account: Account<'info, TokenAccount>,
     
+    /// Buyer NFT A account (destination for seller's NFT)
     #[account(
         init_if_needed,
         payer = caller,
@@ -2835,6 +2854,7 @@ pub struct Settle<'info> {
     #[account(mut)]
     pub buyer: UncheckedAccount<'info>,
     
+    /// NFT A mint (seller's NFT being traded)
     pub nft_mint: Account<'info, Mint>,
     
     pub token_program: Program<'info, Token>,
@@ -2878,12 +2898,14 @@ pub struct CancelIfExpired<'info> {
     )]
     pub seller: UncheckedAccount<'info>,
     
+    /// Seller NFT A account (refund destination for seller's NFT)
     #[account(
         mut,
         constraint = seller_nft_account.owner == escrow_state.seller
     )]
     pub seller_nft_account: Account<'info, TokenAccount>,
     
+    /// Escrow NFT A account (seller's NFT held in escrow)
     #[account(
         mut,
         constraint = escrow_nft_account.mint == escrow_state.nft_a_mint
@@ -2896,6 +2918,7 @@ pub struct CancelIfExpired<'info> {
 
 #[derive(Accounts)]
 pub struct AdminCancel<'info> {
+    /// Admin who authorized the cancellation
     #[account(mut)]
     pub admin: Signer<'info>,
     
@@ -2929,12 +2952,14 @@ pub struct AdminCancel<'info> {
     )]
     pub seller: UncheckedAccount<'info>,
     
+    /// Seller NFT A account (refund destination for seller's NFT)
     #[account(
         mut,
         constraint = seller_nft_account.owner == escrow_state.seller
     )]
     pub seller_nft_account: Account<'info, TokenAccount>,
     
+    /// Escrow NFT A account (seller's NFT held in escrow)
     #[account(
         mut,
         constraint = escrow_nft_account.mint == escrow_state.nft_a_mint
