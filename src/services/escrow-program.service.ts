@@ -1538,12 +1538,13 @@ export class EscrowProgramService {
       console.log('[EscrowProgramService] =====================================');
 
       // Prepare instruction parameters with explicit logging
+      // CRITICAL: Anchor expects `undefined` (not `null`) for Option<T> types when None
       const initAgreementParams = [
         escrowId,
         swapTypeEnum,
-        solAmount || null,
+        solAmount ?? null, // Option<u64> - null is OK for BN
         nftMint, // nft_a_mint parameter (seller's NFT)
-        nftBMint || null, // nft_b_mint parameter (buyer's NFT for certain swap types)
+        nftBMint ?? undefined, // Option<Pubkey> - MUST use undefined, not null!
         expiryTimestamp,
         platformFeeBps,
         feePayerEnum
