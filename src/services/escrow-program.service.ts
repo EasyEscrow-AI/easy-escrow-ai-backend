@@ -1537,11 +1537,12 @@ export class EscrowProgramService {
         solVault: solVaultPda, // Separate PDA for holding SOL lamports
         nftAMint: nftMint, // NFT A mint (seller's NFT) - used by Anchor to derive escrow_nft_account PDA
         escrowNftAccount: escrowNftAAccount, // Escrow NFT A account (PDA-derived, Anchor validates it matches)
-        // For NFT<>SOL: pass escrow PDA as placeholder (safe, won't be used since nft_b_mint param is None)
+        // For NFT<>SOL: Use NFT A mint as account placeholder (valid Mint account)
         // For NFT<>NFT: pass actual NFT B accounts
-        // Using escrow PDA instead of SystemProgram to avoid potential validation issues
-        nftBMint: nftBMint || escrowPda, // NFT B mint (or escrow PDA as placeholder for NFT<>SOL)
-        escrowNftBAccount: escrowNftBAccount || escrowPda, // Escrow NFT B account (or escrow PDA as placeholder for NFT<>SOL)
+        // KEY: nftBMint PARAMETER is undefined for NFT<>SOL (Rust sees None), so no ATA creation attempted
+        // Account placeholder just needs to be a valid Mint address to pass Anchor validation
+        nftBMint: nftBMint || nftMint, // NFT B mint (or NFT A mint as placeholder for NFT<>SOL)
+        escrowNftBAccount: escrowNftBAccount || escrowNftAAccount, // Escrow NFT B account (or NFT A escrow account as placeholder for NFT<>SOL)
         admin: this.adminKeypair.publicKey,
         tokenProgram: TOKEN_PROGRAM_ID,
         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -1576,8 +1577,8 @@ export class EscrowProgramService {
         solVault: solVaultPda.toString(),
         nftAMint: nftMint.toString(),
         escrowNftAccount: escrowNftAAccount.toString(),
-        nftBMint: (nftBMint || escrowPda).toString(),
-        escrowNftBAccount: (escrowNftBAccount || escrowPda).toString(),
+        nftBMint: (nftBMint || nftMint).toString(),
+        escrowNftBAccount: (escrowNftBAccount || escrowNftAAccount).toString(),
         admin: this.adminKeypair.publicKey.toString(),
         hasNftB: !!nftBMint,
         isNftForSol: swapType === 'NFT_FOR_SOL',
