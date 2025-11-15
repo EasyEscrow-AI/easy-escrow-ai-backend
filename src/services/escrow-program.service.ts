@@ -1530,31 +1530,28 @@ export class EscrowProgramService {
       // CRITICAL: escrow_nft_account has PDA definition in IDL with init_if_needed
       // We pass it explicitly - Anchor will validate it matches PDA derivation
       // escrow_nft_b_account must be a valid account address, even if unused for NFT<>SOL swaps
+      // Build accounts object - Let Anchor derive PDA accounts with init_if_needed
+      // escrowNftAccount and escrowNftBAccount have PDA constraints - Anchor derives them from:
+      // - escrowState (authority)
+      // - Token Program constant
+      // - nftAMint / nftBMint (mint)
       const accounts: any = {
-        escrowState: escrowPda, // Anchor converts escrow_state -> escrowState
+        escrowState: escrowPda,
         buyer,
         seller,
-        solVault: solVaultPda, // Separate PDA for holding SOL lamports
-        nftAMint: nftMint, // NFT A mint (seller's NFT) - used by Anchor to derive escrow_nft_account PDA
-        escrowNftAccount: escrowNftAAccount, // Escrow NFT A account (PDA-derived, Anchor validates it matches)
-        // For NFT<>SOL: Use NFT A mint as account placeholder (valid Mint account)
-        // For NFT<>NFT: pass actual NFT B accounts
-        // KEY: nftBMint PARAMETER is undefined for NFT<>SOL (Rust sees None), so no ATA creation attempted
-        // Account placeholder just needs to be a valid Mint address to pass Anchor validation
-        nftBMint: nftBMint || nftMint, // NFT B mint (or NFT A mint as placeholder for NFT<>SOL)
-        escrowNftBAccount: escrowNftBAccount || escrowNftAAccount, // Escrow NFT B account (or NFT A escrow account as placeholder for NFT<>SOL)
+        solVault: solVaultPda,
+        nftAMint: nftMint,
+        nftBMint: nftBMint || nftMint, // For NFT_FOR_SOL: use nftAMint as placeholder
         admin: this.adminKeypair.publicKey,
         tokenProgram: TOKEN_PROGRAM_ID,
         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-        systemProgram: SystemProgram.programId, // Anchor converts system_program -> systemProgram
+        systemProgram: SystemProgram.programId,
       };
       
-      // Validate that we have NFT B accounts for NFT<>NFT swaps
+      // Validate that we have NFT B mint for NFT<>NFT swaps
+      // Note: escrowNftBAccount is derived by Anchor, so we don't validate it here
       if (swapType !== 'NFT_FOR_SOL' && !nftBMint) {
         throw new Error(`nftBMint is required for swap type ${swapType}`);
-      }
-      if (swapType !== 'NFT_FOR_SOL' && !escrowNftBAccount) {
-        throw new Error(`escrowNftBAccount is required for swap type ${swapType}`);
       }
 
       console.log('[EscrowProgramService] ===== initAgreement Details =====');
@@ -1576,13 +1573,11 @@ export class EscrowProgramService {
         seller: seller.toString(),
         solVault: solVaultPda.toString(),
         nftAMint: nftMint.toString(),
-        escrowNftAccount: escrowNftAAccount.toString(),
         nftBMint: (nftBMint || nftMint).toString(),
-        escrowNftBAccount: (escrowNftBAccount || escrowNftAAccount).toString(),
         admin: this.adminKeypair.publicKey.toString(),
         hasNftB: !!nftBMint,
         isNftForSol: swapType === 'NFT_FOR_SOL',
-        usingAccountsMethod: true,
+        note: 'Anchor derives escrowNftAccount and escrowNftBAccount PDAs automatically',
       });
       console.log('[EscrowProgramService] =====================================');
 
