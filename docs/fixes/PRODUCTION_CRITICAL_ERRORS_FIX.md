@@ -116,10 +116,15 @@ Jito Block Engine enforces **1 request per second** limit. Concurrent test opera
 private static lastJitoRequestTime: number = 0;
 private static readonly JITO_RATE_LIMIT_MS = 1000; // 1 second
 
-// Pre-request rate limiting
-const timeSinceLastRequest = now - EscrowProgramService.lastJitoRequestTime;
-if (timeSinceLastRequest < JITO_RATE_LIMIT_MS) {
-  const delayMs = JITO_RATE_LIMIT_MS - timeSinceLastRequest;
+// Atomic slot reservation (prevents race conditions under concurrent load)
+const now = Date.now();
+const nextAvailableTime = EscrowProgramService.lastJitoRequestTime + JITO_RATE_LIMIT_MS;
+const delayMs = Math.max(0, nextAvailableTime - now);
+
+// Reserve slot BEFORE waiting (critical for concurrent safety)
+EscrowProgramService.lastJitoRequestTime = Math.max(now, nextAvailableTime);
+
+if (delayMs > 0) {
   await new Promise(resolve => setTimeout(resolve, delayMs));
 }
 
@@ -133,9 +138,10 @@ if (response.status === 429 && attempt < MAX_RETRIES) {
 
 **Features:**
 - ✅ Automatic 1-second spacing between requests
+- ✅ **Atomic slot reservation** (prevents race conditions)
 - ✅ Retry on 429 with exponential backoff (1s, 2s, 3s)
 - ✅ Max 3 retries before failing
-- ✅ Thread-safe (static rate limiter)
+- ✅ **Concurrent-safe** (reserves slot before waiting)
 
 **Files Changed:**
 - `src/services/escrow-program.service.ts` (lines 142-144, 242-334)
