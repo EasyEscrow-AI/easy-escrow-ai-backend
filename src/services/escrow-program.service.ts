@@ -1537,11 +1537,11 @@ export class EscrowProgramService {
         solVault: solVaultPda, // Separate PDA for holding SOL lamports
         nftAMint: nftMint, // NFT A mint (seller's NFT) - used by Anchor to derive escrow_nft_account PDA
         escrowNftAccount: escrowNftAAccount, // Escrow NFT A account (PDA-derived, Anchor validates it matches)
-        // For NFT<>SOL: pass SystemProgram to signal "no NFT B" (program checks nft_b_mint.is_some())
+        // For NFT<>SOL: pass escrow PDA as placeholder (safe, won't be used since nft_b_mint param is None)
         // For NFT<>NFT: pass actual NFT B accounts
-        // FIXED: Don't use NFT A as placeholder - causes duplicate ATA creation error (error 102)
-        nftBMint: nftBMint || SystemProgram.programId, // NFT B mint (or SystemProgram for NFT<>SOL)
-        escrowNftBAccount: escrowNftBAccount || SystemProgram.programId, // Escrow NFT B account (or SystemProgram for NFT<>SOL)
+        // Using escrow PDA instead of SystemProgram to avoid potential validation issues
+        nftBMint: nftBMint || escrowPda, // NFT B mint (or escrow PDA as placeholder for NFT<>SOL)
+        escrowNftBAccount: escrowNftBAccount || escrowPda, // Escrow NFT B account (or escrow PDA as placeholder for NFT<>SOL)
         admin: this.adminKeypair.publicKey,
         tokenProgram: TOKEN_PROGRAM_ID,
         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -1576,8 +1576,8 @@ export class EscrowProgramService {
         solVault: solVaultPda.toString(),
         nftAMint: nftMint.toString(),
         escrowNftAccount: escrowNftAAccount.toString(),
-        nftBMint: (nftBMint || SystemProgram.programId).toString(),
-        escrowNftBAccount: (escrowNftBAccount || SystemProgram.programId).toString(),
+        nftBMint: (nftBMint || escrowPda).toString(),
+        escrowNftBAccount: (escrowNftBAccount || escrowPda).toString(),
         admin: this.adminKeypair.publicKey.toString(),
         hasNftB: !!nftBMint,
         isNftForSol: swapType === 'NFT_FOR_SOL',
