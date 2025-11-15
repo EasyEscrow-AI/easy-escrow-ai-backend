@@ -246,17 +246,18 @@ export class EscrowProgramService {
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
       try {
         // Rate limiting: Ensure at least 1 second between Jito requests
+        // Atomically reserve next slot to prevent race conditions
         const now = Date.now();
-        const timeSinceLastRequest = now - EscrowProgramService.lastJitoRequestTime;
+        const nextAvailableTime = EscrowProgramService.lastJitoRequestTime + EscrowProgramService.JITO_RATE_LIMIT_MS;
+        const delayMs = Math.max(0, nextAvailableTime - now);
         
-        if (timeSinceLastRequest < EscrowProgramService.JITO_RATE_LIMIT_MS) {
-          const delayMs = EscrowProgramService.JITO_RATE_LIMIT_MS - timeSinceLastRequest;
+        // Reserve slot BEFORE waiting (prevents concurrent requests from bypassing rate limit)
+        EscrowProgramService.lastJitoRequestTime = Math.max(now, nextAvailableTime);
+        
+        if (delayMs > 0) {
           console.log(`[EscrowProgramService] Rate limiting: Waiting ${delayMs}ms before Jito request (attempt ${attempt + 1}/${MAX_RETRIES + 1})`);
           await new Promise(resolve => setTimeout(resolve, delayMs));
         }
-        
-        // Update last request time
-        EscrowProgramService.lastJitoRequestTime = Date.now();
         
         const response = await fetch(`${JITO_BLOCK_ENGINE_MAINNET}/api/v1/transactions`, {
           method: 'POST',
