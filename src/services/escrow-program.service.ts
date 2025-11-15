@@ -139,6 +139,10 @@ export class EscrowProgramService {
   public program: Program<Escrow>; // Made public for access from other services
   private adminKeypair: Keypair;
   
+  // Jito rate limiting: 1 request per second across all instances
+  private static lastJitoRequestTime: number = 0;
+  private static readonly JITO_RATE_LIMIT_MS = 1000; // 1 second between requests
+  
   // Public getter for programId
   public get programId(): PublicKey {
     return this.program.programId;
@@ -235,58 +239,99 @@ export class EscrowProgramService {
     
     console.log('[EscrowProgramService] Sending transaction via Jito Block Engine directly (bypassing QuickNode)');
     
-    try {
-      const response = await fetch(`${JITO_BLOCK_ENGINE_MAINNET}/api/v1/transactions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          id: 1,
-          method: 'sendTransaction',
-          params: [serializedTransaction, { encoding: 'base64' }],
-        }),
-      });
+    // Retry logic for rate limiting (429 errors)
+    const MAX_RETRIES = 3;
+    let lastError: Error | null = null;
+    
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        // Rate limiting: Ensure at least 1 second between Jito requests
+        const now = Date.now();
+        const timeSinceLastRequest = now - EscrowProgramService.lastJitoRequestTime;
+        
+        if (timeSinceLastRequest < EscrowProgramService.JITO_RATE_LIMIT_MS) {
+          const delayMs = EscrowProgramService.JITO_RATE_LIMIT_MS - timeSinceLastRequest;
+          console.log(`[EscrowProgramService] Rate limiting: Waiting ${delayMs}ms before Jito request (attempt ${attempt + 1}/${MAX_RETRIES + 1})`);
+          await new Promise(resolve => setTimeout(resolve, delayMs));
+        }
+        
+        // Update last request time
+        EscrowProgramService.lastJitoRequestTime = Date.now();
+        
+        const response = await fetch(`${JITO_BLOCK_ENGINE_MAINNET}/api/v1/transactions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0',
+            id: 1,
+            method: 'sendTransaction',
+            params: [serializedTransaction, { encoding: 'base64' }],
+          }),
+        });
 
-      // Check HTTP response status before attempting to parse JSON
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(
-          `[EscrowProgramService] Jito Block Engine HTTP error: ${response.status} ${response.statusText}`,
-          errorText
-        );
-        throw new Error(
-          `Jito Block Engine HTTP ${response.status}: ${response.statusText}. ${errorText.substring(0, 200)}`
-        );
+        // Check HTTP response status before attempting to parse JSON
+        if (!response.ok) {
+          const errorText = await response.text();
+          
+          // Special handling for rate limit (429) - retry with exponential backoff
+          if (response.status === 429 && attempt < MAX_RETRIES) {
+            const retryAfter = 1000 * (attempt + 1); // Exponential backoff: 1s, 2s, 3s
+            console.warn(
+              `[EscrowProgramService] Jito rate limit hit (429). Retry ${attempt + 1}/${MAX_RETRIES} after ${retryAfter}ms`
+            );
+            await new Promise(resolve => setTimeout(resolve, retryAfter));
+            continue; // Retry
+          }
+          
+          console.error(
+            `[EscrowProgramService] Jito Block Engine HTTP error: ${response.status} ${response.statusText}`,
+            errorText
+          );
+          throw new Error(
+            `Jito Block Engine HTTP ${response.status}: ${response.statusText}. ${errorText.substring(0, 200)}`
+          );
+        }
+
+        // Parse JSON response
+        const result = await response.json() as {
+          result?: string;
+          error?: { message?: string; [key: string]: any };
+        };
+        
+        // Check for JSON-RPC error in response
+        if (result.error) {
+          console.error('[EscrowProgramService] Jito Block Engine RPC error:', result.error);
+          throw new Error(`Jito sendTransaction failed: ${result.error.message || JSON.stringify(result.error)}`);
+        }
+
+        // Verify we got a transaction signature
+        if (!result.result) {
+          throw new Error('Jito sendTransaction returned no signature');
+        }
+
+        console.log('[EscrowProgramService] ✅ Transaction sent via Jito Block Engine:', result.result);
+        
+        // Return signature immediately - don't wait for confirmation inline
+        // Jito's multi-stage pipeline (Relayer 200ms + Simulation 10-50ms + Auction 50-200ms)
+        // means transactions take 1-3s to land (5-10s under congestion)
+        // Caller should use waitForJitoConfirmation() to poll bundle status asynchronously
+        return result.result;
+        
+      } catch (error) {
+        lastError = error as Error;
+        console.error(`[EscrowProgramService] Jito request failed (attempt ${attempt + 1}/${MAX_RETRIES + 1}):`, error);
+        
+        // If this is the last attempt, throw the error
+        if (attempt === MAX_RETRIES) {
+          throw error;
+        }
+        
+        // Otherwise, continue to next retry
       }
-
-      // Parse JSON response
-      const result = await response.json() as {
-        result?: string;
-        error?: { message?: string; [key: string]: any };
-      };
-      
-      // Check for JSON-RPC error in response
-      if (result.error) {
-        console.error('[EscrowProgramService] Jito Block Engine RPC error:', result.error);
-        throw new Error(`Jito sendTransaction failed: ${result.error.message || JSON.stringify(result.error)}`);
-      }
-
-      // Verify we got a transaction signature
-      if (!result.result) {
-        throw new Error('Jito sendTransaction returned no signature');
-      }
-
-      console.log('[EscrowProgramService] ✅ Transaction sent via Jito Block Engine:', result.result);
-      
-      // Return signature immediately - don't wait for confirmation inline
-      // Jito's multi-stage pipeline (Relayer 200ms + Simulation 10-50ms + Auction 50-200ms)
-      // means transactions take 1-3s to land (5-10s under congestion)
-      // Caller should use waitForJitoConfirmation() to poll bundle status asynchronously
-      return result.result;
-    } catch (error) {
-      console.error('[EscrowProgramService] Failed to send via Jito Block Engine:', error);
-      throw error;
     }
+    
+    // Should never reach here, but if we do, throw the last error
+    throw lastError || new Error('Failed to send transaction via Jito after all retries');
   }
 
   /**
@@ -1479,8 +1524,8 @@ export class EscrowProgramService {
       const feePayerEnum = { [feePayerVariant.charAt(0).toLowerCase() + feePayerVariant.slice(1)]: {} };
 
       // Build accounts object - NFT B accounts are optional
-      // For NFT<>SOL swaps, pass NFT A accounts as placeholders (program won't use them)
-      // Note: nftBMint and escrowNftBAccount are UncheckedAccount in Rust, so they accept any PublicKey
+      // For NFT<>SOL swaps, we must use SystemProgram as placeholder to avoid creating duplicate ATAs
+      // The Rust program checks nft_b_mint.is_some() - if we pass actual mint, it tries to create ATA
       // CRITICAL: escrow_nft_account has PDA definition in IDL with init_if_needed
       // We pass it explicitly - Anchor will validate it matches PDA derivation
       // escrow_nft_b_account must be a valid account address, even if unused for NFT<>SOL swaps
@@ -1491,10 +1536,11 @@ export class EscrowProgramService {
         solVault: solVaultPda, // Separate PDA for holding SOL lamports
         nftAMint: nftMint, // NFT A mint (seller's NFT) - used by Anchor to derive escrow_nft_account PDA
         escrowNftAccount: escrowNftAAccount, // Escrow NFT A account (PDA-derived, Anchor validates it matches)
-        // For NFT<>SOL: pass NFT A accounts as placeholders (program checks nft_b_mint.is_some() before using)
+        // For NFT<>SOL: pass SystemProgram to signal "no NFT B" (program checks nft_b_mint.is_some())
         // For NFT<>NFT: pass actual NFT B accounts
-        nftBMint: nftBMint || nftMint, // NFT B mint (or NFT A mint as placeholder for NFT<>SOL)
-        escrowNftBAccount: escrowNftBAccount || escrowNftAAccount, // Escrow NFT B account (or NFT A account as placeholder)
+        // FIXED: Don't use NFT A as placeholder - causes duplicate ATA creation error (error 102)
+        nftBMint: nftBMint || SystemProgram.programId, // NFT B mint (or SystemProgram for NFT<>SOL)
+        escrowNftBAccount: escrowNftBAccount || SystemProgram.programId, // Escrow NFT B account (or SystemProgram for NFT<>SOL)
         admin: this.adminKeypair.publicKey,
         tokenProgram: TOKEN_PROGRAM_ID,
         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -1529,10 +1575,11 @@ export class EscrowProgramService {
         solVault: solVaultPda.toString(),
         nftAMint: nftMint.toString(),
         escrowNftAccount: escrowNftAAccount.toString(),
-        nftBMint: (nftBMint || nftMint).toString(),
-        escrowNftBAccount: (escrowNftBAccount || escrowNftAAccount).toString(),
+        nftBMint: (nftBMint || SystemProgram.programId).toString(),
+        escrowNftBAccount: (escrowNftBAccount || SystemProgram.programId).toString(),
         admin: this.adminKeypair.publicKey.toString(),
         hasNftB: !!nftBMint,
+        isNftForSol: swapType === 'NFT_FOR_SOL',
         usingAccountsMethod: true,
       });
       console.log('[EscrowProgramService] =====================================');
