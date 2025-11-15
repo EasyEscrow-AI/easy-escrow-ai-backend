@@ -1530,18 +1530,26 @@ export class EscrowProgramService {
       // CRITICAL: escrow_nft_account has PDA definition in IDL with init_if_needed
       // We pass it explicitly - Anchor will validate it matches PDA derivation
       // escrow_nft_b_account must be a valid account address, even if unused for NFT<>SOL swaps
-      // Build accounts object - Let Anchor derive PDA accounts with init_if_needed
-      // escrowNftAccount and escrowNftBAccount have PDA constraints - Anchor derives them from:
-      // - escrowState (authority)
-      // - Token Program constant
-      // - nftAMint / nftBMint (mint)
+      // Build accounts object:
+      // - escrowNftAccount: Has PDA definition in IDL → Pass explicitly (seed inference not enabled)
+      // - escrowNftBAccount: No PDA definition → MUST be passed (UncheckedAccount in Rust)
+      // 
+      // For NFT_FOR_SOL swaps (no NFT B):
+      // - nftBMint parameter: undefined (Rust sees None) ← Program checks this
+      // - nftBMint account: SystemProgram.programId (placeholder, never used)
+      // - escrowNftBAccount: SystemProgram.programId (placeholder, never used)
+      // 
+      // The Rust program ONLY uses these if nft_b_mint.is_some() (parameter is Some)
+      // When parameter is None, accounts are ignored → safe to pass SystemProgram as placeholder
       const accounts: any = {
         escrowState: escrowPda,
         buyer,
         seller,
         solVault: solVaultPda,
         nftAMint: nftMint,
-        nftBMint: nftBMint || nftMint, // For NFT_FOR_SOL: use nftAMint as placeholder
+        escrowNftAccount: escrowNftAAccount,
+        nftBMint: nftBMint || SystemProgram.programId, // Use SystemProgram for NFT_FOR_SOL
+        escrowNftBAccount: escrowNftBAccount || SystemProgram.programId, // Use SystemProgram for NFT_FOR_SOL
         admin: this.adminKeypair.publicKey,
         tokenProgram: TOKEN_PROGRAM_ID,
         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -1573,11 +1581,13 @@ export class EscrowProgramService {
         seller: seller.toString(),
         solVault: solVaultPda.toString(),
         nftAMint: nftMint.toString(),
-        nftBMint: (nftBMint || nftMint).toString(),
+        escrowNftAccount: escrowNftAAccount.toString(),
+        nftBMint: (nftBMint || SystemProgram.programId).toString(),
+        escrowNftBAccount: (escrowNftBAccount || SystemProgram.programId).toString(),
         admin: this.adminKeypair.publicKey.toString(),
         hasNftB: !!nftBMint,
         isNftForSol: swapType === 'NFT_FOR_SOL',
-        note: 'Anchor derives escrowNftAccount and escrowNftBAccount PDAs automatically',
+        note: 'SystemProgram.programId used as placeholder for NFT_FOR_SOL (never accessed by program)',
       });
       console.log('[EscrowProgramService] =====================================');
 
