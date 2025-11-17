@@ -431,7 +431,7 @@ pub mod escrow {
         swap_type: SwapType,
         sol_amount: Option<u64>,
         nft_a_mint: Pubkey,
-        nft_b_mint: Option<Pubkey>,
+        nft_b_mint: Pubkey,  // Changed from Option<Pubkey> - use Pubkey::default() for "None"
         expiry_timestamp: i64,
         platform_fee_bps: u16,
         fee_payer: FeePayer,
@@ -453,12 +453,15 @@ pub mod escrow {
             EscrowError::InvalidExpiry
         );
 
+        // Helper: Check if NFT B is provided (not the sentinel zero pubkey)
+        let has_nft_b = nft_b_mint != Pubkey::default();
+
         // Validate parameters based on swap type
         match swap_type {
             SwapType::NftForSol => {
                 // For NFT<>SOL: must have sol_amount, no nft_b_mint
                 require!(sol_amount.is_some(), EscrowError::InvalidSwapParameters);
-                require!(nft_b_mint.is_none(), EscrowError::InvalidSwapParameters);
+                require!(!has_nft_b, EscrowError::InvalidSwapParameters);
                 
                 let amount = sol_amount.unwrap();
                 require!(amount >= MIN_SOL_AMOUNT, EscrowError::SolAmountTooLow);
@@ -467,7 +470,7 @@ pub mod escrow {
             SwapType::NftForNftWithFee => {
                 // For NFT<>NFT with fee: must have nft_b_mint, sol_amount is platform fee
                 // No minimum on fees - minimum only applies to transaction values
-                require!(nft_b_mint.is_some(), EscrowError::InvalidSwapParameters);
+                require!(has_nft_b, EscrowError::InvalidSwapParameters);
                 require!(sol_amount.is_some(), EscrowError::InvalidSwapParameters);
                 
                 let fee = sol_amount.unwrap();
@@ -476,7 +479,7 @@ pub mod escrow {
             },
             SwapType::NftForNftPlusSol => {
                 // For NFT<>NFT+SOL: must have nft_b_mint and sol_amount
-                require!(nft_b_mint.is_some(), EscrowError::InvalidSwapParameters);
+                require!(has_nft_b, EscrowError::InvalidSwapParameters);
                 require!(sol_amount.is_some(), EscrowError::InvalidSwapParameters);
                 
                 let amount = sol_amount.unwrap();
@@ -493,11 +496,12 @@ pub mod escrow {
         escrow_state.swap_type = swap_type;
         escrow_state.sol_amount = sol_amount.unwrap_or(0);
         escrow_state.nft_a_mint = nft_a_mint;
-        escrow_state.nft_b_mint = nft_b_mint;
+        // Store NFT B mint - Option<Pubkey> can accept Pubkey::default()
+        escrow_state.nft_b_mint = if has_nft_b { Some(nft_b_mint) } else { None };
         escrow_state.platform_fee_bps = platform_fee_bps;
         escrow_state.fee_payer = fee_payer;
         escrow_state.buyer_sol_deposited = false;
-        escrow_state.seller_sol_deposited = false;  // NEW: Initialize seller SOL deposit flag
+        escrow_state.seller_sol_deposited = false;
         escrow_state.buyer_nft_deposited = false;
         escrow_state.seller_nft_deposited = false;
         escrow_state.status = EscrowStatus::Pending;
@@ -505,9 +509,54 @@ pub mod escrow {
         escrow_state.bump = ctx.bumps.escrow_state;
         escrow_state.admin = ctx.accounts.admin.key();
 
+        // NFT A escrow account is created automatically via init_if_needed constraint
+        // NFT B escrow account needs to be created manually for NFT<>NFT swaps
+        if has_nft_b {
+            // Validate NFT B mint matches the provided account
+            require!(
+                ctx.accounts.nft_b_mint.key() == nft_b_mint,
+                EscrowError::InvalidNftMint
+            );
+
+            // Check if NFT B escrow account exists, create if not
+            // Account doesn't exist if it has no lamports (rent-exempt accounts have lamports)
+            let escrow_nft_b_account_info = ctx.accounts.escrow_nft_b_account.to_account_info();
+            let account_exists = escrow_nft_b_account_info.lamports() > 0 
+                && escrow_nft_b_account_info.data_len() > 0;
+            
+            if !account_exists {
+                // Account doesn't exist, create it via CPI to Associated Token Program
+                let escrow_id_bytes = escrow_id.to_le_bytes();
+                let escrow_signer_seeds: &[&[&[u8]]] = &[&[
+                    b"escrow",
+                    escrow_id_bytes.as_ref(),
+                    &[ctx.bumps.escrow_state],
+                ]];
+
+                let create_ata_ctx = CpiContext::new_with_signer(
+                    ctx.accounts.associated_token_program.to_account_info(),
+                    anchor_spl::associated_token::Create {
+                        payer: ctx.accounts.admin.to_account_info(),
+                        associated_token: escrow_nft_b_account_info,
+                        authority: ctx.accounts.escrow_state.to_account_info(),
+                        mint: ctx.accounts.nft_b_mint.to_account_info(),
+                        system_program: ctx.accounts.system_program.to_account_info(),
+                        token_program: ctx.accounts.token_program.to_account_info(),
+                    },
+                    escrow_signer_seeds,
+                );
+                anchor_spl::associated_token::create(create_ata_ctx)?;
+
+                msg!("NFT B escrow account created: {}", ctx.accounts.escrow_nft_b_account.key());
+            } else {
+                msg!("NFT B escrow account already exists: {}", ctx.accounts.escrow_nft_b_account.key());
+            }
+        }
+
         msg!("Escrow agreement initialized: ID {}", escrow_id);
         msg!("Swap type: {:?}", swap_type);
         msg!("SOL amount: {}", sol_amount.unwrap_or(0));
+        msg!("NFT A escrow account: {}", ctx.accounts.escrow_nft_account.key());
 
         Ok(())
     }
@@ -1930,148 +1979,6 @@ pub struct EscrowState {
     pub expiry_timestamp: i64,
     pub bump: u8,
     pub admin: Pubkey,
-}
-
-// ============================================================================
-// Instructions - NFT <> SOL Swap (Subtask 1.5)
-// ============================================================================
-
-/// Initialize a new SOL-based escrow agreement
-/// Admin-only operation to ensure all escrows are tracked in the database
-pub fn init_agreement(
-    ctx: Context<InitAgreement>,
-    escrow_id: u64,
-    swap_type: SwapType,
-    sol_amount: Option<u64>,
-    nft_a_mint: Pubkey,
-    nft_b_mint: Pubkey,  // Changed from Option<Pubkey> - use Pubkey::default() for "None"
-    expiry_timestamp: i64,
-    platform_fee_bps: u16,
-    fee_payer: FeePayer,
-) -> Result<()> {
-    // Validate admin authorization
-    let authorized_admins = get_authorized_admins();
-    require!(
-        authorized_admins.contains(&ctx.accounts.admin.key()),
-        EscrowError::UnauthorizedAdmin
-    );
-
-    // Validate fee basis points (0-10000 = 0%-100%)
-    require!(platform_fee_bps <= 10000, EscrowError::InvalidFeeBps);
-
-    // Validate expiry timestamp
-    let clock = Clock::get()?;
-    require!(
-        expiry_timestamp > clock.unix_timestamp,
-        EscrowError::InvalidExpiry
-    );
-
-    // Helper: Check if NFT B is provided (not the sentinel zero pubkey)
-    let has_nft_b = nft_b_mint != Pubkey::default();
-
-    // Validate parameters based on swap type
-    match swap_type {
-        SwapType::NftForSol => {
-            // For NFT<>SOL: must have sol_amount, no nft_b_mint
-            require!(sol_amount.is_some(), EscrowError::InvalidSwapParameters);
-            require!(!has_nft_b, EscrowError::InvalidSwapParameters);
-            
-            let amount = sol_amount.unwrap();
-            require!(amount >= MIN_SOL_AMOUNT, EscrowError::SolAmountTooLow);
-            require!(amount <= MAX_SOL_AMOUNT, EscrowError::SolAmountTooHigh);
-        },
-        SwapType::NftForNftWithFee => {
-            // For NFT<>NFT with fee: must have nft_b_mint, sol_amount is platform fee
-            // No minimum on fees - minimum only applies to transaction values
-            require!(has_nft_b, EscrowError::InvalidSwapParameters);
-            require!(sol_amount.is_some(), EscrowError::InvalidSwapParameters);
-            
-            let fee = sol_amount.unwrap();
-            require!(fee > 0, EscrowError::InvalidAmount);
-            require!(fee <= MAX_SOL_AMOUNT, EscrowError::SolAmountTooHigh);
-        },
-        SwapType::NftForNftPlusSol => {
-            // For NFT<>NFT+SOL: must have nft_b_mint and sol_amount
-            require!(has_nft_b, EscrowError::InvalidSwapParameters);
-            require!(sol_amount.is_some(), EscrowError::InvalidSwapParameters);
-            
-            let amount = sol_amount.unwrap();
-            require!(amount >= MIN_SOL_AMOUNT, EscrowError::SolAmountTooLow);
-            require!(amount <= MAX_SOL_AMOUNT, EscrowError::SolAmountTooHigh);
-        },
-    }
-
-    // Initialize escrow state
-    let escrow_state = &mut ctx.accounts.escrow_state;
-    escrow_state.escrow_id = escrow_id;
-    escrow_state.buyer = ctx.accounts.buyer.key();
-    escrow_state.seller = ctx.accounts.seller.key();
-    escrow_state.swap_type = swap_type;
-    escrow_state.sol_amount = sol_amount.unwrap_or(0);
-    escrow_state.nft_a_mint = nft_a_mint;
-    // Store NFT B mint - Option<Pubkey> can accept Pubkey::default()
-    escrow_state.nft_b_mint = if has_nft_b { Some(nft_b_mint) } else { None };
-    escrow_state.platform_fee_bps = platform_fee_bps;
-    escrow_state.fee_payer = fee_payer;
-    escrow_state.buyer_sol_deposited = false;
-    escrow_state.seller_sol_deposited = false;
-    escrow_state.buyer_nft_deposited = false;
-    escrow_state.seller_nft_deposited = false;
-    escrow_state.status = EscrowStatus::Pending;
-    escrow_state.expiry_timestamp = expiry_timestamp;
-    escrow_state.bump = ctx.bumps.escrow_state;
-    escrow_state.admin = ctx.accounts.admin.key();
-
-    // NFT A escrow account is created automatically via init_if_needed constraint
-    // NFT B escrow account needs to be created manually for NFT<>NFT swaps
-    if has_nft_b {
-        // Validate NFT B mint matches the provided account
-        require!(
-            ctx.accounts.nft_b_mint.key() == nft_b_mint,
-            EscrowError::InvalidNftMint
-        );
-
-        // Check if NFT B escrow account exists, create if not
-        // Account doesn't exist if it has no lamports (rent-exempt accounts have lamports)
-        let escrow_nft_b_account_info = ctx.accounts.escrow_nft_b_account.to_account_info();
-        let account_exists = escrow_nft_b_account_info.lamports() > 0 
-            && escrow_nft_b_account_info.data_len() > 0;
-        
-        if !account_exists {
-            // Account doesn't exist, create it via CPI to Associated Token Program
-            let escrow_id_bytes = escrow_id.to_le_bytes();
-            let escrow_signer_seeds: &[&[&[u8]]] = &[&[
-                b"escrow",
-                escrow_id_bytes.as_ref(),
-                &[ctx.bumps.escrow_state],
-            ]];
-
-            let create_ata_ctx = CpiContext::new_with_signer(
-                ctx.accounts.associated_token_program.to_account_info(),
-                anchor_spl::associated_token::Create {
-                    payer: ctx.accounts.admin.to_account_info(),
-                    associated_token: escrow_nft_b_account_info,
-                    authority: ctx.accounts.escrow_state.to_account_info(),
-                    mint: ctx.accounts.nft_b_mint.to_account_info(),
-                    system_program: ctx.accounts.system_program.to_account_info(),
-                    token_program: ctx.accounts.token_program.to_account_info(),
-                },
-                escrow_signer_seeds,
-            );
-            anchor_spl::associated_token::create(create_ata_ctx)?;
-
-            msg!("NFT B escrow account created: {}", ctx.accounts.escrow_nft_b_account.key());
-        } else {
-            msg!("NFT B escrow account already exists: {}", ctx.accounts.escrow_nft_b_account.key());
-        }
-    }
-
-    msg!("Escrow agreement initialized: ID {}", escrow_id);
-    msg!("Swap type: {:?}", swap_type);
-    msg!("SOL amount: {}", sol_amount.unwrap_or(0));
-    msg!("NFT A escrow account: {}", ctx.accounts.escrow_nft_account.key());
-
-    Ok(())
 }
 
 /// Buyer deposits SOL into the escrow PDA

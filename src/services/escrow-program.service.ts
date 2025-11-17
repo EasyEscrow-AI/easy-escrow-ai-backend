@@ -1548,8 +1548,8 @@ export class EscrowProgramService {
         solVault: solVaultPda,
         nftAMint: nftMint,
         escrowNftAccount: escrowNftAAccount,
-        nftBMint: nftBMint || SystemProgram.programId, // Use SystemProgram for NFT_FOR_SOL
-        escrowNftBAccount: escrowNftBAccount || SystemProgram.programId, // Use SystemProgram for NFT_FOR_SOL
+        nftBMint: nftBMint || PublicKey.default, // Use PublicKey.default (zeros) for NFT_FOR_SOL
+        escrowNftBAccount: escrowNftBAccount || PublicKey.default, // Use PublicKey.default (zeros) for NFT_FOR_SOL
         admin: this.adminKeypair.publicKey,
         tokenProgram: TOKEN_PROGRAM_ID,
         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -1582,24 +1582,25 @@ export class EscrowProgramService {
         solVault: solVaultPda.toString(),
         nftAMint: nftMint.toString(),
         escrowNftAccount: escrowNftAAccount.toString(),
-        nftBMint: (nftBMint || SystemProgram.programId).toString(),
-        escrowNftBAccount: (escrowNftBAccount || SystemProgram.programId).toString(),
+        nftBMint: (nftBMint || PublicKey.default).toString(),
+        escrowNftBAccount: (escrowNftBAccount || PublicKey.default).toString(),
         admin: this.adminKeypair.publicKey.toString(),
         hasNftB: !!nftBMint,
         isNftForSol: swapType === 'NFT_FOR_SOL',
-        note: 'SystemProgram.programId used as placeholder for NFT_FOR_SOL (never accessed by program)',
+        note: 'PublicKey.default (zeros) used as sentinel for NFT_FOR_SOL (Rust checks != Pubkey::default())',
       });
       console.log('[EscrowProgramService] =====================================');
 
       // Prepare instruction parameters with explicit logging
       // CRITICAL: nft_b_mint now requires a Pubkey (not Option<Pubkey>)
-      // Use SystemProgram.programId as sentinel value for "no NFT B"
+      // Use PublicKey.default (zeros) as sentinel value for "no NFT B"
+      // Rust checks: has_nft_b = nft_b_mint != Pubkey::default()
       const initAgreementParams = [
         escrowId,
         swapTypeEnum,
         solAmount ?? null, // Option<u64> - null is OK for BN
         nftMint, // nft_a_mint parameter (seller's NFT)
-        nftBMint || SystemProgram.programId, // Pubkey - use SystemProgram.programId for NFT_FOR_SOL
+        nftBMint || PublicKey.default, // Pubkey - use PublicKey.default (zeros) for NFT_FOR_SOL
         expiryTimestamp,
         platformFeeBps,
         feePayerEnum
@@ -1611,9 +1612,9 @@ export class EscrowProgramService {
       console.log('[EscrowProgramService] [2] solAmount:', solAmount?.toString() || 'null', typeof (solAmount || null));
       console.log('[EscrowProgramService] [3] nftMint (nft_a_mint):', nftMint.toString(), typeof nftMint);
       console.log('[EscrowProgramService] [4] nftBMint (nft_b_mint):', 
-        (nftBMint || SystemProgram.programId).toString(), 
+        (nftBMint || PublicKey.default).toString(), 
         'hasRealNFT:', !!nftBMint,
-        'usingSentinel:', !nftBMint);
+        'usingSentinel (PublicKey.default):', !nftBMint);
       console.log('[EscrowProgramService] [5] expiryTimestamp:', expiryTimestamp.toString(), typeof expiryTimestamp);
       console.log('[EscrowProgramService] [6] platformFeeBps:', platformFeeBps, typeof platformFeeBps);
       console.log('[EscrowProgramService] [7] feePayerEnum:', JSON.stringify(feePayerEnum), typeof feePayerEnum);
