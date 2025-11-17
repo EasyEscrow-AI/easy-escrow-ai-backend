@@ -1592,13 +1592,14 @@ export class EscrowProgramService {
       console.log('[EscrowProgramService] =====================================');
 
       // Prepare instruction parameters with explicit logging
-      // CRITICAL: Anchor expects `undefined` (not `null`) for Option<T> types when None
+      // CRITICAL: nft_b_mint now requires a Pubkey (not Option<Pubkey>)
+      // Use SystemProgram.programId as sentinel value for "no NFT B"
       const initAgreementParams = [
         escrowId,
         swapTypeEnum,
         solAmount ?? null, // Option<u64> - null is OK for BN
         nftMint, // nft_a_mint parameter (seller's NFT)
-        nftBMint ?? undefined, // Option<Pubkey> - MUST use undefined, not null!
+        nftBMint || SystemProgram.programId, // Pubkey - use SystemProgram.programId for NFT_FOR_SOL
         expiryTimestamp,
         platformFeeBps,
         feePayerEnum
@@ -1610,9 +1611,9 @@ export class EscrowProgramService {
       console.log('[EscrowProgramService] [2] solAmount:', solAmount?.toString() || 'null', typeof (solAmount || null));
       console.log('[EscrowProgramService] [3] nftMint (nft_a_mint):', nftMint.toString(), typeof nftMint);
       console.log('[EscrowProgramService] [4] nftBMint (nft_b_mint):', 
-        nftBMint ? nftBMint.toString() : 'null', 
-        nftBMint ? 'PublicKey' : typeof (nftBMint || null),
-        'isPublicKey:', nftBMint instanceof PublicKey);
+        (nftBMint || SystemProgram.programId).toString(), 
+        'hasRealNFT:', !!nftBMint,
+        'usingSentinel:', !nftBMint);
       console.log('[EscrowProgramService] [5] expiryTimestamp:', expiryTimestamp.toString(), typeof expiryTimestamp);
       console.log('[EscrowProgramService] [6] platformFeeBps:', platformFeeBps, typeof platformFeeBps);
       console.log('[EscrowProgramService] [7] feePayerEnum:', JSON.stringify(feePayerEnum), typeof feePayerEnum);
