@@ -139,6 +139,10 @@ export class EscrowProgramService {
   public program: Program<Escrow>; // Made public for access from other services
   private adminKeypair: Keypair;
   
+  // Jito rate limiting: 1 request per second across all instances
+  private static lastJitoRequestTime: number = 0;
+  private static readonly JITO_RATE_LIMIT_MS = 1000; // 1 second between requests
+  
   // Public getter for programId
   public get programId(): PublicKey {
     return this.program.programId;
@@ -207,11 +211,25 @@ export class EscrowProgramService {
     // For devnet, use regular RPC (no Jito needed, cheaper)
     if (!isMainnet) {
       console.log('[EscrowProgramService] Sending via regular RPC (devnet)');
-      return await this.provider.connection.sendRawTransaction(transaction.serialize(), {
+      const txId = await this.provider.connection.sendRawTransaction(transaction.serialize(), {
         skipPreflight: false,
         preflightCommitment: 'confirmed',
         maxRetries: 3,
       });
+      
+      // For devnet, wait for confirmation using standard Solana RPC
+      // Devnet doesn't use Jito bundling so confirmTransaction is appropriate
+      console.log('[EscrowProgramService] Waiting for devnet transaction confirmation...');
+      
+      const confirmation = await this.provider.connection.confirmTransaction(txId, 'confirmed');
+      
+      if (confirmation.value.err) {
+        console.error('[EscrowProgramService] Transaction failed on-chain:', confirmation.value.err);
+        throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}`);
+      }
+      
+      console.log('[EscrowProgramService] ✅ Transaction confirmed on-chain');
+      return txId;
     }
 
     // For mainnet, send directly to Jito Block Engine (FREE!)
@@ -221,53 +239,199 @@ export class EscrowProgramService {
     
     console.log('[EscrowProgramService] Sending transaction via Jito Block Engine directly (bypassing QuickNode)');
     
-    try {
-      const response = await fetch(`${JITO_BLOCK_ENGINE_MAINNET}/api/v1/transactions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          id: 1,
-          method: 'sendTransaction',
-          params: [serializedTransaction, { encoding: 'base64' }],
-        }),
-      });
+    // Retry logic for rate limiting (429 errors)
+    const MAX_RETRIES = 3;
+    let lastError: Error | null = null;
+    
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        // Rate limiting: Ensure at least 1 second between Jito requests
+        // Atomically reserve next slot to prevent race conditions
+        const now = Date.now();
+        const nextAvailableTime = EscrowProgramService.lastJitoRequestTime + EscrowProgramService.JITO_RATE_LIMIT_MS;
+        const delayMs = Math.max(0, nextAvailableTime - now);
+        
+        // Reserve slot BEFORE waiting (prevents concurrent requests from bypassing rate limit)
+        EscrowProgramService.lastJitoRequestTime = Math.max(now, nextAvailableTime);
+        
+        if (delayMs > 0) {
+          console.log(`[EscrowProgramService] Rate limiting: Waiting ${delayMs}ms before Jito request (attempt ${attempt + 1}/${MAX_RETRIES + 1})`);
+          await new Promise(resolve => setTimeout(resolve, delayMs));
+        }
+        
+        const response = await fetch(`${JITO_BLOCK_ENGINE_MAINNET}/api/v1/transactions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0',
+            id: 1,
+            method: 'sendTransaction',
+            params: [serializedTransaction, { encoding: 'base64' }],
+          }),
+        });
 
-      // Check HTTP response status before attempting to parse JSON
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(
-          `[EscrowProgramService] Jito Block Engine HTTP error: ${response.status} ${response.statusText}`,
-          errorText
-        );
-        throw new Error(
-          `Jito Block Engine HTTP ${response.status}: ${response.statusText}. ${errorText.substring(0, 200)}`
-        );
+        // Check HTTP response status before attempting to parse JSON
+        if (!response.ok) {
+          const errorText = await response.text();
+          
+          // Special handling for rate limit (429) - retry with exponential backoff
+          if (response.status === 429 && attempt < MAX_RETRIES) {
+            const retryAfter = 1000 * (attempt + 1); // Exponential backoff: 1s, 2s, 3s
+            console.warn(
+              `[EscrowProgramService] Jito rate limit hit (429). Retry ${attempt + 1}/${MAX_RETRIES} after ${retryAfter}ms`
+            );
+            await new Promise(resolve => setTimeout(resolve, retryAfter));
+            continue; // Retry
+          }
+          
+          console.error(
+            `[EscrowProgramService] Jito Block Engine HTTP error: ${response.status} ${response.statusText}`,
+            errorText
+          );
+          throw new Error(
+            `Jito Block Engine HTTP ${response.status}: ${response.statusText}. ${errorText.substring(0, 200)}`
+          );
+        }
+
+        // Parse JSON response
+        const result = await response.json() as {
+          result?: string;
+          error?: { message?: string; [key: string]: any };
+        };
+        
+        // Check for JSON-RPC error in response
+        if (result.error) {
+          console.error('[EscrowProgramService] Jito Block Engine RPC error:', result.error);
+          throw new Error(`Jito sendTransaction failed: ${result.error.message || JSON.stringify(result.error)}`);
+        }
+
+        // Verify we got a transaction signature
+        if (!result.result) {
+          throw new Error('Jito sendTransaction returned no signature');
+        }
+
+        console.log('[EscrowProgramService] ✅ Transaction sent via Jito Block Engine:', result.result);
+        
+        // Return signature immediately - don't wait for confirmation inline
+        // Jito's multi-stage pipeline (Relayer 200ms + Simulation 10-50ms + Auction 50-200ms)
+        // means transactions take 1-3s to land (5-10s under congestion)
+        // Caller should use waitForJitoConfirmation() to poll bundle status asynchronously
+        return result.result;
+        
+      } catch (error) {
+        lastError = error as Error;
+        console.error(`[EscrowProgramService] Jito request failed (attempt ${attempt + 1}/${MAX_RETRIES + 1}):`, error);
+        
+        // If this is the last attempt, throw the error
+        if (attempt === MAX_RETRIES) {
+          throw error;
+        }
+        
+        // Otherwise, continue to next retry
       }
-
-      // Parse JSON response
-      const result = await response.json() as {
-        result?: string;
-        error?: { message?: string; [key: string]: any };
-      };
-      
-      // Check for JSON-RPC error in response
-      if (result.error) {
-        console.error('[EscrowProgramService] Jito Block Engine RPC error:', result.error);
-        throw new Error(`Jito sendTransaction failed: ${result.error.message || JSON.stringify(result.error)}`);
-      }
-
-      // Verify we got a transaction signature
-      if (!result.result) {
-        throw new Error('Jito sendTransaction returned no signature');
-      }
-
-      console.log('[EscrowProgramService] ✅ Transaction sent via Jito Block Engine:', result.result);
-      return result.result;
-    } catch (error) {
-      console.error('[EscrowProgramService] Failed to send via Jito Block Engine:', error);
-      throw error;
     }
+    
+    // Should never reach here, but if we do, throw the last error
+    throw lastError || new Error('Failed to send transaction via Jito after all retries');
+  }
+
+  /**
+   * Wait for Jito transaction confirmation with proper bundle status polling
+   * 
+   * Implements research-backed best practices:
+   * - Tiered polling: 1-2s for first 15s, 2-3s for next 15s
+   * - Bundle status checking via Jito APIs
+   * - Blockhash expiration tracking (60-90s lifetime)
+   * - Automatic retry with fresh blockhash after timeout
+   * 
+   * @param signature Transaction signature from Jito sendTransaction
+   * @param blockhash Original blockhash used in transaction
+   * @param blockhashLastValidHeight Last valid block height for blockhash
+   * @param maxAttempts Maximum polling attempts before giving up
+   * @param timeoutSeconds Timeout in seconds before recommending fresh blockhash (default: 60 for mainnet)
+   * @returns Confirmation result
+   */
+  async waitForJitoConfirmation(
+    signature: string,
+    blockhash: string,
+    blockhashLastValidHeight: number,
+    maxAttempts: number = 30,
+    timeoutSeconds: number = 60
+  ): Promise<{ confirmed: boolean; error?: string }> {
+    console.log(`[EscrowProgramService] Starting Jito confirmation polling for ${signature}`);
+    console.log(`[EscrowProgramService] Blockhash: ${blockhash}, Last valid height: ${blockhashLastValidHeight}`);
+    
+    const startTime = Date.now();
+    let attempt = 0;
+    
+    while (attempt < maxAttempts) {
+      attempt++;
+      const elapsed = (Date.now() - startTime) / 1000;
+      
+      // Tiered polling intervals based on research
+      // 1-2s for first 15s (aggressive), 2-3s for next 15s (moderate)
+      const pollInterval = elapsed < 15 ? 1500 : 2500;
+      
+      console.log(`[EscrowProgramService] Poll attempt ${attempt}/${maxAttempts} (${elapsed.toFixed(1)}s elapsed)`);
+      
+      try {
+        // Check current block height to detect blockhash expiration
+        const currentHeight = await this.provider.connection.getBlockHeight('confirmed');
+        
+        if (currentHeight > blockhashLastValidHeight) {
+          console.error(`[EscrowProgramService] Blockhash expired! Current: ${currentHeight}, Last valid: ${blockhashLastValidHeight}`);
+          return {
+            confirmed: false,
+            error: `Blockhash expired after ${elapsed.toFixed(1)}s. Transaction must be retried with fresh blockhash.`
+          };
+        }
+        
+        // Check transaction status using standard Solana RPC
+        // Jito transactions appear in regular tx status once landed
+        const statuses = await this.provider.connection.getSignatureStatuses([signature]);
+        const status = statuses?.value?.[0];
+        
+        if (status) {
+          if (status.confirmationStatus === 'confirmed' || status.confirmationStatus === 'finalized') {
+            // Transaction landed successfully
+            if (status.err) {
+              console.error(`[EscrowProgramService] Transaction failed on-chain:`, status.err);
+              return {
+                confirmed: false,
+                error: `Transaction failed: ${JSON.stringify(status.err)}`
+              };
+            }
+            
+            console.log(`[EscrowProgramService] ✅ Transaction confirmed on-chain after ${elapsed.toFixed(1)}s (${attempt} polls)`);
+            return { confirmed: true };
+          }
+        }
+        
+        // After timeout, recommend retry with fresh blockhash
+        if (elapsed > timeoutSeconds) {
+          console.warn(`[EscrowProgramService] Transaction not confirmed after ${timeoutSeconds}s - recommend retry with fresh blockhash`);
+          return {
+            confirmed: false,
+            error: `Transaction not confirmed after ${timeoutSeconds}s. Blockhash may expire soon (${blockhashLastValidHeight - currentHeight} blocks remaining). Retry with fresh blockhash recommended.`
+          };
+        }
+        
+        // Wait before next poll
+        await new Promise(resolve => setTimeout(resolve, pollInterval));
+        
+      } catch (error) {
+        console.error(`[EscrowProgramService] Error polling transaction status:`, error);
+        // Continue polling despite errors
+        await new Promise(resolve => setTimeout(resolve, pollInterval));
+      }
+    }
+    
+    // Max attempts reached
+    console.error(`[EscrowProgramService] Max polling attempts (${maxAttempts}) reached after ${((Date.now() - startTime) / 1000).toFixed(1)}s`);
+    return {
+      confirmed: false,
+      error: `Transaction confirmation timeout after ${maxAttempts} attempts. Status unknown - check explorer.`
+    };
   }
 
   /**
@@ -845,7 +1009,7 @@ export class EscrowProgramService {
         escrowTokenAccount: escrowTokenAccount.toString(),
       });
 
-      // Build deposit_seller_nft instruction (v2)
+      // Build deposit_seller_nft instruction
       const instruction = await (this.program.methods as any)
         .depositSellerNft()
         .accountsStrict({
@@ -1075,7 +1239,8 @@ export class EscrowProgramService {
     buyer: PublicKey,
     nftMint: PublicKey,
     feeCollector: PublicKey,
-    escrowId?: BN // Optional for backward compatibility, will fetch from chain if not provided
+    escrowId?: BN, // Optional for backward compatibility, will fetch from chain if not provided
+    nftBMint?: PublicKey // Optional: Required for NFT_FOR_NFT swaps (buyer's NFT)
   ): Promise<string> {
     try {
       console.log('[EscrowProgramService] Settling escrow:', {
@@ -1123,16 +1288,18 @@ export class EscrowProgramService {
       const isMainnet = isMainnetNetwork(this.provider.connection);
 
       // Build settle transaction
-      // Note: Anchor converts snake_case to camelCase
+      // CRITICAL: Use .accounts() instead of .accountsStrict() to ensure proper writable metadata
+      // .accountsStrict() was NOT applying IDL's writable:true flags, causing ConstraintMut error
+      // Anchor SDK will automatically apply writable flags from IDL when using .accounts()
       // Note: settle is permissionless - anyone can trigger settlement
-      const transaction = await (this.program.methods as any)
+      const instructionBuilder = (this.program.methods as any)
         .settle()
-        .accountsStrict({
+        .accounts({
           caller: this.adminKeypair.publicKey, // Permissionless - admin can trigger
           escrowState: escrowPda,
           solVault: solVaultPda, // NEW: Separate vault PDA holding SOL
           seller,
-          platformFeeCollector: feeCollector,
+          platformFeeCollector: feeCollector, // Must be writable to receive platform fee
           escrowNftAccount,
           buyerNftAccount,
           buyer,
@@ -1140,8 +1307,42 @@ export class EscrowProgramService {
           tokenProgram: TOKEN_PROGRAM_ID,
           associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
           systemProgram: SystemProgram.programId,
-        })
-        .transaction();
+        });
+
+      // Add remaining accounts for NFT B (buyer's NFT in NFT_FOR_NFT swaps)
+      if (nftBMint) {
+        console.log('[EscrowProgramService] Adding NFT B accounts for settlement:', nftBMint.toString());
+        
+        const escrowNftBAccount = await getAssociatedTokenAddress(
+          nftBMint,
+          escrowPda,
+          true,
+          TOKEN_PROGRAM_ID
+        );
+
+        const sellerNftBAccount = await getAssociatedTokenAddress(
+          nftBMint,
+          seller,
+          false,
+          TOKEN_PROGRAM_ID
+        );
+
+        console.log('[EscrowProgramService] NFT B Token accounts:', {
+          escrowNftBAccount: escrowNftBAccount.toString(),
+          sellerNftBAccount: sellerNftBAccount.toString(),
+        });
+
+        // Add remaining accounts - ORDER MATTERS! Must match smart contract expectations
+        // Same order as cancelIfExpired and adminCancel
+        instructionBuilder.remainingAccounts([
+          { pubkey: nftBMint, isSigner: false, isWritable: false },          // 1. NFT B mint
+          { pubkey: escrowNftBAccount, isSigner: false, isWritable: true },  // 2. Source: Escrow's NFT B account
+          { pubkey: sellerNftBAccount, isSigner: false, isWritable: true },  // 3. Destination: Seller's NFT B account
+          { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },  // 4. Token program
+        ]);
+      }
+
+      const transaction = await instructionBuilder.transaction();
 
       // Add Jito tip for mainnet
       if (isMainnet) {
@@ -1280,6 +1481,26 @@ export class EscrowProgramService {
       );
       console.log('[EscrowProgramService] SOL vault PDA:', solVaultPda.toString());
 
+      // Derive escrow NFT A account (seller's NFT held in escrow)
+      // Created by admin during agreement initialization
+      const escrowNftAAccount = await getAssociatedTokenAddress(
+        nftMint,
+        escrowPda,
+        true // allowOwnerOffCurve for PDAs
+      );
+      console.log('[EscrowProgramService] Escrow NFT A account:', escrowNftAAccount.toString());
+
+      // Derive escrow NFT B account (buyer's NFT held in escrow) - only for NFT<>NFT swaps
+      let escrowNftBAccount: PublicKey | undefined;
+      if (nftBMint) {
+        escrowNftBAccount = await getAssociatedTokenAddress(
+          nftBMint,
+          escrowPda,
+          true // allowOwnerOffCurve for PDAs
+        );
+        console.log('[EscrowProgramService] Escrow NFT B account:', escrowNftBAccount.toString());
+      }
+
       // Map string swap type to Anchor enum format (PascalCase)
       // NFT_FOR_SOL -> NftForSol, BUYER -> Buyer
       const swapTypeMap: Record<string, string> = {
@@ -1303,36 +1524,140 @@ export class EscrowProgramService {
       const swapTypeEnum = { [swapTypeVariant.charAt(0).toLowerCase() + swapTypeVariant.slice(1)]: {} };
       const feePayerEnum = { [feePayerVariant.charAt(0).toLowerCase() + feePayerVariant.slice(1)]: {} };
 
+      // Build accounts object - NFT B accounts are optional
+      // For NFT<>SOL swaps, we must use SystemProgram as placeholder to avoid creating duplicate ATAs
+      // The Rust program checks nft_b_mint.is_some() - if we pass actual mint, it tries to create ATA
+      // CRITICAL: escrow_nft_account has PDA definition in IDL with init_if_needed
+      // We pass it explicitly - Anchor will validate it matches PDA derivation
+      // escrow_nft_b_account must be a valid account address, even if unused for NFT<>SOL swaps
+      // Build accounts object:
+      // - escrowNftAccount: Has PDA definition in IDL → Pass explicitly (seed inference not enabled)
+      // - escrowNftBAccount: No PDA definition → MUST be passed (UncheckedAccount in Rust)
+      // 
+      // For NFT_FOR_SOL swaps (no NFT B):
+      // - nftBMint parameter: undefined (Rust sees None) ← Program checks this
+      // - nftBMint account: SystemProgram.programId (placeholder, never used)
+      // - escrowNftBAccount: SystemProgram.programId (placeholder, never used)
+      // 
+      // The Rust program ONLY uses these if nft_b_mint.is_some() (parameter is Some)
+      // When parameter is None, accounts are ignored → safe to pass SystemProgram as placeholder
+      const accounts: any = {
+        escrowState: escrowPda,
+        buyer,
+        seller,
+        solVault: solVaultPda,
+        nftAMint: nftMint,
+        escrowNftAccount: escrowNftAAccount,
+        nftBMint: nftBMint || PublicKey.default, // Use PublicKey.default (zeros) for NFT_FOR_SOL
+        escrowNftBAccount: escrowNftBAccount || PublicKey.default, // Use PublicKey.default (zeros) for NFT_FOR_SOL
+        admin: this.adminKeypair.publicKey,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+      };
+      
+      // Validate that we have NFT B mint for NFT<>NFT swaps
+      // Note: escrowNftBAccount is derived by Anchor, so we don't validate it here
+      if (swapType !== 'NFT_FOR_SOL' && !nftBMint) {
+        throw new Error(`nftBMint is required for swap type ${swapType}`);
+      }
+
+      console.log('[EscrowProgramService] ===== initAgreement Details =====');
+      console.log('[EscrowProgramService] Parameters:', {
+        escrowId: escrowId.toString(),
+        swapType,
+        swapTypeEnum: JSON.stringify(swapTypeEnum),
+        solAmount: solAmount?.toString(),
+        nftMint: nftMint.toString(),
+        nftBMint: nftBMint?.toString() || 'null',
+        expiryTimestamp: expiryTimestamp.toString(),
+        platformFeeBps,
+        feePayer,
+        feePayerEnum: JSON.stringify(feePayerEnum),
+      });
+      console.log('[EscrowProgramService] Accounts:', {
+        escrowState: escrowPda.toString(),
+        buyer: buyer.toString(),
+        seller: seller.toString(),
+        solVault: solVaultPda.toString(),
+        nftAMint: nftMint.toString(),
+        escrowNftAccount: escrowNftAAccount.toString(),
+        nftBMint: (nftBMint || PublicKey.default).toString(),
+        escrowNftBAccount: (escrowNftBAccount || PublicKey.default).toString(),
+        admin: this.adminKeypair.publicKey.toString(),
+        hasNftB: !!nftBMint,
+        isNftForSol: swapType === 'NFT_FOR_SOL',
+        note: 'PublicKey.default (zeros) used as sentinel for NFT_FOR_SOL (Rust checks != Pubkey::default())',
+      });
+      console.log('[EscrowProgramService] =====================================');
+
+      // Prepare instruction parameters with explicit logging
+      // CRITICAL: nft_b_mint now requires a Pubkey (not Option<Pubkey>)
+      // Use PublicKey.default (zeros) as sentinel value for "no NFT B"
+      // Rust checks: has_nft_b = nft_b_mint != Pubkey::default()
+      const initAgreementParams = [
+        escrowId,
+        swapTypeEnum,
+        solAmount ?? null, // Option<u64> - null is OK for BN
+        nftMint, // nft_a_mint parameter (seller's NFT)
+        nftBMint || PublicKey.default, // Pubkey - use PublicKey.default (zeros) for NFT_FOR_SOL
+        expiryTimestamp,
+        platformFeeBps,
+        feePayerEnum
+      ];
+
+      console.log('[EscrowProgramService] ===== Instruction Parameters (DETAILED) =====');
+      console.log('[EscrowProgramService] [0] escrowId:', escrowId.toString(), typeof escrowId);
+      console.log('[EscrowProgramService] [1] swapTypeEnum:', JSON.stringify(swapTypeEnum), typeof swapTypeEnum);
+      console.log('[EscrowProgramService] [2] solAmount:', solAmount?.toString() || 'null', typeof (solAmount || null));
+      console.log('[EscrowProgramService] [3] nftMint (nft_a_mint):', nftMint.toString(), typeof nftMint);
+      console.log('[EscrowProgramService] [4] nftBMint (nft_b_mint):', 
+        (nftBMint || PublicKey.default).toString(), 
+        'hasRealNFT:', !!nftBMint,
+        'usingSentinel (PublicKey.default):', !nftBMint);
+      console.log('[EscrowProgramService] [5] expiryTimestamp:', expiryTimestamp.toString(), typeof expiryTimestamp);
+      console.log('[EscrowProgramService] [6] platformFeeBps:', platformFeeBps, typeof platformFeeBps);
+      console.log('[EscrowProgramService] [7] feePayerEnum:', JSON.stringify(feePayerEnum), typeof feePayerEnum);
+      console.log('[EscrowProgramService] =====================================');
+
       // Build instruction
       // Note: Anchor converts snake_case (Rust) to camelCase (TypeScript)
-      const instruction = await (this.program.methods as any)
-        .initAgreement(
-          escrowId,
-          swapTypeEnum,
-          solAmount || null,
-          nftMint, // nft_a_mint parameter (seller's NFT)
-          nftBMint || null, // nft_b_mint parameter (buyer's NFT for certain swap types)
-          expiryTimestamp,
-          platformFeeBps,
-          feePayerEnum
-        )
-        .accountsStrict({
-          escrowState: escrowPda, // Anchor converts escrow_state -> escrowState
-          buyer,
-          seller,
-          solVault: solVaultPda, // NEW: Separate PDA for holding SOL lamports
-          admin: this.adminKeypair.publicKey,
-          systemProgram: SystemProgram.programId, // Anchor converts system_program -> systemProgram
-        })
-        .instruction();
+      // escrow_nft_account has PDA definition in IDL with init_if_needed
+      // Use .accounts() instead of .accountsStrict() to allow Anchor to handle PDA derivation
+      // Anchor will automatically derive escrow_nft_account PDA based on escrow_state and nft_a_mint
+      let instruction;
+      try {
+        instruction = await (this.program.methods as any)
+          .initAgreement(...initAgreementParams)
+          .accounts(accounts)
+          .instruction();
+      } catch (instructionError: any) {
+        console.error('[EscrowProgramService] Failed to build instruction:', instructionError);
+        console.error('[EscrowProgramService] Error details:', {
+          message: instructionError?.message,
+          stack: instructionError?.stack,
+          accounts: Object.keys(accounts),
+        });
+        throw new Error(
+          `Failed to build initAgreement instruction: ${instructionError?.message || 'Unknown error'}`
+        );
+      }
 
-      console.log('[EscrowProgramService] V2 Instruction built');
+      console.log('[EscrowProgramService] ✅ Instruction built successfully');
+      console.log('[EscrowProgramService] Instruction keys count:', instruction.keys.length);
+      console.log('[EscrowProgramService] Instruction data length:', instruction.data.length);
 
       // Fix: Set buyer and seller as NON-signers (Anchor bug workaround)
       instruction.keys.forEach((key: any) => {
         if (key.pubkey.equals(buyer) || key.pubkey.equals(seller)) {
+          console.log('[EscrowProgramService] Setting non-signer:', key.pubkey.toString());
           key.isSigner = false;
         }
+      });
+      
+      console.log('[EscrowProgramService] Final instruction keys:');
+      instruction.keys.forEach((key: any, index: number) => {
+        console.log(`  [${index}] ${key.pubkey.toString()} - signer:${key.isSigner}, writable:${key.isWritable}`);
       });
 
       // Create transaction with compute budget and instruction
@@ -1396,17 +1721,38 @@ export class EscrowProgramService {
 
       // Sign with admin only
       transaction.feePayer = this.adminKeypair.publicKey;
-      transaction.recentBlockhash = (
-        await this.provider.connection.getLatestBlockhash()
-      ).blockhash;
+      
+      // Get recent blockhash with lastValidBlockHeight for expiration tracking
+      // Use 'confirmed' commitment (not 'finalized') to maximize blockhash lifetime
+      const { blockhash, lastValidBlockHeight } = await this.provider.connection.getLatestBlockhash('confirmed');
+      transaction.recentBlockhash = blockhash;
       transaction.sign(this.adminKeypair);
 
       console.log(
-        '[EscrowProgramService] V2 Transaction signed by admin, sending to network...'
+        '[EscrowProgramService] Transaction signed by admin, sending to network...'
       );
 
-      // Send transaction via Jito Block Engine
+      // Send transaction via Jito Block Engine (returns immediately)
       const txId = await this.sendTransactionViaJito(transaction, isMainnet);
+
+      console.log('[EscrowProgramService] Transaction sent, waiting for confirmation...');
+
+      // Wait for confirmation using proper Jito polling
+      // Mainnet: 60s timeout (handles network congestion), Devnet: 30s timeout
+      const timeoutSeconds = isMainnet ? 60 : 30;
+      const confirmResult = await this.waitForJitoConfirmation(
+        txId,
+        blockhash,
+        lastValidBlockHeight,
+        30, // max 30 polling attempts (~45 seconds with tiered intervals)
+        timeoutSeconds // timeout before recommending fresh blockhash
+      );
+
+      if (!confirmResult.confirmed) {
+        throw new Error(
+          `Transaction confirmation failed: ${confirmResult.error || 'Unknown error'}`
+        );
+      }
 
       console.log('[EscrowProgramService] Escrow initialized:', {
         pda: escrowPda.toString(),
@@ -2249,10 +2595,7 @@ export class EscrowProgramService {
       );
       console.log('[EscrowProgramService] SOL vault PDA for cancel:', solVaultPda.toString());
 
-      // Build remaining_accounts for refunds
-      const remainingAccounts: any[] = [];
-
-      // Add NFT A accounts (seller's NFT to refund)
+      // Derive NFT A accounts (seller's NFT to refund) - now required in accountsStrict
       const escrowNftAccount = await getAssociatedTokenAddress(
         nftMint,
         escrowPda,
@@ -2267,14 +2610,26 @@ export class EscrowProgramService {
         TOKEN_PROGRAM_ID
       );
 
-      remainingAccounts.push(
-        { pubkey: nftMint, isSigner: false, isWritable: false },
-        { pubkey: escrowNftAccount, isSigner: false, isWritable: true },
-        { pubkey: sellerNftAccount, isSigner: false, isWritable: true },
-        { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false }
-      );
+      // Build instruction matching new IDL structure
+      // NFT A (seller's NFT): Now required accounts in accountsStrict
+      // NFT B (buyer's NFT): Still uses remainingAccounts for NFT_FOR_NFT swaps
+      const instructionBuilder = (this.program.methods as any)
+        .cancelIfExpired()
+        .accountsStrict({
+          caller: this.adminKeypair.publicKey, // Caller receives rent refund as cleanup reward
+          escrowState: escrowPda,
+          solVault: solVaultPda,
+          buyer,
+          seller, // Required for seller SOL refunds in NFT_FOR_NFT_WITH_FEE
+          sellerNftAccount, // NFT A: Now required
+          escrowNftAccount, // NFT A: Now required
+          tokenProgram: TOKEN_PROGRAM_ID, // Now required
+          systemProgram: SystemProgram.programId,
+        });
 
-      // For NFT<>NFT swaps, add NFT B accounts (buyer's NFT to refund)
+      // Build remaining accounts for NFT B (buyer's NFT in NFT_FOR_NFT swaps)
+      const remainingAccountsForNftB: any[] = [];
+
       if (
         (swapType === 'NFT_FOR_NFT_WITH_FEE' || swapType === 'NFT_FOR_NFT_PLUS_SOL') &&
         nftBMint
@@ -2293,7 +2648,7 @@ export class EscrowProgramService {
           TOKEN_PROGRAM_ID
         );
 
-        remainingAccounts.push(
+        remainingAccountsForNftB.push(
           { pubkey: nftBMint, isSigner: false, isWritable: false },
           { pubkey: escrowNftBAccount, isSigner: false, isWritable: true },
           { pubkey: buyerNftBAccount, isSigner: false, isWritable: true },
@@ -2301,18 +2656,12 @@ export class EscrowProgramService {
         );
       }
 
-      // Build instruction
-      const instruction = await (this.program.methods as any)
-        .cancelIfExpired()
-        .accountsStrict({
-          escrowState: escrowPda,
-          solVault: solVaultPda, // NEW: Vault PDA for SOL refunds
-          buyer,
-          seller,
-          systemProgram: SystemProgram.programId,
-        })
-        .remainingAccounts(remainingAccounts)
-        .instruction();
+      // Add remaining accounts for NFT B if this is an NFT_FOR_NFT swap
+      if (remainingAccountsForNftB.length > 0) {
+        instructionBuilder.remainingAccounts(remainingAccountsForNftB);
+      }
+
+      const instruction = await instructionBuilder.instruction();
 
       // Create transaction
       const { Transaction, ComputeBudgetProgram } = await import('@solana/web3.js');
@@ -2416,10 +2765,7 @@ export class EscrowProgramService {
       );
       console.log('[EscrowProgramService] SOL vault PDA for admin cancel:', solVaultPda.toString());
 
-      // Build remaining_accounts (same as cancelIfExpiredV2)
-      const remainingAccounts: any[] = [];
-
-      // Add NFT A accounts
+      // Derive NFT A accounts (seller's NFT to refund)
       const escrowNftAccount = await getAssociatedTokenAddress(
         nftMint,
         escrowPda,
@@ -2434,14 +2780,10 @@ export class EscrowProgramService {
         TOKEN_PROGRAM_ID
       );
 
-      remainingAccounts.push(
-        { pubkey: nftMint, isSigner: false, isWritable: false },
-        { pubkey: escrowNftAccount, isSigner: false, isWritable: true },
-        { pubkey: sellerNftAccount, isSigner: false, isWritable: true },
-        { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false }
-      );
+      // Build remaining accounts for NFT B (buyer's NFT in NFT_FOR_NFT swaps)
+      // NFT A accounts are now in accountsStrict, but NFT B still needs remainingAccounts
+      const remainingAccounts: any[] = [];
 
-      // Add NFT B accounts if needed
       if (
         (swapType === 'NFT_FOR_NFT_WITH_FEE' || swapType === 'NFT_FOR_NFT_PLUS_SOL') &&
         nftBMint
@@ -2460,6 +2802,7 @@ export class EscrowProgramService {
           TOKEN_PROGRAM_ID
         );
 
+        // Add NFT B accounts to remaining accounts for buyer's NFT refund
         remainingAccounts.push(
           { pubkey: nftBMint, isSigner: false, isWritable: false },
           { pubkey: escrowNftBAccount, isSigner: false, isWritable: true },
@@ -2468,19 +2811,29 @@ export class EscrowProgramService {
         );
       }
 
-      // Build instruction
-      const instruction = await (this.program.methods as any)
+      // Build instruction matching new IDL structure
+      // NFT A (seller's NFT): Now required accounts in accountsStrict
+      // NFT B (buyer's NFT): Still uses remainingAccounts for NFT_FOR_NFT swaps
+      const instructionBuilder = (this.program.methods as any)
         .adminCancel()
         .accountsStrict({
           admin: this.adminKeypair.publicKey,
           escrowState: escrowPda,
-          solVault: solVaultPda, // NEW: Vault PDA for SOL refunds
+          solVault: solVaultPda,
           buyer,
-          seller,
+          seller, // ADDED: Required for seller SOL refunds in NFT_FOR_NFT_WITH_FEE
+          sellerNftAccount, // NFT A: Now required (was in remainingAccounts)
+          escrowNftAccount, // NFT A: Now required (was in remainingAccounts)
+          tokenProgram: TOKEN_PROGRAM_ID, // Now required
           systemProgram: SystemProgram.programId,
-        })
-        .remainingAccounts(remainingAccounts)
-        .instruction();
+        });
+
+      // Add remaining accounts for NFT B if this is an NFT_FOR_NFT swap
+      if (remainingAccounts.length > 0) {
+        instructionBuilder.remainingAccounts(remainingAccounts);
+      }
+
+      const instruction = await instructionBuilder.instruction();
 
       // Create transaction
       const { Transaction, ComputeBudgetProgram } = await import('@solana/web3.js');
@@ -2540,6 +2893,119 @@ export class EscrowProgramService {
           error instanceof Error ? error.message : 'Unknown error'
         }`
       );
+    }
+  }
+
+  /**
+   * Close escrow account and recover rent-exempt reserve
+   * Can only be called after escrow reaches terminal state (Completed or Cancelled)
+   * Returns rent to admin wallet (who paid for account creation)
+   * 
+   * @param escrowPda - Escrow PDA address
+   * @returns Transaction signature
+   */
+  async closeEscrow(escrowPda: PublicKey): Promise<string> {
+    try {
+      console.log('[EscrowProgramService] Closing escrow account:', escrowPda.toString());
+
+      // Fetch escrow state with retry logic to handle timing issues
+      // After settlement, the on-chain state may not be immediately available due to:
+      // - RPC node cache invalidation delay
+      // - Network propagation time
+      // - Transaction confirmation vs. account state update timing
+      const maxRetries = 5;
+      const retryDelayMs = 3000; // 3 seconds between retries (up to 15s total wait)
+      let escrowState: any;
+      let status: any;
+      let isCompleted = false;
+      let isCancelled = false;
+
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          escrowState = await this.program.account.escrowState.fetch(escrowPda);
+          console.log(`[EscrowProgramService] Escrow status (attempt ${attempt}/${maxRetries}):`, escrowState.status);
+
+          // Validate terminal state
+          // Status is an enum object: { pending: {} } | { completed: {} } | { cancelled: {} }
+          status = escrowState.status as any;
+          isCompleted = status.completed !== undefined;
+          isCancelled = status.cancelled !== undefined;
+
+          if (isCompleted || isCancelled) {
+            // Terminal state reached
+            break;
+          }
+
+          if (attempt < maxRetries) {
+            console.log(`[EscrowProgramService] Status still pending, waiting ${retryDelayMs}ms before retry...`);
+            await new Promise(resolve => setTimeout(resolve, retryDelayMs));
+          }
+        } catch (fetchError: any) {
+          // Handle transient RPC errors (network issues, timeouts, etc.)
+          console.warn(`[EscrowProgramService] Failed to fetch escrow state (attempt ${attempt}/${maxRetries}):`, fetchError.message);
+          
+          if (attempt < maxRetries) {
+            console.log(`[EscrowProgramService] Retrying after ${retryDelayMs}ms...`);
+            await new Promise(resolve => setTimeout(resolve, retryDelayMs));
+          } else {
+            // All retries exhausted, throw the fetch error
+            throw new Error(`Failed to fetch escrow state after ${maxRetries} attempts: ${fetchError.message}`);
+          }
+        }
+      }
+      
+      if (!isCompleted && !isCancelled) {
+        throw new Error(`Cannot close escrow in status: ${JSON.stringify(status)} after ${maxRetries} attempts. The escrow state may not have propagated yet.`);
+      }
+
+      // Build close instruction
+      const instruction = await (this.program.methods as any)
+        .closeEscrow()
+        .accountsStrict({
+          admin: this.adminKeypair.publicKey,
+          escrowState: escrowPda,
+        })
+        .instruction();
+
+      // Create transaction
+      const { Transaction } = await import('@solana/web3.js');
+      const transaction = new Transaction().add(instruction);
+
+      // Get recent blockhash
+      const { blockhash, lastValidBlockHeight } =
+        await this.provider.connection.getLatestBlockhash('finalized');
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = this.adminKeypair.publicKey;
+
+      // Sign transaction
+      transaction.sign(this.adminKeypair);
+
+      // Send and confirm transaction
+      const signature = await this.provider.connection.sendRawTransaction(
+        transaction.serialize(),
+        {
+          skipPreflight: false,
+          maxRetries: 3,
+        }
+      );
+
+      console.log('[EscrowProgramService] Close escrow transaction sent:', signature);
+
+      // Confirm transaction
+      await this.provider.connection.confirmTransaction(
+        {
+          signature,
+          blockhash,
+          lastValidBlockHeight,
+        },
+        'confirmed'
+      );
+
+      console.log('[EscrowProgramService] Escrow account closed successfully');
+      return signature;
+    } catch (error: any) {
+      console.error('[EscrowProgramService] Failed to close escrow:', error);
+      throw new Error(`Failed to close escrow account: ${error.message}`);
     }
   }
 

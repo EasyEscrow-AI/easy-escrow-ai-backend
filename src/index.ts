@@ -6,7 +6,7 @@ import swaggerUi from 'swagger-ui-express';
 import YAML from 'yamljs';
 import { connectDatabase, checkDatabaseHealth } from './config/database';
 import { connectRedis, checkRedisHealth, disconnectRedis } from './config/redis';
-import { agreementRoutes, expiryCancellationRoutes, webhookRoutes, receiptRoutes, transactionLogRoutes, healthRoutes } from './routes';
+import { agreementRoutes, expiryCancellationRoutes, webhookRoutes, receiptRoutes, transactionLogRoutes, healthRoutes, offersRoutes } from './routes';
 import {
   corsOptions,
   helmetConfig,
@@ -79,6 +79,9 @@ const stuckAgreementMonitor = getStuckAgreementMonitor({
   warningThresholdMinutes: 10, // Warn if stuck for 10 minutes
   criticalThresholdMinutes: 30, // Critical if stuck for 30 minutes
   checkIntervalMs: 60000, // Check every minute
+  autoRefundEnabled: true, // ✅ NEW: Automatically refund stuck agreements
+  autoRefundThresholdMinutes: 15, // ✅ NEW: Auto-refund after 15 minutes
+  maxAgeHours: 24, // ✅ NEW: Only check agreements updated within last 24 hours (prevents accumulation)
 });
 
 // Register alert handlers for stuck agreements
@@ -234,6 +237,7 @@ app.get('/', (_req: Request, res: Response) => {
     endpoints: {
       health: '/health',
       agreements: '/v1/agreements',
+      offers: '/api/offers',
       receipts: '/v1/receipts',
       transactions: '/v1/transactions',
       expiryCancellation: '/api/expiry-cancellation',
@@ -270,6 +274,7 @@ if (swaggerDocument) {
 
 // API Routes
 app.use(agreementRoutes);
+app.use(offersRoutes);
 app.use(receiptRoutes);
 app.use('/v1/transactions', transactionLogRoutes);
 app.use('/api/expiry-cancellation', expiryCancellationRoutes);

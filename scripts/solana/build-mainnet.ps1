@@ -15,8 +15,8 @@ Write-Host "🏗️  Building Solana Program for MAINNET..." -ForegroundColor Cy
 Write-Host "Program ID: 2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx" -ForegroundColor Yellow
 Write-Host ""
 
-# Build with mainnet feature
-anchor build --features mainnet
+# Build with mainnet feature (pass to cargo via --)
+anchor build -- --features mainnet
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host ""

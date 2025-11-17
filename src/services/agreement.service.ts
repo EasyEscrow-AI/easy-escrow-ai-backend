@@ -71,13 +71,44 @@ export const createAgreement = async (
     let solAmount: BN | undefined;
     let nftBMint: PublicKey | undefined;
 
-    // Convert SOL amount to lamports if provided
+    // For NFT_FOR_NFT_WITH_FEE, backend is authoritative on total platform fee
+    // Client's solAmount is ignored for this swap type to prevent premature settlement
+    if (swapType === SwapType.NFT_FOR_NFT_WITH_FEE) {
+      const feeBps = data.feeBps ?? 100; // Default 1% if not provided
+      const LAMPORTS_PER_SOL = 1000000000;
+      
+      // Platform fee is split between buyer and seller (0.005 SOL each for 1% = 0.01 SOL total)
+      // Calculate: (feeBps / 10000) * 1 SOL as base, but minimum 0.01 SOL for operational reasons
+      const platformFeeLamports = Math.max(
+        Math.floor((feeBps / 10000) * LAMPORTS_PER_SOL),
+        10000000 // Minimum 0.01 SOL total platform fee
+      );
+      // CRITICAL: Set solAmount to BUYER'S PORTION ONLY (half of total)
+      // The smart contract's deposit_sol instruction reads this value from escrow state
+      // and requires the buyer to transfer exactly this amount.
+      // Seller deposits their half separately via deposit_seller_sol_fee.
+      const buyerPortion = Math.floor(platformFeeLamports / 2);
+      solAmount = new BN(buyerPortion);
+      console.log(`[AgreementService] NFT_FOR_NFT_WITH_FEE: Buyer portion (solAmount): ${solAmount.toString()} lamports (${buyerPortion / LAMPORTS_PER_SOL} SOL) [BACKEND AUTHORITATIVE]`);
+      console.log(`[AgreementService] NFT_FOR_NFT_WITH_FEE: Total platform fee: ${platformFeeLamports} lamports (${platformFeeLamports / LAMPORTS_PER_SOL} SOL)`);
+      
+      // Log warning if client sent a different value
     if (data.solAmount !== undefined) {
+        const clientValue = typeof data.solAmount === 'string' ? parseInt(data.solAmount, 10) : data.solAmount;
+        console.warn(`[AgreementService] NFT_FOR_NFT_WITH_FEE: Ignoring client solAmount=${clientValue}, using calculated total fee=${platformFeeLamports}`);
+      }
+    } 
+    // Convert SOL amount to lamports if provided (for other swap types)
+    else if (data.solAmount !== undefined) {
       const solAmountNum = typeof data.solAmount === 'string' 
         ? parseInt(data.solAmount, 10) 
         : data.solAmount;
       solAmount = new BN(solAmountNum);
       console.log(`[AgreementService] SOL amount: ${solAmount.toString()} lamports`);
+    } else if (swapType === SwapType.NFT_FOR_NFT_PLUS_SOL) {
+      // Note: NFT_FOR_NFT_PLUS_SOL should have solAmount provided by client (SOL amount + fee)
+      // If not provided, we don't auto-calculate it since we don't know the intended SOL amount
+      console.warn(`[AgreementService] NFT_FOR_NFT_PLUS_SOL: No solAmount provided by client`);
     }
 
     // Parse buyer's NFT mint if provided (for NFT<>NFT swaps)
@@ -115,12 +146,17 @@ export const createAgreement = async (
     );
 
     let buyerNftAta: PublicKey | undefined;
+    let buyerNftBDepositAddr: string | null = null;
     if (nftBMint) {
+      // Derive escrow's NFT B token account (where buyer deposits their NFT)
+      // This is the escrow PDA's associated token account for NFT B
       buyerNftAta = await getAssociatedTokenAddress(
         nftBMint,
-        escrowResult.pda,
+        escrowResult.pda,  // Escrow PDA, not buyer wallet
         true // allowOwnerOffCurve for PDAs
       );
+      buyerNftBDepositAddr = buyerNftAta.toString();
+      console.log(`[AgreementService] Derived escrow NFT B deposit address: ${buyerNftBDepositAddr}`);
     }
 
     // 7. Store agreement in database with SOL fields
@@ -149,7 +185,8 @@ export const createAgreement = async (
         
         // Deposit addresses
         usdcDepositAddr: null, // DEPRECATED: V2 uses SOL sent directly to escrowPda, not USDC token accounts
-        nftDepositAddr: sellerNftAta.toString(),
+        nftDepositAddr: sellerNftAta.toString(),       // Seller's NFT A deposit address
+        nftBDepositAddr: buyerNftBDepositAddr,         // Buyer's NFT B deposit address (for NFT<>NFT swaps)
         
         initTxId: escrowResult.txId,
       },
@@ -412,6 +449,7 @@ const mapAgreementToDTO = (agreement: any): AgreementResponseDTO => {
     // Deprecated USDC deposit address
     usdcDepositAddr: agreement.usdcDepositAddr || undefined,
     nftDepositAddr: agreement.nftDepositAddr || undefined,
+    nftBDepositAddr: agreement.nftBDepositAddr || undefined, // Escrow's NFT B token account for NFT<>NFT swaps
     
     initTxId: agreement.initTxId || undefined,
     settleTxId: agreement.settleTxId || undefined,
@@ -477,7 +515,8 @@ const mapAgreementToDetailDTO = (agreement: any): AgreementDetailResponseDTO => 
   const canBeCancelled =
     isExpired &&
     (agreement.status === AgreementStatus.PENDING ||
-      agreement.status === AgreementStatus.USDC_LOCKED ||
+      agreement.status === AgreementStatus.SOL_LOCKED ||
+      agreement.status === AgreementStatus.USDC_LOCKED || // Legacy V1
       agreement.status === AgreementStatus.NFT_LOCKED ||
       agreement.status === AgreementStatus.BOTH_LOCKED);
 
@@ -639,14 +678,15 @@ export const prepareDepositNftTransaction = async (
       throw new Error(`Agreement not found: ${agreementId}`);
     }
 
-    // 2. Validate status - allow NFT deposit when PENDING or USDC_LOCKED
+    // 2. Validate status - allow NFT deposit when PENDING, SOL_LOCKED, or USDC_LOCKED
     const allowedStatuses: AgreementStatus[] = [
       AgreementStatus.PENDING,
-      AgreementStatus.USDC_LOCKED,
+      AgreementStatus.SOL_LOCKED,    // V2: Buyer's SOL already deposited
+      AgreementStatus.USDC_LOCKED,   // Legacy V1
     ];
     if (!allowedStatuses.includes(agreement.status)) {
       throw new Error(
-        `Cannot deposit NFT: Agreement status is ${agreement.status}. Must be PENDING or USDC_LOCKED.`
+        `Cannot deposit NFT: Agreement status is ${agreement.status}. Must be PENDING, SOL_LOCKED, or USDC_LOCKED.`
       );
     }
 
@@ -753,14 +793,15 @@ export const depositNftToEscrow = async (
       throw new Error(`Agreement not found: ${agreementId}`);
     }
 
-    // 2. Validate status - allow NFT deposit when PENDING or USDC_LOCKED
+    // 2. Validate status - allow NFT deposit when PENDING, SOL_LOCKED, or USDC_LOCKED
     const allowedStatuses: AgreementStatus[] = [
       AgreementStatus.PENDING,
-      AgreementStatus.USDC_LOCKED,
+      AgreementStatus.SOL_LOCKED,    // V2: Buyer's SOL already deposited
+      AgreementStatus.USDC_LOCKED,   // Legacy V1
     ];
     if (!allowedStatuses.includes(agreement.status)) {
       throw new Error(
-        `Cannot deposit NFT: Agreement status is ${agreement.status}. Must be PENDING or USDC_LOCKED.`
+        `Cannot deposit NFT: Agreement status is ${agreement.status}. Must be PENDING, SOL_LOCKED, or USDC_LOCKED.`
       );
     }
 
@@ -957,10 +998,21 @@ export const prepareDepositSolTransaction = async (
     const escrowService = new EscrowProgramService();
     const escrowPda = new PublicKey(agreement.escrowPda);
     const buyer = new PublicKey(agreement.buyer);
-    // Convert Prisma Decimal to string before passing to BN
-    const solAmount = new BN(agreement.solAmount.toString());
+    
+    // Calculate deposit amount based on swap type
+    // CRITICAL: For NFT_FOR_NFT_WITH_FEE, agreement.solAmount is BUYER'S PORTION ONLY (0.005 SOL)
+    // NOT the total fee! The smart contract reads this value from on-chain state.
+    // Seller deposits their half separately via deposit_seller_sol_fee.
+    const depositAmount = new BN(agreement.solAmount.toString());
+    
+    if (agreement.swapType === 'NFT_FOR_NFT_WITH_FEE') {
+      console.log(`[AgreementService] NFT_FOR_NFT_WITH_FEE: Buyer deposits their portion: ${depositAmount.toString()} lamports (${depositAmount.toNumber() / 1000000000} SOL)`);
+    } else {
+      // For NFT_FOR_SOL and NFT_FOR_NFT_PLUS_SOL, buyer deposits full amount
+      console.log(`[AgreementService] ${agreement.swapType}: Buyer deposits full amount: ${depositAmount.toString()} lamports`);
+    }
 
-    const result = await escrowService.buildDepositSolTransaction(escrowPda, buyer, solAmount);
+    const result = await escrowService.buildDepositSolTransaction(escrowPda, buyer, depositAmount);
 
     console.log('[AgreementService] Unsigned SOL deposit transaction prepared');
 
@@ -1003,11 +1055,11 @@ export const prepareDepositSellerSolFeeTransaction = async (
     const allowedStatuses: AgreementStatus[] = [
       AgreementStatus.PENDING,
       AgreementStatus.NFT_LOCKED,
-      AgreementStatus.USDC_LOCKED, // In case buyer deposited first
+      AgreementStatus.SOL_LOCKED, // In case buyer deposited SOL fee first
     ];
     if (!allowedStatuses.includes(agreement.status)) {
       throw new Error(
-        `Cannot deposit seller SOL fee: Agreement status is ${agreement.status}. Must be PENDING, NFT_LOCKED, or USDC_LOCKED.`
+        `Cannot deposit seller SOL fee: Agreement status is ${agreement.status}. Must be PENDING, NFT_LOCKED, or SOL_LOCKED.`
       );
     }
 
@@ -1079,11 +1131,11 @@ export const prepareDepositBuyerNftTransaction = async (
     const allowedStatuses: AgreementStatus[] = [
       AgreementStatus.PENDING,
       AgreementStatus.NFT_LOCKED,
-      AgreementStatus.USDC_LOCKED, // In case seller deposited SOL fee first
+      AgreementStatus.SOL_LOCKED, // In case seller deposited SOL fee first
     ];
     if (!allowedStatuses.includes(agreement.status)) {
       throw new Error(
-        `Cannot deposit buyer NFT: Agreement status is ${agreement.status}. Must be PENDING, NFT_LOCKED, or USDC_LOCKED.`
+        `Cannot deposit buyer NFT: Agreement status is ${agreement.status}. Must be PENDING, NFT_LOCKED, or SOL_LOCKED.`
       );
     }
 
@@ -1172,7 +1224,7 @@ export const depositSolToEscrow = async (
       (d) => d.type === 'NFT' && d.status === 'CONFIRMED'
     );
 
-    const newStatus = nftDeposit ? AgreementStatus.BOTH_LOCKED : AgreementStatus.USDC_LOCKED;
+    const newStatus = nftDeposit ? AgreementStatus.BOTH_LOCKED : AgreementStatus.SOL_LOCKED;
     
     await prisma.agreement.update({
       where: { id: agreement.id },

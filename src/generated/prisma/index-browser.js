@@ -134,6 +134,7 @@ exports.Prisma.AgreementScalarFieldEnum = {
   expiry: 'expiry',
   usdcDepositAddr: 'usdcDepositAddr',
   nftDepositAddr: 'nftDepositAddr',
+  nftBDepositAddr: 'nftBDepositAddr',
   initTxId: 'initTxId',
   settleTxId: 'settleTxId',
   cancelTxId: 'cancelTxId',
@@ -242,6 +243,68 @@ exports.Prisma.WebhookScalarFieldEnum = {
   scheduledFor: 'scheduledFor'
 };
 
+exports.Prisma.UserScalarFieldEnum = {
+  id: 'id',
+  walletAddress: 'walletAddress',
+  nonceAccount: 'nonceAccount',
+  isSubsidized: 'isSubsidized',
+  totalSwapsCompleted: 'totalSwapsCompleted',
+  totalFeesPaidLamports: 'totalFeesPaidLamports',
+  swapStats: 'swapStats',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.NoncePoolScalarFieldEnum = {
+  id: 'id',
+  nonceAccount: 'nonceAccount',
+  status: 'status',
+  lastUsedAt: 'lastUsedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.SwapOfferScalarFieldEnum = {
+  id: 'id',
+  makerWallet: 'makerWallet',
+  takerWallet: 'takerWallet',
+  offerType: 'offerType',
+  parentOfferId: 'parentOfferId',
+  offeredAssets: 'offeredAssets',
+  requestedAssets: 'requestedAssets',
+  platformFeeLamports: 'platformFeeLamports',
+  status: 'status',
+  expiresAt: 'expiresAt',
+  nonceAccount: 'nonceAccount',
+  currentNonceValue: 'currentNonceValue',
+  serializedTransaction: 'serializedTransaction',
+  transactionSignature: 'transactionSignature',
+  filledAt: 'filledAt',
+  cancelledAt: 'cancelledAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.SwapTransactionScalarFieldEnum = {
+  id: 'id',
+  offerId: 'offerId',
+  counterOfferId: 'counterOfferId',
+  signature: 'signature',
+  makerWallet: 'makerWallet',
+  takerWallet: 'takerWallet',
+  platformFeeCollectedLamports: 'platformFeeCollectedLamports',
+  totalValueLamports: 'totalValueLamports',
+  executedAt: 'executedAt',
+  transactionSignature: 'transactionSignature',
+  status: 'status',
+  gasFee: 'gasFee',
+  isSubsidized: 'isSubsidized',
+  errorMessage: 'errorMessage',
+  confirmedAt: 'confirmedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -275,6 +338,7 @@ exports.AgreementStatus = exports.$Enums.AgreementStatus = {
   PENDING: 'PENDING',
   FUNDED: 'FUNDED',
   USDC_LOCKED: 'USDC_LOCKED',
+  SOL_LOCKED: 'SOL_LOCKED',
   NFT_LOCKED: 'NFT_LOCKED',
   BOTH_LOCKED: 'BOTH_LOCKED',
   SETTLED: 'SETTLED',
@@ -323,6 +387,35 @@ exports.WebhookDeliveryStatus = exports.$Enums.WebhookDeliveryStatus = {
   RETRYING: 'RETRYING'
 };
 
+exports.NonceStatus = exports.$Enums.NonceStatus = {
+  AVAILABLE: 'AVAILABLE',
+  IN_USE: 'IN_USE',
+  EXPIRED: 'EXPIRED',
+  INVALID: 'INVALID'
+};
+
+exports.OfferType = exports.$Enums.OfferType = {
+  MAKER_OFFER: 'MAKER_OFFER',
+  COUNTER_OFFER: 'COUNTER_OFFER',
+  COUNTER: 'COUNTER'
+};
+
+exports.OfferStatus = exports.$Enums.OfferStatus = {
+  ACTIVE: 'ACTIVE',
+  MATCHED: 'MATCHED',
+  CANCELLED: 'CANCELLED',
+  EXPIRED: 'EXPIRED',
+  COMPLETED: 'COMPLETED',
+  FILLED: 'FILLED'
+};
+
+exports.TransactionStatus = exports.$Enums.TransactionStatus = {
+  PENDING: 'PENDING',
+  CONFIRMED: 'CONFIRMED',
+  FAILED: 'FAILED',
+  CANCELLED: 'CANCELLED'
+};
+
 exports.Prisma.ModelName = {
   Agreement: 'Agreement',
   Deposit: 'Deposit',
@@ -330,7 +423,11 @@ exports.Prisma.ModelName = {
   Settlement: 'Settlement',
   Receipt: 'Receipt',
   TransactionLog: 'TransactionLog',
-  Webhook: 'Webhook'
+  Webhook: 'Webhook',
+  User: 'User',
+  NoncePool: 'NoncePool',
+  SwapOffer: 'SwapOffer',
+  SwapTransaction: 'SwapTransaction'
 };
 
 /**

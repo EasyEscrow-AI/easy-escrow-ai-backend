@@ -8,6 +8,9 @@
 export * from './database';
 export * from './redis';
 export * from './validation';
+export * from './constants';
+export * from './atomicSwap.config';
+export * from './noncePool.config';
 
 // Environment configuration
 export const config = {
@@ -52,7 +55,18 @@ export const config = {
   // Platform
   platform: {
     feeBps: parseInt(process.env.PLATFORM_FEE_BPS || '250', 10),
-    feeCollectorAddress: process.env.DEVNET_STAGING_FEE_COLLECTOR_ADDRESS || process.env.PLATFORM_FEE_COLLECTOR_ADDRESS || '',
+    feeCollectorAddress: (() => {
+      const nodeEnv = process.env.NODE_ENV || 'development';
+      // Use environment-specific fee collector address
+      switch (nodeEnv) {
+        case 'production':
+          return process.env.MAINNET_PROD_FEE_COLLECTOR_ADDRESS || process.env.PLATFORM_FEE_COLLECTOR_ADDRESS || '';
+        case 'staging':
+          return process.env.DEVNET_STAGING_FEE_COLLECTOR_ADDRESS || process.env.PLATFORM_FEE_COLLECTOR_ADDRESS || '';
+        default:
+          return process.env.DEVNET_FEE_COLLECTOR_ADDRESS || process.env.PLATFORM_FEE_COLLECTOR_ADDRESS || '';
+      }
+    })(),
   },
   
   // Webhooks

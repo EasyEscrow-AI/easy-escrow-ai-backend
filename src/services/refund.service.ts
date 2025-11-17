@@ -168,6 +168,8 @@ export class RefundService {
       const hasDeposits = agreement.deposits.length > 0;
 
       // Check if agreement status allows refunds
+      // ARCHIVED is included because test cleanup marks failed agreements as ARCHIVED
+      // but they may still have stuck assets in escrow PDAs that need to be refunded
       const refundableStatuses: AgreementStatus[] = [
         AgreementStatus.EXPIRED,
         AgreementStatus.CANCELLED,
@@ -176,6 +178,7 @@ export class RefundService {
         AgreementStatus.USDC_LOCKED,
         AgreementStatus.NFT_LOCKED,
         AgreementStatus.BOTH_LOCKED,
+        AgreementStatus.ARCHIVED, // Allow refunds for archived agreements with stuck assets
       ];
 
       if (!refundableStatuses.includes(agreement.status)) {
@@ -259,7 +262,8 @@ export class RefundService {
         throw new Error(`Agreement ${agreementId} not found`);
       }
 
-      // Process each deposit refund
+      // Process each deposit refund with rate limiting to prevent Jito 429 errors
+      // Jito Block Engine limits: 1 transaction per second
       for (const deposit of agreement.deposits) {
         try {
           const txId = await this.processDepositRefund(
@@ -278,6 +282,11 @@ export class RefundService {
             type: deposit.type,
             txId,
           });
+
+          // CRITICAL: Add 2-second delay between Jito transactions to prevent rate limiting
+          // Jito limit: 1 tx/second, we use 2 seconds to be safe
+          console.log('[RefundService] Waiting 2s before next refund (Jito rate limiting)...');
+          await new Promise(resolve => setTimeout(resolve, 2000));
 
           // Log the refund transaction
           try {
@@ -298,6 +307,10 @@ export class RefundService {
             depositId: deposit.id,
             error: error instanceof Error ? error.message : 'Unknown error',
           });
+
+          // Also add delay after errors to prevent cascading rate limits
+          console.log('[RefundService] Waiting 2s after error (Jito rate limiting)...');
+          await new Promise(resolve => setTimeout(resolve, 2000));
         }
       }
 
@@ -322,6 +335,21 @@ export class RefundService {
         } catch (webhookError) {
           // Log webhook error but don't fail the refund
           console.error('[RefundService] Failed to publish webhook event:', webhookError);
+        }
+
+        // Close escrow account and recover rent after successful refund
+        if (updatedAgreement.escrowPda) {
+          try {
+            console.log(`[RefundService] Closing escrow account to recover rent: ${updatedAgreement.escrowPda}`);
+            const escrowProgramService = (await import('./escrow-program.service')).getEscrowProgramService();
+            const { PublicKey } = await import('@solana/web3.js');
+            const closeTxId = await escrowProgramService.closeEscrow(new PublicKey(updatedAgreement.escrowPda));
+            console.log(`[RefundService] Escrow account closed, rent recovered. Tx: ${closeTxId}`);
+          } catch (error: any) {
+            // Log but don't fail refund - rent recovery is optional
+            console.error(`[RefundService] Failed to close escrow account: ${error.message}`);
+            console.error('[RefundService] Refund succeeded, but rent recovery failed (non-critical)');
+          }
         }
       }
 

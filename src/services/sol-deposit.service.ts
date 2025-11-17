@@ -79,7 +79,8 @@ export class SolDepositService {
       // Validate this is a SOL-based swap type
       if (
         agreement.swapType !== 'NFT_FOR_SOL' &&
-        agreement.swapType !== 'NFT_FOR_NFT_PLUS_SOL'
+        agreement.swapType !== 'NFT_FOR_NFT_PLUS_SOL' &&
+        agreement.swapType !== 'NFT_FOR_NFT_WITH_FEE' // ADDED: Monitor vault for fee deposits
       ) {
         console.log(`[SolDepositService] Skipping: Agreement ${agreementId} is not a SOL-based swap (${agreement.swapType})`);
         return {
@@ -88,31 +89,19 @@ export class SolDepositService {
         };
       }
 
-      // Check if SOL deposit already exists
-      const existingDeposit = await prisma.deposit.findFirst({
-        where: {
-          agreementId,
-          type: 'SOL',
-          status: {
-            in: ['CONFIRMED', 'PENDING'],
-          },
-        },
-      });
-
-      if (existingDeposit) {
-        console.log(`[SolDepositService] SOL deposit already recorded for agreement: ${agreementId}`);
-        return {
-          success: true,
-          depositId: existingDeposit.id,
-          amount: existingDeposit.amount?.toString(),
-          status: existingDeposit.status,
-        };
-      }
-
       // Get SOL balance (account lamports)
       const solBalance = BigInt(accountInfo.lamports);
       // Note: agreement.solAmount is already stored in lamports
-      const expectedAmount = agreement.solAmount ? BigInt(agreement.solAmount.toString()) : BigInt(0);
+      // CRITICAL: For NFT_FOR_NFT_WITH_FEE, agreement.solAmount = buyer's portion (half)
+      // But we need to check for TOTAL platform fee (both buyer and seller portions)
+      let expectedAmount: bigint;
+      if (agreement.swapType === 'NFT_FOR_NFT_WITH_FEE') {
+        const buyerPortion = agreement.solAmount ? BigInt(agreement.solAmount.toString()) : BigInt(0);
+        expectedAmount = buyerPortion * BigInt(2); // Total = buyer's portion * 2
+        console.log(`[SolDepositService] NFT_FOR_NFT_WITH_FEE: Buyer portion in DB: ${buyerPortion} lamports, Expected total: ${expectedAmount} lamports`);
+      } else {
+        expectedAmount = agreement.solAmount ? BigInt(agreement.solAmount.toString()) : BigInt(0);
+      }
 
       console.log(`[SolDepositService] Escrow PDA balance: ${solBalance} lamports (${Number(solBalance) / LAMPORTS_PER_SOL} SOL)`);
       console.log(`[SolDepositService] Expected amount: ${expectedAmount} lamports (${Number(expectedAmount) / LAMPORTS_PER_SOL} SOL)`);
@@ -127,37 +116,101 @@ export class SolDepositService {
         };
       }
 
-      // Record SOL deposit
-      const solAmount = lamportsToSol(expectedAmount);
-      const deposit = await prisma.deposit.create({
-        data: {
-          agreementId,
-          type: 'SOL',
-          depositor: agreement.buyer || 'unknown', // Buyer pays SOL
-          amount: new Decimal(solAmount),
-          status: DepositStatus.CONFIRMED,
-          detectedAt: new Date(),
-          confirmedAt: new Date(),
-        },
-      });
+      // For NFT_FOR_NFT_WITH_FEE: Deposits should already be recorded by API endpoints
+      // (buyer via /deposit-sol, seller via /deposit-seller-sol-fee)
+      // Monitoring service should NOT record deposits, only update status
+      let depositId: string | undefined;
+      let solAmount: string;
 
-      console.log(`[SolDepositService] ✅ SOL deposit recorded: ${deposit.id}, Amount: ${solAmount} SOL`);
+      if (agreement.swapType === 'NFT_FOR_NFT_WITH_FEE') {
+        console.log(`[SolDepositService] NFT_FOR_NFT_WITH_FEE: Vault balance sufficient, checking for existing deposits...`);
+        
+        // Check if both SOL deposits exist (should be recorded by API)
+        const solDeposits = agreement.deposits.filter(
+          (d) => d.type === 'SOL' && d.status === DepositStatus.CONFIRMED
+        );
+
+        console.log(`[SolDepositService] Found ${solDeposits.length} SOL deposit(s) in database`);
+        
+        if (solDeposits.length === 0) {
+          console.log(`[SolDepositService] INFO: No deposits recorded in database for NFT_FOR_NFT_WITH_FEE (expected - deposits not tracked, only vault balance)`);
+        } else {
+          console.log(`[SolDepositService] ${solDeposits.length} deposit(s) found, but using vault balance for status calculation`);
+        }
+
+        // Don't record a new deposit - client-side signed transactions don't need database tracking
+        // Use vault balance for status calculation (more reliable for NFT_FOR_NFT_WITH_FEE)
+        solAmount = lamportsToSol(expectedAmount);
+      } else {
+        // NFT_FOR_SOL or NFT_FOR_NFT_PLUS_SOL: Record deposit as fallback
+        // (API should record it, but monitoring service can catch missed deposits)
+        
+        // Check if deposit already exists
+        const existingDeposit = await prisma.deposit.findFirst({
+          where: {
+            agreementId,
+            type: 'SOL',
+            status: {
+              in: ['CONFIRMED', 'PENDING'],
+            },
+          },
+        });
+
+        if (existingDeposit) {
+          console.log(`[SolDepositService] SOL deposit already recorded: ${existingDeposit.id}`);
+          depositId = existingDeposit.id;
+          solAmount = existingDeposit.amount?.toString() || lamportsToSol(expectedAmount);
+        } else {
+          // Record new deposit
+          solAmount = lamportsToSol(expectedAmount);
+          const deposit = await prisma.deposit.create({
+            data: {
+              agreementId,
+              type: 'SOL',
+              depositor: agreement.buyer || 'unknown', // Buyer pays SOL
+              amount: new Decimal(solAmount),
+              status: DepositStatus.CONFIRMED,
+              detectedAt: new Date(),
+              confirmedAt: new Date(),
+            },
+          });
+          depositId = deposit.id;
+          console.log(`[SolDepositService] ✅ SOL deposit recorded: ${deposit.id}, Amount: ${solAmount} SOL`);
+        }
+      }
 
       // Update agreement status based on what's been deposited
-      const nftDeposit = agreement.deposits.find(
-        (d) => d.type === 'NFT' && d.status === DepositStatus.CONFIRMED
+      // For NFT_FOR_NFT_WITH_FEE: Need 2 NFTs + sol_vault has full fee amount
+      // For NFT_FOR_SOL/NFT_FOR_NFT_PLUS_SOL: Need 1 NFT + SOL
+      const nftDeposits = agreement.deposits.filter(
+        (d) => (d.type === 'NFT' || d.type === 'NFT_BUYER') && d.status === DepositStatus.CONFIRMED
       );
 
       let newStatus: AgreementStatus = agreement.status;
 
-      if (nftDeposit) {
-        // Both NFT and SOL deposited
-        newStatus = AgreementStatus.BOTH_LOCKED;
-        console.log(`[SolDepositService] Both NFT and SOL deposited, updating status to BOTH_LOCKED`);
+      // Determine if all required deposits are complete
+      let allDepositsComplete = false;
+      
+      if (agreement.swapType === 'NFT_FOR_NFT_WITH_FEE' || agreement.swapType === 'NFT_FOR_NFT_PLUS_SOL') {
+        // NFT<>NFT swaps: Requires 2 NFTs (NFT + NFT_BUYER) + SOL requirements
+        const hasNftA = agreement.deposits.some(d => d.type === 'NFT' && d.status === DepositStatus.CONFIRMED);
+        const hasNftB = agreement.deposits.some(d => d.type === 'NFT_BUYER' && d.status === DepositStatus.CONFIRMED);
+        allDepositsComplete = hasNftA && hasNftB && solBalance >= expectedAmount;
+        console.log(`[SolDepositService] ${agreement.swapType}: NFT A: ${hasNftA}, NFT B: ${hasNftB}, ${nftDeposits.length}/2 total NFTs deposited, vault balance: ${Number(solBalance) / LAMPORTS_PER_SOL} SOL (expected: ${Number(expectedAmount) / LAMPORTS_PER_SOL} SOL)`);
       } else {
-        // Only SOL deposited
-        newStatus = AgreementStatus.USDC_LOCKED; // Reusing USDC_LOCKED for SOL (buyer funds locked)
-        console.log(`[SolDepositService] SOL deposited, updating status to USDC_LOCKED (buyer funds locked)`);
+        // NFT_FOR_SOL: Requires 1 NFT + SOL
+        allDepositsComplete = nftDeposits.length >= 1;
+        console.log(`[SolDepositService] ${agreement.swapType}: ${nftDeposits.length}/1 NFT deposited, SOL deposited`);
+      }
+
+      if (allDepositsComplete) {
+        // All required deposits are complete
+        newStatus = AgreementStatus.BOTH_LOCKED;
+        console.log(`[SolDepositService] All deposits complete, updating status to BOTH_LOCKED`);
+      } else {
+        // Only SOL deposited (waiting for NFT(s))
+        newStatus = AgreementStatus.SOL_LOCKED; // V2: Buyer's SOL deposited
+        console.log(`[SolDepositService] SOL deposited, waiting for NFT deposits, updating status to SOL_LOCKED`);
       }
 
       // Update agreement status
@@ -178,7 +231,7 @@ export class SolDepositService {
 
       return {
         success: true,
-        depositId: deposit.id,
+        depositId, // May be undefined for NFT_FOR_NFT_WITH_FEE (deposits recorded by API)
         amount: solAmount,
         status: DepositStatus.CONFIRMED,
       };

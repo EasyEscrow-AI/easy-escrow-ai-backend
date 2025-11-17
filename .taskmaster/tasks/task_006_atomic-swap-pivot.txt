@@ -1,0 +1,131 @@
+# Task ID: 6
+# Title: Implement OfferManager Service for Core Swap Business Logic
+# Status: pending
+# Dependencies: 1, 2, 3, 4, 5
+# Priority: high
+# Description: Create a comprehensive service that manages the complete lifecycle of swap offers including creation, counter-offers, cancellation, acceptance, and fulfillment with proper transaction management and coordination with other core services.
+# Details:
+Implement the OfferManager service with the following core components:
+
+1. **Offer Creation and Management**:
+   - Create maker offers with support for both direct offers (targeted to specific wallet) and open offers (available to any taker)
+   - Generate unique offer IDs and store offer details in database with proper indexing
+   - Implement offer validation using AssetValidator service to verify maker owns offered assets
+   - Calculate and store platform fees using FeeCalculator service
+   - Set offer expiration timestamps and implement automatic cleanup of expired offers
+   - Support partial fills for divisible assets and track remaining quantities
+
+2. **Counter-Offer System**:
+   - Allow users to create counter-offers against existing offers with modified terms
+   - Link counter-offers to parent offers and maintain offer chain history
+   - Implement counter-offer validation to ensure reasonable terms and asset ownership
+   - Handle counter-offer acceptance and rejection workflows
+   - Prevent circular counter-offer chains and implement maximum counter-offer depth
+
+3. **Offer Cancellation and Nonce Management**:
+   - Implement offer cancellation with proper database state updates
+   - Coordinate with NoncePoolManager to invalidate associated nonce accounts
+   - Handle batch cancellation for multiple offers
+   - Implement maker-initiated cancellation and automatic expiration-based cancellation
+   - Clean up related counter-offers when parent offers are cancelled
+
+4. **Offer Acceptance and Transaction Building**:
+   - Validate taker eligibility and asset ownership before acceptance
+   - Coordinate with TransactionBuilder service to construct atomic swap transactions
+   - Assign nonce accounts from NoncePoolManager for transaction durability
+   - Return serialized transaction data ready for taker signature and submission
+   - Implement transaction size optimization and fee calculation integration
+   - Handle ATA creation requirements for both maker and taker
+
+5. **Post-Transaction Management**:
+   - Mark offers as filled after receiving on-chain confirmation
+   - Update user swap statistics and transaction history
+   - Release nonce accounts back to pool after successful completion
+   - Handle failed transactions and implement retry logic for network issues
+   - Maintain audit trail of all offer state changes
+
+6. **Database Transaction Management**:
+   - Implement proper database transactions for all multi-step operations
+   - Use database locks to prevent race conditions during offer acceptance
+   - Implement rollback mechanisms for failed operations
+   - Ensure data consistency across related tables (offers, users, transactions)
+   - Handle concurrent access scenarios with proper isolation levels
+
+7. **Service Coordination**:
+   - Integrate with NoncePoolManager for nonce account lifecycle management
+   - Use AssetValidator for all asset ownership verification operations
+   - Leverage FeeCalculator for accurate fee computation and validation
+   - Coordinate with TransactionBuilder for transaction construction
+   - Implement proper error handling and service dependency management
+
+# Test Strategy:
+1. **Unit Testing**:
+   - Test offer creation with various asset combinations (NFT-to-NFT, NFT-to-SOL, SOL-to-NFT)
+   - Mock all service dependencies (NoncePoolManager, AssetValidator, FeeCalculator, TransactionBuilder) to test business logic isolation
+   - Test counter-offer creation, validation, and chain management
+   - Verify offer cancellation properly invalidates nonce accounts and updates database state
+   - Test offer acceptance workflow with valid and invalid scenarios
+   - Test concurrent offer acceptance scenarios to ensure proper locking and race condition prevention
+
+2. **Integration Testing**:
+   - Test end-to-end offer lifecycle with real database transactions
+   - Verify proper coordination between all dependent services
+   - Test transaction rollback scenarios when service calls fail
+   - Test offer expiration cleanup with time-based scenarios
+   - Verify database consistency after various failure scenarios
+
+3. **Load Testing**:
+   - Test concurrent offer creation and acceptance under high load
+   - Verify database transaction performance with multiple simultaneous operations
+   - Test nonce pool exhaustion scenarios and proper error handling
+   - Measure service response times under various load conditions
+
+4. **Error Handling Testing**:
+   - Test behavior when dependent services are unavailable or return errors
+   - Verify proper cleanup when transactions fail at various stages
+   - Test database connection failures and recovery mechanisms
+   - Test invalid asset scenarios and proper error propagation to clients
+
+# Subtasks:
+## 1. Implement Offer Creation and Management Core Logic [pending]
+### Dependencies: None
+### Description: Create the foundational offer creation system with support for direct and open offers, unique ID generation, database storage, asset validation integration, and fee calculation.
+### Details:
+Implement offer creation endpoints that generate unique offer IDs, validate maker asset ownership through AssetValidator service, calculate platform fees using FeeCalculator service, store offer details in database with proper indexing for efficient queries, support both direct offers (targeted to specific wallets) and open offers (available to any taker), implement offer expiration timestamps, and support partial fills for divisible assets with remaining quantity tracking.
+
+## 2. Implement Counter-Offer System with Chain Management [pending]
+### Dependencies: 6.1
+### Description: Create comprehensive counter-offer functionality with parent-child linking, offer chain history tracking, validation logic, and acceptance/rejection workflows.
+### Details:
+Implement counter-offer creation against existing offers with modified terms, maintain parent-child relationships and offer chain history in database, implement counter-offer validation to ensure reasonable terms and asset ownership, handle acceptance and rejection workflows, prevent circular counter-offer chains with maximum depth limits, implement counter-offer expiration and cleanup logic.
+
+## 3. Implement Offer Cancellation and Nonce Management Integration [pending]
+### Dependencies: 6.1, 6.2
+### Description: Create offer cancellation system with database state updates, nonce account invalidation coordination, and batch cancellation support.
+### Details:
+Implement offer cancellation with proper database state updates and transaction management, coordinate with NoncePoolManager to invalidate associated nonce accounts, support batch cancellation for multiple offers, handle maker-initiated cancellation and automatic expiration-based cancellation, clean up related counter-offers when parent offers are cancelled, implement audit trail for cancellation events.
+
+## 4. Implement Offer Acceptance and Transaction Building Workflow [pending]
+### Dependencies: 6.1, 6.3
+### Description: Create offer acceptance system with taker validation, transaction building coordination, nonce assignment, and transaction optimization.
+### Details:
+Implement taker eligibility validation and asset ownership verification before acceptance, coordinate with TransactionBuilder service to construct atomic swap transactions, assign nonce accounts from NoncePoolManager for transaction durability, return serialized transaction data ready for taker signature, implement transaction size optimization and fee calculation integration, handle ATA creation requirements for both maker and taker.
+
+## 5. Implement Post-Transaction Management and State Updates [pending]
+### Dependencies: 6.4
+### Description: Create post-transaction processing system for offer completion, user statistics updates, nonce account release, and failure handling.
+### Details:
+Mark offers as filled after receiving on-chain confirmation, update user swap statistics and transaction history in database, release nonce accounts back to NoncePoolManager pool after successful completion, handle failed transactions with retry logic for network issues, maintain comprehensive audit trail of all offer state changes, implement cleanup procedures for incomplete transactions.
+
+## 6. Implement Database Transaction Management and Concurrency Control [pending]
+### Dependencies: 6.1, 6.2, 6.3, 6.4, 6.5
+### Description: Create robust database transaction management with proper locking, rollback mechanisms, and concurrency handling for all multi-step operations.
+### Details:
+Implement database transactions for all multi-step operations with proper isolation levels, use database locks to prevent race conditions during offer acceptance, implement comprehensive rollback mechanisms for failed operations, ensure data consistency across related tables (offers, users, transactions), handle concurrent access scenarios with optimistic and pessimistic locking strategies, implement deadlock detection and resolution.
+
+## 7. Implement Service Coordination and Comprehensive Error Handling [pending]
+### Dependencies: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6
+### Description: Create service integration layer with proper dependency management, error handling, circuit breakers, and comprehensive logging across all OfferManager operations.
+### Details:
+Integrate with NoncePoolManager for nonce account lifecycle management, coordinate with AssetValidator for asset ownership verification, leverage FeeCalculator for fee computation, coordinate with TransactionBuilder for transaction construction, implement circuit breakers for service dependencies, create comprehensive error handling with proper error classification and recovery strategies, implement structured logging for all operations and service interactions.
+

@@ -417,6 +417,11 @@ export class SettlementService {
 
       console.log(`[SettlementService] Settlement completed successfully for ${agreement.agreementId}`);
 
+      // 6. Schedule asynchronous rent recovery for V1 (non-blocking)
+      if (agreement.escrowPda) {
+        this.scheduleRentRecovery(agreement.agreementId, agreement.escrowPda);
+      }
+
       const settlementResult: SettlementResult = {
         success: true,
         agreementId: agreement.agreementId,
@@ -913,12 +918,24 @@ export class SettlementService {
     });
 
     // Calculate platform fee (in basis points)
-    const platformFee = solAmount.mul(feeBps).div(10000);
+    // CRITICAL: For NFT_FOR_NFT_WITH_FEE, solAmount = buyer's portion (half of total fee)
+    // But the TOTAL platform fee should be recorded (buyer portion * 2)
+    let platformFee: Decimal;
+    if (agreement.swapType === 'NFT_FOR_NFT_WITH_FEE') {
+      // solAmount is buyer's portion, total fee is double
+      platformFee = solAmount.mul(2);
+      console.log(`[SettlementService] NFT_FOR_NFT_WITH_FEE: Buyer portion: ${solAmount.toString()}, Total platform fee: ${platformFee.toString()}`);
+    } else {
+      // For other swap types, calculate fee as percentage of sale price
+      platformFee = solAmount.mul(feeBps).div(10000);
+    }
 
     let creatorRoyalty = new Decimal(0);
 
     // Calculate creator royalty if enabled
-    if (honorRoyalties) {
+    // CRITICAL: For NFT_FOR_NFT_WITH_FEE, skip royalties - no sale is happening (just an exchange)
+    // The solAmount is platform fee, not a sale price
+    if (honorRoyalties && agreement.swapType !== 'NFT_FOR_NFT_WITH_FEE') {
       try {
         const nftMetadata = await this.fetchNftMetadata(agreement.nftMint);
         if (nftMetadata && nftMetadata.sellerFeeBasisPoints) {
@@ -931,12 +948,24 @@ export class SettlementService {
     }
 
     // Calculate amount seller receives
-    const totalDeductions = platformFee.add(creatorRoyalty);
-    const sellerReceived = solAmount.sub(totalDeductions);
+    // CRITICAL: For NFT_FOR_NFT_WITH_FEE, seller receives NFT B, not SOL
+    // So sellerReceived should be 0
+    let sellerReceived: Decimal;
+    let totalDeductions: Decimal;
+    
+    if (agreement.swapType === 'NFT_FOR_NFT_WITH_FEE') {
+      sellerReceived = new Decimal(0);
+      totalDeductions = platformFee.add(creatorRoyalty);
+      console.log(`[SettlementService] NFT_FOR_NFT_WITH_FEE: Seller receives NFT B (not SOL), sellerReceived: 0`);
+    } else {
+      // For other swap types, seller receives: solAmount - fees
+      totalDeductions = platformFee.add(creatorRoyalty);
+      sellerReceived = solAmount.sub(totalDeductions);
 
-    // Ensure seller receives at least 0
-    if (sellerReceived.lt(0)) {
-      throw new Error('V2: Fees exceed SOL amount, settlement cannot proceed');
+      // Ensure seller receives at least 0
+      if (sellerReceived.lt(0)) {
+        throw new Error('V2: Fees exceed SOL amount, settlement cannot proceed');
+      }
     }
 
     return {
@@ -985,12 +1014,15 @@ export class SettlementService {
 
       // Call settlement instruction
       // Note: settle reads swap type and all parameters from escrow state
+      // For NFT<>NFT swaps, also pass nftBMint to enable NFT B transfer
       const txId = await escrowProgramService.settle(
         escrowPda,
         seller,
         buyer,
         nftMint,
-        feeCollector
+        feeCollector,
+        undefined, // escrowId (optional, will be fetched from chain)
+        nftBMint   // nftBMint (optional, for NFT<>NFT swaps)
       );
 
       console.log('[SettlementService] V2 Settlement transaction confirmed:', txId);
@@ -1118,6 +1150,10 @@ export class SettlementService {
 
       console.log(`[SettlementService] V2 Settlement completed successfully for ${agreement.agreementId}`);
 
+      // 7. Schedule asynchronous rent recovery (non-blocking)
+      // Run in background after a delay to allow on-chain state propagation
+      this.scheduleRentRecovery(agreement.agreementId, agreement.escrowPda);
+
       const settlementResult: SettlementResult = {
         success: true,
         agreementId: agreement.agreementId,
@@ -1219,6 +1255,56 @@ export class SettlementService {
     } catch (error) {
       console.error('[SettlementService] Failed to record V2 settlement:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Schedule asynchronous rent recovery with retries
+   * Runs in background without blocking settlement flow
+   * 
+   * Strategy:
+   * - Initial delay: 20 seconds (allow on-chain state propagation)
+   * - Max retries: 10 attempts
+   * - Retry delay: 10 seconds between attempts
+   * - Total window: ~120 seconds (2 minutes)
+   */
+  private scheduleRentRecovery(agreementId: string, escrowPda: string): void {
+    console.log(`[SettlementService] Scheduling rent recovery for ${agreementId} (escrow: ${escrowPda})`);
+    
+    // Run in background after initial delay
+    setTimeout(async () => {
+      await this.executeRentRecoveryWithRetries(agreementId, escrowPda);
+    }, 20000); // 20 second initial delay
+  }
+
+  /**
+   * Execute rent recovery with automatic retries
+   */
+  private async executeRentRecoveryWithRetries(agreementId: string, escrowPda: string): Promise<void> {
+    const maxRetries = 10;
+    const retryDelayMs = 10000; // 10 seconds between retries
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`[SettlementService] Attempting rent recovery for ${agreementId} (attempt ${attempt}/${maxRetries})`);
+        
+        const escrowProgramService = getEscrowProgramService();
+        const closeTxId = await escrowProgramService.closeEscrow(new PublicKey(escrowPda));
+        
+        console.log(`[SettlementService] ✅ Rent recovery successful for ${agreementId}. Tx: ${closeTxId}`);
+        return; // Success - exit retry loop
+        
+      } catch (error: any) {
+        console.error(`[SettlementService] Rent recovery attempt ${attempt}/${maxRetries} failed for ${agreementId}:`, error.message);
+        
+        if (attempt < maxRetries) {
+          console.log(`[SettlementService] Retrying rent recovery in ${retryDelayMs / 1000}s...`);
+          await new Promise(resolve => setTimeout(resolve, retryDelayMs));
+        } else {
+          console.error(`[SettlementService] ❌ Rent recovery failed permanently for ${agreementId} after ${maxRetries} attempts`);
+          console.error(`[SettlementService] Manual rent recovery may be needed for escrow: ${escrowPda}`);
+        }
+      }
     }
   }
 }

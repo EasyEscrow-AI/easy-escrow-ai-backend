@@ -76,9 +76,15 @@ export function isValidPreset(preset: string): preset is ExpiryPreset {
  * Validate expiry duration in hours
  */
 export function isValidExpiryDuration(durationHours: number): boolean {
+  // BYPASS: Allow short expiry durations for E2E testing
+  // NOTE: Minimum is 0.003 hours (~10 seconds) to prevent zero-duration expiries
+  // which would violate smart contract's requirement that expiry must be in the future
+  const isE2ETesting = process.env.ENABLE_E2E_TESTING === 'true';
+  const minDuration = isE2ETesting ? 0.003 : EXPIRY_CONSTANTS.MIN_DURATION_HOURS; // 0.003 hours = ~10 seconds
+  
   return (
     Number.isFinite(durationHours) &&
-    durationHours >= EXPIRY_CONSTANTS.MIN_DURATION_HOURS &&
+    durationHours > minDuration && // Use > instead of >= to ensure expiry is strictly in future
     durationHours <= EXPIRY_CONSTANTS.MAX_DURATION_HOURS
   );
 }
@@ -113,10 +119,16 @@ export function validateExpiryTimestamp(
   const durationHours = durationMs / (1000 * 60 * 60);
 
   // Check if duration is within allowed range
-  if (durationMs < EXPIRY_CONSTANTS.MIN_DURATION_MS) {
+  // BYPASS: Allow short expiry durations for E2E testing (e.g., 15 seconds for expiry tests)
+  // NOTE: Even in E2E mode, enforce minimum of ~10 seconds to prevent zero-duration expiries
+  const isE2ETesting = process.env.ENABLE_E2E_TESTING === 'true';
+  const minDurationMs = isE2ETesting ? 10000 : EXPIRY_CONSTANTS.MIN_DURATION_MS; // 10 seconds in E2E
+  
+  if (durationMs <= minDurationMs) {
+    const minDescription = isE2ETesting ? '10 seconds' : '5 minutes';
     return {
       valid: false,
-      error: `Expiry duration must be at least 5 minutes`,
+      error: `Expiry duration must be greater than ${minDescription}`,
       durationHours,
     };
   }
@@ -144,9 +156,12 @@ export function createExpiryFromDuration(
   now: Date = new Date()
 ): ExpiryValidationResult {
   if (!isValidExpiryDuration(durationHours)) {
+    const isE2ETesting = process.env.ENABLE_E2E_TESTING === 'true';
+    const minDurationMsg = isE2ETesting ? 'greater than 0.003 hours (~10 seconds)' : 'at least 5 minutes (0.0833 hours)';
+    
     return {
       valid: false,
-      error: `Duration must be at least 5 minutes (0.0833 hours) and not exceed ${EXPIRY_CONSTANTS.MAX_DURATION_HOURS} hours`,
+      error: `Duration must be ${minDurationMsg} and not exceed ${EXPIRY_CONSTANTS.MAX_DURATION_HOURS} hours`,
       durationHours,
     };
   }

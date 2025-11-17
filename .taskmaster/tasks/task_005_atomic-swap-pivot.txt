@@ -1,0 +1,111 @@
+# Task ID: 5
+# Title: Implement TransactionBuilder Service for Constructing Atomic Swap Transactions
+# Status: pending
+# Dependencies: 2, 3, 4
+# Priority: high
+# Description: Create a comprehensive transaction builder service that constructs complete Solana atomic swap transactions with durable nonce support, ATA creation, NFT/cNFT transfers, SOL transfers, and platform fee collection while respecting transaction size limits.
+# Details:
+Implement the TransactionBuilder service with the following core components:
+
+1. **Transaction Foundation Setup**:
+   - Initialize Transaction object with durable nonce advance instruction as the first instruction (mandatory ordering)
+   - Set transaction feePayer to taker's public key
+   - Use durable nonce account's stored blockhash as recentBlockhash instead of latest blockhash
+   - Implement transaction size monitoring to ensure 1232 byte limit compliance
+
+2. **Associated Token Account (ATA) Management**:
+   - Check for existing ATAs for all token transfers using getAssociatedTokenAddress
+   - Add createAssociatedTokenAccountInstruction for missing ATAs before transfer instructions
+   - Handle both maker and taker ATA requirements for NFT transfers
+   - Optimize ATA creation by batching when possible
+
+3. **Asset Transfer Instructions**:
+   - **Standard NFT Transfers**: Use SPL Token Program's transfer instruction with amount=1
+   - **Compressed NFT Transfers**: Integrate with Bubblegum program for cNFT transfers, including Merkle proof validation and tree account references
+   - **SOL Transfers**: Add SystemProgram.transfer instructions for SOL amounts between maker and taker
+   - Ensure proper instruction ordering: nonce advance → ATA creation → asset transfers → fee collection
+
+4. **Platform Fee Integration**:
+   - Integrate with FeeCalculator service to determine fee amounts
+   - Add execute_swap_with_fee instruction to collect platform fees
+   - Handle fee distribution to platform treasury account
+   - Ensure fee instruction is added after all transfer instructions
+
+5. **Transaction Signing and Size Optimization**:
+   - Partially sign transaction with platform authority private key
+   - Implement transaction size estimation and optimization techniques
+   - Add instruction compression where possible (combine similar operations)
+   - Provide size breakdown reporting for debugging oversized transactions
+   - Handle transaction size overflow by suggesting swap simplification
+
+6. **Error Handling and Validation**:
+   - Validate all required accounts exist and have sufficient balances
+   - Check for account ownership and transfer permissions
+   - Handle insufficient SOL for rent exemption and transaction fees
+   - Provide detailed error messages for transaction construction failures
+
+# Test Strategy:
+1. **Unit Testing**:
+   - Test transaction construction with various swap combinations (NFT-to-NFT, NFT-to-SOL, SOL-to-NFT, mixed swaps)
+   - Verify durable nonce advance instruction is always first in transaction
+   - Test ATA creation logic with existing and missing token accounts
+   - Mock Bubblegum program calls for cNFT transfer testing
+   - Test transaction size calculation and 1232 byte limit enforcement
+   - Verify platform fee instruction integration with different fee scenarios
+
+2. **Integration Testing**:
+   - Test with real Solana devnet using actual nonce accounts from NoncePoolManager
+   - Verify fee calculations match FeeCalculator service outputs
+   - Test asset validation integration with AssetValidator service
+   - Test complete transaction flow from construction to partial signing
+   - Verify transaction serialization and deserialization maintains integrity
+
+3. **Size Limit Testing**:
+   - Create maximum complexity swaps (multiple NFTs, cNFTs, SOL transfers) to test size limits
+   - Test size optimization techniques with oversized transactions
+   - Verify error handling when transactions exceed 1232 bytes
+   - Test instruction ordering and compression effectiveness
+
+4. **Error Scenario Testing**:
+   - Test with insufficient account balances, missing accounts, and invalid permissions
+   - Test with malformed Merkle proofs for cNFT transfers
+   - Test with expired or invalid nonce accounts
+   - Verify graceful handling of RPC failures during account lookups
+
+# Subtasks:
+## 1. Implement Transaction Foundation Setup with Durable Nonce Integration [pending]
+### Dependencies: None
+### Description: Create the core transaction initialization system with durable nonce advance instruction as the first instruction, proper fee payer setup, and transaction size monitoring to ensure 1232 byte limit compliance.
+### Details:
+Initialize Transaction object with durable nonce advance instruction as mandatory first instruction. Set transaction feePayer to taker's public key. Use durable nonce account's stored blockhash as recentBlockhash instead of latest blockhash. Implement transaction size monitoring and estimation to ensure 1232 byte limit compliance with real-time size tracking.
+
+## 2. Create ATA Management System for Token Account Creation [pending]
+### Dependencies: 5.1
+### Description: Implement Associated Token Account management system that checks for existing ATAs, creates missing ones, and optimizes ATA creation through batching for both maker and taker requirements.
+### Details:
+Check for existing ATAs using getAssociatedTokenAddress for all token transfers. Add createAssociatedTokenAccountInstruction for missing ATAs before transfer instructions. Handle both maker and taker ATA requirements for NFT transfers. Optimize ATA creation by batching when possible and implement proper instruction ordering.
+
+## 3. Implement Standard NFT Transfer Instruction Building [pending]
+### Dependencies: 5.1, 5.2
+### Description: Create standard NFT transfer instruction builder using SPL Token Program with proper amount validation, account verification, and transfer instruction construction for NFT-to-NFT swaps.
+### Details:
+Use SPL Token Program's transfer instruction with amount=1 for standard NFT transfers. Implement proper source and destination token account validation. Handle NFT transfer between maker and taker accounts with proper ownership verification and balance checking before instruction creation.
+
+## 4. Create Compressed NFT Transfer Integration with Bubblegum Program [pending]
+### Dependencies: 5.1, 5.2
+### Description: Implement compressed NFT transfer system that integrates with Bubblegum program for cNFT transfers, including Merkle proof validation and tree account references for compressed asset handling.
+### Details:
+Integrate with Bubblegum program for cNFT transfers including Merkle proof validation and tree account references. Handle compressed NFT transfer instructions with proper proof verification. Implement tree account management and ensure proper instruction formatting for Bubblegum program compatibility.
+
+## 5. Implement SOL Transfer and Platform Fee Collection Instructions [pending]
+### Dependencies: 5.1
+### Description: Create SOL transfer instruction builder and platform fee collection system that integrates with FeeCalculator service, handles fee distribution to treasury, and ensures proper instruction ordering.
+### Details:
+Add SystemProgram.transfer instructions for SOL amounts between maker and taker. Integrate with FeeCalculator service to determine fee amounts. Add execute_swap_with_fee instruction to collect platform fees. Handle fee distribution to platform treasury account and ensure fee instruction is added after all transfer instructions.
+
+## 6. Create Transaction Signing, Size Optimization, and Validation Systems [pending]
+### Dependencies: 5.1, 5.2, 5.3, 5.4, 5.5
+### Description: Implement transaction signing with platform authority, size optimization techniques, comprehensive validation, and error handling for transaction construction failures and oversized transactions.
+### Details:
+Partially sign transaction with platform authority private key. Implement transaction size estimation and optimization techniques including instruction compression. Add size breakdown reporting for debugging oversized transactions. Handle transaction size overflow by suggesting swap simplification. Validate all required accounts exist and have sufficient balances with detailed error messages.
+

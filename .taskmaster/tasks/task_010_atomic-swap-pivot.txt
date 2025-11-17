@@ -1,0 +1,65 @@
+# Task ID: 10
+# Title: Clean Up and Migrate Old Agreement Code
+# Status: pending
+# Dependencies: 1
+# Priority: medium
+# Description: Comment out old escrow agreement models and services while preserving code for potential future use, disable monitoring and refund services for agreements, and document all changes made during the migration to atomic swaps.
+# Details:
+Implement the code cleanup and migration with the following systematic approach:
+
+1. **Old Escrow Agreement Models Cleanup**:
+   - Locate all agreement-related models (Agreement, EscrowAgreement, AgreementStatus, etc.)
+   - Comment out model definitions using block comments with clear headers
+   - Add migration comments explaining why code is preserved: "// PRESERVED FOR POTENTIAL FUTURE USE - Original escrow agreement model"
+   - Update any database schema files to comment out agreement table definitions
+   - Preserve all field definitions and relationships for potential future reference
+
+2. **Service Layer Cleanup**:
+   - Comment out AgreementService, EscrowService, and related service classes
+   - Disable monitoring service components specifically related to agreement tracking
+   - Comment out refund service logic for agreements while keeping general refund infrastructure
+   - Preserve service method signatures and business logic in comments for future adaptation
+   - Add clear documentation headers explaining the purpose of each commented service
+
+3. **Settlement Service Migration**:
+   - Comment out settlement service logic related to escrow agreements
+   - Preserve settlement patterns and algorithms that may be adaptable to atomic swaps
+   - Add detailed comments explaining which settlement logic could be repurposed
+   - Keep database transaction patterns and error handling approaches intact in comments
+
+4. **Receipts Functionality Preservation**:
+   - Audit receipts system to ensure no dependencies on commented agreement code
+   - Update receipt generation to work independently of agreement models
+   - Maintain receipt storage, retrieval, and formatting capabilities
+   - Test receipt functionality to ensure it remains fully operational
+
+5. **Documentation and Migration Notes**:
+   - Create comprehensive migration documentation listing all disabled components
+   - Document the rationale for preserving vs. removing specific code sections
+   - Add inline comments explaining the relationship between old agreement code and new atomic swap functionality
+   - Create a reference guide for developers on what was changed and where to find preserved code
+
+# Test Strategy:
+1. **Code Preservation Verification**:
+   - Verify all agreement-related models and services are properly commented out but remain readable
+   - Confirm no active code references the commented agreement functionality
+   - Test that the application starts and runs without errors after commenting out agreement code
+   - Validate that all preserved code maintains proper syntax and could be uncommented if needed
+
+2. **Receipts Functionality Testing**:
+   - Test receipt generation for various transaction types to ensure independence from agreement models
+   - Verify receipt storage and retrieval operations work correctly
+   - Test receipt formatting and display functionality
+   - Confirm receipt history and search capabilities remain intact
+
+3. **Service Isolation Testing**:
+   - Verify monitoring service operates correctly with agreement monitoring disabled
+   - Test that refund service works for non-agreement transactions
+   - Confirm settlement service components unrelated to agreements continue functioning
+   - Validate that no runtime errors occur from disabled service components
+
+4. **Documentation Completeness Review**:
+   - Review migration documentation for completeness and accuracy
+   - Verify all commented code sections have clear explanatory headers
+   - Confirm inline comments adequately explain preservation rationale
+   - Test that developers can understand what was changed and why through documentation alone

@@ -6,6 +6,9 @@
  */
 
 import { config } from './index';
+import { validateProgramConfig } from './constants';
+import { getFeeConfig, getCNFTIndexerConfig, getSwapOfferConfig } from './atomicSwap.config';
+import { getNoncePoolConfig } from './noncePool.config';
 
 export class ConfigurationError extends Error {
   constructor(message: string) {
@@ -80,6 +83,41 @@ export function validateSolanaConfig(): void {
 }
 
 /**
+ * Validates atomic swap configuration
+ * @throws {ConfigurationError} if any atomic swap config is invalid
+ */
+export function validateAtomicSwapConfig(): void {
+  // Validate program configuration (program ID, fee collector, network)
+  validateProgramConfig();
+  
+  // Validate fee configuration
+  const feeConfig = getFeeConfig();
+  console.log('✅ Fee configuration valid');
+  console.log(`   Flat fee: ${feeConfig.flatFeeSol} SOL`);
+  console.log(`   Percentage fee: ${feeConfig.percentageFeeBps} BPS (${feeConfig.percentageFeeRate * 100}%)`);
+  console.log(`   Max fee: ${feeConfig.maxFeeSol} SOL`);
+  
+  // Validate cNFT indexer configuration
+  const cnftConfig = getCNFTIndexerConfig();
+  console.log('✅ cNFT Indexer configuration valid');
+  console.log(`   API URL: ${cnftConfig.apiUrl}`);
+  console.log(`   Timeout: ${cnftConfig.timeoutMs}ms`);
+  console.log(`   Caching: ${cnftConfig.enableCaching ? 'enabled' : 'disabled'}`);
+  
+  // Validate swap offer configuration
+  const offerConfig = getSwapOfferConfig();
+  console.log('✅ Swap offer configuration valid');
+  console.log(`   Default expiration: ${offerConfig.defaultExpirationMs / (24 * 60 * 60 * 1000)} days`);
+  console.log(`   Max assets per side: ${offerConfig.maxAssetsPerSide}`);
+  
+  // Validate nonce pool configuration
+  const nonceConfig = getNoncePoolConfig();
+  console.log('✅ Nonce pool configuration valid');
+  console.log(`   Pool size: ${nonceConfig.minPoolSize} - ${nonceConfig.maxPoolSize}`);
+  console.log(`   Replenishment threshold: ${nonceConfig.replenishmentThreshold}`);
+}
+
+/**
  * Validates configuration on application startup
  * Call this before starting the server
  */
@@ -92,6 +130,10 @@ export function validateConfig(): void {
     console.log(`   Program ID: ${config.solana?.escrowProgramId}`);
     console.log(`   Network: ${config.solana?.network}`);
     console.log(`   RPC: ${config.solana?.rpcUrl}`);
+    
+    console.log('\n🔍 Validating atomic swap configuration...');
+    validateAtomicSwapConfig();
+    console.log('✅ All atomic swap configurations valid');
   } catch (error) {
     if (error instanceof ConfigurationError) {
       console.error('❌ Configuration Error:', error.message);

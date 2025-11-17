@@ -3967,5 +3967,781 @@
       "updated": "2025-11-04T05:12:17.482Z",
       "description": "Replace USDC with SOL in escrow program - support NFT<>SOL, NFT<>NFT, NFT<>NFT+SOL swaps"
     }
+  },
+  "atomic-swap-pivot": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Create Postgres Database Schema and Migrations for Atomic Swap System",
+        "description": "Design and implement comprehensive database schema with Prisma migrations for atomic swap system supporting users, nonce pools, swap offers, and transaction history with NFT/cNFT asset management using existing Prisma/PostgreSQL infrastructure.",
+        "status": "done",
+        "dependencies": [],
+        "priority": "high",
+        "details": "Update existing Prisma infrastructure to support atomic swap system:\n\n**Prisma Integration**:\n- Update existing schema.prisma file in /prisma directory\n- Create new Prisma migrations using: npm run db:migrate (for dev) or npm run db:migrate:deploy (for staging/production)\n- Keep existing tables (they will be commented out later in Task 10)\n- Migrations will auto-run on DigitalOcean during deployment via pre-deploy job\n\n**New Tables for Atomic Swaps**:\n\n1. **Users Table**:\n   - wallet_address (String, @id, unique Solana wallet address)\n   - nonce_account (String?, nullable, references to durable nonce account)\n   - is_subsidized (Boolean, @default(false), indicates if user has subsidized transactions)\n   - swap_stats (Json, stores aggregated swap statistics like total_swaps, successful_swaps, failed_swaps, total_volume)\n   - created_at, updated_at (DateTime, @default(now()), @updatedAt)\n   - @@index on wallet_address, nonce_account\n\n2. **Nonce Pool Table**:\n   - id (Int, @id, @default(autoincrement()))\n   - nonce_account (String, @unique, the durable nonce account public key)\n   - status (NonceStatus enum: AVAILABLE, IN_USE, EXPIRED, INVALID)\n   - last_used_at (DateTime?, nullable)\n   - created_at, updated_at (DateTime, @default(now()), @updatedAt)\n   - @@index on status for efficient querying of available nonces\n\n3. **Swap Offers Table**:\n   - id (Int, @id, @default(autoincrement()))\n   - maker_wallet (String, references Users.wallet_address)\n   - offer_type (OfferType enum: MAKER_OFFER, COUNTER_OFFER)\n   - parent_offer_id (Int?, nullable, self-referencing for counter-offers)\n   - offered_assets (Json array, structure: [{type: 'nft'|'cnft', mint: 'address', metadata: {}}])\n   - requested_assets (Json array, same structure as offered_assets)\n   - status (OfferStatus enum: ACTIVE, MATCHED, CANCELLED, EXPIRED, COMPLETED)\n   - expires_at (DateTime)\n   - nonce_account (String, references NoncePool.nonce_account)\n   - created_at, updated_at (DateTime, @default(now()), @updatedAt)\n   - @@index on maker_wallet, status, expires_at, parent_offer_id\n\n4. **Swap Transactions Table**:\n   - id (Int, @id, @default(autoincrement()))\n   - offer_id (Int, references SwapOffers.id)\n   - counter_offer_id (Int?, nullable, references SwapOffers.id)\n   - maker_wallet (String, references Users.wallet_address)\n   - taker_wallet (String, references Users.wallet_address)\n   - transaction_signature (String, @unique, Solana transaction signature)\n   - status (TransactionStatus enum: PENDING, CONFIRMED, FAILED, CANCELLED)\n   - gas_fee (BigInt, fee in lamports)\n   - is_subsidized (Boolean, whether transaction was subsidized)\n   - error_message (String?, nullable, for failed transactions)\n   - confirmed_at (DateTime?, nullable)\n   - created_at, updated_at (DateTime, @default(now()), @updatedAt)\n   - @@index on offer_id, maker_wallet, taker_wallet, status, transaction_signature\n\n**Prisma Migration Considerations**:\n- Use proper @relation directives for foreign key relationships\n- Define custom validation using @map for database constraints\n- Ensure Json fields validate required structure in application layer\n- Create appropriate indexes using @@index directives\n- Set up proper enum types for status fields",
+        "testStrategy": "1. **Prisma Schema Validation**: Run `npx prisma validate` to ensure schema syntax is correct and `npx prisma db push` against test database to verify all tables, indexes, and relationships are created correctly.\n\n2. **Migration Testing**: Test both `npm run db:migrate` and `npm run db:migrate:deploy` commands to ensure migrations work correctly in development and production environments.\n\n3. **Prisma Client Generation**: Verify `npx prisma generate` creates proper TypeScript types and client methods for all new tables and relationships.\n\n4. **Data Integrity Testing**: Use Prisma Client to insert test data for each table ensuring foreign key relationships work correctly and constraint violations are properly caught.\n\n5. **Query Performance Testing**: Create sample datasets with 10k+ records using Prisma Client and verify query performance on indexed columns (wallet lookups, status filtering, asset searches).\n\n6. **JSON Field Functionality**: Test JSON operations on asset arrays using Prisma's JSON filtering capabilities including querying by mint address and asset type filtering.\n\n7. **Relationship Testing**: Verify all Prisma relations work correctly including nested queries, includes, and cascade operations.\n\n8. **Migration Rollback Testing**: Test migration rollback using `npx prisma migrate reset` to ensure schema changes can be safely reverted.\n\n9. **Production Deployment Testing**: Verify migrations auto-run correctly on DigitalOcean during deployment via pre-deploy job configuration.",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Update schema.prisma with atomic swap tables",
+            "description": "Add new table definitions to existing schema.prisma file for Users, NoncePool, SwapOffers, and SwapTransactions tables with proper Prisma syntax, relationships, and indexes.",
+            "dependencies": [],
+            "details": "Update the existing /prisma/schema.prisma file to include:\n- Users model with wallet_address as @id, nonce_account reference, is_subsidized boolean, swap_stats Json field\n- NoncePool model with auto-increment id, unique nonce_account, status enum, timestamps\n- SwapOffers model with relationships to Users and NoncePool, Json arrays for assets, status enum\n- SwapTransactions model with references to offers and users, transaction tracking fields\n- Define all necessary enums: NonceStatus, OfferType, OfferStatus, TransactionStatus\n- Add proper @@index directives for performance optimization\n- Set up @relation directives for foreign key relationships",
+            "status": "done",
+            "testStrategy": "Run `npx prisma validate` to ensure schema syntax is correct and all relationships are properly defined."
+          },
+          {
+            "id": 2,
+            "title": "Create initial Prisma migration for atomic swap tables",
+            "description": "Generate and test the initial Prisma migration that creates all atomic swap tables while preserving existing database structure.",
+            "dependencies": [
+              1
+            ],
+            "details": "Create the migration using `npx prisma migrate dev --name add-atomic-swap-tables` to:\n- Generate migration SQL files in /prisma/migrations directory\n- Ensure migration creates all new tables without affecting existing ones\n- Verify foreign key constraints are properly established\n- Test migration applies cleanly to fresh database\n- Validate that existing tables remain untouched\n- Ensure migration is reversible and can be rolled back safely",
+            "status": "done",
+            "testStrategy": "Apply migration to test database and verify all tables are created correctly using database inspection tools and Prisma Studio."
+          },
+          {
+            "id": 3,
+            "title": "Generate and validate Prisma Client types",
+            "description": "Generate updated Prisma Client with TypeScript types for all atomic swap tables and validate type safety and relationship access patterns.",
+            "dependencies": [
+              2
+            ],
+            "details": "Run `npx prisma generate` to create updated Prisma Client and:\n- Verify TypeScript types are generated for all new models\n- Test type safety for all table relationships and Json fields\n- Validate enum types are properly typed and exported\n- Ensure nested query capabilities work for related data\n- Test include and select options for optimized queries\n- Verify Json field typing allows proper asset structure access\n- Create sample TypeScript code to validate client usage patterns\n<info added on 2025-11-17T06:24:36.399Z>\n**COMPLETED SUCCESSFULLY ✅**\n\nPrisma Client generation and validation completed with full success:\n\n**Generated Components:**\n- 4 TypeScript models with complete type safety: User, NoncePool, SwapOffer, SwapTransaction\n- 4 properly typed enums: NonceStatus, OfferType, OfferStatus, TransactionStatus\n- Full relationship typing with include/select query optimization\n- Json field types with proper casting patterns for asset structures\n\n**Validation Confirmed:**\n- Comprehensive test file created at `temp/test-prisma-types.ts` demonstrating all type safety features\n- Project builds successfully with zero TypeScript errors via `npm run build`\n- All enum exports verified and properly typed\n- Nested relationship queries fully functional with type inference\n- Json field access patterns validated with proper casting\n\n**Generated Files:**\n- `src/generated/prisma/index.d.ts` - Complete type definitions\n- `src/generated/prisma/index.js` - Client implementation\n- Supporting runtime files and engine binaries\n\nThe Prisma Client is now production-ready for integration with atomic swap services.\n</info added on 2025-11-17T06:24:36.399Z>",
+            "status": "done",
+            "testStrategy": "Create test TypeScript files that use all generated types and relationships to ensure proper compilation and IntelliSense support."
+          },
+          {
+            "id": 4,
+            "title": "Test database operations with sample data",
+            "description": "Create comprehensive test suite for database operations using Prisma Client with sample atomic swap data to validate all CRUD operations and relationships.",
+            "dependencies": [
+              3
+            ],
+            "details": "Implement test suite that:\n- Creates sample users with various wallet addresses and configurations\n- Populates nonce pool with test nonce accounts in different statuses\n- Creates swap offers with different asset combinations and relationships\n- Tests transaction creation and status updates\n- Validates all foreign key relationships work correctly\n- Tests Json field queries and filtering capabilities\n- Verifies cascade operations and constraint enforcement\n- Tests concurrent operations for thread safety\n- Validates index performance with larger datasets",
+            "status": "done",
+            "testStrategy": "Run comprehensive test suite covering all CRUD operations, relationship queries, and constraint validations with both positive and negative test cases."
+          },
+          {
+            "id": 5,
+            "title": "Configure deployment migration strategy",
+            "description": "Set up automated migration deployment for DigitalOcean environment ensuring migrations run safely during application deployment.",
+            "dependencies": [
+              4
+            ],
+            "details": "Configure deployment pipeline to:\n- Set up pre-deploy job that runs `npm run db:migrate:deploy` on DigitalOcean\n- Ensure DATABASE_URL environment variable is properly configured\n- Test migration deployment in staging environment first\n- Implement rollback strategy for failed migrations\n- Add migration status monitoring and alerting\n- Document deployment process and troubleshooting steps\n- Verify zero-downtime deployment with database changes\n- Test with both additive and breaking schema changes",
+            "status": "done",
+            "testStrategy": "Deploy to staging environment and verify migrations run automatically and successfully without manual intervention."
+          },
+          {
+            "id": 6,
+            "title": "Performance optimization and monitoring setup",
+            "description": "Implement database performance monitoring and optimization for atomic swap tables including query analysis and index tuning.",
+            "dependencies": [
+              5
+            ],
+            "details": "Set up performance monitoring and optimization:\n- Analyze query performance for common atomic swap operations\n- Optimize indexes based on actual usage patterns\n- Set up database monitoring for slow queries and performance metrics\n- Implement connection pooling configuration for Prisma Client\n- Add query logging and analysis tools\n- Create performance benchmarks for swap operations\n- Document query optimization best practices\n- Set up alerts for database performance issues",
+            "status": "done",
+            "testStrategy": "Run performance tests with realistic data volumes and query patterns to validate optimization effectiveness and monitoring accuracy."
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Implement NoncePoolManager Service for Durable Nonce Account Management",
+        "description": "Create a comprehensive service to manage a pool of Solana durable nonce accounts with thread-safe operations for initialization, assignment, retrieval, advancement, and cleanup.",
+        "details": "Implement the NoncePoolManager service with the following core components:\n\n1. **Pool Initialization and Replenishment**:\n   - Create configurable pool size with minimum/maximum thresholds\n   - Generate new durable nonce accounts using Solana Web3.js\n   - Fund accounts with minimum rent-exempt balance\n   - Store account keypairs securely and track pool status\n   - Implement automatic replenishment when pool falls below threshold\n\n2. **Thread-Safe Pool Operations**:\n   - Use mutex/semaphore locking for concurrent access protection\n   - Implement queue-based assignment system to prevent race conditions\n   - Add connection pooling for Solana RPC calls\n   - Handle pool exhaustion gracefully with waiting mechanisms\n\n3. **User Assignment Logic**:\n   - Assign available nonce accounts to users on first request\n   - Track subsidy eligibility and mark first assignments appropriately\n   - Update user records in database with assigned nonce account\n   - Implement assignment timeout and retry mechanisms\n\n4. **Nonce Value Management**:\n   - Retrieve current nonce values from on-chain accounts using getAccountInfo\n   - Cache nonce values with TTL to reduce RPC calls\n   - Handle network failures and stale data scenarios\n   - Validate nonce format and account state\n\n5. **Nonce Advancement**:\n   - Advance nonce accounts to invalidate pending transactions\n   - Use SystemProgram.nonceAdvance instruction\n   - Handle advancement failures and retry logic\n   - Track advancement history for debugging\n\n6. **Cleanup and Maintenance**:\n   - Identify expired/unused nonce accounts based on configurable criteria\n   - Safely reclaim accounts by checking for pending transactions\n   - Return reclaimed accounts to available pool\n   - Implement periodic cleanup job with configurable intervals\n   - Log cleanup activities for monitoring\n\n7. **Error Handling and Monitoring**:\n   - Comprehensive error handling for RPC failures, network issues\n   - Metrics collection for pool utilization, assignment rates\n   - Health check endpoints for service monitoring\n   - Structured logging for debugging and audit trails",
+        "testStrategy": "1. **Unit Testing**:\n   - Test pool initialization with various configurations\n   - Verify thread-safety using concurrent assignment requests\n   - Mock Solana RPC calls to test error handling scenarios\n   - Test nonce advancement and cleanup logic with simulated accounts\n\n2. **Integration Testing**:\n   - Deploy test service against Solana devnet\n   - Create real nonce accounts and verify on-chain state\n   - Test user assignment flow with database integration\n   - Verify cleanup operations don't interfere with active accounts\n\n3. **Load Testing**:\n   - Simulate high concurrent user assignment requests\n   - Test pool replenishment under heavy load\n   - Measure RPC call efficiency and caching effectiveness\n   - Verify no race conditions or deadlocks occur\n\n4. **Database Integration Testing**:\n   - Verify user nonce account assignments are persisted correctly\n   - Test subsidy tracking updates in user records\n   - Ensure database transactions are atomic with pool operations\n\n5. **Monitoring and Observability**:\n   - Verify metrics are collected and exposed correctly\n   - Test health check endpoints return accurate pool status\n   - Validate log output contains necessary debugging information\n   - Test alerting for pool exhaustion scenarios",
+        "status": "done",
+        "dependencies": [
+          1
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Implement Pool Initialization and Configuration Management",
+            "description": "Create the core pool initialization system with configurable parameters for managing durable nonce account creation, funding, and automatic replenishment.",
+            "dependencies": [],
+            "details": "Implement pool configuration loading from environment variables (min/max pool size, replenishment thresholds). Create nonce account generation using Solana Web3.js Keypair.generate() and SystemProgram.createNonceAccount(). Fund accounts with rent-exempt balance using Connection.getMinimumBalanceForRentExemption(). Implement secure keypair storage with encryption. Add automatic replenishment logic triggered when available accounts fall below threshold. Include comprehensive error handling for RPC failures and funding issues.",
+            "status": "done",
+            "testStrategy": "Unit test pool initialization with various configurations. Mock Solana RPC calls to test account creation and funding. Test replenishment triggers and thresholds. Verify secure keypair storage and retrieval."
+          },
+          {
+            "id": 2,
+            "title": "Create Thread-Safe Pool Operations with Mutex Locking",
+            "description": "Implement thread-safe pool operations using mutex/semaphore locking to prevent race conditions during concurrent nonce account access and assignment.",
+            "dependencies": [
+              1
+            ],
+            "details": "Implement mutex-based locking using async-mutex or similar library for pool access protection. Create queue-based assignment system to handle concurrent requests. Add connection pooling for Solana RPC calls to prevent connection exhaustion. Implement graceful pool exhaustion handling with configurable wait timeouts and retry mechanisms. Add semaphore controls for limiting concurrent operations. Include deadlock prevention and timeout handling for long-running operations.",
+            "status": "done",
+            "testStrategy": "Test concurrent access scenarios with multiple threads requesting nonce accounts simultaneously. Verify mutex locking prevents race conditions. Test pool exhaustion handling and wait mechanisms. Load test with high concurrency to validate thread safety."
+          },
+          {
+            "id": 3,
+            "title": "Implement User Assignment Logic with Database Integration",
+            "description": "Create user assignment system that tracks nonce account assignments, subsidy eligibility, and maintains user records in the database with proper transaction handling.",
+            "dependencies": [
+              2
+            ],
+            "details": "Implement user assignment logic that assigns available nonce accounts on first request. Track subsidy eligibility flags and mark first-time assignments appropriately. Create database integration for updating user records with assigned nonce account public keys. Implement assignment timeout mechanisms and retry logic for failed assignments. Add user lookup functionality to retrieve existing assignments. Include transaction rollback handling for failed database operations and comprehensive audit logging.",
+            "status": "done",
+            "testStrategy": "Test user assignment with new and existing users. Verify subsidy eligibility tracking and database updates. Test assignment timeout and retry mechanisms. Mock database failures to test rollback behavior."
+          },
+          {
+            "id": 4,
+            "title": "Create Nonce Value Retrieval and Caching System",
+            "description": "Implement nonce value management system with on-chain retrieval, intelligent caching, and stale data handling for optimal performance and reliability.",
+            "dependencies": [
+              3
+            ],
+            "details": "Implement nonce value retrieval using Connection.getAccountInfo() with proper parsing of nonce account data. Create TTL-based caching system using Redis or in-memory cache to reduce RPC calls. Add cache invalidation logic for nonce advancement events. Implement network failure handling with exponential backoff retry logic. Add nonce format validation and account state verification. Include stale data detection and automatic cache refresh mechanisms with configurable TTL values.",
+            "status": "done",
+            "testStrategy": "Test nonce value retrieval from on-chain accounts. Verify caching behavior with TTL expiration. Test network failure scenarios and retry logic. Validate nonce format parsing and account state verification."
+          },
+          {
+            "id": 5,
+            "title": "Implement Nonce Advancement with Retry Logic and Error Handling",
+            "description": "Create nonce advancement system using SystemProgram.nonceAdvance instruction with comprehensive retry mechanisms and failure handling for transaction invalidation.",
+            "dependencies": [
+              4
+            ],
+            "details": "Implement nonce advancement using SystemProgram.nonceAdvance instruction with proper transaction construction. Add exponential backoff retry logic for advancement failures with configurable max attempts. Implement advancement history tracking for debugging and audit purposes. Create failure categorization (network, RPC, account state) with appropriate handling strategies. Add advancement verification to confirm successful nonce updates. Include comprehensive error logging and metrics collection for advancement success rates.",
+            "status": "done",
+            "testStrategy": "Test nonce advancement with valid and invalid scenarios. Verify retry logic with simulated failures. Test advancement verification and history tracking. Mock various failure types to test error handling strategies."
+          },
+          {
+            "id": 6,
+            "title": "Create Cleanup and Maintenance Operations with Periodic Jobs",
+            "description": "Implement automated cleanup system for expired nonce accounts with periodic maintenance jobs, safe reclamation logic, and comprehensive monitoring.",
+            "dependencies": [
+              5
+            ],
+            "details": "Implement expired account identification based on configurable criteria (last used timestamp, assignment age). Create safe account reclamation logic that checks for pending transactions before cleanup. Add periodic cleanup job using cron-like scheduling with configurable intervals. Implement account return logic to move reclaimed accounts back to available pool. Add cleanup activity logging and metrics collection for monitoring pool health. Include cleanup failure handling and manual intervention capabilities for stuck accounts.",
+            "status": "done",
+            "testStrategy": "Test expired account identification with various age criteria. Verify safe reclamation logic checks for pending transactions. Test periodic job scheduling and execution. Mock cleanup failures to test error handling and recovery."
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Implement FeeCalculator Service for Platform Fee Logic",
+        "description": "Create a comprehensive fee calculation service that handles different swap types with configurable fee structures, validation against maximum caps, and detailed fee breakdowns.",
+        "details": "Implement the FeeCalculator service with the following core components:\n\n1. **Fee Structure Configuration**:\n   - Load fee configuration from environment variables (FLAT_NFT_FEE, SOL_SWAP_PERCENTAGE, MAX_FEE_CAP_SOL)\n   - Support different fee types: flat fees for pure NFT swaps, percentage-based for SOL-involved swaps\n   - Implement configurable maximum fee caps (e.g., 0.5 SOL maximum)\n   - Create fee rule definitions for different swap scenarios (NFT-to-NFT, NFT-to-SOL, SOL-to-NFT)\n\n2. **Core Fee Calculation Logic**:\n   - Implement calculateSwapFee(swapType, assetValues, swapDetails) method\n   - For pure NFT swaps: apply flat fee structure based on asset count or complexity\n   - For SOL-involved swaps: calculate percentage-based fees on SOL amounts\n   - Apply fee caps and validate against maximum limits\n   - Handle edge cases like zero-value swaps or minimum fee thresholds\n\n3. **Fee Breakdown and Conversion**:\n   - Provide detailed fee breakdown with lamports and SOL conversions\n   - Include fee rate information and calculation methodology\n   - Return structured fee object with: { totalFeeLamports, totalFeeSOL, feeRate, feeType, breakdown, cappedAmount }\n   - Support fee preview functionality for UI display\n\n4. **Validation and Error Handling**:\n   - Validate input parameters and swap configurations\n   - Ensure fee calculations don't exceed maximum caps\n   - Handle invalid swap types or malformed asset data\n   - Provide clear error messages for fee calculation failures\n\n5. **Integration Points**:\n   - Design service to integrate with swap offer creation and validation\n   - Support fee estimation for different user scenarios\n   - Provide methods for fee adjustment based on user subsidization status",
+        "testStrategy": "1. **Unit Testing**:\n   - Test fee calculations for all swap types (NFT-to-NFT, NFT-to-SOL, SOL-to-NFT) with various asset values\n   - Verify percentage calculations and flat fee applications are accurate\n   - Test fee cap enforcement with edge cases (fees exceeding caps, zero fees, minimum thresholds)\n   - Validate lamports to SOL conversions and fee breakdown accuracy\n   - Test configuration loading from environment variables with different scenarios\n\n2. **Integration Testing**:\n   - Test fee calculation integration with mock swap offer data\n   - Verify fee service works correctly with different user subsidization statuses\n   - Test fee estimation accuracy against actual swap scenarios\n   - Validate error handling with malformed input data\n\n3. **Configuration Testing**:\n   - Test service behavior with different environment variable configurations\n   - Verify fee rules apply correctly for various swap scenarios\n   - Test dynamic fee adjustment based on configuration changes\n\n4. **Performance Testing**:\n   - Benchmark fee calculation performance with large asset lists\n   - Test concurrent fee calculations for multiple swap requests\n   - Verify memory usage and calculation efficiency",
+        "status": "done",
+        "dependencies": [
+          1
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 4,
+        "title": "Implement AssetValidator Service for NFT and cNFT Ownership Verification",
+        "description": "Create a comprehensive asset validation service that verifies ownership of both standard NFTs and compressed NFTs, handling Merkle proof validation and returning normalized asset representations.",
+        "details": "Implement the AssetValidator service with the following core components:\n\n1. **Standard NFT Ownership Verification**:\n   - Query SPL token accounts using Solana Web3.js getTokenAccountsByOwner method\n   - Validate token account ownership and balance (must be 1 for NFTs)\n   - Check token mint metadata to confirm NFT status\n   - Handle frozen token accounts and verify transferability\n   - Implement caching layer for frequently queried NFTs to reduce RPC calls\n\n2. **Compressed NFT (cNFT) Integration**:\n   - Integrate with Helius or similar indexer API for cNFT ownership queries\n   - Implement API client with proper authentication and rate limiting\n   - Parse compressed NFT metadata and ownership information\n   - Handle API failures with fallback mechanisms and retry logic\n   - Cache cNFT ownership data with appropriate TTL\n\n3. **Merkle Proof Data Management**:\n   - Fetch Merkle tree data including tree address, leaf index, and proof nodes\n   - Validate proof structure and completeness before returning\n   - Implement proof verification logic using Solana's compression libraries\n   - Handle tree updates and proof invalidation scenarios\n   - Store proof data temporarily for transaction building\n\n4. **Asset Normalization and Response**:\n   - Create unified AssetInfo interface for both NFT types\n   - Include essential fields: mint/assetId, owner, metadata URI, proof data (for cNFTs)\n   - Implement asset type detection and appropriate validation routing\n   - Return consistent error formats for validation failures\n   - Support batch validation for multiple assets\n\n5. **Re-validation and Edge Case Handling**:\n   - Implement re-validation logic for accept-time verification\n   - Handle burned assets by checking burn authority and account status\n   - Detect transferred assets by comparing current vs. cached ownership\n   - Manage frozen assets and provide clear error messaging\n   - Implement circuit breaker pattern for external API failures\n   - Add comprehensive logging for debugging ownership disputes\n\n6. **Configuration and Error Handling**:\n   - Load indexer API endpoints and credentials from environment\n   - Implement configurable timeouts and retry policies\n   - Create custom error types for different validation failure scenarios\n   - Add metrics collection for validation success/failure rates",
+        "testStrategy": "1. **Unit Testing**:\n   - Mock Solana RPC calls to test standard NFT ownership validation with various scenarios (owned, not owned, frozen, burned)\n   - Mock indexer API responses to test cNFT ownership verification and error handling\n   - Test Merkle proof fetching and validation logic with valid and invalid proof data\n   - Verify asset normalization produces consistent output for both NFT types\n   - Test edge case handling including burned, frozen, and transferred assets\n\n2. **Integration Testing**:\n   - Test against real Solana devnet with actual NFT and cNFT assets\n   - Verify indexer API integration with rate limiting and authentication\n   - Test re-validation scenarios by transferring assets between test accounts\n   - Validate caching behavior and TTL expiration with time-based tests\n   - Test batch validation performance with multiple assets\n\n3. **Error Scenario Testing**:\n   - Simulate RPC failures and verify fallback mechanisms\n   - Test indexer API downtime and circuit breaker functionality\n   - Verify proper error messages for each validation failure type\n   - Test timeout handling for slow API responses\n   - Validate retry logic with exponential backoff\n\n4. **Performance Testing**:\n   - Measure validation response times for both NFT types\n   - Test concurrent validation requests to verify thread safety\n   - Benchmark caching effectiveness with cache hit/miss ratios\n   - Load test with high volume of validation requests",
+        "status": "done",
+        "dependencies": [
+          1
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 5,
+        "title": "Implement TransactionBuilder Service for Constructing Atomic Swap Transactions",
+        "description": "Create a comprehensive transaction builder service that constructs complete Solana atomic swap transactions with durable nonce support, ATA creation, NFT/cNFT transfers, SOL transfers, and platform fee collection while respecting transaction size limits.",
+        "details": "Implement the TransactionBuilder service with the following core components:\n\n1. **Transaction Foundation Setup**:\n   - Initialize Transaction object with durable nonce advance instruction as the first instruction (mandatory ordering)\n   - Set transaction feePayer to taker's public key\n   - Use durable nonce account's stored blockhash as recentBlockhash instead of latest blockhash\n   - Implement transaction size monitoring to ensure 1232 byte limit compliance\n\n2. **Associated Token Account (ATA) Management**:\n   - Check for existing ATAs for all token transfers using getAssociatedTokenAddress\n   - Add createAssociatedTokenAccountInstruction for missing ATAs before transfer instructions\n   - Handle both maker and taker ATA requirements for NFT transfers\n   - Optimize ATA creation by batching when possible\n\n3. **Asset Transfer Instructions**:\n   - **Standard NFT Transfers**: Use SPL Token Program's transfer instruction with amount=1\n   - **Compressed NFT Transfers**: Integrate with Bubblegum program for cNFT transfers, including Merkle proof validation and tree account references\n   - **SOL Transfers**: Add SystemProgram.transfer instructions for SOL amounts between maker and taker\n   - Ensure proper instruction ordering: nonce advance → ATA creation → asset transfers → fee collection\n\n4. **Platform Fee Integration**:\n   - Integrate with FeeCalculator service to determine fee amounts\n   - Add execute_swap_with_fee instruction to collect platform fees\n   - Handle fee distribution to platform treasury account\n   - Ensure fee instruction is added after all transfer instructions\n\n5. **Transaction Signing and Size Optimization**:\n   - Partially sign transaction with platform authority private key\n   - Implement transaction size estimation and optimization techniques\n   - Add instruction compression where possible (combine similar operations)\n   - Provide size breakdown reporting for debugging oversized transactions\n   - Handle transaction size overflow by suggesting swap simplification\n\n6. **Error Handling and Validation**:\n   - Validate all required accounts exist and have sufficient balances\n   - Check for account ownership and transfer permissions\n   - Handle insufficient SOL for rent exemption and transaction fees\n   - Provide detailed error messages for transaction construction failures",
+        "testStrategy": "1. **Unit Testing**:\n   - Test transaction construction with various swap combinations (NFT-to-NFT, NFT-to-SOL, SOL-to-NFT, mixed swaps)\n   - Verify durable nonce advance instruction is always first in transaction\n   - Test ATA creation logic with existing and missing token accounts\n   - Mock Bubblegum program calls for cNFT transfer testing\n   - Test transaction size calculation and 1232 byte limit enforcement\n   - Verify platform fee instruction integration with different fee scenarios\n\n2. **Integration Testing**:\n   - Test with real Solana devnet using actual nonce accounts from NoncePoolManager\n   - Verify fee calculations match FeeCalculator service outputs\n   - Test asset validation integration with AssetValidator service\n   - Test complete transaction flow from construction to partial signing\n   - Verify transaction serialization and deserialization maintains integrity\n\n3. **Size Limit Testing**:\n   - Create maximum complexity swaps (multiple NFTs, cNFTs, SOL transfers) to test size limits\n   - Test size optimization techniques with oversized transactions\n   - Verify error handling when transactions exceed 1232 bytes\n   - Test instruction ordering and compression effectiveness\n\n4. **Error Scenario Testing**:\n   - Test with insufficient account balances, missing accounts, and invalid permissions\n   - Test with malformed Merkle proofs for cNFT transfers\n   - Test with expired or invalid nonce accounts\n   - Verify graceful handling of RPC failures during account lookups",
+        "status": "done",
+        "dependencies": [
+          2,
+          3,
+          4
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Implement Transaction Foundation Setup with Durable Nonce Integration",
+            "description": "Create the core transaction initialization system with durable nonce advance instruction as the first instruction, proper fee payer setup, and transaction size monitoring to ensure 1232 byte limit compliance.",
+            "dependencies": [],
+            "details": "Initialize Transaction object with durable nonce advance instruction as mandatory first instruction. Set transaction feePayer to taker's public key. Use durable nonce account's stored blockhash as recentBlockhash instead of latest blockhash. Implement transaction size monitoring and estimation to ensure 1232 byte limit compliance with real-time size tracking.",
+            "status": "done",
+            "testStrategy": "Unit test transaction initialization with various nonce accounts, verify nonce advance instruction ordering, test size monitoring with mock instructions, and validate fee payer assignment."
+          },
+          {
+            "id": 2,
+            "title": "Create ATA Management System for Token Account Creation",
+            "description": "Implement Associated Token Account management system that checks for existing ATAs, creates missing ones, and optimizes ATA creation through batching for both maker and taker requirements.",
+            "dependencies": [
+              1
+            ],
+            "details": "Check for existing ATAs using getAssociatedTokenAddress for all token transfers. Add createAssociatedTokenAccountInstruction for missing ATAs before transfer instructions. Handle both maker and taker ATA requirements for NFT transfers. Optimize ATA creation by batching when possible and implement proper instruction ordering.",
+            "status": "done",
+            "testStrategy": "Test ATA existence checking with various token mints, verify ATA creation instruction generation, test batching optimization, and mock RPC calls for account queries."
+          },
+          {
+            "id": 3,
+            "title": "Implement Standard NFT Transfer Instruction Building",
+            "description": "Create standard NFT transfer instruction builder using SPL Token Program with proper amount validation, account verification, and transfer instruction construction for NFT-to-NFT swaps.",
+            "dependencies": [
+              1,
+              2
+            ],
+            "details": "Use SPL Token Program's transfer instruction with amount=1 for standard NFT transfers. Implement proper source and destination token account validation. Handle NFT transfer between maker and taker accounts with proper ownership verification and balance checking before instruction creation.",
+            "status": "done",
+            "testStrategy": "Test NFT transfer instruction creation with various token accounts, verify amount=1 enforcement, test account ownership validation, and mock SPL Token Program interactions."
+          },
+          {
+            "id": 4,
+            "title": "Create Compressed NFT Transfer Integration with Bubblegum Program",
+            "description": "Implement compressed NFT transfer system that integrates with Bubblegum program for cNFT transfers, including Merkle proof validation and tree account references for compressed asset handling.",
+            "dependencies": [
+              1,
+              2
+            ],
+            "details": "Integrate with Bubblegum program for cNFT transfers including Merkle proof validation and tree account references. Handle compressed NFT transfer instructions with proper proof verification. Implement tree account management and ensure proper instruction formatting for Bubblegum program compatibility.",
+            "status": "done",
+            "testStrategy": "Test cNFT transfer instruction creation with mock Merkle proofs, verify Bubblegum program integration, test tree account handling, and validate compressed asset transfer logic."
+          },
+          {
+            "id": 5,
+            "title": "Implement SOL Transfer and Platform Fee Collection Instructions",
+            "description": "Create SOL transfer instruction builder and platform fee collection system that integrates with FeeCalculator service, handles fee distribution to treasury, and ensures proper instruction ordering.",
+            "dependencies": [
+              1
+            ],
+            "details": "Add SystemProgram.transfer instructions for SOL amounts between maker and taker. Integrate with FeeCalculator service to determine fee amounts. Add execute_swap_with_fee instruction to collect platform fees. Handle fee distribution to platform treasury account and ensure fee instruction is added after all transfer instructions.",
+            "status": "done",
+            "testStrategy": "Test SOL transfer instruction creation with various amounts, verify fee calculation integration, test platform fee collection logic, and validate instruction ordering requirements."
+          },
+          {
+            "id": 6,
+            "title": "Create Transaction Signing, Size Optimization, and Validation Systems",
+            "description": "Implement transaction signing with platform authority, size optimization techniques, comprehensive validation, and error handling for transaction construction failures and oversized transactions.",
+            "dependencies": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "details": "Partially sign transaction with platform authority private key. Implement transaction size estimation and optimization techniques including instruction compression. Add size breakdown reporting for debugging oversized transactions. Handle transaction size overflow by suggesting swap simplification. Validate all required accounts exist and have sufficient balances with detailed error messages.",
+            "status": "done",
+            "testStrategy": "Test transaction signing with mock private keys, verify size optimization algorithms, test validation logic with various account states, and simulate oversized transaction handling."
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Implement OfferManager Service for Core Swap Business Logic",
+        "description": "Create a comprehensive service that manages the complete lifecycle of swap offers including creation, counter-offers, cancellation, acceptance, and fulfillment with proper transaction management and coordination with other core services.",
+        "details": "Implement the OfferManager service with the following core components:\n\n1. **Offer Creation and Management**:\n   - Create maker offers with support for both direct offers (targeted to specific wallet) and open offers (available to any taker)\n   - Generate unique offer IDs and store offer details in database with proper indexing\n   - Implement offer validation using AssetValidator service to verify maker owns offered assets\n   - Calculate and store platform fees using FeeCalculator service\n   - Set offer expiration timestamps and implement automatic cleanup of expired offers\n   - Support partial fills for divisible assets and track remaining quantities\n\n2. **Counter-Offer System**:\n   - Allow users to create counter-offers against existing offers with modified terms\n   - Link counter-offers to parent offers and maintain offer chain history\n   - Implement counter-offer validation to ensure reasonable terms and asset ownership\n   - Handle counter-offer acceptance and rejection workflows\n   - Prevent circular counter-offer chains and implement maximum counter-offer depth\n\n3. **Offer Cancellation and Nonce Management**:\n   - Implement offer cancellation with proper database state updates\n   - Coordinate with NoncePoolManager to invalidate associated nonce accounts\n   - Handle batch cancellation for multiple offers\n   - Implement maker-initiated cancellation and automatic expiration-based cancellation\n   - Clean up related counter-offers when parent offers are cancelled\n\n4. **Offer Acceptance and Transaction Building**:\n   - Validate taker eligibility and asset ownership before acceptance\n   - Coordinate with TransactionBuilder service to construct atomic swap transactions\n   - Assign nonce accounts from NoncePoolManager for transaction durability\n   - Return serialized transaction data ready for taker signature and submission\n   - Implement transaction size optimization and fee calculation integration\n   - Handle ATA creation requirements for both maker and taker\n\n5. **Post-Transaction Management**:\n   - Mark offers as filled after receiving on-chain confirmation\n   - Update user swap statistics and transaction history\n   - Release nonce accounts back to pool after successful completion\n   - Handle failed transactions and implement retry logic for network issues\n   - Maintain audit trail of all offer state changes\n\n6. **Database Transaction Management**:\n   - Implement proper database transactions for all multi-step operations\n   - Use database locks to prevent race conditions during offer acceptance\n   - Implement rollback mechanisms for failed operations\n   - Ensure data consistency across related tables (offers, users, transactions)\n   - Handle concurrent access scenarios with proper isolation levels\n\n7. **Service Coordination**:\n   - Integrate with NoncePoolManager for nonce account lifecycle management\n   - Use AssetValidator for all asset ownership verification operations\n   - Leverage FeeCalculator for accurate fee computation and validation\n   - Coordinate with TransactionBuilder for transaction construction\n   - Implement proper error handling and service dependency management",
+        "testStrategy": "1. **Unit Testing**:\n   - Test offer creation with various asset combinations (NFT-to-NFT, NFT-to-SOL, SOL-to-NFT)\n   - Mock all service dependencies (NoncePoolManager, AssetValidator, FeeCalculator, TransactionBuilder) to test business logic isolation\n   - Test counter-offer creation, validation, and chain management\n   - Verify offer cancellation properly invalidates nonce accounts and updates database state\n   - Test offer acceptance workflow with valid and invalid scenarios\n   - Test concurrent offer acceptance scenarios to ensure proper locking and race condition prevention\n\n2. **Integration Testing**:\n   - Test end-to-end offer lifecycle with real database transactions\n   - Verify proper coordination between all dependent services\n   - Test transaction rollback scenarios when service calls fail\n   - Test offer expiration cleanup with time-based scenarios\n   - Verify database consistency after various failure scenarios\n\n3. **Load Testing**:\n   - Test concurrent offer creation and acceptance under high load\n   - Verify database transaction performance with multiple simultaneous operations\n   - Test nonce pool exhaustion scenarios and proper error handling\n   - Measure service response times under various load conditions\n\n4. **Error Handling Testing**:\n   - Test behavior when dependent services are unavailable or return errors\n   - Verify proper cleanup when transactions fail at various stages\n   - Test database connection failures and recovery mechanisms\n   - Test invalid asset scenarios and proper error propagation to clients",
+        "status": "done",
+        "dependencies": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Implement Offer Creation and Management Core Logic",
+            "description": "Create the foundational offer creation system with support for direct and open offers, unique ID generation, database storage, asset validation integration, and fee calculation.",
+            "dependencies": [],
+            "details": "Implement offer creation endpoints that generate unique offer IDs, validate maker asset ownership through AssetValidator service, calculate platform fees using FeeCalculator service, store offer details in database with proper indexing for efficient queries, support both direct offers (targeted to specific wallets) and open offers (available to any taker), implement offer expiration timestamps, and support partial fills for divisible assets with remaining quantity tracking.",
+            "status": "done",
+            "testStrategy": "Unit test offer creation with various asset combinations (NFT-to-NFT, NFT-to-SOL, SOL-to-NFT), mock AssetValidator and FeeCalculator services, test unique ID generation, verify database storage and indexing, test expiration handling and partial fill logic."
+          },
+          {
+            "id": 2,
+            "title": "Implement Counter-Offer System with Chain Management",
+            "description": "Create comprehensive counter-offer functionality with parent-child linking, offer chain history tracking, validation logic, and acceptance/rejection workflows.",
+            "dependencies": [
+              1
+            ],
+            "details": "Implement counter-offer creation against existing offers with modified terms, maintain parent-child relationships and offer chain history in database, implement counter-offer validation to ensure reasonable terms and asset ownership, handle acceptance and rejection workflows, prevent circular counter-offer chains with maximum depth limits, implement counter-offer expiration and cleanup logic.",
+            "status": "done",
+            "testStrategy": "Test counter-offer creation with various term modifications, verify parent-child linking and chain history tracking, test circular chain prevention, validate acceptance/rejection workflows, test maximum depth enforcement and expiration handling."
+          },
+          {
+            "id": 3,
+            "title": "Implement Offer Cancellation and Nonce Management Integration",
+            "description": "Create offer cancellation system with database state updates, nonce account invalidation coordination, and batch cancellation support.",
+            "dependencies": [
+              1,
+              2
+            ],
+            "details": "Implement offer cancellation with proper database state updates and transaction management, coordinate with NoncePoolManager to invalidate associated nonce accounts, support batch cancellation for multiple offers, handle maker-initiated cancellation and automatic expiration-based cancellation, clean up related counter-offers when parent offers are cancelled, implement audit trail for cancellation events.",
+            "status": "done",
+            "testStrategy": "Test individual and batch offer cancellation, verify nonce account invalidation coordination, test counter-offer cleanup when parent offers are cancelled, verify database state consistency and audit trail creation."
+          },
+          {
+            "id": 4,
+            "title": "Implement Offer Acceptance and Transaction Building Workflow",
+            "description": "Create offer acceptance system with taker validation, transaction building coordination, nonce assignment, and transaction optimization.",
+            "dependencies": [
+              1,
+              3
+            ],
+            "details": "Implement taker eligibility validation and asset ownership verification before acceptance, coordinate with TransactionBuilder service to construct atomic swap transactions, assign nonce accounts from NoncePoolManager for transaction durability, return serialized transaction data ready for taker signature, implement transaction size optimization and fee calculation integration, handle ATA creation requirements for both maker and taker.",
+            "status": "done",
+            "testStrategy": "Test taker validation and asset ownership verification, mock TransactionBuilder coordination, verify nonce account assignment, test transaction serialization and size optimization, validate ATA creation handling and fee integration."
+          },
+          {
+            "id": 5,
+            "title": "Implement Post-Transaction Management and State Updates",
+            "description": "Create post-transaction processing system for offer completion, user statistics updates, nonce account release, and failure handling.",
+            "dependencies": [
+              4
+            ],
+            "details": "Mark offers as filled after receiving on-chain confirmation, update user swap statistics and transaction history in database, release nonce accounts back to NoncePoolManager pool after successful completion, handle failed transactions with retry logic for network issues, maintain comprehensive audit trail of all offer state changes, implement cleanup procedures for incomplete transactions.",
+            "status": "done",
+            "testStrategy": "Test offer completion marking and state updates, verify user statistics and history updates, test nonce account release coordination, validate failure handling and retry logic, verify audit trail maintenance and cleanup procedures."
+          },
+          {
+            "id": 6,
+            "title": "Implement Database Transaction Management and Concurrency Control",
+            "description": "Create robust database transaction management with proper locking, rollback mechanisms, and concurrency handling for all multi-step operations.",
+            "dependencies": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "details": "Implement database transactions for all multi-step operations with proper isolation levels, use database locks to prevent race conditions during offer acceptance, implement comprehensive rollback mechanisms for failed operations, ensure data consistency across related tables (offers, users, transactions), handle concurrent access scenarios with optimistic and pessimistic locking strategies, implement deadlock detection and resolution.",
+            "status": "done",
+            "testStrategy": "Test database transaction isolation and rollback mechanisms, simulate concurrent access scenarios and race conditions, verify locking strategies prevent data corruption, test deadlock detection and resolution, validate data consistency across all related tables."
+          },
+          {
+            "id": 7,
+            "title": "Implement Service Coordination and Comprehensive Error Handling",
+            "description": "Create service integration layer with proper dependency management, error handling, circuit breakers, and comprehensive logging across all OfferManager operations.",
+            "dependencies": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "details": "Integrate with NoncePoolManager for nonce account lifecycle management, coordinate with AssetValidator for asset ownership verification, leverage FeeCalculator for fee computation, coordinate with TransactionBuilder for transaction construction, implement circuit breakers for service dependencies, create comprehensive error handling with proper error classification and recovery strategies, implement structured logging for all operations and service interactions.",
+            "status": "done",
+            "testStrategy": "Test service integration with all dependencies (NoncePoolManager, AssetValidator, FeeCalculator, TransactionBuilder), verify circuit breaker functionality during service failures, test error handling and recovery strategies, validate comprehensive logging and error classification across all operations."
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Completely Rewrite Solana Escrow Program for Atomic Swaps",
+        "description": "Completely rewrite the existing Solana escrow program currently deployed at program ID AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei to replace its escrow agreement model with a new atomic swap system. This involves a full architectural pivot: building a brand new atomic swap program from scratch and deploying it to the same program ID, thereby replacing all existing escrow logic and functionality. The new program will support atomic swaps with fee collection, handling both standard NFTs and compressed NFTs. CRITICAL: All development and testing must follow the local-first development workflow using Docker containers and local Solana test validator for fast iteration, then deploy the completely rewritten program to the existing staging program ID for validation before production deployment.",
+        "status": "done",
+        "dependencies": [
+          3
+        ],
+        "priority": "high",
+        "details": "This task entails a complete architectural overhaul of the Solana escrow program currently deployed at the staging program ID AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei. The key points are:\n\n- **Full Replacement of Existing Program:** The new atomic swap program will be developed from scratch and deployed to replace the existing escrow program code at the same program ID. This is not an incremental update or feature addition but a total rewrite and architectural pivot.\n\n- **Program Structure Overhaul:** Remove all existing escrow agreement logic, state accounts, and related instructions. Create a new program entry point with atomic_swap_with_fee as the primary instruction. Define new account structures for atomic swap state, treasury PDA, and fee accounting. Implement proper program-derived address (PDA) derivation for treasury and state accounts.\n\n- **Atomic Swap Instruction Implementation:** Implement atomic_swap_with_fee instruction supporting maker/taker model, handling asset transfers for standard SPL tokens/NFTs and compressed NFTs (cNFTs), SOL transfers with balance validation, and ensuring atomicity of swaps.\n\n- **Compressed NFT (cNFT) Support:** Integrate with Metaplex Bubblegum program for cNFT transfers, including Merkle proof validation and support for cNFT-to-cNFT and cNFT-to-standard-asset swaps.\n\n- **Platform Fee Collection System:** Implement treasury PDA for collecting platform fees in SOL, with fee calculations based on swap type, enforcing caps and thresholds, and transferring fees during swap execution.\n\n- **On-Chain Fee Accounting:** Track total fees collected, swap counts, and fee distribution on-chain with authorized withdrawal mechanisms.\n\n- **Security and Validation Framework:** Comprehensive account validation, signer verification, reentrancy protection, and Merkle proof validation for cNFT operations.\n\n- **Local-First Development Environment:** Use Docker containers and local Solana test validator for rapid development and testing. Deploy the new program to the existing staging program ID for network validation before production deployment.\n\n- **Testing Suite and SDK Generation:** Develop comprehensive unit and integration tests, including fuzzing and security tests. Generate Anchor IDL and TypeScript client SDK with multi-environment support.\n\nThis task explicitly clarifies that the staging program ID is the existing escrow program's ID and that the new atomic swap program will replace the existing code at this ID, maintaining the same program ID but completely changing the program logic and functionality.",
+        "testStrategy": "1. **Local-First Development and Testing Workflow:**\n   - Develop the new atomic swap program locally using Docker containers and local Solana test validator for fast iteration.\n   - Deploy the new program code to the local validator for rapid testing cycles.\n   - Run comprehensive unit and integration tests locally covering all swap scenarios and fee logic.\n   - After successful local validation, deploy the new atomic swap program code to the existing staging program ID (AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei), replacing the old escrow program code.\n   - Conduct full end-to-end testing on staging under real network conditions to validate the new atomic swap functionality.\n   - Only after full staging validation, proceed with production deployment.\n\n2. **Unit Testing:**\n   - Test atomic_swap_with_fee instruction with all supported asset combinations (standard NFT-to-NFT, NFT-to-SOL, SOL-to-NFT, cNFT-to-NFT, cNFT-to-cNFT).\n   - Verify fee calculation accuracy, enforcement of fee caps, and treasury PDA operations.\n   - Validate security checks including signer verification, account ownership, and Merkle proof validation.\n\n3. **Integration Testing:**\n   - Test complete swap workflows on local validator and staging, including cNFT integration with Bubblegum program.\n   - Validate fee accounting and withdrawal mechanisms.\n   - Test program interaction with generated TypeScript SDK and IDL.\n\n4. **Security Testing:**\n   - Conduct security audits focusing on reentrancy protection, account validation, and unauthorized access attempts.\n   - Test failure scenarios ensuring atomicity and proper error handling.\n\n5. **Performance and Compatibility Testing:**\n   - Measure transaction size and compute unit consumption.\n   - Test compatibility with various wallet implementations and transaction builders.\n   - Verify fee collection efficiency and treasury management operations.",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Design New Program Architecture and Account Structures",
+            "description": "Design the complete program architecture for atomic swaps, removing all existing escrow logic and defining new account structures for atomic swap state, treasury PDA, and fee accounting.",
+            "dependencies": [],
+            "details": "Remove all existing escrow agreement logic, state accounts, and related instructions. Create new program entry point with atomic_swap_with_fee as the primary instruction. Define new account structures for atomic swap state, treasury PDA, and fee accounting. Implement proper program-derived address (PDA) derivation for treasury and state accounts with proper seeds and bump calculations.",
+            "status": "done",
+            "testStrategy": "Unit test PDA derivation logic, validate account structure sizes and alignment, test account initialization and closure scenarios."
+          },
+          {
+            "id": 2,
+            "title": "Set Up Local Development Environment with Docker and Solana Test Validator",
+            "description": "Configure local development environment using Docker containers for services and local Solana test validator for fast iteration and testing cycles.",
+            "dependencies": [
+              1
+            ],
+            "details": "Set up Docker containers for PostgreSQL, Redis, and other required services for local development. Configure local Solana test validator (solana-test-validator) for program deployment and testing. Create docker-compose configuration for orchestrating all services. Set up hot reloading and fast iteration workflows for program development. Configure environment variables for switching between local, staging, and production program IDs. Ensure proper networking between containers and local validator.",
+            "status": "done",
+            "testStrategy": "Test Docker container startup and service communication, verify local Solana test validator functionality, test program deployment to local validator, validate environment variable configuration switching."
+          },
+          {
+            "id": 3,
+            "title": "Implement Atomic Swap Instruction with Basic Asset Transfer Logic",
+            "description": "Create the core atomic_swap_with_fee instruction that handles complete swap execution in a single transaction with maker/taker model and basic asset transfers.",
+            "dependencies": [
+              2
+            ],
+            "details": "Create atomic_swap_with_fee instruction that handles complete swap execution in a single transaction. Support maker/taker model where maker creates offer and taker executes the swap. Implement asset transfer logic for standard SPL tokens/NFTs. Handle SOL transfers between parties with proper balance validation. Ensure atomicity - either all transfers succeed or entire transaction fails.",
+            "status": "done",
+            "testStrategy": "Test atomic swap execution with various asset combinations on local validator, verify transaction atomicity with failure scenarios, validate balance changes and transfer logic with fast local iteration."
+          },
+          {
+            "id": 4,
+            "title": "Integrate Compressed NFT Support with Bubblegum Program",
+            "description": "Integrate with Metaplex Bubblegum program to support compressed NFT transfers in atomic swaps with proper Merkle proof validation.",
+            "dependencies": [
+              3
+            ],
+            "details": "Integrate with Metaplex Bubblegum program for cNFT transfers. Implement Merkle proof validation for cNFT ownership verification. Handle cNFT transfer instructions with proper proof and leaf data. Support both cNFT-to-cNFT and cNFT-to-standard-asset swaps with proper cross-program invocation (CPI) calls.",
+            "status": "done",
+            "testStrategy": "Test cNFT transfer scenarios with valid and invalid Merkle proofs on local validator, verify Bubblegum program integration locally, test mixed cNFT and standard asset swaps with rapid iteration."
+          },
+          {
+            "id": 5,
+            "title": "Implement Platform Fee Collection System with Treasury PDA",
+            "description": "Implement a comprehensive platform fee collection system with treasury PDA for collecting fees in SOL based on swap type and value.",
+            "dependencies": [
+              3
+            ],
+            "details": "Implement treasury PDA for collecting platform fees in SOL. Calculate fees based on swap type (flat fees for NFT-only swaps, percentage for SOL-involved swaps). Enforce maximum fee caps and minimum fee thresholds. Transfer fees to treasury PDA during swap execution with proper validation and CPI calls to system program.",
+            "status": "done",
+            "testStrategy": "Test fee calculation accuracy for different swap types on local validator, verify treasury PDA balance updates locally, test fee cap enforcement and edge cases with fast iteration cycles."
+          },
+          {
+            "id": 6,
+            "title": "Create On-Chain Fee Accounting and Withdrawal Mechanisms",
+            "description": "Create comprehensive on-chain fee accounting to track collected fees, swap statistics, and implement authorized withdrawal mechanisms.",
+            "dependencies": [
+              5
+            ],
+            "details": "Create fee accounting state to track total fees collected, number of swaps, and fee distribution. Implement fee withdrawal mechanism for authorized treasury management. Store fee statistics on-chain for transparency and auditing. Update accounting atomically with each successful swap and implement proper authorization checks for withdrawals.",
+            "status": "done",
+            "testStrategy": "Test fee accounting updates with concurrent swaps on local validator, verify withdrawal authorization and balance transfers locally, validate accounting accuracy over multiple transactions with rapid testing cycles."
+          },
+          {
+            "id": 7,
+            "title": "Implement Comprehensive Security and Validation Framework",
+            "description": "Implement a robust security and validation framework with comprehensive account validation, signer verification, and reentrancy protection.",
+            "dependencies": [
+              4,
+              5
+            ],
+            "details": "Implement comprehensive account validation for all input accounts. Verify signer authorities for asset transfers and fee payments. Check account ownership, balance sufficiency, and transfer permissions. Implement reentrancy protection and proper error handling. Validate Merkle proofs for cNFT operations with proper leaf verification and security checks.",
+            "status": "done",
+            "testStrategy": "Test security validations with malicious inputs on local validator, verify reentrancy protection locally, test account ownership and signer verification with edge cases and attack scenarios using fast local iteration."
+          },
+          {
+            "id": 8,
+            "title": "Create Comprehensive Testing Suite with Local and Staging Validation",
+            "description": "Develop a comprehensive testing suite covering all instruction handlers, swap scenarios, error conditions, and security vulnerabilities with local-first testing approach followed by staging validation.",
+            "dependencies": [
+              7
+            ],
+            "details": "Write comprehensive unit tests for all instruction handlers. Create integration tests for complete swap scenarios (NFT-to-NFT, NFT-to-SOL, cNFT swaps). Test error conditions, edge cases, and security vulnerabilities. Implement fuzzing tests for account validation and fee calculation. Run all tests locally on Solana test validator for fast iteration. Deploy to STAGING program (AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei) only after local validation is complete. Run comprehensive E2E tests on staging with real network conditions.",
+            "status": "done",
+            "testStrategy": "Execute full test suite locally with coverage analysis and fast iteration cycles, deploy and run integration tests against local Solana test validator, perform security testing with malicious transaction scenarios locally, then validate all functionality on staging with comprehensive E2E testing after local validation is complete."
+          },
+          {
+            "id": 9,
+            "title": "Generate IDL and TypeScript Client SDK with Multi-Environment Support",
+            "description": "Generate new Anchor IDL reflecting the atomic swap program structure and create TypeScript client SDK with support for local, staging, and production environments.",
+            "dependencies": [
+              8
+            ],
+            "details": "Generate new Anchor IDL reflecting the atomic swap program structure. Create TypeScript types and client SDK for frontend integration with multi-environment support for local development, staging, and production. Provide code examples and documentation for program interaction. Ensure type safety and proper error handling in generated client code with comprehensive method signatures and error types. Include configuration options for switching between local test validator, staging, and production program IDs. Test SDK functionality locally before staging deployment.",
+            "status": "done",
+            "testStrategy": "Validate IDL generation accuracy, test TypeScript client SDK with real program interactions on local test validator first, then validate on STAGING environment, verify type safety and error handling in client code, test multi-environment program ID configuration switching between local, staging, and production."
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Implement Express HTTP API Routes for Atomic Swaps",
+        "description": "Create comprehensive Express.js HTTP API endpoints for atomic swap operations including offer creation, counter-offers, cancellation, acceptance, confirmation, and listing with proper validation and error handling.",
+        "details": "Implement the Express HTTP API routes with the following core components:\n\n1. **Route Structure and Middleware Setup**:\n   - Create Express router with proper middleware chain (body parsing, CORS, rate limiting)\n   - Implement authentication middleware to verify wallet signatures for protected endpoints\n   - Add request logging and error handling middleware with structured error responses\n   - Set up input validation middleware using Joi or similar library for request body/params validation\n\n2. **Offer Management Routes**:\n   - POST /api/offers: Create new swap offer with maker assets, requested assets, and optional taker specification\n     * Validate maker wallet signature and asset ownership\n     * Use OfferManager service to create offer and calculate fees\n     * Return offer ID and details with 201 status\n   - POST /api/offers/:id/counter: Create counter-offer for existing offer\n     * Validate taker eligibility and asset ownership\n     * Generate counter-offer with modified terms\n     * Return counter-offer details with 201 status\n   - POST /api/offers/:id/cancel: Cancel existing offer (maker only)\n     * Verify maker authorization and offer status\n     * Update offer status to cancelled\n     * Return confirmation with 200 status\n\n3. **Transaction Execution Routes**:\n   - POST /api/offers/:id/accept: Accept offer and return serialized transaction\n     * Validate taker authorization and offer availability\n     * Use TransactionBuilder service to construct atomic swap transaction\n     * Assign nonce account from NoncePoolManager\n     * Return serialized transaction for client signing with 200 status\n   - POST /api/offers/:id/confirm: Confirm on-chain transaction completion\n     * Validate transaction signature and verify on-chain execution\n     * Update offer status to completed and release nonce account\n     * Return confirmation details with 200 status\n\n4. **Query Routes**:\n   - GET /api/offers: List offers with filtering and pagination\n     * Support query parameters: maker, taker, status, asset_type, limit, offset\n     * Implement proper SQL queries with indexes for performance\n     * Return paginated results with metadata\n   - GET /api/offers/:id: Get detailed offer information\n     * Return complete offer details including assets, fees, and status history\n     * Include related counter-offers if applicable\n\n5. **Error Handling and Status Codes**:\n   - 400 Bad Request: Invalid input data, malformed requests\n   - 401 Unauthorized: Missing or invalid wallet signature\n   - 403 Forbidden: Insufficient permissions for operation\n   - 404 Not Found: Offer not found or invalid offer ID\n   - 409 Conflict: Offer already accepted/cancelled, invalid state transition\n   - 422 Unprocessable Entity: Valid format but business logic validation failed\n   - 500 Internal Server Error: Service failures, database errors\n\n6. **Input Validation Schemas**:\n   - Validate Solana wallet addresses format (base58, 32-44 characters)\n   - Validate asset structures (mint addresses, amounts, metadata)\n   - Validate offer IDs (UUID format)\n   - Sanitize and validate all user inputs to prevent injection attacks",
+        "testStrategy": "1. **Unit Testing**:\n   - Test each route handler in isolation with mocked service dependencies (OfferManager, TransactionBuilder, NoncePoolManager)\n   - Verify input validation with valid and invalid request payloads for all endpoints\n   - Test error handling scenarios including service failures and database connection issues\n   - Mock wallet signature verification and test authorization flows\n\n2. **Integration Testing**:\n   - Test complete API workflows: create offer → accept → confirm transaction chain\n   - Test counter-offer creation and acceptance flows with multiple participants\n   - Verify database interactions and proper transaction rollback on failures\n   - Test pagination and filtering functionality with large datasets\n\n3. **API Contract Testing**:\n   - Validate all response schemas match OpenAPI specification\n   - Test HTTP status codes for all success and error scenarios\n   - Verify proper Content-Type headers and response formatting\n   - Test CORS headers and preflight requests for browser compatibility\n\n4. **Security Testing**:\n   - Test rate limiting with burst requests to prevent abuse\n   - Verify wallet signature validation prevents unauthorized operations\n   - Test input sanitization against SQL injection and XSS attacks\n   - Validate authorization checks prevent users from accessing others' offers\n\n5. **Performance Testing**:\n   - Load test offer listing endpoint with concurrent requests and large datasets\n   - Measure response times for transaction building and serialization\n   - Test database query performance with proper indexing\n   - Verify memory usage and connection pooling under load",
+        "status": "done",
+        "dependencies": [
+          1,
+          6
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 9,
+        "title": "Implement Monitoring and Background Jobs System",
+        "description": "Create a comprehensive monitoring and background job system with health checks, automated cleanup jobs, structured logging, and error alerting for the atomic swap platform.",
+        "details": "Implement the monitoring and background jobs system with the following core components:\n\n1. **Health Check Endpoint/Function**:\n   - Create `/health` endpoint that performs comprehensive system health verification\n   - Test database connectivity with simple query execution and connection pool status\n   - Verify nonce pool health by checking available nonce count, account validity, and recent advancement success rates\n   - Validate treasury PDA accessibility and balance sufficiency for fee collection\n   - Test RPC connectivity with multiple endpoints and measure response times\n   - Return structured health status with individual component statuses and overall system health score\n   - Implement health check caching (30-60 second TTL) to prevent excessive resource usage\n\n2. **Cron Job for Expiring Old Offers**:\n   - Create scheduled job (runs every 15 minutes) to identify and expire offers past their expiration time\n   - Query offers table for records where expires_at < current timestamp and status = 'active'\n   - Update expired offers to 'expired' status and log expiration events\n   - Implement batch processing for large numbers of expired offers to prevent database locks\n   - Send notifications to makers about expired offers if notification system exists\n   - Track expiration metrics for monitoring dashboard\n\n3. **Cron Job for Cleaning Up Unused Nonce Accounts**:\n   - Create scheduled job (runs every hour) to identify and clean up stale nonce accounts\n   - Query nonce_pool table for accounts not used in last 24 hours and not currently assigned\n   - Verify nonce accounts are still valid on-chain before cleanup\n   - Reclaim SOL from unused nonce accounts back to treasury\n   - Remove cleaned accounts from database and update pool statistics\n   - Implement safety checks to maintain minimum pool size during cleanup\n\n4. **Cron Job for Replenishing Nonce Pool**:\n   - Create scheduled job (runs every 30 minutes) to maintain optimal nonce pool size\n   - Check current available nonce count against configured minimum threshold\n   - Generate new nonce accounts when pool falls below threshold using NoncePoolManager service\n   - Fund new accounts with rent-exempt balance from treasury\n   - Update pool statistics and log replenishment activities\n   - Implement exponential backoff for failed replenishment attempts\n\n5. **Structured Logging System**:\n   - Implement Winston or Pino logger with structured JSON format for all critical operations\n   - Create log levels: ERROR (critical failures), WARN (recoverable issues), INFO (important events), DEBUG (detailed tracing)\n   - Log all swap lifecycle events: offer creation, acceptance, transaction submission, confirmation, failures\n   - Include contextual metadata: user_wallet, offer_id, transaction_signature, nonce_account, error_codes\n   - Implement log rotation and retention policies (keep 30 days of logs)\n   - Create correlation IDs for tracking requests across multiple services\n\n6. **Error Alerting System**:\n   - Implement alerting for critical failures: database connection loss, RPC endpoint failures, nonce pool depletion, treasury balance low\n   - Create alert severity levels: CRITICAL (immediate action required), HIGH (action needed within hours), MEDIUM (monitor closely)\n   - Integrate with notification services (email, Slack, PagerDuty) for real-time alerts\n   - Implement alert throttling to prevent spam (max 1 alert per error type per 15 minutes)\n   - Create alert recovery notifications when issues are resolved\n   - Track alert metrics and false positive rates for tuning\n\n7. **Job Scheduling and Management**:\n   - Use node-cron or similar library for job scheduling with proper timezone handling\n   - Implement job locking to prevent concurrent execution of same job type\n   - Create job status tracking with execution history, success/failure rates, and performance metrics\n   - Implement graceful shutdown handling for background jobs during application restart\n   - Add job monitoring dashboard showing last execution times, success rates, and current status",
+        "testStrategy": "1. **Health Check Testing**:\n   - Test health endpoint with all systems healthy and verify 200 response with detailed status\n   - Simulate database connection failure and verify health check detects and reports the issue\n   - Mock RPC endpoint failures and test fallback behavior and error reporting\n   - Test nonce pool health detection with various pool states (empty, low, healthy)\n   - Verify treasury PDA balance checking with different balance scenarios\n   - Load test health endpoint to ensure caching prevents resource exhaustion\n\n2. **Background Job Testing**:\n   - Create test offers with past expiration dates and verify expiration job correctly identifies and updates them\n   - Test nonce cleanup job with mock unused accounts and verify proper SOL reclamation\n   - Simulate low nonce pool scenarios and verify replenishment job creates new accounts correctly\n   - Test job locking mechanism by attempting to run same job concurrently\n   - Verify job error handling and retry logic with simulated failures\n\n3. **Logging System Testing**:\n   - Verify structured logs are generated for all critical operations with proper JSON format\n   - Test log level filtering and ensure sensitive data is not logged\n   - Verify correlation IDs are properly propagated across service calls\n   - Test log rotation and retention policies with mock log volume\n   - Validate log parsing and searchability in log aggregation system\n\n4. **Alerting System Testing**:\n   - Simulate critical failures (database down, RPC failures) and verify alerts are sent\n   - Test alert throttling by triggering multiple instances of same error type\n   - Verify alert recovery notifications when issues are resolved\n   - Test different notification channels (email, Slack) with mock integrations\n   - Validate alert severity classification and routing logic\n\n5. **Integration Testing**:\n   - Test complete monitoring system during simulated high-load scenarios\n   - Verify background jobs continue operating during system stress\n   - Test graceful shutdown and startup of monitoring system\n   - Validate monitoring system performance impact on main application\n   - Test monitoring system with real database and RPC connections in staging environment",
+        "status": "pending",
+        "dependencies": [
+          1,
+          2
+        ],
+        "priority": "medium",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Audit Existing Services and Background Jobs Infrastructure",
+            "description": "Conduct comprehensive audit of existing monitoring services, background jobs, health checks, cleanup jobs, and logging infrastructure to identify what can be reused or adapted for atomic swaps.",
+            "dependencies": [],
+            "details": "Review existing codebase for settlement services, monitoring endpoints, refund services, cleanup jobs, and logging systems. Document current infrastructure capabilities, identify reusable components, and create adaptation plan for atomic swap requirements. Analyze existing job scheduling, health monitoring, and alerting mechanisms.",
+            "status": "pending",
+            "testStrategy": "Create inventory of existing services, test current health endpoints, verify existing job execution, and validate logging output formats."
+          },
+          {
+            "id": 2,
+            "title": "Adapt Existing Health Check System for Atomic Swap Components",
+            "description": "Modify existing health check endpoints to include atomic swap specific monitoring including nonce pool health, treasury PDA validation, and swap transaction status verification.",
+            "dependencies": [
+              1
+            ],
+            "details": "Extend current health check endpoint to verify nonce pool availability, treasury balance sufficiency, RPC connectivity for atomic swap operations, and database connectivity for swap tables. Implement component-specific health scoring and caching mechanisms with 30-60 second TTL.",
+            "status": "pending",
+            "testStrategy": "Test health endpoint with all atomic swap components healthy, simulate component failures, verify health scoring accuracy, and validate caching behavior."
+          },
+          {
+            "id": 3,
+            "title": "Implement Offer Expiry Background Job for Atomic Swaps",
+            "description": "Create scheduled job to automatically expire atomic swap offers past their expiration time and update offer status in database.",
+            "dependencies": [
+              1
+            ],
+            "details": "Implement cron job running every 15 minutes to query offers table for expired records, update status to 'expired', log expiration events, and implement batch processing for large volumes. Include maker notifications and expiration metrics tracking for monitoring dashboard.",
+            "status": "pending",
+            "testStrategy": "Test job execution with various expired offer scenarios, verify batch processing performance, validate database updates, and test notification delivery."
+          },
+          {
+            "id": 4,
+            "title": "Adapt Existing Cleanup Jobs for Nonce Account Management",
+            "description": "Modify existing cleanup infrastructure to handle unused nonce account cleanup and nonce pool replenishment for atomic swap operations.",
+            "dependencies": [
+              1,
+              2
+            ],
+            "details": "Create hourly cleanup job for stale nonce accounts and 30-minute replenishment job for maintaining optimal pool size. Implement safety checks, SOL reclamation from unused accounts, on-chain validation, and exponential backoff for failed operations. Integrate with NoncePoolManager service.",
+            "status": "pending",
+            "testStrategy": "Test cleanup job with various nonce account states, verify SOL reclamation accuracy, validate pool size maintenance, and test failure recovery mechanisms."
+          },
+          {
+            "id": 5,
+            "title": "Update Existing Logging Infrastructure for Atomic Swap Operations",
+            "description": "Enhance existing structured logging system to capture atomic swap lifecycle events with correlation IDs and contextual metadata.",
+            "dependencies": [
+              1
+            ],
+            "details": "Extend current logging system (Winston/Pino) to include atomic swap events: offer creation, acceptance, transaction submission, confirmation, and failures. Add contextual metadata including user_wallet, offer_id, transaction_signature, nonce_account, and error_codes. Implement correlation IDs and log retention policies.",
+            "status": "pending",
+            "testStrategy": "Test logging output for all swap lifecycle events, verify correlation ID tracking across services, validate metadata inclusion, and test log rotation functionality."
+          },
+          {
+            "id": 6,
+            "title": "Adapt Existing Error Alerting System for Atomic Swap Failures",
+            "description": "Extend existing alerting infrastructure to handle atomic swap specific failures including nonce pool depletion, treasury balance issues, and swap transaction failures.",
+            "dependencies": [
+              1,
+              2
+            ],
+            "details": "Enhance current alerting system to monitor atomic swap critical failures: database connectivity, RPC endpoints, nonce pool status, treasury balance, and transaction failures. Implement severity levels, notification integration (email/Slack/PagerDuty), alert throttling, and recovery notifications. Include alert metrics tracking.",
+            "status": "pending",
+            "testStrategy": "Test alert generation for various failure scenarios, verify notification delivery across channels, validate alert throttling behavior, and test recovery notification accuracy."
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "title": "Clean Up and Migrate Old Agreement Code",
+        "description": "Comment out old escrow agreement models and services while preserving code for potential future use, disable monitoring and refund services for agreements, and document all changes made during the migration to atomic swaps.",
+        "details": "Implement the code cleanup and migration with the following systematic approach:\n\n1. **Old Escrow Agreement Models Cleanup**:\n   - Locate all agreement-related models (Agreement, EscrowAgreement, AgreementStatus, etc.)\n   - Comment out model definitions using block comments with clear headers\n   - Add migration comments explaining why code is preserved: \"// PRESERVED FOR POTENTIAL FUTURE USE - Original escrow agreement model\"\n   - Update any database schema files to comment out agreement table definitions\n   - Preserve all field definitions and relationships for potential future reference\n\n2. **Service Layer Cleanup**:\n   - Comment out AgreementService, EscrowService, and related service classes\n   - Disable monitoring service components specifically related to agreement tracking\n   - Comment out refund service logic for agreements while keeping general refund infrastructure\n   - Preserve service method signatures and business logic in comments for future adaptation\n   - Add clear documentation headers explaining the purpose of each commented service\n\n3. **Settlement Service Migration**:\n   - Comment out settlement service logic related to escrow agreements\n   - Preserve settlement patterns and algorithms that may be adaptable to atomic swaps\n   - Add detailed comments explaining which settlement logic could be repurposed\n   - Keep database transaction patterns and error handling approaches intact in comments\n\n4. **Receipts Functionality Preservation**:\n   - Audit receipts system to ensure no dependencies on commented agreement code\n   - Update receipt generation to work independently of agreement models\n   - Maintain receipt storage, retrieval, and formatting capabilities\n   - Test receipt functionality to ensure it remains fully operational\n\n5. **Documentation and Migration Notes**:\n   - Create comprehensive migration documentation listing all disabled components\n   - Document the rationale for preserving vs. removing specific code sections\n   - Add inline comments explaining the relationship between old agreement code and new atomic swap functionality\n   - Create a reference guide for developers on what was changed and where to find preserved code",
+        "testStrategy": "1. **Code Preservation Verification**:\n   - Verify all agreement-related models and services are properly commented out but remain readable\n   - Confirm no active code references the commented agreement functionality\n   - Test that the application starts and runs without errors after commenting out agreement code\n   - Validate that all preserved code maintains proper syntax and could be uncommented if needed\n\n2. **Receipts Functionality Testing**:\n   - Test receipt generation for various transaction types to ensure independence from agreement models\n   - Verify receipt storage and retrieval operations work correctly\n   - Test receipt formatting and display functionality\n   - Confirm receipt history and search capabilities remain intact\n\n3. **Service Isolation Testing**:\n   - Verify monitoring service operates correctly with agreement monitoring disabled\n   - Test that refund service works for non-agreement transactions\n   - Confirm settlement service components unrelated to agreements continue functioning\n   - Validate that no runtime errors occur from disabled service components\n\n4. **Documentation Completeness Review**:\n   - Review migration documentation for completeness and accuracy\n   - Verify all commented code sections have clear explanatory headers\n   - Confirm inline comments adequately explain preservation rationale\n   - Test that developers can understand what was changed and why through documentation alone",
+        "status": "pending",
+        "dependencies": [
+          1
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 11,
+        "title": "Update Configuration and Environment Management",
+        "description": "Implement comprehensive configuration management system with type-safe environment variables for nonce pool settings, platform authority keypairs, fee collector wallet configuration, fee parameters, cNFT indexer API settings, and critical local/staging/production program ID management with environment-based switching and Docker development support using existing program deployments.",
+        "status": "done",
+        "dependencies": [
+          1
+        ],
+        "priority": "high",
+        "details": "Implement the configuration and environment management system with the following comprehensive approach:\n\n1. **Environment Variables Structure**:\n   - Add NONCE_POOL_SIZE, NONCE_POOL_REFILL_THRESHOLD, NONCE_POOL_ADVANCE_INTERVAL environment variables\n   - Add PLATFORM_AUTHORITY_KEYPAIR_PATH pointing to existing keypairs in wallets/ directory\n   - **REMOVED**: All Treasury PDA configuration (TREASURY_PDA_SEED, TREASURY_PDA_BUMP) - using direct fee collector wallets instead\n   - **NEW**: Add STAGING_FEE_COLLECTOR_ADDRESS=8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ (from wallets/staging/staging-fee-collector.json)\n   - **NEW**: Add MAINNET_PROD_FEE_COLLECTOR_ADDRESS for production fee collection\n   - Add FEE_FLAT_AMOUNT_LAMPORTS, FEE_PERCENTAGE_BASIS_POINTS, FEE_MAX_AMOUNT_LAMPORTS for fee calculation\n   - Add CNFT_INDEXER_API_URL, CNFT_INDEXER_API_KEY, CNFT_INDEXER_TIMEOUT_MS for compressed NFT indexing\n   - **CRITICAL**: Add SOLANA_NETWORK (local/staging/mainnet-beta) for three-tier environment identification\n   - **CRITICAL**: Add LOCAL_PROGRAM_ID for local Docker development with test validator (dynamically generated)\n   - **CRITICAL**: Add STAGING_PROGRAM_ID=AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei (existing program from wallets/staging/escrow-program-keypair.json)\n   - **CRITICAL**: Add PRODUCTION_PROGRAM_ID (from existing wallets/production/escrow-program-keypair.json)\n   - **CRITICAL**: Add CURRENT_PROGRAM_ID (dynamically set based on SOLANA_NETWORK)\n   - **NEW**: Add DATABASE_URL for local Docker PostgreSQL connection\n   - **NEW**: Add REDIS_URL for local Docker Redis connection\n   - **NEW**: Add SOLANA_RPC_URL (http://localhost:8899 for local, staging/production URLs for respective environments)\n\n2. **Configuration Schema and Validation**:\n   - Create comprehensive Joi or Zod schema for all environment variables with proper types and constraints\n   - Implement startup validation that fails fast if required configurations are missing or invalid\n   - Add range validation for numeric values (fees, timeouts, pool sizes) with sensible min/max bounds\n   - Validate keypair path accessibility and format during startup (pointing to existing wallets/ directory)\n   - **REMOVED**: Treasury PDA validation - replaced with fee collector wallet address validation\n   - **NEW**: Validate fee collector wallet addresses are valid Solana public keys\n   - **NEW**: Validate SOLANA_NETWORK is one of allowed values (local/staging/mainnet-beta)\n   - **NEW**: Validate existing program IDs from wallets/ directory keypairs match expected values\n   - **NEW**: Validate STAGING_PROGRAM_ID matches AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei\n   - **NEW**: Validate Docker service URLs (DATABASE_URL, REDIS_URL) for local environment\n   - **NEW**: Implement program ID validation that ensures existing program deployments are used correctly\n\n3. **Constants.ts Updates**:\n   - Add new ATOMIC_SWAP_PROGRAM_ID constant replacing old escrow program ID\n   - Create configuration accessor functions: getNoncePoolConfig(), getFeeConfig(), getFeeCollectorConfig(), getCNFTIndexerConfig()\n   - **REMOVED**: getTreasuryConfig() - replaced with getFeeCollectorConfig()\n   - **NEW**: Add getProgramConfig() function that returns current program ID based on environment using existing deployments\n   - **NEW**: Add getNetworkConfig() function for network-specific settings including RPC URLs\n   - **NEW**: Add getDatabaseConfig() and getRedisConfig() functions for Docker service connections\n   - Implement type-safe configuration interfaces: NoncePoolConfig, FeeConfig, FeeCollectorConfig, CNFTIndexerConfig\n   - **REMOVED**: TreasuryConfig interface - replaced with FeeCollectorConfig\n   - **NEW**: Add ProgramConfig, NetworkConfig, DatabaseConfig, and RedisConfig interfaces\n   - Add configuration validation helpers and error types for better debugging\n   - **NEW**: Add three-tier program ID switching logic using existing program deployments\n\n4. **Configuration Loading and Caching**:\n   - Implement singleton configuration manager that loads and validates all settings once at startup\n   - Create configuration refresh mechanism for non-critical settings that can be updated without restart\n   - Add configuration logging (with sensitive data redaction) for debugging and monitoring\n   - Implement configuration defaults for local Docker development environment\n   - **NEW**: Add program ID validation at startup that uses existing program deployments from wallets/ directory\n   - **NEW**: Implement environment-based program ID switching with Docker development support\n   - **NEW**: Add Docker service connection validation for local development environment\n   - **NEW**: Add fee collector wallet validation that ensures proper wallet addresses are configured\n\n5. **Type Safety and Developer Experience**:\n   - Export strongly-typed configuration objects with IntelliSense support\n   - Create configuration builder pattern for local Docker development testing\n   - Add configuration documentation with examples and valid ranges for all three environments\n   - Implement configuration change detection and warnings for staging/production deployments\n   - **NEW**: Add program ID configuration documentation referencing existing wallets/ directory structure\n   - **NEW**: Create environment-specific configuration templates for local Docker, staging, and production\n   - **NEW**: Add Docker development setup documentation with service configuration examples\n   - **NEW**: Document fee collector wallet configuration and usage patterns for simplified MVP approach",
+        "testStrategy": "1. **Configuration Validation Testing**:\n   - Test startup validation with missing required environment variables and verify application fails to start with clear error messages\n   - Test invalid configuration values (negative fees, invalid URLs, malformed keypairs) and verify proper validation errors\n   - Test configuration loading with valid environment variables and verify all settings are properly parsed and accessible\n   - **NEW**: Test SOLANA_NETWORK validation with invalid values and verify proper error handling for all three environments\n   - **NEW**: Test LOCAL_PROGRAM_ID validation for local development environment\n   - **NEW**: Test STAGING_PROGRAM_ID validation matches AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei from existing deployment\n   - **NEW**: Test PRODUCTION_PROGRAM_ID validation uses existing program from wallets/production/escrow-program-keypair.json\n   - **NEW**: Test Docker service URL validation (DATABASE_URL, REDIS_URL) for local environment\n   - **NEW**: Test fee collector wallet address validation for staging (8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ) and production\n\n2. **Type Safety and Accessor Testing**:\n   - Test all configuration accessor functions return properly typed objects with expected values\n   - Verify configuration interfaces match actual environment variable structure and types\n   - Test configuration caching behavior and ensure values remain consistent across multiple accessor calls\n   - **NEW**: Test getProgramConfig() returns correct existing program ID based on SOLANA_NETWORK setting\n   - **NEW**: Test getNetworkConfig() returns appropriate network-specific configurations including RPC URLs\n   - **NEW**: Test getDatabaseConfig() and getRedisConfig() return proper Docker service connection details\n   - **NEW**: Test getFeeCollectorConfig() returns correct wallet addresses for staging and production environments\n\n3. **Integration Testing**:\n   - Test configuration integration with NoncePoolManager, FeeCalculator, and other services that depend on these settings\n   - **REMOVED**: Treasury PDA derivation testing - replaced with fee collector wallet validation\n   - **NEW**: Test fee collector wallet integration with fee calculation and payment processing\n   - Test cNFT indexer configuration integration with actual API calls (using test endpoints)\n   - **NEW**: Test program ID switching integration with existing deployments across three environments\n   - **NEW**: Verify all services use CURRENT_PROGRAM_ID correctly based on environment using existing programs\n   - **NEW**: Test Docker service integration with local PostgreSQL and Redis containers\n\n4. **Environment-Specific Testing**:\n   - Test configuration loading in local Docker, staging, and production-like environments\n   - Verify configuration defaults work properly for local Docker development scenarios\n   - Test configuration refresh mechanism without requiring application restart\n   - **NEW**: Test local environment configuration with dynamically generated LOCAL_PROGRAM_ID and Docker services\n   - **NEW**: Test staging environment configuration with existing STAGING_PROGRAM_ID (AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei)\n   - **NEW**: Test environment-based program ID switching between existing local, staging, and production deployments\n   - **NEW**: Verify production program ID uses existing deployment from wallets/ directory\n   - **NEW**: Test Docker container connectivity and service availability for local development\n   - **NEW**: Test fee collector wallet configuration for staging (8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ) and production environments\n\n5. **Security and Validation Testing**:\n   - Verify sensitive configuration values (private keys, API keys, database passwords) are properly redacted in logs\n   - Test configuration validation edge cases including boundary values for fees and timeouts\n   - Verify keypair loading and validation works with existing keypairs in wallets/ directory\n   - **NEW**: Test program ID security validation that prevents unauthorized program usage\n   - **NEW**: Verify existing program deployment validation prevents accidental program ID modification\n   - **NEW**: Test Docker service security configurations and connection string validation\n   - **NEW**: Test fee collector wallet security validation and address format verification",
+        "subtasks": []
+      },
+      {
+        "id": 12,
+        "title": "Create Comprehensive Test Suite for Atomic Swap System",
+        "description": "Develop a complete test suite covering unit tests for core services, integration tests for offer management, end-to-end tests for swap flows, and API endpoint testing with comprehensive coverage of all atomic swap functionality.",
+        "details": "Implement a comprehensive test suite with the following components:\n\n1. **Unit Tests for Core Services**:\n   - NoncePoolManager: Test pool initialization, thread-safe assignment/release, nonce advancement, cleanup operations, and error handling with mocked Solana RPC calls\n   - FeeCalculator: Test fee calculations for all swap types (NFT-to-NFT, NFT-to-SOL, SOL-to-NFT), percentage calculations, flat fee applications, fee cap enforcement, and edge cases\n   - AssetValidator: Test standard NFT ownership verification, cNFT validation with Merkle proofs, error handling for invalid assets, and caching mechanisms\n   - TransactionBuilder: Test transaction construction for various swap combinations, durable nonce integration, ATA creation logic, instruction ordering, and transaction size limits\n\n2. **Integration Tests for OfferManager**:\n   - Test complete offer lifecycle (creation, counter-offers, cancellation, acceptance, fulfillment)\n   - Test coordination between OfferManager and all dependent services (NoncePoolManager, AssetValidator, FeeCalculator, TransactionBuilder)\n   - Test database transaction management and rollback scenarios\n   - Test concurrent offer operations and race condition handling\n\n3. **End-to-End Swap Flow Tests**:\n   - NFT-to-NFT swaps: Test complete flow from offer creation to transaction confirmation\n   - NFT-to-cNFT swaps: Test cross-format asset swaps with proper Merkle proof handling\n   - Swaps with SOL: Test mixed asset swaps including SOL transfers and fee calculations\n   - Test swap flows both with and without SOL components to verify different fee structures\n\n4. **API Endpoint Tests**:\n   - Test all HTTP routes (/offers, /counter-offers, /cancel, /accept, /confirm, /list)\n   - Test request validation, authentication, error responses, and success scenarios\n   - Test rate limiting, CORS handling, and middleware functionality\n   - Test API response formats and error message consistency\n\n5. **Specialized Test Scenarios**:\n   - Durable nonce invalidation on cancel: Test that cancelled offers properly invalidate their assigned nonces\n   - Offer expiration logic: Test automatic offer expiration, cleanup jobs, and expired offer handling\n   - Error recovery scenarios: Test system behavior during RPC failures, database outages, and partial transaction failures\n\n6. **Test Infrastructure Setup**:\n   - Configure test database with proper schema and test data seeding\n   - Set up Solana test validator or use devnet for blockchain interactions\n   - Implement test utilities for creating mock assets, wallets, and transactions\n   - Create test fixtures for various swap scenarios and edge cases",
+        "testStrategy": "1. **Test Coverage Verification**:\n   - Achieve minimum 90% code coverage across all core services and API routes\n   - Use coverage tools (nyc/istanbul) to identify untested code paths\n   - Verify all error handling branches are tested with appropriate scenarios\n\n2. **Unit Test Validation**:\n   - Run unit tests in isolation with all external dependencies mocked\n   - Verify each service's business logic works correctly independent of other components\n   - Test edge cases, boundary conditions, and error scenarios for each service\n\n3. **Integration Test Execution**:\n   - Run integration tests against test database with realistic data scenarios\n   - Verify service interactions work correctly with actual database transactions\n   - Test concurrent operations and ensure thread safety under load\n\n4. **End-to-End Test Verification**:\n   - Execute complete swap flows against Solana test validator or devnet\n   - Verify actual blockchain transactions are created and confirmed correctly\n   - Test with real NFT/cNFT assets and validate asset transfers occur properly\n\n5. **API Test Validation**:\n   - Use supertest or similar library to test HTTP endpoints with various request scenarios\n   - Verify response status codes, headers, and body content match specifications\n   - Test authentication flows and ensure protected endpoints reject unauthorized requests\n\n6. **Performance and Load Testing**:\n   - Test system behavior under concurrent user load\n   - Verify nonce pool management works correctly under high demand\n   - Test database performance with large numbers of offers and transactions\n\n7. **Continuous Integration Setup**:\n   - Configure test suite to run automatically on code changes\n   - Set up test reporting and failure notifications\n   - Ensure tests can run reliably in CI/CD environment with proper test isolation",
+        "status": "pending",
+        "dependencies": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          8
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 13,
+        "title": "Update Documentation for Atomic Swap Architecture",
+        "description": "Create comprehensive documentation covering all aspects of the atomic swap system including API endpoints, database schema, architecture components, security considerations, deployment guides, and migration instructions from the old agreement system.",
+        "details": "Implement comprehensive documentation with the following structured approach:\n\n1. **API Documentation**:\n   - Document all Express HTTP API endpoints with complete request/response examples for offer creation, counter-offers, cancellation, acceptance, and confirmation\n   - Include authentication requirements, rate limiting details, and error response formats\n   - Provide cURL examples and SDK usage patterns for each endpoint\n   - Document query parameters, request body schemas, and response data structures\n   - Include WebSocket event documentation for real-time offer updates\n\n2. **Database Schema Documentation**:\n   - Create detailed entity relationship diagrams (ERD) showing all tables and their relationships\n   - Document each table with column descriptions, data types, constraints, and indexes\n   - Explain foreign key relationships between users, offers, nonce_pools, and transaction_history tables\n   - Include sample data and common query patterns\n   - Document migration scripts and versioning strategy\n\n3. **Durable Nonce Pool Architecture**:\n   - Document NoncePoolManager service architecture with pool initialization, assignment, and cleanup processes\n   - Explain thread-safety mechanisms and concurrent access patterns\n   - Document nonce account lifecycle management and advancement strategies\n   - Include configuration parameters and scaling considerations\n   - Provide troubleshooting guide for nonce pool issues\n\n4. **Asset Validation Flow Documentation**:\n   - Create flowcharts showing NFT and cNFT validation processes\n   - Document integration with Solana RPC and indexer APIs\n   - Explain Merkle proof validation for compressed NFTs\n   - Document error handling and fallback mechanisms\n   - Include performance optimization strategies and caching approaches\n\n5. **Transaction Building Process**:\n   - Document TransactionBuilder service with step-by-step transaction construction\n   - Explain durable nonce integration and instruction ordering requirements\n   - Document ATA creation logic and fee collection mechanisms\n   - Include transaction size optimization strategies and limits\n   - Provide examples for different swap types (NFT-to-NFT, NFT-to-SOL, SOL-to-NFT)\n\n6. **Security Considerations**:\n   - Document authentication and authorization mechanisms\n   - Explain wallet signature verification and replay attack prevention\n   - Document rate limiting and DDoS protection strategies\n   - Include private key management and environment variable security\n   - Document audit trail and monitoring requirements\n\n7. **Deployment Guide**:\n   - Create step-by-step deployment instructions for production environments\n   - Document environment variable configuration and validation\n   - Include database setup, migration execution, and monitoring setup\n   - Document load balancer configuration and scaling strategies\n   - Provide health check and monitoring endpoint setup\n\n8. **Migration Guide from Old Agreement System**:\n   - Document differences between old escrow agreements and new atomic swaps\n   - Provide data migration scripts and procedures\n   - Explain API endpoint changes and breaking changes\n   - Include client-side migration examples and best practices\n   - Document rollback procedures and contingency plans",
+        "testStrategy": "1. **Documentation Completeness Verification**:\n   - Review each API endpoint documentation against actual implementation in Task 8 to ensure accuracy\n   - Verify database schema documentation matches the actual schema from Task 1\n   - Cross-reference architecture documentation with service implementations from Tasks 2-6\n   - Ensure all configuration parameters from Task 11 are properly documented\n\n2. **Documentation Accuracy Testing**:\n   - Test all API examples using actual endpoints to verify request/response formats are correct\n   - Validate database queries and examples against the actual schema\n   - Verify deployment instructions by following them in a clean environment\n   - Test migration procedures with sample data to ensure they work correctly\n\n3. **User Experience Validation**:\n   - Have developers unfamiliar with the system follow the documentation to set up and use the API\n   - Verify deployment guide can be followed successfully by operations team\n   - Test migration guide with actual legacy data to ensure smooth transition\n   - Validate troubleshooting sections resolve common issues\n\n4. **Documentation Maintenance**:\n   - Establish process for keeping documentation in sync with code changes\n   - Create documentation review checklist for future updates\n   - Verify all external links and references are valid and accessible\n   - Ensure documentation is properly versioned and tagged with releases",
+        "status": "pending",
+        "dependencies": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          8,
+          10,
+          11
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 14,
+        "title": "Deploy Atomic Swap Program to Staging Environment",
+        "description": "Deploy atomic swap backend configuration to the existing DigitalOcean staging environment. The staging program (AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei) is already deployed to devnet. This task focuses on verifying existing secrets, adding any missing atomic swap configuration, and deploying via the existing auto-deploy workflow.",
+        "status": "pending",
+        "dependencies": [
+          7
+        ],
+        "priority": "high",
+        "details": "Deploy atomic swap functionality to staging environment using existing infrastructure:\n\n1. **Verify Existing DigitalOcean Secrets**:\n   - Check DigitalOcean App Platform console for existing atomic swap secrets\n   - Verify STAGING_PROGRAM_ID=AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei is configured\n   - Confirm STAGING_FEE_COLLECTOR_ADDRESS is set for treasury PDA\n   - Validate PLATFORM_AUTHORITY_PRIVATE_KEY exists for transaction signing\n   - Check NONCE_POOL_SIZE and other nonce-related configuration\n   - Verify SOLANA_RPC_URL points to appropriate devnet endpoint\n\n2. **Add Missing Atomic Swap Secrets**:\n   - Add any missing environment variables via DigitalOcean console\n   - Configure atomic swap specific settings (treasury PDA seed, bump values)\n   - Set up database connection strings if needed for new schema\n   - Ensure all backend services have required configuration variables\n\n3. **Deploy via Existing Auto-Deploy**:\n   - Push atomic swap backend code to master branch\n   - Auto-deploy to DigitalOcean triggers automatically (already configured)\n   - Monitor deployment progress through DigitalOcean console\n   - Verify pre-deploy job runs database migrations successfully\n\n4. **Database Schema Deployment**:\n   - Database migrations run automatically via pre-deploy job\n   - Verify new atomic swap tables are created correctly\n   - Confirm foreign key relationships and indexes are established\n   - Validate migration completes without errors\n\n5. **Backend Service Configuration**:\n   - Services automatically restart with new atomic swap configuration\n   - NoncePoolManager uses existing nonce accounts and RPC endpoints\n   - FeeCalculator configured to use staging treasury PDA\n   - AssetValidator works with devnet asset verification\n   - API endpoints reference staging program ID in transactions\n\n6. **Post-Deploy Verification**:\n   - Verify backend services start successfully with atomic swap config\n   - Test connection to existing program AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei\n   - Confirm database schema updates applied correctly\n   - Validate API health endpoints respond properly",
+        "testStrategy": "1. **Pre-Deploy Secret Verification**:\n   - Access DigitalOcean App Platform console and verify existing secrets\n   - Check that STAGING_PROGRAM_ID, STAGING_FEE_COLLECTOR_ADDRESS, and PLATFORM_AUTHORITY_PRIVATE_KEY are configured\n   - Validate NONCE_POOL_SIZE and RPC endpoint configuration\n   - Document any missing secrets that need to be added\n\n2. **Auto-Deploy Process Validation**:\n   - Push atomic swap code to master branch and verify auto-deploy triggers\n   - Monitor DigitalOcean deployment logs for successful completion\n   - Verify pre-deploy job executes database migrations without errors\n   - Confirm backend services restart automatically with new configuration\n\n3. **Database Migration Verification**:\n   - Connect to staging database and verify new atomic swap tables exist\n   - Check table schemas match expected structure from migration scripts\n   - Test foreign key constraints and indexes are properly created\n   - Confirm migration completed successfully in deployment logs\n\n4. **Backend Service Health Testing**:\n   - Verify all services start without configuration errors\n   - Check application logs for successful program ID and RPC connection\n   - Test staging keypair loading and basic transaction signing capability\n   - Confirm API health endpoints return successful responses\n\n5. **Integration Testing with Existing Program**:\n   - Verify connection to program AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei on devnet\n   - Test treasury PDA accessibility and balance verification\n   - Confirm nonce account pool integration works with updated services\n   - Validate API endpoints respond correctly with staging configuration\n\n6. **End-to-End Functionality Validation**:\n   - Create test atomic swap offer using staging environment\n   - Verify transaction building uses correct staging program ID\n   - Test fee calculation and treasury PDA interaction\n   - Confirm asset validation works with devnet data\n   - Validate complete swap flow from offer creation to confirmation",
+        "subtasks": []
+      },
+      {
+        "id": 15,
+        "title": "Execute Comprehensive End-to-End Testing on Staging Environment",
+        "description": "Perform comprehensive end-to-end testing of the atomic swap system on staging environment using program ID AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei, covering all swap types, offer lifecycle, edge cases, integration scenarios, and performance testing.",
+        "details": "Execute comprehensive end-to-end testing with the following systematic approach:\n\n1. **Basic Swap Testing Execution**:\n   - Execute NFT-to-NFT swaps on staging using real test NFTs and verify complete transaction flow from offer creation to confirmation\n   - Execute NFT-to-SOL swaps testing various SOL amounts (0.1, 1, 5 SOL) and verify proper fee calculation and collection\n   - Execute SOL-to-NFT swaps with different NFT values and verify treasury fee collection matches expected calculations\n   - Execute cNFT-to-cNFT swaps using Bubblegum program integration and verify Merkle proof validation works correctly\n   - Execute mixed NFT/cNFT swaps (standard NFT for cNFT) and verify both asset types transfer properly\n\n2. **Offer Lifecycle Testing Implementation**:\n   - Create offers using staging API endpoints and verify on-chain state matches database records\n   - Create counter-offers for existing offers and test proper chain management with multiple counter-offers\n   - Cancel offers at various stages (pending, counter-offered) and verify nonce invalidation prevents replay attacks\n   - Accept offers and verify transaction construction includes all required instructions (nonce advance, transfers, fee collection)\n   - Confirm swaps and verify final state shows proper asset ownership transfer and fee collection\n\n3. **Edge Case Testing Scenarios**:\n   - Test offer expiration by creating offers with short expiration times and verifying they cannot be accepted after expiration\n   - Test concurrent offer acceptance using multiple clients attempting to accept the same offer simultaneously\n   - Test maximum transaction size scenarios by creating swaps with multiple NFTs approaching 1232 byte limit\n   - Test fee calculation edge cases including zero-value swaps, maximum fee cap scenarios, and percentage calculation precision\n   - Test nonce pool exhaustion by creating more concurrent swaps than available nonces and verify proper queuing/waiting\n\n4. **Integration Testing Workflows**:\n   - Execute complete user workflows from wallet connection through swap completion using staging frontend\n   - Verify database consistency after each swap by checking offer status, transaction records, and user statistics\n   - Test error handling and recovery scenarios including failed transactions, network timeouts, and RPC errors\n   - Verify monitoring and alerting systems trigger correctly for failed swaps, nonce pool depletion, and system errors\n\n5. **Performance Testing Execution**:\n   - Execute load testing with 10-50 concurrent swaps to test system throughput and identify bottlenecks\n   - Measure transaction confirmation times across different swap types and document performance baselines\n   - Test nonce pool performance under load including pool replenishment timing and thread contention handling\n   - Monitor database performance during high load and verify query optimization effectiveness\n\n6. **Staging Environment Validation**:\n   - Verify all backend services are properly configured for staging program ID AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei\n   - Test treasury PDA derivation and fee collection using staging program\n   - Validate cNFT indexer integration works correctly with staging environment\n   - Verify monitoring dashboards show accurate staging metrics and alerts",
+        "testStrategy": "1. **Test Execution Validation**:\n   - Execute minimum 100 successful swaps across all swap types (NFT-to-NFT, NFT-to-SOL, SOL-to-NFT, cNFT swaps) on staging\n   - Verify 100% success rate for basic swap scenarios with proper asset ownership transfer\n   - Document all failed test cases with detailed error analysis and resolution steps\n\n2. **Offer Lifecycle Verification**:\n   - Create and track 50+ offers through complete lifecycle (creation → counter-offer → acceptance → confirmation)\n   - Verify database state consistency matches on-chain state for all offer status transitions\n   - Test offer cancellation at each lifecycle stage and verify proper cleanup\n\n3. **Edge Case Coverage Validation**:\n   - Execute all identified edge cases with documented results and system behavior\n   - Verify error handling provides clear user feedback and proper system recovery\n   - Test race condition scenarios with concurrent users and verify system maintains consistency\n\n4. **Performance Baseline Establishment**:\n   - Achieve minimum 10 concurrent swaps without system degradation\n   - Document transaction confirmation times with 95th percentile under 30 seconds\n   - Verify nonce pool maintains adequate buffer during peak load testing\n\n5. **Integration Test Completion**:\n   - Execute complete user workflows with 100% success rate for happy path scenarios\n   - Verify all monitoring alerts trigger correctly during simulated failure scenarios\n   - Confirm database integrity checks pass after all testing phases\n\n6. **Production Readiness Certification**:\n   - Generate comprehensive test report documenting all test results, performance metrics, and identified issues\n   - Obtain stakeholder sign-off on test results before production deployment consideration\n   - Verify all critical bugs identified during testing have been resolved and retested",
+        "status": "pending",
+        "dependencies": [
+          12,
+          14
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 16,
+        "title": "Perform Security Audit and Final Verification on STAGING Environment",
+        "description": "Conduct comprehensive security audit and final verification of the atomic swap system on staging environment, covering security review, data integrity, monitoring verification, documentation validation, and production readiness checklist before production deployment.",
+        "details": "Implement comprehensive security audit and verification with the following systematic approach:\n\n1. **Security Review Implementation**:\n   - Audit all transaction signing flows by reviewing TransactionBuilder service code and testing signature validation with malformed/invalid signatures\n   - Verify proper authorization checks in all API endpoints by testing unauthorized access attempts and wallet signature validation\n   - Review nonce account security by testing NoncePoolManager thread safety, account isolation, and unauthorized nonce usage attempts\n   - Test for potential attack vectors including reentrancy attacks on atomic_swap_with_fee instruction, MEV exploitation scenarios, and front-running protection\n   - Verify fee collection cannot be bypassed by testing direct program calls, modified transaction structures, and fee calculation tampering\n   - Test Merkle proof validation for cNFTs by submitting invalid proofs, expired proofs, and proofs for non-owned assets\n\n2. **Data Integrity Verification Implementation**:\n   - Verify database transactions are atomic by testing concurrent offer operations and simulating database connection failures mid-transaction\n   - Test rollback scenarios for failed operations including partial transaction failures, network timeouts, and RPC errors\n   - Verify offer state transitions are correct by testing all state changes (pending → accepted → confirmed → completed) with edge cases\n   - Check for race conditions by running concurrent operations on same offers and testing nonce pool assignment under high load\n\n3. **Monitoring & Alerting Verification Implementation**:\n   - Verify all critical operations are logged by checking log output for offer creation, acceptance, confirmation, and error scenarios\n   - Test alerting for error conditions by triggering known error states and verifying alert delivery mechanisms\n   - Verify health checks report accurate status by testing with various system states (database down, RPC unavailable, nonce pool exhausted)\n   - Test background jobs execute correctly by monitoring nonce pool replenishment, cleanup tasks, and scheduled maintenance operations\n\n4. **Documentation Verification Implementation**:\n   - Verify all API endpoints are documented correctly by comparing documentation against actual endpoint implementations from Task 8\n   - Check deployment procedures are complete by following staging deployment steps and identifying any missing configuration or setup steps\n   - Verify migration guides are accurate by testing migration procedures on clean test environment\n   - Test that examples and code samples work by executing all provided code examples and SDK usage patterns\n\n5. **Production Readiness Checklist Implementation**:\n   - Confirm all staging tests from Task 15 are passing with 100% success rate across all swap types\n   - Verify no critical bugs or security issues remain by reviewing all test results and security audit findings\n   - Validate performance metrics are acceptable by checking transaction processing times, API response times, and resource utilization\n   - Confirm monitoring and alerting systems are functional by testing alert triggers and notification delivery\n   - Verify rollback plan is documented and tested by executing rollback procedures on staging environment\n   - Confirm production program ID is configured and ready with proper treasury PDA initialization and fee collection setup",
+        "testStrategy": "1. **Security Audit Validation**:\n   - Execute penetration testing suite covering all identified attack vectors with documented results showing no successful exploits\n   - Verify authorization bypass attempts fail with proper error responses and logging\n   - Test nonce account security by attempting unauthorized access and confirming proper isolation\n   - Validate Merkle proof security by submitting 100+ invalid proof scenarios and confirming all are rejected\n\n2. **Data Integrity Testing**:\n   - Execute 1000+ concurrent database operations and verify 100% atomicity with no partial state corruption\n   - Test rollback scenarios by simulating failures at each stage of offer lifecycle and confirming proper cleanup\n   - Run race condition tests with 50+ concurrent threads and verify no data corruption or inconsistent states\n   - Validate offer state machine by testing all valid and invalid state transitions\n\n3. **Monitoring System Verification**:\n   - Verify 100% of critical operations generate appropriate log entries with required detail level\n   - Test alert delivery by triggering each error condition and confirming alerts are received within SLA timeframes\n   - Validate health check accuracy by testing with various failure scenarios and confirming status reporting\n   - Monitor background job execution for 24-hour period and verify all scheduled tasks complete successfully\n\n4. **Documentation Accuracy Testing**:\n   - Execute all API examples from documentation and verify 100% success rate with expected responses\n   - Follow deployment procedures step-by-step on clean environment and document any gaps or issues\n   - Test migration guides by performing actual migration and confirming all steps work as documented\n   - Validate code samples by running in isolated environment and confirming expected behavior\n\n5. **Production Readiness Verification**:\n   - Confirm Task 15 end-to-end testing shows 100% pass rate with no critical issues\n   - Review security audit results and confirm zero critical or high-severity findings\n   - Validate performance benchmarks meet or exceed requirements (sub-second API responses, successful transaction processing)\n   - Test complete rollback procedure and confirm system can be restored to previous state within defined RTO/RPO\n   - Verify production configuration is complete and tested with proper program ID and treasury setup",
+        "status": "pending",
+        "dependencies": [
+          15,
+          14,
+          13
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 17,
+        "title": "Set up Local Docker Development Environment for Atomic Swap System",
+        "description": "Configure comprehensive local Docker development environment using existing Docker Compose setup with PostgreSQL, Redis, backend services, local Solana test validator, and development scripts to enable fast iteration during atomic swap system development.",
+        "status": "pending",
+        "dependencies": [
+          1,
+          11
+        ],
+        "priority": "high",
+        "details": "Configure the local Docker development environment using the existing Docker infrastructure with the following components:\n\n1. **Existing Docker Compose Integration**:\n   - Use existing docker-compose.yml with PostgreSQL container on localhost:5432 (postgres/postgres credentials)\n   - Utilize existing Redis container on localhost:6379 for caching and session management\n   - Leverage existing backend service container on port 3000 with health check functionality\n   - Use existing Docker scripts: npm run docker:start, docker:stop, docker:restart for service management\n\n2. **Environment Configuration for Atomic Swaps**:\n   - Update existing .env file with atomic swap specific configuration variables\n   - Set SOLANA_NETWORK=local, SOLANA_RPC_URL=http://localhost:8899, SOLANA_WS_URL=ws://localhost:8900\n   - Configure LOCAL_PROGRAM_ID placeholder that gets populated after local program deployment\n   - Add atomic swap specific environment variables (fee configuration, treasury settings, nonce pool configuration)\n   - Ensure DATABASE_URL points to existing PostgreSQL setup (postgresql://postgres:postgres@localhost:5432/atomic_swap_db)\n   - Set REDIS_URL=redis://localhost:6379 for existing Redis integration\n\n3. **Database Integration with Existing Setup**:\n   - Use existing npm run db:migrate command for executing atomic swap database migrations\n   - Configure migration runner to work with existing PostgreSQL container setup\n   - Add seed data script with test users, sample NFT metadata, and development swap offers for testing\n   - Ensure database connection works with existing Docker network configuration\n\n4. **Local Solana Development Integration**:\n   - Use existing localnet scripts: npm run localnet:start for starting solana-test-validator\n   - Utilize npm run localnet:setup for local keypair generation and account setup\n   - Use npm run localnet:reset for cleaning validator state between development sessions\n   - Configure LOCAL_PROGRAM_ID environment variable integration with existing localnet scripts\n   - Set up local program deployment integration with existing development workflow\n\n5. **Development Workflow Integration**:\n   - Integrate atomic swap development with existing hot reloading setup\n   - Configure automatic program redeployment workflow using existing development scripts\n   - Set up development-specific logging configuration for atomic swap components\n   - Ensure proper integration between Docker services and local Solana validator\n\n6. **Unified Development Scripts**:\n   - Create unified startup script that uses existing npm run docker:start and npm run localnet:start\n   - Add atomic swap specific initialization that works with existing infrastructure\n   - Create reset script that uses existing docker:restart and localnet:reset commands\n   - Integrate health check verification for both existing services and new atomic swap components",
+        "testStrategy": "1. **Existing Docker Environment Validation**:\n   - Execute `npm run docker:start` and verify all existing services (PostgreSQL, Redis, backend) start successfully\n   - Test service connectivity to PostgreSQL on localhost:5432 with postgres/postgres credentials\n   - Verify Redis connectivity on localhost:6379 and backend service health check on port 3000\n   - Confirm existing hot reloading functionality works with atomic swap code changes\n\n2. **Local Solana Integration Testing**:\n   - Execute `npm run localnet:start` and verify solana-test-validator starts with RPC at http://localhost:8899\n   - Run `npm run localnet:setup` and confirm local keypair generation and account setup works correctly\n   - Test LOCAL_PROGRAM_ID environment variable integration with existing localnet scripts\n   - Verify `npm run localnet:reset` properly cleans validator state\n\n3. **Database Migration Integration**:\n   - Execute `npm run db:migrate` and verify atomic swap migrations run against existing PostgreSQL setup\n   - Confirm database connection works with existing Docker network configuration\n   - Test seed data insertion with existing database setup and verify proper data relationships\n\n4. **Unified Development Workflow Testing**:\n   - Test complete startup sequence using existing npm scripts (docker:start, localnet:start)\n   - Verify atomic swap program deployment works with existing localnet infrastructure\n   - Execute reset workflow using existing scripts (docker:restart, localnet:reset) and confirm clean state\n   - Validate integration between existing Docker services and local Solana validator for atomic swap development",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Update .env file with atomic swap configuration",
+            "description": "Update the existing .env file to include all atomic swap specific environment variables while preserving existing configuration for Docker and database setup.",
+            "dependencies": [],
+            "details": "Modify the existing .env file to add atomic swap specific variables:\n- SOLANA_NETWORK=local\n- SOLANA_RPC_URL=http://localhost:8899\n- SOLANA_WS_URL=ws://localhost:8900\n- LOCAL_PROGRAM_ID (placeholder for local deployment)\n- Fee configuration variables (FLAT_NFT_FEE, SOL_SWAP_PERCENTAGE, MAX_FEE_CAP_SOL)\n- Treasury PDA configuration (TREASURY_PDA_SEED, TREASURY_PDA_BUMP)\n- Nonce pool settings (NONCE_POOL_SIZE, NONCE_POOL_REFILL_THRESHOLD)\n- Platform authority keypair configuration\nEnsure existing DATABASE_URL and REDIS_URL remain compatible with current Docker setup.",
+            "status": "pending",
+            "testStrategy": "Verify all atomic swap environment variables are properly set and existing Docker/database configuration remains functional"
+          },
+          {
+            "id": 2,
+            "title": "Configure database migrations with existing npm scripts",
+            "description": "Ensure atomic swap database migrations work correctly with the existing npm run db:migrate command and Docker PostgreSQL setup.",
+            "dependencies": [],
+            "details": "Configure the migration system to work with existing infrastructure:\n- Verify npm run db:migrate works with atomic swap migrations from Task 1\n- Ensure migrations run against existing PostgreSQL container (postgres/postgres@localhost:5432)\n- Test migration rollback functionality with existing database setup\n- Configure migration state tracking to work with existing database schema\n- Add atomic swap specific seed data that integrates with existing development workflow",
+            "status": "pending",
+            "testStrategy": "Execute npm run db:migrate and verify all atomic swap tables are created correctly in existing PostgreSQL container"
+          },
+          {
+            "id": 3,
+            "title": "Integrate LOCAL_PROGRAM_ID with existing localnet scripts",
+            "description": "Configure LOCAL_PROGRAM_ID environment variable to work seamlessly with existing npm run localnet scripts for program deployment and management.",
+            "dependencies": [
+              1
+            ],
+            "details": "Integrate program ID management with existing localnet infrastructure:\n- Modify existing localnet:setup script to capture and set LOCAL_PROGRAM_ID after program deployment\n- Ensure LOCAL_PROGRAM_ID is properly updated in .env file during local development\n- Configure program deployment to work with existing solana-test-validator setup\n- Add LOCAL_PROGRAM_ID validation to existing health check scripts\n- Ensure program ID persistence across localnet:reset operations when needed",
+            "status": "pending",
+            "testStrategy": "Execute npm run localnet:setup and verify LOCAL_PROGRAM_ID is properly set and accessible to backend services"
+          },
+          {
+            "id": 4,
+            "title": "Create unified development startup script",
+            "description": "Create a unified startup script that orchestrates existing Docker and localnet scripts for complete atomic swap development environment initialization.",
+            "dependencies": [
+              2,
+              3
+            ],
+            "details": "Develop a comprehensive startup script that:\n- Executes npm run docker:start to initialize PostgreSQL, Redis, and backend services\n- Waits for Docker service health checks to pass\n- Runs npm run db:migrate to apply atomic swap database migrations\n- Executes npm run localnet:start to start solana-test-validator\n- Runs npm run localnet:setup for keypair and program deployment\n- Verifies all services are running and properly configured\n- Provides clear status feedback and error handling throughout the process",
+            "status": "pending",
+            "testStrategy": "Execute unified startup script and verify all services (Docker containers and Solana validator) start correctly with proper atomic swap configuration"
+          },
+          {
+            "id": 5,
+            "title": "Create unified development reset script",
+            "description": "Create a comprehensive reset script that uses existing Docker and localnet reset commands to provide clean development environment reinitialization.",
+            "dependencies": [
+              4
+            ],
+            "details": "Develop a reset script that:\n- Executes npm run docker:stop to stop all Docker services\n- Runs npm run localnet:reset to clean Solana validator state\n- Clears any cached program deployments and temporary files\n- Executes npm run docker:restart to reinitialize Docker services with clean state\n- Runs database migrations and seed data insertion for fresh development state\n- Provides option to preserve or reset LOCAL_PROGRAM_ID based on development needs\n- Includes verification steps to ensure clean environment reset",
+            "status": "pending",
+            "testStrategy": "Execute reset script and verify complete environment cleanup and reinitialization with all atomic swap components working correctly"
+          }
+        ]
+      },
+      {
+        "id": 18,
+        "title": "Document Atomic Swap Deployment Architecture and Auto-Deploy Workflow",
+        "description": "Create comprehensive documentation explaining how the atomic swap system integrates with the existing DigitalOcean auto-deploy infrastructure, database migration strategy, and deployment workflow for both staging and production environments.",
+        "details": "Create comprehensive deployment documentation with the following structured approach:\n\n1. **DigitalOcean Auto-Deploy Workflow Documentation**:\n   - Document that pushing to staging/production branches triggers automatic deployment on DigitalOcean\n   - Explain the complete CI/CD pipeline flow from git push to live deployment\n   - Document pre-deploy jobs that automatically run database migrations using `npm run db:migrate:deploy`\n   - Include branch protection rules and deployment approval processes\n   - Document rollback procedures using DigitalOcean's built-in rollback functionality with step-by-step instructions\n\n2. **Environment Configuration Documentation**:\n   - Document staging program ID (AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei) and production program ID configuration\n   - Explain how environment variables and secrets are managed in DigitalOcean console\n   - Document required environment variables for atomic swap system (SOLANA_RPC_URL, PLATFORM_AUTHORITY_KEYPAIR, TREASURY_PDA_SEED, etc.)\n   - Include security best practices for secret management and rotation procedures\n\n3. **Local Development Environment Documentation**:\n   - Document the Docker Compose setup for local development (postgres, redis, backend)\n   - Explain how to use existing npm scripts for docker management (`npm run docker:start`, `npm run docker:stop`)\n   - Document localnet management scripts and Solana test validator setup\n   - Include troubleshooting guide for common local development issues\n\n4. **Database Migration Strategy Documentation**:\n   - Document how Prisma migrations integrate with the auto-deploy workflow\n   - Explain migration rollback procedures and data backup strategies\n   - Document migration testing procedures for both staging and production\n   - Include database schema versioning and compatibility considerations\n\n5. **Atomic Swap Deployment Checklist**:\n   - Create pre-deployment checklist specific to atomic swap system updates\n   - Include post-deployment verification steps and health checks\n   - Document monitoring and alerting setup for atomic swap transactions\n   - Include performance benchmarks and expected metrics after deployment",
+        "testStrategy": "1. **Documentation Accuracy Verification**:\n   - Verify documentation accurately reflects current deployment workflow by testing each documented step\n   - Cross-reference documented environment variables with actual DigitalOcean console configuration\n   - Validate that all documented npm scripts and Docker commands execute successfully\n\n2. **Deployment Procedure Testing**:\n   - Test that documented procedures work for both staging and production deployments by executing a test deployment\n   - Verify database migration procedures work correctly with `npm run db:migrate:deploy`\n   - Test rollback procedures in staging environment to ensure they are accurate and safe to execute\n\n3. **Local Development Setup Validation**:\n   - Ensure local development setup documentation allows new developers to get started quickly by having a fresh developer follow the documentation\n   - Test Docker Compose setup instructions on clean environment\n   - Verify all documented npm scripts work as expected (`npm run docker:start`, localnet scripts)\n\n4. **Deployment Checklist Verification**:\n   - Execute the atomic swap deployment checklist on staging environment to verify completeness\n   - Test all health checks and monitoring procedures documented in the checklist\n   - Validate that post-deployment verification steps catch potential issues",
+        "status": "pending",
+        "dependencies": [
+          14,
+          15,
+          16
+        ],
+        "priority": "medium",
+        "subtasks": []
+      }
+    ],
+    "metadata": {
+      "created": "2025-11-17T05:45:23.312Z",
+      "updated": "2025-11-17T10:56:37.399Z",
+      "description": "Complete architectural pivot from escrow agreements to atomic NFT/cNFT swaps with durable nonces"
+    }
   }
 }

@@ -11,6 +11,7 @@ import webhookRoutes from './webhook.routes';
 import receiptRoutes from './receipt.routes';
 import transactionLogRoutes from './transaction-log.routes';
 import healthRoutes from './health.routes';
+import offersRoutes from './offers.routes';
 
 export { 
   agreementRoutes, 
@@ -18,6 +19,7 @@ export {
   webhookRoutes, 
   receiptRoutes,
   transactionLogRoutes,
-  healthRoutes
+  healthRoutes,
+  offersRoutes
 };
 

@@ -7,7 +7,8 @@
  * NOTE: USDC monitoring is deprecated but kept for backwards compatibility (V1 only).
  */
 
-import { AccountInfo, Context } from '@solana/web3.js';
+import { AccountInfo, Context, PublicKey } from '@solana/web3.js';
+import { getAssociatedTokenAddress } from '@solana/spl-token';
 import { getSolanaService } from './solana.service';
 import { getUsdcDepositService } from './usdc-deposit.service';
 import { getNftDepositService } from './nft-deposit.service';
@@ -157,7 +158,7 @@ export class MonitoringService {
       // - Stale data: In non-production, exclude agreements older than 7 days (prevents E2E test pollution)
       const baseWhere: any = {
         status: {
-          in: ['PENDING', 'FUNDED', 'USDC_LOCKED', 'NFT_LOCKED'],
+          in: ['PENDING', 'FUNDED', 'USDC_LOCKED', 'SOL_LOCKED', 'NFT_LOCKED'], // Include SOL_LOCKED for V2
         },
         expiry: {
           gt: new Date(), // Not expired
@@ -187,7 +188,9 @@ export class MonitoringService {
           agreementId: true,
           usdcDepositAddr: true,
           nftDepositAddr: true,
-          escrowPda: true,
+          nftBDepositAddr: true, // Escrow's NFT B token account for NFT<>NFT swaps
+          nftBMint: true,        // Needed for deriving NFT B address if not stored
+          escrowPda: true,       // Needed for deriving NFT B address if not stored
           swapType: true,
           status: true,
           createdAt: true,
@@ -222,7 +225,7 @@ export class MonitoringService {
           if (
             agreement.escrowPda &&
             (agreement.swapType === 'NFT_FOR_SOL' || agreement.swapType === 'NFT_FOR_NFT_PLUS_SOL' || agreement.swapType === 'NFT_FOR_NFT_WITH_FEE') &&
-            !['USDC_LOCKED', 'BOTH_LOCKED'].includes(agreement.status)
+            !['SOL_LOCKED', 'BOTH_LOCKED'].includes(agreement.status)
           ) {
             try {
               // Derive sol_vault PDA using solanaService helper
@@ -238,13 +241,21 @@ export class MonitoringService {
               if (error.message && error.message.includes('IDL_MISMATCH')) {
                 console.warn(`[MonitoringService] Skipping old agreement ${agreement.agreementId}: Created with older program version`);
                 // Optionally: Mark agreement for archival in production
+              } else if (error.message && (error.message.includes('Account does not exist') || error.message.includes('has no data'))) {
+                // Expected for newly created agreements - escrow account not yet confirmed on-chain
+                if (agreement.status === 'PENDING') {
+                  console.log(`[MonitoringService] Escrow account not yet confirmed for ${agreement.agreementId}, will retry on next monitoring cycle`);
+                } else {
+                  // Unexpected for non-PENDING agreements - this is a real issue
+                  console.error(`[MonitoringService] Failed to derive SOL vault for ${agreement.agreementId} (status: ${agreement.status}):`, error);
+                }
               } else {
                 console.error(`[MonitoringService] Failed to derive SOL vault for ${agreement.agreementId}:`, error);
               }
             }
           }
 
-          // Monitor seller NFT
+          // Monitor seller NFT (NFT A)
           if (
             agreement.nftDepositAddr &&
             !['NFT_LOCKED', 'BOTH_LOCKED'].includes(agreement.status)
@@ -254,6 +265,44 @@ export class MonitoringService {
               agreementId: agreement.agreementId,
               type: 'nft'
             });
+          }
+
+          // Monitor buyer NFT (NFT B) for NFT-for-NFT swaps
+          if (
+            (agreement.swapType === 'NFT_FOR_NFT_WITH_FEE' || agreement.swapType === 'NFT_FOR_NFT_PLUS_SOL') &&
+            !['NFT_LOCKED', 'BOTH_LOCKED'].includes(agreement.status)
+          ) {
+            let nftBDepositAddr: string | null = null;
+
+            // Try to use database field first
+            if (agreement.nftBDepositAddr) {
+              nftBDepositAddr = agreement.nftBDepositAddr;
+              console.log(`[MonitoringService] Using stored NFT B deposit address for ${agreement.agreementId}: ${nftBDepositAddr}`);
+            }
+            // Fallback: Derive from nftBMint and escrowPda (where NFT is actually deposited)
+            else if (agreement.nftBMint && agreement.escrowPda) {
+              try {
+                const derivedAddr = await getAssociatedTokenAddress(
+                  new PublicKey(agreement.nftBMint),
+                  new PublicKey(agreement.escrowPda)  // Escrow PDA, not buyer wallet
+                );
+                nftBDepositAddr = derivedAddr.toString();
+                console.log(`[MonitoringService] Derived escrow NFT B deposit address for ${agreement.agreementId}: ${nftBDepositAddr}`);
+              } catch (error) {
+                console.error(`[MonitoringService] Failed to derive NFT B deposit address for ${agreement.agreementId}:`, error);
+              }
+            }
+
+            // Add to monitoring if we have an address
+            if (nftBDepositAddr) {
+              accountsToMonitor.push({
+                publicKey: nftBDepositAddr,
+                agreementId: agreement.agreementId,
+                type: 'nft'
+              });
+            } else {
+              console.warn(`[MonitoringService] No NFT B deposit address available for ${agreement.agreementId}`);
+            }
           }
         } else {
           // V1 (Legacy USDC): Monitor USDC deposit address if not yet locked
@@ -332,21 +381,49 @@ export class MonitoringService {
         `[MonitoringService] Starting to monitor ${accountType} account: ${publicKey}`
       );
 
-      // Subscribe to account changes
-      const subscriptionId = await this.solanaService.subscribeToAccount(
-        publicKey,
-        async (accountInfo, context) => {
-          await this.handleAccountChange(
-            publicKey,
-            accountInfo,
-            context,
-            accountType,
-            agreementId
-          );
-        }
-      );
+      let subscriptionId: number | undefined;
 
-      // Store monitored account info
+      // Check if WebSocket monitoring is disabled (e.g., due to rate limits)
+      const disableWsMonitoring = process.env.DISABLE_WS_MONITORING === 'true';
+      
+      if (disableWsMonitoring) {
+        console.log('[MonitoringService] ⚠️ WebSocket monitoring disabled, using polling only');
+      } else {
+        // Try to subscribe to account changes via WebSocket
+        try {
+          subscriptionId = await this.solanaService.subscribeToAccount(
+            publicKey,
+            async (accountInfo, context) => {
+              await this.handleAccountChange(
+                publicKey,
+                accountInfo,
+                context,
+                accountType,
+                agreementId
+              );
+            }
+          );
+          console.log(`[MonitoringService] ✅ WebSocket subscription created for ${publicKey}`);
+        } catch (wsError: any) {
+          // Handle WebSocket subscription failures gracefully
+          const errorMessage = wsError?.message || String(wsError);
+          
+          if (errorMessage.includes('429') || errorMessage.includes('rate limit')) {
+            console.warn(
+              `[MonitoringService] ⚠️ WebSocket rate limit hit for ${publicKey}, falling back to polling only`
+            );
+          } else {
+            console.warn(
+              `[MonitoringService] ⚠️ WebSocket subscription failed for ${publicKey}: ${errorMessage}`
+            );
+            console.warn('[MonitoringService] Falling back to polling only');
+          }
+          // Don't throw error - continue with polling-only monitoring
+          subscriptionId = undefined;
+        }
+      }
+
+      // Store monitored account info (with or without WebSocket subscription)
       this.monitoredAccounts.set(publicKey, {
         publicKey,
         agreementId,
@@ -354,8 +431,9 @@ export class MonitoringService {
         subscriptionId,
       });
 
+      const monitoringMode = subscriptionId !== undefined ? 'WebSocket + Polling' : 'Polling only';
       console.log(
-        `[MonitoringService] Successfully monitoring ${accountType} account: ${publicKey}`
+        `[MonitoringService] ✅ Successfully monitoring ${accountType} account: ${publicKey} (${monitoringMode})`
       );
     } catch (error) {
       console.error(`[MonitoringService] Failed to monitor account ${publicKey}:`, error);

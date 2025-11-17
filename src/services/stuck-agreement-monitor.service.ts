@@ -2,11 +2,14 @@
  * Stuck Agreement Monitor Service
  * 
  * Monitors for agreements that are stuck in BOTH_LOCKED status for an unusually long time
- * and alerts when settlement appears to be failing repeatedly
+ * and alerts when settlement appears to be failing repeatedly.
+ * 
+ * NEW: Automatically processes refunds for stuck agreements to return assets to senders.
  */
 
 import { prisma } from '../config/database';
 import { AgreementStatus } from '../generated/prisma';
+import { getRefundService } from './refund.service';
 
 /**
  * Alert severity levels
@@ -35,6 +38,9 @@ interface MonitorConfig {
   warningThresholdMinutes?: number; // Warning if stuck for this long
   criticalThresholdMinutes?: number; // Critical if stuck for this long
   checkIntervalMs?: number; // How often to check (milliseconds)
+  autoRefundEnabled?: boolean; // Enable automatic refund processing
+  autoRefundThresholdMinutes?: number; // Auto-refund after this many minutes
+  maxAgeHours?: number; // Maximum age of agreements to check (prevents old agreements from accumulating)
 }
 
 /**
@@ -45,12 +51,16 @@ export class StuckAgreementMonitorService {
   private monitorTimer?: NodeJS.Timeout;
   private isRunning: boolean = false;
   private alertCallbacks: Array<(alert: StuckAgreementAlert) => void> = [];
+  private refundAttempts: Set<string> = new Set(); // Track refund attempts to avoid duplicates
 
   constructor(config?: MonitorConfig) {
     this.config = {
       warningThresholdMinutes: config?.warningThresholdMinutes || 10, // 10 minutes
       criticalThresholdMinutes: config?.criticalThresholdMinutes || 30, // 30 minutes
       checkIntervalMs: config?.checkIntervalMs || 60000, // 1 minute
+      autoRefundEnabled: config?.autoRefundEnabled ?? true, // Enabled by default
+      autoRefundThresholdMinutes: config?.autoRefundThresholdMinutes || 15, // 15 minutes
+      maxAgeHours: config?.maxAgeHours || 24, // Only check agreements updated within last 24 hours
     };
   }
 
@@ -68,6 +78,9 @@ export class StuckAgreementMonitorService {
       warningThreshold: `${this.config.warningThresholdMinutes} minutes`,
       criticalThreshold: `${this.config.criticalThresholdMinutes} minutes`,
       checkInterval: `${this.config.checkIntervalMs / 1000} seconds`,
+      autoRefundEnabled: this.config.autoRefundEnabled,
+      autoRefundThreshold: `${this.config.autoRefundThresholdMinutes} minutes`,
+      maxAge: `${this.config.maxAgeHours} hours`,
     });
 
     // Run initial check
@@ -121,13 +134,30 @@ export class StuckAgreementMonitorService {
       const criticalThreshold = new Date(
         now.getTime() - this.config.criticalThresholdMinutes * 60 * 1000
       );
+      const maxAgeThreshold = new Date(
+        now.getTime() - this.config.maxAgeHours * 60 * 60 * 1000
+      );
 
-      // Find agreements stuck in BOTH_LOCKED status
+      // Find agreements stuck in any status with deposits
+      // Includes partial deposits (NFT_LOCKED, SOL_LOCKED/USDC_LOCKED) and complete deposits (BOTH_LOCKED)
+      // ARCHIVED is included because agreements can be archived WITH deposits still in escrow
+      // (e.g., test cleanup, failed settlement). We skip ARCHIVED without deposits (normal cleanup)
+      // but alert CRITICAL for ARCHIVED with deposits (stuck funds!)
+      // Only checks agreements updated within maxAgeHours to prevent old agreements from accumulating
       const stuckAgreements = await prisma.agreement.findMany({
         where: {
-          status: AgreementStatus.BOTH_LOCKED,
+          status: {
+            in: [
+              AgreementStatus.NFT_LOCKED,    // Only NFT deposited
+              AgreementStatus.SOL_LOCKED,    // Only SOL deposited (V2)
+              AgreementStatus.USDC_LOCKED,   // Only USDC deposited (legacy V1)
+              AgreementStatus.BOTH_LOCKED,   // Both sides deposited
+              AgreementStatus.ARCHIVED,      // Failed/cleanup agreements
+            ],
+          },
           updatedAt: {
             lt: warningThreshold, // Updated before warning threshold
+            gte: maxAgeThreshold, // But not older than maxAge (prevents accumulation)
           },
         },
         select: {
@@ -137,6 +167,13 @@ export class StuckAgreementMonitorService {
           escrowPda: true,
           nftMint: true,
           price: true,
+          deposits: {
+            select: {
+              id: true,
+              type: true,
+              status: true,
+            },
+          },
         },
       });
 
@@ -154,26 +191,124 @@ export class StuckAgreementMonitorService {
         const timeSinceUpdate = now.getTime() - agreement.updatedAt.getTime();
         const minutesSinceUpdate = Math.round(timeSinceUpdate / 60000);
 
+        // Check if agreement has deposits
+        const hasDeposits = agreement.deposits && agreement.deposits.length > 0;
+
+        // For ARCHIVED agreements without deposits, skip (normal cleanup, not stuck)
+        if (agreement.status === AgreementStatus.ARCHIVED && !hasDeposits) {
+          console.log(
+            `[StuckAgreementMonitor] ℹ️  Agreement ${agreement.agreementId} is ARCHIVED with no deposits (normal cleanup) - skipping alert`
+          );
+          continue; // Skip to next agreement
+        }
+
         // Determine severity
-        const isCritical = agreement.updatedAt < criticalThreshold;
+        // ARCHIVED with deposits is always CRITICAL (stuck funds!)
+        const isCritical = agreement.updatedAt < criticalThreshold || 
+                          (agreement.status === AgreementStatus.ARCHIVED && hasDeposits);
         const severity = isCritical ? AlertSeverity.CRITICAL : AlertSeverity.WARNING;
+
+        const depositInfo = hasDeposits 
+          ? ` - ${agreement.deposits.length} deposit(s) stuck!` 
+          : ' - no deposits';
 
         const alert: StuckAgreementAlert = {
           agreementId: agreement.agreementId,
           status: agreement.status,
           timeSinceLastUpdate: timeSinceUpdate,
           severity,
-          message: `Agreement ${agreement.agreementId} stuck in ${agreement.status} for ${minutesSinceUpdate} minutes (Escrow PDA: ${agreement.escrowPda})`,
+          message: `Agreement ${agreement.agreementId} stuck in ${agreement.status} for ${minutesSinceUpdate} minutes (Escrow PDA: ${agreement.escrowPda})${depositInfo}`,
           timestamp: now,
         };
 
-        console.log(`[StuckAgreementMonitor] ${severity}: ${alert.message}`);
-
-        // Trigger alert callbacks
+        // Trigger alert callbacks (logging handled by callback in index.ts to avoid duplicate logs)
         this.triggerAlert(alert);
+
+        // ** AUTOMATIC REFUND PROCESSING **
+        // If auto-refund is enabled and agreement has been stuck long enough, process refund
+        const autoRefundThreshold = new Date(
+          now.getTime() - this.config.autoRefundThresholdMinutes * 60 * 1000
+        );
+        
+        if (
+          this.config.autoRefundEnabled &&
+          agreement.updatedAt < autoRefundThreshold &&
+          !this.refundAttempts.has(agreement.agreementId)
+        ) {
+          console.log(
+            `[StuckAgreementMonitor] 🔄 Agreement ${agreement.agreementId} stuck for ${minutesSinceUpdate} minutes - initiating automatic refund`
+          );
+          
+          // Mark as attempted (prevent duplicate attempts)
+          this.refundAttempts.add(agreement.agreementId);
+          
+          // CRITICAL: Process refund SEQUENTIALLY (await) to prevent Jito rate limiting
+          // Previously this was fire-and-forget which caused multiple agreements
+          // to process refunds in parallel, overwhelming Jito's 1 tx/second limit
+          try {
+            await this.processAutomaticRefund(agreement.agreementId);
+          } catch (refundError) {
+            console.error(
+              `[StuckAgreementMonitor] ⚠️ Automatic refund failed for ${agreement.agreementId}:`,
+              refundError
+            );
+            // Remove from attempts so it can be retried in next cycle
+            this.refundAttempts.delete(agreement.agreementId);
+          }
+          
+          // Add delay between agreements to further prevent rate limiting
+          console.log('[StuckAgreementMonitor] Waiting 3s before processing next agreement...');
+          await new Promise(resolve => setTimeout(resolve, 3000));
+        }
       }
     } catch (error) {
       console.error('[StuckAgreementMonitor] Error checking for stuck agreements:', error);
+    }
+  }
+
+  /**
+   * Process automatic refund for stuck agreement
+   */
+  private async processAutomaticRefund(agreementId: string): Promise<void> {
+    try {
+      console.log(`[StuckAgreementMonitor] 🔄 Starting automatic refund for ${agreementId}`);
+      
+      const refundService = getRefundService();
+      
+      // Check refund eligibility
+      const eligibility = await refundService.checkRefundEligibility(agreementId);
+      
+      if (!eligibility.eligible) {
+        console.log(
+          `[StuckAgreementMonitor] ℹ️  Agreement ${agreementId} not eligible for refund: ${eligibility.reason}`
+        );
+        return;
+      }
+      
+      console.log(
+        `[StuckAgreementMonitor] ✅ Agreement ${agreementId} eligible for refund - processing...`
+      );
+      
+      // Process refunds
+      const result = await refundService.processRefunds(agreementId);
+      
+      if (result.success) {
+        console.log(
+          `[StuckAgreementMonitor] ✅ Automatic refund successful for ${agreementId} - ${result.refundedDeposits.length} deposit(s) refunded`
+        );
+      } else {
+        console.error(
+          `[StuckAgreementMonitor] ❌ Automatic refund failed for ${agreementId}:`,
+          result.errors
+        );
+        throw new Error(`Refund failed: ${result.errors?.map(e => `${e.depositId}: ${e.error}`).join('; ')}`);
+      }
+    } catch (error) {
+      console.error(
+        `[StuckAgreementMonitor] ❌ Error processing automatic refund for ${agreementId}:`,
+        error
+      );
+      throw error;
     }
   }
 

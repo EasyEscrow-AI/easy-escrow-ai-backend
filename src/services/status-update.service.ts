@@ -452,14 +452,16 @@ export class StatusUpdateService {
     const validTransitions: Record<AgreementStatus, AgreementStatus[]> = {
       [AgreementStatus.PENDING]: [
         AgreementStatus.FUNDED,
-        AgreementStatus.USDC_LOCKED,
+        AgreementStatus.USDC_LOCKED,  // Legacy V1
+        AgreementStatus.SOL_LOCKED,   // V2: SOL deposited
         AgreementStatus.NFT_LOCKED,
         AgreementStatus.EXPIRED,
         AgreementStatus.CANCELLED,
         AgreementStatus.ARCHIVED,
       ],
       [AgreementStatus.FUNDED]: [
-        AgreementStatus.USDC_LOCKED,
+        AgreementStatus.USDC_LOCKED,  // Legacy V1
+        AgreementStatus.SOL_LOCKED,   // V2: SOL deposited
         AgreementStatus.NFT_LOCKED,
         AgreementStatus.BOTH_LOCKED,
         AgreementStatus.EXPIRED,
@@ -467,6 +469,12 @@ export class StatusUpdateService {
         AgreementStatus.ARCHIVED,
       ],
       [AgreementStatus.USDC_LOCKED]: [
+        AgreementStatus.BOTH_LOCKED,
+        AgreementStatus.EXPIRED,
+        AgreementStatus.CANCELLED,
+        AgreementStatus.ARCHIVED,
+      ],
+      [AgreementStatus.SOL_LOCKED]: [  // V2: SOL deposited, waiting for NFT(s)
         AgreementStatus.BOTH_LOCKED,
         AgreementStatus.EXPIRED,
         AgreementStatus.CANCELLED,
