@@ -1,4 +1,10 @@
--- Add atomic swap enums (only if they don't exist)
+-- Fix Atomic Swap Schema Migration
+-- This migration consolidates the atomic swap schema changes and is safe to run even if some objects already exist
+
+-- ============================================================================
+-- STEP 1: Create Enums (if they don't exist)
+-- ============================================================================
+
 DO $$ BEGIN
   CREATE TYPE "NonceStatus" AS ENUM ('AVAILABLE', 'IN_USE', 'EXPIRED', 'INVALID');
 EXCEPTION
@@ -23,10 +29,16 @@ EXCEPTION
   WHEN duplicate_object THEN null;
 END $$;
 
--- CreateTable: users (atomic swap users)
+-- ============================================================================
+-- STEP 2: Create Tables (if they don't exist)
+-- ============================================================================
+
+-- Users table
 CREATE TABLE IF NOT EXISTS "users" (
     "id" TEXT NOT NULL,
     "wallet_address" TEXT NOT NULL,
+    "maker_wallet" TEXT,
+    "taker_wallet" TEXT,
     "nonce_account" TEXT,
     "is_subsidized" BOOLEAN NOT NULL DEFAULT false,
     "total_swaps_completed" INTEGER NOT NULL DEFAULT 0,
@@ -34,11 +46,10 @@ CREATE TABLE IF NOT EXISTS "users" (
     "swap_stats" JSONB NOT NULL DEFAULT '{}',
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
-
     CONSTRAINT "users_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable: nonce_pool
+-- Nonce Pool table
 CREATE TABLE IF NOT EXISTS "nonce_pool" (
     "id" SERIAL NOT NULL,
     "nonce_account" TEXT NOT NULL,
@@ -46,11 +57,10 @@ CREATE TABLE IF NOT EXISTS "nonce_pool" (
     "last_used_at" TIMESTAMP(3),
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
-
     CONSTRAINT "nonce_pool_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable: swap_offers
+-- Swap Offers table
 CREATE TABLE IF NOT EXISTS "swap_offers" (
     "id" SERIAL NOT NULL,
     "maker_wallet" TEXT NOT NULL,
@@ -70,11 +80,10 @@ CREATE TABLE IF NOT EXISTS "swap_offers" (
     "cancelled_at" TIMESTAMP(3),
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
-
     CONSTRAINT "swap_offers_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable: swap_transactions
+-- Swap Transactions table
 CREATE TABLE IF NOT EXISTS "swap_transactions" (
     "id" SERIAL NOT NULL,
     "offer_id" INTEGER NOT NULL,
@@ -93,115 +102,130 @@ CREATE TABLE IF NOT EXISTS "swap_transactions" (
     "confirmed_at" TIMESTAMP(3),
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
-
     CONSTRAINT "swap_transactions_pkey" PRIMARY KEY ("id")
 );
 
--- CreateIndex
+-- ============================================================================
+-- STEP 3: Add missing columns if they don't exist
+-- ============================================================================
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'users' AND column_name = 'maker_wallet') THEN
+        ALTER TABLE "users" ADD COLUMN "maker_wallet" TEXT;
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'users' AND column_name = 'taker_wallet') THEN
+        ALTER TABLE "users" ADD COLUMN "taker_wallet" TEXT;
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'swap_offers' AND column_name = 'taker_wallet') THEN
+        ALTER TABLE "swap_offers" ADD COLUMN "taker_wallet" TEXT;
+    END IF;
+END $$;
+
+-- ============================================================================
+-- STEP 4: Create Indexes (if they don't exist)
+-- ============================================================================
+
+-- Users indexes
 CREATE UNIQUE INDEX IF NOT EXISTS "users_wallet_address_key" ON "users"("wallet_address");
-
--- CreateIndex
 CREATE INDEX IF NOT EXISTS "users_wallet_address_idx" ON "users"("wallet_address");
-
--- CreateIndex
 CREATE INDEX IF NOT EXISTS "users_nonce_account_idx" ON "users"("nonce_account");
+CREATE INDEX IF NOT EXISTS "users_maker_wallet_idx" ON "users"("maker_wallet");
+CREATE INDEX IF NOT EXISTS "users_taker_wallet_idx" ON "users"("taker_wallet");
 
--- CreateIndex
+-- Nonce Pool indexes
 CREATE UNIQUE INDEX IF NOT EXISTS "nonce_pool_nonce_account_key" ON "nonce_pool"("nonce_account");
-
--- CreateIndex
 CREATE INDEX IF NOT EXISTS "nonce_pool_status_idx" ON "nonce_pool"("status");
-
--- CreateIndex
 CREATE INDEX IF NOT EXISTS "nonce_pool_last_used_at_idx" ON "nonce_pool"("last_used_at");
 
--- CreateIndex
+-- Swap Offers indexes
 CREATE INDEX IF NOT EXISTS "swap_offers_maker_wallet_idx" ON "swap_offers"("maker_wallet");
-
--- CreateIndex
 CREATE INDEX IF NOT EXISTS "swap_offers_taker_wallet_idx" ON "swap_offers"("taker_wallet");
-
--- CreateIndex
 CREATE INDEX IF NOT EXISTS "swap_offers_status_idx" ON "swap_offers"("status");
-
--- CreateIndex
 CREATE INDEX IF NOT EXISTS "swap_offers_expires_at_idx" ON "swap_offers"("expires_at");
-
--- CreateIndex
 CREATE INDEX IF NOT EXISTS "swap_offers_parent_offer_id_idx" ON "swap_offers"("parent_offer_id");
-
--- CreateIndex
 CREATE INDEX IF NOT EXISTS "swap_offers_nonce_account_idx" ON "swap_offers"("nonce_account");
-
--- CreateIndex
 CREATE INDEX IF NOT EXISTS "idx_offer_status_expiry" ON "swap_offers"("status", "expires_at");
 
--- CreateIndex
+-- Swap Transactions indexes
 CREATE UNIQUE INDEX IF NOT EXISTS "swap_transactions_signature_key" ON "swap_transactions"("signature");
-
--- CreateIndex
 CREATE UNIQUE INDEX IF NOT EXISTS "swap_transactions_transaction_signature_key" ON "swap_transactions"("transaction_signature");
-
--- CreateIndex
 CREATE INDEX IF NOT EXISTS "swap_transactions_offer_id_idx" ON "swap_transactions"("offer_id");
-
--- CreateIndex
 CREATE INDEX IF NOT EXISTS "swap_transactions_counter_offer_id_idx" ON "swap_transactions"("counter_offer_id");
-
--- CreateIndex
 CREATE INDEX IF NOT EXISTS "swap_transactions_maker_wallet_idx" ON "swap_transactions"("maker_wallet");
-
--- CreateIndex
 CREATE INDEX IF NOT EXISTS "swap_transactions_taker_wallet_idx" ON "swap_transactions"("taker_wallet");
-
--- CreateIndex
 CREATE INDEX IF NOT EXISTS "swap_transactions_status_idx" ON "swap_transactions"("status");
-
--- CreateIndex
 CREATE INDEX IF NOT EXISTS "swap_transactions_transaction_signature_idx" ON "swap_transactions"("transaction_signature");
-
--- CreateIndex
 CREATE INDEX IF NOT EXISTS "swap_transactions_confirmed_at_idx" ON "swap_transactions"("confirmed_at");
 
--- AddForeignKey (only if tables exist)
+-- ============================================================================
+-- STEP 5: Add Foreign Keys (if they don't exist)
+-- ============================================================================
+
 DO $$ BEGIN
-  ALTER TABLE "swap_offers" ADD CONSTRAINT "swap_offers_maker_wallet_fkey" FOREIGN KEY ("maker_wallet") REFERENCES "users"("wallet_address") ON DELETE CASCADE ON UPDATE CASCADE;
+  ALTER TABLE "swap_offers" ADD CONSTRAINT "swap_offers_maker_wallet_fkey" 
+    FOREIGN KEY ("maker_wallet") REFERENCES "users"("wallet_address") 
+    ON DELETE CASCADE ON UPDATE CASCADE;
 EXCEPTION
   WHEN duplicate_object THEN null;
 END $$;
 
 DO $$ BEGIN
-  ALTER TABLE "swap_offers" ADD CONSTRAINT "swap_offers_nonce_account_fkey" FOREIGN KEY ("nonce_account") REFERENCES "nonce_pool"("nonce_account") ON DELETE RESTRICT ON UPDATE CASCADE;
+  ALTER TABLE "swap_offers" ADD CONSTRAINT "swap_offers_nonce_account_fkey" 
+    FOREIGN KEY ("nonce_account") REFERENCES "nonce_pool"("nonce_account") 
+    ON DELETE RESTRICT ON UPDATE CASCADE;
 EXCEPTION
   WHEN duplicate_object THEN null;
 END $$;
 
 DO $$ BEGIN
-  ALTER TABLE "swap_offers" ADD CONSTRAINT "swap_offers_parent_offer_id_fkey" FOREIGN KEY ("parent_offer_id") REFERENCES "swap_offers"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+  ALTER TABLE "swap_offers" ADD CONSTRAINT "swap_offers_parent_offer_id_fkey" 
+    FOREIGN KEY ("parent_offer_id") REFERENCES "swap_offers"("id") 
+    ON DELETE SET NULL ON UPDATE CASCADE;
 EXCEPTION
   WHEN duplicate_object THEN null;
 END $$;
 
 DO $$ BEGIN
-  ALTER TABLE "swap_transactions" ADD CONSTRAINT "swap_transactions_offer_id_fkey" FOREIGN KEY ("offer_id") REFERENCES "swap_offers"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  ALTER TABLE "swap_transactions" ADD CONSTRAINT "swap_transactions_offer_id_fkey" 
+    FOREIGN KEY ("offer_id") REFERENCES "swap_offers"("id") 
+    ON DELETE CASCADE ON UPDATE CASCADE;
 EXCEPTION
   WHEN duplicate_object THEN null;
 END $$;
 
 DO $$ BEGIN
-  ALTER TABLE "swap_transactions" ADD CONSTRAINT "swap_transactions_counter_offer_id_fkey" FOREIGN KEY ("counter_offer_id") REFERENCES "swap_offers"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+  ALTER TABLE "swap_transactions" ADD CONSTRAINT "swap_transactions_counter_offer_id_fkey" 
+    FOREIGN KEY ("counter_offer_id") REFERENCES "swap_offers"("id") 
+    ON DELETE SET NULL ON UPDATE CASCADE;
 EXCEPTION
   WHEN duplicate_object THEN null;
 END $$;
 
 DO $$ BEGIN
-  ALTER TABLE "swap_transactions" ADD CONSTRAINT "swap_transactions_maker_wallet_fkey" FOREIGN KEY ("maker_wallet") REFERENCES "users"("wallet_address") ON DELETE RESTRICT ON UPDATE CASCADE;
+  ALTER TABLE "swap_transactions" ADD CONSTRAINT "swap_transactions_maker_wallet_fkey" 
+    FOREIGN KEY ("maker_wallet") REFERENCES "users"("wallet_address") 
+    ON DELETE RESTRICT ON UPDATE CASCADE;
 EXCEPTION
   WHEN duplicate_object THEN null;
 END $$;
 
 DO $$ BEGIN
-  ALTER TABLE "swap_transactions" ADD CONSTRAINT "swap_transactions_taker_wallet_fkey" FOREIGN KEY ("taker_wallet") REFERENCES "users"("wallet_address") ON DELETE RESTRICT ON UPDATE CASCADE;
+  ALTER TABLE "swap_transactions" ADD CONSTRAINT "swap_transactions_taker_wallet_fkey" 
+    FOREIGN KEY ("taker_wallet") REFERENCES "users"("wallet_address") 
+    ON DELETE RESTRICT ON UPDATE CASCADE;
 EXCEPTION
   WHEN duplicate_object THEN null;
 END $$;
+
