@@ -273,3 +273,154 @@ model Webhook {
   @@index([createdAt])
   @@map("webhooks")
 }
+
+// ============================================
+// ATOMIC SWAP SYSTEM TABLES
+// ============================================
+
+// Enum for nonce pool status
+enum NonceStatus {
+  AVAILABLE
+  IN_USE
+  EXPIRED
+  INVALID
+}
+
+// Enum for offer type
+enum OfferType {
+  MAKER_OFFER
+  COUNTER_OFFER
+  COUNTER // Alias for counter-offers
+}
+
+// Enum for offer status
+enum OfferStatus {
+  ACTIVE
+  MATCHED
+  CANCELLED
+  EXPIRED
+  COMPLETED
+  FILLED // Alias for completed swaps
+}
+
+// Enum for swap transaction status
+enum TransactionStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+  CANCELLED
+}
+
+// Users table for atomic swap system
+model User {
+  id                    String   @id @default(uuid())
+  walletAddress         String   @unique @map("wallet_address")
+  nonceAccount          String?  @map("nonce_account")
+  isSubsidized          Boolean  @default(false) @map("is_subsidized")
+  totalSwapsCompleted   Int      @default(0) @map("total_swaps_completed")
+  totalFeesPaidLamports BigInt   @default(0) @map("total_fees_paid_lamports")
+  swapStats             Json     @default("{}") @map("swap_stats")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  makerOffers       SwapOffer[]       @relation("MakerOffers")
+  makerTransactions SwapTransaction[] @relation("MakerTransactions")
+  takerTransactions SwapTransaction[] @relation("TakerTransactions")
+
+  @@index([walletAddress])
+  @@index([nonceAccount])
+  @@map("users")
+}
+
+// Nonce pool table for durable nonce accounts
+model NoncePool {
+  id           Int         @id @default(autoincrement())
+  nonceAccount String      @unique @map("nonce_account")
+  status       NonceStatus @default(AVAILABLE)
+  lastUsedAt   DateTime?   @map("last_used_at")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  offers SwapOffer[]
+
+  @@index([status])
+  @@index([lastUsedAt])
+  @@map("nonce_pool")
+}
+
+// Swap offers table
+model SwapOffer {
+  id                    Int         @id @default(autoincrement())
+  makerWallet           String      @map("maker_wallet")
+  takerWallet           String?     @map("taker_wallet")
+  offerType             OfferType   @map("offer_type")
+  parentOfferId         Int?        @map("parent_offer_id")
+  offeredAssets         Json        @map("offered_assets")
+  requestedAssets       Json        @map("requested_assets")
+  platformFeeLamports   BigInt      @map("platform_fee_lamports")
+  status                OfferStatus @default(ACTIVE)
+  expiresAt             DateTime    @map("expires_at")
+  nonceAccount          String      @map("nonce_account")
+  currentNonceValue     String?     @map("current_nonce_value")
+  serializedTransaction String?     @map("serialized_transaction") @db.Text
+  transactionSignature  String?     @map("transaction_signature")
+  filledAt              DateTime?   @map("filled_at")
+  cancelledAt           DateTime?   @map("cancelled_at")
+  createdAt             DateTime    @default(now()) @map("created_at")
+  updatedAt             DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  maker               User              @relation("MakerOffers", fields: [makerWallet], references: [walletAddress], onDelete: Cascade)
+  nonce               NoncePool         @relation(fields: [nonceAccount], references: [nonceAccount])
+  parentOffer         SwapOffer?        @relation("CounterOffers", fields: [parentOfferId], references: [id])
+  counterOffers       SwapOffer[]       @relation("CounterOffers")
+  transactions        SwapTransaction[] @relation("OfferTransactions")
+  counterTransactions SwapTransaction[] @relation("CounterOfferTransactions")
+
+  @@index([makerWallet])
+  @@index([takerWallet])
+  @@index([status])
+  @@index([expiresAt])
+  @@index([parentOfferId])
+  @@index([nonceAccount])
+  @@index([status, expiresAt], name: "idx_offer_status_expiry")
+  @@map("swap_offers")
+}
+
+// Swap transactions table
+model SwapTransaction {
+  id                           Int               @id @default(autoincrement())
+  offerId                      Int               @map("offer_id")
+  counterOfferId               Int?              @map("counter_offer_id")
+  signature                    String            @unique
+  makerWallet                  String            @map("maker_wallet")
+  takerWallet                  String            @map("taker_wallet")
+  platformFeeCollectedLamports BigInt            @map("platform_fee_collected_lamports")
+  totalValueLamports           BigInt            @map("total_value_lamports")
+  executedAt                   DateTime          @map("executed_at")
+  transactionSignature         String?           @map("transaction_signature")
+  status                       TransactionStatus @default(PENDING)
+  gasFee                       BigInt?           @map("gas_fee")
+  isSubsidized                 Boolean           @default(false) @map("is_subsidized")
+  errorMessage                 String?           @map("error_message")
+  confirmedAt                  DateTime?         @map("confirmed_at")
+  createdAt                    DateTime          @default(now()) @map("created_at")
+  updatedAt                    DateTime          @updatedAt @map("updated_at")
+
+  // Relations
+  offer        SwapOffer  @relation("OfferTransactions", fields: [offerId], references: [id], onDelete: Cascade)
+  counterOffer SwapOffer? @relation("CounterOfferTransactions", fields: [counterOfferId], references: [id])
+  maker        User       @relation("MakerTransactions", fields: [makerWallet], references: [walletAddress])
+  taker        User       @relation("TakerTransactions", fields: [takerWallet], references: [walletAddress])
+
+  @@index([offerId])
+  @@index([counterOfferId])
+  @@index([makerWallet])
+  @@index([takerWallet])
+  @@index([status])
+  @@index([transactionSignature])
+  @@index([confirmedAt])
+  @@map("swap_transactions")
+}

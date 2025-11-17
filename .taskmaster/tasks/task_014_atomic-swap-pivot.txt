@@ -1,0 +1,83 @@
+# Task ID: 14
+# Title: Deploy Atomic Swap Program to Staging Environment
+# Status: pending
+# Dependencies: 7
+# Priority: high
+# Description: Update the existing staging environment configuration and database schema for atomic swaps on DigitalOcean. The staging program (AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei) is already deployed and functional. This task focuses on updating staging secrets, pushing configuration changes via auto-deploy, and verifying the updated environment works correctly with the new atomic swap system.
+# Details:
+Update the existing staging environment for atomic swap functionality with the following approach:
+
+1. **Staging Environment Configuration Update**:
+   - Update staging secrets in DigitalOcean console for new atomic swap configuration
+   - Configure STAGING_PROGRAM_ID=AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei (existing program)
+   - Update SOLANA_RPC_URL to point to staging network endpoint
+   - Set PLATFORM_AUTHORITY_KEYPAIR for staging-specific keypair
+   - Configure TREASURY_PDA_SEED and TREASURY_PDA_BUMP for staging treasury account
+
+2. **Auto-Deploy Process**:
+   - Push changes to staging branch to trigger automatic deployment
+   - Monitor pre-deploy job execution for database migrations
+   - Verify auto-deploy completes successfully without manual intervention
+   - Confirm backend services restart with new configuration
+
+3. **Database Schema Updates**:
+   - Verify database migrations run automatically via pre-deploy job
+   - Confirm new atomic swap tables are created correctly
+   - Validate foreign key relationships and indexes are established
+   - Check that old escrow-related tables are properly handled during migration
+
+4. **Backend Service Configuration**:
+   - Update NoncePoolManager to use staging nonce accounts and RPC endpoints
+   - Configure FeeCalculator to use staging treasury PDA for fee collection
+   - Update AssetValidator to work with staging network asset verification
+   - Ensure all API endpoints reference staging program ID in transaction building
+
+5. **Staging Infrastructure Validation**:
+   - Verify existing nonce account pool is accessible and funded
+   - Confirm staging treasury PDA has sufficient test SOL for testing
+   - Validate staging-specific monitoring and logging endpoints
+   - Test database connectivity with updated schema
+
+6. **Service Integration Verification**:
+   - Verify all backend services start successfully with new configuration
+   - Test environment variable loading and staging program ID usage
+   - Confirm RPC calls connect to staging network properly
+   - Validate staging keypair loading and transaction signing capability
+
+# Test Strategy:
+1. **Pre-Deploy Configuration Verification**:
+   - Verify all staging secrets are updated in DigitalOcean console
+   - Confirm staging branch contains latest atomic swap configuration changes
+   - Validate environment variables are properly set for staging deployment
+   - Check that database migration scripts are included in deployment
+
+2. **Auto-Deploy Process Validation**:
+   - Monitor git push to staging branch triggers deployment successfully
+   - Verify pre-deploy job executes database migrations without errors
+   - Confirm deployment completes and backend services restart automatically
+   - Check deployment logs for any configuration or startup errors
+
+3. **Database Migration Verification**:
+   - Query staging database to confirm new atomic swap tables exist
+   - Verify table schemas match expected structure from migration scripts
+   - Test foreign key constraints and indexes are properly created
+   - Confirm data integrity and migration rollback capability if needed
+
+4. **Backend Service Startup Testing**:
+   - Verify all services start without configuration errors
+   - Check logs for successful staging program ID loading
+   - Confirm RPC connection to staging Solana network is established
+   - Test staging keypair loading and basic transaction signing
+
+5. **Integration Testing with Existing Infrastructure**:
+   - Verify connection to existing staging program at AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei
+   - Test treasury PDA accessibility and balance verification
+   - Confirm nonce account pool integration works with updated services
+   - Validate API endpoints respond correctly with staging configuration
+
+6. **End-to-End Functionality Validation**:
+   - Create test atomic swap offer using staging environment
+   - Verify transaction building uses correct staging program ID
+   - Test fee calculation and treasury PDA interaction
+   - Confirm asset validation works with staging network data
+   - Validate complete swap flow from offer creation to confirmation

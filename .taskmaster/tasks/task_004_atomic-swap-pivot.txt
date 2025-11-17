@@ -1,0 +1,78 @@
+# Task ID: 4
+# Title: Implement AssetValidator Service for NFT and cNFT Ownership Verification
+# Status: pending
+# Dependencies: 1
+# Priority: high
+# Description: Create a comprehensive asset validation service that verifies ownership of both standard NFTs and compressed NFTs, handling Merkle proof validation and returning normalized asset representations.
+# Details:
+Implement the AssetValidator service with the following core components:
+
+1. **Standard NFT Ownership Verification**:
+   - Query SPL token accounts using Solana Web3.js getTokenAccountsByOwner method
+   - Validate token account ownership and balance (must be 1 for NFTs)
+   - Check token mint metadata to confirm NFT status
+   - Handle frozen token accounts and verify transferability
+   - Implement caching layer for frequently queried NFTs to reduce RPC calls
+
+2. **Compressed NFT (cNFT) Integration**:
+   - Integrate with Helius or similar indexer API for cNFT ownership queries
+   - Implement API client with proper authentication and rate limiting
+   - Parse compressed NFT metadata and ownership information
+   - Handle API failures with fallback mechanisms and retry logic
+   - Cache cNFT ownership data with appropriate TTL
+
+3. **Merkle Proof Data Management**:
+   - Fetch Merkle tree data including tree address, leaf index, and proof nodes
+   - Validate proof structure and completeness before returning
+   - Implement proof verification logic using Solana's compression libraries
+   - Handle tree updates and proof invalidation scenarios
+   - Store proof data temporarily for transaction building
+
+4. **Asset Normalization and Response**:
+   - Create unified AssetInfo interface for both NFT types
+   - Include essential fields: mint/assetId, owner, metadata URI, proof data (for cNFTs)
+   - Implement asset type detection and appropriate validation routing
+   - Return consistent error formats for validation failures
+   - Support batch validation for multiple assets
+
+5. **Re-validation and Edge Case Handling**:
+   - Implement re-validation logic for accept-time verification
+   - Handle burned assets by checking burn authority and account status
+   - Detect transferred assets by comparing current vs. cached ownership
+   - Manage frozen assets and provide clear error messaging
+   - Implement circuit breaker pattern for external API failures
+   - Add comprehensive logging for debugging ownership disputes
+
+6. **Configuration and Error Handling**:
+   - Load indexer API endpoints and credentials from environment
+   - Implement configurable timeouts and retry policies
+   - Create custom error types for different validation failure scenarios
+   - Add metrics collection for validation success/failure rates
+
+# Test Strategy:
+1. **Unit Testing**:
+   - Mock Solana RPC calls to test standard NFT ownership validation with various scenarios (owned, not owned, frozen, burned)
+   - Mock indexer API responses to test cNFT ownership verification and error handling
+   - Test Merkle proof fetching and validation logic with valid and invalid proof data
+   - Verify asset normalization produces consistent output for both NFT types
+   - Test edge case handling including burned, frozen, and transferred assets
+
+2. **Integration Testing**:
+   - Test against real Solana devnet with actual NFT and cNFT assets
+   - Verify indexer API integration with rate limiting and authentication
+   - Test re-validation scenarios by transferring assets between test accounts
+   - Validate caching behavior and TTL expiration with time-based tests
+   - Test batch validation performance with multiple assets
+
+3. **Error Scenario Testing**:
+   - Simulate RPC failures and verify fallback mechanisms
+   - Test indexer API downtime and circuit breaker functionality
+   - Verify proper error messages for each validation failure type
+   - Test timeout handling for slow API responses
+   - Validate retry logic with exponential backoff
+
+4. **Performance Testing**:
+   - Measure validation response times for both NFT types
+   - Test concurrent validation requests to verify thread safety
+   - Benchmark caching effectiveness with cache hit/miss ratios
+   - Load test with high volume of validation requests

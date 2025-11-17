@@ -6,7 +6,7 @@ import swaggerUi from 'swagger-ui-express';
 import YAML from 'yamljs';
 import { connectDatabase, checkDatabaseHealth } from './config/database';
 import { connectRedis, checkRedisHealth, disconnectRedis } from './config/redis';
-import { agreementRoutes, expiryCancellationRoutes, webhookRoutes, receiptRoutes, transactionLogRoutes, healthRoutes } from './routes';
+import { agreementRoutes, expiryCancellationRoutes, webhookRoutes, receiptRoutes, transactionLogRoutes, healthRoutes, offersRoutes } from './routes';
 import {
   corsOptions,
   helmetConfig,
@@ -237,6 +237,7 @@ app.get('/', (_req: Request, res: Response) => {
     endpoints: {
       health: '/health',
       agreements: '/v1/agreements',
+      offers: '/api/offers',
       receipts: '/v1/receipts',
       transactions: '/v1/transactions',
       expiryCancellation: '/api/expiry-cancellation',
@@ -273,6 +274,7 @@ if (swaggerDocument) {
 
 // API Routes
 app.use(agreementRoutes);
+app.use(offersRoutes);
 app.use(receiptRoutes);
 app.use('/v1/transactions', transactionLogRoutes);
 app.use('/api/expiry-cancellation', expiryCancellationRoutes);
