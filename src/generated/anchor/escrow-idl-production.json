@@ -908,9 +908,7 @@
         },
         {
           "name": "nft_b_mint",
-          "type": {
-            "option": "pubkey"
-          }
+          "type": "pubkey"
         },
         {
           "name": "expiry_timestamp",
