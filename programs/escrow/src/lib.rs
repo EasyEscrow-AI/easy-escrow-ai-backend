@@ -1944,7 +1944,7 @@ pub fn init_agreement(
     swap_type: SwapType,
     sol_amount: Option<u64>,
     nft_a_mint: Pubkey,
-    nft_b_mint: Option<Pubkey>,
+    nft_b_mint: Pubkey,  // Changed from Option<Pubkey> - use Pubkey::default() for "None"
     expiry_timestamp: i64,
     platform_fee_bps: u16,
     fee_payer: FeePayer,
@@ -1966,12 +1966,15 @@ pub fn init_agreement(
         EscrowError::InvalidExpiry
     );
 
+    // Helper: Check if NFT B is provided (not the sentinel zero pubkey)
+    let has_nft_b = nft_b_mint != Pubkey::default();
+
     // Validate parameters based on swap type
     match swap_type {
         SwapType::NftForSol => {
             // For NFT<>SOL: must have sol_amount, no nft_b_mint
             require!(sol_amount.is_some(), EscrowError::InvalidSwapParameters);
-            require!(nft_b_mint.is_none(), EscrowError::InvalidSwapParameters);
+            require!(!has_nft_b, EscrowError::InvalidSwapParameters);
             
             let amount = sol_amount.unwrap();
             require!(amount >= MIN_SOL_AMOUNT, EscrowError::SolAmountTooLow);
@@ -1980,7 +1983,7 @@ pub fn init_agreement(
         SwapType::NftForNftWithFee => {
             // For NFT<>NFT with fee: must have nft_b_mint, sol_amount is platform fee
             // No minimum on fees - minimum only applies to transaction values
-            require!(nft_b_mint.is_some(), EscrowError::InvalidSwapParameters);
+            require!(has_nft_b, EscrowError::InvalidSwapParameters);
             require!(sol_amount.is_some(), EscrowError::InvalidSwapParameters);
             
             let fee = sol_amount.unwrap();
@@ -1989,7 +1992,7 @@ pub fn init_agreement(
         },
         SwapType::NftForNftPlusSol => {
             // For NFT<>NFT+SOL: must have nft_b_mint and sol_amount
-            require!(nft_b_mint.is_some(), EscrowError::InvalidSwapParameters);
+            require!(has_nft_b, EscrowError::InvalidSwapParameters);
             require!(sol_amount.is_some(), EscrowError::InvalidSwapParameters);
             
             let amount = sol_amount.unwrap();
@@ -2006,7 +2009,8 @@ pub fn init_agreement(
     escrow_state.swap_type = swap_type;
     escrow_state.sol_amount = sol_amount.unwrap_or(0);
     escrow_state.nft_a_mint = nft_a_mint;
-    escrow_state.nft_b_mint = nft_b_mint;
+    // Store NFT B mint - Option<Pubkey> can accept Pubkey::default()
+    escrow_state.nft_b_mint = if has_nft_b { Some(nft_b_mint) } else { None };
     escrow_state.platform_fee_bps = platform_fee_bps;
     escrow_state.fee_payer = fee_payer;
     escrow_state.buyer_sol_deposited = false;
@@ -2020,10 +2024,10 @@ pub fn init_agreement(
 
     // NFT A escrow account is created automatically via init_if_needed constraint
     // NFT B escrow account needs to be created manually for NFT<>NFT swaps
-    if nft_b_mint.is_some() {
+    if has_nft_b {
         // Validate NFT B mint matches the provided account
         require!(
-            ctx.accounts.nft_b_mint.key() == nft_b_mint.unwrap(),
+            ctx.accounts.nft_b_mint.key() == nft_b_mint,
             EscrowError::InvalidNftMint
         );
 
