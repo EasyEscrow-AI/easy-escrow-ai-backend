@@ -18,10 +18,35 @@ EXCEPTION
   WHEN duplicate_object THEN null;
 END $$;
 
-DO $$ BEGIN
-  CREATE TYPE "OfferStatus" AS ENUM ('ACTIVE', 'FILLED', 'CANCELLED', 'EXPIRED');
-EXCEPTION
-  WHEN duplicate_object THEN null;
+-- Create OfferStatus enum with correct values or verify existing enum matches
+DO $$ 
+DECLARE
+  enum_exists BOOLEAN;
+  has_wrong_values BOOLEAN;
+BEGIN
+  -- Check if enum exists
+  SELECT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'OfferStatus') INTO enum_exists;
+  
+  IF enum_exists THEN
+    -- Check if it has the wrong values (MATCHED or COMPLETED)
+    SELECT EXISTS (
+      SELECT 1 FROM pg_enum e
+      JOIN pg_type t ON e.enumtypid = t.oid
+      WHERE t.typname = 'OfferStatus' 
+      AND e.enumlabel IN ('MATCHED', 'COMPLETED')
+    ) INTO has_wrong_values;
+    
+    IF has_wrong_values THEN
+      RAISE EXCEPTION 'OfferStatus enum exists with incompatible values (MATCHED, COMPLETED). Please run: DROP TYPE "OfferStatus" CASCADE; before re-running this migration.';
+    END IF;
+    
+    -- Enum exists with correct values, skip creation
+    RAISE NOTICE 'OfferStatus enum already exists with correct values, skipping creation';
+  ELSE
+    -- Create new enum with correct values
+    CREATE TYPE "OfferStatus" AS ENUM ('ACTIVE', 'FILLED', 'CANCELLED', 'EXPIRED');
+    RAISE NOTICE 'Created OfferStatus enum with values: ACTIVE, FILLED, CANCELLED, EXPIRED';
+  END IF;
 END $$;
 
 DO $$ BEGIN
