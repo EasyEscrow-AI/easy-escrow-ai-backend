@@ -14,6 +14,7 @@ import { AssetValidator } from '../services/assetValidator';
 import { TransactionBuilder } from '../services/transactionBuilder';
 import { Connection, Keypair, PublicKey } from '@solana/web3.js';
 import { prisma } from '../config/database';
+import bs58 from 'bs58';
 
 const router = Router();
 
@@ -45,7 +46,6 @@ try {
 } catch (jsonError) {
   // If JSON parsing fails, try base58 format
   try {
-    const bs58 = require('bs58');
     const secretKeyBytes = bs58.decode(adminPrivateKey);
     platformAuthority = Keypair.fromSecretKey(secretKeyBytes);
   } catch (base58Error) {
