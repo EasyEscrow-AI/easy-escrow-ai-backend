@@ -168,11 +168,9 @@ export type OfferType = (typeof OfferType)[keyof typeof OfferType]
 
 export const OfferStatus: {
   ACTIVE: 'ACTIVE',
-  MATCHED: 'MATCHED',
+  FILLED: 'FILLED',
   CANCELLED: 'CANCELLED',
-  EXPIRED: 'EXPIRED',
-  COMPLETED: 'COMPLETED',
-  FILLED: 'FILLED'
+  EXPIRED: 'EXPIRED'
 };
 
 export type OfferStatus = (typeof OfferStatus)[keyof typeof OfferStatus]

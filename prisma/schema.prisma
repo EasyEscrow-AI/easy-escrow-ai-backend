@@ -295,12 +295,10 @@ enum OfferType {
 
 // Enum for offer status
 enum OfferStatus {
-  ACTIVE
-  MATCHED
-  CANCELLED
-  EXPIRED
-  COMPLETED
-  FILLED // Alias for completed swaps
+  ACTIVE    // Offer is open and can be accepted
+  FILLED    // Swap has been executed successfully
+  CANCELLED // Offer was cancelled by maker
+  EXPIRED   // Offer expired based on expires_at timestamp
 }
 
 // Enum for swap transaction status
