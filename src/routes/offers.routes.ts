@@ -23,14 +23,21 @@ const connection = new Connection(
   'confirmed'
 );
 
-// Load platform authority from environment
-const platformAuthorityKey = process.env.PLATFORM_AUTHORITY_PRIVATE_KEY;
-if (!platformAuthorityKey) {
-  throw new Error('PLATFORM_AUTHORITY_PRIVATE_KEY environment variable is required');
+// Load platform admin keypair for runtime operations (NOT the deployer/upgrade authority!)
+// This should be DEVNET_STAGING_ADMIN_PRIVATE_KEY or MAINNET_PROD_ADMIN_PRIVATE_KEY
+const adminPrivateKey = process.env.DEVNET_STAGING_ADMIN_PRIVATE_KEY || 
+                        process.env.MAINNET_PROD_ADMIN_PRIVATE_KEY;
+
+if (!adminPrivateKey) {
+  throw new Error(
+    'Admin private key environment variable is required. ' +
+    'Use DEVNET_STAGING_ADMIN_PRIVATE_KEY for staging or MAINNET_PROD_ADMIN_PRIVATE_KEY for production. ' +
+    'DO NOT use PLATFORM_AUTHORITY_PRIVATE_KEY (that is the deployer/upgrade authority and should never be on the server).'
+  );
 }
 
 const platformAuthority = Keypair.fromSecretKey(
-  Buffer.from(JSON.parse(platformAuthorityKey))
+  Buffer.from(JSON.parse(adminPrivateKey))
 );
 
 // Initialize core services

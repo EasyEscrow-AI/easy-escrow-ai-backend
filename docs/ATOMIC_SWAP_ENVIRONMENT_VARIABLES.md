@@ -62,45 +62,66 @@ MAINNET_PROD_FEE_COLLECTOR_ADDRESS=<your-mainnet-fee-collector-wallet>
 
 ---
 
-## Platform Authority
+## Admin Keypair (Runtime Operations)
 
-The platform authority signs transactions and manages the nonce pool.
+**🔒 SECURITY CRITICAL**: The admin keypair is used for runtime transaction signing and nonce pool management. **This MUST be on the server.**
 
-### Option 1: Keypair Path (Recommended)
+### Staging Environment
 ```bash
-# Auto-detected from wallets/ directory if not set
-# Local: wallets/local/local-admin.json
-# Staging: wallets/staging/staging-admin.json
-# Production: wallets/production/production-admin.json
+# Admin private key for staging (devnet) - JSON array format
+DEVNET_STAGING_ADMIN_PRIVATE_KEY=[1,2,3,...]
 
-PLATFORM_AUTHORITY_KEYPAIR_PATH=./wallets/staging/staging-admin.json
+# Corresponding public address (for reference/logging)
+DEVNET_STAGING_ADMIN_ADDRESS=<public-key-base58>
 ```
 
-### Option 2: Private Key
+### Production Environment  
 ```bash
-# Base58 encoded private key (NOT RECOMMENDED for production)
-PLATFORM_AUTHORITY_PRIVATE_KEY=[1,2,3,...]
+# Admin private key for production (mainnet) - JSON array format
+MAINNET_PROD_ADMIN_PRIVATE_KEY=[1,2,3,...]
+
+# Corresponding public address (for reference/logging)
+MAINNET_PROD_ADMIN_ADDRESS=<public-key-base58>
 ```
+
+**Admin Keypair Uses:**
+- ✅ Signing atomic swap transactions
+- ✅ Advancing durable nonces
+- ✅ Managing nonce pool accounts
+- ✅ Platform fee collection instructions
+- ✅ Runtime blockchain interactions
+
+**Security Notes:**
+- Must be set in DigitalOcean secrets for staging/production
+- Should be different from deployer/upgrade authority
+- Private key format: JSON array `[1,2,3,...]` from keypair file
 
 ---
 
-## Program Deployer (Upgrade Authority)
+## Deployer Keypair (Program Upgrade Authority)
 
-The program deployer is the upgrade authority for the Solana program. Used only for program upgrades.
+**⚠️ NEVER PUT THIS ON THE SERVER!** The deployer keypair is the upgrade authority for the Solana program. Used only for local program upgrades.
 
-### Keypair Path
+### Keypair Path (Local Only)
 ```bash
-# Auto-detected from wallets/ directory if not set
+# Auto-detected from wallets/ directory for local operations
 # Staging: wallets/staging/staging-deployer.json
 # Production: wallets/production/production-deployer.json
 
 PROGRAM_DEPLOYER_KEYPAIR_PATH=./wallets/staging/staging-deployer.json
 ```
 
-**Note**: This keypair is separate from the platform authority. It's used exclusively for:
-- Upgrading the Solana program with `solana program upgrade`
-- Managing program upgrade authority
-- **NOT** used for runtime transaction signing
+**Deployer Keypair Uses:**
+- ✅ Upgrading the Solana program with `solana program upgrade`
+- ✅ Managing program upgrade authority
+- ❌ **NOT** used for runtime transaction signing
+- ❌ **NEVER** set as environment variable on servers
+
+**Security Notes:**
+- Keep this keypair secure and offline when not upgrading
+- Only use from your local machine for program upgrades
+- DO NOT set `PLATFORM_AUTHORITY_PRIVATE_KEY` on servers (deprecated)
+- Use `DEVNET_STAGING_ADMIN_PRIVATE_KEY` / `MAINNET_PROD_ADMIN_PRIVATE_KEY` instead
 
 ---
 
@@ -278,7 +299,10 @@ SOLANA_NETWORK=staging
 SOLANA_RPC_URL=<your-quicknode-devnet-endpoint-url>
 STAGING_PROGRAM_ID=AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei
 STAGING_FEE_COLLECTOR_ADDRESS=8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ
-PLATFORM_AUTHORITY_KEYPAIR_PATH=./wallets/staging/staging-admin.json
+
+# Admin keypair (for runtime operations, MUST be set for servers)
+DEVNET_STAGING_ADMIN_PRIVATE_KEY=[1,2,3,...]  # From wallets/staging/staging-admin.json
+DEVNET_STAGING_ADMIN_ADDRESS=<public-key-base58>
 
 # cNFT Indexer (QuickNode - same as RPC URL)
 CNFT_INDEXER_API_URL=<your-quicknode-devnet-endpoint-url>
@@ -301,8 +325,9 @@ PRODUCTION_PROGRAM_ID=2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx
 # Fee collector wallet (REQUIRED - set actual mainnet wallet address)
 MAINNET_PROD_FEE_COLLECTOR_ADDRESS=<your-mainnet-fee-collector-wallet-address>
 
-# Platform authority
-PLATFORM_AUTHORITY_KEYPAIR_PATH=./wallets/production/production-admin.json
+# Admin keypair (for runtime operations, MUST be set for servers)
+MAINNET_PROD_ADMIN_PRIVATE_KEY=[1,2,3,...]  # From wallets/production/production-admin.json
+MAINNET_PROD_ADMIN_ADDRESS=<public-key-base58>
 
 # cNFT Indexer (QuickNode - same as RPC URL)
 CNFT_INDEXER_API_URL=<your-quicknode-mainnet-endpoint-url>
@@ -350,25 +375,29 @@ Look for:
 
 For DigitalOcean App Platform, configure these secrets in the console:
 
-**Required Secrets (Staging):**
-- `SOLANA_RPC_URL` = (your QuickNode devnet endpoint URL)
+**🔒 Required Secrets (Staging):**
+- `SOLANA_RPC_URL` = (your QuickNode devnet endpoint URL with auth)
 - `STAGING_PROGRAM_ID` = `AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei`
 - `STAGING_FEE_COLLECTOR_ADDRESS` = `8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ`
-- `PLATFORM_AUTHORITY_PRIVATE_KEY` = (from `wallets/staging/staging-admin.json`)
-- `PROGRAM_DEPLOYER_KEYPAIR_PATH` = (from `wallets/staging/staging-deployer.json`)
+- `DEVNET_STAGING_ADMIN_PRIVATE_KEY` = (JSON array from `wallets/staging/staging-admin.json`)
+- `DEVNET_STAGING_ADMIN_ADDRESS` = (public key from `wallets/staging/staging-admin.json`)
 - `DATABASE_URL` = (DigitalOcean managed database connection string)
 - `REDIS_URL` = (Redis Cloud connection string)
 - `CNFT_INDEXER_API_URL` = (same as `SOLANA_RPC_URL` for QuickNode)
 
-**Required Secrets (Production):**
-- `SOLANA_RPC_URL` = (your QuickNode mainnet endpoint URL)
+**🔒 Required Secrets (Production):**
+- `SOLANA_RPC_URL` = (your QuickNode mainnet endpoint URL with auth)
 - `PRODUCTION_PROGRAM_ID` = `2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx`
 - `MAINNET_PROD_FEE_COLLECTOR_ADDRESS` = (your actual mainnet wallet address for fee collection)
-- `PLATFORM_AUTHORITY_PRIVATE_KEY` = (from `wallets/production/production-admin.json`)
-- `PROGRAM_DEPLOYER_KEYPAIR_PATH` = (from `wallets/production/production-deployer.json`)
+- `MAINNET_PROD_ADMIN_PRIVATE_KEY` = (JSON array from `wallets/production/production-admin.json`)
+- `MAINNET_PROD_ADMIN_ADDRESS` = (public key from `wallets/production/production-admin.json`)
 - `DATABASE_URL` = (DigitalOcean production database connection string)
 - `REDIS_URL` = (Redis production connection string)
 - `CNFT_INDEXER_API_URL` = (same as `SOLANA_RPC_URL` for QuickNode)
+
+**⚠️ NEVER SET ON SERVER:**
+- ❌ `PLATFORM_AUTHORITY_PRIVATE_KEY` (deprecated, use admin keys above)
+- ❌ `PROGRAM_DEPLOYER_KEYPAIR_PATH` (deployer/upgrade authority, local only)
 
 **Optional Secrets (with defaults):**
 - `FEE_FLAT_AMOUNT_SOL` (default: 0.005)
