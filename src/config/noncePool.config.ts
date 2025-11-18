@@ -187,6 +187,7 @@ export const STAGING_CONFIG: NoncePoolConfig = {
   maxPoolSize: 50,
   replenishmentThreshold: 15,
   replenishmentBatchSize: 5,
+  maxConcurrentCreations: 1, // Create one at a time to avoid RPC rate limiting and conflicts
   environment: 'staging',
 };
 
