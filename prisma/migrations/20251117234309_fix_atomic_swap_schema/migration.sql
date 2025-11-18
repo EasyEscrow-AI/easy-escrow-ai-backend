@@ -133,6 +133,63 @@ BEGIN
     END IF;
 END $$;
 
+-- Add missing columns to swap_transactions table if needed
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'swap_transactions' AND column_name = 'signature') THEN
+        ALTER TABLE "swap_transactions" ADD COLUMN "signature" TEXT NOT NULL DEFAULT '';
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'swap_transactions' AND column_name = 'transaction_signature') THEN
+        ALTER TABLE "swap_transactions" ADD COLUMN "transaction_signature" TEXT;
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'swap_transactions' AND column_name = 'status') THEN
+        ALTER TABLE "swap_transactions" ADD COLUMN "status" "TransactionStatus" NOT NULL DEFAULT 'PENDING';
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'swap_transactions' AND column_name = 'gas_fee') THEN
+        ALTER TABLE "swap_transactions" ADD COLUMN "gas_fee" BIGINT;
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'swap_transactions' AND column_name = 'is_subsidized') THEN
+        ALTER TABLE "swap_transactions" ADD COLUMN "is_subsidized" BOOLEAN NOT NULL DEFAULT false;
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'swap_transactions' AND column_name = 'error_message') THEN
+        ALTER TABLE "swap_transactions" ADD COLUMN "error_message" TEXT;
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'swap_transactions' AND column_name = 'confirmed_at') THEN
+        ALTER TABLE "swap_transactions" ADD COLUMN "confirmed_at" TIMESTAMP(3);
+    END IF;
+END $$;
+
 -- ============================================================================
 -- STEP 4: Create Indexes (if they don't exist)
 -- ============================================================================
