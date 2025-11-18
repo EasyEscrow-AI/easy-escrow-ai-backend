@@ -67,15 +67,26 @@ const assetValidator = new AssetValidator(connection, {
   heliusApiKey: process.env.HELIUS_API_KEY || '',
 });
 
-const programIdStr = process.env.PROGRAM_ID;
-const treasuryPdaStr = process.env.TREASURY_PDA;
-
-if (!programIdStr || !treasuryPdaStr) {
-  throw new Error('PROGRAM_ID and TREASURY_PDA environment variables are required');
+// Get program ID based on environment
+const programIdStr = process.env.STAGING_PROGRAM_ID || process.env.PRODUCTION_PROGRAM_ID;
+if (!programIdStr) {
+  throw new Error(
+    'Program ID environment variable is required. ' +
+    'Use STAGING_PROGRAM_ID for staging or PRODUCTION_PROGRAM_ID for production.'
+  );
 }
-
 const programId = new PublicKey(programIdStr);
-const treasuryPda = new PublicKey(treasuryPdaStr);
+
+// Get fee collector address (we send fees directly to a wallet, not a treasury PDA)
+const feeCollectorStr = process.env.STAGING_FEE_COLLECTOR_ADDRESS || 
+                        process.env.MAINNET_PROD_FEE_COLLECTOR_ADDRESS;
+if (!feeCollectorStr) {
+  throw new Error(
+    'Fee collector address environment variable is required. ' +
+    'Use STAGING_FEE_COLLECTOR_ADDRESS for staging or MAINNET_PROD_FEE_COLLECTOR_ADDRESS for production.'
+  );
+}
+const feeCollector = new PublicKey(feeCollectorStr);
 
 const transactionBuilder = new TransactionBuilder(
   connection,
@@ -90,7 +101,7 @@ const offerManager = new OfferManager(
   assetValidator,
   transactionBuilder,
   platformAuthority,
-  treasuryPda,
+  feeCollector,
   programId
 );
 
