@@ -402,11 +402,9 @@ exports.OfferType = exports.$Enums.OfferType = {
 
 exports.OfferStatus = exports.$Enums.OfferStatus = {
   ACTIVE: 'ACTIVE',
-  MATCHED: 'MATCHED',
+  FILLED: 'FILLED',
   CANCELLED: 'CANCELLED',
-  EXPIRED: 'EXPIRED',
-  COMPLETED: 'COMPLETED',
-  FILLED: 'FILLED'
+  EXPIRED: 'EXPIRED'
 };
 
 exports.TransactionStatus = exports.$Enums.TransactionStatus = {
