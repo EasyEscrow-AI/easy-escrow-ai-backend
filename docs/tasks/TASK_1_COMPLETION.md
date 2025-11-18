@@ -33,7 +33,7 @@ Added four new models with comprehensive field definitions, enums, indexes, and 
 - Stores swap offers and counter-offers with detailed asset information
 - Fields: `id`, `makerWallet`, `offerType`, `parentOfferId`, `offeredAssets`, `requestedAssets`, `status`, `expiresAt`, `nonceAccount`, `createdAt`, `updatedAt`
 - Offer Type Enum: `MAKER_OFFER`, `COUNTER_OFFER`
-- Offer Status Enum: `ACTIVE`, `MATCHED`, `EXECUTED`, `CANCELLED`, `EXPIRED`, `FAILED`
+- Offer Status Enum: `ACTIVE`, `FILLED`, `CANCELLED`, `EXPIRED`
 - Indexes: Primary key, maker wallet, status, expiration, nonce account, parent offer, composite status+expiration
 - Supports both NFTs and cNFTs via JSONB fields
 

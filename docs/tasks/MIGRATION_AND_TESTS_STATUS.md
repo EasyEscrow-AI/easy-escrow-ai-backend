@@ -67,7 +67,7 @@ WHERE table_schema = 'public'
 ### Enums Created
 - ✅ `NonceStatus` - AVAILABLE, IN_USE, EXPIRED, INVALID
 - ✅ `OfferType` - MAKER_OFFER, COUNTER_OFFER, COUNTER
-- ✅ `OfferStatus` - ACTIVE, MATCHED, CANCELLED, EXPIRED, COMPLETED, FILLED
+- ✅ `OfferStatus` - ACTIVE, FILLED, CANCELLED, EXPIRED
 - ✅ `TransactionStatus` - PENDING, CONFIRMED, FAILED, CANCELLED
 
 ### Indexes Created
