@@ -258,12 +258,8 @@ export class OfferManager {
         nonceAccount: offer.nonceAccount,
       });
       
-      // 7. Update offer status to MATCHED
-      await this.prisma.swapOffer.update({
-        where: { id: offerId },
-        data: { status: OfferStatus.MATCHED },
-      });
-      
+      // 7. Offer remains ACTIVE until transaction is confirmed (then becomes FILLED)
+      // No status update needed here - confirmSwap() will set it to FILLED
       console.log('[OfferManager] Offer accepted, transaction ready:', offerId);
       
       return {
@@ -296,8 +292,8 @@ export class OfferManager {
         throw new Error('Only the maker can cancel this offer');
       }
       
-      // 3. Verify offer is cancelable
-      if (offer.status !== OfferStatus.ACTIVE && offer.status !== OfferStatus.MATCHED) {
+      // 3. Verify offer is cancelable (only ACTIVE offers can be cancelled)
+      if (offer.status !== OfferStatus.ACTIVE) {
         throw new Error(`Offer cannot be cancelled (status: ${offer.status})`);
       }
       
@@ -308,12 +304,11 @@ export class OfferManager {
       await this.prisma.swapOffer.updateMany({
         where: {
           nonceAccount: offer.nonceAccount,
-          status: {
-            in: [OfferStatus.ACTIVE, OfferStatus.MATCHED],
-          },
+          status: OfferStatus.ACTIVE,
         },
         data: {
           status: OfferStatus.CANCELLED,
+          cancelledAt: new Date(),
         },
       });
       
