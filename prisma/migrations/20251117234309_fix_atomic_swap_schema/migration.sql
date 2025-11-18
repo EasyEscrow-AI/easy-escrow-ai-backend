@@ -1,5 +1,6 @@
--- Fix Atomic Swap Schema Migration
+-- Fix Atomic Swap Schema Migration (Updated with column checks)
 -- This migration consolidates the atomic swap schema changes and is safe to run even if some objects already exist
+-- Updated: Added checks for all swap_transactions columns before creating indexes
 
 -- ============================================================================
 -- STEP 1: Create Enums (if they don't exist)
