@@ -94,12 +94,10 @@ Stores swap offers and counter-offers with asset details.
 - `COUNTER_OFFER` - Counter to existing offer
 
 **Offer Status Enum**:
-- `ACTIVE` - Available for matching
-- `MATCHED` - Taker found, pending execution
-- `EXECUTED` - Successfully completed
-- `CANCELLED` - Cancelled by maker
-- `EXPIRED` - Past expiration time
-- `FAILED` - Execution failed
+- `ACTIVE` - Offer is open and can be accepted
+- `FILLED` - Swap has been executed successfully
+- `CANCELLED` - Offer was cancelled by maker
+- `EXPIRED` - Offer expired based on expires_at timestamp
 
 **Indexes**:
 - PRIMARY KEY on `id`
