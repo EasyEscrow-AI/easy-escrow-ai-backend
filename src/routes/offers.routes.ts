@@ -80,13 +80,12 @@ if (!programIdStr) {
 const programId = new PublicKey(programIdStr);
 
 // Get fee collector address (we send fees directly to a wallet, not a treasury PDA)
-const feeCollectorStr = process.env.DEVNET_DEV_FEE_COLLECTOR_ADDRESS ||
-                        process.env.STAGING_FEE_COLLECTOR_ADDRESS || 
+const feeCollectorStr = process.env.DEVNET_STAGING_FEE_COLLECTOR_ADDRESS ||
                         process.env.MAINNET_PROD_FEE_COLLECTOR_ADDRESS;
 if (!feeCollectorStr) {
   throw new Error(
     'Fee collector address environment variable is required. ' +
-    'Use DEVNET_DEV_FEE_COLLECTOR_ADDRESS, STAGING_FEE_COLLECTOR_ADDRESS, or MAINNET_PROD_FEE_COLLECTOR_ADDRESS.'
+    'Use DEVNET_STAGING_FEE_COLLECTOR_ADDRESS for staging or MAINNET_PROD_FEE_COLLECTOR_ADDRESS for production.'
   );
 }
 const feeCollector = new PublicKey(feeCollectorStr);
