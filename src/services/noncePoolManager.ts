@@ -151,6 +151,11 @@ export class NoncePoolManager {
         })
       );
       
+      // Get latest blockhash and set transaction metadata
+      const { blockhash } = await this.connection.getLatestBlockhash('confirmed');
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = this.authority.publicKey;
+      
       // Send and confirm transaction
       const signature = await this.connection.sendTransaction(transaction, [
         this.authority,

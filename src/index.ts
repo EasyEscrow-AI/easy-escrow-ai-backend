@@ -360,26 +360,33 @@ const startServer = async () => {
         try {
           console.log('Starting background services...');
           
-          // Start monitoring orchestrator
-          console.log('[STARTUP] 🚀 Starting monitoring orchestrator...');
-          console.log('[STARTUP] This includes MonitoringService and SettlementService');
-          await monitoringOrchestrator.start();
-          console.log('[STARTUP] ✅ Monitoring orchestrator started successfully');
+          // DISABLED FOR ATOMIC SWAP MVP: Old escrow agreement monitoring/settlement
+          // These services are for the legacy escrow agreement model, not atomic swaps
+          // TODO: Re-enable if we bring back agreement-based escrows
           
-          // Start expiry-cancellation orchestrator
-          console.log('[STARTUP] 🚀 Starting expiry-cancellation orchestrator...');
-          await expiryCancellationOrchestrator.start();
-          console.log('[STARTUP] ✅ Expiry-cancellation orchestrator started successfully');
+          // Start monitoring orchestrator (DISABLED - legacy agreements only)
+          // console.log('[STARTUP] 🚀 Starting monitoring orchestrator...');
+          // console.log('[STARTUP] This includes MonitoringService and SettlementService');
+          // await monitoringOrchestrator.start();
+          // console.log('[STARTUP] ✅ Monitoring orchestrator started successfully');
+          console.log('[STARTUP] ⏭️  Monitoring orchestrator skipped (legacy agreements only)');
+          
+          // Start expiry-cancellation orchestrator (DISABLED - legacy agreements only)
+          // console.log('[STARTUP] 🚀 Starting expiry-cancellation orchestrator...');
+          // await expiryCancellationOrchestrator.start();
+          // console.log('[STARTUP] ✅ Expiry-cancellation orchestrator started successfully');
+          console.log('[STARTUP] ⏭️  Expiry-cancellation orchestrator skipped (legacy agreements only)');
           
           // Start idempotency service
           console.log('Starting idempotency service...');
           await idempotencyService.start();
           console.log('✅ Idempotency service started');
           
-          // Start stuck agreement monitor
-          console.log('Starting stuck agreement monitor...');
-          await stuckAgreementMonitor.start();
-          console.log('✅ Stuck agreement monitor started');
+          // Start stuck agreement monitor (DISABLED - legacy agreements only)
+          // console.log('Starting stuck agreement monitor...');
+          // await stuckAgreementMonitor.start();
+          // console.log('✅ Stuck agreement monitor started');
+          console.log('⏭️  Stuck agreement monitor skipped (legacy agreements only)');
           
           // Start backup scheduler (production only)
           if (process.env.NODE_ENV === 'production') {
