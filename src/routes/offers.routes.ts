@@ -36,9 +36,29 @@ if (!adminPrivateKey) {
   );
 }
 
-const platformAuthority = Keypair.fromSecretKey(
-  Buffer.from(JSON.parse(adminPrivateKey))
-);
+// Parse the admin private key - supports both JSON array and base58 formats
+let platformAuthority: Keypair;
+try {
+  // Try JSON array format first: [1,2,3,...]
+  const secretKeyArray = JSON.parse(adminPrivateKey);
+  platformAuthority = Keypair.fromSecretKey(Buffer.from(secretKeyArray));
+} catch (jsonError) {
+  // If JSON parsing fails, try base58 format
+  try {
+    const bs58 = require('bs58');
+    const secretKeyBytes = bs58.decode(adminPrivateKey);
+    platformAuthority = Keypair.fromSecretKey(secretKeyBytes);
+  } catch (base58Error) {
+    throw new Error(
+      `Failed to load admin keypair. Invalid format. ` +
+      `Expected either:\n` +
+      `1. JSON array format: [1,2,3,...] (from keypair file)\n` +
+      `2. Base58 string format (from 'solana-keygen' output)\n` +
+      `JSON parse error: ${jsonError}\n` +
+      `Base58 decode error: ${base58Error}`
+    );
+  }
+}
 
 // Initialize core services
 const noncePoolManager = new NoncePoolManager(connection, prisma, platformAuthority);
