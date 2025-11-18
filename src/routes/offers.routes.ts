@@ -68,22 +68,25 @@ const assetValidator = new AssetValidator(connection, {
 });
 
 // Get program ID based on environment
-const programIdStr = process.env.STAGING_PROGRAM_ID || process.env.PRODUCTION_PROGRAM_ID;
+const programIdStr = process.env.ESCROW_PROGRAM_ID || 
+                      process.env.STAGING_PROGRAM_ID || 
+                      process.env.PRODUCTION_PROGRAM_ID;
 if (!programIdStr) {
   throw new Error(
     'Program ID environment variable is required. ' +
-    'Use STAGING_PROGRAM_ID for staging or PRODUCTION_PROGRAM_ID for production.'
+    'Use ESCROW_PROGRAM_ID (recommended), STAGING_PROGRAM_ID, or PRODUCTION_PROGRAM_ID.'
   );
 }
 const programId = new PublicKey(programIdStr);
 
 // Get fee collector address (we send fees directly to a wallet, not a treasury PDA)
-const feeCollectorStr = process.env.STAGING_FEE_COLLECTOR_ADDRESS || 
+const feeCollectorStr = process.env.DEVNET_DEV_FEE_COLLECTOR_ADDRESS ||
+                        process.env.STAGING_FEE_COLLECTOR_ADDRESS || 
                         process.env.MAINNET_PROD_FEE_COLLECTOR_ADDRESS;
 if (!feeCollectorStr) {
   throw new Error(
     'Fee collector address environment variable is required. ' +
-    'Use STAGING_FEE_COLLECTOR_ADDRESS for staging or MAINNET_PROD_FEE_COLLECTOR_ADDRESS for production.'
+    'Use DEVNET_DEV_FEE_COLLECTOR_ADDRESS, STAGING_FEE_COLLECTOR_ADDRESS, or MAINNET_PROD_FEE_COLLECTOR_ADDRESS.'
   );
 }
 const feeCollector = new PublicKey(feeCollectorStr);
