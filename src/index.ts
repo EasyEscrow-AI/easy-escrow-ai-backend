@@ -15,7 +15,7 @@ import {
   securityHeaders,
 } from './middleware';
 import { getIdempotencyService } from './services';
-import { backupScheduler } from './services/backup-scheduler.service';
+// import { backupScheduler } from './services/backup-scheduler.service'; // DISABLED for BETA launch
 
 // Load environment variables
 dotenv.config();
@@ -288,19 +288,9 @@ const startServer = async () => {
           await idempotencyService.start();
           console.log('✅ Idempotency service started');
           
-          // Start backup scheduler (production only)
-          if (process.env.NODE_ENV === 'production') {
-            console.log('Starting backup scheduler...');
-            backupScheduler.startWeeklyBackup(); // Weekly backups on Sunday at 2 AM
-            const status = backupScheduler.getStatus();
-            if (status.isLeader) {
-              console.log(`✅ Backup scheduler started (${status.activeJobs} job(s))`);
-            } else {
-              console.log('⏭️  Backup scheduler - follower instance (not running backups)');
-            }
-          } else {
-            console.log('⏭️  Backup scheduler skipped (not in production)');
-          }
+          // DISABLED for BETA launch - Backup scheduler
+          // Manual backups via CLI tools are sufficient for BETA phase
+          console.log('⏭️  Backup scheduler disabled (BETA launch - using manual backups)');
           
           console.log('✅ All background services started');
         } catch (error) {
