@@ -1,13 +1,13 @@
 openapi: 3.0.3
 info:
   title: EasyEscrow.ai Atomic Swap API
-  version: 2.0.0
+  version: 1.0.0
   description: |
     Backend API service for EasyEscrow.ai - Non-custodial atomic swap platform for NFTs and SOL on Solana.
     
     ## Atomic Swap System
     
-    EasyEscrow.ai v2 uses **atomic swaps** - instant, non-custodial exchanges that execute in a single transaction.
+    EasyEscrow.ai uses **atomic swaps** - instant, non-custodial exchanges that execute in a single transaction.
     Your assets are NEVER held in escrow. The swap happens atomically or not at all.
     
     ### How It Works
@@ -87,7 +87,7 @@ paths:
                     example: EasyEscrow.ai Backend API
                   version:
                     type: string
-                    example: 2.0.0
+                    example: 1.0.0
                   endpoints:
                     type: object
                     properties:
