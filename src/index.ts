@@ -15,6 +15,7 @@ import {
   securityHeaders,
 } from './middleware';
 import { getIdempotencyService } from './services';
+import { backupScheduler } from './services/backup-scheduler.service';
 
 // Load environment variables
 dotenv.config();
