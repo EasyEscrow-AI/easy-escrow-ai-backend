@@ -25,14 +25,9 @@ jobs:
       branch: staging
       deploy_on_push: true
     dockerfile_path: Dockerfile
-    # TEMPORARY ONE-TIME FIX - Will revert after successful deploy
-    # Cleans up failed migration record before running migrations
-    # The migration file no longer exists in codebase, but DB still has failed record
-    run_command: |
-      echo "🔧 Cleaning up failed migration record..."
-      npx prisma migrate resolve --rolled-back 20251117192727_add_atomic_swap_models || echo "Migration not found, continuing..."
-      echo "✅ Cleanup complete, running migrations..."
-      npx prisma migrate deploy
+    # Database manually cleaned - failed migration record removed via SQL
+    # Ready for normal migration deployment
+    run_command: npx prisma migrate deploy
     instance_count: 1
     instance_size_slug: basic-xxs
     envs:
