@@ -13,6 +13,7 @@ import { describe, it, before, after } from 'mocha';
 import { expect } from 'chai';
 import { Connection, Keypair, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { Program, AnchorProvider, Wallet } from '@coral-xyz/anchor';
+import { getAccount } from '@solana/spl-token';
 import * as fs from 'fs';
 import * as path from 'path';
 import {
@@ -26,6 +27,7 @@ import {
   NFTDetails,
 } from '../../helpers/devnet-nft-setup';
 import { wait } from '../../helpers/test-utils';
+import { createAtomicSwapClient, AtomicSwapApiClient } from '../../helpers/atomic-swap-api-client';
 
 // Test configuration
 const RPC_URL = process.env.STAGING_SOLANA_RPC_URL || 'https://api.devnet.solana.com';
@@ -40,6 +42,7 @@ describe('🚀 Atomic Swap E2E: NFT for SOL - Happy Path (Staging)', () => {
   let treasuryPda: PublicKey;
   let wallets: DevnetWallets;
   let testNFT: NFTDetails;
+  let apiClient: AtomicSwapApiClient;
   
   before(async function() {
     this.timeout(120000);
