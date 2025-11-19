@@ -14,13 +14,7 @@ import {
   sanitizeInput,
   securityHeaders,
 } from './middleware';
-import { 
-  getMonitoringOrchestrator, 
-  getExpiryCancellationOrchestrator,
-  getIdempotencyService 
-} from './services';
-import { getStuckAgreementMonitor, AlertSeverity } from './services/stuck-agreement-monitor.service';
-import { backupScheduler } from './services/backup-scheduler.service';
+import { getIdempotencyService } from './services';
 
 // Load environment variables
 dotenv.config();
@@ -45,59 +39,10 @@ const PORT = process.env.PORT || 3000;
 // DigitalOcean App Platform has exactly 1 load balancer - trust 1 hop
 app.set('trust proxy', 1);
 
-// Initialize orchestrator instances (before route handlers)
-// Use environment-based intervals to allow tuning in production
-const monitoringOrchestrator = getMonitoringOrchestrator({
-  autoRestart: true,
-  maxRestarts: 5,
-  restartDelayMs: 5000,
-  healthCheckIntervalMs: (() => {
-    const parsed = parseInt(process.env.HEALTH_CHECK_INTERVAL_MS || '60000', 10);
-    return isNaN(parsed) ? 60000 : parsed; // Fallback to 60s if invalid
-  })(),
-  metricsIntervalMs: (() => {
-    const parsed = parseInt(process.env.METRICS_INTERVAL_MS || '120000', 10);
-    return isNaN(parsed) ? 120000 : parsed; // Fallback to 120s if invalid
-  })(),
-});
-
-const expiryCancellationOrchestrator = getExpiryCancellationOrchestrator({
-  expiryCheckIntervalMs: (() => {
-    const parsed = parseInt(process.env.EXPIRY_CHECK_INTERVAL_MS || '300000', 10);
-    return isNaN(parsed) ? 300000 : parsed; // Fallback to 5min if invalid
-  })(),
-  autoProcessRefunds: true,
-  refundProcessingBatchSize: 10,
-  enableMonitoring: true,
-});
-
+// Initialize idempotency service for atomic swaps
 const idempotencyService = getIdempotencyService({
   expirationHours: 24, // Keep idempotency keys for 24 hours
   cleanupIntervalMinutes: 60, // Clean up expired keys every hour
-});
-
-const stuckAgreementMonitor = getStuckAgreementMonitor({
-  warningThresholdMinutes: 10, // Warn if stuck for 10 minutes
-  criticalThresholdMinutes: 30, // Critical if stuck for 30 minutes
-  checkIntervalMs: 60000, // Check every minute
-  autoRefundEnabled: true, // ✅ NEW: Automatically refund stuck agreements
-  autoRefundThresholdMinutes: 15, // ✅ NEW: Auto-refund after 15 minutes
-  maxAgeHours: 24, // ✅ NEW: Only check agreements updated within last 24 hours (prevents accumulation)
-});
-
-// Register alert handlers for stuck agreements
-stuckAgreementMonitor.onAlert((alert) => {
-  const emoji = alert.severity === AlertSeverity.CRITICAL ? '🔴' : '⚠️';
-  console.error(`${emoji} [StuckAgreementAlert] ${alert.severity}: ${alert.message}`);
-  
-  // TODO: In production, send to Slack/email/monitoring service
-  // For now, just log to console with clear formatting
-  if (alert.severity === AlertSeverity.CRITICAL) {
-    console.error(`   🚨 CRITICAL: Agreement requires immediate attention!`);
-    console.error(`   Agreement ID: ${alert.agreementId}`);
-    console.error(`   Status: ${alert.status}`);
-    console.error(`   Time stuck: ${Math.round(alert.timeSinceLastUpdate / 60000)} minutes`);
-  }
 });
 
 // Security Middleware (apply first)
@@ -125,31 +70,6 @@ app.get('/health', async (_req: Request, res: Response) => {
   const dbHealthy = await checkDatabaseHealth();
   const redisHealthy = await checkRedisHealth();
   
-  // Get monitoring orchestrator health with error handling
-  // NOTE: Monitoring orchestrator is DISABLED for atomic swap MVP (legacy agreements only)
-  let monitoringHealth;
-  let monitoringError = null;
-  
-  try {
-    // Use the module-level orchestrator instance to ensure consistency
-    monitoringHealth = monitoringOrchestrator.getHealth();
-  } catch (error) {
-    // If getHealth() throws, log it and return a safe default
-    console.error('[Health Check] Failed to get monitoring health:', error);
-    monitoringError = error instanceof Error ? error.message : 'Unknown error';
-    monitoringHealth = {
-      healthy: false,
-      uptime: 0,
-      monitoredAccounts: 0,
-      solanaHealthy: false,
-      restartCount: 0,
-    };
-  }
-  
-  // Get expiry-cancellation orchestrator health
-  // NOTE: Expiry-cancellation is DISABLED for atomic swap MVP (legacy agreements only)
-  const expiryCancellationHealth = await expiryCancellationOrchestrator.healthCheck();
-  
   // Get idempotency service status
   const idempotencyStatus = idempotencyService.getStatus();
   
@@ -163,9 +83,8 @@ app.get('/health', async (_req: Request, res: Response) => {
     noncePoolError = error instanceof Error ? error.message : 'Unknown error';
   }
   
-  // FOR ATOMIC SWAP MVP: Only require core services (DB, Redis, Idempotency)
-  // Legacy monitoring services are intentionally disabled
-  // Nonce pool is optional - atomic swaps will queue if pool is depleted
+  // Atomic Swap MVP: Core services required for operation
+  // Nonce pool is monitored but not required for health (atomic swaps will queue if depleted)
   const allHealthy = dbHealthy && redisHealthy && idempotencyStatus.isRunning;
   const status = allHealthy ? 'healthy' : 'unhealthy';
   const statusCode = allHealthy ? 200 : 503;
@@ -174,24 +93,9 @@ app.get('/health', async (_req: Request, res: Response) => {
     status,
     timestamp: new Date().toISOString(),
     service: 'easy-escrow-ai-backend',
-    mode: 'atomic-swap-mvp',
+    mode: 'atomic-swap',
     database: dbHealthy ? 'connected' : 'disconnected',
     redis: redisHealthy ? 'connected' : 'disconnected',
-    monitoring: {
-      status: 'disabled', // Disabled for atomic swap MVP (legacy agreements only)
-      note: 'Legacy escrow agreement monitoring - disabled for atomic swap MVP',
-      monitoredAccounts: monitoringHealth.monitoredAccounts,
-      uptime: `${Math.floor(monitoringHealth.uptime / 1000 / 60)} minutes`,
-      restartCount: monitoringHealth.restartCount,
-      solanaHealthy: monitoringHealth.solanaHealthy,
-      ...(monitoringError && { error: monitoringError }),
-    },
-    expiryCancellation: {
-      status: 'disabled', // Disabled for atomic swap MVP (legacy agreements only)
-      note: 'Legacy escrow agreement expiry/cancellation - disabled for atomic swap MVP',
-      services: expiryCancellationHealth.services,
-      recentErrors: expiryCancellationHealth.recentErrors,
-    },
     idempotency: {
       status: idempotencyStatus.isRunning ? 'running' : 'stopped',
       expirationHours: idempotencyStatus.expirationHours,
@@ -335,18 +239,6 @@ const gracefulShutdown = async (signal: string) => {
   console.log(`\n${signal} received. Starting graceful shutdown...`);
   
   try {
-    // Stop monitoring orchestrator
-    console.log('Stopping monitoring orchestrator...');
-    await monitoringOrchestrator.stop();
-    
-    // Stop expiry-cancellation orchestrator
-    console.log('Stopping expiry-cancellation orchestrator...');
-    await expiryCancellationOrchestrator.stop();
-    
-    // Stop stuck agreement monitor
-    console.log('Stopping stuck agreement monitor...');
-    await stuckAgreementMonitor.stop();
-    
     // Stop idempotency service
     console.log('Stopping idempotency service...');
     await idempotencyService.stop();
@@ -385,38 +277,15 @@ const startServer = async () => {
       console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
       console.log(`💾 Redis caching: ACTIVE\n`);
       
-      // Start orchestrators in background after server is listening
+      // Start background services after server is listening
       (async () => {
         try {
           console.log('Starting background services...');
-          
-          // DISABLED FOR ATOMIC SWAP MVP: Old escrow agreement monitoring/settlement
-          // These services are for the legacy escrow agreement model, not atomic swaps
-          // TODO: Re-enable if we bring back agreement-based escrows
-          
-          // Start monitoring orchestrator (DISABLED - legacy agreements only)
-          // console.log('[STARTUP] 🚀 Starting monitoring orchestrator...');
-          // console.log('[STARTUP] This includes MonitoringService and SettlementService');
-          // await monitoringOrchestrator.start();
-          // console.log('[STARTUP] ✅ Monitoring orchestrator started successfully');
-          console.log('[STARTUP] ⏭️  Monitoring orchestrator skipped (legacy agreements only)');
-          
-          // Start expiry-cancellation orchestrator (DISABLED - legacy agreements only)
-          // console.log('[STARTUP] 🚀 Starting expiry-cancellation orchestrator...');
-          // await expiryCancellationOrchestrator.start();
-          // console.log('[STARTUP] ✅ Expiry-cancellation orchestrator started successfully');
-          console.log('[STARTUP] ⏭️  Expiry-cancellation orchestrator skipped (legacy agreements only)');
           
           // Start idempotency service
           console.log('Starting idempotency service...');
           await idempotencyService.start();
           console.log('✅ Idempotency service started');
-          
-          // Start stuck agreement monitor (DISABLED - legacy agreements only)
-          // console.log('Starting stuck agreement monitor...');
-          // await stuckAgreementMonitor.start();
-          // console.log('✅ Stuck agreement monitor started');
-          console.log('⏭️  Stuck agreement monitor skipped (legacy agreements only)');
           
           // Start backup scheduler (production only)
           if (process.env.NODE_ENV === 'production') {
