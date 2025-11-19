@@ -11,6 +11,7 @@ import {
   Keypair,
   LAMPORTS_PER_SOL,
   NonceAccount,
+  NONCE_ACCOUNT_LENGTH,
   PublicKey,
   SystemProgram,
   Transaction,
@@ -134,7 +135,7 @@ export class NoncePoolManager {
       
       // Get minimum rent-exempt balance for nonce account
       const rentExemption = await this.connection.getMinimumBalanceForRentExemption(
-        NonceAccount.length
+        NONCE_ACCOUNT_LENGTH
       );
       
       console.log(`[NoncePoolManager] Rent exemption: ${rentExemption} lamports`);
@@ -145,7 +146,7 @@ export class NoncePoolManager {
           fromPubkey: this.authority.publicKey,
           newAccountPubkey: nonceAccount,
           lamports: rentExemption,
-          space: NonceAccount.length,
+          space: NONCE_ACCOUNT_LENGTH,
           programId: SystemProgram.programId,
         })
       );
