@@ -108,13 +108,11 @@ const offerManager = new OfferManager(
   programId
 );
 
-// TEMPORARILY DISABLED: Initialize nonce pool on startup
-// TODO: Re-enable after fixing "invalid account data for instruction" error
-// The nonce creation is failing in production - needs debugging
-// noncePoolManager.initialize().catch((error) => {
-//   console.error('Failed to initialize nonce pool:', error);
-// });
-console.log('[NoncePoolManager] Initialization DISABLED - manual debugging required');
+// Initialize nonce pool on startup
+noncePoolManager.initialize().catch((error) => {
+  console.error('[NoncePoolManager] Failed to initialize nonce pool:', error);
+  console.error('[NoncePoolManager] Atomic swap features will be unavailable');
+});
 
 /**
  * POST /api/offers
