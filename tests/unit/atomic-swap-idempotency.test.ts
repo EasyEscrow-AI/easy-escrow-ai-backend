@@ -127,6 +127,7 @@ describe('Atomic Swap Idempotency Protection', () => {
 
     it('should allow new requests to proceed and intercept response', async () => {
       const idempotencyKey = 'valid-key-12345678';
+      const originalJson = mockResponse.json;
 
       (mockRequest.header as jest.Mock).mockReturnValue(idempotencyKey);
       mockIdempotencyService.checkIdempotency.mockResolvedValue({
@@ -141,7 +142,7 @@ describe('Atomic Swap Idempotency Protection', () => {
       );
 
       expect(nextFunction).toHaveBeenCalled();
-      expect(mockResponse.json).not.toBe(mockResponse.json); // Response intercepted
+      expect(mockResponse.json).not.toBe(originalJson); // Response intercepted
     });
 
     it('should store response after successful request', async () => {
