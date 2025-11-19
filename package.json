@@ -12,7 +12,7 @@
     "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
-    "db:migrate:deploy": "prisma migrate deploy",
+    "db:migrate:deploy": "node scripts/database/safe-migrate-deploy.js",
     "db:migrate:resolve": "bash scripts/database/migrate-with-resolve.sh",
     "db:migrate:resolve:win": "powershell -ExecutionPolicy Bypass -File scripts/database/migrate-with-resolve.ps1",
     "db:push": "prisma db push",
