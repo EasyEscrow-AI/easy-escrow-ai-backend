@@ -101,26 +101,44 @@ npm run test:production:e2e:all
 
 ---
 
-## Legacy Tests (Disabled for Atomic Swap MVP)
+## Legacy Tests (Moved to tests/unit/legacy/)
 
-The following legacy escrow agreement tests have been disabled with `_` prefix:
+**20 legacy escrow agreement tests** have been moved to `tests/unit/legacy/`:
 
-- `_test:unit:receipt` - Old receipt service
-- `_test:unit:nft-deposit` - Old NFT deposit service
-- `_test:unit:usdc-deposit` - Old USDC deposit service
-- `_test:unit:transaction-log` - Old transaction logging
-- `_test:unit:refund` - Old refund service
-- `_test:unit:settlement-refund` - Old settlement refund
-- `_test:unit:token-accounts` - Old token account handling
-- `_test:unit:jito` - Old Jito integration
-- `_test:unit:expiry-validation` - Old expiry validation
-- `_test:unit:amount-validation` - Old amount validation
-- `_test:unit:nft-for-nft-fee` - Old NFT fee calculation
-- `_test:unit:core-services` - Old core service suite
+### Location
+All legacy test files are in: `tests/unit/legacy/`
 
-**Why disabled?** These tests are for the legacy escrow agreement model (custodial, multi-step flow). Atomic swaps use a completely different model (non-custodial, single transaction).
+See the complete README: `tests/unit/legacy/README.md`
 
-**Can we re-enable them?** Yes! If we bring back agreement-based escrows, remove the `_` prefix to re-enable.
+### Test Files Moved
+- `agreement-cache.service.test.ts` - Agreement caching
+- `agreement-cancellation.test.ts` - Multi-signature cancellation
+- `agreement.service.test.ts` - Main agreement service
+- `amount-validation.test.ts` - Amount validation
+- `close-escrow.test.ts` - Escrow closure
+- `deposit.service.test.ts` - Generic deposits
+- `escrow-program-token-accounts.test.ts` - Token accounts
+- `expiry-extension-validation.test.ts` - Expiry extensions
+- `expiry-timestamp-validation.test.ts` - Expiry timestamps
+- `jito-confirmation.test.ts` - Jito confirmations
+- `jito-integration.test.ts` - Jito integration
+- `nft-deposit.service.test.ts` - NFT deposits
+- `nft-for-nft-fee.test.ts` - NFT fee calculation
+- `receipt-signing.service.test.ts` - Receipt signing
+- `receipt.service.test.ts` - Receipt creation
+- `refund.service.test.ts` - Refund processing
+- `settlement-automatic-refund.test.ts` - Auto refunds
+- `transaction-log.service.test.ts` - Transaction logging
+- `usdc-deposit.service.test.ts` - USDC deposits
+
+**Why moved?** These tests are for the legacy escrow agreement model (custodial, multi-step flow). Atomic swaps use a completely different model (non-custodial, single transaction).
+
+**Can we re-enable them?** Yes! If we bring back agreement-based escrows:
+1. Move files back to `tests/unit/`
+2. Add test scripts back to `package.json`
+3. Update tests for current codebase
+
+See `tests/unit/legacy/README.md` for full details.
 
 ---
 
