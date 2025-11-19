@@ -7,7 +7,7 @@
 
 import { Router, Request, Response } from 'express';
 import { standardRateLimiter, strictRateLimiter } from '../middleware';
-import { idempotencyMiddleware } from '../middleware/idempotency.middleware';
+import { requiredIdempotency } from '../middleware/idempotency.middleware';
 import { OfferManager } from '../services/offerManager';
 import { NoncePoolManager } from '../services/noncePoolManager';
 import { FeeCalculator } from '../services/feeCalculator';
@@ -120,7 +120,7 @@ noncePoolManager.initialize().catch((error) => {
 router.post(
   '/api/offers',
   strictRateLimiter,
-  idempotencyMiddleware, // Prevent duplicate offer creation on retry
+  requiredIdempotency, // Prevent duplicate offer creation on retry
   async (req: Request, res: Response): Promise<void> => {
     try {
       const {
@@ -327,7 +327,7 @@ router.get(
 router.post(
   '/api/offers/:id/counter',
   strictRateLimiter,
-  idempotencyMiddleware, // Prevent duplicate counter-offer creation on retry
+  requiredIdempotency, // Prevent duplicate counter-offer creation on retry
   async (req: Request, res: Response): Promise<void> => {
     try {
       const parentOfferId = parseInt(req.params.id, 10);
@@ -428,7 +428,7 @@ router.post(
 router.post(
   '/api/offers/:id/accept',
   standardRateLimiter,
-  idempotencyMiddleware, // CRITICAL: Prevent duplicate nonce consumption on retry
+  requiredIdempotency, // CRITICAL: Prevent duplicate nonce consumption on retry
   async (req: Request, res: Response): Promise<void> => {
     try {
       const offerId = parseInt(req.params.id, 10);
@@ -521,7 +521,7 @@ router.post(
 router.post(
   '/api/offers/:id/cancel',
   standardRateLimiter,
-  idempotencyMiddleware, // CRITICAL: Prevent multiple nonce advances on retry
+  requiredIdempotency, // CRITICAL: Prevent multiple nonce advances on retry
   async (req: Request, res: Response): Promise<void> => {
     try {
       const offerId = parseInt(req.params.id, 10);
@@ -600,7 +600,7 @@ router.post(
 router.post(
   '/api/offers/:id/confirm',
   standardRateLimiter,
-  idempotencyMiddleware, // CRITICAL: Prevent double-marking offer as FILLED on retry
+  requiredIdempotency, // CRITICAL: Prevent double-marking offer as FILLED on retry
   async (req: Request, res: Response): Promise<void> => {
     try {
       const offerId = parseInt(req.params.id, 10);
