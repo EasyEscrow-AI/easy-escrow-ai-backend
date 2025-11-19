@@ -15,6 +15,7 @@
     "db:migrate:deploy": "prisma migrate deploy",
     "db:migrate:resolve": "bash scripts/database/migrate-with-resolve.sh",
     "db:migrate:resolve:win": "powershell -ExecutionPolicy Bypass -File scripts/database/migrate-with-resolve.ps1",
+    "db:cleanup:migration": "ts-node scripts/database/cleanup-failed-migration.ts",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "db:seed": "ts-node prisma/seed.ts",
