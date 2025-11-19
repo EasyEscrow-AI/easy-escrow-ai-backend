@@ -17,7 +17,7 @@ import {
 } from '@solana/web3.js';
 import { Mutex } from 'async-mutex';
 import { PrismaClient, NonceStatus } from '../generated/prisma';
-import { getNoncePoolConfig, NoncePoolConfig } from '../config/noncePool.config';
+import { getNoncePoolConfig, NoncePoolConfig, getEnvironmentConfig } from '../config/noncePool.config';
 
 export interface NonceAccountInfo {
   nonceAccount: string;
@@ -65,12 +65,15 @@ export class NoncePoolManager {
     this.connection = connection;
     this.prisma = prisma;
     this.authority = authority;
-    this.config = config ? { ...getNoncePoolConfig(), ...config } : getNoncePoolConfig();
+    // Use environment-specific config by default, then apply any overrides
+    const baseConfig = getEnvironmentConfig(process.env.NODE_ENV);
+    this.config = config ? { ...baseConfig, ...config } : baseConfig;
     this.poolMutex = new Mutex();
     
     console.log('[NoncePoolManager] Initialized with config:', {
       minPoolSize: this.config.minPoolSize,
       maxPoolSize: this.config.maxPoolSize,
+      maxConcurrentCreations: this.config.maxConcurrentCreations,
       environment: this.config.environment,
     });
   }
