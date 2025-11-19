@@ -136,35 +136,67 @@ export class NoncePoolManager {
       
       console.log(`[NoncePoolManager] Rent exemption: ${rentExemption} lamports`);
       
-      // Create transaction to initialize nonce account
-      const transaction = new Transaction().add(
+      // Step 1: Create the account (separate transaction)
+      const createTx = new Transaction().add(
         SystemProgram.createAccount({
           fromPubkey: this.authority.publicKey,
           newAccountPubkey: nonceAccount,
           lamports: rentExemption,
           space: NonceAccount.length,
           programId: SystemProgram.programId,
-        }),
+        })
+      );
+      
+      // Get latest blockhash and set transaction metadata
+      let blockhashInfo = await this.connection.getLatestBlockhash('confirmed');
+      createTx.recentBlockhash = blockhashInfo.blockhash;
+      createTx.feePayer = this.authority.publicKey;
+      
+      // Send and confirm account creation
+      const createSig = await this.connection.sendTransaction(createTx, [
+        this.authority,
+        nonceKeypair,
+      ], {
+        skipPreflight: false,
+        preflightCommitment: 'confirmed',
+      });
+      
+      console.log(`[NoncePoolManager] Account creation tx: ${createSig}`);
+      
+      await this.connection.confirmTransaction({
+        signature: createSig,
+        blockhash: blockhashInfo.blockhash,
+        lastValidBlockHeight: blockhashInfo.lastValidBlockHeight,
+      }, 'confirmed');
+      
+      // Step 2: Initialize as nonce account (separate transaction)
+      const initTx = new Transaction().add(
         SystemProgram.nonceInitialize({
           noncePubkey: nonceAccount,
           authorizedPubkey: this.authority.publicKey,
         })
       );
       
-      // Get latest blockhash and set transaction metadata
-      const { blockhash } = await this.connection.getLatestBlockhash('confirmed');
-      transaction.recentBlockhash = blockhash;
-      transaction.feePayer = this.authority.publicKey;
+      // Get fresh blockhash for initialization
+      blockhashInfo = await this.connection.getLatestBlockhash('confirmed');
+      initTx.recentBlockhash = blockhashInfo.blockhash;
+      initTx.feePayer = this.authority.publicKey;
       
-      // Send and confirm transaction
-      const signature = await this.connection.sendTransaction(transaction, [
+      // Send and confirm nonce initialization
+      const initSig = await this.connection.sendTransaction(initTx, [
         this.authority,
-        nonceKeypair,
-      ]);
+      ], {
+        skipPreflight: false,
+        preflightCommitment: 'confirmed',
+      });
       
-      console.log(`[NoncePoolManager] Nonce account creation tx: ${signature}`);
+      console.log(`[NoncePoolManager] Nonce initialization tx: ${initSig}`);
       
-      await this.connection.confirmTransaction(signature, 'confirmed');
+      await this.connection.confirmTransaction({
+        signature: initSig,
+        blockhash: blockhashInfo.blockhash,
+        lastValidBlockHeight: blockhashInfo.lastValidBlockHeight,
+      }, 'confirmed');
       
       // Get initial nonce value
       const nonceAccountInfo = await this.connection.getAccountInfo(nonceAccount);

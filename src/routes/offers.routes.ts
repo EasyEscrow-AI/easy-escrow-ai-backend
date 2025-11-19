@@ -7,6 +7,7 @@
 
 import { Router, Request, Response } from 'express';
 import { standardRateLimiter, strictRateLimiter } from '../middleware';
+import { requiredIdempotency } from '../middleware/idempotency.middleware';
 import { OfferManager } from '../services/offerManager';
 import { NoncePoolManager } from '../services/noncePoolManager';
 import { FeeCalculator } from '../services/feeCalculator';
@@ -119,6 +120,7 @@ noncePoolManager.initialize().catch((error) => {
 router.post(
   '/api/offers',
   strictRateLimiter,
+  requiredIdempotency, // Prevent duplicate offer creation on retry
   async (req: Request, res: Response): Promise<void> => {
     try {
       const {
@@ -325,6 +327,7 @@ router.get(
 router.post(
   '/api/offers/:id/counter',
   strictRateLimiter,
+  requiredIdempotency, // Prevent duplicate counter-offer creation on retry
   async (req: Request, res: Response): Promise<void> => {
     try {
       const parentOfferId = parseInt(req.params.id, 10);
@@ -425,6 +428,7 @@ router.post(
 router.post(
   '/api/offers/:id/accept',
   standardRateLimiter,
+  requiredIdempotency, // CRITICAL: Prevent duplicate nonce consumption on retry
   async (req: Request, res: Response): Promise<void> => {
     try {
       const offerId = parseInt(req.params.id, 10);
@@ -517,6 +521,7 @@ router.post(
 router.post(
   '/api/offers/:id/cancel',
   standardRateLimiter,
+  requiredIdempotency, // CRITICAL: Prevent multiple nonce advances on retry
   async (req: Request, res: Response): Promise<void> => {
     try {
       const offerId = parseInt(req.params.id, 10);
@@ -595,6 +600,7 @@ router.post(
 router.post(
   '/api/offers/:id/confirm',
   standardRateLimiter,
+  requiredIdempotency, // CRITICAL: Prevent double-marking offer as FILLED on retry
   async (req: Request, res: Response): Promise<void> => {
     try {
       const offerId = parseInt(req.params.id, 10);
