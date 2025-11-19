@@ -125,6 +125,7 @@ app.get('/health', async (_req: Request, res: Response) => {
   const redisHealthy = await checkRedisHealth();
   
   // Get monitoring orchestrator health with error handling
+  // NOTE: Monitoring orchestrator is DISABLED for atomic swap MVP (legacy agreements only)
   let monitoringHealth;
   let monitoringError = null;
   
@@ -145,12 +146,15 @@ app.get('/health', async (_req: Request, res: Response) => {
   }
   
   // Get expiry-cancellation orchestrator health
+  // NOTE: Expiry-cancellation is DISABLED for atomic swap MVP (legacy agreements only)
   const expiryCancellationHealth = await expiryCancellationOrchestrator.healthCheck();
   
   // Get idempotency service status
   const idempotencyStatus = idempotencyService.getStatus();
   
-  const allHealthy = dbHealthy && redisHealthy && monitoringHealth.healthy && expiryCancellationHealth.healthy && idempotencyStatus.isRunning;
+  // FOR ATOMIC SWAP MVP: Only require core services (DB, Redis, Idempotency)
+  // Legacy monitoring services are intentionally disabled
+  const allHealthy = dbHealthy && redisHealthy && idempotencyStatus.isRunning;
   const status = allHealthy ? 'healthy' : 'unhealthy';
   const statusCode = allHealthy ? 200 : 503;
   
@@ -158,10 +162,12 @@ app.get('/health', async (_req: Request, res: Response) => {
     status,
     timestamp: new Date().toISOString(),
     service: 'easy-escrow-ai-backend',
+    mode: 'atomic-swap-mvp',
     database: dbHealthy ? 'connected' : 'disconnected',
     redis: redisHealthy ? 'connected' : 'disconnected',
     monitoring: {
-      status: monitoringHealth.healthy ? 'running' : 'stopped',
+      status: 'disabled', // Disabled for atomic swap MVP (legacy agreements only)
+      note: 'Legacy escrow agreement monitoring - disabled for atomic swap MVP',
       monitoredAccounts: monitoringHealth.monitoredAccounts,
       uptime: `${Math.floor(monitoringHealth.uptime / 1000 / 60)} minutes`,
       restartCount: monitoringHealth.restartCount,
@@ -169,7 +175,8 @@ app.get('/health', async (_req: Request, res: Response) => {
       ...(monitoringError && { error: monitoringError }),
     },
     expiryCancellation: {
-      status: expiryCancellationHealth.healthy ? 'running' : 'stopped',
+      status: 'disabled', // Disabled for atomic swap MVP (legacy agreements only)
+      note: 'Legacy escrow agreement expiry/cancellation - disabled for atomic swap MVP',
       services: expiryCancellationHealth.services,
       recentErrors: expiryCancellationHealth.recentErrors,
     },
@@ -177,6 +184,10 @@ app.get('/health', async (_req: Request, res: Response) => {
       status: idempotencyStatus.isRunning ? 'running' : 'stopped',
       expirationHours: idempotencyStatus.expirationHours,
       cleanupIntervalMinutes: idempotencyStatus.cleanupIntervalMinutes,
+    },
+    noncePool: {
+      status: 'disabled', // Temporarily disabled for debugging
+      note: 'Nonce pool initialization disabled - debugging "invalid account data" error',
     }
   });
 });
