@@ -1,7 +1,7 @@
 # ============================================
 # Builder Stage - Build TypeScript application
 # ============================================
-# Cache bust: 2025-11-19-01:15-force-fresh-prisma-migrations
+# Cache bust: 2025-11-19-06:25-P3011-force-complete-rebuild
 FROM node:20-alpine AS builder
 
 # Set working directory

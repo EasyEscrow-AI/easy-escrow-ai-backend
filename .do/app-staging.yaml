@@ -25,9 +25,9 @@ jobs:
       branch: staging
       deploy_on_push: true
     dockerfile_path: Dockerfile
-    # FORCE FRESH BUILD - Updated 2025-11-19
-    # Database migrations table was manually cleared
-    # All migrations will run fresh from empty state
+    # FORCE FRESH BUILD - Updated 2025-11-19 06:25 UTC
+    # P3011 Fix: Database is clean, forcing complete Docker rebuild
+    # Cache bust in Dockerfile ensures fresh prisma/migrations copy
     run_command: npx prisma migrate deploy
     instance_count: 1
     instance_size_slug: basic-xxs
