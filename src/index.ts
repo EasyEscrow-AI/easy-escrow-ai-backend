@@ -7,6 +7,7 @@ import YAML from 'yamljs';
 import { connectDatabase, checkDatabaseHealth } from './config/database';
 import { connectRedis, checkRedisHealth, disconnectRedis } from './config/redis';
 import { agreementRoutes, expiryCancellationRoutes, webhookRoutes, receiptRoutes, transactionLogRoutes, healthRoutes, offersRoutes } from './routes';
+import { noncePoolManager } from './routes/offers.routes';
 import {
   corsOptions,
   helmetConfig,
@@ -152,8 +153,19 @@ app.get('/health', async (_req: Request, res: Response) => {
   // Get idempotency service status
   const idempotencyStatus = idempotencyService.getStatus();
   
+  // Get nonce pool status
+  let noncePoolStats = null;
+  let noncePoolError = null;
+  try {
+    noncePoolStats = await noncePoolManager.getPoolStats();
+  } catch (error) {
+    console.error('[Health Check] Failed to get nonce pool stats:', error);
+    noncePoolError = error instanceof Error ? error.message : 'Unknown error';
+  }
+  
   // FOR ATOMIC SWAP MVP: Only require core services (DB, Redis, Idempotency)
   // Legacy monitoring services are intentionally disabled
+  // Nonce pool is optional - atomic swaps will queue if pool is depleted
   const allHealthy = dbHealthy && redisHealthy && idempotencyStatus.isRunning;
   const status = allHealthy ? 'healthy' : 'unhealthy';
   const statusCode = allHealthy ? 200 : 503;
@@ -185,9 +197,16 @@ app.get('/health', async (_req: Request, res: Response) => {
       expirationHours: idempotencyStatus.expirationHours,
       cleanupIntervalMinutes: idempotencyStatus.cleanupIntervalMinutes,
     },
-    noncePool: {
-      status: 'disabled', // Temporarily disabled for debugging
-      note: 'Nonce pool initialization disabled - debugging "invalid account data" error',
+    noncePool: noncePoolStats ? {
+      status: 'running',
+      total: noncePoolStats.total,
+      available: noncePoolStats.available,
+      inUse: noncePoolStats.inUse,
+      expired: noncePoolStats.expired,
+      health: noncePoolStats.available > 0 ? 'healthy' : 'depleted',
+    } : {
+      status: 'error',
+      error: noncePoolError || 'Failed to get pool stats',
     }
   });
 });
