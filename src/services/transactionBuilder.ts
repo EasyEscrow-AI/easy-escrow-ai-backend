@@ -13,6 +13,7 @@
 import {
   Connection,
   Keypair,
+  NonceAccount,
   PublicKey,
   SystemProgram,
   Transaction,
@@ -338,14 +339,10 @@ export class TransactionBuilder {
     
     // Parse nonce account data using Solana's NonceAccount parser
     // The nonce account stores the blockhash that should be used for durable transactions
-    const nonceAccount = SystemProgram.nonceAccountDataFromAccountData(accountInfo.data);
-    
-    if (!nonceAccount) {
-      throw new Error(`Failed to parse nonce account data for ${nonceAccountPubkey.toBase58()}`);
-    }
+    const nonceAccount = NonceAccount.fromAccountData(accountInfo.data);
     
     // Return the stored blockhash (not the nonce value!)
-    return nonceAccount.blockhash;
+    return nonceAccount.nonce;
   }
   
   /**
