@@ -252,18 +252,11 @@ export class AssetValidator {
    * Validate compressed NFT ownership
    */
   private async validateCNFT(walletAddress: string, assetId: string): Promise<ValidationResult> {
-    if (!this.config.heliusApiKey) {
-      return {
-        isValid: false,
-        error: 'Helius API key not configured for cNFT validation',
-      };
-    }
-    
     try {
-      console.log(`[AssetValidator] Fetching cNFT data from Helius for ${assetId}`);
+      console.log(`[AssetValidator] Fetching cNFT data via DAS API for ${assetId}`);
       
-      // Fetch asset data from Helius
-      const assetData = await this.fetchCNFTFromHelius(assetId);
+      // Fetch asset data via DAS API (works with QuickNode, Helius, etc.)
+      const assetData = await this.fetchCNFTViaDAS(assetId);
       
       // Verify ownership
       if (assetData.ownership?.owner !== walletAddress) {
@@ -337,39 +330,32 @@ export class AssetValidator {
   }
   
   /**
-   * Fetch cNFT data from Helius API
+   * Fetch cNFT data via DAS API (Digital Asset Standard)
+   * Works with QuickNode, Helius, and other RPC providers that support DAS
    */
-  private async fetchCNFTFromHelius(assetId: string, retryCount = 0): Promise<any> {
+  private async fetchCNFTViaDAS(assetId: string, retryCount = 0): Promise<any> {
     try {
-      const url = `${this.config.heliusEndpoint}/assets/${assetId}?api-key=${this.config.heliusApiKey}`;
+      console.log(`[AssetValidator] Calling getAsset RPC method for ${assetId}`);
       
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), this.config.requestTimeout);
-      
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        signal: controller.signal,
+      // Use RPC method instead of REST endpoint
+      // This works with QuickNode, Helius, and other DAS-compatible providers
+      const response = await (this.connection as any)._rpcRequest('getAsset', {
+        id: assetId,
       });
       
-      clearTimeout(timeoutId);
-      
-      if (!response.ok) {
-        throw new Error(`Helius API error: ${response.status} ${response.statusText}`);
+      if (!response) {
+        throw new Error('No response from getAsset RPC call');
       }
       
-      const data = await response.json();
-      return data;
+      return response;
     } catch (error) {
-      console.error(`[AssetValidator] Helius API request failed (attempt ${retryCount + 1}):`, error);
+      console.error(`[AssetValidator] DAS API request failed (attempt ${retryCount + 1}):`, error);
       
       if (retryCount < this.config.maxRetries) {
         const delay = Math.pow(2, retryCount) * 1000; // Exponential backoff
         console.log(`[AssetValidator] Retrying in ${delay}ms...`);
         await this.sleep(delay);
-        return this.fetchCNFTFromHelius(assetId, retryCount + 1);
+        return this.fetchCNFTViaDAS(assetId, retryCount + 1);
       }
       
       throw error;
@@ -377,7 +363,8 @@ export class AssetValidator {
   }
   
   /**
-   * Fetch Merkle proof for cNFT
+   * Fetch Merkle proof for cNFT via DAS API
+   * Works with QuickNode, Helius, and other RPC providers that support DAS
    */
   private async fetchCNFTProof(assetId: string, retryCount = 0): Promise<{
     tree: string;
@@ -386,37 +373,23 @@ export class AssetValidator {
     root: string;
   }> {
     try {
-      const url = `${this.config.heliusEndpoint}/assets/${assetId}/proof?api-key=${this.config.heliusApiKey}`;
+      console.log(`[AssetValidator] Calling getAssetProof RPC method for ${assetId}`);
       
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), this.config.requestTimeout);
-      
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        signal: controller.signal,
+      // Use RPC method instead of REST endpoint
+      const response = await (this.connection as any)._rpcRequest('getAssetProof', {
+        id: assetId,
       });
       
-      clearTimeout(timeoutId);
-      
-      if (!response.ok) {
-        throw new Error(`Helius API proof error: ${response.status} ${response.statusText}`);
+      if (!response) {
+        throw new Error('No response from getAssetProof RPC call');
       }
       
-      const data = (await response.json()) as {
-        tree_id: string;
-        leaf_index: number;
-        proof: string[];
-        root: string;
-      };
-      
+      // Map response to expected format
       return {
-        tree: data.tree_id,
-        leafIndex: data.leaf_index,
-        proof: data.proof,
-        root: data.root,
+        tree: response.tree_id,
+        leafIndex: response.leaf_index,
+        proof: response.proof,
+        root: response.root,
       };
     } catch (error) {
       console.error(`[AssetValidator] Proof fetch failed (attempt ${retryCount + 1}):`, error);
