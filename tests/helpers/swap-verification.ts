@@ -16,7 +16,7 @@ export async function verifyBalanceChange(
   publicKey: PublicKey,
   balanceBefore: number,
   expectedChange: number, // positive for increase, negative for decrease (in lamports)
-  tolerance: number = 10000, // 0.00001 SOL tolerance for transaction fees
+  tolerance: number = 5000000, // 0.005 SOL tolerance for devnet transaction fees
   label: string = 'Account'
 ): Promise<void> {
   const balanceAfter = await connection.getBalance(publicKey);
