@@ -185,11 +185,21 @@ export class AtomicSwapApiClient {
   /**
    * Confirm on-chain execution
    */
-  async confirmOffer(offerId: string, signature: string): Promise<any> {
+  async confirmOffer(offerId: string, signature: string, idempotencyKey?: string): Promise<any> {
+    const headers: any = {};
+    if (idempotencyKey) {
+      headers['idempotency-key'] = idempotencyKey;
+    } else {
+      // Generate default idempotency key if not provided
+      headers['idempotency-key'] = AtomicSwapApiClient.generateIdempotencyKey(`confirm-${offerId}`);
+    }
+    
     try {
-      const response = await this.client.post(`/api/offers/${offerId}/confirm`, {
-        signature,
-      });
+      const response = await this.client.post(
+        `/api/offers/${offerId}/confirm`,
+        { signature },
+        { headers }
+      );
       return response.data;
     } catch (error: any) {
       if (error.response) {
