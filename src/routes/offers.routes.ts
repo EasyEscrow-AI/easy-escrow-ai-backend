@@ -8,6 +8,7 @@
 import { Router, Request, Response } from 'express';
 import { standardRateLimiter, strictRateLimiter } from '../middleware';
 import { requiredIdempotency } from '../middleware/idempotency.middleware';
+import { AssetType } from '../services/assetValidator';
 import { OfferManager } from '../services/offerManager';
 import { NoncePoolManager } from '../services/noncePoolManager';
 import { FeeCalculator } from '../services/feeCalculator';
@@ -172,12 +173,25 @@ router.post(
         return;
       }
 
+      // Transform asset format from API format to internal format
+      // API format: { mint, isCompressed, merkleTree? }
+      // Internal format: { identifier, type }
+      const transformAssets = (assets: any[]) => {
+        return assets.map((asset) => ({
+          identifier: asset.mint,
+          type: asset.isCompressed ? AssetType.CNFT : AssetType.NFT,
+        }));
+      };
+
+      const transformedOfferedAssets = transformAssets(offeredAssets);
+      const transformedRequestedAssets = transformAssets(requestedAssets);
+
       // Create offer
       const offer = await offerManager.createOffer({
         makerWallet,
         takerWallet: takerWallet || undefined,
-        offeredAssets,
-        requestedAssets,
+        offeredAssets: transformedOfferedAssets,
+        requestedAssets: transformedRequestedAssets,
         offeredSol: offeredSol ? BigInt(offeredSol) : undefined,
         requestedSol: requestedSol ? BigInt(requestedSol) : undefined,
         customFee: customFee ? BigInt(customFee) : undefined,
