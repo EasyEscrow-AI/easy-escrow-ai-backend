@@ -332,6 +332,14 @@ export class OfferManager {
     platformFee: bigint;
     nonceAccount: string;
   }): Promise<{ serializedTransaction: string; nonceValue: string }> {
+    console.log('[OfferManager] buildOfferTransaction params:', {
+      makerWallet: params.makerWallet,
+      takerWallet: params.takerWallet,
+      offeredAssets: JSON.stringify(params.offeredAssets),
+      requestedAssets: JSON.stringify(params.requestedAssets),
+      nonceAccount: params.nonceAccount,
+    });
+    
     const inputs: TransactionBuildInputs = {
       makerPubkey: new PublicKey(params.makerWallet),
       takerPubkey: new PublicKey(params.takerWallet),
@@ -352,6 +360,9 @@ export class OfferManager {
       treasuryPDA: this.treasuryPDA,
       programId: this.programId,
     };
+    
+    console.log('[OfferManager] TransactionBuildInputs makerAssets:', JSON.stringify(inputs.makerAssets));
+    console.log('[OfferManager] TransactionBuildInputs takerAssets:', JSON.stringify(inputs.takerAssets));
     
     // Validate inputs
     this.transactionBuilder.validateInputs(inputs);
