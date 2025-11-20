@@ -216,31 +216,13 @@ describe('🚀 Atomic Swap E2E: NFT for SOL - Happy Path (Staging)', () => {
       // Wait for confirmation
       await waitForConfirmation(connection, swapSignature, 'confirmed');
       
-      if (!acceptResponse.success || !acceptResponse.data) {
-        throw new Error(`Failed to accept offer: ${acceptResponse.message || 'Unknown error'}`);
-      }
+      console.log('✅ Transaction confirmed on-chain');
       
-      console.log('✅ Offer accepted, received transaction');
-      
-      // Step 4: Sign and send taker transaction
-      console.log('\n🔏 Step 4: Signing and sending taker transaction...');
-      const takerSignature = await AtomicSwapApiClient.signAndSendTransaction(
-        acceptResponse.data.transaction.serialized,
-        [wallets.receiver], // Taker signs
-        connection
-      );
-      
-      console.log(`✅ Taker transaction sent: ${takerSignature}`);
-      displayExplorerLink(takerSignature, 'devnet');
-      
-      // Wait for confirmation
-      await waitForConfirmation(connection, takerSignature, 'confirmed');
-      
-      // Step 5: Confirm execution via API
-      console.log('\n✅ Step 5: Confirming on-chain execution...');
+      // Step 4: Confirm execution via API
+      console.log('\n✅ Step 4: Confirming on-chain execution...');
       const confirmResponse = await apiClient.confirmOffer(
         createResponse.data.offer.id,
-        takerSignature
+        swapSignature
       );
       
       if (!confirmResponse.success) {
@@ -249,8 +231,8 @@ describe('🚀 Atomic Swap E2E: NFT for SOL - Happy Path (Staging)', () => {
       
       console.log('✅ Swap execution confirmed');
       
-      // Step 6: Get balances and verify changes
-      console.log('\n📊 Step 6: Verifying state changes...');
+      // Step 5: Get balances and verify changes
+      console.log('\n📊 Step 5: Verifying state changes...');
       
       const makerBalanceAfter = await connection.getBalance(wallets.sender.publicKey);
       const takerBalanceAfter = await connection.getBalance(wallets.receiver.publicKey);
