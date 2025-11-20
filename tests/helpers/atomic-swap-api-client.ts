@@ -211,8 +211,9 @@ export class AtomicSwapApiClient {
       transaction = VersionedTransaction.deserialize(txBuffer);
       
       // Sign versioned transaction with all signers at once
+      // FIX: Spread signers array for VersionedTransaction.sign()
       if (transaction instanceof VersionedTransaction) {
-        transaction.sign(signers); // Pass all signers at once, not in a loop
+        transaction.sign(...signers);
       }
     } catch (versionedError) {
       // Fall back to legacy transaction
@@ -232,7 +233,13 @@ export class AtomicSwapApiClient {
     });
 
     // Wait for confirmation
-    await connection.confirmTransaction(signature, 'confirmed');
+    // FIX: Use proper confirmation method with blockhash
+    const latestBlockhash = await connection.getLatestBlockhash('confirmed');
+    await connection.confirmTransaction({
+      signature,
+      blockhash: latestBlockhash.blockhash,
+      lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
+    }, 'confirmed');
 
     return signature;
   }
