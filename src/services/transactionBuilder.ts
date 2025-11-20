@@ -336,13 +336,16 @@ export class TransactionBuilder {
       throw new Error(`Nonce account ${nonceAccountPubkey.toBase58()} not found`);
     }
     
-    // Parse nonce account data
-    // Format: [4 bytes version] [32 bytes authorized pubkey] [32 bytes nonce value] [...]
-    const nonceValueStart = 4 + 32; // Skip version and authorized pubkey
-    const nonceValue = accountInfo.data.slice(nonceValueStart, nonceValueStart + 32);
+    // Parse nonce account data using Solana's NonceAccount parser
+    // The nonce account stores the blockhash that should be used for durable transactions
+    const nonceAccount = SystemProgram.nonceAccountDataFromAccountData(accountInfo.data);
     
-    // Convert to base58 for use as recentBlockhash
-    return new PublicKey(nonceValue).toBase58();
+    if (!nonceAccount) {
+      throw new Error(`Failed to parse nonce account data for ${nonceAccountPubkey.toBase58()}`);
+    }
+    
+    // Return the stored blockhash (not the nonce value!)
+    return nonceAccount.blockhash;
   }
   
   /**
