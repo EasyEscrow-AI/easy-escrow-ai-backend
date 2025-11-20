@@ -147,6 +147,8 @@ export class OfferManager {
           offerType: OfferType.MAKER_OFFER,
           offeredAssets: input.offeredAssets as any,
           requestedAssets: input.requestedAssets as any,
+          offeredSolLamports: offeredSol > BigInt(0) ? offeredSol : null,
+          requestedSolLamports: requestedSol > BigInt(0) ? requestedSol : null,
           platformFeeLamports: platformFee,
           status: OfferStatus.ACTIVE,
           expiresAt,
@@ -222,13 +224,22 @@ export class OfferManager {
         );
       }
       
-      // 5. Calculate fee
+      // 5. Extract SOL amounts from offer
       const offeredAssets = offer.offeredAssets as Array<{ type: AssetType; identifier: string }>;
-      const offeredSol = BigInt(0); // TODO: Extract from offer
-      const requestedSol = BigInt(0); // TODO: Extract from offer
-      const feeBreakdown = this.feeCalculator.calculateFee(offeredSol, requestedSol);
+      const offeredSol = offer.offeredSolLamports ? BigInt(offer.offeredSolLamports) : BigInt(0);
+      const requestedSol = offer.requestedSolLamports ? BigInt(offer.requestedSolLamports) : BigInt(0);
       
-      // 6. Build transaction
+      console.log('[OfferManager] SOL amounts:', {
+        offeredSol: offeredSol.toString(),
+        requestedSol: requestedSol.toString(),
+      });
+      
+      // 6. Use stored platform fee
+      const platformFee = BigInt(offer.platformFeeLamports);
+      
+      console.log('[OfferManager] Platform fee:', platformFee.toString());
+      
+      // 7. Build transaction
       const buildResult = await this.buildOfferTransaction({
         makerWallet: offer.makerWallet,
         takerWallet,
@@ -236,12 +247,20 @@ export class OfferManager {
         offeredSol,
         requestedAssets,
         requestedSol,
-        platformFee: feeBreakdown.feeLamports,
+        platformFee,
         nonceAccount: offer.nonceAccount,
       });
       
-      // 7. Offer remains ACTIVE until transaction is confirmed (then becomes FILLED)
-      // No status update needed here - confirmSwap() will set it to FILLED
+      // 8. Store transaction and taker info (status remains ACTIVE until confirmed)
+      await this.prisma.swapOffer.update({
+        where: { id: offerId },
+        data: {
+          takerWallet,
+          serializedTransaction: buildResult.serializedTransaction,
+          currentNonceValue: buildResult.nonceValue,
+        },
+      });
+      
       console.log('[OfferManager] Offer accepted, transaction ready:', offerId);
       
       return {
