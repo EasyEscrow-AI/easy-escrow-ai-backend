@@ -213,7 +213,7 @@ export class AtomicSwapApiClient {
       // Sign versioned transaction with all signers at once
       // FIX: Spread signers array for VersionedTransaction.sign()
       if (transaction instanceof VersionedTransaction) {
-        transaction.sign(...signers);
+        transaction.sign(signers as [Keypair, ...Keypair[]]);
       }
     } catch (versionedError) {
       // Fall back to legacy transaction
