@@ -171,11 +171,7 @@ describe('🚀 Atomic Swap E2E: NFT for SOL - Happy Path (Staging)', () => {
         }],
         requestedAssets: [], // Empty array since requesting SOL
         requestedSol: solAmount,
-        customFee: {
-          type: 'percentage',
-          value: platformFeeRate * 100, // Convert to percentage (0.01 → 1%)
-          payer: 'taker',
-        },
+        customFee: expectedPlatformFee, // Platform fee in lamports (number)
       }, idempotencyKey);
       
       if (!createResponse.success || !createResponse.data) {
