@@ -137,7 +137,7 @@ describe('🚀 Atomic Swap E2E: NFT for SOL - Happy Path (Staging)', () => {
       console.log('\n📋 TEST: NFT for SOL with 1% Fee');
       console.log('═══════════════════════════════════════════════════════════');
       
-      const solAmount = 0.5 * LAMPORTS_PER_SOL; // 0.5 SOL
+      const solAmount = 0.1 * LAMPORTS_PER_SOL; // 0.1 SOL (reduced to conserve test funds)
       const platformFeeRate = 0.01; // 1%
       const platformFee = Math.floor(solAmount * platformFeeRate);
       
@@ -320,7 +320,7 @@ describe('🚀 Atomic Swap E2E: NFT for SOL - Happy Path (Staging)', () => {
       console.log('\n📋 TEST: NFT for SOL with Fixed Fee');
       console.log('═══════════════════════════════════════════════════════════');
       
-      const solAmount = 0.5 * LAMPORTS_PER_SOL; // 0.5 SOL
+      const solAmount = 0.1 * LAMPORTS_PER_SOL; // 0.1 SOL (reduced to conserve test funds)
       const platformFee = 0.01 * LAMPORTS_PER_SOL; // Fixed 0.01 SOL fee
       
       console.log('📦 Swap Details:');
@@ -352,7 +352,7 @@ describe('🚀 Atomic Swap E2E: NFT for SOL - Happy Path (Staging)', () => {
       console.log('\n📋 TEST: NFT for SOL with Zero Fee (Platform Pays)');
       console.log('═══════════════════════════════════════════════════════════');
       
-      const solAmount = 0.5 * LAMPORTS_PER_SOL; // 0.5 SOL
+      const solAmount = 0.1 * LAMPORTS_PER_SOL; // 0.1 SOL (reduced to conserve test funds)
       const platformFee = 0; // Platform covers fees
       
       console.log('📦 Swap Details:');
