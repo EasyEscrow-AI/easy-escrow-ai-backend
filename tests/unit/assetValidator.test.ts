@@ -14,6 +14,7 @@ jest.mock('@solana/web3.js', () => {
     Connection: jest.fn().mockImplementation(() => ({
       getTokenAccountsByOwner: jest.fn(),
       getAccountInfo: jest.fn(),
+      _rpcRequest: jest.fn(), // Required for QuickNode DAS API (getAsset, getAssetProof)
     })),
     PublicKey: actual.PublicKey,
   };
@@ -204,21 +205,27 @@ describe('AssetValidator', () => {
         amount: 1,
       };
       
-      // Mock Helius API response
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          id: assetId,
-          ownership: {
-            owner: walletAddress,
-            frozen: false,
-          },
-          compression: {
-            tree: 'test-tree-id',
-            leaf_id: 42,
-          },
-          burnt: false,
-        }),
+      // Mock DAS API _rpcRequest response for getAsset (first call)
+      (mockConnection._rpcRequest as jest.Mock).mockResolvedValueOnce({
+        id: assetId,
+        ownership: {
+          owner: walletAddress,
+          frozen: false,
+        },
+        compression: {
+          tree: 'test-tree-id',
+          leaf_id: 42,
+        },
+        burnt: false,
+      });
+      
+      // Mock DAS API _rpcRequest response for getAssetProof (second call)
+      (mockConnection._rpcRequest as jest.Mock).mockResolvedValueOnce({
+        root: 'test-root-hash',
+        proof: ['proof1', 'proof2', 'proof3'],
+        node_index: 42,
+        leaf: 'test-leaf-hash',
+        tree_id: 'test-tree-id',
       });
       
       const result = await assetValidator.validateAssets(walletAddress, [asset]);
