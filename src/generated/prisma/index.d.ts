@@ -12955,12 +12955,16 @@ export namespace Prisma {
   export type SwapOfferAvgAggregateOutputType = {
     id: number | null
     parentOfferId: number | null
+    offeredSolLamports: number | null
+    requestedSolLamports: number | null
     platformFeeLamports: number | null
   }
 
   export type SwapOfferSumAggregateOutputType = {
     id: number | null
     parentOfferId: number | null
+    offeredSolLamports: bigint | null
+    requestedSolLamports: bigint | null
     platformFeeLamports: bigint | null
   }
 
@@ -12970,6 +12974,8 @@ export namespace Prisma {
     takerWallet: string | null
     offerType: $Enums.OfferType | null
     parentOfferId: number | null
+    offeredSolLamports: bigint | null
+    requestedSolLamports: bigint | null
     platformFeeLamports: bigint | null
     status: $Enums.OfferStatus | null
     expiresAt: Date | null
@@ -12989,6 +12995,8 @@ export namespace Prisma {
     takerWallet: string | null
     offerType: $Enums.OfferType | null
     parentOfferId: number | null
+    offeredSolLamports: bigint | null
+    requestedSolLamports: bigint | null
     platformFeeLamports: bigint | null
     status: $Enums.OfferStatus | null
     expiresAt: Date | null
@@ -13010,6 +13018,8 @@ export namespace Prisma {
     parentOfferId: number
     offeredAssets: number
     requestedAssets: number
+    offeredSolLamports: number
+    requestedSolLamports: number
     platformFeeLamports: number
     status: number
     expiresAt: number
@@ -13028,12 +13038,16 @@ export namespace Prisma {
   export type SwapOfferAvgAggregateInputType = {
     id?: true
     parentOfferId?: true
+    offeredSolLamports?: true
+    requestedSolLamports?: true
     platformFeeLamports?: true
   }
 
   export type SwapOfferSumAggregateInputType = {
     id?: true
     parentOfferId?: true
+    offeredSolLamports?: true
+    requestedSolLamports?: true
     platformFeeLamports?: true
   }
 
@@ -13043,6 +13057,8 @@ export namespace Prisma {
     takerWallet?: true
     offerType?: true
     parentOfferId?: true
+    offeredSolLamports?: true
+    requestedSolLamports?: true
     platformFeeLamports?: true
     status?: true
     expiresAt?: true
@@ -13062,6 +13078,8 @@ export namespace Prisma {
     takerWallet?: true
     offerType?: true
     parentOfferId?: true
+    offeredSolLamports?: true
+    requestedSolLamports?: true
     platformFeeLamports?: true
     status?: true
     expiresAt?: true
@@ -13083,6 +13101,8 @@ export namespace Prisma {
     parentOfferId?: true
     offeredAssets?: true
     requestedAssets?: true
+    offeredSolLamports?: true
+    requestedSolLamports?: true
     platformFeeLamports?: true
     status?: true
     expiresAt?: true
@@ -13191,6 +13211,8 @@ export namespace Prisma {
     parentOfferId: number | null
     offeredAssets: JsonValue
     requestedAssets: JsonValue
+    offeredSolLamports: bigint | null
+    requestedSolLamports: bigint | null
     platformFeeLamports: bigint
     status: $Enums.OfferStatus
     expiresAt: Date
@@ -13231,6 +13253,8 @@ export namespace Prisma {
     parentOfferId?: boolean
     offeredAssets?: boolean
     requestedAssets?: boolean
+    offeredSolLamports?: boolean
+    requestedSolLamports?: boolean
     platformFeeLamports?: boolean
     status?: boolean
     expiresAt?: boolean
@@ -13259,6 +13283,8 @@ export namespace Prisma {
     parentOfferId?: boolean
     offeredAssets?: boolean
     requestedAssets?: boolean
+    offeredSolLamports?: boolean
+    requestedSolLamports?: boolean
     platformFeeLamports?: boolean
     status?: boolean
     expiresAt?: boolean
@@ -13283,6 +13309,8 @@ export namespace Prisma {
     parentOfferId?: boolean
     offeredAssets?: boolean
     requestedAssets?: boolean
+    offeredSolLamports?: boolean
+    requestedSolLamports?: boolean
     platformFeeLamports?: boolean
     status?: boolean
     expiresAt?: boolean
@@ -13307,6 +13335,8 @@ export namespace Prisma {
     parentOfferId?: boolean
     offeredAssets?: boolean
     requestedAssets?: boolean
+    offeredSolLamports?: boolean
+    requestedSolLamports?: boolean
     platformFeeLamports?: boolean
     status?: boolean
     expiresAt?: boolean
@@ -13320,7 +13350,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type SwapOfferOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "makerWallet" | "takerWallet" | "offerType" | "parentOfferId" | "offeredAssets" | "requestedAssets" | "platformFeeLamports" | "status" | "expiresAt" | "nonceAccount" | "currentNonceValue" | "serializedTransaction" | "transactionSignature" | "filledAt" | "cancelledAt" | "createdAt" | "updatedAt", ExtArgs["result"]["swapOffer"]>
+  export type SwapOfferOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "makerWallet" | "takerWallet" | "offerType" | "parentOfferId" | "offeredAssets" | "requestedAssets" | "offeredSolLamports" | "requestedSolLamports" | "platformFeeLamports" | "status" | "expiresAt" | "nonceAccount" | "currentNonceValue" | "serializedTransaction" | "transactionSignature" | "filledAt" | "cancelledAt" | "createdAt" | "updatedAt", ExtArgs["result"]["swapOffer"]>
   export type SwapOfferInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     maker?: boolean | UserDefaultArgs<ExtArgs>
     nonce?: boolean | NoncePoolDefaultArgs<ExtArgs>
@@ -13359,6 +13389,8 @@ export namespace Prisma {
       parentOfferId: number | null
       offeredAssets: Prisma.JsonValue
       requestedAssets: Prisma.JsonValue
+      offeredSolLamports: bigint | null
+      requestedSolLamports: bigint | null
       platformFeeLamports: bigint
       status: $Enums.OfferStatus
       expiresAt: Date
@@ -13806,6 +13838,8 @@ export namespace Prisma {
     readonly parentOfferId: FieldRef<"SwapOffer", 'Int'>
     readonly offeredAssets: FieldRef<"SwapOffer", 'Json'>
     readonly requestedAssets: FieldRef<"SwapOffer", 'Json'>
+    readonly offeredSolLamports: FieldRef<"SwapOffer", 'BigInt'>
+    readonly requestedSolLamports: FieldRef<"SwapOffer", 'BigInt'>
     readonly platformFeeLamports: FieldRef<"SwapOffer", 'BigInt'>
     readonly status: FieldRef<"SwapOffer", 'OfferStatus'>
     readonly expiresAt: FieldRef<"SwapOffer", 'DateTime'>
@@ -15826,6 +15860,8 @@ export namespace Prisma {
     parentOfferId: 'parentOfferId',
     offeredAssets: 'offeredAssets',
     requestedAssets: 'requestedAssets',
+    offeredSolLamports: 'offeredSolLamports',
+    requestedSolLamports: 'requestedSolLamports',
     platformFeeLamports: 'platformFeeLamports',
     status: 'status',
     expiresAt: 'expiresAt',
@@ -17073,6 +17109,8 @@ export namespace Prisma {
     parentOfferId?: IntNullableFilter<"SwapOffer"> | number | null
     offeredAssets?: JsonFilter<"SwapOffer">
     requestedAssets?: JsonFilter<"SwapOffer">
+    offeredSolLamports?: BigIntNullableFilter<"SwapOffer"> | bigint | number | null
+    requestedSolLamports?: BigIntNullableFilter<"SwapOffer"> | bigint | number | null
     platformFeeLamports?: BigIntFilter<"SwapOffer"> | bigint | number
     status?: EnumOfferStatusFilter<"SwapOffer"> | $Enums.OfferStatus
     expiresAt?: DateTimeFilter<"SwapOffer"> | Date | string
@@ -17100,6 +17138,8 @@ export namespace Prisma {
     parentOfferId?: SortOrderInput | SortOrder
     offeredAssets?: SortOrder
     requestedAssets?: SortOrder
+    offeredSolLamports?: SortOrderInput | SortOrder
+    requestedSolLamports?: SortOrderInput | SortOrder
     platformFeeLamports?: SortOrder
     status?: SortOrder
     expiresAt?: SortOrder
@@ -17130,6 +17170,8 @@ export namespace Prisma {
     parentOfferId?: IntNullableFilter<"SwapOffer"> | number | null
     offeredAssets?: JsonFilter<"SwapOffer">
     requestedAssets?: JsonFilter<"SwapOffer">
+    offeredSolLamports?: BigIntNullableFilter<"SwapOffer"> | bigint | number | null
+    requestedSolLamports?: BigIntNullableFilter<"SwapOffer"> | bigint | number | null
     platformFeeLamports?: BigIntFilter<"SwapOffer"> | bigint | number
     status?: EnumOfferStatusFilter<"SwapOffer"> | $Enums.OfferStatus
     expiresAt?: DateTimeFilter<"SwapOffer"> | Date | string
@@ -17157,6 +17199,8 @@ export namespace Prisma {
     parentOfferId?: SortOrderInput | SortOrder
     offeredAssets?: SortOrder
     requestedAssets?: SortOrder
+    offeredSolLamports?: SortOrderInput | SortOrder
+    requestedSolLamports?: SortOrderInput | SortOrder
     platformFeeLamports?: SortOrder
     status?: SortOrder
     expiresAt?: SortOrder
@@ -17186,6 +17230,8 @@ export namespace Prisma {
     parentOfferId?: IntNullableWithAggregatesFilter<"SwapOffer"> | number | null
     offeredAssets?: JsonWithAggregatesFilter<"SwapOffer">
     requestedAssets?: JsonWithAggregatesFilter<"SwapOffer">
+    offeredSolLamports?: BigIntNullableWithAggregatesFilter<"SwapOffer"> | bigint | number | null
+    requestedSolLamports?: BigIntNullableWithAggregatesFilter<"SwapOffer"> | bigint | number | null
     platformFeeLamports?: BigIntWithAggregatesFilter<"SwapOffer"> | bigint | number
     status?: EnumOfferStatusWithAggregatesFilter<"SwapOffer"> | $Enums.OfferStatus
     expiresAt?: DateTimeWithAggregatesFilter<"SwapOffer"> | Date | string
@@ -18363,6 +18409,8 @@ export namespace Prisma {
     offerType: $Enums.OfferType
     offeredAssets: JsonNullValueInput | InputJsonValue
     requestedAssets: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: bigint | number | null
+    requestedSolLamports?: bigint | number | null
     platformFeeLamports: bigint | number
     status?: $Enums.OfferStatus
     expiresAt: Date | string
@@ -18389,6 +18437,8 @@ export namespace Prisma {
     parentOfferId?: number | null
     offeredAssets: JsonNullValueInput | InputJsonValue
     requestedAssets: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: bigint | number | null
+    requestedSolLamports?: bigint | number | null
     platformFeeLamports: bigint | number
     status?: $Enums.OfferStatus
     expiresAt: Date | string
@@ -18410,6 +18460,8 @@ export namespace Prisma {
     offerType?: EnumOfferTypeFieldUpdateOperationsInput | $Enums.OfferType
     offeredAssets?: JsonNullValueInput | InputJsonValue
     requestedAssets?: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    requestedSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
     platformFeeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
     status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -18436,6 +18488,8 @@ export namespace Prisma {
     parentOfferId?: NullableIntFieldUpdateOperationsInput | number | null
     offeredAssets?: JsonNullValueInput | InputJsonValue
     requestedAssets?: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    requestedSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
     platformFeeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
     status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -18460,6 +18514,8 @@ export namespace Prisma {
     parentOfferId?: number | null
     offeredAssets: JsonNullValueInput | InputJsonValue
     requestedAssets: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: bigint | number | null
+    requestedSolLamports?: bigint | number | null
     platformFeeLamports: bigint | number
     status?: $Enums.OfferStatus
     expiresAt: Date | string
@@ -18478,6 +18534,8 @@ export namespace Prisma {
     offerType?: EnumOfferTypeFieldUpdateOperationsInput | $Enums.OfferType
     offeredAssets?: JsonNullValueInput | InputJsonValue
     requestedAssets?: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    requestedSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
     platformFeeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
     status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -18498,6 +18556,8 @@ export namespace Prisma {
     parentOfferId?: NullableIntFieldUpdateOperationsInput | number | null
     offeredAssets?: JsonNullValueInput | InputJsonValue
     requestedAssets?: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    requestedSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
     platformFeeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
     status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -19788,6 +19848,8 @@ export namespace Prisma {
     parentOfferId?: SortOrder
     offeredAssets?: SortOrder
     requestedAssets?: SortOrder
+    offeredSolLamports?: SortOrder
+    requestedSolLamports?: SortOrder
     platformFeeLamports?: SortOrder
     status?: SortOrder
     expiresAt?: SortOrder
@@ -19804,6 +19866,8 @@ export namespace Prisma {
   export type SwapOfferAvgOrderByAggregateInput = {
     id?: SortOrder
     parentOfferId?: SortOrder
+    offeredSolLamports?: SortOrder
+    requestedSolLamports?: SortOrder
     platformFeeLamports?: SortOrder
   }
 
@@ -19813,6 +19877,8 @@ export namespace Prisma {
     takerWallet?: SortOrder
     offerType?: SortOrder
     parentOfferId?: SortOrder
+    offeredSolLamports?: SortOrder
+    requestedSolLamports?: SortOrder
     platformFeeLamports?: SortOrder
     status?: SortOrder
     expiresAt?: SortOrder
@@ -19832,6 +19898,8 @@ export namespace Prisma {
     takerWallet?: SortOrder
     offerType?: SortOrder
     parentOfferId?: SortOrder
+    offeredSolLamports?: SortOrder
+    requestedSolLamports?: SortOrder
     platformFeeLamports?: SortOrder
     status?: SortOrder
     expiresAt?: SortOrder
@@ -19848,6 +19916,8 @@ export namespace Prisma {
   export type SwapOfferSumOrderByAggregateInput = {
     id?: SortOrder
     parentOfferId?: SortOrder
+    offeredSolLamports?: SortOrder
+    requestedSolLamports?: SortOrder
     platformFeeLamports?: SortOrder
   }
 
@@ -22147,6 +22217,8 @@ export namespace Prisma {
     offerType: $Enums.OfferType
     offeredAssets: JsonNullValueInput | InputJsonValue
     requestedAssets: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: bigint | number | null
+    requestedSolLamports?: bigint | number | null
     platformFeeLamports: bigint | number
     status?: $Enums.OfferStatus
     expiresAt: Date | string
@@ -22171,6 +22243,8 @@ export namespace Prisma {
     parentOfferId?: number | null
     offeredAssets: JsonNullValueInput | InputJsonValue
     requestedAssets: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: bigint | number | null
+    requestedSolLamports?: bigint | number | null
     platformFeeLamports: bigint | number
     status?: $Enums.OfferStatus
     expiresAt: Date | string
@@ -22318,6 +22392,8 @@ export namespace Prisma {
     parentOfferId?: IntNullableFilter<"SwapOffer"> | number | null
     offeredAssets?: JsonFilter<"SwapOffer">
     requestedAssets?: JsonFilter<"SwapOffer">
+    offeredSolLamports?: BigIntNullableFilter<"SwapOffer"> | bigint | number | null
+    requestedSolLamports?: BigIntNullableFilter<"SwapOffer"> | bigint | number | null
     platformFeeLamports?: BigIntFilter<"SwapOffer"> | bigint | number
     status?: EnumOfferStatusFilter<"SwapOffer"> | $Enums.OfferStatus
     expiresAt?: DateTimeFilter<"SwapOffer"> | Date | string
@@ -22391,6 +22467,8 @@ export namespace Prisma {
     offerType: $Enums.OfferType
     offeredAssets: JsonNullValueInput | InputJsonValue
     requestedAssets: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: bigint | number | null
+    requestedSolLamports?: bigint | number | null
     platformFeeLamports: bigint | number
     status?: $Enums.OfferStatus
     expiresAt: Date | string
@@ -22416,6 +22494,8 @@ export namespace Prisma {
     parentOfferId?: number | null
     offeredAssets: JsonNullValueInput | InputJsonValue
     requestedAssets: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: bigint | number | null
+    requestedSolLamports?: bigint | number | null
     platformFeeLamports: bigint | number
     status?: $Enums.OfferStatus
     expiresAt: Date | string
@@ -22517,6 +22597,8 @@ export namespace Prisma {
     offerType: $Enums.OfferType
     offeredAssets: JsonNullValueInput | InputJsonValue
     requestedAssets: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: bigint | number | null
+    requestedSolLamports?: bigint | number | null
     platformFeeLamports: bigint | number
     status?: $Enums.OfferStatus
     expiresAt: Date | string
@@ -22542,6 +22624,8 @@ export namespace Prisma {
     parentOfferId?: number | null
     offeredAssets: JsonNullValueInput | InputJsonValue
     requestedAssets: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: bigint | number | null
+    requestedSolLamports?: bigint | number | null
     platformFeeLamports: bigint | number
     status?: $Enums.OfferStatus
     expiresAt: Date | string
@@ -22567,6 +22651,8 @@ export namespace Prisma {
     offerType: $Enums.OfferType
     offeredAssets: JsonNullValueInput | InputJsonValue
     requestedAssets: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: bigint | number | null
+    requestedSolLamports?: bigint | number | null
     platformFeeLamports: bigint | number
     status?: $Enums.OfferStatus
     expiresAt: Date | string
@@ -22591,6 +22677,8 @@ export namespace Prisma {
     offerType: $Enums.OfferType
     offeredAssets: JsonNullValueInput | InputJsonValue
     requestedAssets: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: bigint | number | null
+    requestedSolLamports?: bigint | number | null
     platformFeeLamports: bigint | number
     status?: $Enums.OfferStatus
     expiresAt: Date | string
@@ -22794,6 +22882,8 @@ export namespace Prisma {
     offerType?: EnumOfferTypeFieldUpdateOperationsInput | $Enums.OfferType
     offeredAssets?: JsonNullValueInput | InputJsonValue
     requestedAssets?: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    requestedSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
     platformFeeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
     status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -22819,6 +22909,8 @@ export namespace Prisma {
     parentOfferId?: NullableIntFieldUpdateOperationsInput | number | null
     offeredAssets?: JsonNullValueInput | InputJsonValue
     requestedAssets?: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    requestedSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
     platformFeeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
     status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -22887,6 +22979,8 @@ export namespace Prisma {
     offerType: $Enums.OfferType
     offeredAssets: JsonNullValueInput | InputJsonValue
     requestedAssets: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: bigint | number | null
+    requestedSolLamports?: bigint | number | null
     platformFeeLamports: bigint | number
     status?: $Enums.OfferStatus
     expiresAt: Date | string
@@ -22912,6 +23006,8 @@ export namespace Prisma {
     parentOfferId?: number | null
     offeredAssets: JsonNullValueInput | InputJsonValue
     requestedAssets: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: bigint | number | null
+    requestedSolLamports?: bigint | number | null
     platformFeeLamports: bigint | number
     status?: $Enums.OfferStatus
     expiresAt: Date | string
@@ -22937,6 +23033,8 @@ export namespace Prisma {
     offerType: $Enums.OfferType
     offeredAssets: JsonNullValueInput | InputJsonValue
     requestedAssets: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: bigint | number | null
+    requestedSolLamports?: bigint | number | null
     platformFeeLamports: bigint | number
     status?: $Enums.OfferStatus
     expiresAt: Date | string
@@ -22962,6 +23060,8 @@ export namespace Prisma {
     parentOfferId?: number | null
     offeredAssets: JsonNullValueInput | InputJsonValue
     requestedAssets: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: bigint | number | null
+    requestedSolLamports?: bigint | number | null
     platformFeeLamports: bigint | number
     status?: $Enums.OfferStatus
     expiresAt: Date | string
@@ -23064,6 +23164,8 @@ export namespace Prisma {
     offerType?: EnumOfferTypeFieldUpdateOperationsInput | $Enums.OfferType
     offeredAssets?: JsonNullValueInput | InputJsonValue
     requestedAssets?: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    requestedSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
     platformFeeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
     status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -23089,6 +23191,8 @@ export namespace Prisma {
     parentOfferId?: NullableIntFieldUpdateOperationsInput | number | null
     offeredAssets?: JsonNullValueInput | InputJsonValue
     requestedAssets?: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    requestedSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
     platformFeeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
     status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -23120,6 +23224,8 @@ export namespace Prisma {
     offerType?: EnumOfferTypeFieldUpdateOperationsInput | $Enums.OfferType
     offeredAssets?: JsonNullValueInput | InputJsonValue
     requestedAssets?: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    requestedSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
     platformFeeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
     status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -23145,6 +23251,8 @@ export namespace Prisma {
     parentOfferId?: NullableIntFieldUpdateOperationsInput | number | null
     offeredAssets?: JsonNullValueInput | InputJsonValue
     requestedAssets?: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    requestedSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
     platformFeeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
     status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -23369,6 +23477,8 @@ export namespace Prisma {
     parentOfferId?: number | null
     offeredAssets: JsonNullValueInput | InputJsonValue
     requestedAssets: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: bigint | number | null
+    requestedSolLamports?: bigint | number | null
     platformFeeLamports: bigint | number
     status?: $Enums.OfferStatus
     expiresAt: Date | string
@@ -23425,6 +23535,8 @@ export namespace Prisma {
     offerType?: EnumOfferTypeFieldUpdateOperationsInput | $Enums.OfferType
     offeredAssets?: JsonNullValueInput | InputJsonValue
     requestedAssets?: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    requestedSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
     platformFeeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
     status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -23449,6 +23561,8 @@ export namespace Prisma {
     parentOfferId?: NullableIntFieldUpdateOperationsInput | number | null
     offeredAssets?: JsonNullValueInput | InputJsonValue
     requestedAssets?: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    requestedSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
     platformFeeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
     status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -23472,6 +23586,8 @@ export namespace Prisma {
     parentOfferId?: NullableIntFieldUpdateOperationsInput | number | null
     offeredAssets?: JsonNullValueInput | InputJsonValue
     requestedAssets?: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    requestedSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
     platformFeeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
     status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -23605,6 +23721,8 @@ export namespace Prisma {
     parentOfferId?: number | null
     offeredAssets: JsonNullValueInput | InputJsonValue
     requestedAssets: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: bigint | number | null
+    requestedSolLamports?: bigint | number | null
     platformFeeLamports: bigint | number
     status?: $Enums.OfferStatus
     expiresAt: Date | string
@@ -23622,6 +23740,8 @@ export namespace Prisma {
     offerType?: EnumOfferTypeFieldUpdateOperationsInput | $Enums.OfferType
     offeredAssets?: JsonNullValueInput | InputJsonValue
     requestedAssets?: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    requestedSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
     platformFeeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
     status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -23647,6 +23767,8 @@ export namespace Prisma {
     parentOfferId?: NullableIntFieldUpdateOperationsInput | number | null
     offeredAssets?: JsonNullValueInput | InputJsonValue
     requestedAssets?: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    requestedSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
     platformFeeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
     status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -23670,6 +23792,8 @@ export namespace Prisma {
     parentOfferId?: NullableIntFieldUpdateOperationsInput | number | null
     offeredAssets?: JsonNullValueInput | InputJsonValue
     requestedAssets?: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    requestedSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
     platformFeeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
     status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -23689,6 +23813,8 @@ export namespace Prisma {
     offerType: $Enums.OfferType
     offeredAssets: JsonNullValueInput | InputJsonValue
     requestedAssets: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: bigint | number | null
+    requestedSolLamports?: bigint | number | null
     platformFeeLamports: bigint | number
     status?: $Enums.OfferStatus
     expiresAt: Date | string
@@ -23745,6 +23871,8 @@ export namespace Prisma {
     offerType?: EnumOfferTypeFieldUpdateOperationsInput | $Enums.OfferType
     offeredAssets?: JsonNullValueInput | InputJsonValue
     requestedAssets?: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    requestedSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
     platformFeeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
     status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -23769,6 +23897,8 @@ export namespace Prisma {
     offerType?: EnumOfferTypeFieldUpdateOperationsInput | $Enums.OfferType
     offeredAssets?: JsonNullValueInput | InputJsonValue
     requestedAssets?: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    requestedSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
     platformFeeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
     status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -23792,6 +23922,8 @@ export namespace Prisma {
     offerType?: EnumOfferTypeFieldUpdateOperationsInput | $Enums.OfferType
     offeredAssets?: JsonNullValueInput | InputJsonValue
     requestedAssets?: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    requestedSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
     platformFeeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
     status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string

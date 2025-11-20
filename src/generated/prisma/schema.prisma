@@ -357,6 +357,8 @@ model SwapOffer {
   parentOfferId         Int?        @map("parent_offer_id")
   offeredAssets         Json        @map("offered_assets")
   requestedAssets       Json        @map("requested_assets")
+  offeredSolLamports    BigInt?     @map("offered_sol_lamports")
+  requestedSolLamports  BigInt?     @map("requested_sol_lamports")
   platformFeeLamports   BigInt      @map("platform_fee_lamports")
   status                OfferStatus @default(ACTIVE)
   expiresAt             DateTime    @map("expires_at")

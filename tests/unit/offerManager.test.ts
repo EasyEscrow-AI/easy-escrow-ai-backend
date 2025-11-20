@@ -64,6 +64,7 @@ describe('OfferManager', () => {
       findUnique: jest.fn(),
       upsert: jest.fn(),
       update: jest.fn(),
+      create: jest.fn(), // Added missing create mock
     };
     (mockPrisma as any).swapOffer = {
       create: jest.fn(),
@@ -71,6 +72,7 @@ describe('OfferManager', () => {
       findMany: jest.fn(),
       update: jest.fn(),
       updateMany: jest.fn(),
+      count: jest.fn(), // Added missing count mock
     };
     (mockPrisma as any).swapTransaction = {
       create: jest.fn(),
@@ -81,9 +83,12 @@ describe('OfferManager', () => {
       mockConnection,
       mockPrisma,
       mockNoncePoolManager,
-      mockAssetValidator,
       mockFeeCalculator,
-      mockTransactionBuilder
+      mockAssetValidator,
+      mockTransactionBuilder,
+      Keypair.generate(), // platformAuthority
+      Keypair.generate().publicKey, // treasuryPDA
+      Keypair.generate().publicKey  // programId
     );
     
     // Setup default mock returns
@@ -96,10 +101,15 @@ describe('OfferManager', () => {
     
     (mockNoncePoolManager.getCurrentNonce as jest.Mock).mockResolvedValue('current-nonce-value');
     
-    (mockAssetValidator.validateAssets as jest.Mock).mockResolvedValue({
-      valid: true,
-      validatedAssets: [],
-      invalidAssets: [],
+    (mockAssetValidator.validateAssets as jest.Mock).mockResolvedValue([
+      { identifier: 'test-asset', isValid: true },
+    ]);
+    
+    // Setup FeeCalculator mock
+    (mockFeeCalculator.calculateFee as jest.Mock).mockReturnValue({
+      feeLamports: BigInt(1000000),
+      feeType: 'PERCENTAGE',
+      feeRate: 0.01,
     });
     
     (mockFeeCalculator.calculateFee as jest.Mock).mockReturnValue({

@@ -275,7 +275,7 @@ describe('NoncePoolManager', () => {
   
   describe('Nonce Retrieval', () => {
     it('should get current nonce value from account', async () => {
-      const nonceAccount = 'test-nonce-account';
+      const nonceAccount = Keypair.generate().publicKey.toBase58();
       const mockNonceData = Buffer.alloc(80);
       mockNonceData.write('mock-nonce-value', 36); // Start at offset 36
       
@@ -290,17 +290,17 @@ describe('NoncePoolManager', () => {
     });
     
     it('should throw error if nonce account not found', async () => {
-      const nonceAccount = 'non-existent-nonce';
+      const nonceAccount = Keypair.generate().publicKey.toBase58();
       
       (mockConnection.getAccountInfo as jest.Mock).mockResolvedValue(null);
       
       await expect(noncePoolManager.getCurrentNonce(nonceAccount)).rejects.toThrow(
-        'Nonce account non-existent-nonce not found'
+        `Nonce account ${nonceAccount} not found`
       );
     });
     
     it('should cache nonce values', async () => {
-      const nonceAccount = 'test-nonce-account';
+      const nonceAccount = Keypair.generate().publicKey.toBase58();
       const mockNonceData = Buffer.alloc(80);
       
       (mockConnection.getAccountInfo as jest.Mock).mockResolvedValue({
@@ -320,7 +320,7 @@ describe('NoncePoolManager', () => {
   
   describe('Nonce Advancement', () => {
     it('should advance nonce successfully', async () => {
-      const nonceAccount = 'test-nonce-account';
+      const nonceAccount = Keypair.generate().publicKey.toBase58();
       
       (mockConnection.getLatestBlockhash as jest.Mock).mockResolvedValue({
         blockhash: 'mock-blockhash',
@@ -345,7 +345,7 @@ describe('NoncePoolManager', () => {
     });
     
     it('should retry nonce advancement on failure', async () => {
-      const nonceAccount = 'test-nonce-account';
+      const nonceAccount = Keypair.generate().publicKey.toBase58();
       
       (mockConnection.getLatestBlockhash as jest.Mock).mockResolvedValue({
         blockhash: 'mock-blockhash',
@@ -368,7 +368,7 @@ describe('NoncePoolManager', () => {
     });
     
     it('should throw error after max retries', async () => {
-      const nonceAccount = 'test-nonce-account';
+      const nonceAccount = Keypair.generate().publicKey.toBase58();
       
       (mockConnection.getLatestBlockhash as jest.Mock).mockResolvedValue({
         blockhash: 'mock-blockhash',
