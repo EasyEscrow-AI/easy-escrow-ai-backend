@@ -506,11 +506,32 @@ router.post(
 
       const result = await offerManager.acceptOffer(offerId, takerWallet);
 
+      // Get updated offer with transaction
+      const updatedOffer = await prisma.swapOffer.findUnique({
+        where: { id: offerId },
+      });
+
+      if (!updatedOffer) {
+        throw new Error('Offer not found after accept');
+      }
+
       res.status(200).json({
         success: true,
         data: {
-          serializedTransaction: result.serializedTransaction,
-          message: 'Sign this transaction with your wallet and submit it to the network. Then call /api/offers/:id/confirm with the transaction signature.',
+          offer: {
+            id: updatedOffer.id.toString(),
+            status: updatedOffer.status,
+            makerWallet: updatedOffer.makerWallet,
+            takerWallet: updatedOffer.takerWallet || takerWallet,
+            offeredAssets: updatedOffer.offeredAssets,
+            requestedAssets: updatedOffer.requestedAssets,
+            offeredSol: updatedOffer.offeredSolLamports?.toString() || '0',
+            requestedSol: updatedOffer.requestedSolLamports?.toString() || '0',
+          },
+          transaction: {
+            serialized: result.serializedTransaction,
+            nonceAccount: updatedOffer.nonceAccount,
+          },
         },
         timestamp: new Date().toISOString(),
       });
