@@ -506,31 +506,27 @@ router.post(
 
       const result = await offerManager.acceptOffer(offerId, takerWallet);
 
-      // Get updated offer with transaction
-      const updatedOffer = await prisma.swapOffer.findUnique({
-        where: { id: offerId },
-      });
-
-      if (!updatedOffer) {
-        throw new Error('Offer not found after accept');
+      // Result now includes both serializedTransaction and updatedOffer
+      if (!result.offer) {
+        throw new Error('Offer not returned from acceptOffer');
       }
 
       res.status(200).json({
         success: true,
         data: {
           offer: {
-            id: updatedOffer.id.toString(),
-            status: updatedOffer.status,
-            makerWallet: updatedOffer.makerWallet,
-            takerWallet: updatedOffer.takerWallet || takerWallet,
-            offeredAssets: updatedOffer.offeredAssets,
-            requestedAssets: updatedOffer.requestedAssets,
-            offeredSol: updatedOffer.offeredSolLamports?.toString() || '0',
-            requestedSol: updatedOffer.requestedSolLamports?.toString() || '0',
+            id: result.offer.id.toString(),
+            status: result.offer.status,
+            makerWallet: result.offer.makerWallet,
+            takerWallet: result.offer.takerWallet || takerWallet,
+            offeredAssets: result.offer.offeredAssets,
+            requestedAssets: result.offer.requestedAssets,
+            offeredSol: result.offer.offeredSolLamports?.toString() || '0',
+            requestedSol: result.offer.requestedSolLamports?.toString() || '0',
           },
           transaction: {
             serialized: result.serializedTransaction,
-            nonceAccount: updatedOffer.nonceAccount,
+            nonceAccount: result.offer.nonceAccount,
           },
         },
         timestamp: new Date().toISOString(),

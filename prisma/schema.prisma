@@ -296,6 +296,7 @@ enum OfferType {
 // Enum for offer status
 enum OfferStatus {
   ACTIVE    // Offer is open and can be accepted
+  ACCEPTED  // Offer has been accepted, transaction built and ready for signing
   FILLED    // Swap has been executed successfully
   CANCELLED // Offer was cancelled by maker
   EXPIRED   // Offer expired based on expires_at timestamp

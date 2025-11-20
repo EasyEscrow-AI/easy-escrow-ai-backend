@@ -251,13 +251,14 @@ export class OfferManager {
         nonceAccount: offer.nonceAccount,
       });
       
-      // 8. Store transaction and taker info (status remains ACTIVE until confirmed)
-      await this.prisma.swapOffer.update({
+      // 8. Update offer with transaction and set status to ACCEPTED
+      const updatedOffer = await this.prisma.swapOffer.update({
         where: { id: offerId },
         data: {
           takerWallet,
           serializedTransaction: buildResult.serializedTransaction,
           currentNonceValue: buildResult.nonceValue,
+          status: OfferStatus.ACCEPTED,
         },
       });
       
@@ -265,6 +266,7 @@ export class OfferManager {
       
       return {
         serializedTransaction: buildResult.serializedTransaction,
+        offer: updatedOffer,
       };
     } catch (error) {
       console.error('[OfferManager] Failed to accept offer:', error);
@@ -301,11 +303,13 @@ export class OfferManager {
       // 4. Advance nonce to invalidate any pending transactions
       await this.noncePoolManager.advanceNonce(offer.nonceAccount);
       
-      // 5. Mark this offer and all others using the same nonce as cancelled
+      // 5. Cancel all offers using this nonce account (including both ACTIVE and ACCEPTED)
+      // ACCEPTED offers also have pending transactions that would fail with consumed nonce
       await this.prisma.swapOffer.updateMany({
         where: {
           nonceAccount: offer.nonceAccount,
-          status: OfferStatus.ACTIVE,
+          id: { not: offerId },
+          status: { in: [OfferStatus.ACTIVE, OfferStatus.ACCEPTED] },
         },
         data: {
           status: OfferStatus.CANCELLED,
@@ -659,11 +663,12 @@ export class OfferManager {
           },
         });
         
-        // 3b. Cancel all other active offers using the same nonce account
+        // 3b. Cancel ALL offers using the same nonce account (ACTIVE and ACCEPTED)
+        // CRITICAL: ACCEPTED offers also have serialized transactions using this nonce
         await tx.swapOffer.updateMany({
           where: {
             nonceAccount: offer.nonceAccount,
-            status: OfferStatus.ACTIVE,
+            status: { in: [OfferStatus.ACTIVE, OfferStatus.ACCEPTED] },
             id: { not: params.offerId },
           },
           data: {
