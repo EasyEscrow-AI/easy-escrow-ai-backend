@@ -1,318 +1,488 @@
-# Staging E2E Tests
+# STAGING E2E Tests
 
-End-to-end test suite for validating atomic swap functionality on the STAGING (devnet) environment.
+Modular end-to-end test suite for STAGING environment validation.
 
----
+## Quick Start
 
-## 🎯 Test Architecture
-
-### Current: Atomic Swap Tests ✨
-
-The primary E2E tests use the **new atomic swap architecture** with direct blockchain transactions and durable nonces.
-
-```
-tests/staging/e2e/
-├── 01-atomic-nft-for-sol-happy-path.test.ts    # NFT → SOL swaps
-├── 02-atomic-cnft-for-sol-happy-path.test.ts   # cNFT → SOL swaps
-├── 03-atomic-nft-for-nft-happy-path.test.ts    # NFT → NFT swaps
-├── 04-atomic-nft-for-cnft-happy-path.test.ts   # NFT → cNFT swaps
-├── legacy/                                      # Deprecated orchestrator tests
-└── README.md                                    # This file
-```
-
-### Legacy: Orchestrator Tests (Deprecated) 🟡
-
-Legacy agreement-based tests have been moved to `legacy/` folder:
-- See [legacy/README.md](legacy/README.md) for details
-- Kept for backwards compatibility only
-- **DO NOT add new tests there**
-
----
-
-## 🚀 Running Atomic Swap Tests
-
-### Individual Test Files
+### Run All Scenarios
 
 ```bash
-# NFT for SOL atomic swaps
-npm run test:staging:e2e:atomic:nft-sol
-
-# cNFT for SOL atomic swaps
-npm run test:staging:e2e:atomic:cnft-for-sol
-
-# NFT for NFT atomic swaps
-npm run test:staging:e2e:atomic:nft-for-nft
-
-# NFT for cNFT atomic swaps
-npm run test:staging:e2e:atomic:nft-for-cnft
-
-# Run ALL atomic swap tests
-npm run test:staging:e2e:atomic:all
+# Run all 8 scenarios in sequence (via staging-all-e2e.test.ts orchestrator)
+npm run test:staging:e2e
+npm run test:staging:e2e:verbose
 ```
 
-### Direct Mocha Commands
+**Note:** The `staging-all-e2e.test.ts` file imports all individual test scenarios in sequence. This eliminates code duplication while allowing both comprehensive and individual test execution.
+
+### Run Individual Scenarios
 
 ```bash
-# Run specific test file
-mocha --no-config --require ts-node/register \
-  tests/staging/e2e/01-atomic-nft-for-sol-happy-path.test.ts \
-  --timeout 180000 --reporter spec --colors
+# 01 - Happy Path
+npm run test:staging:e2e:01-solana-nft-usdc-happy-path
+npm run test:staging:e2e:01-solana-nft-usdc-happy-path:verbose
 
-# Run all atomic swap tests
-mocha --no-config --require ts-node/register \
-  'tests/staging/e2e/*-atomic-*.test.ts' \
-  --timeout 180000 --reporter spec --colors
+# 02 - Agreement Expiry & Refund
+npm run test:staging:e2e:02-agreement-expiry-refund
+npm run test:staging:e2e:02-agreement-expiry-refund:verbose
+
+# 03 - Admin Cancellation
+npm run test:staging:e2e:03-admin-cancellation
+npm run test:staging:e2e:03-admin-cancellation:verbose
+
+# 04 - Platform Fee Collection
+npm run test:staging:e2e:04-platform-fee-collection
+npm run test:staging:e2e:04-platform-fee-collection:verbose
+
+# 05 - Webhook Delivery
+npm run test:staging:e2e:05-webhook-delivery
+npm run test:staging:e2e:05-webhook-delivery:verbose
+
+# 06 - Idempotency Handling
+npm run test:staging:e2e:06-idempotency-handling
+npm run test:staging:e2e:06-idempotency-handling:verbose
+
+# 07 - Concurrent Operations
+npm run test:staging:e2e:07-concurrent-operations
+npm run test:staging:e2e:07-concurrent-operations:verbose
+
+# 08 - Edge Cases & Validation
+npm run test:staging:e2e:08-edge-cases-validation
+npm run test:staging:e2e:08-edge-cases-validation:verbose
 ```
 
----
+## Test Architecture
 
-## 📊 Test Scenarios
+### File Structure
 
-### 01. NFT for SOL - Atomic Swap
-**File:** `01-atomic-nft-for-sol-happy-path.test.ts`  
-**Status:** ✅ Scenario 1 Complete (Remaining scenarios TODO)
+```
+tests/e2e/staging/
+├── staging-all-e2e.test.ts              # Master orchestrator (imports all tests)
+├── 01-solana-nft-usdc-happy-path.test.ts
+├── 02-agreement-expiry-refund.test.ts
+├── 03-admin-cancellation.test.ts
+├── 04-platform-fee-collection.test.ts
+├── 05-webhook-delivery.test.ts
+├── 06-idempotency-handling.test.ts
+├── 07-concurrent-operations.test.ts
+├── 08-edge-cases-validation.test.ts
+├── shared-test-utils.ts                 # Common utilities
+├── test-config.ts                       # Configuration
+└── README.md                            # This file
+```
 
-**Test Scenarios:**
-1. ✅ **Standard 1% Percentage Fee** - Complete with full verification
-2. ⏳ **Fixed Flat Fee** - TODO
-3. ⏳ **Zero Fee (Platform Pays)** - TODO
-4. ⏳ **Nonce Validation** - TODO
-5. ⏳ **Balance Edge Cases** - TODO
+### How It Works
 
-**What It Tests:**
-- API endpoint integration (create, accept, confirm)
-- Transaction serialization with durable nonces
-- Maker and taker transaction signing
-- Balance changes (maker receives SOL)
-- Fee collection verification
-- NFT ownership transfers
-- Nonce consumption validation
+**Single Source of Truth:**
+- Each test scenario exists in ONE file only
+- `staging-all-e2e.test.ts` imports all individual test files
+- No code duplication = easier maintenance
+- Changes to individual tests automatically reflect in "run all" mode
 
-**Duration:** ~1.5-2 minutes per scenario
+**Run Options:**
+- `npm run test:staging:e2e` → Runs all 8 scenarios via orchestrator
+- `npm run test:staging:e2e:01-*` → Runs specific scenario independently
 
-### 02. cNFT for SOL - Atomic Swap
-**File:** `02-atomic-cnft-for-sol-happy-path.test.ts`  
-**Status:** ⏳ TODO
+### Shared Utilities
+- **`shared-test-utils.ts`** - Common functions, types, and helpers
+- **`test-config.ts`** - Centralized configuration
 
-**Test Scenarios:**
-1. Standard 1% percentage fee with Merkle proof
-2. Fixed flat fee with compression validation
-3. Zero fee scenario
-4. Nonce validation with cNFTs
-5. QuickNode DAS API integration
+### Test Scenarios
 
-**What It Tests:**
-- cNFT-specific swap flows
-- Merkle proof validation
-- QuickNode DAS API integration
-- Compressed asset verification
+#### 01. Solana NFT-for-USDC Happy Path ✅
+**File:** `01-solana-nft-usdc-happy-path.test.ts`  
+**Commands:** 
+- `npm run test:staging:e2e:01-solana-nft-usdc-happy-path`
+- `npm run test:staging:e2e:01-solana-nft-usdc-happy-path:verbose`
 
-### 03. NFT for NFT - Atomic Swap
-**File:** `03-atomic-nft-for-nft-happy-path.test.ts`  
-**Status:** ⏳ TODO
+**Duration:** ~46 seconds  
+**Tests:** 11 test cases
 
-**Test Scenarios:**
-1. Pure NFT-NFT swap (1% fee)
-2. NFT-NFT with fixed fee
-3. Hybrid NFT + SOL swap
-4. Zero fee NFT swap
-5. Multi-asset verification
+**Flow:**
+1. Setup USDC accounts for all parties
+2. Create test NFT on Solana
+3. Create escrow agreement via API
+4. Deposit NFT from sender
+5. Deposit USDC from receiver
+6. Wait for automatic settlement
+7. Verify NFT transfer to receiver
+8. Verify USDC distribution with platform fees
+9. Verify receipt generation with all transaction IDs
 
-**What It Tests:**
-- Pure asset swaps (no SOL involved)
-- Dual NFT ownership transfers
-- Fee handling for asset-only swaps
-
-### 04. NFT for cNFT - Atomic Swap
-**File:** `04-atomic-nft-for-cnft-happy-path.test.ts`  
-**Status:** ⏳ TODO
-
-**Test Scenarios:**
-1. NFT → cNFT swap (1% fee)
-2. cNFT → NFT swap (reverse)
-3. Cross-format verification
-4. Merkle proof + standard NFT
-5. Hybrid scenarios
-
-**What It Tests:**
-- Cross-format swaps
-- Combined validation strategies
-- Mixed asset type handling
+**Status:** ✅ 11/11 passing (100% success rate)
 
 ---
 
-## 🔧 Environment Setup
+#### 02. Agreement Expiry & Refund ✅
+**File:** `02-agreement-expiry-refund.test.ts`  
+**Commands:**
+- `npm run test:staging:e2e:02-agreement-expiry-refund`
+- `npm run test:staging:e2e:02-agreement-expiry-refund:verbose`
 
-### Required Environment Variables
+**Duration:** ~30 seconds  
+**Tests:** 2 test cases
+
+**Flow:**
+1. Create agreement with 15-second expiry
+2. Optionally deposit NFT (partial deposit)
+3. Wait for agreement to expire
+4. Verify status changes to EXPIRED
+5. Verify refund processing triggered
+6. Verify NFT returned to sender
+
+**Note:** Tests automatic expiry handling and refund workflows.
+
+---
+
+#### 03. Admin Cancellation ✅
+**File:** `03-admin-cancellation.test.ts`  
+**Commands:**
+- `npm run test:staging:e2e:03-admin-cancellation`
+- `npm run test:staging:e2e:03-admin-cancellation:verbose`
+
+**Duration:** ~15 seconds  
+**Tests:** 1 test case
+
+**Flow:**
+1. Create escrow agreement
+2. Admin initiates cancellation (via API with admin key)
+3. Verify status changes to CANCELLED
+4. Verify refund processing (if deposits were made)
+
+**Note:** Requires `ADMIN_API_KEY` in environment.
+
+---
+
+#### 04. Platform Fee Collection ✅
+**File:** `04-platform-fee-collection.test.ts`  
+**Commands:**
+- `npm run test:staging:e2e:04-platform-fee-collection`
+- `npm run test:staging:e2e:04-platform-fee-collection:verbose`
+
+**Duration:** ~10 seconds  
+**Tests:** 2 test cases
+
+**Tests:**
+1. Verify standard fee collection (1% platform fee)
+2. Zero-fee transactions acceptance
+
+**Note:** Fee distribution is also thoroughly tested in Test 01 (Happy Path).
+
+---
+
+#### 05. Webhook Delivery ⏭️
+**File:** `05-webhook-delivery.test.ts`  
+**Commands:**
+- `npm run test:staging:e2e:05-webhook-delivery`
+- `npm run test:staging:e2e:05-webhook-delivery:verbose`
+
+**Duration:** ~5 seconds  
+**Tests:** 1 test case (currently skipped)
+
+**Note:** Requires external webhook receiver (webhook.site or similar). Skipped in automated E2E suite.
+
+**Events to verify:**
+- AGREEMENT_CREATED
+- DEPOSIT_DETECTED
+- AGREEMENT_SETTLED
+- AGREEMENT_CANCELLED
+
+---
+
+#### 06. Idempotency Handling ✅
+**File:** `06-idempotency-handling.test.ts`  
+**Commands:**
+- `npm run test:staging:e2e:06-idempotency-handling`
+- `npm run test:staging:e2e:06-idempotency-handling:verbose`
+
+**Duration:** ~15 seconds  
+**Tests:** 1 test case
+
+**Flow:**
+1. Create agreement with idempotency key
+2. Retry same request with same idempotency key
+3. Verify same agreement is returned (no duplicate)
+4. Verify no new agreement created
+
+**Note:** Tests duplicate request prevention via idempotency keys.
+
+---
+
+#### 07. Concurrent Operations ✅
+**File:** `07-concurrent-operations.test.ts`  
+**Commands:**
+- `npm run test:staging:e2e:07-concurrent-operations`
+- `npm run test:staging:e2e:07-concurrent-operations:verbose`
+
+**Duration:** ~25 seconds  
+**Tests:** 1 test case
+
+**Flow:**
+1. Create 5 NFTs for testing
+2. Create 5 agreements concurrently (parallel requests)
+3. Verify all succeed
+4. Verify all agreements have unique IDs
+5. Verify no race conditions detected
+
+**Note:** Tests database transaction isolation and concurrent request handling.
+
+---
+
+#### 08. Edge Cases & Validation ✅
+**File:** `08-edge-cases-validation.test.ts`  
+**Commands:**
+- `npm run test:staging:e2e:08-edge-cases-validation`
+- `npm run test:staging:e2e:08-edge-cases-validation:verbose`
+
+**Duration:** ~30 seconds  
+**Tests:** 3 test cases
+
+**Tests:**
+1. Invalid mint address handling
+2. Insufficient funds detection
+3. Invalid signature rejection
+
+**Note:** Tests error handling and input validation across the system.
+
+## Configuration
+
+### Environment Variables
+
+Tests use the following environment variables from `.env.staging`:
 
 ```bash
-# API Configuration
-STAGING_API_URL=https://easyescrow-backend-staging.ondigitalocean.app
-ATOMIC_SWAP_API_KEY=<your-staging-api-key>
-
-# Blockchain Configuration
-STAGING_SOLANA_RPC_URL=https://devnet.helius-rpc.com/?api-key=<key>
-STAGING_PROGRAM_ID=AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei
-
-# Wallets
-DEVNET_STAGING_FEE_COLLECTOR_ADDRESS=8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ
-STAGING_ADMIN_PRIVATE_KEY_PATH=./wallets/staging/staging-deployer.json
-
-# Test Wallets
-DEVNET_SENDER_PRIVATE_KEY_PATH=./wallets/dev/devnet-sender.json
-DEVNET_RECEIVER_PRIVATE_KEY_PATH=./wallets/dev/devnet-receiver.json
+SOLANA_RPC_URL=https://red-quaint-wind.solana-devnet.quiknode.pro/[your-api-key]/  # QuickNode RPC (fast, cross-chain ready)
+STAGING_API_BASE_URL=https://staging-api.easyescrow.ai
+NODE_ENV=staging
 ```
 
-See [ATOMIC_SWAP_ENVIRONMENT_VARIABLES.md](../../../docs/ATOMIC_SWAP_ENVIRONMENT_VARIABLES.md) for complete setup guide.
+**Note:** Tests automatically load `.env.staging` with `override: true` to use QuickNode RPC instead of the public devnet RPC.
 
----
+### Test Configuration
 
-## 📝 Test Structure
-
-### Standard Test Flow
-
-Each atomic swap test follows this pattern:
+Located in `test-config.ts`:
 
 ```typescript
-describe('Scenario: [Description]', () => {
-  it('should successfully swap [assets] with [fee type]', async function() {
-    // 1. Get balances/owners BEFORE swap
-    const makerBalanceBefore = await connection.getBalance(maker);
-    const nftOwnerBefore = await getNFTOwner(connection, nft);
-    
-    // 2. Create offer via API
-    const offer = await apiClient.createOffer({
-      makerWallet, takerWallet,
-      offeredAssets, requestedSol,
-      customFee: { type, value, payer }
-    });
-    
-    // 3. Sign and send maker transaction
-    const makerSig = await signAndSendTransaction(
-      offer.data.transaction.serialized,
-      [makerKeypair],
-      connection
-    );
-    
-    // 4. Accept offer via API
-    const accept = await apiClient.acceptOffer(offerId, takerWallet);
-    
-    // 5. Sign and send taker transaction
-    const takerSig = await signAndSendTransaction(
-      accept.data.transaction.serialized,
-      [takerKeypair],
-      connection
-    );
-    
-    // 6. Confirm execution
-    await apiClient.confirmOffer(offerId, takerSig);
-    
-    // 7. Verify all state changes
-    await verifyBalanceChange(maker, +expectedSOL);
-    await verifyBalanceChange(taker, -expectedSOL);
-    await verifyNFTOwner(nft, takerPubkey);
-    await verifyNonceAdvanced(nonceAccount);
+{
+  programId: 'AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei',
+  network: 'devnet',
+  usdcMint: 'Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr',
+  apiBaseUrl: 'https://staging-api.easyescrow.ai',
+  testAmounts: {
+    swap: 0.1,      // USDC
+    fee: 0.01,      // 1%
+    minSOL: 0.1,
+  }
+}
+```
+
+### Wallets
+
+Tests use static wallets from `wallets/staging/`:
+- `staging-sender.json` - NFT seller
+- `staging-receiver.json` - USDC buyer  
+- `staging-admin.json` - Agreement signer
+- `staging-fee-collector.json` - Platform fee recipient
+
+**⚠️ Important:** Ensure wallets have sufficient SOL and USDC before running tests.
+
+## Writing New Test Scenarios
+
+### Template
+
+```typescript
+import { describe, it, before } from 'mocha';
+import { expect } from 'chai';
+import { Connection } from '@solana/web3.js';
+import { STAGING_CONFIG } from './test-config';
+import {
+  loadStagingWallets,
+  createTestNFT,
+  // ... other utilities
+  type StagingWallets,
+} from './shared-test-utils';
+
+describe('STAGING E2E - Your Scenario', function () {
+  this.timeout(180000); // 3 minutes
+
+  let connection: Connection;
+  let wallets: StagingWallets;
+
+  before(async function () {
+    connection = new Connection(STAGING_CONFIG.rpcUrl, 'confirmed');
+    wallets = loadStagingWallets();
+    // Additional setup...
+  });
+
+  it('should do something', async function () {
+    // Your test logic here
   });
 });
 ```
 
----
+### Best Practices
 
-## 🧪 Test Utilities
+1. **Use Shared Utilities** - Don't duplicate code
+2. **Descriptive Test Names** - Use "should..." format
+3. **Console Logging** - Add visual feedback with emojis
+4. **Proper Timeouts** - Set realistic timeouts per test
+5. **Clean Setup** - Initialize in `before()` hook
+6. **Assertions** - Use Chai's expect syntax
+7. **Error Handling** - Log detailed error information
 
-### API Client
-**Location:** `tests/helpers/atomic-swap-api-client.ts`
+### Example Test
 
-Provides:
-- `createOffer()` - Create swap offer
-- `acceptOffer()` - Accept offer
-- `confirmOffer()` - Confirm execution
-- `signAndSendTransaction()` - TX signing/sending
-- `generateIdempotencyKey()` - Idempotency helper
-
-### Verification Helpers
-**Location:** `tests/helpers/swap-verification.ts`
-
-Provides:
-- `verifyBalanceChange()` - Check SOL balance changes
-- `verifyNFTOwner()` - Verify asset ownership
-- `verifyNonceAdvanced()` - Confirm nonce consumption
-- `waitForConfirmation()` - TX confirmation with retries
-- `displayTestSummary()` - Pretty results output
-
-### Wallet Management
-**Location:** `tests/helpers/devnet-wallet-manager.ts`
-
-Provides:
-- `loadDevnetWallets()` - Load test wallets
-- `verifyWalletBalances()` - Check balances
-- `displayWalletInfo()` - Show wallet details
-
-### NFT Creation
-**Location:** `tests/helpers/devnet-nft-setup.ts`
-
-Provides:
-- `createTestNFT()` - Create NFTs for testing
-- `displayNFTInfo()` - Show NFT details
-
----
-
-## 📈 Test Coverage
-
-### Current Status
-- ✅ **1/36+ scenarios complete** (Scenario 1: NFT for SOL with 1% fee)
-- ✅ Complete API integration working
-- ✅ Full verification suite implemented
-- ✅ Template ready for replication
-
-### Remaining Work
-- **File 01:** 4 more scenarios (~4 hours)
-- **File 02:** 5 cNFT scenarios (~7.5 hours)
-- **File 03:** 5 NFT-NFT scenarios (~5 hours)
-- **File 04:** 5 NFT-cNFT scenarios (~7.5 hours)
-
-**Total Estimated Time:** ~10-12 hours to complete all scenarios
-
----
-
-## 🎯 Success Criteria
-
-Tests should verify:
-- ✅ API endpoints respond correctly
-- ✅ Transaction serialization accurate
-- ✅ Signatures valid
-- ✅ Balance changes within tolerance
-- ✅ Asset transfers confirmed
-- ✅ Nonce consumption validated
-- ✅ No errors or warnings
-
----
-
-## 📚 Related Documentation
-
-- [Atomic Swap Implementation Plan](../../../docs/tasks/ATOMIC_SWAP_E2E_IMPLEMENTATION_PLAN.md)
-- [Scenario 1 Completion Report](../../../docs/tasks/ATOMIC_SWAP_E2E_SCENARIO1_COMPLETE.md)
-- [Atomic Swap Environment Variables](../../../docs/ATOMIC_SWAP_ENVIRONMENT_VARIABLES.md)
-- [Legacy Orchestrator Tests](legacy/README.md) - Deprecated
-
----
-
-## 🚦 Getting Started
-
-1. **Set up environment** - Configure `.env` with staging credentials
-2. **Fund test wallets** - Ensure devnet SOL in sender/receiver wallets
-3. **Run Scenario 1** - Validate setup with working test
-4. **Replicate pattern** - Use Scenario 1 as template for remaining tests
-
-```bash
-# Quick start
-npm run test:staging:e2e:atomic:nft-sol
+```typescript
+it('should create test NFT for sender', async function () {
+  console.log('🎨 Creating test NFT...\n');
+  
+  const nft = await createTestNFT(connection, wallets.sender);
+  
+  console.log(`   NFT Mint: ${nft.mint.toBase58()}`);
+  console.log(`   Owner: ${wallets.sender.publicKey.toBase58()}\n`);
+  
+  expect(nft.mint).to.be.instanceOf(PublicKey);
+  expect(nft.tokenAccount).to.be.instanceOf(PublicKey);
+});
 ```
 
-**Expected:** All assertions pass, ~1.5-2 minutes duration
+## Troubleshooting
+
+### Rate Limiting (429 Errors)
+
+**Problem:** `Too many creation requests from this IP`
+
+**Solution:**
+- Run tests individually instead of all at once
+- Add delays between test runs
+- Wait a few minutes before retrying
+
+### Insufficient Funds
+
+**Problem:** `insufficient funds` errors
+
+**Solution:**
+```bash
+# Check wallet balances
+npm run staging:verify
+
+# Fund wallets with SOL
+npm run staging:fund-wallets
+```
+
+### Account Not Found
+
+**Problem:** `TokenAccountNotFoundError`
+
+**Solution:**
+- Ensure USDC accounts are created before use
+- Use `setupUSDCAccounts()` helper in test setup
+- Check that wallets have been funded
+
+### Connection Timeout
+
+**Problem:** RPC connection timeouts
+
+**Solution:**
+- Use a reliable RPC endpoint (Helius, QuickNode)
+- Increase timeout values in test config
+- Check network connectivity
+
+## Utilities Reference
+
+### Wallet Management
+
+```typescript
+// Load all staging wallets
+const wallets = loadStagingWallets();
+
+// Access individual wallets
+wallets.sender
+wallets.receiver
+wallets.admin
+wallets.feeCollector
+```
+
+### Token Operations
+
+```typescript
+// Create test NFT
+const nft = await createTestNFT(connection, owner);
+
+// Setup USDC accounts
+const accounts = await setupUSDCAccounts(
+  connection,
+  usdcMint,
+  sender,
+  receiver,
+  feeCollector // optional
+);
+
+// Get token balance (handles decimals automatically)
+const balance = await getTokenBalance(connection, tokenAccount);
+```
+
+### Balance Tracking
+
+```typescript
+// Get comprehensive balances
+const balances = await getInitialBalances(
+  connection,
+  wallets,
+  usdcAccounts
+);
+
+// Display formatted balances
+displayBalances(balances, 'Initial Balances');
+```
+
+### API Helpers
+
+```typescript
+// Generate unique idempotency key
+const key = generateIdempotencyKey('my-test');
+
+// Get explorer URL
+const url = getExplorerUrl(txId, 'tx');
+const addressUrl = getExplorerUrl(pubkey, 'address');
+
+// Wait for agreement status
+const agreement = await waitForAgreementStatus(
+  agreementId,
+  'SETTLED',
+  60,    // max attempts
+  2000   // interval ms
+);
+```
+
+## Known Issues
+
+1. **Rate Limiting** - Running all scenarios together triggers 429 errors
+2. **Receipt Generation** - Receipt ID may not be immediately available (async processing)
+
+## Contributing
+
+To add a new test scenario:
+
+1. Create new test file: `0X-scenario-name.test.ts`
+2. Import shared utilities from `shared-test-utils.ts`
+3. Follow the template structure above
+4. Add npm scripts to `package.json`:
+   ```json
+   "test:staging:e2e:scenario-name": "mocha --require ts-node/register --no-config tests/e2e/staging/0X-scenario-name.test.ts --timeout 180000 --reporter spec --colors"
+   ```
+5. Update this README with new scenario details
+6. Test thoroughly before committing
+
+## Support
+
+For issues or questions:
+- Check existing test implementations for examples
+- Review shared utilities documentation
+- Consult staging deployment docs
+- Check API documentation at `/api-docs`
 
 ---
 
-**Status:** 🟢 ACTIVE - Atomic swap tests in progress  
-**Last Updated:** November 20, 2025  
-**Completion:** 1/36+ scenarios (3% complete)
+**Last Updated:** 2025-10-22  
+**Status:** All tests passing (11/11) ✅  
+**Maintained By:** Development Team
