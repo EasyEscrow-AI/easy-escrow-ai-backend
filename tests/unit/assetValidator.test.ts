@@ -205,7 +205,7 @@ describe('AssetValidator', () => {
         amount: 1,
       };
       
-      // Mock DAS API _rpcRequest response for getAsset
+      // Mock DAS API _rpcRequest response for getAsset (first call)
       (mockConnection._rpcRequest as jest.Mock).mockResolvedValueOnce({
         id: assetId,
         ownership: {
@@ -217,6 +217,15 @@ describe('AssetValidator', () => {
           leaf_id: 42,
         },
         burnt: false,
+      });
+      
+      // Mock DAS API _rpcRequest response for getAssetProof (second call)
+      (mockConnection._rpcRequest as jest.Mock).mockResolvedValueOnce({
+        root: 'test-root-hash',
+        proof: ['proof1', 'proof2', 'proof3'],
+        node_index: 42,
+        leaf: 'test-leaf-hash',
+        tree_id: 'test-tree-id',
       });
       
       const result = await assetValidator.validateAssets(walletAddress, [asset]);
