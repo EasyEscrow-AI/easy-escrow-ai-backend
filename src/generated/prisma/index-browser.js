@@ -272,6 +272,8 @@ exports.Prisma.SwapOfferScalarFieldEnum = {
   parentOfferId: 'parentOfferId',
   offeredAssets: 'offeredAssets',
   requestedAssets: 'requestedAssets',
+  offeredSolLamports: 'offeredSolLamports',
+  requestedSolLamports: 'requestedSolLamports',
   platformFeeLamports: 'platformFeeLamports',
   status: 'status',
   expiresAt: 'expiresAt',

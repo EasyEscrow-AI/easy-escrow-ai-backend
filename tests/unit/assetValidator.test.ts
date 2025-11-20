@@ -3,7 +3,7 @@
  * Tests NFT and cNFT ownership validation
  */
 
-import { Connection, PublicKey } from '@solana/web3.js';
+import { Connection, Keypair, PublicKey } from '@solana/web3.js';
 import { AssetValidator, AssetInfo, AssetType } from '../../src/services/assetValidator';
 
 // Mock Solana Connection
@@ -68,7 +68,7 @@ describe('AssetValidator', () => {
       (mockConnection.getTokenAccountsByOwner as jest.Mock).mockResolvedValue({
         value: [
           {
-            pubkey: new PublicKey('mock-token-account'),
+            pubkey: Keypair.generate().publicKey,
             account: {
               data: {
                 parsed: {
@@ -126,7 +126,7 @@ describe('AssetValidator', () => {
       (mockConnection.getTokenAccountsByOwner as jest.Mock).mockResolvedValue({
         value: [
           {
-            pubkey: new PublicKey('token-account-1'),
+            pubkey: Keypair.generate().publicKey,
             account: {
               data: {
                 parsed: {
@@ -139,7 +139,7 @@ describe('AssetValidator', () => {
             },
           },
           {
-            pubkey: new PublicKey('token-account-2'),
+            pubkey: Keypair.generate().publicKey,
             account: {
               data: {
                 parsed: {
@@ -171,7 +171,7 @@ describe('AssetValidator', () => {
       (mockConnection.getTokenAccountsByOwner as jest.Mock).mockResolvedValue({
         value: [
           {
-            pubkey: new PublicKey('token-account'),
+            pubkey: Keypair.generate().publicKey,
             account: {
               data: {
                 parsed: {
@@ -370,7 +370,7 @@ describe('AssetValidator', () => {
       (mockConnection.getTokenAccountsByOwner as jest.Mock).mockResolvedValue({
         value: [
           {
-            pubkey: new PublicKey('token-account'),
+            pubkey: Keypair.generate().publicKey,
             account: {
               data: {
                 parsed: {
@@ -419,7 +419,7 @@ describe('AssetValidator', () => {
       (mockConnection.getTokenAccountsByOwner as jest.Mock).mockResolvedValue({
         value: [
           {
-            pubkey: new PublicKey('token-account'),
+            pubkey: Keypair.generate().publicKey,
             account: {
               data: {
                 parsed: {
@@ -528,7 +528,7 @@ describe('AssetValidator', () => {
       (mockConnection.getTokenAccountsByOwner as jest.Mock).mockResolvedValue({
         value: [
           {
-            pubkey: new PublicKey('token-account'),
+            pubkey: Keypair.generate().publicKey,
             account: {
               data: {
                 parsed: {
