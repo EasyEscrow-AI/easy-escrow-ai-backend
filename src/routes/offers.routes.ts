@@ -174,17 +174,29 @@ router.post(
       }
 
       // Transform asset format from API format to internal format
-      // API format: { mint, isCompressed, merkleTree? }
+      // API format: { mint, isCompressed, merkleTree?, amount?, assetType? }
       // Internal format: { identifier, type }
-      const transformAssets = (assets: any[]) => {
-        return assets.map((asset) => ({
-          identifier: asset.mint,
-          type: asset.isCompressed ? AssetType.CNFT : AssetType.NFT,
-        }));
+      const transformAssets = (assets: any[], arrayName: string) => {
+        return assets.map((asset, index) => {
+          console.log(`[Offers Route] Transforming ${arrayName}[${index}]:`, JSON.stringify(asset));
+          
+          if (!asset.mint) {
+            console.error(`[Offers Route] Missing mint in ${arrayName}[${index}]:`, asset);
+            throw new Error(`Asset ${index} in ${arrayName} is missing 'mint' field`);
+          }
+          
+          const transformed = {
+            identifier: asset.mint,
+            type: asset.isCompressed ? AssetType.CNFT : AssetType.NFT,
+          };
+          
+          console.log(`[Offers Route] Transformed to:`, JSON.stringify(transformed));
+          return transformed;
+        });
       };
 
-      const transformedOfferedAssets = transformAssets(offeredAssets);
-      const transformedRequestedAssets = transformAssets(requestedAssets);
+      const transformedOfferedAssets = transformAssets(offeredAssets, 'offeredAssets');
+      const transformedRequestedAssets = transformAssets(requestedAssets, 'requestedAssets');
 
       // Create offer
       const offer = await offerManager.createOffer({
