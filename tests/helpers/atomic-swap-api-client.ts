@@ -146,11 +146,17 @@ export class AtomicSwapApiClient {
   /**
    * Accept an offer
    */
-  async acceptOffer(offerId: string, takerWallet: string): Promise<AcceptOfferResponse> {
+  async acceptOffer(offerId: string, takerWallet: string, idempotencyKey?: string): Promise<AcceptOfferResponse> {
+    const headers: any = {};
+    if (idempotencyKey) {
+      headers['idempotency-key'] = idempotencyKey;
+    }
+
     try {
       const response = await this.client.post<AcceptOfferResponse>(
         `/api/offers/${offerId}/accept`,
-        { takerWallet }
+        { takerWallet },
+        { headers }
       );
       return response.data;
     } catch (error: any) {
