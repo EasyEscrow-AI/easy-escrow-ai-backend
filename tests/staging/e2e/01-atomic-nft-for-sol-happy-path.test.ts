@@ -264,7 +264,7 @@ describe('🚀 Atomic Swap E2E: NFT for SOL - Happy Path (Staging)', () => {
         wallets.receiver.publicKey,
         takerBalanceBefore,
         -(solAmount + platformFee), // Taker pays SOL + fee
-        50000, // Tolerance for TX fees
+        undefined, // Use default tolerance (5M lamports = 0.005 SOL)
         'Taker'
       );
       
