@@ -1,80 +1,137 @@
-# Legacy Escrow Agreement Tests
+# Legacy Orchestrator Unit Tests
 
-These tests are for the **old custodial escrow agreement model** (pre-atomic swaps).
+⚠️ **DEPRECATED**: These tests are for the legacy escrow orchestrator system and are not actively maintained for the new atomic swap architecture.
 
-## Why Are These Here?
+## Overview
 
-The atomic swap MVP uses a completely different architecture:
-- **Old Model:** Custodial, multi-step flow with on-chain escrow state
-- **New Model:** Non-custodial, single atomic transaction with durable nonces
+This directory contains unit tests for the legacy escrow orchestrator services that handled:
+- Traditional escrow agreements
+- USDC and NFT deposits
+- Automatic refunds and settlements
+- Receipt generation and signing
+- Transaction logging and status updates
 
-These tests are **not compatible** with the atomic swap system.
+## Current Status
 
-## Can We Use Them Again?
+🔴 **Not Run by Default** - These tests are excluded from the main `npm run test:unit` command to focus on atomic swap development.
 
-**Yes!** If we bring back agreement-based escrows, these tests can be re-enabled:
+## Test Categories
 
-1. Move files back to `tests/unit/`
-2. Add test scripts back to `package.json`
-3. Update tests to work with current codebase
-
-## Test Files
-
-### Agreement Core
-- `agreement-cache.service.test.ts` - Agreement caching service
-- `agreement-cancellation.test.ts` - Multi-signature cancellation
-- `agreement.service.test.ts` - Main agreement service
-- `close-escrow.test.ts` - Escrow account closure
+### Agreement Management
+- `agreement.service.test.ts` - Agreement creation and management
+- `agreement-cache.service.test.ts` - Agreement caching
+- `agreement-cancellation.test.ts` - Agreement cancellation logic
 
 ### Deposits
-- `deposit.service.test.ts` - Generic deposit service
-- `nft-deposit.service.test.ts` - NFT deposit handling
-- `usdc-deposit.service.test.ts` - USDC deposit handling
+- `deposit.service.test.ts` - General deposit handling
+- `usdc-deposit.service.test.ts` - USDC-specific deposits
+- `nft-deposit.service.test.ts` - NFT deposit validation
+
+### Settlements & Refunds
+- `settlement-automatic-refund.test.ts` - Automatic refund triggers
+- `refund.service.test.ts` - Refund processing
+
+### Receipts
+- `receipt.service.test.ts` - Receipt generation
+- `receipt-signing.service.test.ts` - Receipt signing and verification
 
 ### Validation
 - `amount-validation.test.ts` - Amount validation rules
-- `expiry-extension-validation.test.ts` - Expiry extension logic
-- `expiry-timestamp-validation.test.ts` - Expiry timestamp validation
+- `expiry-timestamp-validation.test.ts` - Expiry time validation
+- `expiry-extension-validation.test.ts` - Extension validation
 
-### Solana Program
-- `escrow-program-token-accounts.test.ts` - Token account handling
-
-### Fees & Refunds
-- `nft-for-nft-fee.test.ts` - NFT↔NFT fee calculation
-- `refund.service.test.ts` - Refund processing
-- `settlement-automatic-refund.test.ts` - Automatic refunds
-
-### Receipts & Logging
-- `receipt-signing.service.test.ts` - Receipt signature generation
-- `receipt.service.test.ts` - Receipt creation
+### Infrastructure
+- `close-escrow.test.ts` - Escrow closure logic
 - `transaction-log.service.test.ts` - Transaction logging
+- `queue.service.test.ts` - Job queue management
+- `resource-tracking.test.ts` - Resource usage tracking
+- `status-update.service.test.ts` - Status transition validation
+- `global-teardown.test.ts` - Test cleanup
 
-### Integrations
+### Jito Integration
 - `jito-confirmation.test.ts` - Jito transaction confirmation
 - `jito-integration.test.ts` - Jito bundle integration
 
-## What Replaced These?
+### Solana
+- `solana.service.test.ts` - Solana utility functions
+- `escrow-program-token-accounts.test.ts` - Token account management
 
-**Atomic Swap Tests** (in `tests/unit/`):
-- `atomic-swap-idempotency.test.ts` - Idempotency protection
+### Fees
+- `nft-for-nft-fee.test.ts` - NFT swap fee calculations
+
+## Running Legacy Tests
+
+### Run all legacy tests:
+```bash
+npm run test:unit:legacy
+```
+
+### Run specific legacy test:
+```bash
+npm run test:unit:mocha:legacy
+```
+
+### Run legacy tests with mocha:
+```bash
+cross-env NODE_ENV=test mocha --require ts-node/register --no-config 'tests/unit/legacy/**/*.test.ts' --timeout 10000
+```
+
+## Known Issues
+
+Most legacy tests are failing due to:
+- ❌ Database connection mocking issues
+- ❌ Service initialization problems
+- ❌ Outdated mock configurations
+- ❌ Missing dependencies for legacy services
+
+## Maintenance Strategy
+
+### Short Term
+- Keep tests as historical reference
+- Do not invest time fixing failing tests
+- Focus on atomic swap test suite
+
+### Long Term Options
+1. **Archive** - Move to separate repository for historical purposes
+2. **Adapt** - Refactor to test shared services (cache, database, idempotency)
+3. **Remove** - Delete entirely if services are fully deprecated
+
+## Atomic Swap Tests
+
+✅ **Active Tests** - The following tests remain in the main `tests/unit/` directory and are actively maintained:
+
+### Core Atomic Swap Services
+- `offerManager.test.ts` - Offer lifecycle management
+- `offerManager-sol-amounts.test.ts` - SOL amount handling
+- `transactionBuilder.test.ts` - Transaction construction
+- `assetValidator.test.ts` - NFT/cNFT ownership validation
+- `noncePoolManager.test.ts` - Durable nonce management
+- `feeCalculator.test.ts` - Platform fee calculations
+
+### Atomic Swap Infrastructure
+- `atomic-swap-idempotency.test.ts` - Request idempotency
+- `idempotency.test.ts` - Idempotency middleware
+- `cache.service.test.ts` - Caching layer
+- `database.test.ts` - Database operations
 - `nonce-pool-creation.test.ts` - Nonce account creation
-- `assetValidator.test.ts` - Asset ownership validation
-- `feeCalculator.test.ts` - Fee calculation
-- `noncePoolManager.test.ts` - Nonce pool management
-- `offerManager.test.ts` - Offer lifecycle
-- `transactionBuilder.test.ts` - Transaction building
-- `idempotency.test.ts` - Idempotency service (reused)
 
-## Notes
+## Migration Path
 
-- These files are kept for reference
-- They may need updates to work with current dependencies
-- Some services (like idempotency) were kept and adapted for atomic swaps
-- Test scripts were removed from `package.json`
+If you need to resurrect a legacy test:
+1. Check if equivalent functionality exists in atomic swap services
+2. Adapt test to new service architecture
+3. Move back to main `tests/unit/` directory
+4. Update imports and mocks for new services
+
+## Questions?
+
+For questions about:
+- **Atomic swap tests** - See main `tests/unit/README.md`
+- **Legacy system architecture** - See `docs/LEGACY_ORCHESTRATOR_ARCHITECTURE.md` (if exists)
+- **Test organization** - See `.cursor/rules/taskmaster/testing.mdc`
 
 ---
 
-**Last Updated:** November 19, 2025  
-**Reason:** Moved to legacy for atomic swap MVP  
-**Status:** Preserved for potential future use
-
+**Last Updated:** 2024-11-20  
+**Status:** Deprecated, not actively maintained  
+**Maintainer:** Focus on atomic swap tests instead
