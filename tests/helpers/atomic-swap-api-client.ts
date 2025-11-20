@@ -87,7 +87,7 @@ export class AtomicSwapApiClient {
   async createOffer(params: CreateOfferParams, idempotencyKey?: string): Promise<OfferResponse> {
     const headers: any = {};
     if (idempotencyKey) {
-      headers['X-Idempotency-Key'] = idempotencyKey;
+      headers['idempotency-key'] = idempotencyKey;
     }
 
     try {
