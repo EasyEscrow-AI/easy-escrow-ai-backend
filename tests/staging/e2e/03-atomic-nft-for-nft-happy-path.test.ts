@@ -208,7 +208,7 @@ describe('🔄 Atomic Swap E2E: NFT for NFT - Happy Path (Staging)', () => {
       // Step 3: Both parties sign and send
       console.log('\n🔏 Step 3: Signing and sending transaction (both parties)...');
       const swapSignature = await AtomicSwapApiClient.signAndSendTransaction(
-        acceptResponse.data.serializedTransaction,
+        acceptResponse.data.transaction.serialized,
         [wallets.sender, wallets.receiver],
         connection
       );
