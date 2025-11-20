@@ -28,12 +28,27 @@ import {
 } from '../../helpers/devnet-nft-setup';
 import { wait } from '../../helpers/test-utils';
 import { createAtomicSwapClient, AtomicSwapApiClient } from '../../helpers/atomic-swap-api-client';
+import {
+  verifyBalanceChange,
+  verifyNFTOwner,
+  getNFTOwner,
+  verifyNonceAdvanced,
+  getNonceData,
+  waitForConfirmation,
+  displayExplorerLink,
+  displayTestSummary,
+} from '../../helpers/swap-verification';
 
 // Test configuration
 const RPC_URL = process.env.STAGING_SOLANA_RPC_URL || 'https://api.devnet.solana.com';
 const PROGRAM_ID = new PublicKey('AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei');
 const PLATFORM_AUTHORITY_PATH = process.env.STAGING_ADMIN_PRIVATE_KEY_PATH || 
   path.join(__dirname, '../../../wallets/staging/staging-deployer.json');
+const STAGING_API_URL = process.env.STAGING_API_URL || 'http://localhost:3000';
+const FEE_COLLECTOR_ADDRESS = new PublicKey(
+  process.env.DEVNET_STAGING_FEE_COLLECTOR_ADDRESS || 
+  '8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ'
+);
 
 describe('🚀 Atomic Swap E2E: NFT for SOL - Happy Path (Staging)', () => {
   let connection: Connection;
@@ -106,6 +121,12 @@ describe('🚀 Atomic Swap E2E: NFT for SOL - Happy Path (Staging)', () => {
     });
     displayNFTInfo(testNFT);
     
+    // Initialize API client
+    console.log('\n🔌 Initializing API client...');
+    console.log(`  API URL: ${STAGING_API_URL}`);
+    apiClient = createAtomicSwapClient(STAGING_API_URL);
+    console.log('✅ API client initialized');
+    
     console.log('\n✅ Setup complete\n');
   });
   
@@ -117,46 +138,182 @@ describe('🚀 Atomic Swap E2E: NFT for SOL - Happy Path (Staging)', () => {
       console.log('═══════════════════════════════════════════════════════════');
       
       const solAmount = 0.5 * LAMPORTS_PER_SOL; // 0.5 SOL
-      const platformFee = Math.floor(solAmount * 0.01); // 1%
+      const platformFeeRate = 0.01; // 1%
+      const platformFee = Math.floor(solAmount * platformFeeRate);
       
       console.log('📦 Swap Details:');
       console.log(`  Maker offers: NFT (${testNFT.mint.toString()})`);
       console.log(`  Taker offers: ${solAmount / LAMPORTS_PER_SOL} SOL`);
       console.log(`  Platform fee: ${platformFee / LAMPORTS_PER_SOL} SOL (1%)`);
       
-      // Get balances before swap
+      // Get balances and NFT owner before swap
       const makerBalanceBefore = await connection.getBalance(wallets.sender.publicKey);
       const takerBalanceBefore = await connection.getBalance(wallets.receiver.publicKey);
-      const treasuryBalanceBefore = await connection.getBalance(treasuryPda);
+      const feeCollectorBalanceBefore = await connection.getBalance(FEE_COLLECTOR_ADDRESS);
+      const nftOwnerBefore = await getNFTOwner(connection, testNFT.mint);
       
       console.log('\n💰 Balances Before:');
-      console.log(`  Maker:    ${makerBalanceBefore / LAMPORTS_PER_SOL} SOL`);
-      console.log(`  Taker:    ${takerBalanceBefore / LAMPORTS_PER_SOL} SOL`);
-      console.log(`  Treasury: ${treasuryBalanceBefore / LAMPORTS_PER_SOL} SOL`);
+      console.log(`  Maker:         ${(makerBalanceBefore / LAMPORTS_PER_SOL).toFixed(9)} SOL`);
+      console.log(`  Taker:         ${(takerBalanceBefore / LAMPORTS_PER_SOL).toFixed(9)} SOL`);
+      console.log(`  Fee Collector: ${(feeCollectorBalanceBefore / LAMPORTS_PER_SOL).toFixed(9)} SOL`);
+      console.log(`\n🎨 NFT Owner Before: ${nftOwnerBefore.toBase58()}`);
       
-      // TODO: Implement actual swap transaction via backend API or direct program call
-      // This will be implemented after backend API integration is complete
+      // Step 1: Create offer via API
+      console.log('\n📝 Step 1: Creating offer via API...');
+      const idempotencyKey = AtomicSwapApiClient.generateIdempotencyKey('test-nft-sol-1pct');
       
-      console.log('\n⚠️  Note: Actual swap execution pending backend API integration');
-      console.log('✅ Test structure validated\n');
+      const createResponse = await apiClient.createOffer({
+        makerWallet: wallets.sender.publicKey.toBase58(),
+        takerWallet: wallets.receiver.publicKey.toBase58(),
+        offeredAssets: [{
+          mint: testNFT.mint.toBase58(),
+          isCompressed: false,
+        }],
+        requestedSol: solAmount,
+        customFee: {
+          type: 'percentage',
+          value: 100, // 1% in basis points (100 bps = 1%)
+          payer: 'taker',
+        },
+      }, idempotencyKey);
       
-      // Expected final state assertions (uncomment after implementation):
-      // const makerBalanceAfter = await connection.getBalance(wallets.sender.publicKey);
-      // const takerBalanceAfter = await connection.getBalance(wallets.receiver.publicKey);
-      // const treasuryBalanceAfter = await connection.getBalance(treasuryPda);
-      //
-      // Maker should receive SOL (minus transaction costs)
-      // expect(makerBalanceAfter).to.be.greaterThan(makerBalanceBefore + solAmount - 10000);
-      //
-      // Taker should pay SOL + fee
-      // expect(takerBalanceAfter).to.be.lessThan(takerBalanceBefore - solAmount - platformFee);
-      //
-      // Treasury should receive fee
-      // expect(treasuryBalanceAfter).to.equal(treasuryBalanceBefore + platformFee);
-      //
+      if (!createResponse.success || !createResponse.data) {
+        throw new Error(`Failed to create offer: ${createResponse.message || 'Unknown error'}`);
+      }
+      
+      console.log(`✅ Offer created: ${createResponse.data.offer.id}`);
+      console.log(`  Nonce Account: ${createResponse.data.transaction.nonceAccount}`);
+      
+      // Get nonce value before transaction
+      const nonceAccountPubkey = new PublicKey(createResponse.data.transaction.nonceAccount);
+      const { nonce: nonceBefore } = await getNonceData(connection, nonceAccountPubkey);
+      console.log(`  Nonce Before: ${nonceBefore.substring(0, 20)}...`);
+      
+      // Step 2: Sign and send maker transaction
+      console.log('\n🔏 Step 2: Signing and sending maker transaction...');
+      const makerSignature = await AtomicSwapApiClient.signAndSendTransaction(
+        createResponse.data.transaction.serialized,
+        [wallets.sender], // Maker signs
+        connection
+      );
+      
+      console.log(`✅ Maker transaction sent: ${makerSignature}`);
+      displayExplorerLink(makerSignature, 'devnet');
+      
+      // Wait for confirmation
+      await waitForConfirmation(connection, makerSignature, 'confirmed');
+      
+      // Step 3: Accept offer via API
+      console.log('\n🤝 Step 3: Accepting offer via API...');
+      const acceptResponse = await apiClient.acceptOffer(
+        createResponse.data.offer.id,
+        wallets.receiver.publicKey.toBase58()
+      );
+      
+      if (!acceptResponse.success || !acceptResponse.data) {
+        throw new Error(`Failed to accept offer: ${acceptResponse.message || 'Unknown error'}`);
+      }
+      
+      console.log('✅ Offer accepted, received transaction');
+      
+      // Step 4: Sign and send taker transaction
+      console.log('\n🔏 Step 4: Signing and sending taker transaction...');
+      const takerSignature = await AtomicSwapApiClient.signAndSendTransaction(
+        acceptResponse.data.transaction.serialized,
+        [wallets.receiver], // Taker signs
+        connection
+      );
+      
+      console.log(`✅ Taker transaction sent: ${takerSignature}`);
+      displayExplorerLink(takerSignature, 'devnet');
+      
+      // Wait for confirmation
+      await waitForConfirmation(connection, takerSignature, 'confirmed');
+      
+      // Step 5: Confirm execution via API
+      console.log('\n✅ Step 5: Confirming on-chain execution...');
+      const confirmResponse = await apiClient.confirmOffer(
+        createResponse.data.offer.id,
+        takerSignature
+      );
+      
+      if (!confirmResponse.success) {
+        throw new Error(`Failed to confirm offer: ${confirmResponse.message || 'Unknown error'}`);
+      }
+      
+      console.log('✅ Swap execution confirmed');
+      
+      // Step 6: Get balances and verify changes
+      console.log('\n📊 Step 6: Verifying state changes...');
+      
+      const makerBalanceAfter = await connection.getBalance(wallets.sender.publicKey);
+      const takerBalanceAfter = await connection.getBalance(wallets.receiver.publicKey);
+      const feeCollectorBalanceAfter = await connection.getBalance(FEE_COLLECTOR_ADDRESS);
+      
+      // Calculate actual changes
+      const makerChange = makerBalanceAfter - makerBalanceBefore;
+      const takerChange = takerBalanceAfter - takerBalanceBefore;
+      const feeCollected = feeCollectorBalanceAfter - feeCollectorBalanceBefore;
+      
+      console.log('\n💰 Balances After:');
+      console.log(`  Maker:         ${(makerBalanceAfter / LAMPORTS_PER_SOL).toFixed(9)} SOL`);
+      console.log(`  Taker:         ${(takerBalanceAfter / LAMPORTS_PER_SOL).toFixed(9)} SOL`);
+      console.log(`  Fee Collector: ${(feeCollectorBalanceAfter / LAMPORTS_PER_SOL).toFixed(9)} SOL`);
+      
+      // Verify maker received SOL (should receive 0.5 SOL minus small TX fees)
+      await verifyBalanceChange(
+        connection,
+        wallets.sender.publicKey,
+        makerBalanceBefore,
+        solAmount, // Maker should receive 0.5 SOL
+        50000, // Tolerance for TX fees
+        'Maker'
+      );
+      
+      // Verify taker paid SOL + fee (should pay 0.5 SOL + 0.005 SOL fee + TX fees)
+      await verifyBalanceChange(
+        connection,
+        wallets.receiver.publicKey,
+        takerBalanceBefore,
+        -(solAmount + platformFee), // Taker pays SOL + fee
+        50000, // Tolerance for TX fees
+        'Taker'
+      );
+      
+      // Verify fee collector received platform fee
+      await verifyBalanceChange(
+        connection,
+        FEE_COLLECTOR_ADDRESS,
+        feeCollectorBalanceBefore,
+        platformFee, // Should receive exactly 0.005 SOL
+        1000, // Minimal tolerance
+        'Fee Collector'
+      );
+      
       // Verify NFT ownership transfer
-      // const nftOwner = await getNFTOwner(connection, testNFT.mint);
-      // expect(nftOwner.toString()).to.equal(wallets.receiver.publicKey.toString());
+      await verifyNFTOwner(
+        connection,
+        testNFT.mint,
+        wallets.receiver.publicKey,
+        'Test NFT'
+      );
+      
+      // Verify nonce advanced
+      const nonceAfter = await verifyNonceAdvanced(
+        connection,
+        nonceAccountPubkey,
+        nonceBefore,
+        'Durable Nonce'
+      );
+      
+      // Display test summary
+      displayTestSummary('NFT for SOL with 1% Fee', {
+        makerBalanceChange: makerChange,
+        takerBalanceChange: takerChange,
+        feeCollected,
+        nftTransferred: true,
+        nonceAdvanced: true,
+      });
     });
   });
   
