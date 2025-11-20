@@ -341,7 +341,8 @@ export class TransactionBuilder {
     const nonceValueStart = 4 + 32; // Skip version and authorized pubkey
     const nonceValue = accountInfo.data.slice(nonceValueStart, nonceValueStart + 32);
     
-    return nonceValue.toString('base64');
+    // Convert to base58 for use as recentBlockhash
+    return new PublicKey(nonceValue).toBase58();
   }
   
   /**
