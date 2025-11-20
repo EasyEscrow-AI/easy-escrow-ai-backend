@@ -251,13 +251,14 @@ export class OfferManager {
         nonceAccount: offer.nonceAccount,
       });
       
-      // 8. Store transaction and taker info (status remains ACTIVE until confirmed)
-      await this.prisma.swapOffer.update({
+      // 8. Update offer with transaction and set status to ACCEPTED
+      const updatedOffer = await this.prisma.swapOffer.update({
         where: { id: offerId },
         data: {
           takerWallet,
           serializedTransaction: buildResult.serializedTransaction,
           currentNonceValue: buildResult.nonceValue,
+          status: OfferStatus.ACCEPTED,
         },
       });
       
@@ -265,6 +266,7 @@ export class OfferManager {
       
       return {
         serializedTransaction: buildResult.serializedTransaction,
+        offer: updatedOffer,
       };
     } catch (error) {
       console.error('[OfferManager] Failed to accept offer:', error);

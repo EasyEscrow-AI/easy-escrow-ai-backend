@@ -404,6 +404,7 @@ exports.OfferType = exports.$Enums.OfferType = {
 
 exports.OfferStatus = exports.$Enums.OfferStatus = {
   ACTIVE: 'ACTIVE',
+  ACCEPTED: 'ACCEPTED',
   FILLED: 'FILLED',
   CANCELLED: 'CANCELLED',
   EXPIRED: 'EXPIRED'
