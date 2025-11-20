@@ -28,9 +28,13 @@ describe('OfferManager - ACCEPTED Status', () => {
         create: jest.fn(),
         findUnique: jest.fn(),
         update: jest.fn(),
+        updateMany: jest.fn(),
       },
       user: {
         upsert: jest.fn(),
+      },
+      swapTransaction: {
+        create: jest.fn(),
       },
       $transaction: jest.fn((fn) => fn(mockPrisma)),
     } as any;
@@ -38,6 +42,7 @@ describe('OfferManager - ACCEPTED Status', () => {
     mockNoncePoolManager = {
       assignNonceToUser: jest.fn(),
       getCurrentNonce: jest.fn(),
+      advanceNonce: jest.fn(),
     } as any;
 
     mockAssetValidator = {
@@ -79,6 +84,13 @@ describe('OfferManager - ACCEPTED Status', () => {
     (mockTransactionBuilder.buildSwapTransaction as jest.Mock).mockResolvedValue({
       serializedTransaction: 'mock-serialized-transaction',
       nonceValue: 'mock-nonce-value',
+    });
+
+    // Mock getTransaction for confirmation
+    (mockConnection.getTransaction as any) = jest.fn().mockResolvedValue({
+      slot: 12345,
+      blockTime: Math.floor(Date.now() / 1000),
+      meta: { err: null },
     });
 
     offerManager = new OfferManager(
@@ -176,6 +188,7 @@ describe('OfferManager - ACCEPTED Status', () => {
 
     it('should transition from ACCEPTED to FILLED when confirmed', async () => {
       const offerId = 1;
+      const nonceAccount = Keypair.generate().publicKey.toBase58();
       const transactionSignature = 'mock-signature';
 
       // Mock finding ACCEPTED offer
@@ -183,19 +196,24 @@ describe('OfferManager - ACCEPTED Status', () => {
         id: offerId,
         status: OfferStatus.ACCEPTED,
         serializedTransaction: 'mock-serialized-transaction',
-      });
-
-      // Mock transaction confirmation
-      (mockConnection.getTransaction as any) = jest.fn().mockResolvedValue({
-        slot: 12345,
-        blockTime: Math.floor(Date.now() / 1000),
-        meta: { err: null },
+        nonceAccount,
       });
 
       // Mock update to FILLED
       (mockPrisma.swapOffer.update as jest.Mock).mockResolvedValue({
         id: offerId,
         status: OfferStatus.FILLED,
+      });
+
+      // Mock updateMany for cancelling other offers
+      (mockPrisma.swapOffer.updateMany as jest.Mock).mockResolvedValue({
+        count: 0,
+      });
+
+      // Mock transaction creation
+      (mockPrisma.swapTransaction.create as jest.Mock).mockResolvedValue({
+        id: 1,
+        signature: transactionSignature,
       });
 
       await offerManager.confirmSwap({
@@ -248,6 +266,90 @@ describe('OfferManager - ACCEPTED Status', () => {
     });
   });
 
+  describe('Nonce Reuse Prevention', () => {
+    it('should cancel both ACTIVE and ACCEPTED offers using same nonce when confirming', async () => {
+      const offerId = 1;
+      const nonceAccount = Keypair.generate().publicKey.toBase58();
+      const signature = 'mock-signature';
+
+      // Mock finding offer
+      (mockPrisma.swapOffer.findUnique as jest.Mock).mockResolvedValue({
+        id: offerId,
+        status: OfferStatus.ACCEPTED,
+        serializedTransaction: 'mock-tx',
+        nonceAccount,
+      });
+
+      // Mock update to FILLED
+      (mockPrisma.swapOffer.update as jest.Mock).mockResolvedValue({
+        id: offerId,
+        status: OfferStatus.FILLED,
+      });
+
+      // Mock updateMany for cancelling
+      (mockPrisma.swapOffer.updateMany as jest.Mock).mockResolvedValue({
+        count: 2, // 2 other offers cancelled
+      });
+
+      // Mock transaction creation
+      (mockPrisma.swapTransaction.create as jest.Mock).mockResolvedValue({
+        id: 1,
+      });
+
+      await offerManager.confirmSwap({ offerId, signature });
+
+      // Verify both ACTIVE and ACCEPTED offers are cancelled
+      expect(mockPrisma.swapOffer.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            nonceAccount,
+            id: { not: offerId },
+            status: { in: [OfferStatus.ACTIVE, OfferStatus.ACCEPTED] },
+          }),
+          data: { status: OfferStatus.CANCELLED },
+        })
+      );
+    });
+
+    it('should prevent nonce reuse by cancelling ACCEPTED offers', async () => {
+      const offerId = 1;
+      const nonceAccount = Keypair.generate().publicKey.toBase58();
+      const signature = 'mock-signature';
+
+      // Create scenario: 3 offers with same nonce
+      // - Offer 1 (offerId): ACCEPTED → will be FILLED
+      // - Offer 2: ACTIVE → should be CANCELLED
+      // - Offer 3: ACCEPTED → should be CANCELLED (this is the bug fix)
+
+      (mockPrisma.swapOffer.findUnique as jest.Mock).mockResolvedValue({
+        id: offerId,
+        status: OfferStatus.ACCEPTED,
+        serializedTransaction: 'mock-tx',
+        nonceAccount,
+      });
+
+      (mockPrisma.swapOffer.update as jest.Mock).mockResolvedValue({
+        id: offerId,
+        status: OfferStatus.FILLED,
+      });
+
+      // Mock cancelling 2 offers (1 ACTIVE + 1 ACCEPTED)
+      (mockPrisma.swapOffer.updateMany as jest.Mock).mockResolvedValue({
+        count: 2,
+      });
+
+      (mockPrisma.swapTransaction.create as jest.Mock).mockResolvedValue({
+        id: 1,
+      });
+
+      await offerManager.confirmSwap({ offerId, signature });
+
+      // Verify the where clause includes both statuses
+      const updateManyCall = (mockPrisma.swapOffer.updateMany as jest.Mock).mock.calls[0][0];
+      expect(updateManyCall.where.status.in).toEqual([OfferStatus.ACTIVE, OfferStatus.ACCEPTED]);
+    });
+  });
+
   describe('Response Structure', () => {
     it('should return both transaction and offer in acceptOffer response', async () => {
       const makerWallet = Keypair.generate().publicKey.toBase58();
@@ -291,4 +393,3 @@ describe('OfferManager - ACCEPTED Status', () => {
     });
   });
 });
-
