@@ -194,9 +194,11 @@ describe('🔄 Atomic Swap E2E: NFT for NFT - Happy Path (Staging)', () => {
       
       // Step 2: Accept offer
       console.log('\n🤝 Step 2: Accepting offer via API...');
+      const acceptIdempotencyKey = AtomicSwapApiClient.generateIdempotencyKey('test-nft-nft-accept');
       const acceptResponse = await apiClient.acceptOffer(
         createResponse.data.offer.id,
-        wallets.receiver.publicKey.toBase58()
+        wallets.receiver.publicKey.toBase58(),
+        acceptIdempotencyKey
       );
       
       if (!acceptResponse.success || !acceptResponse.data) {
