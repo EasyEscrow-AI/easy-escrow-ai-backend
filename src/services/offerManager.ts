@@ -183,7 +183,10 @@ export class OfferManager {
   /**
    * Accept an offer and get transaction to sign
    */
-  async acceptOffer(offerId: number, takerWallet: string): Promise<{ serializedTransaction: string }> {
+  async acceptOffer(offerId: number, takerWallet: string): Promise<{ 
+    serializedTransaction: string;
+    offer: any; // SwapOffer from Prisma
+  }> {
     console.log('[OfferManager] Accepting offer:', { offerId, taker: takerWallet });
     
     try {
