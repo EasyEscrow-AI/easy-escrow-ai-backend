@@ -212,11 +212,20 @@ router.post(
       res.status(201).json({
         success: true,
         data: {
-          ...offer,
-          platformFee: {
-            ...offer.platformFee,
-            feeLamports: offer.platformFee.feeLamports.toString(),
-            totalSwapValueLamports: offer.platformFee.totalSwapValueLamports.toString(),
+          offer: {
+            id: offer.id.toString(),
+            status: offer.status,
+            makerWallet: offer.makerWallet,
+            takerWallet: offer.takerWallet || null,
+            offeredAssets: offer.offeredAssets,
+            requestedAssets: offer.requestedAssets,
+            offeredSol: offeredSol?.toString() || '0',
+            requestedSol: requestedSol?.toString() || '0',
+            createdAt: offer.createdAt.toISOString(),
+          },
+          transaction: {
+            serialized: offer.serializedTransaction || '',
+            nonceAccount: offer.nonceAccount,
           },
         },
         timestamp: new Date().toISOString(),
