@@ -133,29 +133,11 @@ export class OfferManager {
       // 5. Calculate expiration time
       const expiresAt = new Date(Date.now() + (input.expirationMs || 7 * 24 * 60 * 60 * 1000)); // 7 days default
       
-      // 6. If taker is specified (direct offer), build transaction immediately
-      let serializedTransaction: string | undefined;
-      let currentNonceValue: string | undefined;
-      
-      if (input.takerWallet) {
-        // Build transaction for direct offer
-        const buildResult = await this.buildOfferTransaction({
-          makerWallet: input.makerWallet,
-          takerWallet: input.takerWallet,
-          offeredAssets: input.offeredAssets,
-          offeredSol,
-          requestedAssets: input.requestedAssets,
-          requestedSol,
-          platformFee,
-          nonceAccount,
-        });
-        
-        serializedTransaction = buildResult.serializedTransaction;
-        currentNonceValue = buildResult.nonceValue;
-      } else {
-        // For open offers, just get current nonce value
-        currentNonceValue = await this.noncePoolManager.getCurrentNonce(nonceAccount);
-      }
+      // 6. Get current nonce value (transaction will be built when offer is accepted)
+      // NOTE: We don't build the transaction at create time because it needs BOTH
+      // maker and taker signatures. The transaction is built when the offer is accepted.
+      const currentNonceValue = await this.noncePoolManager.getCurrentNonce(nonceAccount);
+      const serializedTransaction: string | undefined = undefined;
       
       // 7. Create offer in database
       const offer = await this.prisma.swapOffer.create({

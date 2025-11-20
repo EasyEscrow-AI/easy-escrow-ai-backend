@@ -223,9 +223,10 @@ router.post(
             requestedSol: requestedSol?.toString() || '0',
             createdAt: offer.createdAt.toISOString(),
           },
+          // Transaction will be built when offer is accepted (needs both signatures)
           transaction: {
-            serialized: offer.serializedTransaction || '',
             nonceAccount: offer.nonceAccount,
+            message: 'Transaction will be built when offer is accepted',
           },
         },
         timestamp: new Date().toISOString(),

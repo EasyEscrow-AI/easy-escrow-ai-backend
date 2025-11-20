@@ -173,6 +173,8 @@ describe('🚀 Atomic Swap E2E: NFT for SOL - Happy Path (Staging)', () => {
         requestedSol: solAmount,
       }, idempotencyKey);
       
+      console.log('🔍 CREATE RESPONSE DEBUG:', JSON.stringify(createResponse, null, 2));
+      
       if (!createResponse.success || !createResponse.data) {
         throw new Error(`Failed to create offer: ${createResponse.message || 'Unknown error'}`);
       }
@@ -185,26 +187,32 @@ describe('🚀 Atomic Swap E2E: NFT for SOL - Happy Path (Staging)', () => {
       const { nonce: nonceBefore } = await getNonceData(connection, nonceAccountPubkey);
       console.log(`  Nonce Before: ${nonceBefore.substring(0, 20)}...`);
       
-      // Step 2: Sign and send maker transaction
-      console.log('\n🔏 Step 2: Signing and sending maker transaction...');
-      const makerSignature = await AtomicSwapApiClient.signAndSendTransaction(
-        createResponse.data.transaction.serialized,
-        [wallets.sender], // Maker signs
-        connection
-      );
-      
-      console.log(`✅ Maker transaction sent: ${makerSignature}`);
-      displayExplorerLink(makerSignature, 'devnet');
-      
-      // Wait for confirmation
-      await waitForConfirmation(connection, makerSignature, 'confirmed');
-      
-      // Step 3: Accept offer via API
-      console.log('\n🤝 Step 3: Accepting offer via API...');
+      // Step 2: Accept offer via API (this builds the transaction)
+      console.log('\n🤝 Step 2: Accepting offer via API...');
       const acceptResponse = await apiClient.acceptOffer(
         createResponse.data.offer.id,
         wallets.receiver.publicKey.toBase58()
       );
+      
+      if (!acceptResponse.success || !acceptResponse.data) {
+        throw new Error(`Failed to accept offer: ${acceptResponse.message || 'Unknown error'}`);
+      }
+      
+      console.log(`✅ Offer accepted, transaction ready for signing`);
+      
+      // Step 3: Both parties sign and send transaction
+      console.log('\n🔏 Step 3: Signing and sending transaction (both parties)...');
+      const swapSignature = await AtomicSwapApiClient.signAndSendTransaction(
+        acceptResponse.data.serializedTransaction,
+        [wallets.sender, wallets.receiver], // BOTH maker and taker sign
+        connection
+      );
+      
+      console.log(`✅ Swap transaction sent: ${swapSignature}`);
+      displayExplorerLink(swapSignature, 'devnet');
+      
+      // Wait for confirmation
+      await waitForConfirmation(connection, swapSignature, 'confirmed');
       
       if (!acceptResponse.success || !acceptResponse.data) {
         throw new Error(`Failed to accept offer: ${acceptResponse.message || 'Unknown error'}`);
