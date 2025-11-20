@@ -210,11 +210,9 @@ export class AtomicSwapApiClient {
     try {
       transaction = VersionedTransaction.deserialize(txBuffer);
       
-      // Sign versioned transaction
+      // Sign versioned transaction with all signers at once
       if (transaction instanceof VersionedTransaction) {
-        for (const signer of signers) {
-          transaction.sign([signer]);
-        }
+        transaction.sign(signers); // Pass all signers at once, not in a loop
       }
     } catch (versionedError) {
       // Fall back to legacy transaction
