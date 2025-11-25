@@ -173,6 +173,26 @@ router.post(
         return;
       }
 
+      // Validate mint addresses before transformation
+      const validateMintAddresses = (assets: any[], arrayName: string) => {
+        assets.forEach((asset, index) => {
+          if (!asset.mint) {
+            throw new Error(`Asset ${index} in ${arrayName} is missing 'mint' field`);
+          }
+          
+          // Validate that mint is a valid Solana address format
+          try {
+            new PublicKey(asset.mint);
+          } catch (error) {
+            throw new Error(`Invalid mint address format in ${arrayName}[${index}]: ${asset.mint}`);
+          }
+        });
+      };
+      
+      // Validate mint addresses early
+      validateMintAddresses(offeredAssets, 'offeredAssets');
+      validateMintAddresses(requestedAssets, 'requestedAssets');
+      
       // Transform asset format from API format to internal format
       // API format: { mint, isCompressed, merkleTree?, amount?, assetType? }
       // Internal format: { identifier, type }
@@ -234,10 +254,48 @@ router.post(
     } catch (error) {
       console.error('Error creating offer:', error);
 
+      // Handle validation errors with 422 status
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create offer';
+      
+      // Check if this is a validation error based on specific patterns
+      // Use precise matching to avoid misclassifying server/infrastructure errors
+      const isValidationError = 
+        // Asset ownership validation
+        errorMessage.includes('does not own') ||
+        // On-chain asset validation
+        errorMessage.includes('not found on-chain') ||
+        // Mint address validation (be specific to avoid "Failed to mint transaction")
+        errorMessage.includes('Invalid mint address') ||
+        errorMessage.includes('invalid mint address') ||
+        // Explicit validation errors
+        (errorMessage.includes('validation') && !errorMessage.includes('RPC')) ||
+        (errorMessage.includes('Validation') && !errorMessage.includes('RPC')) ||
+        // Missing required fields (be specific)
+        (errorMessage.includes('required') && !errorMessage.includes('connection')) ||
+        // Token account errors (specific to asset validation)
+        errorMessage.includes('Token account') ||
+        errorMessage.includes('token account') ||
+        // Frozen assets
+        errorMessage.includes('frozen') ||
+        errorMessage.includes('Frozen') ||
+        // Asset amount validation
+        errorMessage.includes('Invalid token amount') ||
+        errorMessage.includes('expected 1, got');
+      
+      if (isValidationError) {
+        res.status(422).json({
+          success: false,
+          error: 'Validation Error',
+          message: errorMessage,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
       res.status(500).json({
         success: false,
         error: 'Internal Server Error',
-        message: error instanceof Error ? error.message : 'Failed to create offer',
+        message: errorMessage,
         timestamp: new Date().toISOString(),
       });
     }
