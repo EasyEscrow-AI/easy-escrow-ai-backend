@@ -133,6 +133,34 @@
             border-color: #667eea;
         }
 
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .filter-btn:hover {
+            border-color: #667eea;
+            background: #f0f3ff;
+        }
+
+        .filter-btn.active {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+
         .nft-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -368,7 +396,7 @@
                         <div class="wallet-title maker">Maker (Sender)</div>
                         <div class="wallet-address" id="maker-address">FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71</div>
                     </div>
-                    <button class="refresh-btn" onclick="loadWalletInfo('maker')">Refresh</button>
+                    <button class="refresh-btn" id="maker-refresh-btn">Refresh</button>
                 </div>
                 <div class="balance-display" id="maker-balance">-- SOL</div>
 
@@ -378,6 +406,11 @@
                 </div>
 
                 <div class="section-title">Select NFTs to Offer</div>
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-wallet="maker" data-filter="all">All</button>
+                    <button class="filter-btn" data-wallet="maker" data-filter="spl">SPL Only</button>
+                    <button class="filter-btn" data-wallet="maker" data-filter="cnft">cNFT Only</button>
+                </div>
                 <div class="nft-grid" id="maker-nfts">
                     <div class="loading">
                         <div class="spinner"></div>
@@ -393,7 +426,7 @@
                         <div class="wallet-title taker">Taker (Receiver)</div>
                         <div class="wallet-address" id="taker-address">Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk</div>
                     </div>
-                    <button class="refresh-btn" onclick="loadWalletInfo('taker')">Refresh</button>
+                    <button class="refresh-btn" id="taker-refresh-btn">Refresh</button>
                 </div>
                 <div class="balance-display" id="taker-balance">-- SOL</div>
 
@@ -403,6 +436,11 @@
                 </div>
 
                 <div class="section-title">Select NFTs to Request</div>
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-wallet="taker" data-filter="all">All</button>
+                    <button class="filter-btn" data-wallet="taker" data-filter="spl">SPL Only</button>
+                    <button class="filter-btn" data-wallet="taker" data-filter="cnft">cNFT Only</button>
+                </div>
                 <div class="nft-grid" id="taker-nfts">
                     <div class="loading">
                         <div class="spinner"></div>
@@ -413,7 +451,7 @@
         </div>
 
         <div class="swap-button-container">
-            <button class="swap-button" id="swap-btn" onclick="executeAtomicSwap()" disabled>
+            <button class="swap-button" id="swap-btn" disabled>
                 Execute Atomic Swap
             </button>
         </div>
