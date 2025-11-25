@@ -9,9 +9,52 @@ Quick guide for minting compressed NFTs (cNFTs) on test wallets for atomic swap 
 
 ## Quick Options (Easiest First)
 
-### Option 1: Helius DAS API (Recommended for Developers)
+### Option 1: QuickNode DAS API (Recommended - Already Configured!)
 
-**Best for:** Programmatic minting, API integration
+**Best for:** We already use QuickNode! Zero additional setup needed.
+
+**We have QuickNode configured for:**
+- cNFT metadata fetching (already working)
+- DAS API endpoint (ready to use)
+- Same RPC we use for everything else
+
+```bash
+# We already have this in our code!
+# Just use the QuickNode endpoint with DAS methods
+
+# Example: Mint cNFT via QuickNode
+curl https://your-quicknode-endpoint.solana-devnet.quiknode.pro/YOUR_TOKEN/ \
+  -X POST \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "mintCompressedNft",
+    "params": {
+      "name": "Test cNFT",
+      "symbol": "TEST",
+      "uri": "https://arweave.net/metadata.json",
+      "receiver": "FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71"
+    }
+  }'
+```
+
+**Resources:**
+- [QuickNode DAS API Docs](https://www.quicknode.com/docs/solana/qn_fetchNFTs)
+- [QuickNode cNFT Guide](https://www.quicknode.com/guides/solana-development/compressed-nfts)
+- [DAS API Reference](https://docs.quicknode.com/docs/solana-digital-asset-standard-das-api)
+
+**Advantages:**
+- ✅ Already configured in our project
+- ✅ Same endpoint we use for everything
+- ✅ No additional API keys needed
+- ✅ Consistent with our infrastructure
+
+---
+
+### Option 2: Helius DAS API (Also Great)
+
+**Best for:** Programmatic minting, alternative provider
 
 ```bash
 # Using Helius RPC with cNFT support
@@ -33,7 +76,7 @@ curl https://devnet.helius-rpc.com/?api-key=YOUR_KEY \
 
 ---
 
-### Option 2: Underdog Protocol (Easiest for Quick Testing)
+### Option 3: Underdog Protocol (Easiest for Quick Testing)
 
 **Best for:** Quick testing, no blockchain knowledge needed
 
@@ -57,7 +100,7 @@ curl -X POST https://devnet.underdogprotocol.com/v2/projects/YOUR_PROJECT_ID/nft
 
 ---
 
-### Option 3: Crossmint (User-Friendly)
+### Option 4: Crossmint (User-Friendly)
 
 **Best for:** Non-developers, visual interface
 
@@ -72,7 +115,7 @@ curl -X POST https://devnet.underdogprotocol.com/v2/projects/YOUR_PROJECT_ID/nft
 
 ---
 
-### Option 4: Metaplex Sugar CLI (Advanced)
+### Option 5: Metaplex Sugar CLI (Advanced)
 
 **Best for:** Bulk minting, production workflows
 
