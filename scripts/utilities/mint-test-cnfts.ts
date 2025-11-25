@@ -111,18 +111,45 @@ async function main() {
   console.log('   - Metaplex JS SDK');
   console.log('   - Helius Digital Asset API');
 
-  console.log('\n📚 Quick Guide:');
-  console.log('   1. Install Sugar: npm install -g @metaplex-foundation/sugar');
-  console.log('   2. Init: sugar init');
-  console.log('   3. Configure collection in config.json');
-  console.log('   4. Upload assets: sugar upload');
-  console.log('   5. Mint: sugar mint');
+  console.log('\n📚 Quick Guide (Metaplex Sugar):');
+  console.log('\n   Install Sugar (choose one method):');
+  console.log('   ');
+  console.log('   Option 1: Using pre-built binaries (recommended)');
+  console.log('   - Download from: https://github.com/metaplex-foundation/sugar/releases');
+  console.log('   - Extract and add to PATH');
+  console.log('   ');
+  console.log('   Option 2: Using Cargo (Rust)');
+  console.log('   - cargo install sugar-cli');
+  console.log('   ');
+  console.log('   Option 3: Build from source');
+  console.log('   - git clone https://github.com/metaplex-foundation/sugar.git');
+  console.log('   - cd sugar && cargo build --release');
+  console.log('   ');
+  console.log('   Then use Sugar:');
+  console.log('   1. sugar init');
+  console.log('   2. Configure collection in config.json');
+  console.log('   3. sugar upload');
+  console.log('   4. sugar mint');
 
   console.log('\n✅ Script completed');
-  console.log('\n💡 For now, you can:');
-  console.log('   1. Use existing devnet cNFTs if available');
-  console.log('   2. Test with SPL NFTs only');
-  console.log('   3. Use Metaplex Sugar to mint real cNFTs');
+  console.log('\n💡 Alternative Methods:');
+  console.log('   ');
+  console.log('   1. Use Helius DAS API:');
+  console.log('      - https://docs.helius.dev/compression-and-das-api/digital-asset-standard-das-api');
+  console.log('      - Easiest for programmatic minting');
+  console.log('   ');
+  console.log('   2. Use Underdog Protocol:');
+  console.log('      - https://docs.underdog.so/');
+  console.log('      - Simple API for cNFT creation');
+  console.log('   ');
+  console.log('   3. Use Crossmint:');
+  console.log('      - https://docs.crossmint.com/');
+  console.log('      - User-friendly cNFT minting');
+  console.log('   ');
+  console.log('   4. For testing now:');
+  console.log('      - Use existing devnet cNFTs if available');
+  console.log('      - Test with SPL NFTs only');
+  console.log('      - Filter functionality works with both types');
 }
 
 main().catch((error) => {
