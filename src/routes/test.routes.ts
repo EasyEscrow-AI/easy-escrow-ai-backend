@@ -17,6 +17,21 @@ const connection = new Connection(
 );
 
 /**
+ * GET /test/config
+ * Get test page configuration including wallet addresses
+ */
+router.get('/api/test/config', (_req: Request, res: Response) => {
+  res.json({
+    success: true,
+    data: {
+      makerAddress: process.env.DEVNET_STAGING_SENDER_ADDRESS,
+      takerAddress: process.env.DEVNET_STAGING_RECEIVER_ADDRESS,
+    },
+    timestamp: new Date().toISOString(),
+  });
+});
+
+/**
  * GET /test
  * Serve the atomic swap test page
  */

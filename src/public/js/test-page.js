@@ -4,8 +4,9 @@
  */
 
 // Wallet addresses (public addresses only - no private keys)
-const MAKER_ADDRESS = 'FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71';
-const TAKER_ADDRESS = 'Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk';
+// Will be loaded from backend configuration
+let MAKER_ADDRESS = '';
+let TAKER_ADDRESS = '';
 
 // State
 let makerData = null;
@@ -15,8 +16,45 @@ let selectedTakerNFTs = [];
 let makerFilter = 'all'; // 'all', 'spl', 'cnft'
 let takerFilter = 'all';
 
+// Load configuration from backend
+async function loadConfig() {
+    try {
+        const response = await fetch('/api/test/config');
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+            MAKER_ADDRESS = result.data.makerAddress;
+            TAKER_ADDRESS = result.data.takerAddress;
+            
+            // Update displayed addresses
+            document.getElementById('maker-address').textContent = MAKER_ADDRESS;
+            document.getElementById('taker-address').textContent = TAKER_ADDRESS;
+            
+            console.log('✅ Config loaded:', { MAKER_ADDRESS, TAKER_ADDRESS });
+            return true;
+        } else {
+            console.error('❌ Failed to load config:', result);
+            addActivityLog('❌ Failed to load wallet configuration', 'error');
+            return false;
+        }
+    } catch (error) {
+        console.error('❌ Error loading config:', error);
+        addActivityLog('❌ Error loading configuration: ' + error.message, 'error');
+        return false;
+    }
+}
+
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log('🚀 Atomic Swap Test Page Loaded');
+    
+    // Load configuration first
+    const configLoaded = await loadConfig();
+    
+    if (!configLoaded) {
+        return;
+    }
+    
     // Load wallet data
     loadWalletInfo('maker');
     loadWalletInfo('taker');
