@@ -100,7 +100,8 @@ describe('FeeCalculator', () => {
       const fee = feeCalculator.calculateFee(largeSol, BigInt(0));
       
       expect(fee.feeType).toBe('percentage');
-      expect(fee.feeLamports).toBe(BigInt(1_000_000_000)); // 1% of 100 SOL = 1 SOL
+      expect(fee.feeLamports).toBe(BigInt(500_000_000)); // 1% of 100 SOL = 1 SOL, but capped at 0.5 SOL max
+      expect(fee.wasCapped).toBe(true); // Should indicate the fee was capped
     });
   });
   
