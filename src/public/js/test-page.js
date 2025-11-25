@@ -12,15 +12,71 @@ let makerData = null;
 let takerData = null;
 let selectedMakerNFTs = [];
 let selectedTakerNFTs = [];
+let makerFilter = 'all'; // 'all', 'spl', 'cnft'
+let takerFilter = 'all';
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('maker-address').textContent = MAKER_ADDRESS;
-    document.getElementById('taker-address').textContent = TAKER_ADDRESS;
-    
+    // Load wallet data
     loadWalletInfo('maker');
     loadWalletInfo('taker');
+    
+    // Setup refresh button event listeners
+    document.getElementById('maker-refresh-btn').addEventListener('click', () => {
+        loadWalletInfo('maker');
+    });
+    
+    document.getElementById('taker-refresh-btn').addEventListener('click', () => {
+        loadWalletInfo('taker');
+    });
+    
+    // Setup swap button event listener
+    document.getElementById('swap-btn').addEventListener('click', executeAtomicSwap);
+    
+    // Setup filter button event listeners
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', handleFilterClick);
+    });
+    
+    // Setup NFT card click handling with event delegation
+    document.getElementById('maker-nfts').addEventListener('click', (e) => {
+        const card = e.target.closest('.nft-card');
+        if (card) {
+            const index = parseInt(card.dataset.index);
+            toggleNFT('maker', index);
+        }
+    });
+    
+    document.getElementById('taker-nfts').addEventListener('click', (e) => {
+        const card = e.target.closest('.nft-card');
+        if (card) {
+            const index = parseInt(card.dataset.index);
+            toggleNFT('taker', index);
+        }
+    });
 });
+
+// Handle filter button clicks
+function handleFilterClick(e) {
+    const btn = e.target;
+    const wallet = btn.dataset.wallet;
+    const filter = btn.dataset.filter;
+    
+    // Update active state
+    document.querySelectorAll(`.filter-btn[data-wallet="${wallet}"]`).forEach(b => {
+        b.classList.remove('active');
+    });
+    btn.classList.add('active');
+    
+    // Update filter state
+    if (wallet === 'maker') {
+        makerFilter = filter;
+        if (makerData) renderNFTs('maker', makerData.nfts);
+    } else {
+        takerFilter = filter;
+        if (takerData) renderNFTs('taker', takerData.nfts);
+    }
+}
 
 // Load wallet information
 async function loadWalletInfo(wallet) {
@@ -68,22 +124,39 @@ async function loadWalletInfo(wallet) {
 // Render NFTs
 function renderNFTs(wallet, nfts) {
     const container = document.getElementById(`${wallet}-nfts`);
+    const filter = wallet === 'maker' ? makerFilter : takerFilter;
     
-    if (nfts.length === 0) {
-        container.innerHTML = '<div class="empty-state">No NFTs found in this wallet</div>';
+    // Apply filter
+    let filteredNfts = nfts;
+    if (filter === 'spl') {
+        filteredNfts = nfts.filter(nft => !nft.isCompressed);
+    } else if (filter === 'cnft') {
+        filteredNfts = nfts.filter(nft => nft.isCompressed);
+    }
+    
+    if (filteredNfts.length === 0) {
+        const message = filter === 'all' 
+            ? 'No NFTs found in this wallet'
+            : `No ${filter === 'spl' ? 'SPL NFTs' : 'cNFTs'} found in this wallet`;
+        container.innerHTML = `<div class="empty-state">${message}</div>`;
         return;
     }
 
-    container.innerHTML = nfts.map((nft, index) => `
-        <div class="nft-card" onclick="toggleNFT('${wallet}', ${index})">
-            <img class="nft-image" 
-                 src="${nft.image || 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'%3E%3Crect fill=\'%23ddd\' width=\'100\' height=\'100\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23999\' font-family=\'Arial\' font-size=\'14\'%3ENo Image%3C/text%3E%3C/svg%3E'}" 
-                 alt="${nft.name}"
-                 onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'%3E%3Crect fill=\'%23ddd\' width=\'100\' height=\'100\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23999\' font-family=\'Arial\' font-size=\'14\'%3ENo Image%3C/text%3E%3C/svg%3E'">
-            <div class="nft-name">${nft.name || 'Unknown NFT'}</div>
-            <div class="nft-mint">${nft.mint.substring(0, 8)}...</div>
-        </div>
-    `).join('');
+    container.innerHTML = filteredNfts.map((nft, index) => {
+        // Find original index in unfiltered array for toggle functionality
+        const originalIndex = nfts.findIndex(n => n.mint === nft.mint);
+        return `
+            <div class="nft-card" data-index="${originalIndex}">
+                <img class="nft-image" 
+                     src="${nft.image || 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'%3E%3Crect fill=\'%23ddd\' width=\'100\' height=\'100\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23999\' font-family=\'Arial\' font-size=\'14\'%3ENo Image%3C/text%3E%3C/svg%3E'}" 
+                     alt="${nft.name}"
+                     onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'%3E%3Crect fill=\'%23ddd\' width=\'100\' height=\'100\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23999\' font-family=\'Arial\' font-size=\'14\'%3ENo Image%3C/text%3E%3C/svg%3E'">
+                <div class="nft-name">${nft.name || 'Unknown NFT'}</div>
+                <div class="nft-type">${nft.isCompressed ? 'cNFT' : 'SPL NFT'}</div>
+                <div class="nft-mint">${nft.mint.substring(0, 8)}...</div>
+            </div>
+        `;
+    }).join('');
 }
 
 // Toggle NFT selection
@@ -310,9 +383,4 @@ function showTransactionSummary(createData, acceptData) {
 
     summary.classList.add('show');
 }
-
-// Expose functions to global scope for onclick handlers
-window.loadWalletInfo = loadWalletInfo;
-window.toggleNFT = toggleNFT;
-window.executeAtomicSwap = executeAtomicSwap;
 
