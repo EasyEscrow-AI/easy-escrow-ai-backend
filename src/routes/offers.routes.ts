@@ -257,19 +257,30 @@ router.post(
       // Handle validation errors with 422 status
       const errorMessage = error instanceof Error ? error.message : 'Failed to create offer';
       
-      // Check if this is a validation error based on error message content
+      // Check if this is a validation error based on specific patterns
+      // Use precise matching to avoid misclassifying server/infrastructure errors
       const isValidationError = 
+        // Asset ownership validation
         errorMessage.includes('does not own') ||
-        errorMessage.includes('Invalid') ||
-        errorMessage.includes('invalid') ||
-        errorMessage.includes('mint') ||
+        // On-chain asset validation
         errorMessage.includes('not found on-chain') ||
-        errorMessage.includes('validation') ||
-        errorMessage.includes('Validation') ||
-        errorMessage.includes('must be') ||
-        errorMessage.includes('required') ||
-        errorMessage.includes('format') ||
-        errorMessage.includes('address');
+        // Mint address validation (be specific to avoid "Failed to mint transaction")
+        errorMessage.includes('Invalid mint address') ||
+        errorMessage.includes('invalid mint address') ||
+        // Explicit validation errors
+        (errorMessage.includes('validation') && !errorMessage.includes('RPC')) ||
+        (errorMessage.includes('Validation') && !errorMessage.includes('RPC')) ||
+        // Missing required fields (be specific)
+        (errorMessage.includes('required') && !errorMessage.includes('connection')) ||
+        // Token account errors (specific to asset validation)
+        errorMessage.includes('Token account') ||
+        errorMessage.includes('token account') ||
+        // Frozen assets
+        errorMessage.includes('frozen') ||
+        errorMessage.includes('Frozen') ||
+        // Asset amount validation
+        errorMessage.includes('Invalid token amount') ||
+        errorMessage.includes('expected 1, got');
       
       if (isValidationError) {
         res.status(422).json({
