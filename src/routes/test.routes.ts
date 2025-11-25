@@ -84,7 +84,13 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
 
     if (heliusApiKey && nfts.length > 0) {
       try {
-        const heliusUrl = `https://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`;
+        // Determine Helius endpoint based on Solana RPC URL
+        const rpcUrl = process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com';
+        const isDevnet = rpcUrl.includes('devnet');
+        const heliusUrl = isDevnet 
+          ? `https://devnet.helius-rpc.com/?api-key=${heliusApiKey}`
+          : `https://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`;
+        
         const response = await fetch(heliusUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

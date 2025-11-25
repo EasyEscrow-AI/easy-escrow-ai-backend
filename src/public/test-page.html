@@ -606,8 +606,8 @@
                             mint: nft.mint,
                             isCompressed: nft.isCompressed || false,
                         })),
-                        offeredSol: offeredSol ? (parseFloat(offeredSol) * 1e9).toString() : undefined,
-                        requestedSol: requestedSol ? (parseFloat(requestedSol) * 1e9).toString() : undefined,
+                        offeredSol: offeredSol ? Math.round(parseFloat(offeredSol) * 1e9).toString() : undefined,
+                        requestedSol: requestedSol ? Math.round(parseFloat(requestedSol) * 1e9).toString() : undefined,
                     }),
                 });
 
