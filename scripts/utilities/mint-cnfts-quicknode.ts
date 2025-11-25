@@ -50,7 +50,7 @@ async function mintCNFTWithQuickNode(
       }),
     });
 
-    const data = await response.json();
+    const data = await response.json() as { error?: { message: string }; result?: { assetId: string; signature: string } };
 
     if (data.error) {
       console.error('❌ Error:', data.error.message);
