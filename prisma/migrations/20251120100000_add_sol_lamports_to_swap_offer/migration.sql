@@ -5,3 +5,4 @@ ALTER TABLE "swap_offers"
 ADD COLUMN IF NOT EXISTS "offered_sol_lamports" BIGINT,
 ADD COLUMN IF NOT EXISTS "requested_sol_lamports" BIGINT;
 
+
