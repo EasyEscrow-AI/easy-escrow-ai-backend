@@ -173,6 +173,26 @@ router.post(
         return;
       }
 
+      // Validate mint addresses before transformation
+      const validateMintAddresses = (assets: any[], arrayName: string) => {
+        assets.forEach((asset, index) => {
+          if (!asset.mint) {
+            throw new Error(`Asset ${index} in ${arrayName} is missing 'mint' field`);
+          }
+          
+          // Validate that mint is a valid Solana address format
+          try {
+            new PublicKey(asset.mint);
+          } catch (error) {
+            throw new Error(`Invalid mint address format in ${arrayName}[${index}]: ${asset.mint}`);
+          }
+        });
+      };
+      
+      // Validate mint addresses early
+      validateMintAddresses(offeredAssets, 'offeredAssets');
+      validateMintAddresses(requestedAssets, 'requestedAssets');
+      
       // Transform asset format from API format to internal format
       // API format: { mint, isCompressed, merkleTree?, amount?, assetType? }
       // Internal format: { identifier, type }
@@ -234,10 +254,37 @@ router.post(
     } catch (error) {
       console.error('Error creating offer:', error);
 
+      // Handle validation errors with 422 status
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create offer';
+      
+      // Check if this is a validation error based on error message content
+      const isValidationError = 
+        errorMessage.includes('does not own') ||
+        errorMessage.includes('Invalid') ||
+        errorMessage.includes('invalid') ||
+        errorMessage.includes('mint') ||
+        errorMessage.includes('not found on-chain') ||
+        errorMessage.includes('validation') ||
+        errorMessage.includes('Validation') ||
+        errorMessage.includes('must be') ||
+        errorMessage.includes('required') ||
+        errorMessage.includes('format') ||
+        errorMessage.includes('address');
+      
+      if (isValidationError) {
+        res.status(422).json({
+          success: false,
+          error: 'Validation Error',
+          message: errorMessage,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
       res.status(500).json({
         success: false,
         error: 'Internal Server Error',
-        message: error instanceof Error ? error.message : 'Failed to create offer',
+        message: errorMessage,
         timestamp: new Date().toISOString(),
       });
     }
