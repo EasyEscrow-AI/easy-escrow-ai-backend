@@ -6,7 +6,7 @@ import swaggerUi from 'swagger-ui-express';
 import YAML from 'yamljs';
 import { connectDatabase, checkDatabaseHealth } from './config/database';
 import { connectRedis, checkRedisHealth, disconnectRedis } from './config/redis';
-import { agreementRoutes, expiryCancellationRoutes, webhookRoutes, receiptRoutes, transactionLogRoutes, healthRoutes, offersRoutes } from './routes';
+import { agreementRoutes, expiryCancellationRoutes, webhookRoutes, receiptRoutes, transactionLogRoutes, healthRoutes, offersRoutes, testRoutes } from './routes';
 import { noncePoolManager } from './routes/offers.routes';
 import {
   corsOptions,
@@ -176,7 +176,8 @@ app.get('/', (_req: Request, res: Response) => {
       receipts: '/v1/receipts',
       transactions: '/v1/transactions',
       expiryCancellation: '/api/expiry-cancellation',
-      webhooks: '/api/webhooks'
+      webhooks: '/api/webhooks',
+      test: '/test'
     }
   };
   
@@ -207,6 +208,9 @@ if (swaggerDocument) {
   });
 }
 
+// Serve static files from public directory
+app.use(express.static(path.join(__dirname, 'public')));
+
 // API Routes
 app.use(agreementRoutes);
 app.use(offersRoutes);
@@ -215,6 +219,7 @@ app.use('/v1/transactions', transactionLogRoutes);
 app.use('/api/expiry-cancellation', expiryCancellationRoutes);
 app.use('/api', webhookRoutes);
 app.use('/health', healthRoutes);
+app.use(testRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {
