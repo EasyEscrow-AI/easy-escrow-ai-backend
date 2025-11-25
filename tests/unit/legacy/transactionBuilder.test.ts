@@ -8,11 +8,13 @@ import { TransactionBuilder, SwapTransactionParams } from '../../src/services/tr
 import { AssetValidator, AssetType } from '../../src/services/assetValidator';
 import { FeeCalculator } from '../../src/services/feeCalculator';
 
-// Mock dependencies
+// Mock only Connection, preserve other classes like Keypair
 jest.mock('@solana/web3.js', () => {
   const actual = jest.requireActual('@solana/web3.js');
   return {
     ...actual,
+    Keypair: actual.Keypair, // Explicitly preserve Keypair
+    PublicKey: actual.PublicKey, // Explicitly preserve PublicKey
     Connection: jest.fn().mockImplementation(() => ({
       getAccountInfo: jest.fn(),
       getRecentBlockhash: jest.fn(),
@@ -41,15 +43,10 @@ describe('TransactionBuilder', () => {
     mockProgramId = Keypair.generate().publicKey;
     mockTreasuryPda = Keypair.generate().publicKey;
     
+    // TransactionBuilder only takes connection and platformAuthority
     transactionBuilder = new TransactionBuilder(
       mockConnection,
-      mockAssetValidator,
-      mockFeeCalculator,
-      {
-        programId: mockProgramId.toBase58(),
-        treasuryPda: mockTreasuryPda.toBase58(),
-        platformAuthority: mockPlatformAuthority,
-      }
+      mockPlatformAuthority
     );
     
     // Setup default mocks
@@ -69,13 +66,10 @@ describe('TransactionBuilder', () => {
       expect(transactionBuilder).toBeInstanceOf(TransactionBuilder);
     });
     
-    it('should throw error with invalid configuration', () => {
+    it('should throw error with invalid platform authority', () => {
       expect(() => {
-        new TransactionBuilder(mockConnection, mockAssetValidator, mockFeeCalculator, {
-          programId: 'invalid-pubkey',
-          treasuryPda: mockTreasuryPda.toBase58(),
-          platformAuthority: mockPlatformAuthority,
-        });
+        // Pass null as platformAuthority to trigger error
+        new TransactionBuilder(mockConnection, null as any);
       }).toThrow();
     });
   });

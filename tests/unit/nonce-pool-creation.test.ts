@@ -8,7 +8,7 @@
 import { Connection, Keypair, Transaction, SystemProgram, sendAndConfirmTransaction } from '@solana/web3.js';
 import { NoncePoolManager } from '../../src/services/noncePoolManager';
 import { prisma } from '../../src/config/database';
-import { NonceStatus } from '@prisma/client';
+import { NonceStatus } from '../../src/generated/prisma';
 
 // Mock Solana connection
 jest.mock('@solana/web3.js', () => {

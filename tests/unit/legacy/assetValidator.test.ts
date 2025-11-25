@@ -245,21 +245,18 @@ describe('AssetValidator', () => {
         amount: 1,
       };
       
-      // Mock Helius API response with different owner
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          id: 'test-cnft-asset-id',
-          ownership: {
-            owner: 'different-wallet-address',
-            frozen: false,
-          },
-          compression: {
-            tree: 'test-tree-id',
-            leaf_id: 42,
-          },
-          burnt: false,
-        }),
+      // Mock DAS API response with different owner
+      (mockConnection._rpcRequest as jest.Mock).mockResolvedValueOnce({
+        id: 'test-cnft-asset-id',
+        ownership: {
+          owner: 'different-wallet-address',
+          frozen: false,
+        },
+        compression: {
+          tree: 'test-tree-id',
+          leaf_id: 42,
+        },
+        burnt: false,
       });
       
       const result = await assetValidator.validateAssets(walletAddress, [asset]);
@@ -276,21 +273,18 @@ describe('AssetValidator', () => {
         amount: 1,
       };
       
-      // Mock Helius API response with frozen asset
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          id: 'test-cnft-asset-id',
-          ownership: {
-            owner: walletAddress,
-            frozen: true, // Frozen
-          },
-          compression: {
-            tree: 'test-tree-id',
-            leaf_id: 42,
-          },
-          burnt: false,
-        }),
+      // Mock DAS API response with frozen asset
+      (mockConnection._rpcRequest as jest.Mock).mockResolvedValueOnce({
+        id: 'test-cnft-asset-id',
+        ownership: {
+          owner: walletAddress,
+          frozen: true, // Frozen
+        },
+        compression: {
+          tree: 'test-tree-id',
+          leaf_id: 42,
+        },
+        burnt: false,
       });
       
       const result = await assetValidator.validateAssets(walletAddress, [asset]);
@@ -307,21 +301,18 @@ describe('AssetValidator', () => {
         amount: 1,
       };
       
-      // Mock Helius API response with burnt asset
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          id: 'test-cnft-asset-id',
-          ownership: {
-            owner: walletAddress,
-            frozen: false,
-          },
-          compression: {
-            tree: 'test-tree-id',
-            leaf_id: 42,
-          },
-          burnt: true, // Burnt
-        }),
+      // Mock DAS API response with burnt asset
+      (mockConnection._rpcRequest as jest.Mock).mockResolvedValueOnce({
+        id: 'test-cnft-asset-id',
+        ownership: {
+          owner: walletAddress,
+          frozen: false,
+        },
+        compression: {
+          tree: 'test-tree-id',
+          leaf_id: 42,
+        },
+        burnt: true, // Burnt
       });
       
       const result = await assetValidator.validateAssets(walletAddress, [asset]);
@@ -392,21 +383,27 @@ describe('AssetValidator', () => {
         ],
       });
       
-      // Mock cNFT validation
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          id: 'cnft-id-1',
-          ownership: {
-            owner: walletAddress,
-            frozen: false,
-          },
-          compression: {
-            tree: 'test-tree',
-            leaf_id: 10,
-          },
-          burnt: false,
-        }),
+      // Mock cNFT validation via DAS API
+      (mockConnection._rpcRequest as jest.Mock).mockResolvedValueOnce({
+        id: 'cnft-id-1',
+        ownership: {
+          owner: walletAddress,
+          frozen: false,
+        },
+        compression: {
+          tree: 'test-tree',
+          leaf_id: 10,
+        },
+        burnt: false,
+      });
+      
+      // Mock getAssetProof for cNFT
+      (mockConnection._rpcRequest as jest.Mock).mockResolvedValueOnce({
+        root: 'test-root',
+        proof: ['proof1'],
+        node_index: 10,
+        leaf: 'test-leaf',
+        tree_id: 'test-tree',
       });
       
       const result = await assetValidator.validateAssets(walletAddress, assets);
@@ -441,21 +438,18 @@ describe('AssetValidator', () => {
         ],
       });
       
-      // Mock cNFT validation (invalid - burnt)
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          id: 'cnft-id-1',
-          ownership: {
-            owner: walletAddress,
-            frozen: false,
-          },
-          compression: {
-            tree: 'test-tree',
-            leaf_id: 10,
-          },
-          burnt: true,
-        }),
+      // Mock cNFT validation (invalid - burnt) via DAS API
+      (mockConnection._rpcRequest as jest.Mock).mockResolvedValueOnce({
+        id: 'cnft-id-1',
+        ownership: {
+          owner: walletAddress,
+          frozen: false,
+        },
+        compression: {
+          tree: 'test-tree',
+          leaf_id: 10,
+        },
+        burnt: true,
       });
       
       const result = await assetValidator.validateAssets(walletAddress, assets);
@@ -466,60 +460,85 @@ describe('AssetValidator', () => {
     });
   });
   
-  describe('Merkle Proof Fetching', () => {
-    it('should fetch Merkle proof for cNFT', async () => {
+  describe('Merkle Proof Fetching (via cNFT validation)', () => {
+    it('should fetch Merkle proof data during cNFT validation', async () => {
+      const walletAddress = 'test-wallet-address';
       const assetId = 'test-cnft-asset-id';
       
-      // Mock Helius Merkle proof response
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          tree_id: 'test-tree-id',
-          leaf_index: 42,
-          proof: ['hash1', 'hash2', 'hash3'],
-          root: 'root-hash',
-        }),
+      const asset: AssetInfo = {
+        standard: AssetType.CNFT,
+        assetId,
+        amount: 1,
+      };
+      
+      // Mock DAS API response for getAsset
+      (mockConnection._rpcRequest as jest.Mock).mockResolvedValueOnce({
+        id: assetId,
+        ownership: {
+          owner: walletAddress,
+          frozen: false,
+        },
+        compression: {
+          tree: 'test-tree-id',
+          leaf_id: 42,
+        },
+        burnt: false,
       });
       
-      const proof = await assetValidator.fetchMerkleProof(assetId);
-      
-      expect(proof).toEqual({
-        treeId: 'test-tree-id',
-        leafIndex: 42,
+      // Mock DAS API response for getAssetProof
+      (mockConnection._rpcRequest as jest.Mock).mockResolvedValueOnce({
+        root: 'test-root-hash',
         proof: ['hash1', 'hash2', 'hash3'],
-        root: 'root-hash',
+        node_index: 42,
+        leaf: 'test-leaf-hash',
+        tree_id: 'test-tree-id',
       });
+      
+      const result = await assetValidator.validateAssets(walletAddress, [asset]);
+      
+      expect(result.valid).toBe(true);
+      expect(result.validatedAssets[0].tree).toBe('test-tree-id');
+      expect(result.validatedAssets[0].leafIndex).toBe(42);
+      expect(result.validatedAssets[0].proof).toBeDefined();
     });
     
-    it('should retry Merkle proof fetching on failure', async () => {
+    it('should retry on DAS API failure', async () => {
+      const walletAddress = 'test-wallet-address';
       const assetId = 'test-cnft-asset-id';
       
-      // First call fails, second succeeds
-      (global.fetch as jest.Mock)
+      const asset: AssetInfo = {
+        standard: AssetType.CNFT,
+        assetId,
+        amount: 1,
+      };
+      
+      // First getAsset call fails, second succeeds
+      (mockConnection._rpcRequest as jest.Mock)
         .mockRejectedValueOnce(new Error('API error'))
         .mockResolvedValueOnce({
-          ok: true,
-          json: async () => ({
-            tree_id: 'test-tree-id',
-            leaf_index: 42,
-            proof: ['hash1', 'hash2'],
-            root: 'root-hash',
-          }),
+          id: assetId,
+          ownership: {
+            owner: walletAddress,
+            frozen: false,
+          },
+          compression: {
+            tree: 'test-tree-id',
+            leaf_id: 42,
+          },
+          burnt: false,
+        })
+        .mockResolvedValueOnce({
+          root: 'test-root-hash',
+          proof: ['hash1', 'hash2'],
+          node_index: 42,
+          leaf: 'test-leaf-hash',
+          tree_id: 'test-tree-id',
         });
       
-      const proof = await assetValidator.fetchMerkleProof(assetId);
+      const result = await assetValidator.validateAssets(walletAddress, [asset]);
       
-      expect(proof).toBeDefined();
-      expect(global.fetch).toHaveBeenCalledTimes(2);
-    });
-    
-    it('should throw error after max retries', async () => {
-      const assetId = 'test-cnft-asset-id';
-      
-      // All calls fail
-      (global.fetch as jest.Mock).mockRejectedValue(new Error('Persistent API error'));
-      
-      await expect(assetValidator.fetchMerkleProof(assetId)).rejects.toThrow();
+      expect(result.valid).toBe(true);
+      expect(mockConnection._rpcRequest).toHaveBeenCalled();
     });
   });
   
@@ -614,14 +633,17 @@ describe('AssetValidator', () => {
       ).rejects.toThrow('RPC node down');
     });
     
-    it('should handle Helius API errors gracefully', async () => {
+    it('should handle DAS API errors gracefully', async () => {
       const asset: AssetInfo = {
         standard: AssetType.CNFT,
         assetId: 'test-cnft',
         amount: 1,
       };
       
-      (global.fetch as jest.Mock).mockRejectedValue(new Error('Helius API unavailable'));
+      // Mock DAS API failure after max retries
+      (mockConnection._rpcRequest as jest.Mock).mockRejectedValue(
+        new Error('DAS API unavailable')
+      );
       
       await expect(
         assetValidator.validateAssets('test-wallet', [asset])

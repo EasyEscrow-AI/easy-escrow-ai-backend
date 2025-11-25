@@ -111,6 +111,10 @@ describe('NoncePoolManager', () => {
       (mockPrisma.noncePool.findMany as jest.Mock).mockResolvedValue([]);
       
       // Mock nonce account creation
+      (mockConnection.getLatestBlockhash as jest.Mock).mockResolvedValue({
+        blockhash: 'mock-blockhash',
+        lastValidBlockHeight: 12345,
+      });
       (mockConnection.getMinimumBalanceForRentExemption as jest.Mock).mockResolvedValue(1_500_000);
       (mockConnection.sendTransaction as jest.Mock).mockResolvedValue('mock-signature');
       (mockConnection.confirmTransaction as jest.Mock).mockResolvedValue({ value: { err: null } });
@@ -401,7 +405,15 @@ describe('NoncePoolManager', () => {
       expect(mockPrisma.noncePool.update).toHaveBeenCalledTimes(2);
     });
     
-    it('should start cleanup job on initialization', () => {
+    it('should start cleanup job on initialization', async () => {
+      // Mock pool stats to prevent initialization from trying to create nonces
+      (mockPrisma.noncePool.findMany as jest.Mock).mockResolvedValue(
+        Array(10).fill({ status: NonceStatus.AVAILABLE })
+      );
+      
+      // Initialize to start cleanup job
+      await noncePoolManager.initialize();
+      
       // Cleanup job should be started
       expect((noncePoolManager as any).cleanupInterval).toBeDefined();
     });

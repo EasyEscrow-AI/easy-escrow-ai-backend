@@ -31,21 +31,35 @@ describe('OfferManager - SOL Amount Handling', () => {
   let treasuryPDA: PublicKey;
   let programId: PublicKey;
   
+  let makerKeypair: Keypair;
+  let takerKeypair: Keypair;
+  let nonceAccountKeypair: Keypair;
+  
   beforeEach(() => {
     // Create keypairs
     platformAuthority = Keypair.generate();
     treasuryPDA = Keypair.generate().publicKey;
     programId = Keypair.generate().publicKey;
+    makerKeypair = Keypair.generate();
+    takerKeypair = Keypair.generate();
+    nonceAccountKeypair = Keypair.generate();
     
     // Create mocks
     mockConnection = {
       getAccountInfo: jest.fn(),
       getBalance: jest.fn(),
+      confirmTransaction: jest.fn().mockResolvedValue({ value: { err: null } }),
+      getTransaction: jest.fn().mockResolvedValue({
+        slot: 12345,
+        meta: { err: null },
+        blockTime: Math.floor(Date.now() / 1000),
+      }),
     } as any;
     
     mockPrisma = {
       user: {
         findUnique: jest.fn(),
+        create: jest.fn(),
         upsert: jest.fn(),
       },
       swapOffer: {
@@ -70,8 +84,8 @@ describe('OfferManager - SOL Amount Handling', () => {
     } as any;
     
     mockTransactionBuilder = {
-      buildSwapTransaction: jest.fn(),
-      validateInputs: jest.fn(),
+      buildSwapTransaction: jest.fn().mockResolvedValue(Buffer.from('mock-transaction-data').toString('base64')),
+      validateInputs: jest.fn().mockReturnValue(undefined),
     } as any;
     
     offerManager = new OfferManager(
@@ -87,12 +101,13 @@ describe('OfferManager - SOL Amount Handling', () => {
     );
     
     // Setup default mock returns
-    (mockPrisma.user.upsert as jest.Mock).mockResolvedValue({
-      walletAddress: 'test-wallet',
+    (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+    (mockPrisma.user.create as jest.Mock).mockResolvedValue({
+      walletAddress: makerKeypair.publicKey.toBase58(),
       createdAt: new Date(),
     });
     
-    (mockNoncePoolManager.assignNonceToUser as jest.Mock).mockResolvedValue('test-nonce-account');
+    (mockNoncePoolManager.assignNonceToUser as jest.Mock).mockResolvedValue(nonceAccountKeypair.publicKey.toBase58());
     (mockNoncePoolManager.getCurrentNonce as jest.Mock).mockResolvedValue('test-nonce-value');
     
     (mockAssetValidator.validateAssets as jest.Mock).mockResolvedValue([
@@ -121,8 +136,8 @@ describe('OfferManager - SOL Amount Handling', () => {
       
       (mockPrisma.swapOffer.create as jest.Mock).mockResolvedValue({
         id: 1,
-        makerWallet: 'maker-wallet',
-        takerWallet: 'taker-wallet',
+        makerWallet: makerKeypair.publicKey.toBase58(),
+        takerWallet: takerKeypair.publicKey.toBase58(),
         offerType: OfferType.MAKER_OFFER,
         offeredAssets: [],
         requestedAssets: [],
@@ -130,14 +145,14 @@ describe('OfferManager - SOL Amount Handling', () => {
         requestedSolLamports: null,
         platformFeeLamports: BigInt(1000000),
         status: OfferStatus.ACTIVE,
-        nonceAccount: 'test-nonce',
+        nonceAccount: nonceAccountKeypair.publicKey.toBase58(),
         createdAt: new Date(),
         expiresAt: new Date(),
       });
       
       await offerManager.createOffer({
-        makerWallet: 'maker-wallet',
-        takerWallet: 'taker-wallet',
+        makerWallet: makerKeypair.publicKey.toBase58(),
+        takerWallet: takerKeypair.publicKey.toBase58(),
         offeredAssets: [],
         offeredSol,
         requestedAssets: [{ type: AssetType.NFT, identifier: 'test-nft' }],
@@ -157,8 +172,8 @@ describe('OfferManager - SOL Amount Handling', () => {
       
       (mockPrisma.swapOffer.create as jest.Mock).mockResolvedValue({
         id: 1,
-        makerWallet: 'maker-wallet',
-        takerWallet: 'taker-wallet',
+        makerWallet: makerKeypair.publicKey.toBase58(),
+        takerWallet: takerKeypair.publicKey.toBase58(),
         offerType: OfferType.MAKER_OFFER,
         offeredAssets: [{ type: AssetType.NFT, identifier: 'test-nft' }],
         requestedAssets: [],
@@ -166,14 +181,14 @@ describe('OfferManager - SOL Amount Handling', () => {
         requestedSolLamports: requestedSol,
         platformFeeLamports: BigInt(1000000),
         status: OfferStatus.ACTIVE,
-        nonceAccount: 'test-nonce',
+        nonceAccount: nonceAccountKeypair.publicKey.toBase58(),
         createdAt: new Date(),
         expiresAt: new Date(),
       });
       
       await offerManager.createOffer({
-        makerWallet: 'maker-wallet',
-        takerWallet: 'taker-wallet',
+        makerWallet: makerKeypair.publicKey.toBase58(),
+        takerWallet: takerKeypair.publicKey.toBase58(),
         offeredAssets: [{ type: AssetType.NFT, identifier: 'test-nft' }],
         requestedAssets: [],
         requestedSol,
@@ -191,7 +206,7 @@ describe('OfferManager - SOL Amount Handling', () => {
     it('should store null for zero SOL amounts', async () => {
       (mockPrisma.swapOffer.create as jest.Mock).mockResolvedValue({
         id: 1,
-        makerWallet: 'maker-wallet',
+        makerWallet: makerKeypair.publicKey.toBase58(),
         offerType: OfferType.MAKER_OFFER,
         offeredAssets: [],
         requestedAssets: [],
@@ -199,7 +214,7 @@ describe('OfferManager - SOL Amount Handling', () => {
         requestedSolLamports: null,
         platformFeeLamports: BigInt(1000000),
         status: OfferStatus.ACTIVE,
-        nonceAccount: 'test-nonce',
+        nonceAccount: nonceAccountKeypair.publicKey.toBase58(),
         createdAt: new Date(),
         expiresAt: new Date(),
       });
@@ -226,8 +241,8 @@ describe('OfferManager - SOL Amount Handling', () => {
       
       (mockPrisma.swapOffer.create as jest.Mock).mockResolvedValue({
         id: 1,
-        makerWallet: 'maker-wallet',
-        takerWallet: 'taker-wallet',
+        makerWallet: makerKeypair.publicKey.toBase58(),
+        takerWallet: takerKeypair.publicKey.toBase58(),
         offerType: OfferType.MAKER_OFFER,
         offeredAssets: [],
         requestedAssets: [],
@@ -235,14 +250,14 @@ describe('OfferManager - SOL Amount Handling', () => {
         requestedSolLamports: requestedSol,
         platformFeeLamports: BigInt(1000000),
         status: OfferStatus.ACTIVE,
-        nonceAccount: 'test-nonce',
+        nonceAccount: nonceAccountKeypair.publicKey.toBase58(),
         createdAt: new Date(),
         expiresAt: new Date(),
       });
       
       await offerManager.createOffer({
-        makerWallet: 'maker-wallet',
-        takerWallet: 'taker-wallet',
+        makerWallet: makerKeypair.publicKey.toBase58(),
+        takerWallet: takerKeypair.publicKey.toBase58(),
         offeredAssets: [],
         offeredSol,
         requestedAssets: [],
@@ -266,7 +281,7 @@ describe('OfferManager - SOL Amount Handling', () => {
       
       (mockPrisma.swapOffer.findUnique as jest.Mock).mockResolvedValue({
         id: 1,
-        makerWallet: 'maker-wallet',
+        makerWallet: makerKeypair.publicKey.toBase58(),
         takerWallet: null,
         offerType: OfferType.MAKER_OFFER,
         offeredAssets: [],
@@ -275,14 +290,14 @@ describe('OfferManager - SOL Amount Handling', () => {
         requestedSolLamports: null,
         platformFeeLamports: BigInt(1000000),
         status: OfferStatus.ACTIVE,
-        nonceAccount: 'test-nonce',
+        nonceAccount: nonceAccountKeypair.publicKey.toBase58(),
         expiresAt: new Date(Date.now() + 86400000),
         createdAt: new Date(),
       });
       
       (mockPrisma.swapOffer.update as jest.Mock).mockResolvedValue({});
       
-      await offerManager.acceptOffer(1, 'taker-wallet');
+      await offerManager.acceptOffer(1, takerKeypair.publicKey.toBase58());
       
       expect(mockTransactionBuilder.buildSwapTransaction).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -296,7 +311,7 @@ describe('OfferManager - SOL Amount Handling', () => {
       
       (mockPrisma.swapOffer.findUnique as jest.Mock).mockResolvedValue({
         id: 1,
-        makerWallet: 'maker-wallet',
+        makerWallet: makerKeypair.publicKey.toBase58(),
         takerWallet: null,
         offerType: OfferType.MAKER_OFFER,
         offeredAssets: [{ type: AssetType.NFT, identifier: 'test-nft' }],
@@ -305,14 +320,14 @@ describe('OfferManager - SOL Amount Handling', () => {
         requestedSolLamports: requestedSol,
         platformFeeLamports: BigInt(1000000),
         status: OfferStatus.ACTIVE,
-        nonceAccount: 'test-nonce',
+        nonceAccount: nonceAccountKeypair.publicKey.toBase58(),
         expiresAt: new Date(Date.now() + 86400000),
         createdAt: new Date(),
       });
       
       (mockPrisma.swapOffer.update as jest.Mock).mockResolvedValue({});
       
-      await offerManager.acceptOffer(1, 'taker-wallet');
+      await offerManager.acceptOffer(1, takerKeypair.publicKey.toBase58());
       
       expect(mockTransactionBuilder.buildSwapTransaction).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -324,7 +339,7 @@ describe('OfferManager - SOL Amount Handling', () => {
     it('should default to BigInt(0) when SOL amounts are null', async () => {
       (mockPrisma.swapOffer.findUnique as jest.Mock).mockResolvedValue({
         id: 1,
-        makerWallet: 'maker-wallet',
+        makerWallet: makerKeypair.publicKey.toBase58(),
         takerWallet: null,
         offerType: OfferType.MAKER_OFFER,
         offeredAssets: [{ type: AssetType.NFT, identifier: 'nft-1' }],
@@ -333,14 +348,14 @@ describe('OfferManager - SOL Amount Handling', () => {
         requestedSolLamports: null,
         platformFeeLamports: BigInt(1000000),
         status: OfferStatus.ACTIVE,
-        nonceAccount: 'test-nonce',
+        nonceAccount: nonceAccountKeypair.publicKey.toBase58(),
         expiresAt: new Date(Date.now() + 86400000),
         createdAt: new Date(),
       });
       
       (mockPrisma.swapOffer.update as jest.Mock).mockResolvedValue({});
       
-      await offerManager.acceptOffer(1, 'taker-wallet');
+      await offerManager.acceptOffer(1, takerKeypair.publicKey.toBase58());
       
       expect(mockTransactionBuilder.buildSwapTransaction).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -356,7 +371,7 @@ describe('OfferManager - SOL Amount Handling', () => {
       
       (mockPrisma.swapOffer.findUnique as jest.Mock).mockResolvedValue({
         id: 1,
-        makerWallet: 'maker-wallet',
+        makerWallet: makerKeypair.publicKey.toBase58(),
         takerWallet: null,
         offerType: OfferType.MAKER_OFFER,
         offeredAssets: [],
@@ -365,14 +380,14 @@ describe('OfferManager - SOL Amount Handling', () => {
         requestedSolLamports: requestedSol,
         platformFeeLamports: BigInt(1000000),
         status: OfferStatus.ACTIVE,
-        nonceAccount: 'test-nonce',
+        nonceAccount: nonceAccountKeypair.publicKey.toBase58(),
         expiresAt: new Date(Date.now() + 86400000),
         createdAt: new Date(),
       });
       
       (mockPrisma.swapOffer.update as jest.Mock).mockResolvedValue({});
       
-      await offerManager.acceptOffer(1, 'taker-wallet');
+      await offerManager.acceptOffer(1, takerKeypair.publicKey.toBase58());
       
       expect(mockTransactionBuilder.buildSwapTransaction).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -387,7 +402,7 @@ describe('OfferManager - SOL Amount Handling', () => {
       
       (mockPrisma.swapOffer.findUnique as jest.Mock).mockResolvedValue({
         id: 1,
-        makerWallet: 'maker-wallet',
+        makerWallet: makerKeypair.publicKey.toBase58(),
         takerWallet: null,
         offerType: OfferType.MAKER_OFFER,
         offeredAssets: [],
@@ -396,14 +411,14 @@ describe('OfferManager - SOL Amount Handling', () => {
         requestedSolLamports: null,
         platformFeeLamports: platformFee,
         status: OfferStatus.ACTIVE,
-        nonceAccount: 'test-nonce',
+        nonceAccount: nonceAccountKeypair.publicKey.toBase58(),
         expiresAt: new Date(Date.now() + 86400000),
         createdAt: new Date(),
       });
       
       (mockPrisma.swapOffer.update as jest.Mock).mockResolvedValue({});
       
-      await offerManager.acceptOffer(1, 'taker-wallet');
+      await offerManager.acceptOffer(1, takerKeypair.publicKey.toBase58());
       
       expect(mockTransactionBuilder.buildSwapTransaction).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -418,7 +433,7 @@ describe('OfferManager - SOL Amount Handling', () => {
       
       (mockPrisma.swapOffer.findUnique as jest.Mock).mockResolvedValue({
         id: 1,
-        makerWallet: 'maker-wallet',
+        makerWallet: makerKeypair.publicKey.toBase58(),
         takerWallet: null,
         offerType: OfferType.MAKER_OFFER,
         offeredAssets: [],
@@ -427,7 +442,7 @@ describe('OfferManager - SOL Amount Handling', () => {
         requestedSolLamports: null,
         platformFeeLamports: BigInt(1000000),
         status: OfferStatus.ACTIVE,
-        nonceAccount: 'test-nonce',
+        nonceAccount: nonceAccountKeypair.publicKey.toBase58(),
         expiresAt: new Date(Date.now() + 86400000),
         createdAt: new Date(),
       });
@@ -439,12 +454,13 @@ describe('OfferManager - SOL Amount Handling', () => {
       
       (mockPrisma.swapOffer.update as jest.Mock).mockResolvedValue({});
       
-      await offerManager.acceptOffer(1, 'taker-wallet');
+      await offerManager.acceptOffer(1, takerKeypair.publicKey.toBase58());
       
       expect(mockPrisma.swapOffer.update).toHaveBeenCalledWith({
         where: { id: 1 },
         data: {
-          takerWallet: 'taker-wallet',
+          takerWallet: takerKeypair.publicKey.toBase58(),
+          status: 'ACCEPTED',
           serializedTransaction: serializedTx,
           currentNonceValue: nonceValue,
         },
@@ -458,7 +474,7 @@ describe('OfferManager - SOL Amount Handling', () => {
       
       (mockPrisma.swapOffer.create as jest.Mock).mockResolvedValue({
         id: 1,
-        makerWallet: 'maker-wallet',
+        makerWallet: makerKeypair.publicKey.toBase58(),
         offerType: OfferType.MAKER_OFFER,
         offeredAssets: [],
         requestedAssets: [],
@@ -466,13 +482,13 @@ describe('OfferManager - SOL Amount Handling', () => {
         requestedSolLamports: null,
         platformFeeLamports: BigInt(1000000),
         status: OfferStatus.ACTIVE,
-        nonceAccount: 'test-nonce',
+        nonceAccount: nonceAccountKeypair.publicKey.toBase58(),
         createdAt: new Date(),
         expiresAt: new Date(),
       });
       
       await offerManager.createOffer({
-        makerWallet: 'maker-wallet',
+        makerWallet: makerKeypair.publicKey.toBase58(),
         offeredAssets: [],
         offeredSol: largeSol,
         requestedAssets: [{ type: AssetType.NFT, identifier: 'test-nft' }],
@@ -492,7 +508,7 @@ describe('OfferManager - SOL Amount Handling', () => {
       
       (mockPrisma.swapOffer.create as jest.Mock).mockResolvedValue({
         id: 1,
-        makerWallet: 'maker-wallet',
+        makerWallet: makerKeypair.publicKey.toBase58(),
         offerType: OfferType.MAKER_OFFER,
         offeredAssets: [],
         requestedAssets: [],
@@ -500,13 +516,13 @@ describe('OfferManager - SOL Amount Handling', () => {
         requestedSolLamports: null,
         platformFeeLamports: BigInt(1000000),
         status: OfferStatus.ACTIVE,
-        nonceAccount: 'test-nonce',
+        nonceAccount: nonceAccountKeypair.publicKey.toBase58(),
         createdAt: new Date(),
         expiresAt: new Date(),
       });
       
       await offerManager.createOffer({
-        makerWallet: 'maker-wallet',
+        makerWallet: makerKeypair.publicKey.toBase58(),
         offeredAssets: [],
         offeredSol: minSol,
         requestedAssets: [{ type: AssetType.NFT, identifier: 'test-nft' }],
