@@ -15,9 +15,6 @@ let selectedTakerNFTs = [];
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('maker-address').textContent = MAKER_ADDRESS;
-    document.getElementById('taker-address').textContent = TAKER_ADDRESS;
-    
     loadWalletInfo('maker');
     loadWalletInfo('taker');
 });
