@@ -574,10 +574,10 @@ function showConfirmationModal() {
         estimatedTime = '~10 seconds';
     }
     
-    // Calculate network fees (rough estimate)
-    // Base fee + per-NFT fee
-    const baseFee = 0.00001; // SOL
-    const perNFTFee = 0.000005; // SOL per NFT
+    // Calculate network fees (realistic estimate)
+    // Atomic swaps involve multiple instructions and signatures
+    const baseFee = 0.005; // Base transaction + compute (SOL)
+    const perNFTFee = 0.002; // Per NFT transfer (includes potential ATA creation)
     const networkFee = baseFee + (totalNFTs * perNFTFee);
     
     // Calculate platform fee
