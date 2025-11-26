@@ -242,8 +242,19 @@ async function loadWalletInfo(wallet) {
         // Store wallet data
         if (wallet === 'maker') {
             makerData = data.data;
+            // Debug: Log cNFT mint addresses received from backend
+            const cNfts = data.data.nfts.filter(n => n.isCompressed);
+            console.log(`🔍 [Maker] Received ${cNfts.length} cNFTs from backend:`);
+            cNfts.forEach(nft => {
+                console.log(`   - ${nft.name}: ${nft.mint}`);
+            });
         } else {
             takerData = data.data;
+            const cNfts = data.data.nfts.filter(n => n.isCompressed);
+            console.log(`🔍 [Taker] Received ${cNfts.length} cNFTs from backend:`);
+            cNfts.forEach(nft => {
+                console.log(`   - ${nft.name}: ${nft.mint}`);
+            });
         }
 
         // Update balance
@@ -652,30 +663,46 @@ async function executeAtomicSwap(params) {
         // Use confirmed parameters passed from modal
         const { offeredSol, requestedSol, selectedMakerNFTs: confirmedMakerNFTs, selectedTakerNFTs: confirmedTakerNFTs } = params;
 
+        // Debug: Log selected NFTs
+        console.log('🔍 [Swap] Selected NFTs:');
+        console.log('   Maker NFTs:', confirmedMakerNFTs);
+        console.log('   Taker NFTs:', confirmedTakerNFTs);
+
         addLog('🚀 Starting atomic swap...', 'info');
 
         // Step 1: Create offer
         addLog('Step 1: Creating swap offer...', 'info');
+        
+        // Build request payload
+        const requestPayload = {
+            makerWallet: MAKER_ADDRESS,
+            takerWallet: TAKER_ADDRESS,
+            offeredAssets: confirmedMakerNFTs.map(nft => ({
+                mint: nft.mint,
+                isCompressed: nft.isCompressed || false,
+            })),
+            requestedAssets: confirmedTakerNFTs.map(nft => ({
+                mint: nft.mint,
+                isCompressed: nft.isCompressed || false,
+            })),
+            offeredSol: offeredSol ? Math.round(parseFloat(offeredSol) * 1e9).toString() : undefined,
+            requestedSol: requestedSol ? Math.round(parseFloat(requestedSol) * 1e9).toString() : undefined,
+        };
+        
+        // Debug: Log exact payload being sent to backend
+        console.log('📤 [Swap] Sending to backend:', requestPayload);
+        console.log('📤 [Swap] Offered assets details:');
+        requestPayload.offeredAssets.forEach((asset, i) => {
+            console.log(`   ${i + 1}. ${asset.isCompressed ? 'cNFT' : 'SPL'}: ${asset.mint}`);
+        });
+        
         const createResponse = await fetch('/api/offers', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'idempotency-key': `test-${Date.now()}`,
             },
-            body: JSON.stringify({
-                makerWallet: MAKER_ADDRESS,
-                takerWallet: TAKER_ADDRESS,
-                offeredAssets: confirmedMakerNFTs.map(nft => ({
-                    mint: nft.mint,
-                    isCompressed: nft.isCompressed || false,
-                })),
-                requestedAssets: confirmedTakerNFTs.map(nft => ({
-                    mint: nft.mint,
-                    isCompressed: nft.isCompressed || false,
-                })),
-                offeredSol: offeredSol ? Math.round(parseFloat(offeredSol) * 1e9).toString() : undefined,
-                requestedSol: requestedSol ? Math.round(parseFloat(requestedSol) * 1e9).toString() : undefined,
-            }),
+            body: JSON.stringify(requestPayload),
         });
 
         const createData = await createResponse.json();
