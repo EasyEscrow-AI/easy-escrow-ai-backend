@@ -221,21 +221,30 @@ function renderNFTs(wallet, nfts) {
         return;
     }
 
+    const placeholderSvg = 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'%3E%3Crect fill=\'%23ddd\' width=\'100\' height=\'100\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23999\' font-family=\'Arial\' font-size=\'14\'%3ENo Image%3C/text%3E%3C/svg%3E';
+    
     container.innerHTML = filteredNfts.map((nft, index) => {
         // Find original index in unfiltered array for toggle functionality
         const originalIndex = nfts.findIndex(n => n.mint === nft.mint);
         return `
             <div class="nft-card" data-index="${originalIndex}">
                 <img class="nft-image" 
-                     src="${nft.image || 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'%3E%3Crect fill=\'%23ddd\' width=\'100\' height=\'100\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23999\' font-family=\'Arial\' font-size=\'14\'%3ENo Image%3C/text%3E%3C/svg%3E'}" 
+                     src="${nft.image || placeholderSvg}" 
                      alt="${nft.name}"
-                     onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'%3E%3Crect fill=\'%23ddd\' width=\'100\' height=\'100\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23999\' font-family=\'Arial\' font-size=\'14\'%3ENo Image%3C/text%3E%3C/svg%3E'">
+                     data-fallback="${placeholderSvg}">
                 <div class="nft-name">${nft.name || 'Unknown NFT'}</div>
                 <div class="nft-type">${nft.isCompressed ? 'cNFT' : 'SPL NFT'}</div>
                 <div class="nft-mint">${nft.mint.substring(0, 8)}...</div>
             </div>
         `;
     }).join('');
+    
+    // Add CSP-compliant error handlers after rendering
+    container.querySelectorAll('.nft-image').forEach(img => {
+        img.addEventListener('error', function() {
+            this.src = this.dataset.fallback;
+        }, { once: true }); // Only fire once to prevent infinite loops
+    });
 }
 
 // Toggle NFT selection
