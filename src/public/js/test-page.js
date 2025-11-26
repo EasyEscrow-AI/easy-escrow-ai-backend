@@ -401,7 +401,7 @@ function clearNFTSelection(wallet) {
     const nfts = wallet === 'maker' ? makerData.nfts : takerData.nfts;
     renderNFTs(wallet, nfts);
     updateNFTSelection(wallet);
-    addLog(`🗑️ Cleared ${wallet} NFT selection`, 'info');
+    // No log message - silent clear for better UX
 }
 
 // Add log entry
