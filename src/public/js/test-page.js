@@ -335,9 +335,13 @@ function updateNFTSelection(wallet) {
         card.classList.toggle('selected', isSelected);
     });
     
-    // Update clear button state
+    // Update clear button visibility
     const clearBtn = document.getElementById(`${wallet}-clear-btn`);
-    clearBtn.disabled = selectedArray.length === 0;
+    if (selectedArray.length === 0) {
+        clearBtn.classList.add('hidden');
+    } else {
+        clearBtn.classList.remove('hidden');
+    }
 }
 
 // Clear NFT selection
