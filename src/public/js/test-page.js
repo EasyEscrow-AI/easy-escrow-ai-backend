@@ -467,13 +467,23 @@ function showConfirmationModal() {
     makerOffersEl.innerHTML = '';
     takerOffersEl.innerHTML = '';
     
+    // Helper function to format SOL with USD (defined here for early use)
+    const formatSOLDisplay = (solAmount) => {
+        const solValue = parseFloat(solAmount);
+        if (solPriceUSD) {
+            const usdValue = (solValue * solPriceUSD).toFixed(2);
+            return `💰 ${escapeHtml(solAmount)} SOL (~$${usdValue} USD)`;
+        }
+        return `💰 ${escapeHtml(solAmount)} SOL`;
+    };
+    
     // Build maker offers (XSS-safe)
     if (offeredSol) {
         const item = document.createElement('div');
         item.className = 'swap-item';
         item.innerHTML = `
             <div class="swap-item-label">SOL Amount</div>
-            <div class="swap-item-value">💰 ${escapeHtml(offeredSol)} SOL</div>
+            <div class="swap-item-value">${formatSOLDisplay(offeredSol)}</div>
         `;
         makerOffersEl.appendChild(item);
     }
@@ -526,7 +536,7 @@ function showConfirmationModal() {
         item.className = 'swap-item';
         item.innerHTML = `
             <div class="swap-item-label">SOL Amount</div>
-            <div class="swap-item-value">💰 ${escapeHtml(requestedSol)} SOL</div>
+            <div class="swap-item-value">${formatSOLDisplay(requestedSol)}</div>
         `;
         takerOffersEl.appendChild(item);
     }

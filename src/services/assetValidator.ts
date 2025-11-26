@@ -258,18 +258,30 @@ export class AssetValidator {
       // Fetch asset data via DAS API (works with QuickNode, Helius, etc.)
       const assetData = await this.fetchCNFTViaDAS(assetId);
       
-      // Verify ownership
-      if (assetData.ownership?.owner !== walletAddress) {
+      // Verify ownership with detailed logging
+      const actualOwner = assetData.ownership?.owner;
+      const expectedOwner = walletAddress;
+      
+      console.log(`[AssetValidator] Ownership check for cNFT ${assetId}:`);
+      console.log(`  Expected owner: ${expectedOwner}`);
+      console.log(`  Actual owner:   ${actualOwner}`);
+      console.log(`  Match: ${actualOwner === expectedOwner}`);
+      
+      if (actualOwner !== expectedOwner) {
+        console.error(`[AssetValidator] ❌ Ownership mismatch for cNFT ${assetId}`);
+        console.error(`  Wallet expected: ${expectedOwner}`);
+        console.error(`  Wallet found:    ${actualOwner}`);
+        
         return {
           isValid: false,
           asset: {
             type: AssetType.CNFT,
             identifier: assetId,
-            owner: assetData.ownership?.owner || '',
+            owner: actualOwner || '',
             status: AssetStatus.NOT_OWNED,
             validatedAt: new Date(),
           },
-          error: 'Wallet does not own this cNFT',
+          error: `Wallet does not own this cNFT (owner: ${actualOwner})`,
         };
       }
       
