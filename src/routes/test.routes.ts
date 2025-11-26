@@ -128,21 +128,26 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
               if (cNfts.length === 0) {
                 console.log('Sample cNFT asset structure:', JSON.stringify({
                   id: asset.id,
+                  uri: asset.uri,
                   content: asset.content,
                 }, null, 2));
               }
+              
+              // For cNFTs minted with image URL directly in uri field (non-standard but works for testing)
+              // Try: content structure, then fall back to root uri field (where we set it during minting)
+              const imageUrl = asset.content?.files?.[0]?.uri || 
+                              asset.content?.links?.image || 
+                              asset.content?.json_uri ||
+                              asset.content?.metadata?.uri ||
+                              asset.uri || // Root uri field (set during minting)
+                              null;
               
               return {
                 mint: asset.id,
                 tokenAccount: null, // cNFTs don't have token accounts
                 isCompressed: true,
                 name: asset.content?.metadata?.name || 'Unknown cNFT',
-                // Try multiple sources for image: files, links, or uri directly (for simple mints)
-                image: asset.content?.files?.[0]?.uri || 
-                       asset.content?.links?.image || 
-                       asset.content?.json_uri || // Sometimes the uri is here
-                       asset.content?.metadata?.uri || // Or here
-                       null,
+                image: imageUrl,
                 symbol: asset.content?.metadata?.symbol || '',
               };
             });
