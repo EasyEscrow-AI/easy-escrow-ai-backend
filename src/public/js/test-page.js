@@ -168,12 +168,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Setup search input event listeners
     document.getElementById('maker-search').addEventListener('input', (e) => {
         makerSearchTerm = e.target.value;
-        if (makerData) renderNFTs('maker', makerData.nfts);
+        if (makerData) {
+            renderNFTs('maker', makerData.nfts);
+            updateNFTSelection('maker'); // Restore visual selection state
+        }
     });
     
     document.getElementById('taker-search').addEventListener('input', (e) => {
         takerSearchTerm = e.target.value;
-        if (takerData) renderNFTs('taker', takerData.nfts);
+        if (takerData) {
+            renderNFTs('taker', takerData.nfts);
+            updateNFTSelection('taker'); // Restore visual selection state
+        }
     });
     
     // Setup NFT card click handling with event delegation
