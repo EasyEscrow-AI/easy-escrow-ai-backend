@@ -176,8 +176,8 @@ app.get('/', (_req: Request, res: Response) => {
       receipts: '/v1/receipts',
       transactions: '/v1/transactions',
       expiryCancellation: '/api/expiry-cancellation',
-      webhooks: '/api/webhooks',
-      test: '/test'
+      webhooks: '/api/webhooks'
+      // Note: Test endpoints are NOT documented publicly (internal use only)
     }
   };
   
