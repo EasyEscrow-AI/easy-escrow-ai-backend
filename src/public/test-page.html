@@ -147,7 +147,26 @@
         .filter-buttons {
             display: flex;
             gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .nft-search-box {
+            width: 100%;
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 0.95rem;
             margin-bottom: 15px;
+            transition: border-color 0.3s;
+        }
+
+        .nft-search-box:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .nft-search-box::placeholder {
+            color: #999;
         }
 
         .filter-btn {
@@ -861,6 +880,11 @@
                 font-size: 0.95rem;
             }
 
+            .nft-search-box {
+                padding: 8px 12px;
+                font-size: 0.9rem;
+            }
+
             .nft-grid {
                 grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
                 gap: 8px;
@@ -1023,6 +1047,7 @@
                     <button class="filter-btn" data-wallet="maker" data-filter="cnft">cNFT Only</button>
                     <button class="clear-btn hidden" id="maker-clear-btn">Clear Selection</button>
                 </div>
+                <input type="text" class="nft-search-box" id="maker-search" placeholder="🔍 Search by name or ID...">
                 <div class="nft-grid" id="maker-nfts">
                     <div class="loading">
                         <div class="spinner"></div>
@@ -1054,6 +1079,7 @@
                     <button class="filter-btn" data-wallet="taker" data-filter="cnft">cNFT Only</button>
                     <button class="clear-btn hidden" id="taker-clear-btn">Clear Selection</button>
                 </div>
+                <input type="text" class="nft-search-box" id="taker-search" placeholder="🔍 Search by name or ID...">
                 <div class="nft-grid" id="taker-nfts">
                     <div class="loading">
                         <div class="spinner"></div>
