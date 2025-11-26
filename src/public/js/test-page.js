@@ -733,14 +733,34 @@ async function executeAtomicSwap(params) {
 
         addLog('✓ Offer accepted, transaction built', 'success');
 
-        // Note about wallet signing
-        addLog('⚠️ Note: Transaction signing requires wallet integration', 'info');
-        addLog('Transaction would be signed by both parties and submitted on-chain', 'info');
+        // Step 3: Execute the swap on-chain using test wallets
+        addLog('Step 3: Executing swap on-chain...', 'info');
+        addLog('🔐 Signing with test wallet private keys...', 'info');
+        
+        const executeResponse = await fetch('/api/test/execute-swap', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Test-Execution': 'true', // Required security header
+            },
+            body: JSON.stringify({
+                serializedTransaction: acceptData.data.transaction.serialized,
+                requireSignatures: [MAKER_ADDRESS, TAKER_ADDRESS],
+            }),
+        });
 
-        // Show transaction summary (pass confirmed params)
-        showTransactionSummary(createData.data, acceptData.data, params);
+        const executeData = await executeResponse.json();
+        if (!executeData.success) {
+            throw new Error(executeData.error || 'Failed to execute swap on-chain');
+        }
 
-        addLog('✅ Atomic swap flow completed successfully!', 'success');
+        addLog('✅ Transaction confirmed on blockchain!', 'success');
+        addLog(`🔗 Signature: ${executeData.data.signature}`, 'success');
+
+        // Show transaction summary (pass confirmed params + execution data)
+        showTransactionSummary(createData.data, acceptData.data, executeData.data, params);
+
+        addLog('✅ Atomic swap completed successfully on devnet!', 'success');
 
     } catch (error) {
         console.error('Swap error:', error);
@@ -754,7 +774,7 @@ async function executeAtomicSwap(params) {
 }
 
 // Show transaction summary
-function showTransactionSummary(createData, acceptData, params) {
+function showTransactionSummary(createData, acceptData, executeData, params) {
     const summary = document.getElementById('transaction-summary');
     const content = document.getElementById('summary-content');
 
@@ -764,14 +784,18 @@ function showTransactionSummary(createData, acceptData, params) {
     // Build summary HTML safely (XSS-protected)
     content.innerHTML = `
         <div class="summary-section">
-            <h4>Offer Details</h4>
+            <h4>✅ Transaction Confirmed On-Chain</h4>
+            <div class="summary-item">
+                <span class="summary-label">Signature:</span>
+                <span class="summary-value"><a href="${executeData.explorerUrl}" target="_blank" rel="noopener noreferrer">${escapeHtml(executeData.signature.substring(0, 20))}...</a></span>
+            </div>
             <div class="summary-item">
                 <span class="summary-label">Offer ID:</span>
                 <span class="summary-value">${escapeHtml(createData.offer.id)}</span>
             </div>
             <div class="summary-item">
                 <span class="summary-label">Status:</span>
-                <span class="summary-value">${escapeHtml(acceptData.offer.status)}</span>
+                <span class="summary-value badge-success">EXECUTED ✅</span>
             </div>
             <div class="summary-item">
                 <span class="summary-label">Nonce Account:</span>
@@ -780,7 +804,7 @@ function showTransactionSummary(createData, acceptData, params) {
         </div>
 
         <div class="summary-section">
-            <h4>Maker Offers</h4>
+            <h4>Maker Offered</h4>
             ${confirmedMakerNFTs.length > 0 ? `
                 <div class="summary-item">
                     <span class="summary-label">NFTs:</span>
@@ -796,7 +820,7 @@ function showTransactionSummary(createData, acceptData, params) {
         </div>
 
         <div class="summary-section">
-            <h4>Taker Requests</h4>
+            <h4>Taker Offered</h4>
             ${confirmedTakerNFTs.length > 0 ? `
                 <div class="summary-item">
                     <span class="summary-label">NFTs:</span>
@@ -812,14 +836,11 @@ function showTransactionSummary(createData, acceptData, params) {
         </div>
 
         <div class="summary-section">
-            <h4>Next Steps</h4>
+            <h4>🔗 View Transaction</h4>
             <div class="summary-item">
-                <span class="summary-label">Transaction:</span>
-                <span class="summary-value">Ready for wallet signatures</span>
-            </div>
-            <div class="summary-item">
-                <span class="summary-label">Implementation:</span>
-                <span class="summary-value">Requires Phantom/Solflare wallet integration</span>
+                <a href="${executeData.explorerUrl}" target="_blank" rel="noopener noreferrer" class="explorer-link">
+                    View on Solscan (Devnet) →
+                </a>
             </div>
         </div>
     `;

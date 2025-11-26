@@ -13,6 +13,7 @@ import transactionLogRoutes from './transaction-log.routes';
 import healthRoutes from './health.routes';
 import offersRoutes from './offers.routes';
 import testRoutes from './test.routes';
+import testExecuteRoutes from './test-execute.routes';
 
 export { 
   agreementRoutes, 
@@ -22,6 +23,7 @@ export {
   transactionLogRoutes,
   healthRoutes,
   offersRoutes,
-  testRoutes
+  testRoutes,
+  testExecuteRoutes
 };
 

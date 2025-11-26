@@ -6,7 +6,7 @@ import swaggerUi from 'swagger-ui-express';
 import YAML from 'yamljs';
 import { connectDatabase, checkDatabaseHealth } from './config/database';
 import { connectRedis, checkRedisHealth, disconnectRedis } from './config/redis';
-import { agreementRoutes, expiryCancellationRoutes, webhookRoutes, receiptRoutes, transactionLogRoutes, healthRoutes, offersRoutes, testRoutes } from './routes';
+import { agreementRoutes, expiryCancellationRoutes, webhookRoutes, receiptRoutes, transactionLogRoutes, healthRoutes, offersRoutes, testRoutes, testExecuteRoutes } from './routes';
 import { noncePoolManager } from './routes/offers.routes';
 import {
   corsOptions,
@@ -220,6 +220,7 @@ app.use('/api/expiry-cancellation', expiryCancellationRoutes);
 app.use('/api', webhookRoutes);
 app.use('/health', healthRoutes);
 app.use(testRoutes);
+app.use(testExecuteRoutes); // ⚠️ TEST ONLY - Real swap execution with private keys
 
 // 404 handler
 app.use((req: Request, res: Response) => {
