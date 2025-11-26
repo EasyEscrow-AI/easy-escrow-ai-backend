@@ -88,10 +88,13 @@ pub struct SwapParams {
 }
 
 pub fn atomic_swap_handler(ctx: Context<AtomicSwapWithFee>, params: SwapParams) -> Result<()> {
+    let treasury = &mut ctx.accounts.treasury;
+    
+    // Check if program is paused
+    require!(!treasury.is_paused, AtomicSwapError::ProgramPaused);
+    
     // Validate parameters
     validate_params(&params)?;
-    
-    let treasury = &mut ctx.accounts.treasury;
     
     msg!("Executing atomic swap: {}", params.swap_id);
     msg!("Maker: {}", ctx.accounts.maker.key());
