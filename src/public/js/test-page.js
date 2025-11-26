@@ -26,6 +26,11 @@ function setEnvironmentBadge() {
     
     const badge = document.getElementById('env-badge');
     
+    if (!badge) {
+        console.warn('Environment badge element not found');
+        return;
+    }
+    
     if (isDevnet) {
         badge.textContent = '🧪 STAGING - DEVNET';
         badge.className = 'env-badge staging';
@@ -33,6 +38,8 @@ function setEnvironmentBadge() {
         badge.textContent = '🚀 PRODUCTION - MAINNET';
         badge.className = 'env-badge production';
     }
+    
+    console.log('✅ Environment badge set:', isDevnet ? 'STAGING - DEVNET' : 'PRODUCTION - MAINNET');
 }
 
 // Load configuration from backend
@@ -452,3 +459,8 @@ function showTransactionSummary(createData, acceptData) {
     summary.classList.add('show');
 }
 
+// Set environment badge immediately on script load (before DOMContentLoaded)
+// This ensures the badge updates as quickly as possible
+if (document.getElementById('env-badge')) {
+    setEnvironmentBadge();
+}
