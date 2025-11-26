@@ -242,8 +242,19 @@ async function loadWalletInfo(wallet) {
         // Store wallet data
         if (wallet === 'maker') {
             makerData = data.data;
+            // Debug: Log cNFT mint addresses received from backend
+            const cNfts = data.data.nfts.filter(n => n.isCompressed);
+            console.log(`🔍 [Maker] Received ${cNfts.length} cNFTs from backend:`);
+            cNfts.forEach(nft => {
+                console.log(`   - ${nft.name}: ${nft.mint}`);
+            });
         } else {
             takerData = data.data;
+            const cNfts = data.data.nfts.filter(n => n.isCompressed);
+            console.log(`🔍 [Taker] Received ${cNfts.length} cNFTs from backend:`);
+            cNfts.forEach(nft => {
+                console.log(`   - ${nft.name}: ${nft.mint}`);
+            });
         }
 
         // Update balance
@@ -390,7 +401,7 @@ function clearNFTSelection(wallet) {
     const nfts = wallet === 'maker' ? makerData.nfts : takerData.nfts;
     renderNFTs(wallet, nfts);
     updateNFTSelection(wallet);
-    addLog(`🗑️ Cleared ${wallet} NFT selection`, 'info');
+    // No log message - silent clear for better UX
 }
 
 // Add log entry
@@ -574,18 +585,22 @@ function showConfirmationModal() {
         estimatedTime = '~10 seconds';
     }
     
-    // Calculate network fees (rough estimate)
-    // Base fee + per-NFT fee
-    const baseFee = 0.00001; // SOL
-    const perNFTFee = 0.000005; // SOL per NFT
+    // Calculate network fees (realistic estimate)
+    // Atomic swaps involve multiple instructions and signatures
+    const baseFee = 0.005; // Base transaction + compute (SOL)
+    const perNFTFee = 0.002; // Per NFT transfer (includes potential ATA creation)
     const networkFee = baseFee + (totalNFTs * perNFTFee);
     
-    // Calculate platform fee
-    // - If SOL is transferred: 1% of total SOL (minimum 0.01 SOL)
-    // - If only NFTs (no SOL): Base fee of 0.01 SOL
-    let platformFee = 0.01; // Base fee
+    // Calculate platform fee (matches backend FeeCalculator logic)
+    // - If SOL is transferred: 1% of total SOL (minimum 0.001 SOL)
+    // - If only NFTs (no SOL): Flat fee of 0.005 SOL
+    let platformFee;
     if (totalSOL > 0) {
-        platformFee = Math.max(totalSOL * 0.01, 0.01);
+        // Percentage-based fee with minimum floor
+        platformFee = Math.max(totalSOL * 0.01, 0.001);
+    } else {
+        // Flat fee for NFT-only swaps
+        platformFee = 0.005;
     }
     
     // Helper function to format SOL with USD
@@ -599,10 +614,10 @@ function showConfirmationModal() {
     };
     
     // Format platform fee display
-    // Show base fee for NFT-only swaps, calculated fee for SOL swaps
+    // Show flat fee for NFT-only swaps, percentage fee for SOL swaps
     const platformFeeDisplay = totalSOL > 0 
         ? formatSOLWithUSD(platformFee)
-        : `${formatSOLWithUSD(platformFee)} (base fee)`;
+        : `${formatSOLWithUSD(platformFee)} (flat fee)`;
     
     // Update modal values
     document.getElementById('modal-est-time').textContent = estimatedTime;
@@ -639,6 +654,9 @@ async function executeAtomicSwap(params) {
     const swapBtn = document.getElementById('swap-btn');
     const originalText = swapBtn.innerHTML;
     
+    // Start timer
+    const startTime = performance.now();
+    
     // Set loading state
     swapBtn.disabled = true;
     swapBtn.innerHTML = '⏳ Swap In-Progress...';
@@ -648,30 +666,46 @@ async function executeAtomicSwap(params) {
         // Use confirmed parameters passed from modal
         const { offeredSol, requestedSol, selectedMakerNFTs: confirmedMakerNFTs, selectedTakerNFTs: confirmedTakerNFTs } = params;
 
+        // Debug: Log selected NFTs
+        console.log('🔍 [Swap] Selected NFTs:');
+        console.log('   Maker NFTs:', confirmedMakerNFTs);
+        console.log('   Taker NFTs:', confirmedTakerNFTs);
+
         addLog('🚀 Starting atomic swap...', 'info');
 
         // Step 1: Create offer
         addLog('Step 1: Creating swap offer...', 'info');
+        
+        // Build request payload
+        const requestPayload = {
+            makerWallet: MAKER_ADDRESS,
+            takerWallet: TAKER_ADDRESS,
+            offeredAssets: confirmedMakerNFTs.map(nft => ({
+                mint: nft.mint,
+                isCompressed: nft.isCompressed || false,
+            })),
+            requestedAssets: confirmedTakerNFTs.map(nft => ({
+                mint: nft.mint,
+                isCompressed: nft.isCompressed || false,
+            })),
+            offeredSol: offeredSol ? Math.round(parseFloat(offeredSol) * 1e9).toString() : undefined,
+            requestedSol: requestedSol ? Math.round(parseFloat(requestedSol) * 1e9).toString() : undefined,
+        };
+        
+        // Debug: Log exact payload being sent to backend
+        console.log('📤 [Swap] Sending to backend:', requestPayload);
+        console.log('📤 [Swap] Offered assets details:');
+        requestPayload.offeredAssets.forEach((asset, i) => {
+            console.log(`   ${i + 1}. ${asset.isCompressed ? 'cNFT' : 'SPL'}: ${asset.mint}`);
+        });
+        
         const createResponse = await fetch('/api/offers', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'idempotency-key': `test-${Date.now()}`,
             },
-            body: JSON.stringify({
-                makerWallet: MAKER_ADDRESS,
-                takerWallet: TAKER_ADDRESS,
-                offeredAssets: confirmedMakerNFTs.map(nft => ({
-                    mint: nft.mint,
-                    isCompressed: nft.isCompressed || false,
-                })),
-                requestedAssets: confirmedTakerNFTs.map(nft => ({
-                    mint: nft.mint,
-                    isCompressed: nft.isCompressed || false,
-                })),
-                offeredSol: offeredSol ? Math.round(parseFloat(offeredSol) * 1e9).toString() : undefined,
-                requestedSol: requestedSol ? Math.round(parseFloat(requestedSol) * 1e9).toString() : undefined,
-            }),
+            body: JSON.stringify(requestPayload),
         });
 
         const createData = await createResponse.json();
@@ -702,14 +736,41 @@ async function executeAtomicSwap(params) {
 
         addLog('✓ Offer accepted, transaction built', 'success');
 
-        // Note about wallet signing
-        addLog('⚠️ Note: Transaction signing requires wallet integration', 'info');
-        addLog('Transaction would be signed by both parties and submitted on-chain', 'info');
+        // Step 3: Execute the swap on-chain using test wallets
+        addLog('Step 3: Executing swap on-chain...', 'info');
+        addLog('🔐 Signing with test wallet private keys...', 'info');
+        
+        const executeResponse = await fetch('/api/test/execute-swap', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Test-Execution': 'true', // Required security header
+            },
+            body: JSON.stringify({
+                serializedTransaction: acceptData.data.transaction.serialized,
+                requireSignatures: [MAKER_ADDRESS, TAKER_ADDRESS],
+            }),
+        });
 
-        // Show transaction summary (pass confirmed params)
-        showTransactionSummary(createData.data, acceptData.data, params);
+        const executeData = await executeResponse.json();
+        if (!executeData.success) {
+            throw new Error(executeData.error || 'Failed to execute swap on-chain');
+        }
 
-        addLog('✅ Atomic swap flow completed successfully!', 'success');
+        addLog('✅ Transaction confirmed on blockchain!', 'success');
+        addLog(`🔗 Signature: ${executeData.data.signature}`, 'success');
+
+        // Calculate execution time
+        const endTime = performance.now();
+        const executionTimeMs = endTime - startTime;
+        const executionTimeSec = (executionTimeMs / 1000).toFixed(2);
+
+        addLog(`⚡ Execution time: ${executionTimeSec}s`, 'success');
+
+        // Show transaction summary (pass confirmed params + execution data + timing)
+        showTransactionSummary(createData.data, acceptData.data, executeData.data, params, executionTimeSec);
+
+        addLog('✅ Atomic swap completed successfully on devnet!', 'success');
 
     } catch (error) {
         console.error('Swap error:', error);
@@ -723,7 +784,7 @@ async function executeAtomicSwap(params) {
 }
 
 // Show transaction summary
-function showTransactionSummary(createData, acceptData, params) {
+function showTransactionSummary(createData, acceptData, executeData, params, executionTimeSec) {
     const summary = document.getElementById('transaction-summary');
     const content = document.getElementById('summary-content');
 
@@ -733,14 +794,22 @@ function showTransactionSummary(createData, acceptData, params) {
     // Build summary HTML safely (XSS-protected)
     content.innerHTML = `
         <div class="summary-section">
-            <h4>Offer Details</h4>
+            <h4>✅ Transaction Confirmed On-Chain</h4>
+            <div class="summary-item">
+                <span class="summary-label">Signature:</span>
+                <span class="summary-value"><a href="${executeData.explorerUrl}" target="_blank" rel="noopener noreferrer">${escapeHtml(executeData.signature.substring(0, 20))}...</a></span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Execution Time:</span>
+                <span class="summary-value highlight">⚡ ${executionTimeSec}s</span>
+            </div>
             <div class="summary-item">
                 <span class="summary-label">Offer ID:</span>
                 <span class="summary-value">${escapeHtml(createData.offer.id)}</span>
             </div>
             <div class="summary-item">
                 <span class="summary-label">Status:</span>
-                <span class="summary-value">${escapeHtml(acceptData.offer.status)}</span>
+                <span class="summary-value badge-success">EXECUTED ✅</span>
             </div>
             <div class="summary-item">
                 <span class="summary-label">Nonce Account:</span>
@@ -749,7 +818,7 @@ function showTransactionSummary(createData, acceptData, params) {
         </div>
 
         <div class="summary-section">
-            <h4>Maker Offers</h4>
+            <h4>Maker Offered</h4>
             ${confirmedMakerNFTs.length > 0 ? `
                 <div class="summary-item">
                     <span class="summary-label">NFTs:</span>
@@ -765,7 +834,7 @@ function showTransactionSummary(createData, acceptData, params) {
         </div>
 
         <div class="summary-section">
-            <h4>Taker Requests</h4>
+            <h4>Taker Offered</h4>
             ${confirmedTakerNFTs.length > 0 ? `
                 <div class="summary-item">
                     <span class="summary-label">NFTs:</span>
@@ -781,14 +850,11 @@ function showTransactionSummary(createData, acceptData, params) {
         </div>
 
         <div class="summary-section">
-            <h4>Next Steps</h4>
+            <h4>🔗 View Transaction</h4>
             <div class="summary-item">
-                <span class="summary-label">Transaction:</span>
-                <span class="summary-value">Ready for wallet signatures</span>
-            </div>
-            <div class="summary-item">
-                <span class="summary-label">Implementation:</span>
-                <span class="summary-value">Requires Phantom/Solflare wallet integration</span>
+                <a href="${executeData.explorerUrl}" target="_blank" rel="noopener noreferrer" class="explorer-link">
+                    View on Solscan (Devnet) →
+                </a>
             </div>
         </div>
     `;
