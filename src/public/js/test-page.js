@@ -16,6 +16,25 @@ let selectedTakerNFTs = [];
 let makerFilter = 'all'; // 'all', 'spl', 'cnft'
 let takerFilter = 'all';
 
+// Detect and set environment
+function setEnvironmentBadge() {
+    const hostname = window.location.hostname;
+    const isDevnet = hostname.includes('staging') || 
+                     hostname.includes('dev') || 
+                     hostname === 'localhost' ||
+                     hostname === '127.0.0.1';
+    
+    const badge = document.getElementById('env-badge');
+    
+    if (isDevnet) {
+        badge.textContent = '🧪 STAGING - DEVNET';
+        badge.className = 'env-badge staging';
+    } else {
+        badge.textContent = '🚀 PRODUCTION - MAINNET';
+        badge.className = 'env-badge production';
+    }
+}
+
 // Load configuration from backend
 async function loadConfig() {
     try {
@@ -27,7 +46,10 @@ async function loadConfig() {
             TAKER_ADDRESS = result.data.takerAddress;
             
             // Update displayed addresses with Solscan links
-            const isDevnet = window.location.hostname.includes('staging') || window.location.hostname.includes('dev');
+            const isDevnet = window.location.hostname.includes('staging') || 
+                           window.location.hostname.includes('dev') ||
+                           window.location.hostname === 'localhost' ||
+                           window.location.hostname === '127.0.0.1';
             const solscanCluster = isDevnet ? '?cluster=devnet' : '';
             
             document.getElementById('maker-address').innerHTML = 
@@ -53,7 +75,10 @@ async function loadConfig() {
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('🚀 Atomic Swap Test Page Loaded');
     
-    // Load configuration first
+    // Set environment badge first
+    setEnvironmentBadge();
+    
+    // Load configuration
     const configLoaded = await loadConfig();
     
     if (!configLoaded) {

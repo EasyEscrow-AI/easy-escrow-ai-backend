@@ -391,6 +391,42 @@
             color: #c0392b;
         }
 
+        /* Environment Badge */
+        .env-badge {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 1000;
+            animation: slideInRight 0.5s ease-out;
+        }
+
+        .env-badge.staging {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .env-badge.production {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
         /* Mobile Responsive Styles */
         @media (max-width: 1024px) {
             .container {
@@ -461,6 +497,13 @@
 
             .header p {
                 font-size: 0.9rem;
+            }
+
+            .env-badge {
+                top: 10px;
+                right: 10px;
+                padding: 8px 16px;
+                font-size: 0.75rem;
             }
 
             .swap-container {
@@ -572,6 +615,13 @@
         }
 
         @media (max-width: 480px) {
+            .env-badge {
+                top: 8px;
+                right: 8px;
+                padding: 6px 12px;
+                font-size: 0.7rem;
+            }
+
             .header h1 {
                 font-size: 1.3rem;
             }
@@ -633,10 +683,13 @@
     </style>
 </head>
 <body>
+    <!-- Environment Badge -->
+    <div class="env-badge" id="env-badge">LOADING...</div>
+
     <div class="container">
         <div class="header">
             <h1>⚡ Atomic Swap Test Page</h1>
-            <p>Test atomic swap functionality with live wallets on Devnet</p>
+            <p>Test atomic swap functionality with live wallets</p>
         </div>
 
         <div class="swap-container">
