@@ -15,6 +15,20 @@ let selectedMakerNFTs = [];
 let selectedTakerNFTs = [];
 let makerFilter = 'all'; // 'all', 'spl', 'cnft'
 let takerFilter = 'all';
+let solPriceUSD = null; // Cached SOL price in USD
+
+// Fetch SOL price in USD
+async function fetchSOLPrice() {
+    try {
+        const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd');
+        const data = await response.json();
+        solPriceUSD = data.solana.usd;
+        console.log(`💰 SOL Price: $${solPriceUSD} USD`);
+    } catch (error) {
+        console.warn('Failed to fetch SOL price:', error);
+        solPriceUSD = null; // Fallback to no USD display
+    }
+}
 
 // Detect and set environment
 function setEnvironmentBadge() {
@@ -84,6 +98,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Set environment badge first
     setEnvironmentBadge();
+    
+    // Fetch SOL price for USD conversions
+    fetchSOLPrice();
     
     // Load configuration
     const configLoaded = await loadConfig();
@@ -491,11 +508,11 @@ function showConfirmationModal() {
     const totalSOL = (parseFloat(offeredSol) || 0) + (parseFloat(requestedSol) || 0);
     
     // Estimate time based on number of NFTs (check larger thresholds first)
-    let estimatedTime = '~5-10 seconds';
+    let estimatedTime = '~5 seconds';
     if (totalNFTs > 10) {
-        estimatedTime = '~15-20 seconds';
+        estimatedTime = '~20 seconds';
     } else if (totalNFTs > 5) {
-        estimatedTime = '~10-15 seconds';
+        estimatedTime = '~10 seconds';
     }
     
     // Calculate network fees (rough estimate)
@@ -509,13 +526,30 @@ function showConfirmationModal() {
     if (platformFee < 0.01 && totalSOL > 0) {
         platformFee = 0.01;
     }
-    const platformFeeDisplay = totalSOL > 0 
-        ? `${platformFee.toFixed(4)} SOL (1%)`
-        : '0 SOL (no SOL transfer)';
+    
+    // Helper function to format SOL with USD
+    const formatSOLWithUSD = (solAmount) => {
+        const solStr = solAmount.toFixed(4);
+        if (solPriceUSD) {
+            const usdValue = (solAmount * solPriceUSD).toFixed(2);
+            return `${solStr} SOL (~$${usdValue} USD)`;
+        }
+        return `${solStr} SOL`;
+    };
+    
+    // Format platform fee display
+    let platformFeeDisplay;
+    if (totalSOL > 0) {
+        platformFeeDisplay = formatSOLWithUSD(platformFee);
+    } else {
+        platformFeeDisplay = '0 SOL (no SOL transfer)';
+    }
     
     // Update modal values
     document.getElementById('modal-est-time').textContent = estimatedTime;
-    document.getElementById('modal-network-fees').textContent = `~${networkFee.toFixed(6)} SOL`;
+    document.getElementById('modal-network-fees').textContent = solPriceUSD 
+        ? `~${formatSOLWithUSD(networkFee)}`
+        : `~${networkFee.toFixed(6)} SOL`;
     document.getElementById('modal-platform-fee').textContent = platformFeeDisplay;
     
     // Show modal
