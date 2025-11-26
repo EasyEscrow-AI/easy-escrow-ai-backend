@@ -281,8 +281,10 @@ function updateNFTSelection(wallet) {
     const container = document.getElementById(`${wallet}-nfts`);
     const cards = container.querySelectorAll('.nft-card');
 
-    cards.forEach((card, index) => {
-        const nft = nfts[index];
+    cards.forEach((card) => {
+        // Use the original index from data-index attribute (handles filtered lists correctly)
+        const originalIndex = parseInt(card.dataset.index);
+        const nft = nfts[originalIndex];
         const isSelected = selectedArray.some(n => n.mint === nft.mint);
         card.classList.toggle('selected', isSelected);
     });
