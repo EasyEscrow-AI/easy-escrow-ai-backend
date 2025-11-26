@@ -15,7 +15,8 @@ info:
     1. **Maker creates offer** - Specifies what they offer and what they want
     2. **Taker accepts offer** - Gets a pre-built transaction to sign
     3. **Taker signs & broadcasts** - The swap executes atomically on Solana
-    4. **Instant settlement** - NFTs/SOL/cNFTs transfer simultaneously
+    4. **Taker confirms** - Submits the transaction signature for verification
+    5. **Instant settlement** - NFTs/SOL/cNFTs transfer simultaneously
     
     ### Supported Asset Types
     
@@ -35,10 +36,10 @@ info:
     
     ### Platform Fees
     
-    - **SOL involved**: 1% of SOL amount (paid by taker)
-    - **Pure NFT swaps**: 0.005 SOL flat fee (paid by taker)
-    - **Maximum fee**: Capped at 0.5 SOL
+    - **NFT-only swaps**: 0.005 SOL flat fee (paid by taker)
+    - **Swaps with SOL**: 1% of total SOL amount (paid by taker)
     - **Minimum fee**: 0.001 SOL
+    - **Maximum fee**: 0.5 SOL (fee cap)
     
     ### Security
     
@@ -46,6 +47,7 @@ info:
     - **Asset validation** ensures you own what you're trading
     - **Rate limiting** prevents API abuse
     - **Input validation** protects against malicious inputs
+    - **Idempotency keys** prevent duplicate operations
     
   contact:
     name: EasyEscrow.ai Support
@@ -213,9 +215,8 @@ paths:
                   makerWallet: "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"
                   takerWallet: "8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ"
                   offeredAssets:
-                    - standard: "nft"
-                      mint: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
-                      amount: 1
+                    - mint: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+                      isCompressed: false
                   requestedAssets: []
                   offeredSol: "0"
                   requestedSol: "1000000000"
@@ -225,9 +226,8 @@ paths:
                   makerWallet: "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"
                   offeredAssets: []
                   requestedAssets:
-                    - standard: "nft"
-                      mint: "8xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
-                      amount: 1
+                    - mint: "8xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+                      isCompressed: false
                   offeredSol: "500000000"
                   requestedSol: "0"
               nftForNft:
@@ -236,13 +236,11 @@ paths:
                   makerWallet: "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"
                   takerWallet: "8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ"
                   offeredAssets:
-                    - standard: "nft"
-                      mint: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
-                      amount: 1
+                    - mint: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+                      isCompressed: false
                   requestedAssets:
-                    - standard: "nft"
-                      mint: "8xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
-                      amount: 1
+                    - mint: "8xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+                      isCompressed: false
                   offeredSol: "0"
                   requestedSol: "0"
               cnftForSol:
@@ -250,11 +248,8 @@ paths:
                 value:
                   makerWallet: "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"
                   offeredAssets:
-                    - standard: "cnft"
-                      assetId: "DRiP2Pn2K6fuMLKQmt5rZWqHheXMyUtCeXhe8kDQdxRu"
-                      tree: "TreeAccount..."
-                      leafIndex: 12345
-                      amount: 1
+                    - mint: "DRiP2Pn2K6fuMLKQmt5rZWqHheXMyUtCeXhe8kDQdxRu"
+                      isCompressed: true
                   requestedAssets: []
                   offeredSol: "0"
                   requestedSol: "2000000000"
@@ -272,46 +267,57 @@ paths:
                   data:
                     type: object
                     properties:
-                      offerId:
-                        type: integer
-                        example: 1
-                      status:
-                        type: string
-                        example: "active"
-                      makerWallet:
-                        type: string
-                      takerWallet:
-                        type: string
-                      offeredAssets:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/Asset'
-                      requestedAssets:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/Asset'
-                      offeredSol:
-                        type: string
-                        description: In lamports
-                      requestedSol:
-                        type: string
-                        description: In lamports
-                      platformFee:
-                        type: string
-                        description: In lamports
-                      feeBreakdown:
-                        $ref: '#/components/schemas/FeeBreakdown'
-                      expiresAt:
-                        type: string
-                        format: date-time
-                      createdAt:
-                        type: string
-                        format: date-time
+                      offer:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            example: "1"
+                          status:
+                            type: string
+                            example: "PENDING"
+                          makerWallet:
+                            type: string
+                          takerWallet:
+                            type: string
+                            nullable: true
+                          offeredAssets:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Asset'
+                          requestedAssets:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Asset'
+                          offeredSol:
+                            type: string
+                            description: In lamports
+                          requestedSol:
+                            type: string
+                            description: In lamports
+                          createdAt:
+                            type: string
+                            format: date-time
+                      transaction:
+                        type: object
+                        properties:
+                          nonceAccount:
+                            type: string
+                            description: Durable nonce account address
+                          message:
+                            type: string
+                            example: "Transaction will be built when offer is accepted"
                   timestamp:
                     type: string
                     format: date-time
         '400':
           $ref: '#/components/responses/BadRequest'
+        '422':
+          description: Validation error - asset ownership or on-chain validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '429':
           $ref: '#/components/responses/RateLimitExceeded'
         '500':
@@ -365,9 +371,8 @@ paths:
               takerWallet: "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"
               offeredAssets: []
               requestedAssets:
-                - standard: "nft"
-                  mint: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
-                  amount: 1
+                - mint: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+                  isCompressed: false
               offeredSol: "1500000000"
               requestedSol: "0"
       responses:
@@ -390,7 +395,7 @@ paths:
                         type: integer
                       status:
                         type: string
-                        example: "active"
+                        example: "PENDING"
                   timestamp:
                     type: string
                     format: date-time
@@ -446,7 +451,7 @@ paths:
                         type: integer
                       status:
                         type: string
-                        example: "cancelled"
+                        example: "CANCELLED"
                       cancelledAt:
                         type: string
                         format: date-time
@@ -482,6 +487,8 @@ paths:
         2. Sign with your wallet
         3. Broadcast to Solana
         4. Call /confirm with the signature
+        
+        **Requires idempotency key** to prevent duplicate nonce consumption.
       parameters:
         - $ref: '#/components/parameters/OfferId'
       requestBody:
@@ -511,23 +518,61 @@ paths:
                   data:
                     type: object
                     properties:
-                      offerId:
-                        type: integer
-                      serializedTransaction:
-                        type: string
-                        description: Base64-encoded transaction to sign and broadcast
-                        example: "AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAEDz..."
-                      instructions:
-                        type: string
-                        description: Instructions for signing and broadcasting
-                        example: "1. Deserialize this transaction 2. Sign with your wallet 3. Broadcast to Solana 4. Call /confirm with signature"
+                      offer:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                          status:
+                            type: string
+                            example: "ACCEPTED"
+                          makerWallet:
+                            type: string
+                          takerWallet:
+                            type: string
+                          offeredAssets:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Asset'
+                          requestedAssets:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Asset'
+                          offeredSol:
+                            type: string
+                            description: In lamports
+                          requestedSol:
+                            type: string
+                            description: In lamports
+                      transaction:
+                        type: object
+                        properties:
+                          serialized:
+                            type: string
+                            description: Base64-encoded transaction to sign and broadcast
+                            example: "AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAEDz..."
+                          nonceAccount:
+                            type: string
+                            description: Durable nonce account used in the transaction
                   timestamp:
                     type: string
                     format: date-time
         '400':
           $ref: '#/components/responses/BadRequest'
+        '403':
+          description: Not authorized to accept this offer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '404':
           $ref: '#/components/responses/NotFound'
+        '422':
+          description: Validation error - asset ownership validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
@@ -540,6 +585,8 @@ paths:
         Confirm that you've broadcast the swap transaction and provide its signature.
         
         The API will verify the transaction on-chain and mark the offer as filled.
+        
+        **Requires idempotency key** to prevent duplicate confirmations.
       parameters:
         - $ref: '#/components/parameters/OfferId'
       requestBody:
@@ -569,19 +616,11 @@ paths:
                   data:
                     type: object
                     properties:
-                      offerId:
-                        type: integer
-                      status:
-                        type: string
-                        example: "filled"
-                      signature:
-                        type: string
-                      filledAt:
-                        type: string
-                        format: date-time
                       message:
                         type: string
-                        example: "Swap executed successfully"
+                        example: "Swap confirmed successfully"
+                      signature:
+                        type: string
                   timestamp:
                     type: string
                     format: date-time
@@ -611,48 +650,36 @@ components:
     OfferStatus:
       type: string
       enum:
-        - active
-        - filled
-        - cancelled
-        - expired
+        - PENDING
+        - ACCEPTED
+        - FILLED
+        - CANCELLED
+        - EXPIRED
       description: |
         Offer status:
-        - **active**: Offer is open and can be accepted
-        - **filled**: Swap has been executed
-        - **cancelled**: Offer was cancelled by maker
-        - **expired**: Offer has expired (after 7 days)
+        - **PENDING**: Offer is open and can be accepted
+        - **ACCEPTED**: Offer has been accepted, transaction ready to sign
+        - **FILLED**: Swap has been executed on-chain
+        - **CANCELLED**: Offer was cancelled by maker
+        - **EXPIRED**: Offer has expired (after 7 days)
 
     Asset:
       type: object
       required:
-        - standard
-        - amount
+        - mint
+        - isCompressed
       properties:
-        standard:
-          type: string
-          enum: ["nft", "cnft"]
-          description: Asset type - "nft" for SPL NFTs, "cnft" for compressed NFTs
-          example: "nft"
         mint:
           type: string
-          description: Mint address (required for NFTs)
+          description: Mint address or Asset ID
           example: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
-        amount:
-          type: integer
-          description: Amount of tokens (typically 1 for NFTs)
-          example: 1
-        assetId:
-          type: string
-          description: Asset ID (required for cNFTs)
-          example: "DRiP2Pn2K6fuMLKQmt5rZWqHheXMyUtCeXhe8kDQdxRu"
-        tree:
-          type: string
-          description: Merkle tree account (required for cNFTs)
-          example: "TreeAccount..."
-        leafIndex:
-          type: integer
-          description: Leaf index in tree (optional for cNFTs)
-          example: 12345
+        isCompressed:
+          type: boolean
+          description: |
+            Whether this is a compressed NFT (cNFT).
+            - `false` for SPL NFTs
+            - `true` for compressed NFTs (Metaplex Bubblegum)
+          example: false
 
     CreateOfferRequest:
       type: object
@@ -712,6 +739,7 @@ components:
           type: string
         takerWallet:
           type: string
+          nullable: true
         offerType:
           type: string
           enum: ["MAKER_OFFER", "COUNTER_OFFER"]
@@ -760,41 +788,19 @@ components:
             parentOfferId:
               type: integer
               description: Parent offer ID (for counter-offers)
+              nullable: true
             filledAt:
               type: string
               format: date-time
+              nullable: true
             cancelledAt:
               type: string
               format: date-time
+              nullable: true
             transactionSignature:
               type: string
               description: Solana transaction signature (if filled)
-
-    FeeBreakdown:
-      type: object
-      properties:
-        feeLamports:
-          type: string
-          description: Fee amount in lamports
-          example: "10000000"
-        feeSol:
-          type: number
-          description: Fee amount in SOL
-          example: 0.01
-        feeType:
-          type: string
-          enum: ["flat", "percentage"]
-          description: Type of fee calculation used
-        percentageRate:
-          type: string
-          description: Percentage rate used (if applicable)
-          example: "1%"
-        totalSwapValueLamports:
-          type: string
-          description: Total SOL value of the swap
-        totalSwapValueSol:
-          type: number
-          description: Total SOL value in SOL
+              nullable: true
 
     HealthResponse:
       type: object
@@ -809,6 +815,9 @@ components:
         service:
           type: string
           example: easy-escrow-ai-backend
+        mode:
+          type: string
+          example: atomic-swap
         database:
           type: string
           enum: [connected, disconnected]
@@ -817,20 +826,11 @@ components:
           type: string
           enum: [connected, disconnected]
           example: connected
-        solana:
-          type: object
-          properties:
-            connected:
-              type: boolean
-            network:
-              type: string
-              example: "devnet"
-            programId:
-              type: string
-              example: "AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei"
         idempotency:
           type: object
           properties:
+            isRunning:
+              type: boolean
             status:
               type: string
               enum: [running, stopped]
@@ -838,6 +838,19 @@ components:
               type: integer
             cleanupIntervalMinutes:
               type: integer
+        noncePool:
+          type: object
+          properties:
+            totalNonces:
+              type: integer
+            availableNonces:
+              type: integer
+            consumedNonces:
+              type: integer
+            healthPercentage:
+              type: number
+            isHealthy:
+              type: boolean
 
     ErrorResponse:
       type: object
