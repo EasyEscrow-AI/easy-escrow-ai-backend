@@ -569,8 +569,10 @@ async function confirmAndExecuteSwap() {
         return;
     }
     
+    // Save params locally before hiding modal (which clears confirmedSwapParams)
+    const params = confirmedSwapParams;
     hideConfirmationModal();
-    await executeAtomicSwap(confirmedSwapParams);
+    await executeAtomicSwap(params);
 }
 
 // Execute atomic swap (uses confirmed parameters to prevent stale values)
