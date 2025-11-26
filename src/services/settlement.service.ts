@@ -27,7 +27,8 @@ interface SettlementConfig {
   pollingInterval?: number; // Milliseconds between settlement checks
   maxRetries?: number; // Max retries for failed settlements
   retryDelayMs?: number; // Delay between retries
-  platformFeeCollectorAddress?: string; // Platform fee collection wallet
+  platformTreasuryAddress?: string; // Treasury wallet where fees are initially collected
+  platformFeeCollectorAddress?: string; // Cold storage wallet for weekly transfers (kept for backwards compatibility)
 }
 
 /**
@@ -89,7 +90,13 @@ export class SettlementService {
       pollingInterval: settlementConfig?.pollingInterval || envPollingInterval,
       maxRetries: settlementConfig?.maxRetries || 3,
       retryDelayMs: settlementConfig?.retryDelayMs || 2000,
-      platformFeeCollectorAddress: settlementConfig?.platformFeeCollectorAddress || 
+      // Treasury address for active fee collection (hot wallet)
+      platformTreasuryAddress: settlementConfig?.platformTreasuryAddress || 
+        config.platform?.treasuryAddress || 
+        '11111111111111111111111111111111',
+      // Use treasury address for active fee collection (where fees go during swaps)
+      platformFeeCollectorAddress: settlementConfig?.platformTreasuryAddress || 
+        config.platform?.treasuryAddress || 
         config.platform?.feeCollectorAddress || 
         '11111111111111111111111111111111', // Fallback address
     };

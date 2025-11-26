@@ -22,7 +22,11 @@ export interface ProgramConfig {
   programId: PublicKey;
   /** Program ID as string */
   programIdString: string;
-  /** Fee collector address */
+  /** Treasury wallet address (where fees are initially collected) */
+  treasuryAddress: PublicKey;
+  /** Treasury wallet address as string */
+  treasuryAddressString: string;
+  /** Fee collector address (cold storage for weekly transfers) */
   feeCollectorAddress: PublicKey;
   /** Fee collector address as string */
   feeCollectorAddressString: string;
@@ -135,7 +139,68 @@ export function getProgramId(): string {
 }
 
 /**
+ * Get treasury wallet address for current environment
+ * Treasury wallets temporarily hold platform fees before weekly reconciliation and transfer to cold storage
+ */
+export function getTreasuryAddress(): string {
+  const network = getCurrentNetwork();
+  const walletsDir = path.join(process.cwd(), 'wallets');
+
+  switch (network) {
+    case 'staging':
+      // Try environment variable first, then load from keypair file
+      if (process.env.STAGING_TREASURY_ADDRESS) {
+        return process.env.STAGING_TREASURY_ADDRESS;
+      }
+      
+      try {
+        const treasuryPath = path.join(walletsDir, 'staging', 'staging-treasury.json');
+        if (fs.existsSync(treasuryPath)) {
+          const keypairData = JSON.parse(fs.readFileSync(treasuryPath, 'utf-8'));
+          return new PublicKey(keypairData).toBase58();
+        }
+      } catch (error) {
+        console.warn('⚠️  Could not load staging treasury from keypair file:', error);
+      }
+      
+      // Hardcoded fallback (staging treasury public key)
+      return 'AScijLJ1ApcQftktBRN818b8LDH4JJovQ5qrGDHfHuPu';
+
+    case 'production':
+      // Try environment variable first, then load from keypair file
+      if (process.env.PRODUCTION_TREASURY_ADDRESS || process.env.MAINNET_TREASURY_ADDRESS) {
+        return process.env.PRODUCTION_TREASURY_ADDRESS || process.env.MAINNET_TREASURY_ADDRESS!;
+      }
+      
+      try {
+        const treasuryPath = path.join(walletsDir, 'production', 'production-treasury.json');
+        if (fs.existsSync(treasuryPath)) {
+          const keypairData = JSON.parse(fs.readFileSync(treasuryPath, 'utf-8'));
+          return new PublicKey(keypairData).toBase58();
+        }
+      } catch (error) {
+        console.warn('⚠️  Could not load production treasury from keypair file:', error);
+      }
+
+      // Hardcoded fallback (production treasury public key)
+      return '9VN2bzjWoF1HsmyPrNtwXbBMxCYRNsFagC6pcfLmN7LA';
+
+    case 'local':
+    default:
+      // For local, use staging treasury as fallback
+      return (
+        process.env.LOCAL_TREASURY_ADDRESS ||
+        'AScijLJ1ApcQftktBRN818b8LDH4JJovQ5qrGDHfHuPu' // Fallback to staging treasury
+      );
+  }
+}
+
+/**
  * Get fee collector address for current environment
+ * This is the COLD STORAGE address where fees are ultimately stored after weekly reconciliation
+ * 
+ * NOTE: Platform fees now go to treasury wallet first (getTreasuryAddress),
+ * then are moved to this cold storage collector weekly after prize distribution
  */
 export function getFeeCollectorAddress(): string {
   const network = getCurrentNetwork();
@@ -145,7 +210,7 @@ export function getFeeCollectorAddress(): string {
       return (
         process.env.STAGING_FEE_COLLECTOR_ADDRESS ||
         process.env.DEVNET_STAGING_FEE_COLLECTOR_ADDRESS ||
-        '8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ' // Known staging fee collector
+        '8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ' // Known staging fee collector (cold storage)
       );
 
     case 'production':
@@ -232,12 +297,15 @@ export function getProgramDeployerPath(): string | undefined {
  */
 export function getProgramConfig(): ProgramConfig {
   const programIdString = getProgramId();
+  const treasuryAddressString = getTreasuryAddress();
   const feeCollectorAddressString = getFeeCollectorAddress();
   const network = getCurrentNetwork();
 
   return {
     programId: new PublicKey(programIdString),
     programIdString,
+    treasuryAddress: new PublicKey(treasuryAddressString),
+    treasuryAddressString,
     feeCollectorAddress: new PublicKey(feeCollectorAddressString),
     feeCollectorAddressString,
     network,
@@ -268,6 +336,14 @@ export function validateProgramConfig(): void {
     );
   }
 
+  // Validate treasury address
+  if (invalidIds.includes(config.treasuryAddressString)) {
+    throw new Error(
+      `Invalid treasury address: ${config.treasuryAddressString}. ` +
+      `Please set treasury address for ${config.network} environment.`
+    );
+  }
+
   // Validate fee collector address
   if (invalidIds.includes(config.feeCollectorAddressString)) {
     throw new Error(
@@ -288,7 +364,8 @@ export function validateProgramConfig(): void {
   console.log('✅ Program configuration validated');
   console.log(`   Network: ${config.network}`);
   console.log(`   Program ID: ${config.programIdString}`);
-  console.log(`   Fee Collector: ${config.feeCollectorAddressString}`);
+  console.log(`   Treasury (Active Fee Collection): ${config.treasuryAddressString}`);
+  console.log(`   Fee Collector (Cold Storage): ${config.feeCollectorAddressString}`);
   if (config.authorityKeypairPath) {
     console.log(`   Authority: ${config.authorityKeypairPath}`);
   }
@@ -339,6 +416,8 @@ export default {
   getCurrentNetwork,
   getPlatformAuthorityPath,
   getProgramDeployerPath,
+  getTreasuryAddress,
+  getFeeCollectorAddress,
   validateProgramConfig,
   resetProgramConfig,
   KNOWN_PROGRAM_IDS,

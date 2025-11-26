@@ -224,6 +224,88 @@ USDC_MINT_ADDRESS=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
 
 ---
 
+## Platform Fee Collection
+
+### Treasury Wallet System
+
+The platform uses a two-tier fee collection system for security and operational flexibility:
+
+1. **Treasury Wallet (Hot Wallet)** - Receives fees during swaps, checked weekly for reconciliation
+2. **Fee Collector (Cold Storage)** - Final destination after prize distribution
+
+### `STAGING_TREASURY_ADDRESS`
+- **Type**: String (Base58 Public Key)
+- **Required**: No (defaults to hardcoded staging treasury)
+- **Description**: Staging/devnet treasury wallet where platform fees are initially collected.
+- **Default**: `AScijLJ1ApcQftktBRN818b8LDH4JJovQ5qrGDHfHuPu`
+
+```bash
+STAGING_TREASURY_ADDRESS=AScijLJ1ApcQftktBRN818b8LDH4JJovQ5qrGDHfHuPu
+```
+
+### `PRODUCTION_TREASURY_ADDRESS` / `MAINNET_TREASURY_ADDRESS`
+- **Type**: String (Base58 Public Key)
+- **Required**: No (defaults to hardcoded production treasury)
+- **Description**: Production/mainnet treasury wallet where platform fees are initially collected.
+- **Default**: `9VN2bzjWoF1HsmyPrNtwXbBMxCYRNsFagC6pcfLmN7LA`
+- **Security**: **HIGH PRIORITY** - This is a hot wallet holding active funds
+
+```bash
+PRODUCTION_TREASURY_ADDRESS=9VN2bzjWoF1HsmyPrNtwXbBMxCYRNsFagC6pcfLmN7LA
+# OR
+MAINNET_TREASURY_ADDRESS=9VN2bzjWoF1HsmyPrNtwXbBMxCYRNsFagC6pcfLmN7LA
+```
+
+### `LOCAL_TREASURY_ADDRESS`
+- **Type**: String (Base58 Public Key)
+- **Required**: No (defaults to staging treasury)
+- **Description**: Local development treasury wallet address.
+- **Default**: Falls back to staging treasury
+
+```bash
+LOCAL_TREASURY_ADDRESS=AScijLJ1ApcQftktBRN818b8LDH4JJovQ5qrGDHfHuPu
+```
+
+### `STAGING_FEE_COLLECTOR_ADDRESS` / `DEVNET_STAGING_FEE_COLLECTOR_ADDRESS`
+- **Type**: String (Base58 Public Key)
+- **Required**: No (defaults to hardcoded collector)
+- **Description**: Staging/devnet cold storage wallet where fees are transferred after weekly reconciliation.
+- **Default**: `8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ`
+
+```bash
+STAGING_FEE_COLLECTOR_ADDRESS=8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ
+# OR
+DEVNET_STAGING_FEE_COLLECTOR_ADDRESS=8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ
+```
+
+### `MAINNET_PROD_FEE_COLLECTOR_ADDRESS`
+- **Type**: String (Base58 Public Key)
+- **Required**: Yes (for production environment)
+- **Description**: Production/mainnet cold storage wallet where fees are transferred after weekly reconciliation.
+- **Security**: **CRITICAL** - This should be a cold storage wallet
+
+```bash
+MAINNET_PROD_FEE_COLLECTOR_ADDRESS=YOUR_PRODUCTION_COLD_STORAGE_ADDRESS
+```
+
+### Fee Collection Workflow
+
+1. **During Swap**: Platform fees are sent to treasury wallet (hot wallet)
+2. **Weekly Reconciliation**:
+   - Check treasury wallet balance
+   - Distribute prizes to winners
+   - Transfer remaining balance to fee collector (cold storage)
+3. **Cold Storage**: Long-term accumulation of platform fees
+
+**Security Considerations**:
+- Treasury wallets are hot wallets and should be monitored daily
+- Set up alerts for unexpected transactions or balance changes
+- Fee collectors should be cold storage (hardware wallets, multi-sig)
+- Never expose treasury or collector private keys in environment variables
+- Store keypairs securely in `wallets/` directory (gitignored)
+
+---
+
 ## Authentication & Security
 
 ### `JWT_SECRET`
@@ -594,6 +676,10 @@ SOLANA_NETWORK=localnet
 ESCROW_PROGRAM_ID=BZWjEPLRQTzHfQQKHwUJRx5RoU3VJDZvqAGmDrYJTgxP
 USDC_MINT_ADDRESS=Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr
 
+# Platform Fee Collection (uses staging addresses for local dev)
+LOCAL_TREASURY_ADDRESS=AScijLJ1ApcQftktBRN818b8LDH4JJovQ5qrGDHfHuPu
+LOCAL_FEE_COLLECTOR_ADDRESS=8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ
+
 # Security
 JWT_SECRET=development_jwt_secret_min_32_characters_long_not_for_production
 API_KEY=dev_api_key_123
@@ -641,6 +727,10 @@ SOLANA_COMMITMENT=finalized
 SOLANA_NETWORK=mainnet-beta
 ESCROW_PROGRAM_ID=YOUR_MAINNET_PROGRAM_ID
 USDC_MINT_ADDRESS=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+
+# Platform Fee Collection (CRITICAL - Keep treasury keypair secure!)
+PRODUCTION_TREASURY_ADDRESS=9VN2bzjWoF1HsmyPrNtwXbBMxCYRNsFagC6pcfLmN7LA
+MAINNET_PROD_FEE_COLLECTOR_ADDRESS=YOUR_COLD_STORAGE_COLLECTOR_ADDRESS
 
 # Security (use secrets management!)
 JWT_SECRET=SUPER_SECURE_RANDOM_STRING_64_CHARACTERS_OR_MORE_ROTATE_REGULARLY
