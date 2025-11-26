@@ -106,7 +106,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
     
     // Setup swap button event listener
-    document.getElementById('swap-btn').addEventListener('click', executeAtomicSwap);
+    document.getElementById('swap-btn').addEventListener('click', showConfirmationModal);
+    
+    // Setup modal button event listeners
+    document.getElementById('modal-cancel').addEventListener('click', hideConfirmationModal);
+    document.getElementById('modal-confirm').addEventListener('click', confirmAndExecuteSwap);
     
     // Setup filter button event listeners
     document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -294,6 +298,101 @@ function addLog(message, type = 'info') {
     }
 
     logContent.insertBefore(entry, logContent.firstChild);
+}
+
+// Show confirmation modal
+function showConfirmationModal() {
+    const offeredSol = document.getElementById('maker-sol').value;
+    const requestedSol = document.getElementById('taker-sol').value;
+    
+    // Validate
+    if (selectedMakerNFTs.length === 0 && !offeredSol) {
+        addLog('❌ Maker must offer at least one NFT or SOL', 'error');
+        return;
+    }
+    
+    if (selectedTakerNFTs.length === 0 && !requestedSol) {
+        addLog('❌ Taker must request at least one NFT or SOL', 'error');
+        return;
+    }
+    
+    // Populate modal with swap details
+    const makerOffersEl = document.getElementById('modal-maker-offers');
+    const takerOffersEl = document.getElementById('modal-taker-offers');
+    
+    let makerOffersHTML = '';
+    let takerOffersHTML = '';
+    
+    // Maker offers
+    if (offeredSol) {
+        makerOffersHTML += `
+            <div class="swap-item">
+                <div class="swap-item-label">SOL Amount</div>
+                <div class="swap-item-value">💰 ${offeredSol} SOL</div>
+            </div>
+        `;
+    }
+    
+    if (selectedMakerNFTs.length > 0) {
+        makerOffersHTML += `
+            <div class="swap-item">
+                <div class="swap-item-label">NFTs (${selectedMakerNFTs.length})</div>
+                <div class="swap-item-value">
+                    ${selectedMakerNFTs.map(nft => 
+                        `🖼️ ${nft.name || 'Unknown'} ${nft.isCompressed ? '(cNFT)' : '(SPL)'}`
+                    ).join('<br>')}
+                </div>
+            </div>
+        `;
+    }
+    
+    if (!makerOffersHTML) {
+        makerOffersHTML = '<div class="empty-swap-item">Nothing offered</div>';
+    }
+    
+    // Taker offers (what they receive)
+    if (requestedSol) {
+        takerOffersHTML += `
+            <div class="swap-item">
+                <div class="swap-item-label">SOL Amount</div>
+                <div class="swap-item-value">💰 ${requestedSol} SOL</div>
+            </div>
+        `;
+    }
+    
+    if (selectedTakerNFTs.length > 0) {
+        takerOffersHTML += `
+            <div class="swap-item">
+                <div class="swap-item-label">NFTs (${selectedTakerNFTs.length})</div>
+                <div class="swap-item-value">
+                    ${selectedTakerNFTs.map(nft => 
+                        `🖼️ ${nft.name || 'Unknown'} ${nft.isCompressed ? '(cNFT)' : '(SPL)'}`
+                    ).join('<br>')}
+                </div>
+            </div>
+        `;
+    }
+    
+    if (!takerOffersHTML) {
+        takerOffersHTML = '<div class="empty-swap-item">Nothing requested</div>';
+    }
+    
+    makerOffersEl.innerHTML = makerOffersHTML;
+    takerOffersEl.innerHTML = takerOffersHTML;
+    
+    // Show modal
+    document.getElementById('confirm-modal').classList.add('show');
+}
+
+// Hide confirmation modal
+function hideConfirmationModal() {
+    document.getElementById('confirm-modal').classList.remove('show');
+}
+
+// Confirm and execute swap
+async function confirmAndExecuteSwap() {
+    hideConfirmationModal();
+    await executeAtomicSwap();
 }
 
 // Execute atomic swap
