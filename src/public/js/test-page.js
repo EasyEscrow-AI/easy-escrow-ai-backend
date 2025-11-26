@@ -26,9 +26,14 @@ async function loadConfig() {
             MAKER_ADDRESS = result.data.makerAddress;
             TAKER_ADDRESS = result.data.takerAddress;
             
-            // Update displayed addresses
-            document.getElementById('maker-address').textContent = MAKER_ADDRESS;
-            document.getElementById('taker-address').textContent = TAKER_ADDRESS;
+            // Update displayed addresses with Solscan links
+            const isDevnet = window.location.hostname.includes('staging') || window.location.hostname.includes('dev');
+            const solscanCluster = isDevnet ? '?cluster=devnet' : '';
+            
+            document.getElementById('maker-address').innerHTML = 
+                `<a href="https://solscan.io/account/${MAKER_ADDRESS}${solscanCluster}" target="_blank" rel="noopener noreferrer">${MAKER_ADDRESS}</a>`;
+            document.getElementById('taker-address').innerHTML = 
+                `<a href="https://solscan.io/account/${TAKER_ADDRESS}${solscanCluster}" target="_blank" rel="noopener noreferrer">${TAKER_ADDRESS}</a>`;
             
             console.log('✅ Config loaded:', { MAKER_ADDRESS, TAKER_ADDRESS });
             return true;
