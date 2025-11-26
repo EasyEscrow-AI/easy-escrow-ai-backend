@@ -16,12 +16,13 @@
         "All asset transfers and fee collection happen in a single transaction.",
         "",
         "# Process",
-        "1. Validate swap parameters",
-        "2. Collect platform fee from taker",
-        "3. Transfer maker's NFTs to taker",
-        "4. Transfer taker's NFTs to maker",
-        "5. Transfer SOL between parties (if any)",
-        "6. Update treasury statistics",
+        "1. Check if program is paused",
+        "2. Validate swap parameters",
+        "3. Collect platform fee from taker",
+        "4. Transfer maker's NFTs to taker",
+        "5. Transfer taker's NFTs to maker",
+        "6. Transfer SOL between parties (if any)",
+        "7. Update treasury statistics",
         "",
         "# Arguments",
         "* `ctx` - Context containing all accounts needed for the swap",
@@ -31,12 +32,14 @@
         "* `Result<()>` - Success or error",
         "",
         "# Security",
+        "* Checks program pause state before execution",
         "* Requires signatures from maker, taker, and platform authority",
         "* Validates asset ownership before transfer",
         "* Enforces fee collection before any asset transfers",
         "* All-or-nothing execution (atomic)",
         "",
         "# Errors",
+        "* `ProgramPaused` - Operations are temporarily disabled",
         "* `Unauthorized` - Platform authority signature missing or invalid",
         "* `InvalidFee` - Fee is zero or exceeds maximum",
         "* `TooManyAssets` - Asset count exceeds maximum per side",
@@ -164,6 +167,77 @@
       ]
     },
     {
+      "name": "emergency_pause",
+      "docs": [
+        "Emergency pause - stops all swaps and withdrawals",
+        "",
+        "Allows the platform authority to immediately halt all program operations.",
+        "Used in case of security issues, bugs, or regulatory requirements.",
+        "",
+        "# Arguments",
+        "* `ctx` - Context containing authority and treasury",
+        "",
+        "# Returns",
+        "* `Result<()>` - Success or error",
+        "",
+        "# Security",
+        "* Only platform authority can pause",
+        "* Cannot pause if already paused",
+        "",
+        "# Errors",
+        "* `Unauthorized` - Caller is not platform authority",
+        "* `AlreadyPaused` - Program is already in paused state"
+      ],
+      "discriminator": [
+        21,
+        143,
+        27,
+        142,
+        200,
+        181,
+        210,
+        255
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "docs": [
+            "Platform authority (must sign and match treasury authority)"
+          ],
+          "signer": true
+        },
+        {
+          "name": "treasury",
+          "docs": [
+            "Treasury PDA to pause"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  101,
+                  97,
+                  115,
+                  117,
+                  114,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "initialize_treasury",
       "docs": [
         "Initialize the Treasury PDA (one-time setup per authority)",
@@ -230,6 +304,169 @@
         }
       ],
       "args": []
+    },
+    {
+      "name": "unpause",
+      "docs": [
+        "Resume operations after emergency pause",
+        "",
+        "Allows the platform authority to resume program operations after a pause.",
+        "",
+        "# Arguments",
+        "* `ctx` - Context containing authority and treasury",
+        "",
+        "# Returns",
+        "* `Result<()>` - Success or error",
+        "",
+        "# Security",
+        "* Only platform authority can unpause",
+        "* Cannot unpause if not paused",
+        "",
+        "# Errors",
+        "* `Unauthorized` - Caller is not platform authority",
+        "* `NotPaused` - Program is not currently paused"
+      ],
+      "discriminator": [
+        169,
+        144,
+        4,
+        38,
+        10,
+        141,
+        188,
+        255
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "docs": [
+            "Platform authority (must sign and match treasury authority)"
+          ],
+          "signer": true
+        },
+        {
+          "name": "treasury",
+          "docs": [
+            "Treasury PDA to unpause"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  101,
+                  97,
+                  115,
+                  117,
+                  114,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "withdraw_treasury_fees",
+      "docs": [
+        "Withdraw accumulated fees from Treasury PDA to treasury wallet",
+        "",
+        "Allows the platform authority to withdraw SOL from the Treasury PDA to the",
+        "designated treasury wallet. Withdrawals are rate-limited to once per week (7 days).",
+        "",
+        "# Arguments",
+        "* `ctx` - Context containing authority, treasury PDA, and treasury wallet",
+        "* `amount` - Amount of lamports to withdraw",
+        "",
+        "# Returns",
+        "* `Result<()>` - Success or error",
+        "",
+        "# Security",
+        "* Only platform authority can withdraw",
+        "* Program must not be paused",
+        "* Enforces 7-day minimum between withdrawals",
+        "* Maintains rent-exempt minimum in Treasury PDA",
+        "",
+        "# Errors",
+        "* `Unauthorized` - Caller is not platform authority",
+        "* `ProgramPaused` - Program is currently paused",
+        "* `WithdrawalTooFrequent` - Less than 7 days since last withdrawal",
+        "* `InsufficientTreasuryBalance` - Not enough funds available"
+      ],
+      "discriminator": [
+        43,
+        110,
+        110,
+        113,
+        177,
+        16,
+        201,
+        250
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "docs": [
+            "Platform authority (must sign and match treasury authority)"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "treasury",
+          "docs": [
+            "Treasury PDA (source of funds)"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  101,
+                  97,
+                  115,
+                  117,
+                  114,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "treasury_wallet",
+          "docs": [
+            "Destination treasury wallet (receives withdrawn fees)"
+          ],
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -307,6 +544,31 @@
       "code": 6011,
       "name": "ArithmeticOverflow",
       "msg": "Arithmetic overflow: Fee calculation overflowed"
+    },
+    {
+      "code": 6012,
+      "name": "ProgramPaused",
+      "msg": "Program is paused: All operations are temporarily disabled"
+    },
+    {
+      "code": 6013,
+      "name": "AlreadyPaused",
+      "msg": "Program is already paused"
+    },
+    {
+      "code": 6014,
+      "name": "NotPaused",
+      "msg": "Program is not paused"
+    },
+    {
+      "code": 6015,
+      "name": "WithdrawalTooFrequent",
+      "msg": "Withdrawal too frequent: Must wait 7 days between withdrawals"
+    },
+    {
+      "code": 6016,
+      "name": "InsufficientTreasuryBalance",
+      "msg": "Insufficient treasury balance: Not enough funds to withdraw"
     }
   ],
   "types": [
@@ -390,6 +652,34 @@
               "Total number of successful swaps executed"
             ],
             "type": "u64"
+          },
+          {
+            "name": "total_fees_withdrawn",
+            "docs": [
+              "Total fees withdrawn to treasury wallet (in lamports)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "is_paused",
+            "docs": [
+              "Emergency pause flag - when true, all swaps are blocked"
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "paused_at",
+            "docs": [
+              "Timestamp when pause was activated (0 if not paused)"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "last_withdrawal_at",
+            "docs": [
+              "Last withdrawal timestamp"
+            ],
+            "type": "i64"
           },
           {
             "name": "bump",
