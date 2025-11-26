@@ -4,866 +4,202 @@
     "name": "escrow",
     "version": "0.1.0",
     "spec": "0.1.0",
-    "description": "Solana Escrow Program for NFT transactions"
+    "description": "Atomic Swap Program for NFT/cNFT trading on Solana"
   },
   "instructions": [
     {
-      "name": "admin_cancel",
+      "name": "atomic_swap_with_fee",
       "docs": [
-        "Admin emergency cancel with full refunds"
+        "Execute an atomic swap with platform fee collection",
+        "",
+        "This is the core instruction that executes a complete NFT/cNFT/SOL swap atomically.",
+        "All asset transfers and fee collection happen in a single transaction.",
+        "",
+        "# Process",
+        "1. Validate swap parameters",
+        "2. Collect platform fee from taker",
+        "3. Transfer maker's NFTs to taker",
+        "4. Transfer taker's NFTs to maker",
+        "5. Transfer SOL between parties (if any)",
+        "6. Update treasury statistics",
+        "",
+        "# Arguments",
+        "* `ctx` - Context containing all accounts needed for the swap",
+        "* `params` - Swap parameters including asset counts, SOL amounts, fee, and swap ID",
+        "",
+        "# Returns",
+        "* `Result<()>` - Success or error",
+        "",
+        "# Security",
+        "* Requires signatures from maker, taker, and platform authority",
+        "* Validates asset ownership before transfer",
+        "* Enforces fee collection before any asset transfers",
+        "* All-or-nothing execution (atomic)",
+        "",
+        "# Errors",
+        "* `Unauthorized` - Platform authority signature missing or invalid",
+        "* `InvalidFee` - Fee is zero or exceeds maximum",
+        "* `TooManyAssets` - Asset count exceeds maximum per side",
+        "* `InvalidSwapId` - Swap ID exceeds maximum length",
+        "* `ArithmeticOverflow` - Fee calculation overflow"
       ],
       "discriminator": [
-        34,
-        225,
-        37,
-        131,
-        38,
-        121,
-        43,
-        237
-      ],
-      "accounts": [
-        {
-          "name": "admin",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "escrow_state",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  101,
-                  115,
-                  99,
-                  114,
-                  111,
-                  119
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "escrow_state.escrow_id",
-                "account": "EscrowState"
-              }
-            ]
-          }
-        },
-        {
-          "name": "sol_vault",
-          "docs": [
-            "SOL vault PDA - refunds SOL to buyer if deposited"
-          ],
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  115,
-                  111,
-                  108,
-                  95,
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "escrow_state.escrow_id",
-                "account": "EscrowState"
-              }
-            ]
-          }
-        },
-        {
-          "name": "buyer",
-          "writable": true
-        },
-        {
-          "name": "seller_nft_account",
-          "writable": true
-        },
-        {
-          "name": "escrow_nft_account",
-          "writable": true
-        },
-        {
-          "name": "token_program",
-          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": []
-    },
-    {
-      "name": "cancel_if_expired",
-      "docs": [
-        "Cancel expired escrow and return assets to original owners"
-      ],
-      "discriminator": [
-        172,
-        1,
-        191,
-        137,
-        223,
-        156,
-        3,
-        166
-      ],
-      "accounts": [
-        {
-          "name": "escrow_state",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  101,
-                  115,
-                  99,
-                  114,
-                  111,
-                  119
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "escrow_state.escrow_id",
-                "account": "EscrowState"
-              }
-            ]
-          }
-        },
-        {
-          "name": "sol_vault",
-          "docs": [
-            "SOL vault PDA - refunds SOL to buyer if deposited"
-          ],
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  115,
-                  111,
-                  108,
-                  95,
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "escrow_state.escrow_id",
-                "account": "EscrowState"
-              }
-            ]
-          }
-        },
-        {
-          "name": "buyer",
-          "writable": true
-        },
-        {
-          "name": "seller_nft_account",
-          "writable": true
-        },
-        {
-          "name": "escrow_nft_account",
-          "writable": true
-        },
-        {
-          "name": "token_program",
-          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": []
-    },
-    {
-      "name": "deposit_buyer_nft",
-      "docs": [
-        "Buyer deposits NFT B into the escrow (for NFT<>NFT swaps)",
-        "Used for NftForNftWithFee and NftForNftPlusSol swap types"
-      ],
-      "discriminator": [
-        161,
-        161,
-        104,
-        18,
-        248,
-        136,
-        161,
-        167
-      ],
-      "accounts": [
-        {
-          "name": "buyer",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "escrow_state",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  101,
-                  115,
-                  99,
-                  114,
-                  111,
-                  119
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "escrow_state.escrow_id",
-                "account": "EscrowState"
-              }
-            ]
-          }
-        },
-        {
-          "name": "buyer_nft_account",
-          "writable": true
-        },
-        {
-          "name": "escrow_nft_b_account",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "account",
-                "path": "escrow_state"
-              },
-              {
-                "kind": "const",
-                "value": [
-                  6,
-                  221,
-                  246,
-                  225,
-                  215,
-                  101,
-                  161,
-                  147,
-                  217,
-                  203,
-                  225,
-                  70,
-                  206,
-                  235,
-                  121,
-                  172,
-                  28,
-                  180,
-                  133,
-                  237,
-                  95,
-                  91,
-                  55,
-                  145,
-                  58,
-                  140,
-                  245,
-                  133,
-                  126,
-                  255,
-                  0,
-                  169
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "nft_mint"
-              }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
-              ]
-            }
-          }
-        },
-        {
-          "name": "nft_mint"
-        },
-        {
-          "name": "token_program",
-          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
-        },
-        {
-          "name": "associated_token_program",
-          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": []
-    },
-    {
-      "name": "deposit_seller_nft",
-      "docs": [
-        "Seller deposits NFT A into the escrow",
-        "Used for all swap types (seller always deposits NFT A)"
-      ],
-      "discriminator": [
-        81,
-        93,
-        134,
-        77,
-        106,
-        127,
-        106,
-        95
-      ],
-      "accounts": [
-        {
-          "name": "seller",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "escrow_state",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  101,
-                  115,
-                  99,
-                  114,
-                  111,
-                  119
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "escrow_state.escrow_id",
-                "account": "EscrowState"
-              }
-            ]
-          }
-        },
-        {
-          "name": "seller_nft_account",
-          "writable": true
-        },
-        {
-          "name": "escrow_nft_account",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "account",
-                "path": "escrow_state"
-              },
-              {
-                "kind": "const",
-                "value": [
-                  6,
-                  221,
-                  246,
-                  225,
-                  215,
-                  101,
-                  161,
-                  147,
-                  217,
-                  203,
-                  225,
-                  70,
-                  206,
-                  235,
-                  121,
-                  172,
-                  28,
-                  180,
-                  133,
-                  237,
-                  95,
-                  91,
-                  55,
-                  145,
-                  58,
-                  140,
-                  245,
-                  133,
-                  126,
-                  255,
-                  0,
-                  169
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "nft_mint"
-              }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
-              ]
-            }
-          }
-        },
-        {
-          "name": "nft_mint"
-        },
-        {
-          "name": "token_program",
-          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
-        },
-        {
-          "name": "associated_token_program",
-          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": []
-    },
-    {
-      "name": "deposit_seller_sol_fee",
-      "docs": [
-        "Seller deposits SOL fee into the SOL vault PDA",
-        "For NftForNftWithFee swap type only - seller pays 0.005 SOL fee"
-      ],
-      "discriminator": [
-        241,
-        47,
-        17,
-        240,
-        80,
-        82,
-        79,
-        177
-      ],
-      "accounts": [
-        {
-          "name": "seller",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "escrow_state",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  101,
-                  115,
-                  99,
-                  114,
-                  111,
-                  119
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "escrow_state.escrow_id",
-                "account": "EscrowState"
-              }
-            ]
-          }
-        },
-        {
-          "name": "sol_vault",
-          "docs": [
-            "SOL vault PDA - receives seller's fee deposit"
-          ],
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  115,
-                  111,
-                  108,
-                  95,
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "escrow_state.escrow_id",
-                "account": "EscrowState"
-              }
-            ]
-          }
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": []
-    },
-    {
-      "name": "deposit_sol",
-      "docs": [
-        "Buyer deposits SOL into the SOL vault PDA",
-        "For NftForSol and NftForNftPlusSol swap types"
-      ],
-      "discriminator": [
-        108,
-        81,
-        78,
-        117,
-        125,
-        155,
-        56,
-        200
-      ],
-      "accounts": [
-        {
-          "name": "buyer",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "escrow_state",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  101,
-                  115,
-                  99,
-                  114,
-                  111,
-                  119
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "escrow_state.escrow_id",
-                "account": "EscrowState"
-              }
-            ]
-          }
-        },
-        {
-          "name": "sol_vault",
-          "docs": [
-            "SOL vault PDA - receives SOL deposit from buyer"
-          ],
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  115,
-                  111,
-                  108,
-                  95,
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "escrow_state.escrow_id",
-                "account": "EscrowState"
-              }
-            ]
-          }
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": []
-    },
-    {
-      "name": "init_agreement",
-      "docs": [
-        "Initialize a new SOL-based escrow agreement",
-        "Admin-only operation to ensure all escrows are tracked in the database"
-      ],
-      "discriminator": [
-        162,
-        60,
-        0,
+        216,
+        138,
         175,
-        214,
-        172,
-        200,
-        106
+        149,
+        252,
+        20,
+        237,
+        17
       ],
       "accounts": [
         {
-          "name": "admin",
+          "name": "maker",
+          "docs": [
+            "Maker (initiator of the swap)"
+          ],
           "writable": true,
           "signer": true
         },
         {
-          "name": "buyer"
+          "name": "taker",
+          "docs": [
+            "Taker (accepter of the swap)"
+          ],
+          "writable": true,
+          "signer": true
         },
         {
-          "name": "seller"
+          "name": "platform_authority",
+          "docs": [
+            "Platform authority (must sign for fee validation)"
+          ],
+          "signer": true
         },
         {
-          "name": "escrow_state",
+          "name": "treasury",
+          "docs": [
+            "Treasury PDA (receives platform fees)"
+          ],
           "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "const",
                 "value": [
-                  101,
-                  115,
-                  99,
+                  116,
                   114,
-                  111,
-                  119
+                  101,
+                  97,
+                  115,
+                  117,
+                  114,
+                  121
                 ]
               },
               {
-                "kind": "arg",
-                "path": "escrow_id"
+                "kind": "account",
+                "path": "platform_authority"
               }
             ]
           }
         },
         {
-          "name": "sol_vault",
+          "name": "maker_nft_account",
           "docs": [
-            "SOL vault PDA - separate zero-data account for holding SOL lamports",
-            "This mirrors the USDC design where tokens are held in a separate account",
-            "System Program can transfer from zero-data PDAs (unlike data-bearing PDAs)"
+            "Maker's NFT token account (optional - for NFT swaps)"
           ],
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  115,
-                  111,
-                  108,
-                  95,
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
-              },
-              {
-                "kind": "arg",
-                "path": "escrow_id"
-              }
-            ]
-          }
+          "writable": true,
+          "optional": true
+        },
+        {
+          "name": "taker_nft_destination",
+          "docs": [
+            "Taker's destination for maker's NFT (optional)"
+          ],
+          "writable": true,
+          "optional": true
+        },
+        {
+          "name": "taker_nft_account",
+          "docs": [
+            "Taker's NFT token account (optional - for NFT swaps)"
+          ],
+          "writable": true,
+          "optional": true
+        },
+        {
+          "name": "maker_nft_destination",
+          "docs": [
+            "Maker's destination for taker's NFT (optional)"
+          ],
+          "writable": true,
+          "optional": true
+        },
+        {
+          "name": "token_program",
+          "docs": [
+            "Token program for SPL token transfers"
+          ],
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
         },
         {
           "name": "system_program",
+          "docs": [
+            "System program for SOL transfers"
+          ],
           "address": "11111111111111111111111111111111"
         }
       ],
       "args": [
         {
-          "name": "escrow_id",
-          "type": "u64"
-        },
-        {
-          "name": "swap_type",
+          "name": "params",
           "type": {
             "defined": {
-              "name": "SwapType"
-            }
-          }
-        },
-        {
-          "name": "sol_amount",
-          "type": {
-            "option": "u64"
-          }
-        },
-        {
-          "name": "nft_a_mint",
-          "type": "pubkey"
-        },
-        {
-          "name": "nft_b_mint",
-          "type": {
-            "option": "pubkey"
-          }
-        },
-        {
-          "name": "expiry_timestamp",
-          "type": "i64"
-        },
-        {
-          "name": "platform_fee_bps",
-          "type": "u16"
-        },
-        {
-          "name": "fee_payer",
-          "type": {
-            "defined": {
-              "name": "FeePayer"
+              "name": "SwapParams"
             }
           }
         }
       ]
     },
     {
-      "name": "settle",
+      "name": "initialize_treasury",
       "docs": [
-        "Settle the escrow and distribute assets",
-        "Handles both NFT<>SOL and NFT<>NFT with SOL fee swap types",
-        "Permissionless: Anyone can trigger settlement once both deposits are confirmed"
+        "Initialize the Treasury PDA (one-time setup per authority)",
+        "",
+        "Creates a Treasury account that will track platform fees and swap statistics.",
+        "This must be called once by the platform authority before any swaps can be executed.",
+        "",
+        "# Arguments",
+        "* `ctx` - Context containing authority and treasury accounts",
+        "",
+        "# Returns",
+        "* `Result<()>` - Success or error"
       ],
       "discriminator": [
-        175,
-        42,
-        185,
-        87,
-        144,
-        131,
-        102,
-        212
+        124,
+        186,
+        211,
+        195,
+        85,
+        165,
+        129,
+        166
       ],
       "accounts": [
         {
-          "name": "caller",
+          "name": "authority",
+          "docs": [
+            "Platform authority that will control the treasury"
+          ],
           "writable": true,
           "signer": true
         },
         {
-          "name": "escrow_state",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  101,
-                  115,
-                  99,
-                  114,
-                  111,
-                  119
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "escrow_state.escrow_id",
-                "account": "EscrowState"
-              }
-            ]
-          }
-        },
-        {
-          "name": "sol_vault",
+          "name": "treasury",
           "docs": [
-            "SOL vault PDA - holds SOL to be distributed during settlement"
+            "Treasury PDA to initialize"
           ],
           "writable": true,
           "pda": {
@@ -871,141 +207,22 @@
               {
                 "kind": "const",
                 "value": [
-                  115,
-                  111,
-                  108,
-                  95,
-                  118,
+                  116,
+                  114,
+                  101,
                   97,
+                  115,
                   117,
-                  108,
-                  116
+                  114,
+                  121
                 ]
               },
               {
                 "kind": "account",
-                "path": "escrow_state.escrow_id",
-                "account": "EscrowState"
+                "path": "authority"
               }
             ]
           }
-        },
-        {
-          "name": "seller",
-          "writable": true
-        },
-        {
-          "name": "platform_fee_collector",
-          "writable": true
-        },
-        {
-          "name": "escrow_nft_account",
-          "writable": true
-        },
-        {
-          "name": "buyer_nft_account",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "account",
-                "path": "buyer"
-              },
-              {
-                "kind": "const",
-                "value": [
-                  6,
-                  221,
-                  246,
-                  225,
-                  215,
-                  101,
-                  161,
-                  147,
-                  217,
-                  203,
-                  225,
-                  70,
-                  206,
-                  235,
-                  121,
-                  172,
-                  28,
-                  180,
-                  133,
-                  237,
-                  95,
-                  91,
-                  55,
-                  145,
-                  58,
-                  140,
-                  245,
-                  133,
-                  126,
-                  255,
-                  0,
-                  169
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "nft_mint"
-              }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
-              ]
-            }
-          }
-        },
-        {
-          "name": "buyer",
-          "writable": true
-        },
-        {
-          "name": "nft_mint"
-        },
-        {
-          "name": "token_program",
-          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
-        },
-        {
-          "name": "associated_token_program",
-          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
         },
         {
           "name": "system_program",
@@ -1017,298 +234,169 @@
   ],
   "accounts": [
     {
-      "name": "EscrowState",
+      "name": "Treasury",
       "discriminator": [
-        19,
-        90,
-        148,
-        111,
-        55,
-        130,
-        229,
-        108
+        238,
+        239,
+        123,
+        238,
+        89,
+        1,
+        168,
+        253
       ]
     }
   ],
   "errors": [
     {
       "code": 6000,
-      "name": "InvalidAmount",
-      "msg": "Invalid amount provided"
+      "name": "Unauthorized",
+      "msg": "Unauthorized: Only platform authority can execute swaps"
     },
     {
       "code": 6001,
-      "name": "AmountTooLow",
-      "msg": "Amount below minimum: $1.00 (BETA limit)"
+      "name": "InvalidFee",
+      "msg": "Invalid fee: Platform fee must be greater than zero"
     },
     {
       "code": 6002,
-      "name": "AmountTooHigh",
-      "msg": "Amount exceeds maximum: $3,000.00 (BETA limit)"
+      "name": "FeeTooHigh",
+      "msg": "Invalid fee: Fee exceeds maximum allowed"
     },
     {
       "code": 6003,
-      "name": "InvalidExpiry",
-      "msg": "Invalid expiry timestamp"
+      "name": "MakerAssetOwnershipFailed",
+      "msg": "Invalid asset: Maker does not own the specified asset"
     },
     {
       "code": 6004,
-      "name": "InvalidStatus",
-      "msg": "Invalid escrow status for this operation"
+      "name": "TakerAssetOwnershipFailed",
+      "msg": "Invalid asset: Taker does not own the specified asset"
     },
     {
       "code": 6005,
-      "name": "AlreadyDeposited",
-      "msg": "Assets already deposited"
+      "name": "InsufficientMakerBalance",
+      "msg": "Insufficient balance: Maker has insufficient balance"
     },
     {
       "code": 6006,
-      "name": "Unauthorized",
-      "msg": "Unauthorized to perform this action"
+      "name": "InsufficientTakerBalance",
+      "msg": "Insufficient balance: Taker has insufficient balance"
     },
     {
       "code": 6007,
-      "name": "UnauthorizedAdmin",
-      "msg": "Only authorized admin can initialize escrows"
+      "name": "InvalidTokenAccount",
+      "msg": "Invalid token account: Token account does not match expected mint"
     },
     {
       "code": 6008,
-      "name": "InvalidNftMint",
-      "msg": "Invalid NFT mint address"
+      "name": "InvalidMerkleProof",
+      "msg": "Invalid merkle proof: cNFT ownership verification failed"
     },
     {
       "code": 6009,
-      "name": "DepositNotComplete",
-      "msg": "Deposits not complete"
+      "name": "TooManyAssets",
+      "msg": "Too many assets: Maximum number of assets per side exceeded"
     },
     {
       "code": 6010,
-      "name": "Expired",
-      "msg": "Escrow has expired"
+      "name": "InvalidSwapId",
+      "msg": "Invalid swap ID: Swap ID exceeds maximum length"
     },
     {
       "code": 6011,
-      "name": "NotExpired",
-      "msg": "Escrow has not expired yet"
-    },
-    {
-      "code": 6012,
-      "name": "InvalidFeeBps",
-      "msg": "Invalid fee basis points (must be <= 10000)"
-    },
-    {
-      "code": 6013,
-      "name": "CalculationOverflow",
-      "msg": "Calculation overflow"
-    },
-    {
-      "code": 6014,
-      "name": "InvalidSwapType",
-      "msg": "Invalid swap type for this operation"
-    },
-    {
-      "code": 6015,
-      "name": "SolAmountTooLow",
-      "msg": "SOL amount below minimum: 0.01 SOL (BETA limit)"
-    },
-    {
-      "code": 6016,
-      "name": "SolAmountTooHigh",
-      "msg": "SOL amount exceeds maximum: 15 SOL (BETA limit)"
-    },
-    {
-      "code": 6017,
-      "name": "InsufficientFunds",
-      "msg": "Insufficient funds in escrow account after accounting for rent exemption"
-    },
-    {
-      "code": 6018,
-      "name": "InvalidSwapParameters",
-      "msg": "Invalid parameter combination for swap type"
-    },
-    {
-      "code": 6019,
-      "name": "InsufficientFeeCollectorRent",
-      "msg": "Fee collector account would not be rent-exempt after receiving fee"
-    },
-    {
-      "code": 6020,
-      "name": "InsufficientSellerRent",
-      "msg": "Seller account would not be rent-exempt after receiving payment"
-    },
-    {
-      "code": 6021,
-      "name": "InsufficientEscrowRent",
-      "msg": "Escrow account would not be rent-exempt after transfers"
-    },
-    {
-      "code": 6022,
-      "name": "ExecutableAccountNotAllowed",
-      "msg": "Executable accounts (programs) cannot send or receive lamports"
+      "name": "ArithmeticOverflow",
+      "msg": "Arithmetic overflow: Fee calculation overflowed"
     }
   ],
   "types": [
     {
-      "name": "EscrowState",
+      "name": "SwapParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "maker_sends_nft",
+            "docs": [
+              "Whether maker is sending an NFT"
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "taker_sends_nft",
+            "docs": [
+              "Whether taker is sending an NFT"
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "maker_sol_amount",
+            "docs": [
+              "SOL amount maker is sending (in lamports)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "taker_sol_amount",
+            "docs": [
+              "SOL amount taker is sending (in lamports)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "platform_fee",
+            "docs": [
+              "Platform fee in lamports (paid by taker)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "swap_id",
+            "docs": [
+              "Unique swap identifier for backend tracking (max 64 chars)"
+            ],
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Treasury",
       "docs": [
-        "Escrow state account for SOL-based swaps"
+        "Treasury PDA account that tracks platform fees and swap statistics",
+        "",
+        "Seeds: [\"treasury\", platform_authority.key()]"
       ],
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "escrow_id",
-            "type": "u64"
-          },
-          {
-            "name": "buyer",
-            "type": "pubkey"
-          },
-          {
-            "name": "seller",
-            "type": "pubkey"
-          },
-          {
-            "name": "swap_type",
+            "name": "authority",
             "docs": [
-              "Swap type determines which fields are used"
+              "Platform authority that controls the treasury"
             ],
-            "type": {
-              "defined": {
-                "name": "SwapType"
-              }
-            }
+            "type": "pubkey"
           },
           {
-            "name": "sol_amount",
+            "name": "total_fees_collected",
             "docs": [
-              "SOL amount (if applicable to swap type)"
+              "Total platform fees collected (in lamports)"
             ],
             "type": "u64"
           },
           {
-            "name": "nft_a_mint",
+            "name": "total_swaps_executed",
             "docs": [
-              "NFT mints (one or two depending on swap type)"
+              "Total number of successful swaps executed"
             ],
-            "type": "pubkey"
-          },
-          {
-            "name": "nft_b_mint",
-            "type": {
-              "option": "pubkey"
-            }
-          },
-          {
-            "name": "platform_fee_bps",
-            "docs": [
-              "Platform fee configuration"
-            ],
-            "type": "u16"
-          },
-          {
-            "name": "fee_payer",
-            "type": {
-              "defined": {
-                "name": "FeePayer"
-              }
-            }
-          },
-          {
-            "name": "buyer_sol_deposited",
-            "docs": [
-              "Deposit tracking"
-            ],
-            "type": "bool"
-          },
-          {
-            "name": "buyer_nft_deposited",
-            "type": "bool"
-          },
-          {
-            "name": "seller_nft_deposited",
-            "type": "bool"
-          },
-          {
-            "name": "seller_sol_deposited",
-            "type": "bool"
-          },
-          {
-            "name": "status",
-            "docs": [
-              "Status and metadata"
-            ],
-            "type": {
-              "defined": {
-                "name": "EscrowStatus"
-              }
-            }
-          },
-          {
-            "name": "expiry_timestamp",
-            "type": "i64"
+            "type": "u64"
           },
           {
             "name": "bump",
+            "docs": [
+              "PDA bump seed for Treasury derivation"
+            ],
             "type": "u8"
-          },
-          {
-            "name": "admin",
-            "type": "pubkey"
-          }
-        ]
-      }
-    },
-    {
-      "name": "EscrowStatus",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "Pending"
-          },
-          {
-            "name": "Completed"
-          },
-          {
-            "name": "Cancelled"
-          }
-        ]
-      }
-    },
-    {
-      "name": "FeePayer",
-      "docs": [
-        "Who pays the platform fee"
-      ],
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "Buyer"
-          },
-          {
-            "name": "Seller"
-          }
-        ]
-      }
-    },
-    {
-      "name": "SwapType",
-      "docs": [
-        "Swap type determines how the escrow settlement works"
-      ],
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "NftForSol"
-          },
-          {
-            "name": "NftForNftWithFee"
-          },
-          {
-            "name": "NftForNftPlusSol"
           }
         ]
       }

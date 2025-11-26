@@ -34,15 +34,14 @@ pub fn withdraw_treasury_fees_handler(
     ctx: Context<WithdrawTreasuryFees>,
     amount: u64,
 ) -> Result<()> {
-    let treasury = &mut ctx.accounts.treasury;
     let current_time = Clock::get()?.unix_timestamp;
     
     msg!("Withdrawing {} lamports from Treasury PDA", amount);
     msg!("Treasury wallet: {}", ctx.accounts.treasury_wallet.key());
     
     // Validate withdrawal timing (at least 7 days since last withdrawal)
-    if treasury.last_withdrawal_at > 0 {
-        let time_since_last = current_time - treasury.last_withdrawal_at;
+    if ctx.accounts.treasury.last_withdrawal_at > 0 {
+        let time_since_last = current_time - ctx.accounts.treasury.last_withdrawal_at;
         require!(
             time_since_last >= Treasury::MIN_WITHDRAWAL_INTERVAL,
             AtomicSwapError::WithdrawalTooFrequent
@@ -69,6 +68,7 @@ pub fn withdraw_treasury_fees_handler(
     **ctx.accounts.treasury_wallet.try_borrow_mut_lamports()? += amount;
     
     // Update treasury statistics
+    let treasury = &mut ctx.accounts.treasury;
     treasury.total_fees_withdrawn = treasury
         .total_fees_withdrawn
         .checked_add(amount)

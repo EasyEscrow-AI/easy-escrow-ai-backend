@@ -11,18 +11,20 @@ use instructions::*;
 // Environment-specific Program IDs
 // Automatically selected based on build features
 // Build with: anchor build --features <environment>
+// Default: staging (devnet)
 
 #[cfg(feature = "mainnet")]
 declare_id!("2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx");
-
-#[cfg(feature = "staging")]
-declare_id!("AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei");
 
 #[cfg(feature = "devnet")]
 declare_id!("GpvN8LB1xXTu9N541x9rrbxD7HwH6xi1Gkp84P7rUAEZ");
 
 #[cfg(feature = "localnet")]
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
+
+// Default: staging (if no feature specified)
+#[cfg(not(any(feature = "mainnet", feature = "devnet", feature = "localnet")))]
+declare_id!("AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei");
 
 // Security contact information embedded in the program
 // This allows security researchers and auditors to easily find contact information
@@ -48,11 +50,6 @@ compile_error!("Cannot enable both 'mainnet' and 'devnet' features simultaneousl
 #[cfg(all(feature = "mainnet", feature = "localnet"))]
 compile_error!("Cannot enable both 'mainnet' and 'localnet' features simultaneously");
 
-#[cfg(all(feature = "staging", feature = "devnet"))]
-compile_error!("Cannot enable both 'staging' and 'devnet' features simultaneously");
-
-#[cfg(all(feature = "staging", feature = "localnet"))]
-compile_error!("Cannot enable both 'staging' and 'localnet' features simultaneously");
 
 #[cfg(all(feature = "devnet", feature = "localnet"))]
 compile_error!("Cannot enable both 'devnet' and 'localnet' features simultaneously");
@@ -77,9 +74,9 @@ fn get_authorized_admins() -> Vec<Pubkey> {
         vec![pubkey!("HGrfPKZuKR8BSYYJfZRFfdF1y2ApU9LSf6USQ6tpSDj2")] // MAINNET
     }
     
-    #[cfg(feature = "staging")]
+    #[cfg(not(any(feature = "mainnet", feature = "devnet", feature = "localnet")))]
     {
-        vec![pubkey!("498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R")] // STAGING
+        vec![pubkey!("498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R")] // STAGING (default)
     }
     
     #[cfg(feature = "devnet")]
