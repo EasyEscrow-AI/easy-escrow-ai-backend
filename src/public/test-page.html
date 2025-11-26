@@ -172,6 +172,29 @@
             color: white;
         }
 
+        .clear-btn {
+            padding: 8px 16px;
+            border: 2px solid #dc3545;
+            background: white;
+            color: #dc3545;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+            font-weight: 500;
+            margin-left: auto;
+        }
+
+        .clear-btn:hover {
+            background: #dc3545;
+            color: white;
+        }
+
+        .clear-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         .nft-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -505,6 +528,92 @@
 
         .swap-arrow {
             font-size: 2rem;
+            color: #667eea;
+        }
+
+        .nft-preview-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .nft-preview-image {
+            width: 50px;
+            height: 50px;
+            border-radius: 6px;
+            object-fit: cover;
+            background: #e0e0e0;
+        }
+
+        .nft-preview-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .nft-preview-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #333;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .nft-preview-type {
+            font-size: 0.75rem;
+            color: #666;
+        }
+
+        .nft-preview-mint {
+            font-size: 0.7rem;
+            color: #999;
+            font-family: 'Courier New', monospace;
+        }
+
+        .modal-divider {
+            margin: 20px 0;
+            border: none;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .modal-info-section {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .modal-info-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #333;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .modal-info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 0.85rem;
+        }
+
+        .modal-info-label {
+            color: #666;
+        }
+
+        .modal-info-value {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .modal-info-value.highlight {
             color: #667eea;
         }
 
@@ -908,6 +1017,7 @@
                     <button class="filter-btn active" data-wallet="maker" data-filter="all">All</button>
                     <button class="filter-btn" data-wallet="maker" data-filter="spl">SPL Only</button>
                     <button class="filter-btn" data-wallet="maker" data-filter="cnft">cNFT Only</button>
+                    <button class="clear-btn" id="maker-clear-btn" disabled>Clear Selection</button>
                 </div>
                 <div class="nft-grid" id="maker-nfts">
                     <div class="loading">
@@ -938,6 +1048,7 @@
                     <button class="filter-btn active" data-wallet="taker" data-filter="all">All</button>
                     <button class="filter-btn" data-wallet="taker" data-filter="spl">SPL Only</button>
                     <button class="filter-btn" data-wallet="taker" data-filter="cnft">cNFT Only</button>
+                    <button class="clear-btn" id="taker-clear-btn" disabled>Clear Selection</button>
                 </div>
                 <div class="nft-grid" id="taker-nfts">
                     <div class="loading">
@@ -986,6 +1097,24 @@
                 <div class="swap-side taker">
                     <h3>🟣 Taker Receives</h3>
                     <div id="modal-taker-offers"></div>
+                </div>
+            </div>
+            
+            <hr class="modal-divider">
+            
+            <div class="modal-info-section">
+                <div class="modal-info-title">⚡ Swap Information</div>
+                <div class="modal-info-item">
+                    <span class="modal-info-label">Estimated Time:</span>
+                    <span class="modal-info-value highlight" id="modal-est-time">~5-10 seconds</span>
+                </div>
+                <div class="modal-info-item">
+                    <span class="modal-info-label">Network Fees:</span>
+                    <span class="modal-info-value" id="modal-network-fees">~0.00001 SOL</span>
+                </div>
+                <div class="modal-info-item">
+                    <span class="modal-info-label">Platform Fee:</span>
+                    <span class="modal-info-value" id="modal-platform-fee">1% (0.01 SOL min)</span>
                 </div>
             </div>
             
