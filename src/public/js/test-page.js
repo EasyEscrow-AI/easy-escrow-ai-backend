@@ -521,10 +521,12 @@ function showConfirmationModal() {
     const perNFTFee = 0.000005; // SOL per NFT
     const networkFee = baseFee + (totalNFTs * perNFTFee);
     
-    // Calculate platform fee (1% of SOL, minimum 0.01 SOL)
-    let platformFee = totalSOL * 0.01;
-    if (platformFee < 0.01 && totalSOL > 0) {
-        platformFee = 0.01;
+    // Calculate platform fee
+    // - If SOL is transferred: 1% of total SOL (minimum 0.01 SOL)
+    // - If only NFTs (no SOL): Base fee of 0.01 SOL
+    let platformFee = 0.01; // Base fee
+    if (totalSOL > 0) {
+        platformFee = Math.max(totalSOL * 0.01, 0.01);
     }
     
     // Helper function to format SOL with USD
@@ -538,12 +540,10 @@ function showConfirmationModal() {
     };
     
     // Format platform fee display
-    let platformFeeDisplay;
-    if (totalSOL > 0) {
-        platformFeeDisplay = formatSOLWithUSD(platformFee);
-    } else {
-        platformFeeDisplay = '0 SOL (no SOL transfer)';
-    }
+    // Show base fee for NFT-only swaps, calculated fee for SOL swaps
+    const platformFeeDisplay = totalSOL > 0 
+        ? formatSOLWithUSD(platformFee)
+        : `${formatSOLWithUSD(platformFee)} (base fee)`;
     
     // Update modal values
     document.getElementById('modal-est-time').textContent = estimatedTime;
