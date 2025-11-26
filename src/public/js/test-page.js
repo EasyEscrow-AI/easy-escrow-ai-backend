@@ -612,7 +612,7 @@ async function executeAtomicSwap(params) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-Idempotency-Key': `test-${Date.now()}`,
+                'idempotency-key': `test-${Date.now()}`,
             },
             body: JSON.stringify({
                 makerWallet: MAKER_ADDRESS,
@@ -644,7 +644,7 @@ async function executeAtomicSwap(params) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-Idempotency-Key': `test-accept-${Date.now()}`,
+                'idempotency-key': `test-accept-${Date.now()}`,
             },
             body: JSON.stringify({
                 takerWallet: TAKER_ADDRESS,

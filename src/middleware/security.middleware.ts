@@ -17,6 +17,7 @@ export const helmetConfig = helmet({
       styleSrc: ["'self'", "'unsafe-inline'"],
       scriptSrc: ["'self'"],
       imgSrc: ["'self'", 'data:', 'https:'],
+      connectSrc: ["'self'", 'https://api.coingecko.com'], // Allow CoinGecko API for SOL price
     },
   },
   // Hide X-Powered-By header
