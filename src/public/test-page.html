@@ -101,6 +101,17 @@
             margin-top: 5px;
         }
 
+        .wallet-address a {
+            color: #667eea;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .wallet-address a:hover {
+            color: #5568d3;
+            text-decoration: underline;
+        }
+
         .balance-display {
             font-size: 1.8rem;
             font-weight: bold;
@@ -379,13 +390,306 @@
             margin-top: 15px;
             color: #c0392b;
         }
+
+        /* Environment Badge */
+        .env-badge {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 1000;
+            animation: slideInRight 0.5s ease-out;
+        }
+
+        .env-badge.staging {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .env-badge.production {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 1024px) {
+            .container {
+                padding: 15px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .header p {
+                font-size: 1rem;
+            }
+
+            .swap-container {
+                gap: 15px;
+            }
+
+            .wallet-panel {
+                padding: 20px;
+            }
+
+            .wallet-title {
+                font-size: 1.3rem;
+            }
+
+            .wallet-address {
+                font-size: 0.65rem;
+            }
+
+            .balance-display {
+                font-size: 1.5rem;
+            }
+
+            .nft-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                gap: 10px;
+                max-height: 350px;
+            }
+
+            .nft-image {
+                height: 100px;
+            }
+
+            .filter-buttons {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .filter-btn {
+                padding: 6px 12px;
+                font-size: 0.8rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .header p {
+                font-size: 0.9rem;
+            }
+
+            .env-badge {
+                top: 10px;
+                right: 10px;
+                padding: 8px 16px;
+                font-size: 0.75rem;
+            }
+
+            .swap-container {
+                gap: 10px;
+                min-width: 100%;
+                overflow-x: auto;
+                padding-bottom: 10px;
+            }
+
+            .wallet-panel {
+                padding: 15px;
+                min-width: 280px;
+            }
+
+            .wallet-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .wallet-title {
+                font-size: 1.1rem;
+            }
+
+            .wallet-address {
+                font-size: 0.6rem;
+                margin-top: 3px;
+            }
+
+            .refresh-btn {
+                align-self: flex-start;
+                padding: 6px 12px;
+                font-size: 0.85rem;
+            }
+
+            .balance-display {
+                font-size: 1.3rem;
+                margin-bottom: 15px;
+            }
+
+            .section-title {
+                font-size: 1rem;
+                margin: 15px 0 8px 0;
+            }
+
+            .sol-input {
+                padding: 10px;
+                font-size: 0.95rem;
+            }
+
+            .nft-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+                gap: 8px;
+                max-height: 300px;
+            }
+
+            .nft-card {
+                padding: 8px;
+            }
+
+            .nft-image {
+                height: 80px;
+            }
+
+            .nft-name {
+                font-size: 0.8rem;
+            }
+
+            .nft-type-badge {
+                font-size: 0.65rem;
+                padding: 2px 6px;
+            }
+
+            .filter-buttons {
+                gap: 6px;
+            }
+
+            .filter-btn {
+                padding: 5px 10px;
+                font-size: 0.75rem;
+                flex: 1;
+                min-width: fit-content;
+            }
+
+            .swap-button {
+                padding: 15px 30px;
+                font-size: 1rem;
+            }
+
+            .activity-log,
+            .transaction-summary {
+                padding: 15px;
+            }
+
+            .activity-log h3,
+            .transaction-summary h3 {
+                font-size: 1.2rem;
+            }
+
+            .log-entry {
+                padding: 8px;
+                font-size: 0.85rem;
+            }
+
+            .summary-row {
+                padding: 8px;
+                font-size: 0.85rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .env-badge {
+                top: 8px;
+                right: 8px;
+                padding: 6px 12px;
+                font-size: 0.7rem;
+            }
+
+            .header h1 {
+                font-size: 1.3rem;
+            }
+
+            .header p {
+                font-size: 0.85rem;
+            }
+
+            .wallet-panel {
+                min-width: 260px;
+            }
+
+            .wallet-title {
+                font-size: 1rem;
+            }
+
+            .wallet-address {
+                font-size: 0.55rem;
+            }
+
+            .balance-display {
+                font-size: 1.2rem;
+            }
+
+            .nft-grid {
+                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+                gap: 6px;
+                max-height: 250px;
+            }
+
+            .nft-image {
+                height: 70px;
+            }
+
+            .nft-name {
+                font-size: 0.75rem;
+            }
+
+            .nft-type-badge {
+                font-size: 0.6rem;
+                padding: 2px 5px;
+            }
+
+            .filter-btn {
+                font-size: 0.7rem;
+                padding: 4px 8px;
+            }
+
+            .swap-button {
+                padding: 12px 20px;
+                font-size: 0.9rem;
+            }
+
+            .log-entry,
+            .summary-row {
+                font-size: 0.8rem;
+            }
+        }
     </style>
 </head>
 <body>
+    <!-- Environment Badge -->
+    <div class="env-badge" id="env-badge">LOADING...</div>
+
     <div class="container">
         <div class="header">
             <h1>⚡ Atomic Swap Test Page</h1>
-            <p>Test atomic swap functionality with live wallets on Devnet</p>
+            <p>Test atomic swap functionality with live wallets</p>
         </div>
 
         <div class="swap-container">

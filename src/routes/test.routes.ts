@@ -73,13 +73,13 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
     const balance = await connection.getBalance(publicKey);
     const solBalance = balance / LAMPORTS_PER_SOL;
 
-    // Get token accounts (NFTs)
+    // Get SPL token accounts (regular NFTs)
     const tokenAccounts = await connection.getParsedTokenAccountsByOwner(publicKey, {
       programId: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'),
     });
 
-    // Filter for NFTs (amount = 1, decimals = 0)
-    const nfts = tokenAccounts.value
+    // Filter for SPL NFTs (amount = 1, decimals = 0)
+    const splNfts = tokenAccounts.value
       .filter((account) => {
         const amount = account.account.data.parsed.info.tokenAmount.uiAmount;
         const decimals = account.account.data.parsed.info.tokenAmount.decimals;
@@ -90,52 +90,112 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
         return {
           mint: info.mint,
           tokenAccount: account.pubkey.toBase58(),
+          isCompressed: false,
         };
       });
 
-    // If Helius API key is available, get metadata
-    const heliusApiKey = process.env.HELIUS_API_KEY;
-    let nftsWithMetadata = nfts;
-
-    if (heliusApiKey && nfts.length > 0) {
+    // Get compressed NFTs (cNFTs) using DAS API
+    let cNfts: any[] = [];
+    const rpcUrl = process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com';
+    
+    // Check if using QuickNode or Helius (both support DAS API)
+    const isDasSupported = rpcUrl.includes('quiknode') || rpcUrl.includes('helius');
+    
+    if (isDasSupported) {
       try {
-        // Determine Helius endpoint based on Solana RPC URL
-        const rpcUrl = process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com';
-        const isDevnet = rpcUrl.includes('devnet');
-        const heliusUrl = isDevnet 
-          ? `https://devnet.helius-rpc.com/?api-key=${heliusApiKey}`
-          : `https://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`;
-        
-        const response = await fetch(heliusUrl, {
+        const dasResponse = await fetch(rpcUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             jsonrpc: '2.0',
-            id: 'test-page',
+            id: 'get-assets',
+            method: 'getAssetsByOwner',
+            params: {
+              ownerAddress: address,
+              page: 1,
+              limit: 1000,
+            },
+          }),
+        });
+
+        const dasData = await dasResponse.json() as any;
+        
+        if (dasData.result && dasData.result.items) {
+          cNfts = dasData.result.items
+            .filter((asset: any) => asset.compression?.compressed === true)
+            .map((asset: any) => ({
+              mint: asset.id,
+              tokenAccount: null, // cNFTs don't have token accounts
+              isCompressed: true,
+              name: asset.content?.metadata?.name || 'Unknown cNFT',
+              image: asset.content?.files?.[0]?.uri || asset.content?.links?.image || null,
+              symbol: asset.content?.metadata?.symbol || '',
+            }));
+        }
+      } catch (error) {
+        console.warn('Failed to fetch cNFTs via DAS API:', error);
+      }
+    }
+
+    // Combine SPL NFTs and cNFTs
+    const nfts = [...splNfts, ...cNfts];
+
+    // Enrich SPL NFTs with metadata (cNFTs already have metadata from DAS API)
+    let nftsWithMetadata = nfts;
+    
+    const splNftsToEnrich = nfts.filter(nft => !nft.isCompressed && !nft.name);
+    
+    if (isDasSupported && splNftsToEnrich.length > 0) {
+      try {
+        const response = await fetch(rpcUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0',
+            id: 'get-asset-batch',
             method: 'getAssetBatch',
             params: {
-              ids: nfts.map((nft) => nft.mint),
+              ids: splNftsToEnrich.map((nft) => nft.mint),
             },
           }),
         });
 
         const data = await response.json() as any;
         if (data.result) {
-          nftsWithMetadata = nfts.map((nft, index) => {
-            const metadata = data.result[index];
-            return {
-              ...nft,
-              name: metadata?.content?.metadata?.name || 'Unknown NFT',
-              image: metadata?.content?.files?.[0]?.uri || metadata?.content?.links?.image || null,
-              isCompressed: metadata?.compression?.compressed || false,
-            };
+          // Update SPL NFTs with metadata
+          nftsWithMetadata = nfts.map((nft) => {
+            if (nft.isCompressed || nft.name) {
+              return nft; // Already has metadata
+            }
+            
+            const metadataIndex = splNftsToEnrich.findIndex(n => n.mint === nft.mint);
+            if (metadataIndex >= 0) {
+              const metadata = data.result[metadataIndex];
+              return {
+                ...nft,
+                name: metadata?.content?.metadata?.name || 'Unknown NFT',
+                image: metadata?.content?.files?.[0]?.uri || metadata?.content?.links?.image || null,
+                symbol: metadata?.content?.metadata?.symbol || '',
+              };
+            }
+            
+            return nft;
           });
         }
       } catch (error) {
-        console.warn('Failed to fetch NFT metadata from Helius:', error);
-        // Continue with basic NFT data
+        console.warn('Failed to fetch SPL NFT metadata:', error);
       }
     }
+
+    // Ensure all NFTs have required fields
+    const finalNfts = nftsWithMetadata.map(nft => ({
+      mint: nft.mint,
+      tokenAccount: nft.tokenAccount,
+      name: nft.name || 'Unknown NFT',
+      image: nft.image || null,
+      symbol: nft.symbol || '',
+      isCompressed: nft.isCompressed || false,
+    }));
 
     res.json({
       success: true,
@@ -143,8 +203,10 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
         address: address,
         solBalance: solBalance,
         solBalanceLamports: balance,
-        nfts: nftsWithMetadata,
-        nftCount: nftsWithMetadata.length,
+        nfts: finalNfts,
+        nftCount: finalNfts.length,
+        splNftCount: finalNfts.filter(n => !n.isCompressed).length,
+        cNftCount: finalNfts.filter(n => n.isCompressed).length,
       },
       timestamp: new Date().toISOString(),
     });
