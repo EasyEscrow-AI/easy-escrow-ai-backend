@@ -233,17 +233,27 @@ The platform uses a two-tier fee collection system for security and operational 
 1. **Treasury Wallet (Hot Wallet)** - Receives fees during swaps, checked weekly for reconciliation
 2. **Fee Collector (Cold Storage)** - Final destination after prize distribution
 
-### `STAGING_TREASURY_ADDRESS`
+### `DEVNET_STAGING_TREASURY_ADDRESS`
 - **Type**: String (Base58 Public Key)
 - **Required**: No (defaults to hardcoded staging treasury)
 - **Description**: Staging/devnet treasury wallet where platform fees are initially collected.
 - **Default**: `AScijLJ1ApcQftktBRN818b8LDH4JJovQ5qrGDHfHuPu`
 
 ```bash
-STAGING_TREASURY_ADDRESS=AScijLJ1ApcQftktBRN818b8LDH4JJovQ5qrGDHfHuPu
+DEVNET_STAGING_TREASURY_ADDRESS=AScijLJ1ApcQftktBRN818b8LDH4JJovQ5qrGDHfHuPu
 ```
 
-### `PRODUCTION_TREASURY_ADDRESS` / `MAINNET_TREASURY_ADDRESS`
+### `DEVNET_STAGING_TREASURY_PRIVATE_KEY`
+- **Type**: String (JSON array format)
+- **Required**: No (optional for manual treasury operations)
+- **Description**: Private key for staging treasury wallet. Only needed if you need to manually sign transactions from treasury.
+- **Security**: **CRITICAL** - Keep this secret secure. Never commit to version control.
+
+```bash
+DEVNET_STAGING_TREASURY_PRIVATE_KEY=[141,121,226,170,...]
+```
+
+### `MAINNET_PRODUCTION_TREASURY_ADDRESS`
 - **Type**: String (Base58 Public Key)
 - **Required**: No (defaults to hardcoded production treasury)
 - **Description**: Production/mainnet treasury wallet where platform fees are initially collected.
@@ -251,9 +261,17 @@ STAGING_TREASURY_ADDRESS=AScijLJ1ApcQftktBRN818b8LDH4JJovQ5qrGDHfHuPu
 - **Security**: **HIGH PRIORITY** - This is a hot wallet holding active funds
 
 ```bash
-PRODUCTION_TREASURY_ADDRESS=9VN2bzjWoF1HsmyPrNtwXbBMxCYRNsFagC6pcfLmN7LA
-# OR
-MAINNET_TREASURY_ADDRESS=9VN2bzjWoF1HsmyPrNtwXbBMxCYRNsFagC6pcfLmN7LA
+MAINNET_PRODUCTION_TREASURY_ADDRESS=9VN2bzjWoF1HsmyPrNtwXbBMxCYRNsFagC6pcfLmN7LA
+```
+
+### `MAINNET_PRODUCTION_TREASURY_PRIVATE_KEY`
+- **Type**: String (JSON array format)
+- **Required**: No (optional for manual treasury operations)
+- **Description**: Private key for production treasury wallet. Only needed if you need to manually sign transactions from treasury.
+- **Security**: **CRITICAL** - Keep this secret secure. Never commit to version control. Use hardware wallet if possible.
+
+```bash
+MAINNET_PRODUCTION_TREASURY_PRIVATE_KEY=[140,62,47,189,...]
 ```
 
 ### `LOCAL_TREASURY_ADDRESS`
@@ -677,7 +695,8 @@ ESCROW_PROGRAM_ID=BZWjEPLRQTzHfQQKHwUJRx5RoU3VJDZvqAGmDrYJTgxP
 USDC_MINT_ADDRESS=Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr
 
 # Platform Fee Collection (uses staging addresses for local dev)
-LOCAL_TREASURY_ADDRESS=AScijLJ1ApcQftktBRN818b8LDH4JJovQ5qrGDHfHuPu
+DEVNET_STAGING_TREASURY_ADDRESS=AScijLJ1ApcQftktBRN818b8LDH4JJovQ5qrGDHfHuPu
+DEVNET_STAGING_TREASURY_PRIVATE_KEY=[141,121,226,170,132,204,72,1,249,4,69,48,193,168,158,110,164,96,176,219,30,235,102,28,201,137,164,42,183,179,205,10,140,73,23,56,188,174,100,5,167,137,42,39,63,227,167,40,111,72,98,61,235,24,3,14,89,155,146,199,0,106,206,224]
 LOCAL_FEE_COLLECTOR_ADDRESS=8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ
 
 # Security
@@ -729,7 +748,8 @@ ESCROW_PROGRAM_ID=YOUR_MAINNET_PROGRAM_ID
 USDC_MINT_ADDRESS=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
 
 # Platform Fee Collection (CRITICAL - Keep treasury keypair secure!)
-PRODUCTION_TREASURY_ADDRESS=9VN2bzjWoF1HsmyPrNtwXbBMxCYRNsFagC6pcfLmN7LA
+MAINNET_PRODUCTION_TREASURY_ADDRESS=9VN2bzjWoF1HsmyPrNtwXbBMxCYRNsFagC6pcfLmN7LA
+MAINNET_PRODUCTION_TREASURY_PRIVATE_KEY=[140,62,47,189,37,133,75,38,8,58,197,137,35,197,120,192,29,151,91,119,219,112,121,138,16,62,145,218,120,223,101,13,126,33,136,186,167,133,40,28,80,63,3,163,122,13,164,253,168,200,19,32,158,52,129,200,102,112,19,8,202,110,116,23]
 MAINNET_PROD_FEE_COLLECTOR_ADDRESS=YOUR_COLD_STORAGE_COLLECTOR_ADDRESS
 
 # Security (use secrets management!)

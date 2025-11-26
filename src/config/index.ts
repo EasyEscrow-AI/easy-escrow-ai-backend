@@ -60,11 +60,11 @@ export const config = {
       const nodeEnv = process.env.NODE_ENV || 'development';
       switch (nodeEnv) {
         case 'production':
-          return process.env.PRODUCTION_TREASURY_ADDRESS || process.env.MAINNET_TREASURY_ADDRESS || '9VN2bzjWoF1HsmyPrNtwXbBMxCYRNsFagC6pcfLmN7LA';
+          return process.env.MAINNET_PRODUCTION_TREASURY_ADDRESS || '9VN2bzjWoF1HsmyPrNtwXbBMxCYRNsFagC6pcfLmN7LA';
         case 'staging':
-          return process.env.STAGING_TREASURY_ADDRESS || 'AScijLJ1ApcQftktBRN818b8LDH4JJovQ5qrGDHfHuPu';
+          return process.env.DEVNET_STAGING_TREASURY_ADDRESS || 'AScijLJ1ApcQftktBRN818b8LDH4JJovQ5qrGDHfHuPu';
         default:
-          return process.env.LOCAL_TREASURY_ADDRESS || 'AScijLJ1ApcQftktBRN818b8LDH4JJovQ5qrGDHfHuPu';
+          return process.env.DEVNET_STAGING_TREASURY_ADDRESS || 'AScijLJ1ApcQftktBRN818b8LDH4JJovQ5qrGDHfHuPu';
       }
     })(),
     // Fee collector address - cold storage where fees are transferred weekly

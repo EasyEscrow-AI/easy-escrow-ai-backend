@@ -149,8 +149,8 @@ export function getTreasuryAddress(): string {
   switch (network) {
     case 'staging':
       // Try environment variable first, then load from keypair file
-      if (process.env.STAGING_TREASURY_ADDRESS) {
-        return process.env.STAGING_TREASURY_ADDRESS;
+      if (process.env.DEVNET_STAGING_TREASURY_ADDRESS) {
+        return process.env.DEVNET_STAGING_TREASURY_ADDRESS;
       }
       
       try {
@@ -168,8 +168,8 @@ export function getTreasuryAddress(): string {
 
     case 'production':
       // Try environment variable first, then load from keypair file
-      if (process.env.PRODUCTION_TREASURY_ADDRESS || process.env.MAINNET_TREASURY_ADDRESS) {
-        return process.env.PRODUCTION_TREASURY_ADDRESS || process.env.MAINNET_TREASURY_ADDRESS!;
+      if (process.env.MAINNET_PRODUCTION_TREASURY_ADDRESS) {
+        return process.env.MAINNET_PRODUCTION_TREASURY_ADDRESS;
       }
       
       try {
@@ -190,6 +190,7 @@ export function getTreasuryAddress(): string {
       // For local, use staging treasury as fallback
       return (
         process.env.LOCAL_TREASURY_ADDRESS ||
+        process.env.DEVNET_STAGING_TREASURY_ADDRESS ||
         'AScijLJ1ApcQftktBRN818b8LDH4JJovQ5qrGDHfHuPu' // Fallback to staging treasury
       );
   }
