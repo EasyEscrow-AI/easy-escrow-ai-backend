@@ -83,7 +83,19 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
       .filter((account) => {
         const amount = account.account.data.parsed.info.tokenAmount.uiAmount;
         const decimals = account.account.data.parsed.info.tokenAmount.decimals;
-        return amount === 1 && decimals === 0;
+        const owner = account.account.data.parsed.info.owner;
+        
+        // Only include NFTs that:
+        // 1. Have exactly 1 token (not 0)
+        // 2. Have 0 decimals (NFT standard)
+        // 3. Are owned by the specified address
+        const isOwnedNFT = amount === 1 && decimals === 0 && owner === address;
+        
+        if (!isOwnedNFT && decimals === 0) {
+          console.log(`[Test Route] Filtered out SPL token: ${account.account.data.parsed.info.mint} (amount: ${amount})`);
+        }
+        
+        return isOwnedNFT;
       })
       .map((account) => {
         const info = account.account.data.parsed.info;
@@ -121,8 +133,36 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
         const dasData = await dasResponse.json() as any;
         
         if (dasData.result && dasData.result.items) {
+          const totalAssets = dasData.result.items.length;
+          
           cNfts = dasData.result.items
-            .filter((asset: any) => asset.compression?.compressed === true)
+            .filter((asset: any) => {
+              // Only include compressed NFTs that are:
+              // 1. Actually compressed
+              // 2. Currently owned by this wallet
+              // 3. Not burnt
+              // 4. Not frozen
+              const isCompressed = asset.compression?.compressed === true;
+              const isOwned = asset.ownership?.owner === address;
+              const notBurnt = !asset.burnt;
+              const notFrozen = !asset.frozen;
+              
+              const isValid = isCompressed && isOwned && notBurnt && notFrozen;
+              
+              // Log filtered out cNFTs for debugging
+              if (!isValid && isCompressed) {
+                console.log(`[Test Route] Filtered out cNFT: ${asset.id}`, {
+                  isCompressed,
+                  isOwned,
+                  notBurnt,
+                  notFrozen,
+                  actualOwner: asset.ownership?.owner,
+                  expectedOwner: address,
+                });
+              }
+              
+              return isValid;
+            })
             .map((asset: any) => {
               // Debug: Log the asset structure for the first cNFT
               if (cNfts.length === 0) {
@@ -151,6 +191,12 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
                 symbol: asset.content?.metadata?.symbol || '',
               };
             });
+          
+          console.log(`[Test Route] cNFT filtering for ${address}:`, {
+            totalFromDAS: totalAssets,
+            validOwned: cNfts.length,
+            filtered: totalAssets - cNfts.length,
+          });
         }
       } catch (error) {
         console.warn('Failed to fetch cNFTs via DAS API:', error);
