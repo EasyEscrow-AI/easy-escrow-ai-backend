@@ -106,7 +106,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
     
     // Setup swap button event listener
-    document.getElementById('swap-btn').addEventListener('click', executeAtomicSwap);
+    document.getElementById('swap-btn').addEventListener('click', showConfirmationModal);
+    
+    // Setup modal button event listeners
+    document.getElementById('modal-cancel').addEventListener('click', hideConfirmationModal);
+    document.getElementById('modal-confirm').addEventListener('click', confirmAndExecuteSwap);
     
     // Setup filter button event listeners
     document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -296,24 +300,155 @@ function addLog(message, type = 'info') {
     logContent.insertBefore(entry, logContent.firstChild);
 }
 
-// Execute atomic swap
-async function executeAtomicSwap() {
+// HTML escape function to prevent XSS
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Stored swap parameters (to prevent stale values)
+let confirmedSwapParams = null;
+
+// Show confirmation modal
+function showConfirmationModal() {
+    const offeredSol = document.getElementById('maker-sol').value;
+    const requestedSol = document.getElementById('taker-sol').value;
+    
+    // Validate
+    if (selectedMakerNFTs.length === 0 && !offeredSol) {
+        addLog('❌ Maker must offer at least one NFT or SOL', 'error');
+        return;
+    }
+    
+    if (selectedTakerNFTs.length === 0 && !requestedSol) {
+        addLog('❌ Taker must request at least one NFT or SOL', 'error');
+        return;
+    }
+    
+    // Store confirmed parameters (prevent stale values bug)
+    confirmedSwapParams = {
+        offeredSol,
+        requestedSol,
+        selectedMakerNFTs: [...selectedMakerNFTs], // Clone arrays
+        selectedTakerNFTs: [...selectedTakerNFTs],
+    };
+    
+    // Populate modal with swap details (XSS-safe)
+    const makerOffersEl = document.getElementById('modal-maker-offers');
+    const takerOffersEl = document.getElementById('modal-taker-offers');
+    
+    // Clear previous content
+    makerOffersEl.innerHTML = '';
+    takerOffersEl.innerHTML = '';
+    
+    // Build maker offers (XSS-safe)
+    if (offeredSol) {
+        const item = document.createElement('div');
+        item.className = 'swap-item';
+        item.innerHTML = `
+            <div class="swap-item-label">SOL Amount</div>
+            <div class="swap-item-value">💰 ${escapeHtml(offeredSol)} SOL</div>
+        `;
+        makerOffersEl.appendChild(item);
+    }
+    
+    if (selectedMakerNFTs.length > 0) {
+        const item = document.createElement('div');
+        item.className = 'swap-item';
+        const label = document.createElement('div');
+        label.className = 'swap-item-label';
+        label.textContent = `NFTs (${selectedMakerNFTs.length})`;
+        
+        const value = document.createElement('div');
+        value.className = 'swap-item-value';
+        selectedMakerNFTs.forEach((nft, index) => {
+            if (index > 0) value.appendChild(document.createElement('br'));
+            value.appendChild(document.createTextNode(
+                `🖼️ ${nft.name || 'Unknown'} ${nft.isCompressed ? '(cNFT)' : '(SPL)'}`
+            ));
+        });
+        
+        item.appendChild(label);
+        item.appendChild(value);
+        makerOffersEl.appendChild(item);
+    }
+    
+    if (makerOffersEl.children.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'empty-swap-item';
+        empty.textContent = 'Nothing offered';
+        makerOffersEl.appendChild(empty);
+    }
+    
+    // Build taker offers (XSS-safe)
+    if (requestedSol) {
+        const item = document.createElement('div');
+        item.className = 'swap-item';
+        item.innerHTML = `
+            <div class="swap-item-label">SOL Amount</div>
+            <div class="swap-item-value">💰 ${escapeHtml(requestedSol)} SOL</div>
+        `;
+        takerOffersEl.appendChild(item);
+    }
+    
+    if (selectedTakerNFTs.length > 0) {
+        const item = document.createElement('div');
+        item.className = 'swap-item';
+        const label = document.createElement('div');
+        label.className = 'swap-item-label';
+        label.textContent = `NFTs (${selectedTakerNFTs.length})`;
+        
+        const value = document.createElement('div');
+        value.className = 'swap-item-value';
+        selectedTakerNFTs.forEach((nft, index) => {
+            if (index > 0) value.appendChild(document.createElement('br'));
+            value.appendChild(document.createTextNode(
+                `🖼️ ${nft.name || 'Unknown'} ${nft.isCompressed ? '(cNFT)' : '(SPL)'}`
+            ));
+        });
+        
+        item.appendChild(label);
+        item.appendChild(value);
+        takerOffersEl.appendChild(item);
+    }
+    
+    if (takerOffersEl.children.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'empty-swap-item';
+        empty.textContent = 'Nothing requested';
+        takerOffersEl.appendChild(empty);
+    }
+    
+    // Show modal
+    document.getElementById('confirm-modal').classList.add('show');
+}
+
+// Hide confirmation modal
+function hideConfirmationModal() {
+    document.getElementById('confirm-modal').classList.remove('show');
+    confirmedSwapParams = null; // Clear stored params
+}
+
+// Confirm and execute swap
+async function confirmAndExecuteSwap() {
+    if (!confirmedSwapParams) {
+        addLog('❌ No confirmed swap parameters', 'error');
+        return;
+    }
+    
+    hideConfirmationModal();
+    await executeAtomicSwap(confirmedSwapParams);
+}
+
+// Execute atomic swap (uses confirmed parameters to prevent stale values)
+async function executeAtomicSwap(params) {
     const swapBtn = document.getElementById('swap-btn');
     swapBtn.disabled = true;
 
     try {
-        // Collect swap parameters
-        const offeredSol = document.getElementById('maker-sol').value;
-        const requestedSol = document.getElementById('taker-sol').value;
-
-        // Validate
-        if (selectedMakerNFTs.length === 0 && !offeredSol) {
-            throw new Error('Maker must offer at least one NFT or SOL');
-        }
-
-        if (selectedTakerNFTs.length === 0 && !requestedSol) {
-            throw new Error('Taker must offer at least one NFT or SOL');
-        }
+        // Use confirmed parameters passed from modal
+        const { offeredSol, requestedSol, selectedMakerNFTs: confirmedMakerNFTs, selectedTakerNFTs: confirmedTakerNFTs } = params;
 
         addLog('🚀 Starting atomic swap...', 'info');
 
@@ -328,11 +463,11 @@ async function executeAtomicSwap() {
             body: JSON.stringify({
                 makerWallet: MAKER_ADDRESS,
                 takerWallet: TAKER_ADDRESS,
-                offeredAssets: selectedMakerNFTs.map(nft => ({
+                offeredAssets: confirmedMakerNFTs.map(nft => ({
                     mint: nft.mint,
                     isCompressed: nft.isCompressed || false,
                 })),
-                requestedAssets: selectedTakerNFTs.map(nft => ({
+                requestedAssets: confirmedTakerNFTs.map(nft => ({
                     mint: nft.mint,
                     isCompressed: nft.isCompressed || false,
                 })),
@@ -373,8 +508,8 @@ async function executeAtomicSwap() {
         addLog('⚠️ Note: Transaction signing requires wallet integration', 'info');
         addLog('Transaction would be signed by both parties and submitted on-chain', 'info');
 
-        // Show transaction summary
-        showTransactionSummary(createData.data, acceptData.data);
+        // Show transaction summary (pass confirmed params)
+        showTransactionSummary(createData.data, acceptData.data, params);
 
         addLog('✅ Atomic swap flow completed successfully!', 'success');
 
@@ -387,58 +522,59 @@ async function executeAtomicSwap() {
 }
 
 // Show transaction summary
-function showTransactionSummary(createData, acceptData) {
+function showTransactionSummary(createData, acceptData, params) {
     const summary = document.getElementById('transaction-summary');
     const content = document.getElementById('summary-content');
 
-    const offeredSol = document.getElementById('maker-sol').value;
-    const requestedSol = document.getElementById('taker-sol').value;
+    // Use confirmed parameters (not re-reading from inputs)
+    const { offeredSol, requestedSol, selectedMakerNFTs: confirmedMakerNFTs, selectedTakerNFTs: confirmedTakerNFTs } = params;
 
+    // Build summary HTML safely (XSS-protected)
     content.innerHTML = `
         <div class="summary-section">
             <h4>Offer Details</h4>
             <div class="summary-item">
                 <span class="summary-label">Offer ID:</span>
-                <span class="summary-value">${createData.offer.id}</span>
+                <span class="summary-value">${escapeHtml(createData.offer.id)}</span>
             </div>
             <div class="summary-item">
                 <span class="summary-label">Status:</span>
-                <span class="summary-value">${acceptData.offer.status}</span>
+                <span class="summary-value">${escapeHtml(acceptData.offer.status)}</span>
             </div>
             <div class="summary-item">
                 <span class="summary-label">Nonce Account:</span>
-                <span class="summary-value">${acceptData.transaction.nonceAccount}</span>
+                <span class="summary-value">${escapeHtml(acceptData.transaction.nonceAccount)}</span>
             </div>
         </div>
 
         <div class="summary-section">
             <h4>Maker Offers</h4>
-            ${selectedMakerNFTs.length > 0 ? `
+            ${confirmedMakerNFTs.length > 0 ? `
                 <div class="summary-item">
                     <span class="summary-label">NFTs:</span>
-                    <span class="summary-value">${selectedMakerNFTs.length} NFT(s)</span>
+                    <span class="summary-value">${confirmedMakerNFTs.length} NFT(s)</span>
                 </div>
             ` : ''}
             ${offeredSol ? `
                 <div class="summary-item">
                     <span class="summary-label">SOL:</span>
-                    <span class="summary-value">${offeredSol} SOL</span>
+                    <span class="summary-value">${escapeHtml(offeredSol)} SOL</span>
                 </div>
             ` : ''}
         </div>
 
         <div class="summary-section">
             <h4>Taker Requests</h4>
-            ${selectedTakerNFTs.length > 0 ? `
+            ${confirmedTakerNFTs.length > 0 ? `
                 <div class="summary-item">
                     <span class="summary-label">NFTs:</span>
-                    <span class="summary-value">${selectedTakerNFTs.length} NFT(s)</span>
+                    <span class="summary-value">${confirmedTakerNFTs.length} NFT(s)</span>
                 </div>
             ` : ''}
             ${requestedSol ? `
                 <div class="summary-item">
                     <span class="summary-label">SOL:</span>
-                    <span class="summary-value">${requestedSol} SOL</span>
+                    <span class="summary-value">${escapeHtml(requestedSol)} SOL</span>
                 </div>
             ` : ''}
         </div>

@@ -391,6 +391,165 @@
             color: #c0392b;
         }
 
+        /* Confirmation Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .modal-header h2 {
+            font-size: 1.8rem;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .modal-header p {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .swap-preview {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 20px;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .swap-side {
+            background: #f8f8f8;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .swap-side h3 {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .swap-side.maker h3 {
+            color: #667eea;
+        }
+
+        .swap-side.taker h3 {
+            color: #764ba2;
+        }
+
+        .swap-item {
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .swap-item:last-child {
+            border-bottom: none;
+        }
+
+        .swap-item-label {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .swap-item-value {
+            font-size: 1rem;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .swap-arrow {
+            font-size: 2rem;
+            color: #667eea;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .modal-btn-cancel {
+            background: #e0e0e0;
+            color: #666;
+        }
+
+        .modal-btn-cancel:hover {
+            background: #d0d0d0;
+        }
+
+        .modal-btn-confirm {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .modal-btn-confirm:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .empty-swap-item {
+            color: #999;
+            font-style: italic;
+            font-size: 0.9rem;
+        }
+
         /* Environment Badge */
         .env-badge {
             position: fixed;
@@ -504,6 +663,41 @@
                 right: 10px;
                 padding: 8px 16px;
                 font-size: 0.75rem;
+            }
+
+            .modal {
+                padding: 20px;
+                width: 95%;
+            }
+
+            .modal-header h2 {
+                font-size: 1.4rem;
+            }
+
+            .swap-preview {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .swap-arrow {
+                display: none;
+            }
+
+            .swap-side {
+                padding: 15px;
+            }
+
+            .swap-side h3 {
+                font-size: 1rem;
+            }
+
+            .modal-actions {
+                flex-direction: column;
+            }
+
+            .modal-btn {
+                padding: 12px;
+                font-size: 0.95rem;
             }
 
             .swap-container {
@@ -770,6 +964,35 @@
         <div class="transaction-summary" id="transaction-summary">
             <h3>✅ Transaction Summary</h3>
             <div id="summary-content"></div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal-overlay" id="confirm-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>⚡ Confirm Atomic Swap</h2>
+                <p>Review the swap details before executing</p>
+            </div>
+            
+            <div class="swap-preview">
+                <div class="swap-side maker">
+                    <h3>🟣 Maker Offers</h3>
+                    <div id="modal-maker-offers"></div>
+                </div>
+                
+                <div class="swap-arrow">⇄</div>
+                
+                <div class="swap-side taker">
+                    <h3>🟣 Taker Receives</h3>
+                    <div id="modal-taker-offers"></div>
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="modal-btn modal-btn-cancel" id="modal-cancel">Cancel</button>
+                <button class="modal-btn modal-btn-confirm" id="modal-confirm">Confirm Swap</button>
+            </div>
         </div>
     </div>
 
