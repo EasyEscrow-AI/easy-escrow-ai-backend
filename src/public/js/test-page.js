@@ -602,7 +602,12 @@ async function confirmAndExecuteSwap() {
 // Execute atomic swap (uses confirmed parameters to prevent stale values)
 async function executeAtomicSwap(params) {
     const swapBtn = document.getElementById('swap-btn');
+    const originalText = swapBtn.innerHTML;
+    
+    // Set loading state
     swapBtn.disabled = true;
+    swapBtn.innerHTML = '⏳ Swap In-Progress...';
+    swapBtn.style.animation = 'pulse 1.5s ease-in-out infinite';
 
     try {
         // Use confirmed parameters passed from modal
@@ -675,7 +680,10 @@ async function executeAtomicSwap(params) {
         console.error('Swap error:', error);
         addLog(`❌ Swap failed: ${error.message}`, 'error');
     } finally {
+        // Restore button state
+        swapBtn.innerHTML = originalText;
         swapBtn.disabled = false;
+        swapBtn.style.animation = '';
     }
 }
 
