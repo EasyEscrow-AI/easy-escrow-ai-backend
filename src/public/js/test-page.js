@@ -20,12 +20,32 @@ let solPriceUSD = null; // Cached SOL price in USD
 // Fetch SOL price in USD
 async function fetchSOLPrice() {
     try {
-        const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd');
+        console.log('🔄 Fetching SOL price from CoinGecko...');
+        const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd', {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+            },
+        });
+        
+        if (!response.ok) {
+            console.error(`❌ CoinGecko API error: ${response.status} ${response.statusText}`);
+            solPriceUSD = null;
+            return;
+        }
+        
         const data = await response.json();
-        solPriceUSD = data.solana.usd;
-        console.log(`💰 SOL Price: $${solPriceUSD} USD`);
+        console.log('📦 CoinGecko response:', data);
+        
+        if (data && data.solana && typeof data.solana.usd === 'number') {
+            solPriceUSD = data.solana.usd;
+            console.log(`💰 SOL Price: $${solPriceUSD} USD`);
+        } else {
+            console.error('❌ Invalid CoinGecko response structure:', data);
+            solPriceUSD = null;
+        }
     } catch (error) {
-        console.warn('Failed to fetch SOL price:', error);
+        console.error('❌ Failed to fetch SOL price:', error);
         solPriceUSD = null; // Fallback to no USD display
     }
 }
@@ -99,8 +119,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Set environment badge first
     setEnvironmentBadge();
     
-    // Fetch SOL price for USD conversions
-    fetchSOLPrice();
+    // Fetch SOL price for USD conversions (await to ensure it's loaded)
+    await fetchSOLPrice();
     
     // Load configuration
     const configLoaded = await loadConfig();
