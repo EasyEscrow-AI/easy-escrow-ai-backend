@@ -117,6 +117,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         btn.addEventListener('click', handleFilterClick);
     });
     
+    // Setup clear button event listeners
+    document.getElementById('maker-clear-btn').addEventListener('click', () => {
+        clearNFTSelection('maker');
+    });
+    
+    document.getElementById('taker-clear-btn').addEventListener('click', () => {
+        clearNFTSelection('taker');
+    });
+    
     // Setup NFT card click handling with event delegation
     document.getElementById('maker-nfts').addEventListener('click', (e) => {
         const card = e.target.closest('.nft-card');
@@ -288,6 +297,24 @@ function updateNFTSelection(wallet) {
         const isSelected = selectedArray.some(n => n.mint === nft.mint);
         card.classList.toggle('selected', isSelected);
     });
+    
+    // Update clear button state
+    const clearBtn = document.getElementById(`${wallet}-clear-btn`);
+    clearBtn.disabled = selectedArray.length === 0;
+}
+
+// Clear NFT selection
+function clearNFTSelection(wallet) {
+    if (wallet === 'maker') {
+        selectedMakerNFTs = [];
+    } else {
+        selectedTakerNFTs = [];
+    }
+    
+    const nfts = wallet === 'maker' ? makerData.nfts : takerData.nfts;
+    renderNFTs(wallet, nfts);
+    updateNFTSelection(wallet);
+    addLog(`🗑️ Cleared ${wallet} NFT selection`, 'info');
 }
 
 // Add log entry
@@ -365,24 +392,38 @@ function showConfirmationModal() {
     }
     
     if (selectedMakerNFTs.length > 0) {
-        const item = document.createElement('div');
-        item.className = 'swap-item';
-        const label = document.createElement('div');
-        label.className = 'swap-item-label';
-        label.textContent = `NFTs (${selectedMakerNFTs.length})`;
-        
-        const value = document.createElement('div');
-        value.className = 'swap-item-value';
-        selectedMakerNFTs.forEach((nft, index) => {
-            if (index > 0) value.appendChild(document.createElement('br'));
-            value.appendChild(document.createTextNode(
-                `🖼️ ${nft.name || 'Unknown'} ${nft.isCompressed ? '(cNFT)' : '(SPL)'}`
-            ));
+        selectedMakerNFTs.forEach(nft => {
+            const card = document.createElement('div');
+            card.className = 'nft-preview-card';
+            
+            const img = document.createElement('img');
+            img.className = 'nft-preview-image';
+            img.src = nft.image || 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'50\' height=\'50\'%3E%3Crect fill=\'%23ddd\' width=\'50\' height=\'50\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23999\' font-family=\'Arial\' font-size=\'10\'%3ENone%3C/text%3E%3C/svg%3E';
+            img.alt = nft.name || 'Unknown NFT';
+            
+            const details = document.createElement('div');
+            details.className = 'nft-preview-details';
+            
+            const name = document.createElement('div');
+            name.className = 'nft-preview-name';
+            name.textContent = nft.name || 'Unknown NFT';
+            
+            const type = document.createElement('div');
+            type.className = 'nft-preview-type';
+            type.textContent = nft.isCompressed ? 'cNFT' : 'SPL NFT';
+            
+            const mint = document.createElement('div');
+            mint.className = 'nft-preview-mint';
+            mint.textContent = `${nft.mint.substring(0, 8)}...${nft.mint.substring(nft.mint.length - 6)}`;
+            
+            details.appendChild(name);
+            details.appendChild(type);
+            details.appendChild(mint);
+            
+            card.appendChild(img);
+            card.appendChild(details);
+            makerOffersEl.appendChild(card);
         });
-        
-        item.appendChild(label);
-        item.appendChild(value);
-        makerOffersEl.appendChild(item);
     }
     
     if (makerOffersEl.children.length === 0) {
@@ -404,24 +445,38 @@ function showConfirmationModal() {
     }
     
     if (selectedTakerNFTs.length > 0) {
-        const item = document.createElement('div');
-        item.className = 'swap-item';
-        const label = document.createElement('div');
-        label.className = 'swap-item-label';
-        label.textContent = `NFTs (${selectedTakerNFTs.length})`;
-        
-        const value = document.createElement('div');
-        value.className = 'swap-item-value';
-        selectedTakerNFTs.forEach((nft, index) => {
-            if (index > 0) value.appendChild(document.createElement('br'));
-            value.appendChild(document.createTextNode(
-                `🖼️ ${nft.name || 'Unknown'} ${nft.isCompressed ? '(cNFT)' : '(SPL)'}`
-            ));
+        selectedTakerNFTs.forEach(nft => {
+            const card = document.createElement('div');
+            card.className = 'nft-preview-card';
+            
+            const img = document.createElement('img');
+            img.className = 'nft-preview-image';
+            img.src = nft.image || 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'50\' height=\'50\'%3E%3Crect fill=\'%23ddd\' width=\'50\' height=\'50\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23999\' font-family=\'Arial\' font-size=\'10\'%3ENone%3C/text%3E%3C/svg%3E';
+            img.alt = nft.name || 'Unknown NFT';
+            
+            const details = document.createElement('div');
+            details.className = 'nft-preview-details';
+            
+            const name = document.createElement('div');
+            name.className = 'nft-preview-name';
+            name.textContent = nft.name || 'Unknown NFT';
+            
+            const type = document.createElement('div');
+            type.className = 'nft-preview-type';
+            type.textContent = nft.isCompressed ? 'cNFT' : 'SPL NFT';
+            
+            const mint = document.createElement('div');
+            mint.className = 'nft-preview-mint';
+            mint.textContent = `${nft.mint.substring(0, 8)}...${nft.mint.substring(nft.mint.length - 6)}`;
+            
+            details.appendChild(name);
+            details.appendChild(type);
+            details.appendChild(mint);
+            
+            card.appendChild(img);
+            card.appendChild(details);
+            takerOffersEl.appendChild(card);
         });
-        
-        item.appendChild(label);
-        item.appendChild(value);
-        takerOffersEl.appendChild(item);
     }
     
     if (takerOffersEl.children.length === 0) {
@@ -430,6 +485,38 @@ function showConfirmationModal() {
         empty.textContent = 'Nothing requested';
         takerOffersEl.appendChild(empty);
     }
+    
+    // Calculate and display estimated fees and time
+    const totalNFTs = selectedMakerNFTs.length + selectedTakerNFTs.length;
+    const totalSOL = (parseFloat(offeredSol) || 0) + (parseFloat(requestedSol) || 0);
+    
+    // Estimate time based on number of NFTs
+    let estimatedTime = '~5-10 seconds';
+    if (totalNFTs > 5) {
+        estimatedTime = '~10-15 seconds';
+    } else if (totalNFTs > 10) {
+        estimatedTime = '~15-20 seconds';
+    }
+    
+    // Calculate network fees (rough estimate)
+    // Base fee + per-NFT fee
+    const baseFee = 0.00001; // SOL
+    const perNFTFee = 0.000005; // SOL per NFT
+    const networkFee = baseFee + (totalNFTs * perNFTFee);
+    
+    // Calculate platform fee (1% of SOL, minimum 0.01 SOL)
+    let platformFee = totalSOL * 0.01;
+    if (platformFee < 0.01 && totalSOL > 0) {
+        platformFee = 0.01;
+    }
+    const platformFeeDisplay = totalSOL > 0 
+        ? `${platformFee.toFixed(4)} SOL (1%)`
+        : '0 SOL (no SOL transfer)';
+    
+    // Update modal values
+    document.getElementById('modal-est-time').textContent = estimatedTime;
+    document.getElementById('modal-network-fees').textContent = `~${networkFee.toFixed(6)} SOL`;
+    document.getElementById('modal-platform-fee').textContent = platformFeeDisplay;
     
     // Show modal
     document.getElementById('confirm-modal').classList.add('show');
