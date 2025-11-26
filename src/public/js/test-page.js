@@ -654,6 +654,9 @@ async function executeAtomicSwap(params) {
     const swapBtn = document.getElementById('swap-btn');
     const originalText = swapBtn.innerHTML;
     
+    // Start timer
+    const startTime = performance.now();
+    
     // Set loading state
     swapBtn.disabled = true;
     swapBtn.innerHTML = '⏳ Swap In-Progress...';
@@ -757,8 +760,15 @@ async function executeAtomicSwap(params) {
         addLog('✅ Transaction confirmed on blockchain!', 'success');
         addLog(`🔗 Signature: ${executeData.data.signature}`, 'success');
 
-        // Show transaction summary (pass confirmed params + execution data)
-        showTransactionSummary(createData.data, acceptData.data, executeData.data, params);
+        // Calculate execution time
+        const endTime = performance.now();
+        const executionTimeMs = endTime - startTime;
+        const executionTimeSec = (executionTimeMs / 1000).toFixed(2);
+
+        addLog(`⚡ Execution time: ${executionTimeSec}s`, 'success');
+
+        // Show transaction summary (pass confirmed params + execution data + timing)
+        showTransactionSummary(createData.data, acceptData.data, executeData.data, params, executionTimeSec);
 
         addLog('✅ Atomic swap completed successfully on devnet!', 'success');
 
@@ -774,7 +784,7 @@ async function executeAtomicSwap(params) {
 }
 
 // Show transaction summary
-function showTransactionSummary(createData, acceptData, executeData, params) {
+function showTransactionSummary(createData, acceptData, executeData, params, executionTimeSec) {
     const summary = document.getElementById('transaction-summary');
     const content = document.getElementById('summary-content');
 
@@ -788,6 +798,10 @@ function showTransactionSummary(createData, acceptData, executeData, params) {
             <div class="summary-item">
                 <span class="summary-label">Signature:</span>
                 <span class="summary-value"><a href="${executeData.explorerUrl}" target="_blank" rel="noopener noreferrer">${escapeHtml(executeData.signature.substring(0, 20))}...</a></span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Execution Time:</span>
+                <span class="summary-value highlight">⚡ ${executionTimeSec}s</span>
             </div>
             <div class="summary-item">
                 <span class="summary-label">Offer ID:</span>
