@@ -490,12 +490,12 @@ function showConfirmationModal() {
     const totalNFTs = selectedMakerNFTs.length + selectedTakerNFTs.length;
     const totalSOL = (parseFloat(offeredSol) || 0) + (parseFloat(requestedSol) || 0);
     
-    // Estimate time based on number of NFTs
+    // Estimate time based on number of NFTs (check larger thresholds first)
     let estimatedTime = '~5-10 seconds';
-    if (totalNFTs > 5) {
-        estimatedTime = '~10-15 seconds';
-    } else if (totalNFTs > 10) {
+    if (totalNFTs > 10) {
         estimatedTime = '~15-20 seconds';
+    } else if (totalNFTs > 5) {
+        estimatedTime = '~10-15 seconds';
     }
     
     // Calculate network fees (rough estimate)
