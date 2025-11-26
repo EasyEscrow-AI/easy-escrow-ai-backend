@@ -123,14 +123,29 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
         if (dasData.result && dasData.result.items) {
           cNfts = dasData.result.items
             .filter((asset: any) => asset.compression?.compressed === true)
-            .map((asset: any) => ({
-              mint: asset.id,
-              tokenAccount: null, // cNFTs don't have token accounts
-              isCompressed: true,
-              name: asset.content?.metadata?.name || 'Unknown cNFT',
-              image: asset.content?.files?.[0]?.uri || asset.content?.links?.image || null,
-              symbol: asset.content?.metadata?.symbol || '',
-            }));
+            .map((asset: any) => {
+              // Debug: Log the asset structure for the first cNFT
+              if (cNfts.length === 0) {
+                console.log('Sample cNFT asset structure:', JSON.stringify({
+                  id: asset.id,
+                  content: asset.content,
+                }, null, 2));
+              }
+              
+              return {
+                mint: asset.id,
+                tokenAccount: null, // cNFTs don't have token accounts
+                isCompressed: true,
+                name: asset.content?.metadata?.name || 'Unknown cNFT',
+                // Try multiple sources for image: files, links, or uri directly (for simple mints)
+                image: asset.content?.files?.[0]?.uri || 
+                       asset.content?.links?.image || 
+                       asset.content?.json_uri || // Sometimes the uri is here
+                       asset.content?.metadata?.uri || // Or here
+                       null,
+                symbol: asset.content?.metadata?.symbol || '',
+              };
+            });
         }
       } catch (error) {
         console.warn('Failed to fetch cNFTs via DAS API:', error);
