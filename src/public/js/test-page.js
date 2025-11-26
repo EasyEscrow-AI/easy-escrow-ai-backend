@@ -15,6 +15,8 @@ let selectedMakerNFTs = [];
 let selectedTakerNFTs = [];
 let makerFilter = 'all'; // 'all', 'spl', 'cnft'
 let takerFilter = 'all';
+let makerSearchTerm = ''; // Search term for maker NFTs
+let takerSearchTerm = ''; // Search term for taker NFTs
 let solPriceUSD = null; // Cached SOL price in USD
 
 // Fetch SOL price in USD
@@ -163,6 +165,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         clearNFTSelection('taker');
     });
     
+    // Setup search input event listeners
+    document.getElementById('maker-search').addEventListener('input', (e) => {
+        makerSearchTerm = e.target.value;
+        if (makerData) {
+            renderNFTs('maker', makerData.nfts);
+            updateNFTSelection('maker'); // Restore visual selection state
+        }
+    });
+    
+    document.getElementById('taker-search').addEventListener('input', (e) => {
+        takerSearchTerm = e.target.value;
+        if (takerData) {
+            renderNFTs('taker', takerData.nfts);
+            updateNFTSelection('taker'); // Restore visual selection state
+        }
+    });
+    
     // Setup NFT card click handling with event delegation
     document.getElementById('maker-nfts').addEventListener('click', (e) => {
         const card = e.target.closest('.nft-card');
@@ -250,8 +269,9 @@ async function loadWalletInfo(wallet) {
 function renderNFTs(wallet, nfts) {
     const container = document.getElementById(`${wallet}-nfts`);
     const filter = wallet === 'maker' ? makerFilter : takerFilter;
+    const searchTerm = wallet === 'maker' ? makerSearchTerm : takerSearchTerm;
     
-    // Apply filter
+    // Apply type filter
     let filteredNfts = nfts;
     if (filter === 'spl') {
         filteredNfts = nfts.filter(nft => !nft.isCompressed);
@@ -259,10 +279,25 @@ function renderNFTs(wallet, nfts) {
         filteredNfts = nfts.filter(nft => nft.isCompressed);
     }
     
+    // Apply search filter
+    if (searchTerm) {
+        const searchLower = searchTerm.toLowerCase();
+        filteredNfts = filteredNfts.filter(nft => {
+            const name = (nft.name || '').toLowerCase();
+            const mint = (nft.mint || '').toLowerCase();
+            return name.includes(searchLower) || mint.includes(searchLower);
+        });
+    }
+    
     if (filteredNfts.length === 0) {
-        const message = filter === 'all' 
-            ? 'No NFTs found in this wallet'
-            : `No ${filter === 'spl' ? 'SPL NFTs' : 'cNFTs'} found in this wallet`;
+        let message;
+        if (searchTerm) {
+            message = `No NFTs found matching "${searchTerm}"`;
+        } else if (filter === 'all') {
+            message = 'No NFTs found in this wallet';
+        } else {
+            message = `No ${filter === 'spl' ? 'SPL NFTs' : 'cNFTs'} found in this wallet`;
+        }
         container.innerHTML = `<div class="empty-state">${message}</div>`;
         return;
     }
@@ -602,7 +637,12 @@ async function confirmAndExecuteSwap() {
 // Execute atomic swap (uses confirmed parameters to prevent stale values)
 async function executeAtomicSwap(params) {
     const swapBtn = document.getElementById('swap-btn');
+    const originalText = swapBtn.innerHTML;
+    
+    // Set loading state
     swapBtn.disabled = true;
+    swapBtn.innerHTML = '⏳ Swap In-Progress...';
+    swapBtn.style.animation = 'pulse 1.5s ease-in-out infinite';
 
     try {
         // Use confirmed parameters passed from modal
@@ -675,7 +715,10 @@ async function executeAtomicSwap(params) {
         console.error('Swap error:', error);
         addLog(`❌ Swap failed: ${error.message}`, 'error');
     } finally {
+        // Restore button state
+        swapBtn.innerHTML = originalText;
         swapBtn.disabled = false;
+        swapBtn.style.animation = '';
     }
 }
 
