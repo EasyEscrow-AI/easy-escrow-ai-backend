@@ -189,7 +189,7 @@ export function getTreasuryAddress(): string {
       }
 
       // Hardcoded fallback (production treasury public key)
-      return '9VN2bzjWoF1HsmyPrNtwXbBMxCYRNsFagC6pcfLmN7LA';
+      return 'HMtLHzJZ5AUUaKjYBGZpB4RbjN4gYvcd69esNwtaUBFF';
 
     case 'local':
     default:
