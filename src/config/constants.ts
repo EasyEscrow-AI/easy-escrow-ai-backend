@@ -5,7 +5,7 @@
  * across different environments (local/staging/production).
  */
 
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, Keypair } from '@solana/web3.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -157,7 +157,10 @@ export function getTreasuryAddress(): string {
         const treasuryPath = path.join(walletsDir, 'staging', 'staging-treasury.json');
         if (fs.existsSync(treasuryPath)) {
           const keypairData = JSON.parse(fs.readFileSync(treasuryPath, 'utf-8'));
-          return new PublicKey(keypairData).toBase58();
+          // Keypair arrays are 64 bytes: [32 bytes private key, 32 bytes public key]
+          // Use Keypair.fromSecretKey to correctly extract the public key
+          const keypair = Keypair.fromSecretKey(new Uint8Array(keypairData));
+          return keypair.publicKey.toBase58();
         }
       } catch (error) {
         console.warn('⚠️  Could not load staging treasury from keypair file:', error);
@@ -176,7 +179,10 @@ export function getTreasuryAddress(): string {
         const treasuryPath = path.join(walletsDir, 'production', 'production-treasury.json');
         if (fs.existsSync(treasuryPath)) {
           const keypairData = JSON.parse(fs.readFileSync(treasuryPath, 'utf-8'));
-          return new PublicKey(keypairData).toBase58();
+          // Keypair arrays are 64 bytes: [32 bytes private key, 32 bytes public key]
+          // Use Keypair.fromSecretKey to correctly extract the public key
+          const keypair = Keypair.fromSecretKey(new Uint8Array(keypairData));
+          return keypair.publicKey.toBase58();
         }
       } catch (error) {
         console.warn('⚠️  Could not load production treasury from keypair file:', error);

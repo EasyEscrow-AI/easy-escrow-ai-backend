@@ -32,7 +32,7 @@ pub struct Treasury {
 
 impl Treasury {
     /// Space required for Treasury account
-    /// Discriminator (8) + Pubkey (32) + u64 (8) + u64 (8) + u64 (8) + bool (1) + i64 (8) + i64 (8) + u8 (1) = 105 bytes
+    /// Discriminator (8) + Pubkey (32) + u64 (8) + u64 (8) + u64 (8) + bool (1) + i64 (8) + i64 (8) + u8 (1) = 82 bytes
     pub const LEN: usize = 8 + 32 + 8 + 8 + 8 + 1 + 8 + 8 + 1;
     
     /// Treasury PDA seeds
@@ -48,7 +48,7 @@ mod tests {
     
     #[test]
     fn test_treasury_size() {
-        assert_eq!(Treasury::LEN, 105);
+        assert_eq!(Treasury::LEN, 82);
     }
 }
 
