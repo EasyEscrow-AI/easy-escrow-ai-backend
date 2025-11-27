@@ -352,20 +352,20 @@ export class TransactionBuilder {
     };
     
     // Build accounts object
+    // Note: Anchor requires ALL optional accounts to be provided, even if unused
+    // Use program ID as placeholder for unused accounts
     const accounts: any = {
       maker: inputs.makerPubkey,
       taker: inputs.takerPubkey,
       platformAuthority: this.platformAuthority.publicKey,
       treasury: inputs.treasuryPDA,
+      makerNftAccount: makerNftAccount || inputs.programId, // Placeholder if no NFT
+      takerNftDestination: takerNftDestination || inputs.programId, // Placeholder if no NFT
+      takerNftAccount: takerNftAccount || inputs.programId, // Placeholder if no NFT
+      makerNftDestination: makerNftDestination || inputs.programId, // Placeholder if no NFT
       tokenProgram: TOKEN_PROGRAM_ID,
       systemProgram: SystemProgram.programId,
     };
-    
-    // Add optional NFT accounts if present
-    if (makerNftAccount) accounts.makerNftAccount = makerNftAccount;
-    if (takerNftDestination) accounts.takerNftDestination = takerNftDestination;
-    if (takerNftAccount) accounts.takerNftAccount = takerNftAccount;
-    if (makerNftDestination) accounts.makerNftDestination = makerNftDestination;
     
     console.log('[TransactionBuilder] Swap params:', swapParams);
     console.log('[TransactionBuilder] Accounts:', accounts);
