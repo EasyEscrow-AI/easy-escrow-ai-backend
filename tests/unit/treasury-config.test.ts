@@ -110,7 +110,7 @@ describe('Treasury Wallet Configuration', () => {
 
         const address = getTreasuryAddress();
 
-        expect(address).to.equal('9VN2bzjWoF1HsmyPrNtwXbBMxCYRNsFagC6pcfLmN7LA');
+        expect(address).to.equal('HMtLHzJZ5AUUaKjYBGZpB4RbjN4gYvcd69esNwtaUBFF');
       });
 
       it('should load address from keypair file when file exists', () => {
