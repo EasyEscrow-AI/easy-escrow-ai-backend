@@ -98,11 +98,18 @@ const transactionBuilder = new TransactionBuilder(
 );
 
 // Derive Treasury PDA (114-byte structure with locked withdrawals)
-const [treasuryPDA] = PublicKey.findProgramAddressSync(
+const [treasuryPDA, treasuryBump] = PublicKey.findProgramAddressSync(
   [Buffer.from('main_treasury'), platformAuthority.publicKey.toBuffer()],
   programId
 );
-console.log('[OffersRoutes] Treasury PDA:', treasuryPDA.toBase58());
+console.log('[OffersRoutes] ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+console.log('[OffersRoutes] Treasury PDA Derivation:');
+console.log('[OffersRoutes]   Seeds: main_treasury');
+console.log('[OffersRoutes]   Authority:', platformAuthority.publicKey.toBase58());
+console.log('[OffersRoutes]   Program ID:', programId.toBase58());
+console.log('[OffersRoutes]   Treasury PDA:', treasuryPDA.toBase58());
+console.log('[OffersRoutes]   Bump:', treasuryBump);
+console.log('[OffersRoutes] ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
 const offerManager = new OfferManager(
   connection,
