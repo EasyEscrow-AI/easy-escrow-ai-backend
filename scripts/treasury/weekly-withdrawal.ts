@@ -234,7 +234,8 @@ async function main() {
   }
 
   // Calculate withdrawal amount (use correct account size for rent)
-  const accountSize = treasuryData.isOldStructure ? 57 : 82;
+  // Use actual account size (57, 82, or 114 bytes) for accurate rent calculation
+  const accountSize = treasuryData.accountSize;
   const rent = await connection.getMinimumBalanceForRentExemption(accountSize);
   const availableBalance = Number(treasuryData.balance) - rent;
   const MIN_BUFFER = 0.01 * LAMPORTS_PER_SOL; // Keep 0.01 SOL buffer
