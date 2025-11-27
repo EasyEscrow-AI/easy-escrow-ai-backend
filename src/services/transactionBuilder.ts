@@ -117,7 +117,12 @@ export class TransactionBuilder {
     if (!this.program) {
       const wallet = new anchor.Wallet(this.platformAuthority);
       const provider = new anchor.AnchorProvider(this.connection, wallet, { commitment: 'confirmed' });
+      // Use the provided programId, not the IDL's hardcoded address
+      // Anchor.Program constructor: (idl, provider)
+      // Then set the programId manually if needed, or use setProvider
       this.program = new anchor.Program(idl as anchor.Idl, provider);
+      // Override the program ID from IDL with the provided one
+      (this.program as any).programId = programId;
     }
     return this.program;
   }
@@ -302,6 +307,14 @@ export class TransactionBuilder {
   private async createAtomicSwapInstruction(inputs: TransactionBuildInputs): Promise<TransactionInstruction> {
     console.log('[TransactionBuilder] Creating atomic_swap_with_fee instruction');
     
+    // Validate: Program only supports 1 NFT per side
+    if (inputs.makerAssets.length > 1) {
+      throw new Error('Program only supports 1 NFT from maker. Use multiple transactions for multi-NFT swaps.');
+    }
+    if (inputs.takerAssets.length > 1) {
+      throw new Error('Program only supports 1 NFT from taker. Use multiple transactions for multi-NFT swaps.');
+    }
+    
     // Determine if either side is sending NFTs
     const makerSendsNft = inputs.makerAssets.length > 0;
     const takerSendsNft = inputs.takerAssets.length > 0;
@@ -312,30 +325,22 @@ export class TransactionBuilder {
     let takerNftAccount: PublicKey | null = null;
     let makerNftDestination: PublicKey | null = null;
     
-    if (makerSendsNft && inputs.makerAssets[0].assetInfo?.identifier) {
+    if (makerSendsNft) {
+      // Use identifier directly from SwapAsset (required field)
+      const nftMint = new PublicKey(inputs.makerAssets[0].identifier);
       // Maker's NFT source account
-      makerNftAccount = await getAssociatedTokenAddress(
-        new PublicKey(inputs.makerAssets[0].assetInfo.identifier),
-        inputs.makerPubkey
-      );
+      makerNftAccount = await getAssociatedTokenAddress(nftMint, inputs.makerPubkey);
       // Taker's NFT destination account
-      takerNftDestination = await getAssociatedTokenAddress(
-        new PublicKey(inputs.makerAssets[0].assetInfo.identifier),
-        inputs.takerPubkey
-      );
+      takerNftDestination = await getAssociatedTokenAddress(nftMint, inputs.takerPubkey);
     }
     
-    if (takerSendsNft && inputs.takerAssets[0].assetInfo?.identifier) {
+    if (takerSendsNft) {
+      // Use identifier directly from SwapAsset (required field)
+      const nftMint = new PublicKey(inputs.takerAssets[0].identifier);
       // Taker's NFT source account
-      takerNftAccount = await getAssociatedTokenAddress(
-        new PublicKey(inputs.takerAssets[0].assetInfo.identifier),
-        inputs.takerPubkey
-      );
+      takerNftAccount = await getAssociatedTokenAddress(nftMint, inputs.takerPubkey);
       // Maker's NFT destination account
-      makerNftDestination = await getAssociatedTokenAddress(
-        new PublicKey(inputs.takerAssets[0].assetInfo.identifier),
-        inputs.makerPubkey
-      );
+      makerNftDestination = await getAssociatedTokenAddress(nftMint, inputs.makerPubkey);
     }
     
     // Build swap parameters
