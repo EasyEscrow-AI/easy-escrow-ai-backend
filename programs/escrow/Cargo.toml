@@ -9,7 +9,7 @@ crate-type = ["cdylib", "lib"]
 name = "easyescrow"
 
 [features]
-default = ["mainnet"]  # Default to mainnet for safety
+default = ["staging"]  # Default to staging for development (use explicit --features mainnet for production)
 cpi = ["no-entrypoint"]
 no-entrypoint = []
 no-idl = []
