@@ -27,6 +27,10 @@ pub fn initialize_treasury_handler(ctx: Context<InitializeTreasury>) -> Result<(
     treasury.authority = ctx.accounts.authority.key();
     treasury.total_fees_collected = 0;
     treasury.total_swaps_executed = 0;
+    treasury.total_fees_withdrawn = 0;
+    treasury.is_paused = false;
+    treasury.paused_at = 0;
+    treasury.last_withdrawal_at = 0;
     treasury.bump = ctx.bumps.treasury;
     
     msg!("Treasury initialized with authority: {}", treasury.authority);

@@ -45,6 +45,13 @@ const PROGRAM_ID = new PublicKey('AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei')
 const PLATFORM_AUTHORITY_PATH = process.env.STAGING_ADMIN_PRIVATE_KEY_PATH || 
   path.join(__dirname, '../../../wallets/staging/staging-deployer.json');
 const STAGING_API_URL = process.env.STAGING_API_URL || 'http://localhost:3000';
+// Treasury address - where fees are initially collected (hot wallet)
+const TREASURY_ADDRESS = new PublicKey(
+  process.env.DEVNET_STAGING_TREASURY_ADDRESS || 
+  'AScijLJ1ApcQftktBRN818b8LDH4JJovQ5qrGDHfHuPu'
+);
+
+// Fee collector - cold storage for weekly transfers (kept for reference)
 const FEE_COLLECTOR_ADDRESS = new PublicKey(
   process.env.DEVNET_STAGING_FEE_COLLECTOR_ADDRESS || 
   '8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ'
@@ -149,13 +156,13 @@ describe('🚀 Atomic Swap E2E: NFT for SOL - Happy Path (Staging)', () => {
       // Get balances and NFT owner before swap
       const makerBalanceBefore = await connection.getBalance(wallets.sender.publicKey);
       const takerBalanceBefore = await connection.getBalance(wallets.receiver.publicKey);
-      const feeCollectorBalanceBefore = await connection.getBalance(FEE_COLLECTOR_ADDRESS);
+      const treasuryBalanceBefore = await connection.getBalance(TREASURY_ADDRESS);
       const nftOwnerBefore = await getNFTOwner(connection, testNFT.mint);
       
       console.log('\n💰 Balances Before:');
-      console.log(`  Maker:         ${(makerBalanceBefore / LAMPORTS_PER_SOL).toFixed(9)} SOL`);
-      console.log(`  Taker:         ${(takerBalanceBefore / LAMPORTS_PER_SOL).toFixed(9)} SOL`);
-      console.log(`  Fee Collector: ${(feeCollectorBalanceBefore / LAMPORTS_PER_SOL).toFixed(9)} SOL`);
+      console.log(`  Maker:    ${(makerBalanceBefore / LAMPORTS_PER_SOL).toFixed(9)} SOL`);
+      console.log(`  Taker:    ${(takerBalanceBefore / LAMPORTS_PER_SOL).toFixed(9)} SOL`);
+      console.log(`  Treasury: ${(treasuryBalanceBefore / LAMPORTS_PER_SOL).toFixed(9)} SOL (active collection)`);
       console.log(`\n🎨 NFT Owner Before: ${nftOwnerBefore.toBase58()}`);
       
       // Step 1: Create offer via API
@@ -236,17 +243,17 @@ describe('🚀 Atomic Swap E2E: NFT for SOL - Happy Path (Staging)', () => {
       
       const makerBalanceAfter = await connection.getBalance(wallets.sender.publicKey);
       const takerBalanceAfter = await connection.getBalance(wallets.receiver.publicKey);
-      const feeCollectorBalanceAfter = await connection.getBalance(FEE_COLLECTOR_ADDRESS);
+      const treasuryBalanceAfter = await connection.getBalance(TREASURY_ADDRESS);
       
       // Calculate actual changes
       const makerChange = makerBalanceAfter - makerBalanceBefore;
       const takerChange = takerBalanceAfter - takerBalanceBefore;
-      const feeCollected = feeCollectorBalanceAfter - feeCollectorBalanceBefore;
+      const feeCollected = treasuryBalanceAfter - treasuryBalanceBefore;
       
       console.log('\n💰 Balances After:');
-      console.log(`  Maker:         ${(makerBalanceAfter / LAMPORTS_PER_SOL).toFixed(9)} SOL`);
-      console.log(`  Taker:         ${(takerBalanceAfter / LAMPORTS_PER_SOL).toFixed(9)} SOL`);
-      console.log(`  Fee Collector: ${(feeCollectorBalanceAfter / LAMPORTS_PER_SOL).toFixed(9)} SOL`);
+      console.log(`  Maker:    ${(makerBalanceAfter / LAMPORTS_PER_SOL).toFixed(9)} SOL`);
+      console.log(`  Taker:    ${(takerBalanceAfter / LAMPORTS_PER_SOL).toFixed(9)} SOL`);
+      console.log(`  Treasury: ${(treasuryBalanceAfter / LAMPORTS_PER_SOL).toFixed(9)} SOL (active collection)`);
       
       // Verify maker received SOL (should receive 0.5 SOL minus small TX fees)
       await verifyBalanceChange(
@@ -268,15 +275,18 @@ describe('🚀 Atomic Swap E2E: NFT for SOL - Happy Path (Staging)', () => {
         'Taker'
       );
       
-      // Verify fee collector received platform fee
+      // Verify treasury received platform fee (active collection)
       await verifyBalanceChange(
         connection,
-        FEE_COLLECTOR_ADDRESS,
-        feeCollectorBalanceBefore,
+        TREASURY_ADDRESS,
+        treasuryBalanceBefore,
         platformFee, // Should receive exactly 0.005 SOL
         1000, // Minimal tolerance
-        'Fee Collector'
+        'Treasury (Active Fee Collection)'
       );
+      
+      console.log('\n📝 Note: Fees collected in treasury wallet (hot wallet)');
+      console.log('   Weekly reconciliation will transfer to cold storage fee collector');
       
       // Verify NFT ownership transfer
       await verifyNFTOwner(

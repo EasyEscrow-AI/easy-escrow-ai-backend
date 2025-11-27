@@ -11,18 +11,20 @@ use instructions::*;
 // Environment-specific Program IDs
 // Automatically selected based on build features
 // Build with: anchor build --features <environment>
+// Default: staging (devnet)
 
 #[cfg(feature = "mainnet")]
 declare_id!("2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx");
-
-#[cfg(feature = "staging")]
-declare_id!("AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei");
 
 #[cfg(feature = "devnet")]
 declare_id!("GpvN8LB1xXTu9N541x9rrbxD7HwH6xi1Gkp84P7rUAEZ");
 
 #[cfg(feature = "localnet")]
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
+
+// Default: staging (if no feature specified)
+#[cfg(not(any(feature = "mainnet", feature = "devnet", feature = "localnet")))]
+declare_id!("AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei");
 
 // Security contact information embedded in the program
 // This allows security researchers and auditors to easily find contact information
@@ -48,11 +50,6 @@ compile_error!("Cannot enable both 'mainnet' and 'devnet' features simultaneousl
 #[cfg(all(feature = "mainnet", feature = "localnet"))]
 compile_error!("Cannot enable both 'mainnet' and 'localnet' features simultaneously");
 
-#[cfg(all(feature = "staging", feature = "devnet"))]
-compile_error!("Cannot enable both 'staging' and 'devnet' features simultaneously");
-
-#[cfg(all(feature = "staging", feature = "localnet"))]
-compile_error!("Cannot enable both 'staging' and 'localnet' features simultaneously");
 
 #[cfg(all(feature = "devnet", feature = "localnet"))]
 compile_error!("Cannot enable both 'devnet' and 'localnet' features simultaneously");
@@ -77,9 +74,9 @@ fn get_authorized_admins() -> Vec<Pubkey> {
         vec![pubkey!("HGrfPKZuKR8BSYYJfZRFfdF1y2ApU9LSf6USQ6tpSDj2")] // MAINNET
     }
     
-    #[cfg(feature = "staging")]
+    #[cfg(not(any(feature = "mainnet", feature = "devnet", feature = "localnet")))]
     {
-        vec![pubkey!("498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R")] // STAGING
+        vec![pubkey!("498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R")] // STAGING (default)
     }
     
     #[cfg(feature = "devnet")]
@@ -122,12 +119,13 @@ pub mod escrow {
     /// All asset transfers and fee collection happen in a single transaction.
     ///
     /// # Process
-    /// 1. Validate swap parameters
-    /// 2. Collect platform fee from taker
-    /// 3. Transfer maker's NFTs to taker
-    /// 4. Transfer taker's NFTs to maker
-    /// 5. Transfer SOL between parties (if any)
-    /// 6. Update treasury statistics
+    /// 1. Check if program is paused
+    /// 2. Validate swap parameters
+    /// 3. Collect platform fee from taker
+    /// 4. Transfer maker's NFTs to taker
+    /// 5. Transfer taker's NFTs to maker
+    /// 6. Transfer SOL between parties (if any)
+    /// 7. Update treasury statistics
     ///
     /// # Arguments
     /// * `ctx` - Context containing all accounts needed for the swap
@@ -137,12 +135,14 @@ pub mod escrow {
     /// * `Result<()>` - Success or error
     ///
     /// # Security
+    /// * Checks program pause state before execution
     /// * Requires signatures from maker, taker, and platform authority
     /// * Validates asset ownership before transfer
     /// * Enforces fee collection before any asset transfers
     /// * All-or-nothing execution (atomic)
     ///
     /// # Errors
+    /// * `ProgramPaused` - Operations are temporarily disabled
     /// * `Unauthorized` - Platform authority signature missing or invalid
     /// * `InvalidFee` - Fee is zero or exceeds maximum
     /// * `TooManyAssets` - Asset count exceeds maximum per side
@@ -153,6 +153,79 @@ pub mod escrow {
         params: SwapParams,
     ) -> Result<()> {
         instructions::atomic_swap::atomic_swap_handler(ctx, params)
+    }
+    
+    /// Withdraw accumulated fees from Treasury PDA to treasury wallet
+    /// 
+    /// Allows the platform authority to withdraw SOL from the Treasury PDA to the
+    /// designated treasury wallet. Withdrawals are rate-limited to once per week (7 days).
+    ///
+    /// # Arguments
+    /// * `ctx` - Context containing authority, treasury PDA, and treasury wallet
+    /// * `amount` - Amount of lamports to withdraw
+    ///
+    /// # Returns
+    /// * `Result<()>` - Success or error
+    ///
+    /// # Security
+    /// * Only platform authority can withdraw
+    /// * Program must not be paused
+    /// * Enforces 7-day minimum between withdrawals
+    /// * Maintains rent-exempt minimum in Treasury PDA
+    ///
+    /// # Errors
+    /// * `Unauthorized` - Caller is not platform authority
+    /// * `ProgramPaused` - Program is currently paused
+    /// * `WithdrawalTooFrequent` - Less than 7 days since last withdrawal
+    /// * `InsufficientTreasuryBalance` - Not enough funds available
+    pub fn withdraw_treasury_fees(
+        ctx: Context<WithdrawTreasuryFees>,
+        amount: u64,
+    ) -> Result<()> {
+        instructions::withdraw::withdraw_treasury_fees_handler(ctx, amount)
+    }
+    
+    /// Emergency pause - stops all swaps and withdrawals
+    /// 
+    /// Allows the platform authority to immediately halt all program operations.
+    /// Used in case of security issues, bugs, or regulatory requirements.
+    ///
+    /// # Arguments
+    /// * `ctx` - Context containing authority and treasury
+    ///
+    /// # Returns
+    /// * `Result<()>` - Success or error
+    ///
+    /// # Security
+    /// * Only platform authority can pause
+    /// * Cannot pause if already paused
+    ///
+    /// # Errors
+    /// * `Unauthorized` - Caller is not platform authority
+    /// * `AlreadyPaused` - Program is already in paused state
+    pub fn emergency_pause(ctx: Context<EmergencyPause>) -> Result<()> {
+        instructions::pause::emergency_pause_handler(ctx)
+    }
+    
+    /// Resume operations after emergency pause
+    /// 
+    /// Allows the platform authority to resume program operations after a pause.
+    ///
+    /// # Arguments
+    /// * `ctx` - Context containing authority and treasury
+    ///
+    /// # Returns
+    /// * `Result<()>` - Success or error
+    ///
+    /// # Security
+    /// * Only platform authority can unpause
+    /// * Cannot unpause if not paused
+    ///
+    /// # Errors
+    /// * `Unauthorized` - Caller is not platform authority
+    /// * `NotPaused` - Program is not currently paused
+    pub fn unpause(ctx: Context<Unpause>) -> Result<()> {
+        instructions::pause::unpause_handler(ctx)
     }
 }
 

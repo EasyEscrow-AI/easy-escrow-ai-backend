@@ -37,5 +37,20 @@ pub enum AtomicSwapError {
     
     #[msg("Arithmetic overflow: Fee calculation overflowed")]
     ArithmeticOverflow,
+    
+    #[msg("Program is paused: All operations are temporarily disabled")]
+    ProgramPaused,
+    
+    #[msg("Program is already paused")]
+    AlreadyPaused,
+    
+    #[msg("Program is not paused")]
+    NotPaused,
+    
+    #[msg("Withdrawal too frequent: Must wait 7 days between withdrawals")]
+    WithdrawalTooFrequent,
+    
+    #[msg("Insufficient treasury balance: Not enough funds to withdraw")]
+    InsufficientTreasuryBalance,
 }
 
