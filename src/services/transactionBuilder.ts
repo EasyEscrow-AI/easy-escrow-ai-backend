@@ -29,6 +29,9 @@ import { AssetInfo, AssetType } from './assetValidator';
 import * as anchor from '@coral-xyz/anchor';
 import idl from '../generated/anchor/escrow-idl-staging.json';
 
+// Program ID from IDL (used for placeholders)
+const PROGRAM_ID = new PublicKey(idl.address);
+
 export interface SwapAsset {
   type: AssetType;
   identifier: string;
@@ -353,16 +356,16 @@ export class TransactionBuilder {
     
     // Build accounts object
     // Note: Anchor requires ALL optional accounts to be provided, even if unused
-    // Use program ID as placeholder for unused accounts
+    // Use PROGRAM_ID (from IDL) as placeholder for unused accounts to match what program expects
     const accounts: any = {
       maker: inputs.makerPubkey,
       taker: inputs.takerPubkey,
       platformAuthority: this.platformAuthority.publicKey,
       treasury: inputs.treasuryPDA,
-      makerNftAccount: makerNftAccount || inputs.programId, // Placeholder if no NFT
-      takerNftDestination: takerNftDestination || inputs.programId, // Placeholder if no NFT
-      takerNftAccount: takerNftAccount || inputs.programId, // Placeholder if no NFT
-      makerNftDestination: makerNftDestination || inputs.programId, // Placeholder if no NFT
+      makerNftAccount: makerNftAccount || PROGRAM_ID, // Placeholder if no NFT
+      takerNftDestination: takerNftDestination || PROGRAM_ID, // Placeholder if no NFT
+      takerNftAccount: takerNftAccount || PROGRAM_ID, // Placeholder if no NFT
+      makerNftDestination: makerNftDestination || PROGRAM_ID, // Placeholder if no NFT
       tokenProgram: TOKEN_PROGRAM_ID,
       systemProgram: SystemProgram.programId,
     };
