@@ -37,7 +37,7 @@ const RPC_URL = process.env.STAGING_SOLANA_RPC_URL || 'https://api.devnet.solana
 const PROGRAM_ID = new PublicKey('AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei');
 const PLATFORM_AUTHORITY_PATH = process.env.STAGING_ADMIN_PRIVATE_KEY_PATH || 
   path.join(__dirname, '../../../wallets/staging/staging-deployer.json');
-const STAGING_API_URL = process.env.STAGING_API_URL || 'http://localhost:3000';
+const STAGING_API_URL = process.env.STAGING_API_URL || 'https://staging-api.easyescrow.ai';
 const ATOMIC_SWAP_API_KEY = process.env.ATOMIC_SWAP_API_KEY || '';
 
 // TODO: Replace with actual cNFT after creation
