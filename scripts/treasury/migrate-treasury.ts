@@ -38,9 +38,9 @@ async function main() {
   const provider = new anchor.AnchorProvider(connection, wallet, { commitment: 'confirmed' });
   const program = new anchor.Program(idl, provider);
   
-  // Get treasury PDA (using treasury_v3 seeds for 114-byte structure with locked withdrawals)
+  // Get treasury PDA (using treasury_v4 seeds for 114-byte structure with locked withdrawals)
   const [treasuryPda, bump] = PublicKey.findProgramAddressSync(
-    [Buffer.from('treasury_v3'), adminKeypair.publicKey.toBuffer()],
+    [Buffer.from('treasury_v4'), adminKeypair.publicKey.toBuffer()],
     programId
   );
   

@@ -41,10 +41,11 @@ impl Treasury {
     pub const LEN: usize = 8 + 32 + 8 + 8 + 8 + 1 + 8 + 8 + 32 + 1;
 
     /// Treasury PDA seeds
-    /// v3: Adds authorized_withdrawal_wallet for security (114 bytes)
+    /// v4: Fresh PDA for v3 structure (114 bytes with locked withdrawals)
+    /// v3: Corrupted during deployment (deprecated)
     /// v2: Basic tracking with pause (82 bytes, deprecated)
     /// v1: Original structure (57 bytes, deprecated)
-    pub const SEED_PREFIX: &'static [u8] = b"treasury_v3";
+    pub const SEED_PREFIX: &'static [u8] = b"treasury_v4";
     
     /// Minimum time between withdrawals (7 days in seconds)
     pub const MIN_WITHDRAWAL_INTERVAL: i64 = 7 * 24 * 60 * 60;

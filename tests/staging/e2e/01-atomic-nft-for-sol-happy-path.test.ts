@@ -92,9 +92,9 @@ describe('🚀 Atomic Swap E2E: NFT for SOL - Happy Path (Staging)', () => {
     const provider = new AnchorProvider(connection, wallet, { commitment: 'confirmed' });
     program = new Program(idl, provider);
     
-    // Derive treasury PDA (using treasury_v3 seeds for 114-byte structure with locked withdrawals)
+    // Derive treasury PDA (using treasury_v4 seeds for 114-byte structure with locked withdrawals)
     [treasuryPda] = PublicKey.findProgramAddressSync(
-      [Buffer.from('treasury_v3'), platformAuthority.publicKey.toBuffer()],
+      [Buffer.from('treasury_v4'), platformAuthority.publicKey.toBuffer()],
       PROGRAM_ID
     );
     console.log('🏛️  Treasury PDA:', treasuryPda.toBase58());

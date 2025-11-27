@@ -97,9 +97,9 @@ const transactionBuilder = new TransactionBuilder(
   platformAuthority
 );
 
-// Derive Treasury PDA (using treasury_v3 seeds for 114-byte structure with locked withdrawals)
+// Derive Treasury PDA (using treasury_v4 seeds for 114-byte structure with locked withdrawals)
 const [treasuryPDA] = PublicKey.findProgramAddressSync(
-  [Buffer.from('treasury_v3'), platformAuthority.publicKey.toBuffer()],
+  [Buffer.from('treasury_v4'), platformAuthority.publicKey.toBuffer()],
   programId
 );
 console.log('[OffersRoutes] Treasury PDA:', treasuryPDA.toBase58());
