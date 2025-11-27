@@ -162,21 +162,28 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
       });
     }
     
-    // Sign and send transaction
+    // CRITICAL: Transaction already has platform authority signature from creation
+    // Use partialSign to add maker/taker signatures without overwriting existing signature
+    console.log('📤 Adding remaining signatures to transaction...');
+    console.log('   Additional signers:', signers.length);
+    transaction.partialSign(...signers);
+    
+    // Send the fully-signed transaction
     console.log('📤 Submitting transaction to blockchain...');
-    console.log('   Signers:', signers.length);
     
     let signature: string;
     try {
-      signature = await sendAndConfirmTransaction(
-        connection,
-        transaction,
-        signers,
-        {
-          commitment: 'confirmed',
-          preflightCommitment: 'confirmed',
-        }
-      );
+      // Serialize the fully-signed transaction
+      const rawTransaction = transaction.serialize();
+      
+      // Send and confirm using raw transaction (preserves all signatures)
+      signature = await connection.sendRawTransaction(rawTransaction, {
+        skipPreflight: false,
+        preflightCommitment: 'confirmed',
+      });
+      
+      // Wait for confirmation
+      await connection.confirmTransaction(signature, 'confirmed');
       
       console.log('✅ TRANSACTION CONFIRMED!');
       console.log('   Signature:', signature);
