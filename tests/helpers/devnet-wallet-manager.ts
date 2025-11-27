@@ -11,7 +11,8 @@ export interface DevnetWallets {
   sender: Keypair;      // NFT owner (seller)
   receiver: Keypair;    // USDC payer (buyer)
   admin: Keypair;       // System admin (escrow operations)
-  feeCollector: Keypair; // Treasury (receives fees only)
+  feeCollector: Keypair; // Cold storage (long-term fee storage)
+  treasury: Keypair;    // Hot wallet (active fee collection, weekly withdrawals)
 }
 
 /**
@@ -22,6 +23,7 @@ export interface WalletBalances {
   receiver: number;
   admin: number;
   feeCollector: number;
+  treasury: number;
 }
 
 /**
@@ -32,6 +34,7 @@ export interface WalletConfig {
   receiverPrivateKey?: string;
   adminPrivateKey?: string;
   feeCollectorPrivateKey?: string;
+  treasuryPrivateKey?: string;
 }
 
 /**
@@ -52,11 +55,13 @@ export async function loadDevnetWallets(): Promise<DevnetWallets> {
     const receiverKey = process.env.DEVNET_RECEIVER_PRIVATE_KEY;
     const adminKey = process.env.DEVNET_ADMIN_PRIVATE_KEY;
     const feeCollectorKey = process.env.DEVNET_FEE_COLLECTOR_PRIVATE_KEY;
+    const treasuryKey = process.env.DEVNET_TREASURY_PRIVATE_KEY;
 
     let sender: Keypair;
     let receiver: Keypair;
     let admin: Keypair;
     let feeCollector: Keypair;
+    let treasury: Keypair;
 
     if (senderKey && receiverKey && adminKey && feeCollectorKey) {
       // Load from environment
@@ -65,6 +70,21 @@ export async function loadDevnetWallets(): Promise<DevnetWallets> {
       receiver = Keypair.fromSecretKey(bs58.decode(receiverKey));
       admin = Keypair.fromSecretKey(bs58.decode(adminKey));
       feeCollector = Keypair.fromSecretKey(bs58.decode(feeCollectorKey));
+      
+      // Try to load treasury from environment or file
+      if (treasuryKey) {
+        treasury = Keypair.fromSecretKey(bs58.decode(treasuryKey));
+      } else {
+        // Load from staging treasury wallet file  
+        const treasuryPath = path.join(__dirname, '../../wallets/staging/staging-treasury.json');
+        if (fs.existsSync(treasuryPath)) {
+          const treasurySecret = JSON.parse(fs.readFileSync(treasuryPath, 'utf8'));
+          treasury = Keypair.fromSecretKey(new Uint8Array(treasurySecret));
+        } else {
+          // Fallback to fee collector if treasury not found
+          treasury = feeCollector;
+        }
+      }
     } else {
       // Try to load from config file
       const configPath = path.join(__dirname, '../fixtures/devnet-config.json');
@@ -79,6 +99,21 @@ export async function loadDevnetWallets(): Promise<DevnetWallets> {
           receiver = Keypair.fromSecretKey(bs58.decode(config.walletKeys.receiver));
           admin = Keypair.fromSecretKey(bs58.decode(config.walletKeys.admin));
           feeCollector = Keypair.fromSecretKey(bs58.decode(config.walletKeys.feeCollector));
+          
+          // Load treasury from config or wallet file
+          if (config.walletKeys?.treasury) {
+            treasury = Keypair.fromSecretKey(bs58.decode(config.walletKeys.treasury));
+          } else {
+            // Load from staging treasury wallet file
+            const treasuryPath = path.join(__dirname, '../../wallets/staging/staging-treasury.json');
+            if (fs.existsSync(treasuryPath)) {
+              const treasurySecret = JSON.parse(fs.readFileSync(treasuryPath, 'utf8'));
+              treasury = Keypair.fromSecretKey(new Uint8Array(treasurySecret));
+            } else {
+              // Fallback to fee collector if treasury not found
+              treasury = feeCollector;
+            }
+          }
         } else {
           throw new Error('Config file missing wallet keys');
         }
@@ -114,6 +149,7 @@ export async function loadDevnetWallets(): Promise<DevnetWallets> {
         receiver = Keypair.generate();
         admin = Keypair.generate();
         feeCollector = Keypair.generate();
+        treasury = Keypair.generate();
 
         // Save to config file
         const config = {
@@ -122,12 +158,14 @@ export async function loadDevnetWallets(): Promise<DevnetWallets> {
             receiver: bs58.encode(receiver.secretKey),
             admin: bs58.encode(admin.secretKey),
             feeCollector: bs58.encode(feeCollector.secretKey),
+            treasury: bs58.encode(treasury.secretKey),
           },
           wallets: {
             sender: sender.publicKey.toString(),
             receiver: receiver.publicKey.toString(),
             admin: admin.publicKey.toString(),
             feeCollector: feeCollector.publicKey.toString(),
+            treasury: treasury.publicKey.toString(),
           },
           createdAt: new Date().toISOString(),
           description: 'AUTO-GENERATED wallets - Set FORCE_GENERATE_WALLETS=false to prevent regeneration',
@@ -159,6 +197,7 @@ export async function loadDevnetWallets(): Promise<DevnetWallets> {
       receiver,
       admin,
       feeCollector,
+      treasury,
     };
   } catch (error) {
     throw new Error(`Failed to load devnet wallets: ${error instanceof Error ? error.message : String(error)}`);
@@ -173,11 +212,12 @@ export async function checkWalletBalances(
   wallets: DevnetWallets
 ): Promise<WalletBalances> {
   try {
-    const [senderBalance, receiverBalance, adminBalance, feeCollectorBalance] = await Promise.all([
+    const [senderBalance, receiverBalance, adminBalance, feeCollectorBalance, treasuryBalance] = await Promise.all([
       connection.getBalance(wallets.sender.publicKey),
       connection.getBalance(wallets.receiver.publicKey),
       connection.getBalance(wallets.admin.publicKey),
       connection.getBalance(wallets.feeCollector.publicKey),
+      connection.getBalance(wallets.treasury.publicKey),
     ]);
 
     return {
@@ -185,6 +225,7 @@ export async function checkWalletBalances(
       receiver: receiverBalance / LAMPORTS_PER_SOL,
       admin: adminBalance / LAMPORTS_PER_SOL,
       feeCollector: feeCollectorBalance / LAMPORTS_PER_SOL,
+      treasury: treasuryBalance / LAMPORTS_PER_SOL,
     };
   } catch (error) {
     throw new Error(`Failed to check wallet balances: ${error instanceof Error ? error.message : String(error)}`);
@@ -225,7 +266,8 @@ export async function verifyWalletBalances(
   console.log(`  Sender:       ${balances.sender.toFixed(4)} SOL`);
   console.log(`  Receiver:     ${balances.receiver.toFixed(4)} SOL`);
   console.log(`  Admin:        ${balances.admin.toFixed(4)} SOL`);
-  console.log(`  FeeCollector: ${balances.feeCollector.toFixed(4)} SOL\n`);
+  console.log(`  FeeCollector: ${balances.feeCollector.toFixed(4)} SOL`);
+  console.log(`  Treasury:     ${balances.treasury.toFixed(4)} SOL (active collection)\n`);
 
   // Check each wallet
   const errors: string[] = [];
