@@ -9,6 +9,7 @@
  * - Balance verification
  */
 
+import 'dotenv/config'; // Load environment variables
 import { describe, it, before, after } from 'mocha';
 import { expect } from 'chai';
 import { Connection, Keypair, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
