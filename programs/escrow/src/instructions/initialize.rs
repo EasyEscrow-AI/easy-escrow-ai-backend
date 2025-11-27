@@ -21,7 +21,10 @@ pub struct InitializeTreasury<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn initialize_treasury_handler(ctx: Context<InitializeTreasury>) -> Result<()> {
+pub fn initialize_treasury_handler(
+    ctx: Context<InitializeTreasury>,
+    authorized_withdrawal_wallet: Pubkey,
+) -> Result<()> {
     let treasury = &mut ctx.accounts.treasury;
     
     treasury.authority = ctx.accounts.authority.key();
@@ -31,9 +34,11 @@ pub fn initialize_treasury_handler(ctx: Context<InitializeTreasury>) -> Result<(
     treasury.is_paused = false;
     treasury.paused_at = 0;
     treasury.last_withdrawal_at = 0;
+    treasury.authorized_withdrawal_wallet = authorized_withdrawal_wallet;
     treasury.bump = ctx.bumps.treasury;
     
     msg!("Treasury initialized with authority: {}", treasury.authority);
+    msg!("Authorized withdrawal wallet: {}", authorized_withdrawal_wallet);
     
     Ok(())
 }

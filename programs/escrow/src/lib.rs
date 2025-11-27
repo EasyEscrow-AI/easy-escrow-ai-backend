@@ -107,11 +107,20 @@ pub mod escrow {
     ///
     /// # Arguments
     /// * `ctx` - Context containing authority and treasury accounts
+    /// * `authorized_withdrawal_wallet` - Wallet authorized to receive treasury withdrawals
     ///
     /// # Returns
     /// * `Result<()>` - Success or error
-    pub fn initialize_treasury(ctx: Context<InitializeTreasury>) -> Result<()> {
-        instructions::initialize::initialize_treasury_handler(ctx)
+    ///
+    /// # Security
+    /// * Locks withdrawals to specified wallet only
+    /// * Prevents fund redirection even if authority is compromised
+    /// * Can only be changed via program upgrade
+    pub fn initialize_treasury(
+        ctx: Context<InitializeTreasury>,
+        authorized_withdrawal_wallet: Pubkey,
+    ) -> Result<()> {
+        instructions::initialize::initialize_treasury_handler(ctx, authorized_withdrawal_wallet)
     }
     
     /// Execute an atomic swap with platform fee collection
