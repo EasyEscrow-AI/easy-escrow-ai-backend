@@ -36,7 +36,9 @@ impl Treasury {
     pub const LEN: usize = 8 + 32 + 8 + 8 + 8 + 1 + 8 + 8 + 1;
     
     /// Treasury PDA seeds
-    pub const SEED_PREFIX: &'static [u8] = b"treasury";
+    /// Note: Using "treasury_v2" to create fresh PDA with 82-byte structure
+    /// Old "treasury" PDA has 57-byte structure and cannot be resized
+    pub const SEED_PREFIX: &'static [u8] = b"treasury_v2";
     
     /// Minimum time between withdrawals (7 days in seconds)
     pub const MIN_WITHDRAWAL_INTERVAL: i64 = 7 * 24 * 60 * 60;
