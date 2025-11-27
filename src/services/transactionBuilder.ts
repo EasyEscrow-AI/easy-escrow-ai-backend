@@ -23,8 +23,11 @@ import {
   createAssociatedTokenAccountInstruction,
   createTransferInstruction,
   getAssociatedTokenAddress,
+  TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
 import { AssetInfo, AssetType } from './assetValidator';
+import * as anchor from '@coral-xyz/anchor';
+import idl from '../generated/anchor/escrow-idl-staging.json';
 
 export interface SwapAsset {
   type: AssetType;
@@ -90,6 +93,7 @@ export interface BuiltTransaction {
 export class TransactionBuilder {
   private connection: Connection;
   private platformAuthority: Keypair;
+  private program: anchor.Program | null = null;
   
   // Maximum transaction size (Solana limit is 1232 bytes)
   private static readonly MAX_TRANSACTION_SIZE = 1200; // Leave buffer
@@ -107,7 +111,24 @@ export class TransactionBuilder {
   }
   
   /**
-   * Build complete atomic swap transaction
+   * Get or initialize Anchor program instance
+   */
+  private getProgram(programId: PublicKey): anchor.Program {
+    if (!this.program) {
+      const wallet = new anchor.Wallet(this.platformAuthority);
+      const provider = new anchor.AnchorProvider(this.connection, wallet, { commitment: 'confirmed' });
+      // Use the provided programId, not the IDL's hardcoded address
+      // Anchor.Program constructor: (idl, provider)
+      // Then set the programId manually if needed, or use setProvider
+      this.program = new anchor.Program(idl as anchor.Idl, provider);
+      // Override the program ID from IDL with the provided one
+      (this.program as any).programId = programId;
+    }
+    return this.program;
+  }
+  
+  /**
+   * Build complete atomic swap transaction using escrow program
    */
   async buildSwapTransaction(inputs: TransactionBuildInputs): Promise<BuiltTransaction> {
     console.log('[TransactionBuilder] Building swap transaction:', {
@@ -133,50 +154,14 @@ export class TransactionBuilder {
       // 1. Add nonce advance instruction (MUST be first)
       transaction.add(this.createNonceAdvanceInstruction(inputs));
       
-      // 2. Create any missing ATAs
+      // 2. Create any missing ATAs (must be done before program call)
       const ataInstructions = await this.createMissingATAInstructions(inputs);
       ataInstructions.forEach((ix) => transaction.add(ix));
       
-      // 3. Add maker → taker transfers
-      const makerTransfers = await this.createAssetTransferInstructions(
-        inputs.makerAssets,
-        inputs.makerPubkey,
-        inputs.takerPubkey
-      );
-      makerTransfers.forEach((ix) => transaction.add(ix));
-      
-      // 4. Add maker SOL transfer (if any)
-      if (inputs.makerSolLamports > BigInt(0)) {
-        transaction.add(
-          SystemProgram.transfer({
-            fromPubkey: inputs.makerPubkey,
-            toPubkey: inputs.takerPubkey,
-            lamports: Number(inputs.makerSolLamports),
-          })
-        );
-      }
-      
-      // 5. Add taker → maker transfers
-      const takerTransfers = await this.createAssetTransferInstructions(
-        inputs.takerAssets,
-        inputs.takerPubkey,
-        inputs.makerPubkey
-      );
-      takerTransfers.forEach((ix) => transaction.add(ix));
-      
-      // 6. Add taker SOL transfer (if any)
-      if (inputs.takerSolLamports > BigInt(0)) {
-        transaction.add(
-          SystemProgram.transfer({
-            fromPubkey: inputs.takerPubkey,
-            toPubkey: inputs.makerPubkey,
-            lamports: Number(inputs.takerSolLamports),
-          })
-        );
-      }
-      
-      // 7. Add platform fee collection instruction
-      transaction.add(this.createFeeCollectionInstruction(inputs));
+      // 3. Add atomic_swap_with_fee program instruction
+      // This replaces all manual transfers and fee collection
+      const swapInstruction = await this.createAtomicSwapInstruction(inputs);
+      transaction.add(swapInstruction);
       
       // Partially sign with platform authority (for nonce advance)
       transaction.partialSign(this.platformAuthority);
@@ -316,15 +301,89 @@ export class TransactionBuilder {
   }
   
   /**
-   * Create platform fee collection instruction
+   * Create atomic_swap_with_fee program instruction
+   * This replaces all manual transfers and fee collection with a single program call
    */
-  private createFeeCollectionInstruction(inputs: TransactionBuildInputs): TransactionInstruction {
-    // Fee collection: Transfer from taker to treasury PDA
-    return SystemProgram.transfer({
-      fromPubkey: inputs.takerPubkey,
-      toPubkey: inputs.treasuryPDA,
-      lamports: Number(inputs.platformFeeLamports),
-    });
+  private async createAtomicSwapInstruction(inputs: TransactionBuildInputs): Promise<TransactionInstruction> {
+    console.log('[TransactionBuilder] Creating atomic_swap_with_fee instruction');
+    
+    // Validate: Program only supports 1 NFT per side
+    if (inputs.makerAssets.length > 1) {
+      throw new Error('Program only supports 1 NFT from maker. Use multiple transactions for multi-NFT swaps.');
+    }
+    if (inputs.takerAssets.length > 1) {
+      throw new Error('Program only supports 1 NFT from taker. Use multiple transactions for multi-NFT swaps.');
+    }
+    
+    // Determine if either side is sending NFTs
+    const makerSendsNft = inputs.makerAssets.length > 0;
+    const takerSendsNft = inputs.takerAssets.length > 0;
+    
+    // Get NFT token accounts (if applicable)
+    let makerNftAccount: PublicKey | null = null;
+    let takerNftDestination: PublicKey | null = null;
+    let takerNftAccount: PublicKey | null = null;
+    let makerNftDestination: PublicKey | null = null;
+    
+    if (makerSendsNft) {
+      // Use identifier directly from SwapAsset (required field)
+      const nftMint = new PublicKey(inputs.makerAssets[0].identifier);
+      // Maker's NFT source account
+      makerNftAccount = await getAssociatedTokenAddress(nftMint, inputs.makerPubkey);
+      // Taker's NFT destination account
+      takerNftDestination = await getAssociatedTokenAddress(nftMint, inputs.takerPubkey);
+    }
+    
+    if (takerSendsNft) {
+      // Use identifier directly from SwapAsset (required field)
+      const nftMint = new PublicKey(inputs.takerAssets[0].identifier);
+      // Taker's NFT source account
+      takerNftAccount = await getAssociatedTokenAddress(nftMint, inputs.takerPubkey);
+      // Maker's NFT destination account
+      makerNftDestination = await getAssociatedTokenAddress(nftMint, inputs.makerPubkey);
+    }
+    
+    // Build swap parameters
+    const swapParams = {
+      makerSendsNft,
+      takerSendsNft,
+      makerSolAmount: new anchor.BN(inputs.makerSolLamports.toString()),
+      takerSolAmount: new anchor.BN(inputs.takerSolLamports.toString()),
+      platformFee: new anchor.BN(inputs.platformFeeLamports.toString()),
+      swapId: inputs.swapId,
+    };
+    
+    // Build accounts object
+    const accounts: any = {
+      maker: inputs.makerPubkey,
+      taker: inputs.takerPubkey,
+      platformAuthority: this.platformAuthority.publicKey,
+      treasury: inputs.treasuryPDA,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      systemProgram: SystemProgram.programId,
+    };
+    
+    // Add optional NFT accounts if present
+    if (makerNftAccount) accounts.makerNftAccount = makerNftAccount;
+    if (takerNftDestination) accounts.takerNftDestination = takerNftDestination;
+    if (takerNftAccount) accounts.takerNftAccount = takerNftAccount;
+    if (makerNftDestination) accounts.makerNftDestination = makerNftDestination;
+    
+    console.log('[TransactionBuilder] Swap params:', swapParams);
+    console.log('[TransactionBuilder] Accounts:', accounts);
+    
+    // Get program instance
+    const program = this.getProgram(inputs.programId);
+    
+    // Build instruction
+    const instruction = await program.methods
+      .atomicSwapWithFee(swapParams)
+      .accounts(accounts)
+      .instruction();
+    
+    console.log('[TransactionBuilder] atomic_swap_with_fee instruction created');
+    
+    return instruction;
   }
   
   /**
