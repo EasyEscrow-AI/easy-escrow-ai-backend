@@ -96,9 +96,16 @@ async function main() {
   }
   
   // Initialize new treasury with authorized withdrawal wallet
-  const authorizedWallet = new PublicKey(config.platform?.treasuryAddress || '');
-  if (!authorizedWallet) {
+  const treasuryAddressStr = config.platform?.treasuryAddress;
+  if (!treasuryAddressStr || treasuryAddressStr.trim() === '') {
     throw new Error('Treasury address not configured in environment');
+  }
+  
+  let authorizedWallet: PublicKey;
+  try {
+    authorizedWallet = new PublicKey(treasuryAddressStr);
+  } catch (error) {
+    throw new Error(`Invalid treasury address in config: ${treasuryAddressStr}`);
   }
   
   console.log('🚀 Initializing Treasury PDA with NEW structure...');
