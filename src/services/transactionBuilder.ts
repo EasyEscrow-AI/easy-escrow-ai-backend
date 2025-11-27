@@ -112,17 +112,15 @@ export class TransactionBuilder {
   
   /**
    * Get or initialize Anchor program instance
+   * Note: We cache per programId to support multi-environment scenarios
    */
   private getProgram(programId: PublicKey): anchor.Program {
+    // For now, always use the IDL's programId since it matches our deployed staging program
+    // TODO: Support dynamic programId when we have different programs per environment
     if (!this.program) {
       const wallet = new anchor.Wallet(this.platformAuthority);
       const provider = new anchor.AnchorProvider(this.connection, wallet, { commitment: 'confirmed' });
-      // Use the provided programId, not the IDL's hardcoded address
-      // Anchor.Program constructor: (idl, provider)
-      // Then set the programId manually if needed, or use setProvider
       this.program = new anchor.Program(idl as anchor.Idl, provider);
-      // Override the program ID from IDL with the provided one
-      (this.program as any).programId = programId;
     }
     return this.program;
   }
