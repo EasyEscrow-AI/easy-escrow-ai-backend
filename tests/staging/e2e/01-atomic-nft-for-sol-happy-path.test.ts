@@ -158,7 +158,7 @@ describe('🚀 Atomic Swap E2E: NFT for SOL - Happy Path (Staging)', () => {
       // Get balances and NFT owner before swap
       const makerBalanceBefore = await connection.getBalance(wallets.sender.publicKey);
       const takerBalanceBefore = await connection.getBalance(wallets.receiver.publicKey);
-      const treasuryBalanceBefore = await connection.getBalance(TREASURY_ADDRESS);
+      const treasuryBalanceBefore = await connection.getBalance(treasuryPda); // Treasury PDA, not wallet!
       const nftOwnerBefore = await getNFTOwner(connection, testNFT.mint);
       
       console.log('\n💰 Balances Before:');
@@ -277,14 +277,14 @@ describe('🚀 Atomic Swap E2E: NFT for SOL - Happy Path (Staging)', () => {
         'Taker'
       );
       
-      // Verify treasury received platform fee (active collection)
+      // Verify treasury PDA received platform fee (active collection)
       await verifyBalanceChange(
         connection,
-        TREASURY_ADDRESS,
+        treasuryPda, // Check Treasury PDA, not wallet!
         treasuryBalanceBefore,
-        platformFee, // Should receive exactly 0.005 SOL
+        platformFee, // Should receive exactly 0.001 SOL
         1000, // Minimal tolerance
-        'Treasury (Active Fee Collection)'
+        'Treasury PDA (Active Fee Collection)'
       );
       
       console.log('\n📝 Note: Fees collected in treasury wallet (hot wallet)');
