@@ -43,8 +43,9 @@ import {
 // Test configuration
 const RPC_URL = process.env.STAGING_SOLANA_RPC_URL || 'https://api.devnet.solana.com';
 const PROGRAM_ID = new PublicKey('AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei');
+// Use staging-admin.json (same as backend) NOT staging-deployer.json
 const PLATFORM_AUTHORITY_PATH = process.env.STAGING_ADMIN_PRIVATE_KEY_PATH || 
-  path.join(__dirname, '../../../wallets/staging/staging-deployer.json');
+  path.join(__dirname, '../../../wallets/staging/staging-admin.json');
 const STAGING_API_URL = process.env.STAGING_API_URL || 'https://staging-api.easyescrow.ai';
 // Treasury address - where fees are initially collected (hot wallet)
 const TREASURY_ADDRESS = new PublicKey(

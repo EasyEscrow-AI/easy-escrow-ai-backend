@@ -22,11 +22,12 @@ async function main() {
   // Setup connection
   const connection = new Connection(config.solana.rpcUrl, 'confirmed');
 
-  // Load admin keypair (use Solana CLI default for staging backend)
-  const homeDir = process.env.USERPROFILE || process.env.HOME || '';
-  const ADMIN_KEYPAIR_PATH = path.join(homeDir, '.config', 'solana', 'id.json');
+  // Load admin keypair (use staging-admin.json for staging environment)
+  const ADMIN_KEYPAIR_PATH = path.join(process.cwd(), 'wallets', 'staging', 'staging-admin.json');
   const adminKeypairData = JSON.parse(fs.readFileSync(ADMIN_KEYPAIR_PATH, 'utf-8'));
   const adminKeypair = Keypair.fromSecretKey(new Uint8Array(adminKeypairData));
+  
+  console.log(`\n✅ Using staging-admin.json keypair`);
 
   const programId = new PublicKey(idl.address); // Use IDL address for programId
 
