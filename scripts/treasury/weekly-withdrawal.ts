@@ -38,32 +38,69 @@ async function getTreasuryData(connection: Connection, treasuryPda: PublicKey) {
     }
 
     const balance = accountInfo.lamports;
-    
-    // Manually decode the Treasury account data
-    // Layout: discriminator(8) + authority(32) + total_fees_collected(8) + total_swaps_executed(8) + 
-    //         total_fees_withdrawn(8) + is_paused(1) + paused_at(8) + last_withdrawal_at(8) + bump(1)
     const data = accountInfo.data;
+    const accountSize = data.length;
     
+    console.log(`\n📏 Treasury Account Size: ${accountSize} bytes`);
+    
+    // Validate account size and decode based on structure
+    // OLD structure: 57 bytes (discriminator + authority + total_fees + total_swaps + bump)
+    // NEW structure: 82 bytes (adds total_fees_withdrawn, is_paused, paused_at, last_withdrawal_at)
+    
+    if (accountSize !== 57 && accountSize !== 82) {
+      console.error(`\n❌ Unexpected treasury account size: ${accountSize} bytes`);
+      console.error('   Expected: 57 bytes (old) or 82 bytes (new)');
+      return null;
+    }
+    
+    // Common fields (exist in both old and new structures)
     const authority = new PublicKey(data.slice(8, 40));
     const totalFeesCollected = data.readBigUInt64LE(40);
     const totalSwapsExecuted = data.readBigUInt64LE(48);
-    const totalFeesWithdrawn = data.readBigUInt64LE(56);
-    const isPaused = data.readUInt8(64) === 1;
-    const pausedAtTimestamp = data.readBigInt64LE(65);
-    const lastWithdrawalTimestamp = data.readBigInt64LE(73);
-    const bump = data.readUInt8(81);
     
-    return {
-      authority,
-      totalFeesCollected,
-      totalSwapsExecuted,
-      totalFeesWithdrawn,
-      isPaused,
-      pausedAt: Number(pausedAtTimestamp) > 0 ? new Date(Number(pausedAtTimestamp) * 1000) : null,
-      lastWithdrawalAt: Number(lastWithdrawalTimestamp) > 0 ? new Date(Number(lastWithdrawalTimestamp) * 1000) : null,
-      balance: BigInt(balance),
-      bump,
-    };
+    if (accountSize === 57) {
+      // OLD STRUCTURE (57 bytes) - missing withdrawal and pause features
+      const bump = data.readUInt8(56);
+      
+      console.log('⚠️  Treasury is using OLD structure (57 bytes)');
+      console.log('   Missing: withdrawal tracking and pause features');
+      console.log('   Basic withdrawal still works, but timing checks are disabled');
+      
+      return {
+        authority,
+        totalFeesCollected,
+        totalSwapsExecuted,
+        totalFeesWithdrawn: BigInt(0), // Not available in old structure
+        isPaused: false, // Not available in old structure
+        pausedAt: null,
+        lastWithdrawalAt: null,
+        balance: BigInt(balance),
+        bump,
+        isOldStructure: true, // Flag to indicate old structure
+      };
+    } else {
+      // NEW STRUCTURE (82 bytes) - full feature set
+      const totalFeesWithdrawn = data.readBigUInt64LE(56);
+      const isPaused = data.readUInt8(64) === 1;
+      const pausedAtTimestamp = data.readBigInt64LE(65);
+      const lastWithdrawalTimestamp = data.readBigInt64LE(73);
+      const bump = data.readUInt8(81);
+      
+      console.log('✅ Treasury is using NEW structure (82 bytes)');
+      
+      return {
+        authority,
+        totalFeesCollected,
+        totalSwapsExecuted,
+        totalFeesWithdrawn,
+        isPaused,
+        pausedAt: Number(pausedAtTimestamp) > 0 ? new Date(Number(pausedAtTimestamp) * 1000) : null,
+        lastWithdrawalAt: Number(lastWithdrawalTimestamp) > 0 ? new Date(Number(lastWithdrawalTimestamp) * 1000) : null,
+        balance: BigInt(balance),
+        bump,
+        isOldStructure: false,
+      };
+    }
   } catch (error: any) {
     console.error(`Error fetching treasury data: ${error.message}`);
     return null;
@@ -120,12 +157,14 @@ async function main() {
   if (checkStatus) {
     console.log('\n📊 TREASURY STATUS\n');
     
-    const rent = await connection.getMinimumBalanceForRentExemption(82); // Treasury::LEN
+    // Use correct rent calculation based on actual account size
+    const accountSize = treasuryData.isOldStructure ? 57 : 82;
+    const rent = await connection.getMinimumBalanceForRentExemption(accountSize);
     const availableBalance = Number(treasuryData.balance) - rent;
     const pendingWithdrawal = Number(treasuryData.totalFeesCollected) - Number(treasuryData.totalFeesWithdrawn);
     
     console.log(`Total Balance: ${Number(treasuryData.balance) / LAMPORTS_PER_SOL} SOL`);
-    console.log(`Rent Reserve: ${rent / LAMPORTS_PER_SOL} SOL`);
+    console.log(`Rent Reserve: ${rent / LAMPORTS_PER_SOL} SOL (${accountSize} bytes)`);
     console.log(`Available: ${availableBalance / LAMPORTS_PER_SOL} SOL`);
     console.log(`\nTotal Fees Collected: ${Number(treasuryData.totalFeesCollected) / LAMPORTS_PER_SOL} SOL`);
     console.log(`Total Fees Withdrawn: ${Number(treasuryData.totalFeesWithdrawn) / LAMPORTS_PER_SOL} SOL`);
@@ -165,8 +204,9 @@ async function main() {
     console.log('\n⚠️  FORCE MODE: Bypassing time check');
   }
 
-  // Calculate withdrawal amount
-  const rent = await connection.getMinimumBalanceForRentExemption(82); // Treasury::LEN
+  // Calculate withdrawal amount (use correct account size for rent)
+  const accountSize = treasuryData.isOldStructure ? 57 : 82;
+  const rent = await connection.getMinimumBalanceForRentExemption(accountSize);
   const availableBalance = Number(treasuryData.balance) - rent;
   const MIN_BUFFER = 0.01 * LAMPORTS_PER_SOL; // Keep 0.01 SOL buffer
   const withdrawAmount = Math.max(0, availableBalance - MIN_BUFFER);
