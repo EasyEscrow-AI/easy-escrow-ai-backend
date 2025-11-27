@@ -227,6 +227,30 @@ pub mod escrow {
     pub fn unpause(ctx: Context<Unpause>) -> Result<()> {
         instructions::pause::unpause_handler(ctx)
     }
+    
+    /// Close Treasury PDA and refund rent to authority
+    /// 
+    /// Closes an existing Treasury PDA account and refunds rent to the authority.
+    /// Typically used for:
+    /// - Migrating from old structure to new structure
+    /// - Shutting down platform operations
+    /// - Consolidating treasury accounts
+    ///
+    /// # Arguments
+    /// * `ctx` - Context containing authority and treasury
+    ///
+    /// # Returns
+    /// * `Result<()>` - Success or error
+    ///
+    /// # Security
+    /// * Only platform authority can close treasury
+    /// * Authority receives refunded rent lamports
+    ///
+    /// # Errors
+    /// * `Unauthorized` - Caller is not platform authority
+    pub fn close_treasury(ctx: Context<CloseTreasury>) -> Result<()> {
+        instructions::close::close_treasury_handler(ctx)
+    }
 }
 
 /// Verify that a signer is an authorized admin

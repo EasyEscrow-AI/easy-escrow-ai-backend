@@ -7,77 +7,238 @@
  * Usage:
  *   npm run treasury:withdraw              # Execute withdrawal
  *   npm run treasury:withdraw -- --dry-run # Preview without executing
+ *   npm run treasury:withdraw -- --force   # Force withdrawal regardless of timing
  *   npm run treasury:status                # Check treasury status
  */
 
-import { TreasuryWithdrawalService } from '../../src/services/treasury-withdrawal.service';
-import { LAMPORTS_PER_SOL } from '@solana/web3.js';
+import * as anchor from '@coral-xyz/anchor';
+import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram} from '@solana/web3.js';
+import fs from 'fs';
+import path from 'path';
+import config from '../../src/config';
+
+// Load IDL
+const IDL_PATH = path.join(__dirname, '../../src/generated/anchor/escrow-idl-staging.json');
+const idl = JSON.parse(fs.readFileSync(IDL_PATH, 'utf-8'));
+
+async function getTreasuryPda(programId: PublicKey, authority: PublicKey): Promise<[PublicKey, number]> {
+  return PublicKey.findProgramAddressSync(
+    [Buffer.from('treasury'), authority.toBuffer()],
+    programId
+  );
+}
+
+async function getTreasuryData(connection: Connection, treasuryPda: PublicKey) {
+  try {
+    const accountInfo = await connection.getAccountInfo(treasuryPda);
+    if (!accountInfo) {
+      console.log('\n⚠️  Treasury PDA not initialized yet');
+      console.log('   Run a swap first to initialize the treasury');
+      return null;
+    }
+
+    const balance = accountInfo.lamports;
+    
+    // Manually decode the Treasury account data
+    // Layout: discriminator(8) + authority(32) + total_fees_collected(8) + total_swaps_executed(8) + 
+    //         total_fees_withdrawn(8) + is_paused(1) + paused_at(8) + last_withdrawal_at(8) + bump(1)
+    const data = accountInfo.data;
+    
+    const authority = new PublicKey(data.slice(8, 40));
+    const totalFeesCollected = data.readBigUInt64LE(40);
+    const totalSwapsExecuted = data.readBigUInt64LE(48);
+    const totalFeesWithdrawn = data.readBigUInt64LE(56);
+    const isPaused = data.readUInt8(64) === 1;
+    const pausedAtTimestamp = data.readBigInt64LE(65);
+    const lastWithdrawalTimestamp = data.readBigInt64LE(73);
+    const bump = data.readUInt8(81);
+    
+    return {
+      authority,
+      totalFeesCollected,
+      totalSwapsExecuted,
+      totalFeesWithdrawn,
+      isPaused,
+      pausedAt: Number(pausedAtTimestamp) > 0 ? new Date(Number(pausedAtTimestamp) * 1000) : null,
+      lastWithdrawalAt: Number(lastWithdrawalTimestamp) > 0 ? new Date(Number(lastWithdrawalTimestamp) * 1000) : null,
+      balance: BigInt(balance),
+      bump,
+    };
+  } catch (error: any) {
+    console.error(`Error fetching treasury data: ${error.message}`);
+    return null;
+  }
+}
+
+function isWithdrawalTime(): boolean {
+  const now = new Date();
+  const dayOfWeek = now.getUTCDay(); // 0 = Sunday
+  const hours = now.getUTCHours();
+  const minutes = now.getUTCMinutes();
+  
+  // Sunday (0) at 23:59 UTC
+  return dayOfWeek === 0 && hours === 23 && minutes === 59;
+}
 
 async function main() {
   const args = process.argv.slice(2);
   const dryRun = args.includes('--dry-run');
   const checkStatus = args.includes('--status');
+  const force = args.includes('--force');
 
-  const service = new TreasuryWithdrawalService();
+  // Setup connection
+  const connection = new Connection(config.solana.rpcUrl, 'confirmed');
+  
+  // Load admin keypair (use Solana CLI default for staging backend)
+  const homeDir = process.env.USERPROFILE || process.env.HOME || '';
+  const ADMIN_KEYPAIR_PATH = path.join(homeDir, '.config', 'solana', 'id.json');
+  const adminKeypairData = JSON.parse(fs.readFileSync(ADMIN_KEYPAIR_PATH, 'utf-8'));
+  const adminKeypair = Keypair.fromSecretKey(new Uint8Array(adminKeypairData));
+  
+  const programId = new PublicKey(config.solana.escrowProgramId);
+
+  // Setup provider and program
+  const wallet = new anchor.Wallet(adminKeypair);
+  const provider = new anchor.AnchorProvider(connection, wallet, { commitment: 'confirmed' });
+  const program = new anchor.Program(idl, provider);
+
+  // Get treasury PDA
+  const [treasuryPda, bump] = await getTreasuryPda(programId, adminKeypair.publicKey);
+  
+  console.log('\n🏦 TREASURY INFORMATION');
+  console.log(`Program ID: ${programId.toBase58()}`);
+  console.log(`Treasury PDA: ${treasuryPda.toBase58()}`);
+  console.log(`Authority: ${adminKeypair.publicKey.toBase58()}`);
+  
+  // Get treasury data
+  const treasuryData = await getTreasuryData(connection, treasuryPda);
+  
+  if (!treasuryData) {
+    process.exit(1);
+  }
 
   if (checkStatus) {
-    console.log('\n📊 TREASURY STATUS CHECK\n');
+    console.log('\n📊 TREASURY STATUS\n');
     
-    const treasuryData = await service.getTreasuryData();
-    const treasuryPda = await service.getTreasuryPda();
+    const rent = await connection.getMinimumBalanceForRentExemption(82); // Treasury::LEN
+    const availableBalance = Number(treasuryData.balance) - rent;
+    const pendingWithdrawal = Number(treasuryData.totalFeesCollected) - Number(treasuryData.totalFeesWithdrawn);
     
-    console.log(`Treasury PDA: ${treasuryPda.toBase58()}`);
-    console.log(`\nCurrent Balance: ${Number(treasuryData.balance) / LAMPORTS_PER_SOL} SOL`);
-    console.log(`Total Fees Collected: ${Number(treasuryData.totalFeesCollected) / LAMPORTS_PER_SOL} SOL`);
+    console.log(`Total Balance: ${Number(treasuryData.balance) / LAMPORTS_PER_SOL} SOL`);
+    console.log(`Rent Reserve: ${rent / LAMPORTS_PER_SOL} SOL`);
+    console.log(`Available: ${availableBalance / LAMPORTS_PER_SOL} SOL`);
+    console.log(`\nTotal Fees Collected: ${Number(treasuryData.totalFeesCollected) / LAMPORTS_PER_SOL} SOL`);
     console.log(`Total Fees Withdrawn: ${Number(treasuryData.totalFeesWithdrawn) / LAMPORTS_PER_SOL} SOL`);
-    console.log(`Pending Withdrawal: ${(Number(treasuryData.totalFeesCollected) - Number(treasuryData.totalFeesWithdrawn)) / LAMPORTS_PER_SOL} SOL`);
-    console.log(`Total Swaps: ${treasuryData.totalSwapsExecuted}`);
+    console.log(`Pending Withdrawal: ${pendingWithdrawal / LAMPORTS_PER_SOL} SOL`);
+    console.log(`\nTotal Swaps Executed: ${treasuryData.totalSwapsExecuted}`);
     console.log(`Status: ${treasuryData.isPaused ? '🚨 PAUSED' : '✅ ACTIVE'}`);
     console.log(`Last Withdrawal: ${treasuryData.lastWithdrawalAt?.toISOString() || 'Never'}`);
+    
+    if (treasuryData.lastWithdrawalAt) {
+      const daysSince = (Date.now() - treasuryData.lastWithdrawalAt.getTime()) / (1000 * 60 * 60 * 24);
+      console.log(`Days Since Last: ${daysSince.toFixed(1)}`);
+      const canWithdraw = daysSince >= 7;
+      console.log(`Can Withdraw: ${canWithdraw ? '✅ YES' : '❌ NO (wait 7 days)'}`);
+    } else {
+      console.log(`Can Withdraw: ✅ YES (first withdrawal)`);
+    }
     
     return;
   }
 
   // Check if it's the right time for withdrawal
-  const isTime = service.isWithdrawalTime();
+  const isTime = isWithdrawalTime();
   const now = new Date();
   
-  console.log(`\n🕐 Current Time: ${now.toISOString()}`);
-  console.log(`📅 Day of Week: ${now.toUTCString().split(',')[0]}`);
-  console.log(`⏰ Is Withdrawal Time (Sunday 23:59 UTC): ${isTime ? '✅ YES' : '❌ NO'}`);
+  console.log(`\n🕐 WITHDRAWAL TIMING`);
+  console.log(`Current Time: ${now.toISOString()}`);
+  console.log(`Day of Week: ${now.toUTCString().split(',')[0]}`);
+  console.log(`Is Withdrawal Time (Sunday 23:59 UTC): ${isTime ? '✅ YES' : '❌ NO'}`);
 
-  if (!isTime && !args.includes('--force')) {
+  if (!isTime && !force) {
     console.log('\n⚠️  Not withdrawal time. Use --force to override.');
     console.log('   Scheduled: Every Sunday at 23:59 UTC');
     process.exit(0);
   }
 
-  // Execute withdrawal
-  console.log('\n🚀 Executing weekly treasury withdrawal...\n');
-  
-  const result = await service.executeWeeklyWithdrawal({
-    dryRun,
-    minBalance: BigInt(10 * LAMPORTS_PER_SOL), // Keep 10 SOL buffer
-  });
+  if (force) {
+    console.log('\n⚠️  FORCE MODE: Bypassing time check');
+  }
 
-  if (result.success) {
-    console.log('\n✅ Weekly withdrawal completed successfully!');
-    if (result.txId) {
-      console.log(`\n🔗 Transaction: ${result.txId}`);
-      console.log(`💰 Amount: ${Number(result.amountWithdrawn || 0) / LAMPORTS_PER_SOL} SOL`);
-      console.log(`\n🌐 Explorer: https://explorer.solana.com/tx/${result.txId}?cluster=${process.env.NODE_ENV === 'production' ? 'mainnet-beta' : 'devnet'}`);
-    }
+  // Calculate withdrawal amount
+  const rent = await connection.getMinimumBalanceForRentExemption(82); // Treasury::LEN
+  const availableBalance = Number(treasuryData.balance) - rent;
+  const MIN_BUFFER = 0.01 * LAMPORTS_PER_SOL; // Keep 0.01 SOL buffer
+  const withdrawAmount = Math.max(0, availableBalance - MIN_BUFFER);
+
+  if (withdrawAmount <= 0) {
+    console.log('\n⚠️  No funds available for withdrawal');
+    console.log(`   Available: ${availableBalance / LAMPORTS_PER_SOL} SOL`);
+    console.log(`   Minimum buffer: ${MIN_BUFFER / LAMPORTS_PER_SOL} SOL`);
+    process.exit(0);
+  }
+
+  console.log(`\n💰 WITHDRAWAL AMOUNT`);
+  console.log(`Available Balance: ${availableBalance / LAMPORTS_PER_SOL} SOL`);
+  console.log(`Minimum Buffer: ${MIN_BUFFER / LAMPORTS_PER_SOL} SOL`);
+  console.log(`Withdrawal Amount: ${withdrawAmount / LAMPORTS_PER_SOL} SOL`);
+
+  // Get treasury wallet address
+  const treasuryWalletAddress = config.platform?.treasuryAddress;
+  if (!treasuryWalletAddress) {
+    throw new Error('Treasury wallet address not configured');
+  }
+  const treasuryWallet = new PublicKey(treasuryWalletAddress);
+
+  console.log(`\n📤 DESTINATION`);
+  console.log(`Treasury Wallet: ${treasuryWallet.toBase58()}`);
+
+  if (dryRun) {
+    console.log('\n🔍 DRY RUN MODE - No transaction will be sent');
+    console.log(`\nWould withdraw: ${withdrawAmount / LAMPORTS_PER_SOL} SOL`);
+    console.log(`From: ${treasuryPda.toBase58()}`);
+    console.log(`To: ${treasuryWallet.toBase58()}`);
+    process.exit(0);
+  }
+
+  // Execute withdrawal
+  console.log('\n🚀 Executing withdrawal transaction...\n');
+  
+  try {
+    const tx = await program.methods
+      .withdrawTreasuryFees(new anchor.BN(withdrawAmount))
+      .accounts({
+        authority: adminKeypair.publicKey,
+        treasury: treasuryPda,
+        treasuryWallet: treasuryWallet,
+        systemProgram: SystemProgram.programId,
+      })
+      .signers([adminKeypair])
+      .rpc();
+
+    console.log('✅ Withdrawal completed successfully!');
+    console.log(`\n🔗 Transaction: ${tx}`);
+    console.log(`💰 Amount: ${withdrawAmount / LAMPORTS_PER_SOL} SOL`);
+    console.log(`\n🌐 Explorer: https://explorer.solana.com/tx/${tx}?cluster=devnet`);
     
-    // Log to database or external monitoring system
+    // Verify balance
+    await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for confirmation
+    const newBalance = await connection.getBalance(treasuryPda);
+    console.log(`\n📊 New Treasury Balance: ${newBalance / LAMPORTS_PER_SOL} SOL`);
+    
     console.log('\n📝 Next steps:');
     console.log('   1. Verify funds received in treasury wallet');
     console.log('   2. Distribute prizes from treasury wallet');
     console.log('   3. Transfer remaining to cold storage fee collector');
     
     process.exit(0);
-  } else {
-    console.error('\n❌ Weekly withdrawal failed');
-    console.error(`Error: ${result.error}`);
+  } catch (error: any) {
+    console.error('\n❌ Withdrawal failed');
+    console.error(`Error: ${error.message}`);
+    if (error.logs) {
+      console.error('\nProgram Logs:');
+      error.logs.forEach((log: string) => console.error(`  ${log}`));
+    }
     process.exit(1);
   }
 }
@@ -86,4 +247,3 @@ main().catch((error) => {
   console.error('Fatal error:', error);
   process.exit(1);
 });
-
