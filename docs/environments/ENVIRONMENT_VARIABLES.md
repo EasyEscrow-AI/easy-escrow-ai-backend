@@ -257,11 +257,11 @@ DEVNET_STAGING_TREASURY_PRIVATE_KEY=[1,2,3,...,64]  # NEVER commit real keys!
 - **Type**: String (Base58 Public Key)
 - **Required**: No (defaults to hardcoded production treasury)
 - **Description**: Production/mainnet treasury wallet where platform fees are initially collected.
-- **Default**: `9VN2bzjWoF1HsmyPrNtwXbBMxCYRNsFagC6pcfLmN7LA`
+- **Default**: `HMtLHzJZ5AUUaKjYBGZpB4RbjN4gYvcd69esNwtaUBFF`
 - **Security**: **HIGH PRIORITY** - This is a hot wallet holding active funds
 
 ```bash
-MAINNET_PRODUCTION_TREASURY_ADDRESS=9VN2bzjWoF1HsmyPrNtwXbBMxCYRNsFagC6pcfLmN7LA
+MAINNET_PRODUCTION_TREASURY_ADDRESS=HMtLHzJZ5AUUaKjYBGZpB4RbjN4gYvcd69esNwtaUBFF
 ```
 
 ### `MAINNET_PRODUCTION_TREASURY_PRIVATE_KEY`
@@ -748,7 +748,7 @@ ESCROW_PROGRAM_ID=YOUR_MAINNET_PROGRAM_ID
 USDC_MINT_ADDRESS=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
 
 # Platform Fee Collection (CRITICAL - Keep treasury keypair secure!)
-MAINNET_PRODUCTION_TREASURY_ADDRESS=9VN2bzjWoF1HsmyPrNtwXbBMxCYRNsFagC6pcfLmN7LA
+MAINNET_PRODUCTION_TREASURY_ADDRESS=HMtLHzJZ5AUUaKjYBGZpB4RbjN4gYvcd69esNwtaUBFF
 MAINNET_PRODUCTION_TREASURY_PRIVATE_KEY=[1,2,3,...,64]  # Array of 64 bytes - NEVER commit real keys!
 MAINNET_PROD_FEE_COLLECTOR_ADDRESS=YOUR_COLD_STORAGE_COLLECTOR_ADDRESS
 

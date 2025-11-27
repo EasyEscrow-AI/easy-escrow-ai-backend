@@ -200,7 +200,7 @@ After weekly withdrawal to treasury wallet:
 ```bash
 solana balance AScijLJ1ApcQftktBRN818b8LDH4JJovQ5qrGDHfHuPu --url devnet
 # or
-solana balance 9VN2bzjWoF1HsmyPrNtwXbBMxCYRNsFagC6pcfLmN7LA --url mainnet-beta
+solana balance HMtLHzJZ5AUUaKjYBGZpB4RbjN4gYvcd69esNwtaUBFF --url mainnet-beta
 ```
 
 ### 2. Distribute Prizes
@@ -367,7 +367,7 @@ DEVNET_STAGING_TREASURY_PRIVATE_KEY=<your-base58-private-key>  # NEVER commit re
 
 ```bash
 # .env.production
-MAINNET_PRODUCTION_TREASURY_ADDRESS=9VN2bzjWoF1HsmyPrNtwXbBMxCYRNsFagC6pcfLmN7LA
+MAINNET_PRODUCTION_TREASURY_ADDRESS=HMtLHzJZ5AUUaKjYBGZpB4RbjN4gYvcd69esNwtaUBFF
 MAINNET_PRODUCTION_TREASURY_PRIVATE_KEY=<your-base58-private-key>  # NEVER commit real keys!
 ```
 
