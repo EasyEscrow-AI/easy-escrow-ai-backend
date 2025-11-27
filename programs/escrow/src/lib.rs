@@ -22,7 +22,8 @@ declare_id!("GpvN8LB1xXTu9N541x9rrbxD7HwH6xi1Gkp84P7rUAEZ");
 #[cfg(feature = "localnet")]
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
-// Default: staging (if no feature specified)
+// Fallback: staging (if no feature specified AND no default in Cargo.toml)
+// NOTE: Cargo.toml default = ["staging"], so this is rarely used
 #[cfg(not(any(feature = "mainnet", feature = "devnet", feature = "localnet")))]
 declare_id!("AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei");
 

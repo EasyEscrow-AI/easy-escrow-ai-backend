@@ -114,12 +114,27 @@ export class TransactionBuilder {
   }
   
   /**
-   * Get or initialize Anchor program instance
-   * Note: We cache per programId to support multi-environment scenarios
+   * Get Anchor program instance
+   * Validates that programId matches IDL's address to prevent DeclaredProgramIdMismatch
    */
   private getProgram(programId: PublicKey): anchor.Program {
-    // For now, always use the IDL's programId since it matches our deployed staging program
-    // TODO: Support dynamic programId when we have different programs per environment
+    const idlProgramId = new PublicKey(PROGRAM_ID);
+    
+    // Validate programId matches IDL address
+    if (!programId.equals(idlProgramId)) {
+      throw new Error(
+        `Program ID mismatch!\n` +
+        `  Expected (from IDL): ${idlProgramId.toBase58()}\n` +
+        `  Received (from input): ${programId.toBase58()}\n` +
+        `This usually means:\n` +
+        `  1. Wrong IDL file is being used (staging vs production)\n` +
+        `  2. Environment config has wrong program ID\n` +
+        `  3. IDL needs to be regenerated after program build\n` +
+        `Fix: Ensure the correct IDL file is used for this environment.`
+      );
+    }
+    
+    // Use cached program instance if available
     if (!this.program) {
       const wallet = new anchor.Wallet(this.platformAuthority);
       const provider = new anchor.AnchorProvider(this.connection, wallet, { commitment: 'confirmed' });
