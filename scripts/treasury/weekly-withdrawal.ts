@@ -23,7 +23,7 @@ const idl = JSON.parse(fs.readFileSync(IDL_PATH, 'utf-8'));
 
 async function getTreasuryPda(programId: PublicKey, authority: PublicKey): Promise<[PublicKey, number]> {
   return PublicKey.findProgramAddressSync(
-    [Buffer.from('treasury_v3'), authority.toBuffer()],
+    [Buffer.from('main_treasury'), authority.toBuffer()],
     programId
   );
 }
@@ -53,83 +53,42 @@ async function getTreasuryData(connection: Connection, treasuryPda: PublicKey) {
       return null;
     }
     
-    // Common fields (exist in both old and new structures)
+    // Validate treasury structure - expecting 114 bytes only
+    if (accountSize !== 114) {
+      console.error(`\n❌ Unexpected treasury account size: ${accountSize} bytes`);
+      console.error('   Expected: 114 bytes (current structure with locked withdrawals)');
+      console.error('   The PDA may be from an old deployment.');
+      return null;
+    }
+
+    // Decode treasury data (114-byte structure)
     const authority = new PublicKey(data.slice(8, 40));
     const totalFeesCollected = data.readBigUInt64LE(40);
     const totalSwapsExecuted = data.readBigUInt64LE(48);
-    
-    if (accountSize === 57) {
-      // OLD STRUCTURE (57 bytes) - missing withdrawal and pause features
-      const bump = data.readUInt8(56);
-      
-      console.log('⚠️  Treasury is using OLD structure (57 bytes)');
-      console.log('   Missing: withdrawal tracking and pause features');
-      console.log('   Basic withdrawal still works, but timing checks are disabled');
-      
-      return {
-        authority,
-        totalFeesCollected,
-        totalSwapsExecuted,
-        totalFeesWithdrawn: BigInt(0), // Not available in old structure
-        isPaused: false, // Not available in old structure
-        pausedAt: null,
-        lastWithdrawalAt: null,
-        balance: BigInt(balance),
-        bump,
-        isOldStructure: true,
-        accountSize,
-      };
-    } else if (accountSize === 82) {
-      // V2 STRUCTURE (82 bytes) - withdrawal tracking and pause
-      const totalFeesWithdrawn = data.readBigUInt64LE(56);
-      const isPaused = data.readUInt8(64) === 1;
-      const pausedAtTimestamp = data.readBigInt64LE(65);
-      const lastWithdrawalTimestamp = data.readBigInt64LE(73);
-      const bump = data.readUInt8(81);
-      
-      console.log('⚠️  Treasury is using V2 structure (82 bytes)');
-      console.log('   Missing: locked withdrawal wallet security');
-      
-      return {
-        authority,
-        totalFeesCollected,
-        totalSwapsExecuted,
-        totalFeesWithdrawn,
-        isPaused,
-        pausedAt: Number(pausedAtTimestamp) > 0 ? new Date(Number(pausedAtTimestamp) * 1000) : null,
-        lastWithdrawalAt: Number(lastWithdrawalTimestamp) > 0 ? new Date(Number(lastWithdrawalTimestamp) * 1000) : null,
-        balance: BigInt(balance),
-        bump,
-        isOldStructure: false,
-        accountSize,
-      };
-    } else {
-      // V3 STRUCTURE (114 bytes) - full feature set with locked withdrawals
-      const totalFeesWithdrawn = data.readBigUInt64LE(56);
-      const isPaused = data.readUInt8(64) === 1;
-      const pausedAtTimestamp = data.readBigInt64LE(65);
-      const lastWithdrawalTimestamp = data.readBigInt64LE(73);
-      const authorizedWithdrawalWallet = new PublicKey(data.slice(81, 113));
-      const bump = data.readUInt8(113);
-      
-      console.log('✅ Treasury is using V3 structure (114 bytes - SECURE)');
-      console.log(`   Locked withdrawal wallet: ${authorizedWithdrawalWallet.toBase58()}`);
-      
-      return {
-        authority,
-        totalFeesCollected,
-        totalSwapsExecuted,
-        totalFeesWithdrawn,
-        isPaused,
-        pausedAt: Number(pausedAtTimestamp) > 0 ? new Date(Number(pausedAtTimestamp) * 1000) : null,
-        lastWithdrawalAt: Number(lastWithdrawalTimestamp) > 0 ? new Date(Number(lastWithdrawalTimestamp) * 1000) : null,
-        balance: BigInt(balance),
-        bump,
-        isOldStructure: false,
-        accountSize,
-        authorizedWithdrawalWallet,
-      };
-    }
+    const totalFeesWithdrawn = data.readBigUInt64LE(56);
+    const isPaused = data.readUInt8(64) === 1;
+    const pausedAtTimestamp = data.readBigInt64LE(65);
+    const lastWithdrawalTimestamp = data.readBigInt64LE(73);
+    const authorizedWithdrawalWallet = new PublicKey(data.slice(81, 113));
+    const bump = data.readUInt8(113);
+
+    console.log('✅ Treasury structure validated (114 bytes)');
+    console.log(`   Locked withdrawal wallet: ${authorizedWithdrawalWallet.toBase58()}`);
+
+    return {
+      authority,
+      totalFeesCollected,
+      totalSwapsExecuted,
+      totalFeesWithdrawn,
+      isPaused,
+      pausedAt: Number(pausedAtTimestamp) > 0 ? new Date(Number(pausedAtTimestamp) * 1000) : null,
+      lastWithdrawalAt: Number(lastWithdrawalTimestamp) > 0 ? new Date(Number(lastWithdrawalTimestamp) * 1000) : null,
+      balance: BigInt(balance),
+      bump,
+      isOldStructure: false,
+      accountSize,
+      authorizedWithdrawalWallet,
+    };
   } catch (error: any) {
     console.error(`Error fetching treasury data: ${error.message}`);
     return null;
