@@ -23,7 +23,7 @@ const idl = JSON.parse(fs.readFileSync(IDL_PATH, 'utf-8'));
 
 async function getTreasuryPda(programId: PublicKey, authority: PublicKey): Promise<[PublicKey, number]> {
   return PublicKey.findProgramAddressSync(
-    [Buffer.from('treasury'), authority.toBuffer()],
+    [Buffer.from('treasury_v2'), authority.toBuffer()],
     programId
   );
 }

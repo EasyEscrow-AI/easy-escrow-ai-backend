@@ -97,6 +97,13 @@ const transactionBuilder = new TransactionBuilder(
   platformAuthority
 );
 
+// Derive Treasury PDA (using treasury_v2 seeds for 82-byte structure)
+const [treasuryPDA] = PublicKey.findProgramAddressSync(
+  [Buffer.from('treasury_v2'), platformAuthority.publicKey.toBuffer()],
+  programId
+);
+console.log('[OffersRoutes] Treasury PDA:', treasuryPDA.toBase58());
+
 const offerManager = new OfferManager(
   connection,
   prisma,
@@ -105,7 +112,7 @@ const offerManager = new OfferManager(
   assetValidator,
   transactionBuilder,
   platformAuthority,
-  feeCollector,
+  treasuryPDA,
   programId
 );
 
