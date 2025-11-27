@@ -403,7 +403,10 @@ export class AssetValidator {
         topLevelKeys: Object.keys(response),
       });
       
-      // Handle both direct response and wrapped response
+      // CRITICAL: DAS API follows JSON-RPC 2.0 spec
+      // Response structure: { jsonrpc: "2.0", id: "...", result: {...} }
+      // Asset data is in response.result, ownership at response.result.ownership.owner
+      // Reference: https://www.helius.dev/docs/das-api
       const assetData = response.result || response;
       
       // Log ownership field specifically
@@ -440,7 +443,7 @@ export class AssetValidator {
     try {
       console.log(`[AssetValidator] Calling getAssetProof RPC method for ${assetId}`);
       
-      // Use RPC method instead of REST endpoint
+      // DAS API follows JSON-RPC 2.0 spec - proof data is in response.result
       const response = await (this.connection as any)._rpcRequest('getAssetProof', {
         id: assetId,
       });
@@ -449,12 +452,15 @@ export class AssetValidator {
         throw new Error('No response from getAssetProof RPC call');
       }
       
+      // Handle JSON-RPC wrapper: response.result contains the actual proof data
+      const proofData = response.result || response;
+      
       // Map response to expected format
       return {
-        tree: response.tree_id,
-        leafIndex: response.leaf_index,
-        proof: response.proof,
-        root: response.root,
+        tree: proofData.tree_id,
+        leafIndex: proofData.leaf_index,
+        proof: proofData.proof,
+        root: proofData.root,
       };
     } catch (error) {
       console.error(`[AssetValidator] Proof fetch failed (attempt ${retryCount + 1}):`, error);
