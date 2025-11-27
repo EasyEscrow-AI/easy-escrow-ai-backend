@@ -1,5 +1,5 @@
 {
-  "address": "AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei",
+  "address": "2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx",
   "metadata": {
     "name": "escrow",
     "version": "0.1.0",
@@ -165,6 +165,80 @@
           }
         }
       ]
+    },
+    {
+      "name": "close_treasury",
+      "docs": [
+        "Close Treasury PDA and refund rent to authority",
+        "",
+        "Closes an existing Treasury PDA account and refunds rent to the authority.",
+        "Typically used for:",
+        "- Migrating from old structure to new structure",
+        "- Shutting down platform operations",
+        "- Consolidating treasury accounts",
+        "",
+        "# Arguments",
+        "* `ctx` - Context containing authority and treasury",
+        "",
+        "# Returns",
+        "* `Result<()>` - Success or error",
+        "",
+        "# Security",
+        "* Only platform authority can close treasury",
+        "* Authority receives refunded rent lamports",
+        "",
+        "# Errors",
+        "* `Unauthorized` - Caller is not platform authority"
+      ],
+      "discriminator": [
+        113,
+        239,
+        0,
+        73,
+        12,
+        113,
+        171,
+        43
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "docs": [
+            "Platform authority (must sign and match treasury authority)"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "treasury",
+          "docs": [
+            "Treasury PDA to close"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  101,
+                  97,
+                  115,
+                  117,
+                  114,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
     },
     {
       "name": "emergency_pause",
