@@ -10,6 +10,8 @@ import config from '../../src/config';
 
 const IDL_PATH = path.join(__dirname, '../../target/idl/escrow.json');
 const idl = JSON.parse(fs.readFileSync(IDL_PATH, 'utf-8'));
+// Override IDL address with actual program ID
+idl.address = config.solana.escrowProgramId;
 
 async function main() {
   console.log('\n🔄 CLOSE & REINITIALIZE TREASURY\n');
