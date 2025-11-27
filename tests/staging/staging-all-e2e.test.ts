@@ -17,8 +17,9 @@ import * as path from 'path';
 // Test configuration
 const RPC_URL = process.env.STAGING_SOLANA_RPC_URL || 'https://api.devnet.solana.com';
 const PROGRAM_ID = new PublicKey('AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei');
+// Use staging-admin.json (same as backend) NOT staging-deployer.json
 const PLATFORM_AUTHORITY_PATH = process.env.STAGING_ADMIN_PRIVATE_KEY_PATH || 
-  path.join(__dirname, '../../wallets/staging/staging-deployer.json');
+  path.join(__dirname, '../../wallets/staging/staging-admin.json');
 
 describe('🚀 Atomic Swap E2E Tests - STAGING', () => {
   let connection: Connection;
@@ -52,9 +53,9 @@ describe('🚀 Atomic Swap E2E Tests - STAGING', () => {
     const provider = new AnchorProvider(connection, wallet, { commitment: 'confirmed' });
     program = new Program(idl, provider);
     
-    // Derive treasury PDA
+    // Derive treasury PDA (114-byte structure with locked withdrawals)
     [treasuryPda] = PublicKey.findProgramAddressSync(
-      [Buffer.from('treasury'), platformAuthority.publicKey.toBuffer()],
+      [Buffer.from('main_treasury'), platformAuthority.publicKey.toBuffer()],
       PROGRAM_ID
     );
     console.log('🏛️  Treasury PDA:', treasuryPda.toBase58());
