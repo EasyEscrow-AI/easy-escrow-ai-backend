@@ -23,8 +23,15 @@ pub struct WithdrawTreasuryFees<'info> {
     pub treasury: Account<'info, Treasury>,
     
     /// Destination treasury wallet (receives withdrawn fees)
-    /// CHECK: This is the treasury wallet address configured in backend
-    #[account(mut)]
+    /// 
+    /// CHECK: Validated via constraint - must match treasury.authorized_withdrawal_wallet
+    /// This ensures funds can only be withdrawn to the pre-authorized wallet,
+    /// preventing redirection even if authority is compromised.
+    #[account(
+        mut,
+        constraint = treasury_wallet.key() == treasury.authorized_withdrawal_wallet 
+            @ AtomicSwapError::UnauthorizedWithdrawalDestination
+    )]
     pub treasury_wallet: AccountInfo<'info>,
     
     pub system_program: Program<'info, System>,

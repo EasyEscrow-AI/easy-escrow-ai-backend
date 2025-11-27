@@ -52,5 +52,8 @@ pub enum AtomicSwapError {
     
     #[msg("Insufficient treasury balance: Not enough funds to withdraw")]
     InsufficientTreasuryBalance,
+
+    #[msg("Unauthorized withdrawal destination: Treasury can only withdraw to authorized wallet")]
+    UnauthorizedWithdrawalDestination,
 }
 

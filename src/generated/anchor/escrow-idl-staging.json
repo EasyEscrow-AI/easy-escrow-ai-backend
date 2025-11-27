@@ -98,7 +98,10 @@
                   115,
                   117,
                   114,
-                  121
+                  121,
+                  95,
+                  118,
+                  51
                 ]
               },
               {
@@ -227,7 +230,10 @@
                   115,
                   117,
                   114,
-                  121
+                  121,
+                  95,
+                  118,
+                  51
                 ]
               },
               {
@@ -298,7 +304,10 @@
                   115,
                   117,
                   114,
-                  121
+                  121,
+                  95,
+                  118,
+                  51
                 ]
               },
               {
@@ -321,9 +330,15 @@
         "",
         "# Arguments",
         "* `ctx` - Context containing authority and treasury accounts",
+        "* `authorized_withdrawal_wallet` - Wallet authorized to receive treasury withdrawals",
         "",
         "# Returns",
-        "* `Result<()>` - Success or error"
+        "* `Result<()>` - Success or error",
+        "",
+        "# Security",
+        "* Locks withdrawals to specified wallet only",
+        "* Prevents fund redirection even if authority is compromised",
+        "* Can only be changed via program upgrade"
       ],
       "discriminator": [
         124,
@@ -362,7 +377,10 @@
                   115,
                   117,
                   114,
-                  121
+                  121,
+                  95,
+                  118,
+                  51
                 ]
               },
               {
@@ -377,7 +395,12 @@
           "address": "11111111111111111111111111111111"
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "authorized_withdrawal_wallet",
+          "type": "pubkey"
+        }
+      ]
     },
     {
       "name": "unpause",
@@ -436,7 +459,10 @@
                   115,
                   117,
                   114,
-                  121
+                  121,
+                  95,
+                  118,
+                  51
                 ]
               },
               {
@@ -513,7 +539,10 @@
                   115,
                   117,
                   114,
-                  121
+                  121,
+                  95,
+                  118,
+                  51
                 ]
               },
               {
@@ -526,7 +555,10 @@
         {
           "name": "treasury_wallet",
           "docs": [
-            "Destination treasury wallet (receives withdrawn fees)"
+            "Destination treasury wallet (receives withdrawn fees)",
+            "",
+            "This ensures funds can only be withdrawn to the pre-authorized wallet,",
+            "preventing redirection even if authority is compromised."
           ],
           "writable": true
         },
@@ -643,6 +675,11 @@
       "code": 6016,
       "name": "InsufficientTreasuryBalance",
       "msg": "Insufficient treasury balance: Not enough funds to withdraw"
+    },
+    {
+      "code": 6017,
+      "name": "UnauthorizedWithdrawalDestination",
+      "msg": "Unauthorized withdrawal destination: Treasury can only withdraw to authorized wallet"
     }
   ],
   "types": [
@@ -701,7 +738,7 @@
       "docs": [
         "Treasury PDA account that tracks platform fees and swap statistics",
         "",
-        "Seeds: [\"treasury\", platform_authority.key()]"
+        "Seeds: [\"treasury_v3\", platform_authority.key()]"
       ],
       "type": {
         "kind": "struct",
@@ -754,6 +791,15 @@
               "Last withdrawal timestamp"
             ],
             "type": "i64"
+          },
+          {
+            "name": "authorized_withdrawal_wallet",
+            "docs": [
+              "SECURITY: Authorized wallet for withdrawals",
+              "Treasury can ONLY withdraw to this address",
+              "Prevents fund redirection even if authority is compromised"
+            ],
+            "type": "pubkey"
           },
           {
             "name": "bump",

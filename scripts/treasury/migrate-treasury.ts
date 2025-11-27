@@ -38,9 +38,9 @@ async function main() {
   const provider = new anchor.AnchorProvider(connection, wallet, { commitment: 'confirmed' });
   const program = new anchor.Program(idl, provider);
   
-  // Get treasury PDA (using treasury_v2 seeds for 82-byte structure)
+  // Get treasury PDA (using treasury_v3 seeds for 114-byte structure with locked withdrawals)
   const [treasuryPda, bump] = PublicKey.findProgramAddressSync(
-    [Buffer.from('treasury_v2'), adminKeypair.publicKey.toBuffer()],
+    [Buffer.from('treasury_v3'), adminKeypair.publicKey.toBuffer()],
     programId
   );
   
@@ -85,17 +85,35 @@ async function main() {
       
       process.exit(1);
     } else if (treasuryAccount.data.length === 82) {
-      console.log('✅ NEW STRUCTURE (82 bytes) - No migration needed!');
+      console.log('⚠️  OLD STRUCTURE DETECTED (82 bytes - v2)');
+      console.log('   New structure requires 114 bytes (v3 with locked withdrawals)');
+      console.log('   Migration required!\n');
+      process.exit(1);
+    } else if (treasuryAccount.data.length === 114) {
+      console.log('✅ NEW STRUCTURE (114 bytes) - No migration needed!');
       process.exit(0);
     }
   }
   
-  // Initialize new treasury
-  console.log('🚀 Initializing Treasury PDA with NEW structure...\n');
+  // Initialize new treasury with authorized withdrawal wallet
+  const treasuryAddressStr = config.platform?.treasuryAddress;
+  if (!treasuryAddressStr || treasuryAddressStr.trim() === '') {
+    throw new Error('Treasury address not configured in environment');
+  }
+  
+  let authorizedWallet: PublicKey;
+  try {
+    authorizedWallet = new PublicKey(treasuryAddressStr);
+  } catch (error) {
+    throw new Error(`Invalid treasury address in config: ${treasuryAddressStr}`);
+  }
+  
+  console.log('🚀 Initializing Treasury PDA with NEW structure...');
+  console.log(`   Authorized withdrawal wallet: ${authorizedWallet.toBase58()}\n`);
   
   try {
     const tx = await program.methods
-      .initializeTreasury()
+      .initializeTreasury(authorizedWallet)
       .accounts({
         authority: adminKeypair.publicKey,
         treasury: treasuryPda,

@@ -23,7 +23,7 @@ const idl = JSON.parse(fs.readFileSync(IDL_PATH, 'utf-8'));
 
 async function getTreasuryPda(programId: PublicKey, authority: PublicKey): Promise<[PublicKey, number]> {
   return PublicKey.findProgramAddressSync(
-    [Buffer.from('treasury_v2'), authority.toBuffer()],
+    [Buffer.from('treasury_v3'), authority.toBuffer()],
     programId
   );
 }
@@ -47,9 +47,9 @@ async function getTreasuryData(connection: Connection, treasuryPda: PublicKey) {
     // OLD structure: 57 bytes (discriminator + authority + total_fees + total_swaps + bump)
     // NEW structure: 82 bytes (adds total_fees_withdrawn, is_paused, paused_at, last_withdrawal_at)
     
-    if (accountSize !== 57 && accountSize !== 82) {
+    if (accountSize !== 57 && accountSize !== 82 && accountSize !== 114) {
       console.error(`\n❌ Unexpected treasury account size: ${accountSize} bytes`);
-      console.error('   Expected: 57 bytes (old) or 82 bytes (new)');
+      console.error('   Expected: 57 bytes (v1), 82 bytes (v2), or 114 bytes (v3)');
       return null;
     }
     
@@ -76,17 +76,19 @@ async function getTreasuryData(connection: Connection, treasuryPda: PublicKey) {
         lastWithdrawalAt: null,
         balance: BigInt(balance),
         bump,
-        isOldStructure: true, // Flag to indicate old structure
+        isOldStructure: true,
+        accountSize,
       };
-    } else {
-      // NEW STRUCTURE (82 bytes) - full feature set
+    } else if (accountSize === 82) {
+      // V2 STRUCTURE (82 bytes) - withdrawal tracking and pause
       const totalFeesWithdrawn = data.readBigUInt64LE(56);
       const isPaused = data.readUInt8(64) === 1;
       const pausedAtTimestamp = data.readBigInt64LE(65);
       const lastWithdrawalTimestamp = data.readBigInt64LE(73);
       const bump = data.readUInt8(81);
       
-      console.log('✅ Treasury is using NEW structure (82 bytes)');
+      console.log('⚠️  Treasury is using V2 structure (82 bytes)');
+      console.log('   Missing: locked withdrawal wallet security');
       
       return {
         authority,
@@ -99,6 +101,33 @@ async function getTreasuryData(connection: Connection, treasuryPda: PublicKey) {
         balance: BigInt(balance),
         bump,
         isOldStructure: false,
+        accountSize,
+      };
+    } else {
+      // V3 STRUCTURE (114 bytes) - full feature set with locked withdrawals
+      const totalFeesWithdrawn = data.readBigUInt64LE(56);
+      const isPaused = data.readUInt8(64) === 1;
+      const pausedAtTimestamp = data.readBigInt64LE(65);
+      const lastWithdrawalTimestamp = data.readBigInt64LE(73);
+      const authorizedWithdrawalWallet = new PublicKey(data.slice(81, 113));
+      const bump = data.readUInt8(113);
+      
+      console.log('✅ Treasury is using V3 structure (114 bytes - SECURE)');
+      console.log(`   Locked withdrawal wallet: ${authorizedWithdrawalWallet.toBase58()}`);
+      
+      return {
+        authority,
+        totalFeesCollected,
+        totalSwapsExecuted,
+        totalFeesWithdrawn,
+        isPaused,
+        pausedAt: Number(pausedAtTimestamp) > 0 ? new Date(Number(pausedAtTimestamp) * 1000) : null,
+        lastWithdrawalAt: Number(lastWithdrawalTimestamp) > 0 ? new Date(Number(lastWithdrawalTimestamp) * 1000) : null,
+        balance: BigInt(balance),
+        bump,
+        isOldStructure: false,
+        accountSize,
+        authorizedWithdrawalWallet,
       };
     }
   } catch (error: any) {
@@ -158,7 +187,7 @@ async function main() {
     console.log('\n📊 TREASURY STATUS\n');
     
     // Use correct rent calculation based on actual account size
-    const accountSize = treasuryData.isOldStructure ? 57 : 82;
+    const accountSize = treasuryData.accountSize;
     const rent = await connection.getMinimumBalanceForRentExemption(accountSize);
     const availableBalance = Number(treasuryData.balance) - rent;
     const pendingWithdrawal = Number(treasuryData.totalFeesCollected) - Number(treasuryData.totalFeesWithdrawn);
@@ -205,7 +234,8 @@ async function main() {
   }
 
   // Calculate withdrawal amount (use correct account size for rent)
-  const accountSize = treasuryData.isOldStructure ? 57 : 82;
+  // Use actual account size (57, 82, or 114 bytes) for accurate rent calculation
+  const accountSize = treasuryData.accountSize;
   const rent = await connection.getMinimumBalanceForRentExemption(accountSize);
   const availableBalance = Number(treasuryData.balance) - rent;
   const MIN_BUFFER = 0.01 * LAMPORTS_PER_SOL; // Keep 0.01 SOL buffer
