@@ -258,14 +258,50 @@ export class AssetValidator {
       // Fetch asset data via DAS API (works with QuickNode, Helius, etc.)
       const assetData = await this.fetchCNFTViaDAS(assetId);
       
+      // Check if ownership data exists
+      if (!assetData.ownership) {
+        console.error(`[AssetValidator] ❌ Missing ownership data for cNFT ${assetId}`);
+        console.error(`  Asset data keys:`, Object.keys(assetData));
+        console.error(`  Asset data:`, JSON.stringify(assetData, null, 2));
+        
+        return {
+          isValid: false,
+          asset: {
+            type: AssetType.CNFT,
+            identifier: assetId,
+            owner: '',
+            status: AssetStatus.NOT_OWNED,
+            validatedAt: new Date(),
+          },
+          error: 'cNFT ownership data not found in DAS API response',
+        };
+      }
+      
       // Verify ownership with detailed logging
-      const actualOwner = assetData.ownership?.owner;
+      const actualOwner = assetData.ownership.owner;
       const expectedOwner = walletAddress;
       
       console.log(`[AssetValidator] Ownership check for cNFT ${assetId}:`);
       console.log(`  Expected owner: ${expectedOwner}`);
       console.log(`  Actual owner:   ${actualOwner}`);
       console.log(`  Match: ${actualOwner === expectedOwner}`);
+      
+      if (!actualOwner) {
+        console.error(`[AssetValidator] ❌ Owner field is undefined for cNFT ${assetId}`);
+        console.error(`  Ownership object:`, assetData.ownership);
+        
+        return {
+          isValid: false,
+          asset: {
+            type: AssetType.CNFT,
+            identifier: assetId,
+            owner: '',
+            status: AssetStatus.NOT_OWNED,
+            validatedAt: new Date(),
+          },
+          error: 'cNFT owner field is undefined in DAS API response',
+        };
+      }
       
       if (actualOwner !== expectedOwner) {
         console.error(`[AssetValidator] ❌ Ownership mismatch for cNFT ${assetId}`);
@@ -277,7 +313,7 @@ export class AssetValidator {
           asset: {
             type: AssetType.CNFT,
             identifier: assetId,
-            owner: actualOwner || '',
+            owner: actualOwner,
             status: AssetStatus.NOT_OWNED,
             validatedAt: new Date(),
           },
@@ -359,7 +395,27 @@ export class AssetValidator {
         throw new Error('No response from getAsset RPC call');
       }
       
-      return response;
+      // Log the full response structure for debugging
+      console.log(`[AssetValidator] DAS API response structure:`, {
+        hasResult: !!response.result,
+        hasOwnership: !!response.ownership,
+        hasResultOwnership: !!(response.result?.ownership),
+        topLevelKeys: Object.keys(response),
+      });
+      
+      // CRITICAL: DAS API follows JSON-RPC 2.0 spec
+      // Response structure: { jsonrpc: "2.0", id: "...", result: {...} }
+      // Asset data is in response.result, ownership at response.result.ownership.owner
+      // Reference: https://www.helius.dev/docs/das-api
+      const assetData = response.result || response;
+      
+      // Log ownership field specifically
+      console.log(`[AssetValidator] Ownership data:`, {
+        ownership: assetData.ownership,
+        ownershipOwner: assetData.ownership?.owner,
+      });
+      
+      return assetData;
     } catch (error) {
       console.error(`[AssetValidator] DAS API request failed (attempt ${retryCount + 1}):`, error);
       
@@ -387,7 +443,7 @@ export class AssetValidator {
     try {
       console.log(`[AssetValidator] Calling getAssetProof RPC method for ${assetId}`);
       
-      // Use RPC method instead of REST endpoint
+      // DAS API follows JSON-RPC 2.0 spec - proof data is in response.result
       const response = await (this.connection as any)._rpcRequest('getAssetProof', {
         id: assetId,
       });
@@ -396,12 +452,15 @@ export class AssetValidator {
         throw new Error('No response from getAssetProof RPC call');
       }
       
+      // Handle JSON-RPC wrapper: response.result contains the actual proof data
+      const proofData = response.result || response;
+      
       // Map response to expected format
       return {
-        tree: response.tree_id,
-        leafIndex: response.leaf_index,
-        proof: response.proof,
-        root: response.root,
+        tree: proofData.tree_id,
+        leafIndex: proofData.leaf_index,
+        proof: proofData.proof,
+        root: proofData.root,
       };
     } catch (error) {
       console.error(`[AssetValidator] Proof fetch failed (attempt ${retryCount + 1}):`, error);
