@@ -5140,7 +5140,7 @@
         "description": "Add Bubblegum and compression program dependencies to package.json and create constants file with program IDs for TypeScript backend.",
         "details": "Install @metaplex-foundation/mpl-bubblegum@^0.7.0 and @solana/spl-account-compression@^0.2.0. Create src/constants/programs.ts exporting BUBBLEGUM_PROGRAM_ID, SPL_ACCOUNT_COMPRESSION_PROGRAM_ID, and SPL_NOOP_PROGRAM_ID as PublicKey constants. Verify TypeScript compiles successfully.",
         "testStrategy": "",
-        "status": "pending",
+        "status": "in-progress",
         "dependencies": [
           7
         ],
@@ -5277,7 +5277,7 @@
     ],
     "metadata": {
       "created": "2025-11-17T05:45:23.312Z",
-      "updated": "2025-11-28T00:26:36.021Z",
+      "updated": "2025-11-28T00:38:17.774Z",
       "description": "Complete architectural pivot from escrow agreements to atomic NFT/cNFT swaps with durable nonces"
     }
   }
