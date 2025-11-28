@@ -229,105 +229,7 @@ ls -lh target/docker-deploy/easyescrow.so
 
 ---
 
-## Solution 3: GitHub Actions - CI/CD Approach ☁️
-
-### Why GitHub Actions?
-- Already have Linux runners
-- No local setup required
-- Build artifacts stored on GitHub
-- Automated builds on push
-- Zero cost for public repos
-
-### Workflow File
-
-Create `.github/workflows/build-solana-program.yml`:
-
-```yaml
-name: Build Solana Program
-
-on:
-  push:
-    branches: [ main, staging, develop ]
-    paths:
-      - 'programs/**'
-      - 'Cargo.toml'
-      - 'Cargo.lock'
-  workflow_dispatch:
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Cache Solana CLI
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.cache/solana
-          ~/.local/share/solana
-        key: solana-${{ runner.os }}-v1.18.26
-
-    - name: Install Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: 1.79
-        override: true
-
-    - name: Install Solana CLI
-      run: |
-        sh -c "$(curl -sSfL https://release.solana.com/v1.18.26/install)"
-        echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
-
-    - name: Build program
-      working-directory: programs/escrow
-      run: |
-        export HOME=$HOME
-        cargo build-sbf
-
-    - name: Upload program artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: solana-program
-        path: target/deploy/easyescrow.so
-        retention-days: 30
-
-    - name: Upload IDL
-      uses: actions/upload-artifact@v4
-      with:
-        name: program-idl
-        path: target/idl/escrow.json
-        retention-days: 30
-```
-
-### Usage
-
-1. Push to main/staging/develop
-2. GitHub Actions builds automatically
-3. Download artifacts from Actions tab
-4. Deploy manually or via additional workflow
-
-### Pros & Cons
-
-✅ **Pros:**
-- Zero local setup
-- Automatic builds
-- Artifact storage on GitHub
-- Audit trail of builds
-- Free for public repos
-- Works for any contributor
-
-❌ **Cons:**
-- Requires push to trigger (or manual dispatch)
-- Can't iterate quickly (slower than local)
-- Network latency
-- Limited to 2000 minutes/month (free tier)
-
----
-
-## Solution 4: Set HOME Environment Variable (Partial Fix) ⚠️
+## Solution 3: Set HOME Environment Variable (Partial Fix) ⚠️
 
 ### Why This Might Help?
 - Some build script failures on Windows are due to missing `HOME` environment variable
@@ -365,51 +267,51 @@ set HOME=%USERPROFILE%
 |----------|-----------|-------------|-----------|------------------|------|
 | **WSL** | 15 min | ⚡⚡⚡ Fast | 🟡 Medium | ✅ Yes | Free |
 | **Docker** | 30 min | ⚡⚡ Medium | 🟡 Medium | ✅✅ Best | Free |
-| **GitHub Actions** | 5 min | ⚡ Slow | 🟢 Easy | ✅ Yes | Free* |
 | **HOME env var** | 1 min | N/A | 🟢 Easy | ❌ No | Free |
-
-*Free tier: 2000 minutes/month
 
 ---
 
 ## Recommended Approach for This Project 🎯
 
-**Phase 1: Quick Win (Immediate)**
-- Use **GitHub Actions** for initial build
-- Download artifact and test locally
-- Continue backend TypeScript development (unblocked)
+**Phase 1: Local Development Setup (Immediate)**
+- Set up **WSL** for local Rust compilation
+- Best developer experience for daily work
+- Fast iteration cycles (fastest builds)
+- One-time setup: 15-30 minutes
 
-**Phase 2: Local Development (Within 1-2 days)**
-- Set up **WSL** for ongoing development
-- Best developer experience
-- Fast iteration cycles
+**Phase 2: Continue Backend Development (Parallel)**
+- Backend TypeScript doesn't require Rust compilation
+- Implement transaction builder (Task 25)
+- Create E2E tests (Task 28)
+- Test against existing deployed program
 
 **Phase 3: Production Deployment (Ongoing)**
 - Use **Docker** for verifiable mainnet deployments
 - Ensures reproducible builds
 - Industry best practice
+- Same approach used for program verification
 
 ---
 
 ## Implementation Timeline ⏱️
 
-**Immediate (Today):**
-1. Create GitHub Actions workflow (5 minutes)
-2. Push code to trigger build
-3. Download artifacts
-4. Continue backend development
+**Today (45 minutes):**
+1. Install WSL (15 minutes)
+2. Set up Solana environment in WSL (20 minutes)
+3. Test local build (5 minutes)
+4. Continue backend TypeScript development (parallel)
 
 **Tomorrow:**
-1. Install WSL (15 minutes)
-2. Set up Solana environment (20 minutes)
-3. Test local build
+1. Build program in WSL
+2. Test with existing deployed program
+3. Verify cNFT transaction construction
 4. Document any issues
 
 **Next Week:**
-1. Create Docker setup for CI/CD
+1. Create Docker setup for production
 2. Test verifiable builds
 3. Update deployment documentation
-4. Set up mainnet deployment workflow
+4. Deploy cNFT-enabled program to devnet
 
 ---
 
@@ -443,9 +345,6 @@ set HOME=%USERPROFILE%
 ### Issue: "cargo: command not found" in WSL
 **Solution:** Add Cargo to PATH: `source ~/.cargo/env`
 
-### Issue: GitHub Actions runs out of minutes
-**Solution:** Self-hosted runner or Docker local builds
-
 ### Issue: Permission denied on build outputs
 **Solution:** Use Docker volume mounts with user mapping
 
@@ -456,34 +355,30 @@ set HOME=%USERPROFILE%
 **Recommended Solution:** WSL (Windows Subsystem for Linux)
 - Official recommendation from Anchor Framework
 - Best developer experience
-- Fast build times
+- Fast build times (fastest option)
 - Zero cost
-- 15-minute one-time setup
+- 15-30 minute one-time setup
+- Perfect for daily development
 
 **For Production Deployments:** Docker Verifiable Builds
 - Industry standard
 - Reproducible builds
-- CI/CD ready
 - Mainnet verification support
-
-**For Quick Testing:** GitHub Actions
-- No local setup
-- Build once, download artifacts
-- Good for unblocking development
+- Same binary used for on-chain verification
+- Use for final production builds
 
 ---
 
 **Next Steps:**
-1. Choose solution based on your priorities (speed vs. long-term)
-2. Follow setup instructions above
-3. Build program successfully
-4. Continue with Tasks 25-28 (backend TypeScript)
+1. Install WSL (15 minutes)
+2. Set up Solana environment in WSL (20 minutes)
+3. Build program successfully (5 minutes)
+4. Continue with Tasks 25-28 (backend TypeScript - can work in parallel)
 5. Deploy cNFT-enabled program when ready
 
 **Estimated Resolution Time:**
-- GitHub Actions: 30 minutes (including workflow creation)
-- WSL Setup: 45 minutes (including Solana environment)
-- Docker Setup: 60 minutes (including Dockerfile creation)
+- WSL Setup: 45 minutes total (including Solana environment)
+- Docker Setup: 60 minutes (for production later)
 
 **Risk Level:** ✅ Low - All solutions are proven and well-documented by the community.
 
