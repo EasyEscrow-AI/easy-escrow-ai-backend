@@ -29,18 +29,6 @@ pub enum AtomicSwapError {
     #[msg("Invalid merkle proof: cNFT ownership verification failed")]
     InvalidMerkleProof,
     
-    #[msg("Invalid cNFT proof: Merkle proof validation failed")]
-    InvalidCnftProof,
-    
-    #[msg("Missing required account: Bubblegum program")]
-    MissingBubblegumProgram,
-    
-    #[msg("Missing required account: Merkle tree")]
-    MissingMerkleTree,
-    
-    #[msg("Stale proof: Merkle root has changed since proof generation")]
-    StaleProof,
-    
     #[msg("Too many assets: Maximum number of assets per side exceeded")]
     TooManyAssets,
     
@@ -52,9 +40,6 @@ pub enum AtomicSwapError {
     
     #[msg("Program is paused: All operations are temporarily disabled")]
     ProgramPaused,
-    
-    #[msg("Invalid asset flags: Cannot send both standard NFT and compressed NFT")]
-    ConflictingAssetFlags,
     
     #[msg("Program is already paused")]
     AlreadyPaused,
@@ -70,5 +55,20 @@ pub enum AtomicSwapError {
 
     #[msg("Unauthorized withdrawal destination: Treasury can only withdraw to authorized wallet")]
     UnauthorizedWithdrawalDestination,
+    
+    #[msg("Invalid cNFT proof: Merkle proof validation failed")]
+    InvalidCnftProof,
+    
+    #[msg("Missing required account: Bubblegum program")]
+    MissingBubblegumProgram,
+    
+    #[msg("Missing required account: Merkle tree")]
+    MissingMerkleTree,
+    
+    #[msg("Stale proof: Merkle root has changed since proof generation")]
+    StaleProof,
+    
+    #[msg("Invalid asset flags: Cannot send both standard NFT and compressed NFT")]
+    ConflictingAssetFlags,
 }
 
