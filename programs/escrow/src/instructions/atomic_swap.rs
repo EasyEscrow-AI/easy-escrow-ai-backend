@@ -9,13 +9,9 @@ const MAX_SWAP_ID_LEN: usize = 64;
 /// Maximum platform fee (0.5 SOL = 500_000_000 lamports)
 const MAX_PLATFORM_FEE: u64 = 500_000_000;
 
-/// Bubblegum program ID for cNFT transfers
-/// BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY
-const BUBBLEGUM_PROGRAM_ID: Pubkey = Pubkey::new_from_array([
-    157, 198, 155, 162, 195, 89, 178, 49, 155, 47, 66, 68, 239, 76, 
-    45, 220, 104, 240, 76, 244, 81, 94, 158, 148, 141, 115, 61, 
-    34, 109, 168, 136, 52
-]);
+/// Bubblegum program ID for cNFT transfers  
+use anchor_lang::solana_program::pubkey;
+const BUBBLEGUM_PROGRAM_ID: Pubkey = pubkey!("BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY");
 
 /// cNFT Merkle proof for ownership verification
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
@@ -426,35 +422,29 @@ fn transfer_cnft<'info>(
     msg!("  Leaf Index: {}", proof.index);
     msg!("  Proof Root: {:?}", &proof.root[..8]);  // First 8 bytes for brevity
     
-    // Build Bubblegum transfer instruction (v1.2.0 API)
-    let transfer_ix = mpl_bubblegum::instruction::transfer(
-        bubblegum_program.key(),
-        tree_authority.key(),
-        from.key(),
-        from.key(),  // Owner is delegate for non-delegated NFTs
-        to.key(),
-        merkle_tree.key(),
-        log_wrapper.key(),
-        compression_program.key(),
+    // Create Bubblegum transfer CPI context (v0.7.0 API)
+    let cpi_ctx = CpiContext::new(
+        bubblegum_program.clone(),
+        mpl_bubblegum::cpi::accounts::Transfer {
+            tree_authority: tree_authority.clone(),
+            leaf_owner: from.clone(),
+            leaf_delegate: from.clone(),  // Owner is delegate for non-delegated NFTs
+            new_leaf_owner: to.clone(),
+            merkle_tree: merkle_tree.clone(),
+            log_wrapper: log_wrapper.clone(),
+            compression_program: compression_program.clone(),
+            system_program: system_program.clone(),
+        },
+    );
+    
+    // Call Bubblegum transfer instruction
+    mpl_bubblegum::cpi::transfer(
+        cpi_ctx,
         proof.root,
         proof.data_hash,
         proof.creator_hash,
         proof.nonce,
         proof.index,
-    );
-    
-    // Invoke the instruction via CPI
-    anchor_lang::solana_program::program::invoke(
-        &transfer_ix,
-        &[
-            tree_authority.clone(),
-            from.clone(),
-            to.clone(),
-            merkle_tree.clone(),
-            log_wrapper.clone(),
-            compression_program.clone(),
-            system_program.clone(),
-        ],
     )?;
     
     msg!("cNFT transferred successfully");

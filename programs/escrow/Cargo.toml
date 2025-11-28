@@ -23,8 +23,9 @@ staging = []
 localnet = []
 
 [dependencies]
-anchor-lang = { version = "0.29.0", features = ["init-if-needed"] }
-anchor-spl = "0.29.0"
+anchor-lang = { version = "0.32.1", features = ["init-if-needed"] }
+anchor-spl = "0.32.1"
 solana-security-txt = "1.1.1"
-mpl-bubblegum = "1.2.0"
+mpl-bubblegum = "2.1.1"
+spl-account-compression = "0.4.0"
 
