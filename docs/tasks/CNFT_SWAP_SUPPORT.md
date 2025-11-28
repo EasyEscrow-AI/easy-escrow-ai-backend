@@ -133,7 +133,7 @@ spl-account-compression = "0.2.0"
        transfer_standard_nft(ctx, maker, taker)?;
    } else if maker_sends_cnft {
        // New Bubblegum transfer
-       transfer_compressed_nft(
+       transfer_cnft(
            ctx,
            maker,
            taker,
@@ -145,7 +145,7 @@ spl-account-compression = "0.2.0"
    if taker_sends_standard_nft {
        transfer_standard_nft(ctx, taker, maker)?;
    } else if taker_sends_cnft {
-       transfer_compressed_nft(
+       transfer_cnft(
            ctx,
            taker,
            maker,
@@ -154,9 +154,9 @@ spl-account-compression = "0.2.0"
    }
    ```
 
-4. Implement `transfer_compressed_nft` helper:
+4. Implement `transfer_cnft` helper:
    ```rust
-   fn transfer_compressed_nft<'info>(
+   fn transfer_cnft<'info>(
        ctx: Context<'_, '_, '_, 'info, AtomicSwapWithFee<'info>>,
        from: &AccountInfo<'info>,
        to: &AccountInfo<'info>,

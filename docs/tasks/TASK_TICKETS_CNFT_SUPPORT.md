@@ -14,7 +14,7 @@
 | **CNFT-1** | Add Bubblegum dependencies to Solana program | Setup | High | 30 min | Rust Dev |
 | **CNFT-2** | Create cNFT proof data structures | Program | High | 1 hour | Rust Dev |
 | **CNFT-3** | Add optional cNFT accounts to atomic swap | Program | High | 2 hours | Rust Dev |
-| **CNFT-4** | Implement `transfer_compressed_nft()` helper | Program | High | 4 hours | Rust Dev |
+| **CNFT-4** | Implement `transfer_cnft()` helper | Program | High | 4 hours | Rust Dev |
 | **CNFT-5** | Update atomic swap handler for mixed transfers | Program | High | 3 hours | Rust Dev |
 | **CNFT-6** | Add comprehensive program tests | Testing | High | 4 hours | Rust Dev |
 | **CNFT-7** | Update backend transaction builder | Backend | Medium | 3 hours | TS Dev |
@@ -217,7 +217,7 @@ pub struct AtomicSwapWithFee<'info> {
 
 ---
 
-### CNFT-4: Implement `transfer_compressed_nft()` Helper
+### CNFT-4: Implement `transfer_cnft()` Helper
 
 **Priority:** High
 **Type:** Program Development
@@ -245,7 +245,7 @@ use mpl_bubblegum::cpi::{accounts::Transfer as BubblegumTransfer, transfer as bu
 const BUBBLEGUM_PROGRAM_ID: Pubkey = pubkey!("BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY");
 
 /// Transfer a compressed NFT using Bubblegum CPI
-fn transfer_compressed_nft<'info>(
+fn transfer_cnft<'info>(
     from: &AccountInfo<'info>,
     to: &AccountInfo<'info>,
     merkle_tree: &AccountInfo<'info>,
@@ -377,7 +377,7 @@ pub fn atomic_swap_handler(ctx: Context<AtomicSwapWithFee>, params: SwapParams) 
         let log_wrapper = ctx.accounts.log_wrapper.as_ref()
             .ok_or(AtomicSwapError::InvalidMerkleProof)?;
         
-        transfer_compressed_nft(
+        transfer_cnft(
             &ctx.accounts.maker.to_account_info(),
             &ctx.accounts.taker.to_account_info(),
             merkle_tree,
