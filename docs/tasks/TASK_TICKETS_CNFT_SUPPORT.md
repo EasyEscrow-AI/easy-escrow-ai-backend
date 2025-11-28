@@ -28,6 +28,42 @@
 
 ---
 
+## 🔍 Production Enhancements (Based on Sorare Research)
+
+**Research Source:** Sorare's verified Solana cNFT transfer proxy program
+- **Program ID:** `Gz9o1yxV5kVfyC53fFu7StTVeetPZWa2sohzvxJiLxMP`
+- **Repository:** https://gitlab.com/sorare/solana-public-programs-transfer-proxy
+
+### Key Enhancements Adopted:
+
+1. **Granular Error Codes** (CNFT-2)
+   - `InvalidCnftProof`: Merkle proof validation failed
+   - `MissingBubblegumProgram`: Missing Bubblegum program account
+   - `MissingMerkleTree`: Missing Merkle tree account
+   - `StaleProof`: Merkle root changed since proof generation
+
+2. **Enhanced Logging** (CNFT-4)
+   - From/to addresses for every transfer
+   - Tree key and leaf index
+   - Proof root (first 8 bytes) for debugging
+   - Success/failure confirmation messages
+
+3. **Address Lookup Table Support** (CNFT-7, new subtask)
+   - Reduces transaction size by ~60%
+   - Critical for complex swaps with multiple assets
+   - Handles 7+ additional cNFT accounts efficiently
+
+4. **Stale Proof Retry** (CNFT-10, new test)
+   - Automatic retry with fresh proof on failure
+   - Handles dynamic Merkle tree changes
+   - Production-critical edge case handling
+
+5. **Future Delegation Support** (CNFT-2)
+   - Commented `leaf_delegate` field ready for implementation
+   - Supports delegated cNFT transfers when needed
+
+---
+
 ## 🎫 Detailed Task Tickets
 
 ### CNFT-1: Add Bubblegum Dependencies
@@ -80,12 +116,14 @@ cargo build-sbf
 **Depends On:** CNFT-1
 
 #### Description
-Define Rust data structures for cNFT Merkle proofs that will be passed in instruction data.
+Define Rust data structures for cNFT Merkle proofs that will be passed in instruction data, with enhanced error handling based on Sorare's production implementation.
 
 #### Acceptance Criteria
 - [ ] `CnftProof` struct defined with all required fields
 - [ ] Struct implements `AnchorSerialize` and `AnchorDeserialize`
 - [ ] Optional proof fields added to `SwapParams`
+- [ ] **Granular error codes added:** `InvalidCnftProof`, `MissingBubblegumProgram`, `MissingMerkleTree`, `StaleProof`
+- [ ] **Future delegation support:** Commented `leaf_delegate: Option<Pubkey>` field
 - [ ] Program compiles with new structures
 
 #### Implementation
@@ -111,6 +149,9 @@ pub struct CnftProof {
     
     /// Leaf index in the tree
     pub index: u32,
+    
+    // Future: Support for delegated transfers
+    // pub leaf_delegate: Option<Pubkey>,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
@@ -128,6 +169,28 @@ pub struct SwapParams {
     
     /// Whether taker is sending a compressed NFT
     pub taker_sends_cnft: bool,
+}
+```
+
+**File:** `programs/escrow/src/errors.rs`
+
+```rust
+// Add to existing error enum (based on Sorare's production implementation)
+#[error_code]
+pub enum AtomicSwapError {
+    // ... existing errors ...
+    
+    #[msg("Invalid cNFT proof: Merkle proof validation failed")]
+    InvalidCnftProof,
+    
+    #[msg("Missing required account: Bubblegum program")]
+    MissingBubblegumProgram,
+    
+    #[msg("Missing required account: Merkle tree")]
+    MissingMerkleTree,
+    
+    #[msg("Stale proof: Merkle root has changed since proof generation")]
+    StaleProof,
 }
 ```
 
@@ -266,7 +329,8 @@ fn transfer_cnft<'info>(
     msg!("  From: {}", from.key());
     msg!("  To: {}", to.key());
     msg!("  Tree: {}", merkle_tree.key());
-    msg!("  Index: {}", proof.index);
+    msg!("  Leaf Index: {}", proof.index);
+    msg!("  Proof Root: {:?}", &proof.root[..8]);  // First 8 bytes for brevity
     
     // Create Bubblegum transfer CPI context
     let cpi_ctx = CpiContext::new(
