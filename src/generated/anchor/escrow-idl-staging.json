@@ -692,6 +692,31 @@
       "code": 6017,
       "name": "UnauthorizedWithdrawalDestination",
       "msg": "Unauthorized withdrawal destination: Treasury can only withdraw to authorized wallet"
+    },
+    {
+      "code": 6018,
+      "name": "InvalidCnftProof",
+      "msg": "Invalid cNFT proof: Merkle proof validation failed"
+    },
+    {
+      "code": 6019,
+      "name": "MissingBubblegumProgram",
+      "msg": "Missing required account: Bubblegum program"
+    },
+    {
+      "code": 6020,
+      "name": "MissingMerkleTree",
+      "msg": "Missing required account: Merkle tree"
+    },
+    {
+      "code": 6021,
+      "name": "StaleProof",
+      "msg": "Stale proof: Merkle root has changed since proof generation"
+    },
+    {
+      "code": 6022,
+      "name": "ConflictingAssetFlags",
+      "msg": "Invalid asset flags: Cannot send both standard NFT and compressed NFT"
     }
   ],
   "types": [
