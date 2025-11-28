@@ -53,6 +53,9 @@ pub enum AtomicSwapError {
     #[msg("Program is paused: All operations are temporarily disabled")]
     ProgramPaused,
     
+    #[msg("Invalid asset flags: Cannot send both standard NFT and compressed NFT")]
+    ConflictingAssetFlags,
+    
     #[msg("Program is already paused")]
     AlreadyPaused,
     

@@ -353,6 +353,16 @@ fn validate_params(params: &SwapParams) -> Result<()> {
         AtomicSwapError::InvalidFee
     );
     
+    // Validate mutual exclusivity: Cannot send both standard NFT and cNFT
+    require!(
+        !(params.maker_sends_nft && params.maker_sends_cnft),
+        AtomicSwapError::ConflictingAssetFlags
+    );
+    require!(
+        !(params.taker_sends_nft && params.taker_sends_cnft),
+        AtomicSwapError::ConflictingAssetFlags
+    );
+    
     Ok(())
 }
 
