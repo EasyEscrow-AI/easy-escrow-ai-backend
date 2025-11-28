@@ -5140,7 +5140,7 @@
         "description": "Add Bubblegum and compression program dependencies to package.json and create constants file with program IDs for TypeScript backend.",
         "details": "Install @metaplex-foundation/mpl-bubblegum@^0.7.0 and @solana/spl-account-compression@^0.2.0. Create src/constants/programs.ts exporting BUBBLEGUM_PROGRAM_ID, SPL_ACCOUNT_COMPRESSION_PROGRAM_ID, and SPL_NOOP_PROGRAM_ID as PublicKey constants. Verify TypeScript compiles successfully.",
         "testStrategy": "",
-        "status": "in-progress",
+        "status": "done",
         "dependencies": [
           7
         ],
@@ -5153,7 +5153,7 @@
         "description": "Update TypeScript type definitions to include cNFT proof data structures matching Rust program structs.",
         "details": "Create src/types/cnft.ts with CnftProof interface containing: root(string hex), dataHash(string hex), creatorHash(string hex), nonce(number), leafIndex(number), tree(string). Verify AssetInfo interface in assetValidator.ts already has proofData?: CnftProof field (it should). Ensure all TypeScript compiles without errors.",
         "testStrategy": "",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           26
         ],
@@ -5277,7 +5277,7 @@
     ],
     "metadata": {
       "created": "2025-11-17T05:45:23.312Z",
-      "updated": "2025-11-28T00:38:17.774Z",
+      "updated": "2025-11-28T00:40:04.072Z",
       "description": "Complete architectural pivot from escrow agreements to atomic NFT/cNFT swaps with durable nonces"
     }
   }

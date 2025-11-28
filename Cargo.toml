@@ -4,6 +4,13 @@ members = [
 ]
 resolver = "2"
 
+# Force resolution to compatible versions
+# Using Anchor 0.29.0 (most stable with Bubblegum ecosystem)
+[workspace.dependencies]
+anchor-lang = { version = "0.29.0", features = ["init-if-needed"] }
+anchor-spl = "0.29.0"
+mpl-bubblegum = "0.7.0"
+
 [profile.release]
 overflow-checks = true
 lto = "fat"

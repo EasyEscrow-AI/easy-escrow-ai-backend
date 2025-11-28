@@ -9,7 +9,7 @@ const MAX_SWAP_ID_LEN: usize = 64;
 /// Maximum platform fee (0.5 SOL = 500_000_000 lamports)
 const MAX_PLATFORM_FEE: u64 = 500_000_000;
 
-/// Bubblegum program ID for cNFT transfers  
+/// Bubblegum program ID for cNFT transfers
 use anchor_lang::solana_program::pubkey;
 const BUBBLEGUM_PROGRAM_ID: Pubkey = pubkey!("BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY");
 
