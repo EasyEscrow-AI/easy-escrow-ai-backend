@@ -28,6 +28,13 @@ import {
 import { AssetInfo, AssetType } from './assetValidator';
 import * as anchor from '@coral-xyz/anchor';
 import idl from '../generated/anchor/escrow-idl-staging.json';
+import { CnftService, createCnftService } from './cnftService';
+import { CnftTransferParams } from '../types/cnft';
+import {
+  BUBBLEGUM_PROGRAM_ID,
+  SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
+  SPL_NOOP_PROGRAM_ID,
+} from '../constants/bubblegum';
 
 // Program ID from IDL (used for placeholders)
 const PROGRAM_ID = new PublicKey(idl.address);
@@ -97,6 +104,7 @@ export class TransactionBuilder {
   private connection: Connection;
   private platformAuthority: Keypair;
   private program: anchor.Program | null = null;
+  private cnftService: CnftService;
   
   // Maximum transaction size (Solana limit is 1232 bytes)
   private static readonly MAX_TRANSACTION_SIZE = 1200; // Leave buffer
@@ -109,6 +117,7 @@ export class TransactionBuilder {
   constructor(connection: Connection, platformAuthority: Keypair) {
     this.connection = connection;
     this.platformAuthority = platformAuthority;
+    this.cnftService = createCnftService(connection);
     
     console.log('[TransactionBuilder] Initialized with platform authority:', platformAuthority.publicKey.toBase58());
   }
@@ -331,9 +340,11 @@ export class TransactionBuilder {
       throw new Error('Program only supports 1 NFT from taker. Use multiple transactions for multi-NFT swaps.');
     }
     
-    // Determine if either side is sending NFTs
-    const makerSendsNft = inputs.makerAssets.length > 0;
-    const takerSendsNft = inputs.takerAssets.length > 0;
+    // Determine asset types
+    const makerSendsNft = inputs.makerAssets.length > 0 && inputs.makerAssets[0].type === AssetType.NFT;
+    const takerSendsNft = inputs.takerAssets.length > 0 && inputs.takerAssets[0].type === AssetType.NFT;
+    const makerSendsCnft = inputs.makerAssets.length > 0 && inputs.makerAssets[0].type === AssetType.CNFT;
+    const takerSendsCnft = inputs.takerAssets.length > 0 && inputs.takerAssets[0].type === AssetType.CNFT;
     
     // Get NFT token accounts (if applicable)
     let makerNftAccount: PublicKey | null = null;
@@ -341,33 +352,53 @@ export class TransactionBuilder {
     let takerNftAccount: PublicKey | null = null;
     let makerNftDestination: PublicKey | null = null;
     
+    // Get cNFT transfer params (if applicable)
+    let makerCnftParams: CnftTransferParams | null = null;
+    let takerCnftParams: CnftTransferParams | null = null;
+    
     if (makerSendsNft) {
-      // Use identifier directly from SwapAsset (required field)
       const nftMint = new PublicKey(inputs.makerAssets[0].identifier);
-      // Maker's NFT source account
       makerNftAccount = await getAssociatedTokenAddress(nftMint, inputs.makerPubkey);
-      // Taker's NFT destination account
       takerNftDestination = await getAssociatedTokenAddress(nftMint, inputs.takerPubkey);
+    } else if (makerSendsCnft) {
+      makerCnftParams = await this.cnftService.buildTransferParams(
+        inputs.makerAssets[0].identifier,
+        inputs.makerPubkey,
+        inputs.takerPubkey
+      );
     }
     
     if (takerSendsNft) {
-      // Use identifier directly from SwapAsset (required field)
       const nftMint = new PublicKey(inputs.takerAssets[0].identifier);
-      // Taker's NFT source account
       takerNftAccount = await getAssociatedTokenAddress(nftMint, inputs.takerPubkey);
-      // Maker's NFT destination account
       makerNftDestination = await getAssociatedTokenAddress(nftMint, inputs.makerPubkey);
+    } else if (takerSendsCnft) {
+      takerCnftParams = await this.cnftService.buildTransferParams(
+        inputs.takerAssets[0].identifier,
+        inputs.takerPubkey,
+        inputs.makerPubkey
+      );
     }
     
-    // Build swap parameters
-    const swapParams = {
+    // Build swap parameters (including cNFT proof data)
+    const swapParams: any = {
       makerSendsNft,
       takerSendsNft,
+      makerSendsCnft,
+      takerSendsCnft,
       makerSolAmount: new anchor.BN(inputs.makerSolLamports.toString()),
       takerSolAmount: new anchor.BN(inputs.takerSolLamports.toString()),
       platformFee: new anchor.BN(inputs.platformFeeLamports.toString()),
       swapId: inputs.swapId,
     };
+    
+    // Add cNFT proof data if applicable
+    if (makerCnftParams) {
+      swapParams.makerCnftProof = this.serializeCnftProof(makerCnftParams.proof);
+    }
+    if (takerCnftParams) {
+      swapParams.takerCnftProof = this.serializeCnftProof(takerCnftParams.proof);
+    }
     
     // Build accounts object
     // Note: Anchor requires ALL optional accounts to be provided, even if unused
@@ -377,15 +408,28 @@ export class TransactionBuilder {
       taker: inputs.takerPubkey,
       platformAuthority: this.platformAuthority.publicKey,
       treasury: inputs.treasuryPDA,
-      makerNftAccount: makerNftAccount || PROGRAM_ID, // Placeholder if no NFT
-      takerNftDestination: takerNftDestination || PROGRAM_ID, // Placeholder if no NFT
-      takerNftAccount: takerNftAccount || PROGRAM_ID, // Placeholder if no NFT
-      makerNftDestination: makerNftDestination || PROGRAM_ID, // Placeholder if no NFT
+      makerNftAccount: makerNftAccount || PROGRAM_ID,
+      takerNftDestination: takerNftDestination || PROGRAM_ID,
+      takerNftAccount: takerNftAccount || PROGRAM_ID,
+      makerNftDestination: makerNftDestination || PROGRAM_ID,
       tokenProgram: TOKEN_PROGRAM_ID,
       systemProgram: SystemProgram.programId,
+      // cNFT-specific accounts (optional, use placeholder if not needed)
+      makerMerkleTree: makerCnftParams?.treeAddress || PROGRAM_ID,
+      makerTreeAuthority: makerCnftParams?.treeAuthorityAddress || PROGRAM_ID,
+      takerMerkleTree: takerCnftParams?.treeAddress || PROGRAM_ID,
+      takerTreeAuthority: takerCnftParams?.treeAuthorityAddress || PROGRAM_ID,
+      bubblegumProgram: BUBBLEGUM_PROGRAM_ID,
+      compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
+      logWrapper: SPL_NOOP_PROGRAM_ID,
     };
     
-    console.log('[TransactionBuilder] Swap params:', swapParams);
+    console.log('[TransactionBuilder] Swap params:', {
+      ...swapParams,
+      // Truncate proof data for logging
+      makerCnftProof: makerCnftParams ? '[proof data]' : undefined,
+      takerCnftProof: takerCnftParams ? '[proof data]' : undefined,
+    });
     console.log('[TransactionBuilder] Accounts:', accounts);
     
     // Get program instance
@@ -400,6 +444,19 @@ export class TransactionBuilder {
     console.log('[TransactionBuilder] atomic_swap_with_fee instruction created');
     
     return instruction;
+  }
+  
+  /**
+   * Serialize cNFT proof for program instruction
+   */
+  private serializeCnftProof(proof: any): any {
+    return {
+      root: Array.from(proof.root),
+      dataHash: Array.from(proof.dataHash),
+      creatorHash: Array.from(proof.creatorHash),
+      nonce: new anchor.BN(proof.nonce.toString()),
+      index: proof.index,
+    };
   }
   
   /**
