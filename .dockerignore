@@ -97,11 +97,11 @@ src/generated/prisma
 # Keep anchor IDL and types for Docker build
 !src/generated/anchor
 
-# Anchor/Solana artifacts
+# Anchor/Solana artifacts (target ignored for backend builds)
+# NOTE: programs directory is needed for Solana program Docker builds
 target/debug
 target/release
 target/sbf-solana-solana
-programs
 
 # Lock files (keep package-lock.json but ignore others)
 yarn.lock

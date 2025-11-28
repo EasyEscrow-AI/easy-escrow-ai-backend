@@ -10,8 +10,7 @@ const MAX_SWAP_ID_LEN: usize = 64;
 const MAX_PLATFORM_FEE: u64 = 500_000_000;
 
 /// Bubblegum program ID for cNFT transfers
-use anchor_lang::solana_program::pubkey;
-const BUBBLEGUM_PROGRAM_ID: Pubkey = pubkey!("BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY");
+const BUBBLEGUM_PROGRAM_ID: Pubkey = mpl_bubblegum::ID;
 
 /// cNFT Merkle proof for ownership verification
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
@@ -422,30 +421,22 @@ fn transfer_cnft<'info>(
     msg!("  Leaf Index: {}", proof.index);
     msg!("  Proof Root: {:?}", &proof.root[..8]);  // First 8 bytes for brevity
     
-    // Create Bubblegum transfer CPI context (v0.7.0 API)
-    let cpi_ctx = CpiContext::new(
-        bubblegum_program.clone(),
-        mpl_bubblegum::cpi::accounts::Transfer {
-            tree_authority: tree_authority.clone(),
-            leaf_owner: from.clone(),
-            leaf_delegate: from.clone(),  // Owner is delegate for non-delegated NFTs
-            new_leaf_owner: to.clone(),
-            merkle_tree: merkle_tree.clone(),
-            log_wrapper: log_wrapper.clone(),
-            compression_program: compression_program.clone(),
-            system_program: system_program.clone(),
-        },
-    );
-    
-    // Call Bubblegum transfer instruction
-    mpl_bubblegum::cpi::transfer(
-        cpi_ctx,
-        proof.root,
-        proof.data_hash,
-        proof.creator_hash,
-        proof.nonce,
-        proof.index,
-    )?;
+    // Build Bubblegum transfer CPI (v1.4.0 API)
+    mpl_bubblegum::instructions::TransferCpiBuilder::new(bubblegum_program)
+        .tree_config(tree_authority)
+        .leaf_owner(from, false)  // (account, is_signer)
+        .leaf_delegate(from, false)
+        .new_leaf_owner(to)
+        .merkle_tree(merkle_tree)
+        .log_wrapper(log_wrapper)
+        .compression_program(compression_program)
+        .system_program(system_program)
+        .root(proof.root)
+        .data_hash(proof.data_hash)
+        .creator_hash(proof.creator_hash)
+        .nonce(proof.nonce)
+        .index(proof.index)
+        .invoke()?;
     
     msg!("cNFT transferred successfully");
     

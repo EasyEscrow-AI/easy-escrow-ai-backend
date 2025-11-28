@@ -1,5 +1,4 @@
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::pubkey;
 use solana_security_txt::security_txt;
 
 // Modules
@@ -73,22 +72,22 @@ compile_error!("Cannot enable both 'devnet' and 'localnet' features simultaneous
 fn get_authorized_admins() -> Vec<Pubkey> {
     #[cfg(feature = "mainnet")]
     {
-        vec![pubkey!("HGrfPKZuKR8BSYYJfZRFfdF1y2ApU9LSf6USQ6tpSDj2")] // MAINNET
+        vec![Pubkey::from_str_const("HGrfPKZuKR8BSYYJfZRFfdF1y2ApU9LSf6USQ6tpSDj2")] // MAINNET
     }
     
     #[cfg(not(any(feature = "mainnet", feature = "devnet", feature = "localnet")))]
     {
-        vec![pubkey!("498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R")] // STAGING (default)
+        vec![Pubkey::from_str_const("498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R")] // STAGING (default)
     }
     
     #[cfg(feature = "devnet")]
     {
-        vec![pubkey!("7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u")] // DEVNET
+        vec![Pubkey::from_str_const("7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u")] // DEVNET
     }
     
     #[cfg(feature = "localnet")]
     {
-        vec![pubkey!("7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u")] // LOCALNET (uses devnet admin)
+        vec![Pubkey::from_str_const("7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u")] // LOCALNET (uses devnet admin)
     }
     
     #[cfg(not(any(feature = "mainnet", feature = "staging", feature = "devnet", feature = "localnet")))]

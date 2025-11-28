@@ -3,9 +3,9 @@
 # Usage: .\scripts\build-docker.ps1
 
 param(
-    [string]$RustVersion = "1.79",
-    [string]$SolanaVersion = "v1.18.26",
-    [string]$AnchorVersion = "0.29.0"
+    [string]$RustVersion = "1.81",
+    [string]$SolanaVersion = "v2.1.5",
+    [string]$AnchorVersion = "0.30.1"
 )
 
 # Stop on errors
