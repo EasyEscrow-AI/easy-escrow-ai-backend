@@ -9,6 +9,31 @@ const MAX_SWAP_ID_LEN: usize = 64;
 /// Maximum platform fee (0.5 SOL = 500_000_000 lamports)
 const MAX_PLATFORM_FEE: u64 = 500_000_000;
 
+/// Bubblegum program ID for cNFT transfers
+const BUBBLEGUM_PROGRAM_ID: Pubkey = mpl_bubblegum::ID;
+
+/// cNFT Merkle proof for ownership verification
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
+pub struct CnftProof {
+    /// Merkle tree root hash
+    pub root: [u8; 32],
+    
+    /// Asset data hash
+    pub data_hash: [u8; 32],
+    
+    /// Creator hash
+    pub creator_hash: [u8; 32],
+    
+    /// Leaf nonce (for uniqueness)
+    pub nonce: u64,
+    
+    /// Leaf index in the tree
+    pub index: u32,
+    
+    // Future: Support for delegated transfers
+    // pub leaf_delegate: Option<Pubkey>,
+}
+
 /// Execute atomic swap with platform fee collection
 /// 
 /// MVP Version: Supports 1 NFT per side + optional SOL
@@ -64,15 +89,53 @@ pub struct AtomicSwapWithFee<'info> {
     
     /// System program for SOL transfers
     pub system_program: Program<'info, System>,
+    
+    // === cNFT Transfer Accounts (Optional) ===
+    
+    /// Maker's Merkle tree (for cNFT transfers)
+    /// CHECK: Verified by Bubblegum CPI
+    #[account(mut)]
+    pub maker_merkle_tree: Option<AccountInfo<'info>>,
+    
+    /// Maker's tree authority PDA
+    /// CHECK: Verified by Bubblegum CPI
+    pub maker_tree_authority: Option<AccountInfo<'info>>,
+    
+    /// Taker's Merkle tree (for cNFT transfers)
+    /// CHECK: Verified by Bubblegum CPI
+    #[account(mut)]
+    pub taker_merkle_tree: Option<AccountInfo<'info>>,
+    
+    /// Taker's tree authority PDA
+    /// CHECK: Verified by Bubblegum CPI
+    pub taker_tree_authority: Option<AccountInfo<'info>>,
+    
+    /// Bubblegum program for cNFT transfers
+    /// CHECK: Program ID verified in instruction
+    pub bubblegum_program: Option<AccountInfo<'info>>,
+    
+    /// SPL Account Compression program
+    /// CHECK: Program ID verified by Bubblegum
+    pub compression_program: Option<AccountInfo<'info>>,
+    
+    /// SPL Noop program (for logging)
+    /// CHECK: Program ID verified by Bubblegum
+    pub log_wrapper: Option<AccountInfo<'info>>,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
 pub struct SwapParams {
-    /// Whether maker is sending an NFT
+    /// Whether maker is sending a standard NFT
     pub maker_sends_nft: bool,
     
-    /// Whether taker is sending an NFT
+    /// Whether taker is sending a standard NFT
     pub taker_sends_nft: bool,
+    
+    /// Whether maker is sending a compressed NFT
+    pub maker_sends_cnft: bool,
+    
+    /// Whether taker is sending a compressed NFT
+    pub taker_sends_cnft: bool,
     
     /// SOL amount maker is sending (in lamports)
     pub maker_sol_amount: u64,
@@ -85,6 +148,12 @@ pub struct SwapParams {
     
     /// Unique swap identifier for backend tracking (max 64 chars)
     pub swap_id: String,
+    
+    /// Maker's cNFT proof (if sending compressed NFT)
+    pub maker_cnft_proof: Option<CnftProof>,
+    
+    /// Taker's cNFT proof (if sending compressed NFT)
+    pub taker_cnft_proof: Option<CnftProof>,
 }
 
 pub fn atomic_swap_handler(ctx: Context<AtomicSwapWithFee>, params: SwapParams) -> Result<()> {
@@ -111,8 +180,9 @@ pub fn atomic_swap_handler(ctx: Context<AtomicSwapWithFee>, params: SwapParams) 
     
     msg!("Platform fee collected: {} lamports", params.platform_fee);
     
-    // Step 2: Transfer maker's NFT to taker (if any)
+    // Step 2: Transfer maker's asset to taker
     if params.maker_sends_nft {
+        // Standard NFT transfer
         if let (Some(maker_nft), Some(taker_dest)) = (
             &ctx.accounts.maker_nft_account,
             &ctx.accounts.taker_nft_destination,
@@ -129,14 +199,44 @@ pub fn atomic_swap_handler(ctx: Context<AtomicSwapWithFee>, params: SwapParams) 
                 1, // NFT amount is always 1
             )?;
             
-            msg!("Transferred maker NFT to taker");
+            msg!("Transferred maker standard NFT to taker");
         } else {
             return Err(AtomicSwapError::MakerAssetOwnershipFailed.into());
         }
+    } else if params.maker_sends_cnft {
+        // Compressed NFT transfer
+        let proof = params.maker_cnft_proof.as_ref()
+            .ok_or(AtomicSwapError::MissingMerkleTree)?;
+        
+        let merkle_tree = ctx.accounts.maker_merkle_tree.as_ref()
+            .ok_or(AtomicSwapError::MissingMerkleTree)?;
+        let tree_authority = ctx.accounts.maker_tree_authority.as_ref()
+            .ok_or(AtomicSwapError::MissingMerkleTree)?;
+        let bubblegum = ctx.accounts.bubblegum_program.as_ref()
+            .ok_or(AtomicSwapError::MissingBubblegumProgram)?;
+        let compression = ctx.accounts.compression_program.as_ref()
+            .ok_or(AtomicSwapError::MissingBubblegumProgram)?;
+        let log_wrapper = ctx.accounts.log_wrapper.as_ref()
+            .ok_or(AtomicSwapError::MissingBubblegumProgram)?;
+        
+        transfer_cnft(
+            &ctx.accounts.maker.to_account_info(),
+            &ctx.accounts.taker.to_account_info(),
+            merkle_tree,
+            tree_authority,
+            bubblegum,
+            compression,
+            log_wrapper,
+            &ctx.accounts.system_program.to_account_info(),
+            proof,
+        )?;
+        
+        msg!("Transferred maker cNFT to taker");
     }
     
-    // Step 3: Transfer taker's NFT to maker (if any)
+    // Step 3: Transfer taker's asset to maker
     if params.taker_sends_nft {
+        // Standard NFT transfer
         if let (Some(taker_nft), Some(maker_dest)) = (
             &ctx.accounts.taker_nft_account,
             &ctx.accounts.maker_nft_destination,
@@ -153,10 +253,39 @@ pub fn atomic_swap_handler(ctx: Context<AtomicSwapWithFee>, params: SwapParams) 
                 1, // NFT amount is always 1
             )?;
             
-            msg!("Transferred taker NFT to maker");
+            msg!("Transferred taker standard NFT to maker");
         } else {
             return Err(AtomicSwapError::TakerAssetOwnershipFailed.into());
         }
+    } else if params.taker_sends_cnft {
+        // Compressed NFT transfer
+        let proof = params.taker_cnft_proof.as_ref()
+            .ok_or(AtomicSwapError::MissingMerkleTree)?;
+        
+        let merkle_tree = ctx.accounts.taker_merkle_tree.as_ref()
+            .ok_or(AtomicSwapError::MissingMerkleTree)?;
+        let tree_authority = ctx.accounts.taker_tree_authority.as_ref()
+            .ok_or(AtomicSwapError::MissingMerkleTree)?;
+        let bubblegum = ctx.accounts.bubblegum_program.as_ref()
+            .ok_or(AtomicSwapError::MissingBubblegumProgram)?;
+        let compression = ctx.accounts.compression_program.as_ref()
+            .ok_or(AtomicSwapError::MissingBubblegumProgram)?;
+        let log_wrapper = ctx.accounts.log_wrapper.as_ref()
+            .ok_or(AtomicSwapError::MissingBubblegumProgram)?;
+        
+        transfer_cnft(
+            &ctx.accounts.taker.to_account_info(),
+            &ctx.accounts.maker.to_account_info(),
+            merkle_tree,
+            tree_authority,
+            bubblegum,
+            compression,
+            log_wrapper,
+            &ctx.accounts.system_program.to_account_info(),
+            proof,
+        )?;
+        
+        msg!("Transferred taker cNFT to maker");
     }
     
     // Step 4: Transfer SOL from maker to taker (if any)
@@ -219,8 +348,19 @@ fn validate_params(params: &SwapParams) -> Result<()> {
     // Validate that at least one asset is being swapped
     require!(
         params.maker_sends_nft || params.taker_sends_nft || 
+        params.maker_sends_cnft || params.taker_sends_cnft ||
         params.maker_sol_amount > 0 || params.taker_sol_amount > 0,
         AtomicSwapError::InvalidFee
+    );
+    
+    // Validate mutual exclusivity: Cannot send both standard NFT and cNFT
+    require!(
+        !(params.maker_sends_nft && params.maker_sends_cnft),
+        AtomicSwapError::ConflictingAssetFlags
+    );
+    require!(
+        !(params.taker_sends_nft && params.taker_sends_cnft),
+        AtomicSwapError::ConflictingAssetFlags
     );
     
     Ok(())
@@ -262,6 +402,53 @@ fn transfer_sol<'info>(
     );
     
     anchor_lang::system_program::transfer(cpi_context, amount)?;
+    
+    Ok(())
+}
+
+/// Transfer a compressed NFT using Bubblegum CPI
+fn transfer_cnft<'info>(
+    from: &AccountInfo<'info>,
+    to: &AccountInfo<'info>,
+    merkle_tree: &AccountInfo<'info>,
+    tree_authority: &AccountInfo<'info>,
+    bubblegum_program: &AccountInfo<'info>,
+    compression_program: &AccountInfo<'info>,
+    log_wrapper: &AccountInfo<'info>,
+    system_program: &AccountInfo<'info>,
+    proof: &CnftProof,
+) -> Result<()> {
+    // Verify Bubblegum program ID
+    require!(
+        bubblegum_program.key() == BUBBLEGUM_PROGRAM_ID,
+        AtomicSwapError::InvalidCnftProof
+    );
+    
+    msg!("Transferring cNFT via Bubblegum");
+    msg!("  From: {}", from.key());
+    msg!("  To: {}", to.key());
+    msg!("  Tree: {}", merkle_tree.key());
+    msg!("  Leaf Index: {}", proof.index);
+    msg!("  Proof Root: {:?}", &proof.root[..8]);  // First 8 bytes for brevity
+    
+    // Build Bubblegum transfer CPI (v1.4.0 API)
+    mpl_bubblegum::instructions::TransferCpiBuilder::new(bubblegum_program)
+        .tree_config(tree_authority)
+        .leaf_owner(from, false)  // (account, is_signer)
+        .leaf_delegate(from, false)
+        .new_leaf_owner(to)
+        .merkle_tree(merkle_tree)
+        .log_wrapper(log_wrapper)
+        .compression_program(compression_program)
+        .system_program(system_program)
+        .root(proof.root)
+        .data_hash(proof.data_hash)
+        .creator_hash(proof.creator_hash)
+        .nonce(proof.nonce)
+        .index(proof.index)
+        .invoke()?;
+    
+    msg!("cNFT transferred successfully");
     
     Ok(())
 }

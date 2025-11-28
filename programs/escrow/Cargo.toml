@@ -23,7 +23,8 @@ staging = []
 localnet = []
 
 [dependencies]
-anchor-lang = { version = "0.32.1", features = ["init-if-needed"] }
-anchor-spl = "0.32.1"
+anchor-lang = { workspace = true }
+anchor-spl = { workspace = true }
 solana-security-txt = "1.1.1"
+mpl-bubblegum = { workspace = true }
 

@@ -4736,11 +4736,548 @@
         ],
         "priority": "medium",
         "subtasks": []
+      },
+      {
+        "id": 19,
+        "title": "Add Bubblegum and Compression Dependencies to Solana Program",
+        "description": "Add mpl-bubblegum and spl-account-compression crate dependencies to programs/escrow/Cargo.toml to enable compressed NFT transfer functionality.",
+        "details": "Add the following dependencies to Cargo.toml: mpl-bubblegum = \"0.7.0\" and spl-account-compression = \"0.2.0\". Verify program compiles successfully with no version conflicts. This is a prerequisite for all cNFT program work.",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 20,
+        "title": "Create cNFT Proof Data Structures in Program",
+        "description": "Define Rust data structures for cNFT Merkle proofs in atomic_swap.rs including CnftProof struct with enhanced error handling and updated SwapParams with optional proof fields.",
+        "status": "done",
+        "dependencies": [
+          19
+        ],
+        "priority": "high",
+        "details": "Create CnftProof struct with fields: root[u8;32], data_hash[u8;32], creator_hash[u8;32], nonce(u64), index(u32), and commented field for future delegation support (leaf_delegate: Option<Pubkey>). Update SwapParams to include maker_cnft_proof, taker_cnft_proof (Option<CnftProof>), maker_sends_cnft(bool), taker_sends_cnft(bool). Implement AnchorSerialize and AnchorDeserialize traits. Add granular error codes based on Sorare's production implementation: InvalidCnftProof for Merkle proof validation failures, MissingBubblegumProgram for missing required Bubblegum program account, MissingMerkleTree for missing Merkle tree account, and StaleProof for outdated Merkle roots.",
+        "testStrategy": "Unit tests for CnftProof struct serialization/deserialization, SwapParams validation with cNFT fields, and comprehensive error code testing for all cNFT-specific error scenarios including invalid proofs, missing accounts, and stale proof detection.",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Define CnftProof struct with Merkle proof fields",
+            "description": "Create the CnftProof struct in atomic_swap.rs with all required fields for cNFT Merkle proof validation including future delegation support.",
+            "dependencies": [],
+            "details": "Define CnftProof struct with fields: root as [u8; 32] for Merkle tree root, data_hash as [u8; 32] for leaf data hash, creator_hash as [u8; 32] for creator verification, nonce as u64 for leaf nonce, index as u32 for leaf index position. Add commented field leaf_delegate: Option<Pubkey> for future delegation support. Implement AnchorSerialize and AnchorDeserialize traits for the struct.",
+            "status": "done",
+            "testStrategy": "Unit tests for struct creation, field access, and serialization/deserialization with various field combinations including edge cases for hash values and numeric limits."
+          },
+          {
+            "id": 2,
+            "title": "Update SwapParams with cNFT proof fields",
+            "description": "Extend the existing SwapParams struct to include optional cNFT proof fields and boolean flags for cNFT swap detection.",
+            "dependencies": [
+              1
+            ],
+            "details": "Add four new fields to SwapParams: maker_cnft_proof and taker_cnft_proof as Option<CnftProof> to hold Merkle proof data when needed, maker_sends_cnft and taker_sends_cnft as bool flags to indicate which party is sending a cNFT. Ensure backward compatibility with existing SwapParams usage and maintain proper serialization support.",
+            "status": "done",
+            "testStrategy": "Unit tests for SwapParams creation with various cNFT field combinations, validation of optional proof fields, and serialization tests to ensure backward compatibility with existing swap parameters."
+          },
+          {
+            "id": 3,
+            "title": "Add granular cNFT error codes to error enum",
+            "description": "Implement specific error codes for cNFT operations based on Sorare's production implementation best practices.",
+            "dependencies": [],
+            "details": "Add four new error variants to the program's error enum: InvalidCnftProof with message 'Invalid cNFT proof: Merkle proof validation failed' for proof validation failures, MissingBubblegumProgram with message 'Missing required account: Bubblegum program' for missing Bubblegum program account, MissingMerkleTree with message 'Missing required account: Merkle tree' for missing Merkle tree account, and StaleProof with message 'Stale proof: Merkle root has changed since proof generation' for outdated proof detection.",
+            "status": "done",
+            "testStrategy": "Unit tests for each error code creation, message formatting, and error propagation scenarios. Integration tests to verify proper error throwing in various cNFT validation failure scenarios."
+          }
+        ]
+      },
+      {
+        "id": 21,
+        "title": "Add Optional cNFT Accounts to Atomic Swap Instruction",
+        "description": "Add optional Bubblegum-related accounts to AtomicSwapWithFee instruction struct for cNFT transfers including merkle trees, tree authorities, and Bubblegum program accounts.",
+        "details": "Add Option&lt;AccountInfo&gt; fields: maker_merkle_tree, maker_tree_authority, taker_merkle_tree, taker_tree_authority, bubblegum_program, compression_program, log_wrapper. Add CHECK comments for safety. Ensure backward compatibility with standard NFT swaps.",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [
+          19,
+          20
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 22,
+        "title": "Implement transfer_cnft() Helper Function with Bubblegum CPI",
+        "description": "Implement transfer_cnft() helper function that performs compressed NFT transfers via Bubblegum CPI with proper Merkle proof validation and account handling.",
+        "details": "Create transfer_cnft(from, to, merkle_tree, tree_authority, bubblegum_program, compression_program, log_wrapper, system_program, proof) function. Verify Bubblegum program ID matches BUBBLEGUM_PROGRAM_ID constant. Set up BubblegumTransfer CPI context with all required accounts. Call bubblegum_transfer with proof data. Add comprehensive logging and error handling for InvalidMerkleProof errors.\n<info added on 2025-11-28T00:18:42.731Z>\nEnhance subtask 5 with production-grade transfer logging following Sorare's implementation pattern (program Gz9o1yxV5kVfyC53fFu7StTVeetPZWa2sohzvxJiLxMP). Add specific log messages for comprehensive transfer tracking:\n\nTransfer initiation logging: \"Transferring cNFT via Bubblegum\" to mark the start of each transfer operation.\n\nAccount address logging with proper formatting:\n- From address: \"  From: {from.key()}\" \n- To address: \"  To: {to.key()}\"\n- Tree identifier: \"  Tree: {merkle_tree.key()}\"\n\nProof data logging for debugging:\n- Leaf index: \"  Leaf Index: {proof.index}\" to track the specific NFT being transferred\n- Proof root: \"  Proof Root: {:?}\" displaying first 8 bytes for brevity while maintaining diagnostic value\n\nSuccess confirmation: \"cNFT transfer successful\" message upon completion.\n\nThis structured logging approach matches production standards used by Sorare and provides essential debugging information for production environments while maintaining performance through concise log formatting.\n</info added on 2025-11-28T00:18:42.731Z>",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [
+          19,
+          20,
+          21
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Define transfer_cnft() function signature and validate Bubblegum program ID",
+            "description": "Create the transfer_cnft() helper function with proper parameter validation and Bubblegum program ID verification",
+            "dependencies": [],
+            "details": "Define transfer_cnft(from, to, merkle_tree, tree_authority, bubblegum_program, compression_program, log_wrapper, system_program, proof) function signature. Add validation to verify that the provided bubblegum_program matches the BUBBLEGUM_PROGRAM_ID constant. Include proper parameter type checking and null validation for all required accounts.",
+            "status": "done",
+            "testStrategy": "Unit test function signature validation and program ID verification with valid and invalid program IDs"
+          },
+          {
+            "id": 2,
+            "title": "Implement Merkle proof validation and account verification",
+            "description": "Add comprehensive Merkle proof validation and verify all required accounts for the compressed NFT transfer",
+            "dependencies": [
+              1
+            ],
+            "details": "Implement Merkle proof structure validation including proof length, node validation, and tree consistency checks. Verify that the merkle_tree account is valid and accessible. Validate tree_authority permissions and ownership. Add checks for proof data integrity and format compliance with Bubblegum requirements.",
+            "status": "done",
+            "testStrategy": "Test with valid and invalid Merkle proofs, corrupted proof data, and various tree authority scenarios"
+          },
+          {
+            "id": 3,
+            "title": "Set up BubblegumTransfer CPI context with required accounts",
+            "description": "Create and configure the BubblegumTransfer CPI context with all necessary accounts for the compressed NFT transfer",
+            "dependencies": [
+              2
+            ],
+            "details": "Initialize BubblegumTransfer CPI context structure with from, to, merkle_tree, tree_authority, compression_program, log_wrapper, and system_program accounts. Configure account metadata and permissions. Set up proper account ordering and access patterns required by the Bubblegum program. Ensure all accounts are properly initialized and accessible.",
+            "status": "done",
+            "testStrategy": "Test CPI context creation with various account combinations and verify proper account ordering and permissions"
+          },
+          {
+            "id": 4,
+            "title": "Execute bubblegum_transfer CPI call with proof data",
+            "description": "Perform the actual compressed NFT transfer by calling bubblegum_transfer with the validated proof data and CPI context",
+            "dependencies": [
+              3
+            ],
+            "details": "Execute the bubblegum_transfer CPI call using the configured context and validated Merkle proof data. Pass the proof array, leaf index, and tree depth parameters correctly. Handle the CPI invocation result and capture any program-specific return data. Ensure proper instruction data serialization and account meta configuration for the cross-program invocation.",
+            "status": "done",
+            "testStrategy": "Test successful transfers and various failure scenarios including invalid proofs and account access issues"
+          },
+          {
+            "id": 5,
+            "title": "Add comprehensive logging and error handling for transfer operations",
+            "description": "Implement detailed logging and robust error handling specifically for InvalidMerkleProof and other transfer-related errors",
+            "dependencies": [
+              4
+            ],
+            "details": "Add structured logging for transfer initiation, progress, and completion events. Implement specific error handling for InvalidMerkleProof errors with detailed diagnostic information. Add error recovery mechanisms and user-friendly error messages. Include performance metrics logging and transfer success/failure statistics. Implement proper error propagation and cleanup procedures for failed transfers.",
+            "status": "done",
+            "testStrategy": "Test error handling with various failure scenarios and verify proper logging output and error message clarity"
+          }
+        ]
+      },
+      {
+        "id": 23,
+        "title": "Update Atomic Swap Handler for Mixed Standard and Compressed NFT Transfers",
+        "description": "Update atomic_swap_handler to support all combinations of standard NFTs, compressed NFTs, and SOL transfers with proper conditional logic and account validation.",
+        "details": "Add conditional branches for maker_sends_nft (standard), maker_sends_cnft (compressed), taker_sends_nft, and taker_sends_cnft. Validate required accounts are present before transfers. Call transfer_cnft() for compressed NFT transfers and existing SPL token transfer for standard NFTs. Maintain backward compatibility with existing standard NFT swaps. Test all 6+ swap type combinations.",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [
+          22
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Add conditional logic branches for NFT type detection",
+            "description": "Implement conditional branches in atomic_swap_handler to detect and handle maker_sends_nft, maker_sends_cnft, taker_sends_nft, and taker_sends_cnft combinations",
+            "dependencies": [],
+            "details": "Add if/else conditional logic to check maker_sends_nft, maker_sends_cnft, taker_sends_nft, and taker_sends_cnft flags. Create separate code paths for each combination while maintaining clean, readable structure.",
+            "status": "done",
+            "testStrategy": "Unit tests for each conditional branch with mock data to verify correct path execution"
+          },
+          {
+            "id": 2,
+            "title": "Implement account validation for compressed NFT transfers",
+            "description": "Add validation logic to ensure required accounts (merkle_tree, tree_authority, bubblegum_program, compression_program) are present for cNFT transfers",
+            "dependencies": [
+              1
+            ],
+            "details": "Validate that merkle_tree, tree_authority, bubblegum_program, compression_program, and log_wrapper accounts are provided when compressed NFT transfers are detected. Return appropriate errors if required accounts are missing.",
+            "status": "done",
+            "testStrategy": "Test with missing accounts to verify proper error handling and validation"
+          },
+          {
+            "id": 3,
+            "title": "Integrate transfer_cnft function calls for compressed NFTs",
+            "description": "Call the existing transfer_cnft() function for compressed NFT transfers while maintaining existing SPL token transfer logic for standard NFTs",
+            "dependencies": [
+              2
+            ],
+            "details": "Route compressed NFT transfers through transfer_cnft() function with proper proof data and account parameters. Keep existing SPL token transfer logic intact for standard NFT transfers to maintain backward compatibility.",
+            "status": "done",
+            "testStrategy": "Test both standard and compressed NFT transfers to verify correct function routing"
+          },
+          {
+            "id": 4,
+            "title": "Ensure backward compatibility with standard NFT swaps",
+            "description": "Verify that existing standard NFT swap functionality remains unchanged and fully compatible with the new mixed transfer logic",
+            "dependencies": [
+              3
+            ],
+            "details": "Test all existing standard NFT swap scenarios to ensure no regression. Maintain existing function signatures and behavior for standard NFT-only swaps while adding new cNFT capabilities.",
+            "status": "done",
+            "testStrategy": "Regression testing with existing standard NFT swap test cases"
+          },
+          {
+            "id": 5,
+            "title": "Handle SOL transfer combinations with NFTs",
+            "description": "Implement proper handling of SOL transfers in combination with both standard and compressed NFT transfers",
+            "dependencies": [
+              4
+            ],
+            "details": "Add logic to handle SOL transfers when combined with standard NFTs, compressed NFTs, or both. Ensure proper account validation and transfer sequencing for mixed asset type swaps.",
+            "status": "done",
+            "testStrategy": "Test SOL + NFT, SOL + cNFT, and SOL + both NFT types combinations"
+          },
+          {
+            "id": 6,
+            "title": "Test all swap type combinations comprehensively",
+            "description": "Create and execute comprehensive tests for all 6+ swap type combinations including standard NFT, compressed NFT, and SOL transfers",
+            "dependencies": [
+              5
+            ],
+            "details": "Test all possible combinations: NFT-NFT, cNFT-cNFT, NFT-cNFT, SOL-NFT, SOL-cNFT, NFT-SOL, cNFT-SOL, and mixed three-way combinations. Verify proper execution, account handling, and error cases.",
+            "status": "done",
+            "testStrategy": "Integration tests covering all swap combinations with both success and failure scenarios"
+          }
+        ]
+      },
+      {
+        "id": 24,
+        "title": "Add Comprehensive Program Tests for cNFT Swaps",
+        "description": "Create comprehensive Rust test suite for compressed NFT swaps covering all swap scenarios, invalid proof handling, and failure cases.",
+        "details": "Create programs/escrow/tests/cnft_swaps.rs with tests for: cNFT for SOL, cNFT for cNFT, cNFT for standard NFT, invalid proof rejection, missing accounts rejection, stale proof handling. Use solana-program-test for integration testing. Mock Merkle tree and cNFT minting. Verify ownership changes on-chain after swaps.",
+        "testStrategy": "",
+        "status": "pending",
+        "dependencies": [
+          23
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Set up test file structure and basic test framework",
+            "description": "Create the cnft_swaps.rs test file with proper imports and test framework setup",
+            "dependencies": [],
+            "details": "Create programs/escrow/tests/cnft_swaps.rs file with necessary imports including solana-program-test, tokio test framework, and escrow program dependencies. Set up basic test module structure and helper functions for test initialization.",
+            "status": "pending",
+            "testStrategy": "Verify file creation and compilation without errors"
+          },
+          {
+            "id": 2,
+            "title": "Implement Merkle tree and cNFT mocking utilities",
+            "description": "Create mock implementations for Merkle tree operations and cNFT minting for testing",
+            "dependencies": [
+              1
+            ],
+            "details": "Implement mock Merkle tree structure with proof generation capabilities. Create helper functions to mint mock cNFTs with proper metadata and ownership tracking. Include utilities for generating valid and invalid Merkle proofs for testing different scenarios.",
+            "status": "pending",
+            "testStrategy": "Unit tests for mock utilities to ensure they generate valid test data"
+          },
+          {
+            "id": 3,
+            "title": "Create tests for cNFT to SOL swap scenarios",
+            "description": "Implement comprehensive tests for compressed NFT to SOL atomic swaps",
+            "dependencies": [
+              2
+            ],
+            "details": "Create test cases covering successful cNFT to SOL swaps with proper proof validation, ownership verification, and SOL transfer confirmation. Include tests for different SOL amounts and fee calculations. Verify on-chain state changes after swap completion.",
+            "status": "pending",
+            "testStrategy": "Integration tests using solana-program-test to verify complete swap flow and state changes"
+          },
+          {
+            "id": 4,
+            "title": "Create tests for cNFT to cNFT swap scenarios",
+            "description": "Implement tests for compressed NFT to compressed NFT atomic swaps",
+            "dependencies": [
+              2
+            ],
+            "details": "Develop test cases for cNFT to cNFT swaps including dual proof validation, ownership transfers for both assets, and proper Merkle tree updates. Test scenarios with different cNFT collections and verify both assets change ownership correctly.",
+            "status": "pending",
+            "testStrategy": "Integration tests verifying dual cNFT ownership changes and Merkle proof validations"
+          },
+          {
+            "id": 5,
+            "title": "Create tests for cNFT to standard NFT swap scenarios",
+            "description": "Implement tests for compressed NFT to standard NFT atomic swaps",
+            "dependencies": [
+              2
+            ],
+            "details": "Build test cases for mixed swaps between cNFTs and standard NFTs, handling different proof requirements and ownership verification methods. Include tests for proper ATA creation for standard NFTs and cNFT proof validation.",
+            "status": "pending",
+            "testStrategy": "Integration tests verifying mixed asset type swaps and proper ownership transfers"
+          },
+          {
+            "id": 6,
+            "title": "Implement failure case and invalid proof handling tests",
+            "description": "Create comprehensive tests for all failure scenarios and invalid proof rejection",
+            "dependencies": [
+              3,
+              4,
+              5
+            ],
+            "details": "Implement test cases for invalid Merkle proof rejection, missing account scenarios, stale proof handling, and other failure conditions. Include tests for malformed proofs, expired proofs, and unauthorized access attempts. Verify proper error handling and transaction rejection.",
+            "status": "pending",
+            "testStrategy": "Negative testing to ensure all failure cases are properly handled and rejected with appropriate error messages"
+          }
+        ]
+      },
+      {
+        "id": 25,
+        "title": "Update Backend Transaction Builder for cNFT Support",
+        "description": "Update TypeScript transaction builder to detect asset types, add correct accounts based on compressed vs standard NFTs, pass Merkle proof data, and derive tree authority PDAs.",
+        "details": "Modify createAtomicSwapInstruction() in transactionBuilder.ts to detect AssetType.CNFT vs AssetType.NFT. For cNFTs: add maker/taker merkle_tree, tree_authority (derived PDA), bubblegum_program, compression_program, log_wrapper accounts. Pass proof data (root, dataHash, creatorHash, nonce, leafIndex) from assetInfo.proofData in instruction data. Create getTreeAuthority() helper for PDA derivation. Maintain backward compatibility with standard NFT swaps.\n<info added on 2025-11-28T00:18:57.417Z>\nAdd new subtask 7: \"Implement Address Lookup Table (ALT) support for cNFT accounts\" with description \"Optimize cNFT swap transactions using Address Lookup Tables to handle the 7+ additional accounts required for compressed NFT operations\". Details: cNFT swaps require 7+ additional accounts (merkle_tree, tree_authority, bubblegum_program, compression_program, log_wrapper, etc.) which can exceed transaction size limits. Implement ALT integration to compress account references: 1. Create or retrieve existing ALT for cNFT accounts 2. Add Bubblegum program accounts to ALT 3. Build v0 transactions using ALT references 4. Reduce transaction size by ~60% for cNFT swaps. This matches Sorare's production implementation (Gz9o1yxV5kVfyC53fFu7StTVeetPZWa2sohzvxJiLxMP) and is critical for complex swaps with multiple assets. Dependencies: subtasks 1-6 (basic cNFT support must work first). Test strategy: Verify ALT creation, account addition, v0 transaction building, and size reduction vs. legacy transactions.\n</info added on 2025-11-28T00:18:57.417Z>",
+        "testStrategy": "",
+        "status": "pending",
+        "dependencies": [
+          23
+        ],
+        "priority": "medium",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create getTreeAuthority helper function for PDA derivation",
+            "description": "Implement a helper function to derive tree authority Program Derived Addresses (PDAs) for compressed NFTs",
+            "dependencies": [],
+            "details": "Create getTreeAuthority() function in transactionBuilder.ts that derives the tree authority PDA using the merkle tree public key and the bubblegum program ID. Use PublicKey.findProgramAddressSync() with appropriate seeds.",
+            "status": "pending",
+            "testStrategy": "Unit test PDA derivation with known merkle tree addresses and verify correct tree authority addresses are generated"
+          },
+          {
+            "id": 2,
+            "title": "Add asset type detection logic to createAtomicSwapInstruction",
+            "description": "Implement logic to detect whether assets are compressed NFTs or standard NFTs in the transaction builder",
+            "dependencies": [
+              1
+            ],
+            "details": "Modify createAtomicSwapInstruction() to check AssetType.CNFT vs AssetType.NFT from the asset information. Add conditional branching logic that will determine which accounts and data to include based on asset type.",
+            "status": "pending",
+            "testStrategy": "Test with both compressed and standard NFT asset data to ensure correct type detection and branching"
+          },
+          {
+            "id": 3,
+            "title": "Add cNFT-specific accounts for compressed NFT swaps",
+            "description": "Add the required accounts for compressed NFT operations including merkle tree, tree authority, and program accounts",
+            "dependencies": [
+              1,
+              2
+            ],
+            "details": "For cNFT swaps, add maker/taker merkle_tree accounts, tree_authority (using getTreeAuthority() helper), bubblegum_program, compression_program, and log_wrapper accounts to the instruction. Ensure accounts are added in the correct order expected by the Rust program.",
+            "status": "pending",
+            "testStrategy": "Verify all required cNFT accounts are present in generated instructions and in correct order"
+          },
+          {
+            "id": 4,
+            "title": "Pass Merkle proof data in instruction data for cNFTs",
+            "description": "Include compressed NFT proof data (root, dataHash, creatorHash, nonce, leafIndex) in the instruction data",
+            "dependencies": [
+              2,
+              3
+            ],
+            "details": "Extract proof data (root, dataHash, creatorHash, nonce, leafIndex) from assetInfo.proofData and serialize it into the instruction data buffer. Ensure the data format matches what the Rust program expects for cNFT verification.",
+            "status": "pending",
+            "testStrategy": "Test instruction data serialization with sample proof data and verify it matches expected format"
+          },
+          {
+            "id": 5,
+            "title": "Maintain backward compatibility with standard NFT swaps",
+            "description": "Ensure existing standard NFT swap functionality continues to work unchanged while adding cNFT support",
+            "dependencies": [
+              2,
+              3,
+              4
+            ],
+            "details": "Add conditional logic to preserve existing behavior for AssetType.NFT swaps. Standard NFT swaps should use the same accounts and instruction data format as before, without any cNFT-specific additions.",
+            "status": "pending",
+            "testStrategy": "Run existing standard NFT swap tests to ensure no regression in functionality"
+          },
+          {
+            "id": 6,
+            "title": "Integration testing for mixed cNFT and standard NFT swaps",
+            "description": "Test all combinations of compressed and standard NFT swaps to ensure proper functionality",
+            "dependencies": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "details": "Test scenarios including: standard NFT to cNFT swaps, cNFT to standard NFT swaps, cNFT to cNFT swaps, and mixed swaps with SOL. Verify correct accounts, instruction data, and proof handling for each combination.",
+            "status": "pending",
+            "testStrategy": "Create comprehensive integration tests covering all swap type combinations and verify successful transaction building"
+          },
+          {
+            "id": 7,
+            "title": "Implement Address Lookup Table (ALT) support for cNFT accounts",
+            "description": "Optimize cNFT swap transactions using Address Lookup Tables to handle the 7+ additional accounts required for compressed NFT operations",
+            "details": "cNFT swaps require 7+ additional accounts (merkle_tree, tree_authority, bubblegum_program, compression_program, log_wrapper, etc.) which can exceed transaction size limits. Implement ALT integration: 1) Create or retrieve existing ALT for cNFT accounts, 2) Add Bubblegum program accounts to ALT, 3) Build v0 transactions using ALT references, 4) Reduce transaction size by ~60% for cNFT swaps. Based on Sorare production implementation (Gz9o1yxV5kVfyC53fFu7StTVeetPZWa2sohzvxJiLxMP).",
+            "status": "pending",
+            "dependencies": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "parentTaskId": 25
+          }
+        ]
+      },
+      {
+        "id": 26,
+        "title": "Add Bubblegum Dependencies and Program Constants to Backend",
+        "description": "Add Bubblegum and compression program dependencies to package.json and create constants file with program IDs for TypeScript backend.",
+        "details": "Install @metaplex-foundation/mpl-bubblegum@^0.7.0 and @solana/spl-account-compression@^0.2.0. Create src/constants/programs.ts exporting BUBBLEGUM_PROGRAM_ID, SPL_ACCOUNT_COMPRESSION_PROGRAM_ID, and SPL_NOOP_PROGRAM_ID as PublicKey constants. Verify TypeScript compiles successfully.",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [
+          7
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 27,
+        "title": "Update TypeScript Types for cNFT Proof Structures",
+        "description": "Update TypeScript type definitions to include cNFT proof data structures matching Rust program structs.",
+        "details": "Create src/types/cnft.ts with CnftProof interface containing: root(string hex), dataHash(string hex), creatorHash(string hex), nonce(number), leafIndex(number), tree(string). Verify AssetInfo interface in assetValidator.ts already has proofData?: CnftProof field (it should). Ensure all TypeScript compiles without errors.",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [
+          26
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 28,
+        "title": "Create E2E Tests for cNFT Swaps on Staging",
+        "description": "Create comprehensive end-to-end TypeScript tests for cNFT swaps on devnet staging environment covering all swap type combinations.",
+        "details": "Create tests/staging/e2e/05-atomic-cnft-swaps.test.ts with tests for: cNFT for SOL, SOL for cNFT, cNFT for cNFT, cNFT for standard NFT, standard NFT for cNFT. Validate maker owns cNFT with DAS API. Build transaction with proof data. Sign and send transaction. Verify ownership changed on-chain. Use real devnet cNFTs. Test both success and failure scenarios.",
+        "testStrategy": "",
+        "status": "pending",
+        "dependencies": [
+          25,
+          26,
+          27
+        ],
+        "priority": "medium",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Set up E2E test file structure and basic configuration",
+            "description": "Create the test file structure and configure the testing environment for cNFT swap E2E tests on devnet staging",
+            "dependencies": [],
+            "details": "Create tests/staging/e2e/05-atomic-cnft-swaps.test.ts file with proper imports, test configuration for devnet environment, connection setup, and test wallet initialization. Configure Jest/Mocha test runner with appropriate timeouts for blockchain operations.",
+            "status": "pending",
+            "testStrategy": "Verify test file structure is created correctly and basic configuration loads without errors"
+          },
+          {
+            "id": 2,
+            "title": "Implement cNFT for SOL swap test scenarios",
+            "description": "Create comprehensive test cases for swapping compressed NFTs for SOL tokens including success and failure scenarios",
+            "dependencies": [
+              1
+            ],
+            "details": "Implement test cases that validate maker owns cNFT using DAS API, build transaction with Merkle proof data, sign and send transaction, and verify SOL transfer and cNFT ownership change on-chain. Include failure scenarios like invalid proofs, insufficient SOL balance, and unauthorized attempts.",
+            "status": "pending",
+            "testStrategy": "Test both successful swaps and edge cases like invalid proofs, network failures, and insufficient balances"
+          },
+          {
+            "id": 3,
+            "title": "Implement SOL for cNFT swap test scenarios",
+            "description": "Create comprehensive test cases for swapping SOL tokens for compressed NFTs including success and failure scenarios",
+            "dependencies": [
+              1
+            ],
+            "details": "Implement test cases that validate taker has sufficient SOL balance, maker owns target cNFT with DAS API validation, build transaction with proof data, execute swap, and verify SOL deduction and cNFT ownership transfer. Include failure scenarios for insufficient SOL, invalid cNFT proofs, and network issues.",
+            "status": "pending",
+            "testStrategy": "Verify SOL balance checks, cNFT proof validation, and successful ownership transfers with comprehensive error handling"
+          },
+          {
+            "id": 4,
+            "title": "Implement cNFT for cNFT swap test scenarios",
+            "description": "Create comprehensive test cases for swapping compressed NFTs for other compressed NFTs including bidirectional validation",
+            "dependencies": [
+              1
+            ],
+            "details": "Implement test cases that validate both maker and taker own their respective cNFTs using DAS API, build transaction with dual Merkle proof data, execute atomic swap, and verify both cNFT ownership changes on-chain. Include failure scenarios for invalid proofs on either side, mismatched assets, and transaction failures.",
+            "status": "pending",
+            "testStrategy": "Test dual cNFT ownership validation, atomic swap execution, and comprehensive failure scenarios with invalid proofs"
+          },
+          {
+            "id": 5,
+            "title": "Implement cross-format NFT swap test scenarios and validation",
+            "description": "Create test cases for swapping between compressed NFTs and standard NFTs in both directions with comprehensive validation",
+            "dependencies": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "details": "Implement test cases for cNFT-to-standard-NFT and standard-NFT-to-cNFT swaps. Validate cNFT ownership with DAS API and standard NFT ownership with token account queries. Build transactions with appropriate proof data for cNFTs and token account validation for standard NFTs. Verify ownership changes and test failure scenarios including mixed asset type validation errors.",
+            "status": "pending",
+            "testStrategy": "Test cross-format asset validation, mixed transaction building, and comprehensive error handling for different NFT types"
+          },
+          {
+            "id": 6,
+            "title": "Test stale proof retry mechanism for cNFT swaps",
+            "description": "Test automatic retry mechanism when initial cNFT swap fails due to stale Merkle proof, verifying fresh proof fetching and successful swap completion",
+            "details": "Test the critical edge case where a Merkle proof becomes stale between proof generation and transaction submission. Steps: 1) Fetch initial cNFT proof from DAS API, 2) Trigger Merkle tree change by minting another cNFT to same tree, 3) Attempt swap with stale proof, 4) Verify backend detects StaleProof error, 5) Confirm automatic retry with fresh proof, 6) Verify swap completes successfully. This validates proof freshness retry logic matching Sorare's production patterns (program Gz9o1yxV5kVfyC53fFu7StTVeetPZWa2sohzvxJiLxMP).",
+            "status": "pending",
+            "dependencies": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "parentTaskId": 28
+          }
+        ]
+      },
+      {
+        "id": 29,
+        "title": "Update Documentation for cNFT Support",
+        "description": "Update all documentation to reflect compressed NFT support including API docs, OpenAPI spec, README, architecture docs, and test page instructions.",
+        "details": "Update docs/api/openapi.yaml with cNFT examples showing isCompressed:true. Update README.md to mention cNFT support. Update docs/ARCHITECTURE.md to explain cNFT flow. Mark docs/tasks/CNFT_SWAP_SUPPORT.md as complete. Update src/public/test.html instructions for cNFT testing.",
+        "testStrategy": "",
+        "status": "pending",
+        "dependencies": [
+          28
+        ],
+        "priority": "low",
+        "subtasks": []
+      },
+      {
+        "id": 30,
+        "title": "Deploy cNFT-Enabled Program to Devnet and Verify",
+        "description": "Deploy updated program with cNFT support to devnet, upload IDL, update backend IDL files, and verify cNFT swaps work end-to-end on staging.",
+        "details": "Build program with cargo build-sbf from programs/escrow/. Generate IDL with anchor idl build. Deploy to devnet with anchor upgrade using staging-deployer.json. Upload IDL with anchor idl upgrade. Copy IDL to src/generated/anchor/escrow-idl-staging.json. Commit and push IDL update. Test manually on /test page with real cNFT. Verify on Solscan. Run E2E test suite. Document any issues encountered.",
+        "testStrategy": "",
+        "status": "pending",
+        "dependencies": [
+          24,
+          28
+        ],
+        "priority": "high",
+        "subtasks": []
       }
     ],
     "metadata": {
       "created": "2025-11-17T05:45:23.312Z",
-      "updated": "2025-11-17T10:56:37.399Z",
+      "updated": "2025-11-28T00:40:04.072Z",
       "description": "Complete architectural pivot from escrow agreements to atomic NFT/cNFT swaps with durable nonces"
     }
   }

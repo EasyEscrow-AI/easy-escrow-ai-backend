@@ -1,0 +1,47 @@
+# Solana Program Build Dockerfile
+# Purpose: Build Solana programs on Windows using Docker (avoids mpl-bubblegum build script issues)
+# Based on: https://www.kquirapas.com/using-docker-for-verifiable-solana-builds/
+
+# ============================================================================
+# Stage 1: Builder Image
+# ============================================================================
+ARG RUST_VERSION=1.79
+FROM --platform=linux/amd64 rust:${RUST_VERSION} as builder
+
+ARG SOLANA_CLI=v1.18.26
+ARG ANCHOR_VERSION=0.29.0
+
+# Install Solana CLI (using Anza release URL with retries)
+RUN curl --retry 5 --retry-delay 3 --max-time 300 \
+    -sSfL "https://release.anza.xyz/${SOLANA_CLI}/install" | sh || \
+    curl --retry 5 --retry-delay 3 --max-time 300 \
+    -sSfL "https://release.solana.com/${SOLANA_CLI}/install" | sh || \
+    (echo "ERROR: Failed to download Solana installer from both URLs" && exit 1)
+
+# Add Solana to PATH
+ENV PATH="/root/.local/share/solana/install/active_release/bin:${PATH}"
+
+# Verify installations
+RUN echo "Verifying installations..." && \
+    cargo --version && \
+    rustc --version && \
+    solana --version || (echo "Solana installation failed" && exit 1)
+
+# ============================================================================
+# Stage 2: Build Image
+# ============================================================================
+FROM --platform=linux/amd64 builder
+
+WORKDIR /workspace
+
+# Set HOME for build tools (required by cargo build-sbf)
+ENV HOME=/root
+
+# Copy only necessary files for build
+COPY programs/escrow programs/escrow
+COPY Cargo.toml .
+COPY Cargo.lock .
+
+# Default command: build the program
+CMD ["sh", "-c", "cd programs/escrow && cargo build-sbf"]
+
