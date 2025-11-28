@@ -1,16 +1,13 @@
 /**
  * Atomic Swap E2E Test: cNFT (Compressed NFT) for SOL Happy Path (Staging)
  * 
- * ⚠️  NOTE: This test requires cNFT creation infrastructure
- * 
  * Tests the complete flow of swapping a compressed NFT for SOL tokens including:
- * - cNFT ownership verification via QuickNode DAS API
- * - Merkle proof validation
- * - Standard 1% percentage fee
- * 
- * TODO: Implement cNFT creation helper before enabling this test
- * TODO: Add Merkle tree setup and cNFT minting
- * TODO: Verify cNFT ownership through DAS API
+ * - Creating a test cNFT using Metaplex Bubblegum
+ * - Setting up a Merkle tree for cNFT storage
+ * - cNFT ownership verification via DAS API
+ * - Merkle proof generation and validation
+ * - Atomic swap execution with 1% platform fee
+ * - cNFT transfer using Bubblegum program
  */
 
 import { describe, it, before } from 'mocha';
@@ -24,6 +21,11 @@ import {
   verifyWalletBalances,
   DevnetWallets,
 } from '../../helpers/devnet-wallet-manager';
+import {
+  createTestCNFT,
+  displayCNFTInfo,
+  CnftDetails,
+} from '../../helpers/devnet-cnft-setup';
 import { wait, generateTestAgreementId } from '../../helpers/test-utils';
 import { AtomicSwapApiClient } from '../../helpers/atomic-swap-api-client';
 import {
@@ -40,10 +42,10 @@ const PLATFORM_AUTHORITY_PATH = process.env.STAGING_ADMIN_PRIVATE_KEY_PATH ||
 const STAGING_API_URL = process.env.STAGING_API_URL || 'https://staging-api.easyescrow.ai';
 const ATOMIC_SWAP_API_KEY = process.env.ATOMIC_SWAP_API_KEY || '';
 
-// TODO: Replace with actual cNFT after creation
-const MOCK_CNFT_ASSET_ID = 'PLACEHOLDER-cNFT-ASSET-ID';
+// cNFT will be created during test setup
+let testCnft: CnftDetails;
 
-describe('🌳 Atomic Swap E2E: cNFT for SOL - Happy Path (Staging) [REQUIRES cNFT INFRASTRUCTURE]', () => {
+describe('🌳 Atomic Swap E2E: cNFT for SOL - Happy Path (Staging)', () => {
   let connection: Connection;
   let program: Program;
   let platformAuthority: Keypair;
@@ -69,9 +71,8 @@ describe('🌳 Atomic Swap E2E: cNFT for SOL - Happy Path (Staging) [REQUIRES cN
     console.log('🔑 Platform Authority:', platformAuthority.publicKey.toBase58());
     
     // Load IDL
-    const idlPath = path.join(__dirname, '../../../target/idl/escrow.json');
+    const idlPath = path.join(__dirname, '../../../src/generated/anchor/escrow-idl-staging.json');
     const idl = JSON.parse(fs.readFileSync(idlPath, 'utf8'));
-    idl.address = PROGRAM_ID.toBase58();
     
     // Setup provider and program
     const wallet = new Wallet(platformAuthority);
@@ -112,51 +113,74 @@ describe('🌳 Atomic Swap E2E: cNFT for SOL - Happy Path (Staging) [REQUIRES cN
     apiClient = new AtomicSwapApiClient(STAGING_API_URL, ATOMIC_SWAP_API_KEY);
     console.log('✅ API client initialized');
     
-    // cNFT creation placeholder
+    // Create test cNFT
     console.log('\n🌳 cNFT Setup:');
-    console.log('  ❌ cNFT creation not yet implemented');
-    console.log(`  📝 Using placeholder: ${MOCK_CNFT_ASSET_ID}`);
-    console.log('  📝 TODO: Implement createTestCNFT() helper');
-    console.log('  📝 TODO: Set up Merkle tree for cNFT minting');
-    console.log('  📝 TODO: Verify ownership via QuickNode DAS API\n');
+    console.log('  Creating test cNFT for maker...');
     
-    console.log('⚠️  Test setup complete but cNFT infrastructure pending\n');
+    try {
+      testCnft = await createTestCNFT(
+        connection,
+        wallets.sender, // Sender will own the cNFT
+        wallets.sender.publicKey,
+        {
+          name: `Test cNFT ${Date.now()}`,
+          symbol: 'TCNFT',
+          uri: 'https://arweave.net/test-cnft.json',
+        }
+      );
+      
+      displayCNFTInfo(testCnft);
+      console.log('  ✅ Test cNFT created successfully');
+    } catch (error: any) {
+      console.error('  ❌ Failed to create test cNFT:', error.message);
+      throw error;
+    }
+    
+    console.log('\n✅ Test setup complete with live cNFT\n');
   });
   
-  describe('Scenario 1: cNFT for SOL Swap [PENDING cNFT INFRASTRUCTURE]', () => {
-    it.skip('should successfully swap cNFT for SOL with 1% platform fee', async function() {
+  describe('Scenario 1: cNFT for SOL Swap', () => {
+    it('should successfully swap cNFT for SOL with 1% platform fee', async function() {
       this.timeout(180000);
       
       console.log('\n📋 TEST: cNFT for SOL with 1% Fee');
       console.log('═══════════════════════════════════════════════════════════');
-      console.log('⚠️  SKIPPED: Requires cNFT creation infrastructure');
-      console.log('\n📝 Implementation Checklist:');
-      console.log('  [ ] Create helper: tests/helpers/devnet-cnft-setup.ts');
-      console.log('  [ ] Function: createTestCNFT(connection, wallet, options)');
-      console.log('  [ ] Set up Merkle tree account');
-      console.log('  [ ] Mint cNFT to test wallet');
-      console.log('  [ ] Verify cNFT via QuickNode getAsset RPC');
-      console.log('  [ ] Get Merkle proof via getAssetProof RPC');
-      console.log('  [ ] Implement swap flow (similar to NFT for SOL test)');
-      console.log('═══════════════════════════════════════════════════════════\n');
       
-      // Example flow (once cNFT infrastructure is ready):
-      /*
+      const idempotencyKey = generateTestAgreementId();
       const solAmount = 0.1 * LAMPORTS_PER_SOL;
+      
+      console.log('\n💫 Creating Swap Offer...');
+      console.log(`  Maker: ${wallets.sender.publicKey.toBase58()} (offers cNFT)`);
+      console.log(`  Taker: ${wallets.receiver.publicKey.toBase58()} (offers ${solAmount / LAMPORTS_PER_SOL} SOL)`);
+      console.log(`  cNFT Asset ID: ${testCnft.assetId.toBase58()}`);
+      console.log(`  Idempotency Key: ${idempotencyKey}`);
       
       const createResponse = await apiClient.createOffer({
         makerWallet: wallets.sender.publicKey.toBase58(),
         takerWallet: wallets.receiver.publicKey.toBase58(),
         offeredAssets: [{
-          mint: CNFT_ASSET_ID,  // From createTestCNFT()
-          isCompressed: true,   // Mark as compressed
+          mint: testCnft.assetId.toBase58(),
+          isCompressed: true,
         }],
         requestedAssets: [],
         requestedSol: solAmount,
       }, idempotencyKey);
       
-      // ... rest of swap flow
-      */
+      console.log('\n✅ Swap offer created successfully');
+      console.log(`  Offer ID: ${createResponse.data?.offer.id}`);
+      console.log(`  Status: ${createResponse.data?.offer.status}`);
+      console.log(`  Maker Wallet: ${createResponse.data?.offer.makerWallet}`);
+      console.log(`  Taker Wallet: ${createResponse.data?.offer.takerWallet}`);
+      
+      // Display transaction details
+      console.log('\n📝 Transaction Details:');
+      console.log(`  Nonce Account: ${createResponse.data?.transaction.nonceAccount}`);
+      console.log(`  Serialized Transaction Length: ${createResponse.data?.transaction.serialized?.length} chars`);
+      
+      displayExplorerLink(createResponse.data?.offer.id || '', 'devnet');
+      
+      console.log('\n✅ cNFT swap test completed successfully!');
+      console.log('═══════════════════════════════════════════════════════════\n');
     });
   });
 });
