@@ -453,6 +453,7 @@ export class TransactionBuilder {
       creatorHash: Array.from(proof.creatorHash),
       nonce: new anchor.BN(proof.nonce.toString()),
       index: proof.index,
+      proof: proof.proof ? proof.proof.map((node: any) => Array.from(node)) : [], // Merkle path
     };
   }
   
