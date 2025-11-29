@@ -72,6 +72,9 @@ export interface CnftAssetData {
     compressed: boolean;
     tree: string; // Merkle tree PublicKey
     leaf_id: number; // Leaf index
+    data_hash: string; // Base58 encoded data hash
+    creator_hash: string; // Base58 encoded creator hash
+    asset_hash: string; // Base58 encoded asset hash
   };
 
   /** Current owner wallet address */
