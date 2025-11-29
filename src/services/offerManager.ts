@@ -103,7 +103,26 @@ export class OfferManager {
       // 1. Ensure user exists
       await this.ensureUserExists(input.makerWallet);
       
-      // 2. Validate maker's asset ownership
+      // 2. Validate multi-asset restriction (on-chain program limitation)
+      // Current program only supports 1 NFT per side (or NFT ↔ SOL)
+      // Multi-asset support requires program upgrade (see transactionBuilder.ts:338-343)
+      if (input.offeredAssets.length > 1) {
+        throw new Error(
+          'Multi-asset swaps are not yet supported on-chain. ' +
+          'Currently only 1 NFT per side is allowed. ' +
+          'You can offer: 1 NFT, 1 NFT + SOL, or just SOL.'
+        );
+      }
+      
+      if (input.requestedAssets.length > 1) {
+        throw new Error(
+          'Multi-asset swaps are not yet supported on-chain. ' +
+          'Currently only 1 NFT per side is allowed. ' +
+          'You can request: 1 NFT, 1 NFT + SOL, or just SOL.'
+        );
+      }
+      
+      // 3. Validate maker's asset ownership
       const offeredAssetsValidation = await this.assetValidator.validateAssets(
         input.makerWallet,
         input.offeredAssets
@@ -116,10 +135,10 @@ export class OfferManager {
         );
       }
       
-      // 3. Assign or get nonce account for maker
+      // 4. Assign or get nonce account for maker
       const nonceAccount = await this.noncePoolManager.assignNonceToUser(input.makerWallet);
       
-      // 4. Calculate platform fee
+      // 5. Calculate platform fee
       const offeredSol = input.offeredSol || BigInt(0);
       const requestedSol = input.requestedSol || BigInt(0);
       const feeBreakdown = this.feeCalculator.calculateFee(offeredSol, requestedSol);
@@ -130,16 +149,16 @@ export class OfferManager {
         throw new Error('Invalid custom fee');
       }
       
-      // 5. Calculate expiration time
+      // 6. Calculate expiration time
       const expiresAt = new Date(Date.now() + (input.expirationMs || 7 * 24 * 60 * 60 * 1000)); // 7 days default
       
-      // 6. Get current nonce value (transaction will be built when offer is accepted)
+      // 7. Get current nonce value (transaction will be built when offer is accepted)
       // NOTE: We don't build the transaction at create time because it needs BOTH
       // maker and taker signatures. The transaction is built when the offer is accepted.
       const currentNonceValue = await this.noncePoolManager.getCurrentNonce(nonceAccount);
       const serializedTransaction: string | undefined = undefined;
       
-      // 7. Create offer in database
+      // 8. Create offer in database
       const offer = await this.prisma.swapOffer.create({
         data: {
           makerWallet: input.makerWallet,
