@@ -613,9 +613,12 @@ function showConfirmationModal() {
     }
     
     // Calculate network fees (realistic estimate)
-    // Atomic swaps involve multiple instructions and signatures
-    const baseFee = 0.005; // Base transaction + compute (SOL)
-    const perNFTFee = 0.002; // Per NFT transfer (includes potential ATA creation)
+    // Atomic swaps: 3 signatures + compute + potential ATA creation
+    // Base: ~15,000 lamports (3 sigs @ 5000 each) + ~1000 compute = 0.000016 SOL
+    // Per NFT: Small buffer for potential ATA creation (~0.002 SOL if needed)
+    // Most cases ATAs exist, so we show conservative typical estimate
+    const baseFee = 0.0001; // Base transaction signatures + compute + buffer (SOL)
+    const perNFTFee = 0.0002; // Small buffer per NFT for potential extra accounts (SOL)
     const networkFee = baseFee + (totalNFTs * perNFTFee);
     
     // Calculate platform fee (matches backend FeeCalculator logic)
