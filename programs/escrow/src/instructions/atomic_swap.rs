@@ -432,10 +432,12 @@ fn transfer_cnft<'info>(
     msg!("  Proof Root: {:?}", &proof.root[..8]);  // First 8 bytes for brevity
     
     // Build Bubblegum transfer CPI (v1.4.0 API)
+    // CRITICAL: In atomic swaps, both maker and taker ARE signers
+    // Must mark leaf_owner and leaf_delegate as signers (true)
     mpl_bubblegum::instructions::TransferCpiBuilder::new(bubblegum_program)
         .tree_config(tree_authority)
-        .leaf_owner(from, false)  // (account, is_signer)
-        .leaf_delegate(from, false)
+        .leaf_owner(from, true)  // Mark as signer (maker/taker both sign in atomic swaps)
+        .leaf_delegate(from, true)  // Mark as signer
         .new_leaf_owner(to)
         .merkle_tree(merkle_tree)
         .log_wrapper(log_wrapper)
