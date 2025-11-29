@@ -158,6 +158,57 @@
             "System program for SOL transfers"
           ],
           "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "maker_merkle_tree",
+          "docs": [
+            "Maker's Merkle tree (for cNFT transfers)"
+          ],
+          "writable": true,
+          "optional": true
+        },
+        {
+          "name": "maker_tree_authority",
+          "docs": [
+            "Maker's tree authority PDA"
+          ],
+          "optional": true
+        },
+        {
+          "name": "taker_merkle_tree",
+          "docs": [
+            "Taker's Merkle tree (for cNFT transfers)"
+          ],
+          "writable": true,
+          "optional": true
+        },
+        {
+          "name": "taker_tree_authority",
+          "docs": [
+            "Taker's tree authority PDA"
+          ],
+          "optional": true
+        },
+        {
+          "name": "bubblegum_program",
+          "docs": [
+            "Bubblegum program for cNFT transfers"
+          ],
+          "optional": true
+        },
+        {
+          "name": "compression_program",
+          "docs": [
+            "SPL Account Compression program"
+          ],
+          "optional": true
+        },
+        {
+          "name": "log_wrapper",
+          "docs": [
+            "SPL Noop program (for logging)"
+          ],
+          "optional": true
         }
       ],
       "args": [
@@ -721,6 +772,67 @@
   ],
   "types": [
     {
+      "name": "CnftProof",
+      "docs": [
+        "cNFT Merkle proof for ownership verification"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "root",
+            "docs": [
+              "Merkle tree root hash"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "data_hash",
+            "docs": [
+              "Asset data hash"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "creator_hash",
+            "docs": [
+              "Creator hash"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "nonce",
+            "docs": [
+              "Leaf nonce (for uniqueness)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "index",
+            "docs": [
+              "Leaf index in the tree"
+            ],
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
       "name": "SwapParams",
       "type": {
         "kind": "struct",
@@ -728,14 +840,28 @@
           {
             "name": "maker_sends_nft",
             "docs": [
-              "Whether maker is sending an NFT"
+              "Whether maker is sending a standard NFT"
             ],
             "type": "bool"
           },
           {
             "name": "taker_sends_nft",
             "docs": [
-              "Whether taker is sending an NFT"
+              "Whether taker is sending a standard NFT"
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "maker_sends_cnft",
+            "docs": [
+              "Whether maker is sending a compressed NFT"
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "taker_sends_cnft",
+            "docs": [
+              "Whether taker is sending a compressed NFT"
             ],
             "type": "bool"
           },
@@ -766,6 +892,32 @@
               "Unique swap identifier for backend tracking (max 64 chars)"
             ],
             "type": "string"
+          },
+          {
+            "name": "maker_cnft_proof",
+            "docs": [
+              "Maker's cNFT proof (if sending compressed NFT)"
+            ],
+            "type": {
+              "option": {
+                "defined": {
+                  "name": "CnftProof"
+                }
+              }
+            }
+          },
+          {
+            "name": "taker_cnft_proof",
+            "docs": [
+              "Taker's cNFT proof (if sending compressed NFT)"
+            ],
+            "type": {
+              "option": {
+                "defined": {
+                  "name": "CnftProof"
+                }
+              }
+            }
           }
         ]
       }
