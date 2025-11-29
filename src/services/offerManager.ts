@@ -366,7 +366,7 @@ export class OfferManager {
       platformFeeLamports: params.platformFee,
       nonceAccountPubkey: new PublicKey(params.nonceAccount),
       nonceAuthorityPubkey: this.platformAuthority.publicKey,
-      swapId: params.offerId.toString(), // Use offer ID as swap ID (saves transaction space)
+      swapId: "", // Empty string saves 2 bytes (program only uses for logging, we track via offer ID)
       treasuryPDA: this.treasuryPDA,
       programId: this.programId,
     };
