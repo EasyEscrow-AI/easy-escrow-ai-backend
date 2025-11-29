@@ -328,7 +328,7 @@ export async function createTestCNFT(
     {
       name: options?.name || `Test cNFT ${Date.now()}`,
       symbol: options?.symbol || 'TCNFT',
-      uri: options?.uri || 'https://arweave.net/test-cnft-metadata.json',
+      uri: options?.uri || 'https://shdw-drive.genesysgo.net/7nPP797RprCMJaSXsyoTiFvMZVQ6y1dUgobvczdWGd35/test-cnft.json',
     },
     0 // First NFT in tree
   );
