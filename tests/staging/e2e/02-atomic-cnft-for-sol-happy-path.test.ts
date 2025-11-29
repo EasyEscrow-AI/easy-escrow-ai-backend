@@ -125,7 +125,7 @@ describe('🌳 Atomic Swap E2E: cNFT for SOL - Happy Path (Staging)', () => {
         {
           name: `Test cNFT ${Date.now()}`,
           symbol: 'TCNFT',
-          uri: 'https://arweave.net/test-cnft.json',
+          uri: 'https://shdw-drive.genesysgo.net/7nPP797RprCMJaSXsyoTiFvMZVQ6y1dUgobvczdWGd35/test-cnft.json',
         }
       );
       
