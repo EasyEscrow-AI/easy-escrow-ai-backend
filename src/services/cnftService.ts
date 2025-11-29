@@ -194,7 +194,20 @@ export class CnftService {
   ): CnftProof {
     // Decode base58 strings to byte arrays
     const root = Array.from(bs58.decode(dasProof.root));
-    const proof = dasProof.proof.map(node => Array.from(bs58.decode(node)));
+    
+    // CRITICAL: Trim proof based on canopy depth
+    // Our merkle trees have canopy depth 11, so we only need the last (maxDepth - canopyDepth) proof nodes
+    // The first 11 levels are stored on-chain in the canopy
+    // Standard Metaplex tree: maxDepth=14, canopyDepth=11 → need last 3 nodes
+    //
+    // IMPORTANT: Use slice(CANOPY_DEPTH) not slice(-Math.max(...))
+    // slice(-0) equals slice(0) and returns full array (JavaScript quirk)
+    // slice(CANOPY_DEPTH) correctly returns empty array when proof.length <= CANOPY_DEPTH
+    const CANOPY_DEPTH = 11;
+    const proofNodesToSend = dasProof.proof.slice(CANOPY_DEPTH);
+    const proof = proofNodesToSend.map(node => Array.from(bs58.decode(node)));
+    
+    console.log(`[CnftService] Proof trimmed from ${dasProof.proof.length} to ${proof.length} nodes (canopy: ${CANOPY_DEPTH})`);
     
     // CRITICAL: Use actual hashes from DAS API compression field
     // These are required for proper merkle verification by Bubblegum
