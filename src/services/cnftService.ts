@@ -194,15 +194,12 @@ export class CnftService {
   ): CnftProof {
     // Decode base58 strings to byte arrays
     const root = Array.from(bs58.decode(dasProof.root));
-    const leaf = Array.from(bs58.decode(dasProof.leaf));
     const proof = dasProof.proof.map(node => Array.from(bs58.decode(node)));
     
-    // For data_hash and creator_hash:
-    // - data_hash: The DAS proof 'leaf' field IS the data hash
-    // - creator_hash: Not provided by DAS API, must be computed from creators array
-    // For now, use zeros for creator_hash (Bubblegum will compute if needed)
-    const dataHash = leaf; // Leaf hash from DAS proof is the data hash
-    const creatorHash = new Array(32).fill(0); // Placeholder - computed on-chain if needed
+    // CRITICAL: Use actual hashes from DAS API compression field
+    // These are required for proper merkle verification by Bubblegum
+    const dataHash = Array.from(bs58.decode(assetData.compression.data_hash));
+    const creatorHash = Array.from(bs58.decode(assetData.compression.creator_hash));
     
     return {
       root,
