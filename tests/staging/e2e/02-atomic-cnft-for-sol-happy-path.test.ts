@@ -155,6 +155,7 @@ describe('🌳 Atomic Swap E2E: cNFT for SOL - Happy Path (Staging)', () => {
       console.log(`  cNFT Asset ID: ${testCnft.assetId.toBase58()}`);
       console.log(`  Idempotency Key: ${idempotencyKey}`);
       
+      // Step 1: Create offer via API
       const createResponse = await apiClient.createOffer({
         makerWallet: wallets.sender.publicKey.toBase58(),
         takerWallet: wallets.receiver.publicKey.toBase58(),
@@ -172,14 +173,76 @@ describe('🌳 Atomic Swap E2E: cNFT for SOL - Happy Path (Staging)', () => {
       console.log(`  Maker Wallet: ${createResponse.data?.offer.makerWallet}`);
       console.log(`  Taker Wallet: ${createResponse.data?.offer.takerWallet}`);
       
-      // Display transaction details
-      console.log('\n📝 Transaction Details:');
-      console.log(`  Nonce Account: ${createResponse.data?.transaction.nonceAccount}`);
-      console.log(`  Serialized Transaction Length: ${createResponse.data?.transaction.serialized?.length} chars`);
+      // Step 2: Accept offer via API (this builds the transaction)
+      console.log('\n🤝 Step 2: Accepting offer via API...');
+      const acceptIdempotencyKey = AtomicSwapApiClient.generateIdempotencyKey('test-cnft-sol-accept');
+      const acceptResponse = await apiClient.acceptOffer(
+        createResponse.data.offer.id,
+        wallets.receiver.publicKey.toBase58(),
+        acceptIdempotencyKey
+      );
       
-      displayExplorerLink(createResponse.data?.offer.id || '', 'devnet');
+      if (!acceptResponse.success || !acceptResponse.data) {
+        throw new Error(`Failed to accept offer: ${acceptResponse.message || 'Unknown error'}`);
+      }
       
-      console.log('\n✅ cNFT swap test completed successfully!');
+      console.log(`✅ Offer accepted, transaction ready for signing`);
+      
+      // Step 3: Both parties sign and send transaction
+      console.log('\n🔏 Step 3: Signing and sending transaction (both parties)...');
+      console.log('  ⚠️  CRITICAL TEST: This will verify:');
+      console.log('    - cNFT leaf owner is marked as signer');
+      console.log('    - Correct leaf_id is used (not node_index)');
+      console.log('    - Bubblegum transfer succeeds on-chain');
+      
+      const swapSignature = await AtomicSwapApiClient.signAndSendTransaction(
+        acceptResponse.data.transaction.serialized,
+        [wallets.sender, wallets.receiver], // BOTH maker and taker sign
+        connection
+      );
+      
+      console.log(`✅ Swap transaction sent: ${swapSignature}`);
+      displayExplorerLink(swapSignature, 'devnet');
+      
+      // Wait for confirmation
+      await waitForConfirmation(connection, swapSignature, 'confirmed');
+      
+      console.log('✅ Transaction confirmed on-chain');
+      
+      // Step 4: Confirm execution via API
+      console.log('\n✅ Step 4: Confirming on-chain execution...');
+      const confirmResponse = await apiClient.confirmOffer(
+        createResponse.data.offer.id,
+        swapSignature
+      );
+      
+      if (!confirmResponse.success) {
+        throw new Error(`Failed to confirm offer: ${confirmResponse.message || 'Unknown error'}`);
+      }
+      
+      console.log('✅ Swap execution confirmed');
+      
+      // Step 5: Verify cNFT ownership transferred via DAS API
+      console.log('\n📊 Step 5: Verifying cNFT ownership transfer...');
+      
+      // Fetch updated cNFT data
+      const dasResponse = await (connection as any)._rpcRequest('getAsset', {
+        id: testCnft.assetId.toBase58(),
+      });
+      
+      const updatedAsset = dasResponse.result || dasResponse;
+      const newOwner = updatedAsset.ownership.owner;
+      
+      console.log(`  Previous Owner (Maker): ${wallets.sender.publicKey.toBase58()}`);
+      console.log(`  New Owner (Taker):      ${newOwner}`);
+      
+      expect(newOwner).to.equal(
+        wallets.receiver.publicKey.toBase58(),
+        'cNFT should now be owned by taker'
+      );
+      
+      console.log('\n✅ cNFT ownership verified via DAS API!');
+      console.log('✅ Full cNFT swap test completed successfully!');
       console.log('═══════════════════════════════════════════════════════════\n');
     });
   });
