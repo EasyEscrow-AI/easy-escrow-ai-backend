@@ -381,6 +381,8 @@ export class TransactionBuilder {
     }
     
     // Build swap parameters (including cNFT proof data)
+    // NOTE: CRITICAL - makerCnftProof and takerCnftProof MUST always be present
+    // They are Option<CnftProof> in the program, so we send null when not needed
     const swapParams: any = {
       makerSendsNft,
       takerSendsNft,
@@ -390,14 +392,9 @@ export class TransactionBuilder {
       takerSolAmount: new anchor.BN(inputs.takerSolLamports.toString()),
       platformFee: new anchor.BN(inputs.platformFeeLamports.toString()),
       swapId: inputs.swapId,
-    };
-    
-    // Add cNFT proof data if applicable
-    if (makerCnftParams) {
-      swapParams.makerCnftProof = this.serializeCnftProof(makerCnftParams.proof);
-    }
-    if (takerCnftParams) {
-      swapParams.takerCnftProof = this.serializeCnftProof(takerCnftParams.proof);
+      // ALWAYS include proof fields (as null if not applicable)
+      makerCnftProof: makerCnftParams ? this.serializeCnftProof(makerCnftParams.proof) : null,
+      takerCnftProof: takerCnftParams ? this.serializeCnftProof(takerCnftParams.proof) : null,
     }
     
     // Build accounts object
