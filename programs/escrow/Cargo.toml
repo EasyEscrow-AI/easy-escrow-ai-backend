@@ -28,3 +28,14 @@ anchor-spl = { workspace = true }
 solana-security-txt = "1.1.1"
 mpl-bubblegum = { workspace = true }
 
+[profile.release]
+# Increase heap size for cNFT operations (dual cNFT swaps)
+# Default is 32KB, we need more for deserializing both maker and taker cNFT proofs
+# This prevents "memory allocation failed" errors
+overflow-checks = true
+lto = "fat"
+codegen-units = 1
+
+[profile.release.package.easyescrow]
+opt-level = 3
+
