@@ -411,10 +411,10 @@ function resetWallet(wallet) {
         }
     });
     
-    // Re-render NFTs with reset state
-    const nfts = wallet === 'maker' ? makerData.nfts : takerData.nfts;
-    if (nfts) {
-        renderNFTs(wallet, nfts);
+    // Re-render NFTs with reset state (only if wallet data is loaded)
+    const walletData = wallet === 'maker' ? makerData : takerData;
+    if (walletData && walletData.nfts) {
+        renderNFTs(wallet, walletData.nfts);
         updateNFTSelection(wallet);
     }
     
