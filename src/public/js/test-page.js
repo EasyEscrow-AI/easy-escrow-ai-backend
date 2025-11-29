@@ -415,7 +415,7 @@ function resetWallet(wallet) {
     const walletData = wallet === 'maker' ? makerData : takerData;
     if (walletData && walletData.nfts) {
         renderNFTs(wallet, walletData.nfts);
-        updateNFTSelection(wallet);
+    updateNFTSelection(wallet);
     }
     
     addLog(`${wallet === 'maker' ? 'Maker' : 'Taker'} form reset`, 'info');
