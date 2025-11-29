@@ -687,6 +687,73 @@ async function confirmAndExecuteSwap() {
     await executeAtomicSwap(params);
 }
 
+// Helper: Accept offer with retry
+async function acceptOfferWithRetry(offerId, attempt = 1) {
+    try {
+        const response = await fetch(`/api/offers/${offerId}/accept`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'idempotency-key': `test-accept-${Date.now()}`,
+            },
+            body: JSON.stringify({
+                takerWallet: TAKER_ADDRESS,
+            }),
+        });
+
+        const data = await response.json();
+        if (!data.success) {
+            throw new Error(data.message || 'Failed to accept offer');
+        }
+
+        addLog('✓ Offer accepted, transaction built', 'success');
+        return data;
+    } catch (error) {
+        if (attempt < 2) {
+            addLog(`⚠️  Attempt ${attempt} failed, retrying...`, 'warning');
+            await new Promise(resolve => setTimeout(resolve, 200));
+            return acceptOfferWithRetry(offerId, attempt + 1);
+        }
+        throw error;
+    }
+}
+
+// Helper: Execute swap with retry for stale proofs
+async function executeSwapWithRetry(offerId, acceptData, attempt = 1) {
+    try {
+        const response = await fetch('/api/test/execute-swap', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Test-Execution': 'true',
+            },
+            body: JSON.stringify({
+                serializedTransaction: acceptData.data.transaction.serialized,
+                requireSignatures: [MAKER_ADDRESS, TAKER_ADDRESS],
+                offerId: offerId, // Pass offerId for retry logic
+            }),
+        });
+
+        const data = await response.json();
+        
+        // Check for stale proof error
+        if (!data.success && data.errorCode === 'STALE_CNFT_PROOF' && attempt < 3) {
+            addLog(`⚠️  cNFT proof became stale, rebuilding transaction (attempt ${attempt}/3)...`, 'warning');
+            
+            // Rebuild transaction by re-accepting offer
+            const newAcceptData = await acceptOfferWithRetry(offerId, 1);
+            
+            // Retry execution with fresh transaction
+            await new Promise(resolve => setTimeout(resolve, 100));
+            return executeSwapWithRetry(offerId, newAcceptData, attempt + 1);
+        }
+        
+        return data;
+    } catch (error) {
+        throw error;
+    }
+}
+
 // Execute atomic swap (uses confirmed parameters to prevent stale values)
 async function executeAtomicSwap(params) {
     const swapBtn = document.getElementById('swap-btn');
@@ -754,43 +821,16 @@ async function executeAtomicSwap(params) {
         const offerId = createData.data.offer.id;
         addLog(`✓ Offer created (ID: ${offerId})`, 'success');
 
-        // Step 2: Accept offer
+        // Step 2: Accept offer (with retry for stale proofs)
         addLog('Step 2: Accepting offer...', 'info');
-        const acceptResponse = await fetch(`/api/offers/${offerId}/accept`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'idempotency-key': `test-accept-${Date.now()}`,
-            },
-            body: JSON.stringify({
-                takerWallet: TAKER_ADDRESS,
-            }),
-        });
-
-        const acceptData = await acceptResponse.json();
-        if (!acceptData.success) {
-            throw new Error(acceptData.message || 'Failed to accept offer');
-        }
-
-        addLog('✓ Offer accepted, transaction built', 'success');
+        const acceptData = await acceptOfferWithRetry(offerId);
 
         // Step 3: Execute the swap on-chain using test wallets
         addLog('Step 3: Executing swap on-chain...', 'info');
         addLog('🔐 Signing with test wallet private keys...', 'info');
         
-        const executeResponse = await fetch('/api/test/execute-swap', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Test-Execution': 'true', // Required security header
-            },
-            body: JSON.stringify({
-                serializedTransaction: acceptData.data.transaction.serialized,
-                requireSignatures: [MAKER_ADDRESS, TAKER_ADDRESS],
-            }),
-        });
-
-        const executeData = await executeResponse.json();
+        const executeData = await executeSwapWithRetry(offerId, acceptData);
+        
         if (!executeData.success) {
             throw new Error(executeData.error || 'Failed to execute swap on-chain');
         }

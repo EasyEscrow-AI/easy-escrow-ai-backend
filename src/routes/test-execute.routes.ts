@@ -21,6 +21,25 @@ const connection = new Connection(
 );
 
 /**
+ * Check if error is caused by stale cNFT Merkle proof
+ */
+function isCnftProofStaleError(error: any): boolean {
+  const message = error?.message || '';
+  const logs = error?.logs || [];
+  
+  const staleProofIndicators = [
+    'Invalid root recomputed from proof',
+    'Error using concurrent merkle tree',
+    'Merkle proof verification failed',
+  ];
+  
+  return staleProofIndicators.some(indicator =>
+    message.includes(indicator) ||
+    logs.some((log: string) => log.includes(indicator))
+  );
+}
+
+/**
  * Security middleware - ONLY allow on devnet/staging
  */
 function requireTestEnvironment(req: Request, res: Response, next: any) {
@@ -70,7 +89,12 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
   console.log('📍 Network:', process.env.SOLANA_RPC_URL);
   
   try {
-    const { serializedTransaction, requireSignatures } = req.body;
+    const { serializedTransaction, requireSignatures, offerId } = req.body;
+    
+    // offerId is optional - used for cNFT proof retry logic
+    if (offerId) {
+      console.log('📋 Offer ID:', offerId, '(will rebuild transaction if proof is stale)');
+    }
     
     if (!serializedTransaction) {
       return res.status(400).json({
@@ -193,6 +217,25 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
       console.error('❌ Transaction failed:', error.message || error);
       if (error.logs) {
         console.error('Transaction logs:', error.logs);
+      }
+      
+      // Check if this is a stale cNFT proof error
+      const isStaleProof = isCnftProofStaleError(error);
+      
+      if (isStaleProof && offerId) {
+        console.warn('⚠️  Detected stale cNFT proof during execution');
+        console.warn('   This transaction was built with a proof that became invalid');
+        console.warn('   Suggest rebuilding transaction by re-accepting offer');
+        
+        return res.status(409).json({
+          success: false,
+          error: 'Stale cNFT proof detected',
+          errorCode: 'STALE_CNFT_PROOF',
+          message: 'The cNFT Merkle proof became stale between transaction building and execution. Please retry the swap.',
+          offerId,
+          logs: error.logs || [],
+          timestamp: new Date().toISOString(),
+        });
       }
       
       return res.status(500).json({
