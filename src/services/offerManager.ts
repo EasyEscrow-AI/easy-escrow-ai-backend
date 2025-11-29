@@ -244,6 +244,7 @@ export class OfferManager {
       
       // 7. Build transaction
       const buildResult = await this.buildOfferTransaction({
+        offerId,
         makerWallet: offer.makerWallet,
         takerWallet,
         offeredAssets,
@@ -331,6 +332,7 @@ export class OfferManager {
    * Build transaction for an offer
    */
   private async buildOfferTransaction(params: {
+    offerId: number;
     makerWallet: string;
     takerWallet: string;
     offeredAssets: Array<{ type: AssetType; identifier: string }>;
@@ -554,7 +556,10 @@ export class OfferManager {
       
       // 9. Build transaction for counter-offer
       // Counter-maker is the new maker, parent maker becomes the taker
+      // Use parent offer ID with "c" prefix for counter-offers (e.g., "c88" for counter to offer 88)
+      const counterOfferId = `c${params.parentOfferId}`;
       const buildResult = await this.buildOfferTransaction({
+        offerId: parseInt(counterOfferId.replace('c', ''), 10), // Extract parent ID for now (will be replaced with actual counter-offer ID later)
         makerWallet: params.counterMakerWallet,
         takerWallet: parentOffer.makerWallet, // Original maker is now taker
         offeredAssets,
