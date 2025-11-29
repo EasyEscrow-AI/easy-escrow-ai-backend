@@ -209,7 +209,7 @@ export class CnftService {
       dataHash,
       creatorHash,
       nonce: assetData.compression.leaf_id, // Nonce is typically the leaf ID
-      index: dasProof.node_index,
+      index: assetData.compression.leaf_id, // Use actual leaf ID, not node_index
       proof,
     };
   }
