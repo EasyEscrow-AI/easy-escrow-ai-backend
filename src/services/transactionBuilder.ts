@@ -107,7 +107,9 @@ export class TransactionBuilder {
   private cnftService: CnftService;
   
   // Maximum transaction size (Solana limit is 1232 bytes)
-  private static readonly MAX_TRANSACTION_SIZE = 1200; // Leave buffer
+  // After extensive optimization (proof trimming, empty swapId), dual cNFT swaps are ~1231 bytes
+  // We need to allow up to 1231 bytes while staying under Solana's 1232 byte limit
+  private static readonly MAX_TRANSACTION_SIZE = 1232; // Match Solana's actual limit
   
   // Compute unit estimates
   private static readonly BASE_COMPUTE_UNITS = 5000;
