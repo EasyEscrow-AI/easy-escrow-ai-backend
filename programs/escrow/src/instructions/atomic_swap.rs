@@ -61,23 +61,16 @@ pub struct AtomicSwapWithFee<'info> {
     pub treasury: Account<'info, Treasury>,
     
     /// Maker's NFT token account (optional - for NFT swaps)
-    #[account(
-        mut,
-        constraint = maker_nft_account.amount == 1 @ AtomicSwapError::InvalidTokenAccount,
-        constraint = maker_nft_account.owner == maker.key() @ AtomicSwapError::MakerAssetOwnershipFailed
-    )]
+    /// Maker's NFT token account (optional - validated in handler based on params)
+    #[account(mut)]
     pub maker_nft_account: Option<Account<'info, anchor_spl::token::TokenAccount>>,
     
     /// Taker's destination for maker's NFT (optional)
     #[account(mut)]
     pub taker_nft_destination: Option<Account<'info, anchor_spl::token::TokenAccount>>,
     
-    /// Taker's NFT token account (optional - for NFT swaps)
-    #[account(
-        mut,
-        constraint = taker_nft_account.amount == 1 @ AtomicSwapError::InvalidTokenAccount,
-        constraint = taker_nft_account.owner == taker.key() @ AtomicSwapError::TakerAssetOwnershipFailed
-    )]
+    /// Taker's NFT token account (optional - validated in handler based on params)
+    #[account(mut)]
     pub taker_nft_account: Option<Account<'info, anchor_spl::token::TokenAccount>>,
     
     /// Maker's destination for taker's NFT (optional)
@@ -164,6 +157,23 @@ pub fn atomic_swap_handler(ctx: Context<AtomicSwapWithFee>, params: SwapParams) 
     
     // Validate parameters
     validate_params(&params)?;
+    
+    // Validate NFT accounts if NFTs are being sent
+    if params.maker_sends_nft {
+        let maker_nft = ctx.accounts.maker_nft_account
+            .as_ref()
+            .ok_or(AtomicSwapError::InvalidTokenAccount)?;
+        require!(maker_nft.amount == 1, AtomicSwapError::InvalidTokenAccount);
+        require!(maker_nft.owner == ctx.accounts.maker.key(), AtomicSwapError::MakerAssetOwnershipFailed);
+    }
+    
+    if params.taker_sends_nft {
+        let taker_nft = ctx.accounts.taker_nft_account
+            .as_ref()
+            .ok_or(AtomicSwapError::InvalidTokenAccount)?;
+        require!(taker_nft.amount == 1, AtomicSwapError::InvalidTokenAccount);
+        require!(taker_nft.owner == ctx.accounts.taker.key(), AtomicSwapError::TakerAssetOwnershipFailed);
+    }
     
     msg!("Executing atomic swap: {}", params.swap_id);
     msg!("Maker: {}", ctx.accounts.maker.key());
