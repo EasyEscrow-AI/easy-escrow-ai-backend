@@ -144,6 +144,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         loadWalletInfo('taker');
     });
     
+    // Setup reset button event listeners
+    document.getElementById('maker-reset-btn').addEventListener('click', () => {
+        resetWallet('maker');
+    });
+    
+    document.getElementById('taker-reset-btn').addEventListener('click', () => {
+        resetWallet('taker');
+    });
+    
     // Setup swap button event listener
     document.getElementById('swap-btn').addEventListener('click', showConfirmationModal);
     
@@ -154,15 +163,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Setup filter button event listeners
     document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.addEventListener('click', handleFilterClick);
-    });
-    
-    // Setup clear button event listeners
-    document.getElementById('maker-clear-btn').addEventListener('click', () => {
-        clearNFTSelection('maker');
-    });
-    
-    document.getElementById('taker-clear-btn').addEventListener('click', () => {
-        clearNFTSelection('taker');
     });
     
     // Setup search input event listeners
@@ -380,28 +380,45 @@ function updateNFTSelection(wallet) {
         const isSelected = selectedArray.some(n => n.mint === nft.mint);
         card.classList.toggle('selected', isSelected);
     });
-    
-    // Update clear button visibility
-    const clearBtn = document.getElementById(`${wallet}-clear-btn`);
-    if (selectedArray.length === 0) {
-        clearBtn.classList.add('hidden');
-    } else {
-        clearBtn.classList.remove('hidden');
-    }
 }
 
-// Clear NFT selection
-function clearNFTSelection(wallet) {
+// Reset entire wallet form (selections, inputs, filters, search)
+function resetWallet(wallet) {
+    // Clear NFT selections
     if (wallet === 'maker') {
         selectedMakerNFTs = [];
+        makerSearchTerm = '';
+        makerFilter = 'all';
     } else {
         selectedTakerNFTs = [];
+        takerSearchTerm = '';
+        takerFilter = 'all';
     }
     
+    // Clear SOL input
+    document.getElementById(`${wallet}-sol`).value = '';
+    
+    // Clear search input
+    document.getElementById(`${wallet}-search`).value = '';
+    
+    // Reset filter buttons to "All"
+    const filterButtons = document.querySelectorAll(`.filter-btn[data-wallet="${wallet}"]`);
+    filterButtons.forEach(btn => {
+        if (btn.dataset.filter === 'all') {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+    
+    // Re-render NFTs with reset state
     const nfts = wallet === 'maker' ? makerData.nfts : takerData.nfts;
-    renderNFTs(wallet, nfts);
-    updateNFTSelection(wallet);
-    // No log message - silent clear for better UX
+    if (nfts) {
+        renderNFTs(wallet, nfts);
+        updateNFTSelection(wallet);
+    }
+    
+    addLog(`${wallet === 'maker' ? 'Maker' : 'Taker'} form reset`, 'info');
 }
 
 // Add log entry
@@ -623,17 +640,25 @@ function showConfirmationModal() {
         return `${solStr} SOL`;
     };
     
-    // Format platform fee display
-    // Show flat fee for NFT-only swaps, percentage fee for SOL swaps
-    const platformFeeDisplay = totalSOL > 0 
-        ? formatSOLWithUSD(platformFee)
-        : `${formatSOLWithUSD(platformFee)} (flat fee)`;
+    // Format platform fee display and label
+    // Show different label and format based on whether SOL is involved
+    let platformFeeLabel, platformFeeDisplay;
+    if (totalSOL > 0) {
+        // Percentage-based fee for SOL swaps
+        platformFeeLabel = 'Platform Fee (1%):';
+        platformFeeDisplay = formatSOLWithUSD(platformFee);
+    } else {
+        // Flat fee for NFT-only swaps
+        platformFeeLabel = 'Platform Fee:';
+        platformFeeDisplay = `${formatSOLWithUSD(platformFee)} (flat fee)`;
+    }
     
     // Update modal values
     document.getElementById('modal-est-time').textContent = estimatedTime;
     document.getElementById('modal-network-fees').textContent = solPriceUSD 
         ? `~${formatSOLWithUSD(networkFee)}`
         : `~${networkFee.toFixed(6)} SOL`;
+    document.getElementById('modal-platform-fee-label').textContent = platformFeeLabel;
     document.getElementById('modal-platform-fee').textContent = platformFeeDisplay;
     
     // Show modal
