@@ -242,20 +242,52 @@ export class OfferManager {
       
       console.log('[OfferManager] Platform fee:', platformFee.toString());
       
-      // 7. Build transaction
-      const buildResult = await this.buildOfferTransaction({
-        offerId,
-        makerWallet: offer.makerWallet,
-        takerWallet,
-        offeredAssets,
-        offeredSol,
-        requestedAssets,
-        requestedSol,
-        platformFee,
-        nonceAccount: offer.nonceAccount,
-      });
+      // 7. Build transaction with retry logic for stale cNFT proofs
+      // On devnet/staging, Merkle tree roots can change frequently if other cNFTs are modified
+      // Retry with fresh proof if we detect a stale proof error
+      let buildResult: { serializedTransaction: string; nonceValue: string } | null = null;
+      const maxAttempts = 2;
       
-      // 8. Update offer with transaction and set status to ACCEPTED
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+          buildResult = await this.buildOfferTransaction({
+            offerId,
+            makerWallet: offer.makerWallet,
+            takerWallet,
+            offeredAssets,
+            offeredSol,
+            requestedAssets,
+            requestedSol,
+            platformFee,
+            nonceAccount: offer.nonceAccount,
+          });
+          
+          // Success! Break out of retry loop
+          break;
+          
+        } catch (error: any) {
+          const isLastAttempt = attempt === maxAttempts;
+          const isStaleProofError = this.isCnftProofStaleError(error);
+          
+          if (!isLastAttempt && isStaleProofError) {
+            console.warn(`⚠️  [OfferManager] Attempt ${attempt}/${maxAttempts} failed with stale cNFT proof, retrying...`);
+            console.warn(`   Error: ${error.message}`);
+            // Brief delay before retry to let any in-flight tree updates complete
+            await new Promise(resolve => setTimeout(resolve, 100));
+            continue;
+          }
+          
+          // Either not a stale proof error, or we've exhausted retries
+          throw error;
+        }
+      }
+      
+      // 8. Ensure we have a valid transaction
+      if (!buildResult) {
+        throw new Error('Failed to build transaction after retries');
+      }
+      
+      // 9. Update offer with transaction and set status to ACCEPTED
       const updatedOffer = await this.prisma.swapOffer.update({
         where: { id: offerId },
         data: {
@@ -384,6 +416,29 @@ export class OfferManager {
       serializedTransaction: result.serializedTransaction,
       nonceValue: result.nonceValue,
     };
+  }
+  
+  /**
+   * Check if error is caused by stale cNFT Merkle proof
+   * This happens when the tree root changes between proof fetch and transaction execution
+   */
+  private isCnftProofStaleError(error: any): boolean {
+    const message = error?.message || '';
+    const logs = error?.logs || [];
+    const stack = error?.stack || '';
+    
+    // Check for Merkle tree proof validation errors
+    const staleProofIndicators = [
+      'Invalid root recomputed from proof',
+      'Error using concurrent merkle tree',
+      'Merkle proof verification failed',
+    ];
+    
+    return staleProofIndicators.some(indicator =>
+      message.includes(indicator) ||
+      logs.some((log: string) => log.includes(indicator)) ||
+      stack.includes(indicator)
+    );
   }
   
   /**
