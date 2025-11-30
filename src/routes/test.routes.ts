@@ -136,7 +136,7 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
           const totalAssets = dasData.result.items.length;
           
           // DEDICATED TEST TREE - Only show cNFTs from our private tree
-          const DEDICATED_TEST_TREE = 'HGXLWQQjFtu9BmrmfB96UwfKDBP4tvmKGsxDd1kpZu6x';
+          const DEDICATED_TEST_TREE = process.env.STAGING_TEST_TREE || 'DAiT7CHVD5yuQfDAnRwfvwEFNkUKedrs4Evec2U7Gm7Q';
           
           cNfts = dasData.result.items
             .filter((asset: any) => {
