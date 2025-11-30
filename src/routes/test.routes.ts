@@ -138,6 +138,8 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
           // DEDICATED TEST TREE - Only show cNFTs from our private tree
           // If not set, show all cNFTs (for backwards compatibility)
           const DEDICATED_TEST_TREE = process.env.STAGING_TEST_TREE;
+          console.log(`[Test Route] STAGING_TEST_TREE env var: ${DEDICATED_TEST_TREE || 'NOT SET (showing all trees)'}`);
+          console.log(`[Test Route] DAS API returned ${totalAssets} total assets for ${address}`);
           
           cNfts = dasData.result.items
             .filter((asset: any) => {
@@ -173,10 +175,18 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
               }
               
               return isValid;
-            })
-            .map((asset: any) => {
+            });
+          
+          console.log(`[Test Route] After filtering: ${cNfts.length} valid cNFTs found`);
+          if (cNfts.length > 0) {
+            console.log(`[Test Route] cNFT names: ${cNfts.map((a: any) => a.content?.metadata?.name || 'Unknown').join(', ')}`);
+          }
+          
+          let isFirstLog = true;
+          cNfts = cNfts.map((asset: any) => {
               // Debug: Log the asset structure for the first cNFT
-              if (cNfts.length === 0) {
+              if (isFirstLog) {
+                isFirstLog = false;
                 console.log('Sample cNFT asset structure:', JSON.stringify({
                   id: asset.id,
                   uri: asset.uri,
