@@ -50,14 +50,10 @@ async function main() {
 
   console.log('\n─────────────────────────────────────────────────────────────────\n');
 
-  // Create two dedicated trees (one for maker test cNFTs, one for taker)
-  console.log('🌳 Creating Dedicated Maker Tree...');
-  const makerTree = await createMerkleTree(connection, adminKeypair, DEFAULT_TREE_CONFIG);
-  console.log('✅ Maker Tree Created:', makerTree.tree.publicKey.toBase58());
-
-  console.log('\n🌳 Creating Dedicated Taker Tree...');
-  const takerTree = await createMerkleTree(connection, adminKeypair, DEFAULT_TREE_CONFIG);
-  console.log('✅ Taker Tree Created:', takerTree.tree.publicKey.toBase58());
+  // Create ONE dedicated tree for all test cNFTs (saves SOL and is simpler)
+  console.log('🌳 Creating Dedicated Test Tree...');
+  const testTree = await createMerkleTree(connection, adminKeypair, DEFAULT_TREE_CONFIG);
+  console.log('✅ Test Tree Created:', testTree.tree.publicKey.toBase58());
 
   console.log('\n─────────────────────────────────────────────────────────────────\n');
 
@@ -130,14 +126,14 @@ async function main() {
     },
   ];
 
-  // Mint maker's monkey collection
+  // Mint maker's monkey collection (in shared tree)
   for (let i = 0; i < makerMonkeys.length; i++) {
     const monkey = makerMonkeys[i];
-    console.log(`   ${monkey.emoji} Minting ${monkey.name}...`);
+    console.log(`   ${monkey.emoji} Minting ${monkey.name} for Maker...`);
     const cnft = await mintTestCNFT(
       connection,
-      makerTree.tree.publicKey, // Merkle tree
-      makerTree.treeAuthority, // Tree authority PDA
+      testTree.tree.publicKey, // Shared tree
+      testTree.treeAuthority, // Tree authority PDA
       adminKeypair, // Payer (admin)
       makerKeypair.publicKey, // Owner (maker)
       {
@@ -150,14 +146,14 @@ async function main() {
     console.log(`   ✅ Asset ID: ${cnft.assetId.toBase58()}`);
   }
 
-  // Mint taker's monkey collection
+  // Mint taker's monkey collection (in shared tree)
   for (let i = 0; i < takerMonkeys.length; i++) {
     const monkey = takerMonkeys[i];
-    console.log(`   ${monkey.emoji} Minting ${monkey.name}...`);
+    console.log(`   ${monkey.emoji} Minting ${monkey.name} for Taker...`);
     const cnft = await mintTestCNFT(
       connection,
-      takerTree.tree.publicKey, // Merkle tree
-      takerTree.treeAuthority, // Tree authority PDA
+      testTree.tree.publicKey, // Shared tree
+      testTree.treeAuthority, // Tree authority PDA
       adminKeypair, // Payer (admin)
       takerKeypair.publicKey, // Owner (taker)
       {
@@ -176,10 +172,10 @@ async function main() {
 
   // Generate environment variables
   const envVars = `
-# Dedicated Test Merkle Trees (Staging Only)
+# Dedicated Test Merkle Tree (Staging Only)
 # Created: ${new Date().toISOString()}
-STAGING_MAKER_TEST_TREE=${makerTree.tree.publicKey.toBase58()}
-STAGING_TAKER_TEST_TREE=${takerTree.tree.publicKey.toBase58()}
+# Single tree contains all 8 test monkeys (4 maker, 4 taker)
+STAGING_TEST_TREE=${testTree.tree.publicKey.toBase58()}
 
 # Maker Test cNFTs
 STAGING_MAKER_CNFT_1=${makerCnfts[0].assetId.toBase58()}
@@ -211,13 +207,9 @@ STAGING_TAKER_CNFT_4=${takerCnfts[3].assetId.toBase58()}
 
   // Generate tree keypair backup
   const treeKeypairs = {
-    makerTree: {
-      publicKey: makerTree.tree.publicKey.toBase58(),
-      secretKey: Array.from(makerTree.tree.secretKey),
-    },
-    takerTree: {
-      publicKey: takerTree.tree.publicKey.toBase58(),
-      secretKey: Array.from(takerTree.tree.secretKey),
+    testTree: {
+      publicKey: testTree.tree.publicKey.toBase58(),
+      secretKey: Array.from(testTree.tree.secretKey),
     },
   };
 
