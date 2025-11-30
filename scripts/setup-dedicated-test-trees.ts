@@ -13,7 +13,7 @@
  */
 
 import { Connection, Keypair, LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { createMerkleTree, mintCnft, DEFAULT_TREE_CONFIG } from '../tests/helpers/devnet-cnft-setup';
+import { createMerkleTree, mintTestCNFT, DEFAULT_TREE_CONFIG } from '../tests/helpers/devnet-cnft-setup';
 import bs58 from 'bs58';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -134,11 +134,11 @@ async function main() {
   for (let i = 0; i < makerMonkeys.length; i++) {
     const monkey = makerMonkeys[i];
     console.log(`   ${monkey.emoji} Minting ${monkey.name}...`);
-    const cnft = await mintCnft(
+    const cnft = await mintTestCNFT(
       connection,
-      adminKeypair, // Tree authority (admin)
-      makerTree.tree.publicKey,
-      makerTree.treeAuthority,
+      makerTree.tree.publicKey, // Merkle tree
+      makerTree.treeAuthority, // Tree authority PDA
+      adminKeypair, // Payer (admin)
       makerKeypair.publicKey, // Owner (maker)
       {
         name: monkey.name,
@@ -154,11 +154,11 @@ async function main() {
   for (let i = 0; i < takerMonkeys.length; i++) {
     const monkey = takerMonkeys[i];
     console.log(`   ${monkey.emoji} Minting ${monkey.name}...`);
-    const cnft = await mintCnft(
+    const cnft = await mintTestCNFT(
       connection,
-      adminKeypair, // Tree authority (admin)
-      takerTree.tree.publicKey,
-      takerTree.treeAuthority,
+      takerTree.tree.publicKey, // Merkle tree
+      takerTree.treeAuthority, // Tree authority PDA
+      adminKeypair, // Payer (admin)
       takerKeypair.publicKey, // Owner (taker)
       {
         name: monkey.name,
