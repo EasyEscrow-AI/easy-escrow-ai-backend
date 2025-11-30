@@ -763,8 +763,17 @@ async function executeAtomicSwap(params) {
 
         addLog('🚀 Starting atomic swap...', 'info');
 
+        // Performance tracking
+        const timings = {
+            create: 0,
+            accept: 0,
+            execute: 0,
+            total: 0
+        };
+
         // Step 1: Create offer
         addLog('Step 1: Creating swap offer...', 'info');
+        const createStartTime = performance.now();
         
         // Build request payload
         const requestPayload = {
@@ -803,18 +812,24 @@ async function executeAtomicSwap(params) {
             throw new Error(createData.message || 'Failed to create offer');
         }
 
+        timings.create = ((performance.now() - createStartTime) / 1000).toFixed(2);
         const offerId = createData.data.offer.id;
-        addLog(`✓ Offer created (ID: ${offerId})`, 'success');
+        addLog(`✓ Offer created (ID: ${offerId}) [${timings.create}s]`, 'success');
 
         // Step 2: Accept offer (with retry for stale proofs)
         addLog('Step 2: Accepting offer...', 'info');
+        const acceptStartTime = performance.now();
         const acceptData = await acceptOfferWithRetry(offerId);
+        timings.accept = ((performance.now() - acceptStartTime) / 1000).toFixed(2);
+        addLog(`✓ Offer accepted [${timings.accept}s]`, 'success');
 
         // Step 3: Execute the swap on-chain using test wallets
         addLog('Step 3: Executing swap on-chain...', 'info');
         addLog('🔐 Signing with test wallet private keys...', 'info');
         
+        const executeStartTime = performance.now();
         const executeData = await executeSwapWithRetry(offerId, acceptData);
+        timings.execute = ((performance.now() - executeStartTime) / 1000).toFixed(2);
         
         if (!executeData.success) {
             throw new Error(executeData.error || 'Failed to execute swap on-chain');
@@ -823,15 +838,16 @@ async function executeAtomicSwap(params) {
         addLog('✅ Transaction confirmed on blockchain!', 'success');
         addLog(`🔗 Signature: ${executeData.data.signature}`, 'success');
 
-        // Calculate execution time
+        // Calculate total execution time
         const endTime = performance.now();
         const executionTimeMs = endTime - startTime;
         const executionTimeSec = (executionTimeMs / 1000).toFixed(2);
+        timings.total = executionTimeSec;
 
-        addLog(`⚡ Execution time: ${executionTimeSec}s`, 'success');
+        addLog(`⚡ Total time: ${executionTimeSec}s (Create: ${timings.create}s, Accept: ${timings.accept}s, Execute: ${timings.execute}s)`, 'success');
 
-        // Show transaction summary (pass confirmed params + execution data + timing)
-        showTransactionSummary(createData.data, acceptData.data, executeData.data, params, executionTimeSec);
+        // Show transaction summary (pass confirmed params + execution data + timings)
+        showTransactionSummary(createData.data, acceptData.data, executeData.data, params, timings);
 
         addLog('✅ Atomic swap completed successfully on devnet!', 'success');
 
@@ -847,7 +863,7 @@ async function executeAtomicSwap(params) {
 }
 
 // Show transaction summary
-function showTransactionSummary(createData, acceptData, executeData, params, executionTimeSec) {
+function showTransactionSummary(createData, acceptData, executeData, params, timings) {
     const summary = document.getElementById('transaction-summary');
     const content = document.getElementById('summary-content');
 
@@ -863,8 +879,12 @@ function showTransactionSummary(createData, acceptData, executeData, params, exe
                 <span class="summary-value"><a href="${executeData.explorerUrl}" target="_blank" rel="noopener noreferrer">${escapeHtml(executeData.signature.substring(0, 20))}...</a></span>
             </div>
             <div class="summary-item">
-                <span class="summary-label">Execution Time:</span>
-                <span class="summary-value highlight">⚡ ${executionTimeSec}s</span>
+                <span class="summary-label">Total Time:</span>
+                <span class="summary-value highlight">⚡ ${timings.total}s</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Breakdown:</span>
+                <span class="summary-value">Create: ${timings.create}s | Accept: ${timings.accept}s | Execute: ${timings.execute}s</span>
             </div>
             <div class="summary-item">
                 <span class="summary-label">Offer ID:</span>
