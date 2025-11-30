@@ -641,6 +641,77 @@ router.post(
 );
 
 /**
+ * POST /api/offers/:id/rebuild-transaction
+ * Rebuild transaction for an already-accepted offer with fresh cNFT proofs
+ * Used when cNFT proofs become stale between transaction building and execution
+ */
+router.post(
+  '/api/offers/:id/rebuild-transaction',
+  standardRateLimiter,
+  requiredIdempotency, // CRITICAL: Prevent duplicate rebuilds
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const offerId = parseInt(req.params.id, 10);
+
+      if (isNaN(offerId)) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation Error',
+          message: 'Invalid offer ID',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const result = await offerManager.rebuildTransaction(offerId);
+
+      res.status(200).json({
+        success: true,
+        data: {
+          offer: {
+            id: result.offer.id.toString(),
+            status: result.offer.status,
+            makerWallet: result.offer.makerWallet,
+            takerWallet: result.offer.takerWallet,
+            offeredAssets: result.offer.offeredAssets,
+            requestedAssets: result.offer.requestedAssets,
+            offeredSol: result.offer.offeredSolLamports?.toString() || '0',
+            requestedSol: result.offer.requestedSolLamports?.toString() || '0',
+          },
+          transaction: {
+            serialized: result.serializedTransaction,
+            nonceAccount: result.offer.nonceAccount,
+          },
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Error rebuilding transaction:', error);
+
+      const errorMessage = error instanceof Error ? error.message : 'Failed to rebuild transaction';
+
+      // Check for not found or invalid state errors
+      if (errorMessage.includes('not found') || errorMessage.includes('only rebuild')) {
+        res.status(400).json({
+          success: false,
+          error: 'Invalid Request',
+          message: errorMessage,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      res.status(500).json({
+        success: false,
+        error: 'Internal Server Error',
+        message: errorMessage,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
  * POST /api/offers/:id/cancel
  * Cancel an active offer (advances nonce to invalidate transaction)
  */

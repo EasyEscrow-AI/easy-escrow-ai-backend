@@ -202,6 +202,69 @@ export class OfferManager {
   /**
    * Accept an offer and get transaction to sign
    */
+  /**
+   * Rebuild transaction for an already-accepted offer with fresh cNFT proofs
+   * Used when a transaction becomes stale before execution
+   */
+  async rebuildTransaction(offerId: number): Promise<{
+    serializedTransaction: string;
+    offer: any;
+  }> {
+    console.log('[OfferManager] Rebuilding transaction for offer:', offerId);
+    
+    const offer = await this.prisma.swapOffer.findUnique({
+      where: { id: offerId },
+    });
+    
+    if (!offer) {
+      throw new Error('Offer not found');
+    }
+    
+    if (offer.status !== OfferStatus.ACCEPTED) {
+      throw new Error(`Can only rebuild transactions for accepted offers (current status: ${offer.status})`);
+    }
+    
+    if (!offer.takerWallet) {
+      throw new Error('Offer has no taker wallet');
+    }
+    
+    // Extract data from the accepted offer
+    const offeredAssets = offer.offeredAssets as Array<{ type: AssetType; identifier: string }>;
+    const requestedAssets = offer.requestedAssets as Array<{ type: AssetType; identifier: string }>;
+    const offeredSol = offer.offeredSolLamports ? BigInt(offer.offeredSolLamports) : BigInt(0);
+    const requestedSol = offer.requestedSolLamports ? BigInt(offer.requestedSolLamports) : BigInt(0);
+    const platformFee = BigInt(offer.platformFeeLamports);
+    
+    // Rebuild transaction with fresh proofs (no retry loop - caller handles retries)
+    const buildResult = await this.buildOfferTransaction({
+      offerId,
+      makerWallet: offer.makerWallet,
+      takerWallet: offer.takerWallet,
+      offeredAssets,
+      offeredSol,
+      requestedAssets,
+      requestedSol,
+      platformFee,
+      nonceAccount: offer.nonceAccount,
+    });
+    
+    // Update offer with new transaction
+    const updatedOffer = await this.prisma.swapOffer.update({
+      where: { id: offerId },
+      data: {
+        serializedTransaction: buildResult.serializedTransaction,
+        currentNonceValue: buildResult.nonceValue,
+      },
+    });
+    
+    console.log(`[OfferManager] Transaction rebuilt for offer ${offerId}`);
+    
+    return {
+      serializedTransaction: buildResult.serializedTransaction,
+      offer: updatedOffer,
+    };
+  }
+
   async acceptOffer(offerId: number, takerWallet: string): Promise<{ 
     serializedTransaction: string;
     offer: any; // SwapOffer from Prisma
