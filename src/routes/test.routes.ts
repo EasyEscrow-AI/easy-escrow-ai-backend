@@ -136,7 +136,8 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
           const totalAssets = dasData.result.items.length;
           
           // DEDICATED TEST TREE - Only show cNFTs from our private tree
-          const DEDICATED_TEST_TREE = process.env.STAGING_TEST_TREE || 'DAiT7CHVD5yuQfDAnRwfvwEFNkUKedrs4Evec2U7Gm7Q';
+          // If not set, show all cNFTs (for backwards compatibility)
+          const DEDICATED_TEST_TREE = process.env.STAGING_TEST_TREE;
           
           cNfts = dasData.result.items
             .filter((asset: any) => {
@@ -145,12 +146,14 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
               // 2. Currently owned by this wallet
               // 3. Not burnt
               // 4. Not frozen
-              // 5. IN OUR DEDICATED TEST TREE (prevents cross-tree swap failures)
+              // 5. IN OUR DEDICATED TEST TREE (if configured - prevents cross-tree swap failures)
               const isCompressed = asset.compression?.compressed === true;
               const isOwned = asset.ownership?.owner === address;
               const notBurnt = !asset.burnt;
               const notFrozen = !asset.frozen;
-              const inDedicatedTree = asset.compression?.tree === DEDICATED_TEST_TREE;
+              const inDedicatedTree = DEDICATED_TEST_TREE 
+                ? asset.compression?.tree === DEDICATED_TEST_TREE 
+                : true; // If no tree specified, allow all trees
               
               const isValid = isCompressed && isOwned && notBurnt && notFrozen && inDedicatedTree;
               

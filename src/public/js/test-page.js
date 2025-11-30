@@ -819,7 +819,16 @@ async function executeAtomicSwap(params) {
         // Step 2: Accept offer (with retry for stale proofs)
         addLog('Step 2: Accepting offer...', 'info');
         const acceptStartTime = performance.now();
-        const acceptData = await acceptOfferWithRetry(offerId);
+        
+        let acceptData;
+        try {
+            acceptData = await acceptOfferWithRetry(offerId);
+        } catch (acceptError) {
+            timings.accept = ((performance.now() - acceptStartTime) / 1000).toFixed(2);
+            addLog(`❌ Accept failed after [${timings.accept}s]`, 'error');
+            throw new Error(`Failed during accept: ${acceptError.message}`);
+        }
+        
         timings.accept = ((performance.now() - acceptStartTime) / 1000).toFixed(2);
         addLog(`✓ Offer accepted [${timings.accept}s]`, 'success');
 

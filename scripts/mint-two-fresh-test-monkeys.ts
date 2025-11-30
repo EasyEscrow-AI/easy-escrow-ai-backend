@@ -12,13 +12,16 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { mintTestCNFT } from '../tests/helpers/devnet-cnft-setup';
 
+if (!process.env.STAGING_TEST_TREE) {
+  console.error('❌ STAGING_TEST_TREE environment variable not set!');
+  console.error('   Add it to your .env file: STAGING_TEST_TREE=<tree-address>');
+  process.exit(1);
+}
+
 const RPC_URL = process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com';
 const connection = new Connection(RPC_URL, 'confirmed');
 
-// Use tree from environment or fallback to the known test tree
-const TREE_ADDRESS = new PublicKey(
-  process.env.STAGING_TEST_TREE || 'DAiT7CHVD5yuQfDAnRwfvwEFNkUKedrs4Evec2U7Gm7Q'
-);
+const TREE_ADDRESS = new PublicKey(process.env.STAGING_TEST_TREE);
 // Tree creator (admin) - needed to mint
 const TREE_CREATOR = Keypair.fromSecretKey(
   new Uint8Array(JSON.parse(fs.readFileSync(path.join(__dirname, '../wallets/staging/staging-admin.json'), 'utf-8')))

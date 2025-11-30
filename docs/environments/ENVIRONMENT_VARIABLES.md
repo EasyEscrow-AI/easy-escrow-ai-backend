@@ -222,6 +222,28 @@ USDC_MINT_ADDRESS=Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr
 USDC_MINT_ADDRESS=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
 ```
 
+### `STAGING_TEST_TREE`
+- **Type**: String (Base58 Public Key)
+- **Required**: No (only for `/test` page cNFT filtering)
+- **Description**: Dedicated Merkle tree address for test cNFTs. When set, the `/test` page only displays cNFTs from this specific tree, preventing cross-tree swap failures.
+- **Environment**: Staging/Devnet only
+
+```bash
+# Example dedicated test tree
+STAGING_TEST_TREE=DAiT7CHVD5yuQfDAnRwfvwEFNkUKedrs4Evec2U7Gm7Q
+```
+
+**Purpose:**
+- Prevents mixing cNFTs from different Merkle trees in test swaps
+- Each tree has its own Merkle root, making cross-tree proofs invalid
+- Isolates test cNFTs from other devnet cNFTs
+
+**Setup:**
+1. Create a dedicated Merkle tree using `scripts/setup-dedicated-test-trees.ts`
+2. Add the tree address to `.env` as `STAGING_TEST_TREE`
+3. Mint test cNFTs to this tree using `scripts/mint-two-fresh-test-monkeys.ts`
+4. The `/test` page will automatically filter cNFTs to show only those from this tree
+
 ---
 
 ## Platform Fee Collection
