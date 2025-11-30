@@ -135,6 +135,9 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
         if (dasData.result && dasData.result.items) {
           const totalAssets = dasData.result.items.length;
           
+          // DEDICATED TEST TREE - Only show cNFTs from our private tree
+          const DEDICATED_TEST_TREE = 'HGXLWQQjFtu9BmrmfB96UwfKDBP4tvmKGsxDd1kpZu6x';
+          
           cNfts = dasData.result.items
             .filter((asset: any) => {
               // Only include compressed NFTs that are:
@@ -142,12 +145,14 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
               // 2. Currently owned by this wallet
               // 3. Not burnt
               // 4. Not frozen
+              // 5. IN OUR DEDICATED TEST TREE (prevents cross-tree swap failures)
               const isCompressed = asset.compression?.compressed === true;
               const isOwned = asset.ownership?.owner === address;
               const notBurnt = !asset.burnt;
               const notFrozen = !asset.frozen;
+              const inDedicatedTree = asset.compression?.tree === DEDICATED_TEST_TREE;
               
-              const isValid = isCompressed && isOwned && notBurnt && notFrozen;
+              const isValid = isCompressed && isOwned && notBurnt && notFrozen && inDedicatedTree;
               
               // Log filtered out cNFTs for debugging
               if (!isValid && isCompressed) {
@@ -156,6 +161,9 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
                   isOwned,
                   notBurnt,
                   notFrozen,
+                  inDedicatedTree,
+                  tree: asset.compression?.tree,
+                  expectedTree: DEDICATED_TEST_TREE,
                   actualOwner: asset.ownership?.owner,
                   expectedOwner: address,
                 });
