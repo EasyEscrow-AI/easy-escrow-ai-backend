@@ -1,0 +1,33 @@
+{
+  "name": "Tamarin Monkey",
+  "symbol": "MONKEY",
+  "description": "Tiny, energetic monkeys with distinctive mustaches and colorful fur.",
+  "image": "https://images.unsplash.com/photo-1564349683136-77e08dba1ef7?w=800",
+  "attributes": [
+    {
+      "trait_type": "Species",
+      "value": "Tamarin"
+    },
+    {
+      "trait_type": "Habitat",
+      "value": "Amazon"
+    },
+    {
+      "trait_type": "Rarity",
+      "value": "Rare"
+    },
+    {
+      "trait_type": "Size",
+      "value": "Tiny"
+    }
+  ],
+  "properties": {
+    "files": [
+      {
+        "uri": "https://images.unsplash.com/photo-1564349683136-77e08dba1ef7?w=800",
+        "type": "image/jpeg"
+      }
+    ],
+    "category": "image"
+  }
+}

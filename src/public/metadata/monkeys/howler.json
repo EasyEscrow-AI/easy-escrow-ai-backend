@@ -1,0 +1,33 @@
+{
+  "name": "Howler Monkey",
+  "symbol": "MONKEY",
+  "description": "Known for their powerful howls that can be heard for miles through the jungle.",
+  "image": "https://images.unsplash.com/photo-1615963244664-5b845b2025ee?w=800",
+  "attributes": [
+    {
+      "trait_type": "Species",
+      "value": "Howler"
+    },
+    {
+      "trait_type": "Habitat",
+      "value": "Tropical Forest"
+    },
+    {
+      "trait_type": "Rarity",
+      "value": "Uncommon"
+    },
+    {
+      "trait_type": "Volume",
+      "value": "Very Loud"
+    }
+  ],
+  "properties": {
+    "files": [
+      {
+        "uri": "https://images.unsplash.com/photo-1615963244664-5b845b2025ee?w=800",
+        "type": "image/jpeg"
+      }
+    ],
+    "category": "image"
+  }
+}
