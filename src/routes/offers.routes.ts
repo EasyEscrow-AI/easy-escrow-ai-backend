@@ -875,5 +875,5 @@ router.post(
 );
 
 export default router;
-export { noncePoolManager };
+export { noncePoolManager, offerManager };
 

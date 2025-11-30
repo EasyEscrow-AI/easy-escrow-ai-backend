@@ -11,6 +11,7 @@
 import { Router, Request, Response } from 'express';
 import { Connection, Keypair, Transaction, sendAndConfirmTransaction } from '@solana/web3.js';
 import bs58 from 'bs58';
+import { offerManager } from './offers.routes';
 
 const router = Router();
 
@@ -89,7 +90,7 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
   console.log('📍 Network:', process.env.SOLANA_RPC_URL);
   
   try {
-    const { serializedTransaction, requireSignatures, offerId } = req.body;
+    let { serializedTransaction, requireSignatures, offerId } = req.body;
     
     // offerId is optional - used for cNFT proof retry logic
     if (offerId) {
@@ -147,106 +148,153 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
       });
     }
     
-    // Deserialize transaction
-    let transaction: Transaction;
-    try {
-      const txBuffer = Buffer.from(serializedTransaction, 'base64');
-      transaction = Transaction.from(txBuffer);
-      console.log('✅ Transaction deserialized');
-    } catch (error) {
-      console.error('❌ Failed to deserialize transaction:', error);
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid transaction format',
-        timestamp: new Date().toISOString(),
-      });
-    }
+    // === RETRY LOOP: Rebuild and execute immediately on stale proof ===
+    const MAX_ATTEMPTS = 5; // Increased from 3
+    let signature: string | null = null;
     
-    // Determine which signers are needed
-    const signers: Keypair[] = [];
-    const makerAddress = makerKeypair.publicKey.toBase58();
-    const takerAddress = takerKeypair.publicKey.toBase58();
-    
-    if (requireSignatures.includes(makerAddress)) {
-      signers.push(makerKeypair);
-      console.log('🔐 Adding Maker signature');
-    }
-    
-    if (requireSignatures.includes(takerAddress)) {
-      signers.push(takerKeypair);
-      console.log('🔐 Adding Taker signature');
-    }
-    
-    if (signers.length === 0) {
-      console.error('❌ No valid signers found');
-      return res.status(400).json({
-        success: false,
-        error: 'No valid signers found for this transaction',
-        timestamp: new Date().toISOString(),
-      });
-    }
-    
-    // CRITICAL: Transaction already has platform authority signature from creation
-    // Use partialSign to add maker/taker signatures without overwriting existing signature
-    console.log('📤 Adding remaining signatures to transaction...');
-    console.log('   Additional signers:', signers.length);
-    transaction.partialSign(...signers);
-    
-    // Send the fully-signed transaction
-    console.log('📤 Submitting transaction to blockchain...');
-    
-    let signature: string;
-    try {
-      // Serialize the fully-signed transaction
-      const rawTransaction = transaction.serialize();
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      console.log(`\n🔄 Execution attempt ${attempt}/${MAX_ATTEMPTS}`);
       
-      // Send and confirm using raw transaction (preserves all signatures)
-      signature = await connection.sendRawTransaction(rawTransaction, {
-        skipPreflight: false,
-        preflightCommitment: 'confirmed',
-      });
-      
-      // Wait for confirmation
-      await connection.confirmTransaction(signature, 'confirmed');
-      
-      console.log('✅ TRANSACTION CONFIRMED!');
-      console.log('   Signature:', signature);
-      console.log('   Solscan:', `https://solscan.io/tx/${signature}?cluster=devnet`);
-      
-    } catch (error: any) {
-      console.error('❌ Transaction failed:', error.message || error);
-      if (error.logs) {
-        console.error('Transaction logs:', error.logs);
-      }
-      
-      // Check if this is a stale cNFT proof error
-      const isStaleProof = isCnftProofStaleError(error);
-      
-      if (isStaleProof && offerId) {
-        console.warn('⚠️  Detected stale cNFT proof during execution');
-        console.warn('   This transaction was built with a proof that became invalid');
-        console.warn('   Suggest rebuilding transaction by re-accepting offer');
+      try {
+        // Deserialize transaction
+        let transaction: Transaction;
+        try {
+          const txBuffer = Buffer.from(serializedTransaction, 'base64');
+          transaction = Transaction.from(txBuffer);
+          console.log('✅ Transaction deserialized');
+        } catch (error) {
+          console.error('❌ Failed to deserialize transaction:', error);
+          return res.status(400).json({
+            success: false,
+            error: 'Invalid transaction format',
+            timestamp: new Date().toISOString(),
+          });
+        }
         
-        return res.status(409).json({
+        // Determine which signers are needed
+        const signers: Keypair[] = [];
+        const makerAddress = makerKeypair.publicKey.toBase58();
+        const takerAddress = takerKeypair.publicKey.toBase58();
+        
+        if (requireSignatures.includes(makerAddress)) {
+          signers.push(makerKeypair);
+          console.log('🔐 Adding Maker signature');
+        }
+        
+        if (requireSignatures.includes(takerAddress)) {
+          signers.push(takerKeypair);
+          console.log('🔐 Adding Taker signature');
+        }
+        
+        if (signers.length === 0) {
+          console.error('❌ No valid signers found');
+          return res.status(400).json({
+            success: false,
+            error: 'No valid signers found for this transaction',
+            timestamp: new Date().toISOString(),
+          });
+        }
+        
+        // CRITICAL: Transaction already has platform authority signature from creation
+        // Use partialSign to add maker/taker signatures without overwriting existing signature
+        console.log('📤 Adding remaining signatures to transaction...');
+        console.log('   Additional signers:', signers.length);
+        transaction.partialSign(...signers);
+        
+        // Send the fully-signed transaction
+        console.log('📤 Submitting transaction to blockchain...');
+        
+        // Serialize the fully-signed transaction
+        const rawTransaction = transaction.serialize();
+        
+        // Send and confirm using raw transaction (preserves all signatures)
+        signature = await connection.sendRawTransaction(rawTransaction, {
+          skipPreflight: false,
+          preflightCommitment: 'confirmed',
+        });
+        
+        // Wait for confirmation
+        await connection.confirmTransaction(signature, 'confirmed');
+        
+        console.log(`✅ TRANSACTION CONFIRMED on attempt ${attempt}!`);
+        console.log('   Signature:', signature);
+        console.log('   Solscan:', `https://solscan.io/tx/${signature}?cluster=devnet`);
+        
+        // Success! Break out of retry loop
+        break;
+        
+      } catch (error: any) {
+        const isLastAttempt = attempt === MAX_ATTEMPTS;
+        const isStaleProof = isCnftProofStaleError(error);
+        
+        console.error(`❌ Attempt ${attempt} failed:`, error.message || error);
+        if (error.logs) {
+          console.error('Transaction logs:', error.logs);
+        }
+        
+        // If stale proof and we have more attempts and offerId, rebuild immediately
+        if (isStaleProof && !isLastAttempt && offerId) {
+          console.warn(`⚠️  Stale cNFT proof detected on attempt ${attempt}/${MAX_ATTEMPTS}`);
+          console.warn('   Rebuilding transaction with fresh proofs immediately...');
+          
+          try {
+            // Rebuild transaction with fresh proofs
+            const rebuildResult = await offerManager.rebuildTransaction(offerId);
+            
+            // Use the fresh transaction for next attempt
+            serializedTransaction = rebuildResult.serializedTransaction;
+            
+            console.log('✅ Transaction rebuilt with fresh cNFT proofs');
+            console.log(`   Retrying execution immediately (attempt ${attempt + 1})...`);
+            
+            // No delay - execute immediately while proof is fresh
+            continue;
+            
+          } catch (rebuildError: any) {
+            console.error('❌ Failed to rebuild transaction:', rebuildError.message);
+            // Fall through to error response
+          }
+        }
+        
+        // Either not a stale proof, or we've exhausted retries, or rebuild failed
+        if (isLastAttempt) {
+          console.error(`❌ All ${MAX_ATTEMPTS} attempts exhausted`);
+          
+          if (isStaleProof) {
+            return res.status(409).json({
+              success: false,
+              error: 'Stale cNFT proof detected',
+              errorCode: 'STALE_CNFT_PROOF',
+              message: `cNFT proof became stale after ${MAX_ATTEMPTS} attempts. This indicates high activity on the Merkle tree.`,
+              offerId,
+              logs: error.logs || [],
+              timestamp: new Date().toISOString(),
+            });
+          }
+          
+          return res.status(500).json({
+            success: false,
+            error: error.message || 'Transaction failed',
+            logs: error.logs || [],
+            timestamp: new Date().toISOString(),
+          });
+        }
+        
+        // Non-stale proof error - don't retry
+        return res.status(500).json({
           success: false,
-          error: 'Stale cNFT proof detected',
-          errorCode: 'STALE_CNFT_PROOF',
-          message: 'The cNFT Merkle proof became stale between transaction building and execution. Please retry the swap.',
-          offerId,
+          error: error.message || 'Transaction failed',
           logs: error.logs || [],
           timestamp: new Date().toISOString(),
         });
       }
-      
-      return res.status(500).json({
-        success: false,
-        error: error.message || 'Transaction failed',
-        logs: error.logs || [],
-        timestamp: new Date().toISOString(),
-      });
     }
     
-    // Success response
+    // Success response (only reached if signature was set)
+    if (!signature) {
+      throw new Error('No signature generated after retry loop');
+    }
+    
     return res.status(200).json({
       success: true,
       data: {

@@ -719,52 +719,24 @@ async function acceptOfferWithRetry(offerId, attempt = 1) {
 }
 
 // Helper: Execute swap with retry for stale proofs
-async function executeSwapWithRetry(offerId, acceptData, attempt = 1) {
-    try {
-        const response = await fetch('/api/test/execute-swap', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Test-Execution': 'true',
-            },
-            body: JSON.stringify({
-                serializedTransaction: acceptData.data.transaction.serialized,
-                requireSignatures: [MAKER_ADDRESS, TAKER_ADDRESS],
-                offerId: offerId, // Pass offerId for retry logic
-            }),
-        });
+async function executeSwapWithRetry(offerId, acceptData) {
+    // Backend now handles all retry logic internally
+    // Just call once and let the backend rebuild & retry as needed
+    const response = await fetch('/api/test/execute-swap', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Test-Execution': 'true',
+        },
+        body: JSON.stringify({
+            serializedTransaction: acceptData.data.transaction.serialized,
+            requireSignatures: [MAKER_ADDRESS, TAKER_ADDRESS],
+            offerId: offerId, // Backend uses this for automatic retry with fresh proofs
+        }),
+    });
 
-        const data = await response.json();
-        
-        // Check for stale proof error
-        if (!data.success && data.errorCode === 'STALE_CNFT_PROOF' && attempt < 3) {
-            addLog(`⚠️  cNFT proof became stale, rebuilding transaction (attempt ${attempt}/3)...`, 'warning');
-            
-            // Rebuild transaction with fresh proofs (use rebuild endpoint for already-accepted offers)
-            const rebuildResponse = await fetch(`/api/offers/${offerId}/rebuild-transaction`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'idempotency-key': `test-rebuild-${Date.now()}-${attempt}`,
-                },
-            });
-            
-            const rebuildData = await rebuildResponse.json();
-            if (!rebuildData.success) {
-                throw new Error(rebuildData.message || 'Failed to rebuild transaction');
-            }
-            
-            addLog('✓ Transaction rebuilt with fresh cNFT proofs', 'success');
-            
-            // Retry execution with fresh transaction
-            await new Promise(resolve => setTimeout(resolve, 100));
-            return executeSwapWithRetry(offerId, rebuildData, attempt + 1);
-        }
-        
-        return data;
-    } catch (error) {
-        throw error;
-    }
+    const data = await response.json();
+    return data;
 }
 
 // Execute atomic swap (uses confirmed parameters to prevent stale values)
