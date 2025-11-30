@@ -68,10 +68,13 @@ async function main() {
   const makerCnfts = [];
   const takerCnfts = [];
 
+  // Track leaf index across all mints
+  let nextLeafIndex = 0;
+
   // Mint maker monkeys
   for (let i = 0; i < makerMonkeys.length; i++) {
     const monkey = makerMonkeys[i];
-    console.log(`   ${monkey.emoji} Minting ${monkey.name} for Maker...`);
+    console.log(`   ${monkey.emoji} Minting ${monkey.name} for Maker (leaf ${nextLeafIndex})...`);
     try {
       const cnft = await mintTestCNFT(
         connection,
@@ -83,10 +86,12 @@ async function main() {
           name: monkey.name,
           symbol: 'MONKEY',
           uri: monkey.uri,
-        }
+        },
+        nextLeafIndex // CRITICAL: Pass leaf index!
       );
       makerCnfts.push(cnft);
       console.log(`   ✅ Asset ID: ${cnft.assetId.toBase58()}`);
+      nextLeafIndex++; // Increment for next monkey
     } catch (error: any) {
       console.error(`   ❌ Failed:`, error.message);
     }
@@ -95,7 +100,7 @@ async function main() {
   // Mint taker monkeys
   for (let i = 0; i < takerMonkeys.length; i++) {
     const monkey = takerMonkeys[i];
-    console.log(`   ${monkey.emoji} Minting ${monkey.name} for Taker...`);
+    console.log(`   ${monkey.emoji} Minting ${monkey.name} for Taker (leaf ${nextLeafIndex})...`);
     try {
       const cnft = await mintTestCNFT(
         connection,
@@ -107,10 +112,12 @@ async function main() {
           name: monkey.name,
           symbol: 'MONKEY',
           uri: monkey.uri,
-        }
+        },
+        nextLeafIndex // CRITICAL: Pass leaf index!
       );
       takerCnfts.push(cnft);
       console.log(`   ✅ Asset ID: ${cnft.assetId.toBase58()}`);
+      nextLeafIndex++; // Increment for next monkey
     } catch (error: any) {
       console.error(`   ❌ Failed:`, error.message);
     }
