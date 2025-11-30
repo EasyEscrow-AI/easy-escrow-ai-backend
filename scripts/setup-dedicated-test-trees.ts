@@ -76,14 +76,64 @@ async function main() {
   console.log('👤 Taker Wallet:', takerKeypair.publicKey.toBase58());
 
   // Mint test cNFTs into each tree
-  console.log('\n📦 Minting Test cNFTs...\n');
+  console.log('\n🐵 Minting Monkey cNFTs...\n');
 
   const makerCnfts = [];
   const takerCnfts = [];
 
-  // Mint 4 cNFTs for maker
-  for (let i = 1; i <= 4; i++) {
-    console.log(`   Minting Maker Test cNFT #${i}...`);
+  // Monkey breeds for maker's collection
+  // Using Shadow Drive for metadata JSONs with real Unsplash monkey images
+  const makerMonkeys = [
+    { 
+      name: 'Capuchin Monkey', 
+      uri: 'https://shdw-drive.genesysgo.net/7nPP797RprCMJaSXsyoTiFvMZVQ6y1dUgobvczdWGd35/capuchin.json',
+      emoji: '🐒'
+    },
+    { 
+      name: 'Howler Monkey', 
+      uri: 'https://shdw-drive.genesysgo.net/7nPP797RprCMJaSXsyoTiFvMZVQ6y1dUgobvczdWGd35/howler.json',
+      emoji: '🦧'
+    },
+    { 
+      name: 'Spider Monkey', 
+      uri: 'https://shdw-drive.genesysgo.net/7nPP797RprCMJaSXsyoTiFvMZVQ6y1dUgobvczdWGd35/spider.json',
+      emoji: '🐵'
+    },
+    { 
+      name: 'Macaque Monkey', 
+      uri: 'https://shdw-drive.genesysgo.net/7nPP797RprCMJaSXsyoTiFvMZVQ6y1dUgobvczdWGd35/macaque.json',
+      emoji: '🙊'
+    },
+  ];
+
+  // Monkey breeds for taker's collection
+  const takerMonkeys = [
+    { 
+      name: 'Baboon Monkey', 
+      uri: 'https://shdw-drive.genesysgo.net/7nPP797RprCMJaSXsyoTiFvMZVQ6y1dUgobvczdWGd35/baboon.json',
+      emoji: '🦍'
+    },
+    { 
+      name: 'Mandrill Monkey', 
+      uri: 'https://shdw-drive.genesysgo.net/7nPP797RprCMJaSXsyoTiFvMZVQ6y1dUgobvczdWGd35/mandrill.json',
+      emoji: '🐺'
+    },
+    { 
+      name: 'Tamarin Monkey', 
+      uri: 'https://shdw-drive.genesysgo.net/7nPP797RprCMJaSXsyoTiFvMZVQ6y1dUgobvczdWGd35/tamarin.json',
+      emoji: '🐒'
+    },
+    { 
+      name: 'Marmoset Monkey', 
+      uri: 'https://shdw-drive.genesysgo.net/7nPP797RprCMJaSXsyoTiFvMZVQ6y1dUgobvczdWGd35/marmoset.json',
+      emoji: '🦧'
+    },
+  ];
+
+  // Mint maker's monkey collection
+  for (let i = 0; i < makerMonkeys.length; i++) {
+    const monkey = makerMonkeys[i];
+    console.log(`   ${monkey.emoji} Minting ${monkey.name}...`);
     const cnft = await mintCnft(
       connection,
       adminKeypair, // Tree authority (admin)
@@ -91,18 +141,19 @@ async function main() {
       makerTree.treeAuthority,
       makerKeypair.publicKey, // Owner (maker)
       {
-        name: `Maker Test NFT #${i}`,
-        symbol: 'MKRTEST',
-        uri: 'https://shdw-drive.genesysgo.net/7nPP797RprCMJaSXsyoTiFvMZVQ6y1dUgobvczdWGd35/test.json',
+        name: monkey.name,
+        symbol: 'MONKEY',
+        uri: monkey.uri,
       }
     );
     makerCnfts.push(cnft);
     console.log(`   ✅ Asset ID: ${cnft.assetId.toBase58()}`);
   }
 
-  // Mint 4 cNFTs for taker
-  for (let i = 1; i <= 4; i++) {
-    console.log(`   Minting Taker Test cNFT #${i}...`);
+  // Mint taker's monkey collection
+  for (let i = 0; i < takerMonkeys.length; i++) {
+    const monkey = takerMonkeys[i];
+    console.log(`   ${monkey.emoji} Minting ${monkey.name}...`);
     const cnft = await mintCnft(
       connection,
       adminKeypair, // Tree authority (admin)
@@ -110,9 +161,9 @@ async function main() {
       takerTree.treeAuthority,
       takerKeypair.publicKey, // Owner (taker)
       {
-        name: `Taker Test NFT #${i}`,
-        symbol: 'TKRTEST',
-        uri: 'https://shdw-drive.genesysgo.net/7nPP797RprCMJaSXsyoTiFvMZVQ6y1dUgobvczdWGd35/test.json',
+        name: monkey.name,
+        symbol: 'MONKEY',
+        uri: monkey.uri,
       }
     );
     takerCnfts.push(cnft);
