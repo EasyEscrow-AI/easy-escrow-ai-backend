@@ -148,8 +148,8 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
       });
     }
     
-    // === RETRY LOOP: Rebuild and execute immediately on stale proof ===
-    const MAX_ATTEMPTS = 5; // Increased from 3
+    // === RETRY LOOP: Single retry on stale proof ===
+    const MAX_ATTEMPTS = 2; // Initial attempt + 1 retry
     let signature: string | null = null;
     
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
