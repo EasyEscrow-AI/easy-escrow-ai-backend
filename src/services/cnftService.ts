@@ -214,7 +214,7 @@ export class CnftService {
     const dataHash = Array.from(bs58.decode(assetData.compression.data_hash));
     const creatorHash = Array.from(bs58.decode(assetData.compression.creator_hash));
     
-    return {
+    const cnftProof = {
       root,
       dataHash,
       creatorHash,
@@ -222,6 +222,19 @@ export class CnftService {
       index: assetData.compression.leaf_id, // Use actual leaf ID, not node_index
       proof,
     };
+    
+    // DEBUG: Log full proof details for investigation
+    console.log('[CnftService] Full proof details:', {
+      root: root.slice(0, 8),
+      dataHashFirst8: dataHash.slice(0, 8),
+      creatorHashFirst8: creatorHash.slice(0, 8),
+      nonce: cnftProof.nonce,
+      index: cnftProof.index,
+      proofLength: proof.length,
+      fullRoot: root,
+    });
+    
+    return cnftProof;
   }
   
   /**
