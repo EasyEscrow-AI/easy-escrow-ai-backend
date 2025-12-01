@@ -80,7 +80,7 @@ impl MockCnftAsset {
         let tree = Pubkey::new_unique();
         let bubblegum_program_id = mpl_bubblegum::ID;
         let (tree_authority, _) = Pubkey::find_program_address(
-            &[tree.as_ref()],
+            &[b"TreeConfig", tree.as_ref()],
             &bubblegum_program_id,
         );
         
@@ -674,10 +674,10 @@ fn test_stale_proof_scenario() {
 fn test_tree_authority_mismatch() {
     let cnft = MockCnftAsset::new(Pubkey::new_unique(), 0);
     
-    // Derive correct authority
+    // Derive correct authority (Bubblegum standard)
     let bubblegum_program_id = mpl_bubblegum::ID;
     let (correct_authority, _) = Pubkey::find_program_address(
-        &[cnft.tree.as_ref()],
+        &[b"TreeConfig", cnft.tree.as_ref()],
         &bubblegum_program_id,
     );
     

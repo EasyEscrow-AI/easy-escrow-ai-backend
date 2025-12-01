@@ -4958,7 +4958,7 @@
         "description": "Create comprehensive Rust test suite for compressed NFT swaps covering all swap scenarios, invalid proof handling, and failure cases.",
         "details": "Create programs/escrow/tests/cnft_swaps.rs with tests for: cNFT for SOL, cNFT for cNFT, cNFT for standard NFT, invalid proof rejection, missing accounts rejection, stale proof handling. Use solana-program-test for integration testing. Mock Merkle tree and cNFT minting. Verify ownership changes on-chain after swaps.",
         "testStrategy": "",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           23
         ],
@@ -5277,7 +5277,7 @@
     ],
     "metadata": {
       "created": "2025-11-17T05:45:23.312Z",
-      "updated": "2025-12-01T06:52:07.223Z",
+      "updated": "2025-12-01T06:52:16.382Z",
       "description": "Complete architectural pivot from escrow agreements to atomic NFT/cNFT swaps with durable nonces"
     }
   }
