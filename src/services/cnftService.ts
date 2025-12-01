@@ -209,6 +209,14 @@ export class CnftService {
     
     console.log(`[CnftService] Proof trimmed from ${dasProof.proof.length} to ${proof.length} nodes (canopy: ${CANOPY_DEPTH})`);
     
+    // CRITICAL: Calculate leaf_index from node_index
+    // Research: "leaf_index = node_index - 2^maxDepth"
+    // maxDepth equals the full proof length from DAS API
+    const maxDepth = dasProof.proof.length;
+    const leafIndex = dasProof.node_index - Math.pow(2, maxDepth);
+    
+    console.log(`[CnftService] Index calculation: node_index=${dasProof.node_index}, maxDepth=${maxDepth}, leafIndex=${leafIndex}`);
+    
     // CRITICAL: Use actual hashes from DAS API compression field
     // These are required for proper merkle verification by Bubblegum
     const dataHash = Array.from(bs58.decode(assetData.compression.data_hash));
@@ -218,8 +226,8 @@ export class CnftService {
       root,
       dataHash,
       creatorHash,
-      nonce: assetData.compression.leaf_id, // Nonce is typically the leaf ID
-      index: assetData.compression.leaf_id, // Use actual leaf ID, not node_index
+      nonce: assetData.compression.leaf_id, // Nonce is the leaf ID
+      index: leafIndex, // FIXED: Calculate from node_index, not use leaf_id directly
       proof,
     };
     
