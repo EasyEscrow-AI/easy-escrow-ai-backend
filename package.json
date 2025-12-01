@@ -59,6 +59,7 @@
     "staging:check-tree-root": "ts-node scripts/check-tree-root-onchain.ts",
     "staging:investigate-tree": "ts-node scripts/investigate-tree-state.ts",
     "staging:test-fresh-cnft": "ts-node scripts/test-fresh-cnft-swap.ts",
+    "staging:debug-das-caching": "ts-node scripts/debug-das-api-caching.ts",
     "test:production:e2e:all": "mocha --no-config --require ts-node/register tests/production/production-all-e2e.test.ts --timeout 180000 --reporter spec --colors --inline-diffs",
     "test:coverage": "echo 'Coverage reporting not yet configured'",
     "test:watch": "mocha --require ts-node/register 'tests/**/*.test.ts' --watch --watch-files 'src/**/*.ts,tests/**/*.ts'",
