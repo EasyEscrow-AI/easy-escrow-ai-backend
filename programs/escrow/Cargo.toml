@@ -28,6 +28,10 @@ anchor-spl = { workspace = true }
 solana-security-txt = "1.1.1"
 mpl-bubblegum = { workspace = true }
 
+[dev-dependencies]
+# Lightweight testing - no integration test framework needed
+# We'll test logic, validation, and proof handling without full chain simulation
+
 [profile.release]
 # Increase heap size for cNFT operations (dual cNFT swaps)
 # Default is 32KB, we need more for deserializing both maker and taker cNFT proofs

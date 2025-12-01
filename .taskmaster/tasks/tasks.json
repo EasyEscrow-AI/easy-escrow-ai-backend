@@ -4970,7 +4970,7 @@
             "description": "Create the cnft_swaps.rs test file with proper imports and test framework setup",
             "dependencies": [],
             "details": "Create programs/escrow/tests/cnft_swaps.rs file with necessary imports including solana-program-test, tokio test framework, and escrow program dependencies. Set up basic test module structure and helper functions for test initialization.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Verify file creation and compilation without errors"
           },
           {
@@ -5277,7 +5277,7 @@
     ],
     "metadata": {
       "created": "2025-11-17T05:45:23.312Z",
-      "updated": "2025-12-01T00:25:46.735Z",
+      "updated": "2025-12-01T06:46:29.061Z",
       "description": "Complete architectural pivot from escrow agreements to atomic NFT/cNFT swaps with durable nonces"
     }
   }
