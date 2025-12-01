@@ -271,12 +271,37 @@ export class CnftService {
       clearTimeout(timeoutId);
       
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('[CnftService] DAS API HTTP error:', {
+          status: response.status,
+          statusText: response.statusText,
+          body: errorText,
+        });
+        throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
       }
       
-      const data: any = await response.json();
+      // Get response text first for better error handling
+      const responseText = await response.text();
+      
+      if (!responseText || responseText.trim() === '') {
+        console.error('[CnftService] DAS API returned empty response');
+        throw new Error('DAS API returned empty response');
+      }
+      
+      let data: any;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError: any) {
+        console.error('[CnftService] Failed to parse DAS API response:', {
+          error: parseError.message,
+          responseLength: responseText.length,
+          responsePreview: responseText.substring(0, 200),
+        });
+        throw new Error(`Failed to parse DAS API response: ${parseError.message}`);
+      }
       
       if (data?.error) {
+        console.error('[CnftService] DAS API returned error:', data.error);
         throw new Error(`DAS API error: ${data.error.message || JSON.stringify(data.error)}`);
       }
       
