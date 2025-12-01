@@ -13,14 +13,14 @@ The Atomic Swap Test Page is a visual development tool for testing atomic swap f
 ### Split-Screen Wallet View
 
 - **Left Panel (Maker/Sender):** 
-  - Wallet: `FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71`
+  - Wallet: `AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z`
   - Displays SOL balance
   - Shows all NFTs owned by the wallet
   - Allows selection of NFTs to offer
   - Input field for SOL amount to offer
 
 - **Right Panel (Taker/Receiver):**
-  - Wallet: `Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk`
+  - Wallet: `5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4`
   - Displays SOL balance
   - Shows all NFTs owned by the wallet
   - Allows selection of NFTs to request
@@ -59,7 +59,7 @@ Fetches wallet information including balance and NFTs.
 {
   "success": true,
   "data": {
-    "address": "FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71",
+    "address": "AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z",
     "solBalance": 5.2341,
     "solBalanceLamports": 5234100000,
     "nfts": [
@@ -136,8 +136,8 @@ The test page uses these environment variables:
 ### Test Wallets
 
 The hardcoded test wallets are for **Devnet only**:
-- Maker: `FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71`
-- Taker: `Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk`
+- Maker: `AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z`
+- Taker: `5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4`
 
 **⚠️ Never use production wallets or private keys in this test page!**
 

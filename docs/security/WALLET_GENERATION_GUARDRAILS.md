@@ -106,10 +106,10 @@ When addresses match:
 ⚠️  Configuration file already exists: tests/fixtures/devnet-config.json
 
 Existing wallet addresses:
-  Sender:       FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71
-  Receiver:     Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk
-  Admin:        7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u
-  FeeCollector: C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E
+  Sender:       AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z
+  Receiver:     5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4
+  Admin:        498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R
+  FeeCollector: 8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ
 
 ✅ Addresses match standardized wallets. No need to overwrite.
 
@@ -122,10 +122,10 @@ When addresses don't match:
 ⚠️  GUARDRAIL WARNING: Existing addresses DO NOT match standardized wallets!
 
 Standardized addresses:
-  Sender:       FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71
-  Receiver:     Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk
-  Admin:        7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u
-  FeeCollector: C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E
+  Sender:       AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z
+  Receiver:     5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4
+  Admin:        498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R
+  FeeCollector: 8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ
 
 ⚠️  Overwriting will change your wallet addresses!
    This means you'll need to fund NEW addresses.
@@ -156,10 +156,10 @@ Overwrite with standardized static wallets? (y/n):
 ```json
 {
   "wallets": {
-    "sender": "FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71",
-    "receiver": "Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk",
-    "admin": "7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u",
-    "feeCollector": "C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E"
+    "sender": "AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z",
+    "receiver": "5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4",
+    "admin": "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R",
+    "feeCollector": "8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ"
   },
   "walletKeys": {
     "sender": "<base58_private_key>",
@@ -268,10 +268,10 @@ After:
 ### 3. Enforces Standardization
 
 The guardrails check if wallet addresses match the standardized set:
-- Sender: `FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71`
-- Receiver: `Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk`
-- Admin: `7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u`
-- FeeCollector: `C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E`
+- Sender: `AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z`
+- Receiver: `5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4`
+- Admin: `498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R`
+- FeeCollector: `8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ`
 
 If addresses match: ✅ No action needed  
 If addresses differ: ⚠️ Warning before overwrite

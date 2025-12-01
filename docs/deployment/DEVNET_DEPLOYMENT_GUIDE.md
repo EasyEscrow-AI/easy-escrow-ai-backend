@@ -135,18 +135,18 @@ The static wallet addresses need to be funded on devnet:
 ```powershell
 # Option 1: Automated script
 .\scripts\fund-devnet-wallets.ps1 `
-  -Buyer Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk `
-  -Seller FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71 `
-  -Admin 7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u `
-  -FeeCollector C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E
+  -Buyer 5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4 `
+  -Seller AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z `
+  -Admin 498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R `
+  -FeeCollector 8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ
 ```
 
 ```bash
 # Option 2: Individual commands
-solana transfer FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71 2 --url devnet
-solana transfer Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk 2 --url devnet
-solana transfer 7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u 2 --url devnet
-solana transfer C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E 1 --url devnet
+solana transfer AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z 2 --url devnet
+solana transfer 5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4 2 --url devnet
+solana transfer 498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R 2 --url devnet
+solana transfer 8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ 1 --url devnet
 ```
 
 ## Step 5: Run E2E Tests
@@ -302,10 +302,10 @@ For reference (public addresses, safe to share):
 
 | Role | Address |
 |------|---------|
-| Sender (Seller) | `FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71` |
-| Receiver (Buyer) | `Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk` |
-| Admin | `7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u` |
-| FeeCollector | `C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E` |
+| Sender (Seller) | `AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z` |
+| Receiver (Buyer) | `5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4` |
+| Admin | `498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R` |
+| FeeCollector | `8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ` |
 
 ## Related Documentation
 

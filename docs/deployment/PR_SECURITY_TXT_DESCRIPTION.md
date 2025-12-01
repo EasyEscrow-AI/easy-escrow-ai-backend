@@ -47,7 +47,7 @@ security_txt! {
 
 **Found staging authority wallet:**
 - Location: `~/.config/solana/id.json` (default Solana CLI wallet)
-- Public Key: `CPDz3pC5AnK7es3oEcP52HLhByPSAWG6f9QGP6j4jjEA`
+- Public Key: `498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R`
 - Backed up to: `wallets/staging/staging-deployer.json` (gitignored)
 
 ### 4. Deployment

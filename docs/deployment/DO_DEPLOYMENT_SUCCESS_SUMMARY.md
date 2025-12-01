@@ -94,10 +94,10 @@ All **26 environment variables** from `.env.dev` successfully deployed:
 ### Devnet Wallets ✅
 | Wallet | Address | Private Key Env Var |
 |--------|---------|---------------------|
-| **Sender** | `FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71` | `DEVNET_SENDER_PRIVATE_KEY` ✅ |
-| **Receiver** | `Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk` | `DEVNET_RECEIVER_PRIVATE_KEY` ✅ |
-| **Admin** | `7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u` | `DEVNET_ADMIN_PRIVATE_KEY` ✅ |
-| **Fee Collector** | `C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E` | `DEVNET_FEE_COLLECTOR_PRIVATE_KEY` ✅ |
+| **Sender** | `AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z` | `DEVNET_SENDER_PRIVATE_KEY` ✅ |
+| **Receiver** | `5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4` | `DEVNET_RECEIVER_PRIVATE_KEY` ✅ |
+| **Admin** | `498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R` | `DEVNET_ADMIN_PRIVATE_KEY` ✅ |
+| **Fee Collector** | `8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ` | `DEVNET_FEE_COLLECTOR_PRIVATE_KEY` ✅ |
 
 ### Database & Redis ✅
 - `DATABASE_URL` = PostgreSQL connection (DigitalOcean Managed)

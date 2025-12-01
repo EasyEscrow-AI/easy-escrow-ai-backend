@@ -78,7 +78,7 @@ cargo build-sbf
 **Deployment Information:**
 - Program ID: `7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV`
 - Owner: BPFLoaderUpgradeab1e (upgradeable loader)
-- Authority: `CPDz3pC5AnK7es3oEcP52HLhByPSAWG6f9QGP6j4jjEA`
+- Authority: `498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R`
 - Last Deployed Slot: 414,283,640
 - Account Balance: 2.06 SOL
 - Status: ✅ Active and Upgradeable
@@ -148,7 +148,7 @@ The program is deployed with the upgradeable loader, allowing for future updates
 anchor upgrade target/deploy/escrow.so --program-id 7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV
 ```
 
-**Note:** Upgrades must be signed by the current authority: `CPDz3pC5AnK7es3oEcP52HLhByPSAWG6f9QGP6j4jjEA`
+**Note:** Upgrades must be signed by the current authority: `498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R`
 
 ### Integration Points
 This program is ready for integration with:
