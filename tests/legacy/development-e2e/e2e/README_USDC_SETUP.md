@@ -43,7 +43,7 @@ For the receiver wallet (buyer):
 
 Example:
 ```
-Receiver: Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk
+Receiver: 5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4
 Required: 0.5+ USDC
 ```
 
@@ -53,7 +53,7 @@ Before running tests, verify your wallets have USDC:
 
 ```powershell
 # Check receiver USDC balance
-solana balance --url devnet Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk
+solana balance --url devnet 5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4
 ```
 
 Or use the inline check script:
