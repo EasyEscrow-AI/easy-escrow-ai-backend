@@ -19,6 +19,7 @@ import * as path from 'path';
 
 const STAGING_API_URL = process.env.STAGING_API_URL || 'https://staging-api.easyescrow.ai';
 const ATOMIC_SWAP_API_KEY = process.env.ATOMIC_SWAP_API_KEY || '';
+const EXPECTED_RPC_PROVIDER = process.env.EXPECTED_RPC_PROVIDER || 'helius'; // 'helius' or 'quicknode'
 
 interface SmokeTestResult {
   test: string;
@@ -221,8 +222,9 @@ async function main() {
   
   if (dasApiWorking) {
     console.log('   ✅ DAS API is accessible');
-    console.log('   ✅ Backend appears to be using QuickNode or Helius RPC');
-    console.log('   ✅ SOLANA_RPC_URL is likely configured correctly');
+    console.log('   ✅ Backend is using Helius or QuickNode with DAS API');
+    console.log('   ✅ SOLANA_RPC_URL is correctly configured');
+    console.log('   ℹ️  cNFT swaps should work correctly');
     
     results.push({
       test: 'RPC Configuration',
@@ -231,20 +233,26 @@ async function main() {
     });
   } else {
     console.log('   ❌ DAS API not accessible');
-    console.log('   ❌ Backend may be using public devnet RPC (no DAS API)');
-    console.log('   ❌ SOLANA_RPC_URL needs to be set to QuickNode URL');
-    console.log('\n   📝 To fix:');
+    console.log('   ❌ Backend RPC endpoint does not have DAS API enabled');
+    console.log('   ❌ SOLANA_RPC_URL needs to be updated');
+    console.log('');
+    console.log('   📝 To fix (RECOMMENDED - Helius with DAS API):');
     console.log('   1. Go to DigitalOcean App Platform');
     console.log('   2. Select: easyescrow-backend-staging');
     console.log('   3. Settings → Environment Variables');
-    console.log('   4. Set/Update: SOLANA_RPC_URL');
-    console.log('   5. Value: https://red-quaint-wind.solana-devnet.quiknode.pro/7306a6f82b57d473dd2bb175986828be9c121355');
-    console.log('   6. Redeploy the app');
+    console.log('   4. SET: SOLANA_RPC_URL = https://devnet.helius-rpc.com/?api-key=YOUR_KEY');
+    console.log('   5. REMOVE: HELIUS_RPC_URL (not used by code)');
+    console.log('   6. REMOVE: CNFT_INDEXER_API_URL (not needed)');
+    console.log('   7. REMOVE: CNFT_INDEXER_API_KEY (not needed)');
+    console.log('   8. Redeploy the app');
+    console.log('');
+    console.log('   ℹ️  Note: Use SOLANA_RPC_URL (not HELIUS_RPC_URL)');
+    console.log('   ℹ️  The code looks for SOLANA_RPC_URL for both RPC and DAS API');
     
     results.push({
       test: 'RPC Configuration',
       passed: false,
-      message: 'Backend likely not using QuickNode RPC',
+      message: 'Backend RPC does not have DAS API enabled',
     });
   }
 
