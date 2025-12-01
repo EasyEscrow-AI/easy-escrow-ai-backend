@@ -210,10 +210,17 @@ export class OfferManager {
     serializedTransaction: string;
     offer: any;
   }> {
-    console.log('[OfferManager] Rebuilding transaction for offer:', offerId);
+    // Defensive: Ensure offerId is a number (route params can sometimes be strings)
+    const safeOfferId = typeof offerId === 'string' ? parseInt(offerId, 10) : offerId;
+    
+    if (isNaN(safeOfferId)) {
+      throw new Error(`Invalid offer ID: ${offerId}`);
+    }
+    
+    console.log('[OfferManager] Rebuilding transaction for offer:', safeOfferId);
     
     const offer = await this.prisma.swapOffer.findUnique({
-      where: { id: offerId },
+      where: { id: safeOfferId },
     });
     
     if (!offer) {
