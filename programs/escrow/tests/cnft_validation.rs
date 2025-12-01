@@ -14,6 +14,7 @@
 use anchor_lang::prelude::Pubkey;
 
 /// Mock cNFT proof structure for testing
+/// Public to allow reuse in other test modules
 #[derive(Clone, Debug, PartialEq)]
 pub struct TestCnftProof {
     pub root: Vec<u8>,
