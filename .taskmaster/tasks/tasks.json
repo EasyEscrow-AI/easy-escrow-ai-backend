@@ -4579,7 +4579,7 @@
         "description": "Develop a complete test suite covering unit tests for core services, integration tests for offer management, end-to-end tests for swap flows, and API endpoint testing with comprehensive coverage of all atomic swap functionality.",
         "details": "Implement a comprehensive test suite with the following components:\n\n1. **Unit Tests for Core Services**:\n   - NoncePoolManager: Test pool initialization, thread-safe assignment/release, nonce advancement, cleanup operations, and error handling with mocked Solana RPC calls\n   - FeeCalculator: Test fee calculations for all swap types (NFT-to-NFT, NFT-to-SOL, SOL-to-NFT), percentage calculations, flat fee applications, fee cap enforcement, and edge cases\n   - AssetValidator: Test standard NFT ownership verification, cNFT validation with Merkle proofs, error handling for invalid assets, and caching mechanisms\n   - TransactionBuilder: Test transaction construction for various swap combinations, durable nonce integration, ATA creation logic, instruction ordering, and transaction size limits\n\n2. **Integration Tests for OfferManager**:\n   - Test complete offer lifecycle (creation, counter-offers, cancellation, acceptance, fulfillment)\n   - Test coordination between OfferManager and all dependent services (NoncePoolManager, AssetValidator, FeeCalculator, TransactionBuilder)\n   - Test database transaction management and rollback scenarios\n   - Test concurrent offer operations and race condition handling\n\n3. **End-to-End Swap Flow Tests**:\n   - NFT-to-NFT swaps: Test complete flow from offer creation to transaction confirmation\n   - NFT-to-cNFT swaps: Test cross-format asset swaps with proper Merkle proof handling\n   - Swaps with SOL: Test mixed asset swaps including SOL transfers and fee calculations\n   - Test swap flows both with and without SOL components to verify different fee structures\n\n4. **API Endpoint Tests**:\n   - Test all HTTP routes (/offers, /counter-offers, /cancel, /accept, /confirm, /list)\n   - Test request validation, authentication, error responses, and success scenarios\n   - Test rate limiting, CORS handling, and middleware functionality\n   - Test API response formats and error message consistency\n\n5. **Specialized Test Scenarios**:\n   - Durable nonce invalidation on cancel: Test that cancelled offers properly invalidate their assigned nonces\n   - Offer expiration logic: Test automatic offer expiration, cleanup jobs, and expired offer handling\n   - Error recovery scenarios: Test system behavior during RPC failures, database outages, and partial transaction failures\n\n6. **Test Infrastructure Setup**:\n   - Configure test database with proper schema and test data seeding\n   - Set up Solana test validator or use devnet for blockchain interactions\n   - Implement test utilities for creating mock assets, wallets, and transactions\n   - Create test fixtures for various swap scenarios and edge cases",
         "testStrategy": "1. **Test Coverage Verification**:\n   - Achieve minimum 90% code coverage across all core services and API routes\n   - Use coverage tools (nyc/istanbul) to identify untested code paths\n   - Verify all error handling branches are tested with appropriate scenarios\n\n2. **Unit Test Validation**:\n   - Run unit tests in isolation with all external dependencies mocked\n   - Verify each service's business logic works correctly independent of other components\n   - Test edge cases, boundary conditions, and error scenarios for each service\n\n3. **Integration Test Execution**:\n   - Run integration tests against test database with realistic data scenarios\n   - Verify service interactions work correctly with actual database transactions\n   - Test concurrent operations and ensure thread safety under load\n\n4. **End-to-End Test Verification**:\n   - Execute complete swap flows against Solana test validator or devnet\n   - Verify actual blockchain transactions are created and confirmed correctly\n   - Test with real NFT/cNFT assets and validate asset transfers occur properly\n\n5. **API Test Validation**:\n   - Use supertest or similar library to test HTTP endpoints with various request scenarios\n   - Verify response status codes, headers, and body content match specifications\n   - Test authentication flows and ensure protected endpoints reject unauthorized requests\n\n6. **Performance and Load Testing**:\n   - Test system behavior under concurrent user load\n   - Verify nonce pool management works correctly under high demand\n   - Test database performance with large numbers of offers and transactions\n\n7. **Continuous Integration Setup**:\n   - Configure test suite to run automatically on code changes\n   - Set up test reporting and failure notifications\n   - Ensure tests can run reliably in CI/CD environment with proper test isolation",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           1,
           2,
@@ -4617,7 +4617,7 @@
         "id": 14,
         "title": "Deploy Atomic Swap Program to Staging Environment",
         "description": "Deploy atomic swap backend configuration to the existing DigitalOcean staging environment. The staging program (AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei) is already deployed to devnet. This task focuses on verifying existing secrets, adding any missing atomic swap configuration, and deploying via the existing auto-deploy workflow.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           7
         ],
@@ -4632,7 +4632,7 @@
         "description": "Perform comprehensive end-to-end testing of the atomic swap system on staging environment using program ID AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei, covering all swap types, offer lifecycle, edge cases, integration scenarios, and performance testing.",
         "details": "Execute comprehensive end-to-end testing with the following systematic approach:\n\n1. **Basic Swap Testing Execution**:\n   - Execute NFT-to-NFT swaps on staging using real test NFTs and verify complete transaction flow from offer creation to confirmation\n   - Execute NFT-to-SOL swaps testing various SOL amounts (0.1, 1, 5 SOL) and verify proper fee calculation and collection\n   - Execute SOL-to-NFT swaps with different NFT values and verify treasury fee collection matches expected calculations\n   - Execute cNFT-to-cNFT swaps using Bubblegum program integration and verify Merkle proof validation works correctly\n   - Execute mixed NFT/cNFT swaps (standard NFT for cNFT) and verify both asset types transfer properly\n\n2. **Offer Lifecycle Testing Implementation**:\n   - Create offers using staging API endpoints and verify on-chain state matches database records\n   - Create counter-offers for existing offers and test proper chain management with multiple counter-offers\n   - Cancel offers at various stages (pending, counter-offered) and verify nonce invalidation prevents replay attacks\n   - Accept offers and verify transaction construction includes all required instructions (nonce advance, transfers, fee collection)\n   - Confirm swaps and verify final state shows proper asset ownership transfer and fee collection\n\n3. **Edge Case Testing Scenarios**:\n   - Test offer expiration by creating offers with short expiration times and verifying they cannot be accepted after expiration\n   - Test concurrent offer acceptance using multiple clients attempting to accept the same offer simultaneously\n   - Test maximum transaction size scenarios by creating swaps with multiple NFTs approaching 1232 byte limit\n   - Test fee calculation edge cases including zero-value swaps, maximum fee cap scenarios, and percentage calculation precision\n   - Test nonce pool exhaustion by creating more concurrent swaps than available nonces and verify proper queuing/waiting\n\n4. **Integration Testing Workflows**:\n   - Execute complete user workflows from wallet connection through swap completion using staging frontend\n   - Verify database consistency after each swap by checking offer status, transaction records, and user statistics\n   - Test error handling and recovery scenarios including failed transactions, network timeouts, and RPC errors\n   - Verify monitoring and alerting systems trigger correctly for failed swaps, nonce pool depletion, and system errors\n\n5. **Performance Testing Execution**:\n   - Execute load testing with 10-50 concurrent swaps to test system throughput and identify bottlenecks\n   - Measure transaction confirmation times across different swap types and document performance baselines\n   - Test nonce pool performance under load including pool replenishment timing and thread contention handling\n   - Monitor database performance during high load and verify query optimization effectiveness\n\n6. **Staging Environment Validation**:\n   - Verify all backend services are properly configured for staging program ID AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei\n   - Test treasury PDA derivation and fee collection using staging program\n   - Validate cNFT indexer integration works correctly with staging environment\n   - Verify monitoring dashboards show accurate staging metrics and alerts",
         "testStrategy": "1. **Test Execution Validation**:\n   - Execute minimum 100 successful swaps across all swap types (NFT-to-NFT, NFT-to-SOL, SOL-to-NFT, cNFT swaps) on staging\n   - Verify 100% success rate for basic swap scenarios with proper asset ownership transfer\n   - Document all failed test cases with detailed error analysis and resolution steps\n\n2. **Offer Lifecycle Verification**:\n   - Create and track 50+ offers through complete lifecycle (creation → counter-offer → acceptance → confirmation)\n   - Verify database state consistency matches on-chain state for all offer status transitions\n   - Test offer cancellation at each lifecycle stage and verify proper cleanup\n\n3. **Edge Case Coverage Validation**:\n   - Execute all identified edge cases with documented results and system behavior\n   - Verify error handling provides clear user feedback and proper system recovery\n   - Test race condition scenarios with concurrent users and verify system maintains consistency\n\n4. **Performance Baseline Establishment**:\n   - Achieve minimum 10 concurrent swaps without system degradation\n   - Document transaction confirmation times with 95th percentile under 30 seconds\n   - Verify nonce pool maintains adequate buffer during peak load testing\n\n5. **Integration Test Completion**:\n   - Execute complete user workflows with 100% success rate for happy path scenarios\n   - Verify all monitoring alerts trigger correctly during simulated failure scenarios\n   - Confirm database integrity checks pass after all testing phases\n\n6. **Production Readiness Certification**:\n   - Generate comprehensive test report documenting all test results, performance metrics, and identified issues\n   - Obtain stakeholder sign-off on test results before production deployment consideration\n   - Verify all critical bugs identified during testing have been resolved and retested",
-        "status": "pending",
+        "status": "in-progress",
         "dependencies": [
           12,
           14
@@ -4646,7 +4646,7 @@
         "description": "Conduct comprehensive security audit and final verification of the atomic swap system on staging environment, covering security review, data integrity, monitoring verification, documentation validation, and production readiness checklist before production deployment.",
         "details": "Implement comprehensive security audit and verification with the following systematic approach:\n\n1. **Security Review Implementation**:\n   - Audit all transaction signing flows by reviewing TransactionBuilder service code and testing signature validation with malformed/invalid signatures\n   - Verify proper authorization checks in all API endpoints by testing unauthorized access attempts and wallet signature validation\n   - Review nonce account security by testing NoncePoolManager thread safety, account isolation, and unauthorized nonce usage attempts\n   - Test for potential attack vectors including reentrancy attacks on atomic_swap_with_fee instruction, MEV exploitation scenarios, and front-running protection\n   - Verify fee collection cannot be bypassed by testing direct program calls, modified transaction structures, and fee calculation tampering\n   - Test Merkle proof validation for cNFTs by submitting invalid proofs, expired proofs, and proofs for non-owned assets\n\n2. **Data Integrity Verification Implementation**:\n   - Verify database transactions are atomic by testing concurrent offer operations and simulating database connection failures mid-transaction\n   - Test rollback scenarios for failed operations including partial transaction failures, network timeouts, and RPC errors\n   - Verify offer state transitions are correct by testing all state changes (pending → accepted → confirmed → completed) with edge cases\n   - Check for race conditions by running concurrent operations on same offers and testing nonce pool assignment under high load\n\n3. **Monitoring & Alerting Verification Implementation**:\n   - Verify all critical operations are logged by checking log output for offer creation, acceptance, confirmation, and error scenarios\n   - Test alerting for error conditions by triggering known error states and verifying alert delivery mechanisms\n   - Verify health checks report accurate status by testing with various system states (database down, RPC unavailable, nonce pool exhausted)\n   - Test background jobs execute correctly by monitoring nonce pool replenishment, cleanup tasks, and scheduled maintenance operations\n\n4. **Documentation Verification Implementation**:\n   - Verify all API endpoints are documented correctly by comparing documentation against actual endpoint implementations from Task 8\n   - Check deployment procedures are complete by following staging deployment steps and identifying any missing configuration or setup steps\n   - Verify migration guides are accurate by testing migration procedures on clean test environment\n   - Test that examples and code samples work by executing all provided code examples and SDK usage patterns\n\n5. **Production Readiness Checklist Implementation**:\n   - Confirm all staging tests from Task 15 are passing with 100% success rate across all swap types\n   - Verify no critical bugs or security issues remain by reviewing all test results and security audit findings\n   - Validate performance metrics are acceptable by checking transaction processing times, API response times, and resource utilization\n   - Confirm monitoring and alerting systems are functional by testing alert triggers and notification delivery\n   - Verify rollback plan is documented and tested by executing rollback procedures on staging environment\n   - Confirm production program ID is configured and ready with proper treasury PDA initialization and fee collection setup",
         "testStrategy": "1. **Security Audit Validation**:\n   - Execute penetration testing suite covering all identified attack vectors with documented results showing no successful exploits\n   - Verify authorization bypass attempts fail with proper error responses and logging\n   - Test nonce account security by attempting unauthorized access and confirming proper isolation\n   - Validate Merkle proof security by submitting 100+ invalid proof scenarios and confirming all are rejected\n\n2. **Data Integrity Testing**:\n   - Execute 1000+ concurrent database operations and verify 100% atomicity with no partial state corruption\n   - Test rollback scenarios by simulating failures at each stage of offer lifecycle and confirming proper cleanup\n   - Run race condition tests with 50+ concurrent threads and verify no data corruption or inconsistent states\n   - Validate offer state machine by testing all valid and invalid state transitions\n\n3. **Monitoring System Verification**:\n   - Verify 100% of critical operations generate appropriate log entries with required detail level\n   - Test alert delivery by triggering each error condition and confirming alerts are received within SLA timeframes\n   - Validate health check accuracy by testing with various failure scenarios and confirming status reporting\n   - Monitor background job execution for 24-hour period and verify all scheduled tasks complete successfully\n\n4. **Documentation Accuracy Testing**:\n   - Execute all API examples from documentation and verify 100% success rate with expected responses\n   - Follow deployment procedures step-by-step on clean environment and document any gaps or issues\n   - Test migration guides by performing actual migration and confirming all steps work as documented\n   - Validate code samples by running in isolated environment and confirming expected behavior\n\n5. **Production Readiness Verification**:\n   - Confirm Task 15 end-to-end testing shows 100% pass rate with no critical issues\n   - Review security audit results and confirm zero critical or high-severity findings\n   - Validate performance benchmarks meet or exceed requirements (sub-second API responses, successful transaction processing)\n   - Test complete rollback procedure and confirm system can be restored to previous state within defined RTO/RPO\n   - Verify production configuration is complete and tested with proper program ID and treasury setup",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           15,
           14,
@@ -4659,7 +4659,7 @@
         "id": 17,
         "title": "Set up Local Docker Development Environment for Atomic Swap System",
         "description": "Configure comprehensive local Docker development environment using existing Docker Compose setup with PostgreSQL, Redis, backend services, local Solana test validator, and development scripts to enable fast iteration during atomic swap system development.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           1,
           11
@@ -4674,7 +4674,7 @@
             "description": "Update the existing .env file to include all atomic swap specific environment variables while preserving existing configuration for Docker and database setup.",
             "dependencies": [],
             "details": "Modify the existing .env file to add atomic swap specific variables:\n- SOLANA_NETWORK=local\n- SOLANA_RPC_URL=http://localhost:8899\n- SOLANA_WS_URL=ws://localhost:8900\n- LOCAL_PROGRAM_ID (placeholder for local deployment)\n- Fee configuration variables (FLAT_NFT_FEE, SOL_SWAP_PERCENTAGE, MAX_FEE_CAP_SOL)\n- Treasury PDA configuration (TREASURY_PDA_SEED, TREASURY_PDA_BUMP)\n- Nonce pool settings (NONCE_POOL_SIZE, NONCE_POOL_REFILL_THRESHOLD)\n- Platform authority keypair configuration\nEnsure existing DATABASE_URL and REDIS_URL remain compatible with current Docker setup.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Verify all atomic swap environment variables are properly set and existing Docker/database configuration remains functional"
           },
           {
@@ -4683,7 +4683,7 @@
             "description": "Ensure atomic swap database migrations work correctly with the existing npm run db:migrate command and Docker PostgreSQL setup.",
             "dependencies": [],
             "details": "Configure the migration system to work with existing infrastructure:\n- Verify npm run db:migrate works with atomic swap migrations from Task 1\n- Ensure migrations run against existing PostgreSQL container (postgres/postgres@localhost:5432)\n- Test migration rollback functionality with existing database setup\n- Configure migration state tracking to work with existing database schema\n- Add atomic swap specific seed data that integrates with existing development workflow",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Execute npm run db:migrate and verify all atomic swap tables are created correctly in existing PostgreSQL container"
           },
           {
@@ -4694,7 +4694,7 @@
               1
             ],
             "details": "Integrate program ID management with existing localnet infrastructure:\n- Modify existing localnet:setup script to capture and set LOCAL_PROGRAM_ID after program deployment\n- Ensure LOCAL_PROGRAM_ID is properly updated in .env file during local development\n- Configure program deployment to work with existing solana-test-validator setup\n- Add LOCAL_PROGRAM_ID validation to existing health check scripts\n- Ensure program ID persistence across localnet:reset operations when needed",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Execute npm run localnet:setup and verify LOCAL_PROGRAM_ID is properly set and accessible to backend services"
           },
           {
@@ -4706,7 +4706,7 @@
               3
             ],
             "details": "Develop a comprehensive startup script that:\n- Executes npm run docker:start to initialize PostgreSQL, Redis, and backend services\n- Waits for Docker service health checks to pass\n- Runs npm run db:migrate to apply atomic swap database migrations\n- Executes npm run localnet:start to start solana-test-validator\n- Runs npm run localnet:setup for keypair and program deployment\n- Verifies all services are running and properly configured\n- Provides clear status feedback and error handling throughout the process",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Execute unified startup script and verify all services (Docker containers and Solana validator) start correctly with proper atomic swap configuration"
           },
           {
@@ -4717,7 +4717,7 @@
               4
             ],
             "details": "Develop a reset script that:\n- Executes npm run docker:stop to stop all Docker services\n- Runs npm run localnet:reset to clean Solana validator state\n- Clears any cached program deployments and temporary files\n- Executes npm run docker:restart to reinitialize Docker services with clean state\n- Runs database migrations and seed data insertion for fresh development state\n- Provides option to preserve or reset LOCAL_PROGRAM_ID based on development needs\n- Includes verification steps to ensure clean environment reset",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Execute reset script and verify complete environment cleanup and reinitialization with all atomic swap components working correctly"
           }
         ]
@@ -5050,7 +5050,7 @@
             "description": "Implement a helper function to derive tree authority Program Derived Addresses (PDAs) for compressed NFTs",
             "dependencies": [],
             "details": "Create getTreeAuthority() function in transactionBuilder.ts that derives the tree authority PDA using the merkle tree public key and the bubblegum program ID. Use PublicKey.findProgramAddressSync() with appropriate seeds.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Unit test PDA derivation with known merkle tree addresses and verify correct tree authority addresses are generated"
           },
           {
@@ -5061,7 +5061,7 @@
               1
             ],
             "details": "Modify createAtomicSwapInstruction() to check AssetType.CNFT vs AssetType.NFT from the asset information. Add conditional branching logic that will determine which accounts and data to include based on asset type.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Test with both compressed and standard NFT asset data to ensure correct type detection and branching"
           },
           {
@@ -5073,7 +5073,7 @@
               2
             ],
             "details": "For cNFT swaps, add maker/taker merkle_tree accounts, tree_authority (using getTreeAuthority() helper), bubblegum_program, compression_program, and log_wrapper accounts to the instruction. Ensure accounts are added in the correct order expected by the Rust program.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Verify all required cNFT accounts are present in generated instructions and in correct order"
           },
           {
@@ -5085,7 +5085,7 @@
               3
             ],
             "details": "Extract proof data (root, dataHash, creatorHash, nonce, leafIndex) from assetInfo.proofData and serialize it into the instruction data buffer. Ensure the data format matches what the Rust program expects for cNFT verification.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Test instruction data serialization with sample proof data and verify it matches expected format"
           },
           {
@@ -5098,7 +5098,7 @@
               4
             ],
             "details": "Add conditional logic to preserve existing behavior for AssetType.NFT swaps. Standard NFT swaps should use the same accounts and instruction data format as before, without any cNFT-specific additions.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Run existing standard NFT swap tests to ensure no regression in functionality"
           },
           {
@@ -5113,7 +5113,7 @@
               5
             ],
             "details": "Test scenarios including: standard NFT to cNFT swaps, cNFT to standard NFT swaps, cNFT to cNFT swaps, and mixed swaps with SOL. Verify correct accounts, instruction data, and proof handling for each combination.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Create comprehensive integration tests covering all swap type combinations and verify successful transaction building"
           },
           {
@@ -5180,7 +5180,7 @@
             "description": "Create the test file structure and configure the testing environment for cNFT swap E2E tests on devnet staging",
             "dependencies": [],
             "details": "Create tests/staging/e2e/05-atomic-cnft-swaps.test.ts file with proper imports, test configuration for devnet environment, connection setup, and test wallet initialization. Configure Jest/Mocha test runner with appropriate timeouts for blockchain operations.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Verify test file structure is created correctly and basic configuration loads without errors"
           },
           {
@@ -5191,7 +5191,7 @@
               1
             ],
             "details": "Implement test cases that validate maker owns cNFT using DAS API, build transaction with Merkle proof data, sign and send transaction, and verify SOL transfer and cNFT ownership change on-chain. Include failure scenarios like invalid proofs, insufficient SOL balance, and unauthorized attempts.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Test both successful swaps and edge cases like invalid proofs, network failures, and insufficient balances"
           },
           {
@@ -5235,7 +5235,7 @@
             "title": "Test stale proof retry mechanism for cNFT swaps",
             "description": "Test automatic retry mechanism when initial cNFT swap fails due to stale Merkle proof, verifying fresh proof fetching and successful swap completion",
             "details": "Test the critical edge case where a Merkle proof becomes stale between proof generation and transaction submission. Steps: 1) Fetch initial cNFT proof from DAS API, 2) Trigger Merkle tree change by minting another cNFT to same tree, 3) Attempt swap with stale proof, 4) Verify backend detects StaleProof error, 5) Confirm automatic retry with fresh proof, 6) Verify swap completes successfully. This validates proof freshness retry logic matching Sorare's production patterns (program Gz9o1yxV5kVfyC53fFu7StTVeetPZWa2sohzvxJiLxMP).",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               1,
               2,
@@ -5266,7 +5266,7 @@
         "description": "Deploy updated program with cNFT support to devnet, upload IDL, update backend IDL files, and verify cNFT swaps work end-to-end on staging.",
         "details": "Build program with cargo build-sbf from programs/escrow/. Generate IDL with anchor idl build. Deploy to devnet with anchor upgrade using staging-deployer.json. Upload IDL with anchor idl upgrade. Copy IDL to src/generated/anchor/escrow-idl-staging.json. Commit and push IDL update. Test manually on /test page with real cNFT. Verify on Solscan. Run E2E test suite. Document any issues encountered.",
         "testStrategy": "",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           24,
           28
@@ -5277,7 +5277,7 @@
     ],
     "metadata": {
       "created": "2025-11-17T05:45:23.312Z",
-      "updated": "2025-11-28T00:40:04.072Z",
+      "updated": "2025-12-01T00:25:46.735Z",
       "description": "Complete architectural pivot from escrow agreements to atomic NFT/cNFT swaps with durable nonces"
     }
   }
