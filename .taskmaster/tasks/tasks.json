@@ -4958,7 +4958,7 @@
         "description": "Create comprehensive Rust test suite for compressed NFT swaps covering all swap scenarios, invalid proof handling, and failure cases.",
         "details": "Create programs/escrow/tests/cnft_swaps.rs with tests for: cNFT for SOL, cNFT for cNFT, cNFT for standard NFT, invalid proof rejection, missing accounts rejection, stale proof handling. Use solana-program-test for integration testing. Mock Merkle tree and cNFT minting. Verify ownership changes on-chain after swaps.",
         "testStrategy": "",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           23
         ],
@@ -4970,7 +4970,7 @@
             "description": "Create the cnft_swaps.rs test file with proper imports and test framework setup",
             "dependencies": [],
             "details": "Create programs/escrow/tests/cnft_swaps.rs file with necessary imports including solana-program-test, tokio test framework, and escrow program dependencies. Set up basic test module structure and helper functions for test initialization.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Verify file creation and compilation without errors"
           },
           {
@@ -4981,7 +4981,7 @@
               1
             ],
             "details": "Implement mock Merkle tree structure with proof generation capabilities. Create helper functions to mint mock cNFTs with proper metadata and ownership tracking. Include utilities for generating valid and invalid Merkle proofs for testing different scenarios.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Unit tests for mock utilities to ensure they generate valid test data"
           },
           {
@@ -4992,7 +4992,7 @@
               2
             ],
             "details": "Create test cases covering successful cNFT to SOL swaps with proper proof validation, ownership verification, and SOL transfer confirmation. Include tests for different SOL amounts and fee calculations. Verify on-chain state changes after swap completion.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Integration tests using solana-program-test to verify complete swap flow and state changes"
           },
           {
@@ -5003,7 +5003,7 @@
               2
             ],
             "details": "Develop test cases for cNFT to cNFT swaps including dual proof validation, ownership transfers for both assets, and proper Merkle tree updates. Test scenarios with different cNFT collections and verify both assets change ownership correctly.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Integration tests verifying dual cNFT ownership changes and Merkle proof validations"
           },
           {
@@ -5014,7 +5014,7 @@
               2
             ],
             "details": "Build test cases for mixed swaps between cNFTs and standard NFTs, handling different proof requirements and ownership verification methods. Include tests for proper ATA creation for standard NFTs and cNFT proof validation.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Integration tests verifying mixed asset type swaps and proper ownership transfers"
           },
           {
@@ -5027,7 +5027,7 @@
               5
             ],
             "details": "Implement test cases for invalid Merkle proof rejection, missing account scenarios, stale proof handling, and other failure conditions. Include tests for malformed proofs, expired proofs, and unauthorized access attempts. Verify proper error handling and transaction rejection.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Negative testing to ensure all failure cases are properly handled and rejected with appropriate error messages"
           }
         ]
@@ -5277,7 +5277,7 @@
     ],
     "metadata": {
       "created": "2025-11-17T05:45:23.312Z",
-      "updated": "2025-12-01T00:25:46.735Z",
+      "updated": "2025-12-01T06:52:16.382Z",
       "description": "Complete architectural pivot from escrow agreements to atomic NFT/cNFT swaps with durable nonces"
     }
   }
