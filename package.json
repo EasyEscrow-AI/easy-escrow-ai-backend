@@ -36,6 +36,7 @@
     "test:unit:nonce-pool-creation": "jest tests/unit/nonce-pool-creation.test.ts --coverage",
     "test:unit:idempotency": "jest tests/unit/idempotency.test.ts --coverage",
     "test:unit:offer-manager-rebuild": "cross-env NODE_ENV=test mocha --require ts-node/register --no-config tests/unit/offer-manager-rebuild-type-coercion.test.ts --timeout 10000 --reporter spec --colors",
+    "test:unit:monitoring": "cross-env NODE_ENV=test mocha --require ts-node/register --no-config tests/unit/monitoring-services.test.ts --timeout 10000 --reporter spec --colors",
     "___comment___legacy_tests": "Legacy escrow agreement tests moved to tests/unit/legacy/ (see tests/unit/legacy/README.md)",
     "test:integration": "mocha --require ts-node/register --no-config 'tests/integration/**/*.test.ts' --timeout 20000 --exit",
     "test:integration:resource-tracking": "mocha --require ts-node/register --no-config tests/integration/resource-tracking.test.ts --timeout 30000 --reporter spec --colors --exit",
@@ -224,6 +225,7 @@
     "node-cron": "^4.2.1",
     "prisma": "^6.17.1",
     "swagger-ui-express": "^5.0.1",
+    "winston": "^3.11.0",
     "yamljs": "^0.3.0"
   },
   "devDependencies": {
@@ -242,6 +244,7 @@
     "@types/sinon": "^17.0.4",
     "@types/supertest": "^6.0.3",
     "@types/swagger-ui-express": "^4.1.8",
+    "@types/winston": "^2.4.4",
     "@types/yamljs": "^0.2.34",
     "axios": "^1.12.2",
     "bn.js": "^5.2.2",
