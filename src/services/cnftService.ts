@@ -249,19 +249,18 @@ export class CnftService {
     const timeoutId = setTimeout(() => controller.abort(), this.config.requestTimeout);
     
     try {
-      // CRITICAL: Add cache-busting headers to prevent stale proofs
-      // DAS APIs often cache proof responses, but we need fresh data for every call
+      // CRITICAL: Use unique request IDs to prevent DAS API caching
+      // Full cache-control headers break QuickNode's getAssetProof endpoint
+      // but unique IDs should prevent caching without causing errors
       const response = await fetch(this.config.rpcEndpoint, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache', // HTTP/1.0 compatibility
-          'Expires': '0', // Proxies
         },
         body: JSON.stringify({
           jsonrpc: '2.0',
-          id: Date.now() + Math.random(), // Unique ID to prevent caching
+          // Unique ID: timestamp + random + retry count to ensure uniqueness
+          id: `${Date.now()}-${Math.random().toString(36).substring(7)}-${retryCount}`,
           method,
           params,
         }),
