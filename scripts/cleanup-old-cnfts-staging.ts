@@ -236,7 +236,7 @@ async function main() {
   });
 
   console.log('🌳 Old Merkle Trees (orphaned):');
-  oldTrees.forEach((tree, i) => {
+  [...oldTrees].forEach((tree, i) => {
     const treeCount = [...senderOldCnfts, ...receiverOldCnfts].filter(c => c.compression.tree === tree).length;
     console.log(`   ${i + 1}. ${tree}`);
     console.log(`      cNFTs: ${treeCount}`);
