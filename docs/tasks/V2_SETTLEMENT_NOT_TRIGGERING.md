@@ -36,7 +36,7 @@ Settlement service is **NOT triggering** for v2 NFT_FOR_SOL agreements that reac
 ### Smart Contract (Solana Program)
 - **Program ID:** `AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei`
 - **Last Deployed:** Slot 419367768
-- **Upgrade Authority:** `CPDz3pC5AnK7es3oEcP52HLhByPSAWG6f9QGP6j4jjEA`
+- **Upgrade Authority:** `498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R`
 - **Fixes Applied:**
   - ✅ RefCell fix (single escrow_account reference)
   - ✅ Permissionless settle_v2

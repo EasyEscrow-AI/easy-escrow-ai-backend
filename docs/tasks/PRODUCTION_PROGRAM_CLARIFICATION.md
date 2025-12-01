@@ -144,7 +144,7 @@ CNFT_INDEXER_API_KEY=<helius-mainnet-key>
 - Managing program upgrade authority
 - **NOT** used for runtime operations
 
-**Public Key**: `CPDz3pC5AnK7es3oEcP52HLhByPSAWG6f9QGP6j4jjEA` (from staging deployer, verify production)
+**Public Key**: `498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R` (from staging deployer, verify production)
 
 ### Platform Authority vs Deployer
 - **Deployer (`production-deployer.json`)**: Program upgrade authority

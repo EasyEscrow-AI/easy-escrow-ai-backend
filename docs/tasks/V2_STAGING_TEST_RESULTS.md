@@ -94,8 +94,8 @@ anchor build -- --no-default-features --features staging
 ```json
 {
   "nftMint": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
-  "seller": "FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71",
-  "buyer": "Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk",
+  "seller": "AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z",
+  "buyer": "5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4",
   "expiry": "24h",
   "swapType": "NFT_FOR_SOL",
   "solAmount": 1500000000,

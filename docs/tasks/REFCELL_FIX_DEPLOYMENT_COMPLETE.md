@@ -232,7 +232,7 @@ solana program show AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei --url devnet
 
 **Expected:**
 - Program ID: `AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei`
-- Authority: `CPDz3pC5AnK7es3oEcP52HLhByPSAWG6f9QGP6j4jjEA`
+- Authority: `498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R`
 - Last Deployed: Slot > 419367768
 
 ### 2. Verify IDL Updated

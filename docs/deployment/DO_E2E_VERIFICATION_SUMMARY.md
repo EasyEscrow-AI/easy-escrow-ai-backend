@@ -104,10 +104,10 @@ node scripts/verify-do-server.js
 **From your local machine to check remotely:**
 ```powershell
 # Check wallet balances (doesn't require server access)
-solana balance FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71 --url devnet
-solana balance Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk --url devnet
-solana balance 7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u --url devnet
-solana balance C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E --url devnet
+solana balance AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z --url devnet
+solana balance 5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4 --url devnet
+solana balance 498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R --url devnet
+solana balance 8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ --url devnet
 
 # Check program deployment
 solana account 7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV --url devnet
@@ -136,10 +136,10 @@ solana account 7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV --url devnet
 
 ## 📊 Wallet Explorer Links (Check Balances)
 
-- **Sender:** https://explorer.solana.com/address/FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71?cluster=devnet
-- **Receiver:** https://explorer.solana.com/address/Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk?cluster=devnet
-- **Admin:** https://explorer.solana.com/address/7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u?cluster=devnet
-- **FeeCollector:** https://explorer.solana.com/address/C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E?cluster=devnet
+- **Sender:** https://explorer.solana.com/address/AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z?cluster=devnet
+- **Receiver:** https://explorer.solana.com/address/5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4?cluster=devnet
+- **Admin:** https://explorer.solana.com/address/498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R?cluster=devnet
+- **FeeCollector:** https://explorer.solana.com/address/8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ?cluster=devnet
 
 ---
 
@@ -187,10 +187,10 @@ anchor --version  # Should show: anchor-cli 0.32.1
 **Fix:**
 ```bash
 # Fund all wallets
-solana transfer FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71 2 --url devnet
-solana transfer Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk 2 --url devnet
-solana transfer 7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u 2 --url devnet
-solana transfer C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E 1 --url devnet
+solana transfer AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z 2 --url devnet
+solana transfer 5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4 2 --url devnet
+solana transfer 498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R 2 --url devnet
+solana transfer 8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ 1 --url devnet
 
 # Or use batch script
 .\scripts\fund-devnet-wallets.ps1

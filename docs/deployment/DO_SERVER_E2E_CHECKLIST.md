@@ -54,16 +54,16 @@
 These should be set as SECRET type environment variables:
 
 - ❓ `DEVNET_SENDER_PRIVATE_KEY` (Seller - NFT owner)
-  - **Public Address:** `FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71`
+  - **Public Address:** `AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z`
   
 - ❓ `DEVNET_RECEIVER_PRIVATE_KEY` (Buyer - USDC payer)
-  - **Public Address:** `Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk`
+  - **Public Address:** `5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4`
   
 - ❓ `DEVNET_ADMIN_PRIVATE_KEY` (Escrow admin)
-  - **Public Address:** `7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u`
+  - **Public Address:** `498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R`
   
 - ❓ `DEVNET_FEE_COLLECTOR_PRIVATE_KEY` (Treasury - 1% fees)
-  - **Public Address:** `C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E`
+  - **Public Address:** `8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ`
 
 #### How to Set Wallet Secrets
 ```powershell
@@ -91,29 +91,29 @@ All wallets must have sufficient SOL and tokens for testing:
 #### Check Balances
 ```bash
 # Via Solana CLI
-solana balance FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71 --url devnet  # Sender
-solana balance Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk --url devnet  # Receiver
-solana balance 7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u --url devnet  # Admin
-solana balance C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E --url devnet  # FeeCollector
+solana balance AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z --url devnet  # Sender
+solana balance 5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4 --url devnet  # Receiver
+solana balance 498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R --url devnet  # Admin
+solana balance 8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ --url devnet  # FeeCollector
 
 # Via Solana Explorer
-# https://explorer.solana.com/address/FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71?cluster=devnet
+# https://explorer.solana.com/address/AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z?cluster=devnet
 ```
 
 #### Fund Wallets (if needed)
 ```bash
 # Using automated script
 .\scripts\fund-devnet-wallets.ps1 `
-  -Buyer Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk `
-  -Seller FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71 `
-  -Admin 7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u `
-  -FeeCollector C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E
+  -Buyer 5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4 `
+  -Seller AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z `
+  -Admin 498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R `
+  -FeeCollector 8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ
 
 # Or individual transfers from a funded wallet
-solana transfer FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71 2 --url devnet
-solana transfer Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk 2 --url devnet
-solana transfer 7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u 2 --url devnet
-solana transfer C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E 1 --url devnet
+solana transfer AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z 2 --url devnet
+solana transfer 5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4 2 --url devnet
+solana transfer 498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R 2 --url devnet
+solana transfer 8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ 1 --url devnet
 ```
 
 ---
@@ -247,10 +247,10 @@ npm --version
 solana account 4FQ5JoxsS5jjuTR1ScuEpk66eX5B71L7ysJEysmsTwhd --url devnet
 
 # 5. Check wallet balances
-solana balance FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71 --url devnet
-solana balance Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk --url devnet
-solana balance 7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u --url devnet
-solana balance C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E --url devnet
+solana balance AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z --url devnet
+solana balance 5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4 --url devnet
+solana balance 498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R --url devnet
+solana balance 8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ --url devnet
 
 # 6. Check environment variables (masked)
 echo "SOLANA_NETWORK: $SOLANA_NETWORK"

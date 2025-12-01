@@ -4,8 +4,8 @@ Quick guide for minting compressed NFTs (cNFTs) on test wallets for atomic swap 
 
 ## Test Wallets
 
-- **Maker:** `FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71`
-- **Taker:** `Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk`
+- **Maker:** `AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z`
+- **Taker:** `5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4`
 
 ## Quick Options (Easiest First)
 
@@ -34,7 +34,7 @@ curl https://your-quicknode-endpoint.solana-devnet.quiknode.pro/YOUR_TOKEN/ \
       "name": "Test cNFT",
       "symbol": "TEST",
       "uri": "https://arweave.net/metadata.json",
-      "receiver": "FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71"
+      "receiver": "AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z"
     }
   }'
 ```
@@ -87,7 +87,7 @@ curl -X POST https://devnet.underdogprotocol.com/v2/projects/YOUR_PROJECT_ID/nft
   -H "Content-Type: application/json" \
   -d '{
     "name": "Test cNFT",
-    "receiver": "FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71",
+    "receiver": "AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z",
     "attributes": {
       "type": "test"
     }
@@ -199,8 +199,8 @@ If you don't need actual cNFTs right now:
 ### "Not enough SOL"
 ```bash
 # Airdrop devnet SOL
-solana airdrop 1 FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71 --url devnet
-solana airdrop 1 Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk --url devnet
+solana airdrop 1 AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z --url devnet
+solana airdrop 1 5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4 --url devnet
 ```
 
 ### "Cannot find sugar command"
@@ -229,7 +229,7 @@ curl "https://devnet.helius-rpc.com/?api-key=YOUR_KEY" \
     "id": 1,
     "method": "getAssetsByOwner",
     "params": {
-      "ownerAddress": "FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71"
+      "ownerAddress": "AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z"
     }
   }'
 ```

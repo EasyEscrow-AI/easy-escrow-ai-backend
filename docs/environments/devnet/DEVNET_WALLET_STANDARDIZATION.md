@@ -28,10 +28,10 @@ We established `tests/fixtures/devnet-config.json` as the **single source of tru
 
 | Role | Address | Purpose |
 |------|---------|---------|
-| **Sender** | `FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71` | NFT owner (seller) |
-| **Receiver** | `Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk` | USDC payer (buyer) |
-| **Admin** | `7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u` | Escrow operations |
-| **Fee Collector** | `C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E` | Treasury (1% fees) |
+| **Sender** | `AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z` | NFT owner (seller) |
+| **Receiver** | `5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4` | USDC payer (buyer) |
+| **Admin** | `498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R` | Escrow operations |
+| **Fee Collector** | `8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ` | Treasury (1% fees) |
 
 ### Configuration Hierarchy
 
@@ -143,10 +143,10 @@ cat tests\fixtures\devnet-config.json
 
 ```powershell
 .\scripts\fund-devnet-wallets.ps1 `
-  -Buyer Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk `
-  -Seller FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71 `
-  -Admin 7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u `
-  -FeeCollector C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E
+  -Buyer 5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4 `
+  -Seller AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z `
+  -Admin 498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R `
+  -FeeCollector 8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ
 ```
 
 #### Step 4: Run Tests
@@ -221,10 +221,10 @@ import { loadDevnetWallets } from '../helpers/devnet-wallet-manager';
 const wallets = await loadDevnetWallets();
 
 // Returns standardized wallet structure
-wallets.sender;        // FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71
-wallets.receiver;      // Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk
-wallets.admin;         // 7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u
-wallets.feeCollector;  // C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E
+wallets.sender;        // AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z
+wallets.receiver;      // 5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4
+wallets.admin;         // 498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R
+wallets.feeCollector;  // 8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ
 ```
 
 ---
@@ -240,10 +240,10 @@ grep -r "8GDAazp6Vm3avTiMDkaHiTCjMyJRzRF1k9n6w8b85x1m" .
 grep -r "5wwbtUoPpVw7bEWpZj9kp4gZ265uwQuoPxE5145dTdVh" .
 
 # Should return matches in config files (correct addresses)
-grep -r "FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71" .
-grep -r "Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk" .
-grep -r "7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u" .
-grep -r "C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E" .
+grep -r "AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z" .
+grep -r "5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4" .
+grep -r "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R" .
+grep -r "8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ" .
 ```
 
 ### Run Tests
@@ -283,20 +283,20 @@ Remove-Item tests\fixtures\devnet-config.json -ErrorAction SilentlyContinue
 
 ```powershell
 .\scripts\set-devnet-env-vars.ps1 -Permanent `
-  -SenderKey "<NEW_KEY_FOR_FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71>" `
-  -ReceiverKey "<NEW_KEY_FOR_Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk>" `
-  -AdminKey "<NEW_KEY_FOR_7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u>" `
-  -FeeCollectorKey "<NEW_KEY_FOR_C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E>"
+  -SenderKey "<NEW_KEY_FOR_AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z>" `
+  -ReceiverKey "<NEW_KEY_FOR_5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4>" `
+  -AdminKey "<NEW_KEY_FOR_498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R>" `
+  -FeeCollectorKey "<NEW_KEY_FOR_8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ>"
 ```
 
 ### Step 4: Fund New Wallets
 
 ```powershell
 .\scripts\fund-devnet-wallets.ps1 `
-  -Buyer Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk `
-  -Seller FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71 `
-  -Admin 7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u `
-  -FeeCollector C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E
+  -Buyer 5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4 `
+  -Seller AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z `
+  -Admin 498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R `
+  -FeeCollector 8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ
 ```
 
 ---

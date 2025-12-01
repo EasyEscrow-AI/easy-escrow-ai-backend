@@ -14,7 +14,7 @@
 **Network:** Solana Devnet  
 **Deployment Signature:** `2meHkenEWWj2KTbYPK9x7gRZaNPwpg2JmustJi3JzSQRB98vQGoRXUqLVDmNjqTPqoBRFQPvD1t6XFjkbEkXdCkX`  
 **Deployed Slot:** 418,021,317  
-**Authority:** `CPDz3pC5AnK7es3oEcP52HLhByPSAWG6f9QGP6j4jjEA`  
+**Authority:** `498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R`  
 **Program Size:** 305,480 bytes (298.32 KB)  
 **Balance:** 2.127 SOL
 
@@ -24,7 +24,7 @@
 
 **Found:** User's default Solana CLI wallet  
 **Location:** `C:\Users\samde\.config\solana\id.json`  
-**Public Key:** `CPDz3pC5AnK7es3oEcP52HLhByPSAWG6f9QGP6j4jjEA`
+**Public Key:** `498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R`
 
 **Search Process:**
 1. ❌ Not found in project `wallets/` directory

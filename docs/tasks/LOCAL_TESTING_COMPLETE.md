@@ -59,7 +59,7 @@ Total Swaps: 1 ✅
 
 ### Local Validator Setup
 - **Program ID:** `Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS`
-- **Platform Authority:** `7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u`
+- **Platform Authority:** `498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R`
 - **RPC Endpoint:** `http://127.0.0.1:8899`
 - **Network:** localnet
 - **Binary:** `target/deploy/easyescrow.so`

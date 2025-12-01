@@ -13,7 +13,7 @@
 - **Program Size:** 330,008 bytes on-chain (287 KB .so file)
 - **Last Deployed Slot:** 424529547
 - **Balance:** 2.29 SOL
-- **Authority:** CPDz3pC5AnK7es3oEcP52HLhByPSAWG6f9QGP6j4jjEA
+- **Authority:** 498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R
 - **ProgramData Address:** FZPDAXfQBqNv1gLtH5dDHKCwjGwxz9vAeSdCHCNKaZ1Z
 
 ## Build Details

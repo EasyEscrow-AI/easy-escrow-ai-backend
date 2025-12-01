@@ -125,7 +125,7 @@ For local tests, use addresses from `wallets/localnet/`:
 ```
 Sender:  [Generated per test run]
 Receiver: [Generated per test run]
-Admin: 7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u
+Admin: 498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R
 ```
 
 ---
