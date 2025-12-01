@@ -10,6 +10,10 @@
  * - cNFT transfer using Bubblegum program
  */
 
+// Load staging environment variables FIRST
+import * as dotenv from 'dotenv';
+dotenv.config({ path: '.env.staging' });
+
 import { describe, it, before } from 'mocha';
 import { expect } from 'chai';
 import { Connection, Keypair, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
