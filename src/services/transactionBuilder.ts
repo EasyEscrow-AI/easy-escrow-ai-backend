@@ -434,11 +434,50 @@ export class TransactionBuilder {
     // Get program instance
     const program = this.getProgram(inputs.programId);
     
-    // Build instruction
-    const instruction = await program.methods
+    // Collect remaining accounts (proof nodes for cNFT verification)
+    const remainingAccounts: Array<{ pubkey: PublicKey; isSigner: boolean; isWritable: boolean }> = [];
+    
+    if (makerCnftParams && makerCnftParams.proof && makerCnftParams.proof.proof) {
+      console.log('[TransactionBuilder] Adding', makerCnftParams.proof.proof.length, 'maker proof nodes as remaining accounts');
+      for (let i = 0; i < makerCnftParams.proof.proof.length; i++) {
+        const proofNode = makerCnftParams.proof.proof[i];
+        // Convert 32-byte array to PublicKey
+        const proofNodePubkey = new PublicKey(proofNode);
+        remainingAccounts.push({
+          pubkey: proofNodePubkey,
+          isSigner: false,
+          isWritable: false,
+        });
+        console.log(`  Proof node ${i + 1}:`, proofNodePubkey.toBase58());
+      }
+    }
+    
+    if (takerCnftParams && takerCnftParams.proof && takerCnftParams.proof.proof) {
+      console.log('[TransactionBuilder] Adding', takerCnftParams.proof.proof.length, 'taker proof nodes as remaining accounts');
+      for (let i = 0; i < takerCnftParams.proof.proof.length; i++) {
+        const proofNode = takerCnftParams.proof.proof[i];
+        const proofNodePubkey = new PublicKey(proofNode);
+        remainingAccounts.push({
+          pubkey: proofNodePubkey,
+          isSigner: false,
+          isWritable: false,
+        });
+        console.log(`  Proof node ${i + 1}:`, proofNodePubkey.toBase58());
+      }
+    }
+    
+    // Build instruction with remaining accounts
+    let instructionBuilder = program.methods
       .atomicSwapWithFee(swapParams)
-      .accounts(accounts)
-      .instruction();
+      .accounts(accounts);
+    
+    // Add remaining accounts if any
+    if (remainingAccounts.length > 0) {
+      instructionBuilder = instructionBuilder.remainingAccounts(remainingAccounts);
+      console.log('[TransactionBuilder] Added', remainingAccounts.length, 'remaining accounts (proof nodes)');
+    }
+    
+    const instruction = await instructionBuilder.instruction();
     
     console.log('[TransactionBuilder] atomic_swap_with_fee instruction created');
     
