@@ -183,6 +183,33 @@ export class AtomicSwapApiClient {
   }
 
   /**
+   * Rebuild transaction with fresh cNFT proofs
+   */
+  async rebuildTransaction(offerId: string, idempotencyKey?: string): Promise<AcceptOfferResponse> {
+    const headers: any = {};
+    if (idempotencyKey) {
+      headers['idempotency-key'] = idempotencyKey;
+    } else {
+      // Generate default idempotency key if not provided
+      headers['idempotency-key'] = AtomicSwapApiClient.generateIdempotencyKey(`rebuild-${offerId}`);
+    }
+    
+    try {
+      const response = await this.client.post<AcceptOfferResponse>(
+        `/api/offers/${offerId}/rebuild-transaction`,
+        {},
+        { headers }
+      );
+      return response.data;
+    } catch (error: any) {
+      if (error.response) {
+        return error.response.data;
+      }
+      throw error;
+    }
+  }
+
+  /**
    * Confirm on-chain execution
    */
   async confirmOffer(offerId: string, signature: string, idempotencyKey?: string): Promise<any> {

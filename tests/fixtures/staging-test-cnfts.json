@@ -1,0 +1,53 @@
+{
+  "sharedTree": {
+    "address": "H47jXeKnijdgzKPnrdWyZ2dPpQQbDGAtcgoQvwWohNgz",
+    "authority": "7Fmw6w3zFpiW5nAABv8nn3Ehf6vXhjyuA4VR5JdmgGvo",
+    "maxDepth": 14,
+    "maxBufferSize": 64,
+    "canopyDepth": 11,
+    "createdAt": "2025-12-01T00:00:39.876Z"
+  },
+  "testCnfts": [
+    {
+      "assetId": "7BC3X263a9N3BepgLa69LpTY2ZjwQr5ZeCCqEC7Xs1YM",
+      "leafIndex": 0,
+      "owner": "AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z",
+      "name": "Staging Test cNFT #1",
+      "symbol": "STCNFT",
+      "uri": "https://shdw-drive.genesysgo.net/7nPP797RprCMJaSXsyoTiFvMZVQ6y1dUgobvczdWGd35/test-cnft-1.json"
+    },
+    {
+      "assetId": "3WBdwpuUz7CtuHJQ1bQGLUWR4mMbDJPzPp8zqj3epz41",
+      "leafIndex": 1,
+      "owner": "AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z",
+      "name": "Staging Test cNFT #2",
+      "symbol": "STCNFT",
+      "uri": "https://shdw-drive.genesysgo.net/7nPP797RprCMJaSXsyoTiFvMZVQ6y1dUgobvczdWGd35/test-cnft-2.json"
+    },
+    {
+      "assetId": "9FVnCUyHmY3wea7kjhUn1xPnXeDKe8cFNjwsMHA3igdv",
+      "leafIndex": 2,
+      "owner": "AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z",
+      "name": "Staging Test cNFT #3",
+      "symbol": "STCNFT",
+      "uri": "https://shdw-drive.genesysgo.net/7nPP797RprCMJaSXsyoTiFvMZVQ6y1dUgobvczdWGd35/test-cnft-3.json"
+    },
+    {
+      "assetId": "GBVdxVec65CdLsY1FxJ1xgNhEqqjEbPndkeaXxxttPqd",
+      "leafIndex": 3,
+      "owner": "AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z",
+      "name": "Staging Test cNFT #4",
+      "symbol": "STCNFT",
+      "uri": "https://shdw-drive.genesysgo.net/7nPP797RprCMJaSXsyoTiFvMZVQ6y1dUgobvczdWGd35/test-cnft-4.json"
+    },
+    {
+      "assetId": "BQmRmgHpTXhD6xQ6rDgnSNK85VAjoFvEg7919GMCD5yD",
+      "leafIndex": 4,
+      "owner": "AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z",
+      "name": "Staging Test cNFT #5",
+      "symbol": "STCNFT",
+      "uri": "https://shdw-drive.genesysgo.net/7nPP797RprCMJaSXsyoTiFvMZVQ6y1dUgobvczdWGd35/test-cnft-5.json"
+    }
+  ],
+  "lastUpdated": "2025-12-01T00:00:39.877Z"
+}

@@ -21,11 +21,13 @@ import {
   verifyWalletBalances,
   DevnetWallets,
 } from '../../helpers/devnet-wallet-manager';
+import { displayCNFTInfo, CnftDetails } from '../../helpers/devnet-cnft-setup';
 import {
-  createTestCNFT,
-  displayCNFTInfo,
-  CnftDetails,
-} from '../../helpers/devnet-cnft-setup';
+  loadTestCnfts,
+  getTestCnft,
+  displayTestCnftInfo,
+  hasTestCnfts,
+} from '../../helpers/test-cnft-manager';
 import { wait, generateTestAgreementId } from '../../helpers/test-utils';
 import { AtomicSwapApiClient } from '../../helpers/atomic-swap-api-client';
 import {
@@ -42,8 +44,8 @@ const PLATFORM_AUTHORITY_PATH = process.env.STAGING_ADMIN_PRIVATE_KEY_PATH ||
 const STAGING_API_URL = process.env.STAGING_API_URL || 'https://staging-api.easyescrow.ai';
 const ATOMIC_SWAP_API_KEY = process.env.ATOMIC_SWAP_API_KEY || '';
 
-// cNFT will be created during test setup
-let testCnft: CnftDetails;
+// Use pre-minted test cNFT (avoids tree creation cost)
+let testCnftAssetId: string;
 
 describe('🌳 Atomic Swap E2E: cNFT for SOL - Happy Path (Staging)', () => {
   let connection: Connection;
@@ -113,30 +115,54 @@ describe('🌳 Atomic Swap E2E: cNFT for SOL - Happy Path (Staging)', () => {
     apiClient = new AtomicSwapApiClient(STAGING_API_URL, ATOMIC_SWAP_API_KEY);
     console.log('✅ API client initialized');
     
-    // Create test cNFT
+    // Load pre-minted test cNFT
     console.log('\n🌳 cNFT Setup:');
-    console.log('  Creating test cNFT for maker...');
+    console.log('  Loading pre-minted test cNFT...');
     
     try {
-      testCnft = await createTestCNFT(
-        connection,
-        wallets.sender, // Sender will own the cNFT
-        wallets.sender.publicKey,
-        {
-          name: `Test cNFT ${Date.now()}`,
-          symbol: 'TCNFT',
-          uri: 'https://shdw-drive.genesysgo.net/7nPP797RprCMJaSXsyoTiFvMZVQ6y1dUgobvczdWGd35/test-cnft.json',
-        }
-      );
+      // Check if test cNFTs are configured
+      if (!hasTestCnfts()) {
+        console.error('  ❌ Test cNFTs not configured!');
+        console.error('  Run: ts-node scripts/setup-test-cnfts-staging.ts');
+        throw new Error('Test cNFTs not setup. Run setup script first.');
+      }
+
+      // Get first available test cNFT
+      const testCnft = getTestCnft(0); // Use first test cNFT
+      testCnftAssetId = testCnft.assetId;
       
-      displayCNFTInfo(testCnft);
-      console.log('  ✅ Test cNFT created successfully');
+      console.log('  ✅ Using pre-minted test cNFT:');
+      displayTestCnftInfo(testCnft);
+      
+      // Verify ownership
+      console.log('\n  🔍 Verifying current ownership...');
+      const assetData = await (connection as any)._rpcRequest('getAsset', {
+        id: testCnftAssetId,
+      });
+      const asset = assetData.result || assetData;
+      const currentOwner = asset?.ownership?.owner;
+      
+      console.log(`     Current Owner: ${currentOwner}`);
+      console.log(`     Expected Owner: ${wallets.sender.publicKey.toBase58()}`);
+      
+      if (currentOwner !== wallets.sender.publicKey.toBase58()) {
+        console.warn('  ⚠️  cNFT is not currently owned by sender!');
+        console.warn('     This may be from a previous test. Continuing anyway...');
+        console.warn('     Run: ts-node scripts/rebalance-test-cnfts-staging.ts to fix');
+      } else {
+        console.log('  ✅ Ownership verified');
+      }
+      
+      // No need to wait for DAS indexing - cNFT is already indexed!
+      console.log('  ✅ Test cNFT ready (pre-indexed, no wait needed)');
+      
     } catch (error: any) {
-      console.error('  ❌ Failed to create test cNFT:', error.message);
+      console.error('  ❌ Failed to load test cNFT:', error.message);
       throw error;
     }
     
-    console.log('\n✅ Test setup complete with live cNFT\n');
+    console.log('\n✅ Test setup complete with pre-minted cNFT');
+    console.log('💡 Benefits: No tree creation cost, no minting time, no indexing wait!\n');
   });
   
   describe('Scenario 1: cNFT for SOL Swap', () => {
@@ -152,7 +178,7 @@ describe('🌳 Atomic Swap E2E: cNFT for SOL - Happy Path (Staging)', () => {
       console.log('\n💫 Creating Swap Offer...');
       console.log(`  Maker: ${wallets.sender.publicKey.toBase58()} (offers cNFT)`);
       console.log(`  Taker: ${wallets.receiver.publicKey.toBase58()} (offers ${solAmount / LAMPORTS_PER_SOL} SOL)`);
-      console.log(`  cNFT Asset ID: ${testCnft.assetId.toBase58()}`);
+      console.log(`  cNFT Asset ID: ${testCnftAssetId}`);
       console.log(`  Idempotency Key: ${idempotencyKey}`);
       
       // Step 1: Create offer via API
@@ -160,18 +186,22 @@ describe('🌳 Atomic Swap E2E: cNFT for SOL - Happy Path (Staging)', () => {
         makerWallet: wallets.sender.publicKey.toBase58(),
         takerWallet: wallets.receiver.publicKey.toBase58(),
         offeredAssets: [{
-          mint: testCnft.assetId.toBase58(),
+          mint: testCnftAssetId,
           isCompressed: true,
         }],
         requestedAssets: [],
         requestedSol: solAmount,
       }, idempotencyKey);
       
+      if (!createResponse.success || !createResponse.data) {
+        throw new Error(`Failed to create offer: ${createResponse.message || 'Unknown error'}`);
+      }
+      
       console.log('\n✅ Swap offer created successfully');
-      console.log(`  Offer ID: ${createResponse.data?.offer.id}`);
-      console.log(`  Status: ${createResponse.data?.offer.status}`);
-      console.log(`  Maker Wallet: ${createResponse.data?.offer.makerWallet}`);
-      console.log(`  Taker Wallet: ${createResponse.data?.offer.takerWallet}`);
+      console.log(`  Offer ID: ${createResponse.data.offer.id}`);
+      console.log(`  Status: ${createResponse.data.offer.status}`);
+      console.log(`  Maker Wallet: ${createResponse.data.offer.makerWallet}`);
+      console.log(`  Taker Wallet: ${createResponse.data.offer.takerWallet}`);
       
       // Step 2: Accept offer via API (this builds the transaction)
       console.log('\n🤝 Step 2: Accepting offer via API...');
@@ -188,26 +218,92 @@ describe('🌳 Atomic Swap E2E: cNFT for SOL - Happy Path (Staging)', () => {
       
       console.log(`✅ Offer accepted, transaction ready for signing`);
       
-      // Step 3: Both parties sign and send transaction
+      // Step 3: Both parties sign and send transaction with retry for stale proofs
       console.log('\n🔏 Step 3: Signing and sending transaction (both parties)...');
       console.log('  ⚠️  CRITICAL TEST: This will verify:');
       console.log('    - cNFT leaf owner is marked as signer');
       console.log('    - Correct leaf_id is used (not node_index)');
       console.log('    - Bubblegum transfer succeeds on-chain');
       
-      const swapSignature = await AtomicSwapApiClient.signAndSendTransaction(
-        acceptResponse.data.transaction.serialized,
-        [wallets.sender, wallets.receiver], // BOTH maker and taker sign
-        connection
-      );
+      let swapSignature: string | null = null;
+      let serializedTx = acceptResponse.data.transaction.serialized;
+      const maxAttempts = 3;
       
-      console.log(`✅ Swap transaction sent: ${swapSignature}`);
-      displayExplorerLink(swapSignature, 'devnet');
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+          console.log(`\n  Attempt ${attempt}/${maxAttempts}...`);
+          
+          swapSignature = await AtomicSwapApiClient.signAndSendTransaction(
+            serializedTx,
+            [wallets.sender, wallets.receiver], // BOTH maker and taker sign
+            connection
+          );
+          
+          console.log(`✅ Swap transaction sent: ${swapSignature}`);
+          displayExplorerLink(swapSignature, 'devnet');
+          
+          // Wait for confirmation
+          await waitForConfirmation(connection, swapSignature, 'confirmed');
+          
+          console.log('✅ Transaction confirmed on-chain');
+          break; // Success!
+          
+        } catch (error: any) {
+          const isLastAttempt = attempt === maxAttempts;
+          const errorMessage = error?.message || '';
+          const logs = error?.logs || [];
+          
+          // Check for stale cNFT proof error
+          const isStaleProof = 
+            errorMessage.includes('Invalid root recomputed from proof') ||
+            errorMessage.includes('Error using concurrent merkle tree') ||
+            logs.some((log: string) => 
+              log.includes('Invalid root recomputed from proof') ||
+              log.includes('Error using concurrent merkle tree')
+            );
+          
+          console.error(`❌ Attempt ${attempt} failed:`, errorMessage);
+          if (logs.length > 0) {
+            console.error('  Transaction logs:', logs.join('\n  '));
+          }
+          
+          if (isStaleProof && !isLastAttempt) {
+            console.warn(`\n  ⚠️  Stale cNFT proof detected!`);
+            console.warn(`  Rebuilding transaction with fresh proofs...`);
+            
+            // Rebuild transaction with fresh proofs
+            const rebuildResponse = await apiClient.rebuildTransaction(createResponse.data.offer.id);
+            
+            if (!rebuildResponse.success || !rebuildResponse.data) {
+              throw new Error(`Failed to rebuild transaction: ${rebuildResponse.message}`);
+            }
+            
+            serializedTx = rebuildResponse.data.transaction.serialized;
+            console.log(`  ✅ Transaction rebuilt with fresh proofs`);
+            console.log(`  Waiting for proof to stabilize before retry...`);
+            
+            // Longer delay to ensure DAS API has fully updated tree state
+            // and the new proof is stable
+            await wait(2000);
+            console.log(`  Retrying with fresh transaction...`);
+            continue;
+          }
+          
+          // Not a stale proof error, or we've exhausted retries
+          if (isLastAttempt) {
+            console.error(`\n❌ All ${maxAttempts} attempts exhausted`);
+            if (isStaleProof) {
+              throw new Error(`cNFT proof remained stale after ${maxAttempts} attempts. High Merkle tree activity detected.`);
+            }
+          }
+          
+          throw error;
+        }
+      }
       
-      // Wait for confirmation
-      await waitForConfirmation(connection, swapSignature, 'confirmed');
-      
-      console.log('✅ Transaction confirmed on-chain');
+      if (!swapSignature) {
+        throw new Error('Failed to get swap signature after retries');
+      }
       
       // Step 4: Confirm execution via API
       console.log('\n✅ Step 4: Confirming on-chain execution...');
@@ -227,7 +323,7 @@ describe('🌳 Atomic Swap E2E: cNFT for SOL - Happy Path (Staging)', () => {
       
       // Fetch updated cNFT data
       const dasResponse = await (connection as any)._rpcRequest('getAsset', {
-        id: testCnft.assetId.toBase58(),
+        id: testCnftAssetId,
       });
       
       const updatedAsset = dasResponse.result || dasResponse;
@@ -243,6 +339,8 @@ describe('🌳 Atomic Swap E2E: cNFT for SOL - Happy Path (Staging)', () => {
       
       console.log('\n✅ cNFT ownership verified via DAS API!');
       console.log('✅ Full cNFT swap test completed successfully!');
+      console.log('\n💡 Note: Run rebalance script to return cNFT to original owner:');
+      console.log('   ts-node scripts/rebalance-test-cnfts-staging.ts');
       console.log('═══════════════════════════════════════════════════════════\n');
     });
   });

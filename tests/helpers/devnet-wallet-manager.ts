@@ -51,11 +51,12 @@ export interface WalletConfig {
 export async function loadDevnetWallets(): Promise<DevnetWallets> {
   try {
     // Try to load from environment variables
-    const senderKey = process.env.DEVNET_SENDER_PRIVATE_KEY;
-    const receiverKey = process.env.DEVNET_RECEIVER_PRIVATE_KEY;
-    const adminKey = process.env.DEVNET_ADMIN_PRIVATE_KEY;
-    const feeCollectorKey = process.env.DEVNET_FEE_COLLECTOR_PRIVATE_KEY;
-    const treasuryKey = process.env.DEVNET_TREASURY_PRIVATE_KEY;
+    // Support both DEVNET_* (local) and DEVNET_STAGING_* (staging) prefixes
+    const senderKey = process.env.DEVNET_STAGING_SENDER_PRIVATE_KEY || process.env.DEVNET_SENDER_PRIVATE_KEY;
+    const receiverKey = process.env.DEVNET_STAGING_RECEIVER_PRIVATE_KEY || process.env.DEVNET_RECEIVER_PRIVATE_KEY;
+    const adminKey = process.env.DEVNET_STAGING_ADMIN_PRIVATE_KEY || process.env.DEVNET_ADMIN_PRIVATE_KEY;
+    const feeCollectorKey = process.env.DEVNET_STAGING_FEE_COLLECTOR_PRIVATE_KEY || process.env.DEVNET_FEE_COLLECTOR_PRIVATE_KEY;
+    const treasuryKey = process.env.DEVNET_STAGING_TREASURY_PRIVATE_KEY || process.env.DEVNET_TREASURY_PRIVATE_KEY;
 
     let sender: Keypair;
     let receiver: Keypair;
