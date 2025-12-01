@@ -117,12 +117,13 @@ export class CnftService {
   }
   
   /**
-   * Derive tree authority PDA for a Merkle tree
+   * Derive tree authority PDA for a Merkle tree (Bubblegum standard)
    * Tree authority is required for all Bubblegum operations
+   * Seeds: [b"TreeConfig", merkle_tree_pubkey]
    */
   deriveTreeAuthority(treeAddress: PublicKey): PublicKey {
     const [treeAuthority] = PublicKey.findProgramAddressSync(
-      [treeAddress.toBuffer()],
+      [Buffer.from('TreeConfig'), treeAddress.toBuffer()],
       BUBBLEGUM_PROGRAM_ID
     );
     
