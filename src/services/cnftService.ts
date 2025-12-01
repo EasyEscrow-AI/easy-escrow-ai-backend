@@ -249,19 +249,18 @@ export class CnftService {
     const timeoutId = setTimeout(() => controller.abort(), this.config.requestTimeout);
     
     try {
-      // CRITICAL: Add cache-busting headers to prevent stale proofs
-      // DAS APIs often cache proof responses, but we need fresh data for every call
+      // CRITICAL: Use unique request IDs to prevent DAS API caching
+      // Full cache-control headers break QuickNode's getAssetProof endpoint
+      // but unique IDs should prevent caching without causing errors
       const response = await fetch(this.config.rpcEndpoint, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache', // HTTP/1.0 compatibility
-          'Expires': '0', // Proxies
         },
         body: JSON.stringify({
           jsonrpc: '2.0',
-          id: Date.now() + Math.random(), // Unique ID to prevent caching
+          // Unique ID: timestamp + random + retry count to ensure uniqueness
+          id: `${Date.now()}-${Math.random().toString(36).substring(7)}-${retryCount}`,
           method,
           params,
         }),
@@ -271,12 +270,37 @@ export class CnftService {
       clearTimeout(timeoutId);
       
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('[CnftService] DAS API HTTP error:', {
+          status: response.status,
+          statusText: response.statusText,
+          body: errorText,
+        });
+        throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
       }
       
-      const data: any = await response.json();
+      // Get response text first for better error handling
+      const responseText = await response.text();
+      
+      if (!responseText || responseText.trim() === '') {
+        console.error('[CnftService] DAS API returned empty response');
+        throw new Error('DAS API returned empty response');
+      }
+      
+      let data: any;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError: any) {
+        console.error('[CnftService] Failed to parse DAS API response:', {
+          error: parseError.message,
+          responseLength: responseText.length,
+          responsePreview: responseText.substring(0, 200),
+        });
+        throw new Error(`Failed to parse DAS API response: ${parseError.message}`);
+      }
       
       if (data?.error) {
+        console.error('[CnftService] DAS API returned error:', data.error);
         throw new Error(`DAS API error: ${data.error.message || JSON.stringify(data.error)}`);
       }
       
