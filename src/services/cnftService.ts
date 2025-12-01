@@ -214,7 +214,7 @@ export class CnftService {
     const dataHash = Array.from(bs58.decode(assetData.compression.data_hash));
     const creatorHash = Array.from(bs58.decode(assetData.compression.creator_hash));
     
-    return {
+    const cnftProof = {
       root,
       dataHash,
       creatorHash,
@@ -222,6 +222,19 @@ export class CnftService {
       index: assetData.compression.leaf_id, // Use actual leaf ID, not node_index
       proof,
     };
+    
+    // DEBUG: Log full proof details for investigation
+    console.log('[CnftService] Full proof details:', {
+      root: root.slice(0, 8),
+      dataHashFirst8: dataHash.slice(0, 8),
+      creatorHashFirst8: creatorHash.slice(0, 8),
+      nonce: cnftProof.nonce,
+      index: cnftProof.index,
+      proofLength: proof.length,
+      fullRoot: root,
+    });
+    
+    return cnftProof;
   }
   
   /**
@@ -236,12 +249,19 @@ export class CnftService {
     const timeoutId = setTimeout(() => controller.abort(), this.config.requestTimeout);
     
     try {
+      // CRITICAL: Add cache-busting headers to prevent stale proofs
+      // DAS APIs often cache proof responses, but we need fresh data for every call
       const response = await fetch(this.config.rpcEndpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache', // HTTP/1.0 compatibility
+          'Expires': '0', // Proxies
+        },
         body: JSON.stringify({
           jsonrpc: '2.0',
-          id: Date.now(),
+          id: Date.now() + Math.random(), // Unique ID to prevent caching
           method,
           params,
         }),
