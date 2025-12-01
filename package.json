@@ -35,6 +35,7 @@
     "test:unit:atomic-swap-idempotency": "jest tests/unit/atomic-swap-idempotency.test.ts --coverage",
     "test:unit:nonce-pool-creation": "jest tests/unit/nonce-pool-creation.test.ts --coverage",
     "test:unit:idempotency": "jest tests/unit/idempotency.test.ts --coverage",
+    "test:unit:offer-manager-rebuild": "cross-env NODE_ENV=test mocha --require ts-node/register --no-config tests/unit/offer-manager-rebuild-type-coercion.test.ts --timeout 10000 --reporter spec --colors",
     "___comment___legacy_tests": "Legacy escrow agreement tests moved to tests/unit/legacy/ (see tests/unit/legacy/README.md)",
     "test:integration": "mocha --require ts-node/register --no-config 'tests/integration/**/*.test.ts' --timeout 20000 --exit",
     "test:integration:resource-tracking": "mocha --require ts-node/register --no-config tests/integration/resource-tracking.test.ts --timeout 30000 --reporter spec --colors --exit",
