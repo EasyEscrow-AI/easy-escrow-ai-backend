@@ -5,7 +5,7 @@
  * - Database connectivity
  * - Redis connectivity
  * - Nonce pool health
- * - Treasury PDA balance
+ * - Fee payer wallet balance (admin wallet that pays for transactions)
  * - RPC connectivity
  * - Response caching (30-60s TTL)
  */
@@ -36,7 +36,7 @@ export interface HealthCheckResult {
     health?: 'healthy' | 'low' | 'depleted';
     error?: string;
   };
-  treasury: {
+  feePayerWallet: {
     status: 'healthy' | 'low' | 'critical' | 'error';
     address?: string;
     balance?: number;
@@ -57,8 +57,8 @@ export interface HealthCheckConfig {
   /** Cache TTL in seconds (default: 30) */
   cacheTTL: number;
   
-  /** Minimum treasury balance in lamports (default: 1 SOL) */
-  treasuryMinBalance: number;
+  /** Minimum fee payer wallet balance in lamports (default: 1 SOL) */
+  feePayerMinBalance: number;
   
   /** RPC timeout in ms (default: 5000) */
   rpcTimeout: number;
@@ -86,13 +86,13 @@ export class HealthCheckService {
     database: boolean;
     redis: boolean;
     rpc: boolean;
-    treasury: string;
+    feePayerWallet: string;
     noncePool: string;
   } = {
     database: true,
     redis: true,
     rpc: true,
-    treasury: 'healthy',
+    feePayerWallet: 'healthy',
     noncePool: 'healthy',
   };
   
@@ -115,7 +115,7 @@ export class HealthCheckService {
     this.platformAuthority = platformAuthority;
     this.config = {
       cacheTTL: 30, // 30 seconds default
-      treasuryMinBalance: 1_000_000_000, // 1 SOL in lamports
+      feePayerMinBalance: 1_000_000_000, // 1 SOL in lamports
       rpcTimeout: 5000, // 5 seconds
       rpcSlowThreshold: 2000, // 2 seconds
       ...config,
@@ -144,7 +144,7 @@ export class HealthCheckService {
       dbHealthy,
       redisHealthy,
       noncePoolResult,
-      treasuryResult,
+      feePayerResult,
       rpcResult,
     ] = await Promise.all([
       this.checkDatabaseHealth().catch(() => false),
@@ -153,7 +153,7 @@ export class HealthCheckService {
         status: 'error' as const,
         error: error instanceof Error ? error.message : 'Unknown error',
       })),
-      this.checkTreasury().catch((error) => ({
+      this.checkFeePayerWallet().catch((error) => ({
         status: 'error' as const,
         error: error instanceof Error ? error.message : 'Unknown error',
       })),
@@ -167,18 +167,18 @@ export class HealthCheckService {
     const idempotencyStatus = this.idempotencyService.getStatus();
     
     // Trigger alerts for critical failures and recovery notifications
-    await this.handleAlerts(dbHealthy, redisHealthy, noncePoolResult, treasuryResult, rpcResult);
+    await this.handleAlerts(dbHealthy, redisHealthy, noncePoolResult, feePayerResult, rpcResult);
     
     // Determine overall health status
     const criticalHealthy = dbHealthy && redisHealthy && idempotencyStatus.isRunning;
     const rpcHealthy = rpcResult.status === 'connected' || rpcResult.status === 'slow';
-    const treasuryHealthy = treasuryResult.status === 'healthy' || treasuryResult.status === 'low';
+    const feePayerHealthy = feePayerResult.status === 'healthy' || feePayerResult.status === 'low';
     
     let overallStatus: 'healthy' | 'unhealthy' | 'degraded';
-    if (criticalHealthy && rpcHealthy && treasuryHealthy) {
+    if (criticalHealthy && rpcHealthy && feePayerHealthy) {
       overallStatus = 'healthy';
     } else if (criticalHealthy && rpcHealthy) {
-      // Treasury issues are warnings, not critical failures
+      // Fee payer wallet issues are warnings, not critical failures
       overallStatus = 'degraded';
     } else {
       overallStatus = 'unhealthy';
@@ -197,7 +197,7 @@ export class HealthCheckService {
         cleanupIntervalMinutes: idempotencyStatus.cleanupIntervalMinutes,
       },
       noncePool: noncePoolResult,
-      treasury: treasuryResult,
+      feePayerWallet: feePayerResult,
       rpc: rpcResult,
       cached: false,
     };
@@ -211,7 +211,7 @@ export class HealthCheckService {
       database: dbHealthy,
       redis: redisHealthy,
       rpc: rpcResult.status,
-      treasury: treasuryResult.status,
+      feePayerWallet: feePayerResult.status,
       noncePool: typeof noncePoolResult === 'object' && 'health' in noncePoolResult ? noncePoolResult.health : 'error',
     });
     
@@ -235,7 +235,7 @@ export class HealthCheckService {
     dbHealthy: boolean,
     redisHealthy: boolean,
     noncePoolResult: any,
-    treasuryResult: any,
+    feePayerResult: any,
     rpcResult: any
   ): Promise<void> {
     // Database alerts
@@ -283,29 +283,29 @@ export class HealthCheckService {
       this.previousStates.noncePool = currentHealth;
     }
     
-    // Treasury alerts
-    if (typeof treasuryResult === 'object' && 'status' in treasuryResult) {
-      const currentStatus = treasuryResult.status;
-      const prevStatus = this.previousStates.treasury;
+    // Fee payer wallet alerts
+    if (typeof feePayerResult === 'object' && 'status' in feePayerResult) {
+      const currentStatus = feePayerResult.status;
+      const prevStatus = this.previousStates.feePayerWallet;
       
       if (currentStatus === 'critical' && prevStatus !== 'critical') {
-        await alertingService.alertTreasuryCritical(
-          treasuryResult.balance,
-          treasuryResult.address
+        await alertingService.alertFeePayerCritical(
+          feePayerResult.balance,
+          feePayerResult.address
         );
       } else if (currentStatus === 'low' && prevStatus === 'healthy') {
-        await alertingService.alertTreasuryLow(
-          treasuryResult.balance,
-          treasuryResult.address
+        await alertingService.alertFeePayerLow(
+          feePayerResult.balance,
+          feePayerResult.address
         );
       } else if (currentStatus === 'healthy' && (prevStatus === 'critical' || prevStatus === 'low')) {
-        await alertingService.alertTreasuryRecovered(
-          treasuryResult.balance,
-          treasuryResult.address
+        await alertingService.alertFeePayerRecovered(
+          feePayerResult.balance,
+          feePayerResult.address
         );
       }
       
-      this.previousStates.treasury = currentStatus;
+      this.previousStates.feePayerWallet = currentStatus;
     }
   }
   
@@ -340,24 +340,19 @@ export class HealthCheckService {
   }
   
   /**
-   * Check treasury PDA balance
+   * Check fee payer wallet balance (admin wallet that pays for all transactions)
    */
-  private async checkTreasury() {
+  private async checkFeePayerWallet() {
     try {
-      // Derive treasury PDA same way as in offers.routes.ts
-      const [treasuryPDA] = PublicKey.findProgramAddressSync(
-        [Buffer.from('main_treasury'), this.platformAuthority.toBuffer()],
-        this.programId
-      );
-      
-      const balance = await this.connection.getBalance(treasuryPDA);
+      // Check the platform authority wallet balance (this is the actual fee payer)
+      const balance = await this.connection.getBalance(this.platformAuthority);
       const balanceSOL = (balance / 1_000_000_000).toFixed(4);
       
       let status: 'healthy' | 'low' | 'critical';
-      if (balance < this.config.treasuryMinBalance * 0.1) {
+      if (balance < this.config.feePayerMinBalance * 0.1) {
         // Less than 10% of minimum (e.g., < 0.1 SOL if min is 1 SOL)
         status = 'critical';
-      } else if (balance < this.config.treasuryMinBalance) {
+      } else if (balance < this.config.feePayerMinBalance) {
         status = 'low';
       } else {
         status = 'healthy';
@@ -365,13 +360,13 @@ export class HealthCheckService {
       
       return {
         status,
-        address: treasuryPDA.toBase58(),
+        address: this.platformAuthority.toBase58(),
         balance,
         balanceSOL: `${balanceSOL} SOL`,
-        threshold: this.config.treasuryMinBalance,
+        threshold: this.config.feePayerMinBalance,
       };
     } catch (error) {
-      console.error('[HealthCheckService] Treasury check failed:', error);
+      console.error('[HealthCheckService] Fee payer wallet check failed:', error);
       throw error;
     }
   }

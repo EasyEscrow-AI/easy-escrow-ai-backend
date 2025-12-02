@@ -137,7 +137,7 @@ const healthCheckService = new HealthCheckService(
   platformAuthority.publicKey,
   {
     cacheTTL: 30, // 30 seconds
-    treasuryMinBalance: 1_000_000_000, // 1 SOL
+    feePayerMinBalance: 1_000_000_000, // 1 SOL (admin wallet that pays for all transactions)
     rpcTimeout: 5000, // 5 seconds
     rpcSlowThreshold: 2000, // 2 seconds
   }
