@@ -6,7 +6,9 @@ import swaggerUi from 'swagger-ui-express';
 import YAML from 'yamljs';
 import { connectDatabase, checkDatabaseHealth } from './config/database';
 import { connectRedis, checkRedisHealth, disconnectRedis } from './config/redis';
-import { agreementRoutes, expiryCancellationRoutes, webhookRoutes, receiptRoutes, transactionLogRoutes, healthRoutes, offersRoutes, testRoutes, testExecuteRoutes } from './routes';
+// DISABLED: Agreement routes - migrated to atomic swap architecture
+// import { agreementRoutes } from './routes';
+import { expiryCancellationRoutes, webhookRoutes, receiptRoutes, transactionLogRoutes, healthRoutes, offersRoutes, testRoutes, testExecuteRoutes } from './routes';
 import { noncePoolManager, healthCheckService } from './routes/offers.routes';
 import {
   corsOptions,
@@ -164,7 +166,7 @@ app.get('/', (_req: Request, res: Response) => {
     version: '1.0.0',
     endpoints: {
       health: '/health',
-      agreements: '/v1/agreements',
+      // agreements: '/v1/agreements', // DISABLED: Migrated to atomic swap - use /api/offers
       offers: '/api/offers',
       receipts: '/v1/receipts',
       transactions: '/v1/transactions',
@@ -205,7 +207,10 @@ if (swaggerDocument) {
 app.use(express.static(path.join(__dirname, 'public')));
 
 // API Routes
-app.use(agreementRoutes);
+// DISABLED: Agreement routes - migrated to atomic swap architecture (2025-12-02)
+// Agreement-based escrow has been superseded by atomic swaps via /api/offers
+// See docs/MIGRATION_FROM_LEGACY_ESCROW.md for details
+// app.use(agreementRoutes);
 app.use(offersRoutes);
 app.use(receiptRoutes);
 app.use('/v1/transactions', transactionLogRoutes);

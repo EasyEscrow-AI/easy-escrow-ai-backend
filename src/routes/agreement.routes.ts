@@ -1,3 +1,42 @@
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * PRESERVED FOR REFERENCE - Agreement Routes (Legacy Escrow System)
+ * ═══════════════════════════════════════════════════════════════════════════
+ * 
+ * This file contains the REST API routes for the legacy agreement-based escrow
+ * system. These routes are NO LONGER ACTIVE after the atomic swap migration.
+ * 
+ * MIGRATION CONTEXT:
+ * - Legacy system: Multi-step agreement flow (create → deposit → settle)
+ * - New system: Atomic swaps via /api/offers (instant settlement)
+ * - Migration date: 2025-12-02
+ * 
+ * DO NOT DELETE:
+ * - Contains comprehensive REST API patterns for escrow operations
+ * - Demonstrates validation middleware integration
+ * - Shows rate limiting and idempotency patterns
+ * - May be needed if agreement-based escrow is reintroduced
+ * - Serves as reference for future API development
+ * 
+ * KEY ENDPOINTS (now disabled):
+ * - POST   /v1/agreements              - Create new agreement
+ * - GET    /v1/agreements/:id          - Get agreement by ID
+ * - GET    /v1/agreements/:id/detail   - Get agreement with deposit details
+ * - DELETE /v1/agreements/:id          - Cancel agreement
+ * - GET    /v1/agreements              - List agreements with filtering
+ * - POST   /v1/agreements/:id/deposit/nft     - Deposit NFT
+ * - POST   /v1/agreements/:id/deposit/usdc    - Deposit USDC (legacy)
+ * - POST   /v1/agreements/:id/deposit/sol     - Deposit SOL
+ * - POST   /v1/agreements/:id/archive         - Archive old agreements
+ * - POST   /v1/agreements/:id/extend          - Extend agreement expiry
+ * 
+ * RELATED FILES:
+ * - src/services/agreement.service.ts - Business logic
+ * - src/models/dto/agreement.dto.ts - Data transfer objects
+ * - src/models/validators/agreement.validator.ts - Validation logic
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
+
 import { Router, Request, Response } from 'express';
 import { validateAgreementCreation } from '../middleware/validation.middleware';
 import { standardRateLimiter, strictRateLimiter, validateUSDCMintMiddleware, requiredIdempotency, optionalAdminAuth } from '../middleware';
