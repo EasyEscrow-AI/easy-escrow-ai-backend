@@ -1,391 +1,45 @@
-/**
- * Stuck Agreement Monitor Service
+/*
+ * ═══════════════════════════════════════════════════════════════════════════
+ * PRESERVED FOR POTENTIAL FUTURE USE - Stuck Agreement Monitor Service
+ * ═══════════════════════════════════════════════════════════════════════════
  * 
- * Monitors for agreements that are stuck in BOTH_LOCKED status for an unusually long time
- * and alerts when settlement appears to be failing repeatedly.
+ * This file implemented monitoring for agreements stuck in BOTH_LOCKED status
+ * and automatic refund processing.
  * 
- * NEW: Automatically processes refunds for stuck agreements to return assets to senders.
+ * MIGRATION CONTEXT:
+ * - Detected agreements stuck in deposit states for extended periods
+ * - Triggered WARNING and CRITICAL alerts based on duration
+ * - Automatically processed refunds for stuck agreements after threshold
+ * - Prevented accumulation of stuck funds in escrow
+ * - Superseded by atomic swap architecture (no stuck agreements)
+ * 
+ * DO NOT DELETE:
+ * - Contains valuable monitoring patterns and alert logic
+ * - Shows how to implement automatic remediation for stuck states
+ * - Includes intelligent retry logic and rate limiting
+ * - May be needed if agreement-based escrow is reintroduced
+ * - Serves as reference for monitoring other entities
+ * 
+ * KEY METHODS (now disabled):
+ * - start/stop: Service lifecycle management
+ * - checkForStuckAgreements: Periodic check for stuck agreements
+ * - processAutomaticRefund: Automatic refund processing
+ * - onAlert: Register callback for alerts
+ * - manualCheck: Manual trigger for testing
+ * 
+ * IMPORTANT PATTERNS PRESERVED:
+ * - Alert severity levels (WARNING/CRITICAL)
+ * - Automatic remediation with configurable thresholds
+ * - Rate limiting for refund processing
+ * - Age-based filtering to prevent old agreements from accumulating
+ * - Deposit tracking to distinguish stuck funds from normal cleanup
+ * 
+ * DISABLED ON: 2025-12-02
+ * RELATED FILES: agreement.service.ts, refund.service.ts, monitoring-orchestrator.service.ts
+ * ═══════════════════════════════════════════════════════════════════════════
  */
 
-import { prisma } from '../config/database';
-import { AgreementStatus } from '../generated/prisma';
-import { getRefundService } from './refund.service';
-
-/**
- * Alert severity levels
- */
-export enum AlertSeverity {
-  WARNING = 'WARNING',
-  CRITICAL = 'CRITICAL',
-}
-
-/**
- * Stuck agreement alert
- */
-export interface StuckAgreementAlert {
-  agreementId: string;
-  status: AgreementStatus;
-  timeSinceLastUpdate: number; // milliseconds
-  severity: AlertSeverity;
-  message: string;
-  timestamp: Date;
-}
-
-/**
- * Monitor configuration
- */
-interface MonitorConfig {
-  warningThresholdMinutes?: number; // Warning if stuck for this long
-  criticalThresholdMinutes?: number; // Critical if stuck for this long
-  checkIntervalMs?: number; // How often to check (milliseconds)
-  autoRefundEnabled?: boolean; // Enable automatic refund processing
-  autoRefundThresholdMinutes?: number; // Auto-refund after this many minutes
-  maxAgeHours?: number; // Maximum age of agreements to check (prevents old agreements from accumulating)
-}
-
-/**
- * Stuck Agreement Monitor Service Class
- */
-export class StuckAgreementMonitorService {
-  private config: Required<MonitorConfig>;
-  private monitorTimer?: NodeJS.Timeout;
-  private isRunning: boolean = false;
-  private alertCallbacks: Array<(alert: StuckAgreementAlert) => void> = [];
-  private refundAttempts: Set<string> = new Set(); // Track refund attempts to avoid duplicates
-
-  constructor(config?: MonitorConfig) {
-    this.config = {
-      warningThresholdMinutes: config?.warningThresholdMinutes || 10, // 10 minutes
-      criticalThresholdMinutes: config?.criticalThresholdMinutes || 30, // 30 minutes
-      checkIntervalMs: config?.checkIntervalMs || 60000, // 1 minute
-      autoRefundEnabled: config?.autoRefundEnabled ?? true, // Enabled by default
-      autoRefundThresholdMinutes: config?.autoRefundThresholdMinutes || 15, // 15 minutes
-      maxAgeHours: config?.maxAgeHours || 24, // Only check agreements updated within last 24 hours
-    };
-  }
-
-  /**
-   * Start monitoring for stuck agreements
-   */
-  async start(): Promise<void> {
-    if (this.isRunning) {
-      console.log('[StuckAgreementMonitor] Monitor already running');
-      return;
-    }
-
-    console.log('[StuckAgreementMonitor] Starting stuck agreement monitor...');
-    console.log(`[StuckAgreementMonitor] Configuration:`, {
-      warningThreshold: `${this.config.warningThresholdMinutes} minutes`,
-      criticalThreshold: `${this.config.criticalThresholdMinutes} minutes`,
-      checkInterval: `${this.config.checkIntervalMs / 1000} seconds`,
-      autoRefundEnabled: this.config.autoRefundEnabled,
-      autoRefundThreshold: `${this.config.autoRefundThresholdMinutes} minutes`,
-      maxAge: `${this.config.maxAgeHours} hours`,
-    });
-
-    // Run initial check
-    await this.checkForStuckAgreements();
-
-    // Start periodic checks
-    this.monitorTimer = setInterval(async () => {
-      await this.checkForStuckAgreements();
-    }, this.config.checkIntervalMs);
-
-    this.isRunning = true;
-    console.log('[StuckAgreementMonitor] Monitor started successfully');
-  }
-
-  /**
-   * Stop monitoring
-   */
-  async stop(): Promise<void> {
-    if (!this.isRunning) {
-      console.log('[StuckAgreementMonitor] Monitor not running');
-      return;
-    }
-
-    console.log('[StuckAgreementMonitor] Stopping monitor...');
-
-    if (this.monitorTimer) {
-      clearInterval(this.monitorTimer);
-      this.monitorTimer = undefined;
-    }
-
-    this.isRunning = false;
-    console.log('[StuckAgreementMonitor] Monitor stopped');
-  }
-
-  /**
-   * Register a callback for alerts
-   */
-  onAlert(callback: (alert: StuckAgreementAlert) => void): void {
-    this.alertCallbacks.push(callback);
-  }
-
-  /**
-   * Check for stuck agreements
-   */
-  private async checkForStuckAgreements(): Promise<void> {
-    try {
-      const now = new Date();
-      const warningThreshold = new Date(
-        now.getTime() - this.config.warningThresholdMinutes * 60 * 1000
-      );
-      const criticalThreshold = new Date(
-        now.getTime() - this.config.criticalThresholdMinutes * 60 * 1000
-      );
-      const maxAgeThreshold = new Date(
-        now.getTime() - this.config.maxAgeHours * 60 * 60 * 1000
-      );
-
-      // Find agreements stuck in any status with deposits
-      // Includes partial deposits (NFT_LOCKED, SOL_LOCKED/USDC_LOCKED) and complete deposits (BOTH_LOCKED)
-      // ARCHIVED is included because agreements can be archived WITH deposits still in escrow
-      // (e.g., test cleanup, failed settlement). We skip ARCHIVED without deposits (normal cleanup)
-      // but alert CRITICAL for ARCHIVED with deposits (stuck funds!)
-      // Only checks agreements updated within maxAgeHours to prevent old agreements from accumulating
-      const stuckAgreements = await prisma.agreement.findMany({
-        where: {
-          status: {
-            in: [
-              AgreementStatus.NFT_LOCKED,    // Only NFT deposited
-              AgreementStatus.SOL_LOCKED,    // Only SOL deposited (V2)
-              AgreementStatus.USDC_LOCKED,   // Only USDC deposited (legacy V1)
-              AgreementStatus.BOTH_LOCKED,   // Both sides deposited
-              AgreementStatus.ARCHIVED,      // Failed/cleanup agreements
-            ],
-          },
-          updatedAt: {
-            lt: warningThreshold, // Updated before warning threshold
-            gte: maxAgeThreshold, // But not older than maxAge (prevents accumulation)
-          },
-        },
-        select: {
-          agreementId: true,
-          status: true,
-          updatedAt: true,
-          escrowPda: true,
-          nftMint: true,
-          price: true,
-          deposits: {
-            select: {
-              id: true,
-              type: true,
-              status: true,
-            },
-          },
-        },
-      });
-
-      if (stuckAgreements.length === 0) {
-        // No stuck agreements - all good!
-        return;
-      }
-
-      console.log(
-        `[StuckAgreementMonitor] Found ${stuckAgreements.length} potentially stuck agreement(s)`
-      );
-
-      // Process each stuck agreement
-      for (const agreement of stuckAgreements) {
-        const timeSinceUpdate = now.getTime() - agreement.updatedAt.getTime();
-        const minutesSinceUpdate = Math.round(timeSinceUpdate / 60000);
-
-        // Check if agreement has deposits
-        const hasDeposits = agreement.deposits && agreement.deposits.length > 0;
-
-        // For ARCHIVED agreements without deposits, skip (normal cleanup, not stuck)
-        if (agreement.status === AgreementStatus.ARCHIVED && !hasDeposits) {
-          console.log(
-            `[StuckAgreementMonitor] ℹ️  Agreement ${agreement.agreementId} is ARCHIVED with no deposits (normal cleanup) - skipping alert`
-          );
-          continue; // Skip to next agreement
-        }
-
-        // Determine severity
-        // ARCHIVED with deposits is always CRITICAL (stuck funds!)
-        const isCritical = agreement.updatedAt < criticalThreshold || 
-                          (agreement.status === AgreementStatus.ARCHIVED && hasDeposits);
-        const severity = isCritical ? AlertSeverity.CRITICAL : AlertSeverity.WARNING;
-
-        const depositInfo = hasDeposits 
-          ? ` - ${agreement.deposits.length} deposit(s) stuck!` 
-          : ' - no deposits';
-
-        const alert: StuckAgreementAlert = {
-          agreementId: agreement.agreementId,
-          status: agreement.status,
-          timeSinceLastUpdate: timeSinceUpdate,
-          severity,
-          message: `Agreement ${agreement.agreementId} stuck in ${agreement.status} for ${minutesSinceUpdate} minutes (Escrow PDA: ${agreement.escrowPda})${depositInfo}`,
-          timestamp: now,
-        };
-
-        // Trigger alert callbacks (logging handled by callback in index.ts to avoid duplicate logs)
-        this.triggerAlert(alert);
-
-        // ** AUTOMATIC REFUND PROCESSING **
-        // If auto-refund is enabled and agreement has been stuck long enough, process refund
-        const autoRefundThreshold = new Date(
-          now.getTime() - this.config.autoRefundThresholdMinutes * 60 * 1000
-        );
-        
-        if (
-          this.config.autoRefundEnabled &&
-          agreement.updatedAt < autoRefundThreshold &&
-          !this.refundAttempts.has(agreement.agreementId)
-        ) {
-          console.log(
-            `[StuckAgreementMonitor] 🔄 Agreement ${agreement.agreementId} stuck for ${minutesSinceUpdate} minutes - initiating automatic refund`
-          );
-          
-          // Mark as attempted (prevent duplicate attempts)
-          this.refundAttempts.add(agreement.agreementId);
-          
-          // CRITICAL: Process refund SEQUENTIALLY (await) to prevent Jito rate limiting
-          // Previously this was fire-and-forget which caused multiple agreements
-          // to process refunds in parallel, overwhelming Jito's 1 tx/second limit
-          try {
-            await this.processAutomaticRefund(agreement.agreementId);
-          } catch (refundError) {
-            console.error(
-              `[StuckAgreementMonitor] ⚠️ Automatic refund failed for ${agreement.agreementId}:`,
-              refundError
-            );
-            // Remove from attempts so it can be retried in next cycle
-            this.refundAttempts.delete(agreement.agreementId);
-          }
-          
-          // Add delay between agreements to further prevent rate limiting
-          console.log('[StuckAgreementMonitor] Waiting 3s before processing next agreement...');
-          await new Promise(resolve => setTimeout(resolve, 3000));
-        }
-      }
-    } catch (error) {
-      console.error('[StuckAgreementMonitor] Error checking for stuck agreements:', error);
-    }
-  }
-
-  /**
-   * Process automatic refund for stuck agreement
-   */
-  private async processAutomaticRefund(agreementId: string): Promise<void> {
-    try {
-      console.log(`[StuckAgreementMonitor] 🔄 Starting automatic refund for ${agreementId}`);
-      
-      const refundService = getRefundService();
-      
-      // Check refund eligibility
-      const eligibility = await refundService.checkRefundEligibility(agreementId);
-      
-      if (!eligibility.eligible) {
-        console.log(
-          `[StuckAgreementMonitor] ℹ️  Agreement ${agreementId} not eligible for refund: ${eligibility.reason}`
-        );
-        return;
-      }
-      
-      console.log(
-        `[StuckAgreementMonitor] ✅ Agreement ${agreementId} eligible for refund - processing...`
-      );
-      
-      // Process refunds
-      const result = await refundService.processRefunds(agreementId);
-      
-      if (result.success) {
-        console.log(
-          `[StuckAgreementMonitor] ✅ Automatic refund successful for ${agreementId} - ${result.refundedDeposits.length} deposit(s) refunded`
-        );
-      } else {
-        console.error(
-          `[StuckAgreementMonitor] ❌ Automatic refund failed for ${agreementId}:`,
-          result.errors
-        );
-        throw new Error(`Refund failed: ${result.errors?.map(e => `${e.depositId}: ${e.error}`).join('; ')}`);
-      }
-    } catch (error) {
-      console.error(
-        `[StuckAgreementMonitor] ❌ Error processing automatic refund for ${agreementId}:`,
-        error
-      );
-      throw error;
-    }
-  }
-
-  /**
-   * Trigger alert callbacks
-   */
-  private triggerAlert(alert: StuckAgreementAlert): void {
-    for (const callback of this.alertCallbacks) {
-      try {
-        callback(alert);
-      } catch (error) {
-        console.error('[StuckAgreementMonitor] Error in alert callback:', error);
-      }
-    }
-  }
-
-  /**
-   * Get monitor status
-   */
-  getStatus(): {
-    isRunning: boolean;
-    config: Required<MonitorConfig>;
-  } {
-    return {
-      isRunning: this.isRunning,
-      config: this.config,
-    };
-  }
-
-  /**
-   * Manually check for stuck agreements (for testing/debugging)
-   */
-  async manualCheck(): Promise<StuckAgreementAlert[]> {
-    const alerts: StuckAgreementAlert[] = [];
-
-    // Temporarily register a callback to collect alerts
-    const callback = (alert: StuckAgreementAlert) => {
-      alerts.push(alert);
-    };
-
-    this.onAlert(callback);
-    await this.checkForStuckAgreements();
-
-    // Remove the temporary callback
-    const index = this.alertCallbacks.indexOf(callback);
-    if (index > -1) {
-      this.alertCallbacks.splice(index, 1);
-    }
-
-    return alerts;
-  }
-}
-
-// Singleton instance
-let stuckAgreementMonitorInstance: StuckAgreementMonitorService | null = null;
-
-/**
- * Get or create stuck agreement monitor singleton instance
- */
-export function getStuckAgreementMonitor(
-  config?: MonitorConfig
-): StuckAgreementMonitorService {
-  if (!stuckAgreementMonitorInstance) {
-    stuckAgreementMonitorInstance = new StuckAgreementMonitorService(config);
-  }
-  return stuckAgreementMonitorInstance;
-}
-
-/**
- * Reset monitor instance (useful for testing)
- */
-export function resetStuckAgreementMonitor(): void {
-  if (stuckAgreementMonitorInstance) {
-    stuckAgreementMonitorInstance.stop().catch(console.error);
-    stuckAgreementMonitorInstance = null;
-  }
-}
-
-export default StuckAgreementMonitorService;
-
+// This file has been intentionally left empty after migration to atomic swaps
+// Agreement monitoring is no longer needed
+// Export empty object to prevent import errors
+export {};

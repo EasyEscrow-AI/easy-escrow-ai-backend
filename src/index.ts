@@ -6,7 +6,7 @@ import swaggerUi from 'swagger-ui-express';
 import YAML from 'yamljs';
 import { connectDatabase, checkDatabaseHealth } from './config/database';
 import { connectRedis, checkRedisHealth, disconnectRedis } from './config/redis';
-import { agreementRoutes, expiryCancellationRoutes, webhookRoutes, receiptRoutes, transactionLogRoutes, healthRoutes } from './routes';
+import { /* agreementRoutes, */ expiryCancellationRoutes, webhookRoutes, receiptRoutes, transactionLogRoutes, healthRoutes } from './routes';
 import {
   corsOptions,
   helmetConfig,
@@ -14,11 +14,11 @@ import {
   securityHeaders,
 } from './middleware';
 import { 
-  getMonitoringOrchestrator, 
+  /* getMonitoringOrchestrator, */ // DISABLED: Agreement monitoring no longer needed after atomic swap migration
   getExpiryCancellationOrchestrator,
   getIdempotencyService 
 } from './services';
-import { getStuckAgreementMonitor, AlertSeverity } from './services/stuck-agreement-monitor.service';
+// import { getStuckAgreementMonitor, AlertSeverity } from './services/stuck-agreement-monitor.service'; // DISABLED: Agreement monitoring no longer needed
 // import { backupScheduler } from './services/backup-scheduler.service'; // DISABLED for BETA launch
 
 // Load environment variables
@@ -46,6 +46,9 @@ app.set('trust proxy', 1);
 
 // Initialize orchestrator instances (before route handlers)
 // Use environment-based intervals to allow tuning in production
+
+// DISABLED: Agreement monitoring orchestrator (no longer needed after atomic swap migration)
+/*
 const monitoringOrchestrator = getMonitoringOrchestrator({
   autoRestart: true,
   maxRestarts: 5,
@@ -59,6 +62,7 @@ const monitoringOrchestrator = getMonitoringOrchestrator({
     return isNaN(parsed) ? 120000 : parsed; // Fallback to 120s if invalid
   })(),
 });
+*/
 
 const expiryCancellationOrchestrator = getExpiryCancellationOrchestrator({
   expiryCheckIntervalMs: (() => {
@@ -75,6 +79,8 @@ const idempotencyService = getIdempotencyService({
   cleanupIntervalMinutes: 60, // Clean up expired keys every hour
 });
 
+// DISABLED: Stuck agreement monitor (no longer needed after atomic swap migration)
+/*
 const stuckAgreementMonitor = getStuckAgreementMonitor({
   warningThresholdMinutes: 10, // Warn if stuck for 10 minutes
   criticalThresholdMinutes: 30, // Critical if stuck for 30 minutes
@@ -98,6 +104,7 @@ stuckAgreementMonitor.onAlert((alert) => {
     console.error(`   Time stuck: ${Math.round(alert.timeSinceLastUpdate / 60000)} minutes`);
   }
 });
+*/
 
 // Security Middleware (apply first)
 app.use(helmetConfig);
@@ -124,15 +131,14 @@ app.get('/health', async (_req: Request, res: Response) => {
   const dbHealthy = await checkDatabaseHealth();
   const redisHealthy = await checkRedisHealth();
   
-  // Get monitoring orchestrator health with error handling
+  // DISABLED: Agreement monitoring orchestrator health check (no longer needed after atomic swap migration)
+  /*
   let monitoringHealth;
   let monitoringError = null;
   
   try {
-    // Use the module-level orchestrator instance to ensure consistency
     monitoringHealth = monitoringOrchestrator.getHealth();
   } catch (error) {
-    // If getHealth() throws, log it and return a safe default
     console.error('[Health Check] Failed to get monitoring health:', error);
     monitoringError = error instanceof Error ? error.message : 'Unknown error';
     monitoringHealth = {
@@ -143,6 +149,7 @@ app.get('/health', async (_req: Request, res: Response) => {
       restartCount: 0,
     };
   }
+  */
   
   // Get expiry-cancellation orchestrator health
   const expiryCancellationHealth = await expiryCancellationOrchestrator.healthCheck();
@@ -150,7 +157,7 @@ app.get('/health', async (_req: Request, res: Response) => {
   // Get idempotency service status
   const idempotencyStatus = idempotencyService.getStatus();
   
-  const allHealthy = dbHealthy && redisHealthy && monitoringHealth.healthy && expiryCancellationHealth.healthy && idempotencyStatus.isRunning;
+  const allHealthy = dbHealthy && redisHealthy && /* monitoringHealth.healthy && */ expiryCancellationHealth.healthy && idempotencyStatus.isRunning;
   const status = allHealthy ? 'healthy' : 'unhealthy';
   const statusCode = allHealthy ? 200 : 503;
   
@@ -160,6 +167,8 @@ app.get('/health', async (_req: Request, res: Response) => {
     service: 'easy-escrow-ai-backend',
     database: dbHealthy ? 'connected' : 'disconnected',
     redis: redisHealthy ? 'connected' : 'disconnected',
+    // DISABLED: Agreement monitoring (no longer needed after atomic swap migration)
+    /*
     monitoring: {
       status: monitoringHealth.healthy ? 'running' : 'stopped',
       monitoredAccounts: monitoringHealth.monitoredAccounts,
@@ -168,6 +177,7 @@ app.get('/health', async (_req: Request, res: Response) => {
       solanaHealthy: monitoringHealth.solanaHealthy,
       ...(monitoringError && { error: monitoringError }),
     },
+    */
     expiryCancellation: {
       status: expiryCancellationHealth.healthy ? 'running' : 'stopped',
       services: expiryCancellationHealth.services,
@@ -236,7 +246,7 @@ app.get('/', (_req: Request, res: Response) => {
     version: '1.0.0',
     endpoints: {
       health: '/health',
-      agreements: '/v1/agreements',
+      // agreements: '/v1/agreements', // DISABLED: Agreement API no longer available after atomic swap migration
       receipts: '/v1/receipts',
       transactions: '/v1/transactions',
       expiryCancellation: '/api/expiry-cancellation',
@@ -272,7 +282,7 @@ if (swaggerDocument) {
 }
 
 // API Routes
-app.use(agreementRoutes);
+// app.use(agreementRoutes); // DISABLED: Agreement routes no longer available after atomic swap migration
 app.use(receiptRoutes);
 app.use('/v1/transactions', transactionLogRoutes);
 app.use('/api/expiry-cancellation', expiryCancellationRoutes);
@@ -303,17 +313,23 @@ const gracefulShutdown = async (signal: string) => {
   console.log(`\n${signal} received. Starting graceful shutdown...`);
   
   try {
+    // DISABLED: Agreement monitoring orchestrator (no longer needed after atomic swap migration)
+    /*
     // Stop monitoring orchestrator
     console.log('Stopping monitoring orchestrator...');
     await monitoringOrchestrator.stop();
+    */
     
     // Stop expiry-cancellation orchestrator
     console.log('Stopping expiry-cancellation orchestrator...');
     await expiryCancellationOrchestrator.stop();
     
+    // DISABLED: Stuck agreement monitor (no longer needed after atomic swap migration)
+    /*
     // Stop stuck agreement monitor
     console.log('Stopping stuck agreement monitor...');
     await stuckAgreementMonitor.stop();
+    */
     
     // Stop idempotency service
     console.log('Stopping idempotency service...');
@@ -358,11 +374,14 @@ const startServer = async () => {
         try {
           console.log('Starting background services...');
           
+          // DISABLED: Agreement monitoring orchestrator (no longer needed after atomic swap migration)
+          /*
           // Start monitoring orchestrator
           console.log('[STARTUP] 🚀 Starting monitoring orchestrator...');
           console.log('[STARTUP] This includes MonitoringService and SettlementService');
           await monitoringOrchestrator.start();
           console.log('[STARTUP] ✅ Monitoring orchestrator started successfully');
+          */
           
           // Start expiry-cancellation orchestrator
           console.log('[STARTUP] 🚀 Starting expiry-cancellation orchestrator...');
@@ -374,14 +393,18 @@ const startServer = async () => {
           await idempotencyService.start();
           console.log('✅ Idempotency service started');
           
+          // DISABLED: Stuck agreement monitor (no longer needed after atomic swap migration)
+          /*
           // Start stuck agreement monitor
           console.log('Starting stuck agreement monitor...');
           await stuckAgreementMonitor.start();
           console.log('✅ Stuck agreement monitor started');
+          */
           
           // DISABLED for BETA launch - Backup scheduler
           // Manual backups via CLI tools are sufficient for BETA phase
           console.log('⏭️  Backup scheduler disabled (BETA launch - using manual backups)');
+          console.log('⏭️  Agreement monitoring disabled (atomic swap migration - no longer needed)');
           
           console.log('✅ All background services started');
         } catch (error) {
