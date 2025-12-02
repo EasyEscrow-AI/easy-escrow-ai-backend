@@ -617,6 +617,59 @@ export class NoncePoolManager {
   }
   
   /**
+   * Public method for external cleanup scheduler
+   * Returns count of cleaned nonces
+   */
+  async cleanup(): Promise<{ cleaned: number }> {
+    console.log('[NoncePoolManager] External cleanup triggered');
+    
+    try {
+      const expirationDate = new Date(Date.now() - this.config.expirationThresholdMs);
+      
+      // Find nonce accounts that haven't been used recently and are not AVAILABLE
+      const expiredNonces = await this.prisma.noncePool.findMany({
+        where: {
+          lastUsedAt: { lt: expirationDate },
+          status: NonceStatus.IN_USE,
+        },
+      });
+      
+      console.log(`[NoncePoolManager] Found ${expiredNonces.length} expired nonce accounts`);
+      
+      for (const nonce of expiredNonces) {
+        // Mark as EXPIRED
+        await this.prisma.noncePool.update({
+          where: { nonceAccount: nonce.nonceAccount },
+          data: { status: NonceStatus.EXPIRED },
+        });
+        
+        console.log(`[NoncePoolManager] Marked nonce account as expired: ${nonce.nonceAccount}`);
+      }
+      
+      return { cleaned: expiredNonces.length };
+    } catch (error) {
+      console.error('[NoncePoolManager] Cleanup failed:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Public method for external replenishment scheduler
+   * Exposes private replenishPool with proper return value
+   */
+  async replenish(count?: number): Promise<{ created: number }> {
+    console.log('[NoncePoolManager] External replenishment triggered');
+    const toCreate = count || (this.config.minPoolSize - (await this.getPoolStats()).available);
+    
+    if (toCreate <= 0) {
+      return { created: 0 };
+    }
+    
+    await this.replenishPool(toCreate);
+    return { created: toCreate };
+  }
+  
+  /**
    * Utility: Sleep for specified milliseconds
    */
   private sleep(ms: number): Promise<void> {

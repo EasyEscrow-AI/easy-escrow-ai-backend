@@ -7,7 +7,7 @@ import YAML from 'yamljs';
 import { connectDatabase, checkDatabaseHealth } from './config/database';
 import { connectRedis, checkRedisHealth, disconnectRedis } from './config/redis';
 import { agreementRoutes, expiryCancellationRoutes, webhookRoutes, receiptRoutes, transactionLogRoutes, healthRoutes, offersRoutes, testRoutes, testExecuteRoutes } from './routes';
-import { noncePoolManager } from './routes/offers.routes';
+import { noncePoolManager, healthCheckService } from './routes/offers.routes';
 import {
   corsOptions,
   helmetConfig,
@@ -15,6 +15,9 @@ import {
   securityHeaders,
 } from './middleware';
 import { getIdempotencyService } from './services';
+import { getOfferExpiryScheduler } from './services/offer-expiry-scheduler.service';
+import { getNonceCleanupScheduler, getNonceReplenishmentScheduler } from './services/nonce-schedulers.service';
+import { prisma } from './config/database';
 // import { backupScheduler } from './services/backup-scheduler.service'; // DISABLED for BETA launch
 
 // Load environment variables
@@ -46,6 +49,26 @@ const idempotencyService = getIdempotencyService({
   cleanupIntervalMinutes: 60, // Clean up expired keys every hour
 });
 
+// Initialize offer expiry scheduler
+const offerExpiryScheduler = getOfferExpiryScheduler(prisma, {
+  schedule: '*/15 * * * *', // Every 15 minutes
+  batchSize: 200,
+  timezone: process.env.TZ || 'America/Los_Angeles',
+});
+
+// Initialize nonce pool schedulers
+const nonceCleanupScheduler = getNonceCleanupScheduler(noncePoolManager, {
+  cleanupSchedule: '0 * * * *', // Every hour
+  timezone: process.env.TZ || 'America/Los_Angeles',
+});
+
+const nonceReplenishmentScheduler = getNonceReplenishmentScheduler(noncePoolManager, {
+  replenishmentSchedule: '*/30 * * * *', // Every 30 minutes
+  timezone: process.env.TZ || 'America/Los_Angeles',
+  minPoolSize: 10,
+  replenishmentAmount: 5,
+});
+
 // Security Middleware (apply first)
 app.use(helmetConfig);
 app.use(securityHeaders);
@@ -66,54 +89,24 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
   next();
 });
 
-// Health check endpoint
+// Enhanced health check endpoint with treasury PDA, RPC monitoring, and caching
 app.get('/health', async (_req: Request, res: Response) => {
-  const dbHealthy = await checkDatabaseHealth();
-  const redisHealthy = await checkRedisHealth();
-  
-  // Get idempotency service status
-  const idempotencyStatus = idempotencyService.getStatus();
-  
-  // Get nonce pool status
-  let noncePoolStats = null;
-  let noncePoolError = null;
   try {
-    noncePoolStats = await noncePoolManager.getPoolStats();
+    const healthResult = await healthCheckService.check();
+    const statusCode = healthCheckService.getStatusCode(healthResult);
+    
+    res.status(statusCode).json(healthResult);
   } catch (error) {
-    console.error('[Health Check] Failed to get nonce pool stats:', error);
-    noncePoolError = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[Health Check] Unexpected error:', error);
+    res.status(503).json({
+      status: 'unhealthy',
+      timestamp: new Date().toISOString(),
+      service: 'easy-escrow-ai-backend',
+      mode: 'atomic-swap',
+      error: error instanceof Error ? error.message : 'Health check failed',
+      cached: false,
+    });
   }
-  
-  // Atomic Swap MVP: Core services required for operation
-  // Nonce pool is monitored but not required for health (atomic swaps will queue if depleted)
-  const allHealthy = dbHealthy && redisHealthy && idempotencyStatus.isRunning;
-  const status = allHealthy ? 'healthy' : 'unhealthy';
-  const statusCode = allHealthy ? 200 : 503;
-  
-  res.status(statusCode).json({
-    status,
-    timestamp: new Date().toISOString(),
-    service: 'easy-escrow-ai-backend',
-    mode: 'atomic-swap',
-    database: dbHealthy ? 'connected' : 'disconnected',
-    redis: redisHealthy ? 'connected' : 'disconnected',
-    idempotency: {
-      status: idempotencyStatus.isRunning ? 'running' : 'stopped',
-      expirationHours: idempotencyStatus.expirationHours,
-      cleanupIntervalMinutes: idempotencyStatus.cleanupIntervalMinutes,
-    },
-    noncePool: noncePoolStats ? {
-      status: 'running',
-      total: noncePoolStats.total,
-      available: noncePoolStats.available,
-      inUse: noncePoolStats.inUse,
-      expired: noncePoolStats.expired,
-      health: noncePoolStats.available > 0 ? 'healthy' : 'depleted',
-    } : {
-      status: 'error',
-      error: noncePoolError || 'Failed to get pool stats',
-    }
-  });
 });
 
 // Swagger Configuration
@@ -293,6 +286,18 @@ const startServer = async () => {
           console.log('Starting idempotency service...');
           await idempotencyService.start();
           console.log('✅ Idempotency service started');
+          
+          // Start offer expiry scheduler
+          console.log('Starting offer expiry scheduler...');
+          offerExpiryScheduler.start();
+          console.log('✅ Offer expiry scheduler started (runs every 15 minutes)');
+          
+          // Start nonce pool schedulers
+          console.log('Starting nonce pool schedulers...');
+          nonceCleanupScheduler.start();
+          console.log('✅ Nonce cleanup scheduler started (runs hourly)');
+          nonceReplenishmentScheduler.start();
+          console.log('✅ Nonce replenishment scheduler started (runs every 30 minutes)');
           
           // DISABLED for BETA launch - Backup scheduler
           // Manual backups via CLI tools are sufficient for BETA phase

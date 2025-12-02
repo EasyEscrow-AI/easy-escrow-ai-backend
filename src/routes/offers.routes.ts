@@ -14,8 +14,11 @@ import { NoncePoolManager } from '../services/noncePoolManager';
 import { FeeCalculator } from '../services/feeCalculator';
 import { AssetValidator } from '../services/assetValidator';
 import { TransactionBuilder } from '../services/transactionBuilder';
+import { HealthCheckService } from '../services/health-check.service';
 import { Connection, Keypair, PublicKey } from '@solana/web3.js';
-import { prisma } from '../config/database';
+import { prisma, checkDatabaseHealth } from '../config/database';
+import { checkRedisHealth } from '../config/redis';
+import { getIdempotencyService } from '../services';
 import bs58 from 'bs58';
 
 const router = Router();
@@ -121,6 +124,23 @@ const offerManager = new OfferManager(
   platformAuthority,
   treasuryPDA,
   programId
+);
+
+// Initialize health check service
+const healthCheckService = new HealthCheckService(
+  connection,
+  noncePoolManager,
+  getIdempotencyService(),
+  checkDatabaseHealth,
+  checkRedisHealth,
+  programId,
+  platformAuthority.publicKey,
+  {
+    cacheTTL: 30, // 30 seconds
+    treasuryMinBalance: 1_000_000_000, // 1 SOL
+    rpcTimeout: 5000, // 5 seconds
+    rpcSlowThreshold: 2000, // 2 seconds
+  }
 );
 
 // Initialize nonce pool on startup
@@ -875,5 +895,5 @@ router.post(
 );
 
 export default router;
-export { noncePoolManager, offerManager };
+export { noncePoolManager, offerManager, healthCheckService };
 
