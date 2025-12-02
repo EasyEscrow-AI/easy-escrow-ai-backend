@@ -149,20 +149,20 @@ export class OfferExpiryScheduler {
         iterations++;
         
         // Find expired offers in batches
-        // offers.status: pending, accepted, active, etc. should become 'expired'
-        const expiredOffers = await this.prisma.swap_offer.findMany({
+        // offers.status: PENDING, ACCEPTED, ACTIVE, etc. should become EXPIRED
+        const expiredOffers = await this.prisma.swapOffer.findMany({
           where: {
-            expires_at: {
+            expiresAt: {
               lt: new Date(), // Expiration time is in the past
             },
             status: {
-              in: ['active', 'pending'], // Only expire active/pending offers
+              in: ['ACTIVE'], // Only expire active offers
             },
           },
           take: this.config.batchSize,
           select: {
             id: true,
-            expires_at: true,
+            expiresAt: true,
             status: true,
           },
         });
@@ -176,20 +176,19 @@ export class OfferExpiryScheduler {
         
         // Update offers to expired status
         // Include status filter to prevent race condition where offer gets accepted between query and update
-        const offerIds = expiredOffers.map((offer) => offer.id);
+        const offerIds = expiredOffers.map((offer: { id: number }) => offer.id);
         
-        const updateResult = await this.prisma.swap_offer.updateMany({
+        const updateResult = await this.prisma.swapOffer.updateMany({
           where: {
             id: {
               in: offerIds,
             },
             status: {
-              in: ['active', 'pending'], // Re-check status to prevent race condition
+              in: ['ACTIVE'], // Re-check status to prevent race condition
             },
           },
           data: {
-            status: 'expired',
-            updated_at: new Date(),
+            status: 'EXPIRED',
           },
         });
         

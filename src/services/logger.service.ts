@@ -47,8 +47,9 @@ export class LoggerService {
         ? winston.format.json() // JSON for production (parseable)
         : winston.format.printf(({ level, message, timestamp, metadata }) => {
             // Pretty format for development
-            const metaStr = Object.keys(metadata).length > 0
-              ? `\n  ${JSON.stringify(metadata, null, 2)}`
+            const meta = metadata as Record<string, any>;
+            const metaStr = Object.keys(meta).length > 0
+              ? `\n  ${JSON.stringify(meta, null, 2)}`
               : '';
             return `${timestamp} [${level.toUpperCase()}] ${message}${metaStr}`;
           })
