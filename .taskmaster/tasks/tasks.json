@@ -5166,7 +5166,7 @@
         "description": "Create comprehensive end-to-end TypeScript tests for cNFT swaps on devnet staging environment covering all swap type combinations.",
         "details": "Create tests/staging/e2e/05-atomic-cnft-swaps.test.ts with tests for: cNFT for SOL, SOL for cNFT, cNFT for cNFT, cNFT for standard NFT, standard NFT for cNFT. Validate maker owns cNFT with DAS API. Build transaction with proof data. Sign and send transaction. Verify ownership changed on-chain. Use real devnet cNFTs. Test both success and failure scenarios.",
         "testStrategy": "",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           25,
           26,
@@ -5202,7 +5202,7 @@
               1
             ],
             "details": "Implement test cases that validate taker has sufficient SOL balance, maker owns target cNFT with DAS API validation, build transaction with proof data, execute swap, and verify SOL deduction and cNFT ownership transfer. Include failure scenarios for insufficient SOL, invalid cNFT proofs, and network issues.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Verify SOL balance checks, cNFT proof validation, and successful ownership transfers with comprehensive error handling"
           },
           {
@@ -5213,7 +5213,7 @@
               1
             ],
             "details": "Implement test cases that validate both maker and taker own their respective cNFTs using DAS API, build transaction with dual Merkle proof data, execute atomic swap, and verify both cNFT ownership changes on-chain. Include failure scenarios for invalid proofs on either side, mismatched assets, and transaction failures.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Test dual cNFT ownership validation, atomic swap execution, and comprehensive failure scenarios with invalid proofs"
           },
           {
@@ -5227,7 +5227,7 @@
               4
             ],
             "details": "Implement test cases for cNFT-to-standard-NFT and standard-NFT-to-cNFT swaps. Validate cNFT ownership with DAS API and standard NFT ownership with token account queries. Build transactions with appropriate proof data for cNFTs and token account validation for standard NFTs. Verify ownership changes and test failure scenarios including mixed asset type validation errors.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Test cross-format asset validation, mixed transaction building, and comprehensive error handling for different NFT types"
           },
           {
@@ -5277,7 +5277,7 @@
     ],
     "metadata": {
       "created": "2025-11-17T05:45:23.312Z",
-      "updated": "2025-12-01T23:41:37.839Z",
+      "updated": "2025-12-02T04:54:49.234Z",
       "description": "Complete architectural pivot from escrow agreements to atomic NFT/cNFT swaps with durable nonces"
     }
   }

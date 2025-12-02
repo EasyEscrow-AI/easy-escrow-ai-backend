@@ -23,8 +23,10 @@ EasyEscrow.ai is a **100% Atomic Swap platform** enabling instant, trustless exc
 | **NFT ↔ SOL** | Exchange NFT for SOL tokens | ✅ **LIVE** |
 | **NFT ↔ NFT (fee)** | NFT for NFT with platform fee | ✅ **LIVE** |
 | **NFT ↔ NFT + SOL** | NFT for another NFT plus SOL | ✅ **LIVE** |
-| **cNFT ↔ SOL** | Compressed NFT for SOL | 🔄 Coming Soon |
-| **NFT ↔ cNFT** | Standard NFT for compressed NFT | 🔄 Coming Soon |
+| **cNFT ↔ SOL** | Compressed NFT for SOL | ⚠️ Validation Ready |
+| **NFT ↔ cNFT** | Standard NFT for compressed NFT | ⚠️ Validation Ready |
+
+**Note:** Compressed NFT (cNFT) validation is complete and tested. Transaction building and on-chain transfers are in development. See [cNFT Implementation Plan](docs/tasks/CNFT_SWAP_SUPPORT.md) for details.
 
 ---
 
@@ -40,7 +42,7 @@ EasyEscrow.ai is a production-ready atomic swap platform built on Solana blockch
 
 - **⚡ Atomic Swaps**: Instant, trustless peer-to-peer asset exchanges
 - **🔐 Nonce-Based Transactions**: Durable transactions with automatic retry logic
-- **🎨 NFT Support**: Standard NFTs (Metaplex) and compressed NFTs (upcoming)
+- **🎨 NFT Support**: Standard NFTs (Metaplex) and compressed NFTs (cNFT validation ready)
 - **💸 SOL Integration**: Native SOL token transfers in swaps
 - **🌐 Multi-Environment**: Separate deployments for development, staging, and production
 - **📡 RESTful API**: Comprehensive REST endpoints with OpenAPI/Swagger documentation
