@@ -175,12 +175,16 @@ export class OfferExpiryScheduler {
         console.log(`\n📋 Batch ${iterations}: Found ${expiredOffers.length} expired offers`);
         
         // Update offers to expired status
+        // Include status filter to prevent race condition where offer gets accepted between query and update
         const offerIds = expiredOffers.map((offer) => offer.id);
         
         const updateResult = await this.prisma.swap_offer.updateMany({
           where: {
             id: {
               in: offerIds,
+            },
+            status: {
+              in: ['active', 'pending'], // Re-check status to prevent race condition
             },
           },
           data: {

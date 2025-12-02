@@ -348,25 +348,26 @@ export class NonceReplenishmentScheduler {
       
       // Replenish the pool
       const toCreate = this.config.replenishmentAmount;
-      await this.noncePoolManager.replenishPool(toCreate);
+      const result = await this.noncePoolManager.replenish(toCreate);
       
       const duration = Date.now() - startTime;
+      const actuallyCreated = result.created;
       
       console.log('\n╔═══════════════════════════════════════════════════════════╗');
       console.log('║         Replenishment Summary                              ║');
       console.log('╚═══════════════════════════════════════════════════════════╝');
       console.log(`✅ Completed at: ${new Date().toISOString()}`);
-      console.log(`➕ Nonces created: ${toCreate}`);
+      console.log(`➕ Nonces created: ${actuallyCreated}`);
       console.log(`⏱️  Duration: ${duration}ms`);
       
       // Update tracking metrics
       this.lastRun = new Date();
       this.totalExecutions++;
-      this.totalReplenished += toCreate;
+      this.totalReplenished += actuallyCreated;
       this.consecutiveErrors = 0;
       
       this.isRunning = false;
-      return { success: true, created: toCreate };
+      return { success: true, created: actuallyCreated };
       
     } catch (error: any) {
       const duration = Date.now() - startTime;
