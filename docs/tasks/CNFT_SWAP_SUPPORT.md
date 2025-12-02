@@ -1,5 +1,8 @@
 # Compressed NFT (cNFT) Swap Support Implementation Plan
 
+**Last Updated:** December 2, 2025  
+**Status:** Phase 1 Complete (Validation) | Phase 2-3 Pending (Transaction Building & On-Chain)
+
 ## 🎯 Goal
 
 Enable atomic swaps for compressed NFTs in addition to standard NFTs.
@@ -10,10 +13,29 @@ Enable atomic swaps for compressed NFTs in addition to standard NFTs.
 
 | Feature | Standard NFTs | Compressed NFTs |
 |---------|---------------|-----------------|
-| **Validation** | ✅ Working | ✅ Working (PR #300) |
-| **Transaction Building** | ✅ Working | ❌ Not Implemented |
-| **Program Transfer** | ✅ Working | ❌ Not Implemented |
-| **E2E Swaps** | ✅ Working | ❌ Blocked by above |
+| **Validation** | ✅ Working | ✅ Working (PR #300 merged) |
+| **Transaction Building** | ✅ Working | ⏳ In Development |
+| **Program Transfer** | ✅ Working | ⏳ In Development |
+| **E2E Swaps** | ✅ Working | ⏳ Blocked by above |
+
+### ✅ Completed (Phase 1)
+- Asset validation via Helius DAS API
+- Merkle proof fetching and storage
+- Ownership verification for cNFTs
+- Burn status checking
+- Integration with AssetValidator service
+- Documentation in API (OpenAPI spec)
+
+### ⏳ In Progress
+- Transaction builder updates for cNFT accounts
+- Solana program instruction modifications
+- Bubblegum CPI integration
+
+### 📋 Next Steps
+1. Update transaction builder to handle Bubblegum accounts
+2. Modify escrow program to support cNFT transfers
+3. Deploy updated program to staging/mainnet
+4. E2E testing with real cNFT swaps
 
 ---
 
