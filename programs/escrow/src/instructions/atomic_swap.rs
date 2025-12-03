@@ -12,6 +12,26 @@ const MAX_PLATFORM_FEE: u64 = 500_000_000;
 /// Bubblegum program ID for cNFT transfers
 const BUBBLEGUM_PROGRAM_ID: Pubkey = mpl_bubblegum::ID;
 
+/// Authorized apps that can perform zero-fee swaps
+/// Add your trusted app public keys here
+/// 
+/// SECURITY: Only whitelisted apps can execute swaps with platform_fee = 0
+/// This prevents unauthorized parties from bypassing platform fees
+fn get_zero_fee_authorized_apps() -> Vec<Pubkey> {
+    vec![
+        // Staging admin for testing (498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R)
+        Pubkey::new_from_array([
+            0x2e, 0xa7, 0xec, 0x9b, 0xaa, 0xe0, 0xb3, 0xea,
+            0xa4, 0x76, 0xd3, 0x1c, 0x53, 0x77, 0xfa, 0x65,
+            0xb7, 0x39, 0x8f, 0xa5, 0x1e, 0x26, 0x5e, 0x0b,
+            0x9d, 0xe3, 0xdd, 0x7f, 0xc2, 0x01, 0x3a, 0xc2,
+        ]),
+        // Add more authorized app public keys here as needed
+        // Example:
+        // Pubkey::new_from_array([0x12, 0x34, ...]),
+    ]
+}
+
 /// cNFT Merkle proof for ownership verification
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
 pub struct CnftProof {
@@ -118,6 +138,10 @@ pub struct AtomicSwapWithFee<'info> {
     /// SPL Noop program (for logging)
     /// CHECK: Program ID verified by Bubblegum
     pub log_wrapper: Option<AccountInfo<'info>>,
+    
+    /// Optional: Authorized app account for zero-fee swaps
+    /// CHECK: Validated in handler against whitelist for zero-fee authorization
+    pub authorized_app: Option<AccountInfo<'info>>,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
@@ -141,6 +165,7 @@ pub struct SwapParams {
     pub taker_sol_amount: u64,
     
     /// Platform fee in lamports (paid by taker)
+    /// Can be 0 if authorized_app_id is provided and whitelisted
     pub platform_fee: u64,
     
     /// Unique swap identifier for backend tracking (max 64 chars)
@@ -151,6 +176,10 @@ pub struct SwapParams {
     
     /// Taker's cNFT proof (if sending compressed NFT)
     pub taker_cnft_proof: Option<CnftProof>,
+    
+    /// Optional: Authorized app ID for zero-fee swaps
+    /// If platform_fee is 0, this must match a whitelisted app public key
+    pub authorized_app_id: Option<Pubkey>,
 }
 
 pub fn atomic_swap_handler(ctx: Context<AtomicSwapWithFee>, params: SwapParams) -> Result<()> {
@@ -159,8 +188,8 @@ pub fn atomic_swap_handler(ctx: Context<AtomicSwapWithFee>, params: SwapParams) 
     // Check if program is paused
     require!(!treasury.is_paused, AtomicSwapError::ProgramPaused);
     
-    // Validate parameters
-    validate_params(&params)?;
+    // Validate parameters including zero-fee authorization
+    validate_params(&params, ctx.accounts.authorized_app.as_ref())?;
     
     // Validate NFT accounts if NFTs are being sent
     if params.maker_sends_nft {
@@ -184,15 +213,19 @@ pub fn atomic_swap_handler(ctx: Context<AtomicSwapWithFee>, params: SwapParams) 
     msg!("Taker: {}", ctx.accounts.taker.key());
     msg!("Platform fee: {} lamports", params.platform_fee);
     
-    // Step 1: Collect platform fee from taker to treasury
-    collect_platform_fee(
-        &ctx.accounts.taker.to_account_info(),
-        &treasury.to_account_info(),
-        &ctx.accounts.system_program,
-        params.platform_fee,
-    )?;
-    
-    msg!("Platform fee collected: {} lamports", params.platform_fee);
+    // Step 1: Collect platform fee from taker to treasury (if non-zero)
+    if params.platform_fee > 0 {
+        collect_platform_fee(
+            &ctx.accounts.taker.to_account_info(),
+            &treasury.to_account_info(),
+            &ctx.accounts.system_program,
+            params.platform_fee,
+        )?;
+        
+        msg!("Platform fee collected: {} lamports", params.platform_fee);
+    } else {
+        msg!("Zero-fee swap - no fee collected");
+    }
     
     // Step 2: Transfer maker's asset to taker
     if params.maker_sends_nft {
@@ -344,10 +377,34 @@ pub fn atomic_swap_handler(ctx: Context<AtomicSwapWithFee>, params: SwapParams) 
     Ok(())
 }
 
-/// Validate swap parameters
-fn validate_params(params: &SwapParams) -> Result<()> {
-    // Validate fee
-    require!(params.platform_fee > 0, AtomicSwapError::InvalidFee);
+/// Validate swap parameters including zero-fee authorization
+fn validate_params(params: &SwapParams, authorized_app: Option<&AccountInfo>) -> Result<()> {
+    // Check if this is a zero-fee swap (requires authorization)
+    if params.platform_fee == 0 {
+        // Zero-fee swaps require an authorized app
+        let app_account = authorized_app.ok_or(AtomicSwapError::UnauthorizedZeroFeeSwap)?;
+        
+        // Verify the provided authorized_app_id matches the account
+        if let Some(app_id) = params.authorized_app_id {
+            require!(
+                app_account.key() == app_id,
+                AtomicSwapError::UnauthorizedZeroFeeSwap
+            );
+        } else {
+            return Err(AtomicSwapError::UnauthorizedZeroFeeSwap.into());
+        }
+        
+        // Check if app is in whitelist
+        let authorized_apps = get_zero_fee_authorized_apps();
+        require!(
+            authorized_apps.contains(&app_account.key()),
+            AtomicSwapError::UnauthorizedZeroFeeSwap
+        );
+        
+        msg!("Zero-fee swap authorized for app: {}", app_account.key());
+    }
+    
+    // Validate fee doesn't exceed maximum
     require!(
         params.platform_fee <= MAX_PLATFORM_FEE,
         AtomicSwapError::FeeTooHigh

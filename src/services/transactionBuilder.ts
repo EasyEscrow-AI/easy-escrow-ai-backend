@@ -81,6 +81,9 @@ export interface TransactionBuildInputs {
   
   /** Escrow program ID */
   programId: PublicKey;
+  
+  /** Optional: Authorized app public key for zero-fee swaps */
+  authorizedAppId?: PublicKey;
 }
 
 export interface BuiltTransaction {
@@ -397,6 +400,8 @@ export class TransactionBuilder {
       // ALWAYS include proof fields (as null if not applicable)
       makerCnftProof: makerCnftParams ? this.serializeCnftProof(makerCnftParams.proof) : null,
       takerCnftProof: takerCnftParams ? this.serializeCnftProof(takerCnftParams.proof) : null,
+      // Authorized app ID for zero-fee swaps (null if not applicable)
+      authorizedAppId: inputs.authorizedAppId || null,
     }
     
     // Build accounts object
@@ -421,6 +426,8 @@ export class TransactionBuilder {
       bubblegumProgram: BUBBLEGUM_PROGRAM_ID,
       compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
       logWrapper: SPL_NOOP_PROGRAM_ID,
+      // Authorized app account for zero-fee swaps (use placeholder if not provided)
+      authorizedApp: inputs.authorizedAppId || PROGRAM_ID,
     };
     
     console.log('[TransactionBuilder] Swap params:', {

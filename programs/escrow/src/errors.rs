@@ -70,5 +70,8 @@ pub enum AtomicSwapError {
     
     #[msg("Invalid asset flags: Cannot send both standard NFT and compressed NFT")]
     ConflictingAssetFlags,
+    
+    #[msg("Unauthorized: Zero-fee swaps require authorized app signature")]
+    UnauthorizedZeroFeeSwap,
 }
 

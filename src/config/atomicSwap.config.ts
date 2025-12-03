@@ -5,7 +5,7 @@
  * cNFT indexer integration, and swap-specific settings.
  */
 
-import { LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 
 /**
  * Fee Calculation Configuration
@@ -80,6 +80,29 @@ export interface SwapOfferConfig {
 }
 
 /**
+ * Authorized App Configuration
+ * Apps that can perform zero-fee swaps
+ */
+export interface AuthorizedApp {
+  /** App name for identification */
+  name: string;
+  
+  /** App public key */
+  publicKey: PublicKey;
+  
+  /** Whether this app can perform zero-fee swaps */
+  allowZeroFees: boolean;
+}
+
+/**
+ * Authorized Apps Configuration
+ */
+export interface AuthorizedAppsConfig {
+  /** List of authorized apps */
+  apps: AuthorizedApp[];
+}
+
+/**
  * Default Fee Configuration
  */
 const DEFAULT_FEE_CONFIG: FeeConfig = {
@@ -117,6 +140,23 @@ const DEFAULT_OFFER_CONFIG: SwapOfferConfig = {
   maxExpirationMs: 30 * 24 * 60 * 60 * 1000, // 30 days
   maxAssetsPerSide: 10, // Max 10 NFTs per side for MVP
   maxSolAmountLamports: 100 * LAMPORTS_PER_SOL, // 100 SOL max
+};
+
+/**
+ * Default Authorized Apps Configuration
+ * 
+ * Apps listed here can perform zero-fee swaps.
+ * Add comma-separated public keys in AUTHORIZED_ZERO_FEE_APPS env var.
+ */
+const DEFAULT_AUTHORIZED_APPS_CONFIG: AuthorizedAppsConfig = {
+  apps: [
+    // Staging admin for testing (498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R)
+    {
+      name: 'Staging Admin',
+      publicKey: new PublicKey('498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R'),
+      allowZeroFees: true,
+    },
+  ],
 };
 
 /**
@@ -205,6 +245,43 @@ export function loadSwapOfferConfig(): SwapOfferConfig {
 }
 
 /**
+ * Load authorized apps configuration from environment variables
+ * 
+ * AUTHORIZED_ZERO_FEE_APPS: Comma-separated list of public keys
+ * Example: "App1PubKey...,App2PubKey..."
+ */
+export function loadAuthorizedAppsConfig(): AuthorizedAppsConfig {
+  const envApps = process.env.AUTHORIZED_ZERO_FEE_APPS;
+  
+  // Start with default apps
+  const apps: AuthorizedApp[] = [...DEFAULT_AUTHORIZED_APPS_CONFIG.apps];
+  
+  // Add apps from environment variable
+  if (envApps) {
+    const appKeys = envApps.split(',').map((key) => key.trim()).filter((key) => key.length > 0);
+    
+    for (const keyString of appKeys) {
+      try {
+        const publicKey = new PublicKey(keyString);
+        
+        // Skip if already in list
+        if (!apps.some((app) => app.publicKey.equals(publicKey))) {
+          apps.push({
+            name: `App ${keyString.substring(0, 8)}...`,
+            publicKey,
+            allowZeroFees: true,
+          });
+        }
+      } catch (error) {
+        console.warn(`[Config] Invalid authorized app public key: ${keyString}`);
+      }
+    }
+  }
+  
+  return { apps };
+}
+
+/**
  * Validate fee configuration
  */
 export function validateFeeConfig(config: FeeConfig): void {
@@ -282,6 +359,30 @@ export function validateSwapOfferConfig(config: SwapOfferConfig): void {
 }
 
 /**
+ * Validate authorized apps configuration
+ */
+export function validateAuthorizedAppsConfig(config: AuthorizedAppsConfig): void {
+  if (!Array.isArray(config.apps)) {
+    throw new Error('Authorized apps must be an array');
+  }
+  
+  // Validate each app
+  for (const app of config.apps) {
+    if (!app.name || typeof app.name !== 'string') {
+      throw new Error('Each authorized app must have a name');
+    }
+    
+    if (!app.publicKey || !(app.publicKey instanceof PublicKey)) {
+      throw new Error(`Authorized app ${app.name} must have a valid public key`);
+    }
+    
+    if (typeof app.allowZeroFees !== 'boolean') {
+      throw new Error(`Authorized app ${app.name} must have allowZeroFees boolean`);
+    }
+  }
+}
+
+/**
  * Get validated fee configuration
  */
 export function getFeeConfig(): FeeConfig {
@@ -309,12 +410,30 @@ export function getSwapOfferConfig(): SwapOfferConfig {
 }
 
 /**
+ * Get validated authorized apps configuration
+ */
+export function getAuthorizedAppsConfig(): AuthorizedAppsConfig {
+  const config = loadAuthorizedAppsConfig();
+  validateAuthorizedAppsConfig(config);
+  return config;
+}
+
+/**
+ * Check if a public key is authorized for zero-fee swaps
+ */
+export function isAuthorizedForZeroFees(publicKey: PublicKey): boolean {
+  const config = getAuthorizedAppsConfig();
+  return config.apps.some((app) => app.allowZeroFees && app.publicKey.equals(publicKey));
+}
+
+/**
  * Complete atomic swap configuration
  */
 export interface AtomicSwapConfig {
   fees: FeeConfig;
   cnftIndexer: CNFTIndexerConfig;
   offers: SwapOfferConfig;
+  authorizedApps: AuthorizedAppsConfig;
 }
 
 /**
@@ -325,6 +444,7 @@ export function getAtomicSwapConfig(): AtomicSwapConfig {
     fees: getFeeConfig(),
     cnftIndexer: getCNFTIndexerConfig(),
     offers: getSwapOfferConfig(),
+    authorizedApps: getAuthorizedAppsConfig(),
   };
 }
 
@@ -353,7 +473,9 @@ export default {
   getFeeConfig,
   getCNFTIndexerConfig,
   getSwapOfferConfig,
+  getAuthorizedAppsConfig,
   getAtomicSwapConfig: getCachedAtomicSwapConfig,
   resetAtomicSwapConfig,
+  isAuthorizedForZeroFees,
 };
 
