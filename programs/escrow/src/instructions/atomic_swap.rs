@@ -176,10 +176,6 @@ pub struct SwapParams {
     
     /// Taker's cNFT proof (if sending compressed NFT)
     pub taker_cnft_proof: Option<CnftProof>,
-    
-    /// Optional: Authorized app ID for zero-fee swaps
-    /// If platform_fee is 0, this must match a whitelisted app public key
-    pub authorized_app_id: Option<Pubkey>,
 }
 
 pub fn atomic_swap_handler(ctx: Context<AtomicSwapWithFee>, params: SwapParams) -> Result<()> {
@@ -384,17 +380,7 @@ fn validate_params(params: &SwapParams, authorized_app: Option<&Signer>) -> Resu
         // Zero-fee swaps require an authorized app SIGNER (proves ownership)
         let app_signer = authorized_app.ok_or(AtomicSwapError::UnauthorizedZeroFeeSwap)?;
         
-        // Verify the provided authorized_app_id matches the signer
-        if let Some(app_id) = params.authorized_app_id {
-            require!(
-                app_signer.key() == app_id,
-                AtomicSwapError::UnauthorizedZeroFeeSwap
-            );
-        } else {
-            return Err(AtomicSwapError::UnauthorizedZeroFeeSwap.into());
-        }
-        
-        // Check if app is in whitelist
+        // Check if app signer is in whitelist
         let authorized_apps = get_zero_fee_authorized_apps();
         require!(
             authorized_apps.contains(&app_signer.key()),
