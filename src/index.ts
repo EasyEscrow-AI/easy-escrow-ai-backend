@@ -16,10 +16,12 @@ import {
   sanitizeInput,
   securityHeaders,
 } from './middleware';
-import { getIdempotencyService } from './services';
-import { getOfferExpiryScheduler } from './services/offer-expiry-scheduler.service';
-import { getNonceCleanupScheduler, getNonceReplenishmentScheduler } from './services/nonce-schedulers.service';
-import { prisma } from './config/database';
+import { 
+  getMonitoringOrchestrator, 
+  getExpiryCancellationOrchestrator,
+  getIdempotencyService 
+} from './services';
+import { getStuckAgreementMonitor, AlertSeverity } from './services/stuck-agreement-monitor.service';
 // import { backupScheduler } from './services/backup-scheduler.service'; // DISABLED for BETA launch
 
 // Load environment variables
@@ -51,11 +53,13 @@ const idempotencyService = getIdempotencyService({
   cleanupIntervalMinutes: 60, // Clean up expired keys every hour
 });
 
-// Initialize offer expiry scheduler
-const offerExpiryScheduler = getOfferExpiryScheduler(prisma, {
-  schedule: '*/15 * * * *', // Every 15 minutes
-  batchSize: 200,
-  timezone: process.env.TZ || 'America/Los_Angeles',
+const stuckAgreementMonitor = getStuckAgreementMonitor({
+  warningThresholdMinutes: 10, // Warn if stuck for 10 minutes
+  criticalThresholdMinutes: 30, // Critical if stuck for 30 minutes
+  checkIntervalMs: 60000, // Check every minute
+  autoRefundEnabled: true, // ✅ NEW: Automatically refund stuck agreements
+  autoRefundThresholdMinutes: 15, // ✅ NEW: Auto-refund after 15 minutes
+  maxAgeHours: 24, // ✅ NEW: Only check agreements updated within last 24 hours (prevents accumulation)
 });
 
 // Initialize nonce pool schedulers
@@ -296,13 +300,6 @@ const startServer = async () => {
           console.log('Starting offer expiry scheduler...');
           offerExpiryScheduler.start();
           console.log('✅ Offer expiry scheduler started (runs every 15 minutes)');
-          
-          // Start nonce pool schedulers
-          console.log('Starting nonce pool schedulers...');
-          nonceCleanupScheduler.start();
-          console.log('✅ Nonce cleanup scheduler started (runs hourly)');
-          nonceReplenishmentScheduler.start();
-          console.log('✅ Nonce replenishment scheduler started (runs every 30 minutes)');
           
           // DISABLED for BETA launch - Backup scheduler
           // Manual backups via CLI tools are sufficient for BETA phase

@@ -98,6 +98,183 @@ MAINNET_PROD_ADMIN_ADDRESS=<public-key-base58>
 
 ---
 
+## API Key Authentication (Security Critical)
+
+**🔒 SECURITY CRITICAL**: API key authentication prevents unauthorized access to atomic swap endpoints. Only authorized frontend applications can create offers.
+
+### Why API Key is Required
+
+**Problem:** Without authentication, anyone can:
+- ❌ Call your backend API directly
+- ❌ Create unauthorized swap offers
+- ❌ Bypass your frontend application
+- ❌ Potentially abuse the atomic swap system
+
+**Solution:** API key authentication ensures:
+- ✅ Only authorized clients (your frontend) can create offers
+- ✅ Prevents direct program usage outside your apps
+- ✅ Rate limiting and monitoring per client
+- ✅ Ability to revoke access if compromised
+
+### Environment Variables
+
+```bash
+# Generate a secure API key (32 bytes = 64 hex characters)
+ATOMIC_SWAP_API_KEY=a1b2c3d4e5f6...your-64-char-hex-key
+
+# Alternative: Generate via command line
+# node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+### Generating API Keys
+
+**Method 1: Node.js (Recommended)**
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+**Method 2: OpenSSL**
+```bash
+openssl rand -hex 32
+```
+
+**Method 3: PowerShell**
+```powershell
+[System.Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Maximum 256 }))
+```
+
+### Frontend Integration
+
+Your frontend must include the API key in request headers:
+
+```typescript
+// Frontend API call example
+const response = await fetch('https://api.easyescrow.ai/api/offers', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-API-Key': process.env.NEXT_PUBLIC_ATOMIC_SWAP_API_KEY, // Frontend env var
+  },
+  body: JSON.stringify({
+    makerWallet: '...',
+    offeredAssets: [...],
+    requestedAssets: [...],
+    // ...
+  }),
+});
+```
+
+### Security Best Practices
+
+**DO:**
+- ✅ Use a cryptographically secure random generator
+- ✅ Store API key in environment variables (never in code)
+- ✅ Use different API keys for staging and production
+- ✅ Rotate API keys regularly (e.g., every 90 days)
+- ✅ Monitor API usage for suspicious patterns
+- ✅ Use HTTPS only (never send API key over HTTP)
+
+**DON'T:**
+- ❌ Commit API keys to version control
+- ❌ Share API keys in public channels
+- ❌ Reuse the same API key across environments
+- ❌ Use weak or predictable API keys
+- ❌ Log API keys in application logs
+- ❌ Expose API keys in frontend source code (use environment variables)
+
+### Key Rotation
+
+To rotate your API key:
+
+1. **Generate new key:**
+   ```bash
+   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+   ```
+
+2. **Update backend environment:**
+   ```bash
+   # Staging
+   doctl apps update <staging-app-id> --env ATOMIC_SWAP_API_KEY=<new-key>
+   
+   # Production
+   doctl apps update <production-app-id> --env ATOMIC_SWAP_API_KEY=<new-key>
+   ```
+
+3. **Update frontend environment:**
+   ```bash
+   # Update frontend .env file
+   NEXT_PUBLIC_ATOMIC_SWAP_API_KEY=<new-key>
+   
+   # Redeploy frontend
+   ```
+
+4. **Monitor:** Ensure old key is no longer in use before revoking
+
+### Environment-Specific Keys
+
+**Local Development:**
+```bash
+# .env (local)
+ATOMIC_SWAP_API_KEY=dev_1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef
+```
+
+**Staging (Devnet):**
+```bash
+# Set via DigitalOcean App Platform
+ATOMIC_SWAP_API_KEY=${ATOMIC_SWAP_API_KEY_STAGING}  # Secret variable
+```
+
+**Production (Mainnet):**
+```bash
+# Set via DigitalOcean App Platform
+ATOMIC_SWAP_API_KEY=${ATOMIC_SWAP_API_KEY_PRODUCTION}  # Secret variable
+```
+
+### Error Responses
+
+**Missing API Key (401 Unauthorized):**
+```json
+{
+  "success": false,
+  "error": "Unauthorized",
+  "message": "API key required",
+  "timestamp": "2025-11-19T10:00:00.000Z"
+}
+```
+
+**Invalid API Key (403 Forbidden):**
+```json
+{
+  "success": false,
+  "error": "Forbidden",
+  "message": "Invalid API key",
+  "timestamp": "2025-11-19T10:00:00.000Z"
+}
+```
+
+### Testing API Key Authentication
+
+```bash
+# Test without API key (should fail with 401)
+curl -X POST https://api.easyescrow.ai/api/offers \
+  -H "Content-Type: application/json" \
+  -d '{"makerWallet": "..."}'
+
+# Test with valid API key (should succeed)
+curl -X POST https://api.easyescrow.ai/api/offers \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: your-api-key-here" \
+  -d '{"makerWallet": "..."}'
+
+# Test with invalid API key (should fail with 403)
+curl -X POST https://api.easyescrow.ai/api/offers \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: invalid-key" \
+  -d '{"makerWallet": "..."}'
+```
+
+---
+
 ## Deployer Keypair (Program Upgrade Authority)
 
 **⚠️ NEVER PUT THIS ON THE SERVER!** The deployer keypair is the upgrade authority for the Solana program. Used only for local program upgrades.

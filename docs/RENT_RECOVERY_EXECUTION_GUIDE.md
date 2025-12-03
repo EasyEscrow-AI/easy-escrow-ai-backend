@@ -474,5 +474,3 @@ Review these documents:
 - **Net profit: ~$89.50**
 - **ROI: 17,900%** 🚀
 
-
-

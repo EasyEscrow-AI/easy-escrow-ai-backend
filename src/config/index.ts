@@ -55,19 +55,6 @@ export const config = {
   // Platform
   platform: {
     feeBps: parseInt(process.env.PLATFORM_FEE_BPS || '250', 10),
-    // Treasury address - where fees are initially collected before weekly reconciliation
-    treasuryAddress: (() => {
-      const nodeEnv = process.env.NODE_ENV || 'development';
-      switch (nodeEnv) {
-        case 'production':
-          return process.env.MAINNET_PRODUCTION_TREASURY_ADDRESS || '9VN2bzjWoF1HsmyPrNtwXbBMxCYRNsFagC6pcfLmN7LA';
-        case 'staging':
-          return process.env.DEVNET_STAGING_TREASURY_ADDRESS || 'AScijLJ1ApcQftktBRN818b8LDH4JJovQ5qrGDHfHuPu';
-        default:
-          return process.env.DEVNET_STAGING_TREASURY_ADDRESS || 'AScijLJ1ApcQftktBRN818b8LDH4JJovQ5qrGDHfHuPu';
-      }
-    })(),
-    // Fee collector address - cold storage where fees are transferred weekly
     feeCollectorAddress: (() => {
       const nodeEnv = process.env.NODE_ENV || 'development';
       // Use environment-specific fee collector address

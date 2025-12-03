@@ -5,7 +5,50 @@ info:
   description: |
     Backend API service for EasyEscrow.ai - Non-custodial atomic swap platform for NFTs and SOL on Solana.
     
-    ## Atomic Swap System
+    ## Supported Swap Types
+    
+    EasyEscrow.ai currently supports **three types of escrow swaps** on the **Solana blockchain**:
+    
+    ### 1. NFT <> SOL
+    Direct exchange of an NFT for SOL payment.
+    - **Seller provides:** NFT (Traditional NFT)
+    - **Buyer provides:** SOL
+    - **Platform fee:** 1% (100 basis points) - deducted from seller's proceeds
+    - **Blockchain fees:** Covered by EasyEscrow (no additional cost to users)
+    - **Min/Max:** 0.1 SOL minimum, 15 SOL maximum (up to $5,000 AUD limit)
+    
+    ### 2. NFT <> NFT (with SOL fee)
+    Exchange of two NFTs with a separate SOL fee payment.
+    - **Seller provides:** NFT A (Traditional NFT) + 0.0025 SOL (50% of platform fee)
+    - **Buyer provides:** NFT B (Traditional NFT) + 0.0025 SOL (50% of platform fee)
+    - **Platform fee:** 0.005 SOL total - split 50/50 between seller and buyer
+    - **Blockchain fees:** Covered by EasyEscrow (no additional cost to users)
+    - **Min/Max:** 0.1 SOL minimum, 15 SOL maximum (up to $5,000 AUD limit)
+    
+    ### 3. NFT + SOL <> NFT
+    Exchange of an NFT plus SOL payment for another NFT.
+    - **Seller provides:** NFT A (Traditional NFT) + SOL
+    - **Buyer provides:** NFT B (Traditional NFT)
+    - **Platform fee:** 1% (100 basis points) - deducted from SOL amount
+    - **Blockchain fees:** Covered by EasyEscrow (no additional cost to users)
+    - **Min/Max:** 0.1 SOL minimum, 15 SOL maximum (up to $5,000 AUD limit)
+    
+    ## Blockchain Support
+    - ✅ **Solana blockchain** (Devnet, Mainnet)
+    - ✅ **Traditional NFTs** (Metaplex standard)
+    - 🔜 **Compressed NFTs (cNFTs)** - Coming soon
+    - 🔜 **Additional blockchains** - Coming soon
+    
+    ## Additional Features
+    - **Custom expiry times (5 minutes - 24 hours)** with flexible input formats (presets, duration, timestamps)
+    - On-chain non-custodial functionality (assets secured by Smart Contract)
+    - Automatic atomic settlement when both assets are verified on-chain
+    - Automatic agreement expiry and refund handling (auto return to sender)
+    - Comprehensive webhook notifications (real-time updates)
+    - Receipt generation and on-chain verification of assets
+    - Transaction logging and monitoring to ensure a smooth escrow
+    - Rate Limiting: 10 agreement requests per 15 minutes
+    - Idempotency: Agreement creation endpoints support idempotency keys to prevent duplicates
     
     EasyEscrow.ai uses **atomic swaps** - instant, non-custodial exchanges that execute in a single transaction.
     Your assets are NEVER held in escrow. The swap happens atomically or not at all.
@@ -123,7 +166,92 @@ paths:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
 
-  /api/offers:
+  /v1/agreements:
+    post:
+      tags:
+        - Agreements
+      summary: Create a new escrow agreement
+      description: |
+        Creates a new escrow agreement for NFT swaps. This initializes the escrow on the Solana blockchain
+        and generates deposit addresses for the required assets (NFT, SOL, and/or second NFT depending on swap type).
+        
+        **Supported Swap Types:**
+        - NFT <> SOL (NFT_FOR_SOL)
+        - NFT <> NFT with fee (NFT_FOR_NFT_WITH_FEE)
+        - NFT + SOL <> NFT (NFT_FOR_NFT_PLUS_SOL)
+        
+        **Rate Limited**: 10 requests per 15 minutes
+        **Idempotency**: Supports X-Idempotency-Key header
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAgreementRequest'
+            examples:
+              nftForSol:
+                summary: NFT <> SOL Swap
+                description: |
+                  Direct exchange of NFT for SOL payment.
+                  Platform fee: 1% (100 bps). Blockchain fees covered by EasyEscrow.
+                  Min: 0.1 SOL, Max: 15 SOL (up to $5,000 AUD)
+                value:
+                  swapType: "NFT_FOR_SOL"
+                  nftMint: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+                  solAmount: "1000000000"
+                  seller: "4qxZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9"
+                  buyer: "5rxZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9"
+                  expiry: "12h"
+                  feeBps: 100
+                  honorRoyalties: true
+              nftForNftWithFee:
+                summary: NFT <> NFT (with SOL fee)
+                description: |
+                  Exchange two NFTs with 0.005 SOL platform fee split 50/50.
+                  Each party pays 0.0025 SOL. Blockchain fees covered by EasyEscrow.
+                  Min: 0.1 SOL, Max: 15 SOL (up to $5,000 AUD)
+                value:
+                  swapType: "NFT_FOR_NFT_WITH_FEE"
+                  nftMint: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+                  nftBMint: "8xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+                  solAmount: "5000000"
+                  seller: "4qxZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9"
+                  buyer: "5rxZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9"
+                  expiry: "6h"
+                  feeBps: 100
+                  honorRoyalties: true
+              nftPlusSolForNft:
+                summary: NFT + SOL <> NFT
+                description: |
+                  Exchange NFT plus SOL for another NFT.
+                  Platform fee: 1% (100 bps). Blockchain fees covered by EasyEscrow.
+                  Min: 0.1 SOL, Max: 15 SOL (up to $5,000 AUD)
+                value:
+                  swapType: "NFT_FOR_NFT_PLUS_SOL"
+                  nftMint: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+                  nftBMint: "8xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+                  solAmount: "500000000"
+                  seller: "4qxZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9"
+                  buyer: "5rxZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9"
+                  expiry: "24h"
+                  feeBps: 100
+                  honorRoyalties: true
+      responses:
+        '201':
+          description: Agreement created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateAgreementResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
     get:
       tags:
         - Offers
@@ -642,165 +770,96 @@ components:
       name: offerId
       required: true
       schema:
-        type: integer
-      description: Offer ID
-      example: 1
+        type: string
+      description: Agreement ID
+      
+    IdempotencyKey:
+      in: header
+      name: X-Idempotency-Key
+      required: false
+      schema:
+        type: string
+        minLength: 16
+        maxLength: 255
+      description: Idempotency key to prevent duplicate requests (required for agreement creation)
+      
+    TransactionQueryParams:
+      in: query
+      name: query
+      schema:
+        type: object
+        properties:
+          agreementId:
+            type: string
+            description: Filter by agreement ID
+          operationType:
+            type: string
+            enum: [INIT_ESCROW, DEPOSIT_SOL, DEPOSIT_NFT_A, DEPOSIT_NFT_B, SETTLE, CANCEL, REFUND]
+            description: Filter by operation type
+          status:
+            type: string
+            enum: [PENDING, CONFIRMED, FAILED, FINALIZED]
+            description: Filter by status
+          txId:
+            type: string
+            description: Filter by transaction ID (partial match)
+          dateFrom:
+            type: string
+            format: date-time
+            description: Filter by date range start (ISO 8601)
+          dateTo:
+            type: string
+            format: date-time
+            description: Filter by date range end (ISO 8601)
+          limit:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+            description: Number of results
+          offset:
+            type: integer
+            minimum: 0
+            default: 0
+            description: Pagination offset
+          sortBy:
+            type: string
+            enum: [timestamp, blockHeight]
+            default: timestamp
+            description: Sort field
+          sortOrder:
+            type: string
+            enum: [asc, desc]
+            default: desc
+            description: Sort order
 
   schemas:
     OfferStatus:
       type: string
       enum:
-        - PENDING
-        - ACCEPTED
-        - FILLED
+        - PENDING_INIT
+        - PENDING_DEPOSITS
+        - SOL_LOCKED
+        - NFT_A_LOCKED
+        - NFT_B_LOCKED
+        - BOTH_LOCKED
+        - ALL_LOCKED
+        - SETTLED
+        - EXPIRED
         - CANCELLED
         - EXPIRED
       description: |
-        Offer status:
-        - **PENDING**: Offer is open and can be accepted
-        - **ACCEPTED**: Offer has been accepted, transaction ready to sign
-        - **FILLED**: Swap has been executed on-chain
-        - **CANCELLED**: Offer was cancelled by maker
-        - **EXPIRED**: Offer has expired (after 7 days)
-
-    Asset:
-      type: object
-      required:
-        - mint
-        - isCompressed
-      properties:
-        mint:
-          type: string
-          description: Mint address or Asset ID
-          example: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
-        isCompressed:
-          type: boolean
-          description: |
-            Whether this is a compressed NFT (cNFT).
-            - `false` for SPL NFTs
-            - `true` for compressed NFTs (Metaplex Bubblegum)
-          example: false
-
-    CreateOfferRequest:
-      type: object
-      required:
-        - makerWallet
-        - offeredAssets
-        - requestedAssets
-      properties:
-        makerWallet:
-          type: string
-          description: Your wallet address (the offer creator)
-          example: "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"
-        takerWallet:
-          type: string
-          description: |
-            Optional: Specify who can accept this offer.
-            - If provided: Only this address can accept (direct offer)
-            - If omitted: Anyone can accept (open offer)
-          example: "8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ"
-        offeredAssets:
-          type: array
-          items:
-            $ref: '#/components/schemas/Asset'
-          description: Assets you're offering (can be empty if offering only SOL)
-        requestedAssets:
-          type: array
-          items:
-            $ref: '#/components/schemas/Asset'
-          description: Assets you're requesting (can be empty if requesting only SOL)
-        offeredSol:
-          type: string
-          description: |
-            SOL amount you're offering in lamports (1 SOL = 1,000,000,000 lamports).
-            Use "0" if not offering SOL.
-          example: "500000000"
-        requestedSol:
-          type: string
-          description: |
-            SOL amount you're requesting in lamports (1 SOL = 1,000,000,000 lamports).
-            Use "0" if not requesting SOL.
-          example: "1000000000"
-        customFee:
-          type: string
-          description: |
-            Optional: Override the platform fee (in lamports).
-            Must still pass validation (min 0.001 SOL, max 0.5 SOL).
-            If omitted, fee is calculated automatically.
-          example: "10000000"
-
-    OfferSummary:
-      type: object
-      properties:
-        id:
-          type: integer
-          example: 1
-        makerWallet:
-          type: string
-        takerWallet:
-          type: string
-          nullable: true
-        offerType:
-          type: string
-          enum: ["MAKER_OFFER", "COUNTER_OFFER"]
-        status:
-          $ref: '#/components/schemas/OfferStatus'
-        offeredAssetsCount:
-          type: integer
-          description: Number of assets offered
-        requestedAssetsCount:
-          type: integer
-          description: Number of assets requested
-        offeredSol:
-          type: string
-          description: In lamports
-        requestedSol:
-          type: string
-          description: In lamports
-        platformFeeLamports:
-          type: string
-        expiresAt:
-          type: string
-          format: date-time
-        createdAt:
-          type: string
-          format: date-time
-
-    OfferDetail:
-      allOf:
-        - $ref: '#/components/schemas/OfferSummary'
-        - type: object
-          properties:
-            offeredAssets:
-              type: array
-              items:
-                $ref: '#/components/schemas/Asset'
-            requestedAssets:
-              type: array
-              items:
-                $ref: '#/components/schemas/Asset'
-            nonceAccount:
-              type: string
-              description: Durable nonce account address
-            currentNonceValue:
-              type: string
-              description: Current nonce value
-            parentOfferId:
-              type: integer
-              description: Parent offer ID (for counter-offers)
-              nullable: true
-            filledAt:
-              type: string
-              format: date-time
-              nullable: true
-            cancelledAt:
-              type: string
-              format: date-time
-              nullable: true
-            transactionSignature:
-              type: string
-              description: Solana transaction signature (if filled)
-              nullable: true
+        Agreement status:
+        - PENDING_INIT: Agreement is being initialized on-chain
+        - PENDING_DEPOSITS: Waiting for required deposits
+        - SOL_LOCKED: SOL has been deposited (for NFT<>SOL or NFT+SOL<>NFT swaps)
+        - NFT_A_LOCKED: Seller's NFT has been deposited
+        - NFT_B_LOCKED: Buyer's NFT has been deposited (for NFT<>NFT swaps)
+        - BOTH_LOCKED: Two required assets are locked
+        - ALL_LOCKED: All required assets are locked, ready for settlement
+        - SETTLED: Agreement has been successfully settled
+        - EXPIRED: Agreement has expired without settlement
+        - CANCELLED: Agreement has been cancelled
 
     HealthResponse:
       type: object
@@ -838,19 +897,596 @@ components:
               type: integer
             cleanupIntervalMinutes:
               type: integer
-        noncePool:
+
+    CreateAgreementRequest:
+      type: object
+      required:
+        - nftMint
+        - seller
+        - expiry
+        - feeBps
+        - honorRoyalties
+        - swapType
+      properties:
+        nftMint:
+          type: string
+          description: |
+            The seller's NFT mint address (NFT A - unique identifier).
+            
+            Important: This is NOT "minting" (creating) an NFT.
+            The NFT must ALREADY EXIST in the seller's wallet.
+            Provide the mint address of the specific NFT to be traded in this escrow agreement.
+            
+            In Solana, a "mint" is the account that defines a token type. For NFTs,
+            the mint address serves as the unique identifier (like a serial number or contract address).
+            
+            **Supported:** Traditional NFTs (Metaplex standard)
+            **Coming soon:** Compressed NFTs (cNFTs)
+          example: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+        nftBMint:
+          type: string
+          description: |
+            The buyer's NFT mint address (NFT B - unique identifier).
+            Required for NFT_FOR_NFT_WITH_FEE and NFT_FOR_NFT_PLUS_SOL swap types.
+            
+            The NFT must ALREADY EXIST in the buyer's wallet.
+            
+            **Supported:** Traditional NFTs (Metaplex standard)
+            **Coming soon:** Compressed NFTs (cNFTs)
+          example: "8xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+        swapType:
+          type: string
+          enum: ['NFT_FOR_SOL', 'NFT_FOR_NFT_WITH_FEE', 'NFT_FOR_NFT_PLUS_SOL']
+          default: 'NFT_FOR_SOL'
+          description: |
+            Type of swap to execute:
+            - **NFT_FOR_SOL**: Direct exchange of NFT for SOL (1% platform fee, blockchain fees covered)
+            - **NFT_FOR_NFT_WITH_FEE**: Exchange two NFTs (0.005 SOL fee split 50/50, blockchain fees covered)
+            - **NFT_FOR_NFT_PLUS_SOL**: Exchange NFT + SOL for another NFT (1% platform fee, blockchain fees covered)
+            
+            **Limits for all types:** Min 0.1 SOL, Max 15 SOL (up to $5,000 AUD)
+          example: "NFT_FOR_SOL"
+        solAmount:
+          type: string
+          description: |
+            Amount of SOL in lamports (as string to preserve precision).
+            Required for NFT_FOR_SOL and NFT_FOR_NFT_PLUS_SOL swap types.
+            1 SOL = 1,000,000,000 lamports.
+            
+            For NFT_FOR_NFT_WITH_FEE, this represents the platform fee (0.005 SOL = 5,000,000 lamports).
+            
+            **Limits:** Min 100,000,000 lamports (0.1 SOL), Max 15,000,000,000 lamports (15 SOL)
+          example: "1000000000"
+        seller:
+          type: string
+          description: Seller wallet public key
+          example: "4qxZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9"
+        buyer:
+          type: string
+          description: Buyer wallet public key (optional, can be set later)
+          example: "5rxZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9"
+        expiry:
+          oneOf:
+            - type: string
+              format: date-time
+            - type: number
+            - type: string
+              enum: ["5m", "1h", "6h", "12h", "24h"]
+          description: |
+            Agreement expiry time. Supports multiple formats for flexibility:
+            
+            **Format Options:**
+            - **ISO 8601 timestamp** (absolute time): "2025-11-04T12:00:00Z"
+            - **Duration in hours** (number 0.0833-24, where 0.0833 = 5 minutes): 12
+            - **Preset string**: "5m", "1h", "6h", "12h", "24h"
+            - **Optional**: If not provided, defaults to 5 minutes from creation
+            
+            **Constraints:**
+            - Minimum duration: 5 minutes from creation
+            - Maximum duration: 24 hours from creation
+            - Default: 5 minutes (when not specified)
+            - Expiry must be in the future
+            
+            **Examples:**
+            - Absolute: "2025-11-04T12:00:00Z" (expires at specific time)
+            - Duration: 12 (expires 12 hours from now)
+            - Preset: "5m" (expires 5 minutes from now - default)
+            - Preset: "6h" (expires 6 hours from now)
+            - Omitted: Uses default of 5 minutes from now
+            
+            **Note:** A 60-second buffer is added on-chain to prevent clock skew issues.
+          example: "5m"
+        expiryDurationHours:
+          type: number
+          minimum: 0.0833
+          maximum: 24
+          description: |
+            Optional: Explicit duration in hours (alternative to expiry field).
+            Minimum is 0.0833 hours (5 minutes). Default is 0.0833 hours (5 minutes) if not provided.
+            If both expiry and expiryDurationHours are provided, expiry takes precedence.
+          example: 6
+        feeBps:
+          type: integer
+          description: |
+            Platform fee in basis points (100 = 1%).
+            - For NFT_FOR_SOL: 1% (100 bps) of SOL amount
+            - For NFT_FOR_NFT_WITH_FEE: Fixed 0.005 SOL total (split 50/50)
+            - For NFT_FOR_NFT_PLUS_SOL: 1% (100 bps) of SOL amount
+          minimum: 0
+          maximum: 10000
+          example: 100
+        honorRoyalties:
+          type: boolean
+          description: Whether to honor NFT creator royalties
+          example: true
+
+    CreateAgreementResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
           type: object
           properties:
-            totalNonces:
+            agreementId:
+              type: string
+              example: "AGR-1234567890"
+            escrowPda:
+              type: string
+              example: "EscrowPdaAddress..."
+            depositAddresses:
+              type: object
+              properties:
+                nftA:
+                  type: string
+                  description: Deposit address for seller's NFT
+                  example: "NftADepositAddress..."
+                sol:
+                  type: string
+                  description: Deposit address for SOL (if required by swap type)
+                  example: "SolDepositAddress..."
+                nftB:
+                  type: string
+                  description: Deposit address for buyer's NFT (if required by swap type)
+                  example: "NftBDepositAddress..."
+            expiry:
+              type: string
+              format: date-time
+            transactionId:
+              type: string
+              example: "5KqZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9"
+        timestamp:
+          type: string
+          format: date-time
+
+    AgreementListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Agreement'
+        pagination:
+          type: object
+          properties:
+            page:
               type: integer
             availableNonces:
               type: integer
             consumedNonces:
               type: integer
-            healthPercentage:
-              type: number
-            isHealthy:
+            pages:
+              type: integer
+        timestamp:
+          type: string
+          format: date-time
+
+    AgreementDetailResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/AgreementDetail'
+        timestamp:
+          type: string
+          format: date-time
+
+    Agreement:
+      type: object
+      properties:
+        agreementId:
+          type: string
+        swapType:
+          type: string
+          enum: ['NFT_FOR_SOL', 'NFT_FOR_NFT_WITH_FEE', 'NFT_FOR_NFT_PLUS_SOL']
+        nftMint:
+          type: string
+          description: The seller's NFT mint address (NFT A)
+        nftBMint:
+          type: string
+          description: The buyer's NFT mint address (NFT B) - only for NFT<>NFT swaps
+        solAmount:
+          type: string
+          description: Amount of SOL in lamports
+        seller:
+          type: string
+        buyer:
+          type: string
+        status:
+          $ref: '#/components/schemas/AgreementStatus'
+        expiry:
+          type: string
+          format: date-time
+        feeBps:
+          type: integer
+        honorRoyalties:
+          type: boolean
+        escrowPda:
+          type: string
+        nftADepositAddr:
+          type: string
+          description: Deposit address for seller's NFT
+        solDepositAddr:
+          type: string
+          description: Deposit address for SOL
+        nftBDepositAddr:
+          type: string
+          description: Deposit address for buyer's NFT (NFT<>NFT swaps only)
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    AgreementDetail:
+      allOf:
+        - $ref: '#/components/schemas/Agreement'
+        - type: object
+          properties:
+            deposits:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  type:
+                    type: string
+                    enum: [SOL, NFT_A, NFT_B]
+                  depositor:
+                    type: string
+                  amount:
+                    type: string
+                  status:
+                    type: string
+                    enum: [PENDING, CONFIRMED, FAILED]
+                  txId:
+                    type: string
+                  detectedAt:
+                    type: string
+                    format: date-time
+                  confirmedAt:
+                    type: string
+                    format: date-time
+            balances:
+              type: object
+              properties:
+                solLocked:
+                  type: boolean
+                nftALocked:
+                  type: boolean
+                nftBLocked:
+                  type: boolean
+                actualSolAmount:
+                  type: string
+            isExpired:
               type: boolean
+            canBeCancelled:
+              type: boolean
+            cancelledAt:
+              type: string
+              format: date-time
+            settledAt:
+              type: string
+              format: date-time
+
+    CancelAgreementResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            agreementId:
+              type: string
+            status:
+              $ref: '#/components/schemas/AgreementStatus'
+            cancelledAt:
+              type: string
+              format: date-time
+            transactionId:
+              type: string
+            message:
+              type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    Receipt:
+      type: object
+      properties:
+        id:
+          type: string
+        agreementId:
+          type: string
+        swapType:
+          type: string
+          enum: ['NFT_FOR_SOL', 'NFT_FOR_NFT_WITH_FEE', 'NFT_FOR_NFT_PLUS_SOL']
+        nftMint:
+          type: string
+          description: The seller's NFT mint address (NFT A)
+        nftBMint:
+          type: string
+          description: The buyer's NFT mint address (NFT B) - for NFT<>NFT swaps
+        solAmount:
+          type: string
+          description: Amount of SOL exchanged (in lamports)
+        platformFee:
+          type: string
+          description: Platform fee amount (in SOL lamports)
+        creatorRoyalty:
+          type: string
+          description: Creator royalty amount (in SOL lamports)
+        buyer:
+          type: string
+        seller:
+          type: string
+        escrowTxId:
+          type: string
+        settlementTxId:
+          type: string
+        receiptHash:
+          type: string
+        signature:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        settledAt:
+          type: string
+          format: date-time
+        generatedAt:
+          type: string
+          format: date-time
+
+    ReceiptResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/Receipt'
+        timestamp:
+          type: string
+          format: date-time
+
+    ReceiptListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Receipt'
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total:
+              type: integer
+            pages:
+              type: integer
+        timestamp:
+          type: string
+          format: date-time
+
+    ReceiptVerificationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            receiptHash:
+              type: string
+            signature:
+              type: string
+            isValid:
+              type: boolean
+        timestamp:
+          type: string
+          format: date-time
+
+    TransactionLog:
+      type: object
+      properties:
+        id:
+          type: string
+        txId:
+          type: string
+        operationType:
+          type: string
+          enum: [INIT_ESCROW, DEPOSIT_SOL, DEPOSIT_NFT_A, DEPOSIT_NFT_B, SETTLE, CANCEL, REFUND]
+        agreementId:
+          type: string
+        status:
+          type: string
+          enum: [PENDING, CONFIRMED, FAILED, FINALIZED]
+        blockHeight:
+          type: string
+        slot:
+          type: string
+        errorMessage:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        explorerUrl:
+          type: string
+
+    TransactionLogResponse:
+      allOf:
+        - $ref: '#/components/schemas/TransactionLog'
+
+    TransactionLogListResponse:
+      type: object
+      properties:
+        logs:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransactionLog'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+        hasMore:
+          type: boolean
+
+    TransactionStatsResponse:
+      type: object
+      properties:
+        agreementId:
+          type: string
+        totalTransactions:
+          type: integer
+        byOperationType:
+          type: object
+          additionalProperties:
+            type: integer
+        byStatus:
+          type: object
+          additionalProperties:
+            type: integer
+        firstTransaction:
+          type: string
+          format: date-time
+        lastTransaction:
+          type: string
+          format: date-time
+
+    AgreementTransactionsResponse:
+      type: object
+      properties:
+        agreementId:
+          type: string
+        transactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransactionLog'
+        stats:
+          type: object
+          properties:
+            totalTransactions:
+              type: integer
+            byOperationType:
+              type: object
+              additionalProperties:
+                type: integer
+            byStatus:
+              type: object
+              additionalProperties:
+                type: integer
+            firstTransaction:
+              type: string
+              format: date-time
+            lastTransaction:
+              type: string
+              format: date-time
+
+    Webhook:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        eventType:
+          type: string
+          enum: [ESCROW_FUNDED, ESCROW_ASSET_LOCKED, ESCROW_SETTLED, ESCROW_EXPIRED, ESCROW_REFUNDED]
+        targetUrl:
+          type: string
+        status:
+          type: string
+          enum: [PENDING, DELIVERED, FAILED]
+        attempts:
+          type: integer
+        maxAttempts:
+          type: integer
+        lastAttemptAt:
+          type: string
+          format: date-time
+        lastResponseCode:
+          type: integer
+        deliveredAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        scheduledFor:
+          type: string
+          format: date-time
+
+    WebhookListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        agreementId:
+          type: string
+        count:
+          type: integer
+        webhooks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Webhook'
+
+    WebhookStatusResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        webhook:
+          allOf:
+            - $ref: '#/components/schemas/Webhook'
+            - type: object
+              properties:
+                agreementId:
+                  type: string
+                lastResponseBody:
+                  type: string
+                payload:
+                  type: object
 
     ErrorResponse:
       type: object

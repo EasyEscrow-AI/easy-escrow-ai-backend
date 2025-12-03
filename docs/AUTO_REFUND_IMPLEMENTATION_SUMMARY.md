@@ -412,5 +412,3 @@ This update will be deployed together with the rent recovery system in a single 
 
 **Next Steps:** Run local tests, then create PR for review
 
-
-
