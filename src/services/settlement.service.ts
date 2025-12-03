@@ -92,11 +92,10 @@ export class SettlementService {
       retryDelayMs: settlementConfig?.retryDelayMs || 2000,
       // Treasury address for active fee collection (hot wallet)
       platformTreasuryAddress: settlementConfig?.platformTreasuryAddress || 
-        config.platform?.treasuryAddress || 
+        config.platform?.feeCollectorAddress || 
         '11111111111111111111111111111111',
       // Use treasury address for active fee collection (where fees go during swaps)
       platformFeeCollectorAddress: settlementConfig?.platformTreasuryAddress || 
-        config.platform?.treasuryAddress || 
         config.platform?.feeCollectorAddress || 
         '11111111111111111111111111111111', // Fallback address
     };

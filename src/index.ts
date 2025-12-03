@@ -16,12 +16,14 @@ import {
   sanitizeInput,
   securityHeaders,
 } from './middleware';
-import { 
+import {
   getMonitoringOrchestrator, 
   getExpiryCancellationOrchestrator,
   getIdempotencyService 
 } from './services';
 import { getStuckAgreementMonitor, AlertSeverity } from './services/stuck-agreement-monitor.service';
+import { getNonceCleanupScheduler, getNonceReplenishmentScheduler } from './services/nonce-schedulers.service';
+import { OfferExpiryScheduler } from './services/offer-expiry-scheduler.service';
 // import { backupScheduler } from './services/backup-scheduler.service'; // DISABLED for BETA launch
 
 // Load environment variables
@@ -73,6 +75,15 @@ const nonceReplenishmentScheduler = getNonceReplenishmentScheduler(noncePoolMana
   timezone: process.env.TZ || 'America/Los_Angeles',
   minPoolSize: 10,
   replenishmentAmount: 5,
+});
+
+// Initialize offer expiry scheduler
+import { PrismaClient } from './generated/prisma';
+const prisma = new PrismaClient();
+const offerExpiryScheduler = OfferExpiryScheduler.getInstance(prisma, {
+  schedule: '*/15 * * * *', // Every 15 minutes
+  batchSize: 200,
+  timezone: process.env.TZ || 'America/Los_Angeles',
 });
 
 // Security Middleware (apply first)
