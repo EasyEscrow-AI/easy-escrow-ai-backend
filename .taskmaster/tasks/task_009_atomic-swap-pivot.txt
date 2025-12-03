@@ -1,6 +1,6 @@
 # Task ID: 9
 # Title: Implement Monitoring and Background Jobs System
-# Status: pending
+# Status: done
 # Dependencies: 1, 2
 # Priority: medium
 # Description: Create a comprehensive monitoring and background job system with health checks, automated cleanup jobs, structured logging, and error alerting for the atomic swap platform.
@@ -99,3 +99,41 @@ Implement the monitoring and background jobs system with the following core comp
    - Test graceful shutdown and startup of monitoring system
    - Validate monitoring system performance impact on main application
    - Test monitoring system with real database and RPC connections in staging environment
+
+# Subtasks:
+## 1. Audit Existing Services and Background Jobs Infrastructure [done]
+### Dependencies: None
+### Description: Conduct comprehensive audit of existing monitoring services, background jobs, health checks, cleanup jobs, and logging infrastructure to identify what can be reused or adapted for atomic swaps.
+### Details:
+Review existing codebase for settlement services, monitoring endpoints, refund services, cleanup jobs, and logging systems. Document current infrastructure capabilities, identify reusable components, and create adaptation plan for atomic swap requirements. Analyze existing job scheduling, health monitoring, and alerting mechanisms.
+
+## 2. Adapt Existing Health Check System for Atomic Swap Components [done]
+### Dependencies: 9.1
+### Description: Modify existing health check endpoints to include atomic swap specific monitoring including nonce pool health, treasury PDA validation, and swap transaction status verification.
+### Details:
+Extend current health check endpoint to verify nonce pool availability, treasury balance sufficiency, RPC connectivity for atomic swap operations, and database connectivity for swap tables. Implement component-specific health scoring and caching mechanisms with 30-60 second TTL.
+
+## 3. Implement Offer Expiry Background Job for Atomic Swaps [done]
+### Dependencies: 9.1
+### Description: Create scheduled job to automatically expire atomic swap offers past their expiration time and update offer status in database.
+### Details:
+Implement cron job running every 15 minutes to query offers table for expired records, update status to 'expired', log expiration events, and implement batch processing for large volumes. Include maker notifications and expiration metrics tracking for monitoring dashboard.
+
+## 4. Adapt Existing Cleanup Jobs for Nonce Account Management [done]
+### Dependencies: 9.1, 9.2
+### Description: Modify existing cleanup infrastructure to handle unused nonce account cleanup and nonce pool replenishment for atomic swap operations.
+### Details:
+Create hourly cleanup job for stale nonce accounts and 30-minute replenishment job for maintaining optimal pool size. Implement safety checks, SOL reclamation from unused accounts, on-chain validation, and exponential backoff for failed operations. Integrate with NoncePoolManager service.
+
+## 5. Update Existing Logging Infrastructure for Atomic Swap Operations [done]
+### Dependencies: 9.1
+### Description: Enhance existing structured logging system to capture atomic swap lifecycle events with correlation IDs and contextual metadata.
+### Details:
+Extend current logging system (Winston/Pino) to include atomic swap events: offer creation, acceptance, transaction submission, confirmation, and failures. Add contextual metadata including user_wallet, offer_id, transaction_signature, nonce_account, and error_codes. Implement correlation IDs and log retention policies.
+
+## 6. Adapt Existing Error Alerting System for Atomic Swap Failures [done]
+### Dependencies: 9.1, 9.2
+### Description: Extend existing alerting infrastructure to handle atomic swap specific failures including nonce pool depletion, treasury balance issues, and swap transaction failures.
+### Details:
+Enhance current alerting system to monitor atomic swap critical failures: database connectivity, RPC endpoints, nonce pool status, treasury balance, and transaction failures. Implement severity levels, notification integration (email/Slack/PagerDuty), alert throttling, and recovery notifications. Include alert metrics tracking.
+

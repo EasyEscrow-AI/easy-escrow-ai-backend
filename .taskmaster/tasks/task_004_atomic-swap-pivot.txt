@@ -1,6 +1,6 @@
 # Task ID: 4
 # Title: Implement AssetValidator Service for NFT and cNFT Ownership Verification
-# Status: pending
+# Status: done
 # Dependencies: 1
 # Priority: high
 # Description: Create a comprehensive asset validation service that verifies ownership of both standard NFTs and compressed NFTs, handling Merkle proof validation and returning normalized asset representations.

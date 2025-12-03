@@ -1,6 +1,6 @@
 # Task ID: 15
 # Title: Execute Comprehensive End-to-End Testing on Staging Environment
-# Status: pending
+# Status: deferred
 # Dependencies: 12, 14
 # Priority: high
 # Description: Perform comprehensive end-to-end testing of the atomic swap system on staging environment using program ID AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei, covering all swap types, offer lifecycle, edge cases, integration scenarios, and performance testing.
@@ -45,6 +45,23 @@ Execute comprehensive end-to-end testing with the following systematic approach:
    - Test treasury PDA derivation and fee collection using staging program
    - Validate cNFT indexer integration works correctly with staging environment
    - Verify monitoring dashboards show accurate staging metrics and alerts
+<info added on 2025-12-03T04:05:52.974Z>
+**DEFERRED STATUS UPDATE**:
+
+This comprehensive end-to-end testing has been deferred due to cNFT functionality limitations on the staging environment. The staging environment does not properly support compressed NFT operations, which are a critical component of the atomic swap system.
+
+**Testing Status Summary**:
+- Standard NFT-to-NFT swaps: Previously validated on staging
+- NFT-to-SOL and SOL-to-NFT swaps: Previously validated on staging  
+- cNFT-to-cNFT swaps: Cannot be tested on staging due to environment limitations
+- Mixed NFT/cNFT swaps: Cannot be fully tested on staging due to cNFT issues
+
+**Alternative Testing Approach**:
+cNFT functionality will be validated directly on production mainnet after deployment through Task 38: Production Deployment: Post-Deployment Monitoring and Validation. This approach ensures that cNFT swaps are tested in the environment where they will actually operate, avoiding staging environment limitations that could provide false test results.
+
+**Risk Mitigation**:
+While this defers comprehensive staging validation, the core swap logic for standard NFTs and SOL has been validated. The cNFT-specific functionality (Merkle proof validation, Bubblegum program integration) has been unit tested and will undergo immediate production validation upon deployment.
+</info added on 2025-12-03T04:05:52.974Z>
 
 # Test Strategy:
 1. **Test Execution Validation**:

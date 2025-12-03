@@ -4630,9 +4630,9 @@
         "id": 15,
         "title": "Execute Comprehensive End-to-End Testing on Staging Environment",
         "description": "Perform comprehensive end-to-end testing of the atomic swap system on staging environment using program ID AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei, covering all swap types, offer lifecycle, edge cases, integration scenarios, and performance testing.",
-        "details": "Execute comprehensive end-to-end testing with the following systematic approach:\n\n1. **Basic Swap Testing Execution**:\n   - Execute NFT-to-NFT swaps on staging using real test NFTs and verify complete transaction flow from offer creation to confirmation\n   - Execute NFT-to-SOL swaps testing various SOL amounts (0.1, 1, 5 SOL) and verify proper fee calculation and collection\n   - Execute SOL-to-NFT swaps with different NFT values and verify treasury fee collection matches expected calculations\n   - Execute cNFT-to-cNFT swaps using Bubblegum program integration and verify Merkle proof validation works correctly\n   - Execute mixed NFT/cNFT swaps (standard NFT for cNFT) and verify both asset types transfer properly\n\n2. **Offer Lifecycle Testing Implementation**:\n   - Create offers using staging API endpoints and verify on-chain state matches database records\n   - Create counter-offers for existing offers and test proper chain management with multiple counter-offers\n   - Cancel offers at various stages (pending, counter-offered) and verify nonce invalidation prevents replay attacks\n   - Accept offers and verify transaction construction includes all required instructions (nonce advance, transfers, fee collection)\n   - Confirm swaps and verify final state shows proper asset ownership transfer and fee collection\n\n3. **Edge Case Testing Scenarios**:\n   - Test offer expiration by creating offers with short expiration times and verifying they cannot be accepted after expiration\n   - Test concurrent offer acceptance using multiple clients attempting to accept the same offer simultaneously\n   - Test maximum transaction size scenarios by creating swaps with multiple NFTs approaching 1232 byte limit\n   - Test fee calculation edge cases including zero-value swaps, maximum fee cap scenarios, and percentage calculation precision\n   - Test nonce pool exhaustion by creating more concurrent swaps than available nonces and verify proper queuing/waiting\n\n4. **Integration Testing Workflows**:\n   - Execute complete user workflows from wallet connection through swap completion using staging frontend\n   - Verify database consistency after each swap by checking offer status, transaction records, and user statistics\n   - Test error handling and recovery scenarios including failed transactions, network timeouts, and RPC errors\n   - Verify monitoring and alerting systems trigger correctly for failed swaps, nonce pool depletion, and system errors\n\n5. **Performance Testing Execution**:\n   - Execute load testing with 10-50 concurrent swaps to test system throughput and identify bottlenecks\n   - Measure transaction confirmation times across different swap types and document performance baselines\n   - Test nonce pool performance under load including pool replenishment timing and thread contention handling\n   - Monitor database performance during high load and verify query optimization effectiveness\n\n6. **Staging Environment Validation**:\n   - Verify all backend services are properly configured for staging program ID AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei\n   - Test treasury PDA derivation and fee collection using staging program\n   - Validate cNFT indexer integration works correctly with staging environment\n   - Verify monitoring dashboards show accurate staging metrics and alerts",
+        "details": "Execute comprehensive end-to-end testing with the following systematic approach:\n\n1. **Basic Swap Testing Execution**:\n   - Execute NFT-to-NFT swaps on staging using real test NFTs and verify complete transaction flow from offer creation to confirmation\n   - Execute NFT-to-SOL swaps testing various SOL amounts (0.1, 1, 5 SOL) and verify proper fee calculation and collection\n   - Execute SOL-to-NFT swaps with different NFT values and verify treasury fee collection matches expected calculations\n   - Execute cNFT-to-cNFT swaps using Bubblegum program integration and verify Merkle proof validation works correctly\n   - Execute mixed NFT/cNFT swaps (standard NFT for cNFT) and verify both asset types transfer properly\n\n2. **Offer Lifecycle Testing Implementation**:\n   - Create offers using staging API endpoints and verify on-chain state matches database records\n   - Create counter-offers for existing offers and test proper chain management with multiple counter-offers\n   - Cancel offers at various stages (pending, counter-offered) and verify nonce invalidation prevents replay attacks\n   - Accept offers and verify transaction construction includes all required instructions (nonce advance, transfers, fee collection)\n   - Confirm swaps and verify final state shows proper asset ownership transfer and fee collection\n\n3. **Edge Case Testing Scenarios**:\n   - Test offer expiration by creating offers with short expiration times and verifying they cannot be accepted after expiration\n   - Test concurrent offer acceptance using multiple clients attempting to accept the same offer simultaneously\n   - Test maximum transaction size scenarios by creating swaps with multiple NFTs approaching 1232 byte limit\n   - Test fee calculation edge cases including zero-value swaps, maximum fee cap scenarios, and percentage calculation precision\n   - Test nonce pool exhaustion by creating more concurrent swaps than available nonces and verify proper queuing/waiting\n\n4. **Integration Testing Workflows**:\n   - Execute complete user workflows from wallet connection through swap completion using staging frontend\n   - Verify database consistency after each swap by checking offer status, transaction records, and user statistics\n   - Test error handling and recovery scenarios including failed transactions, network timeouts, and RPC errors\n   - Verify monitoring and alerting systems trigger correctly for failed swaps, nonce pool depletion, and system errors\n\n5. **Performance Testing Execution**:\n   - Execute load testing with 10-50 concurrent swaps to test system throughput and identify bottlenecks\n   - Measure transaction confirmation times across different swap types and document performance baselines\n   - Test nonce pool performance under load including pool replenishment timing and thread contention handling\n   - Monitor database performance during high load and verify query optimization effectiveness\n\n6. **Staging Environment Validation**:\n   - Verify all backend services are properly configured for staging program ID AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei\n   - Test treasury PDA derivation and fee collection using staging program\n   - Validate cNFT indexer integration works correctly with staging environment\n   - Verify monitoring dashboards show accurate staging metrics and alerts\n<info added on 2025-12-03T04:05:52.974Z>\n**DEFERRED STATUS UPDATE**:\n\nThis comprehensive end-to-end testing has been deferred due to cNFT functionality limitations on the staging environment. The staging environment does not properly support compressed NFT operations, which are a critical component of the atomic swap system.\n\n**Testing Status Summary**:\n- Standard NFT-to-NFT swaps: Previously validated on staging\n- NFT-to-SOL and SOL-to-NFT swaps: Previously validated on staging  \n- cNFT-to-cNFT swaps: Cannot be tested on staging due to environment limitations\n- Mixed NFT/cNFT swaps: Cannot be fully tested on staging due to cNFT issues\n\n**Alternative Testing Approach**:\ncNFT functionality will be validated directly on production mainnet after deployment through Task 38: Production Deployment: Post-Deployment Monitoring and Validation. This approach ensures that cNFT swaps are tested in the environment where they will actually operate, avoiding staging environment limitations that could provide false test results.\n\n**Risk Mitigation**:\nWhile this defers comprehensive staging validation, the core swap logic for standard NFTs and SOL has been validated. The cNFT-specific functionality (Merkle proof validation, Bubblegum program integration) has been unit tested and will undergo immediate production validation upon deployment.\n</info added on 2025-12-03T04:05:52.974Z>",
         "testStrategy": "1. **Test Execution Validation**:\n   - Execute minimum 100 successful swaps across all swap types (NFT-to-NFT, NFT-to-SOL, SOL-to-NFT, cNFT swaps) on staging\n   - Verify 100% success rate for basic swap scenarios with proper asset ownership transfer\n   - Document all failed test cases with detailed error analysis and resolution steps\n\n2. **Offer Lifecycle Verification**:\n   - Create and track 50+ offers through complete lifecycle (creation → counter-offer → acceptance → confirmation)\n   - Verify database state consistency matches on-chain state for all offer status transitions\n   - Test offer cancellation at each lifecycle stage and verify proper cleanup\n\n3. **Edge Case Coverage Validation**:\n   - Execute all identified edge cases with documented results and system behavior\n   - Verify error handling provides clear user feedback and proper system recovery\n   - Test race condition scenarios with concurrent users and verify system maintains consistency\n\n4. **Performance Baseline Establishment**:\n   - Achieve minimum 10 concurrent swaps without system degradation\n   - Document transaction confirmation times with 95th percentile under 30 seconds\n   - Verify nonce pool maintains adequate buffer during peak load testing\n\n5. **Integration Test Completion**:\n   - Execute complete user workflows with 100% success rate for happy path scenarios\n   - Verify all monitoring alerts trigger correctly during simulated failure scenarios\n   - Confirm database integrity checks pass after all testing phases\n\n6. **Production Readiness Certification**:\n   - Generate comprehensive test report documenting all test results, performance metrics, and identified issues\n   - Obtain stakeholder sign-off on test results before production deployment consideration\n   - Verify all critical bugs identified during testing have been resolved and retested",
-        "status": "in-progress",
+        "status": "deferred",
         "dependencies": [
           12,
           14
@@ -5273,11 +5273,707 @@
         ],
         "priority": "high",
         "subtasks": []
+      },
+      {
+        "id": 31,
+        "title": "Production Deployment: Pre-deployment Audit and Preparation for Atomic Swap and Treasury Functionality",
+        "description": "Conduct a comprehensive audit and preparation phase to ensure readiness for deploying atomic swap and treasury features to the production mainnet environment. This is a fresh production deployment with zero existing users, so no versioning or backwards compatibility is required.",
+        "status": "pending",
+        "dependencies": [
+          14,
+          18,
+          29
+        ],
+        "priority": "high",
+        "details": "1. Review all issues encountered during staging deployments, including IDL buffer size problems, treasury PDA derivation, and nonce account setup; document lessons learned and mitigation strategies.\n2. Verify that all environment variables used in staging have corresponding, correctly configured production equivalents; update documentation accordingly.\n3. Perform a thorough security audit covering password protection on the /test page, secure storage of API keys as secrets, and validation of the authorized apps whitelist.\n4. Create a detailed production deployment checklist covering all steps from deployment initiation to post-deployment verification.\n5. Confirm mainnet wallet funding requirements for deployer wallet, admin wallet, and treasury authority, ensuring sufficient balances and secure key management.\n6. Review and finalize the production authorized apps whitelist, specifically for enabling zero-fee swaps, ensuring only trusted applications are included.\n7. Document clear rollback procedures to revert deployment safely in case of critical failures.\n8. Develop a production monitoring and alerting strategy to track system health, transaction success, and security events post-deployment.\n\nIMPORTANT NOTE: This is a fresh production deployment with zero existing users, so there is no need to maintain backwards compatibility with old transaction formats or implement versioning. The atomic swap system can be deployed cleanly without migration concerns for existing user data.\n\nFollow best practices for mainnet deployment including secure key management, environment-specific configuration, and comprehensive documentation. Use automated deployment scripts where possible and ensure all team members have access to updated deployment and rollback procedures.",
+        "testStrategy": "- Verify that all staging issues have been reviewed and documented with actionable lessons.\n- Confirm environment variables are fully documented and production equivalents are set and tested.\n- Conduct security tests to ensure /test page is password protected, API keys are stored securely, and authorized apps whitelist is enforced.\n- Review and approve the production deployment checklist with the deployment and security teams.\n- Validate wallet funding by checking balances and transaction capabilities on mainnet.\n- Audit the authorized apps whitelist for correctness and completeness.\n- Test rollback procedures in a controlled environment to ensure they function as expected.\n- Implement monitoring and alerting tools; simulate alerts to verify notification workflows.\n- Perform a dry run deployment on a mainnet-like environment if available to validate the entire deployment process end-to-end.\n- Note: Since this is a fresh deployment with no existing users, no backwards compatibility testing is required.",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Document Lessons Learned from Staging Deployments",
+            "description": "Review all issues encountered during staging deployments such as IDL buffer size problems, treasury PDA derivation, and nonce account setup. Document lessons learned and mitigation strategies to inform production deployment.",
+            "dependencies": [],
+            "details": "Analyze staging deployment logs and issue trackers to identify problems and resolutions. Summarize findings in a comprehensive document highlighting root causes and recommended fixes for production.",
+            "status": "pending",
+            "testStrategy": "Verify completeness of documented issues and confirm mitigation strategies are actionable and clear."
+          },
+          {
+            "id": 2,
+            "title": "Audit and Update Environment Variables for Production",
+            "description": "Verify that all environment variables used in staging have corresponding, correctly configured production equivalents. Update environment variable documentation to reflect production settings.",
+            "dependencies": [
+              1
+            ],
+            "details": "Compare staging environment variables with production requirements. Ensure all necessary variables exist, have secure values, and are documented. Coordinate with DevOps to validate production configuration.",
+            "status": "pending",
+            "testStrategy": "Test environment variable presence and correctness in production environment; confirm documentation accuracy."
+          },
+          {
+            "id": 3,
+            "title": "Conduct Comprehensive Security Audit",
+            "description": "Perform a thorough security audit focusing on password protection of the /test page, secure storage of API keys as secrets, and validation of the authorized apps whitelist for production.",
+            "dependencies": [
+              2
+            ],
+            "details": "Review access controls on test endpoints, verify secrets management practices, and audit authorized apps whitelist to ensure only trusted applications are included. Document findings and remediation steps.",
+            "status": "pending",
+            "testStrategy": "Perform penetration tests on /test page, verify secrets encryption and access logs, and validate whitelist entries against trusted app list."
+          },
+          {
+            "id": 4,
+            "title": "Prepare Production Wallets and Authorized Apps Configuration",
+            "description": "Confirm mainnet wallet funding requirements for deployer, admin, and treasury authority wallets ensuring sufficient balances and secure key management. Review and finalize the production authorized apps whitelist, especially for zero-fee swaps.",
+            "dependencies": [
+              3
+            ],
+            "details": "Check wallet balances on mainnet, verify secure storage and access to private keys, and update authorized apps whitelist to include only vetted applications. Document wallet and whitelist status.",
+            "status": "pending",
+            "testStrategy": "Verify wallet balances on mainnet, test key access controls, and confirm whitelist correctness through audit logs."
+          },
+          {
+            "id": 5,
+            "title": "Develop Rollback Procedures and Monitoring Strategy",
+            "description": "Document clear rollback procedures to safely revert deployment in case of critical failures. Develop a production monitoring and alerting strategy to track system health, transaction success, and security events post-deployment.",
+            "dependencies": [
+              4
+            ],
+            "details": "Create step-by-step rollback documentation including triggers and responsible personnel. Design monitoring dashboards and alert rules for key metrics and security events. Ensure team access to procedures and tools. Note: Since this is a fresh deployment with no existing users, rollback procedures can be simplified without backwards compatibility concerns.",
+            "status": "pending",
+            "testStrategy": "Simulate rollback scenarios to validate procedures. Test monitoring alerts with synthetic events and confirm team notification workflows."
+          },
+          {
+            "id": 6,
+            "title": "Truncate Production Database Before Deployment",
+            "description": "Truncate the production PostgreSQL database to remove any test data or residual data from previous deployments, ensuring a clean slate for the atomic swap system launch. Since there are no existing users, this can be done safely without data loss concerns.",
+            "details": "Execute database truncation to clear all tables in the production database. This includes SwapOffers, SwapTransactions, NoncePool, Users, and any other atomic swap related tables. Verify database is empty and ready for fresh production deployment. Since this is a zero-user deployment, no data migration or backup is required.",
+            "status": "pending",
+            "dependencies": [
+              1,
+              2
+            ],
+            "parentTaskId": 31
+          }
+        ]
+      },
+      {
+        "id": 32,
+        "title": "Production Deployment: Solana Program Deployment to Mainnet",
+        "description": "Deploy the atomic swap Solana program to mainnet-beta with proper IDL management and production-grade verification.",
+        "details": "This task involves deploying the atomic swap program to mainnet-beta, ensuring all production best practices are followed. Key steps include:\n\n1. **Build for Mainnet-beta**:\n   - Use the appropriate cfg feature flag to build the program for mainnet-beta, ensuring no staging or devnet-specific code is included.\n   - Run `cargo build-sbf` from the `programs/escrow/` directory to generate the production-ready `.so` file.\n\n2. **Program Size Verification and Optimization**:\n   - Check the compiled program size using `ls -la target/deploy/escrow.so`.\n   - If the program exceeds the recommended size limit (typically 500KB for mainnet), optimize by removing unused dependencies, minimizing code, or splitting logic into separate programs.\n\n3. **Deploy to Mainnet**:\n   - Set the Solana CLI to mainnet-beta: `solana config set --url mainnet-beta`.\n   - Deploy the program using the production deployer wallet: `solana program deploy target/deploy/escrow.so --keypair production-deployer.json`.\n   - Record the deployment transaction ID and program ID for documentation.\n\n4. **IDL Management**:\n   - Close the old IDL on mainnet using `anchor idl close` if necessary.\n   - Generate a new IDL with `anchor idl build` and upload it with `anchor idl upgrade --provider.cluster mainnet-beta --provider.wallet production-deployer.json`.\n   - Ensure the buffer size is sufficient for the new IDL to avoid staging issues.\n\n5. **Verify Deployment and IDL Accessibility**:\n   - Use Solana Explorer or Solscan to verify the program is deployed and accessible.\n   - Confirm the IDL is correctly uploaded and accessible via the Anchor IDL endpoint.\n\n6. **Update Backend IDL Files**:\n   - Copy the new IDL to `src/generated/anchor/escrow-idl-production.json`.\n   - Commit and push the updated IDL file to the repository.\n\n7. **Test Program Initialization and Basic Functionality**:\n   - Initialize the program on mainnet and run basic swap tests to ensure functionality.\n   - Verify all swap types (NFT-to-NFT, NFT-to-SOL, SOL-to-NFT, cNFT swaps) work as expected.\n\n8. **Documentation**:\n   - Document the program ID and deployment transaction ID in the deployment log.\n   - Update any relevant documentation to reflect the production deployment.\n<info added on 2025-12-03T04:07:13.620Z>\n**IMPORTANT NOTE - Fresh Production Deployment**:\n\nThis is a fresh production deployment with zero existing users. NO VERSIONING OR BACKWARDS COMPATIBILITY IS NEEDED. Deploy the atomic swap program cleanly without implementing versioning, migration logic, or backwards compatibility for old transaction formats. The program can be deployed as a brand new system without concerns about maintaining compatibility with previous program versions or transaction structures.\n\nThis means:\n- No need to implement program upgrade mechanisms or version checks\n- No migration scripts or backwards compatibility layers required\n- Transaction formats can be deployed in their current state without legacy support\n- Program accounts and data structures can be initialized fresh without considering previous versions\n- IDL can be uploaded without concerns about breaking changes for existing integrations\n</info added on 2025-12-03T04:07:13.620Z>",
+        "testStrategy": "1. **Deployment Verification**:\n   - Confirm the program is deployed to mainnet-beta and accessible via Solana Explorer or Solscan.\n   - Verify the program ID matches the one recorded in the deployment log.\n\n2. **IDL Verification**:\n   - Check that the IDL is correctly uploaded and accessible via the Anchor IDL endpoint.\n   - Ensure the buffer size is sufficient and no staging issues are present.\n\n3. **Functionality Testing**:\n   - Run basic swap tests on mainnet to verify all swap types work as expected.\n   - Confirm asset ownership changes on-chain after swaps.\n\n4. **Documentation Review**:\n   - Verify the program ID and deployment transaction ID are documented in the deployment log.\n   - Ensure all relevant documentation is updated to reflect the production deployment.",
+        "status": "pending",
+        "dependencies": [
+          31,
+          30
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Build Program for Mainnet-beta with Production Configuration",
+            "description": "Compile the atomic swap Solana program for mainnet-beta using the correct feature flags and ensure no staging or devnet-specific code is included.",
+            "dependencies": [],
+            "details": "Run `cargo build-sbf` from the `programs/escrow/` directory with the appropriate cfg feature flag for mainnet-beta. Verify the build output is in `target/deploy/escrow.so` and contains no staging or devnet-specific logic.",
+            "status": "pending",
+            "testStrategy": "Confirm the build completes without errors and the resulting `.so` file is production-ready."
+          },
+          {
+            "id": 2,
+            "title": "Verify and Optimize Program Size for Mainnet Deployment",
+            "description": "Check the compiled program size and optimize if necessary to meet mainnet-beta size limits.",
+            "dependencies": [
+              1
+            ],
+            "details": "Use `ls -la target/deploy/escrow.so` to check the program size. If the size exceeds 500KB, optimize by removing unused dependencies, minimizing code, or splitting logic into separate programs.",
+            "status": "pending",
+            "testStrategy": "Ensure the program size is within the recommended limit for mainnet-beta."
+          },
+          {
+            "id": 3,
+            "title": "Deploy Program to Mainnet-beta with Production Deployer Wallet",
+            "description": "Deploy the compiled program to mainnet-beta using the production deployer wallet and record the deployment transaction ID and program ID.",
+            "dependencies": [
+              2
+            ],
+            "details": "Set the Solana CLI to mainnet-beta with `solana config set --url mainnet-beta`. Deploy the program using `solana program deploy target/deploy/escrow.so --keypair production-deployer.json`. Record the deployment transaction ID and program ID for documentation.",
+            "status": "pending",
+            "testStrategy": "Verify the program is deployed and accessible on mainnet-beta via Solana Explorer or Solscan."
+          },
+          {
+            "id": 4,
+            "title": "Manage and Upload IDL with Proper Buffer Sizing",
+            "description": "Close the old IDL if necessary, generate a new IDL, and upload it to mainnet-beta with sufficient buffer size.",
+            "dependencies": [
+              3
+            ],
+            "details": "Use `anchor idl close` to close the old IDL if needed. Generate a new IDL with `anchor idl build` and upload it with `anchor idl upgrade --provider.cluster mainnet-beta --provider.wallet production-deployer.json`. Ensure the buffer size is sufficient for the new IDL.",
+            "status": "pending",
+            "testStrategy": "Confirm the IDL is correctly uploaded and accessible via the Anchor IDL endpoint."
+          },
+          {
+            "id": 5,
+            "title": "Update Backend IDL Files and Document Deployment",
+            "description": "Copy the new IDL to the backend, update documentation, and verify program functionality on mainnet-beta.",
+            "dependencies": [
+              4
+            ],
+            "details": "Copy the new IDL to `src/generated/anchor/escrow-idl-production.json`. Commit and push the updated IDL file to the repository. Document the program ID and deployment transaction ID in the deployment log. Update any relevant documentation to reflect the production deployment. Test program initialization and basic functionality on mainnet-beta.",
+            "status": "pending",
+            "testStrategy": "Verify the IDL file is updated in the backend, documentation is complete, and program functionality is confirmed on mainnet-beta."
+          }
+        ]
+      },
+      {
+        "id": 33,
+        "title": "Production Deployment: Treasury PDA Setup and Configuration",
+        "description": "Set up and configure the Treasury PDA on Solana mainnet for atomic swap fee collection in production.",
+        "details": "This task involves creating and configuring the Treasury PDA for the atomic swap platform on Solana mainnet, ensuring it is ready to collect and manage platform fees. Key steps include:\n\n1. **Generate or Use Production Treasury Authority Keypair**:\n   - Use an existing production treasury authority keypair or generate a new one using `solana-keygen new --outfile wallets/treasury-authority.json`.\n   - Ensure the keypair is securely stored and backed up.\n\n2. **Derive Treasury PDA**:\n   - Use the production platform authority (program ID) and a canonical seed (e.g., \"treasury\") to derive the PDA address.\n   - Example in TypeScript:\n     ```typescript\n     import { PublicKey } from \"@solana/web3.js\";\n     const TREASURY_SEED = Buffer.from(\"treasury\");\n     const [treasuryPda] = PublicKey.findProgramAddressSync(\n       [TREASURY_SEED],\n       platformProgramId\n     );\n     console.log(\"Treasury PDA:\", treasuryPda.toBase58());\n     ```\n\n3. **Initialize Treasury Account**:\n   - Call the `initialize_treasury` instruction from the atomic swap program, passing the derived PDA and the treasury authority.\n   - Ensure the transaction is signed by the treasury authority keypair.\n\n4. **Verify Treasury PDA Creation**:\n   - Query the account on-chain using `solana account <treasury_pda_address>` to confirm it exists and has the correct owner and data.\n   - Use Solana Explorer or Solscan to verify the account is visible and initialized.\n\n5. **Fund Treasury PDA**:\n   - If required, fund the Treasury PDA with enough SOL to cover rent exemption using `solana transfer <treasury_pda_address> <amount>`.\n\n6. **Test Treasury Fee Reception**:\n   - Execute a test swap transaction that should result in a fee being sent to the Treasury PDA.\n   - Verify the fee is received by checking the account balance before and after the transaction.\n\n7. **Document Treasury PDA Address and Authority**:\n   - Record the Treasury PDA address and authority in the production documentation.\n   - Update the deployment runbook with the PDA address and initialization steps.\n\n8. **Update Production Environment Variables**:\n   - Add the Treasury PDA address to production environment variables (e.g., `PROD_TREASURY_PDA_ADDRESS`).\n   - Ensure backend services and scripts reference the correct PDA address for fee collection.\n\nBest practices:\n- Use secure key management for the treasury authority keypair.\n- Double-check all addresses and seeds before deployment.\n- Test all steps in a staging environment before production.\n- Document all steps and addresses for audit and recovery purposes.",
+        "testStrategy": "1. **PDA Derivation Verification**:\n   - Confirm the Treasury PDA address matches the one derived from the canonical seed and program ID.\n\n2. **Account Initialization Verification**:\n   - Query the Treasury PDA account on-chain and confirm it is initialized and owned by the correct program.\n\n3. **Funding Verification**:\n   - Check the Treasury PDA account balance after funding to ensure the correct amount was transferred.\n\n4. **Fee Collection Test**:\n   - Execute a test swap transaction and verify the fee is sent to the Treasury PDA.\n   - Check the account balance before and after the transaction to confirm the fee was received.\n\n5. **Environment Variable Verification**:\n   - Confirm the Treasury PDA address is correctly set in production environment variables and referenced by backend services.\n\n6. **Documentation Review**:\n   - Verify all steps and addresses are documented in the deployment runbook and production documentation.",
+        "status": "pending",
+        "dependencies": [
+          31,
+          32
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Generate or Verify Production Treasury Authority Keypair",
+            "description": "Generate a new production treasury authority keypair or verify the existing one is secure and available.",
+            "dependencies": [],
+            "details": "Use `solana-keygen new --outfile wallets/treasury-authority.json` to generate a new keypair if needed. Ensure the keypair is securely stored and backed up. If using an existing keypair, confirm its location and integrity.",
+            "status": "pending",
+            "testStrategy": "Confirm the keypair file exists and is not corrupted. Test signing a dummy transaction with the keypair."
+          },
+          {
+            "id": 2,
+            "title": "Derive Treasury PDA Address",
+            "description": "Derive the Treasury PDA address using the production platform program ID and canonical seed.",
+            "dependencies": [
+              1
+            ],
+            "details": "Use the platform program ID and a canonical seed (e.g., 'treasury') to derive the PDA address. Example in TypeScript: `PublicKey.findProgramAddressSync([Buffer.from('treasury')], platformProgramId);`",
+            "status": "pending",
+            "testStrategy": "Verify the derived PDA address matches the expected value using the same inputs."
+          },
+          {
+            "id": 3,
+            "title": "Initialize Treasury PDA on Mainnet",
+            "description": "Call the initialize_treasury instruction to create and initialize the Treasury PDA account on Solana mainnet.",
+            "dependencies": [
+              2
+            ],
+            "details": "Invoke the atomic swap program's `initialize_treasury` instruction, passing the derived PDA and treasury authority. Ensure the transaction is signed by the treasury authority keypair.",
+            "status": "pending",
+            "testStrategy": "Confirm the transaction succeeds and the account is created on-chain."
+          },
+          {
+            "id": 4,
+            "title": "Verify Treasury PDA Creation and Fund if Needed",
+            "description": "Query the Treasury PDA account on-chain and fund it with SOL for rent exemption if required.",
+            "dependencies": [
+              3
+            ],
+            "details": "Use `solana account <treasury_pda_address>` or Solana Explorer to confirm the account exists and is initialized. If the account is not rent-exempt, fund it with enough SOL using `solana transfer <treasury_pda_address> <amount>`.",
+            "status": "pending",
+            "testStrategy": "Check the account balance and owner on-chain. Confirm the account is rent-exempt and owned by the correct program."
+          },
+          {
+            "id": 5,
+            "title": "Test Fee Collection and Update Environment Variables",
+            "description": "Execute a test swap to verify fee collection and update production environment variables with the Treasury PDA address.",
+            "dependencies": [
+              4
+            ],
+            "details": "Run a test swap transaction and verify the fee is sent to the Treasury PDA. Update production environment variables (e.g., `PROD_TREASURY_PDA_ADDRESS`) and document the PDA address and authority.",
+            "status": "pending",
+            "testStrategy": "Monitor the Treasury PDA balance before and after the test swap. Confirm environment variables are set and accessible to backend services."
+          }
+        ]
+      },
+      {
+        "id": 34,
+        "title": "Configure Production Environment Variables and Secrets for Mainnet Deployment",
+        "description": "Set up and verify all necessary production environment variables and secrets for deploying the atomic swap system to Solana mainnet, ensuring secure and correct configuration.",
+        "details": "1. Create or update the `.env.production` file with all required environment variables, including RPC URLs, program IDs, treasury addresses, wallet addresses, and any other configuration needed for mainnet.\n\n2. In the DigitalOcean App Platform console, securely set all SECRET-type environment variables such as `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET`, `SOLANA_RPC_URL` (using a mainnet RPC endpoint like Helius or QuickNode), private keys, and other sensitive credentials.\n\n3. Configure the production Solana RPC URL to point to a reliable mainnet endpoint, for example, `https://mainnet.helius-rpc.com/?api-key=YOUR-KEY`.\n\n4. Set production program IDs for the atomic swap program and USDC mint on mainnet.\n\n5. Configure production treasury addresses, including the Program Derived Address (PDA) and authority keypairs.\n\n6. Define the production authorized apps whitelist to enable zero-fee swaps for approved applications.\n\n7. Set production wallet addresses such as admin and fee collector wallets.\n\n8. Ensure no secrets or sensitive values are hardcoded or committed in the `.do/app-production.yaml` file; use `${VARIABLE_NAME}` placeholders referencing environment variables instead.\n\n9. Update the production deployment YAML configuration to correctly reference all environment variables.\n\n10. Perform tests to verify that environment variables load correctly in the production deployment environment and that the application functions as expected with these settings.\n\nFollow best practices for secret management, avoid committing secrets to version control, and use DigitalOcean's secret management features for sensitive data.",
+        "testStrategy": "1. Verify that `.env.production` contains all required variables with correct values and no secrets are exposed.\n\n2. In DigitalOcean console, confirm all SECRET-type variables are set and match expected production values.\n\n3. Deploy the application to production and check logs to ensure environment variables are loaded without errors.\n\n4. Test connectivity to the configured Solana mainnet RPC endpoint and verify that the program IDs and treasury addresses are correctly recognized.\n\n5. Confirm that no secrets are present in `.do/app-production.yaml` and that placeholders are correctly used.\n\n6. Perform functional tests on the production deployment to ensure atomic swap operations work correctly with the configured environment.\n\n7. Conduct security checks to verify that secrets are not exposed in logs or error messages.",
+        "status": "pending",
+        "dependencies": [
+          31,
+          32,
+          33
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create or update .env.production file with mainnet variables",
+            "description": "Generate or modify the .env.production file to include all required environment variables for mainnet deployment, such as RPC URLs, program IDs, treasury addresses, wallet addresses, and other configuration values.",
+            "dependencies": [],
+            "details": "Ensure all non-sensitive configuration values are present and correctly set for mainnet. Do not include any secrets or sensitive values in this file.",
+            "status": "pending",
+            "testStrategy": "Verify that the .env.production file contains all required variables and that no secrets are exposed."
+          },
+          {
+            "id": 2,
+            "title": "Securely set SECRET-type environment variables in DigitalOcean",
+            "description": "In the DigitalOcean App Platform console, configure all SECRET-type environment variables such as DATABASE_URL, REDIS_URL, JWT_SECRET, SOLANA_RPC_URL, private keys, and other sensitive credentials.",
+            "dependencies": [
+              1
+            ],
+            "details": "Use DigitalOcean's secret management features to set sensitive values securely. Ensure these values match the expected production configuration.",
+            "status": "pending",
+            "testStrategy": "Confirm in the DigitalOcean console that all SECRET-type variables are set and match expected production values."
+          },
+          {
+            "id": 3,
+            "title": "Configure production Solana RPC URL with mainnet endpoint",
+            "description": "Set the production Solana RPC URL to a reliable mainnet endpoint, such as Helius or QuickNode, ensuring the application connects to the correct Solana cluster.",
+            "dependencies": [
+              2
+            ],
+            "details": "Update the SOLANA_RPC_URL environment variable to use a mainnet RPC endpoint like https://mainnet.helius-rpc.com/?api-key=YOUR-KEY.",
+            "status": "pending",
+            "testStrategy": "Verify the application connects to the mainnet RPC endpoint and logs confirm successful connection."
+          },
+          {
+            "id": 4,
+            "title": "Update production program IDs and treasury addresses",
+            "description": "Set the production program IDs for the atomic swap program and USDC mint, and configure production treasury addresses including the Program Derived Address (PDA) and authority keypairs.",
+            "dependencies": [
+              3
+            ],
+            "details": "Ensure all program IDs and treasury addresses are updated to their mainnet equivalents and that authority keypairs are securely managed.",
+            "status": "pending",
+            "testStrategy": "Check that the application uses the correct program IDs and treasury addresses in production."
+          },
+          {
+            "id": 5,
+            "title": "Verify YAML configuration and test environment variable loading",
+            "description": "Ensure the production deployment YAML configuration references all environment variables correctly and perform tests to verify that environment variables load as expected in the production environment.",
+            "dependencies": [
+              4
+            ],
+            "details": "Update the production deployment YAML to use ${VARIABLE_NAME} placeholders for all environment variables. Deploy and test the application to confirm environment variables are loaded and the application functions correctly.",
+            "status": "pending",
+            "testStrategy": "Deploy the application and check logs to ensure environment variables are loaded and the application functions as expected."
+          }
+        ]
+      },
+      {
+        "id": 35,
+        "title": "Create Comprehensive Production End-to-End Test Suite for Atomic Swap System",
+        "description": "Develop and implement a full production E2E test suite for the atomic swap system by creating tests directly for mainnet, including configuration setup, wallet setup, and documentation. Since we have zero users in production, these E2E tests will serve as the primary validation for production deployment without needing backwards compatibility testing.",
+        "status": "pending",
+        "dependencies": [
+          31,
+          32,
+          33,
+          34
+        ],
+        "priority": "high",
+        "details": "1. Create a new production test directory (tests/production/e2e/) and implement E2E tests directly for production environment.\n2. Configure all tests to use production/mainnet configurations: mainnet RPC endpoints, production deployed program IDs, and production wallet paths.\n3. Implement the following specific production E2E test files covering all swap scenarios:\n   - 01-atomic-nft-for-nft-happy-path.test.ts (SPL NFT swaps)\n   - 02-atomic-sol-for-nft-happy-path.test.ts\n   - 03-atomic-nft-for-sol-happy-path.test.ts\n   - 04-atomic-sol-for-cnft-happy-path.test.ts (compressed NFT swaps)\n   - 05-atomic-cnft-for-cnft-happy-path.test.ts\n   - 06-atomic-cnft-for-nft-happy-path.test.ts\n   - 07-atomic-zero-fee-authorization.test.ts (zero-fee swaps with authorization)\n4. Create a dedicated production wallet setup for testing, separate from any other environments, ensuring secure key management and sufficient SOL for transaction fees.\n5. Implement safe test NFT creation and management strategies for production testing, including minting and cleanup procedures that work directly on mainnet.\n6. Update package.json scripts to include commands for running production E2E tests.\n7. Document detailed production testing procedures, including environment setup, test execution, wallet management, and troubleshooting.\n\nSince cNFT testing will happen on production mainnet and we have zero users, these tests can be created and run directly without requiring staging E2E completion. Follow best practices for Solana E2E testing by simulating real user flows, verifying on-chain state changes, and ensuring tests cover all critical swap scenarios and edge cases. Use reliable mainnet RPC providers and secure key handling to maintain test integrity and security.",
+        "testStrategy": "- Verify that all production E2E tests are successfully created and configured for mainnet environment.\n- Run each production E2E test file independently and as a suite against the mainnet environment.\n- Confirm that all transactions complete successfully with correct asset ownership transfers and fee collections.\n- Validate that production wallet setup works correctly, with proper key loading and SOL balance.\n- Ensure that test NFTs are created and managed safely on mainnet without affecting real user assets (since we have zero users).\n- Monitor logs and on-chain data to verify that program IDs, RPC endpoints, and wallet addresses are correctly configured.\n- Perform repeated test runs to confirm stability and reliability under production conditions.\n- Review documentation for completeness and clarity by following it to set up and run tests from scratch.\n- Validate cNFT swap functionality directly on mainnet since cNFT testing will happen in production.",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create production E2E test directory structure",
+            "description": "Create a new production test directory structure for mainnet E2E tests without copying from staging.",
+            "dependencies": [],
+            "details": "Create a new directory structure tests/production/e2e/ and set up the foundation for production E2E tests. Since staging E2E is deferred, create the structure from scratch for direct production implementation.",
+            "status": "pending",
+            "testStrategy": "Verify production test directory is created with proper structure and organization."
+          },
+          {
+            "id": 2,
+            "title": "Configure production/mainnet test environment",
+            "description": "Set up all production configurations including mainnet RPC endpoints, program IDs, and wallet paths.",
+            "dependencies": [
+              1
+            ],
+            "details": "Configure mainnet RPC endpoints, production deployed program IDs, and production wallet paths. Ensure all configuration is set up for direct mainnet testing without staging dependencies.",
+            "status": "pending",
+            "testStrategy": "Run a sample test to confirm production configuration is correctly applied and connections to mainnet are established."
+          },
+          {
+            "id": 3,
+            "title": "Create dedicated production wallet setup",
+            "description": "Set up secure production wallets for testing, ensuring proper key management and sufficient SOL for transaction fees.",
+            "dependencies": [
+              2
+            ],
+            "details": "Generate new wallet keypairs for production testing, securely store keys, and fund wallets with enough SOL for transaction fees. Ensure wallets are dedicated to production testing only.",
+            "status": "pending",
+            "testStrategy": "Verify wallet creation, key security, and sufficient SOL balance for test transactions."
+          },
+          {
+            "id": 4,
+            "title": "Implement production test NFT creation and management",
+            "description": "Develop procedures for minting and cleaning up test NFTs directly on mainnet for production testing.",
+            "dependencies": [
+              3
+            ],
+            "details": "Create scripts or functions to mint test NFTs for production testing on mainnet, track their usage, and implement cleanup procedures. Since we have zero users in production, these can be safely created and managed on mainnet.",
+            "status": "pending",
+            "testStrategy": "Test minting and cleanup procedures to confirm they work as intended on mainnet."
+          },
+          {
+            "id": 5,
+            "title": "Implement specific production E2E test files",
+            "description": "Create and implement the required production E2E test files covering all swap scenarios including cNFT swaps.",
+            "dependencies": [
+              4
+            ],
+            "details": "Develop the following test files: 01-atomic-nft-for-nft-happy-path.test.ts, 02-atomic-sol-for-nft-happy-path.test.ts, 03-atomic-nft-for-sol-happy-path.test.ts, 04-atomic-sol-for-cnft-happy-path.test.ts, 05-atomic-cnft-for-cnft-happy-path.test.ts, 06-atomic-cnft-for-nft-happy-path.test.ts, 07-atomic-zero-fee-authorization.test.ts. Ensure each test covers the specified swap scenario and works directly on mainnet.",
+            "status": "pending",
+            "testStrategy": "Run each test file independently to verify all swap scenarios are covered and tests pass successfully on mainnet."
+          },
+          {
+            "id": 6,
+            "title": "Update package.json scripts for production E2E tests",
+            "description": "Add commands to package.json for running production E2E tests.",
+            "dependencies": [
+              5
+            ],
+            "details": "Add new scripts to package.json, such as 'test:production:e2e', to facilitate easy execution of production E2E tests. Ensure scripts reference the correct test directory and configurations.",
+            "status": "pending",
+            "testStrategy": "Verify scripts execute production E2E tests correctly and produce expected output."
+          },
+          {
+            "id": 7,
+            "title": "Document production testing procedures",
+            "description": "Create detailed documentation for production testing, including environment setup, test execution, wallet management, and troubleshooting.",
+            "dependencies": [
+              6
+            ],
+            "details": "Write comprehensive documentation covering all aspects of production testing: environment setup, test execution steps, wallet management, and troubleshooting common issues. Include specific guidance for mainnet testing and cNFT validation.",
+            "status": "pending",
+            "testStrategy": "Review documentation for completeness and clarity, and verify it covers all necessary procedures."
+          },
+          {
+            "id": 8,
+            "title": "Verify and validate production E2E test suite",
+            "description": "Run and validate the entire production E2E test suite to ensure all tests pass and serve as primary validation for production deployment.",
+            "dependencies": [
+              7
+            ],
+            "details": "Execute the full production E2E test suite on mainnet, verify all tests pass, and confirm coverage of all critical swap scenarios including cNFT swaps. Since we have zero users in production, these tests serve as the primary validation for production deployment.",
+            "status": "pending",
+            "testStrategy": "Run the entire test suite on mainnet, review results, and ensure all critical scenarios including cNFT swaps are covered and tests pass successfully."
+          }
+        ]
+      },
+      {
+        "id": 36,
+        "title": "Develop Production Smoke and Integration Tests for Atomic Swap System",
+        "description": "Create and implement comprehensive production smoke tests and integration tests to verify the atomic swap system's core functionalities immediately after deployment and ensure API endpoints operate correctly in the production environment.",
+        "details": "1. Develop production smoke tests focusing on critical system components to run immediately after deployment, including:\n   - Backend API accessibility and responsiveness.\n   - Database connectivity and verification that all migrations have been applied.\n   - Redis connectivity and caching functionality.\n   - Solana RPC connectivity to mainnet.\n   - Verification that the atomic swap program is deployed and accessible on mainnet.\n   - Treasury PDA existence and accessibility.\n   - Health check endpoint returns a healthy status.\n\n2. Create production integration tests for key API endpoints to validate end-to-end functionality:\n   - POST /api/swap/build for transaction building.\n   - GET /api/swap/transaction/:signature for transaction fetching.\n   - POST /api/offers for offer creation.\n   - GET /api/offers for offer listing.\n   - Platform fee calculation endpoints.\n   - Asset validation endpoints for NFT, cNFT, and SOL.\n   - Zero-fee authorization validation.\n\n3. Automate these tests and integrate them into the CI/CD pipeline with scripts defined in package.json for easy execution.\n\n4. Document expected test results, pass/fail criteria, and common failure scenarios to facilitate quick diagnosis and resolution.\n\n5. Follow best practices for smoke testing: keep tests fast and lightweight, focus on critical paths, run in production-like environments, and maintain version-controlled test suites with clear pass/fail criteria.\n\n6. Use retry logic and explicit waits where applicable to reduce flaky test failures, and ensure tests run in isolated, stable environments to improve reliability.\n\n7. Coordinate with existing deployment and environment configuration tasks to ensure tests use correct production parameters and secrets.",
+        "testStrategy": "- Execute smoke tests immediately after production deployment to verify basic system health and connectivity; tests must complete within a short time frame (under 10 minutes) with clear binary pass/fail outcomes.\n- Run integration tests against production API endpoints to validate transaction building, offer management, fee calculations, and asset validations.\n- Confirm that all tests pass consistently across multiple runs to detect flaky tests.\n- Log and analyze any failures promptly, correlating with deployment logs and environment configurations.\n- Review test scripts and documentation regularly to keep them up to date with production changes.\n- Use automated CI/CD triggers to run smoke and integration tests on every production deployment.\n- Validate that failure scenarios are properly handled and documented, ensuring quick troubleshooting.\n- Perform manual verification of critical tests initially to confirm automation accuracy.",
+        "status": "pending",
+        "dependencies": [
+          31,
+          32,
+          33,
+          34,
+          35
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create Smoke Test Suite for Critical System Components",
+            "description": "Develop a suite of smoke tests targeting backend API, database, Redis, Solana RPC, atomic swap program, treasury PDA, and health check endpoints.",
+            "dependencies": [],
+            "details": "Implement tests to verify API accessibility, database connectivity, Redis caching, Solana RPC mainnet connectivity, atomic swap program deployment, treasury PDA existence, and health check endpoint status. Ensure tests are fast, lightweight, and run in production-like environments.",
+            "status": "pending",
+            "testStrategy": "Smoke tests must complete within 10 minutes and provide clear binary pass/fail outcomes."
+          },
+          {
+            "id": 2,
+            "title": "Create Integration Test Suite for Key API Endpoints",
+            "description": "Develop integration tests for core API endpoints including swap transaction building, fetching, offer creation, listing, fee calculation, asset validation, and zero-fee authorization.",
+            "dependencies": [],
+            "details": "Write tests for POST /api/swap/build, GET /api/swap/transaction/:signature, POST /api/offers, GET /api/offers, platform fee calculation, asset validation for NFT/cNFT/SOL, and zero-fee authorization endpoints. Validate end-to-end functionality and error handling.",
+            "status": "pending",
+            "testStrategy": "Run integration tests against production API endpoints to validate transaction building, fetching, and offer management flows."
+          },
+          {
+            "id": 3,
+            "title": "Implement API Endpoint Tests for Swap and Offer Management",
+            "description": "Write specific tests for swap and offer management API endpoints to ensure correct request/response handling and business logic.",
+            "dependencies": [
+              2
+            ],
+            "details": "Test POST /api/swap/build for transaction building, GET /api/swap/transaction/:signature for transaction fetching, POST /api/offers for offer creation, and GET /api/offers for offer listing. Include validation of input/output formats and error scenarios.",
+            "status": "pending",
+            "testStrategy": "Validate API endpoint responses and error handling for swap and offer management operations."
+          },
+          {
+            "id": 4,
+            "title": "Implement Connectivity Tests for External Services",
+            "description": "Develop tests to verify connectivity and functionality of external services including database, Redis, and Solana RPC.",
+            "dependencies": [
+              1
+            ],
+            "details": "Test database connectivity and migration status, Redis connectivity and caching, and Solana RPC mainnet connectivity. Ensure all external dependencies are accessible and functioning as expected.",
+            "status": "pending",
+            "testStrategy": "Verify connectivity and basic operations for all external services used by the atomic swap system."
+          },
+          {
+            "id": 5,
+            "title": "Implement Health Check and System Readiness Tests",
+            "description": "Create tests to verify the health check endpoint and overall system readiness after deployment.",
+            "dependencies": [
+              1
+            ],
+            "details": "Test the health check endpoint to ensure it returns a healthy status and validate that all critical system components are ready for operation.",
+            "status": "pending",
+            "testStrategy": "Run health check tests immediately after deployment to confirm system readiness."
+          },
+          {
+            "id": 6,
+            "title": "Add Test Scripts to package.json for Automation",
+            "description": "Integrate smoke and integration test scripts into package.json for easy execution and CI/CD pipeline integration.",
+            "dependencies": [
+              1,
+              2
+            ],
+            "details": "Define npm scripts in package.json to run smoke and integration tests. Ensure scripts are compatible with CI/CD pipeline requirements and can be executed with a single command.",
+            "status": "pending",
+            "testStrategy": "Automate test execution through npm scripts for consistent and repeatable testing."
+          },
+          {
+            "id": 7,
+            "title": "Document Test Results, Criteria, and Failure Scenarios",
+            "description": "Create comprehensive documentation for expected test results, pass/fail criteria, and common failure scenarios to facilitate quick diagnosis and resolution.",
+            "dependencies": [
+              1,
+              2
+            ],
+            "details": "Document expected outcomes for all smoke and integration tests, define clear pass/fail criteria, and list common failure scenarios with troubleshooting steps. Ensure documentation is version-controlled and easily accessible.",
+            "status": "pending",
+            "testStrategy": "Provide clear documentation to support test result interpretation and failure resolution."
+          }
+        ]
+      },
+      {
+        "id": 37,
+        "title": "Production Deployment: Backend Application Deployment to DigitalOcean App Platform",
+        "description": "Deploy the backend application to the DigitalOcean App Platform production environment with secure configuration, database setup, and verification of all production services.",
+        "details": "1. Review and update the `.do/app-production.yaml` deployment configuration file to ensure it reflects production settings, including correct service definitions, build commands, and resource allocations.\n\n2. Verify that all environment variables in the configuration use `${VARIABLE_NAME}` placeholders without hardcoded secrets to maintain security best practices.\n\n3. Ensure that all SECRET-type environment variables in the YAML file have no value fields, following lessons learned from staging deployments.\n\n4. Set all required secrets (e.g., `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET`, API keys) securely in the DigitalOcean App Platform console before deployment.\n\n5. Configure production build settings explicitly, including setting `NODE_ENV=production` and ensuring proper TypeScript compilation and build scripts are used.\n\n6. Provision a production PostgreSQL database cluster on DigitalOcean, configure connection details, and run all necessary Prisma or other database migrations to prepare the schema.\n\n7. Set up a production Redis instance on DigitalOcean and configure the backend to connect securely.\n\n8. Deploy the backend application via DigitalOcean App Platform using the updated configuration and secrets.\n\n9. Monitor deployment logs in real-time for any errors or warnings during startup.\n\n10. Verify that the health check endpoint responds correctly and within expected timeframes.\n\n11. Test the `/test` page to confirm password protection is active and the password `060385` works as expected.\n\n12. Verify that all API endpoints are accessible and respond correctly in the production environment.\n\n13. Check production logs post-deployment for any startup errors or runtime exceptions.\n\n14. Document the entire deployment process, including configuration changes, encountered issues, and resolutions for future reference and team knowledge sharing.\n\nFollow best practices such as zero-downtime deployment, secure secret management, and thorough post-deployment verification to ensure a stable production release.",
+        "testStrategy": "- Confirm `.do/app-production.yaml` is updated with correct placeholders and no hardcoded secrets.\n- Verify all secrets are set in the DigitalOcean console and match expected production values.\n- Confirm production database and Redis instances are provisioned and accessible.\n- Run database migrations successfully without errors.\n- Deploy the backend and monitor logs for errors during startup.\n- Access the health check endpoint and verify a successful response.\n- Access the `/test` page and verify password protection with password `060385`.\n- Test all critical API endpoints for expected responses.\n- Review production logs for any errors or warnings after deployment.\n- Document deployment steps and any issues encountered for team review.",
+        "status": "pending",
+        "dependencies": [
+          31,
+          34,
+          36
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Review and Update Production YAML Configuration",
+            "description": "Examine the `.do/app-production.yaml` file to ensure it accurately reflects production settings, including service definitions, build commands, and resource allocations.",
+            "dependencies": [],
+            "details": "Check that the YAML file uses correct service names, build and start commands, resource sizes, and any production-specific flags. Remove any staging or development configurations.",
+            "status": "pending",
+            "testStrategy": "Validate the YAML syntax and confirm no hardcoded secrets exist; verify placeholders for environment variables."
+          },
+          {
+            "id": 2,
+            "title": "Verify Environment Variable Placeholders and Secret Handling in YAML",
+            "description": "Ensure all environment variables in the YAML use `${VARIABLE_NAME}` placeholders without hardcoded values, especially for secrets, to maintain security best practices.",
+            "dependencies": [
+              1
+            ],
+            "details": "Audit the YAML file to confirm SECRET-type environment variables have no value fields and all variables reference environment placeholders. Remove any embedded secrets.",
+            "status": "pending",
+            "testStrategy": "Check YAML for absence of hardcoded secrets and presence of placeholders; confirm compliance with security guidelines."
+          },
+          {
+            "id": 3,
+            "title": "Set Production Secrets Securely in DigitalOcean App Platform Console",
+            "description": "Configure all required secrets such as `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET`, and API keys securely in the DigitalOcean App Platform console before deployment.",
+            "dependencies": [
+              2
+            ],
+            "details": "Access the DigitalOcean App Platform dashboard, navigate to the app's settings, and input all necessary secrets using the secrets management interface, ensuring no secrets are exposed in code or config files.",
+            "status": "pending",
+            "testStrategy": "Verify that all secrets are present in the console and match expected production values; confirm no secrets appear in deployment logs or YAML."
+          },
+          {
+            "id": 4,
+            "title": "Provision Production PostgreSQL Database and Run Migrations",
+            "description": "Create a production PostgreSQL cluster on DigitalOcean, configure connection details, and execute all necessary Prisma or other database migrations to prepare the schema.",
+            "dependencies": [
+              3
+            ],
+            "details": "Use DigitalOcean Managed Databases to provision PostgreSQL with production specifications. Update connection strings and run migration scripts to ensure the database schema is up to date.",
+            "status": "pending",
+            "testStrategy": "Confirm database cluster is accessible; verify migrations applied successfully by checking schema and migration logs."
+          },
+          {
+            "id": 5,
+            "title": "Provision Production Redis Instance and Configure Backend Connection",
+            "description": "Set up a production Redis instance on DigitalOcean and configure the backend application to connect securely using the appropriate environment variables.",
+            "dependencies": [
+              3
+            ],
+            "details": "Provision Redis via DigitalOcean Managed Databases or App Platform services. Update backend configuration to use the Redis URL secret and test connectivity.",
+            "status": "pending",
+            "testStrategy": "Test Redis connectivity from backend; verify caching or session features function correctly in production."
+          },
+          {
+            "id": 6,
+            "title": "Deploy Backend Application to DigitalOcean App Platform",
+            "description": "Deploy the backend application using the updated `.do/app-production.yaml` configuration and securely set secrets, ensuring production build settings like `NODE_ENV=production` are applied.",
+            "dependencies": [
+              1,
+              3,
+              4,
+              5
+            ],
+            "details": "Trigger deployment via DigitalOcean App Platform UI or CLI, monitor build and deployment logs for errors, and ensure zero-downtime deployment practices are followed.",
+            "status": "pending",
+            "testStrategy": "Monitor deployment logs for errors; confirm deployment completes successfully and app is reachable at production URL."
+          },
+          {
+            "id": 7,
+            "title": "Verify Production Health Check, /test Page Security, and API Endpoints",
+            "description": "Perform post-deployment verification including health check endpoint responsiveness, password protection on `/test` page with password `060385`, and accessibility of all API endpoints.",
+            "dependencies": [
+              6
+            ],
+            "details": "Use HTTP requests or automated tests to check health endpoint timing and status, test `/test` page password protection, and validate API endpoint responses and correctness.",
+            "status": "pending",
+            "testStrategy": "Automated or manual tests confirming health check returns expected status quickly, `/test` page requires correct password, and APIs respond with expected data."
+          },
+          {
+            "id": 8,
+            "title": "Document Deployment Process and Post-Deployment Observations",
+            "description": "Create comprehensive documentation covering configuration changes, deployment steps, encountered issues, resolutions, and verification results for team knowledge sharing and future reference.",
+            "dependencies": [
+              7
+            ],
+            "details": "Write detailed notes on YAML updates, secret management, database and Redis provisioning, deployment execution, verification outcomes, and any troubleshooting performed.",
+            "status": "pending",
+            "testStrategy": "Review documentation completeness and clarity; ensure it enables replication of deployment and troubleshooting by other team members."
+          }
+        ]
+      },
+      {
+        "id": 38,
+        "title": "Production Deployment: Post-Deployment Monitoring and Validation",
+        "description": "Execute comprehensive monitoring and validation activities after production deployment to ensure system stability, correct functionality, and readiness for live operations.",
+        "details": "This task involves executing a series of critical post-deployment activities to validate the atomic swap system's behavior in production. Key activities include:\n\n- Execute production smoke tests to verify basic system health and connectivity (APIs, database, Redis, Solana RPC, program deployment, Treasury PDA, health checks).\n- Run production integration tests to validate API endpoints and backend service interactions.\n- Execute production end-to-end tests covering SPL NFT swaps, cNFT swaps, and zero-fee authorization scenarios.\n- Monitor production logs for errors, warnings, or anomalies using centralized logging solutions (e.g., Datadog, Sentry, or similar).\n- Verify platform fee collection is working by checking that the Treasury PDA is receiving fees as expected.\n- Test real NFT swaps on mainnet using test wallets to confirm successful asset transfers.\n- Monitor Solana Explorer for successful swap transactions and validate transaction details.\n- Verify authorized apps whitelist enforcement for zero-fee swaps by attempting swaps with both whitelisted and non-whitelisted apps.\n- Check the database for proper transaction records and ensure all swap data is persisted correctly.\n- Monitor Redis cache for proper functioning and ensure cache invalidation and updates are working as expected.\n- Set up production alerting and monitoring dashboards (e.g., Grafana, Prometheus) to track system health, transaction throughput, error rates, and key metrics.\n- Document any issues or unexpected behavior encountered during monitoring and validation.\n- Create incident response procedures for common production issues (e.g., failed swaps, fee collection issues, API downtime).\n- Establish a production support rotation to ensure 24/7 coverage for critical issues.\n- Schedule regular production health checks (daily/weekly) to proactively identify and address potential problems.\n- Create a production deployment completion report summarizing all validation activities, results, and any outstanding issues.\n\nBest practices:\n- Use automated monitoring and alerting tools to minimize manual intervention.\n- Implement centralized logging and error tracking for rapid issue diagnosis.\n- Regularly review and update incident response procedures based on real-world incidents.\n- Ensure all monitoring and alerting configurations are version-controlled and documented.",
+        "testStrategy": "1. Execute all production smoke tests and verify that all tests pass within a short time frame (under 10 minutes) with clear binary pass/fail outcomes.\n2. Run production integration tests against all API endpoints and verify that all tests pass.\n3. Execute production end-to-end tests for SPL NFT swaps, cNFT swaps, and zero-fee authorization scenarios, confirming successful asset transfers and fee collection.\n4. Monitor production logs for at least 24 hours and verify that no critical errors, warnings, or anomalies are detected.\n5. Verify platform fee collection by checking the Treasury PDA balance and transaction history on Solana Explorer.\n6. Test real NFT swaps on mainnet with test wallets and confirm successful asset transfers.\n7. Monitor Solana Explorer for successful swap transactions and validate transaction details.\n8. Verify authorized apps whitelist enforcement by attempting swaps with both whitelisted and non-whitelisted apps.\n9. Check the database for proper transaction records and ensure all swap data is persisted correctly.\n10. Monitor Redis cache for proper functioning and ensure cache invalidation and updates are working as expected.\n11. Set up production alerting and monitoring dashboards and verify that all key metrics are being tracked and alerts are triggered as expected.\n12. Document any issues or unexpected behavior encountered during monitoring and validation.\n13. Create incident response procedures and verify that they are clear, actionable, and cover common production issues.\n14. Establish a production support rotation and verify that all team members are aware of their responsibilities.\n15. Schedule production health checks and verify that they are conducted regularly and any issues are addressed promptly.\n16. Create a production deployment completion report summarizing all validation activities, results, and any outstanding issues.",
+        "status": "pending",
+        "dependencies": [
+          32,
+          33,
+          34,
+          35,
+          36,
+          37
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Execute Production Smoke Tests",
+            "description": "Run smoke tests in the production environment to verify basic system health and connectivity, including APIs, database, Redis, Solana RPC, program deployment, Treasury PDA, and health checks.",
+            "dependencies": [],
+            "details": "Automate and execute smoke tests that quickly validate critical system components are operational and responsive. Confirm connectivity to all external and internal services and verify no immediate failures occur.",
+            "status": "pending",
+            "testStrategy": "Verify all smoke tests pass within 10 minutes with clear pass/fail results."
+          },
+          {
+            "id": 2,
+            "title": "Run Production Integration and End-to-End Tests",
+            "description": "Perform comprehensive integration tests on API endpoints and backend services, followed by end-to-end tests covering SPL NFT swaps, cNFT swaps, and zero-fee authorization scenarios in production.",
+            "dependencies": [
+              1
+            ],
+            "details": "Execute automated integration test suites to validate service interactions and API correctness. Then run end-to-end workflows simulating real user scenarios to ensure complete system functionality.",
+            "status": "pending",
+            "testStrategy": "Confirm all integration and end-to-end tests pass successfully without errors."
+          },
+          {
+            "id": 3,
+            "title": "Monitor Production Logs and Analyze Anomalies",
+            "description": "Set up centralized logging solutions (e.g., Datadog, Sentry) to continuously monitor production logs for errors, warnings, and anomalies, enabling rapid issue detection and diagnosis.",
+            "dependencies": [
+              1
+            ],
+            "details": "Configure log aggregation and alerting for error patterns and unusual events. Regularly review logs to identify and document any unexpected behavior or system faults.",
+            "status": "pending",
+            "testStrategy": "Verify alerts trigger on error thresholds and logs are accessible and searchable in the centralized platform."
+          },
+          {
+            "id": 4,
+            "title": "Validate Real NFT Swaps and Fee Collection on Mainnet",
+            "description": "Conduct real NFT swap transactions on mainnet using test wallets to confirm successful asset transfers and verify that platform fee collection via Treasury PDA is functioning correctly.",
+            "dependencies": [
+              2
+            ],
+            "details": "Perform live swap transactions covering different swap types and zero-fee scenarios. Check Treasury PDA account balances and transaction records to ensure fees are collected as expected.",
+            "status": "pending",
+            "testStrategy": "Confirm successful swap transactions on Solana Explorer and verify Treasury PDA fee receipts match expected amounts."
+          },
+          {
+            "id": 5,
+            "title": "Verify Security Controls and Authorized Apps Enforcement",
+            "description": "Test enforcement of authorized apps whitelist for zero-fee swaps by attempting swaps with both whitelisted and non-whitelisted applications to ensure correct access control.",
+            "dependencies": [
+              2
+            ],
+            "details": "Attempt zero-fee swaps using authorized and unauthorized apps. Confirm that only whitelisted apps can perform zero-fee swaps and others are correctly rejected.",
+            "status": "pending",
+            "testStrategy": "Validate swap attempts from non-whitelisted apps fail with appropriate error messages while whitelisted apps succeed."
+          },
+          {
+            "id": 6,
+            "title": "Set Up Production Monitoring Dashboards and Alerting",
+            "description": "Implement monitoring dashboards (e.g., Grafana, Prometheus) and configure alerting to track system health metrics, transaction throughput, error rates, and key performance indicators in production.",
+            "dependencies": [
+              3
+            ],
+            "details": "Integrate metrics collection from all critical components, create visual dashboards for real-time monitoring, and define alert thresholds for proactive incident detection.",
+            "status": "pending",
+            "testStrategy": "Verify dashboards display accurate metrics and alerts trigger correctly on predefined thresholds."
+          },
+          {
+            "id": 7,
+            "title": "Develop Incident Response Procedures and Support Rotation",
+            "description": "Create detailed incident response playbooks for common production issues such as failed swaps, fee collection errors, and API downtime, and establish a 24/7 production support rotation.",
+            "dependencies": [
+              3,
+              6
+            ],
+            "details": "Document step-by-step troubleshooting and mitigation steps for frequent incidents. Organize team schedules to ensure continuous coverage and rapid response capability.",
+            "status": "pending",
+            "testStrategy": "Review incident response documentation for completeness and confirm support rotation schedules are communicated and operational."
+          },
+          {
+            "id": 8,
+            "title": "Compile Production Deployment Completion Report and Schedule Regular Health Checks",
+            "description": "Document all post-deployment validation activities, results, and outstanding issues in a comprehensive report. Schedule recurring production health checks to maintain system stability.",
+            "dependencies": [
+              4,
+              5,
+              6,
+              7
+            ],
+            "details": "Summarize test outcomes, monitoring insights, and incident responses. Define cadence and scope for daily/weekly health checks to proactively identify and resolve issues.",
+            "status": "pending",
+            "testStrategy": "Ensure report is reviewed and approved by stakeholders and health check schedules are established and communicated."
+          }
+        ]
       }
     ],
     "metadata": {
       "created": "2025-11-17T05:45:23.312Z",
-      "updated": "2025-12-02T05:01:22.036Z",
+      "updated": "2025-12-03T04:05:38.516Z",
       "description": "Complete architectural pivot from escrow agreements to atomic NFT/cNFT swaps with durable nonces"
     }
   }

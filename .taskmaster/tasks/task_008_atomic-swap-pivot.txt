@@ -1,6 +1,6 @@
 # Task ID: 8
 # Title: Implement Express HTTP API Routes for Atomic Swaps
-# Status: pending
+# Status: done
 # Dependencies: 1, 6
 # Priority: high
 # Description: Create comprehensive Express.js HTTP API endpoints for atomic swap operations including offer creation, counter-offers, cancellation, acceptance, confirmation, and listing with proper validation and error handling.

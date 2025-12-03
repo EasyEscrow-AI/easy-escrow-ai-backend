@@ -1,6 +1,6 @@
 # Task ID: 3
 # Title: Implement FeeCalculator Service for Platform Fee Logic
-# Status: pending
+# Status: done
 # Dependencies: 1
 # Priority: medium
 # Description: Create a comprehensive fee calculation service that handles different swap types with configurable fee structures, validation against maximum caps, and detailed fee breakdowns.
