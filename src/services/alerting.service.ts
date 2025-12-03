@@ -303,6 +303,36 @@ export class AlertingService {
     );
   }
   
+  // Fee Payer Wallet (Admin Wallet) Alerts
+  async alertFeePayerCritical(balance: number, address: string): Promise<void> {
+    await this.sendAlert(
+      'fee_payer_critical',
+      AlertSeverity.CRITICAL,
+      'Fee Payer Wallet Balance Critical',
+      `Admin wallet (fee payer) balance is critically low: ${(balance / 1e9).toFixed(4)} SOL - Transactions will fail!`,
+      { component: 'fee-payer-wallet', balance, address }
+    );
+  }
+  
+  async alertFeePayerLow(balance: number, address: string): Promise<void> {
+    await this.sendAlert(
+      'fee_payer_low',
+      AlertSeverity.HIGH,
+      'Fee Payer Wallet Balance Low',
+      `Admin wallet (fee payer) balance is running low: ${(balance / 1e9).toFixed(4)} SOL`,
+      { component: 'fee-payer-wallet', balance, address }
+    );
+  }
+  
+  async alertFeePayerRecovered(balance: number, address: string): Promise<void> {
+    await this.sendRecovery(
+      'fee_payer_critical',
+      `Fee payer wallet balance replenished: ${(balance / 1e9).toFixed(4)} SOL`,
+      { component: 'fee-payer-wallet', balance, address }
+    );
+  }
+  
+  // Legacy Treasury Alerts (deprecated - treasury PDA not used for fee payments)
   async alertTreasuryCritical(balance: number, address: string): Promise<void> {
     await this.sendAlert(
       'treasury_critical',
