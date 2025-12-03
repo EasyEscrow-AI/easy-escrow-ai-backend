@@ -5278,7 +5278,7 @@
         "id": 31,
         "title": "Production Deployment: Pre-deployment Audit and Preparation for Atomic Swap and Treasury Functionality",
         "description": "Conduct a comprehensive audit and preparation phase to ensure readiness for deploying atomic swap and treasury features to the production mainnet environment. This is a fresh production deployment with zero existing users, so no versioning or backwards compatibility is required.",
-        "status": "pending",
+        "status": "in-progress",
         "dependencies": [
           14,
           18,
@@ -5294,7 +5294,7 @@
             "description": "Review all issues encountered during staging deployments such as IDL buffer size problems, treasury PDA derivation, and nonce account setup. Document lessons learned and mitigation strategies to inform production deployment.",
             "dependencies": [],
             "details": "Analyze staging deployment logs and issue trackers to identify problems and resolutions. Summarize findings in a comprehensive document highlighting root causes and recommended fixes for production.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Verify completeness of documented issues and confirm mitigation strategies are actionable and clear."
           },
           {
@@ -5305,7 +5305,7 @@
               1
             ],
             "details": "Compare staging environment variables with production requirements. Ensure all necessary variables exist, have secure values, and are documented. Coordinate with DevOps to validate production configuration.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Test environment variable presence and correctness in production environment; confirm documentation accuracy."
           },
           {
@@ -5973,7 +5973,7 @@
     ],
     "metadata": {
       "created": "2025-11-17T05:45:23.312Z",
-      "updated": "2025-12-03T04:05:38.516Z",
+      "updated": "2025-12-03T06:41:09.254Z",
       "description": "Complete architectural pivot from escrow agreements to atomic NFT/cNFT swaps with durable nonces"
     }
   }
