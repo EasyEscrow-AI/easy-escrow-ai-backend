@@ -23,7 +23,7 @@ This guide covers how to update the Interface Definition Language (IDL) for the 
 
 | Environment | Program ID | Wallet |
 |------------|-----------|--------|
-| **Devnet/Staging** | `AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei` | Default wallet (CPDz3pC5AnK7es3oEcP52HLhByPSAWG6f9QGP6j4jjEA) |
+| **Devnet/Staging** | `AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei` | Default wallet (498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R) |
 | **Mainnet/Production** | `2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx` | Production wallet (requires ~10 SOL) |
 
 ---

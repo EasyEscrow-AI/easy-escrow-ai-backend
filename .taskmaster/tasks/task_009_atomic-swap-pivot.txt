@@ -1,0 +1,139 @@
+# Task ID: 9
+# Title: Implement Monitoring and Background Jobs System
+# Status: done
+# Dependencies: 1, 2
+# Priority: medium
+# Description: Create a comprehensive monitoring and background job system with health checks, automated cleanup jobs, structured logging, and error alerting for the atomic swap platform.
+# Details:
+Implement the monitoring and background jobs system with the following core components:
+
+1. **Health Check Endpoint/Function**:
+   - Create `/health` endpoint that performs comprehensive system health verification
+   - Test database connectivity with simple query execution and connection pool status
+   - Verify nonce pool health by checking available nonce count, account validity, and recent advancement success rates
+   - Validate treasury PDA accessibility and balance sufficiency for fee collection
+   - Test RPC connectivity with multiple endpoints and measure response times
+   - Return structured health status with individual component statuses and overall system health score
+   - Implement health check caching (30-60 second TTL) to prevent excessive resource usage
+
+2. **Cron Job for Expiring Old Offers**:
+   - Create scheduled job (runs every 15 minutes) to identify and expire offers past their expiration time
+   - Query offers table for records where expires_at < current timestamp and status = 'active'
+   - Update expired offers to 'expired' status and log expiration events
+   - Implement batch processing for large numbers of expired offers to prevent database locks
+   - Send notifications to makers about expired offers if notification system exists
+   - Track expiration metrics for monitoring dashboard
+
+3. **Cron Job for Cleaning Up Unused Nonce Accounts**:
+   - Create scheduled job (runs every hour) to identify and clean up stale nonce accounts
+   - Query nonce_pool table for accounts not used in last 24 hours and not currently assigned
+   - Verify nonce accounts are still valid on-chain before cleanup
+   - Reclaim SOL from unused nonce accounts back to treasury
+   - Remove cleaned accounts from database and update pool statistics
+   - Implement safety checks to maintain minimum pool size during cleanup
+
+4. **Cron Job for Replenishing Nonce Pool**:
+   - Create scheduled job (runs every 30 minutes) to maintain optimal nonce pool size
+   - Check current available nonce count against configured minimum threshold
+   - Generate new nonce accounts when pool falls below threshold using NoncePoolManager service
+   - Fund new accounts with rent-exempt balance from treasury
+   - Update pool statistics and log replenishment activities
+   - Implement exponential backoff for failed replenishment attempts
+
+5. **Structured Logging System**:
+   - Implement Winston or Pino logger with structured JSON format for all critical operations
+   - Create log levels: ERROR (critical failures), WARN (recoverable issues), INFO (important events), DEBUG (detailed tracing)
+   - Log all swap lifecycle events: offer creation, acceptance, transaction submission, confirmation, failures
+   - Include contextual metadata: user_wallet, offer_id, transaction_signature, nonce_account, error_codes
+   - Implement log rotation and retention policies (keep 30 days of logs)
+   - Create correlation IDs for tracking requests across multiple services
+
+6. **Error Alerting System**:
+   - Implement alerting for critical failures: database connection loss, RPC endpoint failures, nonce pool depletion, treasury balance low
+   - Create alert severity levels: CRITICAL (immediate action required), HIGH (action needed within hours), MEDIUM (monitor closely)
+   - Integrate with notification services (email, Slack, PagerDuty) for real-time alerts
+   - Implement alert throttling to prevent spam (max 1 alert per error type per 15 minutes)
+   - Create alert recovery notifications when issues are resolved
+   - Track alert metrics and false positive rates for tuning
+
+7. **Job Scheduling and Management**:
+   - Use node-cron or similar library for job scheduling with proper timezone handling
+   - Implement job locking to prevent concurrent execution of same job type
+   - Create job status tracking with execution history, success/failure rates, and performance metrics
+   - Implement graceful shutdown handling for background jobs during application restart
+   - Add job monitoring dashboard showing last execution times, success rates, and current status
+
+# Test Strategy:
+1. **Health Check Testing**:
+   - Test health endpoint with all systems healthy and verify 200 response with detailed status
+   - Simulate database connection failure and verify health check detects and reports the issue
+   - Mock RPC endpoint failures and test fallback behavior and error reporting
+   - Test nonce pool health detection with various pool states (empty, low, healthy)
+   - Verify treasury PDA balance checking with different balance scenarios
+   - Load test health endpoint to ensure caching prevents resource exhaustion
+
+2. **Background Job Testing**:
+   - Create test offers with past expiration dates and verify expiration job correctly identifies and updates them
+   - Test nonce cleanup job with mock unused accounts and verify proper SOL reclamation
+   - Simulate low nonce pool scenarios and verify replenishment job creates new accounts correctly
+   - Test job locking mechanism by attempting to run same job concurrently
+   - Verify job error handling and retry logic with simulated failures
+
+3. **Logging System Testing**:
+   - Verify structured logs are generated for all critical operations with proper JSON format
+   - Test log level filtering and ensure sensitive data is not logged
+   - Verify correlation IDs are properly propagated across service calls
+   - Test log rotation and retention policies with mock log volume
+   - Validate log parsing and searchability in log aggregation system
+
+4. **Alerting System Testing**:
+   - Simulate critical failures (database down, RPC failures) and verify alerts are sent
+   - Test alert throttling by triggering multiple instances of same error type
+   - Verify alert recovery notifications when issues are resolved
+   - Test different notification channels (email, Slack) with mock integrations
+   - Validate alert severity classification and routing logic
+
+5. **Integration Testing**:
+   - Test complete monitoring system during simulated high-load scenarios
+   - Verify background jobs continue operating during system stress
+   - Test graceful shutdown and startup of monitoring system
+   - Validate monitoring system performance impact on main application
+   - Test monitoring system with real database and RPC connections in staging environment
+
+# Subtasks:
+## 1. Audit Existing Services and Background Jobs Infrastructure [done]
+### Dependencies: None
+### Description: Conduct comprehensive audit of existing monitoring services, background jobs, health checks, cleanup jobs, and logging infrastructure to identify what can be reused or adapted for atomic swaps.
+### Details:
+Review existing codebase for settlement services, monitoring endpoints, refund services, cleanup jobs, and logging systems. Document current infrastructure capabilities, identify reusable components, and create adaptation plan for atomic swap requirements. Analyze existing job scheduling, health monitoring, and alerting mechanisms.
+
+## 2. Adapt Existing Health Check System for Atomic Swap Components [done]
+### Dependencies: 9.1
+### Description: Modify existing health check endpoints to include atomic swap specific monitoring including nonce pool health, treasury PDA validation, and swap transaction status verification.
+### Details:
+Extend current health check endpoint to verify nonce pool availability, treasury balance sufficiency, RPC connectivity for atomic swap operations, and database connectivity for swap tables. Implement component-specific health scoring and caching mechanisms with 30-60 second TTL.
+
+## 3. Implement Offer Expiry Background Job for Atomic Swaps [done]
+### Dependencies: 9.1
+### Description: Create scheduled job to automatically expire atomic swap offers past their expiration time and update offer status in database.
+### Details:
+Implement cron job running every 15 minutes to query offers table for expired records, update status to 'expired', log expiration events, and implement batch processing for large volumes. Include maker notifications and expiration metrics tracking for monitoring dashboard.
+
+## 4. Adapt Existing Cleanup Jobs for Nonce Account Management [done]
+### Dependencies: 9.1, 9.2
+### Description: Modify existing cleanup infrastructure to handle unused nonce account cleanup and nonce pool replenishment for atomic swap operations.
+### Details:
+Create hourly cleanup job for stale nonce accounts and 30-minute replenishment job for maintaining optimal pool size. Implement safety checks, SOL reclamation from unused accounts, on-chain validation, and exponential backoff for failed operations. Integrate with NoncePoolManager service.
+
+## 5. Update Existing Logging Infrastructure for Atomic Swap Operations [done]
+### Dependencies: 9.1
+### Description: Enhance existing structured logging system to capture atomic swap lifecycle events with correlation IDs and contextual metadata.
+### Details:
+Extend current logging system (Winston/Pino) to include atomic swap events: offer creation, acceptance, transaction submission, confirmation, and failures. Add contextual metadata including user_wallet, offer_id, transaction_signature, nonce_account, and error_codes. Implement correlation IDs and log retention policies.
+
+## 6. Adapt Existing Error Alerting System for Atomic Swap Failures [done]
+### Dependencies: 9.1, 9.2
+### Description: Extend existing alerting infrastructure to handle atomic swap specific failures including nonce pool depletion, treasury balance issues, and swap transaction failures.
+### Details:
+Enhance current alerting system to monitor atomic swap critical failures: database connectivity, RPC endpoints, nonce pool status, treasury balance, and transaction failures. Implement severity levels, notification integration (email/Slack/PagerDuty), alert throttling, and recovery notifications. Include alert metrics tracking.
+

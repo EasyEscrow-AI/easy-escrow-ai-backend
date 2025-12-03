@@ -1,9 +1,9 @@
 {
   "wallets": {
-    "sender": "FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71",
-    "receiver": "Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk",
-    "admin": "7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u",
-    "feeCollector": "C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E"
+    "sender": "AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z",
+    "receiver": "5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4",
+    "admin": "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R",
+    "feeCollector": "8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ"
   },
   "walletKeys": {
     "sender": "57CjnFUDN2rJwYfSTunKb22raU4ffzPTi5jU1FXY9mVSyf1LrJp8hLvDUFx4fbTVGoTeyk3LypFCn48MrwRWkWQo",

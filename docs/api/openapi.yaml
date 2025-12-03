@@ -1,9 +1,9 @@
 openapi: 3.0.3
 info:
-  title: EasyEscrow.ai API
+  title: EasyEscrow.ai Atomic Swap API
   version: 1.0.0
   description: |
-    Backend API service for EasyEscrow.ai - Super fast and easy to use digital escrow platform.
+    Backend API service for EasyEscrow.ai - Non-custodial atomic swap platform for NFTs and SOL on Solana.
     
     ## Supported Swap Types
     
@@ -50,13 +50,47 @@ info:
     - Rate Limiting: 10 agreement requests per 15 minutes
     - Idempotency: Agreement creation endpoints support idempotency keys to prevent duplicates
     
-    ## Custom Expiry Times
-    Agreements support flexible expiry specifications:
-    - **Presets**: "5m", "1h", "6h", "12h", "24h" (recommended for simplicity)
-    - **Duration**: Number of hours (0.0833-24, where 0.0833 = 5 minutes) from creation time
-    - **Absolute**: ISO 8601 timestamp for specific expiry time
-    - **Default**: 5 minutes (when not specified)
-    - **Constraints**: Minimum 5 minutes, maximum 24 hours from creation
+    EasyEscrow.ai uses **atomic swaps** - instant, non-custodial exchanges that execute in a single transaction.
+    Your assets are NEVER held in escrow. The swap happens atomically or not at all.
+    
+    ### How It Works
+    
+    1. **Maker creates offer** - Specifies what they offer and what they want
+    2. **Taker accepts offer** - Gets a pre-built transaction to sign
+    3. **Taker signs & broadcasts** - The swap executes atomically on Solana
+    4. **Taker confirms** - Submits the transaction signature for verification
+    5. **Instant settlement** - NFTs/SOL/cNFTs transfer simultaneously
+    
+    ### Supported Asset Types
+    
+    - ✅ **SPL NFTs** (Metaplex standard)
+    - ✅ **Compressed NFTs (cNFTs)** (Metaplex Bubblegum)
+    - ✅ **SOL** (Native Solana currency)
+    - ✅ **Mixed swaps** (NFT ↔ SOL, NFT ↔ NFT, cNFT ↔ SOL, etc.)
+    
+    ### Key Features
+    
+    - **Non-custodial**: Assets never leave your wallet until the swap executes
+    - **Atomic**: All transfers happen in one transaction or none at all
+    - **Durable nonces**: Offers don't expire due to blockhash expiration
+    - **Low fees**: 1% platform fee on SOL swaps, 0.005 SOL flat fee for NFT-only swaps
+    - **Instant settlement**: No waiting for confirmations or multi-step processes
+    - **Cancel anytime**: Cancel offers instantly by advancing the durable nonce
+    
+    ### Platform Fees
+    
+    - **NFT-only swaps**: 0.005 SOL flat fee (paid by taker)
+    - **Swaps with SOL**: 1% of total SOL amount (paid by taker)
+    - **Minimum fee**: 0.001 SOL
+    - **Maximum fee**: 0.5 SOL (fee cap)
+    
+    ### Security
+    
+    - **Durable nonces** prevent transaction replay attacks
+    - **Asset validation** ensures you own what you're trading
+    - **Rate limiting** prevents API abuse
+    - **Input validation** protects against malicious inputs
+    - **Idempotency keys** prevent duplicate operations
     
   contact:
     name: EasyEscrow.ai Support
@@ -66,34 +100,28 @@ info:
     
 servers:
   - url: http://localhost:3000
-    description: Development server
+    description: Local development
+  - url: https://staging-api.easyescrow.ai
+    description: Staging environment (Devnet)
   - url: https://api.easyescrow.ai
-    description: Production server
+    description: Production (Mainnet)
 
 tags:
   - name: Health
-    description: Service health and status endpoints
-  - name: Agreements
-    description: Escrow agreement management
-  - name: Receipts
-    description: Settlement receipt retrieval and verification
-  - name: Transactions
-    description: Transaction logging and monitoring
-  - name: Webhooks
-    description: Webhook delivery management
-  - name: Expiry & Cancellation
-    description: Agreement expiry, cancellation, and refund management
+    description: Service health and status
+  - name: Offers
+    description: Atomic swap offer lifecycle management
 
 paths:
   /:
     get:
       tags:
         - Health
-      summary: API root endpoint
+      summary: API root
       description: Returns API information and available endpoints
       responses:
         '200':
-          description: Successful response
+          description: Success
           content:
             application/json:
               schema:
@@ -111,21 +139,12 @@ paths:
                       health:
                         type: string
                         example: /health
-                      agreements:
+                      offers:
                         type: string
-                        example: /v1/agreements
-                      receipts:
-                        type: string
-                        example: /v1/receipts
-                      transactions:
-                        type: string
-                        example: /v1/transactions
-                      expiryCancellation:
-                        type: string
-                        example: /api/expiry-cancellation
-                      webhooks:
-                        type: string
-                        example: /api/webhooks
+                        example: /api/offers
+                  documentation:
+                    type: string
+                    example: /docs
 
   /health:
     get:
@@ -235,37 +254,25 @@ paths:
     
     get:
       tags:
-        - Agreements
-      summary: List agreements
-      description: Retrieve a paginated list of escrow agreements with optional filters
+        - Offers
+      summary: List offers
+      description: Retrieve swap offers with optional filters and pagination
       parameters:
         - in: query
           name: status
           schema:
-            $ref: '#/components/schemas/AgreementStatus'
-          description: Filter by agreement status
+            $ref: '#/components/schemas/OfferStatus'
+          description: Filter by offer status
         - in: query
-          name: seller
+          name: makerWallet
           schema:
             type: string
-          description: Filter by seller wallet address
+          description: Filter by maker wallet address
         - in: query
-          name: buyer
+          name: takerWallet
           schema:
             type: string
-          description: Filter by buyer wallet address
-        - in: query
-          name: nft_mint
-          schema:
-            type: string
-          description: Filter by NFT mint address
-        - in: query
-          name: page
-          schema:
-            type: integer
-            minimum: 1
-            default: 1
-          description: Page number
+          description: Filter by taker wallet address
         - in: query
           name: limit
           schema:
@@ -274,132 +281,16 @@ paths:
             maximum: 100
             default: 20
           description: Items per page
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Pagination offset
       responses:
         '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AgreementListResponse'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /v1/agreements/{agreementId}:
-    get:
-      tags:
-        - Agreements
-      summary: Get agreement by ID
-      description: Retrieve detailed information about a specific agreement including balances and deposits
-      parameters:
-        - $ref: '#/components/parameters/AgreementId'
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AgreementDetailResponse'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /v1/agreements/{agreementId}/cancel:
-    post:
-      tags:
-        - Agreements
-      summary: Cancel an expired agreement
-      description: |
-        Cancels an expired agreement that hasn't been settled. This triggers refunds to depositors.
-        Only works for agreements that have passed their expiry date.
-      parameters:
-        - $ref: '#/components/parameters/AgreementId'
-      responses:
-        '200':
-          description: Agreement cancelled successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CancelAgreementResponse'
-        '400':
-          description: Bad request (agreement not expired or already settled)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /v1/agreements/{agreementId}/extend-expiry:
-    post:
-      tags:
-        - Agreements
-      summary: Extend agreement expiry
-      description: |
-        Extends the expiry time of an existing agreement that hasn't expired yet.
-        
-        **Supported Extension Formats:**
-        - **Duration in hours** (number 1-24): Extends from current expiry
-        - **Preset string**: "1h", "6h", "12h", "24h"
-        - **Absolute timestamp**: ISO 8601 format (sets new specific expiry time)
-        
-        **Constraints:**
-        - Agreement must not be expired, settled, cancelled, or refunded
-        - New expiry must be in the future
-        - New expiry cannot exceed 24 hours from current time
-        - Only seller or buyer can extend (if requesterAddress provided)
-        
-        **Rate Limited**: 10 requests per 15 minutes
-      parameters:
-        - $ref: '#/components/parameters/AgreementId'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - extension
-              properties:
-                extension:
-                  oneOf:
-                    - type: number
-                      minimum: 1
-                      maximum: 24
-                    - type: string
-                      enum: ["1h", "6h", "12h", "24h"]
-                    - type: string
-                      format: date-time
-                  description: |
-                    Extension duration or new expiry time.
-                    - Number: Hours to add from current expiry (1-24)
-                    - Preset: "1h", "6h", "12h", "24h" from current expiry
-                    - Timestamp: New absolute expiry time (ISO 8601)
-                  example: "6h"
-                requesterAddress:
-                  type: string
-                  description: Optional wallet address of the requester (seller or buyer). If provided, authorization is verified.
-                  example: "4qxZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9"
-            examples:
-              presetExtension:
-                summary: Extend by preset duration
-                value:
-                  extension: "6h"
-                  requesterAddress: "4qxZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9"
-              numericExtension:
-                summary: Extend by number of hours
-                value:
-                  extension: 12
-              absoluteExtension:
-                summary: Set new absolute expiry
-                value:
-                  extension: "2025-11-04T18:00:00Z"
-                  requesterAddress: "5rxZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9"
-      responses:
-        '200':
-          description: Expiry extended successfully
+          description: Success
           content:
             application/json:
               schema:
@@ -411,33 +302,233 @@ paths:
                   data:
                     type: object
                     properties:
-                      agreementId:
-                        type: string
-                        example: "abc123"
-                      oldExpiry:
-                        type: string
-                        format: date-time
-                        example: "2025-11-03T12:00:00.000Z"
-                      newExpiry:
-                        type: string
-                        format: date-time
-                        example: "2025-11-03T18:00:00.000Z"
-                      extensionHours:
-                        type: number
-                        example: 6
-                      message:
-                        type: string
-                        example: "Successfully extended expiry by 6.0 hours"
+                      offers:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/OfferSummary'
+                      total:
+                        type: integer
+                      limit:
+                        type: integer
+                      offset:
+                        type: integer
                   timestamp:
                     type: string
                     format: date-time
-                    example: "2025-11-03T10:00:00.000Z"
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    post:
+      tags:
+        - Offers
+      summary: Create offer
+      description: |
+        Create a new atomic swap offer.
+        
+        You can create:
+        - **Direct offers** (specify takerWallet) - only that address can accept
+        - **Open offers** (omit takerWallet) - anyone can accept
+        
+        **Rate Limited**: 10 requests per 15 minutes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOfferRequest'
+            examples:
+              nftForSol:
+                summary: NFT ↔ SOL
+                value:
+                  makerWallet: "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"
+                  takerWallet: "8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ"
+                  offeredAssets:
+                    - mint: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+                      isCompressed: false
+                  requestedAssets: []
+                  offeredSol: "0"
+                  requestedSol: "1000000000"
+              solForNft:
+                summary: SOL ↔ NFT (Open Offer)
+                value:
+                  makerWallet: "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"
+                  offeredAssets: []
+                  requestedAssets:
+                    - mint: "8xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+                      isCompressed: false
+                  offeredSol: "500000000"
+                  requestedSol: "0"
+              nftForNft:
+                summary: NFT ↔ NFT
+                value:
+                  makerWallet: "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"
+                  takerWallet: "8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ"
+                  offeredAssets:
+                    - mint: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+                      isCompressed: false
+                  requestedAssets:
+                    - mint: "8xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+                      isCompressed: false
+                  offeredSol: "0"
+                  requestedSol: "0"
+              cnftForSol:
+                summary: cNFT ↔ SOL
+                value:
+                  makerWallet: "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"
+                  offeredAssets:
+                    - mint: "DRiP2Pn2K6fuMLKQmt5rZWqHheXMyUtCeXhe8kDQdxRu"
+                      isCompressed: true
+                  requestedAssets: []
+                  offeredSol: "0"
+                  requestedSol: "2000000000"
+      responses:
+        '201':
+          description: Offer created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      offer:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            example: "1"
+                          status:
+                            type: string
+                            example: "PENDING"
+                          makerWallet:
+                            type: string
+                          takerWallet:
+                            type: string
+                            nullable: true
+                          offeredAssets:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Asset'
+                          requestedAssets:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Asset'
+                          offeredSol:
+                            type: string
+                            description: In lamports
+                          requestedSol:
+                            type: string
+                            description: In lamports
+                          createdAt:
+                            type: string
+                            format: date-time
+                      transaction:
+                        type: object
+                        properties:
+                          nonceAccount:
+                            type: string
+                            description: Durable nonce account address
+                          message:
+                            type: string
+                            example: "Transaction will be built when offer is accepted"
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
-          description: Bad request (invalid extension, expired agreement, invalid state, or unauthorized)
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          description: Validation error - asset ownership or on-chain validation failed
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/offers/{offerId}:
+    get:
+      tags:
+        - Offers
+      summary: Get offer details
+      description: Retrieve full details for a specific offer
+      parameters:
+        - $ref: '#/components/parameters/OfferId'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/OfferDetail'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/offers/{offerId}/counter:
+    post:
+      tags:
+        - Offers
+      summary: Create counter-offer
+      description: Create a counter-offer to an existing offer with different terms
+      parameters:
+        - $ref: '#/components/parameters/OfferId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOfferRequest'
+            example:
+              makerWallet: "8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ"
+              takerWallet: "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"
+              offeredAssets: []
+              requestedAssets:
+                - mint: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+                  isCompressed: false
+              offeredSol: "1500000000"
+              requestedSol: "0"
+      responses:
+        '201':
+          description: Counter-offer created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      offerId:
+                        type: integer
+                      parentOfferId:
+                        type: integer
+                      status:
+                        type: string
+                        example: "PENDING"
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '404':
           $ref: '#/components/responses/NotFound'
         '429':
@@ -445,357 +536,34 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /v1/receipts:
-    get:
-      tags:
-        - Receipts
-      summary: List receipts
-      description: Retrieve a paginated list of settlement receipts with optional filters
-      parameters:
-        - in: query
-          name: agreement_id
-          schema:
-            type: string
-          description: Filter by agreement ID
-        - in: query
-          name: buyer
-          schema:
-            type: string
-          description: Filter by buyer wallet address
-        - in: query
-          name: seller
-          schema:
-            type: string
-          description: Filter by seller wallet address
-        - in: query
-          name: nft_mint
-          schema:
-            type: string
-          description: Filter by NFT mint address
-        - in: query
-          name: start_date
-          schema:
-            type: string
-            format: date-time
-          description: Filter by start date (ISO 8601)
-        - in: query
-          name: end_date
-          schema:
-            type: string
-            format: date-time
-          description: Filter by end date (ISO 8601)
-        - in: query
-          name: page
-          schema:
-            type: integer
-            minimum: 1
-            default: 1
-          description: Page number
-        - in: query
-          name: limit
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-          description: Items per page
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ReceiptListResponse'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /v1/receipts/{id}:
-    get:
-      tags:
-        - Receipts
-      summary: Get receipt by ID
-      description: Retrieve a specific settlement receipt by its ID
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-          description: Receipt ID
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ReceiptResponse'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /v1/receipts/agreement/{agreementId}:
-    get:
-      tags:
-        - Receipts
-      summary: Get receipt by agreement ID
-      description: Retrieve the settlement receipt for a specific agreement
-      parameters:
-        - $ref: '#/components/parameters/AgreementId'
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ReceiptResponse'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /v1/receipts/hash/{hash}:
-    get:
-      tags:
-        - Receipts
-      summary: Get receipt by hash
-      description: Retrieve a settlement receipt by its cryptographic hash
-      parameters:
-        - in: path
-          name: hash
-          required: true
-          schema:
-            type: string
-          description: Receipt hash
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ReceiptResponse'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /v1/receipts/{id}/verify:
+  /api/offers/{offerId}/cancel:
     post:
       tags:
-        - Receipts
-      summary: Verify receipt signature
-      description: Verify the cryptographic signature of a settlement receipt
+        - Offers
+      summary: Cancel offer
+      description: |
+        Cancel an active offer. This advances the durable nonce, invalidating any 
+        serialized transactions that reference it.
+        
+        Only the maker can cancel their offer.
       parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-          description: Receipt ID
+        - $ref: '#/components/parameters/OfferId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - walletAddress
+              properties:
+                walletAddress:
+                  type: string
+                  description: Must be the maker's wallet address
+                  example: "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"
       responses:
         '200':
-          description: Verification result
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ReceiptVerificationResponse'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /v1/transactions:
-    get:
-      tags:
-        - Transactions
-      summary: List transaction logs
-      description: Search and filter transaction logs with pagination
-      parameters:
-        - $ref: '#/components/parameters/TransactionQueryParams'
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TransactionLogListResponse'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /v1/transactions/logs:
-    get:
-      tags:
-        - Transactions
-      summary: List transaction logs (alternative endpoint)
-      description: Alternative endpoint for searching and filtering transaction logs
-      parameters:
-        - $ref: '#/components/parameters/TransactionQueryParams'
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TransactionLogListResponse'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /v1/transactions/logs/{txId}:
-    get:
-      tags:
-        - Transactions
-      summary: Get transaction by ID
-      description: Retrieve a specific transaction log by transaction ID
-      parameters:
-        - in: path
-          name: txId
-          required: true
-          schema:
-            type: string
-          description: Transaction ID (signature)
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TransactionLogResponse'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /v1/transactions/agreements/{agreementId}:
-    get:
-      tags:
-        - Transactions
-      summary: Get agreement transactions
-      description: Retrieve all transactions for a specific agreement with statistics
-      parameters:
-        - $ref: '#/components/parameters/AgreementId'
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AgreementTransactionsResponse'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /v1/transactions/stats/{agreementId}:
-    get:
-      tags:
-        - Transactions
-      summary: Get transaction statistics
-      description: Get transaction statistics for a specific agreement
-      parameters:
-        - $ref: '#/components/parameters/AgreementId'
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TransactionStatsResponse'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /v1/transactions/failed:
-    get:
-      tags:
-        - Transactions
-      summary: Get recent failed transactions
-      description: Retrieve recent failed transactions for debugging purposes
-      parameters:
-        - in: query
-          name: limit
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 50
-            default: 10
-          description: Number of results
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  count:
-                    type: integer
-                  transactions:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/TransactionLog'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /api/webhooks/{agreementId}:
-    get:
-      tags:
-        - Webhooks
-      summary: Get webhooks for agreement
-      description: Retrieve all webhook delivery records for a specific agreement
-      parameters:
-        - $ref: '#/components/parameters/AgreementId'
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WebhookListResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /api/webhooks/status/{webhookId}:
-    get:
-      tags:
-        - Webhooks
-      summary: Get webhook delivery status
-      description: Retrieve detailed delivery status for a specific webhook
-      parameters:
-        - in: path
-          name: webhookId
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Webhook ID
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WebhookStatusResponse'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /api/webhooks/retry/{webhookId}:
-    post:
-      tags:
-        - Webhooks
-      summary: Retry webhook delivery
-      description: Manually retry a failed webhook delivery
-      parameters:
-        - in: path
-          name: webhookId
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Webhook ID
-      responses:
-        '200':
-          description: Retry initiated
+          description: Offer cancelled
           content:
             application/json:
               schema:
@@ -804,246 +572,69 @@ paths:
                   success:
                     type: boolean
                     example: true
-                  message:
-                    type: string
-                    example: Webhook retry initiated
-                  webhookId:
-                    type: string
-                    format: uuid
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /api/webhooks/config:
-    get:
-      tags:
-        - Webhooks
-      summary: Get webhook configurations
-      description: Retrieve all registered webhook endpoint configurations
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  count:
-                    type: integer
-                  configs:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                        url:
-                          type: string
-                        events:
-                          type: array
-                          items:
-                            type: string
-                        enabled:
-                          type: boolean
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /api/webhooks/cleanup:
-    post:
-      tags:
-        - Webhooks
-      summary: Clean up old webhooks
-      description: Delete old delivered webhook records from the database
-      parameters:
-        - in: query
-          name: days
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 365
-            default: 30
-          description: Delete webhooks older than this many days
-      responses:
-        '200':
-          description: Cleanup completed
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  message:
-                    type: string
-                  deletedCount:
-                    type: integer
-                  daysOld:
-                    type: integer
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /api/expiry-cancellation/status:
-    get:
-      tags:
-        - Expiry & Cancellation
-      summary: Get orchestrator status
-      description: Retrieve the status of the expiry and cancellation orchestrator service
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  status:
-                    type: object
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /api/expiry-cancellation/health:
-    get:
-      tags:
-        - Expiry & Cancellation
-      summary: Health check
-      description: Check health of expiry and cancellation services
-      responses:
-        '200':
-          description: Service is healthy
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  health:
-                    type: object
-        '503':
-          description: Service is unhealthy
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  health:
-                    type: object
-
-  /api/expiry-cancellation/check-expired:
-    post:
-      tags:
-        - Expiry & Cancellation
-      summary: Manually trigger expiry check
-      description: Manually trigger a check for expired agreements
-      responses:
-        '200':
-          description: Check completed
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  result:
+                  data:
                     type: object
                     properties:
-                      checkedCount:
+                      offerId:
                         type: integer
-                      expiredCount:
-                        type: integer
-                      expiredAgreementIds:
-                        type: array
-                        items:
-                          type: string
-                      errorCount:
-                        type: integer
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /api/expiry-cancellation/expiring-soon:
-    get:
-      tags:
-        - Expiry & Cancellation
-      summary: Get expiring agreements
-      description: Retrieve agreements that are about to expire within a specified time window
-      parameters:
-        - in: query
-          name: withinMinutes
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 1440
-            default: 60
-          description: Time window in minutes
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  agreements:
-                    type: array
-                    items:
-                      type: object
-                  count:
-                    type: integer
-                  withinMinutes:
-                    type: integer
+                      status:
+                        type: string
+                        example: "CANCELLED"
+                      cancelledAt:
+                        type: string
+                        format: date-time
+                      message:
+                        type: string
+                        example: "Offer cancelled and nonce advanced"
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /api/expiry-cancellation/refund/calculate/{agreementId}:
-    get:
-      tags:
-        - Expiry & Cancellation
-      summary: Calculate refund
-      description: Calculate refund amounts for an agreement
-      parameters:
-        - $ref: '#/components/parameters/AgreementId'
-      responses:
-        '200':
-          description: Successful response
+        '403':
+          description: Unauthorized - not the maker
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  calculation:
-                    type: object
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /api/expiry-cancellation/refund/process/{agreementId}:
+  /api/offers/{offerId}/accept:
     post:
       tags:
-        - Expiry & Cancellation
-      summary: Process refund
-      description: Process refunds for a cancelled or expired agreement
+        - Offers
+      summary: Accept offer
+      description: |
+        Accept an active offer and receive the atomic swap transaction to sign.
+        
+        The API returns a base64-encoded transaction that you must:
+        1. Deserialize
+        2. Sign with your wallet
+        3. Broadcast to Solana
+        4. Call /confirm with the signature
+        
+        **Requires idempotency key** to prevent duplicate nonce consumption.
       parameters:
-        - $ref: '#/components/parameters/AgreementId'
+        - $ref: '#/components/parameters/OfferId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - takerWallet
+              properties:
+                takerWallet:
+                  type: string
+                  description: Your wallet address (must match offer if it's a direct offer)
+                  example: "8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ"
       responses:
         '200':
-          description: Refund processed
+          description: Transaction ready for signing
           content:
             application/json:
               schema:
@@ -1051,22 +642,97 @@ paths:
                 properties:
                   success:
                     type: boolean
-                  result:
+                    example: true
+                  data:
                     type: object
+                    properties:
+                      offer:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                          status:
+                            type: string
+                            example: "ACCEPTED"
+                          makerWallet:
+                            type: string
+                          takerWallet:
+                            type: string
+                          offeredAssets:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Asset'
+                          requestedAssets:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Asset'
+                          offeredSol:
+                            type: string
+                            description: In lamports
+                          requestedSol:
+                            type: string
+                            description: In lamports
+                      transaction:
+                        type: object
+                        properties:
+                          serialized:
+                            type: string
+                            description: Base64-encoded transaction to sign and broadcast
+                            example: "AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAEDz..."
+                          nonceAccount:
+                            type: string
+                            description: Durable nonce account used in the transaction
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          description: Not authorized to accept this offer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          description: Validation error - asset ownership validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /api/expiry-cancellation/refund/eligibility/{agreementId}:
-    get:
+  /api/offers/{offerId}/confirm:
+    post:
       tags:
-        - Expiry & Cancellation
-      summary: Check refund eligibility
-      description: Check if an agreement is eligible for refunds
+        - Offers
+      summary: Confirm swap execution
+      description: |
+        Confirm that you've broadcast the swap transaction and provide its signature.
+        
+        The API will verify the transaction on-chain and mark the offer as filled.
+        
+        **Requires idempotency key** to prevent duplicate confirmations.
       parameters:
-        - $ref: '#/components/parameters/AgreementId'
+        - $ref: '#/components/parameters/OfferId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - signature
+              properties:
+                signature:
+                  type: string
+                  description: Transaction signature from Solana
+                  example: "5KqZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z"
       responses:
         '200':
-          description: Successful response
+          description: Swap confirmed
           content:
             application/json:
               schema:
@@ -1074,16 +740,34 @@ paths:
                 properties:
                   success:
                     type: boolean
-                  eligibility:
+                    example: true
+                  data:
                     type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Swap confirmed successfully"
+                      signature:
+                        type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          description: Invalid signature or transaction failed on-chain
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
 components:
   parameters:
-    AgreementId:
+    OfferId:
       in: path
-      name: agreementId
+      name: offerId
       required: true
       schema:
         type: string
@@ -1150,7 +834,7 @@ components:
             description: Sort order
 
   schemas:
-    AgreementStatus:
+    OfferStatus:
       type: string
       enum:
         - PENDING_INIT
@@ -1163,6 +847,7 @@ components:
         - SETTLED
         - EXPIRED
         - CANCELLED
+        - EXPIRED
       description: |
         Agreement status:
         - PENDING_INIT: Agreement is being initialized on-chain
@@ -1182,47 +867,29 @@ components:
         status:
           type: string
           enum: [healthy, unhealthy]
+          example: healthy
         timestamp:
           type: string
           format: date-time
         service:
           type: string
           example: easy-escrow-ai-backend
+        mode:
+          type: string
+          example: atomic-swap
         database:
           type: string
           enum: [connected, disconnected]
+          example: connected
         redis:
           type: string
           enum: [connected, disconnected]
-        monitoring:
-          type: object
-          properties:
-            status:
-              type: string
-              enum: [running, stopped]
-            monitoredAccounts:
-              type: integer
-            uptime:
-              type: string
-            restartCount:
-              type: integer
-            solanaHealthy:
-              type: boolean
-        expiryCancellation:
-          type: object
-          properties:
-            status:
-              type: string
-              enum: [running, stopped]
-            services:
-              type: object
-            recentErrors:
-              type: array
-              items:
-                type: object
+          example: connected
         idempotency:
           type: object
           properties:
+            isRunning:
+              type: boolean
             status:
               type: string
               enum: [running, stopped]
@@ -1408,9 +1075,9 @@ components:
           properties:
             page:
               type: integer
-            limit:
+            availableNonces:
               type: integer
-            total:
+            consumedNonces:
               type: integer
             pages:
               type: integer
@@ -1829,15 +1496,17 @@ components:
           example: false
         error:
           type: string
+          example: "Validation Error"
         message:
           type: string
+          example: "Invalid wallet address format"
         timestamp:
           type: string
           format: date-time
 
   responses:
     BadRequest:
-      description: Bad request
+      description: Bad request - invalid input
       content:
         application/json:
           schema:
@@ -1869,10 +1538,8 @@ components:
       type: apiKey
       in: header
       name: X-API-Key
-      description: API key for authentication (not yet implemented)
+      description: API key for authentication (coming soon)
 
-# No security applied for now (development)
+# No security required yet (public MVP)
 # security:
 #   - ApiKeyAuth: []
-
-

@@ -1,0 +1,11 @@
+# Task ID: 19
+# Title: Add Bubblegum and Compression Dependencies to Solana Program
+# Status: done
+# Dependencies: None
+# Priority: high
+# Description: Add mpl-bubblegum and spl-account-compression crate dependencies to programs/escrow/Cargo.toml to enable compressed NFT transfer functionality.
+# Details:
+Add the following dependencies to Cargo.toml: mpl-bubblegum = "0.7.0" and spl-account-compression = "0.2.0". Verify program compiles successfully with no version conflicts. This is a prerequisite for all cNFT program work.
+
+# Test Strategy:
+

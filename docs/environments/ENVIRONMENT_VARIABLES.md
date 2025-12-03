@@ -222,6 +222,128 @@ USDC_MINT_ADDRESS=Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr
 USDC_MINT_ADDRESS=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
 ```
 
+### `STAGING_TEST_TREE`
+- **Type**: String (Base58 Public Key)
+- **Required**: No (only for `/test` page cNFT filtering)
+- **Description**: Dedicated Merkle tree address for test cNFTs. When set, the `/test` page only displays cNFTs from this specific tree, preventing cross-tree swap failures.
+- **Environment**: Staging/Devnet only
+
+```bash
+# Example dedicated test tree
+STAGING_TEST_TREE=DAiT7CHVD5yuQfDAnRwfvwEFNkUKedrs4Evec2U7Gm7Q
+```
+
+**Purpose:**
+- Prevents mixing cNFTs from different Merkle trees in test swaps
+- Each tree has its own Merkle root, making cross-tree proofs invalid
+- Isolates test cNFTs from other devnet cNFTs
+
+**Setup:**
+1. Create a dedicated Merkle tree using `scripts/setup-dedicated-test-trees.ts`
+2. Add the tree address to `.env` as `STAGING_TEST_TREE`
+3. Mint test cNFTs to this tree using `scripts/mint-two-fresh-test-monkeys.ts`
+4. The `/test` page will automatically filter cNFTs to show only those from this tree
+
+---
+
+## Platform Fee Collection
+
+### Treasury Wallet System
+
+The platform uses a two-tier fee collection system for security and operational flexibility:
+
+1. **Treasury Wallet (Hot Wallet)** - Receives fees during swaps, checked weekly for reconciliation
+2. **Fee Collector (Cold Storage)** - Final destination after prize distribution
+
+### `DEVNET_STAGING_TREASURY_ADDRESS`
+- **Type**: String (Base58 Public Key)
+- **Required**: No (defaults to hardcoded staging treasury)
+- **Description**: Staging/devnet treasury wallet where platform fees are initially collected.
+- **Default**: `AScijLJ1ApcQftktBRN818b8LDH4JJovQ5qrGDHfHuPu`
+
+```bash
+DEVNET_STAGING_TREASURY_ADDRESS=AScijLJ1ApcQftktBRN818b8LDH4JJovQ5qrGDHfHuPu
+```
+
+### `DEVNET_STAGING_TREASURY_PRIVATE_KEY`
+- **Type**: String (JSON array format)
+- **Required**: No (optional for manual treasury operations)
+- **Description**: Private key for staging treasury wallet. Only needed if you need to manually sign transactions from treasury.
+- **Security**: **CRITICAL** - Keep this secret secure. Never commit to version control.
+
+```bash
+DEVNET_STAGING_TREASURY_PRIVATE_KEY=[1,2,3,...,64]  # NEVER commit real keys!
+```
+
+### `MAINNET_PRODUCTION_TREASURY_ADDRESS`
+- **Type**: String (Base58 Public Key)
+- **Required**: No (defaults to hardcoded production treasury)
+- **Description**: Production/mainnet treasury wallet where platform fees are initially collected.
+- **Default**: `HMtLHzJZ5AUUaKjYBGZpB4RbjN4gYvcd69esNwtaUBFF`
+- **Security**: **HIGH PRIORITY** - This is a hot wallet holding active funds
+
+```bash
+MAINNET_PRODUCTION_TREASURY_ADDRESS=HMtLHzJZ5AUUaKjYBGZpB4RbjN4gYvcd69esNwtaUBFF
+```
+
+### `MAINNET_PRODUCTION_TREASURY_PRIVATE_KEY`
+- **Type**: String (JSON array format)
+- **Required**: No (optional for manual treasury operations)
+- **Description**: Private key for production treasury wallet. Only needed if you need to manually sign transactions from treasury.
+- **Security**: **CRITICAL** - Keep this secret secure. Never commit to version control. Use hardware wallet if possible.
+
+```bash
+MAINNET_PRODUCTION_TREASURY_PRIVATE_KEY=[1,2,3,...,64]  # NEVER commit real keys!
+```
+
+### `LOCAL_TREASURY_ADDRESS`
+- **Type**: String (Base58 Public Key)
+- **Required**: No (defaults to staging treasury)
+- **Description**: Local development treasury wallet address.
+- **Default**: Falls back to staging treasury
+
+```bash
+LOCAL_TREASURY_ADDRESS=AScijLJ1ApcQftktBRN818b8LDH4JJovQ5qrGDHfHuPu
+```
+
+### `STAGING_FEE_COLLECTOR_ADDRESS` / `DEVNET_STAGING_FEE_COLLECTOR_ADDRESS`
+- **Type**: String (Base58 Public Key)
+- **Required**: No (defaults to hardcoded collector)
+- **Description**: Staging/devnet cold storage wallet where fees are transferred after weekly reconciliation.
+- **Default**: `8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ`
+
+```bash
+STAGING_FEE_COLLECTOR_ADDRESS=8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ
+# OR
+DEVNET_STAGING_FEE_COLLECTOR_ADDRESS=8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ
+```
+
+### `MAINNET_PROD_FEE_COLLECTOR_ADDRESS`
+- **Type**: String (Base58 Public Key)
+- **Required**: Yes (for production environment)
+- **Description**: Production/mainnet cold storage wallet where fees are transferred after weekly reconciliation.
+- **Security**: **CRITICAL** - This should be a cold storage wallet
+
+```bash
+MAINNET_PROD_FEE_COLLECTOR_ADDRESS=YOUR_PRODUCTION_COLD_STORAGE_ADDRESS
+```
+
+### Fee Collection Workflow
+
+1. **During Swap**: Platform fees are sent to treasury wallet (hot wallet)
+2. **Weekly Reconciliation**:
+   - Check treasury wallet balance
+   - Distribute prizes to winners
+   - Transfer remaining balance to fee collector (cold storage)
+3. **Cold Storage**: Long-term accumulation of platform fees
+
+**Security Considerations**:
+- Treasury wallets are hot wallets and should be monitored daily
+- Set up alerts for unexpected transactions or balance changes
+- Fee collectors should be cold storage (hardware wallets, multi-sig)
+- Never expose treasury or collector private keys in environment variables
+- Store keypairs securely in `wallets/` directory (gitignored)
+
 ---
 
 ## Authentication & Security
@@ -594,6 +716,11 @@ SOLANA_NETWORK=localnet
 ESCROW_PROGRAM_ID=BZWjEPLRQTzHfQQKHwUJRx5RoU3VJDZvqAGmDrYJTgxP
 USDC_MINT_ADDRESS=Gh9ZwEmdLJ8DscKNTkTqPbNwLNNBjuSzaG9Vp2KGtKJr
 
+# Platform Fee Collection (uses staging addresses for local dev)
+DEVNET_STAGING_TREASURY_ADDRESS=AScijLJ1ApcQftktBRN818b8LDH4JJovQ5qrGDHfHuPu
+DEVNET_STAGING_TREASURY_PRIVATE_KEY=[1,2,3,...,64]  # Array of 64 bytes - NEVER commit real keys!
+LOCAL_FEE_COLLECTOR_ADDRESS=8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ
+
 # Security
 JWT_SECRET=development_jwt_secret_min_32_characters_long_not_for_production
 API_KEY=dev_api_key_123
@@ -641,6 +768,11 @@ SOLANA_COMMITMENT=finalized
 SOLANA_NETWORK=mainnet-beta
 ESCROW_PROGRAM_ID=YOUR_MAINNET_PROGRAM_ID
 USDC_MINT_ADDRESS=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+
+# Platform Fee Collection (CRITICAL - Keep treasury keypair secure!)
+MAINNET_PRODUCTION_TREASURY_ADDRESS=HMtLHzJZ5AUUaKjYBGZpB4RbjN4gYvcd69esNwtaUBFF
+MAINNET_PRODUCTION_TREASURY_PRIVATE_KEY=[1,2,3,...,64]  # Array of 64 bytes - NEVER commit real keys!
+MAINNET_PROD_FEE_COLLECTOR_ADDRESS=YOUR_COLD_STORAGE_COLLECTOR_ADDRESS
 
 # Security (use secrets management!)
 JWT_SECRET=SUPER_SECURE_RANDOM_STRING_64_CHARACTERS_OR_MORE_ROTATE_REGULARLY

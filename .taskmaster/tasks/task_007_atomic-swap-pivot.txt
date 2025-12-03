@@ -1,0 +1,112 @@
+# Task ID: 7
+# Title: Completely Rewrite Solana Escrow Program for Atomic Swaps
+# Status: done
+# Dependencies: 3
+# Priority: high
+# Description: Completely rewrite the existing Solana escrow program currently deployed at program ID AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei to replace its escrow agreement model with a new atomic swap system. This involves a full architectural pivot: building a brand new atomic swap program from scratch and deploying it to the same program ID, thereby replacing all existing escrow logic and functionality. The new program will support atomic swaps with fee collection, handling both standard NFTs and compressed NFTs. CRITICAL: All development and testing must follow the local-first development workflow using Docker containers and local Solana test validator for fast iteration, then deploy the completely rewritten program to the existing staging program ID for validation before production deployment.
+# Details:
+This task entails a complete architectural overhaul of the Solana escrow program currently deployed at the staging program ID AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei. The key points are:
+
+- **Full Replacement of Existing Program:** The new atomic swap program will be developed from scratch and deployed to replace the existing escrow program code at the same program ID. This is not an incremental update or feature addition but a total rewrite and architectural pivot.
+
+- **Program Structure Overhaul:** Remove all existing escrow agreement logic, state accounts, and related instructions. Create a new program entry point with atomic_swap_with_fee as the primary instruction. Define new account structures for atomic swap state, treasury PDA, and fee accounting. Implement proper program-derived address (PDA) derivation for treasury and state accounts.
+
+- **Atomic Swap Instruction Implementation:** Implement atomic_swap_with_fee instruction supporting maker/taker model, handling asset transfers for standard SPL tokens/NFTs and compressed NFTs (cNFTs), SOL transfers with balance validation, and ensuring atomicity of swaps.
+
+- **Compressed NFT (cNFT) Support:** Integrate with Metaplex Bubblegum program for cNFT transfers, including Merkle proof validation and support for cNFT-to-cNFT and cNFT-to-standard-asset swaps.
+
+- **Platform Fee Collection System:** Implement treasury PDA for collecting platform fees in SOL, with fee calculations based on swap type, enforcing caps and thresholds, and transferring fees during swap execution.
+
+- **On-Chain Fee Accounting:** Track total fees collected, swap counts, and fee distribution on-chain with authorized withdrawal mechanisms.
+
+- **Security and Validation Framework:** Comprehensive account validation, signer verification, reentrancy protection, and Merkle proof validation for cNFT operations.
+
+- **Local-First Development Environment:** Use Docker containers and local Solana test validator for rapid development and testing. Deploy the new program to the existing staging program ID for network validation before production deployment.
+
+- **Testing Suite and SDK Generation:** Develop comprehensive unit and integration tests, including fuzzing and security tests. Generate Anchor IDL and TypeScript client SDK with multi-environment support.
+
+This task explicitly clarifies that the staging program ID is the existing escrow program's ID and that the new atomic swap program will replace the existing code at this ID, maintaining the same program ID but completely changing the program logic and functionality.
+
+# Test Strategy:
+1. **Local-First Development and Testing Workflow:**
+   - Develop the new atomic swap program locally using Docker containers and local Solana test validator for fast iteration.
+   - Deploy the new program code to the local validator for rapid testing cycles.
+   - Run comprehensive unit and integration tests locally covering all swap scenarios and fee logic.
+   - After successful local validation, deploy the new atomic swap program code to the existing staging program ID (AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei), replacing the old escrow program code.
+   - Conduct full end-to-end testing on staging under real network conditions to validate the new atomic swap functionality.
+   - Only after full staging validation, proceed with production deployment.
+
+2. **Unit Testing:**
+   - Test atomic_swap_with_fee instruction with all supported asset combinations (standard NFT-to-NFT, NFT-to-SOL, SOL-to-NFT, cNFT-to-NFT, cNFT-to-cNFT).
+   - Verify fee calculation accuracy, enforcement of fee caps, and treasury PDA operations.
+   - Validate security checks including signer verification, account ownership, and Merkle proof validation.
+
+3. **Integration Testing:**
+   - Test complete swap workflows on local validator and staging, including cNFT integration with Bubblegum program.
+   - Validate fee accounting and withdrawal mechanisms.
+   - Test program interaction with generated TypeScript SDK and IDL.
+
+4. **Security Testing:**
+   - Conduct security audits focusing on reentrancy protection, account validation, and unauthorized access attempts.
+   - Test failure scenarios ensuring atomicity and proper error handling.
+
+5. **Performance and Compatibility Testing:**
+   - Measure transaction size and compute unit consumption.
+   - Test compatibility with various wallet implementations and transaction builders.
+   - Verify fee collection efficiency and treasury management operations.
+
+# Subtasks:
+## 1. Design New Program Architecture and Account Structures [done]
+### Dependencies: None
+### Description: Design the complete program architecture for atomic swaps, removing all existing escrow logic and defining new account structures for atomic swap state, treasury PDA, and fee accounting.
+### Details:
+Remove all existing escrow agreement logic, state accounts, and related instructions. Create new program entry point with atomic_swap_with_fee as the primary instruction. Define new account structures for atomic swap state, treasury PDA, and fee accounting. Implement proper program-derived address (PDA) derivation for treasury and state accounts with proper seeds and bump calculations.
+
+## 2. Set Up Local Development Environment with Docker and Solana Test Validator [done]
+### Dependencies: 7.1
+### Description: Configure local development environment using Docker containers for services and local Solana test validator for fast iteration and testing cycles.
+### Details:
+Set up Docker containers for PostgreSQL, Redis, and other required services for local development. Configure local Solana test validator (solana-test-validator) for program deployment and testing. Create docker-compose configuration for orchestrating all services. Set up hot reloading and fast iteration workflows for program development. Configure environment variables for switching between local, staging, and production program IDs. Ensure proper networking between containers and local validator.
+
+## 3. Implement Atomic Swap Instruction with Basic Asset Transfer Logic [done]
+### Dependencies: 7.2
+### Description: Create the core atomic_swap_with_fee instruction that handles complete swap execution in a single transaction with maker/taker model and basic asset transfers.
+### Details:
+Create atomic_swap_with_fee instruction that handles complete swap execution in a single transaction. Support maker/taker model where maker creates offer and taker executes the swap. Implement asset transfer logic for standard SPL tokens/NFTs. Handle SOL transfers between parties with proper balance validation. Ensure atomicity - either all transfers succeed or entire transaction fails.
+
+## 4. Integrate Compressed NFT Support with Bubblegum Program [done]
+### Dependencies: 7.3
+### Description: Integrate with Metaplex Bubblegum program to support compressed NFT transfers in atomic swaps with proper Merkle proof validation.
+### Details:
+Integrate with Metaplex Bubblegum program for cNFT transfers. Implement Merkle proof validation for cNFT ownership verification. Handle cNFT transfer instructions with proper proof and leaf data. Support both cNFT-to-cNFT and cNFT-to-standard-asset swaps with proper cross-program invocation (CPI) calls.
+
+## 5. Implement Platform Fee Collection System with Treasury PDA [done]
+### Dependencies: 7.3
+### Description: Implement a comprehensive platform fee collection system with treasury PDA for collecting fees in SOL based on swap type and value.
+### Details:
+Implement treasury PDA for collecting platform fees in SOL. Calculate fees based on swap type (flat fees for NFT-only swaps, percentage for SOL-involved swaps). Enforce maximum fee caps and minimum fee thresholds. Transfer fees to treasury PDA during swap execution with proper validation and CPI calls to system program.
+
+## 6. Create On-Chain Fee Accounting and Withdrawal Mechanisms [done]
+### Dependencies: 7.5
+### Description: Create comprehensive on-chain fee accounting to track collected fees, swap statistics, and implement authorized withdrawal mechanisms.
+### Details:
+Create fee accounting state to track total fees collected, number of swaps, and fee distribution. Implement fee withdrawal mechanism for authorized treasury management. Store fee statistics on-chain for transparency and auditing. Update accounting atomically with each successful swap and implement proper authorization checks for withdrawals.
+
+## 7. Implement Comprehensive Security and Validation Framework [done]
+### Dependencies: 7.4, 7.5
+### Description: Implement a robust security and validation framework with comprehensive account validation, signer verification, and reentrancy protection.
+### Details:
+Implement comprehensive account validation for all input accounts. Verify signer authorities for asset transfers and fee payments. Check account ownership, balance sufficiency, and transfer permissions. Implement reentrancy protection and proper error handling. Validate Merkle proofs for cNFT operations with proper leaf verification and security checks.
+
+## 8. Create Comprehensive Testing Suite with Local and Staging Validation [done]
+### Dependencies: 7.7
+### Description: Develop a comprehensive testing suite covering all instruction handlers, swap scenarios, error conditions, and security vulnerabilities with local-first testing approach followed by staging validation.
+### Details:
+Write comprehensive unit tests for all instruction handlers. Create integration tests for complete swap scenarios (NFT-to-NFT, NFT-to-SOL, cNFT swaps). Test error conditions, edge cases, and security vulnerabilities. Implement fuzzing tests for account validation and fee calculation. Run all tests locally on Solana test validator for fast iteration. Deploy to STAGING program (AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei) only after local validation is complete. Run comprehensive E2E tests on staging with real network conditions.
+
+## 9. Generate IDL and TypeScript Client SDK with Multi-Environment Support [done]
+### Dependencies: 7.8
+### Description: Generate new Anchor IDL reflecting the atomic swap program structure and create TypeScript client SDK with support for local, staging, and production environments.
+### Details:
+Generate new Anchor IDL reflecting the atomic swap program structure. Create TypeScript types and client SDK for frontend integration with multi-environment support for local development, staging, and production. Provide code examples and documentation for program interaction. Ensure type safety and proper error handling in generated client code with comprehensive method signatures and error types. Include configuration options for switching between local test validator, staging, and production program IDs. Test SDK functionality locally before staging deployment.
+

@@ -74,10 +74,10 @@ fn get_authorized_admins() -> Vec<Pubkey> {
         pubkey!("498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"), // STAGING only
         
         #[cfg(feature = "devnet")]
-        pubkey!("7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u"), // DEVNET only
+        pubkey!("498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"), // DEVNET only
         
         #[cfg(feature = "localnet")]
-        pubkey!("7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u"), // LOCALNET
+        pubkey!("498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"), // LOCALNET
     ]
 }
 ```

@@ -1,0 +1,95 @@
+# Task ID: 15
+# Title: Execute Comprehensive End-to-End Testing on Staging Environment
+# Status: deferred
+# Dependencies: 12, 14
+# Priority: high
+# Description: Perform comprehensive end-to-end testing of the atomic swap system on staging environment using program ID AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei, covering all swap types, offer lifecycle, edge cases, integration scenarios, and performance testing.
+# Details:
+Execute comprehensive end-to-end testing with the following systematic approach:
+
+1. **Basic Swap Testing Execution**:
+   - Execute NFT-to-NFT swaps on staging using real test NFTs and verify complete transaction flow from offer creation to confirmation
+   - Execute NFT-to-SOL swaps testing various SOL amounts (0.1, 1, 5 SOL) and verify proper fee calculation and collection
+   - Execute SOL-to-NFT swaps with different NFT values and verify treasury fee collection matches expected calculations
+   - Execute cNFT-to-cNFT swaps using Bubblegum program integration and verify Merkle proof validation works correctly
+   - Execute mixed NFT/cNFT swaps (standard NFT for cNFT) and verify both asset types transfer properly
+
+2. **Offer Lifecycle Testing Implementation**:
+   - Create offers using staging API endpoints and verify on-chain state matches database records
+   - Create counter-offers for existing offers and test proper chain management with multiple counter-offers
+   - Cancel offers at various stages (pending, counter-offered) and verify nonce invalidation prevents replay attacks
+   - Accept offers and verify transaction construction includes all required instructions (nonce advance, transfers, fee collection)
+   - Confirm swaps and verify final state shows proper asset ownership transfer and fee collection
+
+3. **Edge Case Testing Scenarios**:
+   - Test offer expiration by creating offers with short expiration times and verifying they cannot be accepted after expiration
+   - Test concurrent offer acceptance using multiple clients attempting to accept the same offer simultaneously
+   - Test maximum transaction size scenarios by creating swaps with multiple NFTs approaching 1232 byte limit
+   - Test fee calculation edge cases including zero-value swaps, maximum fee cap scenarios, and percentage calculation precision
+   - Test nonce pool exhaustion by creating more concurrent swaps than available nonces and verify proper queuing/waiting
+
+4. **Integration Testing Workflows**:
+   - Execute complete user workflows from wallet connection through swap completion using staging frontend
+   - Verify database consistency after each swap by checking offer status, transaction records, and user statistics
+   - Test error handling and recovery scenarios including failed transactions, network timeouts, and RPC errors
+   - Verify monitoring and alerting systems trigger correctly for failed swaps, nonce pool depletion, and system errors
+
+5. **Performance Testing Execution**:
+   - Execute load testing with 10-50 concurrent swaps to test system throughput and identify bottlenecks
+   - Measure transaction confirmation times across different swap types and document performance baselines
+   - Test nonce pool performance under load including pool replenishment timing and thread contention handling
+   - Monitor database performance during high load and verify query optimization effectiveness
+
+6. **Staging Environment Validation**:
+   - Verify all backend services are properly configured for staging program ID AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei
+   - Test treasury PDA derivation and fee collection using staging program
+   - Validate cNFT indexer integration works correctly with staging environment
+   - Verify monitoring dashboards show accurate staging metrics and alerts
+<info added on 2025-12-03T04:05:52.974Z>
+**DEFERRED STATUS UPDATE**:
+
+This comprehensive end-to-end testing has been deferred due to cNFT functionality limitations on the staging environment. The staging environment does not properly support compressed NFT operations, which are a critical component of the atomic swap system.
+
+**Testing Status Summary**:
+- Standard NFT-to-NFT swaps: Previously validated on staging
+- NFT-to-SOL and SOL-to-NFT swaps: Previously validated on staging  
+- cNFT-to-cNFT swaps: Cannot be tested on staging due to environment limitations
+- Mixed NFT/cNFT swaps: Cannot be fully tested on staging due to cNFT issues
+
+**Alternative Testing Approach**:
+cNFT functionality will be validated directly on production mainnet after deployment through Task 38: Production Deployment: Post-Deployment Monitoring and Validation. This approach ensures that cNFT swaps are tested in the environment where they will actually operate, avoiding staging environment limitations that could provide false test results.
+
+**Risk Mitigation**:
+While this defers comprehensive staging validation, the core swap logic for standard NFTs and SOL has been validated. The cNFT-specific functionality (Merkle proof validation, Bubblegum program integration) has been unit tested and will undergo immediate production validation upon deployment.
+</info added on 2025-12-03T04:05:52.974Z>
+
+# Test Strategy:
+1. **Test Execution Validation**:
+   - Execute minimum 100 successful swaps across all swap types (NFT-to-NFT, NFT-to-SOL, SOL-to-NFT, cNFT swaps) on staging
+   - Verify 100% success rate for basic swap scenarios with proper asset ownership transfer
+   - Document all failed test cases with detailed error analysis and resolution steps
+
+2. **Offer Lifecycle Verification**:
+   - Create and track 50+ offers through complete lifecycle (creation → counter-offer → acceptance → confirmation)
+   - Verify database state consistency matches on-chain state for all offer status transitions
+   - Test offer cancellation at each lifecycle stage and verify proper cleanup
+
+3. **Edge Case Coverage Validation**:
+   - Execute all identified edge cases with documented results and system behavior
+   - Verify error handling provides clear user feedback and proper system recovery
+   - Test race condition scenarios with concurrent users and verify system maintains consistency
+
+4. **Performance Baseline Establishment**:
+   - Achieve minimum 10 concurrent swaps without system degradation
+   - Document transaction confirmation times with 95th percentile under 30 seconds
+   - Verify nonce pool maintains adequate buffer during peak load testing
+
+5. **Integration Test Completion**:
+   - Execute complete user workflows with 100% success rate for happy path scenarios
+   - Verify all monitoring alerts trigger correctly during simulated failure scenarios
+   - Confirm database integrity checks pass after all testing phases
+
+6. **Production Readiness Certification**:
+   - Generate comprehensive test report documenting all test results, performance metrics, and identified issues
+   - Obtain stakeholder sign-off on test results before production deployment consideration
+   - Verify all critical bugs identified during testing have been resolved and retested

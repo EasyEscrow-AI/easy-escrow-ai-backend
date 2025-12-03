@@ -1,0 +1,11 @@
+# Task ID: 29
+# Title: Update Documentation for cNFT Support
+# Status: done
+# Dependencies: 28
+# Priority: low
+# Description: Update all documentation to reflect compressed NFT support including API docs, OpenAPI spec, README, architecture docs, and test page instructions.
+# Details:
+Update docs/api/openapi.yaml with cNFT examples showing isCompressed:true. Update README.md to mention cNFT support. Update docs/ARCHITECTURE.md to explain cNFT flow. Mark docs/tasks/CNFT_SWAP_SUPPORT.md as complete. Update src/public/test.html instructions for cNFT testing.
+
+# Test Strategy:
+

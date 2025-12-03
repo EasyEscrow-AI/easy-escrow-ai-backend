@@ -1,9 +1,14 @@
 # Production Deployment Preparation - Final Status
 
+⚠️ **STRATEGIC UPDATE (November 25, 2025)**: This document covers the **LEGACY ESCROW SYSTEM** which has been **PARKED**. The platform now focuses **100% on Atomic Swaps**. See [STRATEGIC_PIVOT_ATOMIC_SWAPS.md](../STRATEGIC_PIVOT_ATOMIC_SWAPS.md) for current status.
+
+---
+
 **Date:** 2025-01-06  
 **PR:** #140 - https://github.com/VENTURE-AI-LABS/easy-escrow-ai-backend/pull/140  
 **Branch:** `feature/production-deployment-preparation`  
-**Target:** `staging`
+**Target:** `staging`  
+**Status:** 🗄️ **ARCHIVED - Legacy Escrow System**
 
 ---
 
@@ -80,26 +85,35 @@
 
 ---
 
-## 🔄 Remaining Work
+## 🔄 Remaining Work - ⏸️ PARKED (Legacy Escrow)
 
-### Tests to Create (7 of 9)
+⚠️ **These tests are NO LONGER RELEVANT** - They were for the legacy escrow system which has been parked in favor of atomic swaps.
+
+### ❌ DEPRECATED: Legacy Escrow Tests (No Longer Needed)
 
 **Priority 1 - WITH TIMING ⏱️ (1 test):**
-3. **Test 03:** NFT-for-NFT plus SOL
+3. **Test 03:** NFT-for-NFT plus SOL ❌ **PARKED**
+   - Legacy escrow version (not atomic swap)
    - Source: `tests/staging/e2e/03-nft-for-nft-plus-sol.test.ts`
-   - Add timing instrumentation
-   - Use `getRandomNFTFromWallet`
-   - Target: < 30 seconds
 
 **Priority 2 - NO TIMING (6 tests):**
-4. **Test 04:** Agreement Expiry Refund
-5. **Test 05:** Admin Cancellation
-6. **Test 06:** Zero Fee Transactions
-7. **Test 07:** Idempotency Handling
-8. **Test 08:** Concurrent Operations
-9. **Test 09:** Edge Cases Validation
+4. **Test 04:** Agreement Expiry Refund ❌ **PARKED**
+5. **Test 05:** Admin Cancellation ❌ **PARKED**
+6. **Test 06:** Zero Fee Transactions ❌ **PARKED**
+7. **Test 07:** Idempotency Handling ❌ **PARKED** (escrow-specific)
+8. **Test 08:** Concurrent Operations ❌ **PARKED** (escrow-specific)
+9. **Test 09:** Edge Cases Validation ❌ **PARKED** (escrow-specific)
 
-**Conversion Guide:** `docs/tasks/PRODUCTION_TESTS_CONVERSION_GUIDE.md`
+**Note:** Atomic swap system has its own comprehensive E2E tests. See `tests/staging/e2e/01-atomic-nft-for-sol-happy-path.test.ts`
+
+---
+
+## 🚀 Current Focus: Atomic Swaps
+
+The platform now focuses exclusively on **Atomic Swaps**. See:
+- [Strategic Pivot Documentation](../STRATEGIC_PIVOT_ATOMIC_SWAPS.md)
+- [Atomic Swap Testing Guide](../ATOMIC_SWAP_TESTING.md)
+- [Atomic Swap Status](./ATOMIC_SWAP_STATUS_NOV_18_2025.md)
 
 ---
 

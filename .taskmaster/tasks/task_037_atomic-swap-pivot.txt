@@ -1,0 +1,98 @@
+# Task ID: 37
+# Title: Production Deployment: Backend Application Deployment to DigitalOcean App Platform
+# Status: pending
+# Dependencies: 31, 34, 36
+# Priority: high
+# Description: Deploy the backend application to the DigitalOcean App Platform production environment with secure configuration, database setup, and verification of all production services.
+# Details:
+1. Review and update the `.do/app-production.yaml` deployment configuration file to ensure it reflects production settings, including correct service definitions, build commands, and resource allocations.
+
+2. Verify that all environment variables in the configuration use `${VARIABLE_NAME}` placeholders without hardcoded secrets to maintain security best practices.
+
+3. Ensure that all SECRET-type environment variables in the YAML file have no value fields, following lessons learned from staging deployments.
+
+4. Set all required secrets (e.g., `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET`, API keys) securely in the DigitalOcean App Platform console before deployment.
+
+5. Configure production build settings explicitly, including setting `NODE_ENV=production` and ensuring proper TypeScript compilation and build scripts are used.
+
+6. Provision a production PostgreSQL database cluster on DigitalOcean, configure connection details, and run all necessary Prisma or other database migrations to prepare the schema.
+
+7. Set up a production Redis instance on DigitalOcean and configure the backend to connect securely.
+
+8. Deploy the backend application via DigitalOcean App Platform using the updated configuration and secrets.
+
+9. Monitor deployment logs in real-time for any errors or warnings during startup.
+
+10. Verify that the health check endpoint responds correctly and within expected timeframes.
+
+11. Test the `/test` page to confirm password protection is active and the password `060385` works as expected.
+
+12. Verify that all API endpoints are accessible and respond correctly in the production environment.
+
+13. Check production logs post-deployment for any startup errors or runtime exceptions.
+
+14. Document the entire deployment process, including configuration changes, encountered issues, and resolutions for future reference and team knowledge sharing.
+
+Follow best practices such as zero-downtime deployment, secure secret management, and thorough post-deployment verification to ensure a stable production release.
+
+# Test Strategy:
+- Confirm `.do/app-production.yaml` is updated with correct placeholders and no hardcoded secrets.
+- Verify all secrets are set in the DigitalOcean console and match expected production values.
+- Confirm production database and Redis instances are provisioned and accessible.
+- Run database migrations successfully without errors.
+- Deploy the backend and monitor logs for errors during startup.
+- Access the health check endpoint and verify a successful response.
+- Access the `/test` page and verify password protection with password `060385`.
+- Test all critical API endpoints for expected responses.
+- Review production logs for any errors or warnings after deployment.
+- Document deployment steps and any issues encountered for team review.
+
+# Subtasks:
+## 1. Review and Update Production YAML Configuration [pending]
+### Dependencies: None
+### Description: Examine the `.do/app-production.yaml` file to ensure it accurately reflects production settings, including service definitions, build commands, and resource allocations.
+### Details:
+Check that the YAML file uses correct service names, build and start commands, resource sizes, and any production-specific flags. Remove any staging or development configurations.
+
+## 2. Verify Environment Variable Placeholders and Secret Handling in YAML [pending]
+### Dependencies: 37.1
+### Description: Ensure all environment variables in the YAML use `${VARIABLE_NAME}` placeholders without hardcoded values, especially for secrets, to maintain security best practices.
+### Details:
+Audit the YAML file to confirm SECRET-type environment variables have no value fields and all variables reference environment placeholders. Remove any embedded secrets.
+
+## 3. Set Production Secrets Securely in DigitalOcean App Platform Console [pending]
+### Dependencies: 37.2
+### Description: Configure all required secrets such as `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET`, and API keys securely in the DigitalOcean App Platform console before deployment.
+### Details:
+Access the DigitalOcean App Platform dashboard, navigate to the app's settings, and input all necessary secrets using the secrets management interface, ensuring no secrets are exposed in code or config files.
+
+## 4. Provision Production PostgreSQL Database and Run Migrations [pending]
+### Dependencies: 37.3
+### Description: Create a production PostgreSQL cluster on DigitalOcean, configure connection details, and execute all necessary Prisma or other database migrations to prepare the schema.
+### Details:
+Use DigitalOcean Managed Databases to provision PostgreSQL with production specifications. Update connection strings and run migration scripts to ensure the database schema is up to date.
+
+## 5. Provision Production Redis Instance and Configure Backend Connection [pending]
+### Dependencies: 37.3
+### Description: Set up a production Redis instance on DigitalOcean and configure the backend application to connect securely using the appropriate environment variables.
+### Details:
+Provision Redis via DigitalOcean Managed Databases or App Platform services. Update backend configuration to use the Redis URL secret and test connectivity.
+
+## 6. Deploy Backend Application to DigitalOcean App Platform [pending]
+### Dependencies: 37.1, 37.3, 37.4, 37.5
+### Description: Deploy the backend application using the updated `.do/app-production.yaml` configuration and securely set secrets, ensuring production build settings like `NODE_ENV=production` are applied.
+### Details:
+Trigger deployment via DigitalOcean App Platform UI or CLI, monitor build and deployment logs for errors, and ensure zero-downtime deployment practices are followed.
+
+## 7. Verify Production Health Check, /test Page Security, and API Endpoints [pending]
+### Dependencies: 37.6
+### Description: Perform post-deployment verification including health check endpoint responsiveness, password protection on `/test` page with password `060385`, and accessibility of all API endpoints.
+### Details:
+Use HTTP requests or automated tests to check health endpoint timing and status, test `/test` page password protection, and validate API endpoint responses and correctness.
+
+## 8. Document Deployment Process and Post-Deployment Observations [pending]
+### Dependencies: 37.7
+### Description: Create comprehensive documentation covering configuration changes, deployment steps, encountered issues, resolutions, and verification results for team knowledge sharing and future reference.
+### Details:
+Write detailed notes on YAML updates, secret management, database and Redis provisioning, deployment execution, verification outcomes, and any troubleshooting performed.
+

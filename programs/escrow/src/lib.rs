@@ -4,15 +4,20 @@ use anchor_spl::associated_token::AssociatedToken;
 use anchor_lang::solana_program::program_pack::Pack;
 use solana_security_txt::security_txt;
 
+// Modules
+pub mod state;
+pub mod instructions;
+pub mod errors;
+
+use instructions::*;
+
 // Environment-specific Program IDs
 // Automatically selected based on build features
 // Build with: anchor build --features <environment>
+// Default: staging (devnet)
 
 #[cfg(feature = "mainnet")]
 declare_id!("2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx");
-
-#[cfg(feature = "staging")]
-declare_id!("AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei");
 
 #[cfg(feature = "devnet")]
 declare_id!("GpvN8LB1xXTu9N541x9rrbxD7HwH6xi1Gkp84P7rUAEZ");
@@ -20,16 +25,22 @@ declare_id!("GpvN8LB1xXTu9N541x9rrbxD7HwH6xi1Gkp84P7rUAEZ");
 #[cfg(feature = "localnet")]
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
+// Fallback: staging (if no feature specified AND no default in Cargo.toml)
+// NOTE: Cargo.toml default = ["staging"], so this is rarely used
+#[cfg(not(any(feature = "mainnet", feature = "devnet", feature = "localnet")))]
+declare_id!("AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei");
+
 // Security contact information embedded in the program
 // This allows security researchers and auditors to easily find contact information
 #[cfg(not(feature = "no-entrypoint"))]
 security_txt! {
-    name: "Easy Escrow",
+    name: "Easy Escrow - Atomic Swap Program",
     project_url: "https://easyescrow.ai",
     contacts: "email:security@easyescrow.ai",
     policy: "https://easyescrow.ai/security-policy",
     preferred_languages: "en",
-    auditors: "Pending - Audit scheduled Q1 2026"
+    auditors: "Pending - Audit scheduled Q1 2026",
+    source_code: "https://github.com/easyescrow-ai/atomic-swap"
 }
 
 /// Compile-time check: Ensure exactly one environment feature is enabled
@@ -43,11 +54,6 @@ compile_error!("Cannot enable both 'mainnet' and 'devnet' features simultaneousl
 #[cfg(all(feature = "mainnet", feature = "localnet"))]
 compile_error!("Cannot enable both 'mainnet' and 'localnet' features simultaneously");
 
-#[cfg(all(feature = "staging", feature = "devnet"))]
-compile_error!("Cannot enable both 'staging' and 'devnet' features simultaneously");
-
-#[cfg(all(feature = "staging", feature = "localnet"))]
-compile_error!("Cannot enable both 'staging' and 'localnet' features simultaneously");
 
 #[cfg(all(feature = "devnet", feature = "localnet"))]
 compile_error!("Cannot enable both 'devnet' and 'localnet' features simultaneously");
@@ -59,42 +65,63 @@ compile_error!("Cannot enable both 'devnet' and 'localnet' features simultaneous
 /// - STAGING: wallets/staging/staging-admin.json (498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R)
 /// - MAINNET: wallets/production/production-admin.json (HGrfPKZuKR8BSYYJfZRFfdF1y2ApU9LSf6USQ6tpSDj2)
 /// 
-/// Only these addresses can initialize escrow agreements, ensuring:
-/// 1. All escrows are tracked in the database
+/// Only these addresses can execute atomic swaps, ensuring:
+/// 1. All swaps are tracked in the database
 /// 2. Platform fees are properly controlled
-/// 3. No unauthorized escrow creation
+/// 3. No unauthorized swap execution
 ///
 /// SECURITY: Compile-time checks ensure only ONE admin key is ever included.
 /// Attempting to build with multiple features will result in a compilation error.
 fn get_authorized_admins() -> Vec<Pubkey> {
-    // Use mutually exclusive if-else chain to guarantee only one admin key
-    // This is more secure than independent cfg attributes which could allow multiple keys
-    
     #[cfg(feature = "mainnet")]
-    return vec![pubkey!("HGrfPKZuKR8BSYYJfZRFfdF1y2ApU9LSf6USQ6tpSDj2")]; // MAINNET
+    {
+        // HGrfPKZuKR8BSYYJfZRFfdF1y2ApU9LSf6USQ6tpSDj2
+        vec![Pubkey::new_from_array([
+            0xf1, 0xca, 0xdb, 0x11, 0xef, 0x69, 0xa6, 0xf9,
+            0xc4, 0x71, 0x95, 0x46, 0xaf, 0x05, 0x86, 0x9f,
+            0x27, 0x3c, 0x80, 0x4f, 0xff, 0xa4, 0xa8, 0x48,
+            0xf6, 0x6c, 0xf3, 0x67, 0xbe, 0x23, 0x45, 0xad,
+        ])]
+    }
     
-    #[cfg(feature = "staging")]
-    return vec![pubkey!("498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R")]; // STAGING
+    #[cfg(not(any(feature = "mainnet", feature = "devnet", feature = "localnet")))]
+    {
+        // 498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R
+        vec![Pubkey::new_from_array([
+            0x2e, 0xa7, 0xec, 0x9b, 0xaa, 0xe0, 0xb3, 0xea,
+            0xa4, 0x76, 0xd3, 0x1c, 0x53, 0x77, 0xfa, 0x65,
+            0xb7, 0x39, 0x8f, 0xa5, 0x1e, 0x26, 0x5e, 0x0b,
+            0x9d, 0xe3, 0xdd, 0x7f, 0xc2, 0x01, 0x3a, 0xc2,
+        ])]
+    }
     
     #[cfg(feature = "devnet")]
-    return vec![pubkey!("7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u")]; // DEVNET
+    {
+        // 7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u
+        vec![Pubkey::new_from_array([
+            0x5c, 0x0c, 0xd2, 0x20, 0x73, 0x74, 0xdf, 0xe8,
+            0x44, 0xb9, 0xad, 0x40, 0x67, 0xea, 0xde, 0x8d,
+            0xb3, 0xfd, 0x64, 0x28, 0x2d, 0xea, 0x18, 0xfc,
+            0xad, 0xf2, 0x43, 0xa2, 0xd7, 0x80, 0x9b, 0xd0,
+        ])]
+    }
     
     #[cfg(feature = "localnet")]
-    return vec![pubkey!("7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u")]; // LOCALNET (uses devnet admin)
+    {
+        // 7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u (uses devnet admin)
+        vec![Pubkey::new_from_array([
+            0x5c, 0x0c, 0xd2, 0x20, 0x73, 0x74, 0xdf, 0xe8,
+            0x44, 0xb9, 0xad, 0x40, 0x67, 0xea, 0xde, 0x8d,
+            0xb3, 0xfd, 0x64, 0x28, 0x2d, 0xea, 0x18, 0xfc,
+            0xad, 0xf2, 0x43, 0xa2, 0xd7, 0x80, 0x9b, 0xd0,
+        ])]
+    }
     
-    // This should never be reached due to default feature in Cargo.toml
-    // But if it is, fail safely by returning an empty vec (no admins authorized)
     #[cfg(not(any(feature = "mainnet", feature = "staging", feature = "devnet", feature = "localnet")))]
-    vec![]
+    {
+        vec![] // Fail safely: no admins authorized
+    }
 }
-
-/// BETA Launch Limits: $1.00 minimum, $3,000.00 maximum
-/// These limits will be reassessed after BETA period
-/// USDC has 6 decimals: 1 USDC = 1_000_000 lamports
-#[cfg(feature = "usdc")]
-const MIN_USDC_AMOUNT: u64 = 1_000_000;      // $1.00
-#[cfg(feature = "usdc")]
-const MAX_USDC_AMOUNT: u64 = 3_000_000_000;  // $3,000.00
 
 #[program]
 pub mod escrow {
@@ -1616,226 +1643,167 @@ pub struct InitAgreement<'info> {
     )]
     pub escrow_state: Account<'info, EscrowState>,
     
-    /// CHECK: Buyer address is validated by storing in escrow state
-    pub buyer: UncheckedAccount<'info>,
-    
-    /// CHECK: Seller address is validated by storing in escrow state
-    pub seller: UncheckedAccount<'info>,
-    
-    pub nft_mint: Account<'info, Mint>,
-    
-    /// Admin pays for escrow account creation
-    #[account(mut)]
-    pub admin: Signer<'info>,
-    
-    pub system_program: Program<'info, System>,
-}
-
-/// FEATURE: usdc - This account structure is only available when the usdc feature is enabled
-#[cfg(feature = "usdc")]
-#[derive(Accounts)]
-pub struct DepositUsdc<'info> {
-    #[account(
-        mut,
-        seeds = [b"escrow", escrow_state.escrow_id.to_le_bytes().as_ref()],
-        bump = escrow_state.bump,
-    )]
-    pub escrow_state: Account<'info, EscrowState>,
-    
-    #[account(mut)]
-    pub buyer: Signer<'info>,
-    
-    #[account(
-        mut,
-        constraint = buyer_usdc_account.owner == buyer.key()
-    )]
-    pub buyer_usdc_account: Account<'info, TokenAccount>,
-    
-    #[account(
-        init_if_needed,
-        payer = buyer,
-        associated_token::mint = usdc_mint,
-        associated_token::authority = escrow_state,
-    )]
-    pub escrow_usdc_account: Account<'info, TokenAccount>,
-    
-    pub usdc_mint: Account<'info, Mint>,
-    
-    pub token_program: Program<'info, Token>,
-    pub associated_token_program: Program<'info, AssociatedToken>,
-    pub system_program: Program<'info, System>,
-}
-
-/// FEATURE: usdc - This account structure is only available when the usdc feature is enabled
-#[cfg(feature = "usdc")]
-#[derive(Accounts)]
-pub struct DepositNft<'info> {
-    #[account(
-        mut,
-        seeds = [b"escrow", escrow_state.escrow_id.to_le_bytes().as_ref()],
-        bump = escrow_state.bump,
-    )]
-    pub escrow_state: Account<'info, EscrowState>,
-    
-    #[account(mut)]
-    pub seller: Signer<'info>,
-    
-    #[account(
-        mut,
-        constraint = seller_nft_account.owner == seller.key()
-    )]
-    pub seller_nft_account: Account<'info, TokenAccount>,
-    
-    #[account(
-        init_if_needed,
-        payer = seller,
-        associated_token::mint = nft_mint,
-        associated_token::authority = escrow_state,
-    )]
-    pub escrow_nft_account: Account<'info, TokenAccount>,
-    
-    pub nft_mint: Account<'info, Mint>,
-    
-    pub token_program: Program<'info, Token>,
-    pub associated_token_program: Program<'info, AssociatedToken>,
-    pub system_program: Program<'info, System>,
-}
-
-/// FEATURE: usdc - This account structure is only available when the usdc feature is enabled
-#[cfg(feature = "usdc")]
-#[derive(Accounts)]
-pub struct Settle<'info> {
-    #[account(
-        mut,
-        seeds = [b"escrow", escrow_state.escrow_id.to_le_bytes().as_ref()],
-        bump = escrow_state.bump,
-    )]
-    pub escrow_state: Account<'info, EscrowState>,
-    
-    #[account(mut)]
-    pub escrow_usdc_account: Account<'info, TokenAccount>,
-    
-    #[account(mut)]
-    pub escrow_nft_account: Account<'info, TokenAccount>,
-    
-    #[account(
-        mut,
-        constraint = seller_usdc_account.owner == escrow_state.seller
-    )]
-    pub seller_usdc_account: Account<'info, TokenAccount>,
-    
-    #[account(
-        mut,
-        constraint = buyer_nft_account.owner == escrow_state.buyer
-    )]
-    pub buyer_nft_account: Account<'info, TokenAccount>,
-    
-    /// Platform fee collector USDC account
-    #[account(mut)]
-    pub fee_collector_usdc_account: Account<'info, TokenAccount>,
-    
-    pub token_program: Program<'info, Token>,
-}
-
-/// FEATURE: usdc - This account structure is only available when the usdc feature is enabled
-#[cfg(feature = "usdc")]
-#[derive(Accounts)]
-pub struct CancelIfExpired<'info> {
-    #[account(
-        mut,
-        seeds = [b"escrow", escrow_state.escrow_id.to_le_bytes().as_ref()],
-        bump = escrow_state.bump,
-    )]
-    pub escrow_state: Account<'info, EscrowState>,
-    
-    #[account(mut)]
-    pub escrow_usdc_account: Account<'info, TokenAccount>,
-    
-    #[account(mut)]
-    pub escrow_nft_account: Account<'info, TokenAccount>,
-    
-    #[account(
-        mut,
-        constraint = buyer_usdc_account.owner == escrow_state.buyer
-    )]
-    pub buyer_usdc_account: Account<'info, TokenAccount>,
-    
-    #[account(
-        mut,
-        constraint = seller_nft_account.owner == escrow_state.seller
-    )]
-    pub seller_nft_account: Account<'info, TokenAccount>,
-    
-    pub token_program: Program<'info, Token>,
-}
-
-/// FEATURE: usdc - This account structure is only available when the usdc feature is enabled
-#[cfg(feature = "usdc")]
-#[derive(Accounts)]
-pub struct AdminCancel<'info> {
-    #[account(
-        mut,
-        seeds = [b"escrow", escrow_state.escrow_id.to_le_bytes().as_ref()],
-        bump = escrow_state.bump,
-    )]
-    pub escrow_state: Account<'info, EscrowState>,
-    
-    pub admin: Signer<'info>,
-    
-    #[account(mut)]
-    pub escrow_usdc_account: Account<'info, TokenAccount>,
-    
-    #[account(mut)]
-    pub escrow_nft_account: Account<'info, TokenAccount>,
-    
-    #[account(
-        mut,
-        constraint = buyer_usdc_account.owner == escrow_state.buyer
-    )]
-    pub buyer_usdc_account: Account<'info, TokenAccount>,
-    
-    #[account(
-        mut,
-        constraint = seller_nft_account.owner == escrow_state.seller
-    )]
-    pub seller_nft_account: Account<'info, TokenAccount>,
-    
-    pub token_program: Program<'info, Token>,
-}
-
-// State Account (LEGACY - USDC-based)
-
-/// LEGACY: Escrow state account for USDC-based escrow (deprecated)
-/// FEATURE: usdc - This state is only available when the usdc feature is enabled
-#[cfg(feature = "usdc")]
-#[account]
-#[derive(InitSpace)]
-pub struct EscrowState {
-    pub escrow_id: u64,
-    pub buyer: Pubkey,
-    pub seller: Pubkey,
-    pub usdc_amount: u64,
-    
-    /// The NFT's mint address (unique identifier).
+    /// Initialize the Treasury PDA (one-time setup per authority)
     /// 
-    /// Important: This is NOT "minting" (creating) an NFT.
-    /// The NFT must ALREADY EXIST in the seller's wallet.
-    /// This field stores the mint address to identify WHICH specific NFT
-    /// is being traded in this escrow agreement.
-    pub nft_mint: Pubkey,
+    /// Creates a Treasury account that will track platform fees and swap statistics.
+    /// This must be called once by the platform authority before any swaps can be executed.
+    ///
+    /// # Arguments
+    /// * `ctx` - Context containing authority and treasury accounts
+    /// * `authorized_withdrawal_wallet` - Wallet authorized to receive treasury withdrawals
+    ///
+    /// # Returns
+    /// * `Result<()>` - Success or error
+    ///
+    /// # Security
+    /// * Locks withdrawals to specified wallet only
+    /// * Prevents fund redirection even if authority is compromised
+    /// * Can only be changed via program upgrade
+    pub fn initialize_treasury(
+        ctx: Context<InitializeTreasury>,
+        authorized_withdrawal_wallet: Pubkey,
+    ) -> Result<()> {
+        instructions::initialize::initialize_treasury_handler(ctx, authorized_withdrawal_wallet)
+    }
     
-    /// Platform fee in basis points (1 bps = 0.01%)
-    /// Set during initialization by authorized admin
-    /// Range: 0-10000 (0% to 100%)
-    /// This fee is enforced during settlement and cannot be bypassed
-    pub platform_fee_bps: u16,
+    /// Execute an atomic swap with platform fee collection
+    /// 
+    /// This is the core instruction that executes a complete NFT/cNFT/SOL swap atomically.
+    /// All asset transfers and fee collection happen in a single transaction.
+    ///
+    /// # Process
+    /// 1. Check if program is paused
+    /// 2. Validate swap parameters
+    /// 3. Collect platform fee from taker
+    /// 4. Transfer maker's NFTs to taker
+    /// 5. Transfer taker's NFTs to maker
+    /// 6. Transfer SOL between parties (if any)
+    /// 7. Update treasury statistics
+    ///
+    /// # Arguments
+    /// * `ctx` - Context containing all accounts needed for the swap
+    /// * `params` - Swap parameters including asset counts, SOL amounts, fee, and swap ID
+    ///
+    /// # Returns
+    /// * `Result<()>` - Success or error
+    ///
+    /// # Security
+    /// * Checks program pause state before execution
+    /// * Requires signatures from maker, taker, and platform authority
+    /// * Validates asset ownership before transfer
+    /// * Enforces fee collection before any asset transfers
+    /// * All-or-nothing execution (atomic)
+    ///
+    /// # Errors
+    /// * `ProgramPaused` - Operations are temporarily disabled
+    /// * `Unauthorized` - Platform authority signature missing or invalid
+    /// * `InvalidFee` - Fee is zero or exceeds maximum
+    /// * `TooManyAssets` - Asset count exceeds maximum per side
+    /// * `InvalidSwapId` - Swap ID exceeds maximum length
+    /// * `ArithmeticOverflow` - Fee calculation overflow
+    pub fn atomic_swap_with_fee(
+        ctx: Context<AtomicSwapWithFee>,
+        params: SwapParams,
+    ) -> Result<()> {
+        instructions::atomic_swap::atomic_swap_handler(ctx, params)
+    }
     
-    pub buyer_usdc_deposited: bool,
-    pub seller_nft_deposited: bool,
-    pub status: EscrowStatus,
-    pub expiry_timestamp: i64,
-    pub bump: u8,
-    pub admin: Pubkey,
+    /// Withdraw accumulated fees from Treasury PDA to treasury wallet
+    /// 
+    /// Allows the platform authority to withdraw SOL from the Treasury PDA to the
+    /// designated treasury wallet. Withdrawals are rate-limited to once per week (7 days).
+    ///
+    /// # Arguments
+    /// * `ctx` - Context containing authority, treasury PDA, and treasury wallet
+    /// * `amount` - Amount of lamports to withdraw
+    ///
+    /// # Returns
+    /// * `Result<()>` - Success or error
+    ///
+    /// # Security
+    /// * Only platform authority can withdraw
+    /// * Program must not be paused
+    /// * Enforces 7-day minimum between withdrawals
+    /// * Maintains rent-exempt minimum in Treasury PDA
+    ///
+    /// # Errors
+    /// * `Unauthorized` - Caller is not platform authority
+    /// * `ProgramPaused` - Program is currently paused
+    /// * `WithdrawalTooFrequent` - Less than 7 days since last withdrawal
+    /// * `InsufficientTreasuryBalance` - Not enough funds available
+    pub fn withdraw_treasury_fees(
+        ctx: Context<WithdrawTreasuryFees>,
+        amount: u64,
+    ) -> Result<()> {
+        instructions::withdraw::withdraw_treasury_fees_handler(ctx, amount)
+    }
+    
+    /// Emergency pause - stops all swaps and withdrawals
+    /// 
+    /// Allows the platform authority to immediately halt all program operations.
+    /// Used in case of security issues, bugs, or regulatory requirements.
+    ///
+    /// # Arguments
+    /// * `ctx` - Context containing authority and treasury
+    ///
+    /// # Returns
+    /// * `Result<()>` - Success or error
+    ///
+    /// # Security
+    /// * Only platform authority can pause
+    /// * Cannot pause if already paused
+    ///
+    /// # Errors
+    /// * `Unauthorized` - Caller is not platform authority
+    /// * `AlreadyPaused` - Program is already in paused state
+    pub fn emergency_pause(ctx: Context<EmergencyPause>) -> Result<()> {
+        instructions::pause::emergency_pause_handler(ctx)
+    }
+    
+    /// Resume operations after emergency pause
+    /// 
+    /// Allows the platform authority to resume program operations after a pause.
+    ///
+    /// # Arguments
+    /// * `ctx` - Context containing authority and treasury
+    ///
+    /// # Returns
+    /// * `Result<()>` - Success or error
+    ///
+    /// # Security
+    /// * Only platform authority can unpause
+    /// * Cannot unpause if not paused
+    ///
+    /// # Errors
+    /// * `Unauthorized` - Caller is not platform authority
+    /// * `NotPaused` - Program is not currently paused
+    pub fn unpause(ctx: Context<Unpause>) -> Result<()> {
+        instructions::pause::unpause_handler(ctx)
+    }
+    
+    /// Close Treasury PDA and refund rent to authority
+    /// 
+    /// Closes an existing Treasury PDA account and refunds rent to the authority.
+    /// Typically used for:
+    /// - Migrating from old structure to new structure
+    /// - Shutting down platform operations
+    /// - Consolidating treasury accounts
+    ///
+    /// # Arguments
+    /// * `ctx` - Context containing authority and treasury
+    ///
+    /// # Returns
+    /// * `Result<()>` - Success or error
+    ///
+    /// # Security
+    /// * Only platform authority can close treasury
+    /// * Authority receives refunded rent lamports
+    ///
+    /// # Errors
+    /// * `Unauthorized` - Caller is not platform authority
+    pub fn close_treasury(ctx: Context<CloseTreasury>) -> Result<()> {
+        instructions::close::close_treasury_handler(ctx)
+    }
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq, InitSpace)]
@@ -2499,14 +2467,6 @@ pub fn cancel_if_expired<'info>(ctx: Context<'_, '_, '_, 'info, CancelIfExpired<
             }
         }
     }
-
-    // Mark escrow as cancelled
-    let escrow_id = ctx.accounts.escrow_state.escrow_id;
-    ctx.accounts.escrow_state.status = EscrowStatus::Cancelled;
-
-    msg!("Escrow cancelled due to expiry: ID {}", escrow_id);
-
-    Ok(())
 }
 
 /// Admin emergency cancel with full refunds

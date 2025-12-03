@@ -1,0 +1,103 @@
+# Task ID: 32
+# Title: Production Deployment: Solana Program Deployment to Mainnet
+# Status: pending
+# Dependencies: 31, 30
+# Priority: high
+# Description: Deploy the atomic swap Solana program to mainnet-beta with proper IDL management and production-grade verification.
+# Details:
+This task involves deploying the atomic swap program to mainnet-beta, ensuring all production best practices are followed. Key steps include:
+
+1. **Build for Mainnet-beta**:
+   - Use the appropriate cfg feature flag to build the program for mainnet-beta, ensuring no staging or devnet-specific code is included.
+   - Run `cargo build-sbf` from the `programs/escrow/` directory to generate the production-ready `.so` file.
+
+2. **Program Size Verification and Optimization**:
+   - Check the compiled program size using `ls -la target/deploy/escrow.so`.
+   - If the program exceeds the recommended size limit (typically 500KB for mainnet), optimize by removing unused dependencies, minimizing code, or splitting logic into separate programs.
+
+3. **Deploy to Mainnet**:
+   - Set the Solana CLI to mainnet-beta: `solana config set --url mainnet-beta`.
+   - Deploy the program using the production deployer wallet: `solana program deploy target/deploy/escrow.so --keypair production-deployer.json`.
+   - Record the deployment transaction ID and program ID for documentation.
+
+4. **IDL Management**:
+   - Close the old IDL on mainnet using `anchor idl close` if necessary.
+   - Generate a new IDL with `anchor idl build` and upload it with `anchor idl upgrade --provider.cluster mainnet-beta --provider.wallet production-deployer.json`.
+   - Ensure the buffer size is sufficient for the new IDL to avoid staging issues.
+
+5. **Verify Deployment and IDL Accessibility**:
+   - Use Solana Explorer or Solscan to verify the program is deployed and accessible.
+   - Confirm the IDL is correctly uploaded and accessible via the Anchor IDL endpoint.
+
+6. **Update Backend IDL Files**:
+   - Copy the new IDL to `src/generated/anchor/escrow-idl-production.json`.
+   - Commit and push the updated IDL file to the repository.
+
+7. **Test Program Initialization and Basic Functionality**:
+   - Initialize the program on mainnet and run basic swap tests to ensure functionality.
+   - Verify all swap types (NFT-to-NFT, NFT-to-SOL, SOL-to-NFT, cNFT swaps) work as expected.
+
+8. **Documentation**:
+   - Document the program ID and deployment transaction ID in the deployment log.
+   - Update any relevant documentation to reflect the production deployment.
+<info added on 2025-12-03T04:07:13.620Z>
+**IMPORTANT NOTE - Fresh Production Deployment**:
+
+This is a fresh production deployment with zero existing users. NO VERSIONING OR BACKWARDS COMPATIBILITY IS NEEDED. Deploy the atomic swap program cleanly without implementing versioning, migration logic, or backwards compatibility for old transaction formats. The program can be deployed as a brand new system without concerns about maintaining compatibility with previous program versions or transaction structures.
+
+This means:
+- No need to implement program upgrade mechanisms or version checks
+- No migration scripts or backwards compatibility layers required
+- Transaction formats can be deployed in their current state without legacy support
+- Program accounts and data structures can be initialized fresh without considering previous versions
+- IDL can be uploaded without concerns about breaking changes for existing integrations
+</info added on 2025-12-03T04:07:13.620Z>
+
+# Test Strategy:
+1. **Deployment Verification**:
+   - Confirm the program is deployed to mainnet-beta and accessible via Solana Explorer or Solscan.
+   - Verify the program ID matches the one recorded in the deployment log.
+
+2. **IDL Verification**:
+   - Check that the IDL is correctly uploaded and accessible via the Anchor IDL endpoint.
+   - Ensure the buffer size is sufficient and no staging issues are present.
+
+3. **Functionality Testing**:
+   - Run basic swap tests on mainnet to verify all swap types work as expected.
+   - Confirm asset ownership changes on-chain after swaps.
+
+4. **Documentation Review**:
+   - Verify the program ID and deployment transaction ID are documented in the deployment log.
+   - Ensure all relevant documentation is updated to reflect the production deployment.
+
+# Subtasks:
+## 1. Build Program for Mainnet-beta with Production Configuration [pending]
+### Dependencies: None
+### Description: Compile the atomic swap Solana program for mainnet-beta using the correct feature flags and ensure no staging or devnet-specific code is included.
+### Details:
+Run `cargo build-sbf` from the `programs/escrow/` directory with the appropriate cfg feature flag for mainnet-beta. Verify the build output is in `target/deploy/escrow.so` and contains no staging or devnet-specific logic.
+
+## 2. Verify and Optimize Program Size for Mainnet Deployment [pending]
+### Dependencies: 32.1
+### Description: Check the compiled program size and optimize if necessary to meet mainnet-beta size limits.
+### Details:
+Use `ls -la target/deploy/escrow.so` to check the program size. If the size exceeds 500KB, optimize by removing unused dependencies, minimizing code, or splitting logic into separate programs.
+
+## 3. Deploy Program to Mainnet-beta with Production Deployer Wallet [pending]
+### Dependencies: 32.2
+### Description: Deploy the compiled program to mainnet-beta using the production deployer wallet and record the deployment transaction ID and program ID.
+### Details:
+Set the Solana CLI to mainnet-beta with `solana config set --url mainnet-beta`. Deploy the program using `solana program deploy target/deploy/escrow.so --keypair production-deployer.json`. Record the deployment transaction ID and program ID for documentation.
+
+## 4. Manage and Upload IDL with Proper Buffer Sizing [pending]
+### Dependencies: 32.3
+### Description: Close the old IDL if necessary, generate a new IDL, and upload it to mainnet-beta with sufficient buffer size.
+### Details:
+Use `anchor idl close` to close the old IDL if needed. Generate a new IDL with `anchor idl build` and upload it with `anchor idl upgrade --provider.cluster mainnet-beta --provider.wallet production-deployer.json`. Ensure the buffer size is sufficient for the new IDL.
+
+## 5. Update Backend IDL Files and Document Deployment [pending]
+### Dependencies: 32.4
+### Description: Copy the new IDL to the backend, update documentation, and verify program functionality on mainnet-beta.
+### Details:
+Copy the new IDL to `src/generated/anchor/escrow-idl-production.json`. Commit and push the updated IDL file to the repository. Document the program ID and deployment transaction ID in the deployment log. Update any relevant documentation to reflect the production deployment. Test program initialization and basic functionality on mainnet-beta.
+

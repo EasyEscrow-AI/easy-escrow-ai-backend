@@ -9,10 +9,10 @@ The following static wallet addresses are now configured in `tests/fixtures/devn
 
 | Role | Address |
 |------|---------|
-| **Sender (Buyer1/Seller)** | `FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71` |
-| **Receiver (Buyer2)** | `Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk` |
-| **Admin** | `7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u` |
-| **FeeCollector** | `C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E` |
+| **Sender (Buyer1/Seller)** | `AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z` |
+| **Receiver (Buyer2)** | `5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4` |
+| **Admin** | `498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R` |
+| **FeeCollector** | `8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ` |
 
 ## Quick Start
 
@@ -41,10 +41,10 @@ export DEVNET_FEE_COLLECTOR_PRIVATE_KEY="<your_base58_private_key>"
 Check that all wallets have sufficient SOL:
 
 ```bash
-solana balance FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71 --url devnet
-solana balance Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk --url devnet
-solana balance 7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u --url devnet
-solana balance C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E --url devnet
+solana balance AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z --url devnet
+solana balance 5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4 --url devnet
+solana balance 498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R --url devnet
+solana balance 8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ --url devnet
 ```
 
 **Minimum Requirements:**
@@ -58,10 +58,10 @@ solana balance C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E --url devnet
 If any wallet is low on SOL:
 
 ```bash
-solana transfer FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71 2 --url devnet
-solana transfer Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk 2 --url devnet
-solana transfer 7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u 1 --url devnet
-solana transfer C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E 1 --url devnet
+solana transfer AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z 2 --url devnet
+solana transfer 5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4 2 --url devnet
+solana transfer 498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R 1 --url devnet
+solana transfer 8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ 1 --url devnet
 ```
 
 ### Step 4: Run Tests
@@ -87,10 +87,10 @@ Add a `walletKeys` section to `tests/fixtures/devnet-config.json`:
     "feeCollector": "<base58_private_key>"
   },
   "wallets": {
-    "sender": "FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71",
-    "receiver": "Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk",
-    "admin": "7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u",
-    "feeCollector": "C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E"
+    "sender": "AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z",
+    "receiver": "5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4",
+    "admin": "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R",
+    "feeCollector": "8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ"
   }
 }
 ```
@@ -157,10 +157,10 @@ These test files will now use your static wallets:
 **Solution:**
 ```bash
 # Check balances
-solana balance FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71 --url devnet
+solana balance AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z --url devnet
 
 # Fund as needed
-solana transfer FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71 2 --url devnet
+solana transfer AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z 2 --url devnet
 ```
 
 ### Different wallet addresses showing in test output
@@ -207,10 +207,10 @@ solana transfer FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71 2 --url devnet
 
 Track your wallets on Solana Explorer:
 
-- [Sender (CL8c...)](https://explorer.solana.com/address/FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71?cluster=devnet)
-- [Receiver (8GDA...)](https://explorer.solana.com/address/Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk?cluster=devnet)
-- [Admin (5wwb...)](https://explorer.solana.com/address/7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u?cluster=devnet)
-- [FeeCollector (C5ji...)](https://explorer.solana.com/address/C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E?cluster=devnet)
+- [Sender (CL8c...)](https://explorer.solana.com/address/AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z?cluster=devnet)
+- [Receiver (8GDA...)](https://explorer.solana.com/address/5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4?cluster=devnet)
+- [Admin (5wwb...)](https://explorer.solana.com/address/498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R?cluster=devnet)
+- [FeeCollector (C5ji...)](https://explorer.solana.com/address/8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ?cluster=devnet)
 
 ## Next Steps
 

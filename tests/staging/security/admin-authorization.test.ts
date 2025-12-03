@@ -22,11 +22,12 @@ import { describe, it } from 'mocha';
 import { expect } from 'chai';
 import { Connection, PublicKey, Keypair, Transaction, SystemProgram } from '@solana/web3.js';
 import { AnchorProvider, Program, BN } from '@coral-xyz/anchor';
-import { STAGING_CONFIG } from '../e2e/test-config';
 import { Escrow } from '../../../src/generated/anchor/escrow';
 import { getEscrowIdl } from '../../../src/utils/idl-loader';
 
-describe('STAGING Security - Admin Authorization', function () {
+// DEPRECATED: This test suite tests old escrow functionality (initAgreement)
+// The program now only supports atomic swaps. Treasury authorization is tested in comprehensive suite.
+describe.skip('STAGING Security - Admin Authorization (DEPRECATED)', function () {
   this.timeout(60000);
 
   let connection: Connection;
@@ -35,17 +36,20 @@ describe('STAGING Security - Admin Authorization', function () {
   let program: Program<Escrow>;
 
   before(async function () {
+    const RPC_URL = process.env.STAGING_SOLANA_RPC_URL || 'https://api.devnet.solana.com';
+    const PROGRAM_ID = new PublicKey('AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei');
+    
     console.log('\n' + '='.repeat(80));
     console.log('🔒 STAGING Security Test - Admin Authorization');
     console.log('='.repeat(80));
     console.log(`   Environment: STAGING`);
-    console.log(`   Network: ${STAGING_CONFIG.network}`);
-    console.log(`   RPC: ${STAGING_CONFIG.rpcUrl}`);
-    console.log(`   Program: ${STAGING_CONFIG.programId}`);
+    console.log(`   Network: devnet`);
+    console.log(`   RPC: ${RPC_URL}`);
+    console.log(`   Program: ${PROGRAM_ID}`);
     console.log('='.repeat(80) + '\n');
 
     // Setup connection
-    connection = new Connection(STAGING_CONFIG.rpcUrl, 'confirmed');
+    connection = new Connection(RPC_URL, 'confirmed');
 
     // Load authorized admin keypair from environment
     const adminPrivateKey = process.env.DEVNET_STAGING_ADMIN_PRIVATE_KEY;
@@ -75,7 +79,6 @@ describe('STAGING Security - Admin Authorization', function () {
     console.log(`✅ Unauthorized User: ${unauthorizedKeypair.publicKey.toBase58()}\n`);
 
     // Setup Anchor program
-    const programId = new PublicKey(STAGING_CONFIG.programId);
     const provider = new AnchorProvider(
       connection,
       { publicKey: authorizedAdminKeypair.publicKey, signTransaction: async (tx: any) => tx, signAllTransactions: async (txs: any) => txs } as any,
@@ -87,7 +90,7 @@ describe('STAGING Security - Admin Authorization', function () {
 
     // Verify connectivity
     const version = await connection.getVersion();
-    console.log(`✅ Connected to Solana ${STAGING_CONFIG.network}`);
+    console.log(`✅ Connected to Solana devnet`);
     console.log(`   Version: ${version['solana-core']}\n`);
   });
 

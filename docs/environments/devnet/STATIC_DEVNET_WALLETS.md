@@ -5,22 +5,22 @@ This document describes the static wallet addresses used for devnet E2E testing.
 ## Wallet Addresses
 
 ### Sender (Seller) - NFT Owner
-**Address:** `FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71`
+**Address:** `AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z`
 - Owns NFT
 - Receives USDC payment (99%)
 
 ### Receiver (Buyer) - USDC Payer
-**Address:** `Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk`
+**Address:** `5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4`
 - Pays USDC
 - Receives NFT
 
 ### Admin - Escrow Operations
-**Address:** `7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u`
+**Address:** `498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R`
 - Performs escrow operations
 - System admin wallet
 
 ### FeeCollector - Treasury (Receive-Only)
-**Address:** `C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E`
+**Address:** `8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ`
 - Receives 1% fees
 - Treasury wallet
 - Receive-only (never signs transactions)
@@ -87,20 +87,20 @@ Edit `tests/fixtures/devnet-config.json` and add:
 #### Quick Fund (Individual Commands)
 
 ```bash
-solana transfer FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71 2 --url devnet  # Sender
-solana transfer Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk 2 --url devnet  # Receiver
-solana transfer 7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u 2 --url devnet  # Admin
-solana transfer C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E 1 --url devnet  # FeeCollector
+solana transfer AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z 2 --url devnet  # Sender
+solana transfer 5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4 2 --url devnet  # Receiver
+solana transfer 498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R 2 --url devnet  # Admin
+solana transfer 8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ 1 --url devnet  # FeeCollector
 ```
 
 #### Batch Fund (PowerShell Script)
 
 ```powershell
 .\scripts\fund-devnet-wallets.ps1 `
-  -Buyer Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk `
-  -Seller FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71 `
-  -Admin 7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u `
-  -FeeCollector C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E
+  -Buyer 5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4 `
+  -Seller AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z `
+  -Admin 498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R `
+  -FeeCollector 8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ
 ```
 
 ### 4. Run E2E Tests
@@ -140,10 +140,10 @@ node -e "const bs58=require('bs58');const fs=require('fs');console.log(bs58.enco
 
 ## Solana Explorer Links
 
-- [Sender](https://explorer.solana.com/address/FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71?cluster=devnet)
-- [Receiver](https://explorer.solana.com/address/Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk?cluster=devnet)
-- [Admin](https://explorer.solana.com/address/7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u?cluster=devnet)
-- [FeeCollector](https://explorer.solana.com/address/C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E?cluster=devnet)
+- [Sender](https://explorer.solana.com/address/AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z?cluster=devnet)
+- [Receiver](https://explorer.solana.com/address/5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4?cluster=devnet)
+- [Admin](https://explorer.solana.com/address/498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R?cluster=devnet)
+- [FeeCollector](https://explorer.solana.com/address/8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ?cluster=devnet)
 
 ## Troubleshooting
 
@@ -170,19 +170,19 @@ node -e "const bs58=require('bs58');const fs=require('fs');console.log(bs58.enco
 ### Check Balances
 
 ```bash
-solana balance FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71 --url devnet
-solana balance Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk --url devnet
-solana balance 7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u --url devnet
-solana balance C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E --url devnet
+solana balance AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z --url devnet
+solana balance 5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4 --url devnet
+solana balance 498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R --url devnet
+solana balance 8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ --url devnet
 ```
 
 ### Request Airdrop (if needed)
 
 ```bash
-solana airdrop 2 FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71 --url devnet
-solana airdrop 2 Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk --url devnet
-solana airdrop 2 7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u --url devnet
-solana airdrop 1 C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E --url devnet
+solana airdrop 2 AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z --url devnet
+solana airdrop 2 5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4 --url devnet
+solana airdrop 2 498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R --url devnet
+solana airdrop 1 8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ --url devnet
 ```
 
 ## CI/CD Integration

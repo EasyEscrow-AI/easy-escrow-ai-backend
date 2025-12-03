@@ -56,9 +56,9 @@ npm run test:e2e:devnet:verbose
 ### 2. Setup Progress
 ```
 💼 Setting up test wallets...
-   Buyer1: FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71
-   Buyer2: Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk
-   Seller: 7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u
+   Buyer1: AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z
+   Buyer2: 5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4
+   Seller: 498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R
    
 🪙 Creating test tokens...
    ✅ Test USDC Mint created

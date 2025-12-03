@@ -107,7 +107,7 @@ cargo build-sbf
 - **Deployed Slot**: 415103262
 - **Program Size**: 295,688 bytes (0x48308)
 - **Rent**: 2.05919256 SOL
-- **Upgrade Authority**: `CPDz3pC5AnK7es3oEcP52HLhByPSAWG6f9QGP6j4jjEA`
+- **Upgrade Authority**: `498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R`
 
 ### 4. Backend Integration
 
@@ -166,7 +166,7 @@ docker compose logs backend | grep "Program ID"
 
 ### 2. Insufficient SOL for Deployment
 **Problem**: Default wallet only had 0.43 SOL, needed 2.06 SOL  
-**Solution**: Transferred 2 SOL from funded devnet sender wallet (`FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71`)
+**Solution**: Transferred 2 SOL from funded devnet sender wallet (`AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z`)
 
 ### 3. Devnet Faucet Rate Limiting
 **Problem**: Couldn't airdrop due to rate limits  

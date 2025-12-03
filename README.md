@@ -2,21 +2,53 @@
 
 # EasyEscrow.ai Backend
 
-Backend service for EasyEscrow.ai - an AI-powered escrow platform with Solana blockchain integration.
+🚀 **Production-Ready Atomic Swap Platform** - Trustless peer-to-peer NFT and SOL swaps on Solana blockchain.
+
+## 🎯 Current Focus: Atomic Swaps
+
+EasyEscrow.ai is a **100% Atomic Swap platform** enabling instant, trustless exchanges of NFTs, SOL, and compressed NFTs on Solana mainnet.
+
+### Why Atomic Swaps?
+
+✅ **Instant**: Single transaction execution—no waiting  
+✅ **Trustless**: No escrow deposits, no backend coordination  
+✅ **Secure**: All-or-nothing atomic execution  
+✅ **Low Cost**: Minimal transaction fees  
+✅ **Simple**: One transaction, instant settlement  
+
+### Supported Swap Types
+
+| Type | Description | Status |
+|------|-------------|--------|
+| **NFT ↔ SOL** | Exchange NFT for SOL tokens | ✅ **LIVE** |
+| **NFT ↔ NFT (fee)** | NFT for NFT with platform fee | ✅ **LIVE** |
+| **NFT ↔ NFT + SOL** | NFT for another NFT plus SOL | ✅ **LIVE** |
+| **cNFT ↔ SOL** | Compressed NFT for SOL | ⚠️ Validation Ready |
+| **NFT ↔ cNFT** | Standard NFT for compressed NFT | ⚠️ Validation Ready |
+
+**Note:** Compressed NFT (cNFT) validation is complete and tested. Transaction building and on-chain transfers are in development. See [cNFT Implementation Plan](docs/tasks/CNFT_SWAP_SUPPORT.md) for details.
+
+---
+
+## 📌 Strategic Update
+
+⚠️ **The legacy escrow system (multi-step deposits, settlement workflows) has been parked.** The platform now focuses exclusively on atomic swaps for superior UX and reduced complexity. See [Strategic Pivot Documentation](docs/STRATEGIC_PIVOT_ATOMIC_SWAPS.md).
+
+---
 
 ## Overview
 
-EasyEscrow.ai is a production-ready escrow platform built on Solana blockchain, featuring:
+EasyEscrow.ai is a production-ready atomic swap platform built on Solana blockchain, featuring:
 
-- **Secure Escrow Smart Contracts**: Anchor-based Solana programs for trustless NFT and USDC transactions
-- **BETA Launch Limits**: $1.00 - $10,000.00 transaction limits for stable rollout ([see docs](docs/BETA_LIMITS.md))
-- **Multi-Environment Support**: Separate deployments for development, staging, and production
-- **Real-Time Monitoring**: Automated deposit detection and agreement lifecycle management
-- **RESTful API**: Comprehensive REST endpoints with OpenAPI/Swagger documentation
-- **Webhook System**: Real-time event notifications for all escrow lifecycle events
-- **Settlement Receipts**: Cryptographically signed receipts for completed transactions
-- **Production Infrastructure**: Deployed on DigitalOcean with PostgreSQL, Redis, and Solana RPC
-- **Security First**: Comprehensive secrets management, rate limiting, and security middleware
+- **⚡ Atomic Swaps**: Instant, trustless peer-to-peer asset exchanges
+- **🔐 Nonce-Based Transactions**: Durable transactions with automatic retry logic
+- **🎨 NFT Support**: Standard NFTs (Metaplex) and compressed NFTs (cNFT validation ready)
+- **💸 SOL Integration**: Native SOL token transfers in swaps
+- **🌐 Multi-Environment**: Separate deployments for development, staging, and production
+- **📡 RESTful API**: Comprehensive REST endpoints with OpenAPI/Swagger documentation
+- **🔒 Security First**: Rate limiting, validation, and comprehensive error handling
+- **☁️ Production Infrastructure**: Deployed on DigitalOcean with PostgreSQL, Redis, and Helius RPC
+- **💰 Flexible Fees**: Dynamic platform fees (percentage or flat-rate)
 
 ## Project Structure
 
@@ -25,13 +57,11 @@ EasyEscrow.ai is a production-ready escrow platform built on Solana blockchain, 
 ├── README.md
 ├── SECURITY.md
 ├── docs/                      # 📚 Comprehensive documentation
+│   ├── STRATEGIC_PIVOT_ATOMIC_SWAPS.md  # 🎯 Current focus & roadmap
+│   ├── ATOMIC_SWAP_TESTING.md           # Atomic swap test guide
 │   ├── api/                  # API documentation
 │   │   ├── openapi.yaml      # OpenAPI 3.0 specification
-│   │   ├── README.md         # API overview
-│   │   ├── INTEGRATION_GUIDE.md
-│   │   ├── WEBHOOK_EVENTS.md
-│   │   ├── ERROR_CODES.md
-│   │   └── SWAGGER_IMPLEMENTATION.md
+│   │   └── README.md         # API overview
 │   ├── architecture/         # System design
 │   ├── deployment/           # Deployment guides
 │   ├── environments/         # Environment configs
@@ -44,47 +74,44 @@ EasyEscrow.ai is a production-ready escrow platform built on Solana blockchain, 
 │   │   └── index.ts          # Environment config
 │   ├── generated/            # Generated Prisma client
 │   ├── middleware/           # Express middleware
-│   │   ├── auth.middleware.ts
-│   │   ├── rate-limiter.middleware.ts
-│   │   └── security.middleware.ts
-│   ├── models/               # Data models
+│   ├── models/               # Data models & validators
 │   │   ├── dto/              # Data Transfer Objects
 │   │   └── validators/       # Input validators
 │   ├── routes/               # API routes
-│   │   ├── v1/               # API v1 endpoints
+│   │   ├── offers.routes.ts  # ✅ Atomic swap endpoints (ACTIVE)
 │   │   └── index.ts
 │   ├── services/             # Business logic
-│   │   ├── agreement.service.ts
-│   │   ├── deposit-monitoring.service.ts
-│   │   ├── expiry-cancellation.service.ts
-│   │   ├── receipt.service.ts
-│   │   ├── secrets-management.service.ts
-│   │   ├── solana.service.ts
-│   │   └── webhook.service.ts
+│   │   ├── offerManager.ts          # ✅ Atomic swap manager (ACTIVE)
+│   │   ├── assetValidator.ts        # ✅ NFT/cNFT/SOL validation (ACTIVE)
+│   │   ├── feeCalculator.ts         # ✅ Dynamic fees (ACTIVE)
+│   │   ├── transactionBuilder.ts    # ✅ Swap transactions (ACTIVE)
+│   │   ├── noncePoolManager.ts      # ✅ Durable transactions (ACTIVE)
+│   │   └── solana.service.ts        # ✅ Blockchain ops (ACTIVE)
 │   ├── utils/                # Utility functions
+│   │   └── swap-type-validator.ts   # ✅ Swap logic (ACTIVE)
 │   ├── public/               # Static assets (Swagger UI)
 │   └── index.ts              # Application entry point
 ├── prisma/                    # Database
-│   ├── schema.prisma         # Database schema
+│   ├── schema.prisma         # Database schema (atomic swaps)
 │   ├── migrations/           # Migration files
-│   ├── seed.ts               # Dev seed data
-│   └── seed-staging.ts       # Staging seed data
+│   └── seed.ts               # Dev seed data
 ├── programs/                  # Solana programs
-│   └── escrow/               # Escrow smart contract
+│   └── escrow/               # Atomic swap smart contract
 │       ├── src/lib.rs        # Program logic
 │       ├── Cargo.toml
 │       └── README.md
 ├── tests/                     # Test suites
 │   ├── unit/                 # Unit tests
+│   │   ├── atomic-swap-*.test.ts    # ✅ Atomic swap tests (ACTIVE)
+│   │   └── nonce-pool-*.test.ts     # ✅ Nonce tests (ACTIVE)
 │   ├── integration/          # Integration tests
-│   ├── staging/              # Staging E2E tests
-│   ├── production/           # Production tests
-│   ├── escrow.ts             # Anchor tests
+│   ├── staging/e2e/          # Staging E2E tests
+│   │   └── 01-atomic-nft-for-sol-happy-path.test.ts  # ✅ Primary E2E (ACTIVE)
+│   ├── legacy/               # ⏸️ Legacy escrow tests (PARKED)
 │   └── helpers/              # Test utilities
 ├── scripts/                   # Utility scripts
 │   ├── deployment/           # Deployment automation
 │   ├── development/          # Dev utilities
-│   ├── solana/               # Solana operations
 │   └── testing/              # Test helpers
 ├── Anchor.toml               # Dev Anchor config
 ├── Anchor.staging.toml       # Staging Anchor config

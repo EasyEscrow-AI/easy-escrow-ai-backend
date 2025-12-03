@@ -14,7 +14,7 @@
 | **Network** | Solana Devnet |
 | **Deployed Slot** | 414,280,098 |
 | **Program Size** | 295,688 bytes |
-| **Upgrade Authority** | `CPDz3pC5AnK7es3oEcP52HLhByPSAWG6f9QGP6j4jjEA` |
+| **Upgrade Authority** | `498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R` |
 | **RPC URL** | https://api.devnet.solana.com |
 
 ### View on Explorer

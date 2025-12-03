@@ -6,7 +6,10 @@ import swaggerUi from 'swagger-ui-express';
 import YAML from 'yamljs';
 import { connectDatabase, checkDatabaseHealth } from './config/database';
 import { connectRedis, checkRedisHealth, disconnectRedis } from './config/redis';
-import { agreementRoutes, expiryCancellationRoutes, webhookRoutes, receiptRoutes, transactionLogRoutes, healthRoutes } from './routes';
+// DISABLED: Agreement routes - migrated to atomic swap architecture
+// import { agreementRoutes } from './routes';
+import { expiryCancellationRoutes, webhookRoutes, receiptRoutes, transactionLogRoutes, healthRoutes, offersRoutes, testRoutes, testExecuteRoutes } from './routes';
+import { noncePoolManager, healthCheckService } from './routes/offers.routes';
 import {
   corsOptions,
   helmetConfig,
@@ -44,32 +47,7 @@ const PORT = process.env.PORT || 3000;
 // DigitalOcean App Platform has exactly 1 load balancer - trust 1 hop
 app.set('trust proxy', 1);
 
-// Initialize orchestrator instances (before route handlers)
-// Use environment-based intervals to allow tuning in production
-const monitoringOrchestrator = getMonitoringOrchestrator({
-  autoRestart: true,
-  maxRestarts: 5,
-  restartDelayMs: 5000,
-  healthCheckIntervalMs: (() => {
-    const parsed = parseInt(process.env.HEALTH_CHECK_INTERVAL_MS || '60000', 10);
-    return isNaN(parsed) ? 60000 : parsed; // Fallback to 60s if invalid
-  })(),
-  metricsIntervalMs: (() => {
-    const parsed = parseInt(process.env.METRICS_INTERVAL_MS || '120000', 10);
-    return isNaN(parsed) ? 120000 : parsed; // Fallback to 120s if invalid
-  })(),
-});
-
-const expiryCancellationOrchestrator = getExpiryCancellationOrchestrator({
-  expiryCheckIntervalMs: (() => {
-    const parsed = parseInt(process.env.EXPIRY_CHECK_INTERVAL_MS || '300000', 10);
-    return isNaN(parsed) ? 300000 : parsed; // Fallback to 5min if invalid
-  })(),
-  autoProcessRefunds: true,
-  refundProcessingBatchSize: 10,
-  enableMonitoring: true,
-});
-
+// Initialize idempotency service for atomic swaps
 const idempotencyService = getIdempotencyService({
   expirationHours: 24, // Keep idempotency keys for 24 hours
   cleanupIntervalMinutes: 60, // Clean up expired keys every hour
@@ -84,19 +62,17 @@ const stuckAgreementMonitor = getStuckAgreementMonitor({
   maxAgeHours: 24, // ✅ NEW: Only check agreements updated within last 24 hours (prevents accumulation)
 });
 
-// Register alert handlers for stuck agreements
-stuckAgreementMonitor.onAlert((alert) => {
-  const emoji = alert.severity === AlertSeverity.CRITICAL ? '🔴' : '⚠️';
-  console.error(`${emoji} [StuckAgreementAlert] ${alert.severity}: ${alert.message}`);
-  
-  // TODO: In production, send to Slack/email/monitoring service
-  // For now, just log to console with clear formatting
-  if (alert.severity === AlertSeverity.CRITICAL) {
-    console.error(`   🚨 CRITICAL: Agreement requires immediate attention!`);
-    console.error(`   Agreement ID: ${alert.agreementId}`);
-    console.error(`   Status: ${alert.status}`);
-    console.error(`   Time stuck: ${Math.round(alert.timeSinceLastUpdate / 60000)} minutes`);
-  }
+// Initialize nonce pool schedulers
+const nonceCleanupScheduler = getNonceCleanupScheduler(noncePoolManager, {
+  cleanupSchedule: '0 * * * *', // Every hour
+  timezone: process.env.TZ || 'America/Los_Angeles',
+});
+
+const nonceReplenishmentScheduler = getNonceReplenishmentScheduler(noncePoolManager, {
+  replenishmentSchedule: '*/30 * * * *', // Every 30 minutes
+  timezone: process.env.TZ || 'America/Los_Angeles',
+  minPoolSize: 10,
+  replenishmentAmount: 5,
 });
 
 // Security Middleware (apply first)
@@ -119,66 +95,24 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
   next();
 });
 
-// Health check endpoint
+// Enhanced health check endpoint with treasury PDA, RPC monitoring, and caching
 app.get('/health', async (_req: Request, res: Response) => {
-  const dbHealthy = await checkDatabaseHealth();
-  const redisHealthy = await checkRedisHealth();
-  
-  // Get monitoring orchestrator health with error handling
-  let monitoringHealth;
-  let monitoringError = null;
-  
   try {
-    // Use the module-level orchestrator instance to ensure consistency
-    monitoringHealth = monitoringOrchestrator.getHealth();
+    const healthResult = await healthCheckService.check();
+    const statusCode = healthCheckService.getStatusCode(healthResult);
+    
+    res.status(statusCode).json(healthResult);
   } catch (error) {
-    // If getHealth() throws, log it and return a safe default
-    console.error('[Health Check] Failed to get monitoring health:', error);
-    monitoringError = error instanceof Error ? error.message : 'Unknown error';
-    monitoringHealth = {
-      healthy: false,
-      uptime: 0,
-      monitoredAccounts: 0,
-      solanaHealthy: false,
-      restartCount: 0,
-    };
+    console.error('[Health Check] Unexpected error:', error);
+    res.status(503).json({
+      status: 'unhealthy',
+      timestamp: new Date().toISOString(),
+      service: 'easy-escrow-ai-backend',
+      mode: 'atomic-swap',
+      error: error instanceof Error ? error.message : 'Health check failed',
+      cached: false,
+    });
   }
-  
-  // Get expiry-cancellation orchestrator health
-  const expiryCancellationHealth = await expiryCancellationOrchestrator.healthCheck();
-  
-  // Get idempotency service status
-  const idempotencyStatus = idempotencyService.getStatus();
-  
-  const allHealthy = dbHealthy && redisHealthy && monitoringHealth.healthy && expiryCancellationHealth.healthy && idempotencyStatus.isRunning;
-  const status = allHealthy ? 'healthy' : 'unhealthy';
-  const statusCode = allHealthy ? 200 : 503;
-  
-  res.status(statusCode).json({
-    status,
-    timestamp: new Date().toISOString(),
-    service: 'easy-escrow-ai-backend',
-    database: dbHealthy ? 'connected' : 'disconnected',
-    redis: redisHealthy ? 'connected' : 'disconnected',
-    monitoring: {
-      status: monitoringHealth.healthy ? 'running' : 'stopped',
-      monitoredAccounts: monitoringHealth.monitoredAccounts,
-      uptime: `${Math.floor(monitoringHealth.uptime / 1000 / 60)} minutes`,
-      restartCount: monitoringHealth.restartCount,
-      solanaHealthy: monitoringHealth.solanaHealthy,
-      ...(monitoringError && { error: monitoringError }),
-    },
-    expiryCancellation: {
-      status: expiryCancellationHealth.healthy ? 'running' : 'stopped',
-      services: expiryCancellationHealth.services,
-      recentErrors: expiryCancellationHealth.recentErrors,
-    },
-    idempotency: {
-      status: idempotencyStatus.isRunning ? 'running' : 'stopped',
-      expirationHours: idempotencyStatus.expirationHours,
-      cleanupIntervalMinutes: idempotencyStatus.cleanupIntervalMinutes,
-    }
-  });
 });
 
 // Swagger Configuration
@@ -236,11 +170,13 @@ app.get('/', (_req: Request, res: Response) => {
     version: '1.0.0',
     endpoints: {
       health: '/health',
-      agreements: '/v1/agreements',
+      // agreements: '/v1/agreements', // DISABLED: Migrated to atomic swap - use /api/offers
+      offers: '/api/offers',
       receipts: '/v1/receipts',
       transactions: '/v1/transactions',
       expiryCancellation: '/api/expiry-cancellation',
       webhooks: '/api/webhooks'
+      // Note: Test endpoints are NOT documented publicly (internal use only)
     }
   };
   
@@ -271,13 +207,22 @@ if (swaggerDocument) {
   });
 }
 
+// Serve static files from public directory
+app.use(express.static(path.join(__dirname, 'public')));
+
 // API Routes
-app.use(agreementRoutes);
+// DISABLED: Agreement routes - migrated to atomic swap architecture (2025-12-02)
+// Agreement-based escrow has been superseded by atomic swaps via /api/offers
+// See docs/MIGRATION_FROM_LEGACY_ESCROW.md for details
+// app.use(agreementRoutes);
+app.use(offersRoutes);
 app.use(receiptRoutes);
 app.use('/v1/transactions', transactionLogRoutes);
 app.use('/api/expiry-cancellation', expiryCancellationRoutes);
 app.use('/api', webhookRoutes);
 app.use('/health', healthRoutes);
+app.use(testRoutes);
+app.use(testExecuteRoutes); // ⚠️ TEST ONLY - Real swap execution with private keys
 
 // 404 handler
 app.use((req: Request, res: Response) => {
@@ -303,18 +248,6 @@ const gracefulShutdown = async (signal: string) => {
   console.log(`\n${signal} received. Starting graceful shutdown...`);
   
   try {
-    // Stop monitoring orchestrator
-    console.log('Stopping monitoring orchestrator...');
-    await monitoringOrchestrator.stop();
-    
-    // Stop expiry-cancellation orchestrator
-    console.log('Stopping expiry-cancellation orchestrator...');
-    await expiryCancellationOrchestrator.stop();
-    
-    // Stop stuck agreement monitor
-    console.log('Stopping stuck agreement monitor...');
-    await stuckAgreementMonitor.stop();
-    
     // Stop idempotency service
     console.log('Stopping idempotency service...');
     await idempotencyService.stop();
@@ -353,31 +286,20 @@ const startServer = async () => {
       console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
       console.log(`💾 Redis caching: ACTIVE\n`);
       
-      // Start orchestrators in background after server is listening
+      // Start background services after server is listening
       (async () => {
         try {
           console.log('Starting background services...');
-          
-          // Start monitoring orchestrator
-          console.log('[STARTUP] 🚀 Starting monitoring orchestrator...');
-          console.log('[STARTUP] This includes MonitoringService and SettlementService');
-          await monitoringOrchestrator.start();
-          console.log('[STARTUP] ✅ Monitoring orchestrator started successfully');
-          
-          // Start expiry-cancellation orchestrator
-          console.log('[STARTUP] 🚀 Starting expiry-cancellation orchestrator...');
-          await expiryCancellationOrchestrator.start();
-          console.log('[STARTUP] ✅ Expiry-cancellation orchestrator started successfully');
           
           // Start idempotency service
           console.log('Starting idempotency service...');
           await idempotencyService.start();
           console.log('✅ Idempotency service started');
           
-          // Start stuck agreement monitor
-          console.log('Starting stuck agreement monitor...');
-          await stuckAgreementMonitor.start();
-          console.log('✅ Stuck agreement monitor started');
+          // Start offer expiry scheduler
+          console.log('Starting offer expiry scheduler...');
+          offerExpiryScheduler.start();
+          console.log('✅ Offer expiry scheduler started (runs every 15 minutes)');
           
           // DISABLED for BETA launch - Backup scheduler
           // Manual backups via CLI tools are sufficient for BETA phase

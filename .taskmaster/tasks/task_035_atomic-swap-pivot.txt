@@ -1,0 +1,84 @@
+# Task ID: 35
+# Title: Create Comprehensive Production End-to-End Test Suite for Atomic Swap System
+# Status: pending
+# Dependencies: 31, 32, 33, 34
+# Priority: high
+# Description: Develop and implement a full production E2E test suite for the atomic swap system by creating tests directly for mainnet, including configuration setup, wallet setup, and documentation. Since we have zero users in production, these E2E tests will serve as the primary validation for production deployment without needing backwards compatibility testing.
+# Details:
+1. Create a new production test directory (tests/production/e2e/) and implement E2E tests directly for production environment.
+2. Configure all tests to use production/mainnet configurations: mainnet RPC endpoints, production deployed program IDs, and production wallet paths.
+3. Implement the following specific production E2E test files covering all swap scenarios:
+   - 01-atomic-nft-for-nft-happy-path.test.ts (SPL NFT swaps)
+   - 02-atomic-sol-for-nft-happy-path.test.ts
+   - 03-atomic-nft-for-sol-happy-path.test.ts
+   - 04-atomic-sol-for-cnft-happy-path.test.ts (compressed NFT swaps)
+   - 05-atomic-cnft-for-cnft-happy-path.test.ts
+   - 06-atomic-cnft-for-nft-happy-path.test.ts
+   - 07-atomic-zero-fee-authorization.test.ts (zero-fee swaps with authorization)
+4. Create a dedicated production wallet setup for testing, separate from any other environments, ensuring secure key management and sufficient SOL for transaction fees.
+5. Implement safe test NFT creation and management strategies for production testing, including minting and cleanup procedures that work directly on mainnet.
+6. Update package.json scripts to include commands for running production E2E tests.
+7. Document detailed production testing procedures, including environment setup, test execution, wallet management, and troubleshooting.
+
+Since cNFT testing will happen on production mainnet and we have zero users, these tests can be created and run directly without requiring staging E2E completion. Follow best practices for Solana E2E testing by simulating real user flows, verifying on-chain state changes, and ensuring tests cover all critical swap scenarios and edge cases. Use reliable mainnet RPC providers and secure key handling to maintain test integrity and security.
+
+# Test Strategy:
+- Verify that all production E2E tests are successfully created and configured for mainnet environment.
+- Run each production E2E test file independently and as a suite against the mainnet environment.
+- Confirm that all transactions complete successfully with correct asset ownership transfers and fee collections.
+- Validate that production wallet setup works correctly, with proper key loading and SOL balance.
+- Ensure that test NFTs are created and managed safely on mainnet without affecting real user assets (since we have zero users).
+- Monitor logs and on-chain data to verify that program IDs, RPC endpoints, and wallet addresses are correctly configured.
+- Perform repeated test runs to confirm stability and reliability under production conditions.
+- Review documentation for completeness and clarity by following it to set up and run tests from scratch.
+- Validate cNFT swap functionality directly on mainnet since cNFT testing will happen in production.
+
+# Subtasks:
+## 1. Create production E2E test directory structure [pending]
+### Dependencies: None
+### Description: Create a new production test directory structure for mainnet E2E tests without copying from staging.
+### Details:
+Create a new directory structure tests/production/e2e/ and set up the foundation for production E2E tests. Since staging E2E is deferred, create the structure from scratch for direct production implementation.
+
+## 2. Configure production/mainnet test environment [pending]
+### Dependencies: 35.1
+### Description: Set up all production configurations including mainnet RPC endpoints, program IDs, and wallet paths.
+### Details:
+Configure mainnet RPC endpoints, production deployed program IDs, and production wallet paths. Ensure all configuration is set up for direct mainnet testing without staging dependencies.
+
+## 3. Create dedicated production wallet setup [pending]
+### Dependencies: 35.2
+### Description: Set up secure production wallets for testing, ensuring proper key management and sufficient SOL for transaction fees.
+### Details:
+Generate new wallet keypairs for production testing, securely store keys, and fund wallets with enough SOL for transaction fees. Ensure wallets are dedicated to production testing only.
+
+## 4. Implement production test NFT creation and management [pending]
+### Dependencies: 35.3
+### Description: Develop procedures for minting and cleaning up test NFTs directly on mainnet for production testing.
+### Details:
+Create scripts or functions to mint test NFTs for production testing on mainnet, track their usage, and implement cleanup procedures. Since we have zero users in production, these can be safely created and managed on mainnet.
+
+## 5. Implement specific production E2E test files [pending]
+### Dependencies: 35.4
+### Description: Create and implement the required production E2E test files covering all swap scenarios including cNFT swaps.
+### Details:
+Develop the following test files: 01-atomic-nft-for-nft-happy-path.test.ts, 02-atomic-sol-for-nft-happy-path.test.ts, 03-atomic-nft-for-sol-happy-path.test.ts, 04-atomic-sol-for-cnft-happy-path.test.ts, 05-atomic-cnft-for-cnft-happy-path.test.ts, 06-atomic-cnft-for-nft-happy-path.test.ts, 07-atomic-zero-fee-authorization.test.ts. Ensure each test covers the specified swap scenario and works directly on mainnet.
+
+## 6. Update package.json scripts for production E2E tests [pending]
+### Dependencies: 35.5
+### Description: Add commands to package.json for running production E2E tests.
+### Details:
+Add new scripts to package.json, such as 'test:production:e2e', to facilitate easy execution of production E2E tests. Ensure scripts reference the correct test directory and configurations.
+
+## 7. Document production testing procedures [pending]
+### Dependencies: 35.6
+### Description: Create detailed documentation for production testing, including environment setup, test execution, wallet management, and troubleshooting.
+### Details:
+Write comprehensive documentation covering all aspects of production testing: environment setup, test execution steps, wallet management, and troubleshooting common issues. Include specific guidance for mainnet testing and cNFT validation.
+
+## 8. Verify and validate production E2E test suite [pending]
+### Dependencies: 35.7
+### Description: Run and validate the entire production E2E test suite to ensure all tests pass and serve as primary validation for production deployment.
+### Details:
+Execute the full production E2E test suite on mainnet, verify all tests pass, and confirm coverage of all critical swap scenarios including cNFT swaps. Since we have zero users in production, these tests serve as the primary validation for production deployment.
+
