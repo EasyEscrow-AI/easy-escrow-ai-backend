@@ -1,0 +1,33 @@
+{
+  "name": "Mandrill Monkey",
+  "symbol": "MONKEY",
+  "description": "The most colorful of all primates, with vibrant red and blue faces.",
+  "image": "https://images.unsplash.com/photo-1501706362039-c06b2d715385?w=800",
+  "attributes": [
+    {
+      "trait_type": "Species",
+      "value": "Mandrill"
+    },
+    {
+      "trait_type": "Habitat",
+      "value": "Rainforest"
+    },
+    {
+      "trait_type": "Rarity",
+      "value": "Epic"
+    },
+    {
+      "trait_type": "Color",
+      "value": "Vibrant"
+    }
+  ],
+  "properties": {
+    "files": [
+      {
+        "uri": "https://images.unsplash.com/photo-1501706362039-c06b2d715385?w=800",
+        "type": "image/jpeg"
+      }
+    ],
+    "category": "image"
+  }
+}

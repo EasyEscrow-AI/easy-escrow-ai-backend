@@ -48,6 +48,26 @@ export type TransactionLog = $Result.DefaultSelection<Prisma.$TransactionLogPayl
  * 
  */
 export type Webhook = $Result.DefaultSelection<Prisma.$WebhookPayload>
+/**
+ * Model User
+ * 
+ */
+export type User = $Result.DefaultSelection<Prisma.$UserPayload>
+/**
+ * Model NoncePool
+ * 
+ */
+export type NoncePool = $Result.DefaultSelection<Prisma.$NoncePoolPayload>
+/**
+ * Model SwapOffer
+ * 
+ */
+export type SwapOffer = $Result.DefaultSelection<Prisma.$SwapOfferPayload>
+/**
+ * Model SwapTransaction
+ * 
+ */
+export type SwapTransaction = $Result.DefaultSelection<Prisma.$SwapTransactionPayload>
 
 /**
  * Enums
@@ -126,6 +146,46 @@ export const WebhookDeliveryStatus: {
 
 export type WebhookDeliveryStatus = (typeof WebhookDeliveryStatus)[keyof typeof WebhookDeliveryStatus]
 
+
+export const NonceStatus: {
+  AVAILABLE: 'AVAILABLE',
+  IN_USE: 'IN_USE',
+  EXPIRED: 'EXPIRED',
+  INVALID: 'INVALID'
+};
+
+export type NonceStatus = (typeof NonceStatus)[keyof typeof NonceStatus]
+
+
+export const OfferType: {
+  MAKER_OFFER: 'MAKER_OFFER',
+  COUNTER_OFFER: 'COUNTER_OFFER',
+  COUNTER: 'COUNTER'
+};
+
+export type OfferType = (typeof OfferType)[keyof typeof OfferType]
+
+
+export const OfferStatus: {
+  ACTIVE: 'ACTIVE',
+  ACCEPTED: 'ACCEPTED',
+  FILLED: 'FILLED',
+  CANCELLED: 'CANCELLED',
+  EXPIRED: 'EXPIRED'
+};
+
+export type OfferStatus = (typeof OfferStatus)[keyof typeof OfferStatus]
+
+
+export const TransactionStatus: {
+  PENDING: 'PENDING',
+  CONFIRMED: 'CONFIRMED',
+  FAILED: 'FAILED',
+  CANCELLED: 'CANCELLED'
+};
+
+export type TransactionStatus = (typeof TransactionStatus)[keyof typeof TransactionStatus]
+
 }
 
 export type AgreementStatus = $Enums.AgreementStatus
@@ -155,6 +215,22 @@ export const WebhookEventType: typeof $Enums.WebhookEventType
 export type WebhookDeliveryStatus = $Enums.WebhookDeliveryStatus
 
 export const WebhookDeliveryStatus: typeof $Enums.WebhookDeliveryStatus
+
+export type NonceStatus = $Enums.NonceStatus
+
+export const NonceStatus: typeof $Enums.NonceStatus
+
+export type OfferType = $Enums.OfferType
+
+export const OfferType: typeof $Enums.OfferType
+
+export type OfferStatus = $Enums.OfferStatus
+
+export const OfferStatus: typeof $Enums.OfferStatus
+
+export type TransactionStatus = $Enums.TransactionStatus
+
+export const TransactionStatus: typeof $Enums.TransactionStatus
 
 /**
  * ##  Prisma Client ʲˢ
@@ -343,6 +419,46 @@ export class PrismaClient<
     * ```
     */
   get webhook(): Prisma.WebhookDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.user`: Exposes CRUD operations for the **User** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Users
+    * const users = await prisma.user.findMany()
+    * ```
+    */
+  get user(): Prisma.UserDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.noncePool`: Exposes CRUD operations for the **NoncePool** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more NoncePools
+    * const noncePools = await prisma.noncePool.findMany()
+    * ```
+    */
+  get noncePool(): Prisma.NoncePoolDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.swapOffer`: Exposes CRUD operations for the **SwapOffer** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more SwapOffers
+    * const swapOffers = await prisma.swapOffer.findMany()
+    * ```
+    */
+  get swapOffer(): Prisma.SwapOfferDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.swapTransaction`: Exposes CRUD operations for the **SwapTransaction** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more SwapTransactions
+    * const swapTransactions = await prisma.swapTransaction.findMany()
+    * ```
+    */
+  get swapTransaction(): Prisma.SwapTransactionDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -789,7 +905,11 @@ export namespace Prisma {
     Settlement: 'Settlement',
     Receipt: 'Receipt',
     TransactionLog: 'TransactionLog',
-    Webhook: 'Webhook'
+    Webhook: 'Webhook',
+    User: 'User',
+    NoncePool: 'NoncePool',
+    SwapOffer: 'SwapOffer',
+    SwapTransaction: 'SwapTransaction'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -808,7 +928,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "agreement" | "deposit" | "idempotencyKey" | "settlement" | "receipt" | "transactionLog" | "webhook"
+      modelProps: "agreement" | "deposit" | "idempotencyKey" | "settlement" | "receipt" | "transactionLog" | "webhook" | "user" | "noncePool" | "swapOffer" | "swapTransaction"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1330,6 +1450,302 @@ export namespace Prisma {
           }
         }
       }
+      User: {
+        payload: Prisma.$UserPayload<ExtArgs>
+        fields: Prisma.UserFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.UserFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.UserFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload>
+          }
+          findFirst: {
+            args: Prisma.UserFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.UserFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload>
+          }
+          findMany: {
+            args: Prisma.UserFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload>[]
+          }
+          create: {
+            args: Prisma.UserCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload>
+          }
+          createMany: {
+            args: Prisma.UserCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.UserCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload>[]
+          }
+          delete: {
+            args: Prisma.UserDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload>
+          }
+          update: {
+            args: Prisma.UserUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload>
+          }
+          deleteMany: {
+            args: Prisma.UserDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.UserUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.UserUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload>[]
+          }
+          upsert: {
+            args: Prisma.UserUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload>
+          }
+          aggregate: {
+            args: Prisma.UserAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateUser>
+          }
+          groupBy: {
+            args: Prisma.UserGroupByArgs<ExtArgs>
+            result: $Utils.Optional<UserGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.UserCountArgs<ExtArgs>
+            result: $Utils.Optional<UserCountAggregateOutputType> | number
+          }
+        }
+      }
+      NoncePool: {
+        payload: Prisma.$NoncePoolPayload<ExtArgs>
+        fields: Prisma.NoncePoolFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.NoncePoolFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NoncePoolPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.NoncePoolFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NoncePoolPayload>
+          }
+          findFirst: {
+            args: Prisma.NoncePoolFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NoncePoolPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.NoncePoolFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NoncePoolPayload>
+          }
+          findMany: {
+            args: Prisma.NoncePoolFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NoncePoolPayload>[]
+          }
+          create: {
+            args: Prisma.NoncePoolCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NoncePoolPayload>
+          }
+          createMany: {
+            args: Prisma.NoncePoolCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.NoncePoolCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NoncePoolPayload>[]
+          }
+          delete: {
+            args: Prisma.NoncePoolDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NoncePoolPayload>
+          }
+          update: {
+            args: Prisma.NoncePoolUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NoncePoolPayload>
+          }
+          deleteMany: {
+            args: Prisma.NoncePoolDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.NoncePoolUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.NoncePoolUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NoncePoolPayload>[]
+          }
+          upsert: {
+            args: Prisma.NoncePoolUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NoncePoolPayload>
+          }
+          aggregate: {
+            args: Prisma.NoncePoolAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateNoncePool>
+          }
+          groupBy: {
+            args: Prisma.NoncePoolGroupByArgs<ExtArgs>
+            result: $Utils.Optional<NoncePoolGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.NoncePoolCountArgs<ExtArgs>
+            result: $Utils.Optional<NoncePoolCountAggregateOutputType> | number
+          }
+        }
+      }
+      SwapOffer: {
+        payload: Prisma.$SwapOfferPayload<ExtArgs>
+        fields: Prisma.SwapOfferFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.SwapOfferFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SwapOfferPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.SwapOfferFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SwapOfferPayload>
+          }
+          findFirst: {
+            args: Prisma.SwapOfferFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SwapOfferPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.SwapOfferFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SwapOfferPayload>
+          }
+          findMany: {
+            args: Prisma.SwapOfferFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SwapOfferPayload>[]
+          }
+          create: {
+            args: Prisma.SwapOfferCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SwapOfferPayload>
+          }
+          createMany: {
+            args: Prisma.SwapOfferCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.SwapOfferCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SwapOfferPayload>[]
+          }
+          delete: {
+            args: Prisma.SwapOfferDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SwapOfferPayload>
+          }
+          update: {
+            args: Prisma.SwapOfferUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SwapOfferPayload>
+          }
+          deleteMany: {
+            args: Prisma.SwapOfferDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.SwapOfferUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.SwapOfferUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SwapOfferPayload>[]
+          }
+          upsert: {
+            args: Prisma.SwapOfferUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SwapOfferPayload>
+          }
+          aggregate: {
+            args: Prisma.SwapOfferAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateSwapOffer>
+          }
+          groupBy: {
+            args: Prisma.SwapOfferGroupByArgs<ExtArgs>
+            result: $Utils.Optional<SwapOfferGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.SwapOfferCountArgs<ExtArgs>
+            result: $Utils.Optional<SwapOfferCountAggregateOutputType> | number
+          }
+        }
+      }
+      SwapTransaction: {
+        payload: Prisma.$SwapTransactionPayload<ExtArgs>
+        fields: Prisma.SwapTransactionFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.SwapTransactionFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SwapTransactionPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.SwapTransactionFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SwapTransactionPayload>
+          }
+          findFirst: {
+            args: Prisma.SwapTransactionFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SwapTransactionPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.SwapTransactionFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SwapTransactionPayload>
+          }
+          findMany: {
+            args: Prisma.SwapTransactionFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SwapTransactionPayload>[]
+          }
+          create: {
+            args: Prisma.SwapTransactionCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SwapTransactionPayload>
+          }
+          createMany: {
+            args: Prisma.SwapTransactionCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.SwapTransactionCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SwapTransactionPayload>[]
+          }
+          delete: {
+            args: Prisma.SwapTransactionDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SwapTransactionPayload>
+          }
+          update: {
+            args: Prisma.SwapTransactionUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SwapTransactionPayload>
+          }
+          deleteMany: {
+            args: Prisma.SwapTransactionDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.SwapTransactionUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.SwapTransactionUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SwapTransactionPayload>[]
+          }
+          upsert: {
+            args: Prisma.SwapTransactionUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SwapTransactionPayload>
+          }
+          aggregate: {
+            args: Prisma.SwapTransactionAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateSwapTransaction>
+          }
+          groupBy: {
+            args: Prisma.SwapTransactionGroupByArgs<ExtArgs>
+            result: $Utils.Optional<SwapTransactionGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.SwapTransactionCountArgs<ExtArgs>
+            result: $Utils.Optional<SwapTransactionCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -1433,6 +1849,10 @@ export namespace Prisma {
     receipt?: ReceiptOmit
     transactionLog?: TransactionLogOmit
     webhook?: WebhookOmit
+    user?: UserOmit
+    noncePool?: NoncePoolOmit
+    swapOffer?: SwapOfferOmit
+    swapTransaction?: SwapTransactionOmit
   }
 
   /* Types for Logging */
@@ -1545,6 +1965,135 @@ export namespace Prisma {
    */
   export type AgreementCountOutputTypeCountWebhooksArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: WebhookWhereInput
+  }
+
+
+  /**
+   * Count Type UserCountOutputType
+   */
+
+  export type UserCountOutputType = {
+    makerOffers: number
+    makerTransactions: number
+    takerTransactions: number
+  }
+
+  export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    makerOffers?: boolean | UserCountOutputTypeCountMakerOffersArgs
+    makerTransactions?: boolean | UserCountOutputTypeCountMakerTransactionsArgs
+    takerTransactions?: boolean | UserCountOutputTypeCountTakerTransactionsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserCountOutputType
+     */
+    select?: UserCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountMakerOffersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SwapOfferWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountMakerTransactionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SwapTransactionWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountTakerTransactionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SwapTransactionWhereInput
+  }
+
+
+  /**
+   * Count Type NoncePoolCountOutputType
+   */
+
+  export type NoncePoolCountOutputType = {
+    offers: number
+  }
+
+  export type NoncePoolCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    offers?: boolean | NoncePoolCountOutputTypeCountOffersArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * NoncePoolCountOutputType without action
+   */
+  export type NoncePoolCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NoncePoolCountOutputType
+     */
+    select?: NoncePoolCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * NoncePoolCountOutputType without action
+   */
+  export type NoncePoolCountOutputTypeCountOffersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SwapOfferWhereInput
+  }
+
+
+  /**
+   * Count Type SwapOfferCountOutputType
+   */
+
+  export type SwapOfferCountOutputType = {
+    counterOffers: number
+    transactions: number
+    counterTransactions: number
+  }
+
+  export type SwapOfferCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    counterOffers?: boolean | SwapOfferCountOutputTypeCountCounterOffersArgs
+    transactions?: boolean | SwapOfferCountOutputTypeCountTransactionsArgs
+    counterTransactions?: boolean | SwapOfferCountOutputTypeCountCounterTransactionsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * SwapOfferCountOutputType without action
+   */
+  export type SwapOfferCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SwapOfferCountOutputType
+     */
+    select?: SwapOfferCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * SwapOfferCountOutputType without action
+   */
+  export type SwapOfferCountOutputTypeCountCounterOffersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SwapOfferWhereInput
+  }
+
+  /**
+   * SwapOfferCountOutputType without action
+   */
+  export type SwapOfferCountOutputTypeCountTransactionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SwapTransactionWhereInput
+  }
+
+  /**
+   * SwapOfferCountOutputType without action
+   */
+  export type SwapOfferCountOutputTypeCountCounterTransactionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SwapTransactionWhereInput
   }
 
 
@@ -10064,6 +10613,5062 @@ export namespace Prisma {
 
 
   /**
+   * Model User
+   */
+
+  export type AggregateUser = {
+    _count: UserCountAggregateOutputType | null
+    _avg: UserAvgAggregateOutputType | null
+    _sum: UserSumAggregateOutputType | null
+    _min: UserMinAggregateOutputType | null
+    _max: UserMaxAggregateOutputType | null
+  }
+
+  export type UserAvgAggregateOutputType = {
+    totalSwapsCompleted: number | null
+    totalFeesPaidLamports: number | null
+  }
+
+  export type UserSumAggregateOutputType = {
+    totalSwapsCompleted: number | null
+    totalFeesPaidLamports: bigint | null
+  }
+
+  export type UserMinAggregateOutputType = {
+    id: string | null
+    walletAddress: string | null
+    nonceAccount: string | null
+    isSubsidized: boolean | null
+    totalSwapsCompleted: number | null
+    totalFeesPaidLamports: bigint | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type UserMaxAggregateOutputType = {
+    id: string | null
+    walletAddress: string | null
+    nonceAccount: string | null
+    isSubsidized: boolean | null
+    totalSwapsCompleted: number | null
+    totalFeesPaidLamports: bigint | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type UserCountAggregateOutputType = {
+    id: number
+    walletAddress: number
+    nonceAccount: number
+    isSubsidized: number
+    totalSwapsCompleted: number
+    totalFeesPaidLamports: number
+    swapStats: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type UserAvgAggregateInputType = {
+    totalSwapsCompleted?: true
+    totalFeesPaidLamports?: true
+  }
+
+  export type UserSumAggregateInputType = {
+    totalSwapsCompleted?: true
+    totalFeesPaidLamports?: true
+  }
+
+  export type UserMinAggregateInputType = {
+    id?: true
+    walletAddress?: true
+    nonceAccount?: true
+    isSubsidized?: true
+    totalSwapsCompleted?: true
+    totalFeesPaidLamports?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type UserMaxAggregateInputType = {
+    id?: true
+    walletAddress?: true
+    nonceAccount?: true
+    isSubsidized?: true
+    totalSwapsCompleted?: true
+    totalFeesPaidLamports?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type UserCountAggregateInputType = {
+    id?: true
+    walletAddress?: true
+    nonceAccount?: true
+    isSubsidized?: true
+    totalSwapsCompleted?: true
+    totalFeesPaidLamports?: true
+    swapStats?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type UserAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which User to aggregate.
+     */
+    where?: UserWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Users to fetch.
+     */
+    orderBy?: UserOrderByWithRelationInput | UserOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: UserWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Users from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Users.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Users
+    **/
+    _count?: true | UserCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: UserAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: UserSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: UserMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: UserMaxAggregateInputType
+  }
+
+  export type GetUserAggregateType<T extends UserAggregateArgs> = {
+        [P in keyof T & keyof AggregateUser]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateUser[P]>
+      : GetScalarType<T[P], AggregateUser[P]>
+  }
+
+
+
+
+  export type UserGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: UserWhereInput
+    orderBy?: UserOrderByWithAggregationInput | UserOrderByWithAggregationInput[]
+    by: UserScalarFieldEnum[] | UserScalarFieldEnum
+    having?: UserScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: UserCountAggregateInputType | true
+    _avg?: UserAvgAggregateInputType
+    _sum?: UserSumAggregateInputType
+    _min?: UserMinAggregateInputType
+    _max?: UserMaxAggregateInputType
+  }
+
+  export type UserGroupByOutputType = {
+    id: string
+    walletAddress: string
+    nonceAccount: string | null
+    isSubsidized: boolean
+    totalSwapsCompleted: number
+    totalFeesPaidLamports: bigint
+    swapStats: JsonValue
+    createdAt: Date
+    updatedAt: Date
+    _count: UserCountAggregateOutputType | null
+    _avg: UserAvgAggregateOutputType | null
+    _sum: UserSumAggregateOutputType | null
+    _min: UserMinAggregateOutputType | null
+    _max: UserMaxAggregateOutputType | null
+  }
+
+  type GetUserGroupByPayload<T extends UserGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<UserGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof UserGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], UserGroupByOutputType[P]>
+            : GetScalarType<T[P], UserGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type UserSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    walletAddress?: boolean
+    nonceAccount?: boolean
+    isSubsidized?: boolean
+    totalSwapsCompleted?: boolean
+    totalFeesPaidLamports?: boolean
+    swapStats?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    makerOffers?: boolean | User$makerOffersArgs<ExtArgs>
+    makerTransactions?: boolean | User$makerTransactionsArgs<ExtArgs>
+    takerTransactions?: boolean | User$takerTransactionsArgs<ExtArgs>
+    _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["user"]>
+
+  export type UserSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    walletAddress?: boolean
+    nonceAccount?: boolean
+    isSubsidized?: boolean
+    totalSwapsCompleted?: boolean
+    totalFeesPaidLamports?: boolean
+    swapStats?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["user"]>
+
+  export type UserSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    walletAddress?: boolean
+    nonceAccount?: boolean
+    isSubsidized?: boolean
+    totalSwapsCompleted?: boolean
+    totalFeesPaidLamports?: boolean
+    swapStats?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["user"]>
+
+  export type UserSelectScalar = {
+    id?: boolean
+    walletAddress?: boolean
+    nonceAccount?: boolean
+    isSubsidized?: boolean
+    totalSwapsCompleted?: boolean
+    totalFeesPaidLamports?: boolean
+    swapStats?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "walletAddress" | "nonceAccount" | "isSubsidized" | "totalSwapsCompleted" | "totalFeesPaidLamports" | "swapStats" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+  export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    makerOffers?: boolean | User$makerOffersArgs<ExtArgs>
+    makerTransactions?: boolean | User$makerTransactionsArgs<ExtArgs>
+    takerTransactions?: boolean | User$takerTransactionsArgs<ExtArgs>
+    _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type UserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type UserIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $UserPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "User"
+    objects: {
+      makerOffers: Prisma.$SwapOfferPayload<ExtArgs>[]
+      makerTransactions: Prisma.$SwapTransactionPayload<ExtArgs>[]
+      takerTransactions: Prisma.$SwapTransactionPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      walletAddress: string
+      nonceAccount: string | null
+      isSubsidized: boolean
+      totalSwapsCompleted: number
+      totalFeesPaidLamports: bigint
+      swapStats: Prisma.JsonValue
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["user"]>
+    composites: {}
+  }
+
+  type UserGetPayload<S extends boolean | null | undefined | UserDefaultArgs> = $Result.GetResult<Prisma.$UserPayload, S>
+
+  type UserCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<UserFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: UserCountAggregateInputType | true
+    }
+
+  export interface UserDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['User'], meta: { name: 'User' } }
+    /**
+     * Find zero or one User that matches the filter.
+     * @param {UserFindUniqueArgs} args - Arguments to find a User
+     * @example
+     * // Get one User
+     * const user = await prisma.user.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends UserFindUniqueArgs>(args: SelectSubset<T, UserFindUniqueArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one User that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {UserFindUniqueOrThrowArgs} args - Arguments to find a User
+     * @example
+     * // Get one User
+     * const user = await prisma.user.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends UserFindUniqueOrThrowArgs>(args: SelectSubset<T, UserFindUniqueOrThrowArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first User that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserFindFirstArgs} args - Arguments to find a User
+     * @example
+     * // Get one User
+     * const user = await prisma.user.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends UserFindFirstArgs>(args?: SelectSubset<T, UserFindFirstArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first User that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserFindFirstOrThrowArgs} args - Arguments to find a User
+     * @example
+     * // Get one User
+     * const user = await prisma.user.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends UserFindFirstOrThrowArgs>(args?: SelectSubset<T, UserFindFirstOrThrowArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Users that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Users
+     * const users = await prisma.user.findMany()
+     * 
+     * // Get first 10 Users
+     * const users = await prisma.user.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const userWithIdOnly = await prisma.user.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends UserFindManyArgs>(args?: SelectSubset<T, UserFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a User.
+     * @param {UserCreateArgs} args - Arguments to create a User.
+     * @example
+     * // Create one User
+     * const User = await prisma.user.create({
+     *   data: {
+     *     // ... data to create a User
+     *   }
+     * })
+     * 
+     */
+    create<T extends UserCreateArgs>(args: SelectSubset<T, UserCreateArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Users.
+     * @param {UserCreateManyArgs} args - Arguments to create many Users.
+     * @example
+     * // Create many Users
+     * const user = await prisma.user.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends UserCreateManyArgs>(args?: SelectSubset<T, UserCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Users and returns the data saved in the database.
+     * @param {UserCreateManyAndReturnArgs} args - Arguments to create many Users.
+     * @example
+     * // Create many Users
+     * const user = await prisma.user.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Users and only return the `id`
+     * const userWithIdOnly = await prisma.user.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends UserCreateManyAndReturnArgs>(args?: SelectSubset<T, UserCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a User.
+     * @param {UserDeleteArgs} args - Arguments to delete one User.
+     * @example
+     * // Delete one User
+     * const User = await prisma.user.delete({
+     *   where: {
+     *     // ... filter to delete one User
+     *   }
+     * })
+     * 
+     */
+    delete<T extends UserDeleteArgs>(args: SelectSubset<T, UserDeleteArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one User.
+     * @param {UserUpdateArgs} args - Arguments to update one User.
+     * @example
+     * // Update one User
+     * const user = await prisma.user.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends UserUpdateArgs>(args: SelectSubset<T, UserUpdateArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Users.
+     * @param {UserDeleteManyArgs} args - Arguments to filter Users to delete.
+     * @example
+     * // Delete a few Users
+     * const { count } = await prisma.user.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends UserDeleteManyArgs>(args?: SelectSubset<T, UserDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Users.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Users
+     * const user = await prisma.user.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends UserUpdateManyArgs>(args: SelectSubset<T, UserUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Users and returns the data updated in the database.
+     * @param {UserUpdateManyAndReturnArgs} args - Arguments to update many Users.
+     * @example
+     * // Update many Users
+     * const user = await prisma.user.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more Users and only return the `id`
+     * const userWithIdOnly = await prisma.user.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends UserUpdateManyAndReturnArgs>(args: SelectSubset<T, UserUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one User.
+     * @param {UserUpsertArgs} args - Arguments to update or create a User.
+     * @example
+     * // Update or create a User
+     * const user = await prisma.user.upsert({
+     *   create: {
+     *     // ... data to create a User
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the User we want to update
+     *   }
+     * })
+     */
+    upsert<T extends UserUpsertArgs>(args: SelectSubset<T, UserUpsertArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of Users.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserCountArgs} args - Arguments to filter Users to count.
+     * @example
+     * // Count the number of Users
+     * const count = await prisma.user.count({
+     *   where: {
+     *     // ... the filter for the Users we want to count
+     *   }
+     * })
+    **/
+    count<T extends UserCountArgs>(
+      args?: Subset<T, UserCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], UserCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a User.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends UserAggregateArgs>(args: Subset<T, UserAggregateArgs>): Prisma.PrismaPromise<GetUserAggregateType<T>>
+
+    /**
+     * Group by User.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends UserGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: UserGroupByArgs['orderBy'] }
+        : { orderBy?: UserGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, UserGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetUserGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the User model
+   */
+  readonly fields: UserFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for User.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__UserClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    makerOffers<T extends User$makerOffersArgs<ExtArgs> = {}>(args?: Subset<T, User$makerOffersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SwapOfferPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    makerTransactions<T extends User$makerTransactionsArgs<ExtArgs> = {}>(args?: Subset<T, User$makerTransactionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SwapTransactionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    takerTransactions<T extends User$takerTransactionsArgs<ExtArgs> = {}>(args?: Subset<T, User$takerTransactionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SwapTransactionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the User model
+   */
+  interface UserFieldRefs {
+    readonly id: FieldRef<"User", 'String'>
+    readonly walletAddress: FieldRef<"User", 'String'>
+    readonly nonceAccount: FieldRef<"User", 'String'>
+    readonly isSubsidized: FieldRef<"User", 'Boolean'>
+    readonly totalSwapsCompleted: FieldRef<"User", 'Int'>
+    readonly totalFeesPaidLamports: FieldRef<"User", 'BigInt'>
+    readonly swapStats: FieldRef<"User", 'Json'>
+    readonly createdAt: FieldRef<"User", 'DateTime'>
+    readonly updatedAt: FieldRef<"User", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * User findUnique
+   */
+  export type UserFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    /**
+     * Filter, which User to fetch.
+     */
+    where: UserWhereUniqueInput
+  }
+
+  /**
+   * User findUniqueOrThrow
+   */
+  export type UserFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    /**
+     * Filter, which User to fetch.
+     */
+    where: UserWhereUniqueInput
+  }
+
+  /**
+   * User findFirst
+   */
+  export type UserFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    /**
+     * Filter, which User to fetch.
+     */
+    where?: UserWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Users to fetch.
+     */
+    orderBy?: UserOrderByWithRelationInput | UserOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Users.
+     */
+    cursor?: UserWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Users from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Users.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Users.
+     */
+    distinct?: UserScalarFieldEnum | UserScalarFieldEnum[]
+  }
+
+  /**
+   * User findFirstOrThrow
+   */
+  export type UserFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    /**
+     * Filter, which User to fetch.
+     */
+    where?: UserWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Users to fetch.
+     */
+    orderBy?: UserOrderByWithRelationInput | UserOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Users.
+     */
+    cursor?: UserWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Users from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Users.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Users.
+     */
+    distinct?: UserScalarFieldEnum | UserScalarFieldEnum[]
+  }
+
+  /**
+   * User findMany
+   */
+  export type UserFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    /**
+     * Filter, which Users to fetch.
+     */
+    where?: UserWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Users to fetch.
+     */
+    orderBy?: UserOrderByWithRelationInput | UserOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Users.
+     */
+    cursor?: UserWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Users from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Users.
+     */
+    skip?: number
+    distinct?: UserScalarFieldEnum | UserScalarFieldEnum[]
+  }
+
+  /**
+   * User create
+   */
+  export type UserCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    /**
+     * The data needed to create a User.
+     */
+    data: XOR<UserCreateInput, UserUncheckedCreateInput>
+  }
+
+  /**
+   * User createMany
+   */
+  export type UserCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Users.
+     */
+    data: UserCreateManyInput | UserCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * User createManyAndReturn
+   */
+  export type UserCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * The data used to create many Users.
+     */
+    data: UserCreateManyInput | UserCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * User update
+   */
+  export type UserUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    /**
+     * The data needed to update a User.
+     */
+    data: XOR<UserUpdateInput, UserUncheckedUpdateInput>
+    /**
+     * Choose, which User to update.
+     */
+    where: UserWhereUniqueInput
+  }
+
+  /**
+   * User updateMany
+   */
+  export type UserUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Users.
+     */
+    data: XOR<UserUpdateManyMutationInput, UserUncheckedUpdateManyInput>
+    /**
+     * Filter which Users to update
+     */
+    where?: UserWhereInput
+    /**
+     * Limit how many Users to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * User updateManyAndReturn
+   */
+  export type UserUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * The data used to update Users.
+     */
+    data: XOR<UserUpdateManyMutationInput, UserUncheckedUpdateManyInput>
+    /**
+     * Filter which Users to update
+     */
+    where?: UserWhereInput
+    /**
+     * Limit how many Users to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * User upsert
+   */
+  export type UserUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    /**
+     * The filter to search for the User to update in case it exists.
+     */
+    where: UserWhereUniqueInput
+    /**
+     * In case the User found by the `where` argument doesn't exist, create a new User with this data.
+     */
+    create: XOR<UserCreateInput, UserUncheckedCreateInput>
+    /**
+     * In case the User was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<UserUpdateInput, UserUncheckedUpdateInput>
+  }
+
+  /**
+   * User delete
+   */
+  export type UserDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    /**
+     * Filter which User to delete.
+     */
+    where: UserWhereUniqueInput
+  }
+
+  /**
+   * User deleteMany
+   */
+  export type UserDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Users to delete
+     */
+    where?: UserWhereInput
+    /**
+     * Limit how many Users to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * User.makerOffers
+   */
+  export type User$makerOffersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SwapOffer
+     */
+    select?: SwapOfferSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SwapOffer
+     */
+    omit?: SwapOfferOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SwapOfferInclude<ExtArgs> | null
+    where?: SwapOfferWhereInput
+    orderBy?: SwapOfferOrderByWithRelationInput | SwapOfferOrderByWithRelationInput[]
+    cursor?: SwapOfferWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: SwapOfferScalarFieldEnum | SwapOfferScalarFieldEnum[]
+  }
+
+  /**
+   * User.makerTransactions
+   */
+  export type User$makerTransactionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SwapTransaction
+     */
+    select?: SwapTransactionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SwapTransaction
+     */
+    omit?: SwapTransactionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SwapTransactionInclude<ExtArgs> | null
+    where?: SwapTransactionWhereInput
+    orderBy?: SwapTransactionOrderByWithRelationInput | SwapTransactionOrderByWithRelationInput[]
+    cursor?: SwapTransactionWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: SwapTransactionScalarFieldEnum | SwapTransactionScalarFieldEnum[]
+  }
+
+  /**
+   * User.takerTransactions
+   */
+  export type User$takerTransactionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SwapTransaction
+     */
+    select?: SwapTransactionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SwapTransaction
+     */
+    omit?: SwapTransactionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SwapTransactionInclude<ExtArgs> | null
+    where?: SwapTransactionWhereInput
+    orderBy?: SwapTransactionOrderByWithRelationInput | SwapTransactionOrderByWithRelationInput[]
+    cursor?: SwapTransactionWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: SwapTransactionScalarFieldEnum | SwapTransactionScalarFieldEnum[]
+  }
+
+  /**
+   * User without action
+   */
+  export type UserDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model NoncePool
+   */
+
+  export type AggregateNoncePool = {
+    _count: NoncePoolCountAggregateOutputType | null
+    _avg: NoncePoolAvgAggregateOutputType | null
+    _sum: NoncePoolSumAggregateOutputType | null
+    _min: NoncePoolMinAggregateOutputType | null
+    _max: NoncePoolMaxAggregateOutputType | null
+  }
+
+  export type NoncePoolAvgAggregateOutputType = {
+    id: number | null
+  }
+
+  export type NoncePoolSumAggregateOutputType = {
+    id: number | null
+  }
+
+  export type NoncePoolMinAggregateOutputType = {
+    id: number | null
+    nonceAccount: string | null
+    status: $Enums.NonceStatus | null
+    lastUsedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type NoncePoolMaxAggregateOutputType = {
+    id: number | null
+    nonceAccount: string | null
+    status: $Enums.NonceStatus | null
+    lastUsedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type NoncePoolCountAggregateOutputType = {
+    id: number
+    nonceAccount: number
+    status: number
+    lastUsedAt: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type NoncePoolAvgAggregateInputType = {
+    id?: true
+  }
+
+  export type NoncePoolSumAggregateInputType = {
+    id?: true
+  }
+
+  export type NoncePoolMinAggregateInputType = {
+    id?: true
+    nonceAccount?: true
+    status?: true
+    lastUsedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type NoncePoolMaxAggregateInputType = {
+    id?: true
+    nonceAccount?: true
+    status?: true
+    lastUsedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type NoncePoolCountAggregateInputType = {
+    id?: true
+    nonceAccount?: true
+    status?: true
+    lastUsedAt?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type NoncePoolAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which NoncePool to aggregate.
+     */
+    where?: NoncePoolWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of NoncePools to fetch.
+     */
+    orderBy?: NoncePoolOrderByWithRelationInput | NoncePoolOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: NoncePoolWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` NoncePools from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` NoncePools.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned NoncePools
+    **/
+    _count?: true | NoncePoolCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: NoncePoolAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: NoncePoolSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: NoncePoolMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: NoncePoolMaxAggregateInputType
+  }
+
+  export type GetNoncePoolAggregateType<T extends NoncePoolAggregateArgs> = {
+        [P in keyof T & keyof AggregateNoncePool]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateNoncePool[P]>
+      : GetScalarType<T[P], AggregateNoncePool[P]>
+  }
+
+
+
+
+  export type NoncePoolGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: NoncePoolWhereInput
+    orderBy?: NoncePoolOrderByWithAggregationInput | NoncePoolOrderByWithAggregationInput[]
+    by: NoncePoolScalarFieldEnum[] | NoncePoolScalarFieldEnum
+    having?: NoncePoolScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: NoncePoolCountAggregateInputType | true
+    _avg?: NoncePoolAvgAggregateInputType
+    _sum?: NoncePoolSumAggregateInputType
+    _min?: NoncePoolMinAggregateInputType
+    _max?: NoncePoolMaxAggregateInputType
+  }
+
+  export type NoncePoolGroupByOutputType = {
+    id: number
+    nonceAccount: string
+    status: $Enums.NonceStatus
+    lastUsedAt: Date | null
+    createdAt: Date
+    updatedAt: Date
+    _count: NoncePoolCountAggregateOutputType | null
+    _avg: NoncePoolAvgAggregateOutputType | null
+    _sum: NoncePoolSumAggregateOutputType | null
+    _min: NoncePoolMinAggregateOutputType | null
+    _max: NoncePoolMaxAggregateOutputType | null
+  }
+
+  type GetNoncePoolGroupByPayload<T extends NoncePoolGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<NoncePoolGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof NoncePoolGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], NoncePoolGroupByOutputType[P]>
+            : GetScalarType<T[P], NoncePoolGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type NoncePoolSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    nonceAccount?: boolean
+    status?: boolean
+    lastUsedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    offers?: boolean | NoncePool$offersArgs<ExtArgs>
+    _count?: boolean | NoncePoolCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["noncePool"]>
+
+  export type NoncePoolSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    nonceAccount?: boolean
+    status?: boolean
+    lastUsedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["noncePool"]>
+
+  export type NoncePoolSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    nonceAccount?: boolean
+    status?: boolean
+    lastUsedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["noncePool"]>
+
+  export type NoncePoolSelectScalar = {
+    id?: boolean
+    nonceAccount?: boolean
+    status?: boolean
+    lastUsedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type NoncePoolOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "nonceAccount" | "status" | "lastUsedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["noncePool"]>
+  export type NoncePoolInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    offers?: boolean | NoncePool$offersArgs<ExtArgs>
+    _count?: boolean | NoncePoolCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type NoncePoolIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type NoncePoolIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $NoncePoolPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "NoncePool"
+    objects: {
+      offers: Prisma.$SwapOfferPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: number
+      nonceAccount: string
+      status: $Enums.NonceStatus
+      lastUsedAt: Date | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["noncePool"]>
+    composites: {}
+  }
+
+  type NoncePoolGetPayload<S extends boolean | null | undefined | NoncePoolDefaultArgs> = $Result.GetResult<Prisma.$NoncePoolPayload, S>
+
+  type NoncePoolCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<NoncePoolFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: NoncePoolCountAggregateInputType | true
+    }
+
+  export interface NoncePoolDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['NoncePool'], meta: { name: 'NoncePool' } }
+    /**
+     * Find zero or one NoncePool that matches the filter.
+     * @param {NoncePoolFindUniqueArgs} args - Arguments to find a NoncePool
+     * @example
+     * // Get one NoncePool
+     * const noncePool = await prisma.noncePool.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends NoncePoolFindUniqueArgs>(args: SelectSubset<T, NoncePoolFindUniqueArgs<ExtArgs>>): Prisma__NoncePoolClient<$Result.GetResult<Prisma.$NoncePoolPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one NoncePool that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {NoncePoolFindUniqueOrThrowArgs} args - Arguments to find a NoncePool
+     * @example
+     * // Get one NoncePool
+     * const noncePool = await prisma.noncePool.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends NoncePoolFindUniqueOrThrowArgs>(args: SelectSubset<T, NoncePoolFindUniqueOrThrowArgs<ExtArgs>>): Prisma__NoncePoolClient<$Result.GetResult<Prisma.$NoncePoolPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first NoncePool that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NoncePoolFindFirstArgs} args - Arguments to find a NoncePool
+     * @example
+     * // Get one NoncePool
+     * const noncePool = await prisma.noncePool.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends NoncePoolFindFirstArgs>(args?: SelectSubset<T, NoncePoolFindFirstArgs<ExtArgs>>): Prisma__NoncePoolClient<$Result.GetResult<Prisma.$NoncePoolPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first NoncePool that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NoncePoolFindFirstOrThrowArgs} args - Arguments to find a NoncePool
+     * @example
+     * // Get one NoncePool
+     * const noncePool = await prisma.noncePool.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends NoncePoolFindFirstOrThrowArgs>(args?: SelectSubset<T, NoncePoolFindFirstOrThrowArgs<ExtArgs>>): Prisma__NoncePoolClient<$Result.GetResult<Prisma.$NoncePoolPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more NoncePools that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NoncePoolFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all NoncePools
+     * const noncePools = await prisma.noncePool.findMany()
+     * 
+     * // Get first 10 NoncePools
+     * const noncePools = await prisma.noncePool.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const noncePoolWithIdOnly = await prisma.noncePool.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends NoncePoolFindManyArgs>(args?: SelectSubset<T, NoncePoolFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NoncePoolPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a NoncePool.
+     * @param {NoncePoolCreateArgs} args - Arguments to create a NoncePool.
+     * @example
+     * // Create one NoncePool
+     * const NoncePool = await prisma.noncePool.create({
+     *   data: {
+     *     // ... data to create a NoncePool
+     *   }
+     * })
+     * 
+     */
+    create<T extends NoncePoolCreateArgs>(args: SelectSubset<T, NoncePoolCreateArgs<ExtArgs>>): Prisma__NoncePoolClient<$Result.GetResult<Prisma.$NoncePoolPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many NoncePools.
+     * @param {NoncePoolCreateManyArgs} args - Arguments to create many NoncePools.
+     * @example
+     * // Create many NoncePools
+     * const noncePool = await prisma.noncePool.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends NoncePoolCreateManyArgs>(args?: SelectSubset<T, NoncePoolCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many NoncePools and returns the data saved in the database.
+     * @param {NoncePoolCreateManyAndReturnArgs} args - Arguments to create many NoncePools.
+     * @example
+     * // Create many NoncePools
+     * const noncePool = await prisma.noncePool.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many NoncePools and only return the `id`
+     * const noncePoolWithIdOnly = await prisma.noncePool.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends NoncePoolCreateManyAndReturnArgs>(args?: SelectSubset<T, NoncePoolCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NoncePoolPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a NoncePool.
+     * @param {NoncePoolDeleteArgs} args - Arguments to delete one NoncePool.
+     * @example
+     * // Delete one NoncePool
+     * const NoncePool = await prisma.noncePool.delete({
+     *   where: {
+     *     // ... filter to delete one NoncePool
+     *   }
+     * })
+     * 
+     */
+    delete<T extends NoncePoolDeleteArgs>(args: SelectSubset<T, NoncePoolDeleteArgs<ExtArgs>>): Prisma__NoncePoolClient<$Result.GetResult<Prisma.$NoncePoolPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one NoncePool.
+     * @param {NoncePoolUpdateArgs} args - Arguments to update one NoncePool.
+     * @example
+     * // Update one NoncePool
+     * const noncePool = await prisma.noncePool.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends NoncePoolUpdateArgs>(args: SelectSubset<T, NoncePoolUpdateArgs<ExtArgs>>): Prisma__NoncePoolClient<$Result.GetResult<Prisma.$NoncePoolPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more NoncePools.
+     * @param {NoncePoolDeleteManyArgs} args - Arguments to filter NoncePools to delete.
+     * @example
+     * // Delete a few NoncePools
+     * const { count } = await prisma.noncePool.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends NoncePoolDeleteManyArgs>(args?: SelectSubset<T, NoncePoolDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more NoncePools.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NoncePoolUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many NoncePools
+     * const noncePool = await prisma.noncePool.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends NoncePoolUpdateManyArgs>(args: SelectSubset<T, NoncePoolUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more NoncePools and returns the data updated in the database.
+     * @param {NoncePoolUpdateManyAndReturnArgs} args - Arguments to update many NoncePools.
+     * @example
+     * // Update many NoncePools
+     * const noncePool = await prisma.noncePool.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more NoncePools and only return the `id`
+     * const noncePoolWithIdOnly = await prisma.noncePool.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends NoncePoolUpdateManyAndReturnArgs>(args: SelectSubset<T, NoncePoolUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NoncePoolPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one NoncePool.
+     * @param {NoncePoolUpsertArgs} args - Arguments to update or create a NoncePool.
+     * @example
+     * // Update or create a NoncePool
+     * const noncePool = await prisma.noncePool.upsert({
+     *   create: {
+     *     // ... data to create a NoncePool
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the NoncePool we want to update
+     *   }
+     * })
+     */
+    upsert<T extends NoncePoolUpsertArgs>(args: SelectSubset<T, NoncePoolUpsertArgs<ExtArgs>>): Prisma__NoncePoolClient<$Result.GetResult<Prisma.$NoncePoolPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of NoncePools.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NoncePoolCountArgs} args - Arguments to filter NoncePools to count.
+     * @example
+     * // Count the number of NoncePools
+     * const count = await prisma.noncePool.count({
+     *   where: {
+     *     // ... the filter for the NoncePools we want to count
+     *   }
+     * })
+    **/
+    count<T extends NoncePoolCountArgs>(
+      args?: Subset<T, NoncePoolCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], NoncePoolCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a NoncePool.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NoncePoolAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends NoncePoolAggregateArgs>(args: Subset<T, NoncePoolAggregateArgs>): Prisma.PrismaPromise<GetNoncePoolAggregateType<T>>
+
+    /**
+     * Group by NoncePool.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NoncePoolGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends NoncePoolGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: NoncePoolGroupByArgs['orderBy'] }
+        : { orderBy?: NoncePoolGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, NoncePoolGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetNoncePoolGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the NoncePool model
+   */
+  readonly fields: NoncePoolFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for NoncePool.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__NoncePoolClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    offers<T extends NoncePool$offersArgs<ExtArgs> = {}>(args?: Subset<T, NoncePool$offersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SwapOfferPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the NoncePool model
+   */
+  interface NoncePoolFieldRefs {
+    readonly id: FieldRef<"NoncePool", 'Int'>
+    readonly nonceAccount: FieldRef<"NoncePool", 'String'>
+    readonly status: FieldRef<"NoncePool", 'NonceStatus'>
+    readonly lastUsedAt: FieldRef<"NoncePool", 'DateTime'>
+    readonly createdAt: FieldRef<"NoncePool", 'DateTime'>
+    readonly updatedAt: FieldRef<"NoncePool", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * NoncePool findUnique
+   */
+  export type NoncePoolFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NoncePool
+     */
+    select?: NoncePoolSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NoncePool
+     */
+    omit?: NoncePoolOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoncePoolInclude<ExtArgs> | null
+    /**
+     * Filter, which NoncePool to fetch.
+     */
+    where: NoncePoolWhereUniqueInput
+  }
+
+  /**
+   * NoncePool findUniqueOrThrow
+   */
+  export type NoncePoolFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NoncePool
+     */
+    select?: NoncePoolSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NoncePool
+     */
+    omit?: NoncePoolOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoncePoolInclude<ExtArgs> | null
+    /**
+     * Filter, which NoncePool to fetch.
+     */
+    where: NoncePoolWhereUniqueInput
+  }
+
+  /**
+   * NoncePool findFirst
+   */
+  export type NoncePoolFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NoncePool
+     */
+    select?: NoncePoolSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NoncePool
+     */
+    omit?: NoncePoolOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoncePoolInclude<ExtArgs> | null
+    /**
+     * Filter, which NoncePool to fetch.
+     */
+    where?: NoncePoolWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of NoncePools to fetch.
+     */
+    orderBy?: NoncePoolOrderByWithRelationInput | NoncePoolOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for NoncePools.
+     */
+    cursor?: NoncePoolWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` NoncePools from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` NoncePools.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of NoncePools.
+     */
+    distinct?: NoncePoolScalarFieldEnum | NoncePoolScalarFieldEnum[]
+  }
+
+  /**
+   * NoncePool findFirstOrThrow
+   */
+  export type NoncePoolFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NoncePool
+     */
+    select?: NoncePoolSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NoncePool
+     */
+    omit?: NoncePoolOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoncePoolInclude<ExtArgs> | null
+    /**
+     * Filter, which NoncePool to fetch.
+     */
+    where?: NoncePoolWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of NoncePools to fetch.
+     */
+    orderBy?: NoncePoolOrderByWithRelationInput | NoncePoolOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for NoncePools.
+     */
+    cursor?: NoncePoolWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` NoncePools from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` NoncePools.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of NoncePools.
+     */
+    distinct?: NoncePoolScalarFieldEnum | NoncePoolScalarFieldEnum[]
+  }
+
+  /**
+   * NoncePool findMany
+   */
+  export type NoncePoolFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NoncePool
+     */
+    select?: NoncePoolSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NoncePool
+     */
+    omit?: NoncePoolOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoncePoolInclude<ExtArgs> | null
+    /**
+     * Filter, which NoncePools to fetch.
+     */
+    where?: NoncePoolWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of NoncePools to fetch.
+     */
+    orderBy?: NoncePoolOrderByWithRelationInput | NoncePoolOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing NoncePools.
+     */
+    cursor?: NoncePoolWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` NoncePools from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` NoncePools.
+     */
+    skip?: number
+    distinct?: NoncePoolScalarFieldEnum | NoncePoolScalarFieldEnum[]
+  }
+
+  /**
+   * NoncePool create
+   */
+  export type NoncePoolCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NoncePool
+     */
+    select?: NoncePoolSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NoncePool
+     */
+    omit?: NoncePoolOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoncePoolInclude<ExtArgs> | null
+    /**
+     * The data needed to create a NoncePool.
+     */
+    data: XOR<NoncePoolCreateInput, NoncePoolUncheckedCreateInput>
+  }
+
+  /**
+   * NoncePool createMany
+   */
+  export type NoncePoolCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many NoncePools.
+     */
+    data: NoncePoolCreateManyInput | NoncePoolCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * NoncePool createManyAndReturn
+   */
+  export type NoncePoolCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NoncePool
+     */
+    select?: NoncePoolSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the NoncePool
+     */
+    omit?: NoncePoolOmit<ExtArgs> | null
+    /**
+     * The data used to create many NoncePools.
+     */
+    data: NoncePoolCreateManyInput | NoncePoolCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * NoncePool update
+   */
+  export type NoncePoolUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NoncePool
+     */
+    select?: NoncePoolSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NoncePool
+     */
+    omit?: NoncePoolOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoncePoolInclude<ExtArgs> | null
+    /**
+     * The data needed to update a NoncePool.
+     */
+    data: XOR<NoncePoolUpdateInput, NoncePoolUncheckedUpdateInput>
+    /**
+     * Choose, which NoncePool to update.
+     */
+    where: NoncePoolWhereUniqueInput
+  }
+
+  /**
+   * NoncePool updateMany
+   */
+  export type NoncePoolUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update NoncePools.
+     */
+    data: XOR<NoncePoolUpdateManyMutationInput, NoncePoolUncheckedUpdateManyInput>
+    /**
+     * Filter which NoncePools to update
+     */
+    where?: NoncePoolWhereInput
+    /**
+     * Limit how many NoncePools to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * NoncePool updateManyAndReturn
+   */
+  export type NoncePoolUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NoncePool
+     */
+    select?: NoncePoolSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the NoncePool
+     */
+    omit?: NoncePoolOmit<ExtArgs> | null
+    /**
+     * The data used to update NoncePools.
+     */
+    data: XOR<NoncePoolUpdateManyMutationInput, NoncePoolUncheckedUpdateManyInput>
+    /**
+     * Filter which NoncePools to update
+     */
+    where?: NoncePoolWhereInput
+    /**
+     * Limit how many NoncePools to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * NoncePool upsert
+   */
+  export type NoncePoolUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NoncePool
+     */
+    select?: NoncePoolSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NoncePool
+     */
+    omit?: NoncePoolOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoncePoolInclude<ExtArgs> | null
+    /**
+     * The filter to search for the NoncePool to update in case it exists.
+     */
+    where: NoncePoolWhereUniqueInput
+    /**
+     * In case the NoncePool found by the `where` argument doesn't exist, create a new NoncePool with this data.
+     */
+    create: XOR<NoncePoolCreateInput, NoncePoolUncheckedCreateInput>
+    /**
+     * In case the NoncePool was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<NoncePoolUpdateInput, NoncePoolUncheckedUpdateInput>
+  }
+
+  /**
+   * NoncePool delete
+   */
+  export type NoncePoolDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NoncePool
+     */
+    select?: NoncePoolSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NoncePool
+     */
+    omit?: NoncePoolOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoncePoolInclude<ExtArgs> | null
+    /**
+     * Filter which NoncePool to delete.
+     */
+    where: NoncePoolWhereUniqueInput
+  }
+
+  /**
+   * NoncePool deleteMany
+   */
+  export type NoncePoolDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which NoncePools to delete
+     */
+    where?: NoncePoolWhereInput
+    /**
+     * Limit how many NoncePools to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * NoncePool.offers
+   */
+  export type NoncePool$offersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SwapOffer
+     */
+    select?: SwapOfferSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SwapOffer
+     */
+    omit?: SwapOfferOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SwapOfferInclude<ExtArgs> | null
+    where?: SwapOfferWhereInput
+    orderBy?: SwapOfferOrderByWithRelationInput | SwapOfferOrderByWithRelationInput[]
+    cursor?: SwapOfferWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: SwapOfferScalarFieldEnum | SwapOfferScalarFieldEnum[]
+  }
+
+  /**
+   * NoncePool without action
+   */
+  export type NoncePoolDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NoncePool
+     */
+    select?: NoncePoolSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NoncePool
+     */
+    omit?: NoncePoolOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoncePoolInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model SwapOffer
+   */
+
+  export type AggregateSwapOffer = {
+    _count: SwapOfferCountAggregateOutputType | null
+    _avg: SwapOfferAvgAggregateOutputType | null
+    _sum: SwapOfferSumAggregateOutputType | null
+    _min: SwapOfferMinAggregateOutputType | null
+    _max: SwapOfferMaxAggregateOutputType | null
+  }
+
+  export type SwapOfferAvgAggregateOutputType = {
+    id: number | null
+    parentOfferId: number | null
+    offeredSolLamports: number | null
+    requestedSolLamports: number | null
+    platformFeeLamports: number | null
+  }
+
+  export type SwapOfferSumAggregateOutputType = {
+    id: number | null
+    parentOfferId: number | null
+    offeredSolLamports: bigint | null
+    requestedSolLamports: bigint | null
+    platformFeeLamports: bigint | null
+  }
+
+  export type SwapOfferMinAggregateOutputType = {
+    id: number | null
+    makerWallet: string | null
+    takerWallet: string | null
+    offerType: $Enums.OfferType | null
+    parentOfferId: number | null
+    offeredSolLamports: bigint | null
+    requestedSolLamports: bigint | null
+    platformFeeLamports: bigint | null
+    status: $Enums.OfferStatus | null
+    expiresAt: Date | null
+    nonceAccount: string | null
+    currentNonceValue: string | null
+    serializedTransaction: string | null
+    transactionSignature: string | null
+    filledAt: Date | null
+    cancelledAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type SwapOfferMaxAggregateOutputType = {
+    id: number | null
+    makerWallet: string | null
+    takerWallet: string | null
+    offerType: $Enums.OfferType | null
+    parentOfferId: number | null
+    offeredSolLamports: bigint | null
+    requestedSolLamports: bigint | null
+    platformFeeLamports: bigint | null
+    status: $Enums.OfferStatus | null
+    expiresAt: Date | null
+    nonceAccount: string | null
+    currentNonceValue: string | null
+    serializedTransaction: string | null
+    transactionSignature: string | null
+    filledAt: Date | null
+    cancelledAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type SwapOfferCountAggregateOutputType = {
+    id: number
+    makerWallet: number
+    takerWallet: number
+    offerType: number
+    parentOfferId: number
+    offeredAssets: number
+    requestedAssets: number
+    offeredSolLamports: number
+    requestedSolLamports: number
+    platformFeeLamports: number
+    status: number
+    expiresAt: number
+    nonceAccount: number
+    currentNonceValue: number
+    serializedTransaction: number
+    transactionSignature: number
+    filledAt: number
+    cancelledAt: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type SwapOfferAvgAggregateInputType = {
+    id?: true
+    parentOfferId?: true
+    offeredSolLamports?: true
+    requestedSolLamports?: true
+    platformFeeLamports?: true
+  }
+
+  export type SwapOfferSumAggregateInputType = {
+    id?: true
+    parentOfferId?: true
+    offeredSolLamports?: true
+    requestedSolLamports?: true
+    platformFeeLamports?: true
+  }
+
+  export type SwapOfferMinAggregateInputType = {
+    id?: true
+    makerWallet?: true
+    takerWallet?: true
+    offerType?: true
+    parentOfferId?: true
+    offeredSolLamports?: true
+    requestedSolLamports?: true
+    platformFeeLamports?: true
+    status?: true
+    expiresAt?: true
+    nonceAccount?: true
+    currentNonceValue?: true
+    serializedTransaction?: true
+    transactionSignature?: true
+    filledAt?: true
+    cancelledAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type SwapOfferMaxAggregateInputType = {
+    id?: true
+    makerWallet?: true
+    takerWallet?: true
+    offerType?: true
+    parentOfferId?: true
+    offeredSolLamports?: true
+    requestedSolLamports?: true
+    platformFeeLamports?: true
+    status?: true
+    expiresAt?: true
+    nonceAccount?: true
+    currentNonceValue?: true
+    serializedTransaction?: true
+    transactionSignature?: true
+    filledAt?: true
+    cancelledAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type SwapOfferCountAggregateInputType = {
+    id?: true
+    makerWallet?: true
+    takerWallet?: true
+    offerType?: true
+    parentOfferId?: true
+    offeredAssets?: true
+    requestedAssets?: true
+    offeredSolLamports?: true
+    requestedSolLamports?: true
+    platformFeeLamports?: true
+    status?: true
+    expiresAt?: true
+    nonceAccount?: true
+    currentNonceValue?: true
+    serializedTransaction?: true
+    transactionSignature?: true
+    filledAt?: true
+    cancelledAt?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type SwapOfferAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SwapOffer to aggregate.
+     */
+    where?: SwapOfferWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SwapOffers to fetch.
+     */
+    orderBy?: SwapOfferOrderByWithRelationInput | SwapOfferOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: SwapOfferWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SwapOffers from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SwapOffers.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned SwapOffers
+    **/
+    _count?: true | SwapOfferCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: SwapOfferAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: SwapOfferSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: SwapOfferMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: SwapOfferMaxAggregateInputType
+  }
+
+  export type GetSwapOfferAggregateType<T extends SwapOfferAggregateArgs> = {
+        [P in keyof T & keyof AggregateSwapOffer]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateSwapOffer[P]>
+      : GetScalarType<T[P], AggregateSwapOffer[P]>
+  }
+
+
+
+
+  export type SwapOfferGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SwapOfferWhereInput
+    orderBy?: SwapOfferOrderByWithAggregationInput | SwapOfferOrderByWithAggregationInput[]
+    by: SwapOfferScalarFieldEnum[] | SwapOfferScalarFieldEnum
+    having?: SwapOfferScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: SwapOfferCountAggregateInputType | true
+    _avg?: SwapOfferAvgAggregateInputType
+    _sum?: SwapOfferSumAggregateInputType
+    _min?: SwapOfferMinAggregateInputType
+    _max?: SwapOfferMaxAggregateInputType
+  }
+
+  export type SwapOfferGroupByOutputType = {
+    id: number
+    makerWallet: string
+    takerWallet: string | null
+    offerType: $Enums.OfferType
+    parentOfferId: number | null
+    offeredAssets: JsonValue
+    requestedAssets: JsonValue
+    offeredSolLamports: bigint | null
+    requestedSolLamports: bigint | null
+    platformFeeLamports: bigint
+    status: $Enums.OfferStatus
+    expiresAt: Date
+    nonceAccount: string
+    currentNonceValue: string | null
+    serializedTransaction: string | null
+    transactionSignature: string | null
+    filledAt: Date | null
+    cancelledAt: Date | null
+    createdAt: Date
+    updatedAt: Date
+    _count: SwapOfferCountAggregateOutputType | null
+    _avg: SwapOfferAvgAggregateOutputType | null
+    _sum: SwapOfferSumAggregateOutputType | null
+    _min: SwapOfferMinAggregateOutputType | null
+    _max: SwapOfferMaxAggregateOutputType | null
+  }
+
+  type GetSwapOfferGroupByPayload<T extends SwapOfferGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<SwapOfferGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof SwapOfferGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], SwapOfferGroupByOutputType[P]>
+            : GetScalarType<T[P], SwapOfferGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type SwapOfferSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    makerWallet?: boolean
+    takerWallet?: boolean
+    offerType?: boolean
+    parentOfferId?: boolean
+    offeredAssets?: boolean
+    requestedAssets?: boolean
+    offeredSolLamports?: boolean
+    requestedSolLamports?: boolean
+    platformFeeLamports?: boolean
+    status?: boolean
+    expiresAt?: boolean
+    nonceAccount?: boolean
+    currentNonceValue?: boolean
+    serializedTransaction?: boolean
+    transactionSignature?: boolean
+    filledAt?: boolean
+    cancelledAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    maker?: boolean | UserDefaultArgs<ExtArgs>
+    nonce?: boolean | NoncePoolDefaultArgs<ExtArgs>
+    parentOffer?: boolean | SwapOffer$parentOfferArgs<ExtArgs>
+    counterOffers?: boolean | SwapOffer$counterOffersArgs<ExtArgs>
+    transactions?: boolean | SwapOffer$transactionsArgs<ExtArgs>
+    counterTransactions?: boolean | SwapOffer$counterTransactionsArgs<ExtArgs>
+    _count?: boolean | SwapOfferCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["swapOffer"]>
+
+  export type SwapOfferSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    makerWallet?: boolean
+    takerWallet?: boolean
+    offerType?: boolean
+    parentOfferId?: boolean
+    offeredAssets?: boolean
+    requestedAssets?: boolean
+    offeredSolLamports?: boolean
+    requestedSolLamports?: boolean
+    platformFeeLamports?: boolean
+    status?: boolean
+    expiresAt?: boolean
+    nonceAccount?: boolean
+    currentNonceValue?: boolean
+    serializedTransaction?: boolean
+    transactionSignature?: boolean
+    filledAt?: boolean
+    cancelledAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    maker?: boolean | UserDefaultArgs<ExtArgs>
+    nonce?: boolean | NoncePoolDefaultArgs<ExtArgs>
+    parentOffer?: boolean | SwapOffer$parentOfferArgs<ExtArgs>
+  }, ExtArgs["result"]["swapOffer"]>
+
+  export type SwapOfferSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    makerWallet?: boolean
+    takerWallet?: boolean
+    offerType?: boolean
+    parentOfferId?: boolean
+    offeredAssets?: boolean
+    requestedAssets?: boolean
+    offeredSolLamports?: boolean
+    requestedSolLamports?: boolean
+    platformFeeLamports?: boolean
+    status?: boolean
+    expiresAt?: boolean
+    nonceAccount?: boolean
+    currentNonceValue?: boolean
+    serializedTransaction?: boolean
+    transactionSignature?: boolean
+    filledAt?: boolean
+    cancelledAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    maker?: boolean | UserDefaultArgs<ExtArgs>
+    nonce?: boolean | NoncePoolDefaultArgs<ExtArgs>
+    parentOffer?: boolean | SwapOffer$parentOfferArgs<ExtArgs>
+  }, ExtArgs["result"]["swapOffer"]>
+
+  export type SwapOfferSelectScalar = {
+    id?: boolean
+    makerWallet?: boolean
+    takerWallet?: boolean
+    offerType?: boolean
+    parentOfferId?: boolean
+    offeredAssets?: boolean
+    requestedAssets?: boolean
+    offeredSolLamports?: boolean
+    requestedSolLamports?: boolean
+    platformFeeLamports?: boolean
+    status?: boolean
+    expiresAt?: boolean
+    nonceAccount?: boolean
+    currentNonceValue?: boolean
+    serializedTransaction?: boolean
+    transactionSignature?: boolean
+    filledAt?: boolean
+    cancelledAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type SwapOfferOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "makerWallet" | "takerWallet" | "offerType" | "parentOfferId" | "offeredAssets" | "requestedAssets" | "offeredSolLamports" | "requestedSolLamports" | "platformFeeLamports" | "status" | "expiresAt" | "nonceAccount" | "currentNonceValue" | "serializedTransaction" | "transactionSignature" | "filledAt" | "cancelledAt" | "createdAt" | "updatedAt", ExtArgs["result"]["swapOffer"]>
+  export type SwapOfferInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    maker?: boolean | UserDefaultArgs<ExtArgs>
+    nonce?: boolean | NoncePoolDefaultArgs<ExtArgs>
+    parentOffer?: boolean | SwapOffer$parentOfferArgs<ExtArgs>
+    counterOffers?: boolean | SwapOffer$counterOffersArgs<ExtArgs>
+    transactions?: boolean | SwapOffer$transactionsArgs<ExtArgs>
+    counterTransactions?: boolean | SwapOffer$counterTransactionsArgs<ExtArgs>
+    _count?: boolean | SwapOfferCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type SwapOfferIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    maker?: boolean | UserDefaultArgs<ExtArgs>
+    nonce?: boolean | NoncePoolDefaultArgs<ExtArgs>
+    parentOffer?: boolean | SwapOffer$parentOfferArgs<ExtArgs>
+  }
+  export type SwapOfferIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    maker?: boolean | UserDefaultArgs<ExtArgs>
+    nonce?: boolean | NoncePoolDefaultArgs<ExtArgs>
+    parentOffer?: boolean | SwapOffer$parentOfferArgs<ExtArgs>
+  }
+
+  export type $SwapOfferPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "SwapOffer"
+    objects: {
+      maker: Prisma.$UserPayload<ExtArgs>
+      nonce: Prisma.$NoncePoolPayload<ExtArgs>
+      parentOffer: Prisma.$SwapOfferPayload<ExtArgs> | null
+      counterOffers: Prisma.$SwapOfferPayload<ExtArgs>[]
+      transactions: Prisma.$SwapTransactionPayload<ExtArgs>[]
+      counterTransactions: Prisma.$SwapTransactionPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: number
+      makerWallet: string
+      takerWallet: string | null
+      offerType: $Enums.OfferType
+      parentOfferId: number | null
+      offeredAssets: Prisma.JsonValue
+      requestedAssets: Prisma.JsonValue
+      offeredSolLamports: bigint | null
+      requestedSolLamports: bigint | null
+      platformFeeLamports: bigint
+      status: $Enums.OfferStatus
+      expiresAt: Date
+      nonceAccount: string
+      currentNonceValue: string | null
+      serializedTransaction: string | null
+      transactionSignature: string | null
+      filledAt: Date | null
+      cancelledAt: Date | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["swapOffer"]>
+    composites: {}
+  }
+
+  type SwapOfferGetPayload<S extends boolean | null | undefined | SwapOfferDefaultArgs> = $Result.GetResult<Prisma.$SwapOfferPayload, S>
+
+  type SwapOfferCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<SwapOfferFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: SwapOfferCountAggregateInputType | true
+    }
+
+  export interface SwapOfferDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['SwapOffer'], meta: { name: 'SwapOffer' } }
+    /**
+     * Find zero or one SwapOffer that matches the filter.
+     * @param {SwapOfferFindUniqueArgs} args - Arguments to find a SwapOffer
+     * @example
+     * // Get one SwapOffer
+     * const swapOffer = await prisma.swapOffer.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends SwapOfferFindUniqueArgs>(args: SelectSubset<T, SwapOfferFindUniqueArgs<ExtArgs>>): Prisma__SwapOfferClient<$Result.GetResult<Prisma.$SwapOfferPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one SwapOffer that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {SwapOfferFindUniqueOrThrowArgs} args - Arguments to find a SwapOffer
+     * @example
+     * // Get one SwapOffer
+     * const swapOffer = await prisma.swapOffer.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends SwapOfferFindUniqueOrThrowArgs>(args: SelectSubset<T, SwapOfferFindUniqueOrThrowArgs<ExtArgs>>): Prisma__SwapOfferClient<$Result.GetResult<Prisma.$SwapOfferPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SwapOffer that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SwapOfferFindFirstArgs} args - Arguments to find a SwapOffer
+     * @example
+     * // Get one SwapOffer
+     * const swapOffer = await prisma.swapOffer.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends SwapOfferFindFirstArgs>(args?: SelectSubset<T, SwapOfferFindFirstArgs<ExtArgs>>): Prisma__SwapOfferClient<$Result.GetResult<Prisma.$SwapOfferPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SwapOffer that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SwapOfferFindFirstOrThrowArgs} args - Arguments to find a SwapOffer
+     * @example
+     * // Get one SwapOffer
+     * const swapOffer = await prisma.swapOffer.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends SwapOfferFindFirstOrThrowArgs>(args?: SelectSubset<T, SwapOfferFindFirstOrThrowArgs<ExtArgs>>): Prisma__SwapOfferClient<$Result.GetResult<Prisma.$SwapOfferPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more SwapOffers that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SwapOfferFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all SwapOffers
+     * const swapOffers = await prisma.swapOffer.findMany()
+     * 
+     * // Get first 10 SwapOffers
+     * const swapOffers = await prisma.swapOffer.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const swapOfferWithIdOnly = await prisma.swapOffer.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends SwapOfferFindManyArgs>(args?: SelectSubset<T, SwapOfferFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SwapOfferPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a SwapOffer.
+     * @param {SwapOfferCreateArgs} args - Arguments to create a SwapOffer.
+     * @example
+     * // Create one SwapOffer
+     * const SwapOffer = await prisma.swapOffer.create({
+     *   data: {
+     *     // ... data to create a SwapOffer
+     *   }
+     * })
+     * 
+     */
+    create<T extends SwapOfferCreateArgs>(args: SelectSubset<T, SwapOfferCreateArgs<ExtArgs>>): Prisma__SwapOfferClient<$Result.GetResult<Prisma.$SwapOfferPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many SwapOffers.
+     * @param {SwapOfferCreateManyArgs} args - Arguments to create many SwapOffers.
+     * @example
+     * // Create many SwapOffers
+     * const swapOffer = await prisma.swapOffer.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends SwapOfferCreateManyArgs>(args?: SelectSubset<T, SwapOfferCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many SwapOffers and returns the data saved in the database.
+     * @param {SwapOfferCreateManyAndReturnArgs} args - Arguments to create many SwapOffers.
+     * @example
+     * // Create many SwapOffers
+     * const swapOffer = await prisma.swapOffer.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many SwapOffers and only return the `id`
+     * const swapOfferWithIdOnly = await prisma.swapOffer.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends SwapOfferCreateManyAndReturnArgs>(args?: SelectSubset<T, SwapOfferCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SwapOfferPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a SwapOffer.
+     * @param {SwapOfferDeleteArgs} args - Arguments to delete one SwapOffer.
+     * @example
+     * // Delete one SwapOffer
+     * const SwapOffer = await prisma.swapOffer.delete({
+     *   where: {
+     *     // ... filter to delete one SwapOffer
+     *   }
+     * })
+     * 
+     */
+    delete<T extends SwapOfferDeleteArgs>(args: SelectSubset<T, SwapOfferDeleteArgs<ExtArgs>>): Prisma__SwapOfferClient<$Result.GetResult<Prisma.$SwapOfferPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one SwapOffer.
+     * @param {SwapOfferUpdateArgs} args - Arguments to update one SwapOffer.
+     * @example
+     * // Update one SwapOffer
+     * const swapOffer = await prisma.swapOffer.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends SwapOfferUpdateArgs>(args: SelectSubset<T, SwapOfferUpdateArgs<ExtArgs>>): Prisma__SwapOfferClient<$Result.GetResult<Prisma.$SwapOfferPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more SwapOffers.
+     * @param {SwapOfferDeleteManyArgs} args - Arguments to filter SwapOffers to delete.
+     * @example
+     * // Delete a few SwapOffers
+     * const { count } = await prisma.swapOffer.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends SwapOfferDeleteManyArgs>(args?: SelectSubset<T, SwapOfferDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SwapOffers.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SwapOfferUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many SwapOffers
+     * const swapOffer = await prisma.swapOffer.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends SwapOfferUpdateManyArgs>(args: SelectSubset<T, SwapOfferUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SwapOffers and returns the data updated in the database.
+     * @param {SwapOfferUpdateManyAndReturnArgs} args - Arguments to update many SwapOffers.
+     * @example
+     * // Update many SwapOffers
+     * const swapOffer = await prisma.swapOffer.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more SwapOffers and only return the `id`
+     * const swapOfferWithIdOnly = await prisma.swapOffer.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends SwapOfferUpdateManyAndReturnArgs>(args: SelectSubset<T, SwapOfferUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SwapOfferPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one SwapOffer.
+     * @param {SwapOfferUpsertArgs} args - Arguments to update or create a SwapOffer.
+     * @example
+     * // Update or create a SwapOffer
+     * const swapOffer = await prisma.swapOffer.upsert({
+     *   create: {
+     *     // ... data to create a SwapOffer
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the SwapOffer we want to update
+     *   }
+     * })
+     */
+    upsert<T extends SwapOfferUpsertArgs>(args: SelectSubset<T, SwapOfferUpsertArgs<ExtArgs>>): Prisma__SwapOfferClient<$Result.GetResult<Prisma.$SwapOfferPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of SwapOffers.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SwapOfferCountArgs} args - Arguments to filter SwapOffers to count.
+     * @example
+     * // Count the number of SwapOffers
+     * const count = await prisma.swapOffer.count({
+     *   where: {
+     *     // ... the filter for the SwapOffers we want to count
+     *   }
+     * })
+    **/
+    count<T extends SwapOfferCountArgs>(
+      args?: Subset<T, SwapOfferCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], SwapOfferCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a SwapOffer.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SwapOfferAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends SwapOfferAggregateArgs>(args: Subset<T, SwapOfferAggregateArgs>): Prisma.PrismaPromise<GetSwapOfferAggregateType<T>>
+
+    /**
+     * Group by SwapOffer.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SwapOfferGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends SwapOfferGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: SwapOfferGroupByArgs['orderBy'] }
+        : { orderBy?: SwapOfferGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, SwapOfferGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetSwapOfferGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the SwapOffer model
+   */
+  readonly fields: SwapOfferFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for SwapOffer.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__SwapOfferClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    maker<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    nonce<T extends NoncePoolDefaultArgs<ExtArgs> = {}>(args?: Subset<T, NoncePoolDefaultArgs<ExtArgs>>): Prisma__NoncePoolClient<$Result.GetResult<Prisma.$NoncePoolPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    parentOffer<T extends SwapOffer$parentOfferArgs<ExtArgs> = {}>(args?: Subset<T, SwapOffer$parentOfferArgs<ExtArgs>>): Prisma__SwapOfferClient<$Result.GetResult<Prisma.$SwapOfferPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    counterOffers<T extends SwapOffer$counterOffersArgs<ExtArgs> = {}>(args?: Subset<T, SwapOffer$counterOffersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SwapOfferPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    transactions<T extends SwapOffer$transactionsArgs<ExtArgs> = {}>(args?: Subset<T, SwapOffer$transactionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SwapTransactionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    counterTransactions<T extends SwapOffer$counterTransactionsArgs<ExtArgs> = {}>(args?: Subset<T, SwapOffer$counterTransactionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SwapTransactionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the SwapOffer model
+   */
+  interface SwapOfferFieldRefs {
+    readonly id: FieldRef<"SwapOffer", 'Int'>
+    readonly makerWallet: FieldRef<"SwapOffer", 'String'>
+    readonly takerWallet: FieldRef<"SwapOffer", 'String'>
+    readonly offerType: FieldRef<"SwapOffer", 'OfferType'>
+    readonly parentOfferId: FieldRef<"SwapOffer", 'Int'>
+    readonly offeredAssets: FieldRef<"SwapOffer", 'Json'>
+    readonly requestedAssets: FieldRef<"SwapOffer", 'Json'>
+    readonly offeredSolLamports: FieldRef<"SwapOffer", 'BigInt'>
+    readonly requestedSolLamports: FieldRef<"SwapOffer", 'BigInt'>
+    readonly platformFeeLamports: FieldRef<"SwapOffer", 'BigInt'>
+    readonly status: FieldRef<"SwapOffer", 'OfferStatus'>
+    readonly expiresAt: FieldRef<"SwapOffer", 'DateTime'>
+    readonly nonceAccount: FieldRef<"SwapOffer", 'String'>
+    readonly currentNonceValue: FieldRef<"SwapOffer", 'String'>
+    readonly serializedTransaction: FieldRef<"SwapOffer", 'String'>
+    readonly transactionSignature: FieldRef<"SwapOffer", 'String'>
+    readonly filledAt: FieldRef<"SwapOffer", 'DateTime'>
+    readonly cancelledAt: FieldRef<"SwapOffer", 'DateTime'>
+    readonly createdAt: FieldRef<"SwapOffer", 'DateTime'>
+    readonly updatedAt: FieldRef<"SwapOffer", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * SwapOffer findUnique
+   */
+  export type SwapOfferFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SwapOffer
+     */
+    select?: SwapOfferSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SwapOffer
+     */
+    omit?: SwapOfferOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SwapOfferInclude<ExtArgs> | null
+    /**
+     * Filter, which SwapOffer to fetch.
+     */
+    where: SwapOfferWhereUniqueInput
+  }
+
+  /**
+   * SwapOffer findUniqueOrThrow
+   */
+  export type SwapOfferFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SwapOffer
+     */
+    select?: SwapOfferSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SwapOffer
+     */
+    omit?: SwapOfferOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SwapOfferInclude<ExtArgs> | null
+    /**
+     * Filter, which SwapOffer to fetch.
+     */
+    where: SwapOfferWhereUniqueInput
+  }
+
+  /**
+   * SwapOffer findFirst
+   */
+  export type SwapOfferFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SwapOffer
+     */
+    select?: SwapOfferSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SwapOffer
+     */
+    omit?: SwapOfferOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SwapOfferInclude<ExtArgs> | null
+    /**
+     * Filter, which SwapOffer to fetch.
+     */
+    where?: SwapOfferWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SwapOffers to fetch.
+     */
+    orderBy?: SwapOfferOrderByWithRelationInput | SwapOfferOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SwapOffers.
+     */
+    cursor?: SwapOfferWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SwapOffers from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SwapOffers.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SwapOffers.
+     */
+    distinct?: SwapOfferScalarFieldEnum | SwapOfferScalarFieldEnum[]
+  }
+
+  /**
+   * SwapOffer findFirstOrThrow
+   */
+  export type SwapOfferFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SwapOffer
+     */
+    select?: SwapOfferSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SwapOffer
+     */
+    omit?: SwapOfferOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SwapOfferInclude<ExtArgs> | null
+    /**
+     * Filter, which SwapOffer to fetch.
+     */
+    where?: SwapOfferWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SwapOffers to fetch.
+     */
+    orderBy?: SwapOfferOrderByWithRelationInput | SwapOfferOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SwapOffers.
+     */
+    cursor?: SwapOfferWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SwapOffers from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SwapOffers.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SwapOffers.
+     */
+    distinct?: SwapOfferScalarFieldEnum | SwapOfferScalarFieldEnum[]
+  }
+
+  /**
+   * SwapOffer findMany
+   */
+  export type SwapOfferFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SwapOffer
+     */
+    select?: SwapOfferSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SwapOffer
+     */
+    omit?: SwapOfferOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SwapOfferInclude<ExtArgs> | null
+    /**
+     * Filter, which SwapOffers to fetch.
+     */
+    where?: SwapOfferWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SwapOffers to fetch.
+     */
+    orderBy?: SwapOfferOrderByWithRelationInput | SwapOfferOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing SwapOffers.
+     */
+    cursor?: SwapOfferWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SwapOffers from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SwapOffers.
+     */
+    skip?: number
+    distinct?: SwapOfferScalarFieldEnum | SwapOfferScalarFieldEnum[]
+  }
+
+  /**
+   * SwapOffer create
+   */
+  export type SwapOfferCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SwapOffer
+     */
+    select?: SwapOfferSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SwapOffer
+     */
+    omit?: SwapOfferOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SwapOfferInclude<ExtArgs> | null
+    /**
+     * The data needed to create a SwapOffer.
+     */
+    data: XOR<SwapOfferCreateInput, SwapOfferUncheckedCreateInput>
+  }
+
+  /**
+   * SwapOffer createMany
+   */
+  export type SwapOfferCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many SwapOffers.
+     */
+    data: SwapOfferCreateManyInput | SwapOfferCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * SwapOffer createManyAndReturn
+   */
+  export type SwapOfferCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SwapOffer
+     */
+    select?: SwapOfferSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SwapOffer
+     */
+    omit?: SwapOfferOmit<ExtArgs> | null
+    /**
+     * The data used to create many SwapOffers.
+     */
+    data: SwapOfferCreateManyInput | SwapOfferCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SwapOfferIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * SwapOffer update
+   */
+  export type SwapOfferUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SwapOffer
+     */
+    select?: SwapOfferSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SwapOffer
+     */
+    omit?: SwapOfferOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SwapOfferInclude<ExtArgs> | null
+    /**
+     * The data needed to update a SwapOffer.
+     */
+    data: XOR<SwapOfferUpdateInput, SwapOfferUncheckedUpdateInput>
+    /**
+     * Choose, which SwapOffer to update.
+     */
+    where: SwapOfferWhereUniqueInput
+  }
+
+  /**
+   * SwapOffer updateMany
+   */
+  export type SwapOfferUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update SwapOffers.
+     */
+    data: XOR<SwapOfferUpdateManyMutationInput, SwapOfferUncheckedUpdateManyInput>
+    /**
+     * Filter which SwapOffers to update
+     */
+    where?: SwapOfferWhereInput
+    /**
+     * Limit how many SwapOffers to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * SwapOffer updateManyAndReturn
+   */
+  export type SwapOfferUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SwapOffer
+     */
+    select?: SwapOfferSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SwapOffer
+     */
+    omit?: SwapOfferOmit<ExtArgs> | null
+    /**
+     * The data used to update SwapOffers.
+     */
+    data: XOR<SwapOfferUpdateManyMutationInput, SwapOfferUncheckedUpdateManyInput>
+    /**
+     * Filter which SwapOffers to update
+     */
+    where?: SwapOfferWhereInput
+    /**
+     * Limit how many SwapOffers to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SwapOfferIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * SwapOffer upsert
+   */
+  export type SwapOfferUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SwapOffer
+     */
+    select?: SwapOfferSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SwapOffer
+     */
+    omit?: SwapOfferOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SwapOfferInclude<ExtArgs> | null
+    /**
+     * The filter to search for the SwapOffer to update in case it exists.
+     */
+    where: SwapOfferWhereUniqueInput
+    /**
+     * In case the SwapOffer found by the `where` argument doesn't exist, create a new SwapOffer with this data.
+     */
+    create: XOR<SwapOfferCreateInput, SwapOfferUncheckedCreateInput>
+    /**
+     * In case the SwapOffer was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<SwapOfferUpdateInput, SwapOfferUncheckedUpdateInput>
+  }
+
+  /**
+   * SwapOffer delete
+   */
+  export type SwapOfferDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SwapOffer
+     */
+    select?: SwapOfferSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SwapOffer
+     */
+    omit?: SwapOfferOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SwapOfferInclude<ExtArgs> | null
+    /**
+     * Filter which SwapOffer to delete.
+     */
+    where: SwapOfferWhereUniqueInput
+  }
+
+  /**
+   * SwapOffer deleteMany
+   */
+  export type SwapOfferDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SwapOffers to delete
+     */
+    where?: SwapOfferWhereInput
+    /**
+     * Limit how many SwapOffers to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * SwapOffer.parentOffer
+   */
+  export type SwapOffer$parentOfferArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SwapOffer
+     */
+    select?: SwapOfferSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SwapOffer
+     */
+    omit?: SwapOfferOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SwapOfferInclude<ExtArgs> | null
+    where?: SwapOfferWhereInput
+  }
+
+  /**
+   * SwapOffer.counterOffers
+   */
+  export type SwapOffer$counterOffersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SwapOffer
+     */
+    select?: SwapOfferSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SwapOffer
+     */
+    omit?: SwapOfferOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SwapOfferInclude<ExtArgs> | null
+    where?: SwapOfferWhereInput
+    orderBy?: SwapOfferOrderByWithRelationInput | SwapOfferOrderByWithRelationInput[]
+    cursor?: SwapOfferWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: SwapOfferScalarFieldEnum | SwapOfferScalarFieldEnum[]
+  }
+
+  /**
+   * SwapOffer.transactions
+   */
+  export type SwapOffer$transactionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SwapTransaction
+     */
+    select?: SwapTransactionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SwapTransaction
+     */
+    omit?: SwapTransactionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SwapTransactionInclude<ExtArgs> | null
+    where?: SwapTransactionWhereInput
+    orderBy?: SwapTransactionOrderByWithRelationInput | SwapTransactionOrderByWithRelationInput[]
+    cursor?: SwapTransactionWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: SwapTransactionScalarFieldEnum | SwapTransactionScalarFieldEnum[]
+  }
+
+  /**
+   * SwapOffer.counterTransactions
+   */
+  export type SwapOffer$counterTransactionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SwapTransaction
+     */
+    select?: SwapTransactionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SwapTransaction
+     */
+    omit?: SwapTransactionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SwapTransactionInclude<ExtArgs> | null
+    where?: SwapTransactionWhereInput
+    orderBy?: SwapTransactionOrderByWithRelationInput | SwapTransactionOrderByWithRelationInput[]
+    cursor?: SwapTransactionWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: SwapTransactionScalarFieldEnum | SwapTransactionScalarFieldEnum[]
+  }
+
+  /**
+   * SwapOffer without action
+   */
+  export type SwapOfferDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SwapOffer
+     */
+    select?: SwapOfferSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SwapOffer
+     */
+    omit?: SwapOfferOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SwapOfferInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model SwapTransaction
+   */
+
+  export type AggregateSwapTransaction = {
+    _count: SwapTransactionCountAggregateOutputType | null
+    _avg: SwapTransactionAvgAggregateOutputType | null
+    _sum: SwapTransactionSumAggregateOutputType | null
+    _min: SwapTransactionMinAggregateOutputType | null
+    _max: SwapTransactionMaxAggregateOutputType | null
+  }
+
+  export type SwapTransactionAvgAggregateOutputType = {
+    id: number | null
+    offerId: number | null
+    counterOfferId: number | null
+    platformFeeCollectedLamports: number | null
+    totalValueLamports: number | null
+    gasFee: number | null
+  }
+
+  export type SwapTransactionSumAggregateOutputType = {
+    id: number | null
+    offerId: number | null
+    counterOfferId: number | null
+    platformFeeCollectedLamports: bigint | null
+    totalValueLamports: bigint | null
+    gasFee: bigint | null
+  }
+
+  export type SwapTransactionMinAggregateOutputType = {
+    id: number | null
+    offerId: number | null
+    counterOfferId: number | null
+    signature: string | null
+    makerWallet: string | null
+    takerWallet: string | null
+    platformFeeCollectedLamports: bigint | null
+    totalValueLamports: bigint | null
+    executedAt: Date | null
+    transactionSignature: string | null
+    status: $Enums.TransactionStatus | null
+    gasFee: bigint | null
+    isSubsidized: boolean | null
+    errorMessage: string | null
+    confirmedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type SwapTransactionMaxAggregateOutputType = {
+    id: number | null
+    offerId: number | null
+    counterOfferId: number | null
+    signature: string | null
+    makerWallet: string | null
+    takerWallet: string | null
+    platformFeeCollectedLamports: bigint | null
+    totalValueLamports: bigint | null
+    executedAt: Date | null
+    transactionSignature: string | null
+    status: $Enums.TransactionStatus | null
+    gasFee: bigint | null
+    isSubsidized: boolean | null
+    errorMessage: string | null
+    confirmedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type SwapTransactionCountAggregateOutputType = {
+    id: number
+    offerId: number
+    counterOfferId: number
+    signature: number
+    makerWallet: number
+    takerWallet: number
+    platformFeeCollectedLamports: number
+    totalValueLamports: number
+    executedAt: number
+    transactionSignature: number
+    status: number
+    gasFee: number
+    isSubsidized: number
+    errorMessage: number
+    confirmedAt: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type SwapTransactionAvgAggregateInputType = {
+    id?: true
+    offerId?: true
+    counterOfferId?: true
+    platformFeeCollectedLamports?: true
+    totalValueLamports?: true
+    gasFee?: true
+  }
+
+  export type SwapTransactionSumAggregateInputType = {
+    id?: true
+    offerId?: true
+    counterOfferId?: true
+    platformFeeCollectedLamports?: true
+    totalValueLamports?: true
+    gasFee?: true
+  }
+
+  export type SwapTransactionMinAggregateInputType = {
+    id?: true
+    offerId?: true
+    counterOfferId?: true
+    signature?: true
+    makerWallet?: true
+    takerWallet?: true
+    platformFeeCollectedLamports?: true
+    totalValueLamports?: true
+    executedAt?: true
+    transactionSignature?: true
+    status?: true
+    gasFee?: true
+    isSubsidized?: true
+    errorMessage?: true
+    confirmedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type SwapTransactionMaxAggregateInputType = {
+    id?: true
+    offerId?: true
+    counterOfferId?: true
+    signature?: true
+    makerWallet?: true
+    takerWallet?: true
+    platformFeeCollectedLamports?: true
+    totalValueLamports?: true
+    executedAt?: true
+    transactionSignature?: true
+    status?: true
+    gasFee?: true
+    isSubsidized?: true
+    errorMessage?: true
+    confirmedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type SwapTransactionCountAggregateInputType = {
+    id?: true
+    offerId?: true
+    counterOfferId?: true
+    signature?: true
+    makerWallet?: true
+    takerWallet?: true
+    platformFeeCollectedLamports?: true
+    totalValueLamports?: true
+    executedAt?: true
+    transactionSignature?: true
+    status?: true
+    gasFee?: true
+    isSubsidized?: true
+    errorMessage?: true
+    confirmedAt?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type SwapTransactionAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SwapTransaction to aggregate.
+     */
+    where?: SwapTransactionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SwapTransactions to fetch.
+     */
+    orderBy?: SwapTransactionOrderByWithRelationInput | SwapTransactionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: SwapTransactionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SwapTransactions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SwapTransactions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned SwapTransactions
+    **/
+    _count?: true | SwapTransactionCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: SwapTransactionAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: SwapTransactionSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: SwapTransactionMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: SwapTransactionMaxAggregateInputType
+  }
+
+  export type GetSwapTransactionAggregateType<T extends SwapTransactionAggregateArgs> = {
+        [P in keyof T & keyof AggregateSwapTransaction]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateSwapTransaction[P]>
+      : GetScalarType<T[P], AggregateSwapTransaction[P]>
+  }
+
+
+
+
+  export type SwapTransactionGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SwapTransactionWhereInput
+    orderBy?: SwapTransactionOrderByWithAggregationInput | SwapTransactionOrderByWithAggregationInput[]
+    by: SwapTransactionScalarFieldEnum[] | SwapTransactionScalarFieldEnum
+    having?: SwapTransactionScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: SwapTransactionCountAggregateInputType | true
+    _avg?: SwapTransactionAvgAggregateInputType
+    _sum?: SwapTransactionSumAggregateInputType
+    _min?: SwapTransactionMinAggregateInputType
+    _max?: SwapTransactionMaxAggregateInputType
+  }
+
+  export type SwapTransactionGroupByOutputType = {
+    id: number
+    offerId: number
+    counterOfferId: number | null
+    signature: string
+    makerWallet: string
+    takerWallet: string
+    platformFeeCollectedLamports: bigint
+    totalValueLamports: bigint
+    executedAt: Date
+    transactionSignature: string | null
+    status: $Enums.TransactionStatus
+    gasFee: bigint | null
+    isSubsidized: boolean
+    errorMessage: string | null
+    confirmedAt: Date | null
+    createdAt: Date
+    updatedAt: Date
+    _count: SwapTransactionCountAggregateOutputType | null
+    _avg: SwapTransactionAvgAggregateOutputType | null
+    _sum: SwapTransactionSumAggregateOutputType | null
+    _min: SwapTransactionMinAggregateOutputType | null
+    _max: SwapTransactionMaxAggregateOutputType | null
+  }
+
+  type GetSwapTransactionGroupByPayload<T extends SwapTransactionGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<SwapTransactionGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof SwapTransactionGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], SwapTransactionGroupByOutputType[P]>
+            : GetScalarType<T[P], SwapTransactionGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type SwapTransactionSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    offerId?: boolean
+    counterOfferId?: boolean
+    signature?: boolean
+    makerWallet?: boolean
+    takerWallet?: boolean
+    platformFeeCollectedLamports?: boolean
+    totalValueLamports?: boolean
+    executedAt?: boolean
+    transactionSignature?: boolean
+    status?: boolean
+    gasFee?: boolean
+    isSubsidized?: boolean
+    errorMessage?: boolean
+    confirmedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    offer?: boolean | SwapOfferDefaultArgs<ExtArgs>
+    counterOffer?: boolean | SwapTransaction$counterOfferArgs<ExtArgs>
+    maker?: boolean | UserDefaultArgs<ExtArgs>
+    taker?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["swapTransaction"]>
+
+  export type SwapTransactionSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    offerId?: boolean
+    counterOfferId?: boolean
+    signature?: boolean
+    makerWallet?: boolean
+    takerWallet?: boolean
+    platformFeeCollectedLamports?: boolean
+    totalValueLamports?: boolean
+    executedAt?: boolean
+    transactionSignature?: boolean
+    status?: boolean
+    gasFee?: boolean
+    isSubsidized?: boolean
+    errorMessage?: boolean
+    confirmedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    offer?: boolean | SwapOfferDefaultArgs<ExtArgs>
+    counterOffer?: boolean | SwapTransaction$counterOfferArgs<ExtArgs>
+    maker?: boolean | UserDefaultArgs<ExtArgs>
+    taker?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["swapTransaction"]>
+
+  export type SwapTransactionSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    offerId?: boolean
+    counterOfferId?: boolean
+    signature?: boolean
+    makerWallet?: boolean
+    takerWallet?: boolean
+    platformFeeCollectedLamports?: boolean
+    totalValueLamports?: boolean
+    executedAt?: boolean
+    transactionSignature?: boolean
+    status?: boolean
+    gasFee?: boolean
+    isSubsidized?: boolean
+    errorMessage?: boolean
+    confirmedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    offer?: boolean | SwapOfferDefaultArgs<ExtArgs>
+    counterOffer?: boolean | SwapTransaction$counterOfferArgs<ExtArgs>
+    maker?: boolean | UserDefaultArgs<ExtArgs>
+    taker?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["swapTransaction"]>
+
+  export type SwapTransactionSelectScalar = {
+    id?: boolean
+    offerId?: boolean
+    counterOfferId?: boolean
+    signature?: boolean
+    makerWallet?: boolean
+    takerWallet?: boolean
+    platformFeeCollectedLamports?: boolean
+    totalValueLamports?: boolean
+    executedAt?: boolean
+    transactionSignature?: boolean
+    status?: boolean
+    gasFee?: boolean
+    isSubsidized?: boolean
+    errorMessage?: boolean
+    confirmedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type SwapTransactionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "offerId" | "counterOfferId" | "signature" | "makerWallet" | "takerWallet" | "platformFeeCollectedLamports" | "totalValueLamports" | "executedAt" | "transactionSignature" | "status" | "gasFee" | "isSubsidized" | "errorMessage" | "confirmedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["swapTransaction"]>
+  export type SwapTransactionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    offer?: boolean | SwapOfferDefaultArgs<ExtArgs>
+    counterOffer?: boolean | SwapTransaction$counterOfferArgs<ExtArgs>
+    maker?: boolean | UserDefaultArgs<ExtArgs>
+    taker?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type SwapTransactionIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    offer?: boolean | SwapOfferDefaultArgs<ExtArgs>
+    counterOffer?: boolean | SwapTransaction$counterOfferArgs<ExtArgs>
+    maker?: boolean | UserDefaultArgs<ExtArgs>
+    taker?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type SwapTransactionIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    offer?: boolean | SwapOfferDefaultArgs<ExtArgs>
+    counterOffer?: boolean | SwapTransaction$counterOfferArgs<ExtArgs>
+    maker?: boolean | UserDefaultArgs<ExtArgs>
+    taker?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $SwapTransactionPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "SwapTransaction"
+    objects: {
+      offer: Prisma.$SwapOfferPayload<ExtArgs>
+      counterOffer: Prisma.$SwapOfferPayload<ExtArgs> | null
+      maker: Prisma.$UserPayload<ExtArgs>
+      taker: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: number
+      offerId: number
+      counterOfferId: number | null
+      signature: string
+      makerWallet: string
+      takerWallet: string
+      platformFeeCollectedLamports: bigint
+      totalValueLamports: bigint
+      executedAt: Date
+      transactionSignature: string | null
+      status: $Enums.TransactionStatus
+      gasFee: bigint | null
+      isSubsidized: boolean
+      errorMessage: string | null
+      confirmedAt: Date | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["swapTransaction"]>
+    composites: {}
+  }
+
+  type SwapTransactionGetPayload<S extends boolean | null | undefined | SwapTransactionDefaultArgs> = $Result.GetResult<Prisma.$SwapTransactionPayload, S>
+
+  type SwapTransactionCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<SwapTransactionFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: SwapTransactionCountAggregateInputType | true
+    }
+
+  export interface SwapTransactionDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['SwapTransaction'], meta: { name: 'SwapTransaction' } }
+    /**
+     * Find zero or one SwapTransaction that matches the filter.
+     * @param {SwapTransactionFindUniqueArgs} args - Arguments to find a SwapTransaction
+     * @example
+     * // Get one SwapTransaction
+     * const swapTransaction = await prisma.swapTransaction.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends SwapTransactionFindUniqueArgs>(args: SelectSubset<T, SwapTransactionFindUniqueArgs<ExtArgs>>): Prisma__SwapTransactionClient<$Result.GetResult<Prisma.$SwapTransactionPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one SwapTransaction that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {SwapTransactionFindUniqueOrThrowArgs} args - Arguments to find a SwapTransaction
+     * @example
+     * // Get one SwapTransaction
+     * const swapTransaction = await prisma.swapTransaction.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends SwapTransactionFindUniqueOrThrowArgs>(args: SelectSubset<T, SwapTransactionFindUniqueOrThrowArgs<ExtArgs>>): Prisma__SwapTransactionClient<$Result.GetResult<Prisma.$SwapTransactionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SwapTransaction that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SwapTransactionFindFirstArgs} args - Arguments to find a SwapTransaction
+     * @example
+     * // Get one SwapTransaction
+     * const swapTransaction = await prisma.swapTransaction.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends SwapTransactionFindFirstArgs>(args?: SelectSubset<T, SwapTransactionFindFirstArgs<ExtArgs>>): Prisma__SwapTransactionClient<$Result.GetResult<Prisma.$SwapTransactionPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SwapTransaction that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SwapTransactionFindFirstOrThrowArgs} args - Arguments to find a SwapTransaction
+     * @example
+     * // Get one SwapTransaction
+     * const swapTransaction = await prisma.swapTransaction.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends SwapTransactionFindFirstOrThrowArgs>(args?: SelectSubset<T, SwapTransactionFindFirstOrThrowArgs<ExtArgs>>): Prisma__SwapTransactionClient<$Result.GetResult<Prisma.$SwapTransactionPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more SwapTransactions that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SwapTransactionFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all SwapTransactions
+     * const swapTransactions = await prisma.swapTransaction.findMany()
+     * 
+     * // Get first 10 SwapTransactions
+     * const swapTransactions = await prisma.swapTransaction.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const swapTransactionWithIdOnly = await prisma.swapTransaction.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends SwapTransactionFindManyArgs>(args?: SelectSubset<T, SwapTransactionFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SwapTransactionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a SwapTransaction.
+     * @param {SwapTransactionCreateArgs} args - Arguments to create a SwapTransaction.
+     * @example
+     * // Create one SwapTransaction
+     * const SwapTransaction = await prisma.swapTransaction.create({
+     *   data: {
+     *     // ... data to create a SwapTransaction
+     *   }
+     * })
+     * 
+     */
+    create<T extends SwapTransactionCreateArgs>(args: SelectSubset<T, SwapTransactionCreateArgs<ExtArgs>>): Prisma__SwapTransactionClient<$Result.GetResult<Prisma.$SwapTransactionPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many SwapTransactions.
+     * @param {SwapTransactionCreateManyArgs} args - Arguments to create many SwapTransactions.
+     * @example
+     * // Create many SwapTransactions
+     * const swapTransaction = await prisma.swapTransaction.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends SwapTransactionCreateManyArgs>(args?: SelectSubset<T, SwapTransactionCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many SwapTransactions and returns the data saved in the database.
+     * @param {SwapTransactionCreateManyAndReturnArgs} args - Arguments to create many SwapTransactions.
+     * @example
+     * // Create many SwapTransactions
+     * const swapTransaction = await prisma.swapTransaction.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many SwapTransactions and only return the `id`
+     * const swapTransactionWithIdOnly = await prisma.swapTransaction.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends SwapTransactionCreateManyAndReturnArgs>(args?: SelectSubset<T, SwapTransactionCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SwapTransactionPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a SwapTransaction.
+     * @param {SwapTransactionDeleteArgs} args - Arguments to delete one SwapTransaction.
+     * @example
+     * // Delete one SwapTransaction
+     * const SwapTransaction = await prisma.swapTransaction.delete({
+     *   where: {
+     *     // ... filter to delete one SwapTransaction
+     *   }
+     * })
+     * 
+     */
+    delete<T extends SwapTransactionDeleteArgs>(args: SelectSubset<T, SwapTransactionDeleteArgs<ExtArgs>>): Prisma__SwapTransactionClient<$Result.GetResult<Prisma.$SwapTransactionPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one SwapTransaction.
+     * @param {SwapTransactionUpdateArgs} args - Arguments to update one SwapTransaction.
+     * @example
+     * // Update one SwapTransaction
+     * const swapTransaction = await prisma.swapTransaction.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends SwapTransactionUpdateArgs>(args: SelectSubset<T, SwapTransactionUpdateArgs<ExtArgs>>): Prisma__SwapTransactionClient<$Result.GetResult<Prisma.$SwapTransactionPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more SwapTransactions.
+     * @param {SwapTransactionDeleteManyArgs} args - Arguments to filter SwapTransactions to delete.
+     * @example
+     * // Delete a few SwapTransactions
+     * const { count } = await prisma.swapTransaction.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends SwapTransactionDeleteManyArgs>(args?: SelectSubset<T, SwapTransactionDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SwapTransactions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SwapTransactionUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many SwapTransactions
+     * const swapTransaction = await prisma.swapTransaction.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends SwapTransactionUpdateManyArgs>(args: SelectSubset<T, SwapTransactionUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SwapTransactions and returns the data updated in the database.
+     * @param {SwapTransactionUpdateManyAndReturnArgs} args - Arguments to update many SwapTransactions.
+     * @example
+     * // Update many SwapTransactions
+     * const swapTransaction = await prisma.swapTransaction.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more SwapTransactions and only return the `id`
+     * const swapTransactionWithIdOnly = await prisma.swapTransaction.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends SwapTransactionUpdateManyAndReturnArgs>(args: SelectSubset<T, SwapTransactionUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SwapTransactionPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one SwapTransaction.
+     * @param {SwapTransactionUpsertArgs} args - Arguments to update or create a SwapTransaction.
+     * @example
+     * // Update or create a SwapTransaction
+     * const swapTransaction = await prisma.swapTransaction.upsert({
+     *   create: {
+     *     // ... data to create a SwapTransaction
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the SwapTransaction we want to update
+     *   }
+     * })
+     */
+    upsert<T extends SwapTransactionUpsertArgs>(args: SelectSubset<T, SwapTransactionUpsertArgs<ExtArgs>>): Prisma__SwapTransactionClient<$Result.GetResult<Prisma.$SwapTransactionPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of SwapTransactions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SwapTransactionCountArgs} args - Arguments to filter SwapTransactions to count.
+     * @example
+     * // Count the number of SwapTransactions
+     * const count = await prisma.swapTransaction.count({
+     *   where: {
+     *     // ... the filter for the SwapTransactions we want to count
+     *   }
+     * })
+    **/
+    count<T extends SwapTransactionCountArgs>(
+      args?: Subset<T, SwapTransactionCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], SwapTransactionCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a SwapTransaction.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SwapTransactionAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends SwapTransactionAggregateArgs>(args: Subset<T, SwapTransactionAggregateArgs>): Prisma.PrismaPromise<GetSwapTransactionAggregateType<T>>
+
+    /**
+     * Group by SwapTransaction.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SwapTransactionGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends SwapTransactionGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: SwapTransactionGroupByArgs['orderBy'] }
+        : { orderBy?: SwapTransactionGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, SwapTransactionGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetSwapTransactionGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the SwapTransaction model
+   */
+  readonly fields: SwapTransactionFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for SwapTransaction.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__SwapTransactionClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    offer<T extends SwapOfferDefaultArgs<ExtArgs> = {}>(args?: Subset<T, SwapOfferDefaultArgs<ExtArgs>>): Prisma__SwapOfferClient<$Result.GetResult<Prisma.$SwapOfferPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    counterOffer<T extends SwapTransaction$counterOfferArgs<ExtArgs> = {}>(args?: Subset<T, SwapTransaction$counterOfferArgs<ExtArgs>>): Prisma__SwapOfferClient<$Result.GetResult<Prisma.$SwapOfferPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    maker<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    taker<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the SwapTransaction model
+   */
+  interface SwapTransactionFieldRefs {
+    readonly id: FieldRef<"SwapTransaction", 'Int'>
+    readonly offerId: FieldRef<"SwapTransaction", 'Int'>
+    readonly counterOfferId: FieldRef<"SwapTransaction", 'Int'>
+    readonly signature: FieldRef<"SwapTransaction", 'String'>
+    readonly makerWallet: FieldRef<"SwapTransaction", 'String'>
+    readonly takerWallet: FieldRef<"SwapTransaction", 'String'>
+    readonly platformFeeCollectedLamports: FieldRef<"SwapTransaction", 'BigInt'>
+    readonly totalValueLamports: FieldRef<"SwapTransaction", 'BigInt'>
+    readonly executedAt: FieldRef<"SwapTransaction", 'DateTime'>
+    readonly transactionSignature: FieldRef<"SwapTransaction", 'String'>
+    readonly status: FieldRef<"SwapTransaction", 'TransactionStatus'>
+    readonly gasFee: FieldRef<"SwapTransaction", 'BigInt'>
+    readonly isSubsidized: FieldRef<"SwapTransaction", 'Boolean'>
+    readonly errorMessage: FieldRef<"SwapTransaction", 'String'>
+    readonly confirmedAt: FieldRef<"SwapTransaction", 'DateTime'>
+    readonly createdAt: FieldRef<"SwapTransaction", 'DateTime'>
+    readonly updatedAt: FieldRef<"SwapTransaction", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * SwapTransaction findUnique
+   */
+  export type SwapTransactionFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SwapTransaction
+     */
+    select?: SwapTransactionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SwapTransaction
+     */
+    omit?: SwapTransactionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SwapTransactionInclude<ExtArgs> | null
+    /**
+     * Filter, which SwapTransaction to fetch.
+     */
+    where: SwapTransactionWhereUniqueInput
+  }
+
+  /**
+   * SwapTransaction findUniqueOrThrow
+   */
+  export type SwapTransactionFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SwapTransaction
+     */
+    select?: SwapTransactionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SwapTransaction
+     */
+    omit?: SwapTransactionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SwapTransactionInclude<ExtArgs> | null
+    /**
+     * Filter, which SwapTransaction to fetch.
+     */
+    where: SwapTransactionWhereUniqueInput
+  }
+
+  /**
+   * SwapTransaction findFirst
+   */
+  export type SwapTransactionFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SwapTransaction
+     */
+    select?: SwapTransactionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SwapTransaction
+     */
+    omit?: SwapTransactionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SwapTransactionInclude<ExtArgs> | null
+    /**
+     * Filter, which SwapTransaction to fetch.
+     */
+    where?: SwapTransactionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SwapTransactions to fetch.
+     */
+    orderBy?: SwapTransactionOrderByWithRelationInput | SwapTransactionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SwapTransactions.
+     */
+    cursor?: SwapTransactionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SwapTransactions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SwapTransactions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SwapTransactions.
+     */
+    distinct?: SwapTransactionScalarFieldEnum | SwapTransactionScalarFieldEnum[]
+  }
+
+  /**
+   * SwapTransaction findFirstOrThrow
+   */
+  export type SwapTransactionFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SwapTransaction
+     */
+    select?: SwapTransactionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SwapTransaction
+     */
+    omit?: SwapTransactionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SwapTransactionInclude<ExtArgs> | null
+    /**
+     * Filter, which SwapTransaction to fetch.
+     */
+    where?: SwapTransactionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SwapTransactions to fetch.
+     */
+    orderBy?: SwapTransactionOrderByWithRelationInput | SwapTransactionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SwapTransactions.
+     */
+    cursor?: SwapTransactionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SwapTransactions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SwapTransactions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SwapTransactions.
+     */
+    distinct?: SwapTransactionScalarFieldEnum | SwapTransactionScalarFieldEnum[]
+  }
+
+  /**
+   * SwapTransaction findMany
+   */
+  export type SwapTransactionFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SwapTransaction
+     */
+    select?: SwapTransactionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SwapTransaction
+     */
+    omit?: SwapTransactionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SwapTransactionInclude<ExtArgs> | null
+    /**
+     * Filter, which SwapTransactions to fetch.
+     */
+    where?: SwapTransactionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SwapTransactions to fetch.
+     */
+    orderBy?: SwapTransactionOrderByWithRelationInput | SwapTransactionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing SwapTransactions.
+     */
+    cursor?: SwapTransactionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SwapTransactions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SwapTransactions.
+     */
+    skip?: number
+    distinct?: SwapTransactionScalarFieldEnum | SwapTransactionScalarFieldEnum[]
+  }
+
+  /**
+   * SwapTransaction create
+   */
+  export type SwapTransactionCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SwapTransaction
+     */
+    select?: SwapTransactionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SwapTransaction
+     */
+    omit?: SwapTransactionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SwapTransactionInclude<ExtArgs> | null
+    /**
+     * The data needed to create a SwapTransaction.
+     */
+    data: XOR<SwapTransactionCreateInput, SwapTransactionUncheckedCreateInput>
+  }
+
+  /**
+   * SwapTransaction createMany
+   */
+  export type SwapTransactionCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many SwapTransactions.
+     */
+    data: SwapTransactionCreateManyInput | SwapTransactionCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * SwapTransaction createManyAndReturn
+   */
+  export type SwapTransactionCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SwapTransaction
+     */
+    select?: SwapTransactionSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SwapTransaction
+     */
+    omit?: SwapTransactionOmit<ExtArgs> | null
+    /**
+     * The data used to create many SwapTransactions.
+     */
+    data: SwapTransactionCreateManyInput | SwapTransactionCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SwapTransactionIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * SwapTransaction update
+   */
+  export type SwapTransactionUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SwapTransaction
+     */
+    select?: SwapTransactionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SwapTransaction
+     */
+    omit?: SwapTransactionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SwapTransactionInclude<ExtArgs> | null
+    /**
+     * The data needed to update a SwapTransaction.
+     */
+    data: XOR<SwapTransactionUpdateInput, SwapTransactionUncheckedUpdateInput>
+    /**
+     * Choose, which SwapTransaction to update.
+     */
+    where: SwapTransactionWhereUniqueInput
+  }
+
+  /**
+   * SwapTransaction updateMany
+   */
+  export type SwapTransactionUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update SwapTransactions.
+     */
+    data: XOR<SwapTransactionUpdateManyMutationInput, SwapTransactionUncheckedUpdateManyInput>
+    /**
+     * Filter which SwapTransactions to update
+     */
+    where?: SwapTransactionWhereInput
+    /**
+     * Limit how many SwapTransactions to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * SwapTransaction updateManyAndReturn
+   */
+  export type SwapTransactionUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SwapTransaction
+     */
+    select?: SwapTransactionSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SwapTransaction
+     */
+    omit?: SwapTransactionOmit<ExtArgs> | null
+    /**
+     * The data used to update SwapTransactions.
+     */
+    data: XOR<SwapTransactionUpdateManyMutationInput, SwapTransactionUncheckedUpdateManyInput>
+    /**
+     * Filter which SwapTransactions to update
+     */
+    where?: SwapTransactionWhereInput
+    /**
+     * Limit how many SwapTransactions to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SwapTransactionIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * SwapTransaction upsert
+   */
+  export type SwapTransactionUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SwapTransaction
+     */
+    select?: SwapTransactionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SwapTransaction
+     */
+    omit?: SwapTransactionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SwapTransactionInclude<ExtArgs> | null
+    /**
+     * The filter to search for the SwapTransaction to update in case it exists.
+     */
+    where: SwapTransactionWhereUniqueInput
+    /**
+     * In case the SwapTransaction found by the `where` argument doesn't exist, create a new SwapTransaction with this data.
+     */
+    create: XOR<SwapTransactionCreateInput, SwapTransactionUncheckedCreateInput>
+    /**
+     * In case the SwapTransaction was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<SwapTransactionUpdateInput, SwapTransactionUncheckedUpdateInput>
+  }
+
+  /**
+   * SwapTransaction delete
+   */
+  export type SwapTransactionDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SwapTransaction
+     */
+    select?: SwapTransactionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SwapTransaction
+     */
+    omit?: SwapTransactionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SwapTransactionInclude<ExtArgs> | null
+    /**
+     * Filter which SwapTransaction to delete.
+     */
+    where: SwapTransactionWhereUniqueInput
+  }
+
+  /**
+   * SwapTransaction deleteMany
+   */
+  export type SwapTransactionDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SwapTransactions to delete
+     */
+    where?: SwapTransactionWhereInput
+    /**
+     * Limit how many SwapTransactions to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * SwapTransaction.counterOffer
+   */
+  export type SwapTransaction$counterOfferArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SwapOffer
+     */
+    select?: SwapOfferSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SwapOffer
+     */
+    omit?: SwapOfferOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SwapOfferInclude<ExtArgs> | null
+    where?: SwapOfferWhereInput
+  }
+
+  /**
+   * SwapTransaction without action
+   */
+  export type SwapTransactionDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SwapTransaction
+     */
+    select?: SwapTransactionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SwapTransaction
+     */
+    omit?: SwapTransactionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SwapTransactionInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -10219,6 +15824,82 @@ export namespace Prisma {
   };
 
   export type WebhookScalarFieldEnum = (typeof WebhookScalarFieldEnum)[keyof typeof WebhookScalarFieldEnum]
+
+
+  export const UserScalarFieldEnum: {
+    id: 'id',
+    walletAddress: 'walletAddress',
+    nonceAccount: 'nonceAccount',
+    isSubsidized: 'isSubsidized',
+    totalSwapsCompleted: 'totalSwapsCompleted',
+    totalFeesPaidLamports: 'totalFeesPaidLamports',
+    swapStats: 'swapStats',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+  export const NoncePoolScalarFieldEnum: {
+    id: 'id',
+    nonceAccount: 'nonceAccount',
+    status: 'status',
+    lastUsedAt: 'lastUsedAt',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type NoncePoolScalarFieldEnum = (typeof NoncePoolScalarFieldEnum)[keyof typeof NoncePoolScalarFieldEnum]
+
+
+  export const SwapOfferScalarFieldEnum: {
+    id: 'id',
+    makerWallet: 'makerWallet',
+    takerWallet: 'takerWallet',
+    offerType: 'offerType',
+    parentOfferId: 'parentOfferId',
+    offeredAssets: 'offeredAssets',
+    requestedAssets: 'requestedAssets',
+    offeredSolLamports: 'offeredSolLamports',
+    requestedSolLamports: 'requestedSolLamports',
+    platformFeeLamports: 'platformFeeLamports',
+    status: 'status',
+    expiresAt: 'expiresAt',
+    nonceAccount: 'nonceAccount',
+    currentNonceValue: 'currentNonceValue',
+    serializedTransaction: 'serializedTransaction',
+    transactionSignature: 'transactionSignature',
+    filledAt: 'filledAt',
+    cancelledAt: 'cancelledAt',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type SwapOfferScalarFieldEnum = (typeof SwapOfferScalarFieldEnum)[keyof typeof SwapOfferScalarFieldEnum]
+
+
+  export const SwapTransactionScalarFieldEnum: {
+    id: 'id',
+    offerId: 'offerId',
+    counterOfferId: 'counterOfferId',
+    signature: 'signature',
+    makerWallet: 'makerWallet',
+    takerWallet: 'takerWallet',
+    platformFeeCollectedLamports: 'platformFeeCollectedLamports',
+    totalValueLamports: 'totalValueLamports',
+    executedAt: 'executedAt',
+    transactionSignature: 'transactionSignature',
+    status: 'status',
+    gasFee: 'gasFee',
+    isSubsidized: 'isSubsidized',
+    errorMessage: 'errorMessage',
+    confirmedAt: 'confirmedAt',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type SwapTransactionScalarFieldEnum = (typeof SwapTransactionScalarFieldEnum)[keyof typeof SwapTransactionScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -10460,6 +16141,62 @@ export namespace Prisma {
    * Reference to a field of type 'WebhookDeliveryStatus[]'
    */
   export type ListEnumWebhookDeliveryStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WebhookDeliveryStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'NonceStatus'
+   */
+  export type EnumNonceStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NonceStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'NonceStatus[]'
+   */
+  export type ListEnumNonceStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NonceStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'OfferType'
+   */
+  export type EnumOfferTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OfferType'>
+    
+
+
+  /**
+   * Reference to a field of type 'OfferType[]'
+   */
+  export type ListEnumOfferTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OfferType[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'OfferStatus'
+   */
+  export type EnumOfferStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OfferStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'OfferStatus[]'
+   */
+  export type ListEnumOfferStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OfferStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'TransactionStatus'
+   */
+  export type EnumTransactionStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TransactionStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'TransactionStatus[]'
+   */
+  export type ListEnumTransactionStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TransactionStatus[]'>
     
 
 
@@ -11215,6 +16952,424 @@ export namespace Prisma {
     signature?: StringNullableWithAggregatesFilter<"Webhook"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Webhook"> | Date | string
     scheduledFor?: DateTimeWithAggregatesFilter<"Webhook"> | Date | string
+  }
+
+  export type UserWhereInput = {
+    AND?: UserWhereInput | UserWhereInput[]
+    OR?: UserWhereInput[]
+    NOT?: UserWhereInput | UserWhereInput[]
+    id?: StringFilter<"User"> | string
+    walletAddress?: StringFilter<"User"> | string
+    nonceAccount?: StringNullableFilter<"User"> | string | null
+    isSubsidized?: BoolFilter<"User"> | boolean
+    totalSwapsCompleted?: IntFilter<"User"> | number
+    totalFeesPaidLamports?: BigIntFilter<"User"> | bigint | number
+    swapStats?: JsonFilter<"User">
+    createdAt?: DateTimeFilter<"User"> | Date | string
+    updatedAt?: DateTimeFilter<"User"> | Date | string
+    makerOffers?: SwapOfferListRelationFilter
+    makerTransactions?: SwapTransactionListRelationFilter
+    takerTransactions?: SwapTransactionListRelationFilter
+  }
+
+  export type UserOrderByWithRelationInput = {
+    id?: SortOrder
+    walletAddress?: SortOrder
+    nonceAccount?: SortOrderInput | SortOrder
+    isSubsidized?: SortOrder
+    totalSwapsCompleted?: SortOrder
+    totalFeesPaidLamports?: SortOrder
+    swapStats?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    makerOffers?: SwapOfferOrderByRelationAggregateInput
+    makerTransactions?: SwapTransactionOrderByRelationAggregateInput
+    takerTransactions?: SwapTransactionOrderByRelationAggregateInput
+  }
+
+  export type UserWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    walletAddress?: string
+    AND?: UserWhereInput | UserWhereInput[]
+    OR?: UserWhereInput[]
+    NOT?: UserWhereInput | UserWhereInput[]
+    nonceAccount?: StringNullableFilter<"User"> | string | null
+    isSubsidized?: BoolFilter<"User"> | boolean
+    totalSwapsCompleted?: IntFilter<"User"> | number
+    totalFeesPaidLamports?: BigIntFilter<"User"> | bigint | number
+    swapStats?: JsonFilter<"User">
+    createdAt?: DateTimeFilter<"User"> | Date | string
+    updatedAt?: DateTimeFilter<"User"> | Date | string
+    makerOffers?: SwapOfferListRelationFilter
+    makerTransactions?: SwapTransactionListRelationFilter
+    takerTransactions?: SwapTransactionListRelationFilter
+  }, "id" | "walletAddress">
+
+  export type UserOrderByWithAggregationInput = {
+    id?: SortOrder
+    walletAddress?: SortOrder
+    nonceAccount?: SortOrderInput | SortOrder
+    isSubsidized?: SortOrder
+    totalSwapsCompleted?: SortOrder
+    totalFeesPaidLamports?: SortOrder
+    swapStats?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: UserCountOrderByAggregateInput
+    _avg?: UserAvgOrderByAggregateInput
+    _max?: UserMaxOrderByAggregateInput
+    _min?: UserMinOrderByAggregateInput
+    _sum?: UserSumOrderByAggregateInput
+  }
+
+  export type UserScalarWhereWithAggregatesInput = {
+    AND?: UserScalarWhereWithAggregatesInput | UserScalarWhereWithAggregatesInput[]
+    OR?: UserScalarWhereWithAggregatesInput[]
+    NOT?: UserScalarWhereWithAggregatesInput | UserScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"User"> | string
+    walletAddress?: StringWithAggregatesFilter<"User"> | string
+    nonceAccount?: StringNullableWithAggregatesFilter<"User"> | string | null
+    isSubsidized?: BoolWithAggregatesFilter<"User"> | boolean
+    totalSwapsCompleted?: IntWithAggregatesFilter<"User"> | number
+    totalFeesPaidLamports?: BigIntWithAggregatesFilter<"User"> | bigint | number
+    swapStats?: JsonWithAggregatesFilter<"User">
+    createdAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
+  }
+
+  export type NoncePoolWhereInput = {
+    AND?: NoncePoolWhereInput | NoncePoolWhereInput[]
+    OR?: NoncePoolWhereInput[]
+    NOT?: NoncePoolWhereInput | NoncePoolWhereInput[]
+    id?: IntFilter<"NoncePool"> | number
+    nonceAccount?: StringFilter<"NoncePool"> | string
+    status?: EnumNonceStatusFilter<"NoncePool"> | $Enums.NonceStatus
+    lastUsedAt?: DateTimeNullableFilter<"NoncePool"> | Date | string | null
+    createdAt?: DateTimeFilter<"NoncePool"> | Date | string
+    updatedAt?: DateTimeFilter<"NoncePool"> | Date | string
+    offers?: SwapOfferListRelationFilter
+  }
+
+  export type NoncePoolOrderByWithRelationInput = {
+    id?: SortOrder
+    nonceAccount?: SortOrder
+    status?: SortOrder
+    lastUsedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    offers?: SwapOfferOrderByRelationAggregateInput
+  }
+
+  export type NoncePoolWhereUniqueInput = Prisma.AtLeast<{
+    id?: number
+    nonceAccount?: string
+    AND?: NoncePoolWhereInput | NoncePoolWhereInput[]
+    OR?: NoncePoolWhereInput[]
+    NOT?: NoncePoolWhereInput | NoncePoolWhereInput[]
+    status?: EnumNonceStatusFilter<"NoncePool"> | $Enums.NonceStatus
+    lastUsedAt?: DateTimeNullableFilter<"NoncePool"> | Date | string | null
+    createdAt?: DateTimeFilter<"NoncePool"> | Date | string
+    updatedAt?: DateTimeFilter<"NoncePool"> | Date | string
+    offers?: SwapOfferListRelationFilter
+  }, "id" | "nonceAccount">
+
+  export type NoncePoolOrderByWithAggregationInput = {
+    id?: SortOrder
+    nonceAccount?: SortOrder
+    status?: SortOrder
+    lastUsedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: NoncePoolCountOrderByAggregateInput
+    _avg?: NoncePoolAvgOrderByAggregateInput
+    _max?: NoncePoolMaxOrderByAggregateInput
+    _min?: NoncePoolMinOrderByAggregateInput
+    _sum?: NoncePoolSumOrderByAggregateInput
+  }
+
+  export type NoncePoolScalarWhereWithAggregatesInput = {
+    AND?: NoncePoolScalarWhereWithAggregatesInput | NoncePoolScalarWhereWithAggregatesInput[]
+    OR?: NoncePoolScalarWhereWithAggregatesInput[]
+    NOT?: NoncePoolScalarWhereWithAggregatesInput | NoncePoolScalarWhereWithAggregatesInput[]
+    id?: IntWithAggregatesFilter<"NoncePool"> | number
+    nonceAccount?: StringWithAggregatesFilter<"NoncePool"> | string
+    status?: EnumNonceStatusWithAggregatesFilter<"NoncePool"> | $Enums.NonceStatus
+    lastUsedAt?: DateTimeNullableWithAggregatesFilter<"NoncePool"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"NoncePool"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"NoncePool"> | Date | string
+  }
+
+  export type SwapOfferWhereInput = {
+    AND?: SwapOfferWhereInput | SwapOfferWhereInput[]
+    OR?: SwapOfferWhereInput[]
+    NOT?: SwapOfferWhereInput | SwapOfferWhereInput[]
+    id?: IntFilter<"SwapOffer"> | number
+    makerWallet?: StringFilter<"SwapOffer"> | string
+    takerWallet?: StringNullableFilter<"SwapOffer"> | string | null
+    offerType?: EnumOfferTypeFilter<"SwapOffer"> | $Enums.OfferType
+    parentOfferId?: IntNullableFilter<"SwapOffer"> | number | null
+    offeredAssets?: JsonFilter<"SwapOffer">
+    requestedAssets?: JsonFilter<"SwapOffer">
+    offeredSolLamports?: BigIntNullableFilter<"SwapOffer"> | bigint | number | null
+    requestedSolLamports?: BigIntNullableFilter<"SwapOffer"> | bigint | number | null
+    platformFeeLamports?: BigIntFilter<"SwapOffer"> | bigint | number
+    status?: EnumOfferStatusFilter<"SwapOffer"> | $Enums.OfferStatus
+    expiresAt?: DateTimeFilter<"SwapOffer"> | Date | string
+    nonceAccount?: StringFilter<"SwapOffer"> | string
+    currentNonceValue?: StringNullableFilter<"SwapOffer"> | string | null
+    serializedTransaction?: StringNullableFilter<"SwapOffer"> | string | null
+    transactionSignature?: StringNullableFilter<"SwapOffer"> | string | null
+    filledAt?: DateTimeNullableFilter<"SwapOffer"> | Date | string | null
+    cancelledAt?: DateTimeNullableFilter<"SwapOffer"> | Date | string | null
+    createdAt?: DateTimeFilter<"SwapOffer"> | Date | string
+    updatedAt?: DateTimeFilter<"SwapOffer"> | Date | string
+    maker?: XOR<UserScalarRelationFilter, UserWhereInput>
+    nonce?: XOR<NoncePoolScalarRelationFilter, NoncePoolWhereInput>
+    parentOffer?: XOR<SwapOfferNullableScalarRelationFilter, SwapOfferWhereInput> | null
+    counterOffers?: SwapOfferListRelationFilter
+    transactions?: SwapTransactionListRelationFilter
+    counterTransactions?: SwapTransactionListRelationFilter
+  }
+
+  export type SwapOfferOrderByWithRelationInput = {
+    id?: SortOrder
+    makerWallet?: SortOrder
+    takerWallet?: SortOrderInput | SortOrder
+    offerType?: SortOrder
+    parentOfferId?: SortOrderInput | SortOrder
+    offeredAssets?: SortOrder
+    requestedAssets?: SortOrder
+    offeredSolLamports?: SortOrderInput | SortOrder
+    requestedSolLamports?: SortOrderInput | SortOrder
+    platformFeeLamports?: SortOrder
+    status?: SortOrder
+    expiresAt?: SortOrder
+    nonceAccount?: SortOrder
+    currentNonceValue?: SortOrderInput | SortOrder
+    serializedTransaction?: SortOrderInput | SortOrder
+    transactionSignature?: SortOrderInput | SortOrder
+    filledAt?: SortOrderInput | SortOrder
+    cancelledAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    maker?: UserOrderByWithRelationInput
+    nonce?: NoncePoolOrderByWithRelationInput
+    parentOffer?: SwapOfferOrderByWithRelationInput
+    counterOffers?: SwapOfferOrderByRelationAggregateInput
+    transactions?: SwapTransactionOrderByRelationAggregateInput
+    counterTransactions?: SwapTransactionOrderByRelationAggregateInput
+  }
+
+  export type SwapOfferWhereUniqueInput = Prisma.AtLeast<{
+    id?: number
+    AND?: SwapOfferWhereInput | SwapOfferWhereInput[]
+    OR?: SwapOfferWhereInput[]
+    NOT?: SwapOfferWhereInput | SwapOfferWhereInput[]
+    makerWallet?: StringFilter<"SwapOffer"> | string
+    takerWallet?: StringNullableFilter<"SwapOffer"> | string | null
+    offerType?: EnumOfferTypeFilter<"SwapOffer"> | $Enums.OfferType
+    parentOfferId?: IntNullableFilter<"SwapOffer"> | number | null
+    offeredAssets?: JsonFilter<"SwapOffer">
+    requestedAssets?: JsonFilter<"SwapOffer">
+    offeredSolLamports?: BigIntNullableFilter<"SwapOffer"> | bigint | number | null
+    requestedSolLamports?: BigIntNullableFilter<"SwapOffer"> | bigint | number | null
+    platformFeeLamports?: BigIntFilter<"SwapOffer"> | bigint | number
+    status?: EnumOfferStatusFilter<"SwapOffer"> | $Enums.OfferStatus
+    expiresAt?: DateTimeFilter<"SwapOffer"> | Date | string
+    nonceAccount?: StringFilter<"SwapOffer"> | string
+    currentNonceValue?: StringNullableFilter<"SwapOffer"> | string | null
+    serializedTransaction?: StringNullableFilter<"SwapOffer"> | string | null
+    transactionSignature?: StringNullableFilter<"SwapOffer"> | string | null
+    filledAt?: DateTimeNullableFilter<"SwapOffer"> | Date | string | null
+    cancelledAt?: DateTimeNullableFilter<"SwapOffer"> | Date | string | null
+    createdAt?: DateTimeFilter<"SwapOffer"> | Date | string
+    updatedAt?: DateTimeFilter<"SwapOffer"> | Date | string
+    maker?: XOR<UserScalarRelationFilter, UserWhereInput>
+    nonce?: XOR<NoncePoolScalarRelationFilter, NoncePoolWhereInput>
+    parentOffer?: XOR<SwapOfferNullableScalarRelationFilter, SwapOfferWhereInput> | null
+    counterOffers?: SwapOfferListRelationFilter
+    transactions?: SwapTransactionListRelationFilter
+    counterTransactions?: SwapTransactionListRelationFilter
+  }, "id">
+
+  export type SwapOfferOrderByWithAggregationInput = {
+    id?: SortOrder
+    makerWallet?: SortOrder
+    takerWallet?: SortOrderInput | SortOrder
+    offerType?: SortOrder
+    parentOfferId?: SortOrderInput | SortOrder
+    offeredAssets?: SortOrder
+    requestedAssets?: SortOrder
+    offeredSolLamports?: SortOrderInput | SortOrder
+    requestedSolLamports?: SortOrderInput | SortOrder
+    platformFeeLamports?: SortOrder
+    status?: SortOrder
+    expiresAt?: SortOrder
+    nonceAccount?: SortOrder
+    currentNonceValue?: SortOrderInput | SortOrder
+    serializedTransaction?: SortOrderInput | SortOrder
+    transactionSignature?: SortOrderInput | SortOrder
+    filledAt?: SortOrderInput | SortOrder
+    cancelledAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: SwapOfferCountOrderByAggregateInput
+    _avg?: SwapOfferAvgOrderByAggregateInput
+    _max?: SwapOfferMaxOrderByAggregateInput
+    _min?: SwapOfferMinOrderByAggregateInput
+    _sum?: SwapOfferSumOrderByAggregateInput
+  }
+
+  export type SwapOfferScalarWhereWithAggregatesInput = {
+    AND?: SwapOfferScalarWhereWithAggregatesInput | SwapOfferScalarWhereWithAggregatesInput[]
+    OR?: SwapOfferScalarWhereWithAggregatesInput[]
+    NOT?: SwapOfferScalarWhereWithAggregatesInput | SwapOfferScalarWhereWithAggregatesInput[]
+    id?: IntWithAggregatesFilter<"SwapOffer"> | number
+    makerWallet?: StringWithAggregatesFilter<"SwapOffer"> | string
+    takerWallet?: StringNullableWithAggregatesFilter<"SwapOffer"> | string | null
+    offerType?: EnumOfferTypeWithAggregatesFilter<"SwapOffer"> | $Enums.OfferType
+    parentOfferId?: IntNullableWithAggregatesFilter<"SwapOffer"> | number | null
+    offeredAssets?: JsonWithAggregatesFilter<"SwapOffer">
+    requestedAssets?: JsonWithAggregatesFilter<"SwapOffer">
+    offeredSolLamports?: BigIntNullableWithAggregatesFilter<"SwapOffer"> | bigint | number | null
+    requestedSolLamports?: BigIntNullableWithAggregatesFilter<"SwapOffer"> | bigint | number | null
+    platformFeeLamports?: BigIntWithAggregatesFilter<"SwapOffer"> | bigint | number
+    status?: EnumOfferStatusWithAggregatesFilter<"SwapOffer"> | $Enums.OfferStatus
+    expiresAt?: DateTimeWithAggregatesFilter<"SwapOffer"> | Date | string
+    nonceAccount?: StringWithAggregatesFilter<"SwapOffer"> | string
+    currentNonceValue?: StringNullableWithAggregatesFilter<"SwapOffer"> | string | null
+    serializedTransaction?: StringNullableWithAggregatesFilter<"SwapOffer"> | string | null
+    transactionSignature?: StringNullableWithAggregatesFilter<"SwapOffer"> | string | null
+    filledAt?: DateTimeNullableWithAggregatesFilter<"SwapOffer"> | Date | string | null
+    cancelledAt?: DateTimeNullableWithAggregatesFilter<"SwapOffer"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"SwapOffer"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"SwapOffer"> | Date | string
+  }
+
+  export type SwapTransactionWhereInput = {
+    AND?: SwapTransactionWhereInput | SwapTransactionWhereInput[]
+    OR?: SwapTransactionWhereInput[]
+    NOT?: SwapTransactionWhereInput | SwapTransactionWhereInput[]
+    id?: IntFilter<"SwapTransaction"> | number
+    offerId?: IntFilter<"SwapTransaction"> | number
+    counterOfferId?: IntNullableFilter<"SwapTransaction"> | number | null
+    signature?: StringFilter<"SwapTransaction"> | string
+    makerWallet?: StringFilter<"SwapTransaction"> | string
+    takerWallet?: StringFilter<"SwapTransaction"> | string
+    platformFeeCollectedLamports?: BigIntFilter<"SwapTransaction"> | bigint | number
+    totalValueLamports?: BigIntFilter<"SwapTransaction"> | bigint | number
+    executedAt?: DateTimeFilter<"SwapTransaction"> | Date | string
+    transactionSignature?: StringNullableFilter<"SwapTransaction"> | string | null
+    status?: EnumTransactionStatusFilter<"SwapTransaction"> | $Enums.TransactionStatus
+    gasFee?: BigIntNullableFilter<"SwapTransaction"> | bigint | number | null
+    isSubsidized?: BoolFilter<"SwapTransaction"> | boolean
+    errorMessage?: StringNullableFilter<"SwapTransaction"> | string | null
+    confirmedAt?: DateTimeNullableFilter<"SwapTransaction"> | Date | string | null
+    createdAt?: DateTimeFilter<"SwapTransaction"> | Date | string
+    updatedAt?: DateTimeFilter<"SwapTransaction"> | Date | string
+    offer?: XOR<SwapOfferScalarRelationFilter, SwapOfferWhereInput>
+    counterOffer?: XOR<SwapOfferNullableScalarRelationFilter, SwapOfferWhereInput> | null
+    maker?: XOR<UserScalarRelationFilter, UserWhereInput>
+    taker?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }
+
+  export type SwapTransactionOrderByWithRelationInput = {
+    id?: SortOrder
+    offerId?: SortOrder
+    counterOfferId?: SortOrderInput | SortOrder
+    signature?: SortOrder
+    makerWallet?: SortOrder
+    takerWallet?: SortOrder
+    platformFeeCollectedLamports?: SortOrder
+    totalValueLamports?: SortOrder
+    executedAt?: SortOrder
+    transactionSignature?: SortOrderInput | SortOrder
+    status?: SortOrder
+    gasFee?: SortOrderInput | SortOrder
+    isSubsidized?: SortOrder
+    errorMessage?: SortOrderInput | SortOrder
+    confirmedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    offer?: SwapOfferOrderByWithRelationInput
+    counterOffer?: SwapOfferOrderByWithRelationInput
+    maker?: UserOrderByWithRelationInput
+    taker?: UserOrderByWithRelationInput
+  }
+
+  export type SwapTransactionWhereUniqueInput = Prisma.AtLeast<{
+    id?: number
+    signature?: string
+    AND?: SwapTransactionWhereInput | SwapTransactionWhereInput[]
+    OR?: SwapTransactionWhereInput[]
+    NOT?: SwapTransactionWhereInput | SwapTransactionWhereInput[]
+    offerId?: IntFilter<"SwapTransaction"> | number
+    counterOfferId?: IntNullableFilter<"SwapTransaction"> | number | null
+    makerWallet?: StringFilter<"SwapTransaction"> | string
+    takerWallet?: StringFilter<"SwapTransaction"> | string
+    platformFeeCollectedLamports?: BigIntFilter<"SwapTransaction"> | bigint | number
+    totalValueLamports?: BigIntFilter<"SwapTransaction"> | bigint | number
+    executedAt?: DateTimeFilter<"SwapTransaction"> | Date | string
+    transactionSignature?: StringNullableFilter<"SwapTransaction"> | string | null
+    status?: EnumTransactionStatusFilter<"SwapTransaction"> | $Enums.TransactionStatus
+    gasFee?: BigIntNullableFilter<"SwapTransaction"> | bigint | number | null
+    isSubsidized?: BoolFilter<"SwapTransaction"> | boolean
+    errorMessage?: StringNullableFilter<"SwapTransaction"> | string | null
+    confirmedAt?: DateTimeNullableFilter<"SwapTransaction"> | Date | string | null
+    createdAt?: DateTimeFilter<"SwapTransaction"> | Date | string
+    updatedAt?: DateTimeFilter<"SwapTransaction"> | Date | string
+    offer?: XOR<SwapOfferScalarRelationFilter, SwapOfferWhereInput>
+    counterOffer?: XOR<SwapOfferNullableScalarRelationFilter, SwapOfferWhereInput> | null
+    maker?: XOR<UserScalarRelationFilter, UserWhereInput>
+    taker?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }, "id" | "signature">
+
+  export type SwapTransactionOrderByWithAggregationInput = {
+    id?: SortOrder
+    offerId?: SortOrder
+    counterOfferId?: SortOrderInput | SortOrder
+    signature?: SortOrder
+    makerWallet?: SortOrder
+    takerWallet?: SortOrder
+    platformFeeCollectedLamports?: SortOrder
+    totalValueLamports?: SortOrder
+    executedAt?: SortOrder
+    transactionSignature?: SortOrderInput | SortOrder
+    status?: SortOrder
+    gasFee?: SortOrderInput | SortOrder
+    isSubsidized?: SortOrder
+    errorMessage?: SortOrderInput | SortOrder
+    confirmedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: SwapTransactionCountOrderByAggregateInput
+    _avg?: SwapTransactionAvgOrderByAggregateInput
+    _max?: SwapTransactionMaxOrderByAggregateInput
+    _min?: SwapTransactionMinOrderByAggregateInput
+    _sum?: SwapTransactionSumOrderByAggregateInput
+  }
+
+  export type SwapTransactionScalarWhereWithAggregatesInput = {
+    AND?: SwapTransactionScalarWhereWithAggregatesInput | SwapTransactionScalarWhereWithAggregatesInput[]
+    OR?: SwapTransactionScalarWhereWithAggregatesInput[]
+    NOT?: SwapTransactionScalarWhereWithAggregatesInput | SwapTransactionScalarWhereWithAggregatesInput[]
+    id?: IntWithAggregatesFilter<"SwapTransaction"> | number
+    offerId?: IntWithAggregatesFilter<"SwapTransaction"> | number
+    counterOfferId?: IntNullableWithAggregatesFilter<"SwapTransaction"> | number | null
+    signature?: StringWithAggregatesFilter<"SwapTransaction"> | string
+    makerWallet?: StringWithAggregatesFilter<"SwapTransaction"> | string
+    takerWallet?: StringWithAggregatesFilter<"SwapTransaction"> | string
+    platformFeeCollectedLamports?: BigIntWithAggregatesFilter<"SwapTransaction"> | bigint | number
+    totalValueLamports?: BigIntWithAggregatesFilter<"SwapTransaction"> | bigint | number
+    executedAt?: DateTimeWithAggregatesFilter<"SwapTransaction"> | Date | string
+    transactionSignature?: StringNullableWithAggregatesFilter<"SwapTransaction"> | string | null
+    status?: EnumTransactionStatusWithAggregatesFilter<"SwapTransaction"> | $Enums.TransactionStatus
+    gasFee?: BigIntNullableWithAggregatesFilter<"SwapTransaction"> | bigint | number | null
+    isSubsidized?: BoolWithAggregatesFilter<"SwapTransaction"> | boolean
+    errorMessage?: StringNullableWithAggregatesFilter<"SwapTransaction"> | string | null
+    confirmedAt?: DateTimeNullableWithAggregatesFilter<"SwapTransaction"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"SwapTransaction"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"SwapTransaction"> | Date | string
   }
 
   export type AgreementCreateInput = {
@@ -12088,6 +18243,466 @@ export namespace Prisma {
     signature?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     scheduledFor?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserCreateInput = {
+    id?: string
+    walletAddress: string
+    nonceAccount?: string | null
+    isSubsidized?: boolean
+    totalSwapsCompleted?: number
+    totalFeesPaidLamports?: bigint | number
+    swapStats?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    makerOffers?: SwapOfferCreateNestedManyWithoutMakerInput
+    makerTransactions?: SwapTransactionCreateNestedManyWithoutMakerInput
+    takerTransactions?: SwapTransactionCreateNestedManyWithoutTakerInput
+  }
+
+  export type UserUncheckedCreateInput = {
+    id?: string
+    walletAddress: string
+    nonceAccount?: string | null
+    isSubsidized?: boolean
+    totalSwapsCompleted?: number
+    totalFeesPaidLamports?: bigint | number
+    swapStats?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    makerOffers?: SwapOfferUncheckedCreateNestedManyWithoutMakerInput
+    makerTransactions?: SwapTransactionUncheckedCreateNestedManyWithoutMakerInput
+    takerTransactions?: SwapTransactionUncheckedCreateNestedManyWithoutTakerInput
+  }
+
+  export type UserUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    walletAddress?: StringFieldUpdateOperationsInput | string
+    nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    isSubsidized?: BoolFieldUpdateOperationsInput | boolean
+    totalSwapsCompleted?: IntFieldUpdateOperationsInput | number
+    totalFeesPaidLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    swapStats?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    makerOffers?: SwapOfferUpdateManyWithoutMakerNestedInput
+    makerTransactions?: SwapTransactionUpdateManyWithoutMakerNestedInput
+    takerTransactions?: SwapTransactionUpdateManyWithoutTakerNestedInput
+  }
+
+  export type UserUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    walletAddress?: StringFieldUpdateOperationsInput | string
+    nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    isSubsidized?: BoolFieldUpdateOperationsInput | boolean
+    totalSwapsCompleted?: IntFieldUpdateOperationsInput | number
+    totalFeesPaidLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    swapStats?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    makerOffers?: SwapOfferUncheckedUpdateManyWithoutMakerNestedInput
+    makerTransactions?: SwapTransactionUncheckedUpdateManyWithoutMakerNestedInput
+    takerTransactions?: SwapTransactionUncheckedUpdateManyWithoutTakerNestedInput
+  }
+
+  export type UserCreateManyInput = {
+    id?: string
+    walletAddress: string
+    nonceAccount?: string | null
+    isSubsidized?: boolean
+    totalSwapsCompleted?: number
+    totalFeesPaidLamports?: bigint | number
+    swapStats?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type UserUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    walletAddress?: StringFieldUpdateOperationsInput | string
+    nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    isSubsidized?: BoolFieldUpdateOperationsInput | boolean
+    totalSwapsCompleted?: IntFieldUpdateOperationsInput | number
+    totalFeesPaidLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    swapStats?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    walletAddress?: StringFieldUpdateOperationsInput | string
+    nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    isSubsidized?: BoolFieldUpdateOperationsInput | boolean
+    totalSwapsCompleted?: IntFieldUpdateOperationsInput | number
+    totalFeesPaidLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    swapStats?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type NoncePoolCreateInput = {
+    nonceAccount: string
+    status?: $Enums.NonceStatus
+    lastUsedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    offers?: SwapOfferCreateNestedManyWithoutNonceInput
+  }
+
+  export type NoncePoolUncheckedCreateInput = {
+    id?: number
+    nonceAccount: string
+    status?: $Enums.NonceStatus
+    lastUsedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    offers?: SwapOfferUncheckedCreateNestedManyWithoutNonceInput
+  }
+
+  export type NoncePoolUpdateInput = {
+    nonceAccount?: StringFieldUpdateOperationsInput | string
+    status?: EnumNonceStatusFieldUpdateOperationsInput | $Enums.NonceStatus
+    lastUsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    offers?: SwapOfferUpdateManyWithoutNonceNestedInput
+  }
+
+  export type NoncePoolUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    nonceAccount?: StringFieldUpdateOperationsInput | string
+    status?: EnumNonceStatusFieldUpdateOperationsInput | $Enums.NonceStatus
+    lastUsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    offers?: SwapOfferUncheckedUpdateManyWithoutNonceNestedInput
+  }
+
+  export type NoncePoolCreateManyInput = {
+    id?: number
+    nonceAccount: string
+    status?: $Enums.NonceStatus
+    lastUsedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type NoncePoolUpdateManyMutationInput = {
+    nonceAccount?: StringFieldUpdateOperationsInput | string
+    status?: EnumNonceStatusFieldUpdateOperationsInput | $Enums.NonceStatus
+    lastUsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type NoncePoolUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    nonceAccount?: StringFieldUpdateOperationsInput | string
+    status?: EnumNonceStatusFieldUpdateOperationsInput | $Enums.NonceStatus
+    lastUsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SwapOfferCreateInput = {
+    takerWallet?: string | null
+    offerType: $Enums.OfferType
+    offeredAssets: JsonNullValueInput | InputJsonValue
+    requestedAssets: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: bigint | number | null
+    requestedSolLamports?: bigint | number | null
+    platformFeeLamports: bigint | number
+    status?: $Enums.OfferStatus
+    expiresAt: Date | string
+    currentNonceValue?: string | null
+    serializedTransaction?: string | null
+    transactionSignature?: string | null
+    filledAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    maker: UserCreateNestedOneWithoutMakerOffersInput
+    nonce: NoncePoolCreateNestedOneWithoutOffersInput
+    parentOffer?: SwapOfferCreateNestedOneWithoutCounterOffersInput
+    counterOffers?: SwapOfferCreateNestedManyWithoutParentOfferInput
+    transactions?: SwapTransactionCreateNestedManyWithoutOfferInput
+    counterTransactions?: SwapTransactionCreateNestedManyWithoutCounterOfferInput
+  }
+
+  export type SwapOfferUncheckedCreateInput = {
+    id?: number
+    makerWallet: string
+    takerWallet?: string | null
+    offerType: $Enums.OfferType
+    parentOfferId?: number | null
+    offeredAssets: JsonNullValueInput | InputJsonValue
+    requestedAssets: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: bigint | number | null
+    requestedSolLamports?: bigint | number | null
+    platformFeeLamports: bigint | number
+    status?: $Enums.OfferStatus
+    expiresAt: Date | string
+    nonceAccount: string
+    currentNonceValue?: string | null
+    serializedTransaction?: string | null
+    transactionSignature?: string | null
+    filledAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    counterOffers?: SwapOfferUncheckedCreateNestedManyWithoutParentOfferInput
+    transactions?: SwapTransactionUncheckedCreateNestedManyWithoutOfferInput
+    counterTransactions?: SwapTransactionUncheckedCreateNestedManyWithoutCounterOfferInput
+  }
+
+  export type SwapOfferUpdateInput = {
+    takerWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    offerType?: EnumOfferTypeFieldUpdateOperationsInput | $Enums.OfferType
+    offeredAssets?: JsonNullValueInput | InputJsonValue
+    requestedAssets?: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    requestedSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    platformFeeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    currentNonceValue?: NullableStringFieldUpdateOperationsInput | string | null
+    serializedTransaction?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    filledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    maker?: UserUpdateOneRequiredWithoutMakerOffersNestedInput
+    nonce?: NoncePoolUpdateOneRequiredWithoutOffersNestedInput
+    parentOffer?: SwapOfferUpdateOneWithoutCounterOffersNestedInput
+    counterOffers?: SwapOfferUpdateManyWithoutParentOfferNestedInput
+    transactions?: SwapTransactionUpdateManyWithoutOfferNestedInput
+    counterTransactions?: SwapTransactionUpdateManyWithoutCounterOfferNestedInput
+  }
+
+  export type SwapOfferUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    makerWallet?: StringFieldUpdateOperationsInput | string
+    takerWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    offerType?: EnumOfferTypeFieldUpdateOperationsInput | $Enums.OfferType
+    parentOfferId?: NullableIntFieldUpdateOperationsInput | number | null
+    offeredAssets?: JsonNullValueInput | InputJsonValue
+    requestedAssets?: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    requestedSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    platformFeeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    nonceAccount?: StringFieldUpdateOperationsInput | string
+    currentNonceValue?: NullableStringFieldUpdateOperationsInput | string | null
+    serializedTransaction?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    filledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    counterOffers?: SwapOfferUncheckedUpdateManyWithoutParentOfferNestedInput
+    transactions?: SwapTransactionUncheckedUpdateManyWithoutOfferNestedInput
+    counterTransactions?: SwapTransactionUncheckedUpdateManyWithoutCounterOfferNestedInput
+  }
+
+  export type SwapOfferCreateManyInput = {
+    id?: number
+    makerWallet: string
+    takerWallet?: string | null
+    offerType: $Enums.OfferType
+    parentOfferId?: number | null
+    offeredAssets: JsonNullValueInput | InputJsonValue
+    requestedAssets: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: bigint | number | null
+    requestedSolLamports?: bigint | number | null
+    platformFeeLamports: bigint | number
+    status?: $Enums.OfferStatus
+    expiresAt: Date | string
+    nonceAccount: string
+    currentNonceValue?: string | null
+    serializedTransaction?: string | null
+    transactionSignature?: string | null
+    filledAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SwapOfferUpdateManyMutationInput = {
+    takerWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    offerType?: EnumOfferTypeFieldUpdateOperationsInput | $Enums.OfferType
+    offeredAssets?: JsonNullValueInput | InputJsonValue
+    requestedAssets?: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    requestedSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    platformFeeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    currentNonceValue?: NullableStringFieldUpdateOperationsInput | string | null
+    serializedTransaction?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    filledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SwapOfferUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    makerWallet?: StringFieldUpdateOperationsInput | string
+    takerWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    offerType?: EnumOfferTypeFieldUpdateOperationsInput | $Enums.OfferType
+    parentOfferId?: NullableIntFieldUpdateOperationsInput | number | null
+    offeredAssets?: JsonNullValueInput | InputJsonValue
+    requestedAssets?: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    requestedSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    platformFeeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    nonceAccount?: StringFieldUpdateOperationsInput | string
+    currentNonceValue?: NullableStringFieldUpdateOperationsInput | string | null
+    serializedTransaction?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    filledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SwapTransactionCreateInput = {
+    signature: string
+    platformFeeCollectedLamports: bigint | number
+    totalValueLamports: bigint | number
+    executedAt: Date | string
+    transactionSignature?: string | null
+    status?: $Enums.TransactionStatus
+    gasFee?: bigint | number | null
+    isSubsidized?: boolean
+    errorMessage?: string | null
+    confirmedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    offer: SwapOfferCreateNestedOneWithoutTransactionsInput
+    counterOffer?: SwapOfferCreateNestedOneWithoutCounterTransactionsInput
+    maker: UserCreateNestedOneWithoutMakerTransactionsInput
+    taker: UserCreateNestedOneWithoutTakerTransactionsInput
+  }
+
+  export type SwapTransactionUncheckedCreateInput = {
+    id?: number
+    offerId: number
+    counterOfferId?: number | null
+    signature: string
+    makerWallet: string
+    takerWallet: string
+    platformFeeCollectedLamports: bigint | number
+    totalValueLamports: bigint | number
+    executedAt: Date | string
+    transactionSignature?: string | null
+    status?: $Enums.TransactionStatus
+    gasFee?: bigint | number | null
+    isSubsidized?: boolean
+    errorMessage?: string | null
+    confirmedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SwapTransactionUpdateInput = {
+    signature?: StringFieldUpdateOperationsInput | string
+    platformFeeCollectedLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    totalValueLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    executedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    transactionSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
+    gasFee?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    isSubsidized?: BoolFieldUpdateOperationsInput | boolean
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    offer?: SwapOfferUpdateOneRequiredWithoutTransactionsNestedInput
+    counterOffer?: SwapOfferUpdateOneWithoutCounterTransactionsNestedInput
+    maker?: UserUpdateOneRequiredWithoutMakerTransactionsNestedInput
+    taker?: UserUpdateOneRequiredWithoutTakerTransactionsNestedInput
+  }
+
+  export type SwapTransactionUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    offerId?: IntFieldUpdateOperationsInput | number
+    counterOfferId?: NullableIntFieldUpdateOperationsInput | number | null
+    signature?: StringFieldUpdateOperationsInput | string
+    makerWallet?: StringFieldUpdateOperationsInput | string
+    takerWallet?: StringFieldUpdateOperationsInput | string
+    platformFeeCollectedLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    totalValueLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    executedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    transactionSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
+    gasFee?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    isSubsidized?: BoolFieldUpdateOperationsInput | boolean
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SwapTransactionCreateManyInput = {
+    id?: number
+    offerId: number
+    counterOfferId?: number | null
+    signature: string
+    makerWallet: string
+    takerWallet: string
+    platformFeeCollectedLamports: bigint | number
+    totalValueLamports: bigint | number
+    executedAt: Date | string
+    transactionSignature?: string | null
+    status?: $Enums.TransactionStatus
+    gasFee?: bigint | number | null
+    isSubsidized?: boolean
+    errorMessage?: string | null
+    confirmedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SwapTransactionUpdateManyMutationInput = {
+    signature?: StringFieldUpdateOperationsInput | string
+    platformFeeCollectedLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    totalValueLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    executedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    transactionSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
+    gasFee?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    isSubsidized?: BoolFieldUpdateOperationsInput | boolean
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SwapTransactionUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    offerId?: IntFieldUpdateOperationsInput | number
+    counterOfferId?: NullableIntFieldUpdateOperationsInput | number | null
+    signature?: StringFieldUpdateOperationsInput | string
+    makerWallet?: StringFieldUpdateOperationsInput | string
+    takerWallet?: StringFieldUpdateOperationsInput | string
+    platformFeeCollectedLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    totalValueLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    executedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    transactionSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
+    gasFee?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    isSubsidized?: BoolFieldUpdateOperationsInput | boolean
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type StringFilter<$PrismaModel = never> = {
@@ -13081,6 +19696,352 @@ export namespace Prisma {
     _max?: NestedIntNullableFilter<$PrismaModel>
   }
 
+  export type SwapOfferListRelationFilter = {
+    every?: SwapOfferWhereInput
+    some?: SwapOfferWhereInput
+    none?: SwapOfferWhereInput
+  }
+
+  export type SwapTransactionListRelationFilter = {
+    every?: SwapTransactionWhereInput
+    some?: SwapTransactionWhereInput
+    none?: SwapTransactionWhereInput
+  }
+
+  export type SwapOfferOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type SwapTransactionOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type UserCountOrderByAggregateInput = {
+    id?: SortOrder
+    walletAddress?: SortOrder
+    nonceAccount?: SortOrder
+    isSubsidized?: SortOrder
+    totalSwapsCompleted?: SortOrder
+    totalFeesPaidLamports?: SortOrder
+    swapStats?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type UserAvgOrderByAggregateInput = {
+    totalSwapsCompleted?: SortOrder
+    totalFeesPaidLamports?: SortOrder
+  }
+
+  export type UserMaxOrderByAggregateInput = {
+    id?: SortOrder
+    walletAddress?: SortOrder
+    nonceAccount?: SortOrder
+    isSubsidized?: SortOrder
+    totalSwapsCompleted?: SortOrder
+    totalFeesPaidLamports?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type UserMinOrderByAggregateInput = {
+    id?: SortOrder
+    walletAddress?: SortOrder
+    nonceAccount?: SortOrder
+    isSubsidized?: SortOrder
+    totalSwapsCompleted?: SortOrder
+    totalFeesPaidLamports?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type UserSumOrderByAggregateInput = {
+    totalSwapsCompleted?: SortOrder
+    totalFeesPaidLamports?: SortOrder
+  }
+
+  export type EnumNonceStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.NonceStatus | EnumNonceStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.NonceStatus[] | ListEnumNonceStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.NonceStatus[] | ListEnumNonceStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumNonceStatusFilter<$PrismaModel> | $Enums.NonceStatus
+  }
+
+  export type NoncePoolCountOrderByAggregateInput = {
+    id?: SortOrder
+    nonceAccount?: SortOrder
+    status?: SortOrder
+    lastUsedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type NoncePoolAvgOrderByAggregateInput = {
+    id?: SortOrder
+  }
+
+  export type NoncePoolMaxOrderByAggregateInput = {
+    id?: SortOrder
+    nonceAccount?: SortOrder
+    status?: SortOrder
+    lastUsedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type NoncePoolMinOrderByAggregateInput = {
+    id?: SortOrder
+    nonceAccount?: SortOrder
+    status?: SortOrder
+    lastUsedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type NoncePoolSumOrderByAggregateInput = {
+    id?: SortOrder
+  }
+
+  export type EnumNonceStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.NonceStatus | EnumNonceStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.NonceStatus[] | ListEnumNonceStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.NonceStatus[] | ListEnumNonceStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumNonceStatusWithAggregatesFilter<$PrismaModel> | $Enums.NonceStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumNonceStatusFilter<$PrismaModel>
+    _max?: NestedEnumNonceStatusFilter<$PrismaModel>
+  }
+
+  export type EnumOfferTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.OfferType | EnumOfferTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.OfferType[] | ListEnumOfferTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OfferType[] | ListEnumOfferTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumOfferTypeFilter<$PrismaModel> | $Enums.OfferType
+  }
+
+  export type EnumOfferStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.OfferStatus | EnumOfferStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.OfferStatus[] | ListEnumOfferStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OfferStatus[] | ListEnumOfferStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumOfferStatusFilter<$PrismaModel> | $Enums.OfferStatus
+  }
+
+  export type UserScalarRelationFilter = {
+    is?: UserWhereInput
+    isNot?: UserWhereInput
+  }
+
+  export type NoncePoolScalarRelationFilter = {
+    is?: NoncePoolWhereInput
+    isNot?: NoncePoolWhereInput
+  }
+
+  export type SwapOfferNullableScalarRelationFilter = {
+    is?: SwapOfferWhereInput | null
+    isNot?: SwapOfferWhereInput | null
+  }
+
+  export type SwapOfferCountOrderByAggregateInput = {
+    id?: SortOrder
+    makerWallet?: SortOrder
+    takerWallet?: SortOrder
+    offerType?: SortOrder
+    parentOfferId?: SortOrder
+    offeredAssets?: SortOrder
+    requestedAssets?: SortOrder
+    offeredSolLamports?: SortOrder
+    requestedSolLamports?: SortOrder
+    platformFeeLamports?: SortOrder
+    status?: SortOrder
+    expiresAt?: SortOrder
+    nonceAccount?: SortOrder
+    currentNonceValue?: SortOrder
+    serializedTransaction?: SortOrder
+    transactionSignature?: SortOrder
+    filledAt?: SortOrder
+    cancelledAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type SwapOfferAvgOrderByAggregateInput = {
+    id?: SortOrder
+    parentOfferId?: SortOrder
+    offeredSolLamports?: SortOrder
+    requestedSolLamports?: SortOrder
+    platformFeeLamports?: SortOrder
+  }
+
+  export type SwapOfferMaxOrderByAggregateInput = {
+    id?: SortOrder
+    makerWallet?: SortOrder
+    takerWallet?: SortOrder
+    offerType?: SortOrder
+    parentOfferId?: SortOrder
+    offeredSolLamports?: SortOrder
+    requestedSolLamports?: SortOrder
+    platformFeeLamports?: SortOrder
+    status?: SortOrder
+    expiresAt?: SortOrder
+    nonceAccount?: SortOrder
+    currentNonceValue?: SortOrder
+    serializedTransaction?: SortOrder
+    transactionSignature?: SortOrder
+    filledAt?: SortOrder
+    cancelledAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type SwapOfferMinOrderByAggregateInput = {
+    id?: SortOrder
+    makerWallet?: SortOrder
+    takerWallet?: SortOrder
+    offerType?: SortOrder
+    parentOfferId?: SortOrder
+    offeredSolLamports?: SortOrder
+    requestedSolLamports?: SortOrder
+    platformFeeLamports?: SortOrder
+    status?: SortOrder
+    expiresAt?: SortOrder
+    nonceAccount?: SortOrder
+    currentNonceValue?: SortOrder
+    serializedTransaction?: SortOrder
+    transactionSignature?: SortOrder
+    filledAt?: SortOrder
+    cancelledAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type SwapOfferSumOrderByAggregateInput = {
+    id?: SortOrder
+    parentOfferId?: SortOrder
+    offeredSolLamports?: SortOrder
+    requestedSolLamports?: SortOrder
+    platformFeeLamports?: SortOrder
+  }
+
+  export type EnumOfferTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.OfferType | EnumOfferTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.OfferType[] | ListEnumOfferTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OfferType[] | ListEnumOfferTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumOfferTypeWithAggregatesFilter<$PrismaModel> | $Enums.OfferType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumOfferTypeFilter<$PrismaModel>
+    _max?: NestedEnumOfferTypeFilter<$PrismaModel>
+  }
+
+  export type EnumOfferStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.OfferStatus | EnumOfferStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.OfferStatus[] | ListEnumOfferStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OfferStatus[] | ListEnumOfferStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumOfferStatusWithAggregatesFilter<$PrismaModel> | $Enums.OfferStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumOfferStatusFilter<$PrismaModel>
+    _max?: NestedEnumOfferStatusFilter<$PrismaModel>
+  }
+
+  export type EnumTransactionStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.TransactionStatus | EnumTransactionStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.TransactionStatus[] | ListEnumTransactionStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.TransactionStatus[] | ListEnumTransactionStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumTransactionStatusFilter<$PrismaModel> | $Enums.TransactionStatus
+  }
+
+  export type SwapOfferScalarRelationFilter = {
+    is?: SwapOfferWhereInput
+    isNot?: SwapOfferWhereInput
+  }
+
+  export type SwapTransactionCountOrderByAggregateInput = {
+    id?: SortOrder
+    offerId?: SortOrder
+    counterOfferId?: SortOrder
+    signature?: SortOrder
+    makerWallet?: SortOrder
+    takerWallet?: SortOrder
+    platformFeeCollectedLamports?: SortOrder
+    totalValueLamports?: SortOrder
+    executedAt?: SortOrder
+    transactionSignature?: SortOrder
+    status?: SortOrder
+    gasFee?: SortOrder
+    isSubsidized?: SortOrder
+    errorMessage?: SortOrder
+    confirmedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type SwapTransactionAvgOrderByAggregateInput = {
+    id?: SortOrder
+    offerId?: SortOrder
+    counterOfferId?: SortOrder
+    platformFeeCollectedLamports?: SortOrder
+    totalValueLamports?: SortOrder
+    gasFee?: SortOrder
+  }
+
+  export type SwapTransactionMaxOrderByAggregateInput = {
+    id?: SortOrder
+    offerId?: SortOrder
+    counterOfferId?: SortOrder
+    signature?: SortOrder
+    makerWallet?: SortOrder
+    takerWallet?: SortOrder
+    platformFeeCollectedLamports?: SortOrder
+    totalValueLamports?: SortOrder
+    executedAt?: SortOrder
+    transactionSignature?: SortOrder
+    status?: SortOrder
+    gasFee?: SortOrder
+    isSubsidized?: SortOrder
+    errorMessage?: SortOrder
+    confirmedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type SwapTransactionMinOrderByAggregateInput = {
+    id?: SortOrder
+    offerId?: SortOrder
+    counterOfferId?: SortOrder
+    signature?: SortOrder
+    makerWallet?: SortOrder
+    takerWallet?: SortOrder
+    platformFeeCollectedLamports?: SortOrder
+    totalValueLamports?: SortOrder
+    executedAt?: SortOrder
+    transactionSignature?: SortOrder
+    status?: SortOrder
+    gasFee?: SortOrder
+    isSubsidized?: SortOrder
+    errorMessage?: SortOrder
+    confirmedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type SwapTransactionSumOrderByAggregateInput = {
+    id?: SortOrder
+    offerId?: SortOrder
+    counterOfferId?: SortOrder
+    platformFeeCollectedLamports?: SortOrder
+    totalValueLamports?: SortOrder
+    gasFee?: SortOrder
+  }
+
+  export type EnumTransactionStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.TransactionStatus | EnumTransactionStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.TransactionStatus[] | ListEnumTransactionStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.TransactionStatus[] | ListEnumTransactionStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumTransactionStatusWithAggregatesFilter<$PrismaModel> | $Enums.TransactionStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumTransactionStatusFilter<$PrismaModel>
+    _max?: NestedEnumTransactionStatusFilter<$PrismaModel>
+  }
+
   export type DepositCreateNestedManyWithoutAgreementInput = {
     create?: XOR<DepositCreateWithoutAgreementInput, DepositUncheckedCreateWithoutAgreementInput> | DepositCreateWithoutAgreementInput[] | DepositUncheckedCreateWithoutAgreementInput[]
     connectOrCreate?: DepositCreateOrConnectWithoutAgreementInput | DepositCreateOrConnectWithoutAgreementInput[]
@@ -13379,6 +20340,418 @@ export namespace Prisma {
     upsert?: AgreementUpsertWithoutWebhooksInput
     connect?: AgreementWhereUniqueInput
     update?: XOR<XOR<AgreementUpdateToOneWithWhereWithoutWebhooksInput, AgreementUpdateWithoutWebhooksInput>, AgreementUncheckedUpdateWithoutWebhooksInput>
+  }
+
+  export type SwapOfferCreateNestedManyWithoutMakerInput = {
+    create?: XOR<SwapOfferCreateWithoutMakerInput, SwapOfferUncheckedCreateWithoutMakerInput> | SwapOfferCreateWithoutMakerInput[] | SwapOfferUncheckedCreateWithoutMakerInput[]
+    connectOrCreate?: SwapOfferCreateOrConnectWithoutMakerInput | SwapOfferCreateOrConnectWithoutMakerInput[]
+    createMany?: SwapOfferCreateManyMakerInputEnvelope
+    connect?: SwapOfferWhereUniqueInput | SwapOfferWhereUniqueInput[]
+  }
+
+  export type SwapTransactionCreateNestedManyWithoutMakerInput = {
+    create?: XOR<SwapTransactionCreateWithoutMakerInput, SwapTransactionUncheckedCreateWithoutMakerInput> | SwapTransactionCreateWithoutMakerInput[] | SwapTransactionUncheckedCreateWithoutMakerInput[]
+    connectOrCreate?: SwapTransactionCreateOrConnectWithoutMakerInput | SwapTransactionCreateOrConnectWithoutMakerInput[]
+    createMany?: SwapTransactionCreateManyMakerInputEnvelope
+    connect?: SwapTransactionWhereUniqueInput | SwapTransactionWhereUniqueInput[]
+  }
+
+  export type SwapTransactionCreateNestedManyWithoutTakerInput = {
+    create?: XOR<SwapTransactionCreateWithoutTakerInput, SwapTransactionUncheckedCreateWithoutTakerInput> | SwapTransactionCreateWithoutTakerInput[] | SwapTransactionUncheckedCreateWithoutTakerInput[]
+    connectOrCreate?: SwapTransactionCreateOrConnectWithoutTakerInput | SwapTransactionCreateOrConnectWithoutTakerInput[]
+    createMany?: SwapTransactionCreateManyTakerInputEnvelope
+    connect?: SwapTransactionWhereUniqueInput | SwapTransactionWhereUniqueInput[]
+  }
+
+  export type SwapOfferUncheckedCreateNestedManyWithoutMakerInput = {
+    create?: XOR<SwapOfferCreateWithoutMakerInput, SwapOfferUncheckedCreateWithoutMakerInput> | SwapOfferCreateWithoutMakerInput[] | SwapOfferUncheckedCreateWithoutMakerInput[]
+    connectOrCreate?: SwapOfferCreateOrConnectWithoutMakerInput | SwapOfferCreateOrConnectWithoutMakerInput[]
+    createMany?: SwapOfferCreateManyMakerInputEnvelope
+    connect?: SwapOfferWhereUniqueInput | SwapOfferWhereUniqueInput[]
+  }
+
+  export type SwapTransactionUncheckedCreateNestedManyWithoutMakerInput = {
+    create?: XOR<SwapTransactionCreateWithoutMakerInput, SwapTransactionUncheckedCreateWithoutMakerInput> | SwapTransactionCreateWithoutMakerInput[] | SwapTransactionUncheckedCreateWithoutMakerInput[]
+    connectOrCreate?: SwapTransactionCreateOrConnectWithoutMakerInput | SwapTransactionCreateOrConnectWithoutMakerInput[]
+    createMany?: SwapTransactionCreateManyMakerInputEnvelope
+    connect?: SwapTransactionWhereUniqueInput | SwapTransactionWhereUniqueInput[]
+  }
+
+  export type SwapTransactionUncheckedCreateNestedManyWithoutTakerInput = {
+    create?: XOR<SwapTransactionCreateWithoutTakerInput, SwapTransactionUncheckedCreateWithoutTakerInput> | SwapTransactionCreateWithoutTakerInput[] | SwapTransactionUncheckedCreateWithoutTakerInput[]
+    connectOrCreate?: SwapTransactionCreateOrConnectWithoutTakerInput | SwapTransactionCreateOrConnectWithoutTakerInput[]
+    createMany?: SwapTransactionCreateManyTakerInputEnvelope
+    connect?: SwapTransactionWhereUniqueInput | SwapTransactionWhereUniqueInput[]
+  }
+
+  export type SwapOfferUpdateManyWithoutMakerNestedInput = {
+    create?: XOR<SwapOfferCreateWithoutMakerInput, SwapOfferUncheckedCreateWithoutMakerInput> | SwapOfferCreateWithoutMakerInput[] | SwapOfferUncheckedCreateWithoutMakerInput[]
+    connectOrCreate?: SwapOfferCreateOrConnectWithoutMakerInput | SwapOfferCreateOrConnectWithoutMakerInput[]
+    upsert?: SwapOfferUpsertWithWhereUniqueWithoutMakerInput | SwapOfferUpsertWithWhereUniqueWithoutMakerInput[]
+    createMany?: SwapOfferCreateManyMakerInputEnvelope
+    set?: SwapOfferWhereUniqueInput | SwapOfferWhereUniqueInput[]
+    disconnect?: SwapOfferWhereUniqueInput | SwapOfferWhereUniqueInput[]
+    delete?: SwapOfferWhereUniqueInput | SwapOfferWhereUniqueInput[]
+    connect?: SwapOfferWhereUniqueInput | SwapOfferWhereUniqueInput[]
+    update?: SwapOfferUpdateWithWhereUniqueWithoutMakerInput | SwapOfferUpdateWithWhereUniqueWithoutMakerInput[]
+    updateMany?: SwapOfferUpdateManyWithWhereWithoutMakerInput | SwapOfferUpdateManyWithWhereWithoutMakerInput[]
+    deleteMany?: SwapOfferScalarWhereInput | SwapOfferScalarWhereInput[]
+  }
+
+  export type SwapTransactionUpdateManyWithoutMakerNestedInput = {
+    create?: XOR<SwapTransactionCreateWithoutMakerInput, SwapTransactionUncheckedCreateWithoutMakerInput> | SwapTransactionCreateWithoutMakerInput[] | SwapTransactionUncheckedCreateWithoutMakerInput[]
+    connectOrCreate?: SwapTransactionCreateOrConnectWithoutMakerInput | SwapTransactionCreateOrConnectWithoutMakerInput[]
+    upsert?: SwapTransactionUpsertWithWhereUniqueWithoutMakerInput | SwapTransactionUpsertWithWhereUniqueWithoutMakerInput[]
+    createMany?: SwapTransactionCreateManyMakerInputEnvelope
+    set?: SwapTransactionWhereUniqueInput | SwapTransactionWhereUniqueInput[]
+    disconnect?: SwapTransactionWhereUniqueInput | SwapTransactionWhereUniqueInput[]
+    delete?: SwapTransactionWhereUniqueInput | SwapTransactionWhereUniqueInput[]
+    connect?: SwapTransactionWhereUniqueInput | SwapTransactionWhereUniqueInput[]
+    update?: SwapTransactionUpdateWithWhereUniqueWithoutMakerInput | SwapTransactionUpdateWithWhereUniqueWithoutMakerInput[]
+    updateMany?: SwapTransactionUpdateManyWithWhereWithoutMakerInput | SwapTransactionUpdateManyWithWhereWithoutMakerInput[]
+    deleteMany?: SwapTransactionScalarWhereInput | SwapTransactionScalarWhereInput[]
+  }
+
+  export type SwapTransactionUpdateManyWithoutTakerNestedInput = {
+    create?: XOR<SwapTransactionCreateWithoutTakerInput, SwapTransactionUncheckedCreateWithoutTakerInput> | SwapTransactionCreateWithoutTakerInput[] | SwapTransactionUncheckedCreateWithoutTakerInput[]
+    connectOrCreate?: SwapTransactionCreateOrConnectWithoutTakerInput | SwapTransactionCreateOrConnectWithoutTakerInput[]
+    upsert?: SwapTransactionUpsertWithWhereUniqueWithoutTakerInput | SwapTransactionUpsertWithWhereUniqueWithoutTakerInput[]
+    createMany?: SwapTransactionCreateManyTakerInputEnvelope
+    set?: SwapTransactionWhereUniqueInput | SwapTransactionWhereUniqueInput[]
+    disconnect?: SwapTransactionWhereUniqueInput | SwapTransactionWhereUniqueInput[]
+    delete?: SwapTransactionWhereUniqueInput | SwapTransactionWhereUniqueInput[]
+    connect?: SwapTransactionWhereUniqueInput | SwapTransactionWhereUniqueInput[]
+    update?: SwapTransactionUpdateWithWhereUniqueWithoutTakerInput | SwapTransactionUpdateWithWhereUniqueWithoutTakerInput[]
+    updateMany?: SwapTransactionUpdateManyWithWhereWithoutTakerInput | SwapTransactionUpdateManyWithWhereWithoutTakerInput[]
+    deleteMany?: SwapTransactionScalarWhereInput | SwapTransactionScalarWhereInput[]
+  }
+
+  export type SwapOfferUncheckedUpdateManyWithoutMakerNestedInput = {
+    create?: XOR<SwapOfferCreateWithoutMakerInput, SwapOfferUncheckedCreateWithoutMakerInput> | SwapOfferCreateWithoutMakerInput[] | SwapOfferUncheckedCreateWithoutMakerInput[]
+    connectOrCreate?: SwapOfferCreateOrConnectWithoutMakerInput | SwapOfferCreateOrConnectWithoutMakerInput[]
+    upsert?: SwapOfferUpsertWithWhereUniqueWithoutMakerInput | SwapOfferUpsertWithWhereUniqueWithoutMakerInput[]
+    createMany?: SwapOfferCreateManyMakerInputEnvelope
+    set?: SwapOfferWhereUniqueInput | SwapOfferWhereUniqueInput[]
+    disconnect?: SwapOfferWhereUniqueInput | SwapOfferWhereUniqueInput[]
+    delete?: SwapOfferWhereUniqueInput | SwapOfferWhereUniqueInput[]
+    connect?: SwapOfferWhereUniqueInput | SwapOfferWhereUniqueInput[]
+    update?: SwapOfferUpdateWithWhereUniqueWithoutMakerInput | SwapOfferUpdateWithWhereUniqueWithoutMakerInput[]
+    updateMany?: SwapOfferUpdateManyWithWhereWithoutMakerInput | SwapOfferUpdateManyWithWhereWithoutMakerInput[]
+    deleteMany?: SwapOfferScalarWhereInput | SwapOfferScalarWhereInput[]
+  }
+
+  export type SwapTransactionUncheckedUpdateManyWithoutMakerNestedInput = {
+    create?: XOR<SwapTransactionCreateWithoutMakerInput, SwapTransactionUncheckedCreateWithoutMakerInput> | SwapTransactionCreateWithoutMakerInput[] | SwapTransactionUncheckedCreateWithoutMakerInput[]
+    connectOrCreate?: SwapTransactionCreateOrConnectWithoutMakerInput | SwapTransactionCreateOrConnectWithoutMakerInput[]
+    upsert?: SwapTransactionUpsertWithWhereUniqueWithoutMakerInput | SwapTransactionUpsertWithWhereUniqueWithoutMakerInput[]
+    createMany?: SwapTransactionCreateManyMakerInputEnvelope
+    set?: SwapTransactionWhereUniqueInput | SwapTransactionWhereUniqueInput[]
+    disconnect?: SwapTransactionWhereUniqueInput | SwapTransactionWhereUniqueInput[]
+    delete?: SwapTransactionWhereUniqueInput | SwapTransactionWhereUniqueInput[]
+    connect?: SwapTransactionWhereUniqueInput | SwapTransactionWhereUniqueInput[]
+    update?: SwapTransactionUpdateWithWhereUniqueWithoutMakerInput | SwapTransactionUpdateWithWhereUniqueWithoutMakerInput[]
+    updateMany?: SwapTransactionUpdateManyWithWhereWithoutMakerInput | SwapTransactionUpdateManyWithWhereWithoutMakerInput[]
+    deleteMany?: SwapTransactionScalarWhereInput | SwapTransactionScalarWhereInput[]
+  }
+
+  export type SwapTransactionUncheckedUpdateManyWithoutTakerNestedInput = {
+    create?: XOR<SwapTransactionCreateWithoutTakerInput, SwapTransactionUncheckedCreateWithoutTakerInput> | SwapTransactionCreateWithoutTakerInput[] | SwapTransactionUncheckedCreateWithoutTakerInput[]
+    connectOrCreate?: SwapTransactionCreateOrConnectWithoutTakerInput | SwapTransactionCreateOrConnectWithoutTakerInput[]
+    upsert?: SwapTransactionUpsertWithWhereUniqueWithoutTakerInput | SwapTransactionUpsertWithWhereUniqueWithoutTakerInput[]
+    createMany?: SwapTransactionCreateManyTakerInputEnvelope
+    set?: SwapTransactionWhereUniqueInput | SwapTransactionWhereUniqueInput[]
+    disconnect?: SwapTransactionWhereUniqueInput | SwapTransactionWhereUniqueInput[]
+    delete?: SwapTransactionWhereUniqueInput | SwapTransactionWhereUniqueInput[]
+    connect?: SwapTransactionWhereUniqueInput | SwapTransactionWhereUniqueInput[]
+    update?: SwapTransactionUpdateWithWhereUniqueWithoutTakerInput | SwapTransactionUpdateWithWhereUniqueWithoutTakerInput[]
+    updateMany?: SwapTransactionUpdateManyWithWhereWithoutTakerInput | SwapTransactionUpdateManyWithWhereWithoutTakerInput[]
+    deleteMany?: SwapTransactionScalarWhereInput | SwapTransactionScalarWhereInput[]
+  }
+
+  export type SwapOfferCreateNestedManyWithoutNonceInput = {
+    create?: XOR<SwapOfferCreateWithoutNonceInput, SwapOfferUncheckedCreateWithoutNonceInput> | SwapOfferCreateWithoutNonceInput[] | SwapOfferUncheckedCreateWithoutNonceInput[]
+    connectOrCreate?: SwapOfferCreateOrConnectWithoutNonceInput | SwapOfferCreateOrConnectWithoutNonceInput[]
+    createMany?: SwapOfferCreateManyNonceInputEnvelope
+    connect?: SwapOfferWhereUniqueInput | SwapOfferWhereUniqueInput[]
+  }
+
+  export type SwapOfferUncheckedCreateNestedManyWithoutNonceInput = {
+    create?: XOR<SwapOfferCreateWithoutNonceInput, SwapOfferUncheckedCreateWithoutNonceInput> | SwapOfferCreateWithoutNonceInput[] | SwapOfferUncheckedCreateWithoutNonceInput[]
+    connectOrCreate?: SwapOfferCreateOrConnectWithoutNonceInput | SwapOfferCreateOrConnectWithoutNonceInput[]
+    createMany?: SwapOfferCreateManyNonceInputEnvelope
+    connect?: SwapOfferWhereUniqueInput | SwapOfferWhereUniqueInput[]
+  }
+
+  export type EnumNonceStatusFieldUpdateOperationsInput = {
+    set?: $Enums.NonceStatus
+  }
+
+  export type SwapOfferUpdateManyWithoutNonceNestedInput = {
+    create?: XOR<SwapOfferCreateWithoutNonceInput, SwapOfferUncheckedCreateWithoutNonceInput> | SwapOfferCreateWithoutNonceInput[] | SwapOfferUncheckedCreateWithoutNonceInput[]
+    connectOrCreate?: SwapOfferCreateOrConnectWithoutNonceInput | SwapOfferCreateOrConnectWithoutNonceInput[]
+    upsert?: SwapOfferUpsertWithWhereUniqueWithoutNonceInput | SwapOfferUpsertWithWhereUniqueWithoutNonceInput[]
+    createMany?: SwapOfferCreateManyNonceInputEnvelope
+    set?: SwapOfferWhereUniqueInput | SwapOfferWhereUniqueInput[]
+    disconnect?: SwapOfferWhereUniqueInput | SwapOfferWhereUniqueInput[]
+    delete?: SwapOfferWhereUniqueInput | SwapOfferWhereUniqueInput[]
+    connect?: SwapOfferWhereUniqueInput | SwapOfferWhereUniqueInput[]
+    update?: SwapOfferUpdateWithWhereUniqueWithoutNonceInput | SwapOfferUpdateWithWhereUniqueWithoutNonceInput[]
+    updateMany?: SwapOfferUpdateManyWithWhereWithoutNonceInput | SwapOfferUpdateManyWithWhereWithoutNonceInput[]
+    deleteMany?: SwapOfferScalarWhereInput | SwapOfferScalarWhereInput[]
+  }
+
+  export type SwapOfferUncheckedUpdateManyWithoutNonceNestedInput = {
+    create?: XOR<SwapOfferCreateWithoutNonceInput, SwapOfferUncheckedCreateWithoutNonceInput> | SwapOfferCreateWithoutNonceInput[] | SwapOfferUncheckedCreateWithoutNonceInput[]
+    connectOrCreate?: SwapOfferCreateOrConnectWithoutNonceInput | SwapOfferCreateOrConnectWithoutNonceInput[]
+    upsert?: SwapOfferUpsertWithWhereUniqueWithoutNonceInput | SwapOfferUpsertWithWhereUniqueWithoutNonceInput[]
+    createMany?: SwapOfferCreateManyNonceInputEnvelope
+    set?: SwapOfferWhereUniqueInput | SwapOfferWhereUniqueInput[]
+    disconnect?: SwapOfferWhereUniqueInput | SwapOfferWhereUniqueInput[]
+    delete?: SwapOfferWhereUniqueInput | SwapOfferWhereUniqueInput[]
+    connect?: SwapOfferWhereUniqueInput | SwapOfferWhereUniqueInput[]
+    update?: SwapOfferUpdateWithWhereUniqueWithoutNonceInput | SwapOfferUpdateWithWhereUniqueWithoutNonceInput[]
+    updateMany?: SwapOfferUpdateManyWithWhereWithoutNonceInput | SwapOfferUpdateManyWithWhereWithoutNonceInput[]
+    deleteMany?: SwapOfferScalarWhereInput | SwapOfferScalarWhereInput[]
+  }
+
+  export type UserCreateNestedOneWithoutMakerOffersInput = {
+    create?: XOR<UserCreateWithoutMakerOffersInput, UserUncheckedCreateWithoutMakerOffersInput>
+    connectOrCreate?: UserCreateOrConnectWithoutMakerOffersInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type NoncePoolCreateNestedOneWithoutOffersInput = {
+    create?: XOR<NoncePoolCreateWithoutOffersInput, NoncePoolUncheckedCreateWithoutOffersInput>
+    connectOrCreate?: NoncePoolCreateOrConnectWithoutOffersInput
+    connect?: NoncePoolWhereUniqueInput
+  }
+
+  export type SwapOfferCreateNestedOneWithoutCounterOffersInput = {
+    create?: XOR<SwapOfferCreateWithoutCounterOffersInput, SwapOfferUncheckedCreateWithoutCounterOffersInput>
+    connectOrCreate?: SwapOfferCreateOrConnectWithoutCounterOffersInput
+    connect?: SwapOfferWhereUniqueInput
+  }
+
+  export type SwapOfferCreateNestedManyWithoutParentOfferInput = {
+    create?: XOR<SwapOfferCreateWithoutParentOfferInput, SwapOfferUncheckedCreateWithoutParentOfferInput> | SwapOfferCreateWithoutParentOfferInput[] | SwapOfferUncheckedCreateWithoutParentOfferInput[]
+    connectOrCreate?: SwapOfferCreateOrConnectWithoutParentOfferInput | SwapOfferCreateOrConnectWithoutParentOfferInput[]
+    createMany?: SwapOfferCreateManyParentOfferInputEnvelope
+    connect?: SwapOfferWhereUniqueInput | SwapOfferWhereUniqueInput[]
+  }
+
+  export type SwapTransactionCreateNestedManyWithoutOfferInput = {
+    create?: XOR<SwapTransactionCreateWithoutOfferInput, SwapTransactionUncheckedCreateWithoutOfferInput> | SwapTransactionCreateWithoutOfferInput[] | SwapTransactionUncheckedCreateWithoutOfferInput[]
+    connectOrCreate?: SwapTransactionCreateOrConnectWithoutOfferInput | SwapTransactionCreateOrConnectWithoutOfferInput[]
+    createMany?: SwapTransactionCreateManyOfferInputEnvelope
+    connect?: SwapTransactionWhereUniqueInput | SwapTransactionWhereUniqueInput[]
+  }
+
+  export type SwapTransactionCreateNestedManyWithoutCounterOfferInput = {
+    create?: XOR<SwapTransactionCreateWithoutCounterOfferInput, SwapTransactionUncheckedCreateWithoutCounterOfferInput> | SwapTransactionCreateWithoutCounterOfferInput[] | SwapTransactionUncheckedCreateWithoutCounterOfferInput[]
+    connectOrCreate?: SwapTransactionCreateOrConnectWithoutCounterOfferInput | SwapTransactionCreateOrConnectWithoutCounterOfferInput[]
+    createMany?: SwapTransactionCreateManyCounterOfferInputEnvelope
+    connect?: SwapTransactionWhereUniqueInput | SwapTransactionWhereUniqueInput[]
+  }
+
+  export type SwapOfferUncheckedCreateNestedManyWithoutParentOfferInput = {
+    create?: XOR<SwapOfferCreateWithoutParentOfferInput, SwapOfferUncheckedCreateWithoutParentOfferInput> | SwapOfferCreateWithoutParentOfferInput[] | SwapOfferUncheckedCreateWithoutParentOfferInput[]
+    connectOrCreate?: SwapOfferCreateOrConnectWithoutParentOfferInput | SwapOfferCreateOrConnectWithoutParentOfferInput[]
+    createMany?: SwapOfferCreateManyParentOfferInputEnvelope
+    connect?: SwapOfferWhereUniqueInput | SwapOfferWhereUniqueInput[]
+  }
+
+  export type SwapTransactionUncheckedCreateNestedManyWithoutOfferInput = {
+    create?: XOR<SwapTransactionCreateWithoutOfferInput, SwapTransactionUncheckedCreateWithoutOfferInput> | SwapTransactionCreateWithoutOfferInput[] | SwapTransactionUncheckedCreateWithoutOfferInput[]
+    connectOrCreate?: SwapTransactionCreateOrConnectWithoutOfferInput | SwapTransactionCreateOrConnectWithoutOfferInput[]
+    createMany?: SwapTransactionCreateManyOfferInputEnvelope
+    connect?: SwapTransactionWhereUniqueInput | SwapTransactionWhereUniqueInput[]
+  }
+
+  export type SwapTransactionUncheckedCreateNestedManyWithoutCounterOfferInput = {
+    create?: XOR<SwapTransactionCreateWithoutCounterOfferInput, SwapTransactionUncheckedCreateWithoutCounterOfferInput> | SwapTransactionCreateWithoutCounterOfferInput[] | SwapTransactionUncheckedCreateWithoutCounterOfferInput[]
+    connectOrCreate?: SwapTransactionCreateOrConnectWithoutCounterOfferInput | SwapTransactionCreateOrConnectWithoutCounterOfferInput[]
+    createMany?: SwapTransactionCreateManyCounterOfferInputEnvelope
+    connect?: SwapTransactionWhereUniqueInput | SwapTransactionWhereUniqueInput[]
+  }
+
+  export type EnumOfferTypeFieldUpdateOperationsInput = {
+    set?: $Enums.OfferType
+  }
+
+  export type EnumOfferStatusFieldUpdateOperationsInput = {
+    set?: $Enums.OfferStatus
+  }
+
+  export type UserUpdateOneRequiredWithoutMakerOffersNestedInput = {
+    create?: XOR<UserCreateWithoutMakerOffersInput, UserUncheckedCreateWithoutMakerOffersInput>
+    connectOrCreate?: UserCreateOrConnectWithoutMakerOffersInput
+    upsert?: UserUpsertWithoutMakerOffersInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutMakerOffersInput, UserUpdateWithoutMakerOffersInput>, UserUncheckedUpdateWithoutMakerOffersInput>
+  }
+
+  export type NoncePoolUpdateOneRequiredWithoutOffersNestedInput = {
+    create?: XOR<NoncePoolCreateWithoutOffersInput, NoncePoolUncheckedCreateWithoutOffersInput>
+    connectOrCreate?: NoncePoolCreateOrConnectWithoutOffersInput
+    upsert?: NoncePoolUpsertWithoutOffersInput
+    connect?: NoncePoolWhereUniqueInput
+    update?: XOR<XOR<NoncePoolUpdateToOneWithWhereWithoutOffersInput, NoncePoolUpdateWithoutOffersInput>, NoncePoolUncheckedUpdateWithoutOffersInput>
+  }
+
+  export type SwapOfferUpdateOneWithoutCounterOffersNestedInput = {
+    create?: XOR<SwapOfferCreateWithoutCounterOffersInput, SwapOfferUncheckedCreateWithoutCounterOffersInput>
+    connectOrCreate?: SwapOfferCreateOrConnectWithoutCounterOffersInput
+    upsert?: SwapOfferUpsertWithoutCounterOffersInput
+    disconnect?: SwapOfferWhereInput | boolean
+    delete?: SwapOfferWhereInput | boolean
+    connect?: SwapOfferWhereUniqueInput
+    update?: XOR<XOR<SwapOfferUpdateToOneWithWhereWithoutCounterOffersInput, SwapOfferUpdateWithoutCounterOffersInput>, SwapOfferUncheckedUpdateWithoutCounterOffersInput>
+  }
+
+  export type SwapOfferUpdateManyWithoutParentOfferNestedInput = {
+    create?: XOR<SwapOfferCreateWithoutParentOfferInput, SwapOfferUncheckedCreateWithoutParentOfferInput> | SwapOfferCreateWithoutParentOfferInput[] | SwapOfferUncheckedCreateWithoutParentOfferInput[]
+    connectOrCreate?: SwapOfferCreateOrConnectWithoutParentOfferInput | SwapOfferCreateOrConnectWithoutParentOfferInput[]
+    upsert?: SwapOfferUpsertWithWhereUniqueWithoutParentOfferInput | SwapOfferUpsertWithWhereUniqueWithoutParentOfferInput[]
+    createMany?: SwapOfferCreateManyParentOfferInputEnvelope
+    set?: SwapOfferWhereUniqueInput | SwapOfferWhereUniqueInput[]
+    disconnect?: SwapOfferWhereUniqueInput | SwapOfferWhereUniqueInput[]
+    delete?: SwapOfferWhereUniqueInput | SwapOfferWhereUniqueInput[]
+    connect?: SwapOfferWhereUniqueInput | SwapOfferWhereUniqueInput[]
+    update?: SwapOfferUpdateWithWhereUniqueWithoutParentOfferInput | SwapOfferUpdateWithWhereUniqueWithoutParentOfferInput[]
+    updateMany?: SwapOfferUpdateManyWithWhereWithoutParentOfferInput | SwapOfferUpdateManyWithWhereWithoutParentOfferInput[]
+    deleteMany?: SwapOfferScalarWhereInput | SwapOfferScalarWhereInput[]
+  }
+
+  export type SwapTransactionUpdateManyWithoutOfferNestedInput = {
+    create?: XOR<SwapTransactionCreateWithoutOfferInput, SwapTransactionUncheckedCreateWithoutOfferInput> | SwapTransactionCreateWithoutOfferInput[] | SwapTransactionUncheckedCreateWithoutOfferInput[]
+    connectOrCreate?: SwapTransactionCreateOrConnectWithoutOfferInput | SwapTransactionCreateOrConnectWithoutOfferInput[]
+    upsert?: SwapTransactionUpsertWithWhereUniqueWithoutOfferInput | SwapTransactionUpsertWithWhereUniqueWithoutOfferInput[]
+    createMany?: SwapTransactionCreateManyOfferInputEnvelope
+    set?: SwapTransactionWhereUniqueInput | SwapTransactionWhereUniqueInput[]
+    disconnect?: SwapTransactionWhereUniqueInput | SwapTransactionWhereUniqueInput[]
+    delete?: SwapTransactionWhereUniqueInput | SwapTransactionWhereUniqueInput[]
+    connect?: SwapTransactionWhereUniqueInput | SwapTransactionWhereUniqueInput[]
+    update?: SwapTransactionUpdateWithWhereUniqueWithoutOfferInput | SwapTransactionUpdateWithWhereUniqueWithoutOfferInput[]
+    updateMany?: SwapTransactionUpdateManyWithWhereWithoutOfferInput | SwapTransactionUpdateManyWithWhereWithoutOfferInput[]
+    deleteMany?: SwapTransactionScalarWhereInput | SwapTransactionScalarWhereInput[]
+  }
+
+  export type SwapTransactionUpdateManyWithoutCounterOfferNestedInput = {
+    create?: XOR<SwapTransactionCreateWithoutCounterOfferInput, SwapTransactionUncheckedCreateWithoutCounterOfferInput> | SwapTransactionCreateWithoutCounterOfferInput[] | SwapTransactionUncheckedCreateWithoutCounterOfferInput[]
+    connectOrCreate?: SwapTransactionCreateOrConnectWithoutCounterOfferInput | SwapTransactionCreateOrConnectWithoutCounterOfferInput[]
+    upsert?: SwapTransactionUpsertWithWhereUniqueWithoutCounterOfferInput | SwapTransactionUpsertWithWhereUniqueWithoutCounterOfferInput[]
+    createMany?: SwapTransactionCreateManyCounterOfferInputEnvelope
+    set?: SwapTransactionWhereUniqueInput | SwapTransactionWhereUniqueInput[]
+    disconnect?: SwapTransactionWhereUniqueInput | SwapTransactionWhereUniqueInput[]
+    delete?: SwapTransactionWhereUniqueInput | SwapTransactionWhereUniqueInput[]
+    connect?: SwapTransactionWhereUniqueInput | SwapTransactionWhereUniqueInput[]
+    update?: SwapTransactionUpdateWithWhereUniqueWithoutCounterOfferInput | SwapTransactionUpdateWithWhereUniqueWithoutCounterOfferInput[]
+    updateMany?: SwapTransactionUpdateManyWithWhereWithoutCounterOfferInput | SwapTransactionUpdateManyWithWhereWithoutCounterOfferInput[]
+    deleteMany?: SwapTransactionScalarWhereInput | SwapTransactionScalarWhereInput[]
+  }
+
+  export type SwapOfferUncheckedUpdateManyWithoutParentOfferNestedInput = {
+    create?: XOR<SwapOfferCreateWithoutParentOfferInput, SwapOfferUncheckedCreateWithoutParentOfferInput> | SwapOfferCreateWithoutParentOfferInput[] | SwapOfferUncheckedCreateWithoutParentOfferInput[]
+    connectOrCreate?: SwapOfferCreateOrConnectWithoutParentOfferInput | SwapOfferCreateOrConnectWithoutParentOfferInput[]
+    upsert?: SwapOfferUpsertWithWhereUniqueWithoutParentOfferInput | SwapOfferUpsertWithWhereUniqueWithoutParentOfferInput[]
+    createMany?: SwapOfferCreateManyParentOfferInputEnvelope
+    set?: SwapOfferWhereUniqueInput | SwapOfferWhereUniqueInput[]
+    disconnect?: SwapOfferWhereUniqueInput | SwapOfferWhereUniqueInput[]
+    delete?: SwapOfferWhereUniqueInput | SwapOfferWhereUniqueInput[]
+    connect?: SwapOfferWhereUniqueInput | SwapOfferWhereUniqueInput[]
+    update?: SwapOfferUpdateWithWhereUniqueWithoutParentOfferInput | SwapOfferUpdateWithWhereUniqueWithoutParentOfferInput[]
+    updateMany?: SwapOfferUpdateManyWithWhereWithoutParentOfferInput | SwapOfferUpdateManyWithWhereWithoutParentOfferInput[]
+    deleteMany?: SwapOfferScalarWhereInput | SwapOfferScalarWhereInput[]
+  }
+
+  export type SwapTransactionUncheckedUpdateManyWithoutOfferNestedInput = {
+    create?: XOR<SwapTransactionCreateWithoutOfferInput, SwapTransactionUncheckedCreateWithoutOfferInput> | SwapTransactionCreateWithoutOfferInput[] | SwapTransactionUncheckedCreateWithoutOfferInput[]
+    connectOrCreate?: SwapTransactionCreateOrConnectWithoutOfferInput | SwapTransactionCreateOrConnectWithoutOfferInput[]
+    upsert?: SwapTransactionUpsertWithWhereUniqueWithoutOfferInput | SwapTransactionUpsertWithWhereUniqueWithoutOfferInput[]
+    createMany?: SwapTransactionCreateManyOfferInputEnvelope
+    set?: SwapTransactionWhereUniqueInput | SwapTransactionWhereUniqueInput[]
+    disconnect?: SwapTransactionWhereUniqueInput | SwapTransactionWhereUniqueInput[]
+    delete?: SwapTransactionWhereUniqueInput | SwapTransactionWhereUniqueInput[]
+    connect?: SwapTransactionWhereUniqueInput | SwapTransactionWhereUniqueInput[]
+    update?: SwapTransactionUpdateWithWhereUniqueWithoutOfferInput | SwapTransactionUpdateWithWhereUniqueWithoutOfferInput[]
+    updateMany?: SwapTransactionUpdateManyWithWhereWithoutOfferInput | SwapTransactionUpdateManyWithWhereWithoutOfferInput[]
+    deleteMany?: SwapTransactionScalarWhereInput | SwapTransactionScalarWhereInput[]
+  }
+
+  export type SwapTransactionUncheckedUpdateManyWithoutCounterOfferNestedInput = {
+    create?: XOR<SwapTransactionCreateWithoutCounterOfferInput, SwapTransactionUncheckedCreateWithoutCounterOfferInput> | SwapTransactionCreateWithoutCounterOfferInput[] | SwapTransactionUncheckedCreateWithoutCounterOfferInput[]
+    connectOrCreate?: SwapTransactionCreateOrConnectWithoutCounterOfferInput | SwapTransactionCreateOrConnectWithoutCounterOfferInput[]
+    upsert?: SwapTransactionUpsertWithWhereUniqueWithoutCounterOfferInput | SwapTransactionUpsertWithWhereUniqueWithoutCounterOfferInput[]
+    createMany?: SwapTransactionCreateManyCounterOfferInputEnvelope
+    set?: SwapTransactionWhereUniqueInput | SwapTransactionWhereUniqueInput[]
+    disconnect?: SwapTransactionWhereUniqueInput | SwapTransactionWhereUniqueInput[]
+    delete?: SwapTransactionWhereUniqueInput | SwapTransactionWhereUniqueInput[]
+    connect?: SwapTransactionWhereUniqueInput | SwapTransactionWhereUniqueInput[]
+    update?: SwapTransactionUpdateWithWhereUniqueWithoutCounterOfferInput | SwapTransactionUpdateWithWhereUniqueWithoutCounterOfferInput[]
+    updateMany?: SwapTransactionUpdateManyWithWhereWithoutCounterOfferInput | SwapTransactionUpdateManyWithWhereWithoutCounterOfferInput[]
+    deleteMany?: SwapTransactionScalarWhereInput | SwapTransactionScalarWhereInput[]
+  }
+
+  export type SwapOfferCreateNestedOneWithoutTransactionsInput = {
+    create?: XOR<SwapOfferCreateWithoutTransactionsInput, SwapOfferUncheckedCreateWithoutTransactionsInput>
+    connectOrCreate?: SwapOfferCreateOrConnectWithoutTransactionsInput
+    connect?: SwapOfferWhereUniqueInput
+  }
+
+  export type SwapOfferCreateNestedOneWithoutCounterTransactionsInput = {
+    create?: XOR<SwapOfferCreateWithoutCounterTransactionsInput, SwapOfferUncheckedCreateWithoutCounterTransactionsInput>
+    connectOrCreate?: SwapOfferCreateOrConnectWithoutCounterTransactionsInput
+    connect?: SwapOfferWhereUniqueInput
+  }
+
+  export type UserCreateNestedOneWithoutMakerTransactionsInput = {
+    create?: XOR<UserCreateWithoutMakerTransactionsInput, UserUncheckedCreateWithoutMakerTransactionsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutMakerTransactionsInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type UserCreateNestedOneWithoutTakerTransactionsInput = {
+    create?: XOR<UserCreateWithoutTakerTransactionsInput, UserUncheckedCreateWithoutTakerTransactionsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutTakerTransactionsInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type EnumTransactionStatusFieldUpdateOperationsInput = {
+    set?: $Enums.TransactionStatus
+  }
+
+  export type SwapOfferUpdateOneRequiredWithoutTransactionsNestedInput = {
+    create?: XOR<SwapOfferCreateWithoutTransactionsInput, SwapOfferUncheckedCreateWithoutTransactionsInput>
+    connectOrCreate?: SwapOfferCreateOrConnectWithoutTransactionsInput
+    upsert?: SwapOfferUpsertWithoutTransactionsInput
+    connect?: SwapOfferWhereUniqueInput
+    update?: XOR<XOR<SwapOfferUpdateToOneWithWhereWithoutTransactionsInput, SwapOfferUpdateWithoutTransactionsInput>, SwapOfferUncheckedUpdateWithoutTransactionsInput>
+  }
+
+  export type SwapOfferUpdateOneWithoutCounterTransactionsNestedInput = {
+    create?: XOR<SwapOfferCreateWithoutCounterTransactionsInput, SwapOfferUncheckedCreateWithoutCounterTransactionsInput>
+    connectOrCreate?: SwapOfferCreateOrConnectWithoutCounterTransactionsInput
+    upsert?: SwapOfferUpsertWithoutCounterTransactionsInput
+    disconnect?: SwapOfferWhereInput | boolean
+    delete?: SwapOfferWhereInput | boolean
+    connect?: SwapOfferWhereUniqueInput
+    update?: XOR<XOR<SwapOfferUpdateToOneWithWhereWithoutCounterTransactionsInput, SwapOfferUpdateWithoutCounterTransactionsInput>, SwapOfferUncheckedUpdateWithoutCounterTransactionsInput>
+  }
+
+  export type UserUpdateOneRequiredWithoutMakerTransactionsNestedInput = {
+    create?: XOR<UserCreateWithoutMakerTransactionsInput, UserUncheckedCreateWithoutMakerTransactionsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutMakerTransactionsInput
+    upsert?: UserUpsertWithoutMakerTransactionsInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutMakerTransactionsInput, UserUpdateWithoutMakerTransactionsInput>, UserUncheckedUpdateWithoutMakerTransactionsInput>
+  }
+
+  export type UserUpdateOneRequiredWithoutTakerTransactionsNestedInput = {
+    create?: XOR<UserCreateWithoutTakerTransactionsInput, UserUncheckedCreateWithoutTakerTransactionsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutTakerTransactionsInput
+    upsert?: UserUpsertWithoutTakerTransactionsInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutTakerTransactionsInput, UserUpdateWithoutTakerTransactionsInput>, UserUncheckedUpdateWithoutTakerTransactionsInput>
   }
 
   export type NestedStringFilter<$PrismaModel = never> = {
@@ -13853,6 +21226,74 @@ export namespace Prisma {
     _sum?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedIntNullableFilter<$PrismaModel>
     _max?: NestedIntNullableFilter<$PrismaModel>
+  }
+
+  export type NestedEnumNonceStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.NonceStatus | EnumNonceStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.NonceStatus[] | ListEnumNonceStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.NonceStatus[] | ListEnumNonceStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumNonceStatusFilter<$PrismaModel> | $Enums.NonceStatus
+  }
+
+  export type NestedEnumNonceStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.NonceStatus | EnumNonceStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.NonceStatus[] | ListEnumNonceStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.NonceStatus[] | ListEnumNonceStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumNonceStatusWithAggregatesFilter<$PrismaModel> | $Enums.NonceStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumNonceStatusFilter<$PrismaModel>
+    _max?: NestedEnumNonceStatusFilter<$PrismaModel>
+  }
+
+  export type NestedEnumOfferTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.OfferType | EnumOfferTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.OfferType[] | ListEnumOfferTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OfferType[] | ListEnumOfferTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumOfferTypeFilter<$PrismaModel> | $Enums.OfferType
+  }
+
+  export type NestedEnumOfferStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.OfferStatus | EnumOfferStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.OfferStatus[] | ListEnumOfferStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OfferStatus[] | ListEnumOfferStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumOfferStatusFilter<$PrismaModel> | $Enums.OfferStatus
+  }
+
+  export type NestedEnumOfferTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.OfferType | EnumOfferTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.OfferType[] | ListEnumOfferTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OfferType[] | ListEnumOfferTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumOfferTypeWithAggregatesFilter<$PrismaModel> | $Enums.OfferType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumOfferTypeFilter<$PrismaModel>
+    _max?: NestedEnumOfferTypeFilter<$PrismaModel>
+  }
+
+  export type NestedEnumOfferStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.OfferStatus | EnumOfferStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.OfferStatus[] | ListEnumOfferStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OfferStatus[] | ListEnumOfferStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumOfferStatusWithAggregatesFilter<$PrismaModel> | $Enums.OfferStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumOfferStatusFilter<$PrismaModel>
+    _max?: NestedEnumOfferStatusFilter<$PrismaModel>
+  }
+
+  export type NestedEnumTransactionStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.TransactionStatus | EnumTransactionStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.TransactionStatus[] | ListEnumTransactionStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.TransactionStatus[] | ListEnumTransactionStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumTransactionStatusFilter<$PrismaModel> | $Enums.TransactionStatus
+  }
+
+  export type NestedEnumTransactionStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.TransactionStatus | EnumTransactionStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.TransactionStatus[] | ListEnumTransactionStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.TransactionStatus[] | ListEnumTransactionStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumTransactionStatusWithAggregatesFilter<$PrismaModel> | $Enums.TransactionStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumTransactionStatusFilter<$PrismaModel>
+    _max?: NestedEnumTransactionStatusFilter<$PrismaModel>
   }
 
   export type DepositCreateWithoutAgreementInput = {
@@ -14772,6 +22213,1140 @@ export namespace Prisma {
     receipt?: ReceiptUncheckedUpdateOneWithoutAgreementNestedInput
   }
 
+  export type SwapOfferCreateWithoutMakerInput = {
+    takerWallet?: string | null
+    offerType: $Enums.OfferType
+    offeredAssets: JsonNullValueInput | InputJsonValue
+    requestedAssets: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: bigint | number | null
+    requestedSolLamports?: bigint | number | null
+    platformFeeLamports: bigint | number
+    status?: $Enums.OfferStatus
+    expiresAt: Date | string
+    currentNonceValue?: string | null
+    serializedTransaction?: string | null
+    transactionSignature?: string | null
+    filledAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    nonce: NoncePoolCreateNestedOneWithoutOffersInput
+    parentOffer?: SwapOfferCreateNestedOneWithoutCounterOffersInput
+    counterOffers?: SwapOfferCreateNestedManyWithoutParentOfferInput
+    transactions?: SwapTransactionCreateNestedManyWithoutOfferInput
+    counterTransactions?: SwapTransactionCreateNestedManyWithoutCounterOfferInput
+  }
+
+  export type SwapOfferUncheckedCreateWithoutMakerInput = {
+    id?: number
+    takerWallet?: string | null
+    offerType: $Enums.OfferType
+    parentOfferId?: number | null
+    offeredAssets: JsonNullValueInput | InputJsonValue
+    requestedAssets: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: bigint | number | null
+    requestedSolLamports?: bigint | number | null
+    platformFeeLamports: bigint | number
+    status?: $Enums.OfferStatus
+    expiresAt: Date | string
+    nonceAccount: string
+    currentNonceValue?: string | null
+    serializedTransaction?: string | null
+    transactionSignature?: string | null
+    filledAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    counterOffers?: SwapOfferUncheckedCreateNestedManyWithoutParentOfferInput
+    transactions?: SwapTransactionUncheckedCreateNestedManyWithoutOfferInput
+    counterTransactions?: SwapTransactionUncheckedCreateNestedManyWithoutCounterOfferInput
+  }
+
+  export type SwapOfferCreateOrConnectWithoutMakerInput = {
+    where: SwapOfferWhereUniqueInput
+    create: XOR<SwapOfferCreateWithoutMakerInput, SwapOfferUncheckedCreateWithoutMakerInput>
+  }
+
+  export type SwapOfferCreateManyMakerInputEnvelope = {
+    data: SwapOfferCreateManyMakerInput | SwapOfferCreateManyMakerInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type SwapTransactionCreateWithoutMakerInput = {
+    signature: string
+    platformFeeCollectedLamports: bigint | number
+    totalValueLamports: bigint | number
+    executedAt: Date | string
+    transactionSignature?: string | null
+    status?: $Enums.TransactionStatus
+    gasFee?: bigint | number | null
+    isSubsidized?: boolean
+    errorMessage?: string | null
+    confirmedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    offer: SwapOfferCreateNestedOneWithoutTransactionsInput
+    counterOffer?: SwapOfferCreateNestedOneWithoutCounterTransactionsInput
+    taker: UserCreateNestedOneWithoutTakerTransactionsInput
+  }
+
+  export type SwapTransactionUncheckedCreateWithoutMakerInput = {
+    id?: number
+    offerId: number
+    counterOfferId?: number | null
+    signature: string
+    takerWallet: string
+    platformFeeCollectedLamports: bigint | number
+    totalValueLamports: bigint | number
+    executedAt: Date | string
+    transactionSignature?: string | null
+    status?: $Enums.TransactionStatus
+    gasFee?: bigint | number | null
+    isSubsidized?: boolean
+    errorMessage?: string | null
+    confirmedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SwapTransactionCreateOrConnectWithoutMakerInput = {
+    where: SwapTransactionWhereUniqueInput
+    create: XOR<SwapTransactionCreateWithoutMakerInput, SwapTransactionUncheckedCreateWithoutMakerInput>
+  }
+
+  export type SwapTransactionCreateManyMakerInputEnvelope = {
+    data: SwapTransactionCreateManyMakerInput | SwapTransactionCreateManyMakerInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type SwapTransactionCreateWithoutTakerInput = {
+    signature: string
+    platformFeeCollectedLamports: bigint | number
+    totalValueLamports: bigint | number
+    executedAt: Date | string
+    transactionSignature?: string | null
+    status?: $Enums.TransactionStatus
+    gasFee?: bigint | number | null
+    isSubsidized?: boolean
+    errorMessage?: string | null
+    confirmedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    offer: SwapOfferCreateNestedOneWithoutTransactionsInput
+    counterOffer?: SwapOfferCreateNestedOneWithoutCounterTransactionsInput
+    maker: UserCreateNestedOneWithoutMakerTransactionsInput
+  }
+
+  export type SwapTransactionUncheckedCreateWithoutTakerInput = {
+    id?: number
+    offerId: number
+    counterOfferId?: number | null
+    signature: string
+    makerWallet: string
+    platformFeeCollectedLamports: bigint | number
+    totalValueLamports: bigint | number
+    executedAt: Date | string
+    transactionSignature?: string | null
+    status?: $Enums.TransactionStatus
+    gasFee?: bigint | number | null
+    isSubsidized?: boolean
+    errorMessage?: string | null
+    confirmedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SwapTransactionCreateOrConnectWithoutTakerInput = {
+    where: SwapTransactionWhereUniqueInput
+    create: XOR<SwapTransactionCreateWithoutTakerInput, SwapTransactionUncheckedCreateWithoutTakerInput>
+  }
+
+  export type SwapTransactionCreateManyTakerInputEnvelope = {
+    data: SwapTransactionCreateManyTakerInput | SwapTransactionCreateManyTakerInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type SwapOfferUpsertWithWhereUniqueWithoutMakerInput = {
+    where: SwapOfferWhereUniqueInput
+    update: XOR<SwapOfferUpdateWithoutMakerInput, SwapOfferUncheckedUpdateWithoutMakerInput>
+    create: XOR<SwapOfferCreateWithoutMakerInput, SwapOfferUncheckedCreateWithoutMakerInput>
+  }
+
+  export type SwapOfferUpdateWithWhereUniqueWithoutMakerInput = {
+    where: SwapOfferWhereUniqueInput
+    data: XOR<SwapOfferUpdateWithoutMakerInput, SwapOfferUncheckedUpdateWithoutMakerInput>
+  }
+
+  export type SwapOfferUpdateManyWithWhereWithoutMakerInput = {
+    where: SwapOfferScalarWhereInput
+    data: XOR<SwapOfferUpdateManyMutationInput, SwapOfferUncheckedUpdateManyWithoutMakerInput>
+  }
+
+  export type SwapOfferScalarWhereInput = {
+    AND?: SwapOfferScalarWhereInput | SwapOfferScalarWhereInput[]
+    OR?: SwapOfferScalarWhereInput[]
+    NOT?: SwapOfferScalarWhereInput | SwapOfferScalarWhereInput[]
+    id?: IntFilter<"SwapOffer"> | number
+    makerWallet?: StringFilter<"SwapOffer"> | string
+    takerWallet?: StringNullableFilter<"SwapOffer"> | string | null
+    offerType?: EnumOfferTypeFilter<"SwapOffer"> | $Enums.OfferType
+    parentOfferId?: IntNullableFilter<"SwapOffer"> | number | null
+    offeredAssets?: JsonFilter<"SwapOffer">
+    requestedAssets?: JsonFilter<"SwapOffer">
+    offeredSolLamports?: BigIntNullableFilter<"SwapOffer"> | bigint | number | null
+    requestedSolLamports?: BigIntNullableFilter<"SwapOffer"> | bigint | number | null
+    platformFeeLamports?: BigIntFilter<"SwapOffer"> | bigint | number
+    status?: EnumOfferStatusFilter<"SwapOffer"> | $Enums.OfferStatus
+    expiresAt?: DateTimeFilter<"SwapOffer"> | Date | string
+    nonceAccount?: StringFilter<"SwapOffer"> | string
+    currentNonceValue?: StringNullableFilter<"SwapOffer"> | string | null
+    serializedTransaction?: StringNullableFilter<"SwapOffer"> | string | null
+    transactionSignature?: StringNullableFilter<"SwapOffer"> | string | null
+    filledAt?: DateTimeNullableFilter<"SwapOffer"> | Date | string | null
+    cancelledAt?: DateTimeNullableFilter<"SwapOffer"> | Date | string | null
+    createdAt?: DateTimeFilter<"SwapOffer"> | Date | string
+    updatedAt?: DateTimeFilter<"SwapOffer"> | Date | string
+  }
+
+  export type SwapTransactionUpsertWithWhereUniqueWithoutMakerInput = {
+    where: SwapTransactionWhereUniqueInput
+    update: XOR<SwapTransactionUpdateWithoutMakerInput, SwapTransactionUncheckedUpdateWithoutMakerInput>
+    create: XOR<SwapTransactionCreateWithoutMakerInput, SwapTransactionUncheckedCreateWithoutMakerInput>
+  }
+
+  export type SwapTransactionUpdateWithWhereUniqueWithoutMakerInput = {
+    where: SwapTransactionWhereUniqueInput
+    data: XOR<SwapTransactionUpdateWithoutMakerInput, SwapTransactionUncheckedUpdateWithoutMakerInput>
+  }
+
+  export type SwapTransactionUpdateManyWithWhereWithoutMakerInput = {
+    where: SwapTransactionScalarWhereInput
+    data: XOR<SwapTransactionUpdateManyMutationInput, SwapTransactionUncheckedUpdateManyWithoutMakerInput>
+  }
+
+  export type SwapTransactionScalarWhereInput = {
+    AND?: SwapTransactionScalarWhereInput | SwapTransactionScalarWhereInput[]
+    OR?: SwapTransactionScalarWhereInput[]
+    NOT?: SwapTransactionScalarWhereInput | SwapTransactionScalarWhereInput[]
+    id?: IntFilter<"SwapTransaction"> | number
+    offerId?: IntFilter<"SwapTransaction"> | number
+    counterOfferId?: IntNullableFilter<"SwapTransaction"> | number | null
+    signature?: StringFilter<"SwapTransaction"> | string
+    makerWallet?: StringFilter<"SwapTransaction"> | string
+    takerWallet?: StringFilter<"SwapTransaction"> | string
+    platformFeeCollectedLamports?: BigIntFilter<"SwapTransaction"> | bigint | number
+    totalValueLamports?: BigIntFilter<"SwapTransaction"> | bigint | number
+    executedAt?: DateTimeFilter<"SwapTransaction"> | Date | string
+    transactionSignature?: StringNullableFilter<"SwapTransaction"> | string | null
+    status?: EnumTransactionStatusFilter<"SwapTransaction"> | $Enums.TransactionStatus
+    gasFee?: BigIntNullableFilter<"SwapTransaction"> | bigint | number | null
+    isSubsidized?: BoolFilter<"SwapTransaction"> | boolean
+    errorMessage?: StringNullableFilter<"SwapTransaction"> | string | null
+    confirmedAt?: DateTimeNullableFilter<"SwapTransaction"> | Date | string | null
+    createdAt?: DateTimeFilter<"SwapTransaction"> | Date | string
+    updatedAt?: DateTimeFilter<"SwapTransaction"> | Date | string
+  }
+
+  export type SwapTransactionUpsertWithWhereUniqueWithoutTakerInput = {
+    where: SwapTransactionWhereUniqueInput
+    update: XOR<SwapTransactionUpdateWithoutTakerInput, SwapTransactionUncheckedUpdateWithoutTakerInput>
+    create: XOR<SwapTransactionCreateWithoutTakerInput, SwapTransactionUncheckedCreateWithoutTakerInput>
+  }
+
+  export type SwapTransactionUpdateWithWhereUniqueWithoutTakerInput = {
+    where: SwapTransactionWhereUniqueInput
+    data: XOR<SwapTransactionUpdateWithoutTakerInput, SwapTransactionUncheckedUpdateWithoutTakerInput>
+  }
+
+  export type SwapTransactionUpdateManyWithWhereWithoutTakerInput = {
+    where: SwapTransactionScalarWhereInput
+    data: XOR<SwapTransactionUpdateManyMutationInput, SwapTransactionUncheckedUpdateManyWithoutTakerInput>
+  }
+
+  export type SwapOfferCreateWithoutNonceInput = {
+    takerWallet?: string | null
+    offerType: $Enums.OfferType
+    offeredAssets: JsonNullValueInput | InputJsonValue
+    requestedAssets: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: bigint | number | null
+    requestedSolLamports?: bigint | number | null
+    platformFeeLamports: bigint | number
+    status?: $Enums.OfferStatus
+    expiresAt: Date | string
+    currentNonceValue?: string | null
+    serializedTransaction?: string | null
+    transactionSignature?: string | null
+    filledAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    maker: UserCreateNestedOneWithoutMakerOffersInput
+    parentOffer?: SwapOfferCreateNestedOneWithoutCounterOffersInput
+    counterOffers?: SwapOfferCreateNestedManyWithoutParentOfferInput
+    transactions?: SwapTransactionCreateNestedManyWithoutOfferInput
+    counterTransactions?: SwapTransactionCreateNestedManyWithoutCounterOfferInput
+  }
+
+  export type SwapOfferUncheckedCreateWithoutNonceInput = {
+    id?: number
+    makerWallet: string
+    takerWallet?: string | null
+    offerType: $Enums.OfferType
+    parentOfferId?: number | null
+    offeredAssets: JsonNullValueInput | InputJsonValue
+    requestedAssets: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: bigint | number | null
+    requestedSolLamports?: bigint | number | null
+    platformFeeLamports: bigint | number
+    status?: $Enums.OfferStatus
+    expiresAt: Date | string
+    currentNonceValue?: string | null
+    serializedTransaction?: string | null
+    transactionSignature?: string | null
+    filledAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    counterOffers?: SwapOfferUncheckedCreateNestedManyWithoutParentOfferInput
+    transactions?: SwapTransactionUncheckedCreateNestedManyWithoutOfferInput
+    counterTransactions?: SwapTransactionUncheckedCreateNestedManyWithoutCounterOfferInput
+  }
+
+  export type SwapOfferCreateOrConnectWithoutNonceInput = {
+    where: SwapOfferWhereUniqueInput
+    create: XOR<SwapOfferCreateWithoutNonceInput, SwapOfferUncheckedCreateWithoutNonceInput>
+  }
+
+  export type SwapOfferCreateManyNonceInputEnvelope = {
+    data: SwapOfferCreateManyNonceInput | SwapOfferCreateManyNonceInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type SwapOfferUpsertWithWhereUniqueWithoutNonceInput = {
+    where: SwapOfferWhereUniqueInput
+    update: XOR<SwapOfferUpdateWithoutNonceInput, SwapOfferUncheckedUpdateWithoutNonceInput>
+    create: XOR<SwapOfferCreateWithoutNonceInput, SwapOfferUncheckedCreateWithoutNonceInput>
+  }
+
+  export type SwapOfferUpdateWithWhereUniqueWithoutNonceInput = {
+    where: SwapOfferWhereUniqueInput
+    data: XOR<SwapOfferUpdateWithoutNonceInput, SwapOfferUncheckedUpdateWithoutNonceInput>
+  }
+
+  export type SwapOfferUpdateManyWithWhereWithoutNonceInput = {
+    where: SwapOfferScalarWhereInput
+    data: XOR<SwapOfferUpdateManyMutationInput, SwapOfferUncheckedUpdateManyWithoutNonceInput>
+  }
+
+  export type UserCreateWithoutMakerOffersInput = {
+    id?: string
+    walletAddress: string
+    nonceAccount?: string | null
+    isSubsidized?: boolean
+    totalSwapsCompleted?: number
+    totalFeesPaidLamports?: bigint | number
+    swapStats?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    makerTransactions?: SwapTransactionCreateNestedManyWithoutMakerInput
+    takerTransactions?: SwapTransactionCreateNestedManyWithoutTakerInput
+  }
+
+  export type UserUncheckedCreateWithoutMakerOffersInput = {
+    id?: string
+    walletAddress: string
+    nonceAccount?: string | null
+    isSubsidized?: boolean
+    totalSwapsCompleted?: number
+    totalFeesPaidLamports?: bigint | number
+    swapStats?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    makerTransactions?: SwapTransactionUncheckedCreateNestedManyWithoutMakerInput
+    takerTransactions?: SwapTransactionUncheckedCreateNestedManyWithoutTakerInput
+  }
+
+  export type UserCreateOrConnectWithoutMakerOffersInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutMakerOffersInput, UserUncheckedCreateWithoutMakerOffersInput>
+  }
+
+  export type NoncePoolCreateWithoutOffersInput = {
+    nonceAccount: string
+    status?: $Enums.NonceStatus
+    lastUsedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type NoncePoolUncheckedCreateWithoutOffersInput = {
+    id?: number
+    nonceAccount: string
+    status?: $Enums.NonceStatus
+    lastUsedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type NoncePoolCreateOrConnectWithoutOffersInput = {
+    where: NoncePoolWhereUniqueInput
+    create: XOR<NoncePoolCreateWithoutOffersInput, NoncePoolUncheckedCreateWithoutOffersInput>
+  }
+
+  export type SwapOfferCreateWithoutCounterOffersInput = {
+    takerWallet?: string | null
+    offerType: $Enums.OfferType
+    offeredAssets: JsonNullValueInput | InputJsonValue
+    requestedAssets: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: bigint | number | null
+    requestedSolLamports?: bigint | number | null
+    platformFeeLamports: bigint | number
+    status?: $Enums.OfferStatus
+    expiresAt: Date | string
+    currentNonceValue?: string | null
+    serializedTransaction?: string | null
+    transactionSignature?: string | null
+    filledAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    maker: UserCreateNestedOneWithoutMakerOffersInput
+    nonce: NoncePoolCreateNestedOneWithoutOffersInput
+    parentOffer?: SwapOfferCreateNestedOneWithoutCounterOffersInput
+    transactions?: SwapTransactionCreateNestedManyWithoutOfferInput
+    counterTransactions?: SwapTransactionCreateNestedManyWithoutCounterOfferInput
+  }
+
+  export type SwapOfferUncheckedCreateWithoutCounterOffersInput = {
+    id?: number
+    makerWallet: string
+    takerWallet?: string | null
+    offerType: $Enums.OfferType
+    parentOfferId?: number | null
+    offeredAssets: JsonNullValueInput | InputJsonValue
+    requestedAssets: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: bigint | number | null
+    requestedSolLamports?: bigint | number | null
+    platformFeeLamports: bigint | number
+    status?: $Enums.OfferStatus
+    expiresAt: Date | string
+    nonceAccount: string
+    currentNonceValue?: string | null
+    serializedTransaction?: string | null
+    transactionSignature?: string | null
+    filledAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    transactions?: SwapTransactionUncheckedCreateNestedManyWithoutOfferInput
+    counterTransactions?: SwapTransactionUncheckedCreateNestedManyWithoutCounterOfferInput
+  }
+
+  export type SwapOfferCreateOrConnectWithoutCounterOffersInput = {
+    where: SwapOfferWhereUniqueInput
+    create: XOR<SwapOfferCreateWithoutCounterOffersInput, SwapOfferUncheckedCreateWithoutCounterOffersInput>
+  }
+
+  export type SwapOfferCreateWithoutParentOfferInput = {
+    takerWallet?: string | null
+    offerType: $Enums.OfferType
+    offeredAssets: JsonNullValueInput | InputJsonValue
+    requestedAssets: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: bigint | number | null
+    requestedSolLamports?: bigint | number | null
+    platformFeeLamports: bigint | number
+    status?: $Enums.OfferStatus
+    expiresAt: Date | string
+    currentNonceValue?: string | null
+    serializedTransaction?: string | null
+    transactionSignature?: string | null
+    filledAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    maker: UserCreateNestedOneWithoutMakerOffersInput
+    nonce: NoncePoolCreateNestedOneWithoutOffersInput
+    counterOffers?: SwapOfferCreateNestedManyWithoutParentOfferInput
+    transactions?: SwapTransactionCreateNestedManyWithoutOfferInput
+    counterTransactions?: SwapTransactionCreateNestedManyWithoutCounterOfferInput
+  }
+
+  export type SwapOfferUncheckedCreateWithoutParentOfferInput = {
+    id?: number
+    makerWallet: string
+    takerWallet?: string | null
+    offerType: $Enums.OfferType
+    offeredAssets: JsonNullValueInput | InputJsonValue
+    requestedAssets: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: bigint | number | null
+    requestedSolLamports?: bigint | number | null
+    platformFeeLamports: bigint | number
+    status?: $Enums.OfferStatus
+    expiresAt: Date | string
+    nonceAccount: string
+    currentNonceValue?: string | null
+    serializedTransaction?: string | null
+    transactionSignature?: string | null
+    filledAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    counterOffers?: SwapOfferUncheckedCreateNestedManyWithoutParentOfferInput
+    transactions?: SwapTransactionUncheckedCreateNestedManyWithoutOfferInput
+    counterTransactions?: SwapTransactionUncheckedCreateNestedManyWithoutCounterOfferInput
+  }
+
+  export type SwapOfferCreateOrConnectWithoutParentOfferInput = {
+    where: SwapOfferWhereUniqueInput
+    create: XOR<SwapOfferCreateWithoutParentOfferInput, SwapOfferUncheckedCreateWithoutParentOfferInput>
+  }
+
+  export type SwapOfferCreateManyParentOfferInputEnvelope = {
+    data: SwapOfferCreateManyParentOfferInput | SwapOfferCreateManyParentOfferInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type SwapTransactionCreateWithoutOfferInput = {
+    signature: string
+    platformFeeCollectedLamports: bigint | number
+    totalValueLamports: bigint | number
+    executedAt: Date | string
+    transactionSignature?: string | null
+    status?: $Enums.TransactionStatus
+    gasFee?: bigint | number | null
+    isSubsidized?: boolean
+    errorMessage?: string | null
+    confirmedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    counterOffer?: SwapOfferCreateNestedOneWithoutCounterTransactionsInput
+    maker: UserCreateNestedOneWithoutMakerTransactionsInput
+    taker: UserCreateNestedOneWithoutTakerTransactionsInput
+  }
+
+  export type SwapTransactionUncheckedCreateWithoutOfferInput = {
+    id?: number
+    counterOfferId?: number | null
+    signature: string
+    makerWallet: string
+    takerWallet: string
+    platformFeeCollectedLamports: bigint | number
+    totalValueLamports: bigint | number
+    executedAt: Date | string
+    transactionSignature?: string | null
+    status?: $Enums.TransactionStatus
+    gasFee?: bigint | number | null
+    isSubsidized?: boolean
+    errorMessage?: string | null
+    confirmedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SwapTransactionCreateOrConnectWithoutOfferInput = {
+    where: SwapTransactionWhereUniqueInput
+    create: XOR<SwapTransactionCreateWithoutOfferInput, SwapTransactionUncheckedCreateWithoutOfferInput>
+  }
+
+  export type SwapTransactionCreateManyOfferInputEnvelope = {
+    data: SwapTransactionCreateManyOfferInput | SwapTransactionCreateManyOfferInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type SwapTransactionCreateWithoutCounterOfferInput = {
+    signature: string
+    platformFeeCollectedLamports: bigint | number
+    totalValueLamports: bigint | number
+    executedAt: Date | string
+    transactionSignature?: string | null
+    status?: $Enums.TransactionStatus
+    gasFee?: bigint | number | null
+    isSubsidized?: boolean
+    errorMessage?: string | null
+    confirmedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    offer: SwapOfferCreateNestedOneWithoutTransactionsInput
+    maker: UserCreateNestedOneWithoutMakerTransactionsInput
+    taker: UserCreateNestedOneWithoutTakerTransactionsInput
+  }
+
+  export type SwapTransactionUncheckedCreateWithoutCounterOfferInput = {
+    id?: number
+    offerId: number
+    signature: string
+    makerWallet: string
+    takerWallet: string
+    platformFeeCollectedLamports: bigint | number
+    totalValueLamports: bigint | number
+    executedAt: Date | string
+    transactionSignature?: string | null
+    status?: $Enums.TransactionStatus
+    gasFee?: bigint | number | null
+    isSubsidized?: boolean
+    errorMessage?: string | null
+    confirmedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SwapTransactionCreateOrConnectWithoutCounterOfferInput = {
+    where: SwapTransactionWhereUniqueInput
+    create: XOR<SwapTransactionCreateWithoutCounterOfferInput, SwapTransactionUncheckedCreateWithoutCounterOfferInput>
+  }
+
+  export type SwapTransactionCreateManyCounterOfferInputEnvelope = {
+    data: SwapTransactionCreateManyCounterOfferInput | SwapTransactionCreateManyCounterOfferInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type UserUpsertWithoutMakerOffersInput = {
+    update: XOR<UserUpdateWithoutMakerOffersInput, UserUncheckedUpdateWithoutMakerOffersInput>
+    create: XOR<UserCreateWithoutMakerOffersInput, UserUncheckedCreateWithoutMakerOffersInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutMakerOffersInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutMakerOffersInput, UserUncheckedUpdateWithoutMakerOffersInput>
+  }
+
+  export type UserUpdateWithoutMakerOffersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    walletAddress?: StringFieldUpdateOperationsInput | string
+    nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    isSubsidized?: BoolFieldUpdateOperationsInput | boolean
+    totalSwapsCompleted?: IntFieldUpdateOperationsInput | number
+    totalFeesPaidLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    swapStats?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    makerTransactions?: SwapTransactionUpdateManyWithoutMakerNestedInput
+    takerTransactions?: SwapTransactionUpdateManyWithoutTakerNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutMakerOffersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    walletAddress?: StringFieldUpdateOperationsInput | string
+    nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    isSubsidized?: BoolFieldUpdateOperationsInput | boolean
+    totalSwapsCompleted?: IntFieldUpdateOperationsInput | number
+    totalFeesPaidLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    swapStats?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    makerTransactions?: SwapTransactionUncheckedUpdateManyWithoutMakerNestedInput
+    takerTransactions?: SwapTransactionUncheckedUpdateManyWithoutTakerNestedInput
+  }
+
+  export type NoncePoolUpsertWithoutOffersInput = {
+    update: XOR<NoncePoolUpdateWithoutOffersInput, NoncePoolUncheckedUpdateWithoutOffersInput>
+    create: XOR<NoncePoolCreateWithoutOffersInput, NoncePoolUncheckedCreateWithoutOffersInput>
+    where?: NoncePoolWhereInput
+  }
+
+  export type NoncePoolUpdateToOneWithWhereWithoutOffersInput = {
+    where?: NoncePoolWhereInput
+    data: XOR<NoncePoolUpdateWithoutOffersInput, NoncePoolUncheckedUpdateWithoutOffersInput>
+  }
+
+  export type NoncePoolUpdateWithoutOffersInput = {
+    nonceAccount?: StringFieldUpdateOperationsInput | string
+    status?: EnumNonceStatusFieldUpdateOperationsInput | $Enums.NonceStatus
+    lastUsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type NoncePoolUncheckedUpdateWithoutOffersInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    nonceAccount?: StringFieldUpdateOperationsInput | string
+    status?: EnumNonceStatusFieldUpdateOperationsInput | $Enums.NonceStatus
+    lastUsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SwapOfferUpsertWithoutCounterOffersInput = {
+    update: XOR<SwapOfferUpdateWithoutCounterOffersInput, SwapOfferUncheckedUpdateWithoutCounterOffersInput>
+    create: XOR<SwapOfferCreateWithoutCounterOffersInput, SwapOfferUncheckedCreateWithoutCounterOffersInput>
+    where?: SwapOfferWhereInput
+  }
+
+  export type SwapOfferUpdateToOneWithWhereWithoutCounterOffersInput = {
+    where?: SwapOfferWhereInput
+    data: XOR<SwapOfferUpdateWithoutCounterOffersInput, SwapOfferUncheckedUpdateWithoutCounterOffersInput>
+  }
+
+  export type SwapOfferUpdateWithoutCounterOffersInput = {
+    takerWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    offerType?: EnumOfferTypeFieldUpdateOperationsInput | $Enums.OfferType
+    offeredAssets?: JsonNullValueInput | InputJsonValue
+    requestedAssets?: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    requestedSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    platformFeeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    currentNonceValue?: NullableStringFieldUpdateOperationsInput | string | null
+    serializedTransaction?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    filledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    maker?: UserUpdateOneRequiredWithoutMakerOffersNestedInput
+    nonce?: NoncePoolUpdateOneRequiredWithoutOffersNestedInput
+    parentOffer?: SwapOfferUpdateOneWithoutCounterOffersNestedInput
+    transactions?: SwapTransactionUpdateManyWithoutOfferNestedInput
+    counterTransactions?: SwapTransactionUpdateManyWithoutCounterOfferNestedInput
+  }
+
+  export type SwapOfferUncheckedUpdateWithoutCounterOffersInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    makerWallet?: StringFieldUpdateOperationsInput | string
+    takerWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    offerType?: EnumOfferTypeFieldUpdateOperationsInput | $Enums.OfferType
+    parentOfferId?: NullableIntFieldUpdateOperationsInput | number | null
+    offeredAssets?: JsonNullValueInput | InputJsonValue
+    requestedAssets?: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    requestedSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    platformFeeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    nonceAccount?: StringFieldUpdateOperationsInput | string
+    currentNonceValue?: NullableStringFieldUpdateOperationsInput | string | null
+    serializedTransaction?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    filledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    transactions?: SwapTransactionUncheckedUpdateManyWithoutOfferNestedInput
+    counterTransactions?: SwapTransactionUncheckedUpdateManyWithoutCounterOfferNestedInput
+  }
+
+  export type SwapOfferUpsertWithWhereUniqueWithoutParentOfferInput = {
+    where: SwapOfferWhereUniqueInput
+    update: XOR<SwapOfferUpdateWithoutParentOfferInput, SwapOfferUncheckedUpdateWithoutParentOfferInput>
+    create: XOR<SwapOfferCreateWithoutParentOfferInput, SwapOfferUncheckedCreateWithoutParentOfferInput>
+  }
+
+  export type SwapOfferUpdateWithWhereUniqueWithoutParentOfferInput = {
+    where: SwapOfferWhereUniqueInput
+    data: XOR<SwapOfferUpdateWithoutParentOfferInput, SwapOfferUncheckedUpdateWithoutParentOfferInput>
+  }
+
+  export type SwapOfferUpdateManyWithWhereWithoutParentOfferInput = {
+    where: SwapOfferScalarWhereInput
+    data: XOR<SwapOfferUpdateManyMutationInput, SwapOfferUncheckedUpdateManyWithoutParentOfferInput>
+  }
+
+  export type SwapTransactionUpsertWithWhereUniqueWithoutOfferInput = {
+    where: SwapTransactionWhereUniqueInput
+    update: XOR<SwapTransactionUpdateWithoutOfferInput, SwapTransactionUncheckedUpdateWithoutOfferInput>
+    create: XOR<SwapTransactionCreateWithoutOfferInput, SwapTransactionUncheckedCreateWithoutOfferInput>
+  }
+
+  export type SwapTransactionUpdateWithWhereUniqueWithoutOfferInput = {
+    where: SwapTransactionWhereUniqueInput
+    data: XOR<SwapTransactionUpdateWithoutOfferInput, SwapTransactionUncheckedUpdateWithoutOfferInput>
+  }
+
+  export type SwapTransactionUpdateManyWithWhereWithoutOfferInput = {
+    where: SwapTransactionScalarWhereInput
+    data: XOR<SwapTransactionUpdateManyMutationInput, SwapTransactionUncheckedUpdateManyWithoutOfferInput>
+  }
+
+  export type SwapTransactionUpsertWithWhereUniqueWithoutCounterOfferInput = {
+    where: SwapTransactionWhereUniqueInput
+    update: XOR<SwapTransactionUpdateWithoutCounterOfferInput, SwapTransactionUncheckedUpdateWithoutCounterOfferInput>
+    create: XOR<SwapTransactionCreateWithoutCounterOfferInput, SwapTransactionUncheckedCreateWithoutCounterOfferInput>
+  }
+
+  export type SwapTransactionUpdateWithWhereUniqueWithoutCounterOfferInput = {
+    where: SwapTransactionWhereUniqueInput
+    data: XOR<SwapTransactionUpdateWithoutCounterOfferInput, SwapTransactionUncheckedUpdateWithoutCounterOfferInput>
+  }
+
+  export type SwapTransactionUpdateManyWithWhereWithoutCounterOfferInput = {
+    where: SwapTransactionScalarWhereInput
+    data: XOR<SwapTransactionUpdateManyMutationInput, SwapTransactionUncheckedUpdateManyWithoutCounterOfferInput>
+  }
+
+  export type SwapOfferCreateWithoutTransactionsInput = {
+    takerWallet?: string | null
+    offerType: $Enums.OfferType
+    offeredAssets: JsonNullValueInput | InputJsonValue
+    requestedAssets: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: bigint | number | null
+    requestedSolLamports?: bigint | number | null
+    platformFeeLamports: bigint | number
+    status?: $Enums.OfferStatus
+    expiresAt: Date | string
+    currentNonceValue?: string | null
+    serializedTransaction?: string | null
+    transactionSignature?: string | null
+    filledAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    maker: UserCreateNestedOneWithoutMakerOffersInput
+    nonce: NoncePoolCreateNestedOneWithoutOffersInput
+    parentOffer?: SwapOfferCreateNestedOneWithoutCounterOffersInput
+    counterOffers?: SwapOfferCreateNestedManyWithoutParentOfferInput
+    counterTransactions?: SwapTransactionCreateNestedManyWithoutCounterOfferInput
+  }
+
+  export type SwapOfferUncheckedCreateWithoutTransactionsInput = {
+    id?: number
+    makerWallet: string
+    takerWallet?: string | null
+    offerType: $Enums.OfferType
+    parentOfferId?: number | null
+    offeredAssets: JsonNullValueInput | InputJsonValue
+    requestedAssets: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: bigint | number | null
+    requestedSolLamports?: bigint | number | null
+    platformFeeLamports: bigint | number
+    status?: $Enums.OfferStatus
+    expiresAt: Date | string
+    nonceAccount: string
+    currentNonceValue?: string | null
+    serializedTransaction?: string | null
+    transactionSignature?: string | null
+    filledAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    counterOffers?: SwapOfferUncheckedCreateNestedManyWithoutParentOfferInput
+    counterTransactions?: SwapTransactionUncheckedCreateNestedManyWithoutCounterOfferInput
+  }
+
+  export type SwapOfferCreateOrConnectWithoutTransactionsInput = {
+    where: SwapOfferWhereUniqueInput
+    create: XOR<SwapOfferCreateWithoutTransactionsInput, SwapOfferUncheckedCreateWithoutTransactionsInput>
+  }
+
+  export type SwapOfferCreateWithoutCounterTransactionsInput = {
+    takerWallet?: string | null
+    offerType: $Enums.OfferType
+    offeredAssets: JsonNullValueInput | InputJsonValue
+    requestedAssets: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: bigint | number | null
+    requestedSolLamports?: bigint | number | null
+    platformFeeLamports: bigint | number
+    status?: $Enums.OfferStatus
+    expiresAt: Date | string
+    currentNonceValue?: string | null
+    serializedTransaction?: string | null
+    transactionSignature?: string | null
+    filledAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    maker: UserCreateNestedOneWithoutMakerOffersInput
+    nonce: NoncePoolCreateNestedOneWithoutOffersInput
+    parentOffer?: SwapOfferCreateNestedOneWithoutCounterOffersInput
+    counterOffers?: SwapOfferCreateNestedManyWithoutParentOfferInput
+    transactions?: SwapTransactionCreateNestedManyWithoutOfferInput
+  }
+
+  export type SwapOfferUncheckedCreateWithoutCounterTransactionsInput = {
+    id?: number
+    makerWallet: string
+    takerWallet?: string | null
+    offerType: $Enums.OfferType
+    parentOfferId?: number | null
+    offeredAssets: JsonNullValueInput | InputJsonValue
+    requestedAssets: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: bigint | number | null
+    requestedSolLamports?: bigint | number | null
+    platformFeeLamports: bigint | number
+    status?: $Enums.OfferStatus
+    expiresAt: Date | string
+    nonceAccount: string
+    currentNonceValue?: string | null
+    serializedTransaction?: string | null
+    transactionSignature?: string | null
+    filledAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    counterOffers?: SwapOfferUncheckedCreateNestedManyWithoutParentOfferInput
+    transactions?: SwapTransactionUncheckedCreateNestedManyWithoutOfferInput
+  }
+
+  export type SwapOfferCreateOrConnectWithoutCounterTransactionsInput = {
+    where: SwapOfferWhereUniqueInput
+    create: XOR<SwapOfferCreateWithoutCounterTransactionsInput, SwapOfferUncheckedCreateWithoutCounterTransactionsInput>
+  }
+
+  export type UserCreateWithoutMakerTransactionsInput = {
+    id?: string
+    walletAddress: string
+    nonceAccount?: string | null
+    isSubsidized?: boolean
+    totalSwapsCompleted?: number
+    totalFeesPaidLamports?: bigint | number
+    swapStats?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    makerOffers?: SwapOfferCreateNestedManyWithoutMakerInput
+    takerTransactions?: SwapTransactionCreateNestedManyWithoutTakerInput
+  }
+
+  export type UserUncheckedCreateWithoutMakerTransactionsInput = {
+    id?: string
+    walletAddress: string
+    nonceAccount?: string | null
+    isSubsidized?: boolean
+    totalSwapsCompleted?: number
+    totalFeesPaidLamports?: bigint | number
+    swapStats?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    makerOffers?: SwapOfferUncheckedCreateNestedManyWithoutMakerInput
+    takerTransactions?: SwapTransactionUncheckedCreateNestedManyWithoutTakerInput
+  }
+
+  export type UserCreateOrConnectWithoutMakerTransactionsInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutMakerTransactionsInput, UserUncheckedCreateWithoutMakerTransactionsInput>
+  }
+
+  export type UserCreateWithoutTakerTransactionsInput = {
+    id?: string
+    walletAddress: string
+    nonceAccount?: string | null
+    isSubsidized?: boolean
+    totalSwapsCompleted?: number
+    totalFeesPaidLamports?: bigint | number
+    swapStats?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    makerOffers?: SwapOfferCreateNestedManyWithoutMakerInput
+    makerTransactions?: SwapTransactionCreateNestedManyWithoutMakerInput
+  }
+
+  export type UserUncheckedCreateWithoutTakerTransactionsInput = {
+    id?: string
+    walletAddress: string
+    nonceAccount?: string | null
+    isSubsidized?: boolean
+    totalSwapsCompleted?: number
+    totalFeesPaidLamports?: bigint | number
+    swapStats?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    makerOffers?: SwapOfferUncheckedCreateNestedManyWithoutMakerInput
+    makerTransactions?: SwapTransactionUncheckedCreateNestedManyWithoutMakerInput
+  }
+
+  export type UserCreateOrConnectWithoutTakerTransactionsInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutTakerTransactionsInput, UserUncheckedCreateWithoutTakerTransactionsInput>
+  }
+
+  export type SwapOfferUpsertWithoutTransactionsInput = {
+    update: XOR<SwapOfferUpdateWithoutTransactionsInput, SwapOfferUncheckedUpdateWithoutTransactionsInput>
+    create: XOR<SwapOfferCreateWithoutTransactionsInput, SwapOfferUncheckedCreateWithoutTransactionsInput>
+    where?: SwapOfferWhereInput
+  }
+
+  export type SwapOfferUpdateToOneWithWhereWithoutTransactionsInput = {
+    where?: SwapOfferWhereInput
+    data: XOR<SwapOfferUpdateWithoutTransactionsInput, SwapOfferUncheckedUpdateWithoutTransactionsInput>
+  }
+
+  export type SwapOfferUpdateWithoutTransactionsInput = {
+    takerWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    offerType?: EnumOfferTypeFieldUpdateOperationsInput | $Enums.OfferType
+    offeredAssets?: JsonNullValueInput | InputJsonValue
+    requestedAssets?: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    requestedSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    platformFeeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    currentNonceValue?: NullableStringFieldUpdateOperationsInput | string | null
+    serializedTransaction?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    filledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    maker?: UserUpdateOneRequiredWithoutMakerOffersNestedInput
+    nonce?: NoncePoolUpdateOneRequiredWithoutOffersNestedInput
+    parentOffer?: SwapOfferUpdateOneWithoutCounterOffersNestedInput
+    counterOffers?: SwapOfferUpdateManyWithoutParentOfferNestedInput
+    counterTransactions?: SwapTransactionUpdateManyWithoutCounterOfferNestedInput
+  }
+
+  export type SwapOfferUncheckedUpdateWithoutTransactionsInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    makerWallet?: StringFieldUpdateOperationsInput | string
+    takerWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    offerType?: EnumOfferTypeFieldUpdateOperationsInput | $Enums.OfferType
+    parentOfferId?: NullableIntFieldUpdateOperationsInput | number | null
+    offeredAssets?: JsonNullValueInput | InputJsonValue
+    requestedAssets?: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    requestedSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    platformFeeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    nonceAccount?: StringFieldUpdateOperationsInput | string
+    currentNonceValue?: NullableStringFieldUpdateOperationsInput | string | null
+    serializedTransaction?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    filledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    counterOffers?: SwapOfferUncheckedUpdateManyWithoutParentOfferNestedInput
+    counterTransactions?: SwapTransactionUncheckedUpdateManyWithoutCounterOfferNestedInput
+  }
+
+  export type SwapOfferUpsertWithoutCounterTransactionsInput = {
+    update: XOR<SwapOfferUpdateWithoutCounterTransactionsInput, SwapOfferUncheckedUpdateWithoutCounterTransactionsInput>
+    create: XOR<SwapOfferCreateWithoutCounterTransactionsInput, SwapOfferUncheckedCreateWithoutCounterTransactionsInput>
+    where?: SwapOfferWhereInput
+  }
+
+  export type SwapOfferUpdateToOneWithWhereWithoutCounterTransactionsInput = {
+    where?: SwapOfferWhereInput
+    data: XOR<SwapOfferUpdateWithoutCounterTransactionsInput, SwapOfferUncheckedUpdateWithoutCounterTransactionsInput>
+  }
+
+  export type SwapOfferUpdateWithoutCounterTransactionsInput = {
+    takerWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    offerType?: EnumOfferTypeFieldUpdateOperationsInput | $Enums.OfferType
+    offeredAssets?: JsonNullValueInput | InputJsonValue
+    requestedAssets?: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    requestedSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    platformFeeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    currentNonceValue?: NullableStringFieldUpdateOperationsInput | string | null
+    serializedTransaction?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    filledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    maker?: UserUpdateOneRequiredWithoutMakerOffersNestedInput
+    nonce?: NoncePoolUpdateOneRequiredWithoutOffersNestedInput
+    parentOffer?: SwapOfferUpdateOneWithoutCounterOffersNestedInput
+    counterOffers?: SwapOfferUpdateManyWithoutParentOfferNestedInput
+    transactions?: SwapTransactionUpdateManyWithoutOfferNestedInput
+  }
+
+  export type SwapOfferUncheckedUpdateWithoutCounterTransactionsInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    makerWallet?: StringFieldUpdateOperationsInput | string
+    takerWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    offerType?: EnumOfferTypeFieldUpdateOperationsInput | $Enums.OfferType
+    parentOfferId?: NullableIntFieldUpdateOperationsInput | number | null
+    offeredAssets?: JsonNullValueInput | InputJsonValue
+    requestedAssets?: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    requestedSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    platformFeeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    nonceAccount?: StringFieldUpdateOperationsInput | string
+    currentNonceValue?: NullableStringFieldUpdateOperationsInput | string | null
+    serializedTransaction?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    filledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    counterOffers?: SwapOfferUncheckedUpdateManyWithoutParentOfferNestedInput
+    transactions?: SwapTransactionUncheckedUpdateManyWithoutOfferNestedInput
+  }
+
+  export type UserUpsertWithoutMakerTransactionsInput = {
+    update: XOR<UserUpdateWithoutMakerTransactionsInput, UserUncheckedUpdateWithoutMakerTransactionsInput>
+    create: XOR<UserCreateWithoutMakerTransactionsInput, UserUncheckedCreateWithoutMakerTransactionsInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutMakerTransactionsInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutMakerTransactionsInput, UserUncheckedUpdateWithoutMakerTransactionsInput>
+  }
+
+  export type UserUpdateWithoutMakerTransactionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    walletAddress?: StringFieldUpdateOperationsInput | string
+    nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    isSubsidized?: BoolFieldUpdateOperationsInput | boolean
+    totalSwapsCompleted?: IntFieldUpdateOperationsInput | number
+    totalFeesPaidLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    swapStats?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    makerOffers?: SwapOfferUpdateManyWithoutMakerNestedInput
+    takerTransactions?: SwapTransactionUpdateManyWithoutTakerNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutMakerTransactionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    walletAddress?: StringFieldUpdateOperationsInput | string
+    nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    isSubsidized?: BoolFieldUpdateOperationsInput | boolean
+    totalSwapsCompleted?: IntFieldUpdateOperationsInput | number
+    totalFeesPaidLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    swapStats?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    makerOffers?: SwapOfferUncheckedUpdateManyWithoutMakerNestedInput
+    takerTransactions?: SwapTransactionUncheckedUpdateManyWithoutTakerNestedInput
+  }
+
+  export type UserUpsertWithoutTakerTransactionsInput = {
+    update: XOR<UserUpdateWithoutTakerTransactionsInput, UserUncheckedUpdateWithoutTakerTransactionsInput>
+    create: XOR<UserCreateWithoutTakerTransactionsInput, UserUncheckedCreateWithoutTakerTransactionsInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutTakerTransactionsInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutTakerTransactionsInput, UserUncheckedUpdateWithoutTakerTransactionsInput>
+  }
+
+  export type UserUpdateWithoutTakerTransactionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    walletAddress?: StringFieldUpdateOperationsInput | string
+    nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    isSubsidized?: BoolFieldUpdateOperationsInput | boolean
+    totalSwapsCompleted?: IntFieldUpdateOperationsInput | number
+    totalFeesPaidLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    swapStats?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    makerOffers?: SwapOfferUpdateManyWithoutMakerNestedInput
+    makerTransactions?: SwapTransactionUpdateManyWithoutMakerNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutTakerTransactionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    walletAddress?: StringFieldUpdateOperationsInput | string
+    nonceAccount?: NullableStringFieldUpdateOperationsInput | string | null
+    isSubsidized?: BoolFieldUpdateOperationsInput | boolean
+    totalSwapsCompleted?: IntFieldUpdateOperationsInput | number
+    totalFeesPaidLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    swapStats?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    makerOffers?: SwapOfferUncheckedUpdateManyWithoutMakerNestedInput
+    makerTransactions?: SwapTransactionUncheckedUpdateManyWithoutMakerNestedInput
+  }
+
   export type DepositCreateManyAgreementInput = {
     id?: string
     type: $Enums.DepositType
@@ -14894,6 +23469,585 @@ export namespace Prisma {
     signature?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     scheduledFor?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SwapOfferCreateManyMakerInput = {
+    id?: number
+    takerWallet?: string | null
+    offerType: $Enums.OfferType
+    parentOfferId?: number | null
+    offeredAssets: JsonNullValueInput | InputJsonValue
+    requestedAssets: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: bigint | number | null
+    requestedSolLamports?: bigint | number | null
+    platformFeeLamports: bigint | number
+    status?: $Enums.OfferStatus
+    expiresAt: Date | string
+    nonceAccount: string
+    currentNonceValue?: string | null
+    serializedTransaction?: string | null
+    transactionSignature?: string | null
+    filledAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SwapTransactionCreateManyMakerInput = {
+    id?: number
+    offerId: number
+    counterOfferId?: number | null
+    signature: string
+    takerWallet: string
+    platformFeeCollectedLamports: bigint | number
+    totalValueLamports: bigint | number
+    executedAt: Date | string
+    transactionSignature?: string | null
+    status?: $Enums.TransactionStatus
+    gasFee?: bigint | number | null
+    isSubsidized?: boolean
+    errorMessage?: string | null
+    confirmedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SwapTransactionCreateManyTakerInput = {
+    id?: number
+    offerId: number
+    counterOfferId?: number | null
+    signature: string
+    makerWallet: string
+    platformFeeCollectedLamports: bigint | number
+    totalValueLamports: bigint | number
+    executedAt: Date | string
+    transactionSignature?: string | null
+    status?: $Enums.TransactionStatus
+    gasFee?: bigint | number | null
+    isSubsidized?: boolean
+    errorMessage?: string | null
+    confirmedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SwapOfferUpdateWithoutMakerInput = {
+    takerWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    offerType?: EnumOfferTypeFieldUpdateOperationsInput | $Enums.OfferType
+    offeredAssets?: JsonNullValueInput | InputJsonValue
+    requestedAssets?: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    requestedSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    platformFeeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    currentNonceValue?: NullableStringFieldUpdateOperationsInput | string | null
+    serializedTransaction?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    filledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    nonce?: NoncePoolUpdateOneRequiredWithoutOffersNestedInput
+    parentOffer?: SwapOfferUpdateOneWithoutCounterOffersNestedInput
+    counterOffers?: SwapOfferUpdateManyWithoutParentOfferNestedInput
+    transactions?: SwapTransactionUpdateManyWithoutOfferNestedInput
+    counterTransactions?: SwapTransactionUpdateManyWithoutCounterOfferNestedInput
+  }
+
+  export type SwapOfferUncheckedUpdateWithoutMakerInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    takerWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    offerType?: EnumOfferTypeFieldUpdateOperationsInput | $Enums.OfferType
+    parentOfferId?: NullableIntFieldUpdateOperationsInput | number | null
+    offeredAssets?: JsonNullValueInput | InputJsonValue
+    requestedAssets?: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    requestedSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    platformFeeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    nonceAccount?: StringFieldUpdateOperationsInput | string
+    currentNonceValue?: NullableStringFieldUpdateOperationsInput | string | null
+    serializedTransaction?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    filledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    counterOffers?: SwapOfferUncheckedUpdateManyWithoutParentOfferNestedInput
+    transactions?: SwapTransactionUncheckedUpdateManyWithoutOfferNestedInput
+    counterTransactions?: SwapTransactionUncheckedUpdateManyWithoutCounterOfferNestedInput
+  }
+
+  export type SwapOfferUncheckedUpdateManyWithoutMakerInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    takerWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    offerType?: EnumOfferTypeFieldUpdateOperationsInput | $Enums.OfferType
+    parentOfferId?: NullableIntFieldUpdateOperationsInput | number | null
+    offeredAssets?: JsonNullValueInput | InputJsonValue
+    requestedAssets?: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    requestedSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    platformFeeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    nonceAccount?: StringFieldUpdateOperationsInput | string
+    currentNonceValue?: NullableStringFieldUpdateOperationsInput | string | null
+    serializedTransaction?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    filledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SwapTransactionUpdateWithoutMakerInput = {
+    signature?: StringFieldUpdateOperationsInput | string
+    platformFeeCollectedLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    totalValueLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    executedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    transactionSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
+    gasFee?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    isSubsidized?: BoolFieldUpdateOperationsInput | boolean
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    offer?: SwapOfferUpdateOneRequiredWithoutTransactionsNestedInput
+    counterOffer?: SwapOfferUpdateOneWithoutCounterTransactionsNestedInput
+    taker?: UserUpdateOneRequiredWithoutTakerTransactionsNestedInput
+  }
+
+  export type SwapTransactionUncheckedUpdateWithoutMakerInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    offerId?: IntFieldUpdateOperationsInput | number
+    counterOfferId?: NullableIntFieldUpdateOperationsInput | number | null
+    signature?: StringFieldUpdateOperationsInput | string
+    takerWallet?: StringFieldUpdateOperationsInput | string
+    platformFeeCollectedLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    totalValueLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    executedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    transactionSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
+    gasFee?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    isSubsidized?: BoolFieldUpdateOperationsInput | boolean
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SwapTransactionUncheckedUpdateManyWithoutMakerInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    offerId?: IntFieldUpdateOperationsInput | number
+    counterOfferId?: NullableIntFieldUpdateOperationsInput | number | null
+    signature?: StringFieldUpdateOperationsInput | string
+    takerWallet?: StringFieldUpdateOperationsInput | string
+    platformFeeCollectedLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    totalValueLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    executedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    transactionSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
+    gasFee?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    isSubsidized?: BoolFieldUpdateOperationsInput | boolean
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SwapTransactionUpdateWithoutTakerInput = {
+    signature?: StringFieldUpdateOperationsInput | string
+    platformFeeCollectedLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    totalValueLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    executedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    transactionSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
+    gasFee?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    isSubsidized?: BoolFieldUpdateOperationsInput | boolean
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    offer?: SwapOfferUpdateOneRequiredWithoutTransactionsNestedInput
+    counterOffer?: SwapOfferUpdateOneWithoutCounterTransactionsNestedInput
+    maker?: UserUpdateOneRequiredWithoutMakerTransactionsNestedInput
+  }
+
+  export type SwapTransactionUncheckedUpdateWithoutTakerInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    offerId?: IntFieldUpdateOperationsInput | number
+    counterOfferId?: NullableIntFieldUpdateOperationsInput | number | null
+    signature?: StringFieldUpdateOperationsInput | string
+    makerWallet?: StringFieldUpdateOperationsInput | string
+    platformFeeCollectedLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    totalValueLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    executedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    transactionSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
+    gasFee?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    isSubsidized?: BoolFieldUpdateOperationsInput | boolean
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SwapTransactionUncheckedUpdateManyWithoutTakerInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    offerId?: IntFieldUpdateOperationsInput | number
+    counterOfferId?: NullableIntFieldUpdateOperationsInput | number | null
+    signature?: StringFieldUpdateOperationsInput | string
+    makerWallet?: StringFieldUpdateOperationsInput | string
+    platformFeeCollectedLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    totalValueLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    executedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    transactionSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
+    gasFee?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    isSubsidized?: BoolFieldUpdateOperationsInput | boolean
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SwapOfferCreateManyNonceInput = {
+    id?: number
+    makerWallet: string
+    takerWallet?: string | null
+    offerType: $Enums.OfferType
+    parentOfferId?: number | null
+    offeredAssets: JsonNullValueInput | InputJsonValue
+    requestedAssets: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: bigint | number | null
+    requestedSolLamports?: bigint | number | null
+    platformFeeLamports: bigint | number
+    status?: $Enums.OfferStatus
+    expiresAt: Date | string
+    currentNonceValue?: string | null
+    serializedTransaction?: string | null
+    transactionSignature?: string | null
+    filledAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SwapOfferUpdateWithoutNonceInput = {
+    takerWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    offerType?: EnumOfferTypeFieldUpdateOperationsInput | $Enums.OfferType
+    offeredAssets?: JsonNullValueInput | InputJsonValue
+    requestedAssets?: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    requestedSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    platformFeeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    currentNonceValue?: NullableStringFieldUpdateOperationsInput | string | null
+    serializedTransaction?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    filledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    maker?: UserUpdateOneRequiredWithoutMakerOffersNestedInput
+    parentOffer?: SwapOfferUpdateOneWithoutCounterOffersNestedInput
+    counterOffers?: SwapOfferUpdateManyWithoutParentOfferNestedInput
+    transactions?: SwapTransactionUpdateManyWithoutOfferNestedInput
+    counterTransactions?: SwapTransactionUpdateManyWithoutCounterOfferNestedInput
+  }
+
+  export type SwapOfferUncheckedUpdateWithoutNonceInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    makerWallet?: StringFieldUpdateOperationsInput | string
+    takerWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    offerType?: EnumOfferTypeFieldUpdateOperationsInput | $Enums.OfferType
+    parentOfferId?: NullableIntFieldUpdateOperationsInput | number | null
+    offeredAssets?: JsonNullValueInput | InputJsonValue
+    requestedAssets?: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    requestedSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    platformFeeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    currentNonceValue?: NullableStringFieldUpdateOperationsInput | string | null
+    serializedTransaction?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    filledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    counterOffers?: SwapOfferUncheckedUpdateManyWithoutParentOfferNestedInput
+    transactions?: SwapTransactionUncheckedUpdateManyWithoutOfferNestedInput
+    counterTransactions?: SwapTransactionUncheckedUpdateManyWithoutCounterOfferNestedInput
+  }
+
+  export type SwapOfferUncheckedUpdateManyWithoutNonceInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    makerWallet?: StringFieldUpdateOperationsInput | string
+    takerWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    offerType?: EnumOfferTypeFieldUpdateOperationsInput | $Enums.OfferType
+    parentOfferId?: NullableIntFieldUpdateOperationsInput | number | null
+    offeredAssets?: JsonNullValueInput | InputJsonValue
+    requestedAssets?: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    requestedSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    platformFeeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    currentNonceValue?: NullableStringFieldUpdateOperationsInput | string | null
+    serializedTransaction?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    filledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SwapOfferCreateManyParentOfferInput = {
+    id?: number
+    makerWallet: string
+    takerWallet?: string | null
+    offerType: $Enums.OfferType
+    offeredAssets: JsonNullValueInput | InputJsonValue
+    requestedAssets: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: bigint | number | null
+    requestedSolLamports?: bigint | number | null
+    platformFeeLamports: bigint | number
+    status?: $Enums.OfferStatus
+    expiresAt: Date | string
+    nonceAccount: string
+    currentNonceValue?: string | null
+    serializedTransaction?: string | null
+    transactionSignature?: string | null
+    filledAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SwapTransactionCreateManyOfferInput = {
+    id?: number
+    counterOfferId?: number | null
+    signature: string
+    makerWallet: string
+    takerWallet: string
+    platformFeeCollectedLamports: bigint | number
+    totalValueLamports: bigint | number
+    executedAt: Date | string
+    transactionSignature?: string | null
+    status?: $Enums.TransactionStatus
+    gasFee?: bigint | number | null
+    isSubsidized?: boolean
+    errorMessage?: string | null
+    confirmedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SwapTransactionCreateManyCounterOfferInput = {
+    id?: number
+    offerId: number
+    signature: string
+    makerWallet: string
+    takerWallet: string
+    platformFeeCollectedLamports: bigint | number
+    totalValueLamports: bigint | number
+    executedAt: Date | string
+    transactionSignature?: string | null
+    status?: $Enums.TransactionStatus
+    gasFee?: bigint | number | null
+    isSubsidized?: boolean
+    errorMessage?: string | null
+    confirmedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SwapOfferUpdateWithoutParentOfferInput = {
+    takerWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    offerType?: EnumOfferTypeFieldUpdateOperationsInput | $Enums.OfferType
+    offeredAssets?: JsonNullValueInput | InputJsonValue
+    requestedAssets?: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    requestedSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    platformFeeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    currentNonceValue?: NullableStringFieldUpdateOperationsInput | string | null
+    serializedTransaction?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    filledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    maker?: UserUpdateOneRequiredWithoutMakerOffersNestedInput
+    nonce?: NoncePoolUpdateOneRequiredWithoutOffersNestedInput
+    counterOffers?: SwapOfferUpdateManyWithoutParentOfferNestedInput
+    transactions?: SwapTransactionUpdateManyWithoutOfferNestedInput
+    counterTransactions?: SwapTransactionUpdateManyWithoutCounterOfferNestedInput
+  }
+
+  export type SwapOfferUncheckedUpdateWithoutParentOfferInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    makerWallet?: StringFieldUpdateOperationsInput | string
+    takerWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    offerType?: EnumOfferTypeFieldUpdateOperationsInput | $Enums.OfferType
+    offeredAssets?: JsonNullValueInput | InputJsonValue
+    requestedAssets?: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    requestedSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    platformFeeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    nonceAccount?: StringFieldUpdateOperationsInput | string
+    currentNonceValue?: NullableStringFieldUpdateOperationsInput | string | null
+    serializedTransaction?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    filledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    counterOffers?: SwapOfferUncheckedUpdateManyWithoutParentOfferNestedInput
+    transactions?: SwapTransactionUncheckedUpdateManyWithoutOfferNestedInput
+    counterTransactions?: SwapTransactionUncheckedUpdateManyWithoutCounterOfferNestedInput
+  }
+
+  export type SwapOfferUncheckedUpdateManyWithoutParentOfferInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    makerWallet?: StringFieldUpdateOperationsInput | string
+    takerWallet?: NullableStringFieldUpdateOperationsInput | string | null
+    offerType?: EnumOfferTypeFieldUpdateOperationsInput | $Enums.OfferType
+    offeredAssets?: JsonNullValueInput | InputJsonValue
+    requestedAssets?: JsonNullValueInput | InputJsonValue
+    offeredSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    requestedSolLamports?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    platformFeeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    status?: EnumOfferStatusFieldUpdateOperationsInput | $Enums.OfferStatus
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    nonceAccount?: StringFieldUpdateOperationsInput | string
+    currentNonceValue?: NullableStringFieldUpdateOperationsInput | string | null
+    serializedTransaction?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    filledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SwapTransactionUpdateWithoutOfferInput = {
+    signature?: StringFieldUpdateOperationsInput | string
+    platformFeeCollectedLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    totalValueLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    executedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    transactionSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
+    gasFee?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    isSubsidized?: BoolFieldUpdateOperationsInput | boolean
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    counterOffer?: SwapOfferUpdateOneWithoutCounterTransactionsNestedInput
+    maker?: UserUpdateOneRequiredWithoutMakerTransactionsNestedInput
+    taker?: UserUpdateOneRequiredWithoutTakerTransactionsNestedInput
+  }
+
+  export type SwapTransactionUncheckedUpdateWithoutOfferInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    counterOfferId?: NullableIntFieldUpdateOperationsInput | number | null
+    signature?: StringFieldUpdateOperationsInput | string
+    makerWallet?: StringFieldUpdateOperationsInput | string
+    takerWallet?: StringFieldUpdateOperationsInput | string
+    platformFeeCollectedLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    totalValueLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    executedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    transactionSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
+    gasFee?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    isSubsidized?: BoolFieldUpdateOperationsInput | boolean
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SwapTransactionUncheckedUpdateManyWithoutOfferInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    counterOfferId?: NullableIntFieldUpdateOperationsInput | number | null
+    signature?: StringFieldUpdateOperationsInput | string
+    makerWallet?: StringFieldUpdateOperationsInput | string
+    takerWallet?: StringFieldUpdateOperationsInput | string
+    platformFeeCollectedLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    totalValueLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    executedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    transactionSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
+    gasFee?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    isSubsidized?: BoolFieldUpdateOperationsInput | boolean
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SwapTransactionUpdateWithoutCounterOfferInput = {
+    signature?: StringFieldUpdateOperationsInput | string
+    platformFeeCollectedLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    totalValueLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    executedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    transactionSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
+    gasFee?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    isSubsidized?: BoolFieldUpdateOperationsInput | boolean
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    offer?: SwapOfferUpdateOneRequiredWithoutTransactionsNestedInput
+    maker?: UserUpdateOneRequiredWithoutMakerTransactionsNestedInput
+    taker?: UserUpdateOneRequiredWithoutTakerTransactionsNestedInput
+  }
+
+  export type SwapTransactionUncheckedUpdateWithoutCounterOfferInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    offerId?: IntFieldUpdateOperationsInput | number
+    signature?: StringFieldUpdateOperationsInput | string
+    makerWallet?: StringFieldUpdateOperationsInput | string
+    takerWallet?: StringFieldUpdateOperationsInput | string
+    platformFeeCollectedLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    totalValueLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    executedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    transactionSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
+    gasFee?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    isSubsidized?: BoolFieldUpdateOperationsInput | boolean
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SwapTransactionUncheckedUpdateManyWithoutCounterOfferInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    offerId?: IntFieldUpdateOperationsInput | number
+    signature?: StringFieldUpdateOperationsInput | string
+    makerWallet?: StringFieldUpdateOperationsInput | string
+    takerWallet?: StringFieldUpdateOperationsInput | string
+    platformFeeCollectedLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    totalValueLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    executedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    transactionSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
+    gasFee?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    isSubsidized?: BoolFieldUpdateOperationsInput | boolean
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
 

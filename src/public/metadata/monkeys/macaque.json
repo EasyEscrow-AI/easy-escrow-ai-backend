@@ -1,0 +1,33 @@
+{
+  "name": "Macaque Monkey",
+  "symbol": "MONKEY",
+  "description": "Highly intelligent and social primates found across Asia.",
+  "image": "https://images.unsplash.com/photo-1540206063137-4a88ca974d1a?w=800",
+  "attributes": [
+    {
+      "trait_type": "Species",
+      "value": "Macaque"
+    },
+    {
+      "trait_type": "Habitat",
+      "value": "Mountains & Forests"
+    },
+    {
+      "trait_type": "Rarity",
+      "value": "Common"
+    },
+    {
+      "trait_type": "Social",
+      "value": "High"
+    }
+  ],
+  "properties": {
+    "files": [
+      {
+        "uri": "https://images.unsplash.com/photo-1540206063137-4a88ca974d1a?w=800",
+        "type": "image/jpeg"
+      }
+    ],
+    "category": "image"
+  }
+}

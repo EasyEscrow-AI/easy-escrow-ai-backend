@@ -1,19 +1,21 @@
 {
-  "description": "Static devnet wallets for E2E testing - DO NOT COMMIT PRIVATE KEYS",
+  "description": "Static devnet/staging wallets for E2E testing - DO NOT COMMIT PRIVATE KEYS",
   "wallets": {
-    "sender": "FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71",
-    "receiver": "Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk",
-    "admin": "7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u",
-    "feeCollector": "C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E"
+    "sender": "AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z",
+    "receiver": "5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4",
+    "admin": "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R",
+    "feeCollector": "8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ",
+    "treasury": "AScijLJ1ApcQftktBRN818b8LDH4JJovQ5qrGDHfHuPu"
   },
   "fundingCommands": {
-    "seller": "solana transfer FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71 2 --url devnet",
-    "receiver": "solana transfer Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk 2 --url devnet",
-    "admin": "solana transfer 7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u 2 --url devnet",
-    "feeCollector": "solana transfer C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E 1 --url devnet"
+    "sender": "solana transfer AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z 2 --url devnet",
+    "receiver": "solana transfer 5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4 2 --url devnet",
+    "admin": "solana transfer 498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R 2 --url devnet",
+    "feeCollector": "solana transfer 8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ 1 --url devnet",
+    "treasury": "solana transfer AScijLJ1ApcQftktBRN818b8LDH4JJovQ5qrGDHfHuPu 1 --url devnet"
   },
-  "powershellCommand": ".\\scripts\\fund-devnet-wallets.ps1 -Buyer Cb7RmJfejiPQ1WSGQnzLiBEiEZGQBPByAqSpkhGg93vk -Seller FBU4EL1vWLL6gGAMuqbvkMiRX5gA1aZTZdYyesGwGC71 -Admin 7CKr8FDnPKuJoc5DwJRFcymQ6bL3xERQhmMi9XkGXU9u -FeeCollector C5ji4ZVC2HwWqLD7TGwoZ2mJVSvcC22D8hXLSJ6TRJ1E",
-  "note": "Private keys should be stored in environment variables or secure vault. Never commit private keys to repository.",
-  "createdAt": "2025-10-15T00:00:00.000Z"
+  "powershellCommand": ".\\scripts\\fund-devnet-wallets.ps1 -Buyer 5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4 -Seller AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z -Admin 498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R -FeeCollector 8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ -Treasury AScijLJ1ApcQftktBRN818b8LDH4JJovQ5qrGDHfHuPu",
+  "note": "Private keys should be stored in environment variables or secure vault. Never commit private keys to repository. These are the official staging/devnet wallets.",
+  "createdAt": "2025-10-15T00:00:00.000Z",
+  "updatedAt": "2025-12-01T06:30:00.000Z"
 }
-

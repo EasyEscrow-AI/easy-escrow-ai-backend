@@ -4,6 +4,13 @@ members = [
 ]
 resolver = "2"
 
+# Force resolution to compatible versions
+# Using Anchor 0.30.1 with Solana v2.1+ (includes Rust 1.79 toolchain)
+[workspace.dependencies]
+anchor-lang = { version = "0.30.1", features = ["init-if-needed"] }
+anchor-spl = "0.30.1"
+mpl-bubblegum = "1.4.0"
+
 [profile.release]
 overflow-checks = true
 lto = "fat"

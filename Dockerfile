@@ -1,7 +1,7 @@
 # ============================================
 # Builder Stage - Build TypeScript application
 # ============================================
-# Cache bust: 2025-10-23-04:56-force-receipt-id
+# Cache bust: 2025-11-19-06:25-P3011-force-complete-rebuild
 FROM node:20-alpine AS builder
 
 # Set working directory

@@ -1,0 +1,31 @@
+# Task ID: 20
+# Title: Create cNFT Proof Data Structures in Program
+# Status: done
+# Dependencies: 19
+# Priority: high
+# Description: Define Rust data structures for cNFT Merkle proofs in atomic_swap.rs including CnftProof struct with enhanced error handling and updated SwapParams with optional proof fields.
+# Details:
+Create CnftProof struct with fields: root[u8;32], data_hash[u8;32], creator_hash[u8;32], nonce(u64), index(u32), and commented field for future delegation support (leaf_delegate: Option<Pubkey>). Update SwapParams to include maker_cnft_proof, taker_cnft_proof (Option<CnftProof>), maker_sends_cnft(bool), taker_sends_cnft(bool). Implement AnchorSerialize and AnchorDeserialize traits. Add granular error codes based on Sorare's production implementation: InvalidCnftProof for Merkle proof validation failures, MissingBubblegumProgram for missing required Bubblegum program account, MissingMerkleTree for missing Merkle tree account, and StaleProof for outdated Merkle roots.
+
+# Test Strategy:
+Unit tests for CnftProof struct serialization/deserialization, SwapParams validation with cNFT fields, and comprehensive error code testing for all cNFT-specific error scenarios including invalid proofs, missing accounts, and stale proof detection.
+
+# Subtasks:
+## 1. Define CnftProof struct with Merkle proof fields [done]
+### Dependencies: None
+### Description: Create the CnftProof struct in atomic_swap.rs with all required fields for cNFT Merkle proof validation including future delegation support.
+### Details:
+Define CnftProof struct with fields: root as [u8; 32] for Merkle tree root, data_hash as [u8; 32] for leaf data hash, creator_hash as [u8; 32] for creator verification, nonce as u64 for leaf nonce, index as u32 for leaf index position. Add commented field leaf_delegate: Option<Pubkey> for future delegation support. Implement AnchorSerialize and AnchorDeserialize traits for the struct.
+
+## 2. Update SwapParams with cNFT proof fields [done]
+### Dependencies: 20.1
+### Description: Extend the existing SwapParams struct to include optional cNFT proof fields and boolean flags for cNFT swap detection.
+### Details:
+Add four new fields to SwapParams: maker_cnft_proof and taker_cnft_proof as Option<CnftProof> to hold Merkle proof data when needed, maker_sends_cnft and taker_sends_cnft as bool flags to indicate which party is sending a cNFT. Ensure backward compatibility with existing SwapParams usage and maintain proper serialization support.
+
+## 3. Add granular cNFT error codes to error enum [done]
+### Dependencies: None
+### Description: Implement specific error codes for cNFT operations based on Sorare's production implementation best practices.
+### Details:
+Add four new error variants to the program's error enum: InvalidCnftProof with message 'Invalid cNFT proof: Merkle proof validation failed' for proof validation failures, MissingBubblegumProgram with message 'Missing required account: Bubblegum program' for missing Bubblegum program account, MissingMerkleTree with message 'Missing required account: Merkle tree' for missing Merkle tree account, and StaleProof with message 'Stale proof: Merkle root has changed since proof generation' for outdated proof detection.
+

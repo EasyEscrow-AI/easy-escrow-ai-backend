@@ -15,7 +15,7 @@ Successfully backed up the staging program upgrade authority wallet to the proje
 
 During the security.txt deployment to staging (devnet), we discovered:
 - The staging program `AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei` had an unknown upgrade authority
-- Authority public key: `CPDz3pC5AnK7es3oEcP52HLhByPSAWG6f9QGP6j4jjEA`
+- Authority public key: `498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R`
 - After searching the project, found it was the system-wide Solana CLI default wallet
 
 ---
@@ -37,7 +37,7 @@ This explained why the wallet wasn't in the project - it was the system default 
 **Copied wallet to project:**
 - **Source:** `C:\Users\samde\.config\solana\id.json`
 - **Destination:** `wallets/staging/staging-deployer.json`
-- **Public Key:** `CPDz3pC5AnK7es3oEcP52HLhByPSAWG6f9QGP6j4jjEA`
+- **Public Key:** `498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R`
 
 ### Configuration Alignment
 
@@ -84,11 +84,11 @@ anchor deploy --program-name escrow \
 ```bash
 # Check public key
 solana-keygen pubkey wallets/staging/staging-deployer.json
-# Output: CPDz3pC5AnK7es3oEcP52HLhByPSAWG6f9QGP6j4jjEA
+# Output: 498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R
 
 # Check program authority on-chain
 solana program show AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei --url devnet
-# Authority: CPDz3pC5AnK7es3oEcP52HLhByPSAWG6f9QGP6j4jjEA
+# Authority: 498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R
 ```
 
 ---

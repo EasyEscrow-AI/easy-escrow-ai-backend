@@ -1,0 +1,33 @@
+{
+  "name": "Spider Monkey",
+  "symbol": "MONKEY",
+  "description": "Agile acrobats with prehensile tails that act as a fifth limb.",
+  "image": "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=800",
+  "attributes": [
+    {
+      "trait_type": "Species",
+      "value": "Spider"
+    },
+    {
+      "trait_type": "Habitat",
+      "value": "Canopy"
+    },
+    {
+      "trait_type": "Rarity",
+      "value": "Rare"
+    },
+    {
+      "trait_type": "Agility",
+      "value": "Extreme"
+    }
+  ],
+  "properties": {
+    "files": [
+      {
+        "uri": "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=800",
+        "type": "image/jpeg"
+      }
+    ],
+    "category": "image"
+  }
+}

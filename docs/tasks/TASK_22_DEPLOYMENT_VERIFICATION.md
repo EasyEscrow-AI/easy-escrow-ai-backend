@@ -128,7 +128,7 @@ solana program show 7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV
 | **Program ID** | `7dVEyFFeMzAT3oUpyvXwchGfPQDuXHdQv5tyfDBztKuV` |
 | **Owner** | `BPFLoaderUpgradeab1e11111111111111111111111` |
 | **Program Data Address** | `5Qn3mpWcQzEoSPQL7xqbRWqaYzq9Uy6a7HdaAdSnDTvy` |
-| **Authority** | `CPDz3pC5AnK7es3oEcP52HLhByPSAWG6f9QGP6j4jjEA` |
+| **Authority** | `498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R` |
 | **Last Deployed Slot** | 414,283,640 |
 | **Data Length** | 295,688 bytes (288 KB) |
 | **Account Balance** | 2.06 SOL |

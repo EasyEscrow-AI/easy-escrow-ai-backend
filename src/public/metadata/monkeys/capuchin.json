@@ -1,0 +1,33 @@
+{
+  "name": "Capuchin Monkey",
+  "symbol": "MONKEY",
+  "description": "A clever and resourceful capuchin monkey from the rainforests of Central and South America.",
+  "image": "https://images.unsplash.com/photo-1540573133985-87b6da6d54a9?w=800",
+  "attributes": [
+    {
+      "trait_type": "Species",
+      "value": "Capuchin"
+    },
+    {
+      "trait_type": "Habitat",
+      "value": "Rainforest"
+    },
+    {
+      "trait_type": "Rarity",
+      "value": "Common"
+    },
+    {
+      "trait_type": "Intelligence",
+      "value": "High"
+    }
+  ],
+  "properties": {
+    "files": [
+      {
+        "uri": "https://images.unsplash.com/photo-1540573133985-87b6da6d54a9?w=800",
+        "type": "image/jpeg"
+      }
+    ],
+    "category": "image"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "name": "Marmoset Monkey",
+  "symbol": "MONKEY",
+  "description": "The smallest monkeys in the world, incredibly agile and social.",
+  "image": "https://images.unsplash.com/photo-1580110533026-d5fc7eb6f93b?w=800",
+  "attributes": [
+    {
+      "trait_type": "Species",
+      "value": "Marmoset"
+    },
+    {
+      "trait_type": "Habitat",
+      "value": "Forest"
+    },
+    {
+      "trait_type": "Rarity",
+      "value": "Legendary"
+    },
+    {
+      "trait_type": "Cuteness",
+      "value": "Maximum"
+    }
+  ],
+  "properties": {
+    "files": [
+      {
+        "uri": "https://images.unsplash.com/photo-1580110533026-d5fc7eb6f93b?w=800",
+        "type": "image/jpeg"
+      }
+    ],
+    "category": "image"
+  }
+}

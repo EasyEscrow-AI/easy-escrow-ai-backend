@@ -1,7 +1,7 @@
 [package]
 name = "easyescrow"
 version = "0.1.0"
-description = "Solana Escrow Program for NFT transactions"
+description = "Atomic Swap Program for NFT/cNFT trading on Solana"
 edition = "2021"
 
 [lib]
@@ -9,7 +9,7 @@ crate-type = ["cdylib", "lib"]
 name = "easyescrow"
 
 [features]
-default = ["mainnet"]  # Default to mainnet for safety
+default = ["staging"]  # Default to staging for development (use explicit --features mainnet for production)
 cpi = ["no-entrypoint"]
 no-entrypoint = []
 no-idl = []
@@ -23,7 +23,23 @@ staging = []
 localnet = []
 
 [dependencies]
-anchor-lang = { version = "0.32.1", features = ["init-if-needed"] }
-anchor-spl = "0.32.1"
+anchor-lang = { workspace = true }
+anchor-spl = { workspace = true }
 solana-security-txt = "1.1.1"
+mpl-bubblegum = { workspace = true }
+
+[dev-dependencies]
+# Lightweight testing - no integration test framework needed
+# We'll test logic, validation, and proof handling without full chain simulation
+
+[profile.release]
+# Increase heap size for cNFT operations (dual cNFT swaps)
+# Default is 32KB, we need more for deserializing both maker and taker cNFT proofs
+# This prevents "memory allocation failed" errors
+overflow-checks = true
+lto = "fat"
+codegen-units = 1
+
+[profile.release.package.easyescrow]
+opt-level = 3
 

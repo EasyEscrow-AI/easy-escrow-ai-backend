@@ -1,0 +1,11 @@
+# Task ID: 27
+# Title: Update TypeScript Types for cNFT Proof Structures
+# Status: done
+# Dependencies: 26
+# Priority: medium
+# Description: Update TypeScript type definitions to include cNFT proof data structures matching Rust program structs.
+# Details:
+Create src/types/cnft.ts with CnftProof interface containing: root(string hex), dataHash(string hex), creatorHash(string hex), nonce(number), leafIndex(number), tree(string). Verify AssetInfo interface in assetValidator.ts already has proofData?: CnftProof field (it should). Ensure all TypeScript compiles without errors.
+
+# Test Strategy:
+

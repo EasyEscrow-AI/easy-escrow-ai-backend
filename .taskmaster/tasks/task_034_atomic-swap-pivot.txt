@@ -1,0 +1,75 @@
+# Task ID: 34
+# Title: Configure Production Environment Variables and Secrets for Mainnet Deployment
+# Status: pending
+# Dependencies: 31, 32, 33
+# Priority: high
+# Description: Set up and verify all necessary production environment variables and secrets for deploying the atomic swap system to Solana mainnet, ensuring secure and correct configuration.
+# Details:
+1. Create or update the `.env.production` file with all required environment variables, including RPC URLs, program IDs, treasury addresses, wallet addresses, and any other configuration needed for mainnet.
+
+2. In the DigitalOcean App Platform console, securely set all SECRET-type environment variables such as `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET`, `SOLANA_RPC_URL` (using a mainnet RPC endpoint like Helius or QuickNode), private keys, and other sensitive credentials.
+
+3. Configure the production Solana RPC URL to point to a reliable mainnet endpoint, for example, `https://mainnet.helius-rpc.com/?api-key=YOUR-KEY`.
+
+4. Set production program IDs for the atomic swap program and USDC mint on mainnet.
+
+5. Configure production treasury addresses, including the Program Derived Address (PDA) and authority keypairs.
+
+6. Define the production authorized apps whitelist to enable zero-fee swaps for approved applications.
+
+7. Set production wallet addresses such as admin and fee collector wallets.
+
+8. Ensure no secrets or sensitive values are hardcoded or committed in the `.do/app-production.yaml` file; use `${VARIABLE_NAME}` placeholders referencing environment variables instead.
+
+9. Update the production deployment YAML configuration to correctly reference all environment variables.
+
+10. Perform tests to verify that environment variables load correctly in the production deployment environment and that the application functions as expected with these settings.
+
+Follow best practices for secret management, avoid committing secrets to version control, and use DigitalOcean's secret management features for sensitive data.
+
+# Test Strategy:
+1. Verify that `.env.production` contains all required variables with correct values and no secrets are exposed.
+
+2. In DigitalOcean console, confirm all SECRET-type variables are set and match expected production values.
+
+3. Deploy the application to production and check logs to ensure environment variables are loaded without errors.
+
+4. Test connectivity to the configured Solana mainnet RPC endpoint and verify that the program IDs and treasury addresses are correctly recognized.
+
+5. Confirm that no secrets are present in `.do/app-production.yaml` and that placeholders are correctly used.
+
+6. Perform functional tests on the production deployment to ensure atomic swap operations work correctly with the configured environment.
+
+7. Conduct security checks to verify that secrets are not exposed in logs or error messages.
+
+# Subtasks:
+## 1. Create or update .env.production file with mainnet variables [pending]
+### Dependencies: None
+### Description: Generate or modify the .env.production file to include all required environment variables for mainnet deployment, such as RPC URLs, program IDs, treasury addresses, wallet addresses, and other configuration values.
+### Details:
+Ensure all non-sensitive configuration values are present and correctly set for mainnet. Do not include any secrets or sensitive values in this file.
+
+## 2. Securely set SECRET-type environment variables in DigitalOcean [pending]
+### Dependencies: 34.1
+### Description: In the DigitalOcean App Platform console, configure all SECRET-type environment variables such as DATABASE_URL, REDIS_URL, JWT_SECRET, SOLANA_RPC_URL, private keys, and other sensitive credentials.
+### Details:
+Use DigitalOcean's secret management features to set sensitive values securely. Ensure these values match the expected production configuration.
+
+## 3. Configure production Solana RPC URL with mainnet endpoint [pending]
+### Dependencies: 34.2
+### Description: Set the production Solana RPC URL to a reliable mainnet endpoint, such as Helius or QuickNode, ensuring the application connects to the correct Solana cluster.
+### Details:
+Update the SOLANA_RPC_URL environment variable to use a mainnet RPC endpoint like https://mainnet.helius-rpc.com/?api-key=YOUR-KEY.
+
+## 4. Update production program IDs and treasury addresses [pending]
+### Dependencies: 34.3
+### Description: Set the production program IDs for the atomic swap program and USDC mint, and configure production treasury addresses including the Program Derived Address (PDA) and authority keypairs.
+### Details:
+Ensure all program IDs and treasury addresses are updated to their mainnet equivalents and that authority keypairs are securely managed.
+
+## 5. Verify YAML configuration and test environment variable loading [pending]
+### Dependencies: 34.4
+### Description: Ensure the production deployment YAML configuration references all environment variables correctly and perform tests to verify that environment variables load as expected in the production environment.
+### Details:
+Update the production deployment YAML to use ${VARIABLE_NAME} placeholders for all environment variables. Deploy and test the application to confirm environment variables are loaded and the application functions correctly.
+

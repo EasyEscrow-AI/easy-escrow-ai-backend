@@ -1,0 +1,33 @@
+{
+  "name": "Baboon Monkey",
+  "symbol": "MONKEY",
+  "description": "Powerful and intelligent primates with distinctive faces and complex social structures.",
+  "image": "https://images.unsplash.com/photo-1606420961485-41ea039093b7?w=800",
+  "attributes": [
+    {
+      "trait_type": "Species",
+      "value": "Baboon"
+    },
+    {
+      "trait_type": "Habitat",
+      "value": "Savanna"
+    },
+    {
+      "trait_type": "Rarity",
+      "value": "Uncommon"
+    },
+    {
+      "trait_type": "Strength",
+      "value": "High"
+    }
+  ],
+  "properties": {
+    "files": [
+      {
+        "uri": "https://images.unsplash.com/photo-1606420961485-41ea039093b7?w=800",
+        "type": "image/jpeg"
+      }
+    ],
+    "category": "image"
+  }
+}
