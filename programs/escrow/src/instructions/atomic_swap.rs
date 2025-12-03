@@ -139,9 +139,9 @@ pub struct AtomicSwapWithFee<'info> {
     /// CHECK: Program ID verified by Bubblegum
     pub log_wrapper: Option<AccountInfo<'info>>,
     
-    /// Optional: Authorized app account for zero-fee swaps
-    /// CHECK: Validated in handler against whitelist for zero-fee authorization
-    pub authorized_app: Option<AccountInfo<'info>>,
+    /// Optional: Authorized app signer for zero-fee swaps
+    /// Must sign transaction to prove ownership
+    pub authorized_app: Option<Signer<'info>>,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
@@ -378,16 +378,16 @@ pub fn atomic_swap_handler(ctx: Context<AtomicSwapWithFee>, params: SwapParams) 
 }
 
 /// Validate swap parameters including zero-fee authorization
-fn validate_params(params: &SwapParams, authorized_app: Option<&AccountInfo>) -> Result<()> {
+fn validate_params(params: &SwapParams, authorized_app: Option<&Signer>) -> Result<()> {
     // Check if this is a zero-fee swap (requires authorization)
     if params.platform_fee == 0 {
-        // Zero-fee swaps require an authorized app
-        let app_account = authorized_app.ok_or(AtomicSwapError::UnauthorizedZeroFeeSwap)?;
+        // Zero-fee swaps require an authorized app SIGNER (proves ownership)
+        let app_signer = authorized_app.ok_or(AtomicSwapError::UnauthorizedZeroFeeSwap)?;
         
-        // Verify the provided authorized_app_id matches the account
+        // Verify the provided authorized_app_id matches the signer
         if let Some(app_id) = params.authorized_app_id {
             require!(
-                app_account.key() == app_id,
+                app_signer.key() == app_id,
                 AtomicSwapError::UnauthorizedZeroFeeSwap
             );
         } else {
@@ -397,11 +397,11 @@ fn validate_params(params: &SwapParams, authorized_app: Option<&AccountInfo>) ->
         // Check if app is in whitelist
         let authorized_apps = get_zero_fee_authorized_apps();
         require!(
-            authorized_apps.contains(&app_account.key()),
+            authorized_apps.contains(&app_signer.key()),
             AtomicSwapError::UnauthorizedZeroFeeSwap
         );
         
-        msg!("Zero-fee swap authorized for app: {}", app_account.key());
+        msg!("Zero-fee swap authorized for app: {}", app_signer.key());
     }
     
     // Validate fee doesn't exceed maximum
