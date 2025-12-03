@@ -3,6 +3,93 @@
  * Handles wallet loading, NFT selection, and swap execution
  */
 
+// ========================================
+// PASSWORD PROTECTION (Session-based)
+// ========================================
+(function initPasswordProtection() {
+    console.log('Initializing password protection...');
+    
+    // Password check function
+    function checkPassword() {
+        console.log('checkPassword called');
+        const input = document.getElementById('passwordInput');
+        const error = document.getElementById('passwordError');
+        const overlay = document.getElementById('passwordOverlay');
+        const correctPassword = '060385';
+        
+        if (!input || !error || !overlay) {
+            console.error('Password elements not found in checkPassword');
+            return;
+        }
+        
+        console.log('Input value:', input.value);
+        console.log('Correct password:', correctPassword);
+        console.log('Match:', input.value.trim() === correctPassword);
+        
+        if (input.value.trim() === correctPassword) {
+            console.log('Password correct! Unlocking...');
+            // Store in sessionStorage to persist during session
+            sessionStorage.setItem('testPageAuth', 'true');
+            overlay.classList.add('hidden');
+            error.classList.remove('visible');
+        } else {
+            console.log('Password incorrect');
+            error.classList.add('visible');
+            input.value = '';
+            input.focus();
+        }
+    }
+    
+    // Wait for DOM to be ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setup);
+    } else {
+        setup();
+    }
+    
+    function setup() {
+        console.log('Setting up password protection...');
+        const passwordInput = document.getElementById('passwordInput');
+        const unlockButton = document.getElementById('unlockButton');
+        const overlay = document.getElementById('passwordOverlay');
+        
+        if (!passwordInput || !unlockButton || !overlay) {
+            console.error('Password protection elements not found!');
+            return;
+        }
+        
+        console.log('Elements found successfully');
+        
+        // Check session storage
+        if (sessionStorage.getItem('testPageAuth') === 'true') {
+            console.log('Already authenticated, hiding overlay');
+            overlay.classList.add('hidden');
+        } else {
+            console.log('Not authenticated, showing password prompt');
+            passwordInput.focus();
+        }
+
+        // Add click listener to unlock button
+        unlockButton.addEventListener('click', function() {
+            console.log('Unlock button clicked');
+            checkPassword();
+        });
+
+        // Allow Enter key to submit
+        passwordInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                console.log('Enter key pressed');
+                checkPassword();
+            }
+        });
+        
+        console.log('Password protection initialized');
+    }
+})();
+
+// ========================================
+// WALLET CONFIGURATION
+// ========================================
 // Wallet addresses (public addresses only - no private keys)
 // Will be loaded from backend configuration
 let MAKER_ADDRESS = '';
