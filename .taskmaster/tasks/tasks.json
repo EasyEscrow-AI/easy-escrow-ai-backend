@@ -5316,7 +5316,7 @@
               2
             ],
             "details": "Review access controls on test endpoints, verify secrets management practices, and audit authorized apps whitelist to ensure only trusted applications are included. Document findings and remediation steps.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Perform penetration tests on /test page, verify secrets encryption and access logs, and validate whitelist entries against trusted app list."
           },
           {
@@ -5973,7 +5973,7 @@
     ],
     "metadata": {
       "created": "2025-11-17T05:45:23.312Z",
-      "updated": "2025-12-03T06:41:09.254Z",
+      "updated": "2025-12-03T08:00:22.353Z",
       "description": "Complete architectural pivot from escrow agreements to atomic NFT/cNFT swaps with durable nonces"
     }
   }
