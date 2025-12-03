@@ -52,6 +52,7 @@
     "test:staging:e2e:atomic:sol-for-cnft": "mocha --no-config --require ts-node/register tests/staging/e2e/05-atomic-sol-for-cnft-happy-path.test.ts --timeout 180000 --reporter spec --colors --inline-diffs",
     "test:staging:e2e:atomic:cnft-for-cnft": "mocha --no-config --require ts-node/register tests/staging/e2e/06-atomic-cnft-for-cnft-happy-path.test.ts --timeout 180000 --reporter spec --colors --inline-diffs",
     "test:staging:e2e:atomic:cnft-for-nft": "mocha --no-config --require ts-node/register tests/staging/e2e/07-atomic-cnft-for-nft-happy-path.test.ts --timeout 180000 --reporter spec --colors --inline-diffs",
+    "test:staging:e2e:atomic:zero-fee": "mocha --no-config --require ts-node/register tests/staging/e2e/08-atomic-zero-fee-nft-swap.test.ts --timeout 180000 --reporter spec --colors --inline-diffs",
     "test:staging:e2e:atomic:all": "mocha --no-config --require ts-node/register 'tests/staging/e2e/*.test.ts' --timeout 180000 --reporter spec --colors --inline-diffs",
     "staging:setup-test-cnfts": "ts-node scripts/setup-test-cnfts-staging.ts",
     "staging:rebalance-cnfts": "ts-node scripts/rebalance-test-cnfts-staging.ts",

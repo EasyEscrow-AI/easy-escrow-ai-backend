@@ -400,8 +400,6 @@ export class TransactionBuilder {
       // ALWAYS include proof fields (as null if not applicable)
       makerCnftProof: makerCnftParams ? this.serializeCnftProof(makerCnftParams.proof) : null,
       takerCnftProof: takerCnftParams ? this.serializeCnftProof(takerCnftParams.proof) : null,
-      // Authorized app ID for zero-fee swaps (null if not applicable)
-      authorizedAppId: inputs.authorizedAppId || null,
     }
     
     // Build accounts object
