@@ -19,6 +19,82 @@
             padding: 20px;
         }
 
+        /* Password Protection Overlay */
+        #passwordOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+
+        #passwordOverlay.hidden {
+            display: none;
+        }
+
+        .password-modal {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .password-modal h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .password-modal input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        .password-modal input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .password-modal button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .password-modal button:hover {
+            transform: translateY(-2px);
+        }
+
+        .password-modal .error {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 10px;
+            text-align: center;
+            display: none;
+        }
+
+        .password-modal .error.visible {
+            display: block;
+        }
+
         .container {
             max-width: 1600px;
             margin: 0 auto;
@@ -1009,8 +1085,24 @@
             }
         }
     </style>
-</head>
-<body>
+  </head>
+  <body>
+    <!-- Password Protection Overlay -->
+    <div id="passwordOverlay">
+        <div class="password-modal">
+            <h2>🔒 Protected Test Page</h2>
+            <p style="color: #666; margin-bottom: 20px; text-align: center;">Please enter the password to access this page</p>
+            <input 
+                type="password" 
+                id="passwordInput" 
+                placeholder="Enter password"
+                autocomplete="off"
+            />
+            <button onclick="checkPassword()">Unlock</button>
+            <div class="error" id="passwordError">Incorrect password. Please try again.</div>
+        </div>
+    </div>
+
     <!-- Environment Badge -->
     <div class="env-badge" id="env-badge">LOADING...</div>
 
@@ -1168,6 +1260,48 @@
             </div>
         </div>
     </div>
+
+    <!-- Password Protection Script -->
+    <script>
+        // Password check function
+        function checkPassword() {
+            const input = document.getElementById('passwordInput');
+            const error = document.getElementById('passwordError');
+            const overlay = document.getElementById('passwordOverlay');
+            const correctPassword = '06031985';
+            
+            if (input.value === correctPassword) {
+                // Store in sessionStorage to persist during session
+                sessionStorage.setItem('testPageAuth', 'true');
+                overlay.classList.add('hidden');
+                error.classList.remove('visible');
+            } else {
+                error.classList.add('visible');
+                input.value = '';
+                input.focus();
+            }
+        }
+
+        // Check if already authenticated
+        window.addEventListener('DOMContentLoaded', () => {
+            const passwordInput = document.getElementById('passwordInput');
+            const overlay = document.getElementById('passwordOverlay');
+            
+            // Check session storage
+            if (sessionStorage.getItem('testPageAuth') === 'true') {
+                overlay.classList.add('hidden');
+            } else {
+                passwordInput.focus();
+            }
+
+            // Allow Enter key to submit
+            passwordInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    checkPassword();
+                }
+            });
+        });
+    </script>
 
     <!-- External JavaScript (CSP compliant - no inline scripts) -->
     <script src="/js/test-page.js"></script>
