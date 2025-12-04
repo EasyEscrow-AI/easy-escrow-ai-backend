@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { prisma } from '../db/prisma';
+import { prisma } from '../config/database';
 import crypto from 'crypto';
-import { logger } from '../utils/logger';
+import { logger } from '../services/logger.service';
 
 /**
  * Extended Request interface with zero-fee authorization data
@@ -137,7 +137,7 @@ export const validateZeroFeeApiKey = async (
     prisma.authorizedApp.update({
       where: { id: authorizedApp.id },
       data: { lastUsedAt: new Date() },
-    }).catch(error => {
+    }).catch((error: Error) => {
       logger.error({
         message: 'Failed to update lastUsedAt for authorized app',
         appId: authorizedApp.id,

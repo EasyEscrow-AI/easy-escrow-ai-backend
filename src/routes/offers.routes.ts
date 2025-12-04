@@ -871,24 +871,24 @@ router.post(
         return;
       }
 
-      const confirmedOffer = await offerManager.confirmSwap({
+      await offerManager.confirmSwap({
         offerId,
         signature,
       });
 
       // Log zero-fee swap for audit if authorized
       const zeroFeeRequest = req as ZeroFeeAuthorizedRequest;
-      if (zeroFeeRequest.isZeroFeeAuthorized && zeroFeeRequest.authorizedApp && confirmedOffer) {
+      if (zeroFeeRequest.isZeroFeeAuthorized && zeroFeeRequest.authorizedApp && offer) {
         try {
           // Log the zero-fee swap
           await prisma.zeroFeeSwapLog.create({
             data: {
               authorizedAppId: zeroFeeRequest.authorizedApp.id,
               swapSignature: signature,
-              makerWallet: confirmedOffer.makerWallet,
-              takerWallet: confirmedOffer.takerWallet || '',
+              makerWallet: offer.makerWallet,
+              takerWallet: offer.takerWallet || '',
               platformFeeBps: 0, // Zero fee
-              totalValueLamports: confirmedOffer.offeredSolLamports || BigInt(0),
+              totalValueLamports: offer.offeredSolLamports || BigInt(0),
               backendSigner: platformAuthority.publicKey.toBase58(),
               ipAddress: req.ip,
               userAgent: req.headers['user-agent'],
@@ -906,8 +906,8 @@ router.post(
           console.log('[Zero-Fee Audit] Logged swap:', {
             app: zeroFeeRequest.authorizedApp.name,
             signature,
-            maker: confirmedOffer.makerWallet,
-            taker: confirmedOffer.takerWallet,
+            maker: offer.makerWallet,
+            taker: offer.takerWallet,
           });
         } catch (logError) {
           // Non-blocking error - log but don't fail the request
