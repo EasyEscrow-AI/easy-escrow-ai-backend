@@ -892,7 +892,11 @@ router.post(
           });
 
           if (dbOffer) {
-            // Calculate total value (offered + requested SOL)
+            // Calculate total swap value for audit purposes
+            // For accurate audit trail, we log the combined SOL value from both sides
+            // of the swap. This represents the total SOL volume and would be used to
+            // calculate what the fee WOULD have been if not waived (1% of total SOL value).
+            // Example: Maker offers 5 SOL + NFT, Taker offers 2 SOL + NFT → totalValue = 7 SOL
             const totalValueLamports = (dbOffer.offeredSolLamports || BigInt(0)) + 
                                        (dbOffer.requestedSolLamports || BigInt(0));
 
