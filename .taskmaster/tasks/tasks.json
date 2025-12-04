@@ -5278,7 +5278,7 @@
         "id": 31,
         "title": "Production Deployment: Pre-deployment Audit and Preparation for Atomic Swap and Treasury Functionality",
         "description": "Conduct a comprehensive audit and preparation phase to ensure readiness for deploying atomic swap and treasury features to the production mainnet environment. This is a fresh production deployment with zero existing users, so no versioning or backwards compatibility is required.",
-        "status": "pending",
+        "status": "in-progress",
         "dependencies": [
           14,
           18,
@@ -5294,7 +5294,7 @@
             "description": "Review all issues encountered during staging deployments such as IDL buffer size problems, treasury PDA derivation, and nonce account setup. Document lessons learned and mitigation strategies to inform production deployment.",
             "dependencies": [],
             "details": "Analyze staging deployment logs and issue trackers to identify problems and resolutions. Summarize findings in a comprehensive document highlighting root causes and recommended fixes for production.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Verify completeness of documented issues and confirm mitigation strategies are actionable and clear."
           },
           {
@@ -5305,7 +5305,7 @@
               1
             ],
             "details": "Compare staging environment variables with production requirements. Ensure all necessary variables exist, have secure values, and are documented. Coordinate with DevOps to validate production configuration.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Test environment variable presence and correctness in production environment; confirm documentation accuracy."
           },
           {
@@ -5316,7 +5316,7 @@
               2
             ],
             "details": "Review access controls on test endpoints, verify secrets management practices, and audit authorized apps whitelist to ensure only trusted applications are included. Document findings and remediation steps.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Perform penetration tests on /test page, verify secrets encryption and access logs, and validate whitelist entries against trusted app list."
           },
           {
@@ -5327,7 +5327,7 @@
               3
             ],
             "details": "Check wallet balances on mainnet, verify secure storage and access to private keys, and update authorized apps whitelist to include only vetted applications. Document wallet and whitelist status.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Verify wallet balances on mainnet, test key access controls, and confirm whitelist correctness through audit logs."
           },
           {
@@ -5361,7 +5361,7 @@
         "description": "Deploy the atomic swap Solana program to mainnet-beta with proper IDL management and production-grade verification.",
         "details": "This task involves deploying the atomic swap program to mainnet-beta, ensuring all production best practices are followed. Key steps include:\n\n1. **Build for Mainnet-beta**:\n   - Use the appropriate cfg feature flag to build the program for mainnet-beta, ensuring no staging or devnet-specific code is included.\n   - Run `cargo build-sbf` from the `programs/escrow/` directory to generate the production-ready `.so` file.\n\n2. **Program Size Verification and Optimization**:\n   - Check the compiled program size using `ls -la target/deploy/escrow.so`.\n   - If the program exceeds the recommended size limit (typically 500KB for mainnet), optimize by removing unused dependencies, minimizing code, or splitting logic into separate programs.\n\n3. **Deploy to Mainnet**:\n   - Set the Solana CLI to mainnet-beta: `solana config set --url mainnet-beta`.\n   - Deploy the program using the production deployer wallet: `solana program deploy target/deploy/escrow.so --keypair production-deployer.json`.\n   - Record the deployment transaction ID and program ID for documentation.\n\n4. **IDL Management**:\n   - Close the old IDL on mainnet using `anchor idl close` if necessary.\n   - Generate a new IDL with `anchor idl build` and upload it with `anchor idl upgrade --provider.cluster mainnet-beta --provider.wallet production-deployer.json`.\n   - Ensure the buffer size is sufficient for the new IDL to avoid staging issues.\n\n5. **Verify Deployment and IDL Accessibility**:\n   - Use Solana Explorer or Solscan to verify the program is deployed and accessible.\n   - Confirm the IDL is correctly uploaded and accessible via the Anchor IDL endpoint.\n\n6. **Update Backend IDL Files**:\n   - Copy the new IDL to `src/generated/anchor/escrow-idl-production.json`.\n   - Commit and push the updated IDL file to the repository.\n\n7. **Test Program Initialization and Basic Functionality**:\n   - Initialize the program on mainnet and run basic swap tests to ensure functionality.\n   - Verify all swap types (NFT-to-NFT, NFT-to-SOL, SOL-to-NFT, cNFT swaps) work as expected.\n\n8. **Documentation**:\n   - Document the program ID and deployment transaction ID in the deployment log.\n   - Update any relevant documentation to reflect the production deployment.\n<info added on 2025-12-03T04:07:13.620Z>\n**IMPORTANT NOTE - Fresh Production Deployment**:\n\nThis is a fresh production deployment with zero existing users. NO VERSIONING OR BACKWARDS COMPATIBILITY IS NEEDED. Deploy the atomic swap program cleanly without implementing versioning, migration logic, or backwards compatibility for old transaction formats. The program can be deployed as a brand new system without concerns about maintaining compatibility with previous program versions or transaction structures.\n\nThis means:\n- No need to implement program upgrade mechanisms or version checks\n- No migration scripts or backwards compatibility layers required\n- Transaction formats can be deployed in their current state without legacy support\n- Program accounts and data structures can be initialized fresh without considering previous versions\n- IDL can be uploaded without concerns about breaking changes for existing integrations\n</info added on 2025-12-03T04:07:13.620Z>",
         "testStrategy": "1. **Deployment Verification**:\n   - Confirm the program is deployed to mainnet-beta and accessible via Solana Explorer or Solscan.\n   - Verify the program ID matches the one recorded in the deployment log.\n\n2. **IDL Verification**:\n   - Check that the IDL is correctly uploaded and accessible via the Anchor IDL endpoint.\n   - Ensure the buffer size is sufficient and no staging issues are present.\n\n3. **Functionality Testing**:\n   - Run basic swap tests on mainnet to verify all swap types work as expected.\n   - Confirm asset ownership changes on-chain after swaps.\n\n4. **Documentation Review**:\n   - Verify the program ID and deployment transaction ID are documented in the deployment log.\n   - Ensure all relevant documentation is updated to reflect the production deployment.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           31,
           30
@@ -5374,7 +5374,7 @@
             "description": "Compile the atomic swap Solana program for mainnet-beta using the correct feature flags and ensure no staging or devnet-specific code is included.",
             "dependencies": [],
             "details": "Run `cargo build-sbf` from the `programs/escrow/` directory with the appropriate cfg feature flag for mainnet-beta. Verify the build output is in `target/deploy/escrow.so` and contains no staging or devnet-specific logic.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Confirm the build completes without errors and the resulting `.so` file is production-ready."
           },
           {
@@ -5385,7 +5385,7 @@
               1
             ],
             "details": "Use `ls -la target/deploy/escrow.so` to check the program size. If the size exceeds 500KB, optimize by removing unused dependencies, minimizing code, or splitting logic into separate programs.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Ensure the program size is within the recommended limit for mainnet-beta."
           },
           {
@@ -5396,7 +5396,7 @@
               2
             ],
             "details": "Set the Solana CLI to mainnet-beta with `solana config set --url mainnet-beta`. Deploy the program using `solana program deploy target/deploy/escrow.so --keypair production-deployer.json`. Record the deployment transaction ID and program ID for documentation.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Verify the program is deployed and accessible on mainnet-beta via Solana Explorer or Solscan."
           },
           {
@@ -5407,7 +5407,7 @@
               3
             ],
             "details": "Use `anchor idl close` to close the old IDL if needed. Generate a new IDL with `anchor idl build` and upload it with `anchor idl upgrade --provider.cluster mainnet-beta --provider.wallet production-deployer.json`. Ensure the buffer size is sufficient for the new IDL.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Confirm the IDL is correctly uploaded and accessible via the Anchor IDL endpoint."
           },
           {
@@ -5418,7 +5418,7 @@
               4
             ],
             "details": "Copy the new IDL to `src/generated/anchor/escrow-idl-production.json`. Commit and push the updated IDL file to the repository. Document the program ID and deployment transaction ID in the deployment log. Update any relevant documentation to reflect the production deployment. Test program initialization and basic functionality on mainnet-beta.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Verify the IDL file is updated in the backend, documentation is complete, and program functionality is confirmed on mainnet-beta."
           }
         ]
@@ -5969,11 +5969,53 @@
             "testStrategy": "Ensure report is reviewed and approved by stakeholders and health check schedules are established and communicated."
           }
         ]
+      },
+      {
+        "id": 39,
+        "title": "Add Rate Limiting to /test Page",
+        "description": "Implement rate limiting for the /test page to prevent brute force password attempts with Redis-backed storage and configurable limits.",
+        "details": "Implement comprehensive rate limiting for the /test page with the following components:\n\n1. **Express Rate Limiting Middleware Setup**:\n   - Install and configure express-rate-limit with Redis store using redis-rate-limit\n   - Create rate limiting middleware specifically for POST /test endpoint password verification\n   - Configure IP-based tracking with Redis backend for distributed rate limiting support\n   - Set up middleware to apply only to password verification attempts, not page loads\n\n2. **Environment Configuration**:\n   - Add TEST_PAGE_RATE_LIMIT environment variable (default: 5 attempts)\n   - Add TEST_PAGE_RATE_WINDOW_MS environment variable (default: 3600000 = 1 hour)\n   - Integrate with existing configuration management system from Task 11\n   - Add validation for rate limit configuration values (positive integers, reasonable ranges)\n\n3. **Redis Integration**:\n   - Configure Redis connection for rate limit storage with 1-hour TTL\n   - Implement key structure: \"rate_limit:test_page:{ip_address}\" for tracking attempts\n   - Set up automatic expiration of rate limit counters after window period\n   - Handle Redis connection failures gracefully with fallback behavior\n\n4. **Rate Limit Response Handling**:\n   - Return 429 Too Many Requests status code when limit exceeded\n   - Include Retry-After header with seconds until reset\n   - Display clear error message to user: \"Too many password attempts. Please try again in X minutes.\"\n   - Preserve existing /test page functionality for GET requests and successful authentications\n\n5. **Monitoring and Logging**:\n   - Log rate limit violations with IP address, timestamp, and attempt count\n   - Add structured logging for monitoring excessive failed attempts\n   - Include rate limit metrics in existing monitoring system\n   - Track rate limit effectiveness and adjustment needs\n\n6. **Security Considerations**:\n   - Implement proper IP address extraction handling X-Forwarded-For headers\n   - Consider rate limiting bypass for whitelisted IPs if needed\n   - Ensure rate limiting doesn't interfere with legitimate testing workflows\n   - Add rate limit headers (X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset) for transparency",
+        "testStrategy": "1. **Rate Limiting Functionality Testing**:\n   - Test successful password attempts within rate limit (should allow up to 5 attempts per hour)\n   - Test rate limit enforcement by making 6 consecutive failed attempts and verify 429 response on 6th attempt\n   - Verify rate limit counter resets after 1-hour window expires\n   - Test rate limit headers are properly included in responses (X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset)\n\n2. **Redis Integration Testing**:\n   - Verify rate limit data is stored in Redis with correct TTL (3600 seconds)\n   - Test Redis connection failure scenarios and ensure graceful degradation\n   - Verify rate limit keys follow expected format: \"rate_limit:test_page:{ip_address}\"\n   - Test rate limit persistence across server restarts\n\n3. **Configuration Testing**:\n   - Test custom TEST_PAGE_RATE_LIMIT and TEST_PAGE_RATE_WINDOW_MS values\n   - Verify environment variable validation with invalid values (negative numbers, non-integers)\n   - Test default values are applied when environment variables are not set\n\n4. **Security and Edge Case Testing**:\n   - Test rate limiting with different IP addresses (should be independent counters)\n   - Test X-Forwarded-For header handling for proper IP extraction behind proxies\n   - Verify GET requests to /test page are not rate limited\n   - Test successful password authentication resets or doesn't increment rate limit counter\n\n5. **Monitoring and Logging Testing**:\n   - Verify rate limit violations are logged with proper structured format including IP, timestamp, attempt count\n   - Test log entries are created for monitoring integration\n   - Verify no sensitive information (passwords) are logged during rate limit events\n\n6. **User Experience Testing**:\n   - Verify clear error message is displayed when rate limited\n   - Test Retry-After header provides accurate reset time\n   - Ensure rate limiting doesn't break existing /test page functionality for legitimate users",
+        "status": "pending",
+        "dependencies": [
+          8,
+          11
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 40,
+        "title": "Create and Document Secrets Rotation Policy",
+        "description": "Establish a formal secrets rotation policy to maintain security hygiene for production environment with documented rotation schedules, procedures, and responsibilities.",
+        "details": "Create a comprehensive secrets rotation policy document at docs/security/SECRETS_ROTATION_POLICY.md with the following components:\n\n1. **Rotation Schedule Documentation**:\n   - Create a detailed table with all secret types and their rotation frequencies\n   - JWT_SECRET: Every 90 days (quarterly rotation)\n   - WEBHOOK_SECRET: Every 90 days (quarterly rotation)\n   - SMTP credentials: Every 180 days (bi-annual rotation)\n   - Solana RPC API keys: Annually (yearly rotation)\n   - Database passwords: Annually (yearly rotation)\n   - DigitalOcean Spaces keys: Annually (yearly rotation)\n   - Wallet private keys: Never rotate (generate new wallet if compromised)\n\n2. **Step-by-Step Rotation Procedures**:\n   - Document detailed procedures for each secret type including pre-rotation checks, rotation steps, and post-rotation verification\n   - Include specific commands and API calls needed for each rotation type\n   - Document environment variable updates and deployment procedures\n   - Include coordination steps for secrets shared across multiple services\n\n3. **Responsibilities and Access Control**:\n   - Define team roles and responsibilities for rotation execution\n   - Document who has access to perform rotations for each secret type\n   - Establish approval workflows for sensitive rotations (database passwords, wallet keys)\n   - Create escalation procedures for emergency rotations\n\n4. **Calendar and Reminder System**:\n   - Set up automated calendar reminders for all scheduled rotations\n   - Create quarterly review meetings to assess rotation compliance\n   - Document tracking mechanisms for completed rotations\n\n5. **Emergency and Rollback Procedures**:\n   - Document emergency rotation procedures if secrets are compromised\n   - Create detailed rollback procedures if rotation causes service disruption\n   - Include incident response steps and communication protocols\n   - Document verification checklists to confirm successful rotations\n\n6. **Audit Trail and Compliance**:\n   - Define logging requirements for all rotation activities\n   - Create audit trail documentation standards\n   - Establish compliance reporting procedures\n   - Document retention policies for rotation logs",
+        "testStrategy": "1. **Documentation Completeness Verification**:\n   - Review the created SECRETS_ROTATION_POLICY.md document to ensure all required sections are present and comprehensive\n   - Verify that rotation schedules are clearly defined for all secret types with specific timeframes\n   - Confirm that step-by-step procedures are detailed enough for team members to execute without ambiguity\n\n2. **Procedure Validation**:\n   - Test the documented rotation procedures for at least one secret type (preferably JWT_SECRET) in a staging environment\n   - Verify that all commands and steps in the procedures work as documented\n   - Confirm that rollback procedures can be executed successfully if needed\n\n3. **Calendar and Reminder System Testing**:\n   - Set up calendar reminders for the next rotation cycle and verify they trigger correctly\n   - Test notification systems to ensure responsible team members receive rotation alerts\n   - Verify that tracking mechanisms accurately record completed rotations\n\n4. **Access Control and Responsibility Verification**:\n   - Confirm that documented team responsibilities align with actual access permissions\n   - Verify that approval workflows are properly configured for sensitive rotations\n   - Test escalation procedures to ensure they reach the correct personnel\n\n5. **Audit Trail Validation**:\n   - Verify that logging mechanisms capture all required rotation activities\n   - Test audit trail generation and confirm logs contain sufficient detail for compliance\n   - Validate that retention policies are properly configured and enforced",
+        "status": "pending",
+        "dependencies": [
+          18
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 41,
+        "title": "Implement Zero-Fee Swap Monitoring and Alerting",
+        "description": "Add comprehensive monitoring and alerting for zero-fee swap transactions to detect unauthorized usage and ensure security compliance with structured logging, real-time alerts, and analytics dashboard.",
+        "details": "Implement the zero-fee swap monitoring and alerting system with the following comprehensive components:\n\n1. **Backend Transaction Builder Monitoring**:\n   - Extend TransactionBuilder service to log all zero-fee swap attempts with structured logging format\n   - Add validation middleware to check authorized app public keys against whitelist stored in configuration\n   - Implement immediate Slack/Discord webhook alerts for unknown app attempts\n   - Log format: { timestamp, swapId, authorizedAppPubkey, userWallet, swapType, feeAmount, status }\n   - Add rate limiting detection for suspicious high-frequency attempts from single apps\n\n2. **On-Chain Program Monitoring**:\n   - Implement transaction log parser to monitor UnauthorizedZeroFeeSwap error emissions from Solana program\n   - Track successful zero-fee swaps by parsing program logs and extracting app identifiers\n   - Set up automated monitoring job that queries recent transactions and analyzes program logs\n   - Calculate error rates and trigger alerts when failure rate exceeds 5% threshold\n   - Store metrics in time-series database for trend analysis\n\n3. **Alerting System Integration**:\n   - Integrate with Sentry for error tracking and automated issue creation\n   - Configure Slack/Discord webhooks with different alert channels for different severity levels\n   - Implement alert conditions: immediate (unknown app), hourly (error rate >5%), daily (volume spikes), monthly (inactive app cleanup)\n   - Add alert deduplication to prevent spam and escalation policies for critical alerts\n   - Create alert templates with contextual information including app details and recent activity\n\n4. **Analytics Dashboard**:\n   - Create monitoring dashboard using Grafana or custom React components\n   - Display real-time metrics: zero-fee swaps per app (daily/weekly/monthly views)\n   - Track cost savings per authorized app with historical trends\n   - Show usage patterns, peak times, and anomaly detection\n   - Add exportable reports for compliance and audit purposes\n   - Implement drill-down capabilities to investigate specific incidents\n\n5. **Metrics and Observability**:\n   - Add Prometheus metrics endpoint exposing zero-fee swap counters, error rates, and latency\n   - Implement custom metrics: zero_fee_swaps_total, zero_fee_errors_total, authorized_apps_active\n   - Set up health checks for monitoring system components\n   - Add performance monitoring for alert delivery times and dashboard response times\n   - Create runbooks for common alert scenarios and incident response procedures\n\n6. **Configuration and Security**:\n   - Store authorized app whitelist in secure configuration with hot-reload capability\n   - Implement audit logging for whitelist changes and monitoring configuration updates\n   - Add encryption for sensitive monitoring data and secure webhook URLs\n   - Set up monitoring system redundancy and failover mechanisms",
+        "testStrategy": "1. **Monitoring Functionality Testing**:\n   - Test zero-fee swap logging by creating test swaps with authorized and unauthorized apps, verify all attempts are logged with correct structured format\n   - Mock unknown app attempts and verify immediate alerts are sent to configured Slack/Discord channels\n   - Test error rate monitoring by simulating program failures and verify alerts trigger when threshold exceeded\n   - Validate dashboard displays accurate metrics by comparing with logged data\n\n2. **Alert System Testing**:\n   - Test all alert conditions: unknown app (immediate), error rate >5% (hourly), volume spikes (daily), inactive apps (monthly)\n   - Verify alert deduplication prevents spam by triggering same condition multiple times\n   - Test Sentry integration by causing monitored errors and confirming issues are created\n   - Validate webhook delivery with test messages to Slack/Discord channels\n\n3. **Analytics and Reporting Testing**:\n   - Test dashboard with various time ranges and verify data accuracy against database records\n   - Test cost savings calculations by comparing zero-fee vs normal fee scenarios\n   - Verify export functionality produces correct CSV/PDF reports\n   - Test drill-down capabilities by investigating specific swap transactions\n\n4. **Performance and Reliability Testing**:\n   - Load test monitoring system with high volume of zero-fee swaps to ensure no performance degradation\n   - Test monitoring system failover by simulating component failures\n   - Verify Prometheus metrics endpoint responds correctly under load\n   - Test alert delivery times during peak usage periods\n\n5. **Security and Configuration Testing**:\n   - Test whitelist hot-reload by adding/removing authorized apps and verifying immediate effect\n   - Verify audit logging captures all configuration changes with proper attribution\n   - Test monitoring system access controls and webhook URL security\n   - Validate encrypted storage of sensitive monitoring configuration",
+        "status": "pending",
+        "dependencies": [
+          5,
+          9,
+          11
+        ],
+        "priority": "medium",
+        "subtasks": []
       }
     ],
     "metadata": {
       "created": "2025-11-17T05:45:23.312Z",
-      "updated": "2025-12-03T04:05:38.516Z",
+      "updated": "2025-12-04T05:27:04.320Z",
       "description": "Complete architectural pivot from escrow agreements to atomic NFT/cNFT swaps with durable nonces"
     }
   }

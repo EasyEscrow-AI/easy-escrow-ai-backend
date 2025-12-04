@@ -221,6 +221,14 @@
             border-color: #667eea;
         }
 
+        .api-key-section {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
         .filter-buttons {
             display: flex;
             gap: 10px;
@@ -1178,6 +1186,24 @@
                         <div class="spinner"></div>
                         Loading NFTs...
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Zero-Fee API Key (Optional) -->
+        <div class="api-key-section">
+            <div class="section-title">🔑 Zero-Fee API Key (Optional)</div>
+            <div class="sol-input-group">
+                <input 
+                    type="text" 
+                    class="sol-input" 
+                    id="api-key-input" 
+                    placeholder="Enter API key for zero-fee swaps (leave empty for standard fees)"
+                    style="font-family: monospace; font-size: 0.9rem;"
+                >
+                <div style="margin-top: 8px; font-size: 0.85rem; color: #666;">
+                    <strong>Standard fees:</strong> 0.005 SOL (NFT-only) or 1% of SOL value<br>
+                    <strong>With valid API key:</strong> Zero fees
                 </div>
             </div>
         </div>

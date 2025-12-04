@@ -270,7 +270,7 @@ Update production environment variables:
 
 ```env
 # Old (devnet/staging)
-SOLANA_PROGRAM_ID=GpvN8LB1xXTu9N541x9rrbxD7HwH6xi1Gkp84P7rUAEZ
+SOLANA_PROGRAM_ID=AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei
 
 # New (mainnet)
 MAINNET_PROD_PROGRAM_ID=2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx

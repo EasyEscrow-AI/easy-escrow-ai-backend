@@ -425,3 +425,56 @@ model SwapTransaction {
   @@index([confirmedAt])
   @@map("swap_transactions")
 }
+
+// ============================================
+// ZERO-FEE AUTHORIZATION SYSTEM
+// ============================================
+
+// Authorized apps table for zero-fee swap authorization
+model AuthorizedApp {
+  id               String   @id @default(uuid())
+  name             String // App or partner name
+  apiKey           String   @unique @map("api_key") // SHA256 hashed API key
+  description      String? // Optional description
+  active           Boolean  @default(true) // Can be disabled without deletion
+  zeroFeeEnabled   Boolean  @default(true) @map("zero_fee_enabled") // Zero-fee authorization
+  rateLimitPerDay  Int      @default(1000) @map("rate_limit_per_day") // Daily swap limit
+  totalSwaps       Int      @default(0) @map("total_swaps") // Total swaps executed
+  lastUsedAt       DateTime? @map("last_used_at") // Last time API key was used
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  zeroFeeSwapLogs ZeroFeeSwapLog[]
+
+  @@index([apiKey])
+  @@index([active])
+  @@index([zeroFeeEnabled])
+  @@index([lastUsedAt])
+  @@map("authorized_apps")
+}
+
+// Zero-fee swap audit log
+model ZeroFeeSwapLog {
+  id                 String   @id @default(uuid())
+  authorizedAppId    String   @map("authorized_app_id")
+  swapSignature      String   @map("swap_signature") // Transaction signature
+  makerWallet        String   @map("maker_wallet")
+  takerWallet        String   @map("taker_wallet")
+  platformFeeBps     Int      @map("platform_fee_bps") // Should be 0 for zero-fee
+  totalValueLamports BigInt   @map("total_value_lamports")
+  backendSigner      String   @map("backend_signer") // Which backend signer was used
+  ipAddress          String?  @map("ip_address") // Request IP for security
+  userAgent          String?  @map("user_agent") // Request user agent
+  executedAt         DateTime @default(now()) @map("executed_at")
+
+  // Relations
+  authorizedApp AuthorizedApp @relation(fields: [authorizedAppId], references: [id], onDelete: Cascade)
+
+  @@index([authorizedAppId])
+  @@index([swapSignature])
+  @@index([makerWallet])
+  @@index([takerWallet])
+  @@index([executedAt])
+  @@map("zero_fee_swap_logs")
+}

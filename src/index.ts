@@ -8,7 +8,7 @@ import { connectDatabase, checkDatabaseHealth } from './config/database';
 import { connectRedis, checkRedisHealth, disconnectRedis } from './config/redis';
 // DISABLED: Agreement routes - migrated to atomic swap architecture
 // import { agreementRoutes } from './routes';
-import { expiryCancellationRoutes, webhookRoutes, receiptRoutes, transactionLogRoutes, healthRoutes, offersRoutes, testRoutes, testExecuteRoutes } from './routes';
+import { expiryCancellationRoutes, webhookRoutes, receiptRoutes, transactionLogRoutes, healthRoutes, offersRoutes, testRoutes, testExecuteRoutes, authorizedAppsRoutes } from './routes';
 import { noncePoolManager, healthCheckService } from './routes/offers.routes';
 import {
   corsOptions,
@@ -16,12 +16,14 @@ import {
   sanitizeInput,
   securityHeaders,
 } from './middleware';
-import { 
+import {
   getMonitoringOrchestrator, 
   getExpiryCancellationOrchestrator,
   getIdempotencyService 
 } from './services';
 import { getStuckAgreementMonitor, AlertSeverity } from './services/stuck-agreement-monitor.service';
+import { getNonceCleanupScheduler, getNonceReplenishmentScheduler } from './services/nonce-schedulers.service';
+import { OfferExpiryScheduler } from './services/offer-expiry-scheduler.service';
 // import { backupScheduler } from './services/backup-scheduler.service'; // DISABLED for BETA launch
 
 // Load environment variables
@@ -73,6 +75,15 @@ const nonceReplenishmentScheduler = getNonceReplenishmentScheduler(noncePoolMana
   timezone: process.env.TZ || 'America/Los_Angeles',
   minPoolSize: 10,
   replenishmentAmount: 5,
+});
+
+// Initialize offer expiry scheduler
+import { PrismaClient } from './generated/prisma';
+const prisma = new PrismaClient();
+const offerExpiryScheduler = OfferExpiryScheduler.getInstance(prisma, {
+  schedule: '*/15 * * * *', // Every 15 minutes
+  batchSize: 200,
+  timezone: process.env.TZ || 'America/Los_Angeles',
 });
 
 // Security Middleware (apply first)
@@ -221,6 +232,7 @@ app.use('/v1/transactions', transactionLogRoutes);
 app.use('/api/expiry-cancellation', expiryCancellationRoutes);
 app.use('/api', webhookRoutes);
 app.use('/health', healthRoutes);
+app.use(authorizedAppsRoutes); // Admin endpoints for zero-fee API key management
 app.use(testRoutes);
 app.use(testExecuteRoutes); // ⚠️ TEST ONLY - Real swap execution with private keys
 

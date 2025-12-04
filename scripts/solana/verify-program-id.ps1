@@ -27,7 +27,7 @@ param(
 $programIds = @{
     'mainnet' = '2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx'
     'staging' = 'AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei'
-    'devnet'  = 'GpvN8LB1xXTu9N541x9rrbxD7HwH6xi1Gkp84P7rUAEZ'
+    'devnet'  = 'AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei'
     'localnet' = 'Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS'
 }
 
