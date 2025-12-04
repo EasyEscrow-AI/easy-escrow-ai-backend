@@ -19,16 +19,22 @@ const BUBBLEGUM_PROGRAM_ID: Pubkey = mpl_bubblegum::ID;
 /// This prevents unauthorized parties from bypassing platform fees
 fn get_zero_fee_authorized_apps() -> Vec<Pubkey> {
     vec![
-        // Staging admin for testing (498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R)
+        // Staging backend admin (498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R)
+        // Used by staging backend to sign zero-fee swaps when valid API key provided
         Pubkey::new_from_array([
             0x2e, 0xa7, 0xec, 0x9b, 0xaa, 0xe0, 0xb3, 0xea,
             0xa4, 0x76, 0xd3, 0x1c, 0x53, 0x77, 0xfa, 0x65,
             0xb7, 0x39, 0x8f, 0xa5, 0x1e, 0x26, 0x5e, 0x0b,
             0x9d, 0xe3, 0xdd, 0x7f, 0xc2, 0x01, 0x3a, 0xc2,
         ]),
-        // Add more authorized app public keys here as needed
-        // Example:
-        // Pubkey::new_from_array([0x12, 0x34, ...]),
+        // Production backend admin (HGrfPKZuKR8BSYYJfZRFfdF1y2ApU9LSf6USQ6tpSDj2)
+        // Used by production backend to sign zero-fee swaps when valid API key provided
+        Pubkey::new_from_array([
+            0xf1, 0xca, 0xdb, 0x11, 0xef, 0x69, 0xa6, 0xf9,
+            0xc4, 0x71, 0x95, 0x46, 0xaf, 0x05, 0x86, 0x9f,
+            0x27, 0x3c, 0x80, 0x4f, 0xff, 0xa4, 0xa8, 0x48,
+            0xf6, 0x6c, 0xf3, 0x67, 0xbe, 0x23, 0x45, 0xad,
+        ]),
     ]
 }
 
