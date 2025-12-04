@@ -6,7 +6,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { standardRateLimiter, strictRateLimiter } from '../middleware';
+import { standardRateLimiter, strictRateLimiter, validateZeroFeeApiKey, ZeroFeeAuthorizedRequest } from '../middleware';
 import { requiredIdempotency } from '../middleware/idempotency.middleware';
 import { AssetType } from '../services/assetValidator';
 import { OfferManager } from '../services/offerManager';
@@ -156,6 +156,7 @@ noncePoolManager.initialize().catch((error) => {
 router.post(
   '/api/offers',
   strictRateLimiter,
+  validateZeroFeeApiKey, // Check for zero-fee authorization
   requiredIdempotency, // Prevent duplicate offer creation on retry
   async (req: Request, res: Response): Promise<void> => {
     try {
@@ -226,6 +227,20 @@ router.post(
       // Validate mint addresses early
       validateMintAddresses(offeredAssets, 'offeredAssets');
       validateMintAddresses(requestedAssets, 'requestedAssets');
+      
+      // Zero-fee authorization check
+      const zeroFeeRequest = req as ZeroFeeAuthorizedRequest;
+      const requestsZeroFee = customFee !== undefined && BigInt(customFee) === BigInt(0);
+      
+      if (requestsZeroFee && !zeroFeeRequest.isZeroFeeAuthorized) {
+        res.status(403).json({
+          success: false,
+          error: 'Forbidden',
+          message: 'Zero-fee swaps require valid API key authorization',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
       
       // Transform asset format from API format to internal format
       // API format: { mint, isCompressed, merkleTree?, amount?, assetType? }
@@ -817,6 +832,7 @@ router.post(
 router.post(
   '/api/offers/:id/confirm',
   standardRateLimiter,
+  validateZeroFeeApiKey, // Check for zero-fee authorization for audit logging
   requiredIdempotency, // CRITICAL: Prevent double-marking offer as FILLED on retry
   async (req: Request, res: Response): Promise<void> => {
     try {
@@ -855,10 +871,49 @@ router.post(
         return;
       }
 
-      await offerManager.confirmSwap({
+      const confirmedOffer = await offerManager.confirmSwap({
         offerId,
         signature,
       });
+
+      // Log zero-fee swap for audit if authorized
+      const zeroFeeRequest = req as ZeroFeeAuthorizedRequest;
+      if (zeroFeeRequest.isZeroFeeAuthorized && zeroFeeRequest.authorizedApp && confirmedOffer) {
+        try {
+          // Log the zero-fee swap
+          await prisma.zeroFeeSwapLog.create({
+            data: {
+              authorizedAppId: zeroFeeRequest.authorizedApp.id,
+              swapSignature: signature,
+              makerWallet: confirmedOffer.makerWallet,
+              takerWallet: confirmedOffer.takerWallet || '',
+              platformFeeBps: 0, // Zero fee
+              totalValueLamports: confirmedOffer.offeredSolLamports || BigInt(0),
+              backendSigner: platformAuthority.publicKey.toBase58(),
+              ipAddress: req.ip,
+              userAgent: req.headers['user-agent'],
+            },
+          });
+
+          // Update total swaps count for the app
+          await prisma.authorizedApp.update({
+            where: { id: zeroFeeRequest.authorizedApp.id },
+            data: {
+              totalSwaps: { increment: 1 },
+            },
+          });
+
+          console.log('[Zero-Fee Audit] Logged swap:', {
+            app: zeroFeeRequest.authorizedApp.name,
+            signature,
+            maker: confirmedOffer.makerWallet,
+            taker: confirmedOffer.takerWallet,
+          });
+        } catch (logError) {
+          // Non-blocking error - log but don't fail the request
+          console.error('[Zero-Fee Audit] Failed to log swap:', logError);
+        }
+      }
 
       res.status(200).json({
         success: true,
