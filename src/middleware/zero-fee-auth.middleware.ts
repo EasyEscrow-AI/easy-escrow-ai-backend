@@ -69,8 +69,7 @@ export const validateZeroFeeApiKey = async (
 
     if (!authorizedApp) {
       // Invalid API key - log and continue without authorization
-      logger.warn({
-        message: 'Invalid zero-fee API key attempt',
+      logger.warn('Invalid zero-fee API key attempt', {
         ip: req.ip,
         userAgent: req.headers['user-agent'],
       });
@@ -79,8 +78,7 @@ export const validateZeroFeeApiKey = async (
 
     if (!authorizedApp.active) {
       // App is disabled - log and continue without authorization
-      logger.warn({
-        message: 'Disabled app attempted zero-fee swap',
+      logger.warn('Disabled app attempted zero-fee swap', {
         appId: authorizedApp.id,
         appName: authorizedApp.name,
         ip: req.ip,
@@ -90,8 +88,7 @@ export const validateZeroFeeApiKey = async (
 
     if (!authorizedApp.zeroFeeEnabled) {
       // Zero-fee not enabled for this app - continue without authorization
-      logger.info({
-        message: 'App has valid key but zero-fee not enabled',
+      logger.info('App has valid key but zero-fee not enabled', {
         appId: authorizedApp.id,
         appName: authorizedApp.name,
       });
@@ -113,8 +110,7 @@ export const validateZeroFeeApiKey = async (
 
     if (swapsToday >= authorizedApp.rateLimitPerDay) {
       // Rate limit exceeded - log and continue without authorization
-      logger.warn({
-        message: 'Zero-fee rate limit exceeded',
+      logger.warn('Zero-fee rate limit exceeded', {
         appId: authorizedApp.id,
         appName: authorizedApp.name,
         swapsToday,
@@ -138,15 +134,13 @@ export const validateZeroFeeApiKey = async (
       where: { id: authorizedApp.id },
       data: { lastUsedAt: new Date() },
     }).catch((error: Error) => {
-      logger.error({
-        message: 'Failed to update lastUsedAt for authorized app',
+      logger.error('Failed to update lastUsedAt for authorized app', {
         appId: authorizedApp.id,
         error: error.message,
       });
     });
 
-    logger.info({
-      message: 'Zero-fee authorization granted',
+    logger.info('Zero-fee authorization granted', {
       appId: authorizedApp.id,
       appName: authorizedApp.name,
       swapsToday,
@@ -156,8 +150,7 @@ export const validateZeroFeeApiKey = async (
     next();
   } catch (error) {
     // On error, log and continue without authorization (fail-safe)
-    logger.error({
-      message: 'Error in zero-fee API key validation',
+    logger.error('Error in zero-fee API key validation', {
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
     });

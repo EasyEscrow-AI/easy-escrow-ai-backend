@@ -162,7 +162,7 @@ services:
         scope: RUN_AND_BUILD_TIME
       
       - key: SPACES_ENDPOINT
-        value: sgp1.digitaloceanspaces.com
+        value: https://sgp1.digitaloceanspaces.com
         scope: RUN_AND_BUILD_TIME
       
       - key: SPACES_REGION

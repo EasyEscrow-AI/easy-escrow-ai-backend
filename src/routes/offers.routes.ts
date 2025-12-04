@@ -878,37 +878,58 @@ router.post(
 
       // Log zero-fee swap for audit if authorized
       const zeroFeeRequest = req as ZeroFeeAuthorizedRequest;
-      if (zeroFeeRequest.isZeroFeeAuthorized && zeroFeeRequest.authorizedApp && offer) {
+      if (zeroFeeRequest.isZeroFeeAuthorized && zeroFeeRequest.authorizedApp) {
         try {
-          // Log the zero-fee swap
-          await prisma.zeroFeeSwapLog.create({
-            data: {
-              authorizedAppId: zeroFeeRequest.authorizedApp.id,
-              swapSignature: signature,
-              makerWallet: offer.makerWallet,
-              takerWallet: offer.takerWallet || '',
-              platformFeeBps: 0, // Zero fee
-              totalValueLamports: offer.offeredSolLamports || BigInt(0),
-              backendSigner: platformAuthority.publicKey.toBase58(),
-              ipAddress: req.ip,
-              userAgent: req.headers['user-agent'],
+          // Re-fetch offer from database to get SOL amounts
+          const dbOffer = await prisma.swapOffer.findUnique({
+            where: { id: offerId },
+            select: {
+              makerWallet: true,
+              takerWallet: true,
+              offeredSolLamports: true,
+              requestedSolLamports: true,
             },
           });
 
-          // Update total swaps count for the app
-          await prisma.authorizedApp.update({
-            where: { id: zeroFeeRequest.authorizedApp.id },
-            data: {
-              totalSwaps: { increment: 1 },
-            },
-          });
+          if (dbOffer) {
+            // Calculate total swap value for audit purposes
+            // For accurate audit trail, we log the combined SOL value from both sides
+            // of the swap. This represents the total SOL volume and would be used to
+            // calculate what the fee WOULD have been if not waived (1% of total SOL value).
+            // Example: Maker offers 5 SOL + NFT, Taker offers 2 SOL + NFT → totalValue = 7 SOL
+            const totalValueLamports = (dbOffer.offeredSolLamports || BigInt(0)) + 
+                                       (dbOffer.requestedSolLamports || BigInt(0));
 
-          console.log('[Zero-Fee Audit] Logged swap:', {
-            app: zeroFeeRequest.authorizedApp.name,
-            signature,
-            maker: offer.makerWallet,
-            taker: offer.takerWallet,
-          });
+            // Log the zero-fee swap
+            await prisma.zeroFeeSwapLog.create({
+              data: {
+                authorizedAppId: zeroFeeRequest.authorizedApp.id,
+                swapSignature: signature,
+                makerWallet: dbOffer.makerWallet,
+                takerWallet: dbOffer.takerWallet || '',
+                platformFeeBps: 0, // Zero fee
+                totalValueLamports,
+                backendSigner: platformAuthority.publicKey.toBase58(),
+                ipAddress: req.ip,
+                userAgent: req.headers['user-agent'],
+              },
+            });
+
+            // Update total swaps count for the app
+            await prisma.authorizedApp.update({
+              where: { id: zeroFeeRequest.authorizedApp.id },
+              data: {
+                totalSwaps: { increment: 1 },
+              },
+            });
+
+            console.log('[Zero-Fee Audit] Logged swap:', {
+              app: zeroFeeRequest.authorizedApp.name,
+              signature,
+              maker: dbOffer.makerWallet,
+              taker: dbOffer.takerWallet,
+            });
+          }
         } catch (logError) {
           // Non-blocking error - log but don't fail the request
           console.error('[Zero-Fee Audit] Failed to log swap:', logError);
