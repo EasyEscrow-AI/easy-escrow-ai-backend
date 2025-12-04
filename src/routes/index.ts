@@ -20,6 +20,7 @@ import healthRoutes from './health.routes';
 import offersRoutes from './offers.routes';
 import testRoutes from './test.routes';
 import testExecuteRoutes from './test-execute.routes';
+import authorizedAppsRoutes from './admin/authorized-apps.routes';
 
 export { 
   // agreementRoutes, // DISABLED: Migrated to atomic swap
@@ -30,6 +31,7 @@ export {
   healthRoutes,
   offersRoutes,
   testRoutes,
-  testExecuteRoutes
+  testExecuteRoutes,
+  authorizedAppsRoutes
 };
 

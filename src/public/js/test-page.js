@@ -731,9 +731,17 @@ function showConfirmationModal() {
     };
     
     // Format platform fee display and label
-    // Show different label and format based on whether SOL is involved
+    // Check if API key is provided
+    const apiKeyInput = document.getElementById('api-key-input');
+    const hasApiKey = apiKeyInput && apiKeyInput.value.trim().length > 0;
+    
+    // Show different label and format based on whether SOL is involved and API key
     let platformFeeLabel, platformFeeDisplay;
-    if (totalSOL > 0) {
+    if (hasApiKey) {
+        // Zero-fee with API key (if valid)
+        platformFeeLabel = 'Platform Fee (with API key):';
+        platformFeeDisplay = '0 SOL (zero fee) 🎉';
+    } else if (totalSOL > 0) {
         // Percentage-based fee for SOL swaps
         platformFeeLabel = 'Platform Fee (1%):';
         platformFeeDisplay = formatSOLWithUSD(platformFee);
@@ -885,12 +893,24 @@ async function executeAtomicSwap(params) {
             console.log(`   ${i + 1}. ${asset.isCompressed ? 'cNFT' : 'SPL'}: ${asset.mint}`);
         });
         
+        // Get API key if provided
+        const apiKeyInput = document.getElementById('api-key-input');
+        const apiKey = apiKeyInput ? apiKeyInput.value.trim() : '';
+        
+        // Build headers with optional API key
+        const headers = {
+            'Content-Type': 'application/json',
+            'idempotency-key': `test-${Date.now()}`,
+        };
+        
+        if (apiKey) {
+            headers['X-Atomic-Swap-API-Key'] = apiKey;
+            addLog(`🔑 Using API key for potential zero-fee swap`, 'info');
+        }
+        
         const createResponse = await fetch('/api/offers', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'idempotency-key': `test-${Date.now()}`,
-            },
+            headers: headers,
             body: JSON.stringify(requestPayload),
         });
 
