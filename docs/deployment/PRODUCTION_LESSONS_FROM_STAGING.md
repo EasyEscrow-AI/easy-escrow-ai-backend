@@ -217,11 +217,11 @@ This document captures **critical lessons learned** from 27 completed atomic swa
 **Production Mitigation:**
 - ✅ **CSP-compliant implementation** deployed
 - ✅ **External JavaScript files** (no inline scripts)
-- ✅ **Password: 060385** (updated from 06031985)
+- ✅ **Password updated** (stored in source code only)
 
 **Action Items for Production:**
 - [ ] Verify /test page password protection works in production
-- [ ] Document password for team access
+- [ ] Share password with team via secure channel (not documentation)
 - [ ] Ensure opaque background hides page content
 
 ---

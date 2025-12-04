@@ -29,7 +29,7 @@ This comprehensive security audit covers three critical areas for production dep
 
 **Location:** `src/public/test-page.html` + `src/public/js/test-page.js`
 
-**Password:** `060385` (6-digit numeric)  
+**Password:** `******` (6-digit numeric - stored in source code only, not documented)  
 **Storage:** Session-based (`sessionStorage`)  
 **Protection:** Client-side validation with CSP-compliant external JS
 
