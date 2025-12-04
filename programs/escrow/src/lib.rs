@@ -17,7 +17,7 @@ use instructions::*;
 // Default: staging (devnet)
 
 #[cfg(feature = "mainnet")]
-declare_id!("2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx");
+declare_id!("9PA2JNC4EvUtvq96wD43F8vLdvV9GqpczXy8nCu3oqni");
 
 #[cfg(feature = "devnet")]
 declare_id!("GpvN8LB1xXTu9N541x9rrbxD7HwH6xi1Gkp84P7rUAEZ");
