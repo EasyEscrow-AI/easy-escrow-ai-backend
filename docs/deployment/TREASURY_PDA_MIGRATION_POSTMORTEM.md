@@ -46,7 +46,7 @@ After deploying PR #296 with 8 bug fixes, we encountered a cascading series of I
 **Problem:** Multiple program IDs for different environments without clear build validation:
 - Mainnet: `2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx`
 - Staging: `AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei`
-- Devnet: `GpvN8LB1xXTu9N541x9rrbxD7HwH6xi1Gkp84P7rUAEZ`
+- Devnet: `AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei`
 - Localnet: `Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS`
 
 **Impact:** Easy to compile for wrong environment and deploy incorrect binary.

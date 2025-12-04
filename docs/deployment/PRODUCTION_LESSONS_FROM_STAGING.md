@@ -78,7 +78,7 @@ This document captures **critical lessons learned** from 27 completed atomic swa
 **Multiple Program IDs:**
 - **Mainnet:** `2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx`
 - **Staging:** `AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei`
-- **Devnet:** `GpvN8LB1xXTu9N541x9rrbxD7HwH6xi1Gkp84P7rUAEZ`
+- **Devnet:** `AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei`
 - **Localnet:** `Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS`
 
 **What Happened:**

@@ -81,7 +81,7 @@ solana-verify get-program-id target/deploy/escrow.so
 
 # Expected output should match:
 # Staging: AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei
-# Devnet:  GpvN8LB1xXTu9N541x9rrbxD7HwH6xi1Gkp84P7rUAEZ
+# Devnet:  AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei
 # Mainnet: 2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx
 
 # 3. Verify no keypair file exists (for existing programs)
@@ -184,7 +184,7 @@ cat src/generated/anchor/escrow-idl-<environment>.json | grep '"address"'
 
 # Expected output:
 # "address": "AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei",  # Staging
-# "address": "GpvN8LB1xXTu9N541x9rrbxD7HwH6xi1Gkp84P7rUAEZ",  # Devnet
+# "address": "AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei",  # Devnet
 # "address": "2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx",  # Mainnet
 
 # 3. If mismatch, FIX IT IMMEDIATELY before committing
@@ -198,7 +198,7 @@ The current `Anchor.toml` configuration:
 
 ```toml
 [programs.devnet]
-escrow = "GpvN8LB1xXTu9N541x9rrbxD7HwH6xi1Gkp84P7rUAEZ"
+escrow = "AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei"
 
 [programs.mainnet]
 escrow = "2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx"
@@ -218,7 +218,7 @@ escrow = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
 | Environment | Program ID | Cluster | Build Command |
 |------------|------------|---------|---------------|
 | **Staging** | `AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei` | devnet | `anchor build -- --no-default-features --features staging` |
-| **Devnet** | `GpvN8LB1xXTu9N541x9rrbxD7HwH6xi1Gkp84P7rUAEZ` | devnet | `anchor build -- --no-default-features --features devnet` |
+| **Devnet** | `AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei` | devnet | `anchor build -- --no-default-features --features devnet` |
 | **Mainnet** | `2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx` | mainnet-beta | `anchor build -- --no-default-features --features mainnet` |
 | **Localnet** | `Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS` | localnet | `anchor build -- --no-default-features --features localnet` |
 

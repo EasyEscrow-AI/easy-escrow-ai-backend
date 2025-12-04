@@ -119,7 +119,7 @@ Need to build scripts to:
 1. **Deploy to devnet** (test first)
    ```powershell
    anchor upgrade target/deploy/easyescrow.so `
-     --program-id GpvN8LB1xXTu9N541x9rrbxD7HwH6xi1Gkp84P7rUAEZ `
+     --program-id AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei `
      --provider.cluster devnet `
      --provider.wallet wallets/staging/staging-deployer.json
    ```

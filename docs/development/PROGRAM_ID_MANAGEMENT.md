@@ -19,7 +19,7 @@ To prevent accidental program ID mix-ups between environments, we use **Rust fea
 |-------------|-----------|---------|----------|
 | **Mainnet** | `2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx` | Mainnet-Beta | Production |
 | **Staging** | `AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei` | Devnet | Pre-production testing |
-| **Devnet** | `GpvN8LB1xXTu9N541x9rrbxD7HwH6xi1Gkp84P7rUAEZ` | Devnet | Development |
+| **Devnet** | `AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei` | Devnet | Development |
 | **Localnet** | `Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS` | Localnet | Local testing |
 
 ## Building for Each Environment
@@ -97,7 +97,7 @@ declare_id!("2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx");
 declare_id!("AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei");
 
 #[cfg(feature = "devnet")]
-declare_id!("GpvN8LB1xXTu9N541x9rrbxD7HwH6xi1Gkp84P7rUAEZ");
+declare_id!("AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei");
 
 #[cfg(feature = "localnet")]
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");

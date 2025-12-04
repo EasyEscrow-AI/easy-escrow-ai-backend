@@ -205,7 +205,7 @@ bash scripts/solana/deploy-mainnet.sh
 
 | Environment | Program ID | Network | Keypair Location |
 |------------|-----------|---------|------------------|
-| **Development** | `GpvN8LB1xXTu9N541x9rrbxD7HwH6xi1Gkp84P7rUAEZ` | devnet | `wallets/dev/escrow-program-keypair.json` |
+| **Development** | `AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei` | devnet | `wallets/dev/escrow-program-keypair.json` |
 | **Staging** | `AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei` | devnet | `wallets/staging/escrow-program-keypair.json` |
 | **Production** | `2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx` | **mainnet** | `wallets/production/escrow-program-keypair.json` |
 
