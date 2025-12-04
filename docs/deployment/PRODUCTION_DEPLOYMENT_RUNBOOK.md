@@ -151,7 +151,7 @@ jq -r '.address' target/idl/escrow.json
 **If the output is NOT the mainnet program ID, STOP IMMEDIATELY!**
 
 ❌ If you see: `AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei` (staging)  
-❌ If you see: `GpvN8LB1xXTu9N541x9rrbxD7HwH6xi1Gkp84P7rUAEZ` (devnet)
+❌ If you see: `AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei` (devnet)
 
 **Fix:** Rebuild with correct feature flag:
 ```bash

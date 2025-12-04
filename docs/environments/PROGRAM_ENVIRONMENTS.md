@@ -40,7 +40,7 @@ When setting up this project for the first time, you need to obtain or generate 
 
 4. **Verify** the program IDs match:
    ```bash
-   # Should output: GpvN8LB1xXTu9N541x9rrbxD7HwH6xi1Gkp84P7rUAEZ
+   # Should output: AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei
    solana-keygen pubkey wallets/dev/escrow-program-keypair.json
    
    # Should output: AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei
@@ -96,7 +96,7 @@ solana-keygen pubkey wallets/dev/escrow-program-keypair.json
 
 **Purpose:** Local development and testing  
 **Network:** Devnet  
-**Program ID:** `GpvN8LB1xXTu9N541x9rrbxD7HwH6xi1Gkp84P7rUAEZ`  
+**Program ID:** `AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei`  
 **Config:** `Anchor.dev.toml`  
 **Default:** Yes (used by default for local development)
 
@@ -397,7 +397,7 @@ cat tests/e2e/staging/staging-comprehensive-e2e.test.ts | grep programId
 
 | Environment | Program ID | Network | Status |
 |------------|-----------|---------|--------|
-| Dev | `GpvN8LB1xXTu9N541x9rrbxD7HwH6xi1Gkp84P7rUAEZ` | Devnet | ✅ Active |
+| Dev | `AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei` | Devnet | ✅ Active |
 | Staging | `AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei` | Devnet | ✅ Active |
 | Production | `TBD` | Mainnet-beta | ⏳ Not yet deployed |
 
