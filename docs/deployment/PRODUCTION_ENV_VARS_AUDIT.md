@@ -428,7 +428,7 @@ Search and replace `DATABASE_URL_POOL` with `DATABASE_POOL_URL` in backend codeb
 
 - [ ] **Check backend logs** for "Configuration loaded successfully"
 - [ ] **Verify health check** returns 200 and shows all services healthy
-- [ ] **Test /test page** password protection (password: 060385)
+- [ ] **Test /test page** password protection (password available in source code)
 - [ ] **Verify Treasury PDA** is accessible and configured
 - [ ] **Test API endpoint** connectivity and authentication
 - [ ] **Monitor error logs** for configuration issues
