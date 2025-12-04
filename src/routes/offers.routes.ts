@@ -690,6 +690,7 @@ router.post(
 router.post(
   '/api/offers/:id/rebuild-transaction',
   standardRateLimiter,
+  validateZeroFeeApiKey, // Check for zero-fee authorization for rebuilds
   requiredIdempotency, // CRITICAL: Prevent duplicate rebuilds
   async (req: Request, res: Response): Promise<void> => {
     try {
@@ -705,7 +706,13 @@ router.post(
         return;
       }
 
-      const result = await offerManager.rebuildTransaction(offerId);
+      // Check if zero-fee is authorized (for zero-fee swaps that need rebuilding)
+      const zeroFeeRequest = req as ZeroFeeAuthorizedRequest;
+      const authorizedAppId = zeroFeeRequest.isZeroFeeAuthorized 
+        ? platformAuthority.publicKey.toBase58()
+        : undefined;
+
+      const result = await offerManager.rebuildTransaction(offerId, authorizedAppId);
 
       res.status(200).json({
         success: true,

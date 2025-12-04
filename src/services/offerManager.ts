@@ -206,7 +206,7 @@ export class OfferManager {
    * Rebuild transaction for an already-accepted offer with fresh cNFT proofs
    * Used when a transaction becomes stale before execution
    */
-  async rebuildTransaction(offerId: number): Promise<{
+  async rebuildTransaction(offerId: number, authorizedAppId?: string): Promise<{
     serializedTransaction: string;
     offer: any;
   }> {
@@ -243,6 +243,7 @@ export class OfferManager {
     const platformFee = BigInt(offer.platformFeeLamports);
     
     // Rebuild transaction with fresh proofs (no retry loop - caller handles retries)
+    // Preserve zero-fee authorization if this was originally a zero-fee swap
     const buildResult = await this.buildOfferTransaction({
       offerId,
       makerWallet: offer.makerWallet,
@@ -253,6 +254,7 @@ export class OfferManager {
       requestedSol,
       platformFee,
       nonceAccount: offer.nonceAccount,
+      authorizedAppId, // Pass through for zero-fee swaps
     });
     
     // Update offer with new transaction
