@@ -7,7 +7,7 @@ skip-lint = false
 resolution = true
 
 [programs.devnet]
-escrow = "GpvN8LB1xXTu9N541x9rrbxD7HwH6xi1Gkp84P7rUAEZ"
+escrow = "AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei"
 
 [registry]
 url = "https://api.apr.dev"
@@ -20,6 +20,6 @@ wallet = "~/.config/solana/id.json"
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
 
 [[test.validator.account]]
-address = "GpvN8LB1xXTu9N541x9rrbxD7HwH6xi1Gkp84P7rUAEZ"
+address = "AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei"
 filename = "target/deploy/escrow.json"
 

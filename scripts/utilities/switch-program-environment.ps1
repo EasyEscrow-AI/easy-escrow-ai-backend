@@ -46,7 +46,7 @@ param(
 # Environment configuration
 $envConfig = @{
     dev = @{
-        ProgramId = "GpvN8LB1xXTu9N541x9rrbxD7HwH6xi1Gkp84P7rUAEZ"
+        ProgramId = "AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei"
         KeypairPath = "wallets/dev/escrow-program-keypair.json"
         AnchorConfig = "Anchor.dev.toml"
         Network = "devnet"
