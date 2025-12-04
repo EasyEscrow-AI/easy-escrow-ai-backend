@@ -572,6 +572,7 @@ router.post(
 router.post(
   '/api/offers/:id/accept',
   standardRateLimiter,
+  validateZeroFeeApiKey, // Check for zero-fee authorization
   requiredIdempotency, // CRITICAL: Prevent duplicate nonce consumption on retry
   async (req: Request, res: Response): Promise<void> => {
     try {
@@ -611,7 +612,13 @@ router.post(
         return;
       }
 
-      const result = await offerManager.acceptOffer(offerId, takerWallet);
+      // Check if zero-fee is authorized and get platform authority public key
+      const zeroFeeRequest = req as ZeroFeeAuthorizedRequest;
+      const authorizedAppId = zeroFeeRequest.isZeroFeeAuthorized 
+        ? platformAuthority.publicKey.toBase58()
+        : undefined;
+
+      const result = await offerManager.acceptOffer(offerId, takerWallet, authorizedAppId);
 
       // Result now includes both serializedTransaction and updatedOffer
       if (!result.offer) {
