@@ -336,25 +336,105 @@ fn get_zero_fee_authorized_apps() -> Vec<Pubkey> {
 
 ---
 
-## Recommended Decision: Start with Empty Whitelist
+## Recommended Decision: Backend API Key Authorization (Best Approach)
 
-### Rationale
+### Architecture
 
-1. **Revenue Protection:** All swaps generate platform fees
-2. **Security:** No trust requirements or key management risks
-3. **Simplicity:** Clearest to implement and audit
-4. **Flexibility:** Can add apps later after vetting process established
+Instead of hardcoding partner addresses in the program, use **Backend-Controlled Authorization**:
+
+1. **Backend Signers in Whitelist** (Program Code)
+   - Staging backend: `498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R`
+   - Production backend: `<new-production-signer>` (to be generated)
+   - Both added to program whitelist
+
+2. **Third-Party Apps Get API Keys** (Backend Database)
+   - Apps request zero-fee access
+   - Backend issues unique API key per app
+   - Example: `ATOMIC_SWAP_API_KEY=0600de78367cab25c714df205488dd8e059e1a99befed8e72526088a82c5d22b`
+
+3. **Backend Signs Zero-Fee Swaps** (Runtime Control)
+   - App sends swap request with API key
+   - Backend validates API key against database
+   - If valid → backend signs with authorized signer
+   - If invalid → reject or charge normal fee
+
+### Benefits
+
+✅ **Flexible:** Add/revoke partners without program upgrade  
+✅ **Secure:** Backend controls all authorization  
+✅ **Auditable:** Log all zero-fee requests with API key ID  
+✅ **Scalable:** Easy to add unlimited partners  
+✅ **Cost Effective:** No redeployment for partner changes  
+✅ **Granular Control:** Rate limits, usage quotas, temporary access
 
 ### Implementation
 
-**Update `atomic_swap.rs`:**
+**Update `atomic_swap.rs` Whitelist:**
 ```rust
 fn get_zero_fee_authorized_apps() -> Vec<Pubkey> {
-    vec![] // No authorized apps - all swaps require platform fees
+    vec![
+        // Staging backend signer (for devnet/staging testing)
+        Pubkey::new_from_array([
+            0x2e, 0xa7, 0xec, 0x9b, 0xaa, 0xe0, 0xb3, 0xea,
+            0xa4, 0x76, 0xd3, 0x1c, 0x53, 0x77, 0xfa, 0x65,
+            0xb7, 0x39, 0x8f, 0xa5, 0x1e, 0x26, 0x5e, 0x0b,
+            0x9d, 0xe3, 0xdd, 0x7f, 0xc2, 0x01, 0x3a, 0xc2,
+        ]),
+        // Production backend signer (for mainnet)
+        // Pubkey::new_from_array([...]), // Generate new keypair
+    ]
 }
 ```
 
-**Rebuild and deploy:**
+**Backend Implementation:**
+```typescript
+// Check API key from request
+const apiKey = req.headers['x-atomic-swap-api-key'];
+
+// Validate against database
+const authorizedApp = await db.authorizedApps.findOne({ apiKey, active: true });
+
+if (authorizedApp && params.platform_fee_bps === 0) {
+    // Sign transaction with backend's authorized signer
+    const backendSigner = Keypair.fromSecretKey(process.env.ZERO_FEE_SIGNER_PRIVATE_KEY);
+    transaction.partialSign(backendSigner);
+    
+    // Log for audit
+    await logZeroFeeSwap({
+        appId: authorizedApp.id,
+        appName: authorizedApp.name,
+        swapId: params.escrowId,
+        timestamp: Date.now()
+    });
+}
+```
+
+**Backend Database Schema:**
+```typescript
+// authorized_apps table
+interface AuthorizedApp {
+    id: string;
+    name: string;
+    apiKey: string; // SHA256 hashed
+    active: boolean;
+    zeroFeeEnabled: boolean;
+    rateLimit: number; // swaps per day
+    createdAt: Date;
+    lastUsedAt: Date;
+}
+```
+
+**Generate Production Backend Signer:**
+```bash
+# Generate new keypair for production backend
+solana-keygen new -o wallets/production/backend-zero-fee-signer.json
+solana-keygen pubkey wallets/production/backend-zero-fee-signer.json
+```
+
+**Update Program Code:**
+Add the new production signer public key to the whitelist in `atomic_swap.rs`.
+
+**Rebuild and Deploy:**
 ```powershell
 cd programs/escrow
 $env:HOME = $env:USERPROFILE
@@ -368,10 +448,17 @@ solana program deploy \
   target/deploy/easyescrow.so
 ```
 
+**Backend Environment Variable:**
+```bash
+# Production backend
+ZERO_FEE_SIGNER_PRIVATE_KEY=<from backend-zero-fee-signer.json>
+```
+
 **Document:**
-- Add note to API documentation: "All swaps require platform fees"
-- Update frontend to always include fee
-- Communicate fee structure to users
+- API documentation for zero-fee partner integration
+- API key request process
+- Partner vetting criteria
+- Usage monitoring and rate limits
 
 ### Future Expansion
 
