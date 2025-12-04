@@ -272,7 +272,7 @@ export class OfferManager {
     };
   }
 
-  async acceptOffer(offerId: number, takerWallet: string): Promise<{ 
+  async acceptOffer(offerId: number, takerWallet: string, authorizedAppId?: string): Promise<{ 
     serializedTransaction: string;
     offer: any; // SwapOffer from Prisma
   }> {
@@ -349,6 +349,7 @@ export class OfferManager {
             requestedSol,
             platformFee,
             nonceAccount: offer.nonceAccount,
+            authorizedAppId,
           });
           
           // Success! Break out of retry loop
@@ -462,6 +463,7 @@ export class OfferManager {
     requestedSol: bigint;
     platformFee: bigint;
     nonceAccount: string;
+    authorizedAppId?: string; // For zero-fee swaps
   }): Promise<{ serializedTransaction: string; nonceValue: string }> {
     console.log('[OfferManager] buildOfferTransaction params:', {
       makerWallet: params.makerWallet,
@@ -469,6 +471,7 @@ export class OfferManager {
       offeredAssets: JSON.stringify(params.offeredAssets),
       requestedAssets: JSON.stringify(params.requestedAssets),
       nonceAccount: params.nonceAccount,
+      authorizedAppId: params.authorizedAppId || 'none',
     });
     
     const inputs: TransactionBuildInputs = {
@@ -490,6 +493,7 @@ export class OfferManager {
       swapId: "", // Empty string saves 2 bytes (program only uses for logging, we track via offer ID)
       treasuryPDA: this.treasuryPDA,
       programId: this.programId,
+      authorizedAppId: params.authorizedAppId ? new PublicKey(params.authorizedAppId) : undefined,
     };
     
     console.log('[OfferManager] TransactionBuildInputs makerAssets:', JSON.stringify(inputs.makerAssets));
