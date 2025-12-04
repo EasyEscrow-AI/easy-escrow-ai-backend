@@ -17,16 +17,15 @@ use instructions::*;
 // Default: staging (devnet)
 
 #[cfg(feature = "mainnet")]
-declare_id!("9PA2JNC4EvUtvq96wD43F8vLdvV9GqpczXy8nCu3oqni");
+declare_id!("2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx"); // Production on mainnet-beta
 
 #[cfg(feature = "devnet")]
-declare_id!("GpvN8LB1xXTu9N541x9rrbxD7HwH6xi1Gkp84P7rUAEZ");
+declare_id!("AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei"); // Staging on devnet
 
 #[cfg(feature = "localnet")]
-declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
+declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"); // Local validator
 
-// Fallback: staging (if no feature specified AND no default in Cargo.toml)
-// NOTE: Cargo.toml default = ["staging"], so this is rarely used
+// Fallback: staging (if no feature specified, use staging)
 #[cfg(not(any(feature = "mainnet", feature = "devnet", feature = "localnet")))]
 declare_id!("AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei");
 
