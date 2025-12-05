@@ -97,7 +97,7 @@ describe('🔍 Production Smoke Test: Health Check', () => {
     expect(senderExists).to.be.true;
     expect(receiverExists).to.be.true;
     
-    console.log(`  Sender wallet: ${sender exists ? '✅' : '❌'}`);
+    console.log(`  Sender wallet: ${senderExists ? '✅' : '❌'}`);
     console.log(`  Receiver wallet: ${receiverExists ? '✅' : '❌'}`);
   });
   
