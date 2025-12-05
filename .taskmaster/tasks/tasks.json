@@ -5564,7 +5564,7 @@
         "id": 35,
         "title": "Create Comprehensive Production End-to-End Test Suite for Atomic Swap System",
         "description": "Develop and implement a full production E2E test suite for the atomic swap system by creating tests directly for mainnet, including configuration setup, wallet setup, and documentation. Since we have zero users in production, these E2E tests will serve as the primary validation for production deployment without needing backwards compatibility testing.",
-        "status": "pending",
+        "status": "in-progress",
         "dependencies": [
           31,
           32,
@@ -5669,7 +5669,7 @@
         "description": "Create and implement comprehensive production smoke tests and integration tests to verify the atomic swap system's core functionalities immediately after deployment and ensure API endpoints operate correctly in the production environment.",
         "details": "1. Develop production smoke tests focusing on critical system components to run immediately after deployment, including:\n   - Backend API accessibility and responsiveness.\n   - Database connectivity and verification that all migrations have been applied.\n   - Redis connectivity and caching functionality.\n   - Solana RPC connectivity to mainnet.\n   - Verification that the atomic swap program is deployed and accessible on mainnet.\n   - Treasury PDA existence and accessibility.\n   - Health check endpoint returns a healthy status.\n\n2. Create production integration tests for key API endpoints to validate end-to-end functionality:\n   - POST /api/swap/build for transaction building.\n   - GET /api/swap/transaction/:signature for transaction fetching.\n   - POST /api/offers for offer creation.\n   - GET /api/offers for offer listing.\n   - Platform fee calculation endpoints.\n   - Asset validation endpoints for NFT, cNFT, and SOL.\n   - Zero-fee authorization validation.\n\n3. Automate these tests and integrate them into the CI/CD pipeline with scripts defined in package.json for easy execution.\n\n4. Document expected test results, pass/fail criteria, and common failure scenarios to facilitate quick diagnosis and resolution.\n\n5. Follow best practices for smoke testing: keep tests fast and lightweight, focus on critical paths, run in production-like environments, and maintain version-controlled test suites with clear pass/fail criteria.\n\n6. Use retry logic and explicit waits where applicable to reduce flaky test failures, and ensure tests run in isolated, stable environments to improve reliability.\n\n7. Coordinate with existing deployment and environment configuration tasks to ensure tests use correct production parameters and secrets.",
         "testStrategy": "- Execute smoke tests immediately after production deployment to verify basic system health and connectivity; tests must complete within a short time frame (under 10 minutes) with clear binary pass/fail outcomes.\n- Run integration tests against production API endpoints to validate transaction building, offer management, fee calculations, and asset validations.\n- Confirm that all tests pass consistently across multiple runs to detect flaky tests.\n- Log and analyze any failures promptly, correlating with deployment logs and environment configurations.\n- Review test scripts and documentation regularly to keep them up to date with production changes.\n- Use automated CI/CD triggers to run smoke and integration tests on every production deployment.\n- Validate that failure scenarios are properly handled and documented, ensuring quick troubleshooting.\n- Perform manual verification of critical tests initially to confirm automation accuracy.",
-        "status": "pending",
+        "status": "in-progress",
         "dependencies": [
           31,
           32,
@@ -6015,7 +6015,7 @@
     ],
     "metadata": {
       "created": "2025-11-17T05:45:23.312Z",
-      "updated": "2025-12-04T05:27:04.320Z",
+      "updated": "2025-12-05T05:47:19.507Z",
       "description": "Complete architectural pivot from escrow agreements to atomic NFT/cNFT swaps with durable nonces"
     }
   }
