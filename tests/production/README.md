@@ -34,12 +34,12 @@ tests/production/
 
 **Tests:**
 - `01-atomic-nft-for-sol.test.ts` - NFT → SOL swap
-- `02-atomic-sol-for-nft.test.ts` - SOL → NFT swap
-- `03-atomic-nft-for-nft.test.ts` - NFT → NFT swap
-- `04-atomic-zero-fee-swap.test.ts` - Zero-fee authorized swap
-- `05-treasury-fee-collection.test.ts` - Fee collection validation
-- `06-nonce-validation.test.ts` - Nonce pool management
-- `07-production-security.test.ts` - Security validations
+- `02-atomic-sol-for-nft.test.ts` - SOL → NFT swap  
+- `03-atomic-nft-for-nft.test.ts` - NFT ↔ NFT swap
+- `04-atomic-cnft-for-sol.test.ts` - cNFT → SOL swap
+- `05-atomic-cnft-for-cnft.test.ts` - cNFT ↔ cNFT swap
+- `06-atomic-mixed-assets.test.ts` - Mixed asset swaps (NFT+SOL, cNFT+SOL)
+- `07-zero-fee-authorization.test.ts` - Zero-fee authorized swaps with API key validation
 
 **Characteristics:**
 - Full transaction execution
