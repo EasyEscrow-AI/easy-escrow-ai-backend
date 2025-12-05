@@ -21,11 +21,36 @@ const connection = new Connection(
  * Get test page configuration including wallet addresses
  */
 router.get('/api/test/config', (_req: Request, res: Response) => {
+  // Determine wallet addresses based on environment
+  const nodeEnv = process.env.NODE_ENV || 'development';
+  const network = process.env.SOLANA_NETWORK || 'devnet';
+  
+  let makerAddress: string | undefined;
+  let takerAddress: string | undefined;
+  
+  // Production (Mainnet)
+  if (nodeEnv === 'production' || network === 'mainnet-beta') {
+    makerAddress = process.env.MAINNET_PROD_SENDER_ADDRESS;
+    takerAddress = process.env.MAINNET_PROD_RECEIVER_ADDRESS;
+  }
+  // Staging (Devnet)
+  else if (nodeEnv === 'staging') {
+    makerAddress = process.env.DEVNET_STAGING_SENDER_ADDRESS;
+    takerAddress = process.env.DEVNET_STAGING_RECEIVER_ADDRESS;
+  }
+  // Development (Localnet)
+  else {
+    makerAddress = process.env.LOCALNET_ADMIN_ADDRESS || process.env.DEVNET_STAGING_SENDER_ADDRESS;
+    takerAddress = process.env.LOCALNET_RECEIVER_ADDRESS || process.env.DEVNET_STAGING_RECEIVER_ADDRESS;
+  }
+  
   res.json({
     success: true,
     data: {
-      makerAddress: process.env.DEVNET_STAGING_SENDER_ADDRESS,
-      takerAddress: process.env.DEVNET_STAGING_RECEIVER_ADDRESS,
+      makerAddress,
+      takerAddress,
+      environment: nodeEnv,
+      network,
     },
     timestamp: new Date().toISOString(),
   });
