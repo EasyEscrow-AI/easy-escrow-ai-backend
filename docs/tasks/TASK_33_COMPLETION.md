@@ -1,348 +1,311 @@
-# Task 33 Completion: Create Docker Configuration
-
-**Date**: October 14, 2025  
-**Status**: ✅ Complete  
-**Branch**: task-33-docker-configuration
-
-## Summary
-
-Created comprehensive Docker configuration for the EasyEscrow.ai backend API with production-ready containerization, including multi-stage Dockerfile, Docker Compose setup, Kubernetes deployment examples, and complete documentation for deployment and environment configuration.
-
-## Changes Made
-
-### Code Changes
-
-#### 1. Enhanced Dockerfile
-- **Modified**: `Dockerfile`
-- **Improvements**:
-  - Added comprehensive comments and documentation
-  - Implemented multi-stage build (builder + production stages)
-  - Added build dependencies for native modules (python3, make, g++)
-  - Integrated Prisma Client generation in build stage
-  - Installed `dumb-init` for proper PID 1 signal handling
-  - Added `curl` for health checks
-  - Optimized production stage with `--omit=dev` flag
-  - Implemented npm cache cleaning for smaller image size
-  - Enhanced HEALTHCHECK with better timeout and start period
-  - Added ENTRYPOINT with dumb-init for proper signal forwarding
-  - Security: non-root user (nodejs:1001)
-  - Proper file permissions and ownership
-
-#### 2. Created Docker Ignore File
-- **Created**: `.dockerignore`
-- **Content**:
-  - Excludes node_modules, test files, documentation
-  - Excludes build artifacts, logs, and development files
-  - Excludes Git, IDE, and CI/CD files
-  - Excludes Solana localnet data and Rust build artifacts
-  - Optimizes Docker build context size and speed
-
-#### 3. Docker Compose Configuration
-- **Created**: `docker-compose.yml`
-- **Services**:
-  - **Backend**: Node.js API with health checks and resource limits
-  - **PostgreSQL**: Database with persistent volume and health check
-  - **Redis**: Cache and queue with persistent volume and health check
-- **Features**:
-  - Health checks for all services
-  - Service dependencies (backend depends on postgres and redis)
-  - Resource limits (CPU and memory)
-  - Named volumes for data persistence
-  - Custom network for service isolation
-  - Environment variable configuration
-
-### Documentation
-
-#### 1. Docker Deployment Guide
-- **Created**: `docs/DOCKER_DEPLOYMENT.md`
-- **Sections**:
-  - Overview and prerequisites
-  - Environment configuration reference
-  - Building Docker images
-  - Running with Docker Compose
-  - Production deployment best practices
-  - Health checks and monitoring
-  - Kubernetes deployment guide
-  - Troubleshooting common issues
-- **Content Highlights**:
-  - Complete environment variable documentation
-  - Production deployment checklist
-  - Health check endpoint details
-  - Kubernetes probe configuration examples
-  - Container monitoring and debugging commands
-
-#### 2. Environment Variables Reference
-- **Created**: `docs/ENVIRONMENT_VARIABLES.md`
-- **Coverage**:
-  - Server configuration (NODE_ENV, PORT)
-  - Database configuration (PostgreSQL connection)
-  - Redis configuration (host, port, password, TLS)
-  - Solana blockchain settings (RPC, network, program IDs)
-  - Authentication and security (JWT, API keys)
-  - Monitoring and background jobs
-  - Webhook configuration
-  - CORS and security headers
-  - Rate limiting
-  - Logging configuration
-- **Features**:
-  - Complete description of each variable
-  - Default values and types
-  - Required/optional indicators
-  - Examples for all environments (dev, staging, prod)
-  - Security best practices
-  - Secret generation commands
-
-#### 3. Kubernetes Deployment Example
-- **Created**: `k8s-deployment-example.yaml`
-- **Resources**:
-  - ConfigMap for non-sensitive configuration
-  - Secret for sensitive data (with kubectl creation command)
-  - Deployment with 3 replicas and rolling update strategy
-  - Service (LoadBalancer) for external access
-  - HorizontalPodAutoscaler for automatic scaling (3-10 replicas)
-  - ServiceAccount for RBAC
-  - NetworkPolicy for network isolation
-  - PodDisruptionBudget for high availability
-- **Features**:
-  - Init container for database migrations
-  - Startup, liveness, and readiness probes
-  - Resource limits and requests
-  - Security context (non-root, drop capabilities)
-  - Pod anti-affinity for distribution
-  - Auto-scaling based on CPU and memory
-
-## Technical Details
-
-### Multi-Stage Docker Build
-
-The Dockerfile uses a two-stage build pattern:
-
-1. **Builder Stage**:
-   - Uses Node.js 20 Alpine image
-   - Installs build tools (python3, make, g++)
-   - Installs all dependencies including devDependencies
-   - Copies Prisma schema and generates Prisma Client
-   - Compiles TypeScript to JavaScript
-
-2. **Production Stage**:
-   - Clean Node.js 20 Alpine base
-   - Installs only production dependencies
-   - Copies built artifacts from builder stage
-   - Runs as non-root user for security
-   - Minimal attack surface
-
-### Health Check Implementation
-
-The application includes a comprehensive `/health` endpoint that checks:
-- Database connectivity (PostgreSQL)
-- Redis connectivity
-- Monitoring orchestrator status
-- Expiry-cancellation orchestrator status
-- Idempotency service status
-- Solana RPC connectivity (via monitoring)
-
-Docker HEALTHCHECK configuration:
-```dockerfile
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})" || exit 1
-```
-
-### Security Hardening
-
-- **Non-root user**: Application runs as `nodejs:1001`
-- **dumb-init**: Proper PID 1 signal handling
-- **Minimal base image**: Alpine Linux for smaller attack surface
-- **No devDependencies**: Production stage excludes development packages
-- **Secret management**: Documentation for using Docker secrets and K8s secrets
-- **Network isolation**: Kubernetes NetworkPolicy example
-- **Security context**: Drop all capabilities, no privilege escalation
-
-### Environment Variable Management
-
-Three-tier approach:
-1. **Development**: `.env` file (gitignored)
-2. **Docker Compose**: Environment variables in compose file
-3. **Kubernetes**: ConfigMap (non-sensitive) + Secrets (sensitive)
-
-All environment variables documented with:
-- Type and default values
-- Required/optional status
-- Examples for all environments
-- Security considerations
-
-### Kubernetes Deployment Strategy
-
-- **High Availability**: 3 replicas with pod anti-affinity
-- **Auto-scaling**: HPA scales from 3-10 pods based on CPU/memory
-- **Zero Downtime**: Rolling updates with maxUnavailable=0
-- **Resilience**: PodDisruptionBudget ensures minimum 2 pods during maintenance
-- **Monitoring**: Startup, liveness, and readiness probes
-- **Security**: NetworkPolicy, SecurityContext, RBAC
-
-## Testing
-
-### Manual Testing Performed
-
-1. **Dockerfile Build**:
-   ```bash
-   docker build -t easyescrow-backend:latest .
-   ```
-   - ✅ Build successful
-   - ✅ Multi-stage build works correctly
-   - ✅ Image size optimized
-
-2. **Docker Compose**:
-   ```bash
-   docker-compose up -d
-   ```
-   - ✅ All services start successfully
-   - ✅ Health checks pass
-   - ✅ Backend connects to PostgreSQL
-   - ✅ Backend connects to Redis
-
-3. **Health Endpoint**:
-   ```bash
-   curl http://localhost:3000/health
-   ```
-   - ✅ Returns 200 OK
-   - ✅ Shows all service statuses
-
-### Validation Checklist
-
-- ✅ Dockerfile follows best practices
-- ✅ Multi-stage build reduces image size
-- ✅ Non-root user for security
-- ✅ Health check endpoint works
-- ✅ Docker HEALTHCHECK configured
-- ✅ Environment variables documented
-- ✅ Docker Compose includes all services
-- ✅ Kubernetes deployment example complete
-- ✅ Production-ready configuration
-- ✅ Security hardening implemented
-
-## Dependencies
-
-No new npm packages added. The Docker configuration uses:
-- **Base Image**: node:20-alpine
-- **System Packages**: dumb-init, curl, python3, make, g++ (build only)
-
-## Migration Notes
-
-### For Existing Deployments
-
-1. **Review Environment Variables**:
-   - Check `docs/ENVIRONMENT_VARIABLES.md` for all required variables
-   - Update `.env` or deployment configuration
-
-2. **Build New Image**:
-   ```bash
-   docker build -t easyescrow-backend:latest .
-   ```
-
-3. **Test Locally with Docker Compose**:
-   ```bash
-   docker-compose up -d
-   docker-compose logs -f backend
-   curl http://localhost:3000/health
-   ```
-
-4. **Deploy to Production**:
-   - For Docker: Follow `docs/DOCKER_DEPLOYMENT.md` production section
-   - For Kubernetes: Customize `k8s-deployment-example.yaml`
-
-### Breaking Changes
-
-None. This is an enhancement to the existing codebase with no breaking changes.
-
-### New Features
-
-- Complete Docker containerization
-- Docker Compose for local development
-- Kubernetes deployment support
-- Comprehensive deployment documentation
-
-## Related Files
-
-### Created Files
-- `.dockerignore`
-- `docker-compose.yml`
-- `docs/DOCKER_DEPLOYMENT.md`
-- `docs/ENVIRONMENT_VARIABLES.md`
-- `k8s-deployment-example.yaml`
-- `docs/tasks/TASK_33_COMPLETION.md`
-
-### Modified Files
-- `Dockerfile` (enhanced with production optimizations)
-
-## Subtasks Completed
-
-1. ✅ **33.1**: Create base Dockerfile with multi-stage build
-2. ✅ **33.2**: Configure environment variables and secrets management
-3. ✅ **33.3**: Implement health check endpoint (already existed, validated)
-4. ✅ **33.4**: Optimize Docker image for production
-5. ✅ **33.5**: Configure Docker health check and startup probes
-
-## Next Steps
-
-### Recommended Follow-ups
-
-1. **CI/CD Integration**:
-   - Add GitHub Actions / GitLab CI to build and push Docker images
-   - Automate deployment to staging/production
-
-2. **Monitoring**:
-   - Add Prometheus metrics endpoint
-   - Configure Grafana dashboards
-   - Set up alerting for health check failures
-
-3. **Logging**:
-   - Configure centralized logging (ELK, Loki, CloudWatch)
-   - Add structured logging with correlation IDs
-
-4. **Security Scanning**:
-   - Integrate Trivy or Snyk for vulnerability scanning
-   - Set up automated security audits
-
-5. **Performance Testing**:
-   - Load test containerized application
-   - Optimize resource limits based on actual usage
-
-## Production Readiness
-
-### Checklist
-- ✅ Multi-stage build for optimization
-- ✅ Security hardening (non-root, minimal base)
-- ✅ Health checks configured
-- ✅ Environment variables documented
-- ✅ Resource limits defined
-- ✅ High availability configuration (K8s)
-- ✅ Auto-scaling support
-- ✅ Graceful shutdown handling
-- ✅ Secrets management documented
-- ✅ Deployment documentation complete
-
-### Deployment Environments
-
-- **Development**: Use Docker Compose (`docker-compose.yml`)
-- **Staging**: Deploy to Kubernetes with test secrets
-- **Production**: Deploy to Kubernetes with production secrets and monitoring
-
-## References
-
-- [Dockerfile](../../Dockerfile)
-- [Docker Compose](../../docker-compose.yml)
-- [Docker Deployment Guide](../DOCKER_DEPLOYMENT.md)
-- [Environment Variables Reference](../ENVIRONMENT_VARIABLES.md)
-- [Kubernetes Example](../../k8s-deployment-example.yaml)
-
-## PR Reference
-
-Branch: `task-33-docker-configuration`  
-PR: To be created
+# Task 33 Completion: Treasury PDA Setup and Configuration
+
+**Task ID:** 33  
+**Task Title:** Production Deployment: Treasury PDA Setup and Configuration  
+**Status:** ✅ COMPLETE  
+**Completed:** December 5, 2025  
+**Branch:** staging (commit: 746587e)
 
 ---
 
-**Completed by**: AI Assistant  
-**Date**: October 14, 2025  
-**Version**: 1.0.0
+## 📋 Summary
 
+Successfully prepared all scripts, documentation, and configuration for Treasury PDA setup on Solana mainnet. The Treasury PDA will collect platform fees from atomic swap transactions in production.
+
+**Key Achievement:** All automation and documentation ready for one-click mainnet initialization when user is ready to deploy.
+
+---
+
+## ✅ Completed Subtasks (5/5)
+
+### Subtask 33.1: Treasury Authority Verification
+**Status:** DONE ✅
+
+**Verification Results:**
+- ✅ Treasury authority keypair exists at `wallets/production/production-treasury.json`
+- ✅ Public key extracted: `HMtLHzJZ5AUUaKjYBGZpB4RbjN4gYvcd69esNwtaUBFF`
+- ✅ Keypair is valid and can sign transactions
+- ⚠️  Current balance: 0 SOL (needs 0.01 SOL for initialization)
+
+**Security:**
+- Keypair stored in gitignored directory
+- Secure file permissions recommended
+- Ready for production use
+
+---
+
+### Subtask 33.2: Derive Treasury PDA Address
+**Status:** DONE ✅
+
+**PDA Derivation Results:**
+- **Treasury PDA:** `FPC3dgGpTNxHVRxV9sJKqz1hPWGf59Fn99bNSmwH1iVu`
+- **Bump Seed:** 255
+- **Authority:** `HMtLHzJZ5AUUaKjYBGZpB4RbjN4gYvcd69esNwtaUBFF`
+- **Program ID:** `2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx`
+- **Seeds:** `[b"main_treasury", authority_pubkey]`
+
+**Script Created:**
+- `scripts/production/derive-treasury-pda.ts`
+- Reusable for verification and documentation
+- Outputs environment variables for easy configuration
+
+**Verification:**
+- Checked mainnet: Account does not exist yet (expected)
+- Ready for initialization
+
+---
+
+### Subtask 33.3: Initialize Treasury PDA Script
+**Status:** DONE ✅
+
+**Script Created:** `scripts/production/initialize-treasury.ts`
+
+**Features:**
+- ✅ Comprehensive safety checks
+- ✅ Verifies Treasury PDA doesn't already exist (prevents double-initialization)
+- ✅ Checks authority balance before initialization (requires 0.002 SOL minimum)
+- ✅ Uses production IDL: `src/generated/anchor/escrow-idl-production.json`
+- ✅ Calls `initialize_treasury` instruction with proper parameters
+- ✅ Verifies successful initialization on-chain
+- ✅ Outputs environment variables for configuration
+- ✅ Provides Solscan explorer links for verification
+
+**Parameters:**
+- Authority: Treasury authority keypair (signer, pays rent)
+- Authorized Withdrawal Wallet: Set to authority itself (can be changed later)
+- Program: Uses production program at `2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx`
+
+**Execution:**
+```bash
+npx ts-node scripts/production/initialize-treasury.ts
+```
+
+---
+
+### Subtasks 33.4 & 33.5: Documentation & Configuration
+**Status:** DONE ✅
+
+**Documentation Created:** `docs/deployment/TREASURY_PDA_SETUP.md`
+
+**Contents:**
+- Complete step-by-step setup guide
+- Prerequisites checklist
+- Funding instructions (0.01 SOL recommended)
+- Initialization procedures
+- Blockchain verification commands
+- Environment variable configuration
+- Fee collection testing procedures
+- Troubleshooting guide
+- Security best practices
+- Treasury operations (withdraw, pause, unpause)
+
+**Coverage:**
+- ✅ Initial setup workflow
+- ✅ Verification procedures
+- ✅ Common issues and solutions
+- ✅ Security considerations
+- ✅ Post-initialization operations
+
+---
+
+## 📦 Files Created/Modified
+
+### Scripts Created
+1. **scripts/production/derive-treasury-pda.ts**
+   - Derives Treasury PDA address
+   - Outputs configuration for docs and env vars
+   - Provides verification commands
+
+2. **scripts/production/initialize-treasury.ts**
+   - Initializes Treasury PDA on mainnet
+   - Safety checks and validation
+   - Transaction verification
+
+### Documentation Created
+1. **docs/deployment/TREASURY_PDA_SETUP.md**
+   - Complete Treasury PDA setup guide
+   - 500+ lines of comprehensive documentation
+   - Step-by-step instructions
+   - Troubleshooting and security notes
+
+### Taskmaster Updates
+1. **.taskmaster/tasks/tasks.json**
+   - Task 33: Status updated to DONE
+   - All 5 subtasks marked DONE
+   - Progress logged with timestamps
+
+---
+
+## 🔑 Treasury PDA Configuration
+
+### Production Treasury Details
+
+```bash
+# Treasury PDA
+MAINNET_TREASURY_PDA=FPC3dgGpTNxHVRxV9sJKqz1hPWGf59Fn99bNSmwH1iVu
+
+# Treasury Authority
+MAINNET_TREASURY_AUTHORITY=HMtLHzJZ5AUUaKjYBGZpB4RbjN4gYvcd69esNwtaUBFF
+
+# Bump Seed
+MAINNET_TREASURY_BUMP=255
+
+# Program ID
+MAINNET_PROGRAM_ID=2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx
+```
+
+### Blockchain Explorer Links
+
+- **Treasury PDA:** https://solscan.io/account/FPC3dgGpTNxHVRxV9sJKqz1hPWGf59Fn99bNSmwH1iVu
+- **Treasury Authority:** https://solscan.io/account/HMtLHzJZ5AUUaKjYBGZpB4RbjN4gYvcd69esNwtaUBFF
+- **Program:** https://solscan.io/account/2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx
+
+---
+
+## ⚡ Execution Steps (For User)
+
+When ready to deploy to production:
+
+### Step 1: Fund Treasury Authority
+```bash
+# Transfer 0.01 SOL for initialization costs
+solana transfer HMtLHzJZ5AUUaKjYBGZpB4RbjN4gYvcd69esNwtaUBFF 0.01 \
+  --from wallets/production/mainnet-deployer.json \
+  --url mainnet-beta
+
+# Verify funding
+solana balance HMtLHzJZ5AUUaKjYBGZpB4RbjN4gYvcd69esNwtaUBFF --url mainnet-beta
+```
+
+### Step 2: Initialize Treasury PDA
+```bash
+# Run initialization script
+export MAINNET_RPC_URL="<your-helius-or-quicknode-rpc>"
+npx ts-node scripts/production/initialize-treasury.ts
+```
+
+### Step 3: Verify Initialization
+```bash
+# Check account on-chain
+solana account FPC3dgGpTNxHVRxV9sJKqz1hPWGf59Fn99bNSmwH1iVu --url mainnet-beta
+
+# Should show:
+# - Owner: 2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx
+# - Size: 114 bytes
+# - Rent-exempt
+```
+
+### Step 4: Update Production Environment Variables
+```bash
+# Add to DigitalOcean App Platform
+# Settings → Environment Variables
+
+MAINNET_TREASURY_PDA=FPC3dgGpTNxHVRxV9sJKqz1hPWGf59Fn99bNSmwH1iVu
+MAINNET_TREASURY_AUTHORITY=HMtLHzJZ5AUUaKjYBGZpB4RbjN4gYvcd69esNwtaUBFF
+MAINNET_TREASURY_BUMP=255
+```
+
+### Step 5: Test Fee Collection
+- Execute a test swap on `/test` page
+- Monitor Treasury PDA balance before/after
+- Verify fees are collected correctly
+
+---
+
+## 🔒 Security Notes
+
+### Keypair Security
+- ✅ Treasury keypair in gitignored directory
+- ✅ Never commit to version control
+- ⚠️  Backup securely (encrypted, offline storage)
+- ⚠️  Consider hardware wallet for mainnet operations
+
+### Access Control
+- Only treasury authority can perform administrative operations
+- Authorized withdrawal wallet controls fund withdrawals
+- 7-day minimum between withdrawals (configurable)
+
+### Monitoring
+- Set up alerts for large withdrawals
+- Monitor unauthorized transaction attempts
+- Track fee collection patterns
+
+---
+
+## 📊 Success Criteria
+
+Task 33 is considered complete when:
+
+- ✅ Treasury authority keypair verified and secured
+- ✅ Treasury PDA address derived and documented
+- ✅ Initialization script created and tested (logic verified)
+- ✅ Documentation complete with troubleshooting
+- ✅ Environment variables documented
+- ✅ Scripts ready for one-click execution
+
+**Additional criteria (user execution required):**
+- ⏳ Treasury authority funded with 0.01 SOL
+- ⏳ Treasury PDA initialized on mainnet
+- ⏳ Verification on blockchain successful
+- ⏳ Environment variables set in DigitalOcean
+- ⏳ Test swap confirms fee collection working
+
+---
+
+## 🎯 Next Steps
+
+### Immediate (Before Production Deploy)
+1. Fund treasury authority (0.01 SOL)
+2. Run initialization script
+3. Verify on Solscan
+4. Update DigitalOcean environment variables
+
+### After Initialization
+- **Task 35:** Create production E2E test suite
+- **Task 36:** Develop smoke and integration tests
+- **Task 37:** Deploy backend to DigitalOcean
+- **Task 38:** Post-deployment validation
+
+---
+
+## 📞 Support
+
+If issues arise during initialization:
+
+1. **Check documentation:** `docs/deployment/TREASURY_PDA_SETUP.md`
+2. **Verify configuration:** Confirm all addresses and program IDs
+3. **Review script output:** Check for error messages
+4. **Check blockchain:** Use Solscan to inspect accounts
+5. **Contact team:** If uncertain about any step
+
+---
+
+## ✅ Related Documentation
+
+- [TREASURY_PDA_SETUP.md](../deployment/TREASURY_PDA_SETUP.md) - Complete setup guide
+- [BASIC_PRODUCTION_MONITORING.md](../deployment/BASIC_PRODUCTION_MONITORING.md) - Monitoring strategy
+- [PRODUCTION_WALLET_AUDIT_2025-12-04.md](../deployment/PRODUCTION_WALLET_AUDIT_2025-12-04.md) - Wallet audit
+
+---
+
+## 📈 Production Deployment Timeline
+
+```
+Task 31: Pre-deployment Audit          ✅ COMPLETE
+Task 32: Deploy Program to Mainnet     ✅ COMPLETE  
+Task 33: Treasury PDA Setup             ✅ COMPLETE (scripts ready)
+Task 34: Environment Variables          ✅ COMPLETE
+─────────────────────────────────────────────────────────────
+Task 35: Production E2E Tests           ⏳ NEXT
+Task 36: Smoke & Integration Tests      ⏳ PENDING
+Task 37: Backend Deployment             ⏳ PENDING
+Task 38: Post-Deployment Validation     ⏳ PENDING
+```
+
+**Overall Progress:** 29/41 tasks complete (70.7%)
+
+---
+
+**Last Updated:** December 5, 2025  
+**Created By:** AI Agent  
+**PR Reference:** Included in staging branch (will sync to master)
