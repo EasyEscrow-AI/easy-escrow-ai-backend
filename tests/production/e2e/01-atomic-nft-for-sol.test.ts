@@ -20,7 +20,7 @@ import axios, { AxiosInstance } from 'axios';
 import { wait } from '../../helpers/test-utils';
 
 // Production configuration
-const RPC_URL = process.env.MAINNET_SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
+const RPC_URL = process.env.MAINNET_RPC_URL || 'https://api.mainnet-beta.solana.com';
 const PROGRAM_ID = new PublicKey('2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx');
 const PRODUCTION_API_URL = process.env.PRODUCTION_API_URL || 'https://api.easyescrow.ai';
 const TREASURY_AUTHORITY_PATH = process.env.MAINNET_TREASURY_AUTHORITY_PATH || 

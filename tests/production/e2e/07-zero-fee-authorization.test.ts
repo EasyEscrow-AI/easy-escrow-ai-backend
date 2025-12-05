@@ -18,12 +18,17 @@ import * as path from 'path';
 import axios, { AxiosInstance } from 'axios';
 import { wait } from '../../helpers/test-utils';
 
-const RPC_URL = process.env.MAINNET_SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
+const RPC_URL = process.env.MAINNET_RPC_URL || 'https://api.mainnet-beta.solana.com';
+const PROGRAM_ID = new PublicKey('2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx');
 const PRODUCTION_API_URL = process.env.PRODUCTION_API_URL || 'https://api.easyescrow.ai';
 const AUTHORIZED_API_KEY = process.env.ATOMIC_SWAP_API_KEY || '';
+const TREASURY_AUTHORITY_PATH = process.env.MAINNET_TREASURY_AUTHORITY_PATH || 
+  path.join(__dirname, '../../../wallets/production/production-treasury.json');
 
 describe('🚀 Production E2E: Zero-Fee Authorization (Mainnet)', () => {
   let connection: Connection;
+  let treasuryAuthority: Keypair;
+  let treasuryPda: PublicKey;
   let sender: Keypair;
   let receiver: Keypair;
   let apiClient: AxiosInstance;
@@ -36,6 +41,18 @@ describe('🚀 Production E2E: Zero-Fee Authorization (Mainnet)', () => {
     console.log('╚══════════════════════════════════════════════════════════════╝\n');
     
     connection = new Connection(RPC_URL, 'confirmed');
+    
+    // Load treasury authority
+    const treasurySecret = JSON.parse(fs.readFileSync(TREASURY_AUTHORITY_PATH, 'utf8'));
+    treasuryAuthority = Keypair.fromSecretKey(new Uint8Array(treasurySecret));
+    console.log('🔑 Treasury Authority:', treasuryAuthority.publicKey.toBase58());
+    
+    // Derive treasury PDA
+    [treasuryPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from('main_treasury'), treasuryAuthority.publicKey.toBuffer()],
+      PROGRAM_ID
+    );
+    console.log('🏛️  Treasury PDA:', treasuryPda.toBase58());
     
     const senderPath = path.join(__dirname, '../../../wallets/production/production-sender.json');
     const receiverPath = path.join(__dirname, '../../../wallets/production/production-receiver.json');
@@ -80,11 +97,7 @@ describe('🚀 Production E2E: Zero-Fee Authorization (Mainnet)', () => {
     
     const solAmount = 0.01 * LAMPORTS_PER_SOL;
     
-    const treasuryPda = PublicKey.findProgramAddressSync(
-      [Buffer.from('main_treasury'), new PublicKey('HMtLHzJZ5AUUaKjYBGZpB4RbjN4gYvcd69esNwtaUBFF').toBuffer()],
-      new PublicKey('2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx')
-    )[0];
-    
+    // Treasury PDA already derived in before() hook
     const treasuryBalanceBefore = await connection.getBalance(treasuryPda);
     
     // Create offer with API key

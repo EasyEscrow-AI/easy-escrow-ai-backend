@@ -13,7 +13,7 @@ import * as path from 'path';
 import axios, { AxiosInstance } from 'axios';
 import { wait } from '../../helpers/test-utils';
 
-const RPC_URL = process.env.MAINNET_SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
+const RPC_URL = process.env.MAINNET_RPC_URL || 'https://api.mainnet-beta.solana.com';
 const PRODUCTION_API_URL = process.env.PRODUCTION_API_URL || 'https://api.easyescrow.ai';
 
 describe('🚀 Production E2E: NFT ↔ NFT (Mainnet)', () => {
