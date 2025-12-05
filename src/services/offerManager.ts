@@ -206,7 +206,7 @@ export class OfferManager {
    * Rebuild transaction for an already-accepted offer with fresh cNFT proofs
    * Used when a transaction becomes stale before execution
    */
-  async rebuildTransaction(offerId: number): Promise<{
+  async rebuildTransaction(offerId: number, authorizedAppId?: string): Promise<{
     serializedTransaction: string;
     offer: any;
   }> {
@@ -243,6 +243,7 @@ export class OfferManager {
     const platformFee = BigInt(offer.platformFeeLamports);
     
     // Rebuild transaction with fresh proofs (no retry loop - caller handles retries)
+    // Preserve zero-fee authorization if this was originally a zero-fee swap
     const buildResult = await this.buildOfferTransaction({
       offerId,
       makerWallet: offer.makerWallet,
@@ -253,6 +254,7 @@ export class OfferManager {
       requestedSol,
       platformFee,
       nonceAccount: offer.nonceAccount,
+      authorizedAppId, // Pass through for zero-fee swaps
     });
     
     // Update offer with new transaction
@@ -272,7 +274,7 @@ export class OfferManager {
     };
   }
 
-  async acceptOffer(offerId: number, takerWallet: string): Promise<{ 
+  async acceptOffer(offerId: number, takerWallet: string, authorizedAppId?: string): Promise<{ 
     serializedTransaction: string;
     offer: any; // SwapOffer from Prisma
   }> {
@@ -349,6 +351,7 @@ export class OfferManager {
             requestedSol,
             platformFee,
             nonceAccount: offer.nonceAccount,
+            authorizedAppId,
           });
           
           // Success! Break out of retry loop
@@ -462,6 +465,7 @@ export class OfferManager {
     requestedSol: bigint;
     platformFee: bigint;
     nonceAccount: string;
+    authorizedAppId?: string; // For zero-fee swaps
   }): Promise<{ serializedTransaction: string; nonceValue: string }> {
     console.log('[OfferManager] buildOfferTransaction params:', {
       makerWallet: params.makerWallet,
@@ -469,6 +473,7 @@ export class OfferManager {
       offeredAssets: JSON.stringify(params.offeredAssets),
       requestedAssets: JSON.stringify(params.requestedAssets),
       nonceAccount: params.nonceAccount,
+      authorizedAppId: params.authorizedAppId || 'none',
     });
     
     const inputs: TransactionBuildInputs = {
@@ -490,6 +495,7 @@ export class OfferManager {
       swapId: "", // Empty string saves 2 bytes (program only uses for logging, we track via offer ID)
       treasuryPDA: this.treasuryPDA,
       programId: this.programId,
+      authorizedAppId: params.authorizedAppId ? new PublicKey(params.authorizedAppId) : undefined,
     };
     
     console.log('[OfferManager] TransactionBuildInputs makerAssets:', JSON.stringify(inputs.makerAssets));
