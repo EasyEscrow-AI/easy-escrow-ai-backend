@@ -12,7 +12,7 @@
 
 import { describe, it, before, after } from 'mocha';
 import { expect } from 'chai';
-import { Connection, Keypair, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { Connection, Keypair, PublicKey, LAMPORTS_PER_SOL, Transaction } from '@solana/web3.js';
 import { Program, AnchorProvider, Wallet } from '@coral-xyz/anchor';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -123,14 +123,51 @@ describe('🚀 Production E2E: NFT → SOL - Happy Path (Mainnet)', () => {
       },
     });
     
-    // Create test NFT
-    console.log('\n🎨 Creating test NFT for swap...');
-    const { createTestNFT } = require('../helpers/nft-helpers');
-    testNFT = await createTestNFT(connection, sender, sender, {
-      name: 'Production Test NFT (NFT→SOL)',
-      symbol: 'PTEST',
-    });
-    console.log(`  ✅ NFT created: ${testNFT.mint.toBase58()}`);
+    // Try to reuse existing NFT to save costs
+    console.log('\n🎨 Looking for existing NFT to reuse...');
+    const { getTokenAccountsByOwner } = require('@solana/spl-token');
+    const TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
+    
+    // Get all token accounts owned by sender
+    const tokenAccounts = await connection.getTokenAccountsByOwner(
+      sender.publicKey,
+      { programId: TOKEN_PROGRAM_ID }
+    );
+    
+    // Filter for NFTs (supply = 1, decimals = 0)
+    const existingNFTs = [];
+    for (const { account, pubkey } of tokenAccounts.value) {
+      const accountInfo = account.data;
+      const amount = Number(accountInfo.slice(64, 72).readBigUInt64LE());
+      
+      if (amount === 1) {
+        // This is likely an NFT, get the mint
+        const mint = new PublicKey(accountInfo.slice(0, 32));
+        existingNFTs.push({ mint, tokenAccount: pubkey });
+      }
+    }
+    
+    if (existingNFTs.length > 0) {
+      // Reuse a random existing NFT
+      const randomIndex = Math.floor(Math.random() * existingNFTs.length);
+      const nft = existingNFTs[randomIndex];
+      testNFT = {
+        mint: nft.mint,
+        tokenAccount: nft.tokenAccount,
+      };
+      console.log(`  ✅ Reusing existing NFT: ${testNFT.mint.toBase58()}`);
+      console.log(`     (Found ${existingNFTs.length} existing NFTs, selected #${randomIndex + 1})`);
+      console.log(`     💰 Cost savings: ~0.002 SOL (no minting required)`);
+    } else {
+      // No existing NFTs, create a new one
+      console.log(`  ℹ️  No existing NFTs found, creating new one...`);
+      const { createTestNFT } = require('../helpers/nft-helpers');
+      testNFT = await createTestNFT(connection, sender, sender, {
+        name: 'Production Test NFT (NFT→SOL)',
+        symbol: 'PTEST',
+      });
+      console.log(`  ✅ NFT created: ${testNFT.mint.toBase58()}`);
+    }
     
     console.log('\n⚠️  IMPORTANT: This test uses REAL mainnet wallets and incurs REAL fees!');
     console.log('📊 Estimated cost: ~0.01 SOL (~$1.50 at $150/SOL)\n');
@@ -195,12 +232,32 @@ describe('🚀 Production E2E: NFT → SOL - Happy Path (Mainnet)', () => {
     
     expect(acceptResponse.status).to.equal(200);
     expect(acceptResponse.data.success).to.be.true;
-    console.log(`  ✅ Offer accepted`);
-    console.log(`     Signature: ${acceptResponse.data.data.signature}`);
+    console.log(`  ✅ Offer accepted, transaction received`);
+    
+    // Step 3: Deserialize, sign, and submit transaction
+    console.log('\n✅ Step 3: Signing and submitting transaction...');
+    const serializedTx = acceptResponse.data.data.transaction.serialized;
+    const txBuffer = Buffer.from(serializedTx, 'base64');
+    const transaction = Transaction.from(txBuffer);
+    
+    // Sign with BOTH maker and taker wallets
+    // Transaction already has platform authority signature (nonce authority)
+    transaction.partialSign(sender); // Maker signs
+    transaction.partialSign(receiver); // Taker signs
+    console.log(`  ✅ Transaction signed by maker and taker`);
+    
+    // Submit to Solana
+    const signature = await connection.sendRawTransaction(transaction.serialize(), {
+      skipPreflight: false,
+      preflightCommitment: 'confirmed',
+    });
+    console.log(`  ✅ Transaction submitted: ${signature}`);
     
     // Wait for confirmation
     console.log('\n⏳ Waiting for transaction confirmation...');
-    await wait(15000); // 15 seconds for mainnet
+    await connection.confirmTransaction(signature, 'confirmed');
+    console.log(`  ✅ Transaction confirmed!`);
+    await wait(2000); // Extra buffer for balance updates
     
     // Verify balances after
     const senderBalanceAfter = await connection.getBalance(sender.publicKey);

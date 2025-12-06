@@ -18,6 +18,7 @@ const getAllowedOrigins = (): string[] => {
       'https://easyescrow.ai',
       'https://www.easyescrow.ai',
       'https://app.easyescrow.ai',
+      'https://api.easyescrow.ai', // Allow API to call itself (for /test page)
     ];
   }
   
