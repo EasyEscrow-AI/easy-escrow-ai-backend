@@ -26,7 +26,7 @@ Production credentials were accidentally committed to git in documentation files
 
 ## ⚠️ **Impact Assessment**
 
-### **Test Page Password (060385)**
+### **Test Page Password (06****)**
 
 **Risk Level:** MEDIUM
 - Provides access to production test page at `/test`
