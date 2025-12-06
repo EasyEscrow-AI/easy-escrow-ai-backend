@@ -203,9 +203,11 @@ describe('🚀 Production E2E: NFT → SOL - Happy Path (Mainnet)', () => {
     const txBuffer = Buffer.from(serializedTx, 'base64');
     const transaction = Transaction.from(txBuffer);
     
-    // Sign with taker's wallet
-    transaction.sign(receiver);
-    console.log(`  ✅ Transaction signed by taker`);
+    // Sign with BOTH maker and taker wallets
+    // Transaction already has platform authority signature (nonce authority)
+    transaction.partialSign(sender); // Maker signs
+    transaction.partialSign(receiver); // Taker signs
+    console.log(`  ✅ Transaction signed by maker and taker`);
     
     // Submit to Solana
     const signature = await connection.sendRawTransaction(transaction.serialize(), {
