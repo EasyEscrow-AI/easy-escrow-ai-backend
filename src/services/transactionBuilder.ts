@@ -27,7 +27,13 @@ import {
 } from '@solana/spl-token';
 import { AssetInfo, AssetType } from './assetValidator';
 import * as anchor from '@coral-xyz/anchor';
-import idl from '../generated/anchor/escrow-idl-staging.json';
+
+// Load the correct IDL based on environment
+const isProduction = process.env.NODE_ENV === 'production';
+const idl = isProduction
+  ? require('../generated/anchor/escrow-idl-production.json')
+  : require('../generated/anchor/escrow-idl-staging.json');
+
 import { CnftService, createCnftService } from './cnftService';
 import { CnftTransferParams } from '../types/cnft';
 import {
@@ -424,8 +430,9 @@ export class TransactionBuilder {
       bubblegumProgram: BUBBLEGUM_PROGRAM_ID,
       compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
       logWrapper: SPL_NOOP_PROGRAM_ID,
-      // Authorized app account for zero-fee swaps (use placeholder if not provided)
-      authorizedApp: inputs.authorizedAppId || PROGRAM_ID,
+      // Authorized app account for zero-fee swaps
+      // For standard swaps (no zero-fee), use platform authority public key
+      authorizedApp: inputs.authorizedAppId || this.platformAuthority.publicKey,
     };
     
     console.log('[TransactionBuilder] Swap params:', {
