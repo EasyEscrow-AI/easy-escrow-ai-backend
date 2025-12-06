@@ -225,7 +225,8 @@ https://xxx@xxx.ingest.sentry.io/xxx
 ## **10. Zero-Fee API Authorization** (IMPORTANT)
 
 ### `ATOMIC_SWAP_API_KEY` (already set in authorized_apps table)
-**Value:** `0600de78367cab25c714df205488dd8e059e1a99befed8e72526088a82c5d22b`
+**Value:** `<EXPOSED-NEEDS-ROTATION - see CREDENTIAL_ROTATION_REQUIRED.md>`
+**⚠️ NEVER commit this value - it's already exposed and needs rotation**
 
 **⚠️ This is hashed and stored in the database. NO need to set as env var.**
 
