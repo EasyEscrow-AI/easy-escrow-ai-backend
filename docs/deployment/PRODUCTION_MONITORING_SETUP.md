@@ -474,7 +474,7 @@ doctl apps logs <app-id> --type=run | grep "Unauthorized.*test"
 - Test page accessible
 
 **Procedure:**
-1. Visit: https://api.easyescrow.ai/test (password: 060385)
+1. Visit: https://api.easyescrow.ai/test (password: `<from-env:TEST_PAGE_PASSWORD>`)
 2. Select 2 NFTs (one from each wallet)
 3. Execute swap
 4. Verify:
@@ -502,7 +502,7 @@ doctl apps logs <app-id> --type=run | grep "Unauthorized.*test"
 
 **Procedure:**
 1. Visit test page with API key field
-2. Enter API key: `0600de78367cab25c714df205488dd8e059e1a99befed8e72526088a82c5d22b`
+2. Enter API key: `<from-env:ATOMIC_SWAP_API_KEY>`
 3. Execute swap
 4. Verify:
    - [ ] Platform fee shows as 0 SOL

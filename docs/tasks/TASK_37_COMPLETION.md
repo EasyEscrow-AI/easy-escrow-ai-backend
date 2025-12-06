@@ -136,7 +136,7 @@ After deployment, the test page config endpoint returns:
 
 - **API Base URL:** https://api.easyescrow.ai
 - **Health Check:** https://api.easyescrow.ai/health
-- **Test Page:** https://api.easyescrow.ai/test (password: `060385`)
+- **Test Page:** https://api.easyescrow.ai/test (password: `<from-env:TEST_PAGE_PASSWORD>`)
 - **Swagger Docs:** Disabled in production (security)
 
 ---
