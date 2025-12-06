@@ -11,8 +11,8 @@
 Production credentials were accidentally committed to git in documentation files and pushed to the repository.
 
 **Exposed Credentials:**
-1. **Test Page Password:** `060385`
-2. **Production API Key:** `0600de78367cab25c714df205488dd8e059e1a99befed8e72526088a82c5d22b`
+1. **Test Page Password:** `06****` (6-digit numeric - REDACTED)
+2. **Production API Key:** `0600de78...5d22b` (64-char hex - REDACTED)
 
 **Files Affected:**
 - `docs/deployment/PRODUCTION_MONITORING_SETUP.md` (lines 477, 505)
@@ -26,7 +26,7 @@ Production credentials were accidentally committed to git in documentation files
 
 ## ⚠️ **Impact Assessment**
 
-### **Test Page Password (060385)**
+### **Test Page Password (06****)**
 
 **Risk Level:** MEDIUM
 - Provides access to production test page at `/test`
@@ -60,7 +60,7 @@ Production credentials were accidentally committed to git in documentation files
 
 ### **1. Rotate Test Page Password (5 minutes)**
 
-**Current Password:** `060385` (EXPOSED - DO NOT USE)
+**Current Password:** `06****` (6-digit numeric - EXPOSED - DO NOT USE)
 
 **Steps:**
 1. Generate new strong password:
@@ -95,7 +95,7 @@ Production credentials were accidentally committed to git in documentation files
 
 ### **2. Rotate Production API Key (10 minutes)**
 
-**Current Key:** `0600de78367cab25c714df205488dd8e059e1a99befed8e72526088a82c5d22b` (EXPOSED)
+**Current Key:** `0600de78...5d22b` (64-char hex - EXPOSED - DO NOT USE)
 
 **Steps:**
 1. Generate new API key:
