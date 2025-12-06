@@ -27,7 +27,13 @@ import {
 } from '@solana/spl-token';
 import { AssetInfo, AssetType } from './assetValidator';
 import * as anchor from '@coral-xyz/anchor';
-import idl from '../generated/anchor/escrow-idl-staging.json';
+
+// Load the correct IDL based on environment
+const isProduction = process.env.NODE_ENV === 'production';
+const idl = isProduction
+  ? require('../generated/anchor/escrow-idl-production.json')
+  : require('../generated/anchor/escrow-idl-staging.json');
+
 import { CnftService, createCnftService } from './cnftService';
 import { CnftTransferParams } from '../types/cnft';
 import {
