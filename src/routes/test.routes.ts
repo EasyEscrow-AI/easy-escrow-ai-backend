@@ -222,17 +222,25 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
           
           // Filter for Metaplex Core NFTs (MplCoreAsset)
           // Note: Different RPC providers may use different interface names
+          // IMPORTANT: cNFTs must be explicitly excluded - they have compression.compressed = true
           const coreNfts = dasData.result.items
             .filter((asset: any) => {
-              // Metaplex Core NFTs have various interface names depending on RPC provider
+              // FIRST: Exclude compressed NFTs (cNFTs) - they are NOT Core NFTs
+              const isCompressed = asset.compression?.compressed === true;
+              if (isCompressed) {
+                return false; // This is a cNFT, not a Core NFT
+              }
+              
+              // Metaplex Core NFTs have specific interface names
               const interfaceName = asset.interface?.toLowerCase() || '';
+              // Be more specific - only match exact Metaplex Core interface names
               const isCoreNft = interfaceName === 'mplcoreasset' ||
                                interfaceName === 'mplcorecollection' ||
-                               interfaceName.includes('core') ||
                                asset.interface === 'MplCoreAsset' || 
-                               asset.interface === 'MplCoreCollection' ||
-                               // Some providers use V1_NFT or similar for non-SPL NFTs
-                               (asset.interface === 'V1_NFT' && !asset.compression?.compressed);
+                               asset.interface === 'MplCoreCollection';
+              // Note: Removed 'includes("core")' check as it was too broad and caught non-Core NFTs
+              // Also removed V1_NFT check as that's typically standard SPL NFTs
+              
               const isOwned = asset.ownership?.owner === address;
               const notBurnt = !asset.burnt;
               const notFrozen = !asset.frozen;
@@ -240,10 +248,11 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
               const isValid = isCoreNft && isOwned && notBurnt && notFrozen;
               
               // Log Core NFT detection for debugging
-              if (isCoreNft || asset.interface) {
-                console.log(`[Test Route] Asset ${asset.id} interface check:`, {
+              if (isCoreNft || (asset.interface && isValid)) {
+                console.log(`[Test Route] Asset ${asset.id} Core NFT check:`, {
                   interface: asset.interface,
                   interfaceLower: interfaceName,
+                  isCompressed,
                   isCoreNft,
                   isOwned,
                   notBurnt,
