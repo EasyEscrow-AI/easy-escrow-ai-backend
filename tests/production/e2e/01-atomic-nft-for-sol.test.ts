@@ -23,8 +23,10 @@ import { wait } from '../../helpers/test-utils';
 const RPC_URL = process.env.MAINNET_RPC_URL || 'https://api.mainnet-beta.solana.com';
 const PROGRAM_ID = new PublicKey('2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx');
 const PRODUCTION_API_URL = process.env.PRODUCTION_API_URL || 'https://api.easyescrow.ai';
-const TREASURY_AUTHORITY_PATH = process.env.MAINNET_TREASURY_AUTHORITY_PATH || 
-  path.join(__dirname, '../../../wallets/production/production-treasury.json');
+// Platform authority is used to derive Treasury PDA (not the treasury wallet itself)
+// This must match MAINNET_PROD_ADMIN_PRIVATE_KEY used by the production API
+const PLATFORM_AUTHORITY_PATH = process.env.MAINNET_PLATFORM_AUTHORITY_PATH || 
+  path.join(__dirname, '../../../wallets/production/production-admin.json');
 const SENDER_PATH = process.env.PRODUCTION_SENDER_PATH ||
   path.join(__dirname, '../../../wallets/production/production-sender.json');
 const RECEIVER_PATH = process.env.PRODUCTION_RECEIVER_PATH ||
@@ -33,7 +35,7 @@ const RECEIVER_PATH = process.env.PRODUCTION_RECEIVER_PATH ||
 describe('🚀 Production E2E: NFT → SOL - Happy Path (Mainnet)', () => {
   let connection: Connection;
   let program: Program;
-  let treasuryAuthority: Keypair;
+  let platformAuthority: Keypair;
   let treasuryPda: PublicKey;
   let sender: Keypair;
   let receiver: Keypair;
@@ -53,10 +55,10 @@ describe('🚀 Production E2E: NFT → SOL - Happy Path (Mainnet)', () => {
     console.log('🌐 Network: MAINNET-BETA');
     console.log('🔗 API:', PRODUCTION_API_URL);
     
-    // Load treasury authority
-    const treasurySecret = JSON.parse(fs.readFileSync(TREASURY_AUTHORITY_PATH, 'utf8'));
-    treasuryAuthority = Keypair.fromSecretKey(new Uint8Array(treasurySecret));
-    console.log('🔑 Treasury Authority:', treasuryAuthority.publicKey.toBase58());
+    // Load platform authority (used to derive Treasury PDA)
+    const platformSecret = JSON.parse(fs.readFileSync(PLATFORM_AUTHORITY_PATH, 'utf8'));
+    platformAuthority = Keypair.fromSecretKey(new Uint8Array(platformSecret));
+    console.log('🔑 Platform Authority:', platformAuthority.publicKey.toBase58());
     
     // Load test wallets
     const senderSecret = JSON.parse(fs.readFileSync(SENDER_PATH, 'utf8'));
@@ -73,13 +75,13 @@ describe('🚀 Production E2E: NFT → SOL - Happy Path (Mainnet)', () => {
     idl.address = PROGRAM_ID.toBase58();
     
     // Setup provider and program
-    const wallet = new Wallet(treasuryAuthority);
+    const wallet = new Wallet(platformAuthority);
     const provider = new AnchorProvider(connection, wallet, { commitment: 'confirmed' });
     program = new Program(idl, provider);
     
-    // Derive treasury PDA
+    // Derive treasury PDA (seeds: "main_treasury" + platform_authority_pubkey)
     [treasuryPda] = PublicKey.findProgramAddressSync(
-      [Buffer.from('main_treasury'), treasuryAuthority.publicKey.toBuffer()],
+      [Buffer.from('main_treasury'), platformAuthority.publicKey.toBuffer()],
       PROGRAM_ID
     );
     console.log('🏛️  Treasury PDA:', treasuryPda.toBase58());
@@ -154,6 +156,7 @@ describe('🚀 Production E2E: NFT → SOL - Happy Path (Mainnet)', () => {
       testNFT = {
         mint: nft.mint,
         tokenAccount: nft.tokenAccount,
+        owner: sender.publicKey,
       };
       console.log(`  ✅ Reusing existing NFT: ${testNFT.mint.toBase58()}`);
       console.log(`     (Found ${existingNFTs.length} existing NFTs, selected #${randomIndex + 1})`);
