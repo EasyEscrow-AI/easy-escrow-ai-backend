@@ -965,7 +965,10 @@ async function executeAtomicSwap(params) {
         // Show transaction summary (pass confirmed params + execution data + timings)
         showTransactionSummary(createData.data, acceptData.data, executeData.data, params, timings);
 
-        addLog('✅ Atomic swap completed successfully on devnet!', 'success');
+        // Network from backend response (mainnet-beta or devnet)
+        const network = executeData.data.network || 'devnet';
+        const networkDisplay = network === 'mainnet-beta' ? 'MAINNET' : 'devnet';
+        addLog(`✅ Atomic swap completed successfully on ${networkDisplay}!`, 'success');
 
     } catch (error) {
         console.error('Swap error:', error);
