@@ -1067,7 +1067,7 @@ async function executeAtomicSwap(params) {
         }
 
         addLog('✅ Transaction confirmed on blockchain!', 'success');
-        addLog(`🔗 Signature: ${executeData.data.signature}`, 'success');
+        addLog(`🔗 Signature: <a href="${executeData.data.explorerUrl}" target="_blank" rel="noopener noreferrer" style="color: #22c55e; text-decoration: underline;">${executeData.data.signature}</a>`, 'success');
 
         // Fetch transaction fee from blockchain
         let blockchainFee = null;
