@@ -22,14 +22,19 @@ const connection = new Connection(
  */
 router.get('/api/test/config', (_req: Request, res: Response) => {
   // Determine wallet addresses based on environment
+  // IMPORTANT: This logic must match test-execute.routes.ts exactly
   const nodeEnv = process.env.NODE_ENV || 'development';
   const network = process.env.SOLANA_NETWORK || 'devnet';
+  const rpcUrl = process.env.SOLANA_RPC_URL || '';
+  
+  // Unified mainnet detection: NODE_ENV=production OR SOLANA_NETWORK=mainnet-beta OR RPC URL contains mainnet
+  const isMainnet = nodeEnv === 'production' || network === 'mainnet-beta' || rpcUrl.includes('mainnet');
   
   let makerAddress: string | undefined;
   let takerAddress: string | undefined;
   
   // Production (Mainnet)
-  if (nodeEnv === 'production' || network === 'mainnet-beta') {
+  if (isMainnet) {
     makerAddress = process.env.MAINNET_PROD_SENDER_ADDRESS;
     takerAddress = process.env.MAINNET_PROD_RECEIVER_ADDRESS;
   }
@@ -44,13 +49,15 @@ router.get('/api/test/config', (_req: Request, res: Response) => {
     takerAddress = process.env.LOCALNET_RECEIVER_ADDRESS || process.env.DEVNET_STAGING_RECEIVER_ADDRESS;
   }
   
+  const detectedNetwork = isMainnet ? 'mainnet-beta' : 'devnet';
+  
   res.json({
     success: true,
     data: {
       makerAddress,
       takerAddress,
       environment: nodeEnv,
-      network,
+      network: detectedNetwork,
     },
     timestamp: new Date().toISOString(),
   });
