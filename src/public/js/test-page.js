@@ -954,6 +954,21 @@ async function executeAtomicSwap(params) {
         addLog('✅ Transaction confirmed on blockchain!', 'success');
         addLog(`🔗 Signature: ${executeData.data.signature}`, 'success');
 
+        // Fetch transaction fee from blockchain
+        let blockchainFee = null;
+        try {
+            const feeResponse = await fetch(`/api/test/transaction-fee?signature=${executeData.data.signature}`);
+            const feeData = await feeResponse.json();
+            if (feeData.success && feeData.data.fee) {
+                blockchainFee = feeData.data.fee; // Fee in lamports
+                const feeSol = (blockchainFee / 1e9).toFixed(6);
+                const feeUsd = solPriceUSD ? ` (~$${(blockchainFee / 1e9 * solPriceUSD).toFixed(4)} USD)` : '';
+                addLog(`💸 Blockchain fee: ${feeSol} SOL${feeUsd}`, 'info');
+            }
+        } catch (feeError) {
+            console.warn('Could not fetch transaction fee:', feeError);
+        }
+
         // Calculate total execution time
         const endTime = performance.now();
         const executionTimeMs = endTime - startTime;
@@ -962,8 +977,8 @@ async function executeAtomicSwap(params) {
 
         addLog(`⚡ Total time: ${executionTimeSec}s (Create: ${timings.create}s, Accept: ${timings.accept}s, Execute: ${timings.execute}s)`, 'success');
 
-        // Show transaction summary (pass confirmed params + execution data + timings)
-        showTransactionSummary(createData.data, acceptData.data, executeData.data, params, timings);
+        // Show transaction summary (pass confirmed params + execution data + timings + fee)
+        showTransactionSummary(createData.data, acceptData.data, executeData.data, params, timings, blockchainFee);
 
         // Network from backend response (mainnet-beta or devnet)
         const network = executeData.data.network || 'devnet';
@@ -982,12 +997,20 @@ async function executeAtomicSwap(params) {
 }
 
 // Show transaction summary
-function showTransactionSummary(createData, acceptData, executeData, params, timings) {
+function showTransactionSummary(createData, acceptData, executeData, params, timings, blockchainFee = null) {
     const summary = document.getElementById('transaction-summary');
     const content = document.getElementById('summary-content');
 
     // Use confirmed parameters (not re-reading from inputs)
     const { offeredSol, requestedSol, selectedMakerNFTs: confirmedMakerNFTs, selectedTakerNFTs: confirmedTakerNFTs } = params;
+
+    // Format blockchain fee
+    let feeDisplay = 'Fetching...';
+    if (blockchainFee !== null) {
+        const feeSol = (blockchainFee / 1e9).toFixed(6);
+        const feeUsd = solPriceUSD ? ` (~$${(blockchainFee / 1e9 * solPriceUSD).toFixed(4)} USD)` : '';
+        feeDisplay = `💸 ${feeSol} SOL${feeUsd}`;
+    }
 
     // Build summary HTML safely (XSS-protected)
     content.innerHTML = `
@@ -1000,6 +1023,10 @@ function showTransactionSummary(createData, acceptData, executeData, params, tim
             <div class="summary-item">
                 <span class="summary-label">Total Time:</span>
                 <span class="summary-value highlight">⚡ ${timings.total}s</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Blockchain Fee:</span>
+                <span class="summary-value">${feeDisplay}</span>
             </div>
             <div class="summary-item">
                 <span class="summary-label">Breakdown:</span>

@@ -332,5 +332,59 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * GET /api/test/transaction-fee
+ * Get the fee for a confirmed transaction
+ */
+router.get('/api/test/transaction-fee', async (req: Request, res: Response) => {
+  try {
+    const { signature } = req.query;
+
+    if (!signature || typeof signature !== 'string') {
+      res.status(400).json({
+        success: false,
+        error: 'Transaction signature is required',
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
+
+    // Fetch transaction details
+    const transaction = await connection.getTransaction(signature, {
+      commitment: 'confirmed',
+      maxSupportedTransactionVersion: 0,
+    });
+
+    if (!transaction) {
+      res.status(404).json({
+        success: false,
+        error: 'Transaction not found',
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
+
+    // Get the fee from transaction metadata
+    const fee = transaction.meta?.fee || 0;
+
+    res.json({
+      success: true,
+      data: {
+        signature,
+        fee, // Fee in lamports
+        feeSol: fee / LAMPORTS_PER_SOL,
+      },
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('Error fetching transaction fee:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to fetch transaction fee',
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
 export default router;
 
