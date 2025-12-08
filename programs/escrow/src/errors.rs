@@ -73,5 +73,14 @@ pub enum AtomicSwapError {
     
     #[msg("Unauthorized: Zero-fee swaps require authorized app signature")]
     UnauthorizedZeroFeeSwap,
+    
+    #[msg("Missing required account: Core NFT asset")]
+    MissingCoreAsset,
+    
+    #[msg("Missing required account: mpl-core program")]
+    MissingMplCoreProgram,
+    
+    #[msg("Invalid mpl-core program: Program ID does not match expected")]
+    InvalidMplCoreProgram,
 }
 

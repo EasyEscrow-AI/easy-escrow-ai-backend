@@ -382,6 +382,18 @@ function getNftTypeLabel(nft) {
     return 'SPL NFT';
 }
 
+// Check if NFT type is supported for swaps
+function isNftSwapSupported(nft) {
+    // All NFT types are now supported: SPL NFTs, cNFTs, and Core NFTs
+    return true;
+}
+
+// Get warning message for unsupported NFT (if any)
+function getUnsupportedNftWarning(nft) {
+    // All NFT types now supported
+    return null;
+}
+
 // Render NFTs
 function renderNFTs(wallet, nfts) {
     const container = document.getElementById(`${wallet}-nfts`);
@@ -393,8 +405,11 @@ function renderNFTs(wallet, nfts) {
     if (filter === 'spl') {
         filteredNfts = nfts.filter(nft => !nft.isCompressed && !nft.isCoreNft);
     } else if (filter === 'cnft') {
-        // Show both cNFTs and Core NFTs in this filter
-        filteredNfts = nfts.filter(nft => nft.isCompressed || nft.isCoreNft);
+        // Only show compressed NFTs (cNFTs)
+        filteredNfts = nfts.filter(nft => nft.isCompressed);
+    } else if (filter === 'core') {
+        // Only show Metaplex Core NFTs
+        filteredNfts = nfts.filter(nft => nft.isCoreNft);
     }
     
     // Apply search filter
@@ -414,7 +429,8 @@ function renderNFTs(wallet, nfts) {
         } else if (filter === 'all') {
             message = 'No NFTs found in this wallet';
         } else {
-            message = `No ${filter === 'spl' ? 'SPL NFTs' : 'cNFTs/Core NFTs'} found in this wallet`;
+            const filterLabels = { spl: 'SPL NFTs', cnft: 'cNFTs', core: 'Core NFTs' };
+            message = `No ${filterLabels[filter] || 'NFTs'} found in this wallet`;
         }
         container.innerHTML = `<div class="empty-state">${message}</div>`;
         return;
