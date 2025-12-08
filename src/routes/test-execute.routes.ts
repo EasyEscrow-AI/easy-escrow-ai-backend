@@ -5,7 +5,10 @@
  * This file contains DANGEROUS functionality that signs transactions
  * using private keys stored in environment variables.
  * 
- * ONLY FOR DEVNET/STAGING TESTING - NEVER USE IN PRODUCTION
+ * Protected by:
+ * - Password protection on the test page
+ * - X-Test-Execution header requirement
+ * - Environment-specific private keys
  */
 
 import { Router, Request, Response } from 'express';
@@ -20,6 +23,11 @@ const connection = new Connection(
   process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com',
   'confirmed'
 );
+
+// Determine network type
+const rpcUrl = process.env.SOLANA_RPC_URL || '';
+const isMainnet = rpcUrl.includes('mainnet') || process.env.SOLANA_NETWORK === 'mainnet-beta';
+const networkName = isMainnet ? 'mainnet-beta' : 'devnet';
 
 /**
  * Check if error is caused by stale cNFT Merkle proof
@@ -41,24 +49,12 @@ function isCnftProofStaleError(error: any): boolean {
 }
 
 /**
- * Security middleware - ONLY allow on devnet/staging
+ * Security middleware - requires test header for execution
+ * Works on both devnet (staging) and mainnet (production)
  */
 function requireTestEnvironment(req: Request, res: Response, next: any) {
-  // Check 1: Must be devnet RPC
-  const rpcUrl = process.env.SOLANA_RPC_URL || '';
-  const isDevnet = rpcUrl.includes('devnet');
-  
-  // Check 2: Must have test header (prevents accidental calls)
+  // Check: Must have test header (prevents accidental calls)
   const testHeader = req.headers['x-test-execution'];
-  
-  if (!isDevnet) {
-    console.error('🚨 SECURITY: Attempted test execution on non-devnet network!');
-    return res.status(403).json({
-      success: false,
-      error: 'Test execution only available on devnet',
-      timestamp: new Date().toISOString(),
-    });
-  }
   
   if (testHeader !== 'true') {
     console.error('🚨 SECURITY: Missing X-Test-Execution header');
@@ -69,7 +65,7 @@ function requireTestEnvironment(req: Request, res: Response, next: any) {
     });
   }
   
-  console.log('✅ Test environment check passed - executing on devnet');
+  console.log(`✅ Test environment check passed - executing on ${networkName}`);
   next();
 }
 
@@ -116,15 +112,25 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
     
     console.log('📋 Required signatures:', requireSignatures);
     
-    // Load private keys from ENV
-    const makerPrivateKey = process.env.DEVNET_STAGING_SENDER_PRIVATE_KEY;
-    const takerPrivateKey = process.env.DEVNET_STAGING_RECEIVER_PRIVATE_KEY;
+    // Load private keys from ENV based on network
+    let makerPrivateKey: string | undefined;
+    let takerPrivateKey: string | undefined;
+    
+    if (isMainnet) {
+      makerPrivateKey = process.env.MAINNET_PROD_SENDER_PRIVATE_KEY;
+      takerPrivateKey = process.env.MAINNET_PROD_RECEIVER_PRIVATE_KEY;
+      console.log('🔐 Using MAINNET production test wallet keys');
+    } else {
+      makerPrivateKey = process.env.DEVNET_STAGING_SENDER_PRIVATE_KEY;
+      takerPrivateKey = process.env.DEVNET_STAGING_RECEIVER_PRIVATE_KEY;
+      console.log('🔐 Using DEVNET staging test wallet keys');
+    }
     
     if (!makerPrivateKey || !takerPrivateKey) {
-      console.error('❌ Missing private keys in environment');
+      console.error(`❌ Missing private keys in environment for ${networkName}`);
       return res.status(500).json({
         success: false,
-        error: 'Test wallet private keys not configured',
+        error: `Test wallet private keys not configured for ${networkName}`,
         timestamp: new Date().toISOString(),
       });
     }
@@ -218,7 +224,10 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
         
         console.log(`✅ TRANSACTION CONFIRMED on attempt ${attempt}!`);
         console.log('   Signature:', signature);
-        console.log('   Solscan:', `https://solscan.io/tx/${signature}?cluster=devnet`);
+        const explorerUrl = isMainnet 
+          ? `https://solscan.io/tx/${signature}`
+          : `https://solscan.io/tx/${signature}?cluster=devnet`;
+        console.log('   Solscan:', explorerUrl);
         
         // Success! Break out of retry loop
         break;
@@ -295,13 +304,18 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
       throw new Error('No signature generated after retry loop');
     }
     
+    const finalExplorerUrl = isMainnet 
+      ? `https://solscan.io/tx/${signature}`
+      : `https://solscan.io/tx/${signature}?cluster=devnet`;
+    
     return res.status(200).json({
       success: true,
       data: {
         signature,
-        explorerUrl: `https://solscan.io/tx/${signature}?cluster=devnet`,
+        explorerUrl: finalExplorerUrl,
+        network: networkName,
       },
-      message: 'Swap executed successfully on-chain',
+      message: `Swap executed successfully on ${networkName}`,
       timestamp: new Date().toISOString(),
     });
     
