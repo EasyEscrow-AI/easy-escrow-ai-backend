@@ -221,21 +221,30 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
           console.log(`[Test Route] After cNFT filtering: ${filteredCNfts.length} valid cNFTs found`);
           
           // Filter for Metaplex Core NFTs (MplCoreAsset)
+          // Note: Different RPC providers may use different interface names
           const coreNfts = dasData.result.items
             .filter((asset: any) => {
-              // Metaplex Core NFTs have interface "MplCoreAsset" or similar
-              const isCoreNft = asset.interface === 'MplCoreAsset' || 
+              // Metaplex Core NFTs have various interface names depending on RPC provider
+              const interfaceName = asset.interface?.toLowerCase() || '';
+              const isCoreNft = interfaceName === 'mplcoreasset' ||
+                               interfaceName === 'mplcorecollection' ||
+                               interfaceName.includes('core') ||
+                               asset.interface === 'MplCoreAsset' || 
                                asset.interface === 'MplCoreCollection' ||
-                               (asset.interface && asset.interface.includes('Core'));
+                               // Some providers use V1_NFT or similar for non-SPL NFTs
+                               (asset.interface === 'V1_NFT' && !asset.compression?.compressed);
               const isOwned = asset.ownership?.owner === address;
               const notBurnt = !asset.burnt;
               const notFrozen = !asset.frozen;
               
               const isValid = isCoreNft && isOwned && notBurnt && notFrozen;
               
-              if (isCoreNft) {
-                console.log(`[Test Route] Found Metaplex Core NFT: ${asset.id}`, {
+              // Log Core NFT detection for debugging
+              if (isCoreNft || asset.interface) {
+                console.log(`[Test Route] Asset ${asset.id} interface check:`, {
                   interface: asset.interface,
+                  interfaceLower: interfaceName,
+                  isCoreNft,
                   isOwned,
                   notBurnt,
                   notFrozen,
@@ -312,10 +321,32 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
           // Combine cNFTs and Core NFTs
           cNfts = [...mappedCNfts, ...mappedCoreNfts];
           
+          // Log any unclassified assets (for debugging)
+          const classifiedIds = new Set([
+            ...filteredCNfts.map((a: any) => a.id),
+            ...coreNfts.map((a: any) => a.id),
+          ]);
+          const unclassified = dasData.result.items.filter((asset: any) => {
+            const isOwned = asset.ownership?.owner === address;
+            return isOwned && !asset.burnt && !asset.frozen && !classifiedIds.has(asset.id);
+          });
+          
+          if (unclassified.length > 0) {
+            console.log(`[Test Route] ⚠️ Unclassified DAS assets (not cNFT or Core):`, 
+              unclassified.map((a: any) => ({
+                id: a.id,
+                interface: a.interface,
+                compressed: a.compression?.compressed,
+                name: a.content?.metadata?.name,
+              }))
+            );
+          }
+          
           console.log(`[Test Route] Total DAS assets for ${address}:`, {
             totalFromDAS: totalAssets,
             cNfts: mappedCNfts.length,
             coreNfts: mappedCoreNfts.length,
+            unclassified: unclassified.length,
             total: cNfts.length,
           });
         }
