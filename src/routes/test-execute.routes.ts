@@ -12,9 +12,17 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { Connection, Keypair, Transaction, sendAndConfirmTransaction } from '@solana/web3.js';
+import { Connection, Keypair, Transaction, VersionedTransaction, sendAndConfirmTransaction } from '@solana/web3.js';
 import bs58 from 'bs58';
 import { offerManager } from './offers.routes';
+
+// Helper function to detect if transaction is versioned (V0)
+function isVersionedTransaction(buffer: Buffer): boolean {
+  // Versioned transactions start with a version byte
+  // Legacy transactions start with signature count (compact-u16)
+  // Version 0 is indicated by setting the high bit of the first byte
+  return buffer.length > 0 && (buffer[0] & 0x80) !== 0;
+}
 
 const router = Router();
 
@@ -165,20 +173,11 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
       console.log(`\n🔄 Execution attempt ${attempt}/${MAX_ATTEMPTS}`);
       
       try {
-        // Deserialize transaction
-        let transaction: Transaction;
-        try {
-          const txBuffer = Buffer.from(serializedTransaction, 'base64');
-          transaction = Transaction.from(txBuffer);
-          console.log('✅ Transaction deserialized');
-        } catch (error) {
-          console.error('❌ Failed to deserialize transaction:', error);
-          return res.status(400).json({
-            success: false,
-            error: 'Invalid transaction format',
-            timestamp: new Date().toISOString(),
-          });
-        }
+        // Deserialize transaction (handles both legacy and versioned)
+        const txBuffer = Buffer.from(serializedTransaction, 'base64');
+        const isVersioned = isVersionedTransaction(txBuffer);
+        
+        console.log(`🔄 Transaction type: ${isVersioned ? 'Versioned (V0) with ALT' : 'Legacy'}`);
         
         // Determine which signers are needed
         const signers: Keypair[] = [];
@@ -204,17 +203,80 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
           });
         }
         
-        // CRITICAL: Transaction already has platform authority signature from creation
-        // Use partialSign to add maker/taker signatures without overwriting existing signature
-        console.log('📤 Adding remaining signatures to transaction...');
-        console.log('   Additional signers:', signers.length);
-        transaction.partialSign(...signers);
+        let rawTransaction: Buffer | Uint8Array;
+        
+        if (isVersioned) {
+          // Handle versioned transaction (V0 with ALT)
+          let versionedTx: VersionedTransaction;
+          try {
+            versionedTx = VersionedTransaction.deserialize(txBuffer);
+            console.log('✅ Versioned transaction deserialized');
+            console.log('   Existing signatures:', versionedTx.signatures.length);
+          } catch (error) {
+            console.error('❌ Failed to deserialize versioned transaction:', error);
+            return res.status(400).json({
+              success: false,
+              error: 'Invalid versioned transaction format',
+              timestamp: new Date().toISOString(),
+            });
+          }
+          
+          // CRITICAL: VersionedTransaction.sign() REPLACES all signatures!
+          // We must preserve existing signatures (platform authority) and add new ones.
+          // The platform authority already signed during transaction building.
+          console.log('📤 Adding signatures to versioned transaction...');
+          console.log('   Preserving existing signatures and adding:', signers.length);
+          
+          // Store existing signatures before signing
+          const existingSignatures = [...versionedTx.signatures];
+          
+          // Sign with new signers (this replaces all signatures)
+          versionedTx.sign(signers);
+          
+          // Restore non-null existing signatures that were overwritten
+          // The message.staticAccountKeys order determines signature indices
+          const staticKeys = versionedTx.message.staticAccountKeys;
+          for (let i = 0; i < existingSignatures.length && i < staticKeys.length; i++) {
+            const existingSig = existingSignatures[i];
+            // Check if this signature was non-null and got overwritten
+            if (existingSig && !existingSig.every(b => b === 0)) {
+              // Check if the new signature at this index is null (all zeros)
+              const newSig = versionedTx.signatures[i];
+              if (!newSig || newSig.every(b => b === 0)) {
+                // Restore the existing signature
+                versionedTx.signatures[i] = existingSig;
+                console.log(`   Restored signature at index ${i} for ${staticKeys[i].toBase58()}`);
+              }
+            }
+          }
+          
+          rawTransaction = versionedTx.serialize();
+        } else {
+          // Handle legacy transaction
+          let transaction: Transaction;
+          try {
+            transaction = Transaction.from(txBuffer);
+            console.log('✅ Legacy transaction deserialized');
+          } catch (error) {
+            console.error('❌ Failed to deserialize legacy transaction:', error);
+            return res.status(400).json({
+              success: false,
+              error: 'Invalid transaction format',
+              timestamp: new Date().toISOString(),
+            });
+          }
+          
+          // CRITICAL: Transaction already has platform authority signature from creation
+          // Use partialSign to add maker/taker signatures without overwriting existing signature
+          console.log('📤 Adding remaining signatures to transaction...');
+          console.log('   Additional signers:', signers.length);
+          transaction.partialSign(...signers);
+          
+          rawTransaction = transaction.serialize();
+        }
         
         // Send the fully-signed transaction
         console.log('📤 Submitting transaction to blockchain...');
-        
-        // Serialize the fully-signed transaction
-        const rawTransaction = transaction.serialize();
         
         // Send and confirm using raw transaction (preserves all signatures)
         signature = await connection.sendRawTransaction(rawTransaction, {
