@@ -222,17 +222,25 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
           
           // Filter for Metaplex Core NFTs (MplCoreAsset)
           // Note: Different RPC providers may use different interface names
+          // IMPORTANT: cNFTs must be explicitly excluded - they have compression.compressed = true
           const coreNfts = dasData.result.items
             .filter((asset: any) => {
-              // Metaplex Core NFTs have various interface names depending on RPC provider
+              // FIRST: Exclude compressed NFTs (cNFTs) - they are NOT Core NFTs
+              const isCompressed = asset.compression?.compressed === true;
+              if (isCompressed) {
+                return false; // This is a cNFT, not a Core NFT
+              }
+              
+              // Metaplex Core NFTs have specific interface names
               const interfaceName = asset.interface?.toLowerCase() || '';
+              // Be more specific - only match exact Metaplex Core interface names
               const isCoreNft = interfaceName === 'mplcoreasset' ||
                                interfaceName === 'mplcorecollection' ||
-                               interfaceName.includes('core') ||
                                asset.interface === 'MplCoreAsset' || 
-                               asset.interface === 'MplCoreCollection' ||
-                               // Some providers use V1_NFT or similar for non-SPL NFTs
-                               (asset.interface === 'V1_NFT' && !asset.compression?.compressed);
+                               asset.interface === 'MplCoreCollection';
+              // Note: Removed 'includes("core")' check as it was too broad and caught non-Core NFTs
+              // Also removed V1_NFT check as that's typically standard SPL NFTs
+              
               const isOwned = asset.ownership?.owner === address;
               const notBurnt = !asset.burnt;
               const notFrozen = !asset.frozen;
@@ -240,10 +248,11 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
               const isValid = isCoreNft && isOwned && notBurnt && notFrozen;
               
               // Log Core NFT detection for debugging
-              if (isCoreNft || asset.interface) {
-                console.log(`[Test Route] Asset ${asset.id} interface check:`, {
+              if (isCoreNft || (asset.interface && isValid)) {
+                console.log(`[Test Route] Asset ${asset.id} Core NFT check:`, {
                   interface: asset.interface,
                   interfaceLower: interfaceName,
+                  isCompressed,
                   isCoreNft,
                   isOwned,
                   notBurnt,
@@ -507,33 +516,56 @@ router.post('/api/test/estimate-size', async (req: Request, res: Response) => {
   try {
     const { offeredAssets, requestedAssets } = req.body;
     
-    // Count cNFTs to estimate proof data size
-    const makerCnfts = (offeredAssets || []).filter((a: any) => a.isCompressed);
-    const takerCnfts = (requestedAssets || []).filter((a: any) => a.isCompressed);
+    const makerAssets = offeredAssets || [];
+    const takerAssets = requestedAssets || [];
+    
+    // Count different asset types
+    const makerCnfts = makerAssets.filter((a: any) => a.isCompressed);
+    const takerCnfts = takerAssets.filter((a: any) => a.isCompressed);
+    const makerSplNfts = makerAssets.filter((a: any) => !a.isCompressed);
+    const takerSplNfts = takerAssets.filter((a: any) => !a.isCompressed);
+    
+    // Total NFT counts
+    const totalMakerNfts = makerAssets.length;
+    const totalTakerNfts = takerAssets.length;
+    
+    // Check for multi-asset limitation (current program only supports 1 NFT per side)
+    const exceedsLimit = totalMakerNfts > 1 || totalTakerNfts > 1;
     
     // Base transaction size components
     const numSigners = 3; // maker, taker, platform authority
-    let numAccounts = 15; // base accounts for atomic swap
     
-    // Add cNFT-specific accounts
+    // Base accounts: maker, taker, platform_authority, treasury, token_program, system_program, 
+    // nonce_account, nonce_authority, plus optional accounts for NFT/cNFT transfers
+    let numAccounts = 10; // Base accounts
+    
+    // Each SPL NFT requires 4 accounts: mint, maker_token_account, taker_token_account, token_program (shared)
+    // Since token_program is already counted, add 3 per NFT
+    const splNftAccounts = (makerSplNfts.length + takerSplNfts.length) * 3;
+    numAccounts += splNftAccounts;
+    
+    // cNFT accounts: merkle_tree, tree_authority, bubblegum_program, compression_program, log_wrapper
+    // These are shared per side, so add 5 accounts if any cNFTs on that side
     if (makerCnfts.length > 0) numAccounts += 5;
     if (takerCnfts.length > 0) numAccounts += 5;
     
     // Estimate proof nodes (assume average canopy depth scenario)
     // Default: 3 nodes for standard trees (maxDepth=14, canopy=11)
     // Low canopy: up to 14 nodes for trees with canopy=0
-    const makerProofNodes = makerCnfts.length > 0 ? 6 : 0; // Conservative estimate
-    const takerProofNodes = takerCnfts.length > 0 ? 6 : 0;
+    // Conservative estimate: 6 nodes per cNFT
+    const makerProofNodes = makerCnfts.length > 0 ? 6 * makerCnfts.length : 0;
+    const takerProofNodes = takerCnfts.length > 0 ? 6 * takerCnfts.length : 0;
     
+    // Proof nodes are passed as remaining accounts
     numAccounts += makerProofNodes + takerProofNodes;
     
     // Calculate sizes
     const signatureSize = 64 * numSigners;
     const accountKeySize = 32 * numAccounts;
     const instructionDataSize = 100; // Base instruction data
-    const proofBaseSize = 108; // root + hashes + nonce + index
-    const makerProofSize = makerCnfts.length > 0 ? proofBaseSize + (32 * makerProofNodes) : 0;
-    const takerProofSize = takerCnfts.length > 0 ? proofBaseSize + (32 * takerProofNodes) : 0;
+    const proofBaseSize = 108; // root + hashes + nonce + index per cNFT
+    const makerProofSize = makerCnfts.length > 0 ? (proofBaseSize + (32 * 6)) * makerCnfts.length : 0;
+    const takerProofSize = takerCnfts.length > 0 ? (proofBaseSize + (32 * 6)) * takerCnfts.length : 0;
     
     const estimatedSize = signatureSize + 3 + accountKeySize + 4 + instructionDataSize + makerProofSize + takerProofSize;
     const maxSize = 1232;
@@ -559,17 +591,27 @@ router.post('/api/test/estimate-size', async (req: Request, res: Response) => {
     const altAddress = process.env.PRODUCTION_ALT_ADDRESS || process.env.STAGING_ALT_ADDRESS;
     const altAvailable = !!altAddress;
     
+    // Override recommendation if exceeds multi-asset limit
+    let finalRecommendation = recommendation;
+    let warning: string | null = null;
+    
+    if (exceedsLimit) {
+      finalRecommendation = 'cannot_fit';
+      warning = 'Current program only supports 1 NFT per side. Multi-NFT swaps require program upgrade.';
+    }
+    
     res.json({
       success: true,
       data: {
         estimatedSize,
         estimatedSizeWithALT: willFitWithALT ? estimatedSizeWithALT : null,
         maxSize,
-        willFit,
-        willFitWithALT,
-        recommendation,
+        willFit: exceedsLimit ? false : willFit,
+        willFitWithALT: exceedsLimit ? false : willFitWithALT,
+        recommendation: finalRecommendation,
         altAvailable,
-        useALT: !willFit && willFitWithALT && altAvailable,
+        useALT: !willFit && willFitWithALT && altAvailable && !exceedsLimit,
+        warning,
         breakdown: {
           signatures: signatureSize,
           accountKeys: accountKeySize,
@@ -579,10 +621,15 @@ router.post('/api/test/estimate-size', async (req: Request, res: Response) => {
         details: {
           numSigners,
           numAccounts,
+          totalMakerNfts,
+          totalTakerNfts,
+          makerSplNfts: makerSplNfts.length,
+          takerSplNfts: takerSplNfts.length,
           makerCnfts: makerCnfts.length,
           takerCnfts: takerCnfts.length,
           makerProofNodes,
           takerProofNodes,
+          exceedsLimit,
         },
       },
       timestamp: new Date().toISOString(),

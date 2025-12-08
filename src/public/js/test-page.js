@@ -842,6 +842,15 @@ async function fetchTransactionSizeEstimate(makerNFTs, takerNFTs) {
                     </div>
             `;
             
+            // Add warning if present (e.g., multi-NFT not supported)
+            if (estimate.warning) {
+                html += `
+                    <div class="tx-warning" style="background: #fef2f2; border: 1px solid #ef4444; padding: 8px; border-radius: 6px; margin-bottom: 10px; color: #991b1b; font-size: 0.8rem;">
+                        ⚠️ ${estimate.warning}
+                    </div>
+                `;
+            }
+            
             // Add ALT info if needed
             if (estimate.useALT) {
                 html += `
@@ -862,6 +871,21 @@ async function fetchTransactionSizeEstimate(makerNFTs, takerNFTs) {
                         ${estimate.breakdown.proofData > 0 ? `<span>cNFT Proofs: ${estimate.breakdown.proofData}B</span>` : ''}
                     </div>
                 `;
+            }
+            
+            // Add NFT count details
+            if (estimate.details) {
+                const d = estimate.details;
+                const makerTotal = d.totalMakerNfts || 0;
+                const takerTotal = d.totalTakerNfts || 0;
+                if (makerTotal > 0 || takerTotal > 0) {
+                    html += `
+                        <div class="tx-nft-counts" style="font-size: 0.75rem; color: #666; margin-top: 8px;">
+                            Maker NFTs: ${makerTotal} (${d.makerSplNfts || 0} SPL, ${d.makerCnfts || 0} cNFT) | 
+                            Taker NFTs: ${takerTotal} (${d.takerSplNfts || 0} SPL, ${d.takerCnfts || 0} cNFT)
+                        </div>
+                    `;
+                }
             }
             
             html += '</div>';
@@ -1067,7 +1091,7 @@ async function executeAtomicSwap(params) {
         }
 
         addLog('✅ Transaction confirmed on blockchain!', 'success');
-        addLog(`🔗 Signature: ${executeData.data.signature}`, 'success');
+        addLog(`🔗 Signature: <a href="${executeData.data.explorerUrl}" target="_blank" rel="noopener noreferrer" style="color: #22c55e; text-decoration: underline;">${executeData.data.signature}</a>`, 'success');
 
         // Fetch transaction fee from blockchain
         let blockchainFee = null;
