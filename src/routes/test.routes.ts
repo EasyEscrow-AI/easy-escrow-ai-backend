@@ -22,14 +22,19 @@ const connection = new Connection(
  */
 router.get('/api/test/config', (_req: Request, res: Response) => {
   // Determine wallet addresses based on environment
+  // IMPORTANT: This logic must match test-execute.routes.ts exactly
   const nodeEnv = process.env.NODE_ENV || 'development';
   const network = process.env.SOLANA_NETWORK || 'devnet';
+  const rpcUrl = process.env.SOLANA_RPC_URL || '';
+  
+  // Unified mainnet detection: NODE_ENV=production OR SOLANA_NETWORK=mainnet-beta OR RPC URL contains mainnet
+  const isMainnet = nodeEnv === 'production' || network === 'mainnet-beta' || rpcUrl.includes('mainnet');
   
   let makerAddress: string | undefined;
   let takerAddress: string | undefined;
   
   // Production (Mainnet)
-  if (nodeEnv === 'production' || network === 'mainnet-beta') {
+  if (isMainnet) {
     makerAddress = process.env.MAINNET_PROD_SENDER_ADDRESS;
     takerAddress = process.env.MAINNET_PROD_RECEIVER_ADDRESS;
   }
@@ -44,13 +49,15 @@ router.get('/api/test/config', (_req: Request, res: Response) => {
     takerAddress = process.env.LOCALNET_RECEIVER_ADDRESS || process.env.DEVNET_STAGING_RECEIVER_ADDRESS;
   }
   
+  const detectedNetwork = isMainnet ? 'mainnet-beta' : 'devnet';
+  
   res.json({
     success: true,
     data: {
       makerAddress,
       takerAddress,
       environment: nodeEnv,
-      network,
+      network: detectedNetwork,
     },
     timestamp: new Date().toISOString(),
   });
@@ -166,7 +173,16 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
           console.log(`[Test Route] STAGING_TEST_TREE env var: ${DEDICATED_TEST_TREE || 'NOT SET (showing all trees)'}`);
           console.log(`[Test Route] DAS API returned ${totalAssets} total assets for ${address}`);
           
-          cNfts = dasData.result.items
+          // Log all asset types for debugging
+          const assetTypes = dasData.result.items.reduce((acc: any, asset: any) => {
+            const type = asset.interface || (asset.compression?.compressed ? 'cNFT' : 'unknown');
+            acc[type] = (acc[type] || 0) + 1;
+            return acc;
+          }, {});
+          console.log(`[Test Route] Asset types found:`, assetTypes);
+          
+          // Filter for cNFTs (compressed NFTs)
+          const filteredCNfts = dasData.result.items
             .filter((asset: any) => {
               // Only include compressed NFTs that are:
               // 1. Actually compressed
@@ -202,13 +218,39 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
               return isValid;
             });
           
-          console.log(`[Test Route] After filtering: ${cNfts.length} valid cNFTs found`);
-          if (cNfts.length > 0) {
-            console.log(`[Test Route] cNFT names: ${cNfts.map((a: any) => a.content?.metadata?.name || 'Unknown').join(', ')}`);
-          }
+          console.log(`[Test Route] After cNFT filtering: ${filteredCNfts.length} valid cNFTs found`);
           
+          // Filter for Metaplex Core NFTs (MplCoreAsset)
+          const coreNfts = dasData.result.items
+            .filter((asset: any) => {
+              // Metaplex Core NFTs have interface "MplCoreAsset" or similar
+              const isCoreNft = asset.interface === 'MplCoreAsset' || 
+                               asset.interface === 'MplCoreCollection' ||
+                               (asset.interface && asset.interface.includes('Core'));
+              const isOwned = asset.ownership?.owner === address;
+              const notBurnt = !asset.burnt;
+              const notFrozen = !asset.frozen;
+              
+              const isValid = isCoreNft && isOwned && notBurnt && notFrozen;
+              
+              if (isCoreNft) {
+                console.log(`[Test Route] Found Metaplex Core NFT: ${asset.id}`, {
+                  interface: asset.interface,
+                  isOwned,
+                  notBurnt,
+                  notFrozen,
+                  isValid,
+                });
+              }
+              
+              return isValid;
+            });
+          
+          console.log(`[Test Route] Found ${coreNfts.length} valid Metaplex Core NFTs`);
+          
+          // Map cNFTs to our format
           let isFirstLog = true;
-          cNfts = cNfts.map((asset: any) => {
+          const mappedCNfts = filteredCNfts.map((asset: any) => {
               // Debug: Log the asset structure for the first cNFT
               if (isFirstLog) {
                 isFirstLog = false;
@@ -216,6 +258,7 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
                   id: asset.id,
                   uri: asset.uri,
                   content: asset.content,
+                  interface: asset.interface,
                 }, null, 2));
               }
               
@@ -232,16 +275,48 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
                 mint: asset.id,
                 tokenAccount: null, // cNFTs don't have token accounts
                 isCompressed: true,
+                isCoreNft: false,
                 name: asset.content?.metadata?.name || 'Unknown cNFT',
                 image: imageUrl,
                 symbol: asset.content?.metadata?.symbol || '',
               };
             });
           
-          console.log(`[Test Route] cNFT filtering for ${address}:`, {
+          // Map Metaplex Core NFTs to our format
+          const mappedCoreNfts = coreNfts.map((asset: any) => {
+              console.log('Metaplex Core NFT asset structure:', JSON.stringify({
+                id: asset.id,
+                uri: asset.uri,
+                content: asset.content,
+                interface: asset.interface,
+              }, null, 2));
+              
+              const imageUrl = asset.content?.files?.[0]?.uri || 
+                              asset.content?.links?.image || 
+                              asset.content?.json_uri ||
+                              asset.content?.metadata?.image ||
+                              asset.uri ||
+                              null;
+              
+              return {
+                mint: asset.id,
+                tokenAccount: null, // Core NFTs don't have token accounts like SPL tokens
+                isCompressed: false,
+                isCoreNft: true,
+                name: asset.content?.metadata?.name || 'Unknown Core NFT',
+                image: imageUrl,
+                symbol: asset.content?.metadata?.symbol || '',
+              };
+            });
+          
+          // Combine cNFTs and Core NFTs
+          cNfts = [...mappedCNfts, ...mappedCoreNfts];
+          
+          console.log(`[Test Route] Total DAS assets for ${address}:`, {
             totalFromDAS: totalAssets,
-            validOwned: cNfts.length,
-            filtered: totalAssets - cNfts.length,
+            cNfts: mappedCNfts.length,
+            coreNfts: mappedCoreNfts.length,
+            total: cNfts.length,
           });
         }
       } catch (error) {
@@ -327,6 +402,60 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to fetch wallet info',
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+/**
+ * GET /api/test/transaction-fee
+ * Get the fee for a confirmed transaction
+ */
+router.get('/api/test/transaction-fee', async (req: Request, res: Response) => {
+  try {
+    const { signature } = req.query;
+
+    if (!signature || typeof signature !== 'string') {
+      res.status(400).json({
+        success: false,
+        error: 'Transaction signature is required',
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
+
+    // Fetch transaction details
+    const transaction = await connection.getTransaction(signature, {
+      commitment: 'confirmed',
+      maxSupportedTransactionVersion: 0,
+    });
+
+    if (!transaction) {
+      res.status(404).json({
+        success: false,
+        error: 'Transaction not found',
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
+
+    // Get the fee from transaction metadata
+    const fee = transaction.meta?.fee || 0;
+
+    res.json({
+      success: true,
+      data: {
+        signature,
+        fee, // Fee in lamports
+        feeSol: fee / LAMPORTS_PER_SOL,
+      },
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('Error fetching transaction fee:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to fetch transaction fee',
       timestamp: new Date().toISOString(),
     });
   }

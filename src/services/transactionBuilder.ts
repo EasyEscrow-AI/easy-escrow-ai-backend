@@ -212,9 +212,18 @@ export class TransactionBuilder {
       
       // Check transaction size
       if (serialized.length > TransactionBuilder.MAX_TRANSACTION_SIZE) {
-        throw new Error(
-          `Transaction size (${serialized.length} bytes) exceeds maximum (${TransactionBuilder.MAX_TRANSACTION_SIZE} bytes)`
-        );
+        const hasCnft = inputs.makerAssets.some(a => a.type === AssetType.CNFT) ||
+                        inputs.takerAssets.some(a => a.type === AssetType.CNFT);
+        
+        let errorMessage = `Transaction too large: ${serialized.length} > ${TransactionBuilder.MAX_TRANSACTION_SIZE}`;
+        
+        if (hasCnft) {
+          errorMessage += '. cNFT transfers require Merkle proofs which can exceed Solana\'s transaction size limit. ' +
+            'This cNFT\'s Merkle tree may have a low canopy depth, requiring more proof data. ' +
+            'Try using a different cNFT from a collection with higher canopy depth, or swap NFTs instead of cNFTs.';
+        }
+        
+        throw new Error(errorMessage);
       }
       
       // Estimate compute units
@@ -330,6 +339,16 @@ export class TransactionBuilder {
         
         // For now, throw error to indicate unsupported
         throw new Error('cNFT transfers not yet implemented');
+      } else if (asset.type === AssetType.CORE_NFT) {
+        // Metaplex Core NFT transfer - requires mpl-core program
+        // Core NFTs have a completely different transfer mechanism than SPL Token or Bubblegum
+        console.warn('[TransactionBuilder] Core NFT transfer not yet implemented:', asset.identifier);
+        
+        throw new Error(
+          'Metaplex Core NFT transfers are not yet supported. ' +
+          'Core NFTs use the mpl-core program which requires a different transfer mechanism. ' +
+          'Please use SPL Token NFTs or compressed NFTs (cNFTs) for swaps.'
+        );
       }
     }
     

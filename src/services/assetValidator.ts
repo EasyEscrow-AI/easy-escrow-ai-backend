@@ -11,6 +11,7 @@ import { getAccount, getAssociatedTokenAddress } from '@solana/spl-token';
 export enum AssetType {
   NFT = 'nft',
   CNFT = 'cnft',
+  CORE_NFT = 'core_nft', // Metaplex Core NFTs (mpl-core program)
 }
 
 export enum AssetStatus {
@@ -147,8 +148,12 @@ export class AssetValidator {
       
       if (assetType === AssetType.NFT) {
         result = await this.validateNFT(walletAddress, assetIdentifier);
-      } else {
+      } else if (assetType === AssetType.CNFT) {
         result = await this.validateCNFT(walletAddress, assetIdentifier);
+      } else if (assetType === AssetType.CORE_NFT) {
+        result = await this.validateCoreNFT(walletAddress, assetIdentifier);
+      } else {
+        result = { isValid: false, error: `Unknown asset type: ${assetType}` };
       }
       
       // Cache valid results
@@ -373,6 +378,115 @@ export class AssetValidator {
       return {
         isValid: false,
         error: error instanceof Error ? error.message : 'cNFT validation error',
+      };
+    }
+  }
+  
+  /**
+   * Validate Metaplex Core NFT ownership via DAS API
+   * Core NFTs use the mpl-core program (different from SPL Token and Bubblegum)
+   */
+  private async validateCoreNFT(walletAddress: string, assetId: string): Promise<ValidationResult> {
+    try {
+      console.log(`[AssetValidator] Validating Metaplex Core NFT ${assetId} for ${walletAddress}`);
+      
+      // Fetch asset data via DAS API (same as cNFT)
+      const assetData = await this.fetchCNFTViaDAS(assetId);
+      
+      // Check if this is actually a Core NFT
+      const isCoreNft = assetData.interface === 'MplCoreAsset' || 
+                        assetData.interface === 'MplCoreCollection' ||
+                        (assetData.interface && assetData.interface.includes('Core'));
+      
+      if (!isCoreNft) {
+        console.warn(`[AssetValidator] Asset ${assetId} is not a Metaplex Core NFT (interface: ${assetData.interface})`);
+      }
+      
+      // Check ownership
+      const expectedOwner = walletAddress;
+      const actualOwner = assetData.ownership?.owner;
+      
+      console.log(`[AssetValidator] Core NFT ownership check for ${assetId}:`);
+      console.log(`  Interface: ${assetData.interface}`);
+      console.log(`  Expected owner: ${expectedOwner}`);
+      console.log(`  Actual owner:   ${actualOwner}`);
+      
+      if (!actualOwner) {
+        return {
+          isValid: false,
+          asset: {
+            type: AssetType.CORE_NFT,
+            identifier: assetId,
+            owner: '',
+            status: AssetStatus.NOT_OWNED,
+            validatedAt: new Date(),
+          },
+          error: 'Core NFT owner field not found in DAS API response',
+        };
+      }
+      
+      if (actualOwner !== expectedOwner) {
+        return {
+          isValid: false,
+          asset: {
+            type: AssetType.CORE_NFT,
+            identifier: assetId,
+            owner: actualOwner,
+            status: AssetStatus.NOT_OWNED,
+            validatedAt: new Date(),
+          },
+          error: `Wallet does not own this Core NFT (owner: ${actualOwner})`,
+        };
+      }
+      
+      // Check if burned
+      if (assetData.burnt) {
+        return {
+          isValid: false,
+          asset: {
+            type: AssetType.CORE_NFT,
+            identifier: assetId,
+            owner: walletAddress,
+            status: AssetStatus.BURNED,
+            validatedAt: new Date(),
+          },
+          error: 'Core NFT has been burned',
+        };
+      }
+      
+      // Check if frozen
+      if (assetData.frozen) {
+        return {
+          isValid: false,
+          asset: {
+            type: AssetType.CORE_NFT,
+            identifier: assetId,
+            owner: walletAddress,
+            status: AssetStatus.FROZEN,
+            validatedAt: new Date(),
+          },
+          error: 'Core NFT is frozen',
+        };
+      }
+      
+      console.log(`[AssetValidator] Core NFT ${assetId} successfully validated for ${walletAddress}`);
+      
+      return {
+        isValid: true,
+        asset: {
+          type: AssetType.CORE_NFT,
+          identifier: assetId,
+          owner: walletAddress,
+          metadata: assetData.content?.metadata,
+          status: AssetStatus.VALID,
+          validatedAt: new Date(),
+        },
+      };
+    } catch (error) {
+      console.error(`[AssetValidator] Core NFT validation failed:`, error);
+      return {
+        isValid: false,
+        error: error instanceof Error ? error.message : 'Core NFT validation error',
       };
     }
   }

@@ -243,7 +243,7 @@ router.post(
       }
       
       // Transform asset format from API format to internal format
-      // API format: { mint, isCompressed, merkleTree?, amount?, assetType? }
+      // API format: { mint, isCompressed, isCoreNft?, merkleTree?, amount?, assetType? }
       // Internal format: { identifier, type }
       const transformAssets = (assets: any[], arrayName: string) => {
         return assets.map((asset, index) => {
@@ -254,9 +254,17 @@ router.post(
             throw new Error(`Asset ${index} in ${arrayName} is missing 'mint' field`);
           }
           
+          // Determine asset type: Core NFT > cNFT > SPL NFT
+          let assetType = AssetType.NFT;
+          if (asset.isCoreNft) {
+            assetType = AssetType.CORE_NFT;
+          } else if (asset.isCompressed) {
+            assetType = AssetType.CNFT;
+          }
+          
           const transformed = {
             identifier: asset.mint,
-            type: asset.isCompressed ? AssetType.CNFT : AssetType.NFT,
+            type: assetType,
           };
           
           console.log(`[Offers Route] Transformed to:`, JSON.stringify(transformed));
