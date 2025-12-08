@@ -405,7 +405,7 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
       }
     }
 
-    // Ensure all NFTs have required fields
+    // Ensure all NFTs have required fields (preserve isCoreNft flag!)
     const finalNfts = nftsWithMetadata.map(nft => ({
       mint: nft.mint,
       tokenAccount: nft.tokenAccount,
@@ -413,7 +413,13 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
       image: nft.image || null,
       symbol: nft.symbol || '',
       isCompressed: nft.isCompressed || false,
+      isCoreNft: nft.isCoreNft || false, // IMPORTANT: Preserve Core NFT flag
     }));
+
+    // Calculate counts for each NFT type
+    const splNftCount = finalNfts.filter(n => !n.isCompressed && !n.isCoreNft).length;
+    const cNftCount = finalNfts.filter(n => n.isCompressed).length;
+    const coreNftCount = finalNfts.filter(n => n.isCoreNft).length;
 
     res.json({
       success: true,
@@ -423,8 +429,9 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
         solBalanceLamports: balance,
         nfts: finalNfts,
         nftCount: finalNfts.length,
-        splNftCount: finalNfts.filter(n => !n.isCompressed).length,
-        cNftCount: finalNfts.filter(n => n.isCompressed).length,
+        splNftCount,
+        cNftCount,
+        coreNftCount, // Add Core NFT count
       },
       timestamp: new Date().toISOString(),
     });
