@@ -396,6 +396,22 @@ export class TransactionBuilder {
         inputs.makerPubkey,
         inputs.takerPubkey
       );
+      
+      // Pre-flight check: Estimate transaction size based on proof length
+      const proofLength = makerCnftParams.proof.proof?.length || 0;
+      const estimatedProofBytes = proofLength * 32 + 32 + 32 + 32 + 8 + 4; // proof nodes + root + dataHash + creatorHash + nonce + index
+      const baseTransactionSize = 900; // Approximate base size without proof
+      const estimatedSize = baseTransactionSize + estimatedProofBytes;
+      
+      console.log(`[TransactionBuilder] cNFT proof size estimate: ${proofLength} nodes, ~${estimatedProofBytes} bytes, total ~${estimatedSize} bytes`);
+      
+      if (estimatedSize > TransactionBuilder.MAX_TRANSACTION_SIZE) {
+        throw new Error(
+          `cNFT transaction would be too large (~${estimatedSize} bytes, limit: ${TransactionBuilder.MAX_TRANSACTION_SIZE}). ` +
+          `This cNFT's Merkle tree has ${proofLength} proof nodes (low canopy depth). ` +
+          `Please use a different cNFT from a collection with higher canopy depth, or use a regular SPL NFT instead.`
+        );
+      }
     }
     
     if (takerSendsNft) {
@@ -408,6 +424,22 @@ export class TransactionBuilder {
         inputs.takerPubkey,
         inputs.makerPubkey
       );
+      
+      // Pre-flight check: Estimate transaction size based on proof length
+      const proofLength = takerCnftParams.proof.proof?.length || 0;
+      const estimatedProofBytes = proofLength * 32 + 32 + 32 + 32 + 8 + 4; // proof nodes + root + dataHash + creatorHash + nonce + index
+      const baseTransactionSize = 900; // Approximate base size without proof
+      const estimatedSize = baseTransactionSize + estimatedProofBytes;
+      
+      console.log(`[TransactionBuilder] cNFT proof size estimate: ${proofLength} nodes, ~${estimatedProofBytes} bytes, total ~${estimatedSize} bytes`);
+      
+      if (estimatedSize > TransactionBuilder.MAX_TRANSACTION_SIZE) {
+        throw new Error(
+          `cNFT transaction would be too large (~${estimatedSize} bytes, limit: ${TransactionBuilder.MAX_TRANSACTION_SIZE}). ` +
+          `This cNFT's Merkle tree has ${proofLength} proof nodes (low canopy depth). ` +
+          `Please use a different cNFT from a collection with higher canopy depth, or use a regular SPL NFT instead.`
+        );
+      }
     }
     
     // Build swap parameters (including cNFT proof data)
