@@ -382,6 +382,21 @@ function getNftTypeLabel(nft) {
     return 'SPL NFT';
 }
 
+// Check if NFT type is supported for swaps
+function isNftSwapSupported(nft) {
+    // Core NFTs are NOT yet supported for swaps (mpl-core program not integrated)
+    if (nft.isCoreNft) return false;
+    return true;
+}
+
+// Get warning message for unsupported NFT
+function getUnsupportedNftWarning(nft) {
+    if (nft.isCoreNft) {
+        return '⚠️ Core NFT swaps not yet supported';
+    }
+    return null;
+}
+
 // Render NFTs
 function renderNFTs(wallet, nfts) {
     const container = document.getElementById(`${wallet}-nfts`);
@@ -393,8 +408,11 @@ function renderNFTs(wallet, nfts) {
     if (filter === 'spl') {
         filteredNfts = nfts.filter(nft => !nft.isCompressed && !nft.isCoreNft);
     } else if (filter === 'cnft') {
-        // Show both cNFTs and Core NFTs in this filter
-        filteredNfts = nfts.filter(nft => nft.isCompressed || nft.isCoreNft);
+        // Only show compressed NFTs (cNFTs)
+        filteredNfts = nfts.filter(nft => nft.isCompressed);
+    } else if (filter === 'core') {
+        // Only show Metaplex Core NFTs
+        filteredNfts = nfts.filter(nft => nft.isCoreNft);
     }
     
     // Apply search filter
@@ -414,7 +432,8 @@ function renderNFTs(wallet, nfts) {
         } else if (filter === 'all') {
             message = 'No NFTs found in this wallet';
         } else {
-            message = `No ${filter === 'spl' ? 'SPL NFTs' : 'cNFTs/Core NFTs'} found in this wallet`;
+            const filterLabels = { spl: 'SPL NFTs', cnft: 'cNFTs', core: 'Core NFTs' };
+            message = `No ${filterLabels[filter] || 'NFTs'} found in this wallet`;
         }
         container.innerHTML = `<div class="empty-state">${message}</div>`;
         return;
@@ -433,6 +452,7 @@ function renderNFTs(wallet, nfts) {
                      data-fallback="${placeholderSvg}">
                 <div class="nft-name">${nft.name || 'Unknown NFT'}</div>
                 <div class="nft-type">${getNftTypeLabel(nft)}</div>
+                ${nft.isCoreNft ? '<div class="nft-warning" style="color: #f59e0b; font-size: 0.65rem; margin-top: 2px;">⚠️ Swaps not supported</div>' : ''}
                 <div class="nft-mint">${nft.mint.substring(0, 8)}...</div>
             </div>
         `;
@@ -572,6 +592,20 @@ function showConfirmationModal() {
     
     if (selectedTakerNFTs.length === 0 && !requestedSol) {
         addLog('❌ Taker must request at least one NFT or SOL', 'error');
+        return;
+    }
+    
+    // Check for unsupported NFT types (Core NFTs)
+    const unsupportedMakerNfts = selectedMakerNFTs.filter(nft => nft.isCoreNft);
+    const unsupportedTakerNfts = selectedTakerNFTs.filter(nft => nft.isCoreNft);
+    
+    if (unsupportedMakerNfts.length > 0 || unsupportedTakerNfts.length > 0) {
+        const unsupportedNames = [...unsupportedMakerNfts, ...unsupportedTakerNfts]
+            .map(nft => nft.name || nft.mint.substring(0, 8))
+            .join(', ');
+        addLog(`❌ Core NFT swaps are not yet supported. Unsupported: ${unsupportedNames}`, 'error');
+        addLog('ℹ️ Core NFTs use the mpl-core program which requires a different transfer mechanism.', 'info');
+        addLog('ℹ️ Please use SPL NFTs or cNFTs for swaps.', 'info');
         return;
     }
     
