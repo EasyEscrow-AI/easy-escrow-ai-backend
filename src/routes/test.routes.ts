@@ -499,5 +499,103 @@ router.get('/api/test/transaction-fee', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * POST /api/test/estimate-size
+ * Estimate transaction size for a potential swap
+ */
+router.post('/api/test/estimate-size', async (req: Request, res: Response) => {
+  try {
+    const { offeredAssets, requestedAssets } = req.body;
+    
+    // Count cNFTs to estimate proof data size
+    const makerCnfts = (offeredAssets || []).filter((a: any) => a.isCompressed);
+    const takerCnfts = (requestedAssets || []).filter((a: any) => a.isCompressed);
+    
+    // Base transaction size components
+    const numSigners = 3; // maker, taker, platform authority
+    let numAccounts = 15; // base accounts for atomic swap
+    
+    // Add cNFT-specific accounts
+    if (makerCnfts.length > 0) numAccounts += 5;
+    if (takerCnfts.length > 0) numAccounts += 5;
+    
+    // Estimate proof nodes (assume average canopy depth scenario)
+    // Default: 3 nodes for standard trees (maxDepth=14, canopy=11)
+    // Low canopy: up to 14 nodes for trees with canopy=0
+    const makerProofNodes = makerCnfts.length > 0 ? 6 : 0; // Conservative estimate
+    const takerProofNodes = takerCnfts.length > 0 ? 6 : 0;
+    
+    numAccounts += makerProofNodes + takerProofNodes;
+    
+    // Calculate sizes
+    const signatureSize = 64 * numSigners;
+    const accountKeySize = 32 * numAccounts;
+    const instructionDataSize = 100; // Base instruction data
+    const proofBaseSize = 108; // root + hashes + nonce + index
+    const makerProofSize = makerCnfts.length > 0 ? proofBaseSize + (32 * makerProofNodes) : 0;
+    const takerProofSize = takerCnfts.length > 0 ? proofBaseSize + (32 * takerProofNodes) : 0;
+    
+    const estimatedSize = signatureSize + 3 + accountKeySize + 4 + instructionDataSize + makerProofSize + takerProofSize;
+    const maxSize = 1232;
+    
+    // ALT savings calculation
+    const accountsInALT = Math.min(numAccounts - numSigners, 20);
+    const altSavings = accountsInALT * 31;
+    const estimatedSizeWithALT = estimatedSize - altSavings + 32;
+    
+    const willFit = estimatedSize <= maxSize;
+    const willFitWithALT = estimatedSizeWithALT <= maxSize;
+    
+    let recommendation: string;
+    if (willFit) {
+      recommendation = 'legacy';
+    } else if (willFitWithALT) {
+      recommendation = 'versioned';
+    } else {
+      recommendation = 'cannot_fit';
+    }
+    
+    // Check if ALT is configured
+    const altAddress = process.env.PRODUCTION_ALT_ADDRESS || process.env.STAGING_ALT_ADDRESS;
+    const altAvailable = !!altAddress;
+    
+    res.json({
+      success: true,
+      data: {
+        estimatedSize,
+        estimatedSizeWithALT: willFitWithALT ? estimatedSizeWithALT : null,
+        maxSize,
+        willFit,
+        willFitWithALT,
+        recommendation,
+        altAvailable,
+        useALT: !willFit && willFitWithALT && altAvailable,
+        breakdown: {
+          signatures: signatureSize,
+          accountKeys: accountKeySize,
+          instructions: instructionDataSize + 4,
+          proofData: makerProofSize + takerProofSize,
+        },
+        details: {
+          numSigners,
+          numAccounts,
+          makerCnfts: makerCnfts.length,
+          takerCnfts: takerCnfts.length,
+          makerProofNodes,
+          takerProofNodes,
+        },
+      },
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('Error estimating transaction size:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to estimate transaction size',
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
 export default router;
 

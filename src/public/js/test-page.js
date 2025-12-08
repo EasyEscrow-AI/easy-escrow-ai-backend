@@ -779,8 +779,100 @@ function showConfirmationModal() {
     document.getElementById('modal-platform-fee-label').textContent = platformFeeLabel;
     document.getElementById('modal-platform-fee').textContent = platformFeeDisplay;
     
+    // Fetch transaction size estimate
+    fetchTransactionSizeEstimate(selectedMakerNFTs, selectedTakerNFTs);
+    
     // Show modal
     document.getElementById('confirm-modal').classList.add('show');
+}
+
+// Fetch and display transaction size estimate
+async function fetchTransactionSizeEstimate(makerNFTs, takerNFTs) {
+    const txSizeContainer = document.getElementById('modal-tx-size-container');
+    if (!txSizeContainer) return; // Element doesn't exist yet
+    
+    try {
+        txSizeContainer.innerHTML = '<span class="loading">Estimating size...</span>';
+        
+        const response = await fetch('/api/test/estimate-size', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                offeredAssets: makerNFTs.map(nft => ({
+                    mint: nft.mint,
+                    isCompressed: nft.isCompressed || false,
+                })),
+                requestedAssets: takerNFTs.map(nft => ({
+                    mint: nft.mint,
+                    isCompressed: nft.isCompressed || false,
+                })),
+            }),
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            const estimate = data.data;
+            const percentage = Math.min((estimate.estimatedSize / estimate.maxSize) * 100, 100);
+            
+            // Determine color based on size
+            let barColor = '#22c55e'; // green
+            let statusText = '✅ OK';
+            if (!estimate.willFit && estimate.willFitWithALT) {
+                barColor = '#f59e0b'; // amber
+                statusText = '🔗 ALT Required';
+            } else if (!estimate.willFit && !estimate.willFitWithALT) {
+                barColor = '#ef4444'; // red
+                statusText = '❌ Too Large';
+            } else if (percentage > 80) {
+                barColor = '#f59e0b'; // amber
+                statusText = '⚠️ Near Limit';
+            }
+            
+            // Build display HTML
+            let html = `
+                <div class="tx-size-info">
+                    <div class="tx-size-header">
+                        <span class="tx-size-label">Transaction Size:</span>
+                        <span class="tx-size-value">${estimate.estimatedSize} / ${estimate.maxSize} bytes</span>
+                        <span class="tx-size-status" style="color: ${barColor}">${statusText}</span>
+                    </div>
+                    <div class="tx-size-bar-container">
+                        <div class="tx-size-bar" style="width: ${percentage}%; background-color: ${barColor}"></div>
+                    </div>
+            `;
+            
+            // Add ALT info if needed
+            if (estimate.useALT) {
+                html += `
+                    <div class="tx-alt-info">
+                        <span class="alt-badge">🔗 Address Lookup Table</span>
+                        <span class="alt-size">Size with ALT: ${estimate.estimatedSizeWithALT} bytes</span>
+                    </div>
+                `;
+            }
+            
+            // Add breakdown
+            if (estimate.breakdown) {
+                html += `
+                    <div class="tx-size-breakdown">
+                        <span>Signatures: ${estimate.breakdown.signatures}B</span>
+                        <span>Accounts: ${estimate.breakdown.accountKeys}B</span>
+                        <span>Instructions: ${estimate.breakdown.instructions}B</span>
+                        ${estimate.breakdown.proofData > 0 ? `<span>cNFT Proofs: ${estimate.breakdown.proofData}B</span>` : ''}
+                    </div>
+                `;
+            }
+            
+            html += '</div>';
+            txSizeContainer.innerHTML = html;
+        } else {
+            txSizeContainer.innerHTML = `<span class="error">Could not estimate size</span>`;
+        }
+    } catch (error) {
+        console.error('Error fetching tx size estimate:', error);
+        txSizeContainer.innerHTML = `<span class="error">Error estimating size</span>`;
+    }
 }
 
 // Hide confirmation modal

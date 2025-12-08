@@ -95,12 +95,8 @@ if (!feeCollectorStr) {
 }
 const feeCollector = new PublicKey(feeCollectorStr);
 
-const transactionBuilder = new TransactionBuilder(
-  connection,
-  platformAuthority
-);
-
 // Derive Treasury PDA (114-byte structure with locked withdrawals)
+// Must be derived before creating TransactionBuilder so ALT can be configured
 const [treasuryPDA, treasuryBump] = PublicKey.findProgramAddressSync(
   [Buffer.from('main_treasury'), platformAuthority.publicKey.toBuffer()],
   programId
@@ -113,6 +109,13 @@ console.log('[OffersRoutes]   Program ID:', programId.toBase58());
 console.log('[OffersRoutes]   Treasury PDA:', treasuryPDA.toBase58());
 console.log('[OffersRoutes]   Bump:', treasuryBump);
 console.log('[OffersRoutes] ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+// Create transaction builder with ALT support
+const transactionBuilder = new TransactionBuilder(
+  connection,
+  platformAuthority,
+  treasuryPDA // Pass treasury PDA to enable ALT service
+);
 
 const offerManager = new OfferManager(
   connection,
