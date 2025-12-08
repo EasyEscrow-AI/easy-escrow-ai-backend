@@ -154,13 +154,16 @@ export class ALTService {
    * Get a lookup table account
    */
   async getLookupTable(address: PublicKey): Promise<AddressLookupTableAccount | null> {
-    // Check cache
+    // Check cache - only use cache for the configured platform ALT address
     const now = Date.now();
+    const isConfiguredALT = this.config.lookupTableAddress?.equals(address);
+    
     if (
+      isConfiguredALT &&
       this.cachedLookupTable &&
-      this.cacheTimestamp > now - ALTService.CACHE_TTL_MS &&
-      this.config.lookupTableAddress?.equals(address)
+      this.cacheTimestamp > now - ALTService.CACHE_TTL_MS
     ) {
+      console.log('[ALTService] Returning cached lookup table');
       return this.cachedLookupTable;
     }
     
@@ -169,8 +172,11 @@ export class ALTService {
     const result = await this.connection.getAddressLookupTable(address);
     
     if (result.value) {
-      this.cachedLookupTable = result.value;
-      this.cacheTimestamp = now;
+      // Only cache the configured platform ALT, not arbitrary addresses
+      if (isConfiguredALT) {
+        this.cachedLookupTable = result.value;
+        this.cacheTimestamp = now;
+      }
       console.log('[ALTService] Lookup table found with', result.value.state.addresses.length, 'addresses');
     } else {
       console.log('[ALTService] Lookup table not found');

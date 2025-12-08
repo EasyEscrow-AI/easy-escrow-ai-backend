@@ -211,6 +211,7 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
           try {
             versionedTx = VersionedTransaction.deserialize(txBuffer);
             console.log('✅ Versioned transaction deserialized');
+            console.log('   Existing signatures:', versionedTx.signatures.length);
           } catch (error) {
             console.error('❌ Failed to deserialize versioned transaction:', error);
             return res.status(400).json({
@@ -220,10 +221,34 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
             });
           }
           
-          // Sign versioned transaction
+          // CRITICAL: VersionedTransaction.sign() REPLACES all signatures!
+          // We must preserve existing signatures (platform authority) and add new ones.
+          // The platform authority already signed during transaction building.
           console.log('📤 Adding signatures to versioned transaction...');
-          console.log('   Additional signers:', signers.length);
+          console.log('   Preserving existing signatures and adding:', signers.length);
+          
+          // Store existing signatures before signing
+          const existingSignatures = [...versionedTx.signatures];
+          
+          // Sign with new signers (this replaces all signatures)
           versionedTx.sign(signers);
+          
+          // Restore non-null existing signatures that were overwritten
+          // The message.staticAccountKeys order determines signature indices
+          const staticKeys = versionedTx.message.staticAccountKeys;
+          for (let i = 0; i < existingSignatures.length && i < staticKeys.length; i++) {
+            const existingSig = existingSignatures[i];
+            // Check if this signature was non-null and got overwritten
+            if (existingSig && !existingSig.every(b => b === 0)) {
+              // Check if the new signature at this index is null (all zeros)
+              const newSig = versionedTx.signatures[i];
+              if (!newSig || newSig.every(b => b === 0)) {
+                // Restore the existing signature
+                versionedTx.signatures[i] = existingSig;
+                console.log(`   Restored signature at index ${i} for ${staticKeys[i].toBase58()}`);
+              }
+            }
+          }
           
           rawTransaction = versionedTx.serialize();
         } else {
