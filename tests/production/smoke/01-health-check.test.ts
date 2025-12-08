@@ -9,14 +9,28 @@
 
 import { describe, it } from 'mocha';
 import { expect } from 'chai';
-import { Connection, PublicKey } from '@solana/web3.js';
+import { Connection, Keypair, PublicKey } from '@solana/web3.js';
 import * as path from 'path';
 import * as fs from 'fs';
 
 // Production configuration
 const RPC_URL = process.env.MAINNET_RPC_URL || 'https://api.mainnet-beta.solana.com';
 const PROGRAM_ID = new PublicKey('2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx');
-const TREASURY_PDA = new PublicKey('FPC3dgGpTNxHVRxV9sJKqz1hPWGf59Fn99bNSmwH1iVu');
+
+// Platform authority is used to derive Treasury PDA (must match production API)
+const PLATFORM_AUTHORITY_PATH = process.env.MAINNET_PLATFORM_AUTHORITY_PATH || 
+  path.join(__dirname, '../../../wallets/production/production-admin.json');
+
+// Derive Treasury PDA at runtime from platform authority
+function getTreasuryPDA(): PublicKey {
+  const platformSecret = JSON.parse(fs.readFileSync(PLATFORM_AUTHORITY_PATH, 'utf8'));
+  const platformAuthority = Keypair.fromSecretKey(new Uint8Array(platformSecret));
+  const [treasuryPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('main_treasury'), platformAuthority.publicKey.toBuffer()],
+    PROGRAM_ID
+  );
+  return treasuryPda;
+}
 
 describe('🔍 Production Smoke Test: Health Check', () => {
   let connection: Connection;
@@ -61,7 +75,10 @@ describe('🔍 Production Smoke Test: Health Check', () => {
     
     console.log('✓ Checking Treasury PDA...');
     
-    const treasuryAccount = await connection.getAccountInfo(TREASURY_PDA);
+    const treasuryPDA = getTreasuryPDA();
+    console.log(`  Treasury PDA: ${treasuryPDA.toBase58()}`);
+    
+    const treasuryAccount = await connection.getAccountInfo(treasuryPDA);
     
     expect(treasuryAccount).to.not.be.null;
     expect(treasuryAccount!.owner.toBase58()).to.equal(PROGRAM_ID.toBase58());
