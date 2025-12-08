@@ -210,6 +210,15 @@
             "SPL Noop program (for logging)"
           ],
           "optional": true
+        },
+        {
+          "name": "authorized_app",
+          "docs": [
+            "Optional: Authorized app signer for zero-fee swaps",
+            "Must sign transaction to prove ownership"
+          ],
+          "signer": true,
+          "optional": true
         }
       ],
       "args": [
