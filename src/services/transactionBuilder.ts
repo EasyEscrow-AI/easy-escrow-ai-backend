@@ -212,9 +212,18 @@ export class TransactionBuilder {
       
       // Check transaction size
       if (serialized.length > TransactionBuilder.MAX_TRANSACTION_SIZE) {
-        throw new Error(
-          `Transaction size (${serialized.length} bytes) exceeds maximum (${TransactionBuilder.MAX_TRANSACTION_SIZE} bytes)`
-        );
+        const hasCnft = inputs.makerAssets.some(a => a.type === AssetType.CNFT) ||
+                        inputs.takerAssets.some(a => a.type === AssetType.CNFT);
+        
+        let errorMessage = `Transaction too large: ${serialized.length} > ${TransactionBuilder.MAX_TRANSACTION_SIZE}`;
+        
+        if (hasCnft) {
+          errorMessage += '. cNFT transfers require Merkle proofs which can exceed Solana\'s transaction size limit. ' +
+            'This cNFT\'s Merkle tree may have a low canopy depth, requiring more proof data. ' +
+            'Try using a different cNFT from a collection with higher canopy depth, or swap NFTs instead of cNFTs.';
+        }
+        
+        throw new Error(errorMessage);
       }
       
       // Estimate compute units
