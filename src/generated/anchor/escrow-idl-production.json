@@ -1,5 +1,5 @@
 {
-  "address": "2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx",
+  "address": "AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei",
   "metadata": {
     "name": "escrow",
     "version": "0.1.0",
@@ -212,10 +212,32 @@
           "optional": true
         },
         {
+          "name": "maker_core_asset",
+          "docs": [
+            "Maker's Core NFT asset account (for Core NFT transfers)"
+          ],
+          "writable": true,
+          "optional": true
+        },
+        {
+          "name": "taker_core_asset",
+          "docs": [
+            "Taker's Core NFT asset account (for Core NFT transfers)"
+          ],
+          "writable": true,
+          "optional": true
+        },
+        {
+          "name": "mpl_core_program",
+          "docs": [
+            "Metaplex Core program for Core NFT transfers"
+          ],
+          "optional": true
+        },
+        {
           "name": "authorized_app",
           "docs": [
-            "Optional: Authorized app signer for zero-fee swaps",
-            "Must sign transaction to prove ownership"
+            "Optional: Authorized app signer for zero-fee swaps"
           ],
           "signer": true,
           "optional": true
@@ -887,6 +909,20 @@
             "name": "taker_sends_cnft",
             "docs": [
               "Whether taker is sending a compressed NFT"
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "maker_sends_core_nft",
+            "docs": [
+              "Whether maker is sending a Core NFT (Metaplex Core)"
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "taker_sends_core_nft",
+            "docs": [
+              "Whether taker is sending a Core NFT (Metaplex Core)"
             ],
             "type": "bool"
           },

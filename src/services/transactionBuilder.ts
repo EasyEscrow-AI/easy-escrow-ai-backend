@@ -49,6 +49,9 @@ import {
 // Program ID from IDL (used for placeholders)
 const PROGRAM_ID = new PublicKey(idl.address);
 
+// Metaplex Core program ID for Core NFT transfers
+const MPL_CORE_PROGRAM_ID = new PublicKey('CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d');
+
 export interface SwapAsset {
   type: AssetType;
   identifier: string;
@@ -593,15 +596,10 @@ export class TransactionBuilder {
         // For now, throw error to indicate unsupported
         throw new Error('cNFT transfers not yet implemented');
       } else if (asset.type === AssetType.CORE_NFT) {
-        // Metaplex Core NFT transfer - requires mpl-core program
-        // Core NFTs have a completely different transfer mechanism than SPL Token or Bubblegum
-        console.warn('[TransactionBuilder] Core NFT transfer not yet implemented:', asset.identifier);
-        
-        throw new Error(
-          'Metaplex Core NFT transfers are not yet supported. ' +
-          'Core NFTs use the mpl-core program which requires a different transfer mechanism. ' +
-          'Please use SPL Token NFTs or compressed NFTs (cNFTs) for swaps.'
-        );
+        // Metaplex Core NFT transfer - handled by the program via mpl-core CPI
+        // Core NFTs are single-account assets - the asset address is the NFT mint/ID
+        console.log('[TransactionBuilder] Core NFT transfer will be handled by program:', asset.identifier);
+        // No additional ATA instructions needed - Core NFTs don't use token accounts
       }
     }
     
@@ -628,6 +626,8 @@ export class TransactionBuilder {
     const takerSendsNft = inputs.takerAssets.length > 0 && inputs.takerAssets[0].type === AssetType.NFT;
     const makerSendsCnft = inputs.makerAssets.length > 0 && inputs.makerAssets[0].type === AssetType.CNFT;
     const takerSendsCnft = inputs.takerAssets.length > 0 && inputs.takerAssets[0].type === AssetType.CNFT;
+    const makerSendsCoreNft = inputs.makerAssets.length > 0 && inputs.makerAssets[0].type === AssetType.CORE_NFT;
+    const takerSendsCoreNft = inputs.takerAssets.length > 0 && inputs.takerAssets[0].type === AssetType.CORE_NFT;
     
     // Get NFT token accounts (if applicable)
     let makerNftAccount: PublicKey | null = null;
@@ -638,6 +638,10 @@ export class TransactionBuilder {
     // Get cNFT transfer params (if applicable)
     let makerCnftParams: CnftTransferParams | null = null;
     let takerCnftParams: CnftTransferParams | null = null;
+    
+    // Get Core NFT asset accounts (if applicable)
+    let makerCoreAsset: PublicKey | null = null;
+    let takerCoreAsset: PublicKey | null = null;
     
     if (makerSendsNft) {
       const nftMint = new PublicKey(inputs.makerAssets[0].identifier);
@@ -665,6 +669,10 @@ export class TransactionBuilder {
           `Please use a different cNFT from a collection with higher canopy depth, or use a regular SPL NFT instead.`
         );
       }
+    } else if (makerSendsCoreNft) {
+      // Core NFT - the asset account is the NFT's mint address (which is also its asset address)
+      makerCoreAsset = new PublicKey(inputs.makerAssets[0].identifier);
+      console.log('[TransactionBuilder] Maker sending Core NFT:', makerCoreAsset.toBase58());
     }
     
     if (takerSendsNft) {
@@ -693,6 +701,10 @@ export class TransactionBuilder {
           `Please use a different cNFT from a collection with higher canopy depth, or use a regular SPL NFT instead.`
         );
       }
+    } else if (takerSendsCoreNft) {
+      // Core NFT - the asset account is the NFT's mint address (which is also its asset address)
+      takerCoreAsset = new PublicKey(inputs.takerAssets[0].identifier);
+      console.log('[TransactionBuilder] Taker sending Core NFT:', takerCoreAsset.toBase58());
     }
     
     // Build swap parameters (including cNFT proof data)
@@ -703,6 +715,8 @@ export class TransactionBuilder {
       takerSendsNft,
       makerSendsCnft,
       takerSendsCnft,
+      makerSendsCoreNft,
+      takerSendsCoreNft,
       makerSolAmount: new anchor.BN(inputs.makerSolLamports.toString()),
       takerSolAmount: new anchor.BN(inputs.takerSolLamports.toString()),
       platformFee: new anchor.BN(inputs.platformFeeLamports.toString()),
@@ -734,6 +748,10 @@ export class TransactionBuilder {
       bubblegumProgram: BUBBLEGUM_PROGRAM_ID,
       compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
       logWrapper: SPL_NOOP_PROGRAM_ID,
+      // Core NFT accounts (optional, use placeholder if not needed)
+      makerCoreAsset: makerCoreAsset || PROGRAM_ID,
+      takerCoreAsset: takerCoreAsset || PROGRAM_ID,
+      mplCoreProgram: (makerSendsCoreNft || takerSendsCoreNft) ? MPL_CORE_PROGRAM_ID : PROGRAM_ID,
       // Optional: Authorized app signer for zero-fee swaps
       // Pass null for standard swaps (with fee), only provide for zero-fee swaps
       // Note: This must be null (not a placeholder pubkey) because it's an optional Signer

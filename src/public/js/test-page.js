@@ -384,16 +384,13 @@ function getNftTypeLabel(nft) {
 
 // Check if NFT type is supported for swaps
 function isNftSwapSupported(nft) {
-    // Core NFTs are NOT yet supported for swaps (mpl-core program not integrated)
-    if (nft.isCoreNft) return false;
+    // All NFT types are now supported: SPL NFTs, cNFTs, and Core NFTs
     return true;
 }
 
-// Get warning message for unsupported NFT
+// Get warning message for unsupported NFT (if any)
 function getUnsupportedNftWarning(nft) {
-    if (nft.isCoreNft) {
-        return '⚠️ Core NFT swaps not yet supported';
-    }
+    // All NFT types now supported
     return null;
 }
 
@@ -452,7 +449,6 @@ function renderNFTs(wallet, nfts) {
                      data-fallback="${placeholderSvg}">
                 <div class="nft-name">${nft.name || 'Unknown NFT'}</div>
                 <div class="nft-type">${getNftTypeLabel(nft)}</div>
-                ${nft.isCoreNft ? '<div class="nft-warning" style="color: #f59e0b; font-size: 0.65rem; margin-top: 2px;">⚠️ Swaps not supported</div>' : ''}
                 <div class="nft-mint">${nft.mint.substring(0, 8)}...</div>
             </div>
         `;
@@ -592,20 +588,6 @@ function showConfirmationModal() {
     
     if (selectedTakerNFTs.length === 0 && !requestedSol) {
         addLog('❌ Taker must request at least one NFT or SOL', 'error');
-        return;
-    }
-    
-    // Check for unsupported NFT types (Core NFTs)
-    const unsupportedMakerNfts = selectedMakerNFTs.filter(nft => nft.isCoreNft);
-    const unsupportedTakerNfts = selectedTakerNFTs.filter(nft => nft.isCoreNft);
-    
-    if (unsupportedMakerNfts.length > 0 || unsupportedTakerNfts.length > 0) {
-        const unsupportedNames = [...unsupportedMakerNfts, ...unsupportedTakerNfts]
-            .map(nft => nft.name || nft.mint.substring(0, 8))
-            .join(', ');
-        addLog(`❌ Core NFT swaps are not yet supported. Unsupported: ${unsupportedNames}`, 'error');
-        addLog('ℹ️ Core NFTs use the mpl-core program which requires a different transfer mechanism.', 'info');
-        addLog('ℹ️ Please use SPL NFTs or cNFTs for swaps.', 'info');
         return;
     }
     
