@@ -430,9 +430,10 @@ export class TransactionBuilder {
       bubblegumProgram: BUBBLEGUM_PROGRAM_ID,
       compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
       logWrapper: SPL_NOOP_PROGRAM_ID,
-      // Authorized app account for zero-fee swaps
-      // For standard swaps (no zero-fee), use platform authority public key
-      authorizedApp: inputs.authorizedAppId || this.platformAuthority.publicKey,
+      // Optional: Authorized app signer for zero-fee swaps
+      // Pass null for standard swaps (with fee), only provide for zero-fee swaps
+      // Note: This must be null (not a placeholder pubkey) because it's an optional Signer
+      authorizedApp: inputs.authorizedAppId || null,
     };
     
     console.log('[TransactionBuilder] Swap params:', {
