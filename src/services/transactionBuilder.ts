@@ -339,6 +339,16 @@ export class TransactionBuilder {
         
         // For now, throw error to indicate unsupported
         throw new Error('cNFT transfers not yet implemented');
+      } else if (asset.type === AssetType.CORE_NFT) {
+        // Metaplex Core NFT transfer - requires mpl-core program
+        // Core NFTs have a completely different transfer mechanism than SPL Token or Bubblegum
+        console.warn('[TransactionBuilder] Core NFT transfer not yet implemented:', asset.identifier);
+        
+        throw new Error(
+          'Metaplex Core NFT transfers are not yet supported. ' +
+          'Core NFTs use the mpl-core program which requires a different transfer mechanism. ' +
+          'Please use SPL Token NFTs or compressed NFTs (cNFTs) for swaps.'
+        );
       }
     }
     

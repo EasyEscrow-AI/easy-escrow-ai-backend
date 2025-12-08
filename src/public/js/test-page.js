@@ -329,18 +329,30 @@ async function loadWalletInfo(wallet) {
         // Store wallet data
         if (wallet === 'maker') {
             makerData = data.data;
-            // Debug: Log cNFT mint addresses received from backend
+            // Debug: Log NFT types received from backend
             const cNfts = data.data.nfts.filter(n => n.isCompressed);
-            console.log(`🔍 [Maker] Received ${cNfts.length} cNFTs from backend:`);
-            cNfts.forEach(nft => {
-                console.log(`   - ${nft.name}: ${nft.mint}`);
+            const coreNfts = data.data.nfts.filter(n => n.isCoreNft);
+            const splNfts = data.data.nfts.filter(n => !n.isCompressed && !n.isCoreNft);
+            console.log(`🔍 [Maker] Received NFTs from backend:`, {
+                cNfts: cNfts.length,
+                coreNfts: coreNfts.length,
+                splNfts: splNfts.length,
+            });
+            [...cNfts, ...coreNfts].forEach(nft => {
+                console.log(`   - ${nft.name}: ${nft.mint} (${nft.isCoreNft ? 'Core' : 'cNFT'})`);
             });
         } else {
             takerData = data.data;
             const cNfts = data.data.nfts.filter(n => n.isCompressed);
-            console.log(`🔍 [Taker] Received ${cNfts.length} cNFTs from backend:`);
-            cNfts.forEach(nft => {
-                console.log(`   - ${nft.name}: ${nft.mint}`);
+            const coreNfts = data.data.nfts.filter(n => n.isCoreNft);
+            const splNfts = data.data.nfts.filter(n => !n.isCompressed && !n.isCoreNft);
+            console.log(`🔍 [Taker] Received NFTs from backend:`, {
+                cNfts: cNfts.length,
+                coreNfts: coreNfts.length,
+                splNfts: splNfts.length,
+            });
+            [...cNfts, ...coreNfts].forEach(nft => {
+                console.log(`   - ${nft.name}: ${nft.mint} (${nft.isCoreNft ? 'Core' : 'cNFT'})`);
             });
         }
 
@@ -363,6 +375,13 @@ async function loadWalletInfo(wallet) {
     }
 }
 
+// Get NFT type label for display
+function getNftTypeLabel(nft) {
+    if (nft.isCoreNft) return 'Core NFT';
+    if (nft.isCompressed) return 'cNFT';
+    return 'SPL NFT';
+}
+
 // Render NFTs
 function renderNFTs(wallet, nfts) {
     const container = document.getElementById(`${wallet}-nfts`);
@@ -372,9 +391,10 @@ function renderNFTs(wallet, nfts) {
     // Apply type filter
     let filteredNfts = nfts;
     if (filter === 'spl') {
-        filteredNfts = nfts.filter(nft => !nft.isCompressed);
+        filteredNfts = nfts.filter(nft => !nft.isCompressed && !nft.isCoreNft);
     } else if (filter === 'cnft') {
-        filteredNfts = nfts.filter(nft => nft.isCompressed);
+        // Show both cNFTs and Core NFTs in this filter
+        filteredNfts = nfts.filter(nft => nft.isCompressed || nft.isCoreNft);
     }
     
     // Apply search filter
@@ -394,7 +414,7 @@ function renderNFTs(wallet, nfts) {
         } else if (filter === 'all') {
             message = 'No NFTs found in this wallet';
         } else {
-            message = `No ${filter === 'spl' ? 'SPL NFTs' : 'cNFTs'} found in this wallet`;
+            message = `No ${filter === 'spl' ? 'SPL NFTs' : 'cNFTs/Core NFTs'} found in this wallet`;
         }
         container.innerHTML = `<div class="empty-state">${message}</div>`;
         return;
@@ -412,7 +432,7 @@ function renderNFTs(wallet, nfts) {
                      alt="${nft.name}"
                      data-fallback="${placeholderSvg}">
                 <div class="nft-name">${nft.name || 'Unknown NFT'}</div>
-                <div class="nft-type">${nft.isCompressed ? 'cNFT' : 'SPL NFT'}</div>
+                <div class="nft-type">${getNftTypeLabel(nft)}</div>
                 <div class="nft-mint">${nft.mint.substring(0, 8)}...</div>
             </div>
         `;
@@ -611,7 +631,7 @@ function showConfirmationModal() {
             
             const type = document.createElement('div');
             type.className = 'nft-preview-type';
-            type.textContent = nft.isCompressed ? 'cNFT' : 'SPL NFT';
+            type.textContent = getNftTypeLabel(nft);
             
             const mint = document.createElement('div');
             mint.className = 'nft-preview-mint';
@@ -664,7 +684,7 @@ function showConfirmationModal() {
             
             const type = document.createElement('div');
             type.className = 'nft-preview-type';
-            type.textContent = nft.isCompressed ? 'cNFT' : 'SPL NFT';
+            type.textContent = getNftTypeLabel(nft);
             
             const mint = document.createElement('div');
             mint.className = 'nft-preview-mint';
@@ -877,10 +897,12 @@ async function executeAtomicSwap(params) {
             offeredAssets: confirmedMakerNFTs.map(nft => ({
                 mint: nft.mint,
                 isCompressed: nft.isCompressed || false,
+                isCoreNft: nft.isCoreNft || false,
             })),
             requestedAssets: confirmedTakerNFTs.map(nft => ({
                 mint: nft.mint,
                 isCompressed: nft.isCompressed || false,
+                isCoreNft: nft.isCoreNft || false,
             })),
             offeredSol: offeredSol ? Math.round(parseFloat(offeredSol) * 1e9).toString() : undefined,
             requestedSol: requestedSol ? Math.round(parseFloat(requestedSol) * 1e9).toString() : undefined,
@@ -890,7 +912,8 @@ async function executeAtomicSwap(params) {
         console.log('📤 [Swap] Sending to backend:', requestPayload);
         console.log('📤 [Swap] Offered assets details:');
         requestPayload.offeredAssets.forEach((asset, i) => {
-            console.log(`   ${i + 1}. ${asset.isCompressed ? 'cNFT' : 'SPL'}: ${asset.mint}`);
+            const typeLabel = asset.isCoreNft ? 'Core' : (asset.isCompressed ? 'cNFT' : 'SPL');
+            console.log(`   ${i + 1}. ${typeLabel}: ${asset.mint}`);
         });
         
         // Get API key if provided

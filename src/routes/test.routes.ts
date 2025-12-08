@@ -166,7 +166,16 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
           console.log(`[Test Route] STAGING_TEST_TREE env var: ${DEDICATED_TEST_TREE || 'NOT SET (showing all trees)'}`);
           console.log(`[Test Route] DAS API returned ${totalAssets} total assets for ${address}`);
           
-          cNfts = dasData.result.items
+          // Log all asset types for debugging
+          const assetTypes = dasData.result.items.reduce((acc: any, asset: any) => {
+            const type = asset.interface || (asset.compression?.compressed ? 'cNFT' : 'unknown');
+            acc[type] = (acc[type] || 0) + 1;
+            return acc;
+          }, {});
+          console.log(`[Test Route] Asset types found:`, assetTypes);
+          
+          // Filter for cNFTs (compressed NFTs)
+          const filteredCNfts = dasData.result.items
             .filter((asset: any) => {
               // Only include compressed NFTs that are:
               // 1. Actually compressed
@@ -202,13 +211,39 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
               return isValid;
             });
           
-          console.log(`[Test Route] After filtering: ${cNfts.length} valid cNFTs found`);
-          if (cNfts.length > 0) {
-            console.log(`[Test Route] cNFT names: ${cNfts.map((a: any) => a.content?.metadata?.name || 'Unknown').join(', ')}`);
-          }
+          console.log(`[Test Route] After cNFT filtering: ${filteredCNfts.length} valid cNFTs found`);
           
+          // Filter for Metaplex Core NFTs (MplCoreAsset)
+          const coreNfts = dasData.result.items
+            .filter((asset: any) => {
+              // Metaplex Core NFTs have interface "MplCoreAsset" or similar
+              const isCoreNft = asset.interface === 'MplCoreAsset' || 
+                               asset.interface === 'MplCoreCollection' ||
+                               (asset.interface && asset.interface.includes('Core'));
+              const isOwned = asset.ownership?.owner === address;
+              const notBurnt = !asset.burnt;
+              const notFrozen = !asset.frozen;
+              
+              const isValid = isCoreNft && isOwned && notBurnt && notFrozen;
+              
+              if (isCoreNft) {
+                console.log(`[Test Route] Found Metaplex Core NFT: ${asset.id}`, {
+                  interface: asset.interface,
+                  isOwned,
+                  notBurnt,
+                  notFrozen,
+                  isValid,
+                });
+              }
+              
+              return isValid;
+            });
+          
+          console.log(`[Test Route] Found ${coreNfts.length} valid Metaplex Core NFTs`);
+          
+          // Map cNFTs to our format
           let isFirstLog = true;
-          cNfts = cNfts.map((asset: any) => {
+          const mappedCNfts = filteredCNfts.map((asset: any) => {
               // Debug: Log the asset structure for the first cNFT
               if (isFirstLog) {
                 isFirstLog = false;
@@ -216,6 +251,7 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
                   id: asset.id,
                   uri: asset.uri,
                   content: asset.content,
+                  interface: asset.interface,
                 }, null, 2));
               }
               
@@ -232,16 +268,48 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
                 mint: asset.id,
                 tokenAccount: null, // cNFTs don't have token accounts
                 isCompressed: true,
+                isCoreNft: false,
                 name: asset.content?.metadata?.name || 'Unknown cNFT',
                 image: imageUrl,
                 symbol: asset.content?.metadata?.symbol || '',
               };
             });
           
-          console.log(`[Test Route] cNFT filtering for ${address}:`, {
+          // Map Metaplex Core NFTs to our format
+          const mappedCoreNfts = coreNfts.map((asset: any) => {
+              console.log('Metaplex Core NFT asset structure:', JSON.stringify({
+                id: asset.id,
+                uri: asset.uri,
+                content: asset.content,
+                interface: asset.interface,
+              }, null, 2));
+              
+              const imageUrl = asset.content?.files?.[0]?.uri || 
+                              asset.content?.links?.image || 
+                              asset.content?.json_uri ||
+                              asset.content?.metadata?.image ||
+                              asset.uri ||
+                              null;
+              
+              return {
+                mint: asset.id,
+                tokenAccount: null, // Core NFTs don't have token accounts like SPL tokens
+                isCompressed: false,
+                isCoreNft: true,
+                name: asset.content?.metadata?.name || 'Unknown Core NFT',
+                image: imageUrl,
+                symbol: asset.content?.metadata?.symbol || '',
+              };
+            });
+          
+          // Combine cNFTs and Core NFTs
+          cNfts = [...mappedCNfts, ...mappedCoreNfts];
+          
+          console.log(`[Test Route] Total DAS assets for ${address}:`, {
             totalFromDAS: totalAssets,
-            validOwned: cNfts.length,
-            filtered: totalAssets - cNfts.length,
+            cNfts: mappedCNfts.length,
+            coreNfts: mappedCoreNfts.length,
+            total: cNfts.length,
           });
         }
       } catch (error) {
