@@ -24,9 +24,12 @@ const connection = new Connection(
   'confirmed'
 );
 
-// Determine network type
+// Determine network type - must match logic in test.routes.ts config endpoint
+const nodeEnv = process.env.NODE_ENV || 'development';
+const network = process.env.SOLANA_NETWORK || 'devnet';
 const rpcUrl = process.env.SOLANA_RPC_URL || '';
-const isMainnet = rpcUrl.includes('mainnet') || process.env.SOLANA_NETWORK === 'mainnet-beta';
+// Use same detection as config: NODE_ENV=production OR SOLANA_NETWORK=mainnet-beta OR RPC URL contains mainnet
+const isMainnet = nodeEnv === 'production' || network === 'mainnet-beta' || rpcUrl.includes('mainnet');
 const networkName = isMainnet ? 'mainnet-beta' : 'devnet';
 
 /**
