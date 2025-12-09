@@ -7,6 +7,10 @@
  * ⚠️ IMPORTANT: Uses REAL MAINNET wallets and incurs REAL transaction fees
  */
 
+// Load environment variables
+import * as dotenv from 'dotenv';
+dotenv.config();
+
 import { describe, it, before } from 'mocha';
 import { expect } from 'chai';
 import { 
