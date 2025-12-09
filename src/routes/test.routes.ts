@@ -519,11 +519,13 @@ router.post('/api/test/estimate-size', async (req: Request, res: Response) => {
     const makerAssets = offeredAssets || [];
     const takerAssets = requestedAssets || [];
     
-    // Count different asset types
-    const makerCnfts = makerAssets.filter((a: any) => a.isCompressed);
-    const takerCnfts = takerAssets.filter((a: any) => a.isCompressed);
-    const makerSplNfts = makerAssets.filter((a: any) => !a.isCompressed);
-    const takerSplNfts = takerAssets.filter((a: any) => !a.isCompressed);
+    // Count different asset types (cNFT, CORE, SPL)
+    const makerCnfts = makerAssets.filter((a: any) => a.isCompressed && !a.isCoreNft);
+    const takerCnfts = takerAssets.filter((a: any) => a.isCompressed && !a.isCoreNft);
+    const makerCoreNfts = makerAssets.filter((a: any) => a.isCoreNft);
+    const takerCoreNfts = takerAssets.filter((a: any) => a.isCoreNft);
+    const makerSplNfts = makerAssets.filter((a: any) => !a.isCompressed && !a.isCoreNft);
+    const takerSplNfts = takerAssets.filter((a: any) => !a.isCompressed && !a.isCoreNft);
     
     // Total NFT counts
     const totalMakerNfts = makerAssets.length;
@@ -548,6 +550,10 @@ router.post('/api/test/estimate-size', async (req: Request, res: Response) => {
     // These are shared per side, so add 5 accounts if any cNFTs on that side
     if (makerCnfts.length > 0) numAccounts += 5;
     if (takerCnfts.length > 0) numAccounts += 5;
+    
+    // CORE NFT accounts: asset, collection, mpl_core_program (3 per NFT)
+    const coreNftAccounts = (makerCoreNfts.length + takerCoreNfts.length) * 3;
+    numAccounts += coreNftAccounts;
     
     // Estimate proof nodes (assume average canopy depth scenario)
     // Default: 3 nodes for standard trees (maxDepth=14, canopy=11)
@@ -627,6 +633,8 @@ router.post('/api/test/estimate-size', async (req: Request, res: Response) => {
           takerSplNfts: takerSplNfts.length,
           makerCnfts: makerCnfts.length,
           takerCnfts: takerCnfts.length,
+          makerCoreNfts: makerCoreNfts.length,
+          takerCoreNfts: takerCoreNfts.length,
           makerProofNodes,
           takerProofNodes,
           exceedsLimit,

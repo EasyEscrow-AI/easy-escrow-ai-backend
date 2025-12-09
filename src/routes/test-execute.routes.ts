@@ -177,7 +177,13 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
         const txBuffer = Buffer.from(serializedTransaction, 'base64');
         const isVersioned = isVersionedTransaction(txBuffer);
         
-        console.log(`🔄 Transaction type: ${isVersioned ? 'Versioned (V0) with ALT' : 'Legacy'}`);
+        console.log(`🔄 Transaction buffer info:`, {
+          length: txBuffer.length,
+          firstByte: txBuffer[0],
+          firstByteHex: txBuffer[0]?.toString(16),
+          isVersioned,
+          base64Preview: serializedTransaction.substring(0, 50) + '...',
+        });
         
         // Determine which signers are needed
         const signers: Keypair[] = [];
@@ -259,9 +265,15 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
             console.log('✅ Legacy transaction deserialized');
           } catch (error) {
             console.error('❌ Failed to deserialize legacy transaction:', error);
+            console.error('❌ Transaction buffer info:', {
+              length: txBuffer.length,
+              firstByte: txBuffer[0],
+              firstByteHex: txBuffer[0]?.toString(16),
+              errorMessage: error instanceof Error ? error.message : 'Unknown error',
+            });
             return res.status(400).json({
               success: false,
-              error: 'Invalid transaction format',
+              error: `Invalid transaction format. Buffer length: ${txBuffer.length}, first byte: 0x${txBuffer[0]?.toString(16) || 'undefined'}. This may indicate a versioned transaction being incorrectly detected as legacy.`,
               timestamp: new Date().toISOString(),
             });
           }
