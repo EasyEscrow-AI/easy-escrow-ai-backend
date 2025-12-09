@@ -867,12 +867,23 @@ async function fetchTransactionSizeEstimate(makerNFTs, takerNFTs) {
                 `;
             }
             
-            // Add ALT info if needed
-            if (estimate.useALT) {
+            // Add ALT info if needed - show before/after comparison
+            if (estimate.useALT && estimate.estimatedSizeWithALT) {
+                const altPercentage = Math.min((estimate.estimatedSizeWithALT / estimate.maxSize) * 100, 100);
+                const savings = estimate.estimatedSize - estimate.estimatedSizeWithALT;
                 html += `
-                    <div class="tx-alt-info">
-                        <span class="alt-badge">🔗 Address Lookup Table</span>
-                        <span class="alt-size">Size with ALT: ${estimate.estimatedSizeWithALT} bytes</span>
+                    <div class="tx-alt-info" style="margin-top: 12px; padding: 10px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 1px solid #22c55e; border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span class="alt-badge" style="background: #22c55e; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">🔗 ALT Applied</span>
+                            <span style="color: #166534; font-size: 0.75rem; font-weight: 500;">Saves ${savings} bytes</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                            <span style="font-size: 0.8rem; color: #166534;">With ALT:</span>
+                            <span style="font-size: 0.85rem; font-weight: 600; color: #166534;">${estimate.estimatedSizeWithALT} / ${estimate.maxSize} bytes ✅</span>
+                        </div>
+                        <div class="tx-size-bar-container" style="height: 6px; background: #bbf7d0; border-radius: 3px; overflow: hidden;">
+                            <div class="tx-size-bar" style="width: ${altPercentage}%; background-color: #22c55e; height: 100%;"></div>
+                        </div>
                     </div>
                 `;
             }
@@ -889,16 +900,30 @@ async function fetchTransactionSizeEstimate(makerNFTs, takerNFTs) {
                 `;
             }
             
-            // Add NFT count details
+            // Add NFT count details with CORE NFT support
             if (estimate.details) {
                 const d = estimate.details;
                 const makerTotal = d.totalMakerNfts || 0;
                 const takerTotal = d.totalTakerNfts || 0;
                 if (makerTotal > 0 || takerTotal > 0) {
+                    // Build NFT type breakdown strings
+                    const makerTypes = [];
+                    if (d.makerSplNfts > 0) makerTypes.push(`${d.makerSplNfts} SPL`);
+                    if (d.makerCnfts > 0) makerTypes.push(`${d.makerCnfts} cNFT`);
+                    if (d.makerCoreNfts > 0) makerTypes.push(`${d.makerCoreNfts} CORE`);
+                    
+                    const takerTypes = [];
+                    if (d.takerSplNfts > 0) takerTypes.push(`${d.takerSplNfts} SPL`);
+                    if (d.takerCnfts > 0) takerTypes.push(`${d.takerCnfts} cNFT`);
+                    if (d.takerCoreNfts > 0) takerTypes.push(`${d.takerCoreNfts} CORE`);
+                    
+                    const makerStr = makerTypes.length > 0 ? makerTypes.join(', ') : 'none';
+                    const takerStr = takerTypes.length > 0 ? takerTypes.join(', ') : 'none';
+                    
                     html += `
-                        <div class="tx-nft-counts" style="font-size: 0.75rem; color: #666; margin-top: 8px;">
-                            Maker NFTs: ${makerTotal} (${d.makerSplNfts || 0} SPL, ${d.makerCnfts || 0} cNFT) | 
-                            Taker NFTs: ${takerTotal} (${d.takerSplNfts || 0} SPL, ${d.takerCnfts || 0} cNFT)
+                        <div class="tx-nft-counts" style="font-size: 0.75rem; color: #666; margin-top: 8px; padding: 6px 8px; background: #f8fafc; border-radius: 4px;">
+                            <span style="margin-right: 12px;">📤 Maker: ${makerTotal} (${makerStr})</span>
+                            <span>📥 Taker: ${takerTotal} (${takerStr})</span>
                         </div>
                     `;
                 }
