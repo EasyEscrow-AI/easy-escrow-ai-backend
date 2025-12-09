@@ -660,11 +660,19 @@ export class TransactionBuilder {
       const baseTransactionSize = 900; // Approximate base size without proof
       const estimatedSize = baseTransactionSize + estimatedProofBytes;
       
-      console.log(`[TransactionBuilder] cNFT proof size estimate: ${proofLength} nodes, ~${estimatedProofBytes} bytes, total ~${estimatedSize} bytes`);
+      // Calculate estimated size with ALT (saves ~500-600 bytes by compressing account addresses)
+      const altSavings = this.altService ? 526 : 0; // Approximate ALT savings
+      const estimatedSizeWithALT = estimatedSize - altSavings;
+      const hasALT = this.altService !== null;
       
-      if (estimatedSize > TransactionBuilder.MAX_TRANSACTION_SIZE) {
+      console.log(`[TransactionBuilder] cNFT proof size estimate: ${proofLength} nodes, ~${estimatedProofBytes} bytes, total ~${estimatedSize} bytes`);
+      console.log(`[TransactionBuilder] ALT available: ${hasALT}, size with ALT: ~${estimatedSizeWithALT} bytes`);
+      
+      // Only reject if too large even WITH ALT
+      const effectiveSize = hasALT ? estimatedSizeWithALT : estimatedSize;
+      if (effectiveSize > TransactionBuilder.MAX_TRANSACTION_SIZE) {
         throw new Error(
-          `cNFT transaction would be too large (~${estimatedSize} bytes, limit: ${TransactionBuilder.MAX_TRANSACTION_SIZE}). ` +
+          `cNFT transaction would be too large (~${estimatedSize} bytes${hasALT ? `, ~${estimatedSizeWithALT} with ALT` : ''}, limit: ${TransactionBuilder.MAX_TRANSACTION_SIZE}). ` +
           `This cNFT's Merkle tree has ${proofLength} proof nodes (low canopy depth). ` +
           `Please use a different cNFT from a collection with higher canopy depth, or use a regular SPL NFT instead.`
         );
@@ -692,11 +700,19 @@ export class TransactionBuilder {
       const baseTransactionSize = 900; // Approximate base size without proof
       const estimatedSize = baseTransactionSize + estimatedProofBytes;
       
-      console.log(`[TransactionBuilder] cNFT proof size estimate: ${proofLength} nodes, ~${estimatedProofBytes} bytes, total ~${estimatedSize} bytes`);
+      // Calculate estimated size with ALT (saves ~500-600 bytes by compressing account addresses)
+      const altSavings = this.altService ? 526 : 0; // Approximate ALT savings
+      const estimatedSizeWithALT = estimatedSize - altSavings;
+      const hasALT = this.altService !== null;
       
-      if (estimatedSize > TransactionBuilder.MAX_TRANSACTION_SIZE) {
+      console.log(`[TransactionBuilder] cNFT proof size estimate: ${proofLength} nodes, ~${estimatedProofBytes} bytes, total ~${estimatedSize} bytes`);
+      console.log(`[TransactionBuilder] ALT available: ${hasALT}, size with ALT: ~${estimatedSizeWithALT} bytes`);
+      
+      // Only reject if too large even WITH ALT
+      const effectiveSize = hasALT ? estimatedSizeWithALT : estimatedSize;
+      if (effectiveSize > TransactionBuilder.MAX_TRANSACTION_SIZE) {
         throw new Error(
-          `cNFT transaction would be too large (~${estimatedSize} bytes, limit: ${TransactionBuilder.MAX_TRANSACTION_SIZE}). ` +
+          `cNFT transaction would be too large (~${estimatedSize} bytes${hasALT ? `, ~${estimatedSizeWithALT} with ALT` : ''}, limit: ${TransactionBuilder.MAX_TRANSACTION_SIZE}). ` +
           `This cNFT's Merkle tree has ${proofLength} proof nodes (low canopy depth). ` +
           `Please use a different cNFT from a collection with higher canopy depth, or use a regular SPL NFT instead.`
         );
