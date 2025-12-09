@@ -60,9 +60,17 @@ async function main() {
     throw new Error('Insufficient balance. Need at least 0.05 SOL');
   }
   
-  // Derive Treasury PDA (same as in the program)
+  // Load production admin to derive correct Treasury PDA
+  const adminPath = path.join(__dirname, '../wallets/production/production-admin.json');
+  const adminKeypair = Keypair.fromSecretKey(
+    Buffer.from(JSON.parse(fs.readFileSync(adminPath, 'utf-8')))
+  );
+  console.log('Production Admin:', adminKeypair.publicKey.toBase58());
+  
+  // Derive Treasury PDA (CORRECT seeds: ['main_treasury', authority])
+  // Must match the program's Treasury::SEED_PREFIX and authority
   const [treasuryPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('treasury')],
+    [Buffer.from('main_treasury'), adminKeypair.publicKey.toBuffer()],
     ESCROW_PROGRAM_ID
   );
   console.log('Treasury PDA:', treasuryPda.toBase58());
