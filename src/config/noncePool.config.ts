@@ -193,15 +193,19 @@ export const STAGING_CONFIG: NoncePoolConfig = {
 
 /**
  * Configuration for production environment
+ * 
+ * Note: maxPoolSize limits how many unique users can have assigned nonces.
+ * Each user keeps their nonce and reuses it for multiple offers.
+ * Pool of 1000 = ~1000 unique users with active nonces at any time.
  */
 export const PRODUCTION_CONFIG: NoncePoolConfig = {
   ...DEFAULT_CONFIG,
-  minPoolSize: 20,
-  maxPoolSize: 200,
-  replenishmentThreshold: 40,
-  replenishmentBatchSize: 10,
-  assignmentTimeoutMs: 60000, // 60 seconds for production
-  cleanupIntervalMs: 7200000, // 2 hours
+  minPoolSize: 50,           // Maintain at least 50 available nonces
+  maxPoolSize: 1000,         // Support up to 1000 unique users with nonces
+  replenishmentThreshold: 100, // Trigger replenishment when available < 100
+  replenishmentBatchSize: 20,  // Create 20 at a time during replenishment
+  assignmentTimeoutMs: 60000,  // 60 seconds for production
+  cleanupIntervalMs: 7200000,  // 2 hours
   environment: 'production',
 };
 

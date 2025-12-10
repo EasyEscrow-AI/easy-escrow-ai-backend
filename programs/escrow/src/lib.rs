@@ -1305,6 +1305,169 @@ pub mod escrow {
         
         Ok(())
     }
+
+    // ============================================================================
+    // ATOMIC SWAP INSTRUCTIONS (New Architecture - Single Transaction)
+    // ============================================================================
+
+    /// Initialize the Treasury PDA
+    /// 
+    /// Creates a Treasury account that tracks:
+    /// - Total fees collected
+    /// - Total swaps executed
+    /// - Program pause state
+    /// - Authorized withdrawal wallet
+    ///
+    /// # Security
+    /// * Only platform authority can initialize
+    /// * Locks withdrawals to specified wallet only
+    /// * Prevents fund redirection even if authority is compromised
+    /// * Can only be changed via program upgrade
+    pub fn initialize_treasury(
+        ctx: Context<InitializeTreasury>,
+        authorized_withdrawal_wallet: Pubkey,
+    ) -> Result<()> {
+        instructions::initialize::initialize_treasury_handler(ctx, authorized_withdrawal_wallet)
+    }
+    
+    /// Execute an atomic swap with platform fee collection
+    /// 
+    /// This is the core instruction that executes a complete NFT/cNFT/SOL swap atomically.
+    /// All asset transfers and fee collection happen in a single transaction.
+    ///
+    /// # Process
+    /// 1. Check if program is paused
+    /// 2. Validate swap parameters
+    /// 3. Collect platform fee from taker
+    /// 4. Transfer maker's NFTs to taker
+    /// 5. Transfer taker's NFTs to maker
+    /// 6. Transfer SOL between parties (if any)
+    /// 7. Update treasury statistics
+    ///
+    /// # Arguments
+    /// * `ctx` - Context containing all accounts needed for the swap
+    /// * `params` - Swap parameters including asset counts, SOL amounts, fee, and swap ID
+    ///
+    /// # Returns
+    /// * `Result<()>` - Success or error
+    ///
+    /// # Security
+    /// * Checks program pause state before execution
+    /// * Requires signatures from maker, taker, and platform authority
+    /// * Validates asset ownership before transfer
+    /// * Enforces fee collection before any asset transfers
+    /// * All-or-nothing execution (atomic)
+    ///
+    /// # Errors
+    /// * `ProgramPaused` - Operations are temporarily disabled
+    /// * `Unauthorized` - Platform authority signature missing or invalid
+    /// * `InvalidFee` - Fee is zero or exceeds maximum
+    /// * `TooManyAssets` - Asset count exceeds maximum per side
+    /// * `InvalidSwapId` - Swap ID exceeds maximum length
+    /// * `ArithmeticOverflow` - Fee calculation overflow
+    pub fn atomic_swap_with_fee(
+        ctx: Context<AtomicSwapWithFee>,
+        params: SwapParams,
+    ) -> Result<()> {
+        instructions::atomic_swap::atomic_swap_handler(ctx, params)
+    }
+    
+    /// Withdraw accumulated fees from Treasury PDA to treasury wallet
+    /// 
+    /// Allows the platform authority to withdraw SOL from the Treasury PDA to the
+    /// designated treasury wallet. Withdrawals are rate-limited to once per week (7 days).
+    ///
+    /// # Arguments
+    /// * `ctx` - Context containing authority, treasury PDA, and treasury wallet
+    /// * `amount` - Amount of lamports to withdraw
+    ///
+    /// # Returns
+    /// * `Result<()>` - Success or error
+    ///
+    /// # Security
+    /// * Only platform authority can withdraw
+    /// * Program must not be paused
+    /// * Enforces 7-day minimum between withdrawals
+    /// * Maintains rent-exempt minimum in Treasury PDA
+    ///
+    /// # Errors
+    /// * `Unauthorized` - Caller is not platform authority
+    /// * `ProgramPaused` - Program is currently paused
+    /// * `WithdrawalTooFrequent` - Less than 7 days since last withdrawal
+    /// * `InsufficientTreasuryBalance` - Not enough funds available
+    pub fn withdraw_treasury_fees(
+        ctx: Context<WithdrawTreasuryFees>,
+        amount: u64,
+    ) -> Result<()> {
+        instructions::withdraw::withdraw_treasury_fees_handler(ctx, amount)
+    }
+    
+    /// Emergency pause - stops all swaps and withdrawals
+    /// 
+    /// Allows the platform authority to immediately halt all program operations.
+    /// Used in case of security issues, bugs, or regulatory requirements.
+    ///
+    /// # Arguments
+    /// * `ctx` - Context containing authority and treasury
+    ///
+    /// # Returns
+    /// * `Result<()>` - Success or error
+    ///
+    /// # Security
+    /// * Only platform authority can pause
+    /// * Cannot pause if already paused
+    ///
+    /// # Errors
+    /// * `Unauthorized` - Caller is not platform authority
+    /// * `AlreadyPaused` - Program is already in paused state
+    pub fn emergency_pause(ctx: Context<EmergencyPause>) -> Result<()> {
+        instructions::pause::emergency_pause_handler(ctx)
+    }
+    
+    /// Resume operations after emergency pause
+    /// 
+    /// Allows the platform authority to resume program operations after a pause.
+    ///
+    /// # Arguments
+    /// * `ctx` - Context containing authority and treasury
+    ///
+    /// # Returns
+    /// * `Result<()>` - Success or error
+    ///
+    /// # Security
+    /// * Only platform authority can unpause
+    /// * Cannot unpause if not paused
+    ///
+    /// # Errors
+    /// * `Unauthorized` - Caller is not platform authority
+    /// * `NotPaused` - Program is not currently paused
+    pub fn unpause(ctx: Context<Unpause>) -> Result<()> {
+        instructions::pause::unpause_handler(ctx)
+    }
+    
+    /// Close Treasury PDA and refund rent to authority
+    /// 
+    /// Closes an existing Treasury PDA account and refunds rent to the authority.
+    /// Typically used for:
+    /// - Migrating from old structure to new structure
+    /// - Shutting down platform operations
+    /// - Consolidating treasury accounts
+    ///
+    /// # Arguments
+    /// * `ctx` - Context containing authority and treasury
+    ///
+    /// # Returns
+    /// * `Result<()>` - Success or error
+    ///
+    /// # Security
+    /// * Only platform authority can close treasury
+    /// * Authority receives refunded rent lamports
+    ///
+    /// # Errors
+    /// * `Unauthorized` - Caller is not platform authority
+    pub fn close_treasury(ctx: Context<CloseTreasury>) -> Result<()> {
+        instructions::close::close_treasury_handler(ctx)
+    }
 }
 
 // Account Structures

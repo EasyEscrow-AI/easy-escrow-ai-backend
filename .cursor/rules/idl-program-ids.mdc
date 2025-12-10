@@ -1,0 +1,161 @@
+---
+description: Ensures correct program IDs are used in IDL files for each environment (staging vs production)
+globs: src/generated/anchor/*.json, target/idl/*.json
+alwaysApply: false
+---
+
+# IDL Program ID Verification Rule
+
+## CRITICAL: Each Environment Has a Different Program ID
+
+The Solana escrow program is deployed to **different addresses** on different networks. The IDL files must contain the correct program ID for their environment.
+
+## Program ID Reference
+
+| Environment | Network | Program ID | IDL File |
+|-------------|---------|------------|----------|
+| **Production** | mainnet-beta | `2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx` | `escrow-idl-production.json` |
+| **Staging** | devnet | `AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei` | `escrow-idl-staging.json` |
+| **Development** | devnet | `AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei` | `escrow-idl-dev.json` |
+| **Local** | localnet | `Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS` | N/A |
+
+## ❌ Common Mistake: Wrong Program ID in Production IDL
+
+The most common error is copying the staging IDL to production without updating the `address` field:
+
+```json
+// ❌ WRONG - staging program ID in production IDL
+{
+  "address": "AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei",  // This is STAGING!
+  ...
+}
+```
+
+This causes runtime errors:
+```
+Program ID mismatch!
+Expected (from IDL): AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei
+Received (from input): 2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx
+```
+
+## ✅ Correct Production IDL
+
+```json
+// ✅ CORRECT - mainnet program ID in production IDL
+{
+  "address": "2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx",  // Mainnet!
+  ...
+}
+```
+
+## Verification Checklist
+
+**Before committing any IDL file changes:**
+
+- [ ] Check which IDL file is being modified
+- [ ] Verify the `address` field matches the correct environment:
+  - `escrow-idl-production.json` → `2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx`
+  - `escrow-idl-staging.json` → `AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei`
+- [ ] If regenerating IDL, remember `anchor idl build` uses the default cluster from Anchor.toml
+
+## When Updating IDL Files
+
+### After Program Changes (Regenerating IDL)
+
+1. Build the program:
+   ```powershell
+   cd programs/escrow
+   cargo build-sbf
+   cd ../..
+   ```
+
+2. Generate IDL:
+   ```powershell
+   anchor idl build
+   ```
+
+3. **IMPORTANT**: The generated IDL will have the program ID from Anchor.toml's default cluster (usually devnet). You must:
+
+   **For Staging IDL:**
+   ```powershell
+   Copy-Item target\idl\escrow.json src\generated\anchor\escrow-idl-staging.json -Force
+   # Verify address is: AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei
+   ```
+
+   **For Production IDL:**
+   ```powershell
+   Copy-Item target\idl\escrow.json src\generated\anchor\escrow-idl-production.json -Force
+   # THEN manually update the address field!
+   ```
+   
+   Edit `escrow-idl-production.json` and change:
+   ```json
+   "address": "2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx",
+   ```
+
+4. Verify both files:
+   ```powershell
+   # Check production IDL has mainnet address
+   Get-Content src\generated\anchor\escrow-idl-production.json | Select-String "address"
+   # Should show: 2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx
+
+   # Check staging IDL has devnet address  
+   Get-Content src\generated\anchor\escrow-idl-staging.json | Select-String "address"
+   # Should show: AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei
+   ```
+
+## How the Backend Loads IDL
+
+The backend selects IDL based on `NODE_ENV`:
+
+```typescript
+// src/services/transactionBuilder.ts, src/services/altService.ts
+const isProduction = process.env.NODE_ENV === 'production';
+const idl = isProduction
+  ? require('../generated/anchor/escrow-idl-production.json')
+  : require('../generated/anchor/escrow-idl-staging.json');
+
+const PROGRAM_ID = new PublicKey(idl.address);
+```
+
+If the IDL has the wrong `address`, the program ID validation will fail at runtime.
+
+## Quick Verification Commands
+
+```powershell
+# Verify production IDL has correct mainnet program ID
+$prodIdl = Get-Content src\generated\anchor\escrow-idl-production.json | ConvertFrom-Json
+if ($prodIdl.address -eq "2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx") {
+    Write-Host "✅ Production IDL has correct mainnet program ID"
+} else {
+    Write-Host "❌ WRONG! Production IDL has: $($prodIdl.address)"
+    Write-Host "   Should be: 2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx"
+}
+
+# Verify staging IDL has correct devnet program ID
+$stagingIdl = Get-Content src\generated\anchor\escrow-idl-staging.json | ConvertFrom-Json
+if ($stagingIdl.address -eq "AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei") {
+    Write-Host "✅ Staging IDL has correct devnet program ID"
+} else {
+    Write-Host "❌ WRONG! Staging IDL has: $($stagingIdl.address)"
+    Write-Host "   Should be: AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei"
+}
+```
+
+## Related Files
+
+- [Anchor.toml](mdc:Anchor.toml) - Program ID declarations per cluster
+- [constants.ts](mdc:src/config/constants.ts) - `KNOWN_PROGRAM_IDS` reference
+- [transactionBuilder.ts](mdc:src/services/transactionBuilder.ts) - IDL loading logic
+- [altService.ts](mdc:src/services/altService.ts) - IDL loading logic
+- [solana-program-build.mdc](mdc:.cursor/rules/solana-program-build.mdc) - Build guide
+
+## Agent Instructions
+
+When working with IDL files:
+
+1. **ALWAYS verify the `address` field** matches the target environment
+2. **NEVER copy staging IDL to production** without updating the address
+3. **After regenerating IDL**, always check and update the address for production
+4. **Before committing**, run the verification commands above
+5. **If you see "Program ID mismatch" errors**, check the IDL file first

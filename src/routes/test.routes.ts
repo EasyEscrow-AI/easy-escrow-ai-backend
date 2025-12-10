@@ -16,16 +16,137 @@ const connection = new Connection(
   'confirmed'
 );
 
+// ========================================
+// cNFT PROOF FETCHING HELPERS
+// ========================================
+
+interface CnftProofInfo {
+  assetId: string;
+  treeId: string;
+  proofNodes: number;
+  canopyDepth: number | null;
+  maxDepth: number | null;
+  success: boolean;
+  error?: string;
+}
+
+/**
+ * Fetch actual cNFT proof data from DAS API
+ * Returns the number of proof nodes required for this specific cNFT
+ */
+async function fetchCnftProofInfo(assetId: string): Promise<CnftProofInfo> {
+  try {
+    // Call DAS API getAssetProof
+    const response = await (connection as any)._rpcRequest('getAssetProof', {
+      id: assetId,
+    });
+
+    if (!response || !response.result) {
+      return {
+        assetId,
+        treeId: '',
+        proofNodes: 14, // Fallback to worst case
+        canopyDepth: null,
+        maxDepth: null,
+        success: false,
+        error: 'No response from DAS API',
+      };
+    }
+
+    const proofData = response.result;
+    const proofArray = proofData.proof || [];
+    const proofNodes = proofArray.length;
+    
+    // Calculate canopy depth: maxDepth (typically 14) - proofNodes
+    // Standard trees have maxDepth=14, so canopy = 14 - proofNodes
+    const estimatedMaxDepth = 14;
+    const estimatedCanopyDepth = Math.max(0, estimatedMaxDepth - proofNodes);
+
+    console.log(`[Quote] cNFT ${assetId.slice(0, 8)}... proof: ${proofNodes} nodes (canopy ~${estimatedCanopyDepth})`);
+
+    return {
+      assetId,
+      treeId: proofData.tree_id || '',
+      proofNodes,
+      canopyDepth: estimatedCanopyDepth,
+      maxDepth: estimatedMaxDepth,
+      success: true,
+    };
+  } catch (error: any) {
+    console.warn(`[Quote] Failed to fetch proof for ${assetId}:`, error.message);
+    return {
+      assetId,
+      treeId: '',
+      proofNodes: 14, // Fallback to worst case
+      canopyDepth: null,
+      maxDepth: null,
+      success: false,
+      error: error.message,
+    };
+  }
+}
+
+/**
+ * Fetch proof info for multiple cNFTs in parallel
+ */
+async function fetchMultipleCnftProofs(assetIds: string[]): Promise<Map<string, CnftProofInfo>> {
+  const results = new Map<string, CnftProofInfo>();
+  
+  if (assetIds.length === 0) return results;
+
+  // Fetch all proofs in parallel
+  const proofPromises = assetIds.map(id => fetchCnftProofInfo(id));
+  const proofInfos = await Promise.all(proofPromises);
+  
+  for (const info of proofInfos) {
+    results.set(info.assetId, info);
+  }
+  
+  return results;
+}
+
 /**
  * GET /test/config
  * Get test page configuration including wallet addresses
  */
 router.get('/api/test/config', (_req: Request, res: Response) => {
+  // Determine wallet addresses based on environment
+  // IMPORTANT: This logic must match test-execute.routes.ts exactly
+  const nodeEnv = process.env.NODE_ENV || 'development';
+  const network = process.env.SOLANA_NETWORK || 'devnet';
+  const rpcUrl = process.env.SOLANA_RPC_URL || '';
+  
+  // Unified mainnet detection: NODE_ENV=production OR SOLANA_NETWORK=mainnet-beta OR RPC URL contains mainnet
+  const isMainnet = nodeEnv === 'production' || network === 'mainnet-beta' || rpcUrl.includes('mainnet');
+  
+  let makerAddress: string | undefined;
+  let takerAddress: string | undefined;
+  
+  // Production (Mainnet)
+  if (isMainnet) {
+    makerAddress = process.env.MAINNET_PROD_SENDER_ADDRESS;
+    takerAddress = process.env.MAINNET_PROD_RECEIVER_ADDRESS;
+  }
+  // Staging (Devnet)
+  else if (nodeEnv === 'staging') {
+    makerAddress = process.env.DEVNET_STAGING_SENDER_ADDRESS;
+    takerAddress = process.env.DEVNET_STAGING_RECEIVER_ADDRESS;
+  }
+  // Development (Localnet)
+  else {
+    makerAddress = process.env.LOCALNET_ADMIN_ADDRESS || process.env.DEVNET_STAGING_SENDER_ADDRESS;
+    takerAddress = process.env.LOCALNET_RECEIVER_ADDRESS || process.env.DEVNET_STAGING_RECEIVER_ADDRESS;
+  }
+  
+  const detectedNetwork = isMainnet ? 'mainnet-beta' : 'devnet';
+  
   res.json({
     success: true,
     data: {
-      makerAddress: process.env.DEVNET_STAGING_SENDER_ADDRESS,
-      takerAddress: process.env.DEVNET_STAGING_RECEIVER_ADDRESS,
+      makerAddress,
+      takerAddress,
+      environment: nodeEnv,
+      network: detectedNetwork,
     },
     timestamp: new Date().toISOString(),
   });
@@ -141,7 +262,16 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
           console.log(`[Test Route] STAGING_TEST_TREE env var: ${DEDICATED_TEST_TREE || 'NOT SET (showing all trees)'}`);
           console.log(`[Test Route] DAS API returned ${totalAssets} total assets for ${address}`);
           
-          cNfts = dasData.result.items
+          // Log all asset types for debugging
+          const assetTypes = dasData.result.items.reduce((acc: any, asset: any) => {
+            const type = asset.interface || (asset.compression?.compressed ? 'cNFT' : 'unknown');
+            acc[type] = (acc[type] || 0) + 1;
+            return acc;
+          }, {});
+          console.log(`[Test Route] Asset types found:`, assetTypes);
+          
+          // Filter for cNFTs (compressed NFTs)
+          const filteredCNfts = dasData.result.items
             .filter((asset: any) => {
               // Only include compressed NFTs that are:
               // 1. Actually compressed
@@ -177,13 +307,57 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
               return isValid;
             });
           
-          console.log(`[Test Route] After filtering: ${cNfts.length} valid cNFTs found`);
-          if (cNfts.length > 0) {
-            console.log(`[Test Route] cNFT names: ${cNfts.map((a: any) => a.content?.metadata?.name || 'Unknown').join(', ')}`);
-          }
+          console.log(`[Test Route] After cNFT filtering: ${filteredCNfts.length} valid cNFTs found`);
           
+          // Filter for Metaplex Core NFTs (MplCoreAsset)
+          // Note: Different RPC providers may use different interface names
+          // IMPORTANT: cNFTs must be explicitly excluded - they have compression.compressed = true
+          const coreNfts = dasData.result.items
+            .filter((asset: any) => {
+              // FIRST: Exclude compressed NFTs (cNFTs) - they are NOT Core NFTs
+              const isCompressed = asset.compression?.compressed === true;
+              if (isCompressed) {
+                return false; // This is a cNFT, not a Core NFT
+              }
+              
+              // Metaplex Core NFTs have specific interface names
+              const interfaceName = asset.interface?.toLowerCase() || '';
+              // Be more specific - only match exact Metaplex Core interface names
+              const isCoreNft = interfaceName === 'mplcoreasset' ||
+                               interfaceName === 'mplcorecollection' ||
+                               asset.interface === 'MplCoreAsset' || 
+                               asset.interface === 'MplCoreCollection';
+              // Note: Removed 'includes("core")' check as it was too broad and caught non-Core NFTs
+              // Also removed V1_NFT check as that's typically standard SPL NFTs
+              
+              const isOwned = asset.ownership?.owner === address;
+              const notBurnt = !asset.burnt;
+              const notFrozen = !asset.frozen;
+              
+              const isValid = isCoreNft && isOwned && notBurnt && notFrozen;
+              
+              // Log Core NFT detection for debugging
+              if (isCoreNft || (asset.interface && isValid)) {
+                console.log(`[Test Route] Asset ${asset.id} Core NFT check:`, {
+                  interface: asset.interface,
+                  interfaceLower: interfaceName,
+                  isCompressed,
+                  isCoreNft,
+                  isOwned,
+                  notBurnt,
+                  notFrozen,
+                  isValid,
+                });
+              }
+              
+              return isValid;
+            });
+          
+          console.log(`[Test Route] Found ${coreNfts.length} valid Metaplex Core NFTs`);
+          
+          // Map cNFTs to our format
           let isFirstLog = true;
-          cNfts = cNfts.map((asset: any) => {
+          const mappedCNfts = filteredCNfts.map((asset: any) => {
               // Debug: Log the asset structure for the first cNFT
               if (isFirstLog) {
                 isFirstLog = false;
@@ -191,6 +365,7 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
                   id: asset.id,
                   uri: asset.uri,
                   content: asset.content,
+                  interface: asset.interface,
                 }, null, 2));
               }
               
@@ -207,16 +382,70 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
                 mint: asset.id,
                 tokenAccount: null, // cNFTs don't have token accounts
                 isCompressed: true,
+                isCoreNft: false,
                 name: asset.content?.metadata?.name || 'Unknown cNFT',
                 image: imageUrl,
                 symbol: asset.content?.metadata?.symbol || '',
               };
             });
           
-          console.log(`[Test Route] cNFT filtering for ${address}:`, {
+          // Map Metaplex Core NFTs to our format
+          const mappedCoreNfts = coreNfts.map((asset: any) => {
+              console.log('Metaplex Core NFT asset structure:', JSON.stringify({
+                id: asset.id,
+                uri: asset.uri,
+                content: asset.content,
+                interface: asset.interface,
+              }, null, 2));
+              
+              const imageUrl = asset.content?.files?.[0]?.uri || 
+                              asset.content?.links?.image || 
+                              asset.content?.json_uri ||
+                              asset.content?.metadata?.image ||
+                              asset.uri ||
+                              null;
+              
+              return {
+                mint: asset.id,
+                tokenAccount: null, // Core NFTs don't have token accounts like SPL tokens
+                isCompressed: false,
+                isCoreNft: true,
+                name: asset.content?.metadata?.name || 'Unknown Core NFT',
+                image: imageUrl,
+                symbol: asset.content?.metadata?.symbol || '',
+              };
+            });
+          
+          // Combine cNFTs and Core NFTs
+          cNfts = [...mappedCNfts, ...mappedCoreNfts];
+          
+          // Log any unclassified assets (for debugging)
+          const classifiedIds = new Set([
+            ...filteredCNfts.map((a: any) => a.id),
+            ...coreNfts.map((a: any) => a.id),
+          ]);
+          const unclassified = dasData.result.items.filter((asset: any) => {
+            const isOwned = asset.ownership?.owner === address;
+            return isOwned && !asset.burnt && !asset.frozen && !classifiedIds.has(asset.id);
+          });
+          
+          if (unclassified.length > 0) {
+            console.log(`[Test Route] ⚠️ Unclassified DAS assets (not cNFT or Core):`, 
+              unclassified.map((a: any) => ({
+                id: a.id,
+                interface: a.interface,
+                compressed: a.compression?.compressed,
+                name: a.content?.metadata?.name,
+              }))
+            );
+          }
+          
+          console.log(`[Test Route] Total DAS assets for ${address}:`, {
             totalFromDAS: totalAssets,
-            validOwned: cNfts.length,
-            filtered: totalAssets - cNfts.length,
+            cNfts: mappedCNfts.length,
+            coreNfts: mappedCoreNfts.length,
+            unclassified: unclassified.length,
+            total: cNfts.length,
           });
         }
       } catch (error) {
@@ -274,7 +503,7 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
       }
     }
 
-    // Ensure all NFTs have required fields
+    // Ensure all NFTs have required fields (preserve isCoreNft flag!)
     const finalNfts = nftsWithMetadata.map(nft => ({
       mint: nft.mint,
       tokenAccount: nft.tokenAccount,
@@ -282,7 +511,13 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
       image: nft.image || null,
       symbol: nft.symbol || '',
       isCompressed: nft.isCompressed || false,
+      isCoreNft: nft.isCoreNft || false, // IMPORTANT: Preserve Core NFT flag
     }));
+
+    // Calculate counts for each NFT type
+    const splNftCount = finalNfts.filter(n => !n.isCompressed && !n.isCoreNft).length;
+    const cNftCount = finalNfts.filter(n => n.isCompressed).length;
+    const coreNftCount = finalNfts.filter(n => n.isCoreNft).length;
 
     res.json({
       success: true,
@@ -292,8 +527,9 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
         solBalanceLamports: balance,
         nfts: finalNfts,
         nftCount: finalNfts.length,
-        splNftCount: finalNfts.filter(n => !n.isCompressed).length,
-        cNftCount: finalNfts.filter(n => n.isCompressed).length,
+        splNftCount,
+        cNftCount,
+        coreNftCount, // Add Core NFT count
       },
       timestamp: new Date().toISOString(),
     });
@@ -302,6 +538,752 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to fetch wallet info',
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+/**
+ * GET /api/test/transaction-fee
+ * Get the fee for a confirmed transaction
+ */
+router.get('/api/test/transaction-fee', async (req: Request, res: Response) => {
+  try {
+    const { signature } = req.query;
+
+    if (!signature || typeof signature !== 'string') {
+      res.status(400).json({
+        success: false,
+        error: 'Transaction signature is required',
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
+
+    // Fetch transaction details
+    const transaction = await connection.getTransaction(signature, {
+      commitment: 'confirmed',
+      maxSupportedTransactionVersion: 0,
+    });
+
+    if (!transaction) {
+      res.status(404).json({
+        success: false,
+        error: 'Transaction not found',
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
+
+    // Get the fee from transaction metadata
+    const fee = transaction.meta?.fee || 0;
+
+    res.json({
+      success: true,
+      data: {
+        signature,
+        fee, // Fee in lamports
+        feeSol: fee / LAMPORTS_PER_SOL,
+      },
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('Error fetching transaction fee:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to fetch transaction fee',
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+/**
+ * POST /api/test/estimate-size
+ * Estimate transaction size for a potential swap
+ */
+router.post('/api/test/estimate-size', async (req: Request, res: Response) => {
+  // Our production ALT contains exactly 10 addresses (programs, treasury, authority)
+  const ACTUAL_ALT_ADDRESSES = 10;
+  
+  try {
+    const { offeredAssets, requestedAssets } = req.body;
+    
+    const makerAssets = offeredAssets || [];
+    const takerAssets = requestedAssets || [];
+    
+    // Count different asset types (cNFT, CORE, SPL)
+    const makerCnfts = makerAssets.filter((a: any) => a.isCompressed && !a.isCoreNft);
+    const takerCnfts = takerAssets.filter((a: any) => a.isCompressed && !a.isCoreNft);
+    const makerCoreNfts = makerAssets.filter((a: any) => a.isCoreNft);
+    const takerCoreNfts = takerAssets.filter((a: any) => a.isCoreNft);
+    const makerSplNfts = makerAssets.filter((a: any) => !a.isCompressed && !a.isCoreNft);
+    const takerSplNfts = takerAssets.filter((a: any) => !a.isCompressed && !a.isCoreNft);
+    
+    // Total NFT counts
+    const totalMakerNfts = makerAssets.length;
+    const totalTakerNfts = takerAssets.length;
+    
+    // Check for multi-asset limitation (current program only supports 1 NFT per side)
+    const exceedsLimit = totalMakerNfts > 1 || totalTakerNfts > 1;
+    
+    // Base transaction size components
+    const numSigners = 3; // maker, taker, platform authority
+    
+    // Base accounts: maker, taker, platform_authority, treasury, token_program, system_program, 
+    // nonce_account, nonce_authority, plus optional accounts for NFT/cNFT transfers
+    let numAccounts = 10; // Base accounts
+    
+    // Each SPL NFT requires 4 accounts: mint, maker_token_account, taker_token_account, token_program (shared)
+    // Since token_program is already counted, add 3 per NFT
+    const splNftAccounts = (makerSplNfts.length + takerSplNfts.length) * 3;
+    numAccounts += splNftAccounts;
+    
+    // cNFT accounts: merkle_tree, tree_authority, bubblegum_program, compression_program, log_wrapper
+    // These are shared per side, so add 5 accounts if any cNFTs on that side
+    if (makerCnfts.length > 0) numAccounts += 5;
+    if (takerCnfts.length > 0) numAccounts += 5;
+    
+    // CORE NFT accounts: asset, collection, mpl_core_program (3 per NFT)
+    const coreNftAccounts = (makerCoreNfts.length + takerCoreNfts.length) * 3;
+    numAccounts += coreNftAccounts;
+    
+    // Estimate proof nodes based on actual cNFT data if available
+    // DAS API provides proof length which equals maxDepth
+    // We need: maxDepth - canopyDepth nodes
+    // Standard trees: maxDepth=14, canopy=11 → 3 nodes
+    // Low canopy trees: maxDepth=14, canopy=5 → 9 nodes  
+    // No canopy trees: maxDepth=14, canopy=0 → 14 nodes
+    // 
+    // IMPORTANT: cNFTs with 8+ proof nodes likely won't fit even with ALT!
+    // The transaction limit is 1232 bytes, and each proof node adds 32 bytes.
+    // 
+    // WARNING: Proof size varies per cNFT based on tree canopy depth.
+    // We use WORST CASE (14 nodes) for estimates since we can't fetch the actual
+    // proof until the swap is executed. This may over-estimate size.
+    let makerProofNodes = 0;
+    let takerProofNodes = 0;
+    let cnftWarning: string | null = null;
+    
+    // Check if assets have proof data from DAS API
+    if (makerCnfts.length > 0) {
+      const firstMakerCnft = makerCnfts[0];
+      // Use actual proof length if available, otherwise use WORST CASE
+      if (firstMakerCnft.proofNodes !== undefined) {
+        makerProofNodes = firstMakerCnft.proofNodes * makerCnfts.length;
+      } else {
+        // WORST CASE: assume no canopy (14 nodes) for safety
+        // Many cNFTs have low or no canopy, making them incompatible with atomic swaps
+        makerProofNodes = 14 * makerCnfts.length;
+        cnftWarning = 'cNFT proof size varies by tree. Estimate uses worst case (14 nodes). Actual may be smaller.';
+      }
+    }
+    
+    if (takerCnfts.length > 0) {
+      const firstTakerCnft = takerCnfts[0];
+      if (firstTakerCnft.proofNodes !== undefined) {
+        takerProofNodes = firstTakerCnft.proofNodes * takerCnfts.length;
+      } else {
+        // WORST CASE: assume no canopy (14 nodes) for safety
+        takerProofNodes = 14 * takerCnfts.length;
+        cnftWarning = 'cNFT proof size varies by tree. Estimate uses worst case (14 nodes). Actual may be smaller.';
+      }
+    }
+    
+    // Proof nodes are passed as remaining accounts
+    numAccounts += makerProofNodes + takerProofNodes;
+    
+    // Calculate sizes more accurately
+    const signatureSize = 64 * numSigners;
+    // Account keys: for NON-ALT estimate, include ALL accounts
+    const accountKeySize = 32 * numAccounts;
+    const instructionDataSize = 150; // Base instruction data (more realistic)
+    const proofBaseSize = 108; // root + hashes + nonce + index PER cNFT
+    // Proof data = base overhead PER cNFT + 32 bytes per proof node (inside instruction data)
+    const makerProofDataSize = makerCnfts.length > 0 ? (proofBaseSize * makerCnfts.length) + (32 * makerProofNodes) : 0;
+    const takerProofDataSize = takerCnfts.length > 0 ? (proofBaseSize * takerCnfts.length) + (32 * takerProofNodes) : 0;
+    
+    const estimatedSize = signatureSize + 3 + accountKeySize + 4 + instructionDataSize + makerProofDataSize + takerProofDataSize;
+    const maxSize = 1232;
+    
+    // ALT savings calculation
+    // CRITICAL: Only STATIC addresses are in the ALT (programs, treasury, authority)
+    // Proof nodes for cNFTs are NOT in ALT - they're unique to each transaction
+    // Our production ALT has exactly 10 addresses
+    // Signers and proof nodes can't use ALT
+    const accountsNotInALT = numSigners + makerProofNodes + takerProofNodes;
+    const accountsInALT = Math.min(Math.max(0, numAccounts - accountsNotInALT), ACTUAL_ALT_ADDRESSES);
+    const altSavings = accountsInALT * 31; // Save 31 bytes per account (32 byte key -> 1 byte index)
+    const estimatedSizeWithALT = estimatedSize - altSavings + 32; // +32 for ALT address reference
+    
+    const willFit = estimatedSize <= maxSize;
+    const willFitWithALT = estimatedSizeWithALT <= maxSize;
+    
+    let recommendation: string;
+    if (willFit) {
+      recommendation = 'legacy';
+    } else if (willFitWithALT) {
+      recommendation = 'versioned';
+    } else {
+      recommendation = 'cannot_fit';
+    }
+    
+    // Check if ALT is configured
+    const altAddress = process.env.PRODUCTION_ALT_ADDRESS || process.env.STAGING_ALT_ADDRESS;
+    const altAvailable = !!altAddress;
+    
+    // Override recommendation if exceeds multi-asset limit
+    let finalRecommendation = recommendation;
+    let warning: string | null = null;
+    
+    if (exceedsLimit) {
+      finalRecommendation = 'cannot_fit';
+      warning = 'Current program only supports 1 NFT per side. Multi-NFT swaps require program upgrade.';
+    }
+    
+    // Add warning for cNFTs with too many proof nodes
+    if (!exceedsLimit && !willFitWithALT && (makerProofNodes >= 8 || takerProofNodes >= 8)) {
+      warning = `cNFT estimated at ${Math.max(makerProofNodes, takerProofNodes)} proof nodes (worst case). Most cNFTs exceed the ~7 node limit for atomic swaps. Try an SPL NFT instead.`;
+    }
+    
+    // Add cNFT estimate uncertainty warning if not already showing a more critical warning
+    if (!warning && cnftWarning) {
+      warning = cnftWarning;
+    }
+    
+    res.json({
+      success: true,
+      data: {
+        estimatedSize,
+        estimatedSizeWithALT: willFitWithALT ? estimatedSizeWithALT : null,
+        maxSize,
+        willFit: exceedsLimit ? false : willFit,
+        willFitWithALT: exceedsLimit ? false : willFitWithALT,
+        recommendation: finalRecommendation,
+        altAvailable,
+        useALT: !willFit && willFitWithALT && altAvailable && !exceedsLimit,
+        warning,
+        breakdown: {
+          signatures: signatureSize,
+          accountKeys: accountKeySize,
+          instructions: instructionDataSize + 4,
+          proofData: makerProofDataSize + takerProofDataSize,
+        },
+        details: {
+          numSigners,
+          numAccounts,
+          totalMakerNfts,
+          totalTakerNfts,
+          makerSplNfts: makerSplNfts.length,
+          takerSplNfts: takerSplNfts.length,
+          makerCnfts: makerCnfts.length,
+          takerCnfts: takerCnfts.length,
+          makerCoreNfts: makerCoreNfts.length,
+          takerCoreNfts: takerCoreNfts.length,
+          makerProofNodes,
+          takerProofNodes,
+          exceedsLimit,
+        },
+      },
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('Error estimating transaction size:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to estimate transaction size',
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+// ========================================
+// SOL PRICE CACHING
+// ========================================
+interface CachedSolPrice {
+  price: number;
+  timestamp: number;
+}
+
+interface CoinGeckoResponse {
+  solana?: {
+    usd?: number;
+  };
+}
+
+let cachedSolPrice: CachedSolPrice | null = null;
+const SOL_PRICE_CACHE_TTL_MS = 60000; // 1 minute cache
+
+async function fetchSolPriceUSD(): Promise<number | null> {
+  // Check cache first
+  if (cachedSolPrice && Date.now() - cachedSolPrice.timestamp < SOL_PRICE_CACHE_TTL_MS) {
+    return cachedSolPrice.price;
+  }
+
+  try {
+    const response = await fetch(
+      'https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd',
+      {
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+        signal: AbortSignal.timeout(5000), // 5 second timeout
+      }
+    );
+
+    if (!response.ok) {
+      console.warn(`[Quote] CoinGecko API error: ${response.status}`);
+      return cachedSolPrice?.price || null;
+    }
+
+    const data = await response.json() as CoinGeckoResponse;
+    if (data?.solana?.usd) {
+      cachedSolPrice = {
+        price: data.solana.usd,
+        timestamp: Date.now(),
+      };
+      return data.solana.usd;
+    }
+  } catch (error) {
+    console.warn('[Quote] Failed to fetch SOL price:', error);
+  }
+
+  return cachedSolPrice?.price || null;
+}
+
+// ========================================
+// QUOTE ENDPOINT
+// ========================================
+
+interface QuoteAsset {
+  mint: string;
+  isCompressed?: boolean;
+  isCoreNft?: boolean;
+  name?: string;
+  image?: string;
+  symbol?: string;
+  proofNodes?: number;
+}
+
+interface QuoteRequest {
+  makerAssets: QuoteAsset[];
+  takerAssets: QuoteAsset[];
+  makerSolLamports?: number;
+  takerSolLamports?: number;
+  apiKey?: string; // For zero-fee apps
+}
+
+/**
+ * POST /api/quote
+ * Get comprehensive swap quote including fees, time estimates, and transaction size
+ */
+router.post('/api/quote', async (req: Request, res: Response) => {
+  const ACTUAL_ALT_ADDRESSES = 10;
+  
+  try {
+    const {
+      makerAssets = [],
+      takerAssets = [],
+      makerSolLamports = 0,
+      takerSolLamports = 0,
+      apiKey,
+    } = req.body as QuoteRequest;
+
+    // ========================================
+    // 1. FETCH SOL PRICE
+    // ========================================
+    const solPriceUSD = await fetchSolPriceUSD();
+
+    // ========================================
+    // 2. CALCULATE SOL AMOUNTS
+    // ========================================
+    const makerSolAmount = makerSolLamports / LAMPORTS_PER_SOL;
+    const takerSolAmount = takerSolLamports / LAMPORTS_PER_SOL;
+    const totalSolAmount = makerSolAmount + takerSolAmount;
+
+    // ========================================
+    // 3. CATEGORIZE ASSETS
+    // ========================================
+    const makerCnfts = makerAssets.filter(a => a.isCompressed && !a.isCoreNft);
+    const takerCnfts = takerAssets.filter(a => a.isCompressed && !a.isCoreNft);
+    const makerCoreNfts = makerAssets.filter(a => a.isCoreNft);
+    const takerCoreNfts = takerAssets.filter(a => a.isCoreNft);
+    const makerSplNfts = makerAssets.filter(a => !a.isCompressed && !a.isCoreNft);
+    const takerSplNfts = takerAssets.filter(a => !a.isCompressed && !a.isCoreNft);
+
+    const totalMakerNfts = makerAssets.length;
+    const totalTakerNfts = takerAssets.length;
+    const totalNfts = totalMakerNfts + totalTakerNfts;
+    const cNFTCount = makerCnfts.length + takerCnfts.length;
+    const regularNFTCount = totalNfts - cNFTCount;
+
+    // ========================================
+    // 4. ESTIMATE TIME
+    // ========================================
+    let estimatedTimeSeconds = 5;
+    let estimatedTimeDisplay = '~5 seconds';
+    if (totalNfts > 10 || cNFTCount > 5) {
+      estimatedTimeSeconds = 20;
+      estimatedTimeDisplay = '~20 seconds';
+    } else if (totalNfts > 5 || cNFTCount > 2) {
+      estimatedTimeSeconds = 10;
+      estimatedTimeDisplay = '~10 seconds';
+    }
+
+    // ========================================
+    // 5. CALCULATE NETWORK FEES
+    // ========================================
+    // Solana signature fee: 5,000 lamports = 0.000005 SOL per signature
+    // Atomic swaps typically use 3 signatures = 15,000 lamports = 0.000015 SOL
+    const baseFee = 0.00002; // 3-4 signatures worth as buffer
+    const perRegularNFTFee = 0.000005; // Small buffer per SPL/Core NFT
+    const perCNFTFee = 0.00002; // Higher buffer per cNFT (more compute)
+    const networkFeeSol = baseFee + (regularNFTCount * perRegularNFTFee) + (cNFTCount * perCNFTFee);
+
+    // ========================================
+    // 6. CALCULATE PLATFORM FEE
+    // ========================================
+    // Check for zero-fee API key
+    const hasValidApiKey = apiKey && apiKey.trim().length > 0;
+    
+    let platformFeeSol: number;
+    let platformFeeType: 'percentage' | 'flat' | 'zero';
+    let platformFeeRate: number;
+
+    if (hasValidApiKey) {
+      // Zero fee for API key users (validation happens on actual swap)
+      platformFeeSol = 0;
+      platformFeeType = 'zero';
+      platformFeeRate = 0;
+    } else if (totalSolAmount > 0) {
+      // Percentage-based fee for SOL swaps (1% with 0.001 SOL minimum)
+      platformFeeSol = Math.max(totalSolAmount * 0.01, 0.001);
+      platformFeeType = 'percentage';
+      platformFeeRate = 0.01;
+    } else {
+      // Flat fee for NFT-only swaps
+      platformFeeSol = 0.005;
+      platformFeeType = 'flat';
+      platformFeeRate = 0.005;
+    }
+    const platformFeeUSD = solPriceUSD ? platformFeeSol * solPriceUSD : null;
+
+    // ========================================
+    // 7. ESTIMATE TRANSACTION SIZE
+    // ========================================
+    const exceedsMultiAssetLimit = totalMakerNfts > 1 || totalTakerNfts > 1;
+
+    // Base accounts
+    const numSigners = 3;
+    let numAccounts = 10; // Base accounts
+
+    // SPL NFT accounts (3 per NFT)
+    numAccounts += (makerSplNfts.length + takerSplNfts.length) * 3;
+
+    // cNFT accounts (5 per side if any cNFTs)
+    if (makerCnfts.length > 0) numAccounts += 5;
+    if (takerCnfts.length > 0) numAccounts += 5;
+
+    // Core NFT accounts (3 per NFT)
+    numAccounts += (makerCoreNfts.length + takerCoreNfts.length) * 3;
+
+    // ========================================
+    // 7a. FETCH ACTUAL cNFT PROOF DATA
+    // ========================================
+    // Instead of worst-case estimates, fetch actual proof nodes from DAS API
+    let makerProofNodes = 0;
+    let takerProofNodes = 0;
+    let cnftSizeWarning: string | null = null;
+    const cnftProofDetails: Array<{
+      side: 'maker' | 'taker';
+      assetId: string;
+      proofNodes: number;
+      canopyDepth: number | null;
+      fetched: boolean;
+    }> = [];
+
+    // Collect all cNFT asset IDs that need proof fetching
+    const allCnftIds: string[] = [
+      ...makerCnfts.map(c => c.mint),
+      ...takerCnfts.map(c => c.mint),
+    ];
+
+    // Fetch actual proofs if we have cNFTs
+    if (allCnftIds.length > 0) {
+      console.log(`[Quote] Fetching proof data for ${allCnftIds.length} cNFT(s)...`);
+      const proofMap = await fetchMultipleCnftProofs(allCnftIds);
+      
+      // Process maker cNFTs
+      for (const cnft of makerCnfts) {
+        const proofInfo = proofMap.get(cnft.mint);
+        if (proofInfo && proofInfo.success) {
+          makerProofNodes += proofInfo.proofNodes;
+          cnftProofDetails.push({
+            side: 'maker',
+            assetId: cnft.mint,
+            proofNodes: proofInfo.proofNodes,
+            canopyDepth: proofInfo.canopyDepth,
+            fetched: true,
+          });
+        } else {
+          // Fallback to client-provided or worst case
+          const nodes = cnft.proofNodes ?? 14;
+          makerProofNodes += nodes;
+          cnftProofDetails.push({
+            side: 'maker',
+            assetId: cnft.mint,
+            proofNodes: nodes,
+            canopyDepth: null,
+            fetched: false,
+          });
+          if (!cnft.proofNodes) {
+            cnftSizeWarning = 'Could not fetch proof data for some cNFTs. Using worst-case estimate (14 nodes).';
+          }
+        }
+      }
+      
+      // Process taker cNFTs
+      for (const cnft of takerCnfts) {
+        const proofInfo = proofMap.get(cnft.mint);
+        if (proofInfo && proofInfo.success) {
+          takerProofNodes += proofInfo.proofNodes;
+          cnftProofDetails.push({
+            side: 'taker',
+            assetId: cnft.mint,
+            proofNodes: proofInfo.proofNodes,
+            canopyDepth: proofInfo.canopyDepth,
+            fetched: true,
+          });
+        } else {
+          const nodes = cnft.proofNodes ?? 14;
+          takerProofNodes += nodes;
+          cnftProofDetails.push({
+            side: 'taker',
+            assetId: cnft.mint,
+            proofNodes: nodes,
+            canopyDepth: null,
+            fetched: false,
+          });
+          if (!cnft.proofNodes) {
+            cnftSizeWarning = 'Could not fetch proof data for some cNFTs. Using worst-case estimate (14 nodes).';
+          }
+        }
+      }
+    }
+
+    numAccounts += makerProofNodes + takerProofNodes;
+
+    // Calculate sizes
+    const signatureSize = 64 * numSigners;
+    // Account keys: for NON-ALT estimate, include ALL accounts
+    const accountKeySize = 32 * numAccounts;
+    const instructionDataSize = 150;
+    const proofBaseSize = 108; // root + hashes + nonce + index PER cNFT
+    // Proof data = base overhead PER cNFT + 32 bytes per proof node
+    const makerProofDataSize = makerCnfts.length > 0 ? (proofBaseSize * makerCnfts.length) + (32 * makerProofNodes) : 0;
+    const takerProofDataSize = takerCnfts.length > 0 ? (proofBaseSize * takerCnfts.length) + (32 * takerProofNodes) : 0;
+
+    const estimatedSize = signatureSize + 3 + accountKeySize + 4 + instructionDataSize + makerProofDataSize + takerProofDataSize;
+    const maxSize = 1232;
+
+    // ALT savings calculation
+    // Signers and proof nodes can't use ALT - only static program/treasury addresses
+    const accountsNotInALT = numSigners + makerProofNodes + takerProofNodes;
+    const accountsInALT = Math.min(Math.max(0, numAccounts - accountsNotInALT), ACTUAL_ALT_ADDRESSES);
+    const altSavings = accountsInALT * 31; // Save 31 bytes per account (32 byte key -> 1 byte index)
+    const estimatedSizeWithALT = estimatedSize - altSavings + 32; // +32 for ALT address reference
+
+    const willFit = estimatedSize <= maxSize;
+    const willFitWithALT = estimatedSizeWithALT <= maxSize;
+
+    // ALT availability
+    const altAddress = process.env.PRODUCTION_ALT_ADDRESS || process.env.STAGING_ALT_ADDRESS;
+    const altAvailable = !!altAddress;
+    const useALT = !willFit && willFitWithALT && altAvailable && !exceedsMultiAssetLimit;
+
+    // ========================================
+    // 8. DETERMINE STATUS AND WARNINGS
+    // ========================================
+    let transactionStatus: 'ok' | 'alt_required' | 'near_limit' | 'too_large';
+    let warnings: string[] = [];
+    
+    // Check if we successfully fetched all proofs
+    const allProofsFetched = cnftProofDetails.every(d => d.fetched);
+    const totalProofNodes = makerProofNodes + takerProofNodes;
+
+    if (exceedsMultiAssetLimit) {
+      transactionStatus = 'too_large';
+      warnings.push('Current program only supports 1 NFT per side. Multi-NFT swaps require program upgrade.');
+    } else if (!willFit && !willFitWithALT) {
+      transactionStatus = 'too_large';
+      if (totalProofNodes > 0) {
+        // Provide specific info about proof nodes
+        const proofInfo = cnftProofDetails.map(d => {
+          const canopyInfo = d.canopyDepth !== null ? `, canopy: ${d.canopyDepth}` : '';
+          const fetchStatus = d.fetched ? '✓' : '⚠️';
+          return `${fetchStatus} ${d.assetId.slice(0, 8)}...: ${d.proofNodes} nodes${canopyInfo}`;
+        }).join('\n');
+        
+        if (allProofsFetched) {
+          // We have accurate data
+          warnings.push(`cNFT requires ${totalProofNodes} proof node(s) which exceeds the ~7 node limit for atomic swaps. This cNFT's Merkle tree has insufficient canopy depth. Try an SPL NFT instead.\n\nDetails:\n${proofInfo}`);
+        } else {
+          warnings.push(`cNFT estimated at ${totalProofNodes} proof nodes. Most cNFTs exceed the ~7 node limit for atomic swaps. Try an SPL NFT instead.`);
+        }
+      } else {
+        warnings.push('Transaction exceeds size limit even with Address Lookup Table.');
+      }
+    } else if (!willFit && willFitWithALT) {
+      transactionStatus = 'alt_required';
+    } else if ((estimatedSize / maxSize) > 0.8) {
+      transactionStatus = 'near_limit';
+    } else {
+      transactionStatus = 'ok';
+    }
+
+    // Add info about proof nodes if cNFTs are involved and we fetched proofs successfully
+    if (cnftProofDetails.length > 0 && allProofsFetched && transactionStatus !== 'too_large') {
+      const totalCnfts = cnftProofDetails.length;
+      const avgProofNodes = (totalProofNodes / totalCnfts).toFixed(1);
+      const canopyInfo = cnftProofDetails
+        .filter(d => d.canopyDepth !== null)
+        .map(d => d.canopyDepth)
+        .join(', ');
+      
+      if (canopyInfo) {
+        warnings.push(`cNFT proof verified: ${totalProofNodes} total nodes (avg ${avgProofNodes}/cNFT). Tree canopy depth: ${canopyInfo}`);
+      }
+    } else if (cnftSizeWarning) {
+      warnings.push(cnftSizeWarning);
+    }
+
+    // ========================================
+    // 9. FORMAT RESPONSE
+    // ========================================
+    // Format SOL with appropriate decimal places based on value
+    // Small values (< 0.0001) need more decimals to show meaningful numbers
+    const formatSolDisplay = (sol: number): string => {
+      if (sol === 0) return '0';
+      if (sol >= 0.01) return sol.toFixed(4);       // 0.0100 SOL
+      if (sol >= 0.0001) return sol.toFixed(5);     // 0.00010 SOL
+      return sol.toFixed(6);                         // 0.000001 SOL (for very small fees)
+    };
+
+    // Format USD with appropriate decimal places based on value
+    // Small values need more decimals (e.g., $0.003 instead of $0.00)
+    const formatUsdDisplay = (usd: number): string => {
+      if (usd === 0) return '0.00';
+      if (usd >= 1) return usd.toFixed(2);          // $1.00
+      if (usd >= 0.01) return usd.toFixed(3);       // $0.010
+      if (usd >= 0.001) return usd.toFixed(4);      // $0.0010
+      return usd.toFixed(5);                         // $0.00001 (for very small fees)
+    };
+
+    const formatSolWithUSD = (sol: number) => {
+      const usdValue = solPriceUSD ? sol * solPriceUSD : null;
+      return {
+        sol,
+        lamports: Math.round(sol * LAMPORTS_PER_SOL),
+        usd: usdValue,
+        display: usdValue !== null
+          ? `${formatSolDisplay(sol)} SOL (~$${formatUsdDisplay(usdValue)} USD)`
+          : `${formatSolDisplay(sol)} SOL`,
+      };
+    };
+
+    res.json({
+      success: true,
+      data: {
+        // Price data
+        solPriceUSD,
+
+        // Asset summary
+        maker: {
+          assets: makerAssets,
+          assetCount: totalMakerNfts,
+          sol: makerSolAmount > 0 ? formatSolWithUSD(makerSolAmount) : null,
+          breakdown: {
+            splNfts: makerSplNfts.length,
+            cNfts: makerCnfts.length,
+            coreNfts: makerCoreNfts.length,
+          },
+        },
+        taker: {
+          assets: takerAssets,
+          assetCount: totalTakerNfts,
+          sol: takerSolAmount > 0 ? formatSolWithUSD(takerSolAmount) : null,
+          breakdown: {
+            splNfts: takerSplNfts.length,
+            cNfts: takerCnfts.length,
+            coreNfts: takerCoreNfts.length,
+          },
+        },
+
+        // Timing
+        estimatedTime: {
+          seconds: estimatedTimeSeconds,
+          display: estimatedTimeDisplay,
+        },
+
+        // Fees
+        networkFee: {
+          ...formatSolWithUSD(networkFeeSol),
+          display: `~${formatSolWithUSD(networkFeeSol).display}`,
+        },
+        platformFee: {
+          ...formatSolWithUSD(platformFeeSol),
+          type: platformFeeType,
+          rate: platformFeeRate,
+          label: platformFeeType === 'zero'
+            ? 'Platform Fee (API Key):'
+            : platformFeeType === 'percentage'
+              ? 'Platform Fee (1%):'
+              : 'Platform Fee (flat):',
+          display: platformFeeType === 'zero'
+            ? '0 SOL (zero fee) 🎉'
+            : platformFeeType === 'flat'
+              ? `${formatSolWithUSD(platformFeeSol).display} (flat fee)`
+              : formatSolWithUSD(platformFeeSol).display,
+        },
+
+        // Transaction size
+        transactionSize: {
+          estimated: estimatedSize,
+          estimatedWithALT: willFitWithALT ? estimatedSizeWithALT : null,
+          maxSize,
+          willFit: exceedsMultiAssetLimit ? false : willFit,
+          willFitWithALT: exceedsMultiAssetLimit ? false : willFitWithALT,
+          altAvailable,
+          useALT,
+          altSavings: useALT ? altSavings : null,
+          status: transactionStatus,
+          breakdown: {
+            signatures: signatureSize,
+            accounts: accountKeySize,
+            instructions: instructionDataSize + 4,
+            cnftProofs: makerProofDataSize + takerProofDataSize,
+          },
+          details: {
+            numSigners,
+            numAccounts,
+            makerProofNodes,
+            takerProofNodes,
+          },
+          // Detailed cNFT proof info (if any cNFTs)
+          cnftProofDetails: cnftProofDetails.length > 0 ? cnftProofDetails : undefined,
+        },
+
+        // Warnings
+        warnings,
+
+        // Can proceed with swap?
+        canSwap: transactionStatus !== 'too_large' && !exceedsMultiAssetLimit,
+      },
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('Error generating quote:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to generate quote',
       timestamp: new Date().toISOString(),
     });
   }

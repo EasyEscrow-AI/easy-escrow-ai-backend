@@ -27,6 +27,7 @@ anchor-lang = { workspace = true }
 anchor-spl = { workspace = true }
 solana-security-txt = "1.1.1"
 mpl-bubblegum = { workspace = true }
+mpl-core = { workspace = true }
 
 [dev-dependencies]
 # Lightweight testing - no integration test framework needed

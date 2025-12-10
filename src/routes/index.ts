@@ -21,6 +21,7 @@ import offersRoutes from './offers.routes';
 import testRoutes from './test.routes';
 import testExecuteRoutes from './test-execute.routes';
 import authorizedAppsRoutes from './admin/authorized-apps.routes';
+import noncePoolAdminRoutes from './admin/nonce-pool.routes';
 
 export { 
   // agreementRoutes, // DISABLED: Migrated to atomic swap
@@ -32,6 +33,7 @@ export {
   offersRoutes,
   testRoutes,
   testExecuteRoutes,
-  authorizedAppsRoutes
+  authorizedAppsRoutes,
+  noncePoolAdminRoutes,
 };
 

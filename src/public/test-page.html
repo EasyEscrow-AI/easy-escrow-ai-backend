@@ -721,6 +721,101 @@
             color: #667eea;
         }
 
+        /* Transaction Size Display Styles */
+        .modal-tx-size-container {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .tx-size-info {
+            font-size: 0.8rem;
+        }
+
+        .tx-size-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tx-size-label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .tx-size-value {
+            font-family: monospace;
+            font-size: 0.85rem;
+        }
+
+        .tx-size-status {
+            font-weight: 600;
+        }
+
+        .tx-size-bar-container {
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .tx-size-bar {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .tx-alt-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            background: #fef3c7;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+
+        .alt-badge {
+            background: #f59e0b;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+
+        .alt-size {
+            color: #92400e;
+            font-family: monospace;
+        }
+
+        .tx-size-breakdown {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            color: #666;
+            font-size: 0.75rem;
+        }
+
+        .tx-size-breakdown span {
+            background: #f3f4f6;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+
+        .tx-size-container .loading {
+            color: #666;
+            font-style: italic;
+        }
+
+        .tx-size-container .error {
+            color: #ef4444;
+        }
+
         .modal-actions {
             display: flex;
             gap: 15px;
@@ -1145,6 +1240,7 @@
                     <button class="filter-btn active" data-wallet="maker" data-filter="all">All</button>
                     <button class="filter-btn" data-wallet="maker" data-filter="spl">SPL Only</button>
                     <button class="filter-btn" data-wallet="maker" data-filter="cnft">cNFT Only</button>
+                    <button class="filter-btn" data-wallet="maker" data-filter="core">Core Only</button>
                 </div>
                 <input type="text" class="nft-search-box" id="maker-search" placeholder="🔍 Search by name or ID...">
                 <div class="nft-grid" id="maker-nfts">
@@ -1179,6 +1275,7 @@
                     <button class="filter-btn active" data-wallet="taker" data-filter="all">All</button>
                     <button class="filter-btn" data-wallet="taker" data-filter="spl">SPL Only</button>
                     <button class="filter-btn" data-wallet="taker" data-filter="cnft">cNFT Only</button>
+                    <button class="filter-btn" data-wallet="taker" data-filter="core">Core Only</button>
                 </div>
                 <input type="text" class="nft-search-box" id="taker-search" placeholder="🔍 Search by name or ID...">
                 <div class="nft-grid" id="taker-nfts">
@@ -1265,6 +1362,9 @@
                     <span class="modal-info-label" id="modal-platform-fee-label">Platform Fee:</span>
                     <span class="modal-info-value" id="modal-platform-fee">1% (0.01 SOL min)</span>
                 </div>
+                
+                <!-- Transaction Size Estimate -->
+                <div id="modal-tx-size-container" class="modal-tx-size-container"></div>
             </div>
             
             <div class="modal-actions">
