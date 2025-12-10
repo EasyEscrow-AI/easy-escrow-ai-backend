@@ -296,10 +296,43 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
           preflightCommitment: 'confirmed',
         });
         
-        // Wait for confirmation
-        await connection.confirmTransaction(signature, 'confirmed');
+        // Wait for confirmation AND check for errors
+        const confirmation = await connection.confirmTransaction(signature, 'confirmed');
         
-        console.log(`✅ TRANSACTION CONFIRMED on attempt ${attempt}!`);
+        // CRITICAL: Check if transaction had errors (program errors are NOT thrown by confirmTransaction!)
+        // A transaction can be "confirmed" but still have failed at the program level
+        if (confirmation.value.err) {
+          const errorJson = JSON.stringify(confirmation.value.err);
+          console.error('❌ Transaction confirmed but FAILED with program error:', errorJson);
+          
+          // Parse error to give a better message
+          let errorMessage = `Transaction failed: ${errorJson}`;
+          const err = confirmation.value.err as any;
+          
+          // Check for custom program error (InstructionError with Custom code)
+          if (err.InstructionError) {
+            const [instructionIndex, errorDetail] = err.InstructionError;
+            if (errorDetail?.Custom !== undefined) {
+              errorMessage = `Program error: Instruction #${instructionIndex + 1} failed with custom error code ${errorDetail.Custom}`;
+              
+              // Try to provide helpful context based on known error codes
+              const errorCodes: { [key: number]: string } = {
+                0: 'Unauthorized',
+                24: 'MissingCoreAsset - Core NFT asset account is missing',
+                25: 'MissingMplCoreProgram - The mpl-core program account is missing from the transaction',
+                26: 'InvalidMplCoreProgram - Wrong mpl-core program ID provided',
+              };
+              
+              if (errorCodes[errorDetail.Custom]) {
+                errorMessage += ` (${errorCodes[errorDetail.Custom]})`;
+              }
+            }
+          }
+          
+          throw new Error(errorMessage);
+        }
+        
+        console.log(`✅ TRANSACTION CONFIRMED AND SUCCEEDED on attempt ${attempt}!`);
         console.log('   Signature:', signature);
         const explorerUrl = isMainnet 
           ? `https://solscan.io/tx/${signature}`
