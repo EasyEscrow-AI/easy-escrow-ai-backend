@@ -331,7 +331,8 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
           if (err.InstructionError) {
             const [instructionIndex, errorDetail] = err.InstructionError;
             if (errorDetail?.Custom !== undefined) {
-              customErrorCode = errorDetail.Custom;
+              const code = errorDetail.Custom as number;
+              customErrorCode = code;
               
               // Try to provide helpful context based on known error codes
               const errorCodes: { [key: number]: string } = {
@@ -342,8 +343,8 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
                 26: 'InvalidMplCoreProgram - Wrong mpl-core program ID provided',
               };
               
-              const errorName = errorCodes[customErrorCode] || `Unknown error code ${customErrorCode}`;
-              errorMessage = `Program error: Instruction #${instructionIndex + 1} failed with custom error code ${customErrorCode} (${errorName})`;
+              const errorName = errorCodes[code] || `Unknown error code ${code}`;
+              errorMessage = `Program error: Instruction #${instructionIndex + 1} failed with custom error code ${code} (${errorName})`;
             }
           }
           
