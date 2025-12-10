@@ -1,0 +1,107 @@
+# Task ID: 43
+# Title: Remove 1-NFT-Per-Side Restriction in OfferManager for Bulk Swap Support
+# Status: pending
+# Dependencies: 41
+# Priority: high
+# Description: Update the OfferManager service to support bulk NFT swaps by removing the 1-NFT-per-side limitation and implementing support for up to 10 assets per side with proper validation and fee calculation.
+# Details:
+Implement bulk swap support in OfferManager with the following comprehensive updates:
+
+1. **Remove Multi-Asset Restrictions**:
+   - Update createOffer() method in src/services/offerManager.ts to remove existing 1-NFT-per-side validation
+   - Replace single asset validation with array-based asset validation logic
+   - Ensure backward compatibility with existing single-asset offers
+
+2. **Implement New Asset Limits**:
+   - Add MAX_ASSETS_PER_SIDE constant set to 10 for both offered and requested assets
+   - Implement validation to reject offers exceeding the 10-asset limit per side
+   - Add clear error messages for limit violations
+
+3. **Enhanced Asset Validation**:
+   - Update asset validation logic to handle arrays of multiple assets (NFTs, cNFTs, SOL)
+   - Implement validation for mixed asset type combinations (cNFT + standard NFT + SOL)
+   - Ensure each asset in the array passes individual validation (ownership, metadata, proof data for cNFTs)
+   - Add duplicate asset detection within the same offer side
+
+4. **Bulk Fee Calculation Integration**:
+   - Update fee calculation calls to handle multiple assets by summing individual asset values
+   - Integrate with existing FeeCalculator service to process bulk asset arrays
+   - Ensure proper fee calculation for mixed asset types (flat fees for NFTs, percentage for SOL)
+
+5. **Database Storage Optimization**:
+   - Verify SwapOffer.offeredAssets and SwapOffer.requestedAssets Json fields handle bulk arrays
+   - Update offer serialization/deserialization to properly handle multi-asset structures
+   - Ensure database queries efficiently handle bulk asset data
+
+6. **Offer Management Updates**:
+   - Update offer listing methods to display multi-asset offers with proper asset summaries
+   - Modify offer retrieval to handle bulk asset metadata and display information
+   - Update offer status tracking to account for multi-asset complexity
+
+7. **Comprehensive Validation Rules**:
+   - Implement validation for valid bulk swap combinations (ensure at least one asset per side)
+   - Add business logic validation for reasonable swap combinations
+   - Ensure total transaction size considerations for bulk swaps
+
+# Test Strategy:
+1. **Asset Limit Testing**:
+   - Test offer creation with exactly 10 assets per side and verify acceptance
+   - Test offer creation with 11+ assets per side and verify rejection with appropriate error
+   - Test various combinations (1-10 assets) to ensure all valid ranges work
+
+2. **Mixed Asset Type Validation**:
+   - Create test offers with combinations of cNFTs, standard NFTs, and SOL amounts
+   - Verify each asset type is properly validated within bulk arrays
+   - Test edge cases like all-cNFT, all-standard-NFT, and mixed combinations
+
+3. **Fee Calculation Verification**:
+   - Test bulk swap fee calculations against expected totals for various asset combinations
+   - Verify fee calculations match sum of individual asset fees
+   - Test fee cap enforcement with high-value bulk swaps
+
+4. **Database Integration Testing**:
+   - Create bulk offers and verify proper storage in SwapOffer table Json fields
+   - Test offer retrieval and ensure all assets are properly deserialized
+   - Verify offer listing displays bulk assets correctly
+
+5. **Backward Compatibility Testing**:
+   - Test existing single-asset offers continue to work without modification
+   - Verify API responses maintain consistent format for both single and bulk offers
+   - Test migration scenarios with existing single-asset offers in database
+
+6. **Error Handling and Edge Cases**:
+   - Test duplicate asset detection within same offer side
+   - Test empty asset arrays and verify proper rejection
+   - Test malformed asset data in bulk arrays and verify graceful error handling
+
+# Subtasks:
+## 1. Remove Single Asset Validation and Add MAX_ASSETS_PER_SIDE Constant [pending]
+### Dependencies: None
+### Description: Update OfferManager to remove 1-NFT-per-side restriction and add new asset limits
+### Details:
+In src/services/offerManager.ts, remove existing single asset validation logic from createOffer() method. Add MAX_ASSETS_PER_SIDE constant set to 10. Replace single asset checks with array-based validation that accepts 1-10 assets per side. Ensure backward compatibility with existing single-asset offers by handling both single asset and array inputs.
+
+## 2. Implement Multi-Asset Array Validation Logic [pending]
+### Dependencies: 43.1
+### Description: Update asset validation to handle arrays of multiple mixed asset types
+### Details:
+Enhance asset validation logic in createOffer() to process arrays of assets (NFTs, cNFTs, SOL). Implement validation for mixed asset type combinations. Ensure each asset in the array passes individual validation including ownership verification, metadata checks, and proof data validation for cNFTs. Add duplicate asset detection within the same offer side to prevent duplicate assets in a single swap.
+
+## 3. Update Fee Calculation for Bulk Asset Processing [pending]
+### Dependencies: 43.2
+### Description: Integrate bulk fee calculation with existing FeeCalculator service
+### Details:
+Update fee calculation calls in createOffer() to handle multiple assets by summing individual asset values. Integrate with existing FeeCalculator service to process bulk asset arrays. Implement proper fee calculation logic for mixed asset types (flat fees for NFTs/cNFTs, percentage-based fees for SOL). Ensure total fee calculation accounts for all assets in both offered and requested sides.
+
+## 4. Update Database Storage and Offer Serialization [pending]
+### Dependencies: 43.3
+### Description: Verify and optimize database storage for bulk asset arrays
+### Details:
+Verify SwapOffer.offeredAssets and SwapOffer.requestedAssets JSON fields properly handle bulk asset arrays. Update offer serialization/deserialization logic to handle multi-asset structures correctly. Ensure database queries efficiently process bulk asset data. Test data integrity for complex multi-asset offers with mixed types and verify proper storage and retrieval of asset metadata.
+
+## 5. Update Offer Management and Listing Methods [pending]
+### Dependencies: 43.4
+### Description: Enhance offer listing and retrieval to support multi-asset display
+### Details:
+Update offer listing methods to display multi-asset offers with proper asset summaries and metadata. Modify offer retrieval functions to handle bulk asset information efficiently. Update offer status tracking to account for multi-asset complexity. Implement proper display formatting for mixed asset types in offer listings. Ensure offer management UI can handle and display complex multi-asset swap information clearly.
+

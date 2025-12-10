@@ -1,0 +1,80 @@
+# Task ID: 58
+# Title: Implement DAS API Rate Limiting and Batched Proof Fetching
+# Status: pending
+# Dependencies: 41, 42
+# Priority: high
+# Description: Implement rate limiting, batching, and caching for DAS API proof fetching to handle bulk cNFT swaps with 10+ assets without hitting API rate limits.
+# Details:
+Implement comprehensive rate limiting and batching for DAS API proof fetching with the following components:
+
+1. **Rate Limiting Infrastructure in CnftService**:
+   - Add rate limiter using p-limit library with configurable concurrent request limit (default 5)
+   - Implement request queue with priority handling for proof fetching operations
+   - Add configurable delay between batched requests (200-500ms) to respect API limits
+   - Create RateLimitConfig interface with maxConcurrent, batchSize, and delayMs properties
+
+2. **Batched Proof Fetching Implementation**:
+   - Implement batchedGetCnftProofs(assetIds: string[], batchSize: number = 3) method
+   - Process proof requests in groups of 3-5 with configurable delays between batches
+   - Use Promise.allSettled() for concurrent processing within each batch
+   - Add proper error handling for individual proof fetch failures without failing entire batch
+
+3. **Proof Caching with TTL**:
+   - Implement in-memory proof cache using Map with TTL support (30-60 seconds)
+   - Create ProofCacheEntry interface with proof data, timestamp, and expiry
+   - Add cache cleanup mechanism to prevent memory leaks
+   - Implement cache hit/miss metrics for monitoring
+
+4. **Retry Logic with Exponential Backoff**:
+   - Add retry mechanism for 429 rate limit errors with exponential backoff (1s, 2s, 4s, 8s)
+   - Implement maximum retry attempts (3-5) with configurable backoff multiplier
+   - Handle different error types (network, rate limit, invalid proof) with appropriate retry strategies
+   - Add circuit breaker pattern for persistent API failures
+
+5. **Bulk Transaction Building Enhancement**:
+   - Create bulkBuildTransferParams(assetIds: string[]) method in CnftService
+   - Integrate batched proof fetching with transaction building workflow
+   - Optimize proof fetching order based on transaction grouping requirements
+   - Add progress tracking and cancellation support for long-running bulk operations
+
+6. **Metrics and Monitoring**:
+   - Add comprehensive logging for proof fetch latency, cache hit rates, and rate limit encounters
+   - Implement performance metrics collection (average fetch time, batch processing time)
+   - Add error rate tracking and alerting for API failures
+   - Create dashboard-ready metrics for monitoring bulk swap performance
+
+7. **Configuration and Environment Support**:
+   - Add environment-specific rate limiting configuration (dev vs prod)
+   - Implement feature flags for enabling/disabling batching and caching
+   - Add configuration validation and fallback to safe defaults
+
+# Test Strategy:
+1. **Rate Limiting Verification**:
+   - Test concurrent proof fetching with 10+ simultaneous requests and verify max 5 concurrent limit is enforced
+   - Measure request timing to confirm batching delays are applied correctly
+   - Test rate limit recovery after 429 errors with exponential backoff timing verification
+
+2. **Batched Proof Fetching Testing**:
+   - Test batchedGetCnftProofs() with various batch sizes (3, 5, 10 assets) and verify correct grouping
+   - Test mixed success/failure scenarios within batches using mock DAS API responses
+   - Verify proof data integrity and completeness across all batched requests
+
+3. **Caching Functionality Testing**:
+   - Test proof cache hit/miss scenarios with repeated requests for same assets
+   - Verify TTL expiration by testing cache misses after 60+ seconds
+   - Test cache memory management with large numbers of cached proofs (100+ entries)
+
+4. **Error Handling and Retry Testing**:
+   - Mock 429 rate limit responses and verify exponential backoff retry behavior
+   - Test maximum retry limit enforcement and final failure handling
+   - Test network timeout scenarios and appropriate error propagation
+
+5. **Bulk Operation Integration Testing**:
+   - Test bulkBuildTransferParams() with 10+ cNFTs and verify efficient proof fetching
+   - Measure end-to-end performance improvement compared to sequential proof fetching
+   - Test cancellation of long-running bulk operations and proper resource cleanup
+
+6. **Performance and Monitoring Testing**:
+   - Verify metrics collection accuracy for latency, cache hit rates, and error rates
+   - Test logging output for rate limit hits and performance bottlenecks
+   - Load test with 20+ concurrent bulk swap operations to verify system stability

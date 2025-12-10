@@ -1,0 +1,75 @@
+# Task ID: 61
+# Title: Create Frontend Integration Guide for Bulk cNFT Swaps
+# Status: pending
+# Dependencies: 54, 44, 60
+# Priority: medium
+# Description: Create comprehensive frontend documentation for integrating bulk cNFT swap functionality including API response handling, transaction group management, bundle status polling, and error recovery patterns.
+# Details:
+Implement comprehensive frontend integration documentation for bulk cNFT swap functionality with the following structured approach:
+
+1. **Create docs/frontend/BULK_SWAP_INTEGRATION.md**:
+   - Document API response format for multi-transaction swaps including transaction group arrays structure
+   - Explain transaction group handling with serialized transaction data and signing requirements
+   - Detail bundle status polling endpoints and confirmation flow with timing recommendations
+   - Document error handling patterns for partial failures, timeout scenarios, and recovery actions
+   - Provide progress indicator recommendations with percentage calculations and user feedback patterns
+
+2. **Document Complete Bulk Swap Flow**:
+   - POST /api/offers endpoint usage with multi-asset request format and response structure
+   - Transaction group submission process with proper signing order and batch handling
+   - Bundle status polling strategy with exponential backoff and timeout handling
+   - Partial success scenario management with individual transaction status tracking
+   - Error recovery workflows for failed bundles and retry mechanisms
+
+3. **Create TypeScript Interface Definitions**:
+   - Export BulkSwapResponse interface with transaction group arrays and metadata
+   - Define TransactionGroup interface with serialized transactions and signing requirements
+   - Create BundleStatus enum and polling response interfaces
+   - Add error response types for partial failures and timeout scenarios
+   - Include progress tracking interfaces for UI state management
+
+4. **Implement Example Code Snippets**:
+   - Complete bulk swap initiation example with proper error handling
+   - Transaction signing and submission code with batch processing
+   - Bundle status polling implementation with React hooks or vanilla JS
+   - Progress indicator component examples with real-time updates
+   - Error boundary patterns for graceful failure handling
+
+5. **Document Error Codes and Recovery Actions**:
+   - Comprehensive error code reference with descriptions and causes
+   - Recovery action matrix mapping error types to recommended user actions
+   - Retry strategy documentation with backoff algorithms and limits
+   - User messaging guidelines for different error scenarios
+   - Logging and debugging recommendations for troubleshooting
+
+6. **Create Sequence Diagrams**:
+   - End-to-end bulk swap flow from offer creation to completion
+   - Transaction group processing and bundle submission sequence
+   - Error handling and recovery flow diagrams
+   - Status polling and progress update sequences
+   - Multi-user interaction patterns for offer acceptance and counter-offers
+
+# Test Strategy:
+1. **Documentation Accuracy Verification**:
+   - Cross-reference all API response formats in BULK_SWAP_INTEGRATION.md against actual Task 54 API implementation
+   - Verify TypeScript interfaces match the backend response structures from bulk swap endpoints
+   - Test all example code snippets in a sample frontend application to ensure they compile and execute correctly
+   - Validate sequence diagrams against actual bulk swap flow implementation from Tasks 44 and 60
+
+2. **Integration Testing with Frontend Framework**:
+   - Create a test React/Next.js component using the documented integration patterns
+   - Test bulk swap initiation with 5+ assets and verify transaction group handling works as documented
+   - Implement bundle status polling using the documented approach and verify real-time updates
+   - Test error handling scenarios with simulated API failures and verify recovery actions work correctly
+
+3. **Developer Experience Validation**:
+   - Have frontend developers follow the integration guide to implement bulk swap functionality
+   - Measure time-to-implementation using the documentation and identify any gaps or unclear sections
+   - Verify that all TypeScript interfaces provide proper type safety and IDE autocompletion
+   - Test example code snippets in different frontend frameworks (React, Vue, vanilla JS) to ensure compatibility
+
+4. **Error Scenario Coverage Testing**:
+   - Test all documented error codes and verify recovery actions produce expected results
+   - Simulate partial bundle failures and verify frontend handles mixed success/failure states correctly
+   - Test timeout scenarios and verify polling stops appropriately with user feedback
+   - Validate retry mechanisms work as documented without causing duplicate transactions

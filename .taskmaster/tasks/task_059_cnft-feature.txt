@@ -1,0 +1,87 @@
+# Task ID: 59
+# Title: Implement Proof Freshness Strategy for Bulk cNFT Swaps
+# Status: pending
+# Dependencies: 42, 58
+# Priority: high
+# Description: Implement comprehensive proof freshness management for bulk cNFT swaps to prevent stale Merkle proof errors through just-in-time fetching, validation, and automatic refresh mechanisms.
+# Details:
+Implement comprehensive proof freshness strategy for bulk cNFT swaps with the following components:
+
+1. **Just-in-Time Proof Fetching in CnftService**:
+   - Modify getCnftProof() method to accept optional fetchTime parameter for tracking
+   - Implement fetchProofJIT() method that fetches proofs immediately before transaction building
+   - Add proof caching with 30-second TTL using Map<string, {proof: any, timestamp: number}>
+   - Create ProofFreshnessConfig interface with expirySeconds, maxRetries, refreshThreshold
+
+2. **Proof Validation Before Transaction Building**:
+   - Add validateProofFreshness() method in CnftService to check root matches on-chain
+   - Implement getCurrentTreeRoot() using Bubblegum program account fetching
+   - Add proof validation step in TransactionBuilder.buildAssetTransfers() before instruction creation
+   - Create ProofValidationResult interface with isValid, currentRoot, proofRoot, staleness flags
+
+3. **Automatic Proof Refresh on Stale Errors**:
+   - Implement refreshStaleProof() method with exponential backoff retry logic
+   - Add error detection for "InvalidProof" and "TreeRootMismatch" transaction errors
+   - Create proof refresh queue with priority handling for failed transactions
+   - Add ProofRefreshStrategy enum (IMMEDIATE, BATCHED, SCHEDULED)
+
+4. **Proof Expiry Timestamp Tracking**:
+   - Add proofTimestamp and expiresAt fields to proof cache entries
+   - Implement isProofStale() utility function checking 30-second expiry window
+   - Create proof cleanup job to remove expired entries from cache
+   - Add ProofMetadata interface with fetchTime, treeRoot, canopyDepth, expiresAt
+
+5. **Rebuild-Transaction Endpoint**:
+   - Create POST /api/offers/:id/rebuild-transaction endpoint in offers.routes.ts
+   - Implement rebuildFailedTransaction() method in offerManager.ts
+   - Add transaction failure reason detection and appropriate rebuild strategy
+   - Support both single transaction and bundle transaction rebuilding
+
+6. **Concurrent Tree Modification Detection**:
+   - Implement detectConcurrentModifications() using tree sequence number tracking
+   - Add tree state monitoring during bulk swap execution
+   - Create TreeStateMonitor class with real-time change detection
+   - Implement transaction sequencing to minimize proof staleness window
+
+7. **Transaction Sequencing Optimization**:
+   - Modify TransactionGroupBuilder to order transactions by proof freshness priority
+   - Implement proof-aware transaction batching with freshness scoring
+   - Add sequential execution mode for high-value swaps requiring maximum freshness
+   - Create ProofFreshnessScore calculation based on tree activity and proof age
+
+8. **Architecture Documentation**:
+   - Document proof freshness strategy in docs/PROOF_FRESHNESS_STRATEGY.md
+   - Include proof lifecycle diagrams and freshness decision trees
+   - Add troubleshooting guide for common proof staleness scenarios
+   - Document configuration options and performance tuning recommendations
+
+# Test Strategy:
+1. **Proof Freshness Validation Testing**:
+   - Test fetchProofJIT() with various timing scenarios and verify proofs are fetched within 1-2 seconds of transaction building
+   - Test proof expiry detection by creating proofs, waiting 31+ seconds, and verifying isProofStale() returns true
+   - Test validateProofFreshness() with intentionally stale proofs and verify rejection with appropriate error messages
+   - Verify proof cache TTL behavior by fetching same proof multiple times and confirming cache hits within 30 seconds
+
+2. **Automatic Refresh Mechanism Testing**:
+   - Simulate stale proof errors during transaction execution and verify refreshStaleProof() is triggered automatically
+   - Test exponential backoff retry logic with multiple consecutive failures (verify 1s, 2s, 4s, 8s delays)
+   - Test proof refresh queue priority handling with multiple failed transactions
+   - Verify successful transaction rebuilding after proof refresh completes
+
+3. **Concurrent Modification Detection Testing**:
+   - Test detectConcurrentModifications() by simulating tree state changes during bulk swap execution
+   - Verify TreeStateMonitor detects sequence number changes and triggers appropriate responses
+   - Test transaction sequencing optimization with varying proof freshness scores
+   - Verify sequential execution mode maintains proof freshness for high-value swaps
+
+4. **Rebuild Transaction Endpoint Testing**:
+   - Test POST /api/offers/:id/rebuild-transaction with various failure scenarios (stale proofs, network errors, insufficient funds)
+   - Verify rebuildFailedTransaction() correctly identifies failure reasons and applies appropriate rebuild strategies
+   - Test bundle transaction rebuilding with partial failures (some transactions succeed, others fail)
+   - Verify rebuilt transactions execute successfully after proof refresh
+
+5. **Performance and Load Testing**:
+   - Test bulk swap execution with 10+ cNFTs and verify proof freshness is maintained throughout
+   - Measure proof fetching latency and verify JIT fetching doesn't significantly impact transaction building time
+   - Test proof cache performance with 100+ concurrent proof requests
+   - Verify system handles tree modification bursts without excessive proof refresh overhead
