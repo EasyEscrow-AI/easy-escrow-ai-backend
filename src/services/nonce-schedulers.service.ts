@@ -138,7 +138,7 @@ export class NonceCleanupScheduler {
     console.log(`\n🧹 Starting nonce cleanup at ${new Date().toISOString()}`);
     
     try {
-      // NoncePoolManager.cleanup() handles the cleanup logic
+      // NoncePoolManager.cleanup() marks expired nonces and reclaims them back to pool
       const result = await this.noncePoolManager.cleanup();
       
       const duration = Date.now() - startTime;
@@ -147,17 +147,21 @@ export class NonceCleanupScheduler {
       console.log('║         Cleanup Summary                                    ║');
       console.log('╚═══════════════════════════════════════════════════════════╝');
       console.log(`✅ Completed at: ${new Date().toISOString()}`);
-      console.log(`🗑️  Nonces cleaned: ${result.cleaned}`);
+      console.log(`🏷️  Nonces marked expired: ${result.marked}`);
+      console.log(`♻️  Nonces reclaimed to pool: ${result.reclaimed}`);
+      if (result.failed > 0) {
+        console.log(`⚠️  Nonces failed to reclaim: ${result.failed}`);
+      }
       console.log(`⏱️  Duration: ${duration}ms`);
       
-      // Update tracking metrics
+      // Update tracking metrics (count reclaimed as "cleaned" since they're now available)
       this.lastRun = new Date();
       this.totalExecutions++;
-      this.totalCleaned += result.cleaned;
+      this.totalCleaned += result.reclaimed;
       this.consecutiveErrors = 0;
       
       this.isRunning = false;
-      return { success: true, cleaned: result.cleaned };
+      return { success: true, cleaned: result.reclaimed };
       
     } catch (error: any) {
       const duration = Date.now() - startTime;
