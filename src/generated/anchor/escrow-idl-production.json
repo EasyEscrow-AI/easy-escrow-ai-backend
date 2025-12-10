@@ -398,11 +398,25 @@
           "optional": true
         },
         {
+          "name": "maker_core_collection",
+          "docs": [
+            "Maker's Core NFT collection (required if maker's Core NFT belongs to a collection)"
+          ],
+          "optional": true
+        },
+        {
           "name": "taker_core_asset",
           "docs": [
             "Taker's Core NFT asset account (for Core NFT transfers)"
           ],
           "writable": true,
+          "optional": true
+        },
+        {
+          "name": "taker_core_collection",
+          "docs": [
+            "Taker's Core NFT collection (required if taker's Core NFT belongs to a collection)"
+          ],
           "optional": true
         },
         {
