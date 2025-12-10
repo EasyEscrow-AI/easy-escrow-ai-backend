@@ -715,6 +715,12 @@ interface CachedSolPrice {
   timestamp: number;
 }
 
+interface CoinGeckoResponse {
+  solana?: {
+    usd?: number;
+  };
+}
+
 let cachedSolPrice: CachedSolPrice | null = null;
 const SOL_PRICE_CACHE_TTL_MS = 60000; // 1 minute cache
 
@@ -739,7 +745,7 @@ async function fetchSolPriceUSD(): Promise<number | null> {
       return cachedSolPrice?.price || null;
     }
 
-    const data = await response.json();
+    const data = await response.json() as CoinGeckoResponse;
     if (data?.solana?.usd) {
       cachedSolPrice = {
         price: data.solana.usd,
