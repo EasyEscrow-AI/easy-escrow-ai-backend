@@ -8,7 +8,7 @@ import { connectDatabase, checkDatabaseHealth } from './config/database';
 import { connectRedis, checkRedisHealth, disconnectRedis } from './config/redis';
 // DISABLED: Agreement routes - migrated to atomic swap architecture
 // import { agreementRoutes } from './routes';
-import { expiryCancellationRoutes, webhookRoutes, receiptRoutes, transactionLogRoutes, healthRoutes, offersRoutes, testRoutes, testExecuteRoutes, authorizedAppsRoutes } from './routes';
+import { expiryCancellationRoutes, webhookRoutes, receiptRoutes, transactionLogRoutes, healthRoutes, offersRoutes, testRoutes, testExecuteRoutes, authorizedAppsRoutes, noncePoolAdminRoutes } from './routes';
 import { noncePoolManager, healthCheckService } from './routes/offers.routes';
 import {
   corsOptions,
@@ -233,6 +233,7 @@ app.use('/api/expiry-cancellation', expiryCancellationRoutes);
 app.use('/api', webhookRoutes);
 app.use('/health', healthRoutes);
 app.use(authorizedAppsRoutes); // Admin endpoints for zero-fee API key management
+app.use('/admin/nonce-pool', noncePoolAdminRoutes); // Admin endpoints for nonce pool management
 app.use(testRoutes);
 app.use(testExecuteRoutes); // ⚠️ TEST ONLY - Real swap execution with private keys
 
