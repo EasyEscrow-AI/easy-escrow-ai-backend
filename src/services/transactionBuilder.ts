@@ -622,12 +622,47 @@ export class TransactionBuilder {
     }
     
     // Determine asset types
+    // DEBUG: Log exact types for troubleshooting
+    if (inputs.makerAssets.length > 0) {
+      console.log('[TransactionBuilder] Maker asset[0] type debug:', {
+        rawType: inputs.makerAssets[0].type,
+        typeofType: typeof inputs.makerAssets[0].type,
+        isNFT: inputs.makerAssets[0].type === AssetType.NFT,
+        isCNFT: inputs.makerAssets[0].type === AssetType.CNFT,
+        isCoreNFT: inputs.makerAssets[0].type === AssetType.CORE_NFT,
+        assetTypeNFT: AssetType.NFT,
+        assetTypeCNFT: AssetType.CNFT,
+        assetTypeCoreNFT: AssetType.CORE_NFT,
+      });
+    }
+    if (inputs.takerAssets.length > 0) {
+      console.log('[TransactionBuilder] Taker asset[0] type debug:', {
+        rawType: inputs.takerAssets[0].type,
+        typeofType: typeof inputs.takerAssets[0].type,
+        isNFT: inputs.takerAssets[0].type === AssetType.NFT,
+        isCNFT: inputs.takerAssets[0].type === AssetType.CNFT,
+        isCoreNFT: inputs.takerAssets[0].type === AssetType.CORE_NFT,
+        assetTypeNFT: AssetType.NFT,
+        assetTypeCNFT: AssetType.CNFT,
+        assetTypeCoreNFT: AssetType.CORE_NFT,
+      });
+    }
+    
     const makerSendsNft = inputs.makerAssets.length > 0 && inputs.makerAssets[0].type === AssetType.NFT;
     const takerSendsNft = inputs.takerAssets.length > 0 && inputs.takerAssets[0].type === AssetType.NFT;
     const makerSendsCnft = inputs.makerAssets.length > 0 && inputs.makerAssets[0].type === AssetType.CNFT;
     const takerSendsCnft = inputs.takerAssets.length > 0 && inputs.takerAssets[0].type === AssetType.CNFT;
     const makerSendsCoreNft = inputs.makerAssets.length > 0 && inputs.makerAssets[0].type === AssetType.CORE_NFT;
     const takerSendsCoreNft = inputs.takerAssets.length > 0 && inputs.takerAssets[0].type === AssetType.CORE_NFT;
+    
+    console.log('[TransactionBuilder] Asset type detection results:', {
+      makerSendsNft,
+      takerSendsNft,
+      makerSendsCnft,
+      takerSendsCnft,
+      makerSendsCoreNft,
+      takerSendsCoreNft,
+    });
     
     // Get NFT token accounts (if applicable)
     let makerNftAccount: PublicKey | null = null;
