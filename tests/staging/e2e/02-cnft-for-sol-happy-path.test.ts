@@ -1,11 +1,14 @@
 /**
- * Atomic Swap E2E Test: cNFT (Compressed NFT) for SOL Happy Path (Staging)
+ * cNFT Swap E2E Test: cNFT (Compressed NFT) for SOL Happy Path (Staging)
+ * 
+ * NOTE: cNFT swaps use Jito bundles for multi-transaction execution,
+ * NOT single atomic transactions like standard NFT swaps.
  * 
  * Tests the complete flow of swapping a compressed NFT for SOL tokens including:
  * - Standard 1% percentage fee
  * - Fixed flat fee  
  * - Zero fee (platform pays fees)
- * - cNFT ownership verification via QuickNode indexer
+ * - cNFT ownership verification via DAS API
  * - Merkle proof validation
  */
 
@@ -32,7 +35,7 @@ const QUICKNODE_RPC = process.env.QUICKNODE_CNFT_RPC_URL;
 // Mock cNFT for testing (will be replaced with actual cNFT creation)
 const MOCK_CNFT_ASSET_ID = 'mock-cnft-asset-id-for-testing';
 
-describe('🌳 Atomic Swap E2E: cNFT for SOL - Happy Path (Staging)', () => {
+describe('🌳 cNFT Swap E2E: cNFT for SOL - Happy Path (Staging)', () => {
   let connection: Connection;
   let program: Program;
   let platformAuthority: Keypair;
@@ -43,7 +46,7 @@ describe('🌳 Atomic Swap E2E: cNFT for SOL - Happy Path (Staging)', () => {
     this.timeout(120000);
     
     console.log('\n╔══════════════════════════════════════════════════════════════╗');
-    console.log('║   ATOMIC SWAP: cNFT → SOL HAPPY PATH - STAGING SETUP        ║');
+    console.log('║   cNFT SWAP: cNFT → SOL HAPPY PATH - STAGING SETUP           ║');
     console.log('╚══════════════════════════════════════════════════════════════╝\n');
     
     // Verify QuickNode RPC is configured for cNFT support

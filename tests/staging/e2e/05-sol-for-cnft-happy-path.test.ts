@@ -1,13 +1,15 @@
 /**
- * Atomic Swap E2E Test: cNFT for Standard NFT Cross-Format Happy Path (Staging)
+ * cNFT Swap E2E Test: SOL for cNFT (Compressed NFT) Happy Path (Staging)
  * 
- * Tests the complete flow of swapping a compressed NFT for a standard NFT including:
- * - Using pre-minted test cNFT and standard NFT from test infrastructure
+ * NOTE: cNFT swaps use Jito bundles for multi-transaction execution,
+ * NOT single atomic transactions like standard NFT swaps.
+ * 
+ * Tests the complete flow of swapping SOL tokens for a compressed NFT including:
+ * - Using pre-minted test cNFT from test infrastructure
  * - cNFT ownership verification via DAS API
- * - Standard NFT ownership verification via token account queries
- * - Mixed Merkle proof and token account data
- * - Atomic swap execution with 1% platform fee
- * - Cross-format NFT transfer (Bubblegum + Token Program)
+ * - Merkle proof generation and validation
+ * - cNFT swap execution with 1% platform fee
+ * - SOL transfer and cNFT transfer using Bubblegum program
  */
 
 // Load staging environment variables FIRST
@@ -18,7 +20,6 @@ import { describe, it, before } from 'mocha';
 import { expect } from 'chai';
 import { Connection, Keypair, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { Program, AnchorProvider, Wallet } from '@coral-xyz/anchor';
-import { getAssociatedTokenAddress, getAccount } from '@solana/spl-token';
 import * as fs from 'fs';
 import * as path from 'path';
 import {
@@ -49,11 +50,10 @@ const PLATFORM_AUTHORITY_PATH = process.env.STAGING_ADMIN_PRIVATE_KEY_PATH ||
 const STAGING_API_URL = process.env.STAGING_API_URL || 'https://staging-api.easyescrow.ai';
 const ATOMIC_SWAP_API_KEY = process.env.ATOMIC_SWAP_API_KEY || '';
 
-// Asset IDs - to be loaded
+// Use pre-minted test cNFT (avoids tree creation cost)
 let testCnftAssetId: string;
-let testNftMint: PublicKey;
 
-describe('🌳🖼️  Atomic Swap E2E: cNFT → Standard NFT Cross-Format - Happy Path (Staging)', () => {
+describe('🌳 cNFT Swap E2E: SOL → cNFT - Happy Path (Staging)', () => {
   let connection: Connection;
   let program: Program;
   let platformAuthority: Keypair;
@@ -65,8 +65,8 @@ describe('🌳🖼️  Atomic Swap E2E: cNFT → Standard NFT Cross-Format - Hap
     this.timeout(120000);
     
     console.log('\n╔══════════════════════════════════════════════════════════════╗');
-    console.log('║   ATOMIC SWAP: cNFT → NFT CROSS-FORMAT - STAGING SETUP      ║');
-    console.log('║   ⚠️  REQUIRES: cNFT and Standard NFT Test Assets            ║');
+    console.log('║   ATOMIC SWAP: SOL → cNFT HAPPY PATH - STAGING SETUP        ║');
+    console.log('║   ⚠️  REQUIRES: cNFT Creation Infrastructure                 ║');
     console.log('╚══════════════════════════════════════════════════════════════╝\n');
     
     // Setup connection
@@ -107,10 +107,12 @@ describe('🌳🖼️  Atomic Swap E2E: cNFT → Standard NFT Cross-Format - Hap
     }
     
     // Load test wallets
+    // NOTE: For SOL→cNFT, the MAKER offers SOL, TAKER offers cNFT
+    // So we'll use receiver as maker (offers SOL) and sender as taker (offers cNFT)
     wallets = await loadDevnetWallets();
     console.log('\n🔑 Test Wallets:');
-    console.log(`  Maker (Sender):  ${wallets.sender.publicKey.toBase58()}`);
-    console.log(`  Taker (Receiver): ${wallets.receiver.publicKey.toBase58()}`);
+    console.log(`  Maker (Offers SOL):  ${wallets.receiver.publicKey.toBase58()}`);
+    console.log(`  Taker (Offers cNFT): ${wallets.sender.publicKey.toBase58()}`);
     
     // Verify wallet balances
     await verifyWalletBalances(connection, wallets, 0.1);
@@ -134,7 +136,7 @@ describe('🌳🖼️  Atomic Swap E2E: cNFT → Standard NFT Cross-Format - Hap
       }
 
       // Get first available test cNFT
-      const testCnft = getTestCnft(0);
+      const testCnft = getTestCnft(0); // Use first test cNFT
       testCnftAssetId = testCnft.assetId;
       
       console.log('  ✅ Using pre-minted test cNFT:');
@@ -149,10 +151,10 @@ describe('🌳🖼️  Atomic Swap E2E: cNFT → Standard NFT Cross-Format - Hap
       const currentOwner = asset?.ownership?.owner;
       
       console.log(`     Current Owner: ${currentOwner}`);
-      console.log(`     Expected Owner: ${wallets.sender.publicKey.toBase58()}`);
+      console.log(`     Expected Owner (Taker): ${wallets.sender.publicKey.toBase58()}`);
       
       if (currentOwner !== wallets.sender.publicKey.toBase58()) {
-        console.warn('  ⚠️  cNFT is not currently owned by sender!');
+        console.warn('  ⚠️  cNFT is not currently owned by taker (sender)!');
         console.warn('     This may be from a previous test. Continuing anyway...');
         console.warn('     Run: ts-node scripts/rebalance-test-cnfts-staging.ts to fix');
       } else {
@@ -166,89 +168,37 @@ describe('🌳🖼️  Atomic Swap E2E: cNFT → Standard NFT Cross-Format - Hap
       throw error;
     }
     
-    // Load standard NFT mint address
-    console.log('\n🖼️  Standard NFT Setup:');
-    console.log('  Loading test standard NFT...');
-    
-    try {
-      // Read from devnet-test-nfts.json
-      const nftConfigPath = path.join(__dirname, '../../../wallets/staging/devnet-test-nfts.json');
-      
-      if (!fs.existsSync(nftConfigPath)) {
-        throw new Error('Standard NFT config not found! Run: ts-node scripts/setup-test-nfts-staging.ts');
-      }
-      
-      const nftConfig = JSON.parse(fs.readFileSync(nftConfigPath, 'utf8'));
-      
-      if (!nftConfig.nfts || nftConfig.nfts.length === 0) {
-        throw new Error('No standard NFTs configured! Run: ts-node scripts/setup-test-nfts-staging.ts');
-      }
-      
-      // Use first NFT
-      const nft = nftConfig.nfts[0];
-      testNftMint = new PublicKey(nft.mint);
-      
-      console.log('  ✅ Using test standard NFT:');
-      console.log(`     Name: ${nft.name}`);
-      console.log(`     Mint: ${testNftMint.toBase58()}`);
-      console.log(`     Owner: ${nft.owner}`);
-      
-      // Verify taker owns the NFT
-      const takerAta = await getAssociatedTokenAddress(testNftMint, wallets.receiver.publicKey);
-      
-      try {
-        const tokenAccount = await getAccount(connection, takerAta);
-        console.log(`     Token Account: ${takerAta.toBase58()}`);
-        console.log(`     Balance: ${tokenAccount.amount.toString()}`);
-        
-        if (tokenAccount.amount < 1n) {
-          console.warn('  ⚠️  Taker does not own this NFT!');
-          console.warn('     Run: ts-node scripts/rebalance-test-nfts-staging.ts to fix');
-        } else {
-          console.log('  ✅ Taker owns standard NFT');
-        }
-      } catch (ataError) {
-        console.warn('  ⚠️  Token account not found for taker!');
-        console.warn('     Run: ts-node scripts/rebalance-test-nfts-staging.ts to fix');
-      }
-      
-    } catch (error: any) {
-      console.error('  ❌ Failed to load standard NFT:', error.message);
-      throw error;
-    }
-    
-    console.log('\n✅ Test setup complete with cNFT and standard NFT');
-    console.log('💡 Cross-format swap: Compressed → Standard NFT!\n');
+    console.log('\n✅ Test setup complete with pre-minted cNFT');
+    console.log('💡 Benefits: No tree creation cost, no minting time, no indexing wait!\n');
   });
   
-  describe('Scenario 1: cNFT for Standard NFT Cross-Format Swap', () => {
-    it('should successfully swap cNFT for standard NFT with 1% platform fee', async function() {
+  describe('Scenario 1: SOL for cNFT Swap', () => {
+    it('should successfully swap SOL for cNFT with 1% platform fee', async function() {
       this.timeout(180000);
       
-      console.log('\n📋 TEST: cNFT → Standard NFT Cross-Format with 1% Fee');
+      console.log('\n📋 TEST: SOL for cNFT with 1% Fee');
       console.log('═══════════════════════════════════════════════════════════');
       
       const idempotencyKey = generateTestAgreementId();
+      const solAmount = 0.1 * LAMPORTS_PER_SOL;
       
       console.log('\n💫 Creating Swap Offer...');
-      console.log(`  Maker: ${wallets.sender.publicKey.toBase58()} (offers cNFT)`);
+      console.log(`  Maker: ${wallets.receiver.publicKey.toBase58()} (offers ${solAmount / LAMPORTS_PER_SOL} SOL)`);
+      console.log(`  Taker: ${wallets.sender.publicKey.toBase58()} (offers cNFT)`);
       console.log(`  cNFT Asset ID: ${testCnftAssetId}`);
-      console.log(`  Taker: ${wallets.receiver.publicKey.toBase58()} (offers standard NFT)`);
-      console.log(`  Standard NFT Mint: ${testNftMint.toBase58()}`);
       console.log(`  Idempotency Key: ${idempotencyKey}`);
       
       // Step 1: Create offer via API
+      // Maker offers SOL, Taker offers cNFT
       const createResponse = await apiClient.createOffer({
-        makerWallet: wallets.sender.publicKey.toBase58(),
-        takerWallet: wallets.receiver.publicKey.toBase58(),
-        offeredAssets: [{
+        makerWallet: wallets.receiver.publicKey.toBase58(),
+        takerWallet: wallets.sender.publicKey.toBase58(),
+        offeredAssets: [], // Maker offers SOL only
+        requestedAssets: [{
           mint: testCnftAssetId,
           isCompressed: true,
         }],
-        requestedAssets: [{
-          mint: testNftMint.toBase58(),
-          isCompressed: false,
-        }],
+        offeredSol: solAmount,
         requestedSol: 0,
       }, idempotencyKey);
       
@@ -259,13 +209,15 @@ describe('🌳🖼️  Atomic Swap E2E: cNFT → Standard NFT Cross-Format - Hap
       console.log('\n✅ Swap offer created successfully');
       console.log(`  Offer ID: ${createResponse.data.offer.id}`);
       console.log(`  Status: ${createResponse.data.offer.status}`);
+      console.log(`  Maker Wallet: ${createResponse.data.offer.makerWallet}`);
+      console.log(`  Taker Wallet: ${createResponse.data.offer.takerWallet}`);
       
-      // Step 2: Accept offer via API
+      // Step 2: Accept offer via API (this builds the transaction)
       console.log('\n🤝 Step 2: Accepting offer via API...');
-      const acceptIdempotencyKey = AtomicSwapApiClient.generateIdempotencyKey('test-cnft-nft-accept');
+      const acceptIdempotencyKey = AtomicSwapApiClient.generateIdempotencyKey('test-sol-cnft-accept');
       const acceptResponse = await apiClient.acceptOffer(
         createResponse.data.offer.id,
-        wallets.receiver.publicKey.toBase58(),
+        wallets.sender.publicKey.toBase58(),
         acceptIdempotencyKey
       );
       
@@ -278,10 +230,10 @@ describe('🌳🖼️  Atomic Swap E2E: cNFT → Standard NFT Cross-Format - Hap
       // Step 3: Both parties sign and send transaction with retry for stale proofs
       console.log('\n🔏 Step 3: Signing and sending transaction (both parties)...');
       console.log('  ⚠️  CRITICAL TEST: This will verify:');
-      console.log('    - cNFT Bubblegum transfer with Merkle proof');
-      console.log('    - Standard NFT Token Program transfer');
-      console.log('    - Mixed transaction accounts (Bubblegum + Token Program)');
-      console.log('    - Atomic cross-format swap');
+      console.log('    - cNFT leaf owner is marked as signer');
+      console.log('    - Correct leaf_id is used (not node_index)');
+      console.log('    - Bubblegum transfer succeeds on-chain');
+      console.log('    - SOL transfer from maker to taker');
       
       let swapSignature: string | null = null;
       let serializedTx = acceptResponse.data.transaction.serialized;
@@ -293,23 +245,25 @@ describe('🌳🖼️  Atomic Swap E2E: cNFT → Standard NFT Cross-Format - Hap
           
           swapSignature = await AtomicSwapApiClient.signAndSendTransaction(
             serializedTx,
-            [wallets.sender, wallets.receiver],
+            [wallets.receiver, wallets.sender], // BOTH maker and taker sign
             connection
           );
           
           console.log(`✅ Swap transaction sent: ${swapSignature}`);
           displayExplorerLink(swapSignature, 'devnet');
           
+          // Wait for confirmation
           await waitForConfirmation(connection, swapSignature, 'confirmed');
           
           console.log('✅ Transaction confirmed on-chain');
-          break;
+          break; // Success!
           
         } catch (error: any) {
           const isLastAttempt = attempt === maxAttempts;
           const errorMessage = error?.message || '';
           const logs = error?.logs || [];
           
+          // Check for stale cNFT proof error
           const isStaleProof = 
             errorMessage.includes('Invalid root recomputed from proof') ||
             errorMessage.includes('Error using concurrent merkle tree') ||
@@ -325,8 +279,9 @@ describe('🌳🖼️  Atomic Swap E2E: cNFT → Standard NFT Cross-Format - Hap
           
           if (isStaleProof && !isLastAttempt) {
             console.warn(`\n  ⚠️  Stale cNFT proof detected!`);
-            console.warn(`  Rebuilding transaction with fresh proof...`);
+            console.warn(`  Rebuilding transaction with fresh proofs...`);
             
+            // Rebuild transaction with fresh proofs
             const rebuildResponse = await apiClient.rebuildTransaction(createResponse.data.offer.id);
             
             if (!rebuildResponse.success || !rebuildResponse.data) {
@@ -334,17 +289,19 @@ describe('🌳🖼️  Atomic Swap E2E: cNFT → Standard NFT Cross-Format - Hap
             }
             
             serializedTx = rebuildResponse.data.transaction.serialized;
-            console.log(`  ✅ Transaction rebuilt with fresh cNFT proof`);
+            console.log(`  ✅ Transaction rebuilt with fresh proofs`);
+            console.log(`  Waiting for proof to stabilize before retry...`);
             
             await wait(2000);
             console.log(`  Retrying with fresh transaction...`);
             continue;
           }
           
+          // Not a stale proof error, or we've exhausted retries
           if (isLastAttempt) {
             console.error(`\n❌ All ${maxAttempts} attempts exhausted`);
             if (isStaleProof) {
-              throw new Error(`cNFT proof remained stale after ${maxAttempts} attempts.`);
+              throw new Error(`cNFT proof remained stale after ${maxAttempts} attempts. High Merkle tree activity detected.`);
             }
           }
           
@@ -369,46 +326,29 @@ describe('🌳🖼️  Atomic Swap E2E: cNFT → Standard NFT Cross-Format - Hap
       
       console.log('✅ Swap execution confirmed');
       
-      // Step 5: Verify cross-format transfers
-      console.log('\n📊 Step 5: Verifying cross-format asset transfers...');
+      // Step 5: Verify cNFT ownership transferred via DAS API
+      console.log('\n📊 Step 5: Verifying cNFT ownership transfer...');
       
-      // Verify cNFT transfer via DAS API
+      // Fetch updated cNFT data
       const dasResponse = await (connection as any)._rpcRequest('getAsset', {
         id: testCnftAssetId,
       });
+      
       const updatedAsset = dasResponse.result || dasResponse;
-      const cnftNewOwner = updatedAsset.ownership.owner;
+      const newOwner = updatedAsset.ownership.owner;
       
-      console.log(`  cNFT (Compressed):`);
-      console.log(`    Previous Owner: ${wallets.sender.publicKey.toBase58()}`);
-      console.log(`    New Owner:      ${cnftNewOwner}`);
+      console.log(`  Previous Owner (Taker): ${wallets.sender.publicKey.toBase58()}`);
+      console.log(`  New Owner (Maker):      ${newOwner}`);
       
-      expect(cnftNewOwner).to.equal(
+      expect(newOwner).to.equal(
         wallets.receiver.publicKey.toBase58(),
-        'cNFT should now be owned by taker'
+        'cNFT should now be owned by maker (who offered SOL)'
       );
-      console.log('  ✅ cNFT transferred to taker');
       
-      // Verify standard NFT transfer via token account
-      const makerAta = await getAssociatedTokenAddress(testNftMint, wallets.sender.publicKey);
-      const makerTokenAccount = await getAccount(connection, makerAta);
-      
-      console.log(`\n  Standard NFT:`);
-      console.log(`    Previous Owner: ${wallets.receiver.publicKey.toBase58()}`);
-      console.log(`    New Owner:      ${wallets.sender.publicKey.toBase58()}`);
-      console.log(`    Token Balance:  ${makerTokenAccount.amount.toString()}`);
-      
-      expect(makerTokenAccount.amount).to.equal(
-        1n,
-        'Maker should now own the standard NFT'
-      );
-      console.log('  ✅ Standard NFT transferred to maker');
-      
-      console.log('\n✅ Cross-format asset transfers verified!');
-      console.log('✅ Full cNFT ↔ Standard NFT swap test completed successfully!');
-      console.log('\n💡 Note: Run rebalance scripts to restore original ownership:');
+      console.log('\n✅ cNFT ownership verified via DAS API!');
+      console.log('✅ Full SOL for cNFT swap test completed successfully!');
+      console.log('\n💡 Note: Run rebalance script to return cNFT to original owner:');
       console.log('   ts-node scripts/rebalance-test-cnfts-staging.ts');
-      console.log('   ts-node scripts/rebalance-test-nfts-staging.ts');
       console.log('═══════════════════════════════════════════════════════════\n');
     });
   });
