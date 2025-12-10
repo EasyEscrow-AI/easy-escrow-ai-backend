@@ -674,8 +674,10 @@ router.post(
 
       const errorMessage = error instanceof Error ? error.message : 'Failed to accept offer';
 
-      // Check for authorization errors
-      if (errorMessage.includes('designated taker') || errorMessage.includes('Only')) {
+      // Check for authorization errors (including private sales)
+      if (errorMessage.includes('designated taker') || 
+          errorMessage.includes('private sale') ||
+          errorMessage.includes('Only the designated taker')) {
         res.status(403).json({
           success: false,
           error: 'Forbidden',
@@ -785,8 +787,142 @@ router.post(
 );
 
 /**
+ * PUT /api/offers/:id
+ * Update an existing offer (change SOL amounts or assets)
+ * Only the maker can update, and only while offer is ACTIVE
+ */
+router.put(
+  '/api/offers/:id',
+  strictRateLimiter,
+  requiredIdempotency, // Prevent duplicate updates on retry
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const offerId = parseInt(req.params.id, 10);
+      const {
+        makerWallet,
+        offeredAssets,
+        requestedAssets,
+        offeredSol,
+        requestedSol,
+      } = req.body;
+
+      if (isNaN(offerId)) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation Error',
+          message: 'Invalid offer ID',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      if (!makerWallet) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation Error',
+          message: 'makerWallet is required',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Validate wallet address
+      try {
+        new PublicKey(makerWallet);
+      } catch (error) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation Error',
+          message: 'Invalid wallet address format',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Transform assets if provided
+      const transformAssets = (assets: any[]): Array<{ type: AssetType; identifier: string }> => {
+        return assets.map((asset) => ({
+          identifier: asset.mint,
+          type: asset.isCoreNft ? AssetType.CORE_NFT : 
+                asset.isCompressed ? AssetType.CNFT : AssetType.NFT,
+        }));
+      };
+
+      const result = await offerManager.updateOffer({
+        offerId,
+        makerWallet,
+        offeredAssets: offeredAssets ? transformAssets(offeredAssets) : undefined,
+        requestedAssets: requestedAssets ? transformAssets(requestedAssets) : undefined,
+        offeredSol: offeredSol !== undefined ? BigInt(offeredSol) : undefined,
+        requestedSol: requestedSol !== undefined ? BigInt(requestedSol) : undefined,
+      });
+
+      res.status(200).json({
+        success: true,
+        data: {
+          offer: {
+            id: result.id.toString(),
+            status: result.status,
+            makerWallet: result.makerWallet,
+            takerWallet: result.takerWallet || null,
+            offeredAssets: result.offeredAssets,
+            requestedAssets: result.requestedAssets,
+            platformFee: {
+              ...result.platformFee,
+              feeLamports: result.platformFee.feeLamports.toString(),
+              totalSwapValueLamports: result.platformFee.totalSwapValueLamports.toString(),
+            },
+            expiresAt: result.expiresAt.toISOString(),
+          },
+          message: 'Offer updated successfully',
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Error updating offer:', error);
+
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update offer';
+
+      // Check for authorization errors
+      if (errorMessage.includes('Only the maker')) {
+        res.status(403).json({
+          success: false,
+          error: 'Forbidden',
+          message: errorMessage,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Check for invalid state/validation errors
+      if (errorMessage.includes('cannot be updated') || 
+          errorMessage.includes('not found') ||
+          errorMessage.includes('expired') ||
+          errorMessage.includes('Duplicate') ||
+          errorMessage.includes('does not own')) {
+        res.status(400).json({
+          success: false,
+          error: 'Invalid Request',
+          message: errorMessage,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      res.status(500).json({
+        success: false,
+        error: 'Internal Server Error',
+        message: errorMessage,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
  * POST /api/offers/:id/cancel
- * Cancel an active offer (advances nonce to invalidate transaction)
+ * Cancel an active/accepted offer (advances nonce to invalidate transaction)
+ * Maker or Admin can cancel
  */
 router.post(
   '/api/offers/:id/cancel',
@@ -795,7 +931,7 @@ router.post(
   async (req: Request, res: Response): Promise<void> => {
     try {
       const offerId = parseInt(req.params.id, 10);
-      const { walletAddress } = req.body;
+      const { walletAddress, isAdmin } = req.body;
 
       if (isNaN(offerId)) {
         res.status(400).json({
@@ -817,12 +953,25 @@ router.post(
         return;
       }
 
-      await offerManager.cancelOffer(offerId, walletAddress);
+      // Validate admin claim - only platform authority can claim admin
+      let verifiedAdmin = false;
+      if (isAdmin) {
+        // For now, admin is verified by matching the platform authority
+        // In production, this should be enhanced with proper admin authentication
+        verifiedAdmin = walletAddress === platformAuthority.publicKey.toBase58();
+        if (!verifiedAdmin) {
+          console.warn('[Cancel] Unauthorized admin claim from:', walletAddress);
+        }
+      }
+
+      await offerManager.cancelOffer(offerId, walletAddress, verifiedAdmin);
 
       res.status(200).json({
         success: true,
         data: {
           message: `Offer ${offerId} cancelled successfully`,
+          cancelledBy: walletAddress,
+          role: verifiedAdmin ? 'admin' : 'maker',
         },
         timestamp: new Date().toISOString(),
       });
@@ -832,7 +981,7 @@ router.post(
       const errorMessage = error instanceof Error ? error.message : 'Failed to cancel offer';
 
       // Check for authorization errors
-      if (errorMessage.includes('Only maker')) {
+      if (errorMessage.includes('Only the maker or an admin can cancel')) {
         res.status(403).json({
           success: false,
           error: 'Forbidden',
@@ -843,7 +992,7 @@ router.post(
       }
 
       // Check for invalid state errors
-      if (errorMessage.includes('not active')) {
+      if (errorMessage.includes('cannot be cancelled') || errorMessage.includes('not found')) {
         res.status(400).json({
           success: false,
           error: 'Invalid Request',

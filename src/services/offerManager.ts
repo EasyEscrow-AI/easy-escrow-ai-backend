@@ -356,10 +356,19 @@ export class OfferManager {
         throw new Error('Offer has expired');
       }
       
-      // 3. Ensure taker exists
+      // 3. Check taker wallet restriction (private sales)
+      // If offer has a designated taker, only that wallet can accept
+      if (offer.takerWallet && offer.takerWallet !== takerWallet) {
+        throw new Error(
+          `This offer is a private sale for wallet ${offer.takerWallet}. ` +
+          `Only the designated taker can accept this offer.`
+        );
+      }
+      
+      // 4. Ensure taker exists
       await this.ensureUserExists(takerWallet);
       
-      // 4. Validate taker's asset ownership
+      // 5. Validate taker's asset ownership
       const requestedAssets = offer.requestedAssets as Array<{ type: AssetType; identifier: string }>;
       const takerAssetsValidation = await this.assetValidator.validateAssets(takerWallet, requestedAssets);
       
@@ -370,7 +379,7 @@ export class OfferManager {
         );
       }
       
-      // 5. Extract SOL amounts from offer
+      // 6. Extract SOL amounts from offer
       const offeredAssets = offer.offeredAssets as Array<{ type: AssetType; identifier: string }>;
       const offeredSol = offer.offeredSolLamports ? BigInt(offer.offeredSolLamports) : BigInt(0);
       const requestedSol = offer.requestedSolLamports ? BigInt(offer.requestedSolLamports) : BigInt(0);
@@ -456,9 +465,13 @@ export class OfferManager {
   
   /**
    * Cancel an offer
+   * 
+   * @param offerId - The offer ID to cancel
+   * @param walletAddress - The wallet requesting cancellation
+   * @param isAdmin - Whether the requester is an admin (can cancel any offer)
    */
-  async cancelOffer(offerId: number, walletAddress: string): Promise<void> {
-    console.log('[OfferManager] Canceling offer:', { offerId, wallet: walletAddress });
+  async cancelOffer(offerId: number, walletAddress: string, isAdmin: boolean = false): Promise<void> {
+    console.log('[OfferManager] Canceling offer:', { offerId, wallet: walletAddress, isAdmin });
     
     try {
       // 1. Load offer
@@ -470,20 +483,32 @@ export class OfferManager {
         throw new Error('Offer not found');
       }
       
-      // 2. Verify only maker can cancel
-      if (offer.makerWallet !== walletAddress) {
-        throw new Error('Only the maker can cancel this offer');
+      // 2. Verify authorization: only maker or admin can cancel
+      const isMaker = offer.makerWallet === walletAddress;
+      if (!isMaker && !isAdmin) {
+        throw new Error('Only the maker or an admin can cancel this offer');
       }
       
-      // 3. Verify offer is cancelable (only ACTIVE offers can be cancelled)
-      if (offer.status !== OfferStatus.ACTIVE) {
+      // 3. Verify offer is cancelable (ACTIVE or ACCEPTED offers can be cancelled)
+      // ACCEPTED offers have pending transactions but haven't been executed yet
+      if (offer.status !== OfferStatus.ACTIVE && offer.status !== OfferStatus.ACCEPTED) {
         throw new Error(`Offer cannot be cancelled (status: ${offer.status})`);
       }
       
       // 4. Advance nonce to invalidate any pending transactions
       await this.noncePoolManager.advanceNonce(offer.nonceAccount);
       
-      // 5. Cancel all offers using this nonce account (including both ACTIVE and ACCEPTED)
+      // 5. Update this offer as cancelled with tracking info
+      await this.prisma.swapOffer.update({
+        where: { id: offerId },
+        data: {
+          status: OfferStatus.CANCELLED,
+          cancelledAt: new Date(),
+          cancelledBy: walletAddress,
+        },
+      });
+      
+      // 6. Cancel all OTHER offers using this nonce account (including both ACTIVE and ACCEPTED)
       // ACCEPTED offers also have pending transactions that would fail with consumed nonce
       await this.prisma.swapOffer.updateMany({
         where: {
@@ -494,10 +519,15 @@ export class OfferManager {
         data: {
           status: OfferStatus.CANCELLED,
           cancelledAt: new Date(),
+          cancelledBy: walletAddress,
         },
       });
       
-      console.log('[OfferManager] Offer cancelled:', offerId);
+      console.log('[OfferManager] Offer cancelled:', {
+        offerId,
+        cancelledBy: walletAddress,
+        role: isAdmin ? 'admin' : 'maker',
+      });
     } catch (error) {
       console.error('[OfferManager] Failed to cancel offer:', error);
       throw error;
@@ -871,6 +901,200 @@ export class OfferManager {
       };
     } catch (error) {
       console.error('[OfferManager] Error creating counter-offer:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Update an existing offer (change SOL amounts or assets)
+   * Only the maker can update their own offer, and only while it's ACTIVE
+   * 
+   * @param offerId - The offer to update
+   * @param makerWallet - The maker's wallet (must match offer maker)
+   * @param updates - The fields to update
+   */
+  async updateOffer(params: {
+    offerId: number;
+    makerWallet: string;
+    offeredAssets?: Array<{ type: AssetType; identifier: string }>;
+    requestedAssets?: Array<{ type: AssetType; identifier: string }>;
+    offeredSol?: bigint;
+    requestedSol?: bigint;
+  }): Promise<OfferSummary> {
+    console.log('[OfferManager] Updating offer:', {
+      offerId: params.offerId,
+      maker: params.makerWallet,
+      hasOfferedAssets: !!params.offeredAssets,
+      hasRequestedAssets: !!params.requestedAssets,
+      hasOfferedSol: params.offeredSol !== undefined,
+      hasRequestedSol: params.requestedSol !== undefined,
+    });
+    
+    try {
+      // 1. Load offer
+      const offer = await this.prisma.swapOffer.findUnique({
+        where: { id: params.offerId },
+      });
+      
+      if (!offer) {
+        throw new Error(`Offer ${params.offerId} not found`);
+      }
+      
+      // 2. Verify maker authorization
+      if (offer.makerWallet !== params.makerWallet) {
+        throw new Error('Only the maker can update this offer');
+      }
+      
+      // 3. Verify offer is updateable (only ACTIVE offers)
+      if (offer.status !== OfferStatus.ACTIVE) {
+        throw new Error(`Offer cannot be updated (status: ${offer.status})`);
+      }
+      
+      // 4. Check expiration
+      if (offer.expiresAt < new Date()) {
+        await this.prisma.swapOffer.update({
+          where: { id: params.offerId },
+          data: { status: OfferStatus.EXPIRED },
+        });
+        throw new Error('Offer has expired');
+      }
+      
+      // 5. Merge updates with existing values
+      const currentOfferedAssets = offer.offeredAssets as Array<{ type: AssetType; identifier: string }>;
+      const currentRequestedAssets = offer.requestedAssets as Array<{ type: AssetType; identifier: string }>;
+      
+      const newOfferedAssets = params.offeredAssets ?? currentOfferedAssets;
+      const newRequestedAssets = params.requestedAssets ?? currentRequestedAssets;
+      const newOfferedSol = params.offeredSol ?? (offer.offeredSolLamports ? BigInt(offer.offeredSolLamports) : BigInt(0));
+      const newRequestedSol = params.requestedSol ?? (offer.requestedSolLamports ? BigInt(offer.requestedSolLamports) : BigInt(0));
+      
+      // 6. Validate new asset counts
+      if (newOfferedAssets.length > MAX_ASSETS_PER_SIDE) {
+        throw new Error(`Too many offered assets (${newOfferedAssets.length}). Maximum is ${MAX_ASSETS_PER_SIDE}`);
+      }
+      if (newRequestedAssets.length > MAX_ASSETS_PER_SIDE) {
+        throw new Error(`Too many requested assets (${newRequestedAssets.length}). Maximum is ${MAX_ASSETS_PER_SIDE}`);
+      }
+      
+      // 7. Validate offer still has value
+      const hasOfferedValue = newOfferedAssets.length > 0 || newOfferedSol > BigInt(0);
+      const hasRequestedValue = newRequestedAssets.length > 0 || newRequestedSol > BigInt(0);
+      
+      if (!hasOfferedValue) {
+        throw new Error('Maker must offer at least one asset or SOL');
+      }
+      if (!hasRequestedValue) {
+        throw new Error('Maker must request at least one asset or SOL');
+      }
+      
+      // 8. Check for duplicate assets
+      const offeredIdentifiers = newOfferedAssets.map(a => a.identifier.toLowerCase());
+      const offeredDuplicates = offeredIdentifiers.filter((id, idx) => offeredIdentifiers.indexOf(id) !== idx);
+      if (offeredDuplicates.length > 0) {
+        throw new Error(`Duplicate assets in offered list: ${[...new Set(offeredDuplicates)].join(', ')}`);
+      }
+      
+      const requestedIdentifiers = newRequestedAssets.map(a => a.identifier.toLowerCase());
+      const requestedDuplicates = requestedIdentifiers.filter((id, idx) => requestedIdentifiers.indexOf(id) !== idx);
+      if (requestedDuplicates.length > 0) {
+        throw new Error(`Duplicate assets in requested list: ${[...new Set(requestedDuplicates)].join(', ')}`);
+      }
+      
+      // 9. Validate maker owns any NEW offered assets
+      if (params.offeredAssets) {
+        const validation = await this.assetValidator.validateAssets(
+          params.makerWallet,
+          newOfferedAssets
+        );
+        
+        const invalidAssets = validation.filter((v) => !v.isValid);
+        if (invalidAssets.length > 0) {
+          throw new Error(
+            `Maker does not own the following assets: ${invalidAssets.map((a) => a.error).join(', ')}`
+          );
+        }
+      }
+      
+      // 10. Recalculate platform fee
+      const feeBreakdown = this.feeCalculator.calculateFee(newOfferedSol, newRequestedSol);
+      
+      // 11. Atomically update offer with status check to prevent race conditions
+      // First, lock the offer and verify it's still ACTIVE before proceeding
+      const updatedOffer = await this.prisma.$transaction(async (tx) => {
+        // Re-verify offer is still ACTIVE (prevents race condition)
+        const currentOffer = await tx.swapOffer.findUnique({
+          where: { id: params.offerId },
+        });
+        
+        if (!currentOffer || currentOffer.status !== OfferStatus.ACTIVE) {
+          throw new Error(`Offer cannot be updated (status changed to: ${currentOffer?.status || 'deleted'})`);
+        }
+        
+        // Advance nonce to invalidate any previously built transactions
+        // This ensures any signed transaction with old terms cannot be executed
+        await this.noncePoolManager.advanceNonce(offer.nonceAccount);
+        
+        // Get fresh nonce value
+        const currentNonceValue = await this.noncePoolManager.getCurrentNonce(offer.nonceAccount);
+        
+        // Update offer in database (with status check in WHERE for extra safety)
+        const result = await tx.swapOffer.updateMany({
+          where: { 
+            id: params.offerId,
+            status: OfferStatus.ACTIVE, // Only update if still ACTIVE
+          },
+          data: {
+            offeredAssets: newOfferedAssets as any,
+            requestedAssets: newRequestedAssets as any,
+            offeredSolLamports: newOfferedSol > BigInt(0) ? newOfferedSol : null,
+            requestedSolLamports: newRequestedSol > BigInt(0) ? newRequestedSol : null,
+            platformFeeLamports: feeBreakdown.feeLamports,
+            currentNonceValue,
+            serializedTransaction: null, // Clear any cached transaction
+          },
+        });
+        
+        if (result.count === 0) {
+          throw new Error('Offer was modified by another request. Please retry.');
+        }
+        
+        // Increment updateCount separately (updateMany doesn't support increment)
+        await tx.swapOffer.update({
+          where: { id: params.offerId },
+          data: { updateCount: { increment: 1 } },
+        });
+        
+        // Fetch and return the updated offer
+        return tx.swapOffer.findUnique({
+          where: { id: params.offerId },
+        });
+      });
+      
+      if (!updatedOffer) {
+        throw new Error('Failed to update offer');
+      }
+      
+      console.log('[OfferManager] Offer updated:', {
+        offerId: params.offerId,
+        updateCount: updatedOffer.updateCount,
+      });
+      
+      return {
+        id: updatedOffer.id,
+        makerWallet: updatedOffer.makerWallet,
+        takerWallet: updatedOffer.takerWallet || undefined,
+        offerType: updatedOffer.offerType,
+        status: updatedOffer.status,
+        offeredAssets: updatedOffer.offeredAssets as any[],
+        requestedAssets: updatedOffer.requestedAssets as any[],
+        platformFee: feeBreakdown,
+        nonceAccount: updatedOffer.nonceAccount,
+        expiresAt: updatedOffer.expiresAt,
+        createdAt: updatedOffer.createdAt,
+        serializedTransaction: undefined,
+      };
+    } catch (error) {
+      console.error('[OfferManager] Failed to update offer:', error);
       throw error;
     }
   }
