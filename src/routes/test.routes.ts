@@ -605,17 +605,13 @@ router.post('/api/test/estimate-size', async (req: Request, res: Response) => {
     
     // Calculate sizes more accurately
     const signatureSize = 64 * numSigners;
-    // Account keys: signers + proof nodes can't be in ALT, others might be
-    const signersAndProofAccounts = numSigners + makerProofNodes + takerProofNodes;
-    const compressibleAccounts = Math.max(0, numAccounts - signersAndProofAccounts);
-    // Static accounts not in ALT = signers + proof nodes + (others - min(others, ALT_SIZE))
-    const staticAccountKeys = signersAndProofAccounts + Math.max(0, compressibleAccounts - ACTUAL_ALT_ADDRESSES);
-    const accountKeySize = 32 * staticAccountKeys;
+    // Account keys: for NON-ALT estimate, include ALL accounts
+    const accountKeySize = 32 * numAccounts;
     const instructionDataSize = 150; // Base instruction data (more realistic)
-    const proofBaseSize = 108; // root + hashes + nonce + index per cNFT
-    // Proof data = base overhead + 32 bytes per proof node (inside instruction data)
-    const makerProofDataSize = makerCnfts.length > 0 ? (proofBaseSize + (32 * makerProofNodes)) : 0;
-    const takerProofDataSize = takerCnfts.length > 0 ? (proofBaseSize + (32 * takerProofNodes)) : 0;
+    const proofBaseSize = 108; // root + hashes + nonce + index PER cNFT
+    // Proof data = base overhead PER cNFT + 32 bytes per proof node (inside instruction data)
+    const makerProofDataSize = makerCnfts.length > 0 ? (proofBaseSize * makerCnfts.length) + (32 * makerProofNodes) : 0;
+    const takerProofDataSize = takerCnfts.length > 0 ? (proofBaseSize * takerCnfts.length) + (32 * takerProofNodes) : 0;
     
     const estimatedSize = signatureSize + 3 + accountKeySize + 4 + instructionDataSize + makerProofDataSize + takerProofDataSize;
     const maxSize = 1232;
@@ -624,10 +620,11 @@ router.post('/api/test/estimate-size', async (req: Request, res: Response) => {
     // CRITICAL: Only STATIC addresses are in the ALT (programs, treasury, authority)
     // Proof nodes for cNFTs are NOT in ALT - they're unique to each transaction
     // Our production ALT has exactly 10 addresses
-    const accountsNotInALT = numSigners + makerProofNodes + takerProofNodes; // Signers and proof nodes can't use ALT
+    // Signers and proof nodes can't use ALT
+    const accountsNotInALT = numSigners + makerProofNodes + takerProofNodes;
     const accountsInALT = Math.min(Math.max(0, numAccounts - accountsNotInALT), ACTUAL_ALT_ADDRESSES);
-    const altSavings = accountsInALT * 31;
-    const estimatedSizeWithALT = estimatedSize - altSavings + 32;
+    const altSavings = accountsInALT * 31; // Save 31 bytes per account (32 byte key -> 1 byte index)
+    const estimatedSizeWithALT = estimatedSize - altSavings + 32; // +32 for ALT address reference
     
     const willFit = estimatedSize <= maxSize;
     const willFitWithALT = estimatedSizeWithALT <= maxSize;
@@ -923,23 +920,23 @@ router.post('/api/test/quote', async (req: Request, res: Response) => {
 
     // Calculate sizes
     const signatureSize = 64 * numSigners;
-    const signersAndProofAccounts = numSigners + makerProofNodes + takerProofNodes;
-    const compressibleAccounts = Math.max(0, numAccounts - signersAndProofAccounts);
-    const staticAccountKeys = signersAndProofAccounts + Math.max(0, compressibleAccounts - ACTUAL_ALT_ADDRESSES);
-    const accountKeySize = 32 * staticAccountKeys;
+    // Account keys: for NON-ALT estimate, include ALL accounts
+    const accountKeySize = 32 * numAccounts;
     const instructionDataSize = 150;
-    const proofBaseSize = 108;
-    const makerProofDataSize = makerCnfts.length > 0 ? proofBaseSize + (32 * makerProofNodes) : 0;
-    const takerProofDataSize = takerCnfts.length > 0 ? proofBaseSize + (32 * takerProofNodes) : 0;
+    const proofBaseSize = 108; // root + hashes + nonce + index PER cNFT
+    // Proof data = base overhead PER cNFT + 32 bytes per proof node
+    const makerProofDataSize = makerCnfts.length > 0 ? (proofBaseSize * makerCnfts.length) + (32 * makerProofNodes) : 0;
+    const takerProofDataSize = takerCnfts.length > 0 ? (proofBaseSize * takerCnfts.length) + (32 * takerProofNodes) : 0;
 
     const estimatedSize = signatureSize + 3 + accountKeySize + 4 + instructionDataSize + makerProofDataSize + takerProofDataSize;
     const maxSize = 1232;
 
     // ALT savings calculation
+    // Signers and proof nodes can't use ALT - only static program/treasury addresses
     const accountsNotInALT = numSigners + makerProofNodes + takerProofNodes;
     const accountsInALT = Math.min(Math.max(0, numAccounts - accountsNotInALT), ACTUAL_ALT_ADDRESSES);
-    const altSavings = accountsInALT * 31;
-    const estimatedSizeWithALT = estimatedSize - altSavings + 32;
+    const altSavings = accountsInALT * 31; // Save 31 bytes per account (32 byte key -> 1 byte index)
+    const estimatedSizeWithALT = estimatedSize - altSavings + 32; // +32 for ALT address reference
 
     const willFit = estimatedSize <= maxSize;
     const willFitWithALT = estimatedSizeWithALT <= maxSize;
