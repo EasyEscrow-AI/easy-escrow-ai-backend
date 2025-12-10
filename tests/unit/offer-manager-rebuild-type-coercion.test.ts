@@ -49,6 +49,7 @@ describe('OfferManager.rebuildTransaction - Type Coercion', () => {
         nonceValue: 'mock-nonce',
       }),
       validateInputs: sandbox.stub(),
+      getALTService: sandbox.stub().returns(null), // Required by OfferManager constructor
     };
     const mockPlatformAuthority = Keypair.generate();
     const mockTreasuryPDA = Keypair.generate().publicKey;

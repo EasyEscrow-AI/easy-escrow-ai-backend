@@ -80,7 +80,10 @@ describe('Monitoring Services', () => {
       childLogger.info('Test message', { extra: 'data' });
 
       expect(infoStub.calledOnce).to.be.true;
-      const metadata = infoStub.firstCall.args[1];
+      // Winston logger.info can be called with (message) or (message, meta)
+      // Access args as any[] to handle both signatures
+      const args = infoStub.firstCall.args as any[];
+      const metadata = args[1] || args[0];
       expect(metadata).to.have.property('correlationId', '123');
       expect(metadata).to.have.property('userId', 'user-456');
       expect(metadata).to.have.property('extra', 'data');
