@@ -79,8 +79,9 @@ impl MockCnftAsset {
     pub fn new(owner: Pubkey, leaf_index: u32) -> Self {
         let tree = Pubkey::new_unique();
         let bubblegum_program_id = mpl_bubblegum::ID;
+        // Note: Bubblegum uses [tree_address] only, NOT [b"TreeConfig", tree_address]
         let (tree_authority, _) = Pubkey::find_program_address(
-            &[b"TreeConfig", tree.as_ref()],
+            &[tree.as_ref()],
             &bubblegum_program_id,
         );
         
