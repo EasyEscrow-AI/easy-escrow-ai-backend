@@ -12,6 +12,13 @@ import { FeeCalculator, FeeBreakdown } from './feeCalculator';
 import { AssetValidator, AssetType, ValidationResult } from './assetValidator';
 import { TransactionBuilder, SwapAsset, TransactionBuildInputs } from './transactionBuilder';
 
+// Maximum assets allowed per side of a swap (maker's offered + taker's requested)
+// Bulk swaps with multiple assets are handled via transaction splitting (Task 44)
+const MAX_ASSETS_PER_SIDE = 10;
+
+// Minimum total assets required (at least one side must have assets or SOL)
+const MIN_TOTAL_VALUE = 1;
+
 export interface CreateOfferInput {
   /** Maker wallet address */
   makerWallet: string;
@@ -103,22 +110,50 @@ export class OfferManager {
       // 1. Ensure user exists
       await this.ensureUserExists(input.makerWallet);
       
-      // 2. Validate multi-asset restriction (on-chain program limitation)
-      // Current program only supports 1 NFT per side (or NFT ↔ SOL)
-      // Multi-asset support requires program upgrade (see transactionBuilder.ts:338-343)
-      if (input.offeredAssets.length > 1) {
+      // 2. Validate asset count limits
+      // Bulk swaps with multiple assets are supported - transaction splitting handles execution
+      if (input.offeredAssets.length > MAX_ASSETS_PER_SIDE) {
         throw new Error(
-          'Multi-asset swaps are not yet supported on-chain. ' +
-          'Currently only 1 NFT per side is allowed. ' +
-          'You can offer: 1 NFT, 1 NFT + SOL, or just SOL.'
+          `Too many offered assets (${input.offeredAssets.length}). ` +
+          `Maximum is ${MAX_ASSETS_PER_SIDE} assets per side.`
         );
       }
       
-      if (input.requestedAssets.length > 1) {
+      if (input.requestedAssets.length > MAX_ASSETS_PER_SIDE) {
         throw new Error(
-          'Multi-asset swaps are not yet supported on-chain. ' +
-          'Currently only 1 NFT per side is allowed. ' +
-          'You can request: 1 NFT, 1 NFT + SOL, or just SOL.'
+          `Too many requested assets (${input.requestedAssets.length}). ` +
+          `Maximum is ${MAX_ASSETS_PER_SIDE} assets per side.`
+        );
+      }
+      
+      // 2b. Validate minimum offer value (must offer something)
+      const hasOfferedAssets = input.offeredAssets.length > 0;
+      const hasOfferedSol = (input.offeredSol || BigInt(0)) > BigInt(0);
+      const hasRequestedAssets = input.requestedAssets.length > 0;
+      const hasRequestedSol = (input.requestedSol || BigInt(0)) > BigInt(0);
+      
+      if (!hasOfferedAssets && !hasOfferedSol) {
+        throw new Error('Maker must offer at least one asset or SOL');
+      }
+      
+      if (!hasRequestedAssets && !hasRequestedSol) {
+        throw new Error('Maker must request at least one asset or SOL');
+      }
+      
+      // 2c. Check for duplicate assets within each side
+      const offeredIdentifiers = input.offeredAssets.map(a => a.identifier.toLowerCase());
+      const offeredDuplicates = offeredIdentifiers.filter((id, idx) => offeredIdentifiers.indexOf(id) !== idx);
+      if (offeredDuplicates.length > 0) {
+        throw new Error(
+          `Duplicate assets in offered list: ${[...new Set(offeredDuplicates)].join(', ')}`
+        );
+      }
+      
+      const requestedIdentifiers = input.requestedAssets.map(a => a.identifier.toLowerCase());
+      const requestedDuplicates = requestedIdentifiers.filter((id, idx) => requestedIdentifiers.indexOf(id) !== idx);
+      if (requestedDuplicates.length > 0) {
+        throw new Error(
+          `Duplicate assets in requested list: ${[...new Set(requestedDuplicates)].join(', ')}`
         );
       }
       
@@ -568,14 +603,15 @@ export class OfferManager {
       return null;
     }
     
-    // Calculate fee for display
-    const offeredSol = BigInt(0); // TODO: Extract from offer
-    const requestedSol = BigInt(0); // TODO: Extract from offer
+    // Extract SOL amounts from offer for fee display
+    const offeredSol = offer.offeredSolLamports ? BigInt(offer.offeredSolLamports) : BigInt(0);
+    const requestedSol = offer.requestedSolLamports ? BigInt(offer.requestedSolLamports) : BigInt(0);
     const feeBreakdown = this.feeCalculator.calculateFee(offeredSol, requestedSol);
     
     return {
       id: offer.id,
       makerWallet: offer.makerWallet,
+      takerWallet: offer.takerWallet || undefined,
       offerType: offer.offerType,
       status: offer.status,
       offeredAssets: offer.offeredAssets as any[],
@@ -584,6 +620,7 @@ export class OfferManager {
       nonceAccount: offer.nonceAccount,
       expiresAt: offer.expiresAt,
       createdAt: offer.createdAt,
+      serializedTransaction: offer.serializedTransaction || undefined,
     };
   }
   
@@ -620,13 +657,15 @@ export class OfferManager {
     ]);
     
     const summaries: OfferSummary[] = offers.map((offer) => {
-      const offeredSol = BigInt(0); // TODO: Extract from offer
-      const requestedSol = BigInt(0); // TODO: Extract from offer
+      // Extract SOL amounts from offer for fee display
+      const offeredSol = offer.offeredSolLamports ? BigInt(offer.offeredSolLamports) : BigInt(0);
+      const requestedSol = offer.requestedSolLamports ? BigInt(offer.requestedSolLamports) : BigInt(0);
       const feeBreakdown = this.feeCalculator.calculateFee(offeredSol, requestedSol);
       
       return {
         id: offer.id,
         makerWallet: offer.makerWallet,
+        takerWallet: offer.takerWallet || undefined,
         offerType: offer.offerType,
         status: offer.status,
         offeredAssets: offer.offeredAssets as any[],
@@ -635,6 +674,7 @@ export class OfferManager {
         nonceAccount: offer.nonceAccount,
         expiresAt: offer.expiresAt,
         createdAt: offer.createdAt,
+        serializedTransaction: offer.serializedTransaction || undefined,
       };
     });
     
