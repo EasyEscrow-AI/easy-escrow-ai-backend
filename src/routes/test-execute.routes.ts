@@ -42,10 +42,27 @@ const networkName = isMainnet ? 'mainnet-beta' : 'devnet';
 
 /**
  * Check if error is caused by stale cNFT Merkle proof
+ * 
+ * Stale proofs can be detected in multiple ways:
+ * 1. During preflight simulation: error.message or error.logs contain known indicators
+ * 2. On-chain failure: error.errorCode === 21 (StaleProof from AtomicSwapError)
+ * 3. Message contains the error code reference
  */
 function isCnftProofStaleError(error: any): boolean {
   const message = error?.message || '';
   const logs = error?.logs || [];
+  const errorCode = error?.errorCode;
+  
+  // Check for on-chain StaleProof error (error code 21)
+  // This catches errors thrown from confirmation.value.err
+  if (errorCode === 21) {
+    return true;
+  }
+  
+  // Also check if the error message mentions error code 21 (StaleProof)
+  if (message.includes('error code 21') || message.includes('StaleProof')) {
+    return true;
+  }
   
   const staleProofIndicators = [
     'Invalid root recomputed from proof',
@@ -307,29 +324,49 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
           
           // Parse error to give a better message
           let errorMessage = `Transaction failed: ${errorJson}`;
+          let customErrorCode: number | undefined;
           const err = confirmation.value.err as any;
           
           // Check for custom program error (InstructionError with Custom code)
           if (err.InstructionError) {
             const [instructionIndex, errorDetail] = err.InstructionError;
             if (errorDetail?.Custom !== undefined) {
-              errorMessage = `Program error: Instruction #${instructionIndex + 1} failed with custom error code ${errorDetail.Custom}`;
+              customErrorCode = errorDetail.Custom;
               
               // Try to provide helpful context based on known error codes
               const errorCodes: { [key: number]: string } = {
                 0: 'Unauthorized',
+                21: 'StaleProof - Merkle root has changed since proof generation',
                 24: 'MissingCoreAsset - Core NFT asset account is missing',
                 25: 'MissingMplCoreProgram - The mpl-core program account is missing from the transaction',
                 26: 'InvalidMplCoreProgram - Wrong mpl-core program ID provided',
               };
               
-              if (errorCodes[errorDetail.Custom]) {
-                errorMessage += ` (${errorCodes[errorDetail.Custom]})`;
-              }
+              const errorName = errorCodes[customErrorCode] || `Unknown error code ${customErrorCode}`;
+              errorMessage = `Program error: Instruction #${instructionIndex + 1} failed with custom error code ${customErrorCode} (${errorName})`;
             }
           }
           
-          throw new Error(errorMessage);
+          // Create error with additional properties for retry logic
+          // The stale proof check in isCnftProofStaleError needs errorCode to detect on-chain failures
+          const programError = new Error(errorMessage) as any;
+          programError.errorCode = customErrorCode;
+          
+          // Try to fetch transaction logs for debugging and stale proof detection
+          try {
+            const txInfo = await connection.getTransaction(signature, {
+              commitment: 'confirmed',
+              maxSupportedTransactionVersion: 0,
+            });
+            if (txInfo?.meta?.logMessages) {
+              programError.logs = txInfo.meta.logMessages;
+              console.error('Transaction logs:', programError.logs);
+            }
+          } catch (logError) {
+            console.warn('Could not fetch transaction logs:', logError);
+          }
+          
+          throw programError;
         }
         
         console.log(`✅ TRANSACTION CONFIRMED AND SUCCEEDED on attempt ${attempt}!`);
