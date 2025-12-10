@@ -68,6 +68,16 @@ export type SwapOffer = $Result.DefaultSelection<Prisma.$SwapOfferPayload>
  * 
  */
 export type SwapTransaction = $Result.DefaultSelection<Prisma.$SwapTransactionPayload>
+/**
+ * Model AuthorizedApp
+ * 
+ */
+export type AuthorizedApp = $Result.DefaultSelection<Prisma.$AuthorizedAppPayload>
+/**
+ * Model ZeroFeeSwapLog
+ * 
+ */
+export type ZeroFeeSwapLog = $Result.DefaultSelection<Prisma.$ZeroFeeSwapLogPayload>
 
 /**
  * Enums
@@ -459,6 +469,26 @@ export class PrismaClient<
     * ```
     */
   get swapTransaction(): Prisma.SwapTransactionDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.authorizedApp`: Exposes CRUD operations for the **AuthorizedApp** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more AuthorizedApps
+    * const authorizedApps = await prisma.authorizedApp.findMany()
+    * ```
+    */
+  get authorizedApp(): Prisma.AuthorizedAppDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.zeroFeeSwapLog`: Exposes CRUD operations for the **ZeroFeeSwapLog** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ZeroFeeSwapLogs
+    * const zeroFeeSwapLogs = await prisma.zeroFeeSwapLog.findMany()
+    * ```
+    */
+  get zeroFeeSwapLog(): Prisma.ZeroFeeSwapLogDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -909,7 +939,9 @@ export namespace Prisma {
     User: 'User',
     NoncePool: 'NoncePool',
     SwapOffer: 'SwapOffer',
-    SwapTransaction: 'SwapTransaction'
+    SwapTransaction: 'SwapTransaction',
+    AuthorizedApp: 'AuthorizedApp',
+    ZeroFeeSwapLog: 'ZeroFeeSwapLog'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -928,7 +960,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "agreement" | "deposit" | "idempotencyKey" | "settlement" | "receipt" | "transactionLog" | "webhook" | "user" | "noncePool" | "swapOffer" | "swapTransaction"
+      modelProps: "agreement" | "deposit" | "idempotencyKey" | "settlement" | "receipt" | "transactionLog" | "webhook" | "user" | "noncePool" | "swapOffer" | "swapTransaction" | "authorizedApp" | "zeroFeeSwapLog"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1746,6 +1778,154 @@ export namespace Prisma {
           }
         }
       }
+      AuthorizedApp: {
+        payload: Prisma.$AuthorizedAppPayload<ExtArgs>
+        fields: Prisma.AuthorizedAppFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.AuthorizedAppFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuthorizedAppPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.AuthorizedAppFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuthorizedAppPayload>
+          }
+          findFirst: {
+            args: Prisma.AuthorizedAppFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuthorizedAppPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.AuthorizedAppFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuthorizedAppPayload>
+          }
+          findMany: {
+            args: Prisma.AuthorizedAppFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuthorizedAppPayload>[]
+          }
+          create: {
+            args: Prisma.AuthorizedAppCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuthorizedAppPayload>
+          }
+          createMany: {
+            args: Prisma.AuthorizedAppCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.AuthorizedAppCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuthorizedAppPayload>[]
+          }
+          delete: {
+            args: Prisma.AuthorizedAppDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuthorizedAppPayload>
+          }
+          update: {
+            args: Prisma.AuthorizedAppUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuthorizedAppPayload>
+          }
+          deleteMany: {
+            args: Prisma.AuthorizedAppDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.AuthorizedAppUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.AuthorizedAppUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuthorizedAppPayload>[]
+          }
+          upsert: {
+            args: Prisma.AuthorizedAppUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuthorizedAppPayload>
+          }
+          aggregate: {
+            args: Prisma.AuthorizedAppAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateAuthorizedApp>
+          }
+          groupBy: {
+            args: Prisma.AuthorizedAppGroupByArgs<ExtArgs>
+            result: $Utils.Optional<AuthorizedAppGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.AuthorizedAppCountArgs<ExtArgs>
+            result: $Utils.Optional<AuthorizedAppCountAggregateOutputType> | number
+          }
+        }
+      }
+      ZeroFeeSwapLog: {
+        payload: Prisma.$ZeroFeeSwapLogPayload<ExtArgs>
+        fields: Prisma.ZeroFeeSwapLogFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ZeroFeeSwapLogFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ZeroFeeSwapLogPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ZeroFeeSwapLogFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ZeroFeeSwapLogPayload>
+          }
+          findFirst: {
+            args: Prisma.ZeroFeeSwapLogFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ZeroFeeSwapLogPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ZeroFeeSwapLogFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ZeroFeeSwapLogPayload>
+          }
+          findMany: {
+            args: Prisma.ZeroFeeSwapLogFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ZeroFeeSwapLogPayload>[]
+          }
+          create: {
+            args: Prisma.ZeroFeeSwapLogCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ZeroFeeSwapLogPayload>
+          }
+          createMany: {
+            args: Prisma.ZeroFeeSwapLogCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ZeroFeeSwapLogCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ZeroFeeSwapLogPayload>[]
+          }
+          delete: {
+            args: Prisma.ZeroFeeSwapLogDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ZeroFeeSwapLogPayload>
+          }
+          update: {
+            args: Prisma.ZeroFeeSwapLogUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ZeroFeeSwapLogPayload>
+          }
+          deleteMany: {
+            args: Prisma.ZeroFeeSwapLogDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ZeroFeeSwapLogUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.ZeroFeeSwapLogUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ZeroFeeSwapLogPayload>[]
+          }
+          upsert: {
+            args: Prisma.ZeroFeeSwapLogUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ZeroFeeSwapLogPayload>
+          }
+          aggregate: {
+            args: Prisma.ZeroFeeSwapLogAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateZeroFeeSwapLog>
+          }
+          groupBy: {
+            args: Prisma.ZeroFeeSwapLogGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ZeroFeeSwapLogGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ZeroFeeSwapLogCountArgs<ExtArgs>
+            result: $Utils.Optional<ZeroFeeSwapLogCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -1853,6 +2033,8 @@ export namespace Prisma {
     noncePool?: NoncePoolOmit
     swapOffer?: SwapOfferOmit
     swapTransaction?: SwapTransactionOmit
+    authorizedApp?: AuthorizedAppOmit
+    zeroFeeSwapLog?: ZeroFeeSwapLogOmit
   }
 
   /* Types for Logging */
@@ -2094,6 +2276,37 @@ export namespace Prisma {
    */
   export type SwapOfferCountOutputTypeCountCounterTransactionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: SwapTransactionWhereInput
+  }
+
+
+  /**
+   * Count Type AuthorizedAppCountOutputType
+   */
+
+  export type AuthorizedAppCountOutputType = {
+    zeroFeeSwapLogs: number
+  }
+
+  export type AuthorizedAppCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    zeroFeeSwapLogs?: boolean | AuthorizedAppCountOutputTypeCountZeroFeeSwapLogsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * AuthorizedAppCountOutputType without action
+   */
+  export type AuthorizedAppCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuthorizedAppCountOutputType
+     */
+    select?: AuthorizedAppCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * AuthorizedAppCountOutputType without action
+   */
+  export type AuthorizedAppCountOutputTypeCountZeroFeeSwapLogsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ZeroFeeSwapLogWhereInput
   }
 
 
@@ -12959,6 +13172,8 @@ export namespace Prisma {
     offeredSolLamports: number | null
     requestedSolLamports: number | null
     platformFeeLamports: number | null
+    transactionCount: number | null
+    updateCount: number | null
   }
 
   export type SwapOfferSumAggregateOutputType = {
@@ -12967,6 +13182,8 @@ export namespace Prisma {
     offeredSolLamports: bigint | null
     requestedSolLamports: bigint | null
     platformFeeLamports: bigint | null
+    transactionCount: number | null
+    updateCount: number | null
   }
 
   export type SwapOfferMinAggregateOutputType = {
@@ -12988,6 +13205,12 @@ export namespace Prisma {
     cancelledAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
+    isBulkSwap: boolean | null
+    bundleId: string | null
+    transactionCount: number | null
+    bundleStatus: string | null
+    cancelledBy: string | null
+    updateCount: number | null
   }
 
   export type SwapOfferMaxAggregateOutputType = {
@@ -13009,6 +13232,12 @@ export namespace Prisma {
     cancelledAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
+    isBulkSwap: boolean | null
+    bundleId: string | null
+    transactionCount: number | null
+    bundleStatus: string | null
+    cancelledBy: string | null
+    updateCount: number | null
   }
 
   export type SwapOfferCountAggregateOutputType = {
@@ -13032,6 +13261,12 @@ export namespace Prisma {
     cancelledAt: number
     createdAt: number
     updatedAt: number
+    isBulkSwap: number
+    bundleId: number
+    transactionCount: number
+    bundleStatus: number
+    cancelledBy: number
+    updateCount: number
     _all: number
   }
 
@@ -13042,6 +13277,8 @@ export namespace Prisma {
     offeredSolLamports?: true
     requestedSolLamports?: true
     platformFeeLamports?: true
+    transactionCount?: true
+    updateCount?: true
   }
 
   export type SwapOfferSumAggregateInputType = {
@@ -13050,6 +13287,8 @@ export namespace Prisma {
     offeredSolLamports?: true
     requestedSolLamports?: true
     platformFeeLamports?: true
+    transactionCount?: true
+    updateCount?: true
   }
 
   export type SwapOfferMinAggregateInputType = {
@@ -13071,6 +13310,12 @@ export namespace Prisma {
     cancelledAt?: true
     createdAt?: true
     updatedAt?: true
+    isBulkSwap?: true
+    bundleId?: true
+    transactionCount?: true
+    bundleStatus?: true
+    cancelledBy?: true
+    updateCount?: true
   }
 
   export type SwapOfferMaxAggregateInputType = {
@@ -13092,6 +13337,12 @@ export namespace Prisma {
     cancelledAt?: true
     createdAt?: true
     updatedAt?: true
+    isBulkSwap?: true
+    bundleId?: true
+    transactionCount?: true
+    bundleStatus?: true
+    cancelledBy?: true
+    updateCount?: true
   }
 
   export type SwapOfferCountAggregateInputType = {
@@ -13115,6 +13366,12 @@ export namespace Prisma {
     cancelledAt?: true
     createdAt?: true
     updatedAt?: true
+    isBulkSwap?: true
+    bundleId?: true
+    transactionCount?: true
+    bundleStatus?: true
+    cancelledBy?: true
+    updateCount?: true
     _all?: true
   }
 
@@ -13225,6 +13482,12 @@ export namespace Prisma {
     cancelledAt: Date | null
     createdAt: Date
     updatedAt: Date
+    isBulkSwap: boolean
+    bundleId: string | null
+    transactionCount: number
+    bundleStatus: string | null
+    cancelledBy: string | null
+    updateCount: number
     _count: SwapOfferCountAggregateOutputType | null
     _avg: SwapOfferAvgAggregateOutputType | null
     _sum: SwapOfferSumAggregateOutputType | null
@@ -13267,6 +13530,12 @@ export namespace Prisma {
     cancelledAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    isBulkSwap?: boolean
+    bundleId?: boolean
+    transactionCount?: boolean
+    bundleStatus?: boolean
+    cancelledBy?: boolean
+    updateCount?: boolean
     maker?: boolean | UserDefaultArgs<ExtArgs>
     nonce?: boolean | NoncePoolDefaultArgs<ExtArgs>
     parentOffer?: boolean | SwapOffer$parentOfferArgs<ExtArgs>
@@ -13297,6 +13566,12 @@ export namespace Prisma {
     cancelledAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    isBulkSwap?: boolean
+    bundleId?: boolean
+    transactionCount?: boolean
+    bundleStatus?: boolean
+    cancelledBy?: boolean
+    updateCount?: boolean
     maker?: boolean | UserDefaultArgs<ExtArgs>
     nonce?: boolean | NoncePoolDefaultArgs<ExtArgs>
     parentOffer?: boolean | SwapOffer$parentOfferArgs<ExtArgs>
@@ -13323,6 +13598,12 @@ export namespace Prisma {
     cancelledAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    isBulkSwap?: boolean
+    bundleId?: boolean
+    transactionCount?: boolean
+    bundleStatus?: boolean
+    cancelledBy?: boolean
+    updateCount?: boolean
     maker?: boolean | UserDefaultArgs<ExtArgs>
     nonce?: boolean | NoncePoolDefaultArgs<ExtArgs>
     parentOffer?: boolean | SwapOffer$parentOfferArgs<ExtArgs>
@@ -13349,9 +13630,15 @@ export namespace Prisma {
     cancelledAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    isBulkSwap?: boolean
+    bundleId?: boolean
+    transactionCount?: boolean
+    bundleStatus?: boolean
+    cancelledBy?: boolean
+    updateCount?: boolean
   }
 
-  export type SwapOfferOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "makerWallet" | "takerWallet" | "offerType" | "parentOfferId" | "offeredAssets" | "requestedAssets" | "offeredSolLamports" | "requestedSolLamports" | "platformFeeLamports" | "status" | "expiresAt" | "nonceAccount" | "currentNonceValue" | "serializedTransaction" | "transactionSignature" | "filledAt" | "cancelledAt" | "createdAt" | "updatedAt", ExtArgs["result"]["swapOffer"]>
+  export type SwapOfferOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "makerWallet" | "takerWallet" | "offerType" | "parentOfferId" | "offeredAssets" | "requestedAssets" | "offeredSolLamports" | "requestedSolLamports" | "platformFeeLamports" | "status" | "expiresAt" | "nonceAccount" | "currentNonceValue" | "serializedTransaction" | "transactionSignature" | "filledAt" | "cancelledAt" | "createdAt" | "updatedAt" | "isBulkSwap" | "bundleId" | "transactionCount" | "bundleStatus" | "cancelledBy" | "updateCount", ExtArgs["result"]["swapOffer"]>
   export type SwapOfferInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     maker?: boolean | UserDefaultArgs<ExtArgs>
     nonce?: boolean | NoncePoolDefaultArgs<ExtArgs>
@@ -13403,6 +13690,12 @@ export namespace Prisma {
       cancelledAt: Date | null
       createdAt: Date
       updatedAt: Date
+      isBulkSwap: boolean
+      bundleId: string | null
+      transactionCount: number
+      bundleStatus: string | null
+      cancelledBy: string | null
+      updateCount: number
     }, ExtArgs["result"]["swapOffer"]>
     composites: {}
   }
@@ -13852,6 +14145,12 @@ export namespace Prisma {
     readonly cancelledAt: FieldRef<"SwapOffer", 'DateTime'>
     readonly createdAt: FieldRef<"SwapOffer", 'DateTime'>
     readonly updatedAt: FieldRef<"SwapOffer", 'DateTime'>
+    readonly isBulkSwap: FieldRef<"SwapOffer", 'Boolean'>
+    readonly bundleId: FieldRef<"SwapOffer", 'String'>
+    readonly transactionCount: FieldRef<"SwapOffer", 'Int'>
+    readonly bundleStatus: FieldRef<"SwapOffer", 'String'>
+    readonly cancelledBy: FieldRef<"SwapOffer", 'String'>
+    readonly updateCount: FieldRef<"SwapOffer", 'Int'>
   }
     
 
@@ -14376,6 +14675,8 @@ export namespace Prisma {
     platformFeeCollectedLamports: number | null
     totalValueLamports: number | null
     gasFee: number | null
+    transactionIndex: number | null
+    bundleSlot: number | null
   }
 
   export type SwapTransactionSumAggregateOutputType = {
@@ -14385,6 +14686,8 @@ export namespace Prisma {
     platformFeeCollectedLamports: bigint | null
     totalValueLamports: bigint | null
     gasFee: bigint | null
+    transactionIndex: number | null
+    bundleSlot: bigint | null
   }
 
   export type SwapTransactionMinAggregateOutputType = {
@@ -14405,6 +14708,9 @@ export namespace Prisma {
     confirmedAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
+    bundleId: string | null
+    transactionIndex: number | null
+    bundleSlot: bigint | null
   }
 
   export type SwapTransactionMaxAggregateOutputType = {
@@ -14425,6 +14731,9 @@ export namespace Prisma {
     confirmedAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
+    bundleId: string | null
+    transactionIndex: number | null
+    bundleSlot: bigint | null
   }
 
   export type SwapTransactionCountAggregateOutputType = {
@@ -14445,6 +14754,9 @@ export namespace Prisma {
     confirmedAt: number
     createdAt: number
     updatedAt: number
+    bundleId: number
+    transactionIndex: number
+    bundleSlot: number
     _all: number
   }
 
@@ -14456,6 +14768,8 @@ export namespace Prisma {
     platformFeeCollectedLamports?: true
     totalValueLamports?: true
     gasFee?: true
+    transactionIndex?: true
+    bundleSlot?: true
   }
 
   export type SwapTransactionSumAggregateInputType = {
@@ -14465,6 +14779,8 @@ export namespace Prisma {
     platformFeeCollectedLamports?: true
     totalValueLamports?: true
     gasFee?: true
+    transactionIndex?: true
+    bundleSlot?: true
   }
 
   export type SwapTransactionMinAggregateInputType = {
@@ -14485,6 +14801,9 @@ export namespace Prisma {
     confirmedAt?: true
     createdAt?: true
     updatedAt?: true
+    bundleId?: true
+    transactionIndex?: true
+    bundleSlot?: true
   }
 
   export type SwapTransactionMaxAggregateInputType = {
@@ -14505,6 +14824,9 @@ export namespace Prisma {
     confirmedAt?: true
     createdAt?: true
     updatedAt?: true
+    bundleId?: true
+    transactionIndex?: true
+    bundleSlot?: true
   }
 
   export type SwapTransactionCountAggregateInputType = {
@@ -14525,6 +14847,9 @@ export namespace Prisma {
     confirmedAt?: true
     createdAt?: true
     updatedAt?: true
+    bundleId?: true
+    transactionIndex?: true
+    bundleSlot?: true
     _all?: true
   }
 
@@ -14632,6 +14957,9 @@ export namespace Prisma {
     confirmedAt: Date | null
     createdAt: Date
     updatedAt: Date
+    bundleId: string | null
+    transactionIndex: number
+    bundleSlot: bigint | null
     _count: SwapTransactionCountAggregateOutputType | null
     _avg: SwapTransactionAvgAggregateOutputType | null
     _sum: SwapTransactionSumAggregateOutputType | null
@@ -14671,6 +14999,9 @@ export namespace Prisma {
     confirmedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    bundleId?: boolean
+    transactionIndex?: boolean
+    bundleSlot?: boolean
     offer?: boolean | SwapOfferDefaultArgs<ExtArgs>
     counterOffer?: boolean | SwapTransaction$counterOfferArgs<ExtArgs>
     maker?: boolean | UserDefaultArgs<ExtArgs>
@@ -14695,6 +15026,9 @@ export namespace Prisma {
     confirmedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    bundleId?: boolean
+    transactionIndex?: boolean
+    bundleSlot?: boolean
     offer?: boolean | SwapOfferDefaultArgs<ExtArgs>
     counterOffer?: boolean | SwapTransaction$counterOfferArgs<ExtArgs>
     maker?: boolean | UserDefaultArgs<ExtArgs>
@@ -14719,6 +15053,9 @@ export namespace Prisma {
     confirmedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    bundleId?: boolean
+    transactionIndex?: boolean
+    bundleSlot?: boolean
     offer?: boolean | SwapOfferDefaultArgs<ExtArgs>
     counterOffer?: boolean | SwapTransaction$counterOfferArgs<ExtArgs>
     maker?: boolean | UserDefaultArgs<ExtArgs>
@@ -14743,9 +15080,12 @@ export namespace Prisma {
     confirmedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    bundleId?: boolean
+    transactionIndex?: boolean
+    bundleSlot?: boolean
   }
 
-  export type SwapTransactionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "offerId" | "counterOfferId" | "signature" | "makerWallet" | "takerWallet" | "platformFeeCollectedLamports" | "totalValueLamports" | "executedAt" | "transactionSignature" | "status" | "gasFee" | "isSubsidized" | "errorMessage" | "confirmedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["swapTransaction"]>
+  export type SwapTransactionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "offerId" | "counterOfferId" | "signature" | "makerWallet" | "takerWallet" | "platformFeeCollectedLamports" | "totalValueLamports" | "executedAt" | "transactionSignature" | "status" | "gasFee" | "isSubsidized" | "errorMessage" | "confirmedAt" | "createdAt" | "updatedAt" | "bundleId" | "transactionIndex" | "bundleSlot", ExtArgs["result"]["swapTransaction"]>
   export type SwapTransactionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     offer?: boolean | SwapOfferDefaultArgs<ExtArgs>
     counterOffer?: boolean | SwapTransaction$counterOfferArgs<ExtArgs>
@@ -14791,6 +15131,9 @@ export namespace Prisma {
       confirmedAt: Date | null
       createdAt: Date
       updatedAt: Date
+      bundleId: string | null
+      transactionIndex: number
+      bundleSlot: bigint | null
     }, ExtArgs["result"]["swapTransaction"]>
     composites: {}
   }
@@ -15235,6 +15578,9 @@ export namespace Prisma {
     readonly confirmedAt: FieldRef<"SwapTransaction", 'DateTime'>
     readonly createdAt: FieldRef<"SwapTransaction", 'DateTime'>
     readonly updatedAt: FieldRef<"SwapTransaction", 'DateTime'>
+    readonly bundleId: FieldRef<"SwapTransaction", 'String'>
+    readonly transactionIndex: FieldRef<"SwapTransaction", 'Int'>
+    readonly bundleSlot: FieldRef<"SwapTransaction", 'BigInt'>
   }
     
 
@@ -15669,6 +16015,2366 @@ export namespace Prisma {
 
 
   /**
+   * Model AuthorizedApp
+   */
+
+  export type AggregateAuthorizedApp = {
+    _count: AuthorizedAppCountAggregateOutputType | null
+    _avg: AuthorizedAppAvgAggregateOutputType | null
+    _sum: AuthorizedAppSumAggregateOutputType | null
+    _min: AuthorizedAppMinAggregateOutputType | null
+    _max: AuthorizedAppMaxAggregateOutputType | null
+  }
+
+  export type AuthorizedAppAvgAggregateOutputType = {
+    rateLimitPerDay: number | null
+    totalSwaps: number | null
+  }
+
+  export type AuthorizedAppSumAggregateOutputType = {
+    rateLimitPerDay: number | null
+    totalSwaps: number | null
+  }
+
+  export type AuthorizedAppMinAggregateOutputType = {
+    id: string | null
+    name: string | null
+    apiKey: string | null
+    description: string | null
+    active: boolean | null
+    zeroFeeEnabled: boolean | null
+    rateLimitPerDay: number | null
+    totalSwaps: number | null
+    lastUsedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type AuthorizedAppMaxAggregateOutputType = {
+    id: string | null
+    name: string | null
+    apiKey: string | null
+    description: string | null
+    active: boolean | null
+    zeroFeeEnabled: boolean | null
+    rateLimitPerDay: number | null
+    totalSwaps: number | null
+    lastUsedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type AuthorizedAppCountAggregateOutputType = {
+    id: number
+    name: number
+    apiKey: number
+    description: number
+    active: number
+    zeroFeeEnabled: number
+    rateLimitPerDay: number
+    totalSwaps: number
+    lastUsedAt: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type AuthorizedAppAvgAggregateInputType = {
+    rateLimitPerDay?: true
+    totalSwaps?: true
+  }
+
+  export type AuthorizedAppSumAggregateInputType = {
+    rateLimitPerDay?: true
+    totalSwaps?: true
+  }
+
+  export type AuthorizedAppMinAggregateInputType = {
+    id?: true
+    name?: true
+    apiKey?: true
+    description?: true
+    active?: true
+    zeroFeeEnabled?: true
+    rateLimitPerDay?: true
+    totalSwaps?: true
+    lastUsedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type AuthorizedAppMaxAggregateInputType = {
+    id?: true
+    name?: true
+    apiKey?: true
+    description?: true
+    active?: true
+    zeroFeeEnabled?: true
+    rateLimitPerDay?: true
+    totalSwaps?: true
+    lastUsedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type AuthorizedAppCountAggregateInputType = {
+    id?: true
+    name?: true
+    apiKey?: true
+    description?: true
+    active?: true
+    zeroFeeEnabled?: true
+    rateLimitPerDay?: true
+    totalSwaps?: true
+    lastUsedAt?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type AuthorizedAppAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AuthorizedApp to aggregate.
+     */
+    where?: AuthorizedAppWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AuthorizedApps to fetch.
+     */
+    orderBy?: AuthorizedAppOrderByWithRelationInput | AuthorizedAppOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: AuthorizedAppWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AuthorizedApps from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AuthorizedApps.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned AuthorizedApps
+    **/
+    _count?: true | AuthorizedAppCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: AuthorizedAppAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: AuthorizedAppSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: AuthorizedAppMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: AuthorizedAppMaxAggregateInputType
+  }
+
+  export type GetAuthorizedAppAggregateType<T extends AuthorizedAppAggregateArgs> = {
+        [P in keyof T & keyof AggregateAuthorizedApp]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateAuthorizedApp[P]>
+      : GetScalarType<T[P], AggregateAuthorizedApp[P]>
+  }
+
+
+
+
+  export type AuthorizedAppGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AuthorizedAppWhereInput
+    orderBy?: AuthorizedAppOrderByWithAggregationInput | AuthorizedAppOrderByWithAggregationInput[]
+    by: AuthorizedAppScalarFieldEnum[] | AuthorizedAppScalarFieldEnum
+    having?: AuthorizedAppScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: AuthorizedAppCountAggregateInputType | true
+    _avg?: AuthorizedAppAvgAggregateInputType
+    _sum?: AuthorizedAppSumAggregateInputType
+    _min?: AuthorizedAppMinAggregateInputType
+    _max?: AuthorizedAppMaxAggregateInputType
+  }
+
+  export type AuthorizedAppGroupByOutputType = {
+    id: string
+    name: string
+    apiKey: string
+    description: string | null
+    active: boolean
+    zeroFeeEnabled: boolean
+    rateLimitPerDay: number
+    totalSwaps: number
+    lastUsedAt: Date | null
+    createdAt: Date
+    updatedAt: Date
+    _count: AuthorizedAppCountAggregateOutputType | null
+    _avg: AuthorizedAppAvgAggregateOutputType | null
+    _sum: AuthorizedAppSumAggregateOutputType | null
+    _min: AuthorizedAppMinAggregateOutputType | null
+    _max: AuthorizedAppMaxAggregateOutputType | null
+  }
+
+  type GetAuthorizedAppGroupByPayload<T extends AuthorizedAppGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<AuthorizedAppGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof AuthorizedAppGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], AuthorizedAppGroupByOutputType[P]>
+            : GetScalarType<T[P], AuthorizedAppGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type AuthorizedAppSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    apiKey?: boolean
+    description?: boolean
+    active?: boolean
+    zeroFeeEnabled?: boolean
+    rateLimitPerDay?: boolean
+    totalSwaps?: boolean
+    lastUsedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    zeroFeeSwapLogs?: boolean | AuthorizedApp$zeroFeeSwapLogsArgs<ExtArgs>
+    _count?: boolean | AuthorizedAppCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["authorizedApp"]>
+
+  export type AuthorizedAppSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    apiKey?: boolean
+    description?: boolean
+    active?: boolean
+    zeroFeeEnabled?: boolean
+    rateLimitPerDay?: boolean
+    totalSwaps?: boolean
+    lastUsedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["authorizedApp"]>
+
+  export type AuthorizedAppSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    apiKey?: boolean
+    description?: boolean
+    active?: boolean
+    zeroFeeEnabled?: boolean
+    rateLimitPerDay?: boolean
+    totalSwaps?: boolean
+    lastUsedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["authorizedApp"]>
+
+  export type AuthorizedAppSelectScalar = {
+    id?: boolean
+    name?: boolean
+    apiKey?: boolean
+    description?: boolean
+    active?: boolean
+    zeroFeeEnabled?: boolean
+    rateLimitPerDay?: boolean
+    totalSwaps?: boolean
+    lastUsedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type AuthorizedAppOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "apiKey" | "description" | "active" | "zeroFeeEnabled" | "rateLimitPerDay" | "totalSwaps" | "lastUsedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["authorizedApp"]>
+  export type AuthorizedAppInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    zeroFeeSwapLogs?: boolean | AuthorizedApp$zeroFeeSwapLogsArgs<ExtArgs>
+    _count?: boolean | AuthorizedAppCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type AuthorizedAppIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type AuthorizedAppIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $AuthorizedAppPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "AuthorizedApp"
+    objects: {
+      zeroFeeSwapLogs: Prisma.$ZeroFeeSwapLogPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      name: string
+      apiKey: string
+      description: string | null
+      active: boolean
+      zeroFeeEnabled: boolean
+      rateLimitPerDay: number
+      totalSwaps: number
+      lastUsedAt: Date | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["authorizedApp"]>
+    composites: {}
+  }
+
+  type AuthorizedAppGetPayload<S extends boolean | null | undefined | AuthorizedAppDefaultArgs> = $Result.GetResult<Prisma.$AuthorizedAppPayload, S>
+
+  type AuthorizedAppCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<AuthorizedAppFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: AuthorizedAppCountAggregateInputType | true
+    }
+
+  export interface AuthorizedAppDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['AuthorizedApp'], meta: { name: 'AuthorizedApp' } }
+    /**
+     * Find zero or one AuthorizedApp that matches the filter.
+     * @param {AuthorizedAppFindUniqueArgs} args - Arguments to find a AuthorizedApp
+     * @example
+     * // Get one AuthorizedApp
+     * const authorizedApp = await prisma.authorizedApp.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends AuthorizedAppFindUniqueArgs>(args: SelectSubset<T, AuthorizedAppFindUniqueArgs<ExtArgs>>): Prisma__AuthorizedAppClient<$Result.GetResult<Prisma.$AuthorizedAppPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one AuthorizedApp that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {AuthorizedAppFindUniqueOrThrowArgs} args - Arguments to find a AuthorizedApp
+     * @example
+     * // Get one AuthorizedApp
+     * const authorizedApp = await prisma.authorizedApp.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends AuthorizedAppFindUniqueOrThrowArgs>(args: SelectSubset<T, AuthorizedAppFindUniqueOrThrowArgs<ExtArgs>>): Prisma__AuthorizedAppClient<$Result.GetResult<Prisma.$AuthorizedAppPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AuthorizedApp that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AuthorizedAppFindFirstArgs} args - Arguments to find a AuthorizedApp
+     * @example
+     * // Get one AuthorizedApp
+     * const authorizedApp = await prisma.authorizedApp.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends AuthorizedAppFindFirstArgs>(args?: SelectSubset<T, AuthorizedAppFindFirstArgs<ExtArgs>>): Prisma__AuthorizedAppClient<$Result.GetResult<Prisma.$AuthorizedAppPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AuthorizedApp that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AuthorizedAppFindFirstOrThrowArgs} args - Arguments to find a AuthorizedApp
+     * @example
+     * // Get one AuthorizedApp
+     * const authorizedApp = await prisma.authorizedApp.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends AuthorizedAppFindFirstOrThrowArgs>(args?: SelectSubset<T, AuthorizedAppFindFirstOrThrowArgs<ExtArgs>>): Prisma__AuthorizedAppClient<$Result.GetResult<Prisma.$AuthorizedAppPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more AuthorizedApps that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AuthorizedAppFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all AuthorizedApps
+     * const authorizedApps = await prisma.authorizedApp.findMany()
+     * 
+     * // Get first 10 AuthorizedApps
+     * const authorizedApps = await prisma.authorizedApp.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const authorizedAppWithIdOnly = await prisma.authorizedApp.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends AuthorizedAppFindManyArgs>(args?: SelectSubset<T, AuthorizedAppFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AuthorizedAppPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a AuthorizedApp.
+     * @param {AuthorizedAppCreateArgs} args - Arguments to create a AuthorizedApp.
+     * @example
+     * // Create one AuthorizedApp
+     * const AuthorizedApp = await prisma.authorizedApp.create({
+     *   data: {
+     *     // ... data to create a AuthorizedApp
+     *   }
+     * })
+     * 
+     */
+    create<T extends AuthorizedAppCreateArgs>(args: SelectSubset<T, AuthorizedAppCreateArgs<ExtArgs>>): Prisma__AuthorizedAppClient<$Result.GetResult<Prisma.$AuthorizedAppPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many AuthorizedApps.
+     * @param {AuthorizedAppCreateManyArgs} args - Arguments to create many AuthorizedApps.
+     * @example
+     * // Create many AuthorizedApps
+     * const authorizedApp = await prisma.authorizedApp.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends AuthorizedAppCreateManyArgs>(args?: SelectSubset<T, AuthorizedAppCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many AuthorizedApps and returns the data saved in the database.
+     * @param {AuthorizedAppCreateManyAndReturnArgs} args - Arguments to create many AuthorizedApps.
+     * @example
+     * // Create many AuthorizedApps
+     * const authorizedApp = await prisma.authorizedApp.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many AuthorizedApps and only return the `id`
+     * const authorizedAppWithIdOnly = await prisma.authorizedApp.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends AuthorizedAppCreateManyAndReturnArgs>(args?: SelectSubset<T, AuthorizedAppCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AuthorizedAppPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a AuthorizedApp.
+     * @param {AuthorizedAppDeleteArgs} args - Arguments to delete one AuthorizedApp.
+     * @example
+     * // Delete one AuthorizedApp
+     * const AuthorizedApp = await prisma.authorizedApp.delete({
+     *   where: {
+     *     // ... filter to delete one AuthorizedApp
+     *   }
+     * })
+     * 
+     */
+    delete<T extends AuthorizedAppDeleteArgs>(args: SelectSubset<T, AuthorizedAppDeleteArgs<ExtArgs>>): Prisma__AuthorizedAppClient<$Result.GetResult<Prisma.$AuthorizedAppPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one AuthorizedApp.
+     * @param {AuthorizedAppUpdateArgs} args - Arguments to update one AuthorizedApp.
+     * @example
+     * // Update one AuthorizedApp
+     * const authorizedApp = await prisma.authorizedApp.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends AuthorizedAppUpdateArgs>(args: SelectSubset<T, AuthorizedAppUpdateArgs<ExtArgs>>): Prisma__AuthorizedAppClient<$Result.GetResult<Prisma.$AuthorizedAppPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more AuthorizedApps.
+     * @param {AuthorizedAppDeleteManyArgs} args - Arguments to filter AuthorizedApps to delete.
+     * @example
+     * // Delete a few AuthorizedApps
+     * const { count } = await prisma.authorizedApp.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends AuthorizedAppDeleteManyArgs>(args?: SelectSubset<T, AuthorizedAppDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AuthorizedApps.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AuthorizedAppUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many AuthorizedApps
+     * const authorizedApp = await prisma.authorizedApp.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends AuthorizedAppUpdateManyArgs>(args: SelectSubset<T, AuthorizedAppUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AuthorizedApps and returns the data updated in the database.
+     * @param {AuthorizedAppUpdateManyAndReturnArgs} args - Arguments to update many AuthorizedApps.
+     * @example
+     * // Update many AuthorizedApps
+     * const authorizedApp = await prisma.authorizedApp.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more AuthorizedApps and only return the `id`
+     * const authorizedAppWithIdOnly = await prisma.authorizedApp.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends AuthorizedAppUpdateManyAndReturnArgs>(args: SelectSubset<T, AuthorizedAppUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AuthorizedAppPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one AuthorizedApp.
+     * @param {AuthorizedAppUpsertArgs} args - Arguments to update or create a AuthorizedApp.
+     * @example
+     * // Update or create a AuthorizedApp
+     * const authorizedApp = await prisma.authorizedApp.upsert({
+     *   create: {
+     *     // ... data to create a AuthorizedApp
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the AuthorizedApp we want to update
+     *   }
+     * })
+     */
+    upsert<T extends AuthorizedAppUpsertArgs>(args: SelectSubset<T, AuthorizedAppUpsertArgs<ExtArgs>>): Prisma__AuthorizedAppClient<$Result.GetResult<Prisma.$AuthorizedAppPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of AuthorizedApps.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AuthorizedAppCountArgs} args - Arguments to filter AuthorizedApps to count.
+     * @example
+     * // Count the number of AuthorizedApps
+     * const count = await prisma.authorizedApp.count({
+     *   where: {
+     *     // ... the filter for the AuthorizedApps we want to count
+     *   }
+     * })
+    **/
+    count<T extends AuthorizedAppCountArgs>(
+      args?: Subset<T, AuthorizedAppCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], AuthorizedAppCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a AuthorizedApp.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AuthorizedAppAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends AuthorizedAppAggregateArgs>(args: Subset<T, AuthorizedAppAggregateArgs>): Prisma.PrismaPromise<GetAuthorizedAppAggregateType<T>>
+
+    /**
+     * Group by AuthorizedApp.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AuthorizedAppGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends AuthorizedAppGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: AuthorizedAppGroupByArgs['orderBy'] }
+        : { orderBy?: AuthorizedAppGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, AuthorizedAppGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetAuthorizedAppGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the AuthorizedApp model
+   */
+  readonly fields: AuthorizedAppFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for AuthorizedApp.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__AuthorizedAppClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    zeroFeeSwapLogs<T extends AuthorizedApp$zeroFeeSwapLogsArgs<ExtArgs> = {}>(args?: Subset<T, AuthorizedApp$zeroFeeSwapLogsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ZeroFeeSwapLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the AuthorizedApp model
+   */
+  interface AuthorizedAppFieldRefs {
+    readonly id: FieldRef<"AuthorizedApp", 'String'>
+    readonly name: FieldRef<"AuthorizedApp", 'String'>
+    readonly apiKey: FieldRef<"AuthorizedApp", 'String'>
+    readonly description: FieldRef<"AuthorizedApp", 'String'>
+    readonly active: FieldRef<"AuthorizedApp", 'Boolean'>
+    readonly zeroFeeEnabled: FieldRef<"AuthorizedApp", 'Boolean'>
+    readonly rateLimitPerDay: FieldRef<"AuthorizedApp", 'Int'>
+    readonly totalSwaps: FieldRef<"AuthorizedApp", 'Int'>
+    readonly lastUsedAt: FieldRef<"AuthorizedApp", 'DateTime'>
+    readonly createdAt: FieldRef<"AuthorizedApp", 'DateTime'>
+    readonly updatedAt: FieldRef<"AuthorizedApp", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * AuthorizedApp findUnique
+   */
+  export type AuthorizedAppFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuthorizedApp
+     */
+    select?: AuthorizedAppSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuthorizedApp
+     */
+    omit?: AuthorizedAppOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuthorizedAppInclude<ExtArgs> | null
+    /**
+     * Filter, which AuthorizedApp to fetch.
+     */
+    where: AuthorizedAppWhereUniqueInput
+  }
+
+  /**
+   * AuthorizedApp findUniqueOrThrow
+   */
+  export type AuthorizedAppFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuthorizedApp
+     */
+    select?: AuthorizedAppSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuthorizedApp
+     */
+    omit?: AuthorizedAppOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuthorizedAppInclude<ExtArgs> | null
+    /**
+     * Filter, which AuthorizedApp to fetch.
+     */
+    where: AuthorizedAppWhereUniqueInput
+  }
+
+  /**
+   * AuthorizedApp findFirst
+   */
+  export type AuthorizedAppFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuthorizedApp
+     */
+    select?: AuthorizedAppSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuthorizedApp
+     */
+    omit?: AuthorizedAppOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuthorizedAppInclude<ExtArgs> | null
+    /**
+     * Filter, which AuthorizedApp to fetch.
+     */
+    where?: AuthorizedAppWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AuthorizedApps to fetch.
+     */
+    orderBy?: AuthorizedAppOrderByWithRelationInput | AuthorizedAppOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AuthorizedApps.
+     */
+    cursor?: AuthorizedAppWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AuthorizedApps from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AuthorizedApps.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AuthorizedApps.
+     */
+    distinct?: AuthorizedAppScalarFieldEnum | AuthorizedAppScalarFieldEnum[]
+  }
+
+  /**
+   * AuthorizedApp findFirstOrThrow
+   */
+  export type AuthorizedAppFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuthorizedApp
+     */
+    select?: AuthorizedAppSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuthorizedApp
+     */
+    omit?: AuthorizedAppOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuthorizedAppInclude<ExtArgs> | null
+    /**
+     * Filter, which AuthorizedApp to fetch.
+     */
+    where?: AuthorizedAppWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AuthorizedApps to fetch.
+     */
+    orderBy?: AuthorizedAppOrderByWithRelationInput | AuthorizedAppOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AuthorizedApps.
+     */
+    cursor?: AuthorizedAppWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AuthorizedApps from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AuthorizedApps.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AuthorizedApps.
+     */
+    distinct?: AuthorizedAppScalarFieldEnum | AuthorizedAppScalarFieldEnum[]
+  }
+
+  /**
+   * AuthorizedApp findMany
+   */
+  export type AuthorizedAppFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuthorizedApp
+     */
+    select?: AuthorizedAppSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuthorizedApp
+     */
+    omit?: AuthorizedAppOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuthorizedAppInclude<ExtArgs> | null
+    /**
+     * Filter, which AuthorizedApps to fetch.
+     */
+    where?: AuthorizedAppWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AuthorizedApps to fetch.
+     */
+    orderBy?: AuthorizedAppOrderByWithRelationInput | AuthorizedAppOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing AuthorizedApps.
+     */
+    cursor?: AuthorizedAppWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AuthorizedApps from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AuthorizedApps.
+     */
+    skip?: number
+    distinct?: AuthorizedAppScalarFieldEnum | AuthorizedAppScalarFieldEnum[]
+  }
+
+  /**
+   * AuthorizedApp create
+   */
+  export type AuthorizedAppCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuthorizedApp
+     */
+    select?: AuthorizedAppSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuthorizedApp
+     */
+    omit?: AuthorizedAppOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuthorizedAppInclude<ExtArgs> | null
+    /**
+     * The data needed to create a AuthorizedApp.
+     */
+    data: XOR<AuthorizedAppCreateInput, AuthorizedAppUncheckedCreateInput>
+  }
+
+  /**
+   * AuthorizedApp createMany
+   */
+  export type AuthorizedAppCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many AuthorizedApps.
+     */
+    data: AuthorizedAppCreateManyInput | AuthorizedAppCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * AuthorizedApp createManyAndReturn
+   */
+  export type AuthorizedAppCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuthorizedApp
+     */
+    select?: AuthorizedAppSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuthorizedApp
+     */
+    omit?: AuthorizedAppOmit<ExtArgs> | null
+    /**
+     * The data used to create many AuthorizedApps.
+     */
+    data: AuthorizedAppCreateManyInput | AuthorizedAppCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * AuthorizedApp update
+   */
+  export type AuthorizedAppUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuthorizedApp
+     */
+    select?: AuthorizedAppSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuthorizedApp
+     */
+    omit?: AuthorizedAppOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuthorizedAppInclude<ExtArgs> | null
+    /**
+     * The data needed to update a AuthorizedApp.
+     */
+    data: XOR<AuthorizedAppUpdateInput, AuthorizedAppUncheckedUpdateInput>
+    /**
+     * Choose, which AuthorizedApp to update.
+     */
+    where: AuthorizedAppWhereUniqueInput
+  }
+
+  /**
+   * AuthorizedApp updateMany
+   */
+  export type AuthorizedAppUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update AuthorizedApps.
+     */
+    data: XOR<AuthorizedAppUpdateManyMutationInput, AuthorizedAppUncheckedUpdateManyInput>
+    /**
+     * Filter which AuthorizedApps to update
+     */
+    where?: AuthorizedAppWhereInput
+    /**
+     * Limit how many AuthorizedApps to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * AuthorizedApp updateManyAndReturn
+   */
+  export type AuthorizedAppUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuthorizedApp
+     */
+    select?: AuthorizedAppSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuthorizedApp
+     */
+    omit?: AuthorizedAppOmit<ExtArgs> | null
+    /**
+     * The data used to update AuthorizedApps.
+     */
+    data: XOR<AuthorizedAppUpdateManyMutationInput, AuthorizedAppUncheckedUpdateManyInput>
+    /**
+     * Filter which AuthorizedApps to update
+     */
+    where?: AuthorizedAppWhereInput
+    /**
+     * Limit how many AuthorizedApps to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * AuthorizedApp upsert
+   */
+  export type AuthorizedAppUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuthorizedApp
+     */
+    select?: AuthorizedAppSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuthorizedApp
+     */
+    omit?: AuthorizedAppOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuthorizedAppInclude<ExtArgs> | null
+    /**
+     * The filter to search for the AuthorizedApp to update in case it exists.
+     */
+    where: AuthorizedAppWhereUniqueInput
+    /**
+     * In case the AuthorizedApp found by the `where` argument doesn't exist, create a new AuthorizedApp with this data.
+     */
+    create: XOR<AuthorizedAppCreateInput, AuthorizedAppUncheckedCreateInput>
+    /**
+     * In case the AuthorizedApp was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<AuthorizedAppUpdateInput, AuthorizedAppUncheckedUpdateInput>
+  }
+
+  /**
+   * AuthorizedApp delete
+   */
+  export type AuthorizedAppDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuthorizedApp
+     */
+    select?: AuthorizedAppSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuthorizedApp
+     */
+    omit?: AuthorizedAppOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuthorizedAppInclude<ExtArgs> | null
+    /**
+     * Filter which AuthorizedApp to delete.
+     */
+    where: AuthorizedAppWhereUniqueInput
+  }
+
+  /**
+   * AuthorizedApp deleteMany
+   */
+  export type AuthorizedAppDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AuthorizedApps to delete
+     */
+    where?: AuthorizedAppWhereInput
+    /**
+     * Limit how many AuthorizedApps to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * AuthorizedApp.zeroFeeSwapLogs
+   */
+  export type AuthorizedApp$zeroFeeSwapLogsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ZeroFeeSwapLog
+     */
+    select?: ZeroFeeSwapLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ZeroFeeSwapLog
+     */
+    omit?: ZeroFeeSwapLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ZeroFeeSwapLogInclude<ExtArgs> | null
+    where?: ZeroFeeSwapLogWhereInput
+    orderBy?: ZeroFeeSwapLogOrderByWithRelationInput | ZeroFeeSwapLogOrderByWithRelationInput[]
+    cursor?: ZeroFeeSwapLogWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ZeroFeeSwapLogScalarFieldEnum | ZeroFeeSwapLogScalarFieldEnum[]
+  }
+
+  /**
+   * AuthorizedApp without action
+   */
+  export type AuthorizedAppDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuthorizedApp
+     */
+    select?: AuthorizedAppSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuthorizedApp
+     */
+    omit?: AuthorizedAppOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuthorizedAppInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model ZeroFeeSwapLog
+   */
+
+  export type AggregateZeroFeeSwapLog = {
+    _count: ZeroFeeSwapLogCountAggregateOutputType | null
+    _avg: ZeroFeeSwapLogAvgAggregateOutputType | null
+    _sum: ZeroFeeSwapLogSumAggregateOutputType | null
+    _min: ZeroFeeSwapLogMinAggregateOutputType | null
+    _max: ZeroFeeSwapLogMaxAggregateOutputType | null
+  }
+
+  export type ZeroFeeSwapLogAvgAggregateOutputType = {
+    platformFeeBps: number | null
+    totalValueLamports: number | null
+  }
+
+  export type ZeroFeeSwapLogSumAggregateOutputType = {
+    platformFeeBps: number | null
+    totalValueLamports: bigint | null
+  }
+
+  export type ZeroFeeSwapLogMinAggregateOutputType = {
+    id: string | null
+    authorizedAppId: string | null
+    swapSignature: string | null
+    makerWallet: string | null
+    takerWallet: string | null
+    platformFeeBps: number | null
+    totalValueLamports: bigint | null
+    backendSigner: string | null
+    ipAddress: string | null
+    userAgent: string | null
+    executedAt: Date | null
+  }
+
+  export type ZeroFeeSwapLogMaxAggregateOutputType = {
+    id: string | null
+    authorizedAppId: string | null
+    swapSignature: string | null
+    makerWallet: string | null
+    takerWallet: string | null
+    platformFeeBps: number | null
+    totalValueLamports: bigint | null
+    backendSigner: string | null
+    ipAddress: string | null
+    userAgent: string | null
+    executedAt: Date | null
+  }
+
+  export type ZeroFeeSwapLogCountAggregateOutputType = {
+    id: number
+    authorizedAppId: number
+    swapSignature: number
+    makerWallet: number
+    takerWallet: number
+    platformFeeBps: number
+    totalValueLamports: number
+    backendSigner: number
+    ipAddress: number
+    userAgent: number
+    executedAt: number
+    _all: number
+  }
+
+
+  export type ZeroFeeSwapLogAvgAggregateInputType = {
+    platformFeeBps?: true
+    totalValueLamports?: true
+  }
+
+  export type ZeroFeeSwapLogSumAggregateInputType = {
+    platformFeeBps?: true
+    totalValueLamports?: true
+  }
+
+  export type ZeroFeeSwapLogMinAggregateInputType = {
+    id?: true
+    authorizedAppId?: true
+    swapSignature?: true
+    makerWallet?: true
+    takerWallet?: true
+    platformFeeBps?: true
+    totalValueLamports?: true
+    backendSigner?: true
+    ipAddress?: true
+    userAgent?: true
+    executedAt?: true
+  }
+
+  export type ZeroFeeSwapLogMaxAggregateInputType = {
+    id?: true
+    authorizedAppId?: true
+    swapSignature?: true
+    makerWallet?: true
+    takerWallet?: true
+    platformFeeBps?: true
+    totalValueLamports?: true
+    backendSigner?: true
+    ipAddress?: true
+    userAgent?: true
+    executedAt?: true
+  }
+
+  export type ZeroFeeSwapLogCountAggregateInputType = {
+    id?: true
+    authorizedAppId?: true
+    swapSignature?: true
+    makerWallet?: true
+    takerWallet?: true
+    platformFeeBps?: true
+    totalValueLamports?: true
+    backendSigner?: true
+    ipAddress?: true
+    userAgent?: true
+    executedAt?: true
+    _all?: true
+  }
+
+  export type ZeroFeeSwapLogAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ZeroFeeSwapLog to aggregate.
+     */
+    where?: ZeroFeeSwapLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ZeroFeeSwapLogs to fetch.
+     */
+    orderBy?: ZeroFeeSwapLogOrderByWithRelationInput | ZeroFeeSwapLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ZeroFeeSwapLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ZeroFeeSwapLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ZeroFeeSwapLogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ZeroFeeSwapLogs
+    **/
+    _count?: true | ZeroFeeSwapLogCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: ZeroFeeSwapLogAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ZeroFeeSwapLogSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ZeroFeeSwapLogMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ZeroFeeSwapLogMaxAggregateInputType
+  }
+
+  export type GetZeroFeeSwapLogAggregateType<T extends ZeroFeeSwapLogAggregateArgs> = {
+        [P in keyof T & keyof AggregateZeroFeeSwapLog]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateZeroFeeSwapLog[P]>
+      : GetScalarType<T[P], AggregateZeroFeeSwapLog[P]>
+  }
+
+
+
+
+  export type ZeroFeeSwapLogGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ZeroFeeSwapLogWhereInput
+    orderBy?: ZeroFeeSwapLogOrderByWithAggregationInput | ZeroFeeSwapLogOrderByWithAggregationInput[]
+    by: ZeroFeeSwapLogScalarFieldEnum[] | ZeroFeeSwapLogScalarFieldEnum
+    having?: ZeroFeeSwapLogScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ZeroFeeSwapLogCountAggregateInputType | true
+    _avg?: ZeroFeeSwapLogAvgAggregateInputType
+    _sum?: ZeroFeeSwapLogSumAggregateInputType
+    _min?: ZeroFeeSwapLogMinAggregateInputType
+    _max?: ZeroFeeSwapLogMaxAggregateInputType
+  }
+
+  export type ZeroFeeSwapLogGroupByOutputType = {
+    id: string
+    authorizedAppId: string
+    swapSignature: string
+    makerWallet: string
+    takerWallet: string
+    platformFeeBps: number
+    totalValueLamports: bigint
+    backendSigner: string
+    ipAddress: string | null
+    userAgent: string | null
+    executedAt: Date
+    _count: ZeroFeeSwapLogCountAggregateOutputType | null
+    _avg: ZeroFeeSwapLogAvgAggregateOutputType | null
+    _sum: ZeroFeeSwapLogSumAggregateOutputType | null
+    _min: ZeroFeeSwapLogMinAggregateOutputType | null
+    _max: ZeroFeeSwapLogMaxAggregateOutputType | null
+  }
+
+  type GetZeroFeeSwapLogGroupByPayload<T extends ZeroFeeSwapLogGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ZeroFeeSwapLogGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ZeroFeeSwapLogGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ZeroFeeSwapLogGroupByOutputType[P]>
+            : GetScalarType<T[P], ZeroFeeSwapLogGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ZeroFeeSwapLogSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    authorizedAppId?: boolean
+    swapSignature?: boolean
+    makerWallet?: boolean
+    takerWallet?: boolean
+    platformFeeBps?: boolean
+    totalValueLamports?: boolean
+    backendSigner?: boolean
+    ipAddress?: boolean
+    userAgent?: boolean
+    executedAt?: boolean
+    authorizedApp?: boolean | AuthorizedAppDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["zeroFeeSwapLog"]>
+
+  export type ZeroFeeSwapLogSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    authorizedAppId?: boolean
+    swapSignature?: boolean
+    makerWallet?: boolean
+    takerWallet?: boolean
+    platformFeeBps?: boolean
+    totalValueLamports?: boolean
+    backendSigner?: boolean
+    ipAddress?: boolean
+    userAgent?: boolean
+    executedAt?: boolean
+    authorizedApp?: boolean | AuthorizedAppDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["zeroFeeSwapLog"]>
+
+  export type ZeroFeeSwapLogSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    authorizedAppId?: boolean
+    swapSignature?: boolean
+    makerWallet?: boolean
+    takerWallet?: boolean
+    platformFeeBps?: boolean
+    totalValueLamports?: boolean
+    backendSigner?: boolean
+    ipAddress?: boolean
+    userAgent?: boolean
+    executedAt?: boolean
+    authorizedApp?: boolean | AuthorizedAppDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["zeroFeeSwapLog"]>
+
+  export type ZeroFeeSwapLogSelectScalar = {
+    id?: boolean
+    authorizedAppId?: boolean
+    swapSignature?: boolean
+    makerWallet?: boolean
+    takerWallet?: boolean
+    platformFeeBps?: boolean
+    totalValueLamports?: boolean
+    backendSigner?: boolean
+    ipAddress?: boolean
+    userAgent?: boolean
+    executedAt?: boolean
+  }
+
+  export type ZeroFeeSwapLogOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "authorizedAppId" | "swapSignature" | "makerWallet" | "takerWallet" | "platformFeeBps" | "totalValueLamports" | "backendSigner" | "ipAddress" | "userAgent" | "executedAt", ExtArgs["result"]["zeroFeeSwapLog"]>
+  export type ZeroFeeSwapLogInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    authorizedApp?: boolean | AuthorizedAppDefaultArgs<ExtArgs>
+  }
+  export type ZeroFeeSwapLogIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    authorizedApp?: boolean | AuthorizedAppDefaultArgs<ExtArgs>
+  }
+  export type ZeroFeeSwapLogIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    authorizedApp?: boolean | AuthorizedAppDefaultArgs<ExtArgs>
+  }
+
+  export type $ZeroFeeSwapLogPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ZeroFeeSwapLog"
+    objects: {
+      authorizedApp: Prisma.$AuthorizedAppPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      authorizedAppId: string
+      swapSignature: string
+      makerWallet: string
+      takerWallet: string
+      platformFeeBps: number
+      totalValueLamports: bigint
+      backendSigner: string
+      ipAddress: string | null
+      userAgent: string | null
+      executedAt: Date
+    }, ExtArgs["result"]["zeroFeeSwapLog"]>
+    composites: {}
+  }
+
+  type ZeroFeeSwapLogGetPayload<S extends boolean | null | undefined | ZeroFeeSwapLogDefaultArgs> = $Result.GetResult<Prisma.$ZeroFeeSwapLogPayload, S>
+
+  type ZeroFeeSwapLogCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<ZeroFeeSwapLogFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: ZeroFeeSwapLogCountAggregateInputType | true
+    }
+
+  export interface ZeroFeeSwapLogDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ZeroFeeSwapLog'], meta: { name: 'ZeroFeeSwapLog' } }
+    /**
+     * Find zero or one ZeroFeeSwapLog that matches the filter.
+     * @param {ZeroFeeSwapLogFindUniqueArgs} args - Arguments to find a ZeroFeeSwapLog
+     * @example
+     * // Get one ZeroFeeSwapLog
+     * const zeroFeeSwapLog = await prisma.zeroFeeSwapLog.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ZeroFeeSwapLogFindUniqueArgs>(args: SelectSubset<T, ZeroFeeSwapLogFindUniqueArgs<ExtArgs>>): Prisma__ZeroFeeSwapLogClient<$Result.GetResult<Prisma.$ZeroFeeSwapLogPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one ZeroFeeSwapLog that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {ZeroFeeSwapLogFindUniqueOrThrowArgs} args - Arguments to find a ZeroFeeSwapLog
+     * @example
+     * // Get one ZeroFeeSwapLog
+     * const zeroFeeSwapLog = await prisma.zeroFeeSwapLog.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ZeroFeeSwapLogFindUniqueOrThrowArgs>(args: SelectSubset<T, ZeroFeeSwapLogFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ZeroFeeSwapLogClient<$Result.GetResult<Prisma.$ZeroFeeSwapLogPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ZeroFeeSwapLog that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ZeroFeeSwapLogFindFirstArgs} args - Arguments to find a ZeroFeeSwapLog
+     * @example
+     * // Get one ZeroFeeSwapLog
+     * const zeroFeeSwapLog = await prisma.zeroFeeSwapLog.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ZeroFeeSwapLogFindFirstArgs>(args?: SelectSubset<T, ZeroFeeSwapLogFindFirstArgs<ExtArgs>>): Prisma__ZeroFeeSwapLogClient<$Result.GetResult<Prisma.$ZeroFeeSwapLogPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ZeroFeeSwapLog that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ZeroFeeSwapLogFindFirstOrThrowArgs} args - Arguments to find a ZeroFeeSwapLog
+     * @example
+     * // Get one ZeroFeeSwapLog
+     * const zeroFeeSwapLog = await prisma.zeroFeeSwapLog.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ZeroFeeSwapLogFindFirstOrThrowArgs>(args?: SelectSubset<T, ZeroFeeSwapLogFindFirstOrThrowArgs<ExtArgs>>): Prisma__ZeroFeeSwapLogClient<$Result.GetResult<Prisma.$ZeroFeeSwapLogPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more ZeroFeeSwapLogs that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ZeroFeeSwapLogFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ZeroFeeSwapLogs
+     * const zeroFeeSwapLogs = await prisma.zeroFeeSwapLog.findMany()
+     * 
+     * // Get first 10 ZeroFeeSwapLogs
+     * const zeroFeeSwapLogs = await prisma.zeroFeeSwapLog.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const zeroFeeSwapLogWithIdOnly = await prisma.zeroFeeSwapLog.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends ZeroFeeSwapLogFindManyArgs>(args?: SelectSubset<T, ZeroFeeSwapLogFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ZeroFeeSwapLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a ZeroFeeSwapLog.
+     * @param {ZeroFeeSwapLogCreateArgs} args - Arguments to create a ZeroFeeSwapLog.
+     * @example
+     * // Create one ZeroFeeSwapLog
+     * const ZeroFeeSwapLog = await prisma.zeroFeeSwapLog.create({
+     *   data: {
+     *     // ... data to create a ZeroFeeSwapLog
+     *   }
+     * })
+     * 
+     */
+    create<T extends ZeroFeeSwapLogCreateArgs>(args: SelectSubset<T, ZeroFeeSwapLogCreateArgs<ExtArgs>>): Prisma__ZeroFeeSwapLogClient<$Result.GetResult<Prisma.$ZeroFeeSwapLogPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many ZeroFeeSwapLogs.
+     * @param {ZeroFeeSwapLogCreateManyArgs} args - Arguments to create many ZeroFeeSwapLogs.
+     * @example
+     * // Create many ZeroFeeSwapLogs
+     * const zeroFeeSwapLog = await prisma.zeroFeeSwapLog.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ZeroFeeSwapLogCreateManyArgs>(args?: SelectSubset<T, ZeroFeeSwapLogCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many ZeroFeeSwapLogs and returns the data saved in the database.
+     * @param {ZeroFeeSwapLogCreateManyAndReturnArgs} args - Arguments to create many ZeroFeeSwapLogs.
+     * @example
+     * // Create many ZeroFeeSwapLogs
+     * const zeroFeeSwapLog = await prisma.zeroFeeSwapLog.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many ZeroFeeSwapLogs and only return the `id`
+     * const zeroFeeSwapLogWithIdOnly = await prisma.zeroFeeSwapLog.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ZeroFeeSwapLogCreateManyAndReturnArgs>(args?: SelectSubset<T, ZeroFeeSwapLogCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ZeroFeeSwapLogPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a ZeroFeeSwapLog.
+     * @param {ZeroFeeSwapLogDeleteArgs} args - Arguments to delete one ZeroFeeSwapLog.
+     * @example
+     * // Delete one ZeroFeeSwapLog
+     * const ZeroFeeSwapLog = await prisma.zeroFeeSwapLog.delete({
+     *   where: {
+     *     // ... filter to delete one ZeroFeeSwapLog
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ZeroFeeSwapLogDeleteArgs>(args: SelectSubset<T, ZeroFeeSwapLogDeleteArgs<ExtArgs>>): Prisma__ZeroFeeSwapLogClient<$Result.GetResult<Prisma.$ZeroFeeSwapLogPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one ZeroFeeSwapLog.
+     * @param {ZeroFeeSwapLogUpdateArgs} args - Arguments to update one ZeroFeeSwapLog.
+     * @example
+     * // Update one ZeroFeeSwapLog
+     * const zeroFeeSwapLog = await prisma.zeroFeeSwapLog.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ZeroFeeSwapLogUpdateArgs>(args: SelectSubset<T, ZeroFeeSwapLogUpdateArgs<ExtArgs>>): Prisma__ZeroFeeSwapLogClient<$Result.GetResult<Prisma.$ZeroFeeSwapLogPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more ZeroFeeSwapLogs.
+     * @param {ZeroFeeSwapLogDeleteManyArgs} args - Arguments to filter ZeroFeeSwapLogs to delete.
+     * @example
+     * // Delete a few ZeroFeeSwapLogs
+     * const { count } = await prisma.zeroFeeSwapLog.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ZeroFeeSwapLogDeleteManyArgs>(args?: SelectSubset<T, ZeroFeeSwapLogDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ZeroFeeSwapLogs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ZeroFeeSwapLogUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ZeroFeeSwapLogs
+     * const zeroFeeSwapLog = await prisma.zeroFeeSwapLog.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ZeroFeeSwapLogUpdateManyArgs>(args: SelectSubset<T, ZeroFeeSwapLogUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ZeroFeeSwapLogs and returns the data updated in the database.
+     * @param {ZeroFeeSwapLogUpdateManyAndReturnArgs} args - Arguments to update many ZeroFeeSwapLogs.
+     * @example
+     * // Update many ZeroFeeSwapLogs
+     * const zeroFeeSwapLog = await prisma.zeroFeeSwapLog.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more ZeroFeeSwapLogs and only return the `id`
+     * const zeroFeeSwapLogWithIdOnly = await prisma.zeroFeeSwapLog.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends ZeroFeeSwapLogUpdateManyAndReturnArgs>(args: SelectSubset<T, ZeroFeeSwapLogUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ZeroFeeSwapLogPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one ZeroFeeSwapLog.
+     * @param {ZeroFeeSwapLogUpsertArgs} args - Arguments to update or create a ZeroFeeSwapLog.
+     * @example
+     * // Update or create a ZeroFeeSwapLog
+     * const zeroFeeSwapLog = await prisma.zeroFeeSwapLog.upsert({
+     *   create: {
+     *     // ... data to create a ZeroFeeSwapLog
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ZeroFeeSwapLog we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ZeroFeeSwapLogUpsertArgs>(args: SelectSubset<T, ZeroFeeSwapLogUpsertArgs<ExtArgs>>): Prisma__ZeroFeeSwapLogClient<$Result.GetResult<Prisma.$ZeroFeeSwapLogPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of ZeroFeeSwapLogs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ZeroFeeSwapLogCountArgs} args - Arguments to filter ZeroFeeSwapLogs to count.
+     * @example
+     * // Count the number of ZeroFeeSwapLogs
+     * const count = await prisma.zeroFeeSwapLog.count({
+     *   where: {
+     *     // ... the filter for the ZeroFeeSwapLogs we want to count
+     *   }
+     * })
+    **/
+    count<T extends ZeroFeeSwapLogCountArgs>(
+      args?: Subset<T, ZeroFeeSwapLogCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ZeroFeeSwapLogCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ZeroFeeSwapLog.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ZeroFeeSwapLogAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ZeroFeeSwapLogAggregateArgs>(args: Subset<T, ZeroFeeSwapLogAggregateArgs>): Prisma.PrismaPromise<GetZeroFeeSwapLogAggregateType<T>>
+
+    /**
+     * Group by ZeroFeeSwapLog.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ZeroFeeSwapLogGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ZeroFeeSwapLogGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ZeroFeeSwapLogGroupByArgs['orderBy'] }
+        : { orderBy?: ZeroFeeSwapLogGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ZeroFeeSwapLogGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetZeroFeeSwapLogGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ZeroFeeSwapLog model
+   */
+  readonly fields: ZeroFeeSwapLogFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ZeroFeeSwapLog.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ZeroFeeSwapLogClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    authorizedApp<T extends AuthorizedAppDefaultArgs<ExtArgs> = {}>(args?: Subset<T, AuthorizedAppDefaultArgs<ExtArgs>>): Prisma__AuthorizedAppClient<$Result.GetResult<Prisma.$AuthorizedAppPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ZeroFeeSwapLog model
+   */
+  interface ZeroFeeSwapLogFieldRefs {
+    readonly id: FieldRef<"ZeroFeeSwapLog", 'String'>
+    readonly authorizedAppId: FieldRef<"ZeroFeeSwapLog", 'String'>
+    readonly swapSignature: FieldRef<"ZeroFeeSwapLog", 'String'>
+    readonly makerWallet: FieldRef<"ZeroFeeSwapLog", 'String'>
+    readonly takerWallet: FieldRef<"ZeroFeeSwapLog", 'String'>
+    readonly platformFeeBps: FieldRef<"ZeroFeeSwapLog", 'Int'>
+    readonly totalValueLamports: FieldRef<"ZeroFeeSwapLog", 'BigInt'>
+    readonly backendSigner: FieldRef<"ZeroFeeSwapLog", 'String'>
+    readonly ipAddress: FieldRef<"ZeroFeeSwapLog", 'String'>
+    readonly userAgent: FieldRef<"ZeroFeeSwapLog", 'String'>
+    readonly executedAt: FieldRef<"ZeroFeeSwapLog", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ZeroFeeSwapLog findUnique
+   */
+  export type ZeroFeeSwapLogFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ZeroFeeSwapLog
+     */
+    select?: ZeroFeeSwapLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ZeroFeeSwapLog
+     */
+    omit?: ZeroFeeSwapLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ZeroFeeSwapLogInclude<ExtArgs> | null
+    /**
+     * Filter, which ZeroFeeSwapLog to fetch.
+     */
+    where: ZeroFeeSwapLogWhereUniqueInput
+  }
+
+  /**
+   * ZeroFeeSwapLog findUniqueOrThrow
+   */
+  export type ZeroFeeSwapLogFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ZeroFeeSwapLog
+     */
+    select?: ZeroFeeSwapLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ZeroFeeSwapLog
+     */
+    omit?: ZeroFeeSwapLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ZeroFeeSwapLogInclude<ExtArgs> | null
+    /**
+     * Filter, which ZeroFeeSwapLog to fetch.
+     */
+    where: ZeroFeeSwapLogWhereUniqueInput
+  }
+
+  /**
+   * ZeroFeeSwapLog findFirst
+   */
+  export type ZeroFeeSwapLogFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ZeroFeeSwapLog
+     */
+    select?: ZeroFeeSwapLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ZeroFeeSwapLog
+     */
+    omit?: ZeroFeeSwapLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ZeroFeeSwapLogInclude<ExtArgs> | null
+    /**
+     * Filter, which ZeroFeeSwapLog to fetch.
+     */
+    where?: ZeroFeeSwapLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ZeroFeeSwapLogs to fetch.
+     */
+    orderBy?: ZeroFeeSwapLogOrderByWithRelationInput | ZeroFeeSwapLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ZeroFeeSwapLogs.
+     */
+    cursor?: ZeroFeeSwapLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ZeroFeeSwapLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ZeroFeeSwapLogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ZeroFeeSwapLogs.
+     */
+    distinct?: ZeroFeeSwapLogScalarFieldEnum | ZeroFeeSwapLogScalarFieldEnum[]
+  }
+
+  /**
+   * ZeroFeeSwapLog findFirstOrThrow
+   */
+  export type ZeroFeeSwapLogFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ZeroFeeSwapLog
+     */
+    select?: ZeroFeeSwapLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ZeroFeeSwapLog
+     */
+    omit?: ZeroFeeSwapLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ZeroFeeSwapLogInclude<ExtArgs> | null
+    /**
+     * Filter, which ZeroFeeSwapLog to fetch.
+     */
+    where?: ZeroFeeSwapLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ZeroFeeSwapLogs to fetch.
+     */
+    orderBy?: ZeroFeeSwapLogOrderByWithRelationInput | ZeroFeeSwapLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ZeroFeeSwapLogs.
+     */
+    cursor?: ZeroFeeSwapLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ZeroFeeSwapLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ZeroFeeSwapLogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ZeroFeeSwapLogs.
+     */
+    distinct?: ZeroFeeSwapLogScalarFieldEnum | ZeroFeeSwapLogScalarFieldEnum[]
+  }
+
+  /**
+   * ZeroFeeSwapLog findMany
+   */
+  export type ZeroFeeSwapLogFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ZeroFeeSwapLog
+     */
+    select?: ZeroFeeSwapLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ZeroFeeSwapLog
+     */
+    omit?: ZeroFeeSwapLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ZeroFeeSwapLogInclude<ExtArgs> | null
+    /**
+     * Filter, which ZeroFeeSwapLogs to fetch.
+     */
+    where?: ZeroFeeSwapLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ZeroFeeSwapLogs to fetch.
+     */
+    orderBy?: ZeroFeeSwapLogOrderByWithRelationInput | ZeroFeeSwapLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ZeroFeeSwapLogs.
+     */
+    cursor?: ZeroFeeSwapLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ZeroFeeSwapLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ZeroFeeSwapLogs.
+     */
+    skip?: number
+    distinct?: ZeroFeeSwapLogScalarFieldEnum | ZeroFeeSwapLogScalarFieldEnum[]
+  }
+
+  /**
+   * ZeroFeeSwapLog create
+   */
+  export type ZeroFeeSwapLogCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ZeroFeeSwapLog
+     */
+    select?: ZeroFeeSwapLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ZeroFeeSwapLog
+     */
+    omit?: ZeroFeeSwapLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ZeroFeeSwapLogInclude<ExtArgs> | null
+    /**
+     * The data needed to create a ZeroFeeSwapLog.
+     */
+    data: XOR<ZeroFeeSwapLogCreateInput, ZeroFeeSwapLogUncheckedCreateInput>
+  }
+
+  /**
+   * ZeroFeeSwapLog createMany
+   */
+  export type ZeroFeeSwapLogCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ZeroFeeSwapLogs.
+     */
+    data: ZeroFeeSwapLogCreateManyInput | ZeroFeeSwapLogCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ZeroFeeSwapLog createManyAndReturn
+   */
+  export type ZeroFeeSwapLogCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ZeroFeeSwapLog
+     */
+    select?: ZeroFeeSwapLogSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ZeroFeeSwapLog
+     */
+    omit?: ZeroFeeSwapLogOmit<ExtArgs> | null
+    /**
+     * The data used to create many ZeroFeeSwapLogs.
+     */
+    data: ZeroFeeSwapLogCreateManyInput | ZeroFeeSwapLogCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ZeroFeeSwapLogIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * ZeroFeeSwapLog update
+   */
+  export type ZeroFeeSwapLogUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ZeroFeeSwapLog
+     */
+    select?: ZeroFeeSwapLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ZeroFeeSwapLog
+     */
+    omit?: ZeroFeeSwapLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ZeroFeeSwapLogInclude<ExtArgs> | null
+    /**
+     * The data needed to update a ZeroFeeSwapLog.
+     */
+    data: XOR<ZeroFeeSwapLogUpdateInput, ZeroFeeSwapLogUncheckedUpdateInput>
+    /**
+     * Choose, which ZeroFeeSwapLog to update.
+     */
+    where: ZeroFeeSwapLogWhereUniqueInput
+  }
+
+  /**
+   * ZeroFeeSwapLog updateMany
+   */
+  export type ZeroFeeSwapLogUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ZeroFeeSwapLogs.
+     */
+    data: XOR<ZeroFeeSwapLogUpdateManyMutationInput, ZeroFeeSwapLogUncheckedUpdateManyInput>
+    /**
+     * Filter which ZeroFeeSwapLogs to update
+     */
+    where?: ZeroFeeSwapLogWhereInput
+    /**
+     * Limit how many ZeroFeeSwapLogs to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * ZeroFeeSwapLog updateManyAndReturn
+   */
+  export type ZeroFeeSwapLogUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ZeroFeeSwapLog
+     */
+    select?: ZeroFeeSwapLogSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ZeroFeeSwapLog
+     */
+    omit?: ZeroFeeSwapLogOmit<ExtArgs> | null
+    /**
+     * The data used to update ZeroFeeSwapLogs.
+     */
+    data: XOR<ZeroFeeSwapLogUpdateManyMutationInput, ZeroFeeSwapLogUncheckedUpdateManyInput>
+    /**
+     * Filter which ZeroFeeSwapLogs to update
+     */
+    where?: ZeroFeeSwapLogWhereInput
+    /**
+     * Limit how many ZeroFeeSwapLogs to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ZeroFeeSwapLogIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * ZeroFeeSwapLog upsert
+   */
+  export type ZeroFeeSwapLogUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ZeroFeeSwapLog
+     */
+    select?: ZeroFeeSwapLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ZeroFeeSwapLog
+     */
+    omit?: ZeroFeeSwapLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ZeroFeeSwapLogInclude<ExtArgs> | null
+    /**
+     * The filter to search for the ZeroFeeSwapLog to update in case it exists.
+     */
+    where: ZeroFeeSwapLogWhereUniqueInput
+    /**
+     * In case the ZeroFeeSwapLog found by the `where` argument doesn't exist, create a new ZeroFeeSwapLog with this data.
+     */
+    create: XOR<ZeroFeeSwapLogCreateInput, ZeroFeeSwapLogUncheckedCreateInput>
+    /**
+     * In case the ZeroFeeSwapLog was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ZeroFeeSwapLogUpdateInput, ZeroFeeSwapLogUncheckedUpdateInput>
+  }
+
+  /**
+   * ZeroFeeSwapLog delete
+   */
+  export type ZeroFeeSwapLogDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ZeroFeeSwapLog
+     */
+    select?: ZeroFeeSwapLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ZeroFeeSwapLog
+     */
+    omit?: ZeroFeeSwapLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ZeroFeeSwapLogInclude<ExtArgs> | null
+    /**
+     * Filter which ZeroFeeSwapLog to delete.
+     */
+    where: ZeroFeeSwapLogWhereUniqueInput
+  }
+
+  /**
+   * ZeroFeeSwapLog deleteMany
+   */
+  export type ZeroFeeSwapLogDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ZeroFeeSwapLogs to delete
+     */
+    where?: ZeroFeeSwapLogWhereInput
+    /**
+     * Limit how many ZeroFeeSwapLogs to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * ZeroFeeSwapLog without action
+   */
+  export type ZeroFeeSwapLogDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ZeroFeeSwapLog
+     */
+    select?: ZeroFeeSwapLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ZeroFeeSwapLog
+     */
+    omit?: ZeroFeeSwapLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ZeroFeeSwapLogInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -15873,7 +18579,13 @@ export namespace Prisma {
     filledAt: 'filledAt',
     cancelledAt: 'cancelledAt',
     createdAt: 'createdAt',
-    updatedAt: 'updatedAt'
+    updatedAt: 'updatedAt',
+    isBulkSwap: 'isBulkSwap',
+    bundleId: 'bundleId',
+    transactionCount: 'transactionCount',
+    bundleStatus: 'bundleStatus',
+    cancelledBy: 'cancelledBy',
+    updateCount: 'updateCount'
   };
 
   export type SwapOfferScalarFieldEnum = (typeof SwapOfferScalarFieldEnum)[keyof typeof SwapOfferScalarFieldEnum]
@@ -15896,10 +18608,47 @@ export namespace Prisma {
     errorMessage: 'errorMessage',
     confirmedAt: 'confirmedAt',
     createdAt: 'createdAt',
-    updatedAt: 'updatedAt'
+    updatedAt: 'updatedAt',
+    bundleId: 'bundleId',
+    transactionIndex: 'transactionIndex',
+    bundleSlot: 'bundleSlot'
   };
 
   export type SwapTransactionScalarFieldEnum = (typeof SwapTransactionScalarFieldEnum)[keyof typeof SwapTransactionScalarFieldEnum]
+
+
+  export const AuthorizedAppScalarFieldEnum: {
+    id: 'id',
+    name: 'name',
+    apiKey: 'apiKey',
+    description: 'description',
+    active: 'active',
+    zeroFeeEnabled: 'zeroFeeEnabled',
+    rateLimitPerDay: 'rateLimitPerDay',
+    totalSwaps: 'totalSwaps',
+    lastUsedAt: 'lastUsedAt',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type AuthorizedAppScalarFieldEnum = (typeof AuthorizedAppScalarFieldEnum)[keyof typeof AuthorizedAppScalarFieldEnum]
+
+
+  export const ZeroFeeSwapLogScalarFieldEnum: {
+    id: 'id',
+    authorizedAppId: 'authorizedAppId',
+    swapSignature: 'swapSignature',
+    makerWallet: 'makerWallet',
+    takerWallet: 'takerWallet',
+    platformFeeBps: 'platformFeeBps',
+    totalValueLamports: 'totalValueLamports',
+    backendSigner: 'backendSigner',
+    ipAddress: 'ipAddress',
+    userAgent: 'userAgent',
+    executedAt: 'executedAt'
+  };
+
+  export type ZeroFeeSwapLogScalarFieldEnum = (typeof ZeroFeeSwapLogScalarFieldEnum)[keyof typeof ZeroFeeSwapLogScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -17123,6 +19872,12 @@ export namespace Prisma {
     cancelledAt?: DateTimeNullableFilter<"SwapOffer"> | Date | string | null
     createdAt?: DateTimeFilter<"SwapOffer"> | Date | string
     updatedAt?: DateTimeFilter<"SwapOffer"> | Date | string
+    isBulkSwap?: BoolFilter<"SwapOffer"> | boolean
+    bundleId?: StringNullableFilter<"SwapOffer"> | string | null
+    transactionCount?: IntFilter<"SwapOffer"> | number
+    bundleStatus?: StringNullableFilter<"SwapOffer"> | string | null
+    cancelledBy?: StringNullableFilter<"SwapOffer"> | string | null
+    updateCount?: IntFilter<"SwapOffer"> | number
     maker?: XOR<UserScalarRelationFilter, UserWhereInput>
     nonce?: XOR<NoncePoolScalarRelationFilter, NoncePoolWhereInput>
     parentOffer?: XOR<SwapOfferNullableScalarRelationFilter, SwapOfferWhereInput> | null
@@ -17152,6 +19907,12 @@ export namespace Prisma {
     cancelledAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    isBulkSwap?: SortOrder
+    bundleId?: SortOrderInput | SortOrder
+    transactionCount?: SortOrder
+    bundleStatus?: SortOrderInput | SortOrder
+    cancelledBy?: SortOrderInput | SortOrder
+    updateCount?: SortOrder
     maker?: UserOrderByWithRelationInput
     nonce?: NoncePoolOrderByWithRelationInput
     parentOffer?: SwapOfferOrderByWithRelationInput
@@ -17184,6 +19945,12 @@ export namespace Prisma {
     cancelledAt?: DateTimeNullableFilter<"SwapOffer"> | Date | string | null
     createdAt?: DateTimeFilter<"SwapOffer"> | Date | string
     updatedAt?: DateTimeFilter<"SwapOffer"> | Date | string
+    isBulkSwap?: BoolFilter<"SwapOffer"> | boolean
+    bundleId?: StringNullableFilter<"SwapOffer"> | string | null
+    transactionCount?: IntFilter<"SwapOffer"> | number
+    bundleStatus?: StringNullableFilter<"SwapOffer"> | string | null
+    cancelledBy?: StringNullableFilter<"SwapOffer"> | string | null
+    updateCount?: IntFilter<"SwapOffer"> | number
     maker?: XOR<UserScalarRelationFilter, UserWhereInput>
     nonce?: XOR<NoncePoolScalarRelationFilter, NoncePoolWhereInput>
     parentOffer?: XOR<SwapOfferNullableScalarRelationFilter, SwapOfferWhereInput> | null
@@ -17213,6 +19980,12 @@ export namespace Prisma {
     cancelledAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    isBulkSwap?: SortOrder
+    bundleId?: SortOrderInput | SortOrder
+    transactionCount?: SortOrder
+    bundleStatus?: SortOrderInput | SortOrder
+    cancelledBy?: SortOrderInput | SortOrder
+    updateCount?: SortOrder
     _count?: SwapOfferCountOrderByAggregateInput
     _avg?: SwapOfferAvgOrderByAggregateInput
     _max?: SwapOfferMaxOrderByAggregateInput
@@ -17244,6 +20017,12 @@ export namespace Prisma {
     cancelledAt?: DateTimeNullableWithAggregatesFilter<"SwapOffer"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"SwapOffer"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"SwapOffer"> | Date | string
+    isBulkSwap?: BoolWithAggregatesFilter<"SwapOffer"> | boolean
+    bundleId?: StringNullableWithAggregatesFilter<"SwapOffer"> | string | null
+    transactionCount?: IntWithAggregatesFilter<"SwapOffer"> | number
+    bundleStatus?: StringNullableWithAggregatesFilter<"SwapOffer"> | string | null
+    cancelledBy?: StringNullableWithAggregatesFilter<"SwapOffer"> | string | null
+    updateCount?: IntWithAggregatesFilter<"SwapOffer"> | number
   }
 
   export type SwapTransactionWhereInput = {
@@ -17267,6 +20046,9 @@ export namespace Prisma {
     confirmedAt?: DateTimeNullableFilter<"SwapTransaction"> | Date | string | null
     createdAt?: DateTimeFilter<"SwapTransaction"> | Date | string
     updatedAt?: DateTimeFilter<"SwapTransaction"> | Date | string
+    bundleId?: StringNullableFilter<"SwapTransaction"> | string | null
+    transactionIndex?: IntFilter<"SwapTransaction"> | number
+    bundleSlot?: BigIntNullableFilter<"SwapTransaction"> | bigint | number | null
     offer?: XOR<SwapOfferScalarRelationFilter, SwapOfferWhereInput>
     counterOffer?: XOR<SwapOfferNullableScalarRelationFilter, SwapOfferWhereInput> | null
     maker?: XOR<UserScalarRelationFilter, UserWhereInput>
@@ -17291,6 +20073,9 @@ export namespace Prisma {
     confirmedAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    bundleId?: SortOrderInput | SortOrder
+    transactionIndex?: SortOrder
+    bundleSlot?: SortOrderInput | SortOrder
     offer?: SwapOfferOrderByWithRelationInput
     counterOffer?: SwapOfferOrderByWithRelationInput
     maker?: UserOrderByWithRelationInput
@@ -17318,6 +20103,9 @@ export namespace Prisma {
     confirmedAt?: DateTimeNullableFilter<"SwapTransaction"> | Date | string | null
     createdAt?: DateTimeFilter<"SwapTransaction"> | Date | string
     updatedAt?: DateTimeFilter<"SwapTransaction"> | Date | string
+    bundleId?: StringNullableFilter<"SwapTransaction"> | string | null
+    transactionIndex?: IntFilter<"SwapTransaction"> | number
+    bundleSlot?: BigIntNullableFilter<"SwapTransaction"> | bigint | number | null
     offer?: XOR<SwapOfferScalarRelationFilter, SwapOfferWhereInput>
     counterOffer?: XOR<SwapOfferNullableScalarRelationFilter, SwapOfferWhereInput> | null
     maker?: XOR<UserScalarRelationFilter, UserWhereInput>
@@ -17342,6 +20130,9 @@ export namespace Prisma {
     confirmedAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    bundleId?: SortOrderInput | SortOrder
+    transactionIndex?: SortOrder
+    bundleSlot?: SortOrderInput | SortOrder
     _count?: SwapTransactionCountOrderByAggregateInput
     _avg?: SwapTransactionAvgOrderByAggregateInput
     _max?: SwapTransactionMaxOrderByAggregateInput
@@ -17370,6 +20161,183 @@ export namespace Prisma {
     confirmedAt?: DateTimeNullableWithAggregatesFilter<"SwapTransaction"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"SwapTransaction"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"SwapTransaction"> | Date | string
+    bundleId?: StringNullableWithAggregatesFilter<"SwapTransaction"> | string | null
+    transactionIndex?: IntWithAggregatesFilter<"SwapTransaction"> | number
+    bundleSlot?: BigIntNullableWithAggregatesFilter<"SwapTransaction"> | bigint | number | null
+  }
+
+  export type AuthorizedAppWhereInput = {
+    AND?: AuthorizedAppWhereInput | AuthorizedAppWhereInput[]
+    OR?: AuthorizedAppWhereInput[]
+    NOT?: AuthorizedAppWhereInput | AuthorizedAppWhereInput[]
+    id?: StringFilter<"AuthorizedApp"> | string
+    name?: StringFilter<"AuthorizedApp"> | string
+    apiKey?: StringFilter<"AuthorizedApp"> | string
+    description?: StringNullableFilter<"AuthorizedApp"> | string | null
+    active?: BoolFilter<"AuthorizedApp"> | boolean
+    zeroFeeEnabled?: BoolFilter<"AuthorizedApp"> | boolean
+    rateLimitPerDay?: IntFilter<"AuthorizedApp"> | number
+    totalSwaps?: IntFilter<"AuthorizedApp"> | number
+    lastUsedAt?: DateTimeNullableFilter<"AuthorizedApp"> | Date | string | null
+    createdAt?: DateTimeFilter<"AuthorizedApp"> | Date | string
+    updatedAt?: DateTimeFilter<"AuthorizedApp"> | Date | string
+    zeroFeeSwapLogs?: ZeroFeeSwapLogListRelationFilter
+  }
+
+  export type AuthorizedAppOrderByWithRelationInput = {
+    id?: SortOrder
+    name?: SortOrder
+    apiKey?: SortOrder
+    description?: SortOrderInput | SortOrder
+    active?: SortOrder
+    zeroFeeEnabled?: SortOrder
+    rateLimitPerDay?: SortOrder
+    totalSwaps?: SortOrder
+    lastUsedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    zeroFeeSwapLogs?: ZeroFeeSwapLogOrderByRelationAggregateInput
+  }
+
+  export type AuthorizedAppWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    apiKey?: string
+    AND?: AuthorizedAppWhereInput | AuthorizedAppWhereInput[]
+    OR?: AuthorizedAppWhereInput[]
+    NOT?: AuthorizedAppWhereInput | AuthorizedAppWhereInput[]
+    name?: StringFilter<"AuthorizedApp"> | string
+    description?: StringNullableFilter<"AuthorizedApp"> | string | null
+    active?: BoolFilter<"AuthorizedApp"> | boolean
+    zeroFeeEnabled?: BoolFilter<"AuthorizedApp"> | boolean
+    rateLimitPerDay?: IntFilter<"AuthorizedApp"> | number
+    totalSwaps?: IntFilter<"AuthorizedApp"> | number
+    lastUsedAt?: DateTimeNullableFilter<"AuthorizedApp"> | Date | string | null
+    createdAt?: DateTimeFilter<"AuthorizedApp"> | Date | string
+    updatedAt?: DateTimeFilter<"AuthorizedApp"> | Date | string
+    zeroFeeSwapLogs?: ZeroFeeSwapLogListRelationFilter
+  }, "id" | "apiKey">
+
+  export type AuthorizedAppOrderByWithAggregationInput = {
+    id?: SortOrder
+    name?: SortOrder
+    apiKey?: SortOrder
+    description?: SortOrderInput | SortOrder
+    active?: SortOrder
+    zeroFeeEnabled?: SortOrder
+    rateLimitPerDay?: SortOrder
+    totalSwaps?: SortOrder
+    lastUsedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: AuthorizedAppCountOrderByAggregateInput
+    _avg?: AuthorizedAppAvgOrderByAggregateInput
+    _max?: AuthorizedAppMaxOrderByAggregateInput
+    _min?: AuthorizedAppMinOrderByAggregateInput
+    _sum?: AuthorizedAppSumOrderByAggregateInput
+  }
+
+  export type AuthorizedAppScalarWhereWithAggregatesInput = {
+    AND?: AuthorizedAppScalarWhereWithAggregatesInput | AuthorizedAppScalarWhereWithAggregatesInput[]
+    OR?: AuthorizedAppScalarWhereWithAggregatesInput[]
+    NOT?: AuthorizedAppScalarWhereWithAggregatesInput | AuthorizedAppScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"AuthorizedApp"> | string
+    name?: StringWithAggregatesFilter<"AuthorizedApp"> | string
+    apiKey?: StringWithAggregatesFilter<"AuthorizedApp"> | string
+    description?: StringNullableWithAggregatesFilter<"AuthorizedApp"> | string | null
+    active?: BoolWithAggregatesFilter<"AuthorizedApp"> | boolean
+    zeroFeeEnabled?: BoolWithAggregatesFilter<"AuthorizedApp"> | boolean
+    rateLimitPerDay?: IntWithAggregatesFilter<"AuthorizedApp"> | number
+    totalSwaps?: IntWithAggregatesFilter<"AuthorizedApp"> | number
+    lastUsedAt?: DateTimeNullableWithAggregatesFilter<"AuthorizedApp"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"AuthorizedApp"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"AuthorizedApp"> | Date | string
+  }
+
+  export type ZeroFeeSwapLogWhereInput = {
+    AND?: ZeroFeeSwapLogWhereInput | ZeroFeeSwapLogWhereInput[]
+    OR?: ZeroFeeSwapLogWhereInput[]
+    NOT?: ZeroFeeSwapLogWhereInput | ZeroFeeSwapLogWhereInput[]
+    id?: StringFilter<"ZeroFeeSwapLog"> | string
+    authorizedAppId?: StringFilter<"ZeroFeeSwapLog"> | string
+    swapSignature?: StringFilter<"ZeroFeeSwapLog"> | string
+    makerWallet?: StringFilter<"ZeroFeeSwapLog"> | string
+    takerWallet?: StringFilter<"ZeroFeeSwapLog"> | string
+    platformFeeBps?: IntFilter<"ZeroFeeSwapLog"> | number
+    totalValueLamports?: BigIntFilter<"ZeroFeeSwapLog"> | bigint | number
+    backendSigner?: StringFilter<"ZeroFeeSwapLog"> | string
+    ipAddress?: StringNullableFilter<"ZeroFeeSwapLog"> | string | null
+    userAgent?: StringNullableFilter<"ZeroFeeSwapLog"> | string | null
+    executedAt?: DateTimeFilter<"ZeroFeeSwapLog"> | Date | string
+    authorizedApp?: XOR<AuthorizedAppScalarRelationFilter, AuthorizedAppWhereInput>
+  }
+
+  export type ZeroFeeSwapLogOrderByWithRelationInput = {
+    id?: SortOrder
+    authorizedAppId?: SortOrder
+    swapSignature?: SortOrder
+    makerWallet?: SortOrder
+    takerWallet?: SortOrder
+    platformFeeBps?: SortOrder
+    totalValueLamports?: SortOrder
+    backendSigner?: SortOrder
+    ipAddress?: SortOrderInput | SortOrder
+    userAgent?: SortOrderInput | SortOrder
+    executedAt?: SortOrder
+    authorizedApp?: AuthorizedAppOrderByWithRelationInput
+  }
+
+  export type ZeroFeeSwapLogWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: ZeroFeeSwapLogWhereInput | ZeroFeeSwapLogWhereInput[]
+    OR?: ZeroFeeSwapLogWhereInput[]
+    NOT?: ZeroFeeSwapLogWhereInput | ZeroFeeSwapLogWhereInput[]
+    authorizedAppId?: StringFilter<"ZeroFeeSwapLog"> | string
+    swapSignature?: StringFilter<"ZeroFeeSwapLog"> | string
+    makerWallet?: StringFilter<"ZeroFeeSwapLog"> | string
+    takerWallet?: StringFilter<"ZeroFeeSwapLog"> | string
+    platformFeeBps?: IntFilter<"ZeroFeeSwapLog"> | number
+    totalValueLamports?: BigIntFilter<"ZeroFeeSwapLog"> | bigint | number
+    backendSigner?: StringFilter<"ZeroFeeSwapLog"> | string
+    ipAddress?: StringNullableFilter<"ZeroFeeSwapLog"> | string | null
+    userAgent?: StringNullableFilter<"ZeroFeeSwapLog"> | string | null
+    executedAt?: DateTimeFilter<"ZeroFeeSwapLog"> | Date | string
+    authorizedApp?: XOR<AuthorizedAppScalarRelationFilter, AuthorizedAppWhereInput>
+  }, "id">
+
+  export type ZeroFeeSwapLogOrderByWithAggregationInput = {
+    id?: SortOrder
+    authorizedAppId?: SortOrder
+    swapSignature?: SortOrder
+    makerWallet?: SortOrder
+    takerWallet?: SortOrder
+    platformFeeBps?: SortOrder
+    totalValueLamports?: SortOrder
+    backendSigner?: SortOrder
+    ipAddress?: SortOrderInput | SortOrder
+    userAgent?: SortOrderInput | SortOrder
+    executedAt?: SortOrder
+    _count?: ZeroFeeSwapLogCountOrderByAggregateInput
+    _avg?: ZeroFeeSwapLogAvgOrderByAggregateInput
+    _max?: ZeroFeeSwapLogMaxOrderByAggregateInput
+    _min?: ZeroFeeSwapLogMinOrderByAggregateInput
+    _sum?: ZeroFeeSwapLogSumOrderByAggregateInput
+  }
+
+  export type ZeroFeeSwapLogScalarWhereWithAggregatesInput = {
+    AND?: ZeroFeeSwapLogScalarWhereWithAggregatesInput | ZeroFeeSwapLogScalarWhereWithAggregatesInput[]
+    OR?: ZeroFeeSwapLogScalarWhereWithAggregatesInput[]
+    NOT?: ZeroFeeSwapLogScalarWhereWithAggregatesInput | ZeroFeeSwapLogScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"ZeroFeeSwapLog"> | string
+    authorizedAppId?: StringWithAggregatesFilter<"ZeroFeeSwapLog"> | string
+    swapSignature?: StringWithAggregatesFilter<"ZeroFeeSwapLog"> | string
+    makerWallet?: StringWithAggregatesFilter<"ZeroFeeSwapLog"> | string
+    takerWallet?: StringWithAggregatesFilter<"ZeroFeeSwapLog"> | string
+    platformFeeBps?: IntWithAggregatesFilter<"ZeroFeeSwapLog"> | number
+    totalValueLamports?: BigIntWithAggregatesFilter<"ZeroFeeSwapLog"> | bigint | number
+    backendSigner?: StringWithAggregatesFilter<"ZeroFeeSwapLog"> | string
+    ipAddress?: StringNullableWithAggregatesFilter<"ZeroFeeSwapLog"> | string | null
+    userAgent?: StringNullableWithAggregatesFilter<"ZeroFeeSwapLog"> | string | null
+    executedAt?: DateTimeWithAggregatesFilter<"ZeroFeeSwapLog"> | Date | string
   }
 
   export type AgreementCreateInput = {
@@ -18422,6 +21390,12 @@ export namespace Prisma {
     cancelledAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    isBulkSwap?: boolean
+    bundleId?: string | null
+    transactionCount?: number
+    bundleStatus?: string | null
+    cancelledBy?: string | null
+    updateCount?: number
     maker: UserCreateNestedOneWithoutMakerOffersInput
     nonce: NoncePoolCreateNestedOneWithoutOffersInput
     parentOffer?: SwapOfferCreateNestedOneWithoutCounterOffersInput
@@ -18451,6 +21425,12 @@ export namespace Prisma {
     cancelledAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    isBulkSwap?: boolean
+    bundleId?: string | null
+    transactionCount?: number
+    bundleStatus?: string | null
+    cancelledBy?: string | null
+    updateCount?: number
     counterOffers?: SwapOfferUncheckedCreateNestedManyWithoutParentOfferInput
     transactions?: SwapTransactionUncheckedCreateNestedManyWithoutOfferInput
     counterTransactions?: SwapTransactionUncheckedCreateNestedManyWithoutCounterOfferInput
@@ -18473,6 +21453,12 @@ export namespace Prisma {
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isBulkSwap?: BoolFieldUpdateOperationsInput | boolean
+    bundleId?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionCount?: IntFieldUpdateOperationsInput | number
+    bundleStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
+    updateCount?: IntFieldUpdateOperationsInput | number
     maker?: UserUpdateOneRequiredWithoutMakerOffersNestedInput
     nonce?: NoncePoolUpdateOneRequiredWithoutOffersNestedInput
     parentOffer?: SwapOfferUpdateOneWithoutCounterOffersNestedInput
@@ -18502,6 +21488,12 @@ export namespace Prisma {
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isBulkSwap?: BoolFieldUpdateOperationsInput | boolean
+    bundleId?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionCount?: IntFieldUpdateOperationsInput | number
+    bundleStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
+    updateCount?: IntFieldUpdateOperationsInput | number
     counterOffers?: SwapOfferUncheckedUpdateManyWithoutParentOfferNestedInput
     transactions?: SwapTransactionUncheckedUpdateManyWithoutOfferNestedInput
     counterTransactions?: SwapTransactionUncheckedUpdateManyWithoutCounterOfferNestedInput
@@ -18528,6 +21520,12 @@ export namespace Prisma {
     cancelledAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    isBulkSwap?: boolean
+    bundleId?: string | null
+    transactionCount?: number
+    bundleStatus?: string | null
+    cancelledBy?: string | null
+    updateCount?: number
   }
 
   export type SwapOfferUpdateManyMutationInput = {
@@ -18547,6 +21545,12 @@ export namespace Prisma {
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isBulkSwap?: BoolFieldUpdateOperationsInput | boolean
+    bundleId?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionCount?: IntFieldUpdateOperationsInput | number
+    bundleStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
+    updateCount?: IntFieldUpdateOperationsInput | number
   }
 
   export type SwapOfferUncheckedUpdateManyInput = {
@@ -18570,6 +21574,12 @@ export namespace Prisma {
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isBulkSwap?: BoolFieldUpdateOperationsInput | boolean
+    bundleId?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionCount?: IntFieldUpdateOperationsInput | number
+    bundleStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
+    updateCount?: IntFieldUpdateOperationsInput | number
   }
 
   export type SwapTransactionCreateInput = {
@@ -18585,6 +21595,9 @@ export namespace Prisma {
     confirmedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    bundleId?: string | null
+    transactionIndex?: number
+    bundleSlot?: bigint | number | null
     offer: SwapOfferCreateNestedOneWithoutTransactionsInput
     counterOffer?: SwapOfferCreateNestedOneWithoutCounterTransactionsInput
     maker: UserCreateNestedOneWithoutMakerTransactionsInput
@@ -18609,6 +21622,9 @@ export namespace Prisma {
     confirmedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    bundleId?: string | null
+    transactionIndex?: number
+    bundleSlot?: bigint | number | null
   }
 
   export type SwapTransactionUpdateInput = {
@@ -18624,6 +21640,9 @@ export namespace Prisma {
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    bundleId?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionIndex?: IntFieldUpdateOperationsInput | number
+    bundleSlot?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
     offer?: SwapOfferUpdateOneRequiredWithoutTransactionsNestedInput
     counterOffer?: SwapOfferUpdateOneWithoutCounterTransactionsNestedInput
     maker?: UserUpdateOneRequiredWithoutMakerTransactionsNestedInput
@@ -18648,6 +21667,9 @@ export namespace Prisma {
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    bundleId?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionIndex?: IntFieldUpdateOperationsInput | number
+    bundleSlot?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
   }
 
   export type SwapTransactionCreateManyInput = {
@@ -18668,6 +21690,9 @@ export namespace Prisma {
     confirmedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    bundleId?: string | null
+    transactionIndex?: number
+    bundleSlot?: bigint | number | null
   }
 
   export type SwapTransactionUpdateManyMutationInput = {
@@ -18683,6 +21708,9 @@ export namespace Prisma {
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    bundleId?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionIndex?: IntFieldUpdateOperationsInput | number
+    bundleSlot?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
   }
 
   export type SwapTransactionUncheckedUpdateManyInput = {
@@ -18703,6 +21731,208 @@ export namespace Prisma {
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    bundleId?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionIndex?: IntFieldUpdateOperationsInput | number
+    bundleSlot?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  }
+
+  export type AuthorizedAppCreateInput = {
+    id?: string
+    name: string
+    apiKey: string
+    description?: string | null
+    active?: boolean
+    zeroFeeEnabled?: boolean
+    rateLimitPerDay?: number
+    totalSwaps?: number
+    lastUsedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    zeroFeeSwapLogs?: ZeroFeeSwapLogCreateNestedManyWithoutAuthorizedAppInput
+  }
+
+  export type AuthorizedAppUncheckedCreateInput = {
+    id?: string
+    name: string
+    apiKey: string
+    description?: string | null
+    active?: boolean
+    zeroFeeEnabled?: boolean
+    rateLimitPerDay?: number
+    totalSwaps?: number
+    lastUsedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    zeroFeeSwapLogs?: ZeroFeeSwapLogUncheckedCreateNestedManyWithoutAuthorizedAppInput
+  }
+
+  export type AuthorizedAppUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    apiKey?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    active?: BoolFieldUpdateOperationsInput | boolean
+    zeroFeeEnabled?: BoolFieldUpdateOperationsInput | boolean
+    rateLimitPerDay?: IntFieldUpdateOperationsInput | number
+    totalSwaps?: IntFieldUpdateOperationsInput | number
+    lastUsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    zeroFeeSwapLogs?: ZeroFeeSwapLogUpdateManyWithoutAuthorizedAppNestedInput
+  }
+
+  export type AuthorizedAppUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    apiKey?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    active?: BoolFieldUpdateOperationsInput | boolean
+    zeroFeeEnabled?: BoolFieldUpdateOperationsInput | boolean
+    rateLimitPerDay?: IntFieldUpdateOperationsInput | number
+    totalSwaps?: IntFieldUpdateOperationsInput | number
+    lastUsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    zeroFeeSwapLogs?: ZeroFeeSwapLogUncheckedUpdateManyWithoutAuthorizedAppNestedInput
+  }
+
+  export type AuthorizedAppCreateManyInput = {
+    id?: string
+    name: string
+    apiKey: string
+    description?: string | null
+    active?: boolean
+    zeroFeeEnabled?: boolean
+    rateLimitPerDay?: number
+    totalSwaps?: number
+    lastUsedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AuthorizedAppUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    apiKey?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    active?: BoolFieldUpdateOperationsInput | boolean
+    zeroFeeEnabled?: BoolFieldUpdateOperationsInput | boolean
+    rateLimitPerDay?: IntFieldUpdateOperationsInput | number
+    totalSwaps?: IntFieldUpdateOperationsInput | number
+    lastUsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AuthorizedAppUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    apiKey?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    active?: BoolFieldUpdateOperationsInput | boolean
+    zeroFeeEnabled?: BoolFieldUpdateOperationsInput | boolean
+    rateLimitPerDay?: IntFieldUpdateOperationsInput | number
+    totalSwaps?: IntFieldUpdateOperationsInput | number
+    lastUsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ZeroFeeSwapLogCreateInput = {
+    id?: string
+    swapSignature: string
+    makerWallet: string
+    takerWallet: string
+    platformFeeBps: number
+    totalValueLamports: bigint | number
+    backendSigner: string
+    ipAddress?: string | null
+    userAgent?: string | null
+    executedAt?: Date | string
+    authorizedApp: AuthorizedAppCreateNestedOneWithoutZeroFeeSwapLogsInput
+  }
+
+  export type ZeroFeeSwapLogUncheckedCreateInput = {
+    id?: string
+    authorizedAppId: string
+    swapSignature: string
+    makerWallet: string
+    takerWallet: string
+    platformFeeBps: number
+    totalValueLamports: bigint | number
+    backendSigner: string
+    ipAddress?: string | null
+    userAgent?: string | null
+    executedAt?: Date | string
+  }
+
+  export type ZeroFeeSwapLogUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    swapSignature?: StringFieldUpdateOperationsInput | string
+    makerWallet?: StringFieldUpdateOperationsInput | string
+    takerWallet?: StringFieldUpdateOperationsInput | string
+    platformFeeBps?: IntFieldUpdateOperationsInput | number
+    totalValueLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    backendSigner?: StringFieldUpdateOperationsInput | string
+    ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+    executedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    authorizedApp?: AuthorizedAppUpdateOneRequiredWithoutZeroFeeSwapLogsNestedInput
+  }
+
+  export type ZeroFeeSwapLogUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    authorizedAppId?: StringFieldUpdateOperationsInput | string
+    swapSignature?: StringFieldUpdateOperationsInput | string
+    makerWallet?: StringFieldUpdateOperationsInput | string
+    takerWallet?: StringFieldUpdateOperationsInput | string
+    platformFeeBps?: IntFieldUpdateOperationsInput | number
+    totalValueLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    backendSigner?: StringFieldUpdateOperationsInput | string
+    ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+    executedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ZeroFeeSwapLogCreateManyInput = {
+    id?: string
+    authorizedAppId: string
+    swapSignature: string
+    makerWallet: string
+    takerWallet: string
+    platformFeeBps: number
+    totalValueLamports: bigint | number
+    backendSigner: string
+    ipAddress?: string | null
+    userAgent?: string | null
+    executedAt?: Date | string
+  }
+
+  export type ZeroFeeSwapLogUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    swapSignature?: StringFieldUpdateOperationsInput | string
+    makerWallet?: StringFieldUpdateOperationsInput | string
+    takerWallet?: StringFieldUpdateOperationsInput | string
+    platformFeeBps?: IntFieldUpdateOperationsInput | number
+    totalValueLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    backendSigner?: StringFieldUpdateOperationsInput | string
+    ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+    executedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ZeroFeeSwapLogUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    authorizedAppId?: StringFieldUpdateOperationsInput | string
+    swapSignature?: StringFieldUpdateOperationsInput | string
+    makerWallet?: StringFieldUpdateOperationsInput | string
+    takerWallet?: StringFieldUpdateOperationsInput | string
+    platformFeeBps?: IntFieldUpdateOperationsInput | number
+    totalValueLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    backendSigner?: StringFieldUpdateOperationsInput | string
+    ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+    executedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type StringFilter<$PrismaModel = never> = {
@@ -19862,6 +23092,12 @@ export namespace Prisma {
     cancelledAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    isBulkSwap?: SortOrder
+    bundleId?: SortOrder
+    transactionCount?: SortOrder
+    bundleStatus?: SortOrder
+    cancelledBy?: SortOrder
+    updateCount?: SortOrder
   }
 
   export type SwapOfferAvgOrderByAggregateInput = {
@@ -19870,6 +23106,8 @@ export namespace Prisma {
     offeredSolLamports?: SortOrder
     requestedSolLamports?: SortOrder
     platformFeeLamports?: SortOrder
+    transactionCount?: SortOrder
+    updateCount?: SortOrder
   }
 
   export type SwapOfferMaxOrderByAggregateInput = {
@@ -19891,6 +23129,12 @@ export namespace Prisma {
     cancelledAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    isBulkSwap?: SortOrder
+    bundleId?: SortOrder
+    transactionCount?: SortOrder
+    bundleStatus?: SortOrder
+    cancelledBy?: SortOrder
+    updateCount?: SortOrder
   }
 
   export type SwapOfferMinOrderByAggregateInput = {
@@ -19912,6 +23156,12 @@ export namespace Prisma {
     cancelledAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    isBulkSwap?: SortOrder
+    bundleId?: SortOrder
+    transactionCount?: SortOrder
+    bundleStatus?: SortOrder
+    cancelledBy?: SortOrder
+    updateCount?: SortOrder
   }
 
   export type SwapOfferSumOrderByAggregateInput = {
@@ -19920,6 +23170,8 @@ export namespace Prisma {
     offeredSolLamports?: SortOrder
     requestedSolLamports?: SortOrder
     platformFeeLamports?: SortOrder
+    transactionCount?: SortOrder
+    updateCount?: SortOrder
   }
 
   export type EnumOfferTypeWithAggregatesFilter<$PrismaModel = never> = {
@@ -19972,6 +23224,9 @@ export namespace Prisma {
     confirmedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    bundleId?: SortOrder
+    transactionIndex?: SortOrder
+    bundleSlot?: SortOrder
   }
 
   export type SwapTransactionAvgOrderByAggregateInput = {
@@ -19981,6 +23236,8 @@ export namespace Prisma {
     platformFeeCollectedLamports?: SortOrder
     totalValueLamports?: SortOrder
     gasFee?: SortOrder
+    transactionIndex?: SortOrder
+    bundleSlot?: SortOrder
   }
 
   export type SwapTransactionMaxOrderByAggregateInput = {
@@ -20001,6 +23258,9 @@ export namespace Prisma {
     confirmedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    bundleId?: SortOrder
+    transactionIndex?: SortOrder
+    bundleSlot?: SortOrder
   }
 
   export type SwapTransactionMinOrderByAggregateInput = {
@@ -20021,6 +23281,9 @@ export namespace Prisma {
     confirmedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    bundleId?: SortOrder
+    transactionIndex?: SortOrder
+    bundleSlot?: SortOrder
   }
 
   export type SwapTransactionSumOrderByAggregateInput = {
@@ -20030,6 +23293,8 @@ export namespace Prisma {
     platformFeeCollectedLamports?: SortOrder
     totalValueLamports?: SortOrder
     gasFee?: SortOrder
+    transactionIndex?: SortOrder
+    bundleSlot?: SortOrder
   }
 
   export type EnumTransactionStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -20040,6 +23305,125 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumTransactionStatusFilter<$PrismaModel>
     _max?: NestedEnumTransactionStatusFilter<$PrismaModel>
+  }
+
+  export type ZeroFeeSwapLogListRelationFilter = {
+    every?: ZeroFeeSwapLogWhereInput
+    some?: ZeroFeeSwapLogWhereInput
+    none?: ZeroFeeSwapLogWhereInput
+  }
+
+  export type ZeroFeeSwapLogOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type AuthorizedAppCountOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    apiKey?: SortOrder
+    description?: SortOrder
+    active?: SortOrder
+    zeroFeeEnabled?: SortOrder
+    rateLimitPerDay?: SortOrder
+    totalSwaps?: SortOrder
+    lastUsedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type AuthorizedAppAvgOrderByAggregateInput = {
+    rateLimitPerDay?: SortOrder
+    totalSwaps?: SortOrder
+  }
+
+  export type AuthorizedAppMaxOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    apiKey?: SortOrder
+    description?: SortOrder
+    active?: SortOrder
+    zeroFeeEnabled?: SortOrder
+    rateLimitPerDay?: SortOrder
+    totalSwaps?: SortOrder
+    lastUsedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type AuthorizedAppMinOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    apiKey?: SortOrder
+    description?: SortOrder
+    active?: SortOrder
+    zeroFeeEnabled?: SortOrder
+    rateLimitPerDay?: SortOrder
+    totalSwaps?: SortOrder
+    lastUsedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type AuthorizedAppSumOrderByAggregateInput = {
+    rateLimitPerDay?: SortOrder
+    totalSwaps?: SortOrder
+  }
+
+  export type AuthorizedAppScalarRelationFilter = {
+    is?: AuthorizedAppWhereInput
+    isNot?: AuthorizedAppWhereInput
+  }
+
+  export type ZeroFeeSwapLogCountOrderByAggregateInput = {
+    id?: SortOrder
+    authorizedAppId?: SortOrder
+    swapSignature?: SortOrder
+    makerWallet?: SortOrder
+    takerWallet?: SortOrder
+    platformFeeBps?: SortOrder
+    totalValueLamports?: SortOrder
+    backendSigner?: SortOrder
+    ipAddress?: SortOrder
+    userAgent?: SortOrder
+    executedAt?: SortOrder
+  }
+
+  export type ZeroFeeSwapLogAvgOrderByAggregateInput = {
+    platformFeeBps?: SortOrder
+    totalValueLamports?: SortOrder
+  }
+
+  export type ZeroFeeSwapLogMaxOrderByAggregateInput = {
+    id?: SortOrder
+    authorizedAppId?: SortOrder
+    swapSignature?: SortOrder
+    makerWallet?: SortOrder
+    takerWallet?: SortOrder
+    platformFeeBps?: SortOrder
+    totalValueLamports?: SortOrder
+    backendSigner?: SortOrder
+    ipAddress?: SortOrder
+    userAgent?: SortOrder
+    executedAt?: SortOrder
+  }
+
+  export type ZeroFeeSwapLogMinOrderByAggregateInput = {
+    id?: SortOrder
+    authorizedAppId?: SortOrder
+    swapSignature?: SortOrder
+    makerWallet?: SortOrder
+    takerWallet?: SortOrder
+    platformFeeBps?: SortOrder
+    totalValueLamports?: SortOrder
+    backendSigner?: SortOrder
+    ipAddress?: SortOrder
+    userAgent?: SortOrder
+    executedAt?: SortOrder
+  }
+
+  export type ZeroFeeSwapLogSumOrderByAggregateInput = {
+    platformFeeBps?: SortOrder
+    totalValueLamports?: SortOrder
   }
 
   export type DepositCreateNestedManyWithoutAgreementInput = {
@@ -20752,6 +24136,62 @@ export namespace Prisma {
     upsert?: UserUpsertWithoutTakerTransactionsInput
     connect?: UserWhereUniqueInput
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutTakerTransactionsInput, UserUpdateWithoutTakerTransactionsInput>, UserUncheckedUpdateWithoutTakerTransactionsInput>
+  }
+
+  export type ZeroFeeSwapLogCreateNestedManyWithoutAuthorizedAppInput = {
+    create?: XOR<ZeroFeeSwapLogCreateWithoutAuthorizedAppInput, ZeroFeeSwapLogUncheckedCreateWithoutAuthorizedAppInput> | ZeroFeeSwapLogCreateWithoutAuthorizedAppInput[] | ZeroFeeSwapLogUncheckedCreateWithoutAuthorizedAppInput[]
+    connectOrCreate?: ZeroFeeSwapLogCreateOrConnectWithoutAuthorizedAppInput | ZeroFeeSwapLogCreateOrConnectWithoutAuthorizedAppInput[]
+    createMany?: ZeroFeeSwapLogCreateManyAuthorizedAppInputEnvelope
+    connect?: ZeroFeeSwapLogWhereUniqueInput | ZeroFeeSwapLogWhereUniqueInput[]
+  }
+
+  export type ZeroFeeSwapLogUncheckedCreateNestedManyWithoutAuthorizedAppInput = {
+    create?: XOR<ZeroFeeSwapLogCreateWithoutAuthorizedAppInput, ZeroFeeSwapLogUncheckedCreateWithoutAuthorizedAppInput> | ZeroFeeSwapLogCreateWithoutAuthorizedAppInput[] | ZeroFeeSwapLogUncheckedCreateWithoutAuthorizedAppInput[]
+    connectOrCreate?: ZeroFeeSwapLogCreateOrConnectWithoutAuthorizedAppInput | ZeroFeeSwapLogCreateOrConnectWithoutAuthorizedAppInput[]
+    createMany?: ZeroFeeSwapLogCreateManyAuthorizedAppInputEnvelope
+    connect?: ZeroFeeSwapLogWhereUniqueInput | ZeroFeeSwapLogWhereUniqueInput[]
+  }
+
+  export type ZeroFeeSwapLogUpdateManyWithoutAuthorizedAppNestedInput = {
+    create?: XOR<ZeroFeeSwapLogCreateWithoutAuthorizedAppInput, ZeroFeeSwapLogUncheckedCreateWithoutAuthorizedAppInput> | ZeroFeeSwapLogCreateWithoutAuthorizedAppInput[] | ZeroFeeSwapLogUncheckedCreateWithoutAuthorizedAppInput[]
+    connectOrCreate?: ZeroFeeSwapLogCreateOrConnectWithoutAuthorizedAppInput | ZeroFeeSwapLogCreateOrConnectWithoutAuthorizedAppInput[]
+    upsert?: ZeroFeeSwapLogUpsertWithWhereUniqueWithoutAuthorizedAppInput | ZeroFeeSwapLogUpsertWithWhereUniqueWithoutAuthorizedAppInput[]
+    createMany?: ZeroFeeSwapLogCreateManyAuthorizedAppInputEnvelope
+    set?: ZeroFeeSwapLogWhereUniqueInput | ZeroFeeSwapLogWhereUniqueInput[]
+    disconnect?: ZeroFeeSwapLogWhereUniqueInput | ZeroFeeSwapLogWhereUniqueInput[]
+    delete?: ZeroFeeSwapLogWhereUniqueInput | ZeroFeeSwapLogWhereUniqueInput[]
+    connect?: ZeroFeeSwapLogWhereUniqueInput | ZeroFeeSwapLogWhereUniqueInput[]
+    update?: ZeroFeeSwapLogUpdateWithWhereUniqueWithoutAuthorizedAppInput | ZeroFeeSwapLogUpdateWithWhereUniqueWithoutAuthorizedAppInput[]
+    updateMany?: ZeroFeeSwapLogUpdateManyWithWhereWithoutAuthorizedAppInput | ZeroFeeSwapLogUpdateManyWithWhereWithoutAuthorizedAppInput[]
+    deleteMany?: ZeroFeeSwapLogScalarWhereInput | ZeroFeeSwapLogScalarWhereInput[]
+  }
+
+  export type ZeroFeeSwapLogUncheckedUpdateManyWithoutAuthorizedAppNestedInput = {
+    create?: XOR<ZeroFeeSwapLogCreateWithoutAuthorizedAppInput, ZeroFeeSwapLogUncheckedCreateWithoutAuthorizedAppInput> | ZeroFeeSwapLogCreateWithoutAuthorizedAppInput[] | ZeroFeeSwapLogUncheckedCreateWithoutAuthorizedAppInput[]
+    connectOrCreate?: ZeroFeeSwapLogCreateOrConnectWithoutAuthorizedAppInput | ZeroFeeSwapLogCreateOrConnectWithoutAuthorizedAppInput[]
+    upsert?: ZeroFeeSwapLogUpsertWithWhereUniqueWithoutAuthorizedAppInput | ZeroFeeSwapLogUpsertWithWhereUniqueWithoutAuthorizedAppInput[]
+    createMany?: ZeroFeeSwapLogCreateManyAuthorizedAppInputEnvelope
+    set?: ZeroFeeSwapLogWhereUniqueInput | ZeroFeeSwapLogWhereUniqueInput[]
+    disconnect?: ZeroFeeSwapLogWhereUniqueInput | ZeroFeeSwapLogWhereUniqueInput[]
+    delete?: ZeroFeeSwapLogWhereUniqueInput | ZeroFeeSwapLogWhereUniqueInput[]
+    connect?: ZeroFeeSwapLogWhereUniqueInput | ZeroFeeSwapLogWhereUniqueInput[]
+    update?: ZeroFeeSwapLogUpdateWithWhereUniqueWithoutAuthorizedAppInput | ZeroFeeSwapLogUpdateWithWhereUniqueWithoutAuthorizedAppInput[]
+    updateMany?: ZeroFeeSwapLogUpdateManyWithWhereWithoutAuthorizedAppInput | ZeroFeeSwapLogUpdateManyWithWhereWithoutAuthorizedAppInput[]
+    deleteMany?: ZeroFeeSwapLogScalarWhereInput | ZeroFeeSwapLogScalarWhereInput[]
+  }
+
+  export type AuthorizedAppCreateNestedOneWithoutZeroFeeSwapLogsInput = {
+    create?: XOR<AuthorizedAppCreateWithoutZeroFeeSwapLogsInput, AuthorizedAppUncheckedCreateWithoutZeroFeeSwapLogsInput>
+    connectOrCreate?: AuthorizedAppCreateOrConnectWithoutZeroFeeSwapLogsInput
+    connect?: AuthorizedAppWhereUniqueInput
+  }
+
+  export type AuthorizedAppUpdateOneRequiredWithoutZeroFeeSwapLogsNestedInput = {
+    create?: XOR<AuthorizedAppCreateWithoutZeroFeeSwapLogsInput, AuthorizedAppUncheckedCreateWithoutZeroFeeSwapLogsInput>
+    connectOrCreate?: AuthorizedAppCreateOrConnectWithoutZeroFeeSwapLogsInput
+    upsert?: AuthorizedAppUpsertWithoutZeroFeeSwapLogsInput
+    connect?: AuthorizedAppWhereUniqueInput
+    update?: XOR<XOR<AuthorizedAppUpdateToOneWithWhereWithoutZeroFeeSwapLogsInput, AuthorizedAppUpdateWithoutZeroFeeSwapLogsInput>, AuthorizedAppUncheckedUpdateWithoutZeroFeeSwapLogsInput>
   }
 
   export type NestedStringFilter<$PrismaModel = never> = {
@@ -22230,6 +25670,12 @@ export namespace Prisma {
     cancelledAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    isBulkSwap?: boolean
+    bundleId?: string | null
+    transactionCount?: number
+    bundleStatus?: string | null
+    cancelledBy?: string | null
+    updateCount?: number
     nonce: NoncePoolCreateNestedOneWithoutOffersInput
     parentOffer?: SwapOfferCreateNestedOneWithoutCounterOffersInput
     counterOffers?: SwapOfferCreateNestedManyWithoutParentOfferInput
@@ -22257,6 +25703,12 @@ export namespace Prisma {
     cancelledAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    isBulkSwap?: boolean
+    bundleId?: string | null
+    transactionCount?: number
+    bundleStatus?: string | null
+    cancelledBy?: string | null
+    updateCount?: number
     counterOffers?: SwapOfferUncheckedCreateNestedManyWithoutParentOfferInput
     transactions?: SwapTransactionUncheckedCreateNestedManyWithoutOfferInput
     counterTransactions?: SwapTransactionUncheckedCreateNestedManyWithoutCounterOfferInput
@@ -22285,6 +25737,9 @@ export namespace Prisma {
     confirmedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    bundleId?: string | null
+    transactionIndex?: number
+    bundleSlot?: bigint | number | null
     offer: SwapOfferCreateNestedOneWithoutTransactionsInput
     counterOffer?: SwapOfferCreateNestedOneWithoutCounterTransactionsInput
     taker: UserCreateNestedOneWithoutTakerTransactionsInput
@@ -22307,6 +25762,9 @@ export namespace Prisma {
     confirmedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    bundleId?: string | null
+    transactionIndex?: number
+    bundleSlot?: bigint | number | null
   }
 
   export type SwapTransactionCreateOrConnectWithoutMakerInput = {
@@ -22332,6 +25790,9 @@ export namespace Prisma {
     confirmedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    bundleId?: string | null
+    transactionIndex?: number
+    bundleSlot?: bigint | number | null
     offer: SwapOfferCreateNestedOneWithoutTransactionsInput
     counterOffer?: SwapOfferCreateNestedOneWithoutCounterTransactionsInput
     maker: UserCreateNestedOneWithoutMakerTransactionsInput
@@ -22354,6 +25815,9 @@ export namespace Prisma {
     confirmedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    bundleId?: string | null
+    transactionIndex?: number
+    bundleSlot?: bigint | number | null
   }
 
   export type SwapTransactionCreateOrConnectWithoutTakerInput = {
@@ -22406,6 +25870,12 @@ export namespace Prisma {
     cancelledAt?: DateTimeNullableFilter<"SwapOffer"> | Date | string | null
     createdAt?: DateTimeFilter<"SwapOffer"> | Date | string
     updatedAt?: DateTimeFilter<"SwapOffer"> | Date | string
+    isBulkSwap?: BoolFilter<"SwapOffer"> | boolean
+    bundleId?: StringNullableFilter<"SwapOffer"> | string | null
+    transactionCount?: IntFilter<"SwapOffer"> | number
+    bundleStatus?: StringNullableFilter<"SwapOffer"> | string | null
+    cancelledBy?: StringNullableFilter<"SwapOffer"> | string | null
+    updateCount?: IntFilter<"SwapOffer"> | number
   }
 
   export type SwapTransactionUpsertWithWhereUniqueWithoutMakerInput = {
@@ -22445,6 +25915,9 @@ export namespace Prisma {
     confirmedAt?: DateTimeNullableFilter<"SwapTransaction"> | Date | string | null
     createdAt?: DateTimeFilter<"SwapTransaction"> | Date | string
     updatedAt?: DateTimeFilter<"SwapTransaction"> | Date | string
+    bundleId?: StringNullableFilter<"SwapTransaction"> | string | null
+    transactionIndex?: IntFilter<"SwapTransaction"> | number
+    bundleSlot?: BigIntNullableFilter<"SwapTransaction"> | bigint | number | null
   }
 
   export type SwapTransactionUpsertWithWhereUniqueWithoutTakerInput = {
@@ -22480,6 +25953,12 @@ export namespace Prisma {
     cancelledAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    isBulkSwap?: boolean
+    bundleId?: string | null
+    transactionCount?: number
+    bundleStatus?: string | null
+    cancelledBy?: string | null
+    updateCount?: number
     maker: UserCreateNestedOneWithoutMakerOffersInput
     parentOffer?: SwapOfferCreateNestedOneWithoutCounterOffersInput
     counterOffers?: SwapOfferCreateNestedManyWithoutParentOfferInput
@@ -22507,6 +25986,12 @@ export namespace Prisma {
     cancelledAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    isBulkSwap?: boolean
+    bundleId?: string | null
+    transactionCount?: number
+    bundleStatus?: string | null
+    cancelledBy?: string | null
+    updateCount?: number
     counterOffers?: SwapOfferUncheckedCreateNestedManyWithoutParentOfferInput
     transactions?: SwapTransactionUncheckedCreateNestedManyWithoutOfferInput
     counterTransactions?: SwapTransactionUncheckedCreateNestedManyWithoutCounterOfferInput
@@ -22610,6 +26095,12 @@ export namespace Prisma {
     cancelledAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    isBulkSwap?: boolean
+    bundleId?: string | null
+    transactionCount?: number
+    bundleStatus?: string | null
+    cancelledBy?: string | null
+    updateCount?: number
     maker: UserCreateNestedOneWithoutMakerOffersInput
     nonce: NoncePoolCreateNestedOneWithoutOffersInput
     parentOffer?: SwapOfferCreateNestedOneWithoutCounterOffersInput
@@ -22638,6 +26129,12 @@ export namespace Prisma {
     cancelledAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    isBulkSwap?: boolean
+    bundleId?: string | null
+    transactionCount?: number
+    bundleStatus?: string | null
+    cancelledBy?: string | null
+    updateCount?: number
     transactions?: SwapTransactionUncheckedCreateNestedManyWithoutOfferInput
     counterTransactions?: SwapTransactionUncheckedCreateNestedManyWithoutCounterOfferInput
   }
@@ -22664,6 +26161,12 @@ export namespace Prisma {
     cancelledAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    isBulkSwap?: boolean
+    bundleId?: string | null
+    transactionCount?: number
+    bundleStatus?: string | null
+    cancelledBy?: string | null
+    updateCount?: number
     maker: UserCreateNestedOneWithoutMakerOffersInput
     nonce: NoncePoolCreateNestedOneWithoutOffersInput
     counterOffers?: SwapOfferCreateNestedManyWithoutParentOfferInput
@@ -22691,6 +26194,12 @@ export namespace Prisma {
     cancelledAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    isBulkSwap?: boolean
+    bundleId?: string | null
+    transactionCount?: number
+    bundleStatus?: string | null
+    cancelledBy?: string | null
+    updateCount?: number
     counterOffers?: SwapOfferUncheckedCreateNestedManyWithoutParentOfferInput
     transactions?: SwapTransactionUncheckedCreateNestedManyWithoutOfferInput
     counterTransactions?: SwapTransactionUncheckedCreateNestedManyWithoutCounterOfferInput
@@ -22719,6 +26228,9 @@ export namespace Prisma {
     confirmedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    bundleId?: string | null
+    transactionIndex?: number
+    bundleSlot?: bigint | number | null
     counterOffer?: SwapOfferCreateNestedOneWithoutCounterTransactionsInput
     maker: UserCreateNestedOneWithoutMakerTransactionsInput
     taker: UserCreateNestedOneWithoutTakerTransactionsInput
@@ -22741,6 +26253,9 @@ export namespace Prisma {
     confirmedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    bundleId?: string | null
+    transactionIndex?: number
+    bundleSlot?: bigint | number | null
   }
 
   export type SwapTransactionCreateOrConnectWithoutOfferInput = {
@@ -22766,6 +26281,9 @@ export namespace Prisma {
     confirmedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    bundleId?: string | null
+    transactionIndex?: number
+    bundleSlot?: bigint | number | null
     offer: SwapOfferCreateNestedOneWithoutTransactionsInput
     maker: UserCreateNestedOneWithoutMakerTransactionsInput
     taker: UserCreateNestedOneWithoutTakerTransactionsInput
@@ -22788,6 +26306,9 @@ export namespace Prisma {
     confirmedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    bundleId?: string | null
+    transactionIndex?: number
+    bundleSlot?: bigint | number | null
   }
 
   export type SwapTransactionCreateOrConnectWithoutCounterOfferInput = {
@@ -22895,6 +26416,12 @@ export namespace Prisma {
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isBulkSwap?: BoolFieldUpdateOperationsInput | boolean
+    bundleId?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionCount?: IntFieldUpdateOperationsInput | number
+    bundleStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
+    updateCount?: IntFieldUpdateOperationsInput | number
     maker?: UserUpdateOneRequiredWithoutMakerOffersNestedInput
     nonce?: NoncePoolUpdateOneRequiredWithoutOffersNestedInput
     parentOffer?: SwapOfferUpdateOneWithoutCounterOffersNestedInput
@@ -22923,6 +26450,12 @@ export namespace Prisma {
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isBulkSwap?: BoolFieldUpdateOperationsInput | boolean
+    bundleId?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionCount?: IntFieldUpdateOperationsInput | number
+    bundleStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
+    updateCount?: IntFieldUpdateOperationsInput | number
     transactions?: SwapTransactionUncheckedUpdateManyWithoutOfferNestedInput
     counterTransactions?: SwapTransactionUncheckedUpdateManyWithoutCounterOfferNestedInput
   }
@@ -22992,6 +26525,12 @@ export namespace Prisma {
     cancelledAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    isBulkSwap?: boolean
+    bundleId?: string | null
+    transactionCount?: number
+    bundleStatus?: string | null
+    cancelledBy?: string | null
+    updateCount?: number
     maker: UserCreateNestedOneWithoutMakerOffersInput
     nonce: NoncePoolCreateNestedOneWithoutOffersInput
     parentOffer?: SwapOfferCreateNestedOneWithoutCounterOffersInput
@@ -23020,6 +26559,12 @@ export namespace Prisma {
     cancelledAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    isBulkSwap?: boolean
+    bundleId?: string | null
+    transactionCount?: number
+    bundleStatus?: string | null
+    cancelledBy?: string | null
+    updateCount?: number
     counterOffers?: SwapOfferUncheckedCreateNestedManyWithoutParentOfferInput
     counterTransactions?: SwapTransactionUncheckedCreateNestedManyWithoutCounterOfferInput
   }
@@ -23046,6 +26591,12 @@ export namespace Prisma {
     cancelledAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    isBulkSwap?: boolean
+    bundleId?: string | null
+    transactionCount?: number
+    bundleStatus?: string | null
+    cancelledBy?: string | null
+    updateCount?: number
     maker: UserCreateNestedOneWithoutMakerOffersInput
     nonce: NoncePoolCreateNestedOneWithoutOffersInput
     parentOffer?: SwapOfferCreateNestedOneWithoutCounterOffersInput
@@ -23074,6 +26625,12 @@ export namespace Prisma {
     cancelledAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    isBulkSwap?: boolean
+    bundleId?: string | null
+    transactionCount?: number
+    bundleStatus?: string | null
+    cancelledBy?: string | null
+    updateCount?: number
     counterOffers?: SwapOfferUncheckedCreateNestedManyWithoutParentOfferInput
     transactions?: SwapTransactionUncheckedCreateNestedManyWithoutOfferInput
   }
@@ -23177,6 +26734,12 @@ export namespace Prisma {
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isBulkSwap?: BoolFieldUpdateOperationsInput | boolean
+    bundleId?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionCount?: IntFieldUpdateOperationsInput | number
+    bundleStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
+    updateCount?: IntFieldUpdateOperationsInput | number
     maker?: UserUpdateOneRequiredWithoutMakerOffersNestedInput
     nonce?: NoncePoolUpdateOneRequiredWithoutOffersNestedInput
     parentOffer?: SwapOfferUpdateOneWithoutCounterOffersNestedInput
@@ -23205,6 +26768,12 @@ export namespace Prisma {
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isBulkSwap?: BoolFieldUpdateOperationsInput | boolean
+    bundleId?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionCount?: IntFieldUpdateOperationsInput | number
+    bundleStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
+    updateCount?: IntFieldUpdateOperationsInput | number
     counterOffers?: SwapOfferUncheckedUpdateManyWithoutParentOfferNestedInput
     counterTransactions?: SwapTransactionUncheckedUpdateManyWithoutCounterOfferNestedInput
   }
@@ -23237,6 +26806,12 @@ export namespace Prisma {
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isBulkSwap?: BoolFieldUpdateOperationsInput | boolean
+    bundleId?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionCount?: IntFieldUpdateOperationsInput | number
+    bundleStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
+    updateCount?: IntFieldUpdateOperationsInput | number
     maker?: UserUpdateOneRequiredWithoutMakerOffersNestedInput
     nonce?: NoncePoolUpdateOneRequiredWithoutOffersNestedInput
     parentOffer?: SwapOfferUpdateOneWithoutCounterOffersNestedInput
@@ -23265,6 +26840,12 @@ export namespace Prisma {
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isBulkSwap?: BoolFieldUpdateOperationsInput | boolean
+    bundleId?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionCount?: IntFieldUpdateOperationsInput | number
+    bundleStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
+    updateCount?: IntFieldUpdateOperationsInput | number
     counterOffers?: SwapOfferUncheckedUpdateManyWithoutParentOfferNestedInput
     transactions?: SwapTransactionUncheckedUpdateManyWithoutOfferNestedInput
   }
@@ -23345,6 +26926,147 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     makerOffers?: SwapOfferUncheckedUpdateManyWithoutMakerNestedInput
     makerTransactions?: SwapTransactionUncheckedUpdateManyWithoutMakerNestedInput
+  }
+
+  export type ZeroFeeSwapLogCreateWithoutAuthorizedAppInput = {
+    id?: string
+    swapSignature: string
+    makerWallet: string
+    takerWallet: string
+    platformFeeBps: number
+    totalValueLamports: bigint | number
+    backendSigner: string
+    ipAddress?: string | null
+    userAgent?: string | null
+    executedAt?: Date | string
+  }
+
+  export type ZeroFeeSwapLogUncheckedCreateWithoutAuthorizedAppInput = {
+    id?: string
+    swapSignature: string
+    makerWallet: string
+    takerWallet: string
+    platformFeeBps: number
+    totalValueLamports: bigint | number
+    backendSigner: string
+    ipAddress?: string | null
+    userAgent?: string | null
+    executedAt?: Date | string
+  }
+
+  export type ZeroFeeSwapLogCreateOrConnectWithoutAuthorizedAppInput = {
+    where: ZeroFeeSwapLogWhereUniqueInput
+    create: XOR<ZeroFeeSwapLogCreateWithoutAuthorizedAppInput, ZeroFeeSwapLogUncheckedCreateWithoutAuthorizedAppInput>
+  }
+
+  export type ZeroFeeSwapLogCreateManyAuthorizedAppInputEnvelope = {
+    data: ZeroFeeSwapLogCreateManyAuthorizedAppInput | ZeroFeeSwapLogCreateManyAuthorizedAppInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type ZeroFeeSwapLogUpsertWithWhereUniqueWithoutAuthorizedAppInput = {
+    where: ZeroFeeSwapLogWhereUniqueInput
+    update: XOR<ZeroFeeSwapLogUpdateWithoutAuthorizedAppInput, ZeroFeeSwapLogUncheckedUpdateWithoutAuthorizedAppInput>
+    create: XOR<ZeroFeeSwapLogCreateWithoutAuthorizedAppInput, ZeroFeeSwapLogUncheckedCreateWithoutAuthorizedAppInput>
+  }
+
+  export type ZeroFeeSwapLogUpdateWithWhereUniqueWithoutAuthorizedAppInput = {
+    where: ZeroFeeSwapLogWhereUniqueInput
+    data: XOR<ZeroFeeSwapLogUpdateWithoutAuthorizedAppInput, ZeroFeeSwapLogUncheckedUpdateWithoutAuthorizedAppInput>
+  }
+
+  export type ZeroFeeSwapLogUpdateManyWithWhereWithoutAuthorizedAppInput = {
+    where: ZeroFeeSwapLogScalarWhereInput
+    data: XOR<ZeroFeeSwapLogUpdateManyMutationInput, ZeroFeeSwapLogUncheckedUpdateManyWithoutAuthorizedAppInput>
+  }
+
+  export type ZeroFeeSwapLogScalarWhereInput = {
+    AND?: ZeroFeeSwapLogScalarWhereInput | ZeroFeeSwapLogScalarWhereInput[]
+    OR?: ZeroFeeSwapLogScalarWhereInput[]
+    NOT?: ZeroFeeSwapLogScalarWhereInput | ZeroFeeSwapLogScalarWhereInput[]
+    id?: StringFilter<"ZeroFeeSwapLog"> | string
+    authorizedAppId?: StringFilter<"ZeroFeeSwapLog"> | string
+    swapSignature?: StringFilter<"ZeroFeeSwapLog"> | string
+    makerWallet?: StringFilter<"ZeroFeeSwapLog"> | string
+    takerWallet?: StringFilter<"ZeroFeeSwapLog"> | string
+    platformFeeBps?: IntFilter<"ZeroFeeSwapLog"> | number
+    totalValueLamports?: BigIntFilter<"ZeroFeeSwapLog"> | bigint | number
+    backendSigner?: StringFilter<"ZeroFeeSwapLog"> | string
+    ipAddress?: StringNullableFilter<"ZeroFeeSwapLog"> | string | null
+    userAgent?: StringNullableFilter<"ZeroFeeSwapLog"> | string | null
+    executedAt?: DateTimeFilter<"ZeroFeeSwapLog"> | Date | string
+  }
+
+  export type AuthorizedAppCreateWithoutZeroFeeSwapLogsInput = {
+    id?: string
+    name: string
+    apiKey: string
+    description?: string | null
+    active?: boolean
+    zeroFeeEnabled?: boolean
+    rateLimitPerDay?: number
+    totalSwaps?: number
+    lastUsedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AuthorizedAppUncheckedCreateWithoutZeroFeeSwapLogsInput = {
+    id?: string
+    name: string
+    apiKey: string
+    description?: string | null
+    active?: boolean
+    zeroFeeEnabled?: boolean
+    rateLimitPerDay?: number
+    totalSwaps?: number
+    lastUsedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AuthorizedAppCreateOrConnectWithoutZeroFeeSwapLogsInput = {
+    where: AuthorizedAppWhereUniqueInput
+    create: XOR<AuthorizedAppCreateWithoutZeroFeeSwapLogsInput, AuthorizedAppUncheckedCreateWithoutZeroFeeSwapLogsInput>
+  }
+
+  export type AuthorizedAppUpsertWithoutZeroFeeSwapLogsInput = {
+    update: XOR<AuthorizedAppUpdateWithoutZeroFeeSwapLogsInput, AuthorizedAppUncheckedUpdateWithoutZeroFeeSwapLogsInput>
+    create: XOR<AuthorizedAppCreateWithoutZeroFeeSwapLogsInput, AuthorizedAppUncheckedCreateWithoutZeroFeeSwapLogsInput>
+    where?: AuthorizedAppWhereInput
+  }
+
+  export type AuthorizedAppUpdateToOneWithWhereWithoutZeroFeeSwapLogsInput = {
+    where?: AuthorizedAppWhereInput
+    data: XOR<AuthorizedAppUpdateWithoutZeroFeeSwapLogsInput, AuthorizedAppUncheckedUpdateWithoutZeroFeeSwapLogsInput>
+  }
+
+  export type AuthorizedAppUpdateWithoutZeroFeeSwapLogsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    apiKey?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    active?: BoolFieldUpdateOperationsInput | boolean
+    zeroFeeEnabled?: BoolFieldUpdateOperationsInput | boolean
+    rateLimitPerDay?: IntFieldUpdateOperationsInput | number
+    totalSwaps?: IntFieldUpdateOperationsInput | number
+    lastUsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AuthorizedAppUncheckedUpdateWithoutZeroFeeSwapLogsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    apiKey?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    active?: BoolFieldUpdateOperationsInput | boolean
+    zeroFeeEnabled?: BoolFieldUpdateOperationsInput | boolean
+    rateLimitPerDay?: IntFieldUpdateOperationsInput | number
+    totalSwaps?: IntFieldUpdateOperationsInput | number
+    lastUsedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type DepositCreateManyAgreementInput = {
@@ -23491,6 +27213,12 @@ export namespace Prisma {
     cancelledAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    isBulkSwap?: boolean
+    bundleId?: string | null
+    transactionCount?: number
+    bundleStatus?: string | null
+    cancelledBy?: string | null
+    updateCount?: number
   }
 
   export type SwapTransactionCreateManyMakerInput = {
@@ -23510,6 +27238,9 @@ export namespace Prisma {
     confirmedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    bundleId?: string | null
+    transactionIndex?: number
+    bundleSlot?: bigint | number | null
   }
 
   export type SwapTransactionCreateManyTakerInput = {
@@ -23529,6 +27260,9 @@ export namespace Prisma {
     confirmedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    bundleId?: string | null
+    transactionIndex?: number
+    bundleSlot?: bigint | number | null
   }
 
   export type SwapOfferUpdateWithoutMakerInput = {
@@ -23548,6 +27282,12 @@ export namespace Prisma {
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isBulkSwap?: BoolFieldUpdateOperationsInput | boolean
+    bundleId?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionCount?: IntFieldUpdateOperationsInput | number
+    bundleStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
+    updateCount?: IntFieldUpdateOperationsInput | number
     nonce?: NoncePoolUpdateOneRequiredWithoutOffersNestedInput
     parentOffer?: SwapOfferUpdateOneWithoutCounterOffersNestedInput
     counterOffers?: SwapOfferUpdateManyWithoutParentOfferNestedInput
@@ -23575,6 +27315,12 @@ export namespace Prisma {
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isBulkSwap?: BoolFieldUpdateOperationsInput | boolean
+    bundleId?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionCount?: IntFieldUpdateOperationsInput | number
+    bundleStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
+    updateCount?: IntFieldUpdateOperationsInput | number
     counterOffers?: SwapOfferUncheckedUpdateManyWithoutParentOfferNestedInput
     transactions?: SwapTransactionUncheckedUpdateManyWithoutOfferNestedInput
     counterTransactions?: SwapTransactionUncheckedUpdateManyWithoutCounterOfferNestedInput
@@ -23600,6 +27346,12 @@ export namespace Prisma {
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isBulkSwap?: BoolFieldUpdateOperationsInput | boolean
+    bundleId?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionCount?: IntFieldUpdateOperationsInput | number
+    bundleStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
+    updateCount?: IntFieldUpdateOperationsInput | number
   }
 
   export type SwapTransactionUpdateWithoutMakerInput = {
@@ -23615,6 +27367,9 @@ export namespace Prisma {
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    bundleId?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionIndex?: IntFieldUpdateOperationsInput | number
+    bundleSlot?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
     offer?: SwapOfferUpdateOneRequiredWithoutTransactionsNestedInput
     counterOffer?: SwapOfferUpdateOneWithoutCounterTransactionsNestedInput
     taker?: UserUpdateOneRequiredWithoutTakerTransactionsNestedInput
@@ -23637,6 +27392,9 @@ export namespace Prisma {
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    bundleId?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionIndex?: IntFieldUpdateOperationsInput | number
+    bundleSlot?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
   }
 
   export type SwapTransactionUncheckedUpdateManyWithoutMakerInput = {
@@ -23656,6 +27414,9 @@ export namespace Prisma {
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    bundleId?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionIndex?: IntFieldUpdateOperationsInput | number
+    bundleSlot?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
   }
 
   export type SwapTransactionUpdateWithoutTakerInput = {
@@ -23671,6 +27432,9 @@ export namespace Prisma {
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    bundleId?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionIndex?: IntFieldUpdateOperationsInput | number
+    bundleSlot?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
     offer?: SwapOfferUpdateOneRequiredWithoutTransactionsNestedInput
     counterOffer?: SwapOfferUpdateOneWithoutCounterTransactionsNestedInput
     maker?: UserUpdateOneRequiredWithoutMakerTransactionsNestedInput
@@ -23693,6 +27457,9 @@ export namespace Prisma {
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    bundleId?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionIndex?: IntFieldUpdateOperationsInput | number
+    bundleSlot?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
   }
 
   export type SwapTransactionUncheckedUpdateManyWithoutTakerInput = {
@@ -23712,6 +27479,9 @@ export namespace Prisma {
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    bundleId?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionIndex?: IntFieldUpdateOperationsInput | number
+    bundleSlot?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
   }
 
   export type SwapOfferCreateManyNonceInput = {
@@ -23734,6 +27504,12 @@ export namespace Prisma {
     cancelledAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    isBulkSwap?: boolean
+    bundleId?: string | null
+    transactionCount?: number
+    bundleStatus?: string | null
+    cancelledBy?: string | null
+    updateCount?: number
   }
 
   export type SwapOfferUpdateWithoutNonceInput = {
@@ -23753,6 +27529,12 @@ export namespace Prisma {
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isBulkSwap?: BoolFieldUpdateOperationsInput | boolean
+    bundleId?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionCount?: IntFieldUpdateOperationsInput | number
+    bundleStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
+    updateCount?: IntFieldUpdateOperationsInput | number
     maker?: UserUpdateOneRequiredWithoutMakerOffersNestedInput
     parentOffer?: SwapOfferUpdateOneWithoutCounterOffersNestedInput
     counterOffers?: SwapOfferUpdateManyWithoutParentOfferNestedInput
@@ -23780,6 +27562,12 @@ export namespace Prisma {
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isBulkSwap?: BoolFieldUpdateOperationsInput | boolean
+    bundleId?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionCount?: IntFieldUpdateOperationsInput | number
+    bundleStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
+    updateCount?: IntFieldUpdateOperationsInput | number
     counterOffers?: SwapOfferUncheckedUpdateManyWithoutParentOfferNestedInput
     transactions?: SwapTransactionUncheckedUpdateManyWithoutOfferNestedInput
     counterTransactions?: SwapTransactionUncheckedUpdateManyWithoutCounterOfferNestedInput
@@ -23805,6 +27593,12 @@ export namespace Prisma {
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isBulkSwap?: BoolFieldUpdateOperationsInput | boolean
+    bundleId?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionCount?: IntFieldUpdateOperationsInput | number
+    bundleStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
+    updateCount?: IntFieldUpdateOperationsInput | number
   }
 
   export type SwapOfferCreateManyParentOfferInput = {
@@ -23827,6 +27621,12 @@ export namespace Prisma {
     cancelledAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    isBulkSwap?: boolean
+    bundleId?: string | null
+    transactionCount?: number
+    bundleStatus?: string | null
+    cancelledBy?: string | null
+    updateCount?: number
   }
 
   export type SwapTransactionCreateManyOfferInput = {
@@ -23846,6 +27646,9 @@ export namespace Prisma {
     confirmedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    bundleId?: string | null
+    transactionIndex?: number
+    bundleSlot?: bigint | number | null
   }
 
   export type SwapTransactionCreateManyCounterOfferInput = {
@@ -23865,6 +27668,9 @@ export namespace Prisma {
     confirmedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    bundleId?: string | null
+    transactionIndex?: number
+    bundleSlot?: bigint | number | null
   }
 
   export type SwapOfferUpdateWithoutParentOfferInput = {
@@ -23884,6 +27690,12 @@ export namespace Prisma {
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isBulkSwap?: BoolFieldUpdateOperationsInput | boolean
+    bundleId?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionCount?: IntFieldUpdateOperationsInput | number
+    bundleStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
+    updateCount?: IntFieldUpdateOperationsInput | number
     maker?: UserUpdateOneRequiredWithoutMakerOffersNestedInput
     nonce?: NoncePoolUpdateOneRequiredWithoutOffersNestedInput
     counterOffers?: SwapOfferUpdateManyWithoutParentOfferNestedInput
@@ -23911,6 +27723,12 @@ export namespace Prisma {
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isBulkSwap?: BoolFieldUpdateOperationsInput | boolean
+    bundleId?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionCount?: IntFieldUpdateOperationsInput | number
+    bundleStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
+    updateCount?: IntFieldUpdateOperationsInput | number
     counterOffers?: SwapOfferUncheckedUpdateManyWithoutParentOfferNestedInput
     transactions?: SwapTransactionUncheckedUpdateManyWithoutOfferNestedInput
     counterTransactions?: SwapTransactionUncheckedUpdateManyWithoutCounterOfferNestedInput
@@ -23936,6 +27754,12 @@ export namespace Prisma {
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isBulkSwap?: BoolFieldUpdateOperationsInput | boolean
+    bundleId?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionCount?: IntFieldUpdateOperationsInput | number
+    bundleStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
+    updateCount?: IntFieldUpdateOperationsInput | number
   }
 
   export type SwapTransactionUpdateWithoutOfferInput = {
@@ -23951,6 +27775,9 @@ export namespace Prisma {
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    bundleId?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionIndex?: IntFieldUpdateOperationsInput | number
+    bundleSlot?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
     counterOffer?: SwapOfferUpdateOneWithoutCounterTransactionsNestedInput
     maker?: UserUpdateOneRequiredWithoutMakerTransactionsNestedInput
     taker?: UserUpdateOneRequiredWithoutTakerTransactionsNestedInput
@@ -23973,6 +27800,9 @@ export namespace Prisma {
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    bundleId?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionIndex?: IntFieldUpdateOperationsInput | number
+    bundleSlot?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
   }
 
   export type SwapTransactionUncheckedUpdateManyWithoutOfferInput = {
@@ -23992,6 +27822,9 @@ export namespace Prisma {
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    bundleId?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionIndex?: IntFieldUpdateOperationsInput | number
+    bundleSlot?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
   }
 
   export type SwapTransactionUpdateWithoutCounterOfferInput = {
@@ -24007,6 +27840,9 @@ export namespace Prisma {
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    bundleId?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionIndex?: IntFieldUpdateOperationsInput | number
+    bundleSlot?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
     offer?: SwapOfferUpdateOneRequiredWithoutTransactionsNestedInput
     maker?: UserUpdateOneRequiredWithoutMakerTransactionsNestedInput
     taker?: UserUpdateOneRequiredWithoutTakerTransactionsNestedInput
@@ -24029,6 +27865,9 @@ export namespace Prisma {
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    bundleId?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionIndex?: IntFieldUpdateOperationsInput | number
+    bundleSlot?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
   }
 
   export type SwapTransactionUncheckedUpdateManyWithoutCounterOfferInput = {
@@ -24048,6 +27887,61 @@ export namespace Prisma {
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    bundleId?: NullableStringFieldUpdateOperationsInput | string | null
+    transactionIndex?: IntFieldUpdateOperationsInput | number
+    bundleSlot?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  }
+
+  export type ZeroFeeSwapLogCreateManyAuthorizedAppInput = {
+    id?: string
+    swapSignature: string
+    makerWallet: string
+    takerWallet: string
+    platformFeeBps: number
+    totalValueLamports: bigint | number
+    backendSigner: string
+    ipAddress?: string | null
+    userAgent?: string | null
+    executedAt?: Date | string
+  }
+
+  export type ZeroFeeSwapLogUpdateWithoutAuthorizedAppInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    swapSignature?: StringFieldUpdateOperationsInput | string
+    makerWallet?: StringFieldUpdateOperationsInput | string
+    takerWallet?: StringFieldUpdateOperationsInput | string
+    platformFeeBps?: IntFieldUpdateOperationsInput | number
+    totalValueLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    backendSigner?: StringFieldUpdateOperationsInput | string
+    ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+    executedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ZeroFeeSwapLogUncheckedUpdateWithoutAuthorizedAppInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    swapSignature?: StringFieldUpdateOperationsInput | string
+    makerWallet?: StringFieldUpdateOperationsInput | string
+    takerWallet?: StringFieldUpdateOperationsInput | string
+    platformFeeBps?: IntFieldUpdateOperationsInput | number
+    totalValueLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    backendSigner?: StringFieldUpdateOperationsInput | string
+    ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+    executedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ZeroFeeSwapLogUncheckedUpdateManyWithoutAuthorizedAppInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    swapSignature?: StringFieldUpdateOperationsInput | string
+    makerWallet?: StringFieldUpdateOperationsInput | string
+    takerWallet?: StringFieldUpdateOperationsInput | string
+    platformFeeBps?: IntFieldUpdateOperationsInput | number
+    totalValueLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    backendSigner?: StringFieldUpdateOperationsInput | string
+    ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+    executedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
 

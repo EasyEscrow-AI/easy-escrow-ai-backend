@@ -284,7 +284,13 @@ exports.Prisma.SwapOfferScalarFieldEnum = {
   filledAt: 'filledAt',
   cancelledAt: 'cancelledAt',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  isBulkSwap: 'isBulkSwap',
+  bundleId: 'bundleId',
+  transactionCount: 'transactionCount',
+  bundleStatus: 'bundleStatus',
+  cancelledBy: 'cancelledBy',
+  updateCount: 'updateCount'
 };
 
 exports.Prisma.SwapTransactionScalarFieldEnum = {
@@ -304,7 +310,38 @@ exports.Prisma.SwapTransactionScalarFieldEnum = {
   errorMessage: 'errorMessage',
   confirmedAt: 'confirmedAt',
   createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  bundleId: 'bundleId',
+  transactionIndex: 'transactionIndex',
+  bundleSlot: 'bundleSlot'
+};
+
+exports.Prisma.AuthorizedAppScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  apiKey: 'apiKey',
+  description: 'description',
+  active: 'active',
+  zeroFeeEnabled: 'zeroFeeEnabled',
+  rateLimitPerDay: 'rateLimitPerDay',
+  totalSwaps: 'totalSwaps',
+  lastUsedAt: 'lastUsedAt',
+  createdAt: 'createdAt',
   updatedAt: 'updatedAt'
+};
+
+exports.Prisma.ZeroFeeSwapLogScalarFieldEnum = {
+  id: 'id',
+  authorizedAppId: 'authorizedAppId',
+  swapSignature: 'swapSignature',
+  makerWallet: 'makerWallet',
+  takerWallet: 'takerWallet',
+  platformFeeBps: 'platformFeeBps',
+  totalValueLamports: 'totalValueLamports',
+  backendSigner: 'backendSigner',
+  ipAddress: 'ipAddress',
+  userAgent: 'userAgent',
+  executedAt: 'executedAt'
 };
 
 exports.Prisma.SortOrder = {
@@ -428,7 +465,9 @@ exports.Prisma.ModelName = {
   User: 'User',
   NoncePool: 'NoncePool',
   SwapOffer: 'SwapOffer',
-  SwapTransaction: 'SwapTransaction'
+  SwapTransaction: 'SwapTransaction',
+  AuthorizedApp: 'AuthorizedApp',
+  ZeroFeeSwapLog: 'ZeroFeeSwapLog'
 };
 
 /**
