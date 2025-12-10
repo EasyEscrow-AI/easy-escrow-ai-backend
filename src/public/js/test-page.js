@@ -723,231 +723,261 @@ function showConfirmationModal() {
         takerOffersEl.appendChild(empty);
     }
     
-    // Calculate and display estimated fees and time
-    const totalNFTs = selectedMakerNFTs.length + selectedTakerNFTs.length;
-    const totalSOL = (parseFloat(offeredSol) || 0) + (parseFloat(requestedSol) || 0);
+    // Show loading state for fees/estimates
+    document.getElementById('modal-est-time').textContent = 'Loading...';
+    document.getElementById('modal-network-fees').textContent = 'Loading...';
+    document.getElementById('modal-platform-fee-label').textContent = 'Platform Fee:';
+    document.getElementById('modal-platform-fee').textContent = 'Loading...';
     
-    // Count different NFT types for accurate fee estimation
-    // cNFTs require ~5x more compute units due to Merkle proof processing
-    const cNFTCount = [...selectedMakerNFTs, ...selectedTakerNFTs].filter(nft => nft.isCompressed).length;
-    const regularNFTCount = totalNFTs - cNFTCount;
-    
-    // Estimate time based on number of NFTs (check larger thresholds first)
-    // cNFTs are slightly slower due to proof fetching
-    let estimatedTime = '~5 seconds';
-    if (totalNFTs > 10 || cNFTCount > 5) {
-        estimatedTime = '~20 seconds';
-    } else if (totalNFTs > 5 || cNFTCount > 2) {
-        estimatedTime = '~10 seconds';
-    }
-    
-    // Calculate network fees (realistic estimate based on actual Solana fees)
-    // Solana signature fee: 5,000 lamports = 0.000005 SOL per signature
-    // Atomic swaps typically use 3 signatures = 15,000 lamports = 0.000015 SOL
-    // 
-    // Compute costs (with priority fees ~5-50k microlamports/CU):
-    // - SPL/Core NFTs: ~10,000 CU each = ~0.0000005-0.000005 SOL priority
-    // - cNFTs: ~50,000 CU each = ~0.0000025-0.000025 SOL priority (5x more)
-    // 
-    // Note: ATA creation is rare (usually ATAs exist) and is a one-time cost
-    const baseFee = 0.00002; // 3-4 signatures worth (15,000-20,000 lamports) as safe buffer
-    const perRegularNFTFee = 0.000005; // Small buffer per SPL/Core NFT
-    const perCNFTFee = 0.00002; // Higher buffer per cNFT (more compute + potential proof size)
-    const networkFee = baseFee + (regularNFTCount * perRegularNFTFee) + (cNFTCount * perCNFTFee);
-    
-    // Calculate platform fee (matches backend FeeCalculator logic)
-    // - If SOL is transferred: 1% of total SOL (minimum 0.001 SOL)
-    // - If only NFTs (no SOL): Flat fee of 0.005 SOL
-    let platformFee;
-    if (totalSOL > 0) {
-        // Percentage-based fee with minimum floor
-        platformFee = Math.max(totalSOL * 0.01, 0.001);
-    } else {
-        // Flat fee for NFT-only swaps
-        platformFee = 0.005;
-    }
-    
-    // Helper function to format SOL with USD
-    const formatSOLWithUSD = (solAmount) => {
-        const solStr = solAmount.toFixed(4);
-        if (solPriceUSD) {
-            const usdValue = (solAmount * solPriceUSD).toFixed(2);
-            return `${solStr} SOL (~$${usdValue} USD)`;
-        }
-        return `${solStr} SOL`;
-    };
-    
-    // Format platform fee display and label
-    // Check if API key is provided
+    // Fetch quote from backend (includes all fee calculations and transaction size)
     const apiKeyInput = document.getElementById('api-key-input');
-    const hasApiKey = apiKeyInput && apiKeyInput.value.trim().length > 0;
+    const apiKey = apiKeyInput ? apiKeyInput.value.trim() : '';
     
-    // Show different label and format based on whether SOL is involved and API key
-    let platformFeeLabel, platformFeeDisplay;
-    if (hasApiKey) {
-        // Zero-fee with API key (if valid)
-        platformFeeLabel = 'Platform Fee (with API key):';
-        platformFeeDisplay = '0 SOL (zero fee) 🎉';
-    } else if (totalSOL > 0) {
-        // Percentage-based fee for SOL swaps
-        platformFeeLabel = 'Platform Fee (1%):';
-        platformFeeDisplay = formatSOLWithUSD(platformFee);
-    } else {
-        // Flat fee for NFT-only swaps
-        platformFeeLabel = 'Platform Fee:';
-        platformFeeDisplay = `${formatSOLWithUSD(platformFee)} (flat fee)`;
-    }
-    
-    // Update modal values
-    document.getElementById('modal-est-time').textContent = estimatedTime;
-    document.getElementById('modal-network-fees').textContent = solPriceUSD 
-        ? `~${formatSOLWithUSD(networkFee)}`
-        : `~${networkFee.toFixed(6)} SOL`;
-    document.getElementById('modal-platform-fee-label').textContent = platformFeeLabel;
-    document.getElementById('modal-platform-fee').textContent = platformFeeDisplay;
-    
-    // Fetch transaction size estimate
-    fetchTransactionSizeEstimate(selectedMakerNFTs, selectedTakerNFTs);
+    fetchSwapQuote(selectedMakerNFTs, selectedTakerNFTs, offeredSol, requestedSol, apiKey);
     
     // Show modal
     document.getElementById('confirm-modal').classList.add('show');
 }
 
-// Fetch and display transaction size estimate
-async function fetchTransactionSizeEstimate(makerNFTs, takerNFTs) {
+// Fetch comprehensive swap quote from backend API
+async function fetchSwapQuote(makerNFTs, takerNFTs, offeredSol, requestedSol, apiKey) {
     const txSizeContainer = document.getElementById('modal-tx-size-container');
-    if (!txSizeContainer) return; // Element doesn't exist yet
     
     try {
-        txSizeContainer.innerHTML = '<span class="loading">Estimating size...</span>';
+        if (txSizeContainer) {
+            txSizeContainer.innerHTML = '<span class="loading">Fetching quote...</span>';
+        }
         
-        const response = await fetch('/api/test/estimate-size', {
+        // Build request body for /api/quote
+        const requestBody = {
+            makerAssets: makerNFTs.map(nft => ({
+                mint: nft.mint,
+                isCompressed: nft.isCompressed || false,
+                isCoreNft: nft.isCoreNft || false,
+                name: nft.name,
+                image: nft.image,
+            })),
+            takerAssets: takerNFTs.map(nft => ({
+                mint: nft.mint,
+                isCompressed: nft.isCompressed || false,
+                isCoreNft: nft.isCoreNft || false,
+                name: nft.name,
+                image: nft.image,
+            })),
+            makerSolLamports: offeredSol ? Math.floor(parseFloat(offeredSol) * 1e9) : 0,
+            takerSolLamports: requestedSol ? Math.floor(parseFloat(requestedSol) * 1e9) : 0,
+            apiKey: apiKey || '',
+        };
+        
+        const response = await fetch('/api/quote', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                offeredAssets: makerNFTs.map(nft => ({
-                    mint: nft.mint,
-                    isCompressed: nft.isCompressed || false,
-                })),
-                requestedAssets: takerNFTs.map(nft => ({
-                    mint: nft.mint,
-                    isCompressed: nft.isCompressed || false,
-                })),
-            }),
+            body: JSON.stringify(requestBody),
         });
         
-        const data = await response.json();
+        const result = await response.json();
         
-        if (data.success) {
-            const estimate = data.data;
-            const percentage = Math.min((estimate.estimatedSize / estimate.maxSize) * 100, 100);
+        if (result.success && result.data) {
+            const quote = result.data;
             
-            // Determine color based on size
-            let barColor = '#22c55e'; // green
-            let statusText = '✅ OK';
-            if (!estimate.willFit && estimate.willFitWithALT) {
-                barColor = '#f59e0b'; // amber
-                statusText = '🔗 ALT Required';
-            } else if (!estimate.willFit && !estimate.willFitWithALT) {
-                barColor = '#ef4444'; // red
-                statusText = '❌ Too Large';
-            } else if (percentage > 80) {
-                barColor = '#f59e0b'; // amber
-                statusText = '⚠️ Near Limit';
+            // Update estimated time
+            document.getElementById('modal-est-time').textContent = quote.estimatedTime?.display || '~5 seconds';
+            
+            // Update network fees
+            document.getElementById('modal-network-fees').textContent = quote.networkFee?.display || '~0.00002 SOL';
+            
+            // Update platform fee
+            const platformFee = quote.platformFee;
+            if (platformFee) {
+                let platformFeeLabel = 'Platform Fee:';
+                if (platformFee.type === 'zero') {
+                    platformFeeLabel = 'Platform Fee (with API key):';
+                } else if (platformFee.type === 'percentage') {
+                    platformFeeLabel = `Platform Fee (${platformFee.label || '1%'}):`;
+                }
+                document.getElementById('modal-platform-fee-label').textContent = platformFeeLabel;
+                document.getElementById('modal-platform-fee').textContent = platformFee.display || '0 SOL';
             }
             
-            // Build display HTML
-            let html = `
-                <div class="tx-size-info">
-                    <div class="tx-size-header">
-                        <span class="tx-size-label">Transaction Size:</span>
-                        <span class="tx-size-value">${estimate.estimatedSize} / ${estimate.maxSize} bytes</span>
-                        <span class="tx-size-status" style="color: ${barColor}">${statusText}</span>
-                    </div>
-                    <div class="tx-size-bar-container">
-                        <div class="tx-size-bar" style="width: ${percentage}%; background-color: ${barColor}"></div>
-                    </div>
-            `;
-            
-            // Add warning if present (e.g., multi-NFT not supported)
-            if (estimate.warning) {
-                html += `
-                    <div class="tx-warning" style="background: #fef2f2; border: 1px solid #ef4444; padding: 8px; border-radius: 6px; margin-bottom: 10px; color: #991b1b; font-size: 0.8rem;">
-                        ⚠️ ${estimate.warning}
-                    </div>
-                `;
-            }
-            
-            // Add ALT info if needed - show before/after comparison
-            if (estimate.useALT && estimate.estimatedSizeWithALT) {
-                const altPercentage = Math.min((estimate.estimatedSizeWithALT / estimate.maxSize) * 100, 100);
-                const savings = estimate.estimatedSize - estimate.estimatedSizeWithALT;
-                html += `
-                    <div class="tx-alt-info" style="margin-top: 12px; padding: 10px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 1px solid #22c55e; border-radius: 8px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                            <span class="alt-badge" style="background: #22c55e; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">🔗 ALT Applied</span>
-                            <span style="color: #166534; font-size: 0.75rem; font-weight: 500;">Saves ${savings} bytes</span>
+            // Update transaction size display
+            if (txSizeContainer && quote.transactionSize) {
+                const txSize = quote.transactionSize;
+                const percentage = Math.min((txSize.estimated / txSize.maxSize) * 100, 100);
+                
+                // Determine color based on status
+                let barColor = '#22c55e'; // green
+                let statusText = '✅ OK';
+                if (txSize.status === 'too_large') {
+                    barColor = '#ef4444'; // red
+                    statusText = '❌ Too Large';
+                } else if (txSize.status === 'alt_required') {
+                    barColor = '#f59e0b'; // amber
+                    statusText = '🔗 ALT Required';
+                } else if (txSize.status === 'near_limit') {
+                    barColor = '#f59e0b'; // amber
+                    statusText = '⚠️ Near Limit';
+                }
+                
+                // Build display HTML
+                let html = `
+                    <div class="tx-size-info">
+                        <div class="tx-size-header">
+                            <span class="tx-size-label">Transaction Size:</span>
+                            <span class="tx-size-value">${txSize.estimated} / ${txSize.maxSize} bytes</span>
+                            <span class="tx-size-status" style="color: ${barColor}">${statusText}</span>
                         </div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                            <span style="font-size: 0.8rem; color: #166534;">With ALT:</span>
-                            <span style="font-size: 0.85rem; font-weight: 600; color: #166534;">${estimate.estimatedSizeWithALT} / ${estimate.maxSize} bytes ✅</span>
+                        <div class="tx-size-bar-container">
+                            <div class="tx-size-bar" style="width: ${percentage}%; background-color: ${barColor}"></div>
                         </div>
-                        <div class="tx-size-bar-container" style="height: 6px; background: #bbf7d0; border-radius: 3px; overflow: hidden;">
-                            <div class="tx-size-bar" style="width: ${altPercentage}%; background-color: #22c55e; height: 100%;"></div>
-                        </div>
-                    </div>
                 `;
-            }
-            
-            // Add breakdown
-            if (estimate.breakdown) {
-                html += `
-                    <div class="tx-size-breakdown">
-                        <span>Signatures: ${estimate.breakdown.signatures}B</span>
-                        <span>Accounts: ${estimate.breakdown.accountKeys}B</span>
-                        <span>Instructions: ${estimate.breakdown.instructions}B</span>
-                        ${estimate.breakdown.proofData > 0 ? `<span>cNFT Proofs: ${estimate.breakdown.proofData}B</span>` : ''}
-                    </div>
-                `;
-            }
-            
-            // Add NFT count details with CORE NFT support
-            if (estimate.details) {
-                const d = estimate.details;
-                const makerTotal = d.totalMakerNfts || 0;
-                const takerTotal = d.totalTakerNfts || 0;
-                if (makerTotal > 0 || takerTotal > 0) {
-                    // Build NFT type breakdown strings
-                    const makerTypes = [];
-                    if (d.makerSplNfts > 0) makerTypes.push(`${d.makerSplNfts} SPL`);
-                    if (d.makerCnfts > 0) makerTypes.push(`${d.makerCnfts} cNFT`);
-                    if (d.makerCoreNfts > 0) makerTypes.push(`${d.makerCoreNfts} CORE`);
-                    
-                    const takerTypes = [];
-                    if (d.takerSplNfts > 0) takerTypes.push(`${d.takerSplNfts} SPL`);
-                    if (d.takerCnfts > 0) takerTypes.push(`${d.takerCnfts} cNFT`);
-                    if (d.takerCoreNfts > 0) takerTypes.push(`${d.takerCoreNfts} CORE`);
-                    
-                    const makerStr = makerTypes.length > 0 ? makerTypes.join(', ') : 'none';
-                    const takerStr = takerTypes.length > 0 ? takerTypes.join(', ') : 'none';
-                    
+                
+                // Add warnings if present
+                if (quote.warnings && quote.warnings.length > 0) {
+                    quote.warnings.forEach(warning => {
+                        html += `
+                            <div class="tx-warning" style="background: #fef2f2; border: 1px solid #ef4444; padding: 8px; border-radius: 6px; margin-bottom: 10px; color: #991b1b; font-size: 0.8rem;">
+                                ⚠️ ${escapeHtml(warning)}
+                            </div>
+                        `;
+                    });
+                }
+                
+                // Add ALT info if needed
+                if (txSize.useALT && txSize.estimatedWithALT) {
+                    const altPercentage = Math.min((txSize.estimatedWithALT / txSize.maxSize) * 100, 100);
+                    const savings = txSize.altSavings || (txSize.estimated - txSize.estimatedWithALT);
                     html += `
-                        <div class="tx-nft-counts" style="font-size: 0.75rem; color: #666; margin-top: 8px; padding: 6px 8px; background: #f8fafc; border-radius: 4px;">
-                            <span style="margin-right: 12px;">📤 Maker: ${makerTotal} (${makerStr})</span>
-                            <span>📥 Taker: ${takerTotal} (${takerStr})</span>
+                        <div class="tx-alt-info" style="margin-top: 12px; padding: 10px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 1px solid #22c55e; border-radius: 8px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <span class="alt-badge" style="background: #22c55e; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">🔗 ALT Applied</span>
+                                <span style="color: #166534; font-size: 0.75rem; font-weight: 500;">Saves ${savings} bytes</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                <span style="font-size: 0.8rem; color: #166534;">With ALT:</span>
+                                <span style="font-size: 0.85rem; font-weight: 600; color: #166534;">${txSize.estimatedWithALT} / ${txSize.maxSize} bytes ✅</span>
+                            </div>
+                            <div class="tx-size-bar-container" style="height: 6px; background: #bbf7d0; border-radius: 3px; overflow: hidden;">
+                                <div class="tx-size-bar" style="width: ${altPercentage}%; background-color: #22c55e; height: 100%;"></div>
+                            </div>
                         </div>
                     `;
                 }
+                
+                // Add breakdown
+                if (txSize.breakdown) {
+                    const b = txSize.breakdown;
+                    html += `
+                        <div class="tx-size-breakdown">
+                            <span>Signatures: ${b.signatures}B</span>
+                            <span>Accounts: ${b.accounts}B</span>
+                            <span>Instructions: ${b.instructions}B</span>
+                            ${b.cnftProofs > 0 ? `<span>cNFT Proofs: ${b.cnftProofs}B</span>` : ''}
+                        </div>
+                    `;
+                }
+                
+                // Add cNFT proof details if available
+                if (txSize.cnftProofDetails && txSize.cnftProofDetails.length > 0) {
+                    const proofDetails = txSize.cnftProofDetails;
+                    const allFetched = proofDetails.every(d => d.fetched);
+                    const statusIcon = allFetched ? '✅' : '⚠️';
+                    const statusLabel = allFetched ? 'Verified' : 'Estimated';
+                    
+                    html += `
+                        <div class="cnft-proof-details" style="font-size: 0.75rem; color: #666; margin-top: 8px; padding: 8px; background: ${allFetched ? '#f0fdf4' : '#fefce8'}; border: 1px solid ${allFetched ? '#86efac' : '#fde047'}; border-radius: 6px;">
+                            <div style="font-weight: 600; margin-bottom: 4px; color: ${allFetched ? '#166534' : '#854d0e'};">
+                                ${statusIcon} cNFT Proof Data (${statusLabel})
+                            </div>
+                    `;
+                    
+                    for (const detail of proofDetails) {
+                        const side = detail.side === 'maker' ? '📤' : '📥';
+                        const shortId = detail.assetId.slice(0, 8) + '...' + detail.assetId.slice(-4);
+                        const canopyInfo = detail.canopyDepth !== null ? ` (canopy: ${detail.canopyDepth})` : '';
+                        const fetchIcon = detail.fetched ? '✓' : '?';
+                        
+                        html += `
+                            <div style="display: flex; justify-content: space-between; padding: 2px 0;">
+                                <span>${side} ${shortId}</span>
+                                <span style="font-weight: 500;">${fetchIcon} ${detail.proofNodes} proof nodes${canopyInfo}</span>
+                            </div>
+                        `;
+                    }
+                    
+                    // Add explanation about proof nodes
+                    const totalNodes = proofDetails.reduce((sum, d) => sum + d.proofNodes, 0);
+                    if (totalNodes > 7) {
+                        html += `
+                            <div style="margin-top: 6px; padding-top: 6px; border-top: 1px solid ${allFetched ? '#86efac' : '#fde047'}; color: #991b1b; font-size: 0.7rem;">
+                                ⚠️ ${totalNodes} total proof nodes exceeds the ~7 node limit for atomic swaps
+                            </div>
+                        `;
+                    } else if (totalNodes > 5) {
+                        html += `
+                            <div style="margin-top: 6px; padding-top: 6px; border-top: 1px solid ${allFetched ? '#86efac' : '#fde047'}; color: #b45309; font-size: 0.7rem;">
+                                ⚠️ ${totalNodes} proof nodes is near the limit (~7 max for atomic swaps)
+                            </div>
+                        `;
+                    }
+                    
+                    html += '</div>';
+                }
+                
+                // Add NFT count details
+                const makerBreakdown = quote.maker?.breakdown;
+                const takerBreakdown = quote.taker?.breakdown;
+                if (makerBreakdown || takerBreakdown) {
+                    const makerTotal = quote.maker?.assetCount || 0;
+                    const takerTotal = quote.taker?.assetCount || 0;
+                    
+                    if (makerTotal > 0 || takerTotal > 0) {
+                        const makerTypes = [];
+                        if (makerBreakdown?.splNfts > 0) makerTypes.push(`${makerBreakdown.splNfts} SPL`);
+                        if (makerBreakdown?.cNfts > 0) makerTypes.push(`${makerBreakdown.cNfts} cNFT`);
+                        if (makerBreakdown?.coreNfts > 0) makerTypes.push(`${makerBreakdown.coreNfts} CORE`);
+                        
+                        const takerTypes = [];
+                        if (takerBreakdown?.splNfts > 0) takerTypes.push(`${takerBreakdown.splNfts} SPL`);
+                        if (takerBreakdown?.cNfts > 0) takerTypes.push(`${takerBreakdown.cNfts} cNFT`);
+                        if (takerBreakdown?.coreNfts > 0) takerTypes.push(`${takerBreakdown.coreNfts} CORE`);
+                        
+                        const makerStr = makerTypes.length > 0 ? makerTypes.join(', ') : 'none';
+                        const takerStr = takerTypes.length > 0 ? takerTypes.join(', ') : 'none';
+                        
+                        html += `
+                            <div class="tx-nft-counts" style="font-size: 0.75rem; color: #666; margin-top: 8px; padding: 6px 8px; background: #f8fafc; border-radius: 4px;">
+                                <span style="margin-right: 12px;">📤 Maker: ${makerTotal} (${makerStr})</span>
+                                <span>📥 Taker: ${takerTotal} (${takerStr})</span>
+                            </div>
+                        `;
+                    }
+                }
+                
+                html += '</div>';
+                txSizeContainer.innerHTML = html;
             }
-            
-            html += '</div>';
-            txSizeContainer.innerHTML = html;
         } else {
-            txSizeContainer.innerHTML = `<span class="error">Could not estimate size</span>`;
+            // Fallback to simple display if quote fails
+            console.warn('Quote API failed:', result.error);
+            document.getElementById('modal-est-time').textContent = '~5 seconds';
+            document.getElementById('modal-network-fees').textContent = '~0.00002 SOL';
+            document.getElementById('modal-platform-fee-label').textContent = 'Platform Fee:';
+            document.getElementById('modal-platform-fee').textContent = 'Unable to estimate';
+            
+            if (txSizeContainer) {
+                txSizeContainer.innerHTML = `<span class="error">Could not fetch quote</span>`;
+            }
         }
     } catch (error) {
-        console.error('Error fetching tx size estimate:', error);
-        txSizeContainer.innerHTML = `<span class="error">Error estimating size</span>`;
+        console.error('Error fetching swap quote:', error);
+        document.getElementById('modal-est-time').textContent = '~5 seconds';
+        document.getElementById('modal-network-fees').textContent = '~0.00002 SOL';
+        document.getElementById('modal-platform-fee-label').textContent = 'Platform Fee:';
+        document.getElementById('modal-platform-fee').textContent = 'Unable to estimate';
+        
+        if (txSizeContainer) {
+            txSizeContainer.innerHTML = `<span class="error">Error fetching quote</span>`;
+        }
     }
 }
 

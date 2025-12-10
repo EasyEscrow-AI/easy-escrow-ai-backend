@@ -16,6 +16,95 @@ const connection = new Connection(
   'confirmed'
 );
 
+// ========================================
+// cNFT PROOF FETCHING HELPERS
+// ========================================
+
+interface CnftProofInfo {
+  assetId: string;
+  treeId: string;
+  proofNodes: number;
+  canopyDepth: number | null;
+  maxDepth: number | null;
+  success: boolean;
+  error?: string;
+}
+
+/**
+ * Fetch actual cNFT proof data from DAS API
+ * Returns the number of proof nodes required for this specific cNFT
+ */
+async function fetchCnftProofInfo(assetId: string): Promise<CnftProofInfo> {
+  try {
+    // Call DAS API getAssetProof
+    const response = await (connection as any)._rpcRequest('getAssetProof', {
+      id: assetId,
+    });
+
+    if (!response || !response.result) {
+      return {
+        assetId,
+        treeId: '',
+        proofNodes: 14, // Fallback to worst case
+        canopyDepth: null,
+        maxDepth: null,
+        success: false,
+        error: 'No response from DAS API',
+      };
+    }
+
+    const proofData = response.result;
+    const proofArray = proofData.proof || [];
+    const proofNodes = proofArray.length;
+    
+    // Calculate canopy depth: maxDepth (typically 14) - proofNodes
+    // Standard trees have maxDepth=14, so canopy = 14 - proofNodes
+    const estimatedMaxDepth = 14;
+    const estimatedCanopyDepth = Math.max(0, estimatedMaxDepth - proofNodes);
+
+    console.log(`[Quote] cNFT ${assetId.slice(0, 8)}... proof: ${proofNodes} nodes (canopy ~${estimatedCanopyDepth})`);
+
+    return {
+      assetId,
+      treeId: proofData.tree_id || '',
+      proofNodes,
+      canopyDepth: estimatedCanopyDepth,
+      maxDepth: estimatedMaxDepth,
+      success: true,
+    };
+  } catch (error: any) {
+    console.warn(`[Quote] Failed to fetch proof for ${assetId}:`, error.message);
+    return {
+      assetId,
+      treeId: '',
+      proofNodes: 14, // Fallback to worst case
+      canopyDepth: null,
+      maxDepth: null,
+      success: false,
+      error: error.message,
+    };
+  }
+}
+
+/**
+ * Fetch proof info for multiple cNFTs in parallel
+ */
+async function fetchMultipleCnftProofs(assetIds: string[]): Promise<Map<string, CnftProofInfo>> {
+  const results = new Map<string, CnftProofInfo>();
+  
+  if (assetIds.length === 0) return results;
+
+  // Fetch all proofs in parallel
+  const proofPromises = assetIds.map(id => fetchCnftProofInfo(id));
+  const proofInfos = await Promise.all(proofPromises);
+  
+  for (const info of proofInfos) {
+    results.set(info.assetId, info);
+  }
+  
+  return results;
+}
+
 /**
  * GET /test/config
  * Get test page configuration including wallet addresses
@@ -783,10 +872,10 @@ interface QuoteRequest {
 }
 
 /**
- * POST /api/test/quote
+ * POST /api/quote
  * Get comprehensive swap quote including fees, time estimates, and transaction size
  */
-router.post('/api/test/quote', async (req: Request, res: Response) => {
+router.post('/api/quote', async (req: Request, res: Response) => {
   const ACTUAL_ALT_ADDRESSES = 10;
   
   try {
@@ -896,29 +985,87 @@ router.post('/api/test/quote', async (req: Request, res: Response) => {
     // Core NFT accounts (3 per NFT)
     numAccounts += (makerCoreNfts.length + takerCoreNfts.length) * 3;
 
-    // Proof nodes estimation (WORST CASE for cNFTs without actual proof data)
+    // ========================================
+    // 7a. FETCH ACTUAL cNFT PROOF DATA
+    // ========================================
+    // Instead of worst-case estimates, fetch actual proof nodes from DAS API
     let makerProofNodes = 0;
     let takerProofNodes = 0;
     let cnftSizeWarning: string | null = null;
+    const cnftProofDetails: Array<{
+      side: 'maker' | 'taker';
+      assetId: string;
+      proofNodes: number;
+      canopyDepth: number | null;
+      fetched: boolean;
+    }> = [];
 
-    if (makerCnfts.length > 0) {
-      const firstCnft = makerCnfts[0];
-      if (firstCnft.proofNodes !== undefined) {
-        makerProofNodes = firstCnft.proofNodes * makerCnfts.length;
-      } else {
-        // WORST CASE: 14 nodes (no canopy)
-        makerProofNodes = 14 * makerCnfts.length;
-        cnftSizeWarning = 'cNFT proof size varies by tree. Estimate uses worst case (14 nodes).';
+    // Collect all cNFT asset IDs that need proof fetching
+    const allCnftIds: string[] = [
+      ...makerCnfts.map(c => c.mint),
+      ...takerCnfts.map(c => c.mint),
+    ];
+
+    // Fetch actual proofs if we have cNFTs
+    if (allCnftIds.length > 0) {
+      console.log(`[Quote] Fetching proof data for ${allCnftIds.length} cNFT(s)...`);
+      const proofMap = await fetchMultipleCnftProofs(allCnftIds);
+      
+      // Process maker cNFTs
+      for (const cnft of makerCnfts) {
+        const proofInfo = proofMap.get(cnft.mint);
+        if (proofInfo && proofInfo.success) {
+          makerProofNodes += proofInfo.proofNodes;
+          cnftProofDetails.push({
+            side: 'maker',
+            assetId: cnft.mint,
+            proofNodes: proofInfo.proofNodes,
+            canopyDepth: proofInfo.canopyDepth,
+            fetched: true,
+          });
+        } else {
+          // Fallback to client-provided or worst case
+          const nodes = cnft.proofNodes ?? 14;
+          makerProofNodes += nodes;
+          cnftProofDetails.push({
+            side: 'maker',
+            assetId: cnft.mint,
+            proofNodes: nodes,
+            canopyDepth: null,
+            fetched: false,
+          });
+          if (!cnft.proofNodes) {
+            cnftSizeWarning = 'Could not fetch proof data for some cNFTs. Using worst-case estimate (14 nodes).';
+          }
+        }
       }
-    }
-
-    if (takerCnfts.length > 0) {
-      const firstCnft = takerCnfts[0];
-      if (firstCnft.proofNodes !== undefined) {
-        takerProofNodes = firstCnft.proofNodes * takerCnfts.length;
-      } else {
-        takerProofNodes = 14 * takerCnfts.length;
-        cnftSizeWarning = 'cNFT proof size varies by tree. Estimate uses worst case (14 nodes).';
+      
+      // Process taker cNFTs
+      for (const cnft of takerCnfts) {
+        const proofInfo = proofMap.get(cnft.mint);
+        if (proofInfo && proofInfo.success) {
+          takerProofNodes += proofInfo.proofNodes;
+          cnftProofDetails.push({
+            side: 'taker',
+            assetId: cnft.mint,
+            proofNodes: proofInfo.proofNodes,
+            canopyDepth: proofInfo.canopyDepth,
+            fetched: true,
+          });
+        } else {
+          const nodes = cnft.proofNodes ?? 14;
+          takerProofNodes += nodes;
+          cnftProofDetails.push({
+            side: 'taker',
+            assetId: cnft.mint,
+            proofNodes: nodes,
+            canopyDepth: null,
+            fetched: false,
+          });
+          if (!cnft.proofNodes) {
+            cnftSizeWarning = 'Could not fetch proof data for some cNFTs. Using worst-case estimate (14 nodes).';
+          }
+        }
       }
     }
 
@@ -957,14 +1104,30 @@ router.post('/api/test/quote', async (req: Request, res: Response) => {
     // ========================================
     let transactionStatus: 'ok' | 'alt_required' | 'near_limit' | 'too_large';
     let warnings: string[] = [];
+    
+    // Check if we successfully fetched all proofs
+    const allProofsFetched = cnftProofDetails.every(d => d.fetched);
+    const totalProofNodes = makerProofNodes + takerProofNodes;
 
     if (exceedsMultiAssetLimit) {
       transactionStatus = 'too_large';
       warnings.push('Current program only supports 1 NFT per side. Multi-NFT swaps require program upgrade.');
     } else if (!willFit && !willFitWithALT) {
       transactionStatus = 'too_large';
-      if (makerProofNodes >= 8 || takerProofNodes >= 8) {
-        warnings.push(`cNFT estimated at ${Math.max(makerProofNodes, takerProofNodes)} proof nodes (worst case). Most cNFTs exceed the ~7 node limit for atomic swaps. Try an SPL NFT instead.`);
+      if (totalProofNodes > 0) {
+        // Provide specific info about proof nodes
+        const proofInfo = cnftProofDetails.map(d => {
+          const canopyInfo = d.canopyDepth !== null ? `, canopy: ${d.canopyDepth}` : '';
+          const fetchStatus = d.fetched ? '✓' : '⚠️';
+          return `${fetchStatus} ${d.assetId.slice(0, 8)}...: ${d.proofNodes} nodes${canopyInfo}`;
+        }).join('\n');
+        
+        if (allProofsFetched) {
+          // We have accurate data
+          warnings.push(`cNFT requires ${totalProofNodes} proof node(s) which exceeds the ~7 node limit for atomic swaps. This cNFT's Merkle tree has insufficient canopy depth. Try an SPL NFT instead.\n\nDetails:\n${proofInfo}`);
+        } else {
+          warnings.push(`cNFT estimated at ${totalProofNodes} proof nodes. Most cNFTs exceed the ~7 node limit for atomic swaps. Try an SPL NFT instead.`);
+        }
       } else {
         warnings.push('Transaction exceeds size limit even with Address Lookup Table.');
       }
@@ -976,21 +1139,55 @@ router.post('/api/test/quote', async (req: Request, res: Response) => {
       transactionStatus = 'ok';
     }
 
-    if (cnftSizeWarning && transactionStatus !== 'too_large') {
+    // Add info about proof nodes if cNFTs are involved and we fetched proofs successfully
+    if (cnftProofDetails.length > 0 && allProofsFetched && transactionStatus !== 'too_large') {
+      const totalCnfts = cnftProofDetails.length;
+      const avgProofNodes = (totalProofNodes / totalCnfts).toFixed(1);
+      const canopyInfo = cnftProofDetails
+        .filter(d => d.canopyDepth !== null)
+        .map(d => d.canopyDepth)
+        .join(', ');
+      
+      if (canopyInfo) {
+        warnings.push(`cNFT proof verified: ${totalProofNodes} total nodes (avg ${avgProofNodes}/cNFT). Tree canopy depth: ${canopyInfo}`);
+      }
+    } else if (cnftSizeWarning) {
       warnings.push(cnftSizeWarning);
     }
 
     // ========================================
     // 9. FORMAT RESPONSE
     // ========================================
-    const formatSolWithUSD = (sol: number) => ({
-      sol,
-      lamports: Math.round(sol * LAMPORTS_PER_SOL),
-      usd: solPriceUSD ? sol * solPriceUSD : null,
-      display: solPriceUSD
-        ? `${sol.toFixed(4)} SOL (~$${(sol * solPriceUSD).toFixed(2)} USD)`
-        : `${sol.toFixed(4)} SOL`,
-    });
+    // Format SOL with appropriate decimal places based on value
+    // Small values (< 0.0001) need more decimals to show meaningful numbers
+    const formatSolDisplay = (sol: number): string => {
+      if (sol === 0) return '0';
+      if (sol >= 0.01) return sol.toFixed(4);       // 0.0100 SOL
+      if (sol >= 0.0001) return sol.toFixed(5);     // 0.00010 SOL
+      return sol.toFixed(6);                         // 0.000001 SOL (for very small fees)
+    };
+
+    // Format USD with appropriate decimal places based on value
+    // Small values need more decimals (e.g., $0.003 instead of $0.00)
+    const formatUsdDisplay = (usd: number): string => {
+      if (usd === 0) return '0.00';
+      if (usd >= 1) return usd.toFixed(2);          // $1.00
+      if (usd >= 0.01) return usd.toFixed(3);       // $0.010
+      if (usd >= 0.001) return usd.toFixed(4);      // $0.0010
+      return usd.toFixed(5);                         // $0.00001 (for very small fees)
+    };
+
+    const formatSolWithUSD = (sol: number) => {
+      const usdValue = solPriceUSD ? sol * solPriceUSD : null;
+      return {
+        sol,
+        lamports: Math.round(sol * LAMPORTS_PER_SOL),
+        usd: usdValue,
+        display: usdValue !== null
+          ? `${formatSolDisplay(sol)} SOL (~$${formatUsdDisplay(usdValue)} USD)`
+          : `${formatSolDisplay(sol)} SOL`,
+      };
+    };
 
     res.json({
       success: true,
@@ -1070,6 +1267,8 @@ router.post('/api/test/quote', async (req: Request, res: Response) => {
             makerProofNodes,
             takerProofNodes,
           },
+          // Detailed cNFT proof info (if any cNFTs)
+          cnftProofDetails: cnftProofDetails.length > 0 ? cnftProofDetails : undefined,
         },
 
         // Warnings
