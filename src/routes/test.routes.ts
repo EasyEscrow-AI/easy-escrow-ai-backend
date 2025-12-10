@@ -783,10 +783,10 @@ interface QuoteRequest {
 }
 
 /**
- * POST /api/test/quote
+ * POST /api/quote
  * Get comprehensive swap quote including fees, time estimates, and transaction size
  */
-router.post('/api/test/quote', async (req: Request, res: Response) => {
+router.post('/api/quote', async (req: Request, res: Response) => {
   const ACTUAL_ALT_ADDRESSES = 10;
   
   try {

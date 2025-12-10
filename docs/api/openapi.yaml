@@ -169,7 +169,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
 
-  /api/test/quote:
+  /api/quote:
     post:
       tags:
         - Quote
