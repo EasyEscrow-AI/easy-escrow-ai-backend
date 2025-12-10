@@ -252,6 +252,14 @@ router.post(
         return assets.map((asset, index) => {
           console.log(`[Offers Route] Transforming ${arrayName}[${index}]:`, JSON.stringify(asset));
           
+          // EXPLICIT DEBUG: Log isCoreNft flag type and value
+          console.log(`[Offers Route] ${arrayName}[${index}] isCoreNft debug:`, {
+            rawValue: asset.isCoreNft,
+            typeOf: typeof asset.isCoreNft,
+            isTruthy: !!asset.isCoreNft,
+            isCompressed: asset.isCompressed,
+          });
+          
           if (!asset.mint) {
             console.error(`[Offers Route] Missing mint in ${arrayName}[${index}]:`, asset);
             throw new Error(`Asset ${index} in ${arrayName} is missing 'mint' field`);
@@ -261,8 +269,12 @@ router.post(
           let assetType = AssetType.NFT;
           if (asset.isCoreNft) {
             assetType = AssetType.CORE_NFT;
+            console.log(`[Offers Route] *** ${arrayName}[${index}] detected as CORE NFT ***`);
           } else if (asset.isCompressed) {
             assetType = AssetType.CNFT;
+            console.log(`[Offers Route] *** ${arrayName}[${index}] detected as CNFT ***`);
+          } else {
+            console.log(`[Offers Route] *** ${arrayName}[${index}] detected as SPL NFT ***`);
           }
           
           const transformed = {
@@ -271,6 +283,7 @@ router.post(
           };
           
           console.log(`[Offers Route] Transformed to:`, JSON.stringify(transformed));
+          console.log(`[Offers Route] AssetType.CORE_NFT value:`, AssetType.CORE_NFT);
           return transformed;
         });
       };

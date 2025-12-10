@@ -818,11 +818,44 @@ export class TransactionBuilder {
       makerCoreAsset: makerCoreAsset || PROGRAM_ID,
       takerCoreAsset: takerCoreAsset || PROGRAM_ID,
       mplCoreProgram: (makerSendsCoreNft || takerSendsCoreNft) ? MPL_CORE_PROGRAM_ID : PROGRAM_ID,
-      // Optional: Authorized app signer for zero-fee swaps
-      // Pass null for standard swaps (with fee), only provide for zero-fee swaps
-      // Note: This must be null (not a placeholder pubkey) because it's an optional Signer
-      authorizedApp: inputs.authorizedAppId || null,
     };
+    
+    // CRITICAL VALIDATION: Log and verify mplCoreProgram setting
+    const shouldUseMplCore = makerSendsCoreNft || takerSendsCoreNft;
+    const actualMplCoreProgramId = accounts.mplCoreProgram.toBase58();
+    const expectedMplCoreProgramId = shouldUseMplCore ? MPL_CORE_PROGRAM_ID.toBase58() : PROGRAM_ID.toBase58();
+    
+    console.log('[TransactionBuilder] *** Core NFT Configuration ***');
+    console.log('[TransactionBuilder] makerSendsCoreNft:', makerSendsCoreNft);
+    console.log('[TransactionBuilder] takerSendsCoreNft:', takerSendsCoreNft);
+    console.log('[TransactionBuilder] shouldUseMplCore:', shouldUseMplCore);
+    console.log('[TransactionBuilder] MPL_CORE_PROGRAM_ID:', MPL_CORE_PROGRAM_ID.toBase58());
+    console.log('[TransactionBuilder] PROGRAM_ID (escrow):', PROGRAM_ID.toBase58());
+    console.log('[TransactionBuilder] accounts.mplCoreProgram:', actualMplCoreProgramId);
+    
+    if (shouldUseMplCore && actualMplCoreProgramId !== MPL_CORE_PROGRAM_ID.toBase58()) {
+      throw new Error(
+        `CRITICAL BUG: Core NFT detected (maker: ${makerSendsCoreNft}, taker: ${takerSendsCoreNft}) ` +
+        `but mplCoreProgram is ${actualMplCoreProgramId} instead of ${MPL_CORE_PROGRAM_ID.toBase58()}`
+      );
+    }
+    
+    // Also validate makerCoreAsset and takerCoreAsset
+    if (makerSendsCoreNft && !makerCoreAsset) {
+      throw new Error(
+        `CRITICAL BUG: makerSendsCoreNft is true but makerCoreAsset is null. ` +
+        `makerTypeStr: '${makerTypeStr}', rawType: '${inputs.makerAssets[0]?.type}'`
+      );
+    }
+    if (takerSendsCoreNft && !takerCoreAsset) {
+      throw new Error(
+        `CRITICAL BUG: takerSendsCoreNft is true but takerCoreAsset is null. ` +
+        `takerTypeStr: '${takerTypeStr}', rawType: '${inputs.takerAssets[0]?.type}'`
+      );
+    }
+    
+    // Add authorized app for zero-fee swaps
+    accounts.authorizedApp = inputs.authorizedAppId || null;
     
     console.log('[TransactionBuilder] Swap params:', {
       ...swapParams,
