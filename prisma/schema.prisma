@@ -372,6 +372,16 @@ model SwapOffer {
   createdAt              DateTime    @default(now()) @map("created_at")
   updatedAt              DateTime    @updatedAt @map("updated_at")
 
+  // Bulk swap fields (for 3+ cNFT swaps using Jito bundles)
+  isBulkSwap             Boolean     @default(false) @map("is_bulk_swap")
+  bundleId               String?     @map("bundle_id") // Jito bundle ID for multi-transaction swaps
+  transactionCount       Int         @default(1) @map("transaction_count") // Number of transactions in bundle
+  bundleStatus           String?     @map("bundle_status") // Pending, Landed, Failed, Timeout
+
+  // Enhanced offer management fields
+  cancelledBy            String?     @map("cancelled_by") // Wallet address that cancelled the offer
+  updateCount            Int         @default(0) @map("update_count") // Number of times offer was modified
+
   // Relations
   maker               User              @relation("MakerOffers", fields: [makerWallet], references: [walletAddress], onDelete: Cascade)
   nonce               NoncePool         @relation(fields: [nonceAccount], references: [nonceAccount])
@@ -387,6 +397,8 @@ model SwapOffer {
   @@index([parentOfferId])
   @@index([nonceAccount])
   @@index([status, expiresAt], name: "idx_offer_status_expiry")
+  @@index([bundleId])
+  @@index([isBulkSwap])
   @@map("swap_offers")
 }
 
@@ -410,6 +422,11 @@ model SwapTransaction {
   createdAt                      DateTime          @default(now()) @map("created_at")
   updatedAt                      DateTime          @updatedAt @map("updated_at")
 
+  // Bulk swap / Jito bundle fields
+  bundleId                       String?           @map("bundle_id") // Jito bundle ID (shared across bundle transactions)
+  transactionIndex               Int               @default(0) @map("transaction_index") // Position in bundle (0, 1, 2...)
+  bundleSlot                     BigInt?           @map("bundle_slot") // Slot where bundle landed
+
   // Relations
   offer        SwapOffer  @relation("OfferTransactions", fields: [offerId], references: [id], onDelete: Cascade)
   counterOffer SwapOffer? @relation("CounterOfferTransactions", fields: [counterOfferId], references: [id])
@@ -423,6 +440,7 @@ model SwapTransaction {
   @@index([status])
   @@index([transactionSignature])
   @@index([confirmedAt])
+  @@index([bundleId])
   @@map("swap_transactions")
 }
 
