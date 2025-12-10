@@ -95,6 +95,121 @@
 let MAKER_ADDRESS = '';
 let TAKER_ADDRESS = '';
 
+// ========================================
+// SPL NFT PLACEHOLDER IMAGES
+// ========================================
+// Placeholder images for SPL NFTs that don't have images
+// Images are assigned evenly between maker and taker (5 each), ordered by mint ID
+const SPL_PLACEHOLDER_IMAGES = [
+    'https://fastly.picsum.photos/id/21/3008/2008.jpg?hmac=T8DSVNvP-QldCew7WD4jj_S3mWwxZPqdF0CNPksSko4',
+    'https://fastly.picsum.photos/id/63/5000/2813.jpg?hmac=HvaeSK6WT-G9bYF_CyB2m1ARQirL8UMnygdU9W6PDvM',
+    'https://images.pexels.com/photos/47547/squirrel-animal-cute-rodents-47547.jpeg',
+    'https://images.pexels.com/photos/45201/kitty-cat-kitten-pet-45201.jpeg',
+    'https://images.pexels.com/photos/1661179/pexels-photo-1661179.jpeg',
+    'https://images.pexels.com/photos/62289/yemen-chameleon-chamaeleo-calyptratus-chameleon-reptile-62289.jpeg',
+    'https://images.pexels.com/photos/67552/giraffe-tall-mammal-africa-67552.jpeg',
+    'https://images.pexels.com/photos/162203/panthera-tigris-altaica-tiger-siberian-amurtiger-162203.jpeg',
+    'https://images.pexels.com/photos/326012/pexels-photo-326012.jpeg',
+    'https://images.pexels.com/photos/50577/hedgehog-animal-baby-cute-50577.jpeg',
+];
+
+// LocalStorage key for SPL NFT placeholder image assignments
+const SPL_IMAGE_STORAGE_KEY = 'splNftPlaceholderImages';
+
+/**
+ * Get or create placeholder image assignments for SPL NFTs without images
+ * Images are assigned evenly between maker (5) and taker (5) wallets
+ * @returns {Object} Mapping of mint addresses to placeholder image URLs
+ */
+function getSplImageAssignments() {
+    try {
+        const stored = localStorage.getItem(SPL_IMAGE_STORAGE_KEY);
+        if (stored) {
+            return JSON.parse(stored);
+        }
+    } catch (e) {
+        console.warn('Could not load SPL image assignments from localStorage:', e);
+    }
+    return {};
+}
+
+/**
+ * Save SPL image assignments to localStorage
+ * @param {Object} assignments - Mapping of mint addresses to image URLs
+ */
+function saveSplImageAssignments(assignments) {
+    try {
+        localStorage.setItem(SPL_IMAGE_STORAGE_KEY, JSON.stringify(assignments));
+    } catch (e) {
+        console.warn('Could not save SPL image assignments to localStorage:', e);
+    }
+}
+
+/**
+ * Assign placeholder images to SPL NFTs without images
+ * - Evenly distributed between maker and taker (5 each)
+ * - Ordered by mint ID, applied to first IDs
+ * - Each image used only once
+ */
+function assignPlaceholderImages() {
+    if (!makerData || !takerData) return;
+    
+    const assignments = getSplImageAssignments();
+    const usedImages = new Set(Object.values(assignments));
+    
+    // Get available images (not yet assigned)
+    const availableImages = SPL_PLACEHOLDER_IMAGES.filter(img => !usedImages.has(img));
+    
+    // Split available images: first 5 for maker, next 5 for taker
+    const makerImages = [];
+    const takerImages = [];
+    for (let i = 0; i < availableImages.length; i++) {
+        if (i % 2 === 0 && makerImages.length < 5) {
+            makerImages.push(availableImages[i]);
+        } else if (takerImages.length < 5) {
+            takerImages.push(availableImages[i]);
+        } else if (makerImages.length < 5) {
+            makerImages.push(availableImages[i]);
+        }
+    }
+    
+    // Helper function to assign images to SPL NFTs without images
+    const assignToWallet = (nfts, imagePool) => {
+        // Filter SPL NFTs without images, sorted by mint ID
+        const splNftsNoImage = nfts
+            .filter(nft => !nft.isCompressed && !nft.isCoreNft && !nft.image)
+            .filter(nft => !assignments[nft.mint]) // Not already assigned
+            .sort((a, b) => a.mint.localeCompare(b.mint));
+        
+        // Assign images to first NFTs
+        for (let i = 0; i < splNftsNoImage.length && imagePool.length > 0; i++) {
+            const nft = splNftsNoImage[i];
+            const image = imagePool.shift();
+            assignments[nft.mint] = image;
+            console.log(`📷 Assigned placeholder image to SPL NFT: ${nft.name || nft.mint.substring(0, 8)}...`);
+        }
+    };
+    
+    // Assign to maker NFTs first, then taker
+    assignToWallet(makerData.nfts, makerImages);
+    assignToWallet(takerData.nfts, takerImages);
+    
+    // Save updated assignments
+    saveSplImageAssignments(assignments);
+    
+    return assignments;
+}
+
+/**
+ * Get placeholder image for an SPL NFT if assigned
+ * @param {string} mint - The NFT mint address
+ * @returns {string|null} The placeholder image URL or null if not assigned
+ */
+function getPlaceholderImageForMint(mint) {
+    const assignments = getSplImageAssignments();
+    return assignments[mint] || null;
+}
+
 // State
 let makerData = null;
 let takerData = null;
@@ -367,6 +482,13 @@ async function loadWalletInfo(wallet) {
         // Enable swap button if both wallets loaded
         if (makerData && takerData) {
             document.getElementById('swap-btn').disabled = false;
+            
+            // Assign placeholder images to SPL NFTs without images
+            assignPlaceholderImages();
+            
+            // Re-render NFTs to show placeholder images
+            renderNFTs('maker', makerData.nfts);
+            renderNFTs('taker', takerData.nfts);
         }
     } catch (error) {
         console.error('Error loading wallet:', error);
@@ -441,10 +563,19 @@ function renderNFTs(wallet, nfts) {
     container.innerHTML = filteredNfts.map((nft, index) => {
         // Find original index in unfiltered array for toggle functionality
         const originalIndex = nfts.findIndex(n => n.mint === nft.mint);
+        
+        // Get image: use NFT image, placeholder assignment, or fallback SVG
+        let imageUrl = nft.image;
+        if (!imageUrl) {
+            // Check for assigned placeholder image (only for SPL NFTs)
+            const assignedPlaceholder = getPlaceholderImageForMint(nft.mint);
+            imageUrl = assignedPlaceholder || placeholderSvg;
+        }
+        
         return `
             <div class="nft-card" data-index="${originalIndex}">
                 <img class="nft-image" 
-                     src="${nft.image || placeholderSvg}" 
+                     src="${imageUrl}" 
                      alt="${nft.name}"
                      data-fallback="${placeholderSvg}">
                 <div class="nft-name">${nft.name || 'Unknown NFT'}</div>
@@ -635,7 +766,10 @@ function showConfirmationModal() {
             
             const img = document.createElement('img');
             img.className = 'nft-preview-image';
-            img.src = nft.image || 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'50\' height=\'50\'%3E%3Crect fill=\'%23ddd\' width=\'50\' height=\'50\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23999\' font-family=\'Arial\' font-size=\'10\'%3ENone%3C/text%3E%3C/svg%3E';
+            // Get image: use NFT image, placeholder assignment, or fallback SVG
+            const fallbackSvg = 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'50\' height=\'50\'%3E%3Crect fill=\'%23ddd\' width=\'50\' height=\'50\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23999\' font-family=\'Arial\' font-size=\'10\'%3ENone%3C/text%3E%3C/svg%3E';
+            const assignedPlaceholder = getPlaceholderImageForMint(nft.mint);
+            img.src = nft.image || assignedPlaceholder || fallbackSvg;
             img.alt = nft.name || 'Unknown NFT';
             
             const details = document.createElement('div');
@@ -688,7 +822,10 @@ function showConfirmationModal() {
             
             const img = document.createElement('img');
             img.className = 'nft-preview-image';
-            img.src = nft.image || 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'50\' height=\'50\'%3E%3Crect fill=\'%23ddd\' width=\'50\' height=\'50\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23999\' font-family=\'Arial\' font-size=\'10\'%3ENone%3C/text%3E%3C/svg%3E';
+            // Get image: use NFT image, placeholder assignment, or fallback SVG
+            const fallbackSvg = 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'50\' height=\'50\'%3E%3Crect fill=\'%23ddd\' width=\'50\' height=\'50\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23999\' font-family=\'Arial\' font-size=\'10\'%3ENone%3C/text%3E%3C/svg%3E';
+            const assignedPlaceholder = getPlaceholderImageForMint(nft.mint);
+            img.src = nft.image || assignedPlaceholder || fallbackSvg;
             img.alt = nft.name || 'Unknown NFT';
             
             const details = document.createElement('div');
