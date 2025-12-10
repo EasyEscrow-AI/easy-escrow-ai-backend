@@ -445,7 +445,8 @@ export class EscrowProgramService {
   
   /**
    * Default Jito tip amount in lamports (fallback when tip API fails)
-   * 0.001 SOL = 1,000,000 lamports
+   * 0.001 SOL = 1,000,000 lamports - based on legacy production testing
+   * This is above 50th percentile and provides reliable bundle inclusion
    */
   private static readonly DEFAULT_JITO_TIP_LAMPORTS = 1_000_000;
   
@@ -456,8 +457,17 @@ export class EscrowProgramService {
   
   /**
    * Bundle confirmation timeout in seconds
+   * Based on legacy code: Jito's multi-stage pipeline takes 1-3s normal, 5-10s congested
+   * 30s allows for blockhash retry recommendation (half of 60-90s lifetime)
    */
   private static readonly BUNDLE_CONFIRMATION_TIMEOUT_SECONDS = 30;
+  
+  /**
+   * Delay between sequential bundle submissions in ms
+   * CRITICAL: Learned from stuck-agreement-monitor - multiple parallel requests overwhelm Jito
+   * 3 seconds between operations prevents rate limiting issues
+   */
+  private static readonly BUNDLE_SEQUENTIAL_DELAY_MS = 3000;
 
   /**
    * Get current Jito tip floor from API
@@ -573,6 +583,22 @@ export class EscrowProgramService {
    * 
    * For bulk cNFT swaps requiring multiple transactions for atomicity.
    * Uses Jito bundles to ensure all transactions land in the same slot or none do.
+   * 
+   * CRITICAL REQUIREMENTS (from legacy production testing):
+   * 
+   * 1. **Tip Placement**: Jito tips MUST be the LAST instruction in the LAST transaction
+   *    - Tip must be SystemProgram.transfer to one of the 8 official Jito tip accounts
+   *    - Use getRandomJitoTipAccount() for load balancing
+   * 
+   * 2. **Compute Budget**: Each transaction MUST include compute budget instructions
+   *    - ComputeBudgetProgram.setComputeUnitLimit({ units: 200_000-300_000 })
+   *    - ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 5_000-50_000 })
+   * 
+   * 3. **skipPreflight**: Mainnet transactions should use skipPreflight: true
+   *    - Without this, Jito endpoint simulation checks for tips and may fail
+   * 
+   * 4. **Rate Limiting**: Max 1 request/second to Jito
+   *    - Use BUNDLE_SEQUENTIAL_DELAY_MS (3s) between sequential operations
    * 
    * @param serializedTransactions - Array of base64-encoded serialized transactions (max 5)
    * @param options - Bundle options
@@ -869,6 +895,11 @@ export class EscrowProgramService {
 
   /**
    * Submit transactions individually (for devnet or fallback)
+   * 
+   * CRITICAL LEARNING from legacy stuck-agreement-monitor:
+   * - Must process SEQUENTIALLY with await (not fire-and-forget)
+   * - Add delay between transactions to prevent rate limiting
+   * - Previously parallel processing overwhelmed Jito's 1 tx/second limit
    */
   private async submitTransactionsIndividually(serializedTransactions: string[]): Promise<{
     success: boolean;
@@ -885,7 +916,7 @@ export class EscrowProgramService {
         const txBuffer = Buffer.from(serializedTransactions[i], 'base64');
         
         const signature = await this.provider.connection.sendRawTransaction(txBuffer, {
-          skipPreflight: false,
+          skipPreflight: false, // Devnet: use preflight for better error messages
           preflightCommitment: 'confirmed',
           maxRetries: 3,
         });
@@ -907,6 +938,13 @@ export class EscrowProgramService {
         
         console.log(`[EscrowProgramService] ✅ Transaction ${i + 1}/${serializedTransactions.length} confirmed`);
         
+        // CRITICAL: Add delay between transactions to prevent rate limiting
+        // Learned from stuck-agreement-monitor: 3s delay prevents overwhelming Jito
+        if (i < serializedTransactions.length - 1) {
+          console.log(`[EscrowProgramService] Waiting ${EscrowProgramService.BUNDLE_SEQUENTIAL_DELAY_MS}ms before next transaction...`);
+          await new Promise(resolve => setTimeout(resolve, EscrowProgramService.BUNDLE_SEQUENTIAL_DELAY_MS));
+        }
+        
       } catch (error) {
         console.error(`[EscrowProgramService] Transaction ${i + 1} error:`, error);
         return {
@@ -921,6 +959,35 @@ export class EscrowProgramService {
       success: true,
       signatures,
     };
+  }
+
+  /**
+   * Get official Jito tip accounts
+   * 
+   * IMPORTANT: From legacy JITO_TROUBLESHOOTING.md:
+   * - These are the 8 official Jito tip accounts
+   * - Tips MUST be the LAST instruction in each transaction
+   * - Using verified addresses from Jito documentation
+   */
+  getJitoTipAccounts(): string[] {
+    return [
+      'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
+      'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
+      'HFqU5x63VTqvQss8hp11i4bVmkdzGHnsRRskfJ2J4ybE',
+      '96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5',
+      '3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT',
+      'ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49',
+      'Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY',
+      'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
+    ];
+  }
+
+  /**
+   * Get a random Jito tip account for load balancing
+   */
+  getRandomJitoTipAccount(): string {
+    const accounts = this.getJitoTipAccounts();
+    return accounts[Math.floor(Math.random() * accounts.length)];
   }
 
   // ==================== END JITO BUNDLE SUBMISSION ====================
