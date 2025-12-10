@@ -983,13 +983,22 @@ router.post('/api/quote', async (req: Request, res: Response) => {
     // ========================================
     // 9. FORMAT RESPONSE
     // ========================================
+    // Format SOL with appropriate decimal places based on value
+    // Small values (< 0.0001) need more decimals to show meaningful numbers
+    const formatSolDisplay = (sol: number): string => {
+      if (sol === 0) return '0';
+      if (sol >= 0.01) return sol.toFixed(4);       // 0.0100 SOL
+      if (sol >= 0.0001) return sol.toFixed(5);     // 0.00010 SOL
+      return sol.toFixed(6);                         // 0.000001 SOL (for very small fees)
+    };
+
     const formatSolWithUSD = (sol: number) => ({
       sol,
       lamports: Math.round(sol * LAMPORTS_PER_SOL),
       usd: solPriceUSD ? sol * solPriceUSD : null,
       display: solPriceUSD
-        ? `${sol.toFixed(4)} SOL (~$${(sol * solPriceUSD).toFixed(2)} USD)`
-        : `${sol.toFixed(4)} SOL`,
+        ? `${formatSolDisplay(sol)} SOL (~$${(sol * solPriceUSD).toFixed(4)} USD)`
+        : `${formatSolDisplay(sol)} SOL`,
     });
 
     res.json({
