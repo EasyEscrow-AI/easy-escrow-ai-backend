@@ -622,38 +622,53 @@ export class TransactionBuilder {
     }
     
     // Determine asset types
+    // Use explicit string comparison to handle JSON-parsed values robustly
+    // JSON from Prisma gives plain strings, which may not match enum directly in all cases
+    const getAssetTypeString = (type: any): string => {
+      if (typeof type === 'string') return type.toLowerCase();
+      return String(type).toLowerCase();
+    };
+    
     // DEBUG: Log exact types for troubleshooting
     if (inputs.makerAssets.length > 0) {
+      const makerType = getAssetTypeString(inputs.makerAssets[0].type);
       console.log('[TransactionBuilder] Maker asset[0] type debug:', {
         rawType: inputs.makerAssets[0].type,
+        normalizedType: makerType,
         typeofType: typeof inputs.makerAssets[0].type,
-        isNFT: inputs.makerAssets[0].type === AssetType.NFT,
-        isCNFT: inputs.makerAssets[0].type === AssetType.CNFT,
-        isCoreNFT: inputs.makerAssets[0].type === AssetType.CORE_NFT,
+        isNFT: makerType === 'nft',
+        isCNFT: makerType === 'cnft',
+        isCoreNFT: makerType === 'core_nft',
         assetTypeNFT: AssetType.NFT,
         assetTypeCNFT: AssetType.CNFT,
         assetTypeCoreNFT: AssetType.CORE_NFT,
       });
     }
     if (inputs.takerAssets.length > 0) {
+      const takerType = getAssetTypeString(inputs.takerAssets[0].type);
       console.log('[TransactionBuilder] Taker asset[0] type debug:', {
         rawType: inputs.takerAssets[0].type,
+        normalizedType: takerType,
         typeofType: typeof inputs.takerAssets[0].type,
-        isNFT: inputs.takerAssets[0].type === AssetType.NFT,
-        isCNFT: inputs.takerAssets[0].type === AssetType.CNFT,
-        isCoreNFT: inputs.takerAssets[0].type === AssetType.CORE_NFT,
+        isNFT: takerType === 'nft',
+        isCNFT: takerType === 'cnft',
+        isCoreNFT: takerType === 'core_nft',
         assetTypeNFT: AssetType.NFT,
         assetTypeCNFT: AssetType.CNFT,
         assetTypeCoreNFT: AssetType.CORE_NFT,
       });
     }
     
-    const makerSendsNft = inputs.makerAssets.length > 0 && inputs.makerAssets[0].type === AssetType.NFT;
-    const takerSendsNft = inputs.takerAssets.length > 0 && inputs.takerAssets[0].type === AssetType.NFT;
-    const makerSendsCnft = inputs.makerAssets.length > 0 && inputs.makerAssets[0].type === AssetType.CNFT;
-    const takerSendsCnft = inputs.takerAssets.length > 0 && inputs.takerAssets[0].type === AssetType.CNFT;
-    const makerSendsCoreNft = inputs.makerAssets.length > 0 && inputs.makerAssets[0].type === AssetType.CORE_NFT;
-    const takerSendsCoreNft = inputs.takerAssets.length > 0 && inputs.takerAssets[0].type === AssetType.CORE_NFT;
+    // Use string comparison for robustness (handles JSON-parsed plain strings)
+    const makerTypeStr = inputs.makerAssets.length > 0 ? getAssetTypeString(inputs.makerAssets[0].type) : '';
+    const takerTypeStr = inputs.takerAssets.length > 0 ? getAssetTypeString(inputs.takerAssets[0].type) : '';
+    
+    const makerSendsNft = makerTypeStr === 'nft';
+    const takerSendsNft = takerTypeStr === 'nft';
+    const makerSendsCnft = makerTypeStr === 'cnft';
+    const takerSendsCnft = takerTypeStr === 'cnft';
+    const makerSendsCoreNft = makerTypeStr === 'core_nft';
+    const takerSendsCoreNft = takerTypeStr === 'core_nft';
     
     console.log('[TransactionBuilder] Asset type detection results:', {
       makerSendsNft,
