@@ -677,7 +677,7 @@ router.post(
       // Check for authorization errors (including private sales)
       if (errorMessage.includes('designated taker') || 
           errorMessage.includes('private sale') ||
-          errorMessage.includes('Only')) {
+          errorMessage.includes('Only the designated taker')) {
         res.status(403).json({
           success: false,
           error: 'Forbidden',
@@ -981,7 +981,7 @@ router.post(
       const errorMessage = error instanceof Error ? error.message : 'Failed to cancel offer';
 
       // Check for authorization errors
-      if (errorMessage.includes('Only the maker') || errorMessage.includes('admin')) {
+      if (errorMessage.includes('Only the maker or an admin can cancel')) {
         res.status(403).json({
           success: false,
           error: 'Forbidden',

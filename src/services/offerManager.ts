@@ -1018,27 +1018,61 @@ export class OfferManager {
       // 10. Recalculate platform fee
       const feeBreakdown = this.feeCalculator.calculateFee(newOfferedSol, newRequestedSol);
       
-      // 11. Advance nonce to invalidate any previously built transactions
-      // This ensures any signed transaction with old terms cannot be executed
-      await this.noncePoolManager.advanceNonce(offer.nonceAccount);
-      
-      // 12. Get fresh nonce value
-      const currentNonceValue = await this.noncePoolManager.getCurrentNonce(offer.nonceAccount);
-      
-      // 13. Update offer in database
-      const updatedOffer = await this.prisma.swapOffer.update({
-        where: { id: params.offerId },
-        data: {
-          offeredAssets: newOfferedAssets as any,
-          requestedAssets: newRequestedAssets as any,
-          offeredSolLamports: newOfferedSol > BigInt(0) ? newOfferedSol : null,
-          requestedSolLamports: newRequestedSol > BigInt(0) ? newRequestedSol : null,
-          platformFeeLamports: feeBreakdown.feeLamports,
-          currentNonceValue,
-          serializedTransaction: null, // Clear any cached transaction
-          updateCount: { increment: 1 },
-        },
+      // 11. Atomically update offer with status check to prevent race conditions
+      // First, lock the offer and verify it's still ACTIVE before proceeding
+      const updatedOffer = await this.prisma.$transaction(async (tx) => {
+        // Re-verify offer is still ACTIVE (prevents race condition)
+        const currentOffer = await tx.swapOffer.findUnique({
+          where: { id: params.offerId },
+        });
+        
+        if (!currentOffer || currentOffer.status !== OfferStatus.ACTIVE) {
+          throw new Error(`Offer cannot be updated (status changed to: ${currentOffer?.status || 'deleted'})`);
+        }
+        
+        // Advance nonce to invalidate any previously built transactions
+        // This ensures any signed transaction with old terms cannot be executed
+        await this.noncePoolManager.advanceNonce(offer.nonceAccount);
+        
+        // Get fresh nonce value
+        const currentNonceValue = await this.noncePoolManager.getCurrentNonce(offer.nonceAccount);
+        
+        // Update offer in database (with status check in WHERE for extra safety)
+        const result = await tx.swapOffer.updateMany({
+          where: { 
+            id: params.offerId,
+            status: OfferStatus.ACTIVE, // Only update if still ACTIVE
+          },
+          data: {
+            offeredAssets: newOfferedAssets as any,
+            requestedAssets: newRequestedAssets as any,
+            offeredSolLamports: newOfferedSol > BigInt(0) ? newOfferedSol : null,
+            requestedSolLamports: newRequestedSol > BigInt(0) ? newRequestedSol : null,
+            platformFeeLamports: feeBreakdown.feeLamports,
+            currentNonceValue,
+            serializedTransaction: null, // Clear any cached transaction
+          },
+        });
+        
+        if (result.count === 0) {
+          throw new Error('Offer was modified by another request. Please retry.');
+        }
+        
+        // Increment updateCount separately (updateMany doesn't support increment)
+        await tx.swapOffer.update({
+          where: { id: params.offerId },
+          data: { updateCount: { increment: 1 } },
+        });
+        
+        // Fetch and return the updated offer
+        return tx.swapOffer.findUnique({
+          where: { id: params.offerId },
+        });
       });
+      
+      if (!updatedOffer) {
+        throw new Error('Failed to update offer');
+      }
       
       console.log('[OfferManager] Offer updated:', {
         offerId: params.offerId,
