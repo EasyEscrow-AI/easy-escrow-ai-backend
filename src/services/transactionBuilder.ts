@@ -155,7 +155,7 @@ export class TransactionBuilder {
     
     // Initialize ALT service if treasury PDA is provided
     if (treasuryPda) {
-      const altAddress = process.env.PRODUCTION_ALT_ADDRESS || process.env.STAGING_ALT_ADDRESS;
+      const altAddress = process.env.MAINNET_PROD_ALT_ADDRESS || process.env.DEVNET_STAGING_ALT_ADDRESS;
       this.altService = createALTService(connection, {
         platformAuthority: platformAuthority.publicKey,
         treasuryPda,
@@ -399,7 +399,7 @@ export class TransactionBuilder {
         if (this.altService && sizeEstimate.estimatedSizeWithALT && 
             sizeEstimate.estimatedSizeWithALT <= TransactionBuilder.MAX_TRANSACTION_SIZE) {
           errorMessage += '. This transaction could fit using Address Lookup Tables (ALT). ' +
-            'Enable ALT support or configure PRODUCTION_ALT_ADDRESS environment variable.';
+            'Enable ALT support or configure MAINNET_PROD_ALT_ADDRESS environment variable.';
         } else {
           errorMessage += '. cNFT transfers require Merkle proofs which can exceed Solana\'s transaction size limit. ' +
             'This cNFT\'s Merkle tree may have a low canopy depth, requiring more proof data. ' +
