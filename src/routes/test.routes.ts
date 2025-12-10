@@ -1192,6 +1192,9 @@ router.post('/api/quote', async (req: Request, res: Response) => {
     res.json({
       success: true,
       data: {
+        // Timestamp for tracking when quote was generated
+        timestamp: new Date().toISOString(),
+        
         // Price data
         solPriceUSD,
 

@@ -150,11 +150,12 @@ describe('Atomic Swap Flow - Integration Tests', () => {
     
     it('should create and accept an open offer', async () => {
       // Step 1: Create open offer (no taker specified)
+      // Must have at least one requested asset or SOL
       const createParams = {
         makerWallet: makerWallet.publicKey.toBase58(),
         takerWallet: undefined, // Open offer
         offeredAssets: [],
-        requestedAssets: [],
+        requestedAssets: [{ type: AssetType.NFT, identifier: 'DummyNftMint123456789012345678901234' }],
         offeredSol: BigInt(10 * LAMPORTS_PER_SOL),
         requestedSol: BigInt(0),
       };
@@ -206,7 +207,7 @@ describe('Atomic Swap Flow - Integration Tests', () => {
         takerWallet: parentOffer.makerWallet,
         offeredAssets: [],
         offeredSol: BigInt(20 * LAMPORTS_PER_SOL),
-        requestedAssets: [],
+        requestedAssets: [{ type: AssetType.NFT, identifier: 'DummyNftMint123456789012345678901234' }],
         requestedSol: BigInt(0),
       });
       
@@ -222,12 +223,12 @@ describe('Atomic Swap Flow - Integration Tests', () => {
     });
     
     it('should cancel offers and advance nonce', async () => {
-      // Step 1: Create offer
+      // Step 1: Create offer (must request at least one asset or SOL)
       const offer = await offerManager.createOffer({
         makerWallet: makerWallet.publicKey.toBase58(),
         takerWallet: takerWallet.publicKey.toBase58(),
         offeredAssets: [],
-        requestedAssets: [],
+        requestedAssets: [{ type: AssetType.NFT, identifier: 'DummyNftMint123456789012345678901234' }],
         offeredSol: BigInt(5 * LAMPORTS_PER_SOL),
         requestedSol: BigInt(0),
       });
@@ -273,7 +274,7 @@ describe('Atomic Swap Flow - Integration Tests', () => {
           makerWallet: testWallet.publicKey.toBase58(),
           takerWallet: undefined,
           offeredAssets: [],
-          requestedAssets: [],
+          requestedAssets: [{ type: AssetType.NFT, identifier: 'DummyNftMint123456789012345678901234' }],
           offeredSol: BigInt(1 * LAMPORTS_PER_SOL),
           requestedSol: BigInt(0),
         });
@@ -309,20 +310,22 @@ describe('Atomic Swap Flow - Integration Tests', () => {
       expect(nftOnlyFee.feeType).to.equal('flat');
       expect(nftOnlyFee.feeLamports).to.equal(BigInt(5_000_000)); // 0.005 SOL
       
-      // SOL swap (percentage fee)
+      // SOL swap (percentage fee) - fee is 1% of total SOL value (maker + taker)
       const solSwapFee = feeCalculator.calculateFee(
-        BigInt(100 * LAMPORTS_PER_SOL),
-        BigInt(50 * LAMPORTS_PER_SOL)
+        BigInt(100 * LAMPORTS_PER_SOL), // offered
+        BigInt(50 * LAMPORTS_PER_SOL)   // requested
       );
       expect(solSwapFee.feeType).to.equal('percentage');
-      expect(solSwapFee.feeLamports).to.equal(BigInt(1.5 * LAMPORTS_PER_SOL)); // 1% of 150 SOL
+      // 1% of 150 SOL = 1.5 SOL, but max fee is 0.5 SOL (capped)
+      expect(solSwapFee.wasCapped).to.be.true;
+      expect(solSwapFee.feeLamports).to.equal(BigInt(0.5 * LAMPORTS_PER_SOL)); // 0.5 SOL max fee
       
       // Verify fees are validated in offers
       const offer = await offerManager.createOffer({
         makerWallet: makerWallet.publicKey.toBase58(),
         takerWallet: takerWallet.publicKey.toBase58(),
         offeredAssets: [],
-        requestedAssets: [],
+        requestedAssets: [{ type: AssetType.NFT, identifier: 'DummyNftMint123456789012345678901234' }],
         offeredSol: BigInt(100 * LAMPORTS_PER_SOL),
         requestedSol: BigInt(50 * LAMPORTS_PER_SOL),
       });
@@ -341,7 +344,7 @@ describe('Atomic Swap Flow - Integration Tests', () => {
         makerWallet: wallet1.publicKey.toBase58(),
         takerWallet: undefined,
         offeredAssets: [],
-        requestedAssets: [],
+        requestedAssets: [{ type: AssetType.NFT, identifier: 'DummyNftMint123456789012345678901234' }],
         offeredSol: BigInt(10 * LAMPORTS_PER_SOL),
         requestedSol: BigInt(0),
       });
@@ -350,7 +353,7 @@ describe('Atomic Swap Flow - Integration Tests', () => {
         makerWallet: wallet2.publicKey.toBase58(),
         takerWallet: undefined,
         offeredAssets: [],
-        requestedAssets: [],
+        requestedAssets: [{ type: AssetType.NFT, identifier: 'DummyNftMint123456789012345678901234' }],
         offeredSol: BigInt(20 * LAMPORTS_PER_SOL),
         requestedSol: BigInt(0),
       });
@@ -382,7 +385,7 @@ describe('Atomic Swap Flow - Integration Tests', () => {
         makerWallet: makerWallet.publicKey.toBase58(),
         takerWallet: takerWallet.publicKey.toBase58(),
         offeredAssets: [],
-        requestedAssets: [],
+        requestedAssets: [{ type: AssetType.NFT, identifier: 'DummyNftMint123456789012345678901234' }],
         offeredSol: BigInt(1 * LAMPORTS_PER_SOL),
         requestedSol: BigInt(0),
       });
@@ -413,7 +416,7 @@ describe('Atomic Swap Flow - Integration Tests', () => {
         makerWallet: makerWallet.publicKey.toBase58(),
         takerWallet: undefined,
         offeredAssets: [],
-        requestedAssets: [],
+        requestedAssets: [{ type: AssetType.NFT, identifier: 'DummyNftMint123456789012345678901234' }],
         offeredSol: BigInt(1 * LAMPORTS_PER_SOL),
         requestedSol: BigInt(0),
       });
