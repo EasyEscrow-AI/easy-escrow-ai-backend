@@ -186,7 +186,8 @@ describe('Monitoring Services', () => {
       await alertingService.alertDatabaseDown();
       await alertingService.alertRPCDown('http://example.com');
       await alertingService.alertNoncePoolDepleted({ total: 10, available: 0 });
-      await alertingService.alertTreasuryLow(500000000, 'treasury-address');
+      // Note: Treasury alerts removed - treasury PDA only collects fees, doesn't pay for transactions
+      await alertingService.alertFeePayerLow(500000000, 'fee-payer-address');
 
       const status = alertingService.getStatus();
       expect(status.activeAlerts).to.be.greaterThan(0);
