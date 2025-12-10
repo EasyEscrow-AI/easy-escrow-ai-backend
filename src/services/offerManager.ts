@@ -11,6 +11,12 @@ import { NoncePoolManager } from './noncePoolManager';
 import { FeeCalculator, FeeBreakdown } from './feeCalculator';
 import { AssetValidator, AssetType, ValidationResult } from './assetValidator';
 import { TransactionBuilder, SwapAsset, TransactionBuildInputs } from './transactionBuilder';
+import { 
+  TransactionGroupBuilder, 
+  TransactionGroupResult, 
+  SwapStrategy,
+  createTransactionGroupBuilder 
+} from './transactionGroupBuilder';
 
 // Maximum assets allowed per side of a swap (maker's offered + taker's requested)
 // Bulk swaps with multiple assets are handled via transaction splitting (Task 44)
@@ -67,6 +73,7 @@ export class OfferManager {
   private feeCalculator: FeeCalculator;
   private assetValidator: AssetValidator;
   private transactionBuilder: TransactionBuilder;
+  private transactionGroupBuilder: TransactionGroupBuilder;
   private platformAuthority: Keypair;
   private treasuryPDA: PublicKey;
   private programId: PublicKey;
@@ -92,7 +99,17 @@ export class OfferManager {
     this.treasuryPDA = treasuryPDA;
     this.programId = programId;
     
+    // Initialize TransactionGroupBuilder for bulk swap support
+    // Uses the same ALT service as the TransactionBuilder
+    this.transactionGroupBuilder = createTransactionGroupBuilder(
+      connection,
+      platformAuthority,
+      treasuryPDA,
+      transactionBuilder.getALTService() || undefined
+    );
+    
     console.log('[OfferManager] Initialized');
+    console.log('[OfferManager] Bulk swap support: enabled');
   }
   
   /**
@@ -489,6 +506,9 @@ export class OfferManager {
   
   /**
    * Build transaction for an offer
+   * 
+   * For simple swaps (1-2 total cNFTs): builds single transaction
+   * For bulk swaps (3+ total cNFTs): builds transaction group for Jito bundle
    */
   private async buildOfferTransaction(params: {
     offerId: number;
@@ -501,7 +521,13 @@ export class OfferManager {
     platformFee: bigint;
     nonceAccount: string;
     authorizedAppId?: string; // For zero-fee swaps
-  }): Promise<{ serializedTransaction: string; nonceValue: string }> {
+  }): Promise<{ 
+    serializedTransaction: string; 
+    nonceValue: string;
+    // Bulk swap fields (populated for 3+ cNFT swaps)
+    isBulkSwap?: boolean;
+    transactionGroup?: TransactionGroupResult;
+  }> {
     console.log('[OfferManager] buildOfferTransaction params:', {
       makerWallet: params.makerWallet,
       takerWallet: params.takerWallet,
@@ -527,7 +553,7 @@ export class OfferManager {
       platformFeeLamports: params.platformFee,
       nonceAccountPubkey: new PublicKey(params.nonceAccount),
       nonceAuthorityPubkey: this.platformAuthority.publicKey,
-      swapId: "", // Empty string saves 2 bytes (program only uses for logging, we track via offer ID)
+      swapId: `${params.offerId}`, // Use offer ID for tracking
       treasuryPDA: this.treasuryPDA,
       programId: this.programId,
       authorizedAppId: params.authorizedAppId ? new PublicKey(params.authorizedAppId) : undefined,
@@ -535,6 +561,45 @@ export class OfferManager {
     
     console.log('[OfferManager] TransactionBuildInputs makerAssets:', JSON.stringify(inputs.makerAssets));
     console.log('[OfferManager] TransactionBuildInputs takerAssets:', JSON.stringify(inputs.takerAssets));
+    
+    // Check if this is a bulk swap that needs transaction splitting
+    const requiresBulkSwap = this.transactionGroupBuilder.requiresJitoBundle(inputs);
+    
+    if (requiresBulkSwap) {
+      // Bulk swap: use TransactionGroupBuilder
+      console.log('[OfferManager] Bulk swap detected - using TransactionGroupBuilder');
+      
+      // Validate inputs using group builder
+      this.transactionGroupBuilder.validateInputs(inputs);
+      
+      // Build transaction group
+      const groupResult = await this.transactionGroupBuilder.buildTransactionGroup(inputs);
+      
+      console.log('[OfferManager] Transaction group built:', {
+        strategy: groupResult.strategy,
+        transactionCount: groupResult.transactionCount,
+        requiresJitoBundle: groupResult.requiresJitoBundle,
+        totalSizeBytes: groupResult.totalSizeBytes,
+      });
+      
+      // For bulk swaps, we return the first transaction but include the full group
+      // The API layer will handle Jito bundle submission
+      const firstTx = groupResult.transactions[0];
+      
+      if (!firstTx.transaction) {
+        throw new Error('Failed to build first transaction in group');
+      }
+      
+      return {
+        serializedTransaction: firstTx.transaction.serializedTransaction,
+        nonceValue: groupResult.nonceValue,
+        isBulkSwap: true,
+        transactionGroup: groupResult,
+      };
+    }
+    
+    // Simple swap: use standard TransactionBuilder
+    console.log('[OfferManager] Simple swap - using standard TransactionBuilder');
     
     // Validate inputs
     this.transactionBuilder.validateInputs(inputs);
@@ -545,6 +610,7 @@ export class OfferManager {
     return {
       serializedTransaction: result.serializedTransaction,
       nonceValue: result.nonceValue,
+      isBulkSwap: false,
     };
   }
   
