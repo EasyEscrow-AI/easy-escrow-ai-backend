@@ -329,6 +329,9 @@ export class OfferManager {
   async acceptOffer(offerId: number, takerWallet: string, authorizedAppId?: string): Promise<{ 
     serializedTransaction: string;
     offer: any; // SwapOffer from Prisma
+    // Bulk swap fields (populated for 3+ cNFT swaps)
+    isBulkSwap?: boolean;
+    transactionGroup?: TransactionGroupResult;
   }> {
     console.log('[OfferManager] Accepting offer:', { offerId, taker: takerWallet });
     
@@ -397,7 +400,12 @@ export class OfferManager {
       // 7. Build transaction with retry logic for stale cNFT proofs
       // On devnet/staging, Merkle tree roots can change frequently if other cNFTs are modified
       // Retry with fresh proof if we detect a stale proof error
-      let buildResult: { serializedTransaction: string; nonceValue: string } | null = null;
+      let buildResult: { 
+        serializedTransaction: string; 
+        nonceValue: string;
+        isBulkSwap?: boolean;
+        transactionGroup?: TransactionGroupResult;
+      } | null = null;
       const maxAttempts = 2;
       
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -451,11 +459,17 @@ export class OfferManager {
         },
       });
       
-      console.log('[OfferManager] Offer accepted, transaction ready:', offerId);
+      console.log('[OfferManager] Offer accepted, transaction ready:', {
+        offerId,
+        isBulkSwap: buildResult.isBulkSwap || false,
+        transactionCount: buildResult.transactionGroup?.transactionCount || 1,
+      });
       
       return {
         serializedTransaction: buildResult.serializedTransaction,
         offer: updatedOffer,
+        isBulkSwap: buildResult.isBulkSwap,
+        transactionGroup: buildResult.transactionGroup,
       };
     } catch (error) {
       console.error('[OfferManager] Failed to accept offer:', error);

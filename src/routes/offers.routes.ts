@@ -649,24 +649,51 @@ router.post(
         throw new Error('Offer not returned from acceptOffer');
       }
 
+      // Build response based on whether this is a bulk swap
+      const responseData: any = {
+        offer: {
+          id: result.offer.id.toString(),
+          status: result.offer.status,
+          makerWallet: result.offer.makerWallet,
+          takerWallet: result.offer.takerWallet || takerWallet,
+          offeredAssets: result.offer.offeredAssets,
+          requestedAssets: result.offer.requestedAssets,
+          offeredSol: result.offer.offeredSolLamports?.toString() || '0',
+          requestedSol: result.offer.requestedSolLamports?.toString() || '0',
+        },
+        transaction: {
+          serialized: result.serializedTransaction,
+          nonceAccount: result.offer.nonceAccount,
+        },
+      };
+
+      // Add bulk swap info if this is a multi-transaction swap
+      if (result.isBulkSwap && result.transactionGroup) {
+        responseData.bulkSwap = {
+          isBulkSwap: true,
+          strategy: result.transactionGroup.strategy,
+          transactionCount: result.transactionGroup.transactionCount,
+          requiresJitoBundle: result.transactionGroup.requiresJitoBundle,
+          totalSizeBytes: result.transactionGroup.totalSizeBytes,
+          // Include all transactions for the frontend to handle
+          transactions: result.transactionGroup.transactions.map((tx) => ({
+            index: tx.index,
+            serialized: tx.transaction?.serializedTransaction || null,
+            assets: tx.assets,
+            purpose: tx.purpose,
+            isVersioned: tx.isVersioned,
+          })),
+          // Include tip info if Jito bundle is required
+          tipInfo: result.transactionGroup.requiresJitoBundle ? {
+            tipAccountIndex: result.transactionGroup.transactionCount - 1, // Tip in last tx
+            note: 'Jito tip should be added to the last transaction before signing',
+          } : undefined,
+        };
+      }
+
       res.status(200).json({
         success: true,
-        data: {
-          offer: {
-            id: result.offer.id.toString(),
-            status: result.offer.status,
-            makerWallet: result.offer.makerWallet,
-            takerWallet: result.offer.takerWallet || takerWallet,
-            offeredAssets: result.offer.offeredAssets,
-            requestedAssets: result.offer.requestedAssets,
-            offeredSol: result.offer.offeredSolLamports?.toString() || '0',
-            requestedSol: result.offer.requestedSolLamports?.toString() || '0',
-          },
-          transaction: {
-            serialized: result.serializedTransaction,
-            nonceAccount: result.offer.nonceAccount,
-          },
-        },
+        data: responseData,
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
@@ -992,6 +1019,94 @@ router.post(
       }
 
       // Check for invalid state errors
+      if (errorMessage.includes('cannot be cancelled') || errorMessage.includes('not found')) {
+        res.status(400).json({
+          success: false,
+          error: 'Invalid Request',
+          message: errorMessage,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      res.status(500).json({
+        success: false,
+        error: 'Internal Server Error',
+        message: errorMessage,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * DELETE /api/offers/:id
+ * Cancel an offer (RESTful alias for POST /api/offers/:id/cancel)
+ * Accepts walletAddress and isAdmin in query params or body
+ */
+router.delete(
+  '/api/offers/:id',
+  standardRateLimiter,
+  requiredIdempotency, // CRITICAL: Prevent multiple nonce advances on retry
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const offerId = parseInt(req.params.id, 10);
+      // Accept walletAddress from query params (DELETE convention) or body
+      const walletAddress = (req.query.walletAddress as string) || req.body?.walletAddress;
+      const isAdmin = req.query.isAdmin === 'true' || req.body?.isAdmin;
+
+      if (isNaN(offerId)) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation Error',
+          message: 'Invalid offer ID',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      if (!walletAddress) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation Error',
+          message: 'walletAddress is required (query param or body)',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Validate admin claim
+      let verifiedAdmin = false;
+      if (isAdmin) {
+        verifiedAdmin = walletAddress === platformAuthority.publicKey.toBase58();
+      }
+
+      await offerManager.cancelOffer(offerId, walletAddress, verifiedAdmin);
+
+      res.status(200).json({
+        success: true,
+        data: {
+          message: `Offer ${offerId} cancelled successfully`,
+          cancelledBy: walletAddress,
+          role: verifiedAdmin ? 'admin' : 'maker',
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Error cancelling offer (DELETE):', error);
+
+      const errorMessage = error instanceof Error ? error.message : 'Failed to cancel offer';
+
+      if (errorMessage.includes('Only the maker or an admin can cancel')) {
+        res.status(403).json({
+          success: false,
+          error: 'Forbidden',
+          message: errorMessage,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
       if (errorMessage.includes('cannot be cancelled') || errorMessage.includes('not found')) {
         res.status(400).json({
           success: false,
