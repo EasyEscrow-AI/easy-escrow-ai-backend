@@ -1167,14 +1167,27 @@ router.post('/api/quote', async (req: Request, res: Response) => {
       return sol.toFixed(6);                         // 0.000001 SOL (for very small fees)
     };
 
-    const formatSolWithUSD = (sol: number) => ({
-      sol,
-      lamports: Math.round(sol * LAMPORTS_PER_SOL),
-      usd: solPriceUSD ? sol * solPriceUSD : null,
-      display: solPriceUSD
-        ? `${formatSolDisplay(sol)} SOL (~$${(sol * solPriceUSD).toFixed(4)} USD)`
-        : `${formatSolDisplay(sol)} SOL`,
-    });
+    // Format USD with appropriate decimal places based on value
+    // Small values need more decimals (e.g., $0.003 instead of $0.00)
+    const formatUsdDisplay = (usd: number): string => {
+      if (usd === 0) return '0.00';
+      if (usd >= 1) return usd.toFixed(2);          // $1.00
+      if (usd >= 0.01) return usd.toFixed(3);       // $0.010
+      if (usd >= 0.001) return usd.toFixed(4);      // $0.0010
+      return usd.toFixed(5);                         // $0.00001 (for very small fees)
+    };
+
+    const formatSolWithUSD = (sol: number) => {
+      const usdValue = solPriceUSD ? sol * solPriceUSD : null;
+      return {
+        sol,
+        lamports: Math.round(sol * LAMPORTS_PER_SOL),
+        usd: usdValue,
+        display: usdValue !== null
+          ? `${formatSolDisplay(sol)} SOL (~$${formatUsdDisplay(usdValue)} USD)`
+          : `${formatSolDisplay(sol)} SOL`,
+      };
+    };
 
     res.json({
       success: true,
