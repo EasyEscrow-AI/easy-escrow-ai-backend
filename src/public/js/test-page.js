@@ -727,22 +727,33 @@ function showConfirmationModal() {
     const totalNFTs = selectedMakerNFTs.length + selectedTakerNFTs.length;
     const totalSOL = (parseFloat(offeredSol) || 0) + (parseFloat(requestedSol) || 0);
     
+    // Count different NFT types for accurate fee estimation
+    // cNFTs require ~5x more compute units due to Merkle proof processing
+    const cNFTCount = [...selectedMakerNFTs, ...selectedTakerNFTs].filter(nft => nft.isCompressed).length;
+    const regularNFTCount = totalNFTs - cNFTCount;
+    
     // Estimate time based on number of NFTs (check larger thresholds first)
+    // cNFTs are slightly slower due to proof fetching
     let estimatedTime = '~5 seconds';
-    if (totalNFTs > 10) {
+    if (totalNFTs > 10 || cNFTCount > 5) {
         estimatedTime = '~20 seconds';
-    } else if (totalNFTs > 5) {
+    } else if (totalNFTs > 5 || cNFTCount > 2) {
         estimatedTime = '~10 seconds';
     }
     
-    // Calculate network fees (realistic estimate)
-    // Atomic swaps: 3 signatures + compute + potential ATA creation
-    // Base: ~15,000 lamports (3 sigs @ 5000 each) + ~1000 compute = 0.000016 SOL
-    // Per NFT: Small buffer for potential ATA creation (~0.002 SOL if needed)
-    // Most cases ATAs exist, so we show conservative typical estimate
-    const baseFee = 0.0001; // Base transaction signatures + compute + buffer (SOL)
-    const perNFTFee = 0.0002; // Small buffer per NFT for potential extra accounts (SOL)
-    const networkFee = baseFee + (totalNFTs * perNFTFee);
+    // Calculate network fees (realistic estimate based on actual Solana fees)
+    // Solana signature fee: 5,000 lamports = 0.000005 SOL per signature
+    // Atomic swaps typically use 3 signatures = 15,000 lamports = 0.000015 SOL
+    // 
+    // Compute costs (with priority fees ~5-50k microlamports/CU):
+    // - SPL/Core NFTs: ~10,000 CU each = ~0.0000005-0.000005 SOL priority
+    // - cNFTs: ~50,000 CU each = ~0.0000025-0.000025 SOL priority (5x more)
+    // 
+    // Note: ATA creation is rare (usually ATAs exist) and is a one-time cost
+    const baseFee = 0.00002; // 3-4 signatures worth (15,000-20,000 lamports) as safe buffer
+    const perRegularNFTFee = 0.000005; // Small buffer per SPL/Core NFT
+    const perCNFTFee = 0.00002; // Higher buffer per cNFT (more compute + potential proof size)
+    const networkFee = baseFee + (regularNFTCount * perRegularNFTFee) + (cNFTCount * perCNFTFee);
     
     // Calculate platform fee (matches backend FeeCalculator logic)
     // - If SOL is transferred: 1% of total SOL (minimum 0.001 SOL)
