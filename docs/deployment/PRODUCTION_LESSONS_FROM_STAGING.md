@@ -296,7 +296,7 @@ Based on staging lessons learned:
 - [ ] Verify health check endpoint responds
 
 ### ✅ Security Verification
-- [ ] Verify /test page password protection works (password: 060385)
+- [ ] Verify /test page password protection works (password: `<from-env:TEST_PAGE_PASSWORD>`)
 - [ ] Verify all secrets stored in DigitalOcean console
 - [ ] Verify authorized apps whitelist enforcement
 - [ ] Verify zero-fee authorization requires signature

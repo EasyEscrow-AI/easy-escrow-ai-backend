@@ -36,7 +36,8 @@ info:
     ## Blockchain Support
     - ✅ **Solana blockchain** (Devnet, Mainnet)
     - ✅ **Traditional NFTs** (Metaplex standard)
-    - 🔜 **Compressed NFTs (cNFTs)** - Coming soon
+    - ✅ **Compressed NFTs (cNFTs)** (Metaplex Bubblegum)
+    - ✅ **Metaplex Core NFTs**
     - 🔜 **Additional blockchains** - Coming soon
     
     ## Additional Features
@@ -109,6 +110,8 @@ servers:
 tags:
   - name: Health
     description: Service health and status
+  - name: Quote
+    description: Swap quote and fee estimation
   - name: Offers
     description: Atomic swap offer lifecycle management
 
@@ -166,92 +169,91 @@ paths:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
 
-  /v1/agreements:
+  /api/quote:
     post:
       tags:
-        - Agreements
-      summary: Create a new escrow agreement
+        - Quote
+      summary: Get swap quote
       description: |
-        Creates a new escrow agreement for NFT swaps. This initializes the escrow on the Solana blockchain
-        and generates deposit addresses for the required assets (NFT, SOL, and/or second NFT depending on swap type).
+        Get a comprehensive quote for an atomic swap including:
+        - **SOL price** in USD (cached from CoinGecko)
+        - **Network fees** (based on actual Solana signature costs)
+        - **Platform fees** (percentage, flat, or zero-fee for API key users)
+        - **Transaction size** estimation with ALT support
+        - **Time estimates** based on NFT count and types
+        - **Warnings** about cNFT limitations or multi-asset restrictions
+        - **Swap feasibility** check (`canSwap` boolean)
         
-        **Supported Swap Types:**
-        - NFT <> SOL (NFT_FOR_SOL)
-        - NFT <> NFT with fee (NFT_FOR_NFT_WITH_FEE)
-        - NFT + SOL <> NFT (NFT_FOR_NFT_PLUS_SOL)
+        This endpoint consolidates all information needed for the swap confirmation modal.
         
-        **Rate Limited**: 10 requests per 15 minutes
-        **Idempotency**: Supports X-Idempotency-Key header
-      parameters:
-        - $ref: '#/components/parameters/IdempotencyKey'
+        **Note:** cNFT transaction size estimates use worst-case proof node counts (14 nodes)
+        since actual proof size varies by tree canopy depth and cannot be determined without
+        fetching the full proof data.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateAgreementRequest'
+              $ref: '#/components/schemas/QuoteRequest'
             examples:
               nftForSol:
-                summary: NFT <> SOL Swap
-                description: |
-                  Direct exchange of NFT for SOL payment.
-                  Platform fee: 1% (100 bps). Blockchain fees covered by EasyEscrow.
-                  Min: 0.1 SOL, Max: 15 SOL (up to $5,000 AUD)
+                summary: NFT ↔ SOL Quote
+                description: Quote for trading an SPL NFT for SOL
                 value:
-                  swapType: "NFT_FOR_SOL"
-                  nftMint: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
-                  solAmount: "1000000000"
-                  seller: "4qxZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9"
-                  buyer: "5rxZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9"
-                  expiry: "12h"
-                  feeBps: 100
-                  honorRoyalties: true
-              nftForNftWithFee:
-                summary: NFT <> NFT (with SOL fee)
-                description: |
-                  Exchange two NFTs with 0.005 SOL platform fee split 50/50.
-                  Each party pays 0.0025 SOL. Blockchain fees covered by EasyEscrow.
-                  Min: 0.1 SOL, Max: 15 SOL (up to $5,000 AUD)
+                  makerAssets:
+                    - mint: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+                      isCompressed: false
+                      name: "Cool NFT #123"
+                  takerAssets: []
+                  makerSolLamports: 0
+                  takerSolLamports: 100000000
+              cnftForSol:
+                summary: cNFT ↔ SOL Quote
+                description: Quote for trading a compressed NFT for SOL (larger transaction)
                 value:
-                  swapType: "NFT_FOR_NFT_WITH_FEE"
-                  nftMint: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
-                  nftBMint: "8xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
-                  solAmount: "5000000"
-                  seller: "4qxZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9"
-                  buyer: "5rxZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9"
-                  expiry: "6h"
-                  feeBps: 100
-                  honorRoyalties: true
-              nftPlusSolForNft:
-                summary: NFT + SOL <> NFT
-                description: |
-                  Exchange NFT plus SOL for another NFT.
-                  Platform fee: 1% (100 bps). Blockchain fees covered by EasyEscrow.
-                  Min: 0.1 SOL, Max: 15 SOL (up to $5,000 AUD)
+                  makerAssets:
+                    - mint: "DRiP2Pn2K6fuMLKQmt5rZWqHheXMyUtCeXhe8kDQdxRu"
+                      isCompressed: true
+                      name: "Compressed NFT"
+                  takerAssets: []
+                  makerSolLamports: 0
+                  takerSolLamports: 200000000
+              nftForNft:
+                summary: NFT ↔ NFT Quote
+                description: Quote for trading two NFTs
                 value:
-                  swapType: "NFT_FOR_NFT_PLUS_SOL"
-                  nftMint: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
-                  nftBMint: "8xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
-                  solAmount: "500000000"
-                  seller: "4qxZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9"
-                  buyer: "5rxZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9"
-                  expiry: "24h"
-                  feeBps: 100
-                  honorRoyalties: true
+                  makerAssets:
+                    - mint: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+                      isCompressed: false
+                  takerAssets:
+                    - mint: "8xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+                      isCompressed: false
+                  makerSolLamports: 0
+                  takerSolLamports: 0
+              zeroFee:
+                summary: Zero-Fee Quote (API Key)
+                description: Quote with zero platform fee using API key
+                value:
+                  makerAssets:
+                    - mint: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+                      isCompressed: false
+                  takerAssets: []
+                  makerSolLamports: 0
+                  takerSolLamports: 500000000
+                  apiKey: "your-api-key-here"
       responses:
-        '201':
-          description: Agreement created successfully
+        '200':
+          description: Quote generated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateAgreementResponse'
+                $ref: '#/components/schemas/QuoteResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
-        '429':
-          $ref: '#/components/responses/RateLimitExceeded'
         '500':
           $ref: '#/components/responses/InternalServerError'
-    
+
+  /api/offers:
     get:
       tags:
         - Offers
@@ -834,6 +836,295 @@ components:
             description: Sort order
 
   schemas:
+    QuoteRequest:
+      type: object
+      properties:
+        makerAssets:
+          type: array
+          description: NFTs offered by the maker
+          items:
+            $ref: '#/components/schemas/QuoteAsset'
+        takerAssets:
+          type: array
+          description: NFTs offered by the taker (requested by maker)
+          items:
+            $ref: '#/components/schemas/QuoteAsset'
+        makerSolLamports:
+          type: integer
+          description: SOL amount offered by maker (in lamports)
+          default: 0
+          example: 0
+        takerSolLamports:
+          type: integer
+          description: SOL amount offered by taker (in lamports)
+          default: 0
+          example: 100000000
+        apiKey:
+          type: string
+          description: Optional API key for zero-fee swaps
+          example: "your-api-key-here"
+
+    QuoteAsset:
+      type: object
+      required:
+        - mint
+      properties:
+        mint:
+          type: string
+          description: NFT mint address
+          example: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+        isCompressed:
+          type: boolean
+          description: Whether the NFT is a compressed NFT (cNFT)
+          default: false
+        isCoreNft:
+          type: boolean
+          description: Whether the NFT is a Metaplex Core NFT
+          default: false
+        name:
+          type: string
+          description: NFT name (optional, for display)
+          example: "Cool NFT #123"
+        image:
+          type: string
+          description: NFT image URL (optional)
+        symbol:
+          type: string
+          description: NFT symbol (optional)
+        proofNodes:
+          type: integer
+          description: |
+            Number of Merkle proof nodes for cNFT (optional).
+            If not provided, worst-case estimate (14 nodes) is used.
+          example: 3
+
+    QuoteResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/QuoteData'
+        timestamp:
+          type: string
+          format: date-time
+
+    QuoteData:
+      type: object
+      properties:
+        solPriceUSD:
+          type: number
+          description: Current SOL price in USD (from CoinGecko, cached 1 minute)
+          example: 138.30
+        maker:
+          $ref: '#/components/schemas/QuoteSide'
+        taker:
+          $ref: '#/components/schemas/QuoteSide'
+        estimatedTime:
+          type: object
+          properties:
+            seconds:
+              type: integer
+              description: Estimated swap time in seconds
+              example: 5
+            display:
+              type: string
+              description: Human-readable time estimate
+              example: "~5 seconds"
+        networkFee:
+          $ref: '#/components/schemas/QuoteFee'
+        platformFee:
+          type: object
+          allOf:
+            - $ref: '#/components/schemas/QuoteFee'
+            - type: object
+              properties:
+                type:
+                  type: string
+                  enum: [percentage, flat, zero]
+                  description: |
+                    Fee type:
+                    - percentage: 1% of SOL amount (for swaps involving SOL)
+                    - flat: 0.005 SOL (for NFT-only swaps)
+                    - zero: No fee (for API key users)
+                  example: "percentage"
+                rate:
+                  type: number
+                  description: Fee rate (0.01 for 1%, 0.005 for flat fee, 0 for zero)
+                  example: 0.01
+                label:
+                  type: string
+                  description: Display label for the fee
+                  example: "Platform Fee (1%):"
+        transactionSize:
+          $ref: '#/components/schemas/QuoteTransactionSize'
+        warnings:
+          type: array
+          description: Warning messages about potential issues
+          items:
+            type: string
+          example: ["cNFT proof size varies by tree. Estimate uses worst case (14 nodes)."]
+        canSwap:
+          type: boolean
+          description: Whether the swap can proceed (false if transaction too large or other issues)
+          example: true
+
+    QuoteSide:
+      type: object
+      description: Quote information for one side of the swap (maker or taker)
+      properties:
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuoteAsset'
+        assetCount:
+          type: integer
+          description: Total number of NFTs on this side
+          example: 1
+        sol:
+          type: object
+          nullable: true
+          description: SOL amount if any (null if no SOL on this side)
+          properties:
+            sol:
+              type: number
+              example: 0.1
+            lamports:
+              type: integer
+              example: 100000000
+            usd:
+              type: number
+              nullable: true
+              example: 13.83
+            display:
+              type: string
+              example: "0.1000 SOL (~$13.83 USD)"
+        breakdown:
+          type: object
+          properties:
+            splNfts:
+              type: integer
+              description: Count of SPL NFTs
+              example: 0
+            cNfts:
+              type: integer
+              description: Count of compressed NFTs
+              example: 1
+            coreNfts:
+              type: integer
+              description: Count of Metaplex Core NFTs
+              example: 0
+
+    QuoteFee:
+      type: object
+      description: Fee amount with USD conversion
+      properties:
+        sol:
+          type: number
+          description: Fee amount in SOL
+          example: 0.001
+        lamports:
+          type: integer
+          description: Fee amount in lamports
+          example: 1000000
+        usd:
+          type: number
+          nullable: true
+          description: Fee amount in USD (null if SOL price unavailable)
+          example: 0.14
+        display:
+          type: string
+          description: Formatted display string
+          example: "0.0010 SOL (~$0.14 USD)"
+
+    QuoteTransactionSize:
+      type: object
+      description: Transaction size estimation
+      properties:
+        estimated:
+          type: integer
+          description: Estimated transaction size in bytes (without ALT)
+          example: 1271
+        estimatedWithALT:
+          type: integer
+          nullable: true
+          description: Estimated size with Address Lookup Table (null if still too large)
+          example: 745
+        maxSize:
+          type: integer
+          description: Maximum allowed transaction size (1232 bytes)
+          example: 1232
+        willFit:
+          type: boolean
+          description: Whether transaction fits without ALT
+          example: false
+        willFitWithALT:
+          type: boolean
+          description: Whether transaction fits with ALT
+          example: true
+        altAvailable:
+          type: boolean
+          description: Whether an Address Lookup Table is configured
+          example: true
+        useALT:
+          type: boolean
+          description: Whether ALT will be used for this transaction
+          example: true
+        altSavings:
+          type: integer
+          nullable: true
+          description: Bytes saved by using ALT (null if not using ALT)
+          example: 526
+        status:
+          type: string
+          enum: [ok, alt_required, near_limit, too_large]
+          description: |
+            Transaction size status:
+            - ok: Fits without ALT
+            - alt_required: Requires ALT to fit
+            - near_limit: Fits but close to limit (>80%)
+            - too_large: Exceeds limit even with ALT
+          example: "alt_required"
+        breakdown:
+          type: object
+          description: Size breakdown by component
+          properties:
+            signatures:
+              type: integer
+              description: Signature data size (64 bytes × signers)
+              example: 192
+            accounts:
+              type: integer
+              description: Account keys size (32 bytes × accounts)
+              example: 672
+            instructions:
+              type: integer
+              description: Instruction data size
+              example: 154
+            cnftProofs:
+              type: integer
+              description: cNFT Merkle proof data size
+              example: 556
+        details:
+          type: object
+          description: Detailed count information
+          properties:
+            numSigners:
+              type: integer
+              example: 3
+            numAccounts:
+              type: integer
+              example: 24
+            makerProofNodes:
+              type: integer
+              description: Proof nodes for maker's cNFT(s)
+              example: 14
+            takerProofNodes:
+              type: integer
+              description: Proof nodes for taker's cNFT(s)
+              example: 0
+
     OfferStatus:
       type: string
       enum:
@@ -920,8 +1211,7 @@ components:
             In Solana, a "mint" is the account that defines a token type. For NFTs,
             the mint address serves as the unique identifier (like a serial number or contract address).
             
-            **Supported:** Traditional NFTs (Metaplex standard)
-            **Coming soon:** Compressed NFTs (cNFTs)
+            **Supported:** Traditional NFTs, Compressed NFTs (cNFTs), Metaplex Core NFTs
           example: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
         nftBMint:
           type: string
@@ -931,8 +1221,7 @@ components:
             
             The NFT must ALREADY EXIST in the buyer's wallet.
             
-            **Supported:** Traditional NFTs (Metaplex standard)
-            **Coming soon:** Compressed NFTs (cNFTs)
+            **Supported:** Traditional NFTs, Compressed NFTs (cNFTs), Metaplex Core NFTs
           example: "8xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
         swapType:
           type: string

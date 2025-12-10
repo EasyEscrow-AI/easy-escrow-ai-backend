@@ -350,7 +350,7 @@ Instead of hardcoding partner addresses in the program, use **Backend-Controlled
 2. **Third-Party Apps Get API Keys** (Backend Database)
    - Apps request zero-fee access
    - Backend issues unique API key per app
-   - Example: `ATOMIC_SWAP_API_KEY=0600de78367cab25c714df205488dd8e059e1a99befed8e72526088a82c5d22b`
+   - Example: `ATOMIC_SWAP_API_KEY=<64-char-hex-string-from-secure-generation>`
 
 3. **Backend Signs Zero-Fee Swaps** (Runtime Control)
    - App sends swap request with API key

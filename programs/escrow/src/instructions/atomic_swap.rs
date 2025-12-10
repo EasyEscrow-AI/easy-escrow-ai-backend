@@ -12,6 +12,9 @@ const MAX_PLATFORM_FEE: u64 = 500_000_000;
 /// Bubblegum program ID for cNFT transfers
 const BUBBLEGUM_PROGRAM_ID: Pubkey = mpl_bubblegum::ID;
 
+/// Metaplex Core program ID for Core NFT transfers
+const MPL_CORE_PROGRAM_ID: Pubkey = mpl_core::ID;
+
 /// Authorized apps that can perform zero-fee swaps
 /// Add your trusted app public keys here
 /// 
@@ -145,6 +148,30 @@ pub struct AtomicSwapWithFee<'info> {
     /// CHECK: Program ID verified by Bubblegum
     pub log_wrapper: Option<AccountInfo<'info>>,
     
+    // === Core NFT Transfer Accounts (Optional) ===
+    
+    /// Maker's Core NFT asset account (for Core NFT transfers)
+    /// CHECK: Verified by mpl-core CPI
+    #[account(mut)]
+    pub maker_core_asset: Option<AccountInfo<'info>>,
+    
+    /// Maker's Core NFT collection (required if maker's Core NFT belongs to a collection)
+    /// CHECK: Verified by mpl-core CPI
+    pub maker_core_collection: Option<AccountInfo<'info>>,
+    
+    /// Taker's Core NFT asset account (for Core NFT transfers)
+    /// CHECK: Verified by mpl-core CPI
+    #[account(mut)]
+    pub taker_core_asset: Option<AccountInfo<'info>>,
+    
+    /// Taker's Core NFT collection (required if taker's Core NFT belongs to a collection)
+    /// CHECK: Verified by mpl-core CPI
+    pub taker_core_collection: Option<AccountInfo<'info>>,
+    
+    /// Metaplex Core program for Core NFT transfers
+    /// CHECK: Program ID verified in instruction
+    pub mpl_core_program: Option<AccountInfo<'info>>,
+    
     /// Optional: Authorized app signer for zero-fee swaps
     /// Must sign transaction to prove ownership
     pub authorized_app: Option<Signer<'info>>,
@@ -163,6 +190,12 @@ pub struct SwapParams {
     
     /// Whether taker is sending a compressed NFT
     pub taker_sends_cnft: bool,
+    
+    /// Whether maker is sending a Core NFT (Metaplex Core)
+    pub maker_sends_core_nft: bool,
+    
+    /// Whether taker is sending a Core NFT (Metaplex Core)
+    pub taker_sends_core_nft: bool,
     
     /// SOL amount maker is sending (in lamports)
     pub maker_sol_amount: u64,
@@ -281,6 +314,24 @@ pub fn atomic_swap_handler(ctx: Context<AtomicSwapWithFee>, params: SwapParams) 
         )?;
         
         msg!("Transferred maker cNFT to taker");
+    } else if params.maker_sends_core_nft {
+        // Metaplex Core NFT transfer
+        let core_asset = ctx.accounts.maker_core_asset.as_ref()
+            .ok_or(AtomicSwapError::MissingCoreAsset)?;
+        let mpl_core = ctx.accounts.mpl_core_program.as_ref()
+            .ok_or(AtomicSwapError::MissingMplCoreProgram)?;
+        // Collection is optional - only needed if the Core NFT belongs to a collection
+        let collection = ctx.accounts.maker_core_collection.as_ref();
+        
+        transfer_core_nft(
+            &ctx.accounts.maker.to_account_info(),
+            &ctx.accounts.taker.to_account_info(),
+            core_asset,
+            collection,
+            mpl_core,
+        )?;
+        
+        msg!("Transferred maker Core NFT to taker");
     }
     
     // Step 3: Transfer taker's asset to maker
@@ -335,6 +386,24 @@ pub fn atomic_swap_handler(ctx: Context<AtomicSwapWithFee>, params: SwapParams) 
         )?;
         
         msg!("Transferred taker cNFT to maker");
+    } else if params.taker_sends_core_nft {
+        // Metaplex Core NFT transfer
+        let core_asset = ctx.accounts.taker_core_asset.as_ref()
+            .ok_or(AtomicSwapError::MissingCoreAsset)?;
+        let mpl_core = ctx.accounts.mpl_core_program.as_ref()
+            .ok_or(AtomicSwapError::MissingMplCoreProgram)?;
+        // Collection is optional - only needed if the Core NFT belongs to a collection
+        let collection = ctx.accounts.taker_core_collection.as_ref();
+        
+        transfer_core_nft(
+            &ctx.accounts.taker.to_account_info(),
+            &ctx.accounts.maker.to_account_info(),
+            core_asset,
+            collection,
+            mpl_core,
+        )?;
+        
+        msg!("Transferred taker Core NFT to maker");
     }
     
     // Step 4: Transfer SOL from maker to taker (if any)
@@ -412,17 +481,29 @@ fn validate_params(params: &SwapParams, authorized_app: Option<&Signer>) -> Resu
     require!(
         params.maker_sends_nft || params.taker_sends_nft || 
         params.maker_sends_cnft || params.taker_sends_cnft ||
+        params.maker_sends_core_nft || params.taker_sends_core_nft ||
         params.maker_sol_amount > 0 || params.taker_sol_amount > 0,
         AtomicSwapError::InvalidFee
     );
     
-    // Validate mutual exclusivity: Cannot send both standard NFT and cNFT
+    // Validate mutual exclusivity: Cannot send multiple NFT types at once
+    // Maker can only send one type: standard NFT, cNFT, or Core NFT
+    let maker_nft_types = [params.maker_sends_nft, params.maker_sends_cnft, params.maker_sends_core_nft]
+        .iter()
+        .filter(|&&x| x)
+        .count();
     require!(
-        !(params.maker_sends_nft && params.maker_sends_cnft),
+        maker_nft_types <= 1,
         AtomicSwapError::ConflictingAssetFlags
     );
+    
+    // Taker can only send one type: standard NFT, cNFT, or Core NFT
+    let taker_nft_types = [params.taker_sends_nft, params.taker_sends_cnft, params.taker_sends_core_nft]
+        .iter()
+        .filter(|&&x| x)
+        .count();
     require!(
-        !(params.taker_sends_nft && params.taker_sends_cnft),
+        taker_nft_types <= 1,
         AtomicSwapError::ConflictingAssetFlags
     );
     
@@ -522,6 +603,48 @@ fn transfer_cnft<'info>(
         .invoke()?;
     
     msg!("cNFT transferred successfully");
+    
+    Ok(())
+}
+
+/// Transfer a Metaplex Core NFT using mpl-core CPI
+/// 
+/// If the Core NFT belongs to a collection, the collection account MUST be provided.
+/// The mpl-core program will return "Missing collection" error (0x19) if the NFT
+/// belongs to a collection but the collection account is not passed.
+fn transfer_core_nft<'info>(
+    from: &AccountInfo<'info>,
+    to: &AccountInfo<'info>,
+    asset: &AccountInfo<'info>,
+    collection: Option<&AccountInfo<'info>>,
+    mpl_core_program: &AccountInfo<'info>,
+) -> Result<()> {
+    // Verify mpl-core program ID
+    require!(
+        mpl_core_program.key() == MPL_CORE_PROGRAM_ID,
+        AtomicSwapError::InvalidMplCoreProgram
+    );
+    
+    msg!("Transferring Core NFT via mpl-core");
+    msg!("  From: {}", from.key());
+    msg!("  To: {}", to.key());
+    msg!("  Asset: {}", asset.key());
+    if let Some(coll) = collection {
+        msg!("  Collection: {}", coll.key());
+    }
+    
+    // Build mpl-core transfer CPI
+    // In atomic swaps, the owner (from) is a signer
+    // If the NFT belongs to a collection, the collection account MUST be provided
+    mpl_core::instructions::TransferV1CpiBuilder::new(mpl_core_program)
+        .asset(asset)
+        .payer(from)  // Payer for any rent changes
+        .authority(Some(from))  // Owner must sign (owner is the authority)
+        .new_owner(to)  // Destination owner (AccountInfo)
+        .collection(collection)  // Required for collection NFTs
+        .invoke()?;
+    
+    msg!("Core NFT transferred successfully");
     
     Ok(())
 }

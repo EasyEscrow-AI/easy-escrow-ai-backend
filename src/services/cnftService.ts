@@ -18,6 +18,31 @@ import {
 } from '../types/cnft';
 import { BUBBLEGUM_PROGRAM_ID } from '../constants/bubblegum';
 
+// Concurrent Merkle Tree account header size (before canopy data)
+// Based on SPL Account Compression v0.2: discriminator (8) + header (54) + changelog buffer + rightmost proof
+// For a tree with maxDepth=14, maxBufferSize=64: 8 + 54 + (64 * (1 + 32 + 32 * 14)) + (14 * 32) = ~30,024 bytes
+// The canopy starts after this
+const CMT_HEADER_SIZES: { [key: number]: number } = {
+  // maxDepth -> header size (before canopy)
+  // These are calculated based on SPL Account Compression layout
+  14: 30024, // Standard Metaplex tree (maxBufferSize=64)
+  20: 61752, // Larger trees
+  24: 81976, // Very large trees
+};
+
+// Fallback: estimate header size based on typical maxBufferSize=64
+function estimateHeaderSize(maxDepth: number): number {
+  const maxBufferSize = 64;
+  // Header layout: discriminator(8) + header(54) + changelog_buffer + rightmost_proof
+  // changelog_buffer = maxBufferSize * (1 + 32 + maxDepth * 32)
+  // rightmost_proof = maxDepth * 32
+  const headerSize = 8 + 54;
+  const changelogEntrySize = 1 + 32 + maxDepth * 32;
+  const changelogBufferSize = maxBufferSize * changelogEntrySize;
+  const rightmostProofSize = maxDepth * 32;
+  return headerSize + changelogBufferSize + rightmostProofSize;
+}
+
 export interface CnftServiceConfig {
   /** RPC endpoint with DAS API support (e.g., Helius) */
   rpcEndpoint: string;
@@ -169,8 +194,8 @@ export class CnftService {
     // Derive tree authority
     const treeAuthorityAddress = this.deriveTreeAuthority(treeAddress);
     
-    // Convert proof data to CnftProof format
-    const proof = this.convertDasProofToCnftProof(proofData, assetData);
+    // Convert proof data to CnftProof format with dynamic canopy depth detection
+    const proof = await this.convertDasProofToCnftProofAsync(proofData, assetData);
     
     console.log('[CnftService] cNFT transfer params built successfully');
     
@@ -187,33 +212,104 @@ export class CnftService {
   }
   
   /**
+   * Fetch canopy depth from Merkle tree account
+   * The canopy stores proof nodes on-chain to reduce transaction size
+   * 
+   * IMPORTANT: Canopy depth detection is complex and tree-specific.
+   * If detection fails, we use a DEFAULT_CANOPY_DEPTH that works for most standard trees.
+   * If that fails, the transaction will fail with a size error and the user should use a different NFT.
+   */
+  async getTreeCanopyDepth(treeAddress: PublicKey, maxDepthHint?: number): Promise<number> {
+    console.log('[CnftService] Fetching canopy depth for tree:', treeAddress.toBase58());
+    
+    // Default canopy depth for standard Metaplex trees (maxDepth=14, canopy=11)
+    // This works for most common cNFT collections
+    const DEFAULT_CANOPY_DEPTH = 11;
+    
+    try {
+      const accountInfo = await this.connection.getAccountInfo(treeAddress);
+      
+      if (!accountInfo) {
+        console.warn('[CnftService] Tree account not found, using default canopy depth:', DEFAULT_CANOPY_DEPTH);
+        return DEFAULT_CANOPY_DEPTH;
+      }
+      
+      const accountSize = accountInfo.data.length;
+      console.log('[CnftService] Tree account size:', accountSize, 'bytes');
+      
+      // Use maxDepthHint if provided, otherwise try common values
+      const maxDepthsToTry = maxDepthHint ? [maxDepthHint] : [14, 20, 24, 17, 26, 30];
+      
+      for (const maxDepth of maxDepthsToTry) {
+        const headerSize = CMT_HEADER_SIZES[maxDepth] || estimateHeaderSize(maxDepth);
+        const canopyDataSize = accountSize - headerSize;
+        
+        if (canopyDataSize <= 0) continue;
+        
+        // Each canopy node is 32 bytes
+        // Canopy stores 2^(canopyDepth+1) - 2 nodes
+        const canopyNodes = Math.floor(canopyDataSize / 32);
+        
+        if (canopyNodes <= 0) continue;
+        
+        // canopy_nodes = 2^(canopy_depth+1) - 2
+        // 2^(canopy_depth+1) = canopy_nodes + 2
+        // canopy_depth = log2(canopy_nodes + 2) - 1
+        const canopyDepthFloat = Math.log2(canopyNodes + 2) - 1;
+        const canopyDepth = Math.floor(canopyDepthFloat);
+        
+        // Validate: should be a power of 2 relationship
+        const expectedNodes = Math.pow(2, canopyDepth + 1) - 2;
+        if (Math.abs(expectedNodes - canopyNodes) < 10) { // Allow small variance
+          console.log(`[CnftService] Detected canopy depth: ${canopyDepth} (maxDepth=${maxDepth}, canopyNodes=${canopyNodes})`);
+          return canopyDepth;
+        }
+      }
+      
+      // Fallback: Use default canopy depth (safer than 0 which sends all nodes)
+      console.warn('[CnftService] Could not determine canopy depth, using default:', DEFAULT_CANOPY_DEPTH);
+      return DEFAULT_CANOPY_DEPTH;
+      
+    } catch (error: any) {
+      console.error('[CnftService] Failed to fetch tree canopy depth:', error.message);
+      // Default to standard canopy - safer than 0
+      console.warn('[CnftService] Using default canopy depth:', DEFAULT_CANOPY_DEPTH);
+      return DEFAULT_CANOPY_DEPTH;
+    }
+  }
+  
+  /**
    * Convert DAS proof response to CnftProof format expected by program
    */
-  private convertDasProofToCnftProof(
+  private async convertDasProofToCnftProofAsync(
     dasProof: DasProofResponse,
     assetData: CnftAssetData
-  ): CnftProof {
+  ): Promise<CnftProof> {
     // Decode base58 strings to byte arrays
     const root = Array.from(bs58.decode(dasProof.root));
     
-    // CRITICAL: Trim proof based on canopy depth
-    // Our merkle trees have canopy depth 11, so we only need the last (maxDepth - canopyDepth) proof nodes
-    // The first 11 levels are stored on-chain in the canopy
-    // Standard Metaplex tree: maxDepth=14, canopyDepth=11 → need last 3 nodes
-    //
-    // IMPORTANT: Use slice(CANOPY_DEPTH) not slice(-Math.max(...))
-    // slice(-0) equals slice(0) and returns full array (JavaScript quirk)
-    // slice(CANOPY_DEPTH) correctly returns empty array when proof.length <= CANOPY_DEPTH
-    const CANOPY_DEPTH = 11;
-    const proofNodesToSend = dasProof.proof.slice(CANOPY_DEPTH);
+    // Get tree address and fetch canopy depth dynamically
+    const treeAddress = new PublicKey(assetData.compression.tree);
+    const maxDepth = dasProof.proof.length;
+    const canopyDepth = await this.getTreeCanopyDepth(treeAddress, maxDepth);
+    
+    // CRITICAL: Trim proof based on actual canopy depth
+    // We only need the last (maxDepth - canopyDepth) proof nodes
+    // The first `canopyDepth` levels are stored on-chain in the canopy
+    const proofNodesToSend = dasProof.proof.slice(canopyDepth);
     const proof = proofNodesToSend.map(node => Array.from(bs58.decode(node)));
     
-    console.log(`[CnftService] Proof trimmed from ${dasProof.proof.length} to ${proof.length} nodes (canopy: ${CANOPY_DEPTH})`);
+    // Calculate estimated proof size contribution to transaction
+    const proofSizeBytes = proof.length * 32;
+    console.log(`[CnftService] Proof trimmed from ${maxDepth} to ${proof.length} nodes (canopy: ${canopyDepth}, ~${proofSizeBytes} bytes)`);
+    
+    // Warn if proof is large (may cause transaction size issues)
+    if (proof.length > 5) {
+      console.warn(`[CnftService] ⚠️ Large proof detected (${proof.length} nodes, ~${proofSizeBytes} bytes). Transaction may exceed size limit.`);
+    }
     
     // CRITICAL: Calculate leaf_index from node_index
     // Research: "leaf_index = node_index - 2^maxDepth"
-    // maxDepth equals the full proof length from DAS API
-    const maxDepth = dasProof.proof.length;
     const leafIndex = dasProof.node_index - Math.pow(2, maxDepth);
     
     console.log(`[CnftService] Index calculation: node_index=${dasProof.node_index}, maxDepth=${maxDepth}, leafIndex=${leafIndex}`);
@@ -240,7 +336,60 @@ export class CnftService {
       nonce: cnftProof.nonce,
       index: cnftProof.index,
       proofLength: proof.length,
-      fullRoot: root,
+      canopyDepth,
+      maxDepth,
+      estimatedProofBytes: proofSizeBytes,
+    });
+    
+    return cnftProof;
+  }
+  
+  /**
+   * Convert DAS proof response to CnftProof format expected by program
+   * @deprecated Use convertDasProofToCnftProofAsync instead
+   */
+  private convertDasProofToCnftProof(
+    dasProof: DasProofResponse,
+    assetData: CnftAssetData
+  ): CnftProof {
+    // Decode base58 strings to byte arrays
+    const root = Array.from(bs58.decode(dasProof.root));
+    
+    // FALLBACK: Use canopy depth 0 (send all proof nodes)
+    // This is safer for unknown trees - the canopy on-chain will validate correctly
+    // The transaction might be larger but will work with any tree configuration
+    const CANOPY_DEPTH = 0;
+    const maxDepth = dasProof.proof.length;
+    const proofNodesToSend = dasProof.proof.slice(CANOPY_DEPTH);
+    const proof = proofNodesToSend.map(node => Array.from(bs58.decode(node)));
+    
+    console.log(`[CnftService] Proof: sending all ${proof.length} nodes (fallback mode, canopy: ${CANOPY_DEPTH})`);
+    
+    // CRITICAL: Calculate leaf_index from node_index
+    const leafIndex = dasProof.node_index - Math.pow(2, maxDepth);
+    
+    console.log(`[CnftService] Index calculation: node_index=${dasProof.node_index}, maxDepth=${maxDepth}, leafIndex=${leafIndex}`);
+    
+    // CRITICAL: Use actual hashes from DAS API compression field
+    const dataHash = Array.from(bs58.decode(assetData.compression.data_hash));
+    const creatorHash = Array.from(bs58.decode(assetData.compression.creator_hash));
+    
+    const cnftProof = {
+      root,
+      dataHash,
+      creatorHash,
+      nonce: assetData.compression.leaf_id,
+      index: leafIndex,
+      proof,
+    };
+    
+    console.log('[CnftService] Full proof details:', {
+      root: root.slice(0, 8),
+      dataHashFirst8: dataHash.slice(0, 8),
+      creatorHashFirst8: creatorHash.slice(0, 8),
+      nonce: cnftProof.nonce,
+      index: cnftProof.index,
+      proofLength: proof.length,
     });
     
     return cnftProof;

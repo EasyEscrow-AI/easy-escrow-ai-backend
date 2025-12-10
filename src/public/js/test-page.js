@@ -329,18 +329,30 @@ async function loadWalletInfo(wallet) {
         // Store wallet data
         if (wallet === 'maker') {
             makerData = data.data;
-            // Debug: Log cNFT mint addresses received from backend
+            // Debug: Log NFT types received from backend
             const cNfts = data.data.nfts.filter(n => n.isCompressed);
-            console.log(`🔍 [Maker] Received ${cNfts.length} cNFTs from backend:`);
-            cNfts.forEach(nft => {
-                console.log(`   - ${nft.name}: ${nft.mint}`);
+            const coreNfts = data.data.nfts.filter(n => n.isCoreNft);
+            const splNfts = data.data.nfts.filter(n => !n.isCompressed && !n.isCoreNft);
+            console.log(`🔍 [Maker] Received NFTs from backend:`, {
+                cNfts: cNfts.length,
+                coreNfts: coreNfts.length,
+                splNfts: splNfts.length,
+            });
+            [...cNfts, ...coreNfts].forEach(nft => {
+                console.log(`   - ${nft.name}: ${nft.mint} (${nft.isCoreNft ? 'Core' : 'cNFT'})`);
             });
         } else {
             takerData = data.data;
             const cNfts = data.data.nfts.filter(n => n.isCompressed);
-            console.log(`🔍 [Taker] Received ${cNfts.length} cNFTs from backend:`);
-            cNfts.forEach(nft => {
-                console.log(`   - ${nft.name}: ${nft.mint}`);
+            const coreNfts = data.data.nfts.filter(n => n.isCoreNft);
+            const splNfts = data.data.nfts.filter(n => !n.isCompressed && !n.isCoreNft);
+            console.log(`🔍 [Taker] Received NFTs from backend:`, {
+                cNfts: cNfts.length,
+                coreNfts: coreNfts.length,
+                splNfts: splNfts.length,
+            });
+            [...cNfts, ...coreNfts].forEach(nft => {
+                console.log(`   - ${nft.name}: ${nft.mint} (${nft.isCoreNft ? 'Core' : 'cNFT'})`);
             });
         }
 
@@ -363,6 +375,25 @@ async function loadWalletInfo(wallet) {
     }
 }
 
+// Get NFT type label for display
+function getNftTypeLabel(nft) {
+    if (nft.isCoreNft) return 'Core NFT';
+    if (nft.isCompressed) return 'cNFT';
+    return 'SPL NFT';
+}
+
+// Check if NFT type is supported for swaps
+function isNftSwapSupported(nft) {
+    // All NFT types are now supported: SPL NFTs, cNFTs, and Core NFTs
+    return true;
+}
+
+// Get warning message for unsupported NFT (if any)
+function getUnsupportedNftWarning(nft) {
+    // All NFT types now supported
+    return null;
+}
+
 // Render NFTs
 function renderNFTs(wallet, nfts) {
     const container = document.getElementById(`${wallet}-nfts`);
@@ -372,9 +403,13 @@ function renderNFTs(wallet, nfts) {
     // Apply type filter
     let filteredNfts = nfts;
     if (filter === 'spl') {
-        filteredNfts = nfts.filter(nft => !nft.isCompressed);
+        filteredNfts = nfts.filter(nft => !nft.isCompressed && !nft.isCoreNft);
     } else if (filter === 'cnft') {
+        // Only show compressed NFTs (cNFTs)
         filteredNfts = nfts.filter(nft => nft.isCompressed);
+    } else if (filter === 'core') {
+        // Only show Metaplex Core NFTs
+        filteredNfts = nfts.filter(nft => nft.isCoreNft);
     }
     
     // Apply search filter
@@ -394,7 +429,8 @@ function renderNFTs(wallet, nfts) {
         } else if (filter === 'all') {
             message = 'No NFTs found in this wallet';
         } else {
-            message = `No ${filter === 'spl' ? 'SPL NFTs' : 'cNFTs'} found in this wallet`;
+            const filterLabels = { spl: 'SPL NFTs', cnft: 'cNFTs', core: 'Core NFTs' };
+            message = `No ${filterLabels[filter] || 'NFTs'} found in this wallet`;
         }
         container.innerHTML = `<div class="empty-state">${message}</div>`;
         return;
@@ -412,7 +448,7 @@ function renderNFTs(wallet, nfts) {
                      alt="${nft.name}"
                      data-fallback="${placeholderSvg}">
                 <div class="nft-name">${nft.name || 'Unknown NFT'}</div>
-                <div class="nft-type">${nft.isCompressed ? 'cNFT' : 'SPL NFT'}</div>
+                <div class="nft-type">${getNftTypeLabel(nft)}</div>
                 <div class="nft-mint">${nft.mint.substring(0, 8)}...</div>
             </div>
         `;
@@ -611,7 +647,7 @@ function showConfirmationModal() {
             
             const type = document.createElement('div');
             type.className = 'nft-preview-type';
-            type.textContent = nft.isCompressed ? 'cNFT' : 'SPL NFT';
+            type.textContent = getNftTypeLabel(nft);
             
             const mint = document.createElement('div');
             mint.className = 'nft-preview-mint';
@@ -664,7 +700,7 @@ function showConfirmationModal() {
             
             const type = document.createElement('div');
             type.className = 'nft-preview-type';
-            type.textContent = nft.isCompressed ? 'cNFT' : 'SPL NFT';
+            type.textContent = getNftTypeLabel(nft);
             
             const mint = document.createElement('div');
             mint.className = 'nft-preview-mint';
@@ -687,80 +723,262 @@ function showConfirmationModal() {
         takerOffersEl.appendChild(empty);
     }
     
-    // Calculate and display estimated fees and time
-    const totalNFTs = selectedMakerNFTs.length + selectedTakerNFTs.length;
-    const totalSOL = (parseFloat(offeredSol) || 0) + (parseFloat(requestedSol) || 0);
+    // Show loading state for fees/estimates
+    document.getElementById('modal-est-time').textContent = 'Loading...';
+    document.getElementById('modal-network-fees').textContent = 'Loading...';
+    document.getElementById('modal-platform-fee-label').textContent = 'Platform Fee:';
+    document.getElementById('modal-platform-fee').textContent = 'Loading...';
     
-    // Estimate time based on number of NFTs (check larger thresholds first)
-    let estimatedTime = '~5 seconds';
-    if (totalNFTs > 10) {
-        estimatedTime = '~20 seconds';
-    } else if (totalNFTs > 5) {
-        estimatedTime = '~10 seconds';
-    }
-    
-    // Calculate network fees (realistic estimate)
-    // Atomic swaps: 3 signatures + compute + potential ATA creation
-    // Base: ~15,000 lamports (3 sigs @ 5000 each) + ~1000 compute = 0.000016 SOL
-    // Per NFT: Small buffer for potential ATA creation (~0.002 SOL if needed)
-    // Most cases ATAs exist, so we show conservative typical estimate
-    const baseFee = 0.0001; // Base transaction signatures + compute + buffer (SOL)
-    const perNFTFee = 0.0002; // Small buffer per NFT for potential extra accounts (SOL)
-    const networkFee = baseFee + (totalNFTs * perNFTFee);
-    
-    // Calculate platform fee (matches backend FeeCalculator logic)
-    // - If SOL is transferred: 1% of total SOL (minimum 0.001 SOL)
-    // - If only NFTs (no SOL): Flat fee of 0.005 SOL
-    let platformFee;
-    if (totalSOL > 0) {
-        // Percentage-based fee with minimum floor
-        platformFee = Math.max(totalSOL * 0.01, 0.001);
-    } else {
-        // Flat fee for NFT-only swaps
-        platformFee = 0.005;
-    }
-    
-    // Helper function to format SOL with USD
-    const formatSOLWithUSD = (solAmount) => {
-        const solStr = solAmount.toFixed(4);
-        if (solPriceUSD) {
-            const usdValue = (solAmount * solPriceUSD).toFixed(2);
-            return `${solStr} SOL (~$${usdValue} USD)`;
-        }
-        return `${solStr} SOL`;
-    };
-    
-    // Format platform fee display and label
-    // Check if API key is provided
+    // Fetch quote from backend (includes all fee calculations and transaction size)
     const apiKeyInput = document.getElementById('api-key-input');
-    const hasApiKey = apiKeyInput && apiKeyInput.value.trim().length > 0;
+    const apiKey = apiKeyInput ? apiKeyInput.value.trim() : '';
     
-    // Show different label and format based on whether SOL is involved and API key
-    let platformFeeLabel, platformFeeDisplay;
-    if (hasApiKey) {
-        // Zero-fee with API key (if valid)
-        platformFeeLabel = 'Platform Fee (with API key):';
-        platformFeeDisplay = '0 SOL (zero fee) 🎉';
-    } else if (totalSOL > 0) {
-        // Percentage-based fee for SOL swaps
-        platformFeeLabel = 'Platform Fee (1%):';
-        platformFeeDisplay = formatSOLWithUSD(platformFee);
-    } else {
-        // Flat fee for NFT-only swaps
-        platformFeeLabel = 'Platform Fee:';
-        platformFeeDisplay = `${formatSOLWithUSD(platformFee)} (flat fee)`;
-    }
-    
-    // Update modal values
-    document.getElementById('modal-est-time').textContent = estimatedTime;
-    document.getElementById('modal-network-fees').textContent = solPriceUSD 
-        ? `~${formatSOLWithUSD(networkFee)}`
-        : `~${networkFee.toFixed(6)} SOL`;
-    document.getElementById('modal-platform-fee-label').textContent = platformFeeLabel;
-    document.getElementById('modal-platform-fee').textContent = platformFeeDisplay;
+    fetchSwapQuote(selectedMakerNFTs, selectedTakerNFTs, offeredSol, requestedSol, apiKey);
     
     // Show modal
     document.getElementById('confirm-modal').classList.add('show');
+}
+
+// Fetch comprehensive swap quote from backend API
+async function fetchSwapQuote(makerNFTs, takerNFTs, offeredSol, requestedSol, apiKey) {
+    const txSizeContainer = document.getElementById('modal-tx-size-container');
+    
+    try {
+        if (txSizeContainer) {
+            txSizeContainer.innerHTML = '<span class="loading">Fetching quote...</span>';
+        }
+        
+        // Build request body for /api/quote
+        const requestBody = {
+            makerAssets: makerNFTs.map(nft => ({
+                mint: nft.mint,
+                isCompressed: nft.isCompressed || false,
+                isCoreNft: nft.isCoreNft || false,
+                name: nft.name,
+                image: nft.image,
+            })),
+            takerAssets: takerNFTs.map(nft => ({
+                mint: nft.mint,
+                isCompressed: nft.isCompressed || false,
+                isCoreNft: nft.isCoreNft || false,
+                name: nft.name,
+                image: nft.image,
+            })),
+            makerSolLamports: offeredSol ? Math.floor(parseFloat(offeredSol) * 1e9) : 0,
+            takerSolLamports: requestedSol ? Math.floor(parseFloat(requestedSol) * 1e9) : 0,
+            apiKey: apiKey || '',
+        };
+        
+        const response = await fetch('/api/quote', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody),
+        });
+        
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+            const quote = result.data;
+            
+            // Update estimated time
+            document.getElementById('modal-est-time').textContent = quote.estimatedTime?.display || '~5 seconds';
+            
+            // Update network fees
+            document.getElementById('modal-network-fees').textContent = quote.networkFee?.display || '~0.00002 SOL';
+            
+            // Update platform fee
+            const platformFee = quote.platformFee;
+            if (platformFee) {
+                let platformFeeLabel = 'Platform Fee:';
+                if (platformFee.type === 'zero') {
+                    platformFeeLabel = 'Platform Fee (with API key):';
+                } else if (platformFee.type === 'percentage') {
+                    platformFeeLabel = `Platform Fee (${platformFee.label || '1%'}):`;
+                }
+                document.getElementById('modal-platform-fee-label').textContent = platformFeeLabel;
+                document.getElementById('modal-platform-fee').textContent = platformFee.display || '0 SOL';
+            }
+            
+            // Update transaction size display
+            if (txSizeContainer && quote.transactionSize) {
+                const txSize = quote.transactionSize;
+                const percentage = Math.min((txSize.estimated / txSize.maxSize) * 100, 100);
+                
+                // Determine color based on status
+                let barColor = '#22c55e'; // green
+                let statusText = '✅ OK';
+                if (txSize.status === 'too_large') {
+                    barColor = '#ef4444'; // red
+                    statusText = '❌ Too Large';
+                } else if (txSize.status === 'alt_required') {
+                    barColor = '#f59e0b'; // amber
+                    statusText = '🔗 ALT Required';
+                } else if (txSize.status === 'near_limit') {
+                    barColor = '#f59e0b'; // amber
+                    statusText = '⚠️ Near Limit';
+                }
+                
+                // Build display HTML
+                let html = `
+                    <div class="tx-size-info">
+                        <div class="tx-size-header">
+                            <span class="tx-size-label">Transaction Size:</span>
+                            <span class="tx-size-value">${txSize.estimated} / ${txSize.maxSize} bytes</span>
+                            <span class="tx-size-status" style="color: ${barColor}">${statusText}</span>
+                        </div>
+                        <div class="tx-size-bar-container">
+                            <div class="tx-size-bar" style="width: ${percentage}%; background-color: ${barColor}"></div>
+                        </div>
+                `;
+                
+                // Add warnings if present
+                if (quote.warnings && quote.warnings.length > 0) {
+                    quote.warnings.forEach(warning => {
+                        html += `
+                            <div class="tx-warning" style="background: #fef2f2; border: 1px solid #ef4444; padding: 8px; border-radius: 6px; margin-bottom: 10px; color: #991b1b; font-size: 0.8rem;">
+                                ⚠️ ${escapeHtml(warning)}
+                            </div>
+                        `;
+                    });
+                }
+                
+                // Add ALT info if needed
+                if (txSize.useALT && txSize.estimatedWithALT) {
+                    const altPercentage = Math.min((txSize.estimatedWithALT / txSize.maxSize) * 100, 100);
+                    const savings = txSize.altSavings || (txSize.estimated - txSize.estimatedWithALT);
+                    html += `
+                        <div class="tx-alt-info" style="margin-top: 12px; padding: 10px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 1px solid #22c55e; border-radius: 8px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <span class="alt-badge" style="background: #22c55e; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">🔗 ALT Applied</span>
+                                <span style="color: #166534; font-size: 0.75rem; font-weight: 500;">Saves ${savings} bytes</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                <span style="font-size: 0.8rem; color: #166534;">With ALT:</span>
+                                <span style="font-size: 0.85rem; font-weight: 600; color: #166534;">${txSize.estimatedWithALT} / ${txSize.maxSize} bytes ✅</span>
+                            </div>
+                            <div class="tx-size-bar-container" style="height: 6px; background: #bbf7d0; border-radius: 3px; overflow: hidden;">
+                                <div class="tx-size-bar" style="width: ${altPercentage}%; background-color: #22c55e; height: 100%;"></div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Add breakdown
+                if (txSize.breakdown) {
+                    const b = txSize.breakdown;
+                    html += `
+                        <div class="tx-size-breakdown">
+                            <span>Signatures: ${b.signatures}B</span>
+                            <span>Accounts: ${b.accounts}B</span>
+                            <span>Instructions: ${b.instructions}B</span>
+                            ${b.cnftProofs > 0 ? `<span>cNFT Proofs: ${b.cnftProofs}B</span>` : ''}
+                        </div>
+                    `;
+                }
+                
+                // Add cNFT proof details if available
+                if (txSize.cnftProofDetails && txSize.cnftProofDetails.length > 0) {
+                    const proofDetails = txSize.cnftProofDetails;
+                    const allFetched = proofDetails.every(d => d.fetched);
+                    const statusIcon = allFetched ? '✅' : '⚠️';
+                    const statusLabel = allFetched ? 'Verified' : 'Estimated';
+                    
+                    html += `
+                        <div class="cnft-proof-details" style="font-size: 0.75rem; color: #666; margin-top: 8px; padding: 8px; background: ${allFetched ? '#f0fdf4' : '#fefce8'}; border: 1px solid ${allFetched ? '#86efac' : '#fde047'}; border-radius: 6px;">
+                            <div style="font-weight: 600; margin-bottom: 4px; color: ${allFetched ? '#166534' : '#854d0e'};">
+                                ${statusIcon} cNFT Proof Data (${statusLabel})
+                            </div>
+                    `;
+                    
+                    for (const detail of proofDetails) {
+                        const side = detail.side === 'maker' ? '📤' : '📥';
+                        const shortId = detail.assetId.slice(0, 8) + '...' + detail.assetId.slice(-4);
+                        const canopyInfo = detail.canopyDepth !== null ? ` (canopy: ${detail.canopyDepth})` : '';
+                        const fetchIcon = detail.fetched ? '✓' : '?';
+                        
+                        html += `
+                            <div style="display: flex; justify-content: space-between; padding: 2px 0;">
+                                <span>${side} ${shortId}</span>
+                                <span style="font-weight: 500;">${fetchIcon} ${detail.proofNodes} proof nodes${canopyInfo}</span>
+                            </div>
+                        `;
+                    }
+                    
+                    // Add explanation about proof nodes
+                    const totalNodes = proofDetails.reduce((sum, d) => sum + d.proofNodes, 0);
+                    if (totalNodes > 7) {
+                        html += `
+                            <div style="margin-top: 6px; padding-top: 6px; border-top: 1px solid ${allFetched ? '#86efac' : '#fde047'}; color: #991b1b; font-size: 0.7rem;">
+                                ⚠️ ${totalNodes} total proof nodes exceeds the ~7 node limit for atomic swaps
+                            </div>
+                        `;
+                    } else if (totalNodes > 5) {
+                        html += `
+                            <div style="margin-top: 6px; padding-top: 6px; border-top: 1px solid ${allFetched ? '#86efac' : '#fde047'}; color: #b45309; font-size: 0.7rem;">
+                                ⚠️ ${totalNodes} proof nodes is near the limit (~7 max for atomic swaps)
+                            </div>
+                        `;
+                    }
+                    
+                    html += '</div>';
+                }
+                
+                // Add NFT count details
+                const makerBreakdown = quote.maker?.breakdown;
+                const takerBreakdown = quote.taker?.breakdown;
+                if (makerBreakdown || takerBreakdown) {
+                    const makerTotal = quote.maker?.assetCount || 0;
+                    const takerTotal = quote.taker?.assetCount || 0;
+                    
+                    if (makerTotal > 0 || takerTotal > 0) {
+                        const makerTypes = [];
+                        if (makerBreakdown?.splNfts > 0) makerTypes.push(`${makerBreakdown.splNfts} SPL`);
+                        if (makerBreakdown?.cNfts > 0) makerTypes.push(`${makerBreakdown.cNfts} cNFT`);
+                        if (makerBreakdown?.coreNfts > 0) makerTypes.push(`${makerBreakdown.coreNfts} CORE`);
+                        
+                        const takerTypes = [];
+                        if (takerBreakdown?.splNfts > 0) takerTypes.push(`${takerBreakdown.splNfts} SPL`);
+                        if (takerBreakdown?.cNfts > 0) takerTypes.push(`${takerBreakdown.cNfts} cNFT`);
+                        if (takerBreakdown?.coreNfts > 0) takerTypes.push(`${takerBreakdown.coreNfts} CORE`);
+                        
+                        const makerStr = makerTypes.length > 0 ? makerTypes.join(', ') : 'none';
+                        const takerStr = takerTypes.length > 0 ? takerTypes.join(', ') : 'none';
+                        
+                        html += `
+                            <div class="tx-nft-counts" style="font-size: 0.75rem; color: #666; margin-top: 8px; padding: 6px 8px; background: #f8fafc; border-radius: 4px;">
+                                <span style="margin-right: 12px;">📤 Maker: ${makerTotal} (${makerStr})</span>
+                                <span>📥 Taker: ${takerTotal} (${takerStr})</span>
+                            </div>
+                        `;
+                    }
+                }
+                
+                html += '</div>';
+                txSizeContainer.innerHTML = html;
+            }
+        } else {
+            // Fallback to simple display if quote fails
+            console.warn('Quote API failed:', result.error);
+            document.getElementById('modal-est-time').textContent = '~5 seconds';
+            document.getElementById('modal-network-fees').textContent = '~0.00002 SOL';
+            document.getElementById('modal-platform-fee-label').textContent = 'Platform Fee:';
+            document.getElementById('modal-platform-fee').textContent = 'Unable to estimate';
+            
+            if (txSizeContainer) {
+                txSizeContainer.innerHTML = `<span class="error">Could not fetch quote</span>`;
+            }
+        }
+    } catch (error) {
+        console.error('Error fetching swap quote:', error);
+        document.getElementById('modal-est-time').textContent = '~5 seconds';
+        document.getElementById('modal-network-fees').textContent = '~0.00002 SOL';
+        document.getElementById('modal-platform-fee-label').textContent = 'Platform Fee:';
+        document.getElementById('modal-platform-fee').textContent = 'Unable to estimate';
+        
+        if (txSizeContainer) {
+            txSizeContainer.innerHTML = `<span class="error">Error fetching quote</span>`;
+        }
+    }
 }
 
 // Hide confirmation modal
@@ -877,10 +1095,12 @@ async function executeAtomicSwap(params) {
             offeredAssets: confirmedMakerNFTs.map(nft => ({
                 mint: nft.mint,
                 isCompressed: nft.isCompressed || false,
+                isCoreNft: nft.isCoreNft || false,
             })),
             requestedAssets: confirmedTakerNFTs.map(nft => ({
                 mint: nft.mint,
                 isCompressed: nft.isCompressed || false,
+                isCoreNft: nft.isCoreNft || false,
             })),
             offeredSol: offeredSol ? Math.round(parseFloat(offeredSol) * 1e9).toString() : undefined,
             requestedSol: requestedSol ? Math.round(parseFloat(requestedSol) * 1e9).toString() : undefined,
@@ -890,7 +1110,8 @@ async function executeAtomicSwap(params) {
         console.log('📤 [Swap] Sending to backend:', requestPayload);
         console.log('📤 [Swap] Offered assets details:');
         requestPayload.offeredAssets.forEach((asset, i) => {
-            console.log(`   ${i + 1}. ${asset.isCompressed ? 'cNFT' : 'SPL'}: ${asset.mint}`);
+            const typeLabel = asset.isCoreNft ? 'Core' : (asset.isCompressed ? 'cNFT' : 'SPL');
+            console.log(`   ${i + 1}. ${typeLabel}: ${asset.mint}`);
         });
         
         // Get API key if provided
@@ -952,7 +1173,22 @@ async function executeAtomicSwap(params) {
         }
 
         addLog('✅ Transaction confirmed on blockchain!', 'success');
-        addLog(`🔗 Signature: ${executeData.data.signature}`, 'success');
+        addLog(`🔗 Signature: <a href="${executeData.data.explorerUrl}" target="_blank" rel="noopener noreferrer" style="color: #22c55e; text-decoration: underline;">${executeData.data.signature}</a>`, 'success');
+
+        // Fetch transaction fee from blockchain
+        let blockchainFee = null;
+        try {
+            const feeResponse = await fetch(`/api/test/transaction-fee?signature=${executeData.data.signature}`);
+            const feeData = await feeResponse.json();
+            if (feeData.success && feeData.data.fee) {
+                blockchainFee = feeData.data.fee; // Fee in lamports
+                const feeSol = (blockchainFee / 1e9).toFixed(6);
+                const feeUsd = solPriceUSD ? ` (~$${(blockchainFee / 1e9 * solPriceUSD).toFixed(4)} USD)` : '';
+                addLog(`💸 Blockchain fee: ${feeSol} SOL${feeUsd}`, 'info');
+            }
+        } catch (feeError) {
+            console.warn('Could not fetch transaction fee:', feeError);
+        }
 
         // Calculate total execution time
         const endTime = performance.now();
@@ -962,10 +1198,13 @@ async function executeAtomicSwap(params) {
 
         addLog(`⚡ Total time: ${executionTimeSec}s (Create: ${timings.create}s, Accept: ${timings.accept}s, Execute: ${timings.execute}s)`, 'success');
 
-        // Show transaction summary (pass confirmed params + execution data + timings)
-        showTransactionSummary(createData.data, acceptData.data, executeData.data, params, timings);
+        // Show transaction summary (pass confirmed params + execution data + timings + fee)
+        showTransactionSummary(createData.data, acceptData.data, executeData.data, params, timings, blockchainFee);
 
-        addLog('✅ Atomic swap completed successfully on devnet!', 'success');
+        // Network from backend response (mainnet-beta or devnet)
+        const network = executeData.data.network || 'devnet';
+        const networkDisplay = network === 'mainnet-beta' ? 'MAINNET' : 'devnet';
+        addLog(`✅ Atomic swap completed successfully on ${networkDisplay}!`, 'success');
 
     } catch (error) {
         console.error('Swap error:', error);
@@ -979,12 +1218,20 @@ async function executeAtomicSwap(params) {
 }
 
 // Show transaction summary
-function showTransactionSummary(createData, acceptData, executeData, params, timings) {
+function showTransactionSummary(createData, acceptData, executeData, params, timings, blockchainFee = null) {
     const summary = document.getElementById('transaction-summary');
     const content = document.getElementById('summary-content');
 
     // Use confirmed parameters (not re-reading from inputs)
     const { offeredSol, requestedSol, selectedMakerNFTs: confirmedMakerNFTs, selectedTakerNFTs: confirmedTakerNFTs } = params;
+
+    // Format blockchain fee
+    let feeDisplay = 'Fetching...';
+    if (blockchainFee !== null) {
+        const feeSol = (blockchainFee / 1e9).toFixed(6);
+        const feeUsd = solPriceUSD ? ` (~$${(blockchainFee / 1e9 * solPriceUSD).toFixed(4)} USD)` : '';
+        feeDisplay = `💸 ${feeSol} SOL${feeUsd}`;
+    }
 
     // Build summary HTML safely (XSS-protected)
     content.innerHTML = `
@@ -997,6 +1244,10 @@ function showTransactionSummary(createData, acceptData, executeData, params, tim
             <div class="summary-item">
                 <span class="summary-label">Total Time:</span>
                 <span class="summary-value highlight">⚡ ${timings.total}s</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Blockchain Fee:</span>
+                <span class="summary-value">${feeDisplay}</span>
             </div>
             <div class="summary-item">
                 <span class="summary-label">Breakdown:</span>

@@ -95,12 +95,8 @@ if (!feeCollectorStr) {
 }
 const feeCollector = new PublicKey(feeCollectorStr);
 
-const transactionBuilder = new TransactionBuilder(
-  connection,
-  platformAuthority
-);
-
 // Derive Treasury PDA (114-byte structure with locked withdrawals)
+// Must be derived before creating TransactionBuilder so ALT can be configured
 const [treasuryPDA, treasuryBump] = PublicKey.findProgramAddressSync(
   [Buffer.from('main_treasury'), platformAuthority.publicKey.toBuffer()],
   programId
@@ -113,6 +109,13 @@ console.log('[OffersRoutes]   Program ID:', programId.toBase58());
 console.log('[OffersRoutes]   Treasury PDA:', treasuryPDA.toBase58());
 console.log('[OffersRoutes]   Bump:', treasuryBump);
 console.log('[OffersRoutes] ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+// Create transaction builder with ALT support
+const transactionBuilder = new TransactionBuilder(
+  connection,
+  platformAuthority,
+  treasuryPDA // Pass treasury PDA to enable ALT service
+);
 
 const offerManager = new OfferManager(
   connection,
@@ -243,23 +246,44 @@ router.post(
       }
       
       // Transform asset format from API format to internal format
-      // API format: { mint, isCompressed, merkleTree?, amount?, assetType? }
+      // API format: { mint, isCompressed, isCoreNft?, merkleTree?, amount?, assetType? }
       // Internal format: { identifier, type }
       const transformAssets = (assets: any[], arrayName: string) => {
         return assets.map((asset, index) => {
           console.log(`[Offers Route] Transforming ${arrayName}[${index}]:`, JSON.stringify(asset));
+          
+          // EXPLICIT DEBUG: Log isCoreNft flag type and value
+          console.log(`[Offers Route] ${arrayName}[${index}] isCoreNft debug:`, {
+            rawValue: asset.isCoreNft,
+            typeOf: typeof asset.isCoreNft,
+            isTruthy: !!asset.isCoreNft,
+            isCompressed: asset.isCompressed,
+          });
           
           if (!asset.mint) {
             console.error(`[Offers Route] Missing mint in ${arrayName}[${index}]:`, asset);
             throw new Error(`Asset ${index} in ${arrayName} is missing 'mint' field`);
           }
           
+          // Determine asset type: Core NFT > cNFT > SPL NFT
+          let assetType = AssetType.NFT;
+          if (asset.isCoreNft) {
+            assetType = AssetType.CORE_NFT;
+            console.log(`[Offers Route] *** ${arrayName}[${index}] detected as CORE NFT ***`);
+          } else if (asset.isCompressed) {
+            assetType = AssetType.CNFT;
+            console.log(`[Offers Route] *** ${arrayName}[${index}] detected as CNFT ***`);
+          } else {
+            console.log(`[Offers Route] *** ${arrayName}[${index}] detected as SPL NFT ***`);
+          }
+          
           const transformed = {
             identifier: asset.mint,
-            type: asset.isCompressed ? AssetType.CNFT : AssetType.NFT,
+            type: assetType,
           };
           
           console.log(`[Offers Route] Transformed to:`, JSON.stringify(transformed));
+          console.log(`[Offers Route] AssetType.CORE_NFT value:`, AssetType.CORE_NFT);
           return transformed;
         });
       };

@@ -296,6 +296,18 @@ services:
         scope: RUN_TIME
       
       #
+      # Treasury PDA & Address Lookup Table
+      # Used for atomic swaps and transaction optimization
+      #
+      - key: DEVNET_STAGING_PDA_TREASURY_ADDRESS
+        value: HXC4LXCw8hy9sREUH8Fk7d3HYdLFGprhJ9n7AyfZ4bMN
+        scope: RUN_TIME
+      
+      - key: DEVNET_STAGING_ALT_ADDRESS
+        value: DvxKxLpq3pFCYfNguCBibVSSEYmMEdoU3mTqUwo1mw7J
+        scope: RUN_TIME
+      
+      #
       # Monitoring & Health Checks
       #
       - key: MONITORING_ENDPOINT
