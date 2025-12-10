@@ -692,6 +692,9 @@ export class TransactionBuilder {
     // Get Core NFT asset accounts (if applicable)
     let makerCoreAsset: PublicKey | null = null;
     let takerCoreAsset: PublicKey | null = null;
+    // Core NFT collection accounts (required if NFT belongs to a collection)
+    let makerCoreCollection: PublicKey | null = null;
+    let takerCoreCollection: PublicKey | null = null;
     
     if (makerSendsNft) {
       const nftMint = new PublicKey(inputs.makerAssets[0].identifier);
@@ -731,6 +734,14 @@ export class TransactionBuilder {
       // Core NFT - the asset account is the NFT's mint address (which is also its asset address)
       makerCoreAsset = new PublicKey(inputs.makerAssets[0].identifier);
       console.log('[TransactionBuilder] Maker sending Core NFT:', makerCoreAsset.toBase58());
+      
+      // Fetch collection address if the Core NFT belongs to a collection
+      // This is REQUIRED by mpl-core for collection NFTs, otherwise transfer fails with "Missing collection"
+      const makerCoreCollectionAddress = await this.fetchCoreNftCollection(inputs.makerAssets[0].identifier);
+      if (makerCoreCollectionAddress) {
+        makerCoreCollection = new PublicKey(makerCoreCollectionAddress);
+        console.log('[TransactionBuilder] Maker Core NFT collection:', makerCoreCollection.toBase58());
+      }
     }
     
     if (takerSendsNft) {
@@ -771,6 +782,14 @@ export class TransactionBuilder {
       // Core NFT - the asset account is the NFT's mint address (which is also its asset address)
       takerCoreAsset = new PublicKey(inputs.takerAssets[0].identifier);
       console.log('[TransactionBuilder] Taker sending Core NFT:', takerCoreAsset.toBase58());
+      
+      // Fetch collection address if the Core NFT belongs to a collection
+      // This is REQUIRED by mpl-core for collection NFTs, otherwise transfer fails with "Missing collection"
+      const takerCoreCollectionAddress = await this.fetchCoreNftCollection(inputs.takerAssets[0].identifier);
+      if (takerCoreCollectionAddress) {
+        takerCoreCollection = new PublicKey(takerCoreCollectionAddress);
+        console.log('[TransactionBuilder] Taker Core NFT collection:', takerCoreCollection.toBase58());
+      }
     }
     
     // Build swap parameters (including cNFT proof data)
@@ -816,7 +835,9 @@ export class TransactionBuilder {
       logWrapper: SPL_NOOP_PROGRAM_ID,
       // Core NFT accounts (optional, use placeholder if not needed)
       makerCoreAsset: makerCoreAsset || PROGRAM_ID,
+      makerCoreCollection: makerCoreCollection || PROGRAM_ID,
       takerCoreAsset: takerCoreAsset || PROGRAM_ID,
+      takerCoreCollection: takerCoreCollection || PROGRAM_ID,
       mplCoreProgram: (makerSendsCoreNft || takerSendsCoreNft) ? MPL_CORE_PROGRAM_ID : PROGRAM_ID,
     };
     
@@ -1012,6 +1033,88 @@ export class TransactionBuilder {
     const totalAssets = inputs.makerAssets.length + inputs.takerAssets.length;
     if (totalAssets > 10) {
       throw new Error(`Too many assets (${totalAssets}). Maximum is 10 per swap.`);
+    }
+  }
+  
+  /**
+   * Fetch collection address for a Metaplex Core NFT
+   * 
+   * Core NFTs that belong to a collection require the collection account
+   * to be passed in the transfer instruction. This method fetches the
+   * collection address from the NFT's on-chain data via DAS API.
+   * 
+   * @param assetId - The Core NFT asset ID
+   * @returns The collection address or null if NFT is not in a collection
+   * @throws Error if DAS API fails (prevents confusing downstream errors)
+   */
+  private async fetchCoreNftCollection(assetId: string, retryCount = 0): Promise<string | null> {
+    const MAX_RETRIES = 2;
+    
+    try {
+      console.log('[TransactionBuilder] Fetching Core NFT collection for:', assetId);
+      
+      // Use DAS API to get asset data
+      const response = await (this.connection as any)._rpcRequest('getAsset', {
+        id: assetId,
+      });
+      
+      // Check for JSON-RPC error response (like assetValidator.ts does)
+      if (response?.error) {
+        const errorMsg = response.error.message || JSON.stringify(response.error);
+        console.error('[TransactionBuilder] DAS API returned error:', errorMsg);
+        throw new Error(`DAS API error fetching Core NFT ${assetId}: ${errorMsg}`);
+      }
+      
+      if (!response) {
+        throw new Error(`No response from DAS API for Core NFT ${assetId}`);
+      }
+      
+      // Handle JSON-RPC wrapper
+      const assetData = response.result || response;
+      
+      if (!assetData) {
+        throw new Error(`No asset data returned from DAS API for Core NFT ${assetId}`);
+      }
+      
+      // Check for collection in grouping data
+      // DAS API returns collection info in the "grouping" array
+      const grouping = assetData.grouping || [];
+      const collectionGroup = grouping.find((g: any) => g.group_key === 'collection');
+      
+      if (collectionGroup && collectionGroup.group_value) {
+        console.log('[TransactionBuilder] Found collection:', collectionGroup.group_value);
+        return collectionGroup.group_value;
+      }
+      
+      // Also check update_authority structure (alternative format)
+      // Some Core NFTs have collection in update_authority
+      if (assetData.update_authority?.collection) {
+        console.log('[TransactionBuilder] Found collection in update_authority:', assetData.update_authority.collection);
+        return assetData.update_authority.collection;
+      }
+      
+      // Successfully fetched data - NFT is genuinely not in a collection
+      console.log('[TransactionBuilder] Core NFT is not in a collection (confirmed by DAS API)');
+      return null;
+      
+    } catch (error) {
+      console.error(`[TransactionBuilder] Error fetching Core NFT collection (attempt ${retryCount + 1}/${MAX_RETRIES + 1}):`, error);
+      
+      // Retry on transient errors (rate limiting, network issues)
+      if (retryCount < MAX_RETRIES) {
+        const delay = Math.pow(2, retryCount) * 500; // 500ms, 1000ms
+        console.log(`[TransactionBuilder] Retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return this.fetchCoreNftCollection(assetId, retryCount + 1);
+      }
+      
+      // After retries exhausted, throw a clear error
+      // This prevents the confusing "Missing collection" error downstream
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(
+        `Failed to fetch Core NFT collection info for ${assetId} after ${MAX_RETRIES + 1} attempts: ${errorMessage}. ` +
+        `Cannot proceed - if this NFT belongs to a collection, the transaction would fail with "Missing collection" error.`
+      );
     }
   }
 }
