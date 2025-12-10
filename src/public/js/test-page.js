@@ -876,6 +876,53 @@ async function fetchSwapQuote(makerNFTs, takerNFTs, offeredSol, requestedSol, ap
                     `;
                 }
                 
+                // Add cNFT proof details if available
+                if (txSize.cnftProofDetails && txSize.cnftProofDetails.length > 0) {
+                    const proofDetails = txSize.cnftProofDetails;
+                    const allFetched = proofDetails.every(d => d.fetched);
+                    const statusIcon = allFetched ? '✅' : '⚠️';
+                    const statusLabel = allFetched ? 'Verified' : 'Estimated';
+                    
+                    html += `
+                        <div class="cnft-proof-details" style="font-size: 0.75rem; color: #666; margin-top: 8px; padding: 8px; background: ${allFetched ? '#f0fdf4' : '#fefce8'}; border: 1px solid ${allFetched ? '#86efac' : '#fde047'}; border-radius: 6px;">
+                            <div style="font-weight: 600; margin-bottom: 4px; color: ${allFetched ? '#166534' : '#854d0e'};">
+                                ${statusIcon} cNFT Proof Data (${statusLabel})
+                            </div>
+                    `;
+                    
+                    for (const detail of proofDetails) {
+                        const side = detail.side === 'maker' ? '📤' : '📥';
+                        const shortId = detail.assetId.slice(0, 8) + '...' + detail.assetId.slice(-4);
+                        const canopyInfo = detail.canopyDepth !== null ? ` (canopy: ${detail.canopyDepth})` : '';
+                        const fetchIcon = detail.fetched ? '✓' : '?';
+                        
+                        html += `
+                            <div style="display: flex; justify-content: space-between; padding: 2px 0;">
+                                <span>${side} ${shortId}</span>
+                                <span style="font-weight: 500;">${fetchIcon} ${detail.proofNodes} proof nodes${canopyInfo}</span>
+                            </div>
+                        `;
+                    }
+                    
+                    // Add explanation about proof nodes
+                    const totalNodes = proofDetails.reduce((sum, d) => sum + d.proofNodes, 0);
+                    if (totalNodes > 7) {
+                        html += `
+                            <div style="margin-top: 6px; padding-top: 6px; border-top: 1px solid ${allFetched ? '#86efac' : '#fde047'}; color: #991b1b; font-size: 0.7rem;">
+                                ⚠️ ${totalNodes} total proof nodes exceeds the ~7 node limit for atomic swaps
+                            </div>
+                        `;
+                    } else if (totalNodes > 5) {
+                        html += `
+                            <div style="margin-top: 6px; padding-top: 6px; border-top: 1px solid ${allFetched ? '#86efac' : '#fde047'}; color: #b45309; font-size: 0.7rem;">
+                                ⚠️ ${totalNodes} proof nodes is near the limit (~7 max for atomic swaps)
+                            </div>
+                        `;
+                    }
+                    
+                    html += '</div>';
+                }
+                
                 // Add NFT count details
                 const makerBreakdown = quote.maker?.breakdown;
                 const takerBreakdown = quote.taker?.breakdown;
