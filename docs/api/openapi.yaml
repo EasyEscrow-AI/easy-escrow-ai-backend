@@ -36,7 +36,8 @@ info:
     ## Blockchain Support
     - ✅ **Solana blockchain** (Devnet, Mainnet)
     - ✅ **Traditional NFTs** (Metaplex standard)
-    - 🔜 **Compressed NFTs (cNFTs)** - Coming soon
+    - ✅ **Compressed NFTs (cNFTs)** (Metaplex Bubblegum)
+    - ✅ **Metaplex Core NFTs**
     - 🔜 **Additional blockchains** - Coming soon
     
     ## Additional Features
@@ -1295,8 +1296,7 @@ components:
             In Solana, a "mint" is the account that defines a token type. For NFTs,
             the mint address serves as the unique identifier (like a serial number or contract address).
             
-            **Supported:** Traditional NFTs (Metaplex standard)
-            **Coming soon:** Compressed NFTs (cNFTs)
+            **Supported:** Traditional NFTs, Compressed NFTs (cNFTs), Metaplex Core NFTs
           example: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
         nftBMint:
           type: string
@@ -1306,8 +1306,7 @@ components:
             
             The NFT must ALREADY EXIST in the buyer's wallet.
             
-            **Supported:** Traditional NFTs (Metaplex standard)
-            **Coming soon:** Compressed NFTs (cNFTs)
+            **Supported:** Traditional NFTs, Compressed NFTs (cNFTs), Metaplex Core NFTs
           example: "8xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
         swapType:
           type: string
