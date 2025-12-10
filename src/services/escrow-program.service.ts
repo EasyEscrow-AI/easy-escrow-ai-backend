@@ -434,6 +434,497 @@ export class EscrowProgramService {
     };
   }
 
+  // ==================== JITO BUNDLE SUBMISSION ====================
+  // For bulk cNFT swaps requiring multiple transactions
+
+  /**
+   * Jito Bundle API endpoints
+   */
+  private static readonly JITO_BUNDLE_ENDPOINT_MAINNET = 'https://mainnet.block-engine.jito.wtf/api/v1/bundles';
+  private static readonly JITO_TIP_ENDPOINT_MAINNET = 'https://bundles.jito.wtf/api/v1/bundles/tip_floor';
+  
+  /**
+   * Default Jito tip amount in lamports (fallback when tip API fails)
+   * 0.001 SOL = 1,000,000 lamports
+   */
+  private static readonly DEFAULT_JITO_TIP_LAMPORTS = 1_000_000;
+  
+  /**
+   * Maximum transactions per Jito bundle
+   */
+  private static readonly MAX_BUNDLE_SIZE = 5;
+  
+  /**
+   * Bundle confirmation timeout in seconds
+   */
+  private static readonly BUNDLE_CONFIRMATION_TIMEOUT_SECONDS = 30;
+
+  /**
+   * Get current Jito tip floor from API
+   * Returns tip amount in lamports
+   */
+  async getJitoTipFloor(): Promise<bigint> {
+    try {
+      console.log('[EscrowProgramService] Fetching Jito tip floor...');
+      
+      const response = await fetch(EscrowProgramService.JITO_TIP_ENDPOINT_MAINNET, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      
+      if (!response.ok) {
+        console.warn(`[EscrowProgramService] Jito tip API returned ${response.status}, using default`);
+        return BigInt(EscrowProgramService.DEFAULT_JITO_TIP_LAMPORTS);
+      }
+      
+      const data = await response.json() as { landed_tips_25th_percentile?: number; landed_tips_50th_percentile?: number };
+      
+      // Use 50th percentile for reasonable tip, convert SOL to lamports
+      const tipSol = data.landed_tips_50th_percentile || 0.001;
+      const tipLamports = BigInt(Math.ceil(tipSol * 1_000_000_000));
+      
+      console.log(`[EscrowProgramService] Jito tip floor: ${tipSol} SOL (${tipLamports} lamports)`);
+      
+      return tipLamports;
+    } catch (error) {
+      console.warn('[EscrowProgramService] Failed to fetch Jito tip floor, using default:', error);
+      return BigInt(EscrowProgramService.DEFAULT_JITO_TIP_LAMPORTS);
+    }
+  }
+
+  /**
+   * Simulate a bundle before submission
+   * 
+   * @param serializedTransactions - Array of base64-encoded serialized transactions
+   * @returns Simulation result with success/failure status
+   */
+  async simulateBundle(serializedTransactions: string[]): Promise<{
+    success: boolean;
+    error?: string;
+    logs?: string[];
+  }> {
+    console.log(`[EscrowProgramService] Simulating bundle with ${serializedTransactions.length} transactions...`);
+    
+    try {
+      const response = await fetch(EscrowProgramService.JITO_BUNDLE_ENDPOINT_MAINNET, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'simulateBundle',
+          params: [
+            { 
+              encodedTransactions: serializedTransactions 
+            }
+          ],
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[EscrowProgramService] Bundle simulation HTTP error: ${response.status}`, errorText);
+        return {
+          success: false,
+          error: `HTTP ${response.status}: ${errorText.substring(0, 200)}`,
+        };
+      }
+      
+      const result = await response.json() as {
+        result?: { value?: { transactionResults?: Array<{ error?: any; logs?: string[] }> } };
+        error?: { message?: string };
+      };
+      
+      if (result.error) {
+        console.error('[EscrowProgramService] Bundle simulation RPC error:', result.error);
+        return {
+          success: false,
+          error: result.error.message || JSON.stringify(result.error),
+        };
+      }
+      
+      // Check if any transaction failed
+      const txResults = result.result?.value?.transactionResults || [];
+      const failedTx = txResults.find((tx: any) => tx.error);
+      
+      if (failedTx) {
+        console.error('[EscrowProgramService] Bundle simulation: Transaction failed:', failedTx.error);
+        return {
+          success: false,
+          error: `Transaction simulation failed: ${JSON.stringify(failedTx.error)}`,
+          logs: failedTx.logs,
+        };
+      }
+      
+      console.log('[EscrowProgramService] ✅ Bundle simulation successful');
+      return { success: true };
+      
+    } catch (error) {
+      console.error('[EscrowProgramService] Bundle simulation error:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown simulation error',
+      };
+    }
+  }
+
+  /**
+   * Send a bundle of transactions to Jito Block Engine
+   * 
+   * For bulk cNFT swaps requiring multiple transactions for atomicity.
+   * Uses Jito bundles to ensure all transactions land in the same slot or none do.
+   * 
+   * @param serializedTransactions - Array of base64-encoded serialized transactions (max 5)
+   * @param options - Bundle options
+   * @returns Bundle submission result with bundle ID
+   */
+  async sendBundleViaJito(
+    serializedTransactions: string[],
+    options: {
+      /** Skip simulation (use with caution) */
+      skipSimulation?: boolean;
+      /** Custom tip amount in lamports (overrides dynamic tip) */
+      customTipLamports?: bigint;
+      /** Description for logging */
+      description?: string;
+    } = {}
+  ): Promise<{
+    success: boolean;
+    bundleId?: string;
+    signatures?: string[];
+    error?: string;
+  }> {
+    const { skipSimulation = false, customTipLamports, description = 'Bulk swap bundle' } = options;
+    
+    console.log(`[EscrowProgramService] Sending Jito bundle: ${description}`);
+    console.log(`[EscrowProgramService] Bundle contains ${serializedTransactions.length} transactions`);
+    
+    // Validate bundle size
+    if (serializedTransactions.length === 0) {
+      return { success: false, error: 'Bundle cannot be empty' };
+    }
+    
+    if (serializedTransactions.length > EscrowProgramService.MAX_BUNDLE_SIZE) {
+      return {
+        success: false,
+        error: `Bundle exceeds maximum size (${serializedTransactions.length} > ${EscrowProgramService.MAX_BUNDLE_SIZE})`,
+      };
+    }
+    
+    // For devnet, submit transactions individually (Jito bundles don't work on devnet)
+    const isMainnet = isMainnetNetwork(this.provider.connection);
+    if (!isMainnet) {
+      console.log('[EscrowProgramService] Devnet detected - submitting transactions individually');
+      return this.submitTransactionsIndividually(serializedTransactions);
+    }
+    
+    try {
+      // Rate limiting
+      const now = Date.now();
+      const nextAvailableTime = EscrowProgramService.lastJitoRequestTime + EscrowProgramService.JITO_RATE_LIMIT_MS;
+      const delayMs = Math.max(0, nextAvailableTime - now);
+      
+      if (delayMs > 0) {
+        console.log(`[EscrowProgramService] Rate limiting: Waiting ${delayMs}ms before Jito bundle request`);
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+      }
+      
+      EscrowProgramService.lastJitoRequestTime = Math.max(now, nextAvailableTime);
+      
+      // Simulate bundle first (unless skipped)
+      if (!skipSimulation) {
+        const simulation = await this.simulateBundle(serializedTransactions);
+        if (!simulation.success) {
+          return {
+            success: false,
+            error: `Bundle simulation failed: ${simulation.error}`,
+          };
+        }
+      }
+      
+      // Submit bundle to Jito
+      console.log('[EscrowProgramService] Submitting bundle to Jito Block Engine...');
+      
+      const response = await fetch(EscrowProgramService.JITO_BUNDLE_ENDPOINT_MAINNET, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'sendBundle',
+          params: [serializedTransactions],
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        
+        // Handle rate limiting
+        if (response.status === 429) {
+          console.warn('[EscrowProgramService] Jito bundle rate limit hit (429)');
+          return {
+            success: false,
+            error: 'Jito rate limit exceeded. Please retry in a few seconds.',
+          };
+        }
+        
+        console.error(`[EscrowProgramService] Jito bundle HTTP error: ${response.status}`, errorText);
+        return {
+          success: false,
+          error: `HTTP ${response.status}: ${errorText.substring(0, 200)}`,
+        };
+      }
+      
+      const result = await response.json() as {
+        result?: string;  // Bundle ID (UUID)
+        error?: { message?: string; code?: number };
+      };
+      
+      if (result.error) {
+        console.error('[EscrowProgramService] Jito bundle RPC error:', result.error);
+        return {
+          success: false,
+          error: result.error.message || JSON.stringify(result.error),
+        };
+      }
+      
+      if (!result.result) {
+        return {
+          success: false,
+          error: 'Jito sendBundle returned no bundle ID',
+        };
+      }
+      
+      const bundleId = result.result;
+      console.log(`[EscrowProgramService] ✅ Bundle submitted to Jito: ${bundleId}`);
+      
+      return {
+        success: true,
+        bundleId,
+      };
+      
+    } catch (error) {
+      console.error('[EscrowProgramService] Bundle submission error:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown bundle submission error',
+      };
+    }
+  }
+
+  /**
+   * Get bundle status from Jito
+   * 
+   * @param bundleIds - Array of bundle IDs to check
+   * @returns Bundle status results
+   */
+  async getBundleStatuses(bundleIds: string[]): Promise<{
+    bundleId: string;
+    status: 'Invalid' | 'Pending' | 'Failed' | 'Landed';
+    slot?: number;
+    error?: string;
+  }[]> {
+    console.log(`[EscrowProgramService] Checking status of ${bundleIds.length} bundle(s)...`);
+    
+    try {
+      const response = await fetch(EscrowProgramService.JITO_BUNDLE_ENDPOINT_MAINNET, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'getBundleStatuses',
+          params: [bundleIds],
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[EscrowProgramService] Bundle status HTTP error: ${response.status}`, errorText);
+        return bundleIds.map(id => ({ bundleId: id, status: 'Invalid' as const, error: `HTTP ${response.status}` }));
+      }
+      
+      const result = await response.json() as {
+        result?: { value?: Array<{ bundle_id: string; status: string; slot?: number }> };
+        error?: { message?: string };
+      };
+      
+      if (result.error) {
+        console.error('[EscrowProgramService] Bundle status RPC error:', result.error);
+        return bundleIds.map(id => ({ bundleId: id, status: 'Invalid' as const, error: result.error?.message }));
+      }
+      
+      const statuses = result.result?.value || [];
+      
+      return bundleIds.map(bundleId => {
+        const bundleStatus = statuses.find(s => s.bundle_id === bundleId);
+        if (!bundleStatus) {
+          return { bundleId, status: 'Invalid' as const, error: 'Bundle not found' };
+        }
+        
+        // Map Jito status to our enum
+        let status: 'Invalid' | 'Pending' | 'Failed' | 'Landed';
+        switch (bundleStatus.status) {
+          case 'Landed':
+          case 'landed':
+            status = 'Landed';
+            break;
+          case 'Pending':
+          case 'pending':
+            status = 'Pending';
+            break;
+          case 'Failed':
+          case 'failed':
+            status = 'Failed';
+            break;
+          default:
+            status = 'Invalid';
+        }
+        
+        return {
+          bundleId,
+          status,
+          slot: bundleStatus.slot,
+        };
+      });
+      
+    } catch (error) {
+      console.error('[EscrowProgramService] Bundle status check error:', error);
+      return bundleIds.map(id => ({
+        bundleId: id,
+        status: 'Invalid' as const,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      }));
+    }
+  }
+
+  /**
+   * Wait for bundle confirmation with polling
+   * 
+   * @param bundleId - Bundle ID to track
+   * @param timeoutSeconds - Timeout in seconds (default: 30)
+   * @returns Confirmation result
+   */
+  async waitForBundleConfirmation(
+    bundleId: string,
+    timeoutSeconds: number = EscrowProgramService.BUNDLE_CONFIRMATION_TIMEOUT_SECONDS
+  ): Promise<{
+    confirmed: boolean;
+    status: 'Landed' | 'Failed' | 'Pending' | 'Timeout';
+    slot?: number;
+    error?: string;
+  }> {
+    console.log(`[EscrowProgramService] Waiting for bundle ${bundleId} confirmation...`);
+    
+    const startTime = Date.now();
+    const timeoutMs = timeoutSeconds * 1000;
+    let pollCount = 0;
+    
+    while (Date.now() - startTime < timeoutMs) {
+      pollCount++;
+      
+      // Tiered polling: faster at start, slower after 15s
+      const elapsed = (Date.now() - startTime) / 1000;
+      const pollInterval = elapsed < 15 ? 1500 : 2500;
+      
+      const [status] = await this.getBundleStatuses([bundleId]);
+      
+      console.log(`[EscrowProgramService] Bundle poll #${pollCount}: ${status.status} (${elapsed.toFixed(1)}s elapsed)`);
+      
+      if (status.status === 'Landed') {
+        console.log(`[EscrowProgramService] ✅ Bundle ${bundleId} landed in slot ${status.slot}`);
+        return {
+          confirmed: true,
+          status: 'Landed',
+          slot: status.slot,
+        };
+      }
+      
+      if (status.status === 'Failed') {
+        console.error(`[EscrowProgramService] ❌ Bundle ${bundleId} failed: ${status.error}`);
+        return {
+          confirmed: false,
+          status: 'Failed',
+          error: status.error || 'Bundle execution failed',
+        };
+      }
+      
+      if (status.status === 'Invalid') {
+        // Invalid might mean bundle was dropped or not found
+        console.warn(`[EscrowProgramService] Bundle ${bundleId} status invalid: ${status.error}`);
+        // Continue polling - it might just be pending
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, pollInterval));
+    }
+    
+    // Timeout
+    console.warn(`[EscrowProgramService] Bundle ${bundleId} confirmation timeout after ${timeoutSeconds}s`);
+    return {
+      confirmed: false,
+      status: 'Timeout',
+      error: `Bundle confirmation timeout after ${timeoutSeconds} seconds`,
+    };
+  }
+
+  /**
+   * Submit transactions individually (for devnet or fallback)
+   */
+  private async submitTransactionsIndividually(serializedTransactions: string[]): Promise<{
+    success: boolean;
+    bundleId?: string;
+    signatures?: string[];
+    error?: string;
+  }> {
+    console.log(`[EscrowProgramService] Submitting ${serializedTransactions.length} transactions individually...`);
+    
+    const signatures: string[] = [];
+    
+    for (let i = 0; i < serializedTransactions.length; i++) {
+      try {
+        const txBuffer = Buffer.from(serializedTransactions[i], 'base64');
+        
+        const signature = await this.provider.connection.sendRawTransaction(txBuffer, {
+          skipPreflight: false,
+          preflightCommitment: 'confirmed',
+          maxRetries: 3,
+        });
+        
+        console.log(`[EscrowProgramService] Transaction ${i + 1}/${serializedTransactions.length} sent: ${signature}`);
+        signatures.push(signature);
+        
+        // Wait for confirmation before sending next
+        const confirmation = await this.provider.connection.confirmTransaction(signature, 'confirmed');
+        
+        if (confirmation.value.err) {
+          console.error(`[EscrowProgramService] Transaction ${i + 1} failed:`, confirmation.value.err);
+          return {
+            success: false,
+            signatures,
+            error: `Transaction ${i + 1} failed: ${JSON.stringify(confirmation.value.err)}`,
+          };
+        }
+        
+        console.log(`[EscrowProgramService] ✅ Transaction ${i + 1}/${serializedTransactions.length} confirmed`);
+        
+      } catch (error) {
+        console.error(`[EscrowProgramService] Transaction ${i + 1} error:`, error);
+        return {
+          success: false,
+          signatures,
+          error: `Transaction ${i + 1} failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        };
+      }
+    }
+    
+    return {
+      success: true,
+      signatures,
+    };
+  }
+
+  // ==================== END JITO BUNDLE SUBMISSION ====================
+
   /**
    * Derive escrow PDA from escrow ID
    */
