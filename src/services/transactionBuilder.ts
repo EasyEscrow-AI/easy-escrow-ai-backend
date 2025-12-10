@@ -1045,8 +1045,11 @@ export class TransactionBuilder {
    * 
    * @param assetId - The Core NFT asset ID
    * @returns The collection address or null if NFT is not in a collection
+   * @throws Error if DAS API fails (prevents confusing downstream errors)
    */
-  private async fetchCoreNftCollection(assetId: string): Promise<string | null> {
+  private async fetchCoreNftCollection(assetId: string, retryCount = 0): Promise<string | null> {
+    const MAX_RETRIES = 2;
+    
     try {
       console.log('[TransactionBuilder] Fetching Core NFT collection for:', assetId);
       
@@ -1055,17 +1058,22 @@ export class TransactionBuilder {
         id: assetId,
       });
       
+      // Check for JSON-RPC error response (like assetValidator.ts does)
+      if (response?.error) {
+        const errorMsg = response.error.message || JSON.stringify(response.error);
+        console.error('[TransactionBuilder] DAS API returned error:', errorMsg);
+        throw new Error(`DAS API error fetching Core NFT ${assetId}: ${errorMsg}`);
+      }
+      
       if (!response) {
-        console.warn('[TransactionBuilder] No response from getAsset RPC call');
-        return null;
+        throw new Error(`No response from DAS API for Core NFT ${assetId}`);
       }
       
       // Handle JSON-RPC wrapper
       const assetData = response.result || response;
       
       if (!assetData) {
-        console.warn('[TransactionBuilder] No asset data returned');
-        return null;
+        throw new Error(`No asset data returned from DAS API for Core NFT ${assetId}`);
       }
       
       // Check for collection in grouping data
@@ -1085,12 +1093,28 @@ export class TransactionBuilder {
         return assetData.update_authority.collection;
       }
       
-      console.log('[TransactionBuilder] Core NFT is not in a collection');
+      // Successfully fetched data - NFT is genuinely not in a collection
+      console.log('[TransactionBuilder] Core NFT is not in a collection (confirmed by DAS API)');
       return null;
+      
     } catch (error) {
-      console.error('[TransactionBuilder] Error fetching Core NFT collection:', error);
-      // Return null on error - the transfer might still work if NFT is not in a collection
-      return null;
+      console.error(`[TransactionBuilder] Error fetching Core NFT collection (attempt ${retryCount + 1}/${MAX_RETRIES + 1}):`, error);
+      
+      // Retry on transient errors (rate limiting, network issues)
+      if (retryCount < MAX_RETRIES) {
+        const delay = Math.pow(2, retryCount) * 500; // 500ms, 1000ms
+        console.log(`[TransactionBuilder] Retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return this.fetchCoreNftCollection(assetId, retryCount + 1);
+      }
+      
+      // After retries exhausted, throw a clear error
+      // This prevents the confusing "Missing collection" error downstream
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(
+        `Failed to fetch Core NFT collection info for ${assetId} after ${MAX_RETRIES + 1} attempts: ${errorMessage}. ` +
+        `Cannot proceed - if this NFT belongs to a collection, the transaction would fail with "Missing collection" error.`
+      );
     }
   }
 }
