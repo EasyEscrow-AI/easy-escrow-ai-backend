@@ -88,9 +88,9 @@ describe('🌳 cNFT Swap E2E: cNFT ↔ cNFT - Happy Path (Staging)', () => {
     const provider = new AnchorProvider(connection, wallet, { commitment: 'confirmed' });
     program = new Program(idl, provider);
     
-    // Derive treasury PDA
+    // Derive treasury PDA using correct seed
     [treasuryPda] = PublicKey.findProgramAddressSync(
-      [Buffer.from('treasury'), platformAuthority.publicKey.toBuffer()],
+      [Buffer.from('main_treasury')],
       PROGRAM_ID
     );
     console.log('🏛️  Treasury PDA:', treasuryPda.toBase58());
@@ -164,10 +164,11 @@ describe('🌳 cNFT Swap E2E: cNFT ↔ cNFT - Happy Path (Staging)', () => {
       console.log(`     Maker cNFT Current Owner: ${makerCurrentOwner}`);
       console.log(`     Expected Owner: ${wallets.sender.publicKey.toBase58()}`);
       
-      if (makerCurrentOwner !== wallets.sender.publicKey.toBase58()) {
+      const makerOwnsIt = makerCurrentOwner === wallets.sender.publicKey.toBase58();
+      if (!makerOwnsIt) {
         console.warn('  ⚠️  Maker cNFT is not currently owned by sender!');
-        console.warn('     This may be from a previous test. Continuing anyway...');
-        console.warn('     Run: ts-node scripts/rebalance-test-cnfts-staging.ts to fix');
+        console.warn(`     Current owner: ${makerCurrentOwner}`);
+        console.warn(`     Expected: ${wallets.sender.publicKey.toBase58()}`);
       } else {
         console.log('  ✅ Maker cNFT ownership verified');
       }
@@ -182,12 +183,26 @@ describe('🌳 cNFT Swap E2E: cNFT ↔ cNFT - Happy Path (Staging)', () => {
       console.log(`     Taker cNFT Current Owner: ${takerCurrentOwner}`);
       console.log(`     Expected Owner: ${wallets.receiver.publicKey.toBase58()}`);
       
-      if (takerCurrentOwner !== wallets.receiver.publicKey.toBase58()) {
+      const takerOwnsIt = takerCurrentOwner === wallets.receiver.publicKey.toBase58();
+      if (!takerOwnsIt) {
         console.warn('  ⚠️  Taker cNFT is not currently owned by receiver!');
-        console.warn('     This may be from a previous test. Continuing anyway...');
-        console.warn('     Run: ts-node scripts/rebalance-test-cnfts-staging.ts to fix');
+        console.warn(`     Current owner: ${takerCurrentOwner}`);
+        console.warn(`     Expected: ${wallets.receiver.publicKey.toBase58()}`);
       } else {
         console.log('  ✅ Taker cNFT ownership verified');
+      }
+      
+      // For cNFT <> cNFT to work, both wallets must own their respective cNFTs
+      if (!makerOwnsIt || !takerOwnsIt) {
+        console.error('\n  ❌ OWNERSHIP MISMATCH:');
+        console.error('     For cNFT <> cNFT swap to work, each wallet must own a different cNFT.');
+        console.error('     Currently, all test cNFTs may be owned by the same wallet.');
+        console.error('\n     TO FIX: Run the cNFT rebalance script:');
+        console.error('       npx ts-node scripts/rebalance-test-cnfts-staging.ts');
+        console.error('\n     OR transfer cNFT #2 manually to receiver wallet:');
+        console.error(`       From: ${takerCurrentOwner}`);
+        console.error(`       To:   ${wallets.receiver.publicKey.toBase58()}`);
+        throw new Error('cNFT ownership mismatch - cannot proceed with cNFT <> cNFT swap');
       }
       
       console.log('  ✅ Both test cNFTs ready (pre-indexed, no wait needed)');
