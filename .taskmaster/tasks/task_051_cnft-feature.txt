@@ -1,0 +1,59 @@
+# Task ID: 51
+# Title: Create Unit Tests for cNFT Service and Transaction Builder
+# Status: pending
+# Dependencies: None
+# Priority: high
+# Description: Create comprehensive unit tests for cNFT functionality in the backend services, covering cNFT service operations and transaction builder integration with 80%+ code coverage.
+# Details:
+Implement comprehensive unit test coverage for cNFT functionality across two main test files:
+
+**1. Create tests/unit/cnftService.test.ts**:
+- Test getCnftAsset() with mocked DAS API responses for valid/invalid asset IDs
+- Test getCnftProof() with various proof sizes and tree depths (small, medium, large canopy)
+- Test deriveTreeAuthority() PDA derivation with different merkle tree addresses
+- Test buildTransferParams() combining asset metadata and proof data correctly
+- Test getTreeCanopyDepth() dynamic canopy detection from tree account data
+- Test convertDasProofToCnftProofAsync() proof conversion and trimming logic
+- Test comprehensive error handling for invalid asset IDs, network failures, and malformed responses
+- Mock all external DAS API calls using Jest mocks to ensure isolated testing
+
+**2. Create tests/unit/transactionBuilder.cnft.test.ts**:
+- Test cNFT transfer instruction building with proper Bubblegum program integration
+- Test transaction size estimation accounting for cNFT-specific accounts (merkle tree, tree authority, etc.)
+- Test mixed asset type handling scenarios (cNFT + standard NFT combinations)
+- Test Merkle proof data passing through instruction parameters
+- Test Address Lookup Table integration for account compression
+- Test backward compatibility with existing standard NFT transaction building
+- Mock CnftService dependencies to isolate transaction builder logic
+
+**3. Mock Infrastructure Setup**:
+- Create comprehensive DAS API response mocks for various cNFT scenarios
+- Mock Solana RPC calls for tree account data and PDA derivations
+- Set up test fixtures for different proof sizes and asset configurations
+- Ensure all external dependencies are properly mocked for isolated unit testing
+
+**4. Coverage Requirements**:
+- Achieve minimum 80% code coverage for all cNFT-related code paths
+- Focus on error handling branches and edge cases
+- Test both success and failure scenarios comprehensively
+
+# Test Strategy:
+1. **Test Execution and Coverage Verification**:
+   - Run `npm test tests/unit/cnftService.test.ts` and `npm test tests/unit/transactionBuilder.cnft.test.ts` to verify all tests pass
+   - Use coverage tools (nyc/jest --coverage) to confirm 80%+ code coverage for cNFT service and transaction builder cNFT paths
+   - Verify all error handling branches are tested with appropriate mock scenarios
+
+2. **Mock Validation**:
+   - Confirm DAS API mocks accurately simulate real API responses with proper data structures
+   - Verify Solana RPC mocks return realistic account data for merkle trees and PDAs
+   - Test that mocks can simulate various failure scenarios (network errors, invalid responses, missing data)
+
+3. **Integration Point Testing**:
+   - Verify CnftService methods are properly called by TransactionBuilder with correct parameters
+   - Test that proof data flows correctly from service layer to instruction building
+   - Confirm backward compatibility by running existing standard NFT tests alongside new cNFT tests
+
+4. **Edge Case Coverage**:
+   - Test invalid asset IDs, malformed proofs, network timeouts, and API rate limiting scenarios
+   - Verify proper error propagation and handling throughout the cNFT service chain
+   - Test boundary conditions for proof sizes, tree depths, and account limits

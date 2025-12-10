@@ -1,0 +1,64 @@
+# Task ID: 52
+# Title: Create Integration Tests for Bulk Swap API
+# Status: pending
+# Dependencies: None
+# Priority: high
+# Description: Create comprehensive integration tests for bulk swap API endpoints covering multi-asset swaps, mixed asset types, transaction group creation, Jito bundle submission, and offer management functionality.
+# Details:
+Implement comprehensive integration test coverage for bulk swap functionality across three main test files:
+
+**1. Create tests/integration/bulk-swap.test.ts**:
+- Test creating offers with multiple assets (2-10 per side) using real API endpoints
+- Test mixed asset type combinations (cNFT + standard NFT + SOL) with proper validation
+- Test transaction group creation for bulk swaps with TransactionGroupBuilder integration
+- Test Jito bundle submission integration with mock Jito endpoints and bundle validation
+- Test partial failure handling scenarios (some assets invalid, network failures)
+- Test transaction confirmation polling with various confirmation states and timeouts
+- Mock external dependencies (Solana RPC, DAS API, Jito endpoints) for consistent testing
+
+**2. Create tests/integration/offer-management.test.ts**:
+- Test private sales with taker wallet restriction functionality using real database operations
+- Test counter-offer creation and linking with proper parentOfferId relationships
+- Test offer cancellation scenarios (maker vs admin permissions) with database state verification
+- Test offer updates including SOL amount changes and asset modifications
+- Test offer chain traversal for counter-offer relationships and version tracking
+- Verify proper database state transitions and cleanup operations
+
+**3. Create tests/integration/cnft-transfer.test.ts**:
+- Test cNFT transfer instruction building with Bubblegum program integration
+- Test Merkle proof fetching and validation using mocked DAS API responses
+- Test canopy depth detection with various tree configurations
+- Test proof trimming optimization for different canopy sizes
+- Test stale proof retry mechanism with simulated proof expiration scenarios
+- Mock CnftService operations and verify proper error handling for invalid proofs
+
+**Test Environment Setup**:
+- Configure test database with proper cleanup between tests
+- Set up mock Solana RPC endpoints with consistent responses
+- Create test wallet keypairs and fund with devnet SOL for transaction testing
+- Implement proper test isolation and parallel execution support
+
+# Test Strategy:
+1. **Integration Test Execution and Validation**:
+   - Run `npm test tests/integration/bulk-swap.test.ts` and verify all bulk swap scenarios pass
+   - Run `npm test tests/integration/offer-management.test.ts` and verify offer lifecycle operations
+   - Run `npm test tests/integration/cnft-transfer.test.ts` and verify cNFT transfer logic
+   - Execute full integration test suite with `npm test tests/integration/` and confirm no failures
+
+2. **API Endpoint Integration Testing**:
+   - Verify bulk swap offer creation API handles 2-10 assets per side correctly
+   - Test mixed asset type validation through API endpoints with various combinations
+   - Confirm transaction group creation returns proper transaction arrays for bulk swaps
+   - Validate Jito bundle submission integration with proper bundle formatting
+
+3. **Database Integration Verification**:
+   - Verify offer management tests properly create, update, and cancel offers in database
+   - Test counter-offer chain creation and traversal with real database operations
+   - Confirm private sales taker wallet restrictions work with database queries
+   - Validate proper cleanup of test data between test runs
+
+4. **cNFT Integration Testing**:
+   - Verify cNFT transfer instruction building produces valid Bubblegum instructions
+   - Test Merkle proof integration with mocked DAS API responses
+   - Confirm canopy depth detection and proof trimming optimization logic
+   - Validate stale proof retry mechanism with simulated network conditions

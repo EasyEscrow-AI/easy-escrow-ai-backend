@@ -2,7 +2,7 @@
  * Create Production Address Lookup Table (ALT)
  * 
  * This script creates an ALT on mainnet for optimizing cNFT transaction sizes.
- * Run once to set up, then add the ALT address to PRODUCTION_ALT_ADDRESS env var.
+ * Run once to set up, then add the ALT address to MAINNET_PROD_ALT_ADDRESS env var.
  */
 
 import {
@@ -193,10 +193,10 @@ async function main() {
   console.log('✅ ALT CREATION COMPLETE!');
   console.log('='.repeat(60));
   console.log('\n📋 Add this to DigitalOcean App Platform:');
-  console.log(`   Key:   PRODUCTION_ALT_ADDRESS`);
+  console.log(`   Key:   MAINNET_PROD_ALT_ADDRESS`);
   console.log(`   Value: ${lookupTableAddress.toBase58()}`);
   console.log('\n📋 Or add to .env:');
-  console.log(`   PRODUCTION_ALT_ADDRESS=${lookupTableAddress.toBase58()}`);
+  console.log(`   MAINNET_PROD_ALT_ADDRESS=${lookupTableAddress.toBase58()}`);
   console.log('\n' + '='.repeat(60));
   
   // Save to file for reference

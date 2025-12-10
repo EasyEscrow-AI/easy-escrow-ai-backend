@@ -225,7 +225,7 @@ if (isVersioned) {
 
 ```env
 # Production ALT address (created by setup script)
-PRODUCTION_ALT_ADDRESS=<to-be-created>
+MAINNET_PROD_ALT_ADDRESS=<to-be-created>
 
 # Enable ALT feature flag (for gradual rollout)
 ENABLE_ALT=true
