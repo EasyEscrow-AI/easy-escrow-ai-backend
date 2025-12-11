@@ -456,13 +456,27 @@ export class TransactionGroupBuilder {
       const solTxSize = solTxSerialized.length;
       
       // Determine which signers are actually needed for SOL tx
-      // Only parties who transfer SOL need to sign
+      // Must match the fee payer logic above (lines 426-433)
       const solTxSigners: string[] = [];
-      if (inputs.makerSolLamports > BigInt(0)) {
+      
+      // Determine who pays the platform fee (same logic as above)
+      let feePayerIsMaker = false;
+      let feePayerIsTaker = false;
+      if (inputs.platformFeeLamports > BigInt(0)) {
+        if (inputs.takerSolLamports > BigInt(0)) {
+          feePayerIsTaker = true;
+        } else {
+          // Maker pays fee if they send SOL OR if it's a pure cNFT swap
+          feePayerIsMaker = true;
+        }
+      }
+      
+      // Maker signs if they send SOL OR pay the fee
+      if (inputs.makerSolLamports > BigInt(0) || feePayerIsMaker) {
         solTxSigners.push(inputs.makerPubkey.toBase58());
       }
-      if (inputs.takerSolLamports > BigInt(0) || inputs.platformFeeLamports > BigInt(0)) {
-        // Taker signs if they're sending SOL or paying fee
+      // Taker signs if they send SOL OR pay the fee
+      if (inputs.takerSolLamports > BigInt(0) || feePayerIsTaker) {
         solTxSigners.push(inputs.takerPubkey.toBase58());
       }
       
