@@ -512,7 +512,7 @@ export class TransactionGroupBuilder {
           serializedTransaction: solTxSerialized.toString('base64'),
           sizeBytes: solTxSize,
           isVersioned: false,
-          nonceValue,
+          nonceValue: solBlockhash, // Use actual blockhash (nonce or fresh)
           estimatedComputeUnits: 50000, // SOL transfers are simple
           requiredSigners: solTxSigners,
         },
@@ -586,7 +586,7 @@ export class TransactionGroupBuilder {
           serializedTransaction: cnftTxSerialized.toString('base64'),
           sizeBytes: cnftTxSize,
           isVersioned: false,
-          nonceValue,
+          nonceValue: cnftBlockhash, // Use actual blockhash (nonce or fresh)
           estimatedComputeUnits: 200000, // cNFT transfers with proof are expensive
           requiredSigners: [inputs.makerPubkey.toBase58()],
         },
@@ -656,7 +656,7 @@ export class TransactionGroupBuilder {
           serializedTransaction: cnftTxSerialized.toString('base64'),
           sizeBytes: cnftTxSize,
           isVersioned: false,
-          nonceValue,
+          nonceValue: cnftBlockhash, // Use actual blockhash (nonce or fresh)
           estimatedComputeUnits: 200000, // cNFT transfers with proof are expensive
           requiredSigners: [inputs.takerPubkey.toBase58()],
         },
@@ -673,6 +673,7 @@ export class TransactionGroupBuilder {
       totalSizeBytes,
       makerCnfts: makerCnfts.length,
       takerCnfts: takerCnfts.length,
+      useJitoNonces,
     });
     
     return {
@@ -680,9 +681,9 @@ export class TransactionGroupBuilder {
       analysis,
       transactions,
       transactionCount: transactions.length,
-      requiresJitoBundle: true,
+      requiresJitoBundle: useJitoNonces, // Only require Jito on mainnet
       totalSizeBytes,
-      nonceValue,
+      nonceValue: useJitoNonces ? nonceValue : 'fresh-blockhash', // Indicate blockhash strategy
     };
   }
   
