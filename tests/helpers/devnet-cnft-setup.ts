@@ -98,6 +98,7 @@ export async function createMerkleTree(
   console.log(`   Tree Address: ${tree.publicKey.toBase58()}`);
 
   // Derive tree authority PDA
+  // Note: Bubblegum uses [tree_address] only, NOT ['TreeConfig', tree_address]
   const [treeAuthority] = PublicKey.findProgramAddressSync(
     [tree.publicKey.toBuffer()],
     BUBBLEGUM_PROGRAM_ID

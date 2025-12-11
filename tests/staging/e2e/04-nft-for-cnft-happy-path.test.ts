@@ -1,5 +1,8 @@
 /**
- * Atomic Swap E2E Test: NFT for cNFT Happy Path (Staging)
+ * Cross-Format Swap E2E Test: NFT for cNFT Happy Path (Staging)
+ * 
+ * NOTE: Cross-format swaps involving cNFTs use Jito bundles for multi-transaction
+ * execution, NOT single atomic transactions like standard NFT swaps.
  * 
  * Tests the complete flow of swapping NFT ↔ cNFT (Compressed NFT) including:
  * - Pure NFT ↔ cNFT swap with flat fee
@@ -38,7 +41,7 @@ const QUICKNODE_RPC = process.env.QUICKNODE_CNFT_RPC_URL;
 // Mock cNFT for testing (will be replaced with actual cNFT creation)
 const MOCK_CNFT_ASSET_ID = 'mock-cnft-asset-id-for-hybrid-testing';
 
-describe('🔄🌳 Atomic Swap E2E: NFT for cNFT - Happy Path (Staging)', () => {
+describe('🔄🌳 Cross-Format Swap E2E: NFT for cNFT - Happy Path (Staging)', () => {
   let connection: Connection;
   let program: Program;
   let platformAuthority: Keypair;
