@@ -234,8 +234,10 @@ export class TransactionGroupBuilder {
     } else if (totalCnfts >= 1) {
       // Multiple cNFTs or mixed assets - use Jito bundle with direct Bubblegum
       // Calculate: 1 tx per cNFT + 1 tx for SOL/fee if applicable
+      // Note: We need a SOL tx if there's SOL transfer OR platform fee
       const cnftTxCount = totalCnfts;
-      transactionCount = cnftTxCount + (hasSolTransfer ? 1 : 0);
+      const needsSolTx = hasSolTransfer || inputs.platformFeeLamports > BigInt(0);
+      transactionCount = cnftTxCount + (needsSolTx ? 1 : 0);
       
       // Check if we exceed Jito's bundle limit
       if (transactionCount > MAX_TRANSACTIONS_PER_BUNDLE) {
@@ -364,8 +366,7 @@ export class TransactionGroupBuilder {
     const transactions: TransactionGroupItem[] = [];
     let totalSizeBytes = 0;
     
-    // Get recent blockhash for transactions
-    const { blockhash } = await this.connection.getLatestBlockhash();
+    // Note: All transactions use nonceValue for durable nonce consistency
     
     // Collect all cNFT assets
     const makerCnfts = inputs.makerAssets.filter(a => 
@@ -383,16 +384,12 @@ export class TransactionGroupBuilder {
       const solInstructions: TransactionInstruction[] = [];
       
       // Nonce advance instruction (for durable nonce)
-      const nonceInfo = await this.connection.getAccountInfo(inputs.nonceAccountPubkey);
-      if (nonceInfo) {
-        const nonceAccount = NonceAccount.fromAccountData(nonceInfo.data);
-        solInstructions.push(
-          SystemProgram.nonceAdvance({
-            noncePubkey: inputs.nonceAccountPubkey,
-            authorizedPubkey: this.platformAuthority.publicKey,
-          })
-        );
-      }
+      solInstructions.push(
+        SystemProgram.nonceAdvance({
+          noncePubkey: inputs.nonceAccountPubkey,
+          authorizedPubkey: this.platformAuthority.publicKey,
+        })
+      );
       
       // Maker sends SOL to taker (if any)
       if (inputs.makerSolLamports > BigInt(0)) {
@@ -421,8 +418,21 @@ export class TransactionGroupBuilder {
       
       // Platform fee to treasury
       if (inputs.platformFeeLamports > BigInt(0)) {
-        // Fee comes from whoever is paying SOL
-        const feePayer = inputs.takerSolLamports > BigInt(0) ? inputs.takerPubkey : inputs.makerPubkey;
+        // Determine fee payer:
+        // 1. If taker sends SOL, fee comes from taker's SOL payment
+        // 2. If maker sends SOL, fee comes from maker's SOL payment
+        // 3. For pure cNFT-for-cNFT swaps (no SOL), maker pays fee (initiator)
+        let feePayer: PublicKey;
+        if (inputs.takerSolLamports > BigInt(0)) {
+          feePayer = inputs.takerPubkey;
+        } else if (inputs.makerSolLamports > BigInt(0)) {
+          feePayer = inputs.makerPubkey;
+        } else {
+          // Pure cNFT-for-cNFT swap with fixed fee - maker pays
+          feePayer = inputs.makerPubkey;
+          console.log('[TransactionGroupBuilder] cNFT-for-cNFT swap: maker pays platform fee');
+        }
+        
         solInstructions.push(
           SystemProgram.transfer({
             fromPubkey: feePayer,
@@ -432,9 +442,10 @@ export class TransactionGroupBuilder {
         );
       }
       
-      // Build SOL transaction
+      // Build SOL transaction using nonce value for durable nonce consistency
+      // All transactions in the bundle must use the same blockhash approach
       const solTx = new Transaction({
-        recentBlockhash: blockhash,
+        recentBlockhash: nonceValue, // Use nonce for durable tx (matches cNFT transactions)
         feePayer: this.platformAuthority.publicKey,
       }).add(...solInstructions);
       
