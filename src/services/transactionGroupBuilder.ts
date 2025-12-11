@@ -455,6 +455,17 @@ export class TransactionGroupBuilder {
       const solTxSerialized = solTx.serialize({ requireAllSignatures: false });
       const solTxSize = solTxSerialized.length;
       
+      // Determine which signers are actually needed for SOL tx
+      // Only parties who transfer SOL need to sign
+      const solTxSigners: string[] = [];
+      if (inputs.makerSolLamports > BigInt(0)) {
+        solTxSigners.push(inputs.makerPubkey.toBase58());
+      }
+      if (inputs.takerSolLamports > BigInt(0) || inputs.platformFeeLamports > BigInt(0)) {
+        // Taker signs if they're sending SOL or paying fee
+        solTxSigners.push(inputs.takerPubkey.toBase58());
+      }
+      
       transactions.push({
         index: 0,
         purpose: 'SOL transfers + platform fee',
@@ -471,16 +482,13 @@ export class TransactionGroupBuilder {
           isVersioned: false,
           nonceValue,
           estimatedComputeUnits: 50000, // SOL transfers are simple
-          requiredSigners: [
-            inputs.makerPubkey.toBase58(),
-            inputs.takerPubkey.toBase58(),
-          ],
+          requiredSigners: solTxSigners,
         },
         isVersioned: false,
       });
       
       totalSizeBytes += solTxSize;
-      console.log(`[TransactionGroupBuilder] Tx1 (SOL) built: ${solTxSize} bytes`);
+      console.log(`[TransactionGroupBuilder] Tx1 (SOL) built: ${solTxSize} bytes, signers: ${solTxSigners.join(', ')}`);
     }
     
     // === Transaction 2+: cNFT transfers via direct Bubblegum ===
