@@ -679,6 +679,8 @@ router.post(
           transactions: result.transactionGroup.transactions.map((tx) => ({
             index: tx.index,
             serialized: tx.transaction?.serializedTransaction || null,
+            serializedTransaction: tx.transaction?.serializedTransaction || null, // Alias for compatibility
+            requiredSigners: tx.transaction?.requiredSigners || [],
             // Convert BigInt values to strings for JSON serialization
             assets: {
               makerAssets: tx.assets.makerAssets,
