@@ -141,6 +141,20 @@ export class DirectBubblegumService {
       }
     );
 
+    // CRITICAL FIX: mpl-bubblegum library incorrectly sets leafOwner.isSigner = false
+    // Bubblegum actually requires the leafOwner (or leafDelegate if different) to sign
+    // Find and fix the signer account
+    const signerPubkey = params.delegate || params.fromWallet;
+    const signerIndex = instruction.keys.findIndex(
+      key => key.pubkey.equals(signerPubkey)
+    );
+    if (signerIndex !== -1) {
+      instruction.keys[signerIndex].isSigner = true;
+      console.log('[DirectBubblegumService] Fixed signer flag for:', signerPubkey.toBase58());
+    } else {
+      console.warn('[DirectBubblegumService] Could not find signer account in instruction keys');
+    }
+
     // Add proof nodes as remaining accounts
     // These are required when canopy depth < max depth
     const proofAccountMetas: AccountMeta[] = proofNodes.map(node => ({
