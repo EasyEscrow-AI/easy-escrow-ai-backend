@@ -455,6 +455,31 @@ export class TransactionGroupBuilder {
       const solTxSerialized = solTx.serialize({ requireAllSignatures: false });
       const solTxSize = solTxSerialized.length;
       
+      // Determine which signers are actually needed for SOL tx
+      // Must match the fee payer logic above (lines 426-433)
+      const solTxSigners: string[] = [];
+      
+      // Determine who pays the platform fee (same logic as above)
+      let feePayerIsMaker = false;
+      let feePayerIsTaker = false;
+      if (inputs.platformFeeLamports > BigInt(0)) {
+        if (inputs.takerSolLamports > BigInt(0)) {
+          feePayerIsTaker = true;
+        } else {
+          // Maker pays fee if they send SOL OR if it's a pure cNFT swap
+          feePayerIsMaker = true;
+        }
+      }
+      
+      // Maker signs if they send SOL OR pay the fee
+      if (inputs.makerSolLamports > BigInt(0) || feePayerIsMaker) {
+        solTxSigners.push(inputs.makerPubkey.toBase58());
+      }
+      // Taker signs if they send SOL OR pay the fee
+      if (inputs.takerSolLamports > BigInt(0) || feePayerIsTaker) {
+        solTxSigners.push(inputs.takerPubkey.toBase58());
+      }
+      
       transactions.push({
         index: 0,
         purpose: 'SOL transfers + platform fee',
@@ -471,16 +496,13 @@ export class TransactionGroupBuilder {
           isVersioned: false,
           nonceValue,
           estimatedComputeUnits: 50000, // SOL transfers are simple
-          requiredSigners: [
-            inputs.makerPubkey.toBase58(),
-            inputs.takerPubkey.toBase58(),
-          ],
+          requiredSigners: solTxSigners,
         },
         isVersioned: false,
       });
       
       totalSizeBytes += solTxSize;
-      console.log(`[TransactionGroupBuilder] Tx1 (SOL) built: ${solTxSize} bytes`);
+      console.log(`[TransactionGroupBuilder] Tx1 (SOL) built: ${solTxSize} bytes, signers: ${solTxSigners.join(', ')}`);
     }
     
     // === Transaction 2+: cNFT transfers via direct Bubblegum ===
