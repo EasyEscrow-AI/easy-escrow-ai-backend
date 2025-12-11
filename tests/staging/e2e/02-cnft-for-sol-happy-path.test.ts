@@ -238,71 +238,108 @@ describe('🌳 cNFT Swap E2E: cNFT for SOL - Happy Path (Staging)', () => {
       
       console.log(`✅ Offer accepted, transaction ready for signing`);
       
-      // Check if this is a bulk swap
+      // Check if this is a bulk swap (cNFT swaps use Direct Bubblegum bundles)
       const bulkSwap = (acceptResponse.data as any).bulkSwap;
+      let swapSignature: string | null = null;
+      let bulkSignatures: string[] = [];
+      
       if (bulkSwap && bulkSwap.isBulkSwap) {
-        console.log('\n🚀 BULK SWAP DETECTED:');
+        console.log('\n🚀 BULK SWAP DETECTED (Direct Bubblegum Bundle):');
         console.log(`  Strategy: ${bulkSwap.strategy}`);
         console.log(`  Transaction Count: ${bulkSwap.transactionCount}`);
         console.log(`  Requires Jito: ${bulkSwap.requiresJitoBundle}`);
-      }
-      
-      // Step 3: Both parties sign and send transaction with retry for stale proofs
-      console.log('\n🔏 Step 3: Signing and sending transaction (both parties)...');
-      console.log('  ⚠️  CRITICAL TEST: This will verify:');
-      console.log('    - cNFT transfer from maker to taker');
-      console.log('    - SOL transfer from taker to maker');
-      console.log('    - Platform fee collected');
-      
-      let swapSignature: string | null = null;
-      let serializedTx = acceptResponse.data.transaction.serialized;
-      const maxAttempts = 3;
-      
-      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        try {
-          console.log(`\n  Attempt ${attempt}/${maxAttempts}...`);
-          
-          swapSignature = await AtomicSwapApiClient.signAndSendTransaction(
-            serializedTx,
-            [wallets.sender, wallets.receiver], // BOTH maker and taker sign
-            connection
-          );
-          
-          console.log(`  ✅ Transaction sent: ${swapSignature}`);
-          break; // Success!
-          
-        } catch (error: any) {
-          const errorMsg = error.message || String(error);
-          
-          // Check for stale proof errors
-          if (errorMsg.includes('0xbc4') || 
-              errorMsg.includes('AccountNotInitialized') ||
-              errorMsg.includes('InvalidProof') ||
-              errorMsg.includes('tree_authority')) {
+        
+        // Step 3: Sign and send multiple transactions for cNFT swap
+        console.log('\n🔏 Step 3: Signing and sending bulk swap transactions...');
+        console.log('  ⚠️  CRITICAL TEST: This will verify:');
+        console.log('    - SOL transfers (Transaction 1)');
+        console.log('    - cNFT transfer via Bubblegum (Transaction 2+)');
+        console.log('    - Platform fee collected');
+        
+        // Format transactions for bulk swap handler
+        const transactionsForBulk = bulkSwap.transactions.map((tx: any) => ({
+          index: tx.index,
+          purpose: tx.purpose,
+          serializedTransaction: tx.serializedTransaction,
+          requiredSigners: tx.requiredSigners,
+        }));
+        
+        const bulkResult = await AtomicSwapApiClient.signAndSendBulkSwapTransactions(
+          { transactions: transactionsForBulk },
+          wallets.sender,  // maker
+          wallets.receiver, // taker
+          connection
+        );
+        
+        if (!bulkResult.success) {
+          throw new Error(`Bulk swap failed: ${bulkResult.error}`);
+        }
+        
+        bulkSignatures = bulkResult.signatures;
+        swapSignature = bulkSignatures[bulkSignatures.length - 1]; // Use last signature for verification
+        
+        console.log(`\n✅ All ${bulkSignatures.length} transactions confirmed!`);
+        bulkSignatures.forEach((sig, i) => {
+          console.log(`  Tx ${i + 1}: ${sig}`);
+        });
+        
+      } else {
+        // Standard single transaction flow
+        console.log('\n🔏 Step 3: Signing and sending single transaction (both parties)...');
+        console.log('  ⚠️  CRITICAL TEST: This will verify:');
+        console.log('    - cNFT transfer from maker to taker');
+        console.log('    - SOL transfer from taker to maker');
+        console.log('    - Platform fee collected');
+        
+        let serializedTx = acceptResponse.data.transaction.serialized;
+        const maxAttempts = 3;
+        
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+          try {
+            console.log(`\n  Attempt ${attempt}/${maxAttempts}...`);
             
-            if (attempt < maxAttempts) {
-              console.log(`  ⚠️  Stale proof detected, rebuilding transaction...`);
+            swapSignature = await AtomicSwapApiClient.signAndSendTransaction(
+              serializedTx,
+              [wallets.sender, wallets.receiver], // BOTH maker and taker sign
+              connection
+            );
+            
+            console.log(`  ✅ Transaction sent: ${swapSignature}`);
+            break; // Success!
+            
+          } catch (error: any) {
+            const errorMsg = error.message || String(error);
+            
+            // Check for stale proof errors
+            if (errorMsg.includes('0xbc4') || 
+                errorMsg.includes('AccountNotInitialized') ||
+                errorMsg.includes('InvalidProof') ||
+                errorMsg.includes('tree_authority')) {
               
-              // Re-accept to get fresh transaction with new proofs
-              const retryAcceptKey = AtomicSwapApiClient.generateIdempotencyKey(`retry-${attempt}`);
-              const retryAccept = await apiClient.acceptOffer(
-                createResponse.data.offer.id,
-                wallets.receiver.publicKey.toBase58(),
-                retryAcceptKey
-              );
-              
-              if (retryAccept.success && retryAccept.data) {
-                serializedTx = retryAccept.data.transaction.serialized;
-                console.log(`  🔄 Fresh transaction obtained, retrying...`);
-                continue;
+              if (attempt < maxAttempts) {
+                console.log(`  ⚠️  Stale proof detected, rebuilding transaction...`);
+                
+                // Re-accept to get fresh transaction with new proofs
+                const retryAcceptKey = AtomicSwapApiClient.generateIdempotencyKey(`retry-${attempt}`);
+                const retryAccept = await apiClient.acceptOffer(
+                  createResponse.data.offer.id,
+                  wallets.receiver.publicKey.toBase58(),
+                  retryAcceptKey
+                );
+                
+                if (retryAccept.success && retryAccept.data) {
+                  serializedTx = retryAccept.data.transaction.serialized;
+                  console.log(`  🔄 Fresh transaction obtained, retrying...`);
+                  continue;
+                }
               }
             }
-          }
-          
-          // Final attempt failed or non-retryable error
-          console.error(`  ❌ Attempt ${attempt} failed:`, errorMsg);
-          if (attempt === maxAttempts) {
-            throw error;
+            
+            // Final attempt failed or non-retryable error
+            console.error(`  ❌ Attempt ${attempt} failed:`, errorMsg);
+            if (attempt === maxAttempts) {
+              throw error;
+            }
           }
         }
       }
