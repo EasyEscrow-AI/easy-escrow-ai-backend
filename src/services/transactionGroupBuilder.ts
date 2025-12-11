@@ -366,7 +366,14 @@ export class TransactionGroupBuilder {
     const transactions: TransactionGroupItem[] = [];
     let totalSizeBytes = 0;
     
-    // Note: All transactions use nonceValue for durable nonce consistency
+    // Determine if we should use durable nonces or fresh blockhashes
+    // On devnet/staging, sequential sends don't work with shared nonces
+    // On mainnet, Jito bundles handle atomicity with durable nonces
+    const isMainnet = process.env.SOLANA_NETWORK === 'mainnet-beta' || 
+                      process.env.NODE_ENV === 'production';
+    const useJitoNonces = isMainnet; // Only use durable nonces on mainnet with Jito
+    
+    console.log(`[TransactionGroupBuilder] Network mode: ${isMainnet ? 'mainnet (Jito bundles)' : 'devnet (sequential sends)'}`);
     
     // Collect all cNFT assets
     const makerCnfts = inputs.makerAssets.filter(a => 
@@ -383,13 +390,15 @@ export class TransactionGroupBuilder {
       
       const solInstructions: TransactionInstruction[] = [];
       
-      // Nonce advance instruction (for durable nonce)
-      solInstructions.push(
-        SystemProgram.nonceAdvance({
-          noncePubkey: inputs.nonceAccountPubkey,
-          authorizedPubkey: this.platformAuthority.publicKey,
-        })
-      );
+      // Only add nonce advance instruction for mainnet Jito bundles
+      if (useJitoNonces) {
+        solInstructions.push(
+          SystemProgram.nonceAdvance({
+            noncePubkey: inputs.nonceAccountPubkey,
+            authorizedPubkey: this.platformAuthority.publicKey,
+          })
+        );
+      }
       
       // Maker sends SOL to taker (if any)
       if (inputs.makerSolLamports > BigInt(0)) {
@@ -442,10 +451,19 @@ export class TransactionGroupBuilder {
         );
       }
       
-      // Build SOL transaction using nonce value for durable nonce consistency
-      // All transactions in the bundle must use the same blockhash approach
+      // Build SOL transaction
+      // On mainnet: use durable nonce for Jito bundles
+      // On devnet: use fresh blockhash for sequential sends
+      let solBlockhash: string;
+      if (useJitoNonces) {
+        solBlockhash = nonceValue;
+      } else {
+        const { blockhash } = await this.connection.getLatestBlockhash('confirmed');
+        solBlockhash = blockhash;
+      }
+      
       const solTx = new Transaction({
-        recentBlockhash: nonceValue, // Use nonce for durable tx (matches cNFT transactions)
+        recentBlockhash: solBlockhash,
         feePayer: this.platformAuthority.publicKey,
       }).add(...solInstructions);
       
@@ -494,7 +512,7 @@ export class TransactionGroupBuilder {
           serializedTransaction: solTxSerialized.toString('base64'),
           sizeBytes: solTxSize,
           isVersioned: false,
-          nonceValue,
+          nonceValue: solBlockhash, // Use actual blockhash (nonce or fresh)
           estimatedComputeUnits: 50000, // SOL transfers are simple
           requiredSigners: solTxSigners,
         },
@@ -519,21 +537,32 @@ export class TransactionGroupBuilder {
         toWallet: inputs.takerPubkey,
       });
       
-      // Build transaction with nonce advance
+      // Build transaction
       const cnftInstructions: TransactionInstruction[] = [];
       
-      // Nonce advance for durability
-      cnftInstructions.push(
-        SystemProgram.nonceAdvance({
-          noncePubkey: inputs.nonceAccountPubkey,
-          authorizedPubkey: this.platformAuthority.publicKey,
-        })
-      );
+      // Only add nonce advance instruction for mainnet Jito bundles
+      if (useJitoNonces) {
+        cnftInstructions.push(
+          SystemProgram.nonceAdvance({
+            noncePubkey: inputs.nonceAccountPubkey,
+            authorizedPubkey: this.platformAuthority.publicKey,
+          })
+        );
+      }
       
       cnftInstructions.push(transferResult.instruction);
       
+      // Get blockhash (fresh for devnet, nonce for mainnet)
+      let cnftBlockhash: string;
+      if (useJitoNonces) {
+        cnftBlockhash = nonceValue;
+      } else {
+        const { blockhash } = await this.connection.getLatestBlockhash('confirmed');
+        cnftBlockhash = blockhash;
+      }
+      
       const cnftTx = new Transaction({
-        recentBlockhash: nonceValue, // Use nonce for durable tx
+        recentBlockhash: cnftBlockhash,
         feePayer: this.platformAuthority.publicKey,
       }).add(...cnftInstructions);
       
@@ -557,7 +586,7 @@ export class TransactionGroupBuilder {
           serializedTransaction: cnftTxSerialized.toString('base64'),
           sizeBytes: cnftTxSize,
           isVersioned: false,
-          nonceValue,
+          nonceValue: cnftBlockhash, // Use actual blockhash (nonce or fresh)
           estimatedComputeUnits: 200000, // cNFT transfers with proof are expensive
           requiredSigners: [inputs.makerPubkey.toBase58()],
         },
@@ -579,20 +608,32 @@ export class TransactionGroupBuilder {
         toWallet: inputs.makerPubkey,
       });
       
-      // Build transaction with nonce advance
+      // Build transaction
       const cnftInstructions: TransactionInstruction[] = [];
       
-      cnftInstructions.push(
-        SystemProgram.nonceAdvance({
-          noncePubkey: inputs.nonceAccountPubkey,
-          authorizedPubkey: this.platformAuthority.publicKey,
-        })
-      );
+      // Only add nonce advance instruction for mainnet Jito bundles
+      if (useJitoNonces) {
+        cnftInstructions.push(
+          SystemProgram.nonceAdvance({
+            noncePubkey: inputs.nonceAccountPubkey,
+            authorizedPubkey: this.platformAuthority.publicKey,
+          })
+        );
+      }
       
       cnftInstructions.push(transferResult.instruction);
       
+      // Get blockhash (fresh for devnet, nonce for mainnet)
+      let cnftBlockhash: string;
+      if (useJitoNonces) {
+        cnftBlockhash = nonceValue;
+      } else {
+        const { blockhash } = await this.connection.getLatestBlockhash('confirmed');
+        cnftBlockhash = blockhash;
+      }
+      
       const cnftTx = new Transaction({
-        recentBlockhash: nonceValue,
+        recentBlockhash: cnftBlockhash,
         feePayer: this.platformAuthority.publicKey,
       }).add(...cnftInstructions);
       
@@ -615,7 +656,7 @@ export class TransactionGroupBuilder {
           serializedTransaction: cnftTxSerialized.toString('base64'),
           sizeBytes: cnftTxSize,
           isVersioned: false,
-          nonceValue,
+          nonceValue: cnftBlockhash, // Use actual blockhash (nonce or fresh)
           estimatedComputeUnits: 200000, // cNFT transfers with proof are expensive
           requiredSigners: [inputs.takerPubkey.toBase58()],
         },
@@ -632,6 +673,7 @@ export class TransactionGroupBuilder {
       totalSizeBytes,
       makerCnfts: makerCnfts.length,
       takerCnfts: takerCnfts.length,
+      useJitoNonces,
     });
     
     return {
@@ -639,9 +681,9 @@ export class TransactionGroupBuilder {
       analysis,
       transactions,
       transactionCount: transactions.length,
-      requiresJitoBundle: true,
+      requiresJitoBundle: useJitoNonces, // Only require Jito on mainnet
       totalSizeBytes,
-      nonceValue,
+      nonceValue: useJitoNonces ? nonceValue : 'fresh-blockhash', // Indicate blockhash strategy
     };
   }
   
