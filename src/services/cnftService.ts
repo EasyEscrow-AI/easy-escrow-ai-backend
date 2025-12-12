@@ -52,15 +52,61 @@ export interface CnftServiceConfig {
   
   /** Maximum retry attempts */
   maxRetries: number;
+  
+  /** Rate limiting: max concurrent DAS requests */
+  maxConcurrentRequests: number;
+  
+  /** Rate limiting: delay between batches (ms) */
+  batchDelayMs: number;
+  
+  /** Proof cache TTL in seconds */
+  proofCacheTtlSeconds: number;
+}
+
+/** Cached proof entry with expiration */
+interface ProofCacheEntry {
+  proof: DasProofResponse;
+  fetchedAt: number;
+  expiresAt: number;
+}
+
+/** Metrics for monitoring */
+interface CnftServiceMetrics {
+  proofCacheHits: number;
+  proofCacheMisses: number;
+  totalProofFetches: number;
+  rateLimitHits: number;
+  avgFetchTimeMs: number;
+  lastFetchTimes: number[];
 }
 
 export class CnftService {
   private connection: Connection;
   private config: CnftServiceConfig;
   
+  // Proof cache with TTL
+  private proofCache: Map<string, ProofCacheEntry> = new Map();
+  
+  // Rate limiting: active request count
+  private activeRequests = 0;
+  private requestQueue: Array<() => void> = [];
+  
+  // Metrics
+  private metrics: CnftServiceMetrics = {
+    proofCacheHits: 0,
+    proofCacheMisses: 0,
+    totalProofFetches: 0,
+    rateLimitHits: 0,
+    avgFetchTimeMs: 0,
+    lastFetchTimes: [],
+  };
+  
   private static readonly DEFAULT_CONFIG: Partial<CnftServiceConfig> = {
     requestTimeout: 30000, // 30 seconds (proofs can be slow)
     maxRetries: 3,
+    maxConcurrentRequests: 5, // Limit concurrent DAS API requests
+    batchDelayMs: 200, // Delay between batches
+    proofCacheTtlSeconds: 30, // Cache proofs for 30 seconds
   };
   
   constructor(connection: Connection, config?: Partial<CnftServiceConfig>) {
@@ -72,6 +118,164 @@ export class CnftService {
     } as CnftServiceConfig;
     
     console.log('[CnftService] Initialized with RPC:', this.config.rpcEndpoint);
+    console.log('[CnftService] Rate limiting:', {
+      maxConcurrent: this.config.maxConcurrentRequests,
+      batchDelayMs: this.config.batchDelayMs,
+      cacheTtlSeconds: this.config.proofCacheTtlSeconds,
+    });
+    
+    // Periodic cache cleanup (every 60 seconds)
+    setInterval(() => this.cleanupProofCache(), 60000);
+  }
+  
+  /**
+   * Get service metrics for monitoring
+   */
+  getMetrics(): CnftServiceMetrics {
+    return { ...this.metrics };
+  }
+  
+  /**
+   * Clean up expired cache entries
+   */
+  private cleanupProofCache(): void {
+    const now = Date.now();
+    let cleaned = 0;
+    
+    for (const [key, entry] of this.proofCache.entries()) {
+      if (now >= entry.expiresAt) {
+        this.proofCache.delete(key);
+        cleaned++;
+      }
+    }
+    
+    if (cleaned > 0) {
+      console.log(`[CnftService] Cleaned ${cleaned} expired proof cache entries`);
+    }
+  }
+  
+  /**
+   * Check if a cached proof is still fresh
+   */
+  private getCachedProof(assetId: string): DasProofResponse | null {
+    const entry = this.proofCache.get(assetId);
+    if (!entry) return null;
+    
+    if (Date.now() >= entry.expiresAt) {
+      this.proofCache.delete(assetId);
+      return null;
+    }
+    
+    return entry.proof;
+  }
+  
+  /**
+   * Cache a proof with TTL
+   */
+  private cacheProof(assetId: string, proof: DasProofResponse): void {
+    const now = Date.now();
+    this.proofCache.set(assetId, {
+      proof,
+      fetchedAt: now,
+      expiresAt: now + (this.config.proofCacheTtlSeconds * 1000),
+    });
+  }
+  
+  /**
+   * Rate-limited request execution
+   */
+  private async withRateLimit<T>(fn: () => Promise<T>): Promise<T> {
+    // Wait for available slot
+    while (this.activeRequests >= this.config.maxConcurrentRequests) {
+      this.metrics.rateLimitHits++;
+      await new Promise<void>(resolve => {
+        this.requestQueue.push(resolve);
+      });
+    }
+    
+    this.activeRequests++;
+    
+    try {
+      return await fn();
+    } finally {
+      this.activeRequests--;
+      // Release next waiting request
+      const next = this.requestQueue.shift();
+      if (next) next();
+    }
+  }
+  
+  /**
+   * Fetch proofs for multiple cNFTs in batches
+   * Handles rate limiting and caching automatically
+   */
+  async batchGetCnftProofs(assetIds: string[], batchSize = 3): Promise<Map<string, DasProofResponse>> {
+    console.log(`[CnftService] Batch fetching ${assetIds.length} proofs (batch size: ${batchSize})`);
+    const results = new Map<string, DasProofResponse>();
+    const errors: Array<{ assetId: string; error: string }> = [];
+    
+    // Check cache first
+    const uncachedIds: string[] = [];
+    for (const assetId of assetIds) {
+      const cached = this.getCachedProof(assetId);
+      if (cached) {
+        results.set(assetId, cached);
+        this.metrics.proofCacheHits++;
+        console.log(`[CnftService] Cache hit for ${assetId.substring(0, 8)}...`);
+      } else {
+        uncachedIds.push(assetId);
+        this.metrics.proofCacheMisses++;
+      }
+    }
+    
+    if (uncachedIds.length === 0) {
+      console.log(`[CnftService] All ${assetIds.length} proofs served from cache`);
+      return results;
+    }
+    
+    console.log(`[CnftService] Fetching ${uncachedIds.length} uncached proofs`);
+    
+    // Process in batches
+    for (let i = 0; i < uncachedIds.length; i += batchSize) {
+      const batch = uncachedIds.slice(i, i + batchSize);
+      const batchNum = Math.floor(i / batchSize) + 1;
+      const totalBatches = Math.ceil(uncachedIds.length / batchSize);
+      
+      console.log(`[CnftService] Processing batch ${batchNum}/${totalBatches}`);
+      
+      // Fetch batch concurrently (within rate limits)
+      // Use skipCache=true since we already checked the cache above
+      const batchPromises = batch.map(async (assetId) => {
+        try {
+          const proof = await this.getCnftProof(assetId, true); // Skip cache - already checked
+          return { assetId, proof, error: null };
+        } catch (error: any) {
+          return { assetId, proof: null, error: error.message };
+        }
+      });
+      
+      const batchResults = await Promise.all(batchPromises);
+      
+      for (const result of batchResults) {
+        if (result.proof) {
+          results.set(result.assetId, result.proof);
+        } else {
+          errors.push({ assetId: result.assetId, error: result.error! });
+        }
+      }
+      
+      // Delay between batches (except for last batch)
+      if (i + batchSize < uncachedIds.length) {
+        await new Promise(r => setTimeout(r, this.config.batchDelayMs));
+      }
+    }
+    
+    if (errors.length > 0) {
+      console.warn(`[CnftService] ${errors.length} proof fetch failures:`, errors);
+    }
+    
+    console.log(`[CnftService] Batch complete: ${results.size} proofs fetched`);
+    return results;
   }
   
   /**
@@ -113,32 +317,72 @@ export class CnftService {
   /**
    * Fetch Merkle proof for cNFT transfer
    */
-  async getCnftProof(assetId: string): Promise<DasProofResponse> {
+  async getCnftProof(assetId: string, skipCache = false): Promise<DasProofResponse> {
     console.log('[CnftService] Fetching Merkle proof for:', assetId);
     
+    // Check cache first (unless skip requested)
+    if (!skipCache) {
+      const cached = this.getCachedProof(assetId);
+      if (cached) {
+        console.log('[CnftService] Using cached proof for:', assetId.substring(0, 12) + '...');
+        this.metrics.proofCacheHits++;
+        return cached;
+      }
+      this.metrics.proofCacheMisses++;
+    }
+    
+    const startTime = Date.now();
+    this.metrics.totalProofFetches++;
+    
     try {
-      const response = await this.makeDasRequest('getAssetProof', {
-        id: assetId,
+      // Use rate limiting for the actual fetch
+      const proofData = await this.withRateLimit(async () => {
+        const response = await this.makeDasRequest('getAssetProof', {
+          id: assetId,
+        });
+        
+        // Handle both wrapped and direct responses
+        const data = response.result || response;
+        
+        if (!data || !data.proof) {
+          throw new Error('No proof data returned from DAS API');
+        }
+        
+        return data as DasProofResponse;
       });
       
-      // Handle both wrapped and direct responses
-      const proofData = response.result || response;
-      
-      if (!proofData || !proofData.proof) {
-        throw new Error('No proof data returned from DAS API');
+      // Track fetch time
+      const fetchTime = Date.now() - startTime;
+      this.metrics.lastFetchTimes.push(fetchTime);
+      if (this.metrics.lastFetchTimes.length > 100) {
+        this.metrics.lastFetchTimes.shift();
       }
+      this.metrics.avgFetchTimeMs = 
+        this.metrics.lastFetchTimes.reduce((a, b) => a + b, 0) / this.metrics.lastFetchTimes.length;
       
       console.log('[CnftService] Merkle proof retrieved:', {
         treeId: proofData.tree_id,
         nodeIndex: proofData.node_index,
         proofLength: proofData.proof.length,
+        fetchTimeMs: fetchTime,
       });
       
-      return proofData as DasProofResponse;
+      // Cache the result
+      this.cacheProof(assetId, proofData);
+      
+      return proofData;
     } catch (error: any) {
       console.error('[CnftService] Failed to fetch Merkle proof:', error.message);
       throw new Error(`Failed to fetch Merkle proof for ${assetId}: ${error.message}`);
     }
+  }
+  
+  /**
+   * Get a fresh proof, bypassing cache
+   * Use this when you need to ensure proof is absolutely current
+   */
+  async getFreshCnftProof(assetId: string): Promise<DasProofResponse> {
+    return this.getCnftProof(assetId, true);
   }
   
   /**

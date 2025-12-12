@@ -823,6 +823,184 @@ router.post(
 );
 
 /**
+ * GET /api/offers/:id/bundle-status
+ * Get the bundle execution status for a bulk swap offer
+ * Returns bundle status, transaction signatures, and retry info
+ */
+router.get(
+  '/api/offers/:id/bundle-status',
+  standardRateLimiter,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const offerId = parseInt(req.params.id, 10);
+
+      if (isNaN(offerId)) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation Error',
+          message: 'Invalid offer ID',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Fetch offer with bundle info
+      const offer = await prisma.swapOffer.findUnique({
+        where: { id: offerId },
+        select: {
+          id: true,
+          status: true,
+          bundleStatus: true,
+          isBulkSwap: true,
+          transactionCount: true,
+          transactionSignature: true,
+          createdAt: true,
+          updatedAt: true,
+          expiresAt: true,
+        },
+      });
+
+      if (!offer) {
+        res.status(404).json({
+          success: false,
+          error: 'Not Found',
+          message: `Offer ${offerId} not found`,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Parse transaction signature(s) if stored
+      let signatures: string[] = [];
+      if (offer.transactionSignature) {
+        try {
+          // Try parsing as JSON array first
+          signatures = JSON.parse(offer.transactionSignature);
+        } catch {
+          // Single signature string
+          signatures = [offer.transactionSignature];
+        }
+      }
+
+      res.status(200).json({
+        success: true,
+        data: {
+          offerId: offer.id,
+          offerStatus: offer.status,
+          isBulkSwap: offer.isBulkSwap || false,
+          bundle: {
+            status: offer.bundleStatus || 'N/A',
+            transactionCount: offer.transactionCount || 1,
+            signatures,
+          },
+          timing: {
+            created: offer.createdAt?.toISOString(),
+            updated: offer.updatedAt?.toISOString(),
+            expires: offer.expiresAt?.toISOString(),
+          },
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Error fetching bundle status:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Internal Server Error',
+        message: error instanceof Error ? error.message : 'Failed to fetch bundle status',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * POST /api/offers/:id/retry-bundle
+ * Retry a failed bundle execution with fresh proofs
+ * Only works for offers with bundleStatus = 'Failed' or 'Timeout'
+ */
+router.post(
+  '/api/offers/:id/retry-bundle',
+  strictRateLimiter,
+  requiredIdempotency,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const offerId = parseInt(req.params.id, 10);
+
+      if (isNaN(offerId)) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation Error',
+          message: 'Invalid offer ID',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Fetch offer
+      const offer = await prisma.swapOffer.findUnique({
+        where: { id: offerId },
+      });
+
+      if (!offer) {
+        res.status(404).json({
+          success: false,
+          error: 'Not Found',
+          message: `Offer ${offerId} not found`,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Check if bundle can be retried
+      const retryableStatuses = ['Failed', 'Timeout'];
+      if (!retryableStatuses.includes(offer.bundleStatus || '')) {
+        res.status(400).json({
+          success: false,
+          error: 'Invalid State',
+          message: `Cannot retry bundle with status '${offer.bundleStatus}'. Only 'Failed' or 'Timeout' bundles can be retried.`,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Rebuild transaction with fresh proofs
+      console.log(`[Bundle Retry] Rebuilding offer ${offerId} with fresh proofs`);
+      const result = await offerManager.rebuildTransaction(offerId);
+
+      // Update bundle status to pending
+      await prisma.swapOffer.update({
+        where: { id: offerId },
+        data: {
+          bundleStatus: 'Pending',
+        },
+      });
+
+      res.status(200).json({
+        success: true,
+        message: 'Bundle transaction rebuilt with fresh proofs. Ready for re-execution.',
+        data: {
+          offerId: offerId,
+          newBundleStatus: 'Pending',
+          transaction: {
+            serialized: result.serializedTransaction,
+            nonceAccount: result.offer.nonceAccount,
+          },
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Error retrying bundle:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Internal Server Error',
+        message: error instanceof Error ? error.message : 'Failed to retry bundle',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
  * PUT /api/offers/:id
  * Update an existing offer (change SOL amounts or assets)
  * Only the maker can update, and only while offer is ACTIVE
@@ -1275,6 +1453,97 @@ router.post(
         success: false,
         error: 'Internal Server Error',
         message: errorMessage,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/offers/metrics/bundles
+ * Get bundle execution metrics for monitoring
+ * Returns success rates, average times, and recent failures
+ */
+router.get(
+  '/api/offers/metrics/bundles',
+  standardRateLimiter,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      // Get bundle statistics from last 24 hours
+      const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      
+      const bundleStats = await prisma.swapOffer.groupBy({
+        by: ['bundleStatus'],
+        where: {
+          isBulkSwap: true,
+          createdAt: { gte: since },
+        },
+        _count: true,
+      });
+
+      const totalBundles = bundleStats.reduce((sum, s) => sum + s._count, 0);
+      const landedBundles = bundleStats.find(s => s.bundleStatus === 'Landed')?._count || 0;
+      const failedBundles = bundleStats.find(s => s.bundleStatus === 'Failed')?._count || 0;
+      const timeoutBundles = bundleStats.find(s => s.bundleStatus === 'Timeout')?._count || 0;
+      const pendingBundles = bundleStats.find(s => s.bundleStatus === 'Pending')?._count || 0;
+
+      // Get recent failures for debugging
+      const recentFailures = await prisma.swapOffer.findMany({
+        where: {
+          isBulkSwap: true,
+          bundleStatus: { in: ['Failed', 'Timeout'] },
+          createdAt: { gte: since },
+        },
+        select: {
+          id: true,
+          bundleStatus: true,
+          createdAt: true,
+          makerWallet: true,
+          takerWallet: true,
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+      });
+
+      // Calculate success rate
+      const completedBundles = landedBundles + failedBundles + timeoutBundles;
+      const successRate = completedBundles > 0 
+        ? ((landedBundles / completedBundles) * 100).toFixed(1)
+        : 'N/A';
+
+      res.status(200).json({
+        success: true,
+        data: {
+          period: '24h',
+          totals: {
+            total: totalBundles,
+            landed: landedBundles,
+            failed: failedBundles,
+            timeout: timeoutBundles,
+            pending: pendingBundles,
+          },
+          rates: {
+            successRate: `${successRate}%`,
+            failureRate: completedBundles > 0 
+              ? `${(((failedBundles + timeoutBundles) / completedBundles) * 100).toFixed(1)}%`
+              : 'N/A',
+          },
+        recentFailures: recentFailures.map(f => ({
+          offerId: f.id,
+          status: f.bundleStatus,
+          createdAt: f.createdAt?.toISOString(),
+          maker: f.makerWallet ? f.makerWallet.substring(0, 8) + '...' : 'N/A',
+          taker: f.takerWallet ? f.takerWallet.substring(0, 8) + '...' : 'N/A',
+        })),
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Error fetching bundle metrics:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Internal Server Error',
+        message: error instanceof Error ? error.message : 'Failed to fetch metrics',
         timestamp: new Date().toISOString(),
       });
     }
