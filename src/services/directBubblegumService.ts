@@ -101,7 +101,14 @@ export class DirectBubblegumService {
       proof,
     } = transferParams;
 
+    // Convert proof nodes to PublicKey array for remaining accounts
+    // Do this FIRST so we know if it's a full canopy tree
+    const proofNodesRaw = proof.proof || [];
+    const isFullCanopyTree = proofNodesRaw.length === 0;
+
     // CRITICAL: Validate proof root against on-chain root to detect stale DAS data
+    // For partial canopy trees, this validation is MANDATORY (stale proofs cause failures)
+    // For full canopy trees, validation is best-effort (all proof nodes are on-chain)
     try {
       const treeAccount = await ConcurrentMerkleTreeAccount.fromAccountAddress(
         this.connection,
@@ -116,6 +123,7 @@ export class DirectBubblegumService {
           proofRoot: proofRoot.toString('hex'),
           treePubkey: treeAddress.toBase58(),
           currentSeq: treeAccount.getCurrentSeq().toString(),
+          isFullCanopyTree,
         });
         throw new Error(
           `Stale Merkle proof detected. DAS root ${proofRoot.toString('hex').slice(0, 16)}... ` +
@@ -124,16 +132,31 @@ export class DirectBubblegumService {
       }
       console.log('[DirectBubblegumService] ✅ Proof root validated against on-chain');
     } catch (validationError: any) {
+      // Always re-throw stale proof errors
       if (validationError.message.includes('Stale Merkle proof')) {
         throw validationError;
       }
-      console.warn('[DirectBubblegumService] Could not validate proof root:', validationError.message);
+      
+      // For partial canopy trees, validation failure is critical - we can't proceed safely
+      // because stale external proof nodes would cause cryptic Bubblegum failures
+      if (!isFullCanopyTree) {
+        console.error('[DirectBubblegumService] ❌ Proof validation failed for partial canopy tree');
+        throw new Error(
+          `Cannot validate proof for partial canopy tree: ${validationError.message}. ` +
+          `Refusing to proceed as stale proofs would cause transaction failure.`
+        );
+      }
+      
+      // For full canopy trees (no external proof nodes), validation failure is non-critical
+      // because all proof nodes are stored on-chain - the Bubblegum program will validate
+      console.warn(
+        '[DirectBubblegumService] ⚠️ Could not validate proof root (full canopy tree, continuing):',
+        validationError.message
+      );
     }
 
     // Convert proof nodes to PublicKey array for remaining accounts
     // Each proof node is a 32-byte array
-    // The proof.proof field is optional (empty for full canopy trees)
-    const proofNodesRaw = proof.proof || [];
     const proofNodes: PublicKey[] = proofNodesRaw.map((node) => {
       // Handle both number[] and Uint8Array types
       const nodeBuffer = node instanceof Uint8Array ? node : Buffer.from(node);
