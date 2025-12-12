@@ -1,53 +1,60 @@
 {
   "sharedTree": {
+    "address": "9UDL6tCt8MHDMxYGWCiUHvdjPtyjYBXFkaEb6S4dz39W",
+    "authority": "EoKvzhiYgpRopADBjAPkuXsbCed9y8DWEg9F2Xhns24Z",
+    "maxDepth": 5,
+    "maxBufferSize": 8,
+    "canopyDepth": 5,
+    "isFullCanopy": true,
+    "proofNodesRequired": 0,
+    "createdAt": "2025-06-12T00:00:00.000Z",
+    "note": "Full canopy tree - no external proof nodes needed, eliminates stale proof issues"
+  },
+  "_legacyTree": {
     "address": "Ev6gUCjpQCT3VCpfMHyEXkdyqXJPGPVxempiWKUsza7d",
-    "authority": "6CGpj7nR1UZJbUTjsZbrf67qEwYq6XEq6btikzJPZGA8",
-    "maxDepth": 14,
-    "maxBufferSize": 64,
-    "canopyDepth": 11,
-    "createdAt": "2025-12-01T02:29:15.064Z"
+    "note": "DEPRECATED - had stale proof issues due to canopyDepth < maxDepth"
   },
   "testCnfts": [
     {
-      "assetId": "9krakwJJwGHSPwgrC9mJbnazM7hhZomoeGQrn2xcVAT7",
+      "assetId": "7yh4azbwUzRnVAhS83H7GC3dgjLYqrYCKAZfJDxcFKrG",
       "leafIndex": 0,
       "owner": "AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z",
-      "name": "Staging Test cNFT #1",
-      "symbol": "STCNFT",
-      "uri": "https://shdw-drive.genesysgo.net/7nPP797RprCMJaSXsyoTiFvMZVQ6y1dUgobvczdWGd35/test-cnft-1.json"
+      "name": "Full Canopy Test cNFT #1",
+      "symbol": "FCTEST",
+      "uri": "https://arweave.net/full-canopy-test-1"
     },
     {
-      "assetId": "4XC8BoMFu8W2HAp927duwNLBgUXWytkwZVzjpaANRgFB",
+      "assetId": "BnN52cpzfFRLMX6NrZQj1ohUDSsVWGvm3frw1ryjncGi",
       "leafIndex": 1,
       "owner": "AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z",
-      "name": "Staging Test cNFT #2",
-      "symbol": "STCNFT",
-      "uri": "https://shdw-drive.genesysgo.net/7nPP797RprCMJaSXsyoTiFvMZVQ6y1dUgobvczdWGd35/test-cnft-2.json"
+      "name": "Full Canopy Test cNFT #2",
+      "symbol": "FCTEST",
+      "uri": "https://arweave.net/full-canopy-test-2"
     },
     {
-      "assetId": "Bb2ivQExHd77uu1aBChve13xfTGDHQ7xgF1GZfN9R26j",
+      "assetId": "CtpVpXRLLgVy6YVVWaapr9qGu7N83Nb61rt2ukWnN8PF",
       "leafIndex": 2,
       "owner": "AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z",
-      "name": "Staging Test cNFT #3",
-      "symbol": "STCNFT",
-      "uri": "https://shdw-drive.genesysgo.net/7nPP797RprCMJaSXsyoTiFvMZVQ6y1dUgobvczdWGd35/test-cnft-3.json"
+      "name": "Full Canopy Test cNFT #3",
+      "symbol": "FCTEST",
+      "uri": "https://arweave.net/full-canopy-test-3"
     },
     {
-      "assetId": "4xS6vW7h7GyiBogkTcmoZ8Ja7upPMAUM8xo96EZwY4hc",
+      "assetId": "J29niSGsHCxcy8kTmhoZxMQ6cx9N7n9Zn9aqnsoJnTZV",
       "leafIndex": 3,
       "owner": "AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z",
-      "name": "Staging Test cNFT #4",
-      "symbol": "STCNFT",
-      "uri": "https://shdw-drive.genesysgo.net/7nPP797RprCMJaSXsyoTiFvMZVQ6y1dUgobvczdWGd35/test-cnft-4.json"
+      "name": "Full Canopy Test cNFT #4",
+      "symbol": "FCTEST",
+      "uri": "https://arweave.net/full-canopy-test-4"
     },
     {
-      "assetId": "57rrXoyV9ge9vDg3wavSnu31ViUh5PLndmBtNX8c1Nha",
+      "assetId": "9BeZcqraPx2S2YHyhFQXwuoa4rHwkv7hXm9vMnWiqbQg",
       "leafIndex": 4,
       "owner": "AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z",
-      "name": "Staging Test cNFT #5",
-      "symbol": "STCNFT",
-      "uri": "https://shdw-drive.genesysgo.net/7nPP797RprCMJaSXsyoTiFvMZVQ6y1dUgobvczdWGd35/test-cnft-5.json"
+      "name": "Full Canopy Test cNFT #5",
+      "symbol": "FCTEST",
+      "uri": "https://arweave.net/full-canopy-test-5"
     }
   ],
-  "lastUpdated": "2025-12-01T02:29:15.065Z"
+  "lastUpdated": "2025-12-12T03:15:04.601Z"
 }

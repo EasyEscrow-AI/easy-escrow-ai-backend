@@ -101,7 +101,8 @@ export class DirectBubblegumService {
       proof,
     } = transferParams;
 
-    // Convert proof nodes FIRST to determine if it's a full canopy tree
+    // Convert proof nodes to PublicKey array for remaining accounts
+    // Do this FIRST so we know if it's a full canopy tree
     const proofNodesRaw = proof.proof || [];
     const isFullCanopyTree = proofNodesRaw.length === 0;
 
@@ -155,6 +156,7 @@ export class DirectBubblegumService {
     }
 
     // Convert proof nodes to PublicKey array for remaining accounts
+    // Each proof node is a 32-byte array
     const proofNodes: PublicKey[] = proofNodesRaw.map((node) => {
       // Handle both number[] and Uint8Array types
       const nodeBuffer = node instanceof Uint8Array ? node : Buffer.from(node);
