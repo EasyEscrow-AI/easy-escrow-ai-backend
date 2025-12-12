@@ -354,10 +354,17 @@ export class AtomicSwapApiClient {
         signatures.push(signature);
         console.log(`  ✅ Transaction ${tx.index + 1} confirmed: ${signature}`);
         
-        // Small delay between transactions to avoid rate limiting
+        // Minimal delay between transactions - cNFT proofs can become stale quickly
+        // For cNFT transfers, we want to send as fast as possible
         if (tx.index < bulkSwapData.transactions.length - 1) {
-          console.log('  Waiting 1s before next transaction...');
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          const isCnftNext = bulkSwapData.transactions[tx.index + 1]?.purpose?.toLowerCase().includes('cnft');
+          if (isCnftNext) {
+            console.log('  Sending next cNFT tx immediately (proof freshness)...');
+            // No delay for cNFT transactions - proof freshness is critical
+          } else {
+            console.log('  Waiting 500ms before next transaction...');
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
         }
         
       } catch (error: any) {
