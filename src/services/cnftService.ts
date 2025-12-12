@@ -244,9 +244,10 @@ export class CnftService {
       console.log(`[CnftService] Processing batch ${batchNum}/${totalBatches}`);
       
       // Fetch batch concurrently (within rate limits)
+      // Use skipCache=true since we already checked the cache above
       const batchPromises = batch.map(async (assetId) => {
         try {
-          const proof = await this.getCnftProof(assetId);
+          const proof = await this.getCnftProof(assetId, true); // Skip cache - already checked
           return { assetId, proof, error: null };
         } catch (error: any) {
           return { assetId, proof: null, error: error.message };

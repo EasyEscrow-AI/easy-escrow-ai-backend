@@ -1528,13 +1528,13 @@ router.get(
               ? `${(((failedBundles + timeoutBundles) / completedBundles) * 100).toFixed(1)}%`
               : 'N/A',
           },
-          recentFailures: recentFailures.map(f => ({
-            offerId: f.id,
-            status: f.bundleStatus,
-            createdAt: f.createdAt?.toISOString(),
-            maker: f.makerWallet?.substring(0, 8) + '...',
-            taker: f.takerWallet?.substring(0, 8) + '...',
-          })),
+        recentFailures: recentFailures.map(f => ({
+          offerId: f.id,
+          status: f.bundleStatus,
+          createdAt: f.createdAt?.toISOString(),
+          maker: f.makerWallet ? f.makerWallet.substring(0, 8) + '...' : 'N/A',
+          taker: f.takerWallet ? f.takerWallet.substring(0, 8) + '...' : 'N/A',
+        })),
         },
         timestamp: new Date().toISOString(),
       });
