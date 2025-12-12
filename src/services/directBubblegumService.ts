@@ -101,6 +101,35 @@ export class DirectBubblegumService {
       proof,
     } = transferParams;
 
+    // CRITICAL: Validate proof root against on-chain root to detect stale DAS data
+    try {
+      const treeAccount = await ConcurrentMerkleTreeAccount.fromAccountAddress(
+        this.connection,
+        treeAddress
+      );
+      const onChainRoot = Buffer.from(treeAccount.getCurrentRoot());
+      const proofRoot = Buffer.from(proof.root);
+      
+      if (!onChainRoot.equals(proofRoot)) {
+        console.warn('[DirectBubblegumService] ⚠️ STALE PROOF DETECTED:', {
+          onChainRoot: onChainRoot.toString('hex'),
+          proofRoot: proofRoot.toString('hex'),
+          treePubkey: treeAddress.toBase58(),
+          currentSeq: treeAccount.getCurrentSeq().toString(),
+        });
+        throw new Error(
+          `Stale Merkle proof detected. DAS root ${proofRoot.toString('hex').slice(0, 16)}... ` +
+          `does not match on-chain root ${onChainRoot.toString('hex').slice(0, 16)}...`
+        );
+      }
+      console.log('[DirectBubblegumService] ✅ Proof root validated against on-chain');
+    } catch (validationError: any) {
+      if (validationError.message.includes('Stale Merkle proof')) {
+        throw validationError;
+      }
+      console.warn('[DirectBubblegumService] Could not validate proof root:', validationError.message);
+    }
+
     // Convert proof nodes to PublicKey array for remaining accounts
     // Do this FIRST so we know if it's a full canopy tree
     const proofNodesRaw = proof.proof || [];
