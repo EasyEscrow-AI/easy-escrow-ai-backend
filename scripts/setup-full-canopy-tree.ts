@@ -156,7 +156,7 @@ async function main() {
     throw error;
   }
 
-  // Save tree info
+  // Save tree info (NOTE: Do NOT save private key - tree is immutable once created)
   const treeInfo = {
     address: treeKeypair.publicKey.toBase58(),
     authority: treeAuthority.toBase58(),
@@ -166,7 +166,7 @@ async function main() {
     isFullCanopy: true,
     proofNodesRequired: 0,
     createdAt: new Date().toISOString(),
-    privateKey: Array.from(treeKeypair.secretKey),
+    note: 'Tree deployed on devnet. Private key not saved - tree account is immutable.',
   };
 
   const outputPath = path.join(__dirname, '../.taskmaster/staging-full-canopy-tree.json');
