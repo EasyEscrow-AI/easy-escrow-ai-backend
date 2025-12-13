@@ -153,16 +153,16 @@ function getCnftAnimalImage(assetId) {
     return imageUrl;
 }
 
-// Get image for any NFT (uses animal API for cNFTs without images)
+// Get image for any NFT (uses animal API for cNFTs)
 function getNftImage(nft) {
-    // If NFT already has an image, use it
-    if (nft.image && !nft.image.includes('No Image')) {
-        return nft.image;
-    }
-    
-    // For cNFTs without images, get a persistent animal image
+    // For cNFTs, ALWAYS use animal images (metadata URIs are often fake/broken in test env)
     if (nft.isCompressed && nft.mint) {
         return getCnftAnimalImage(nft.mint);
+    }
+    
+    // For regular NFTs, use their metadata image if available
+    if (nft.image && !nft.image.includes('No Image')) {
+        return nft.image;
     }
     
     // Fallback to placeholder
