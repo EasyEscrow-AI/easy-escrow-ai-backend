@@ -384,6 +384,12 @@ export class OfferManager {
       
       // 6. Extract SOL amounts from offer
       const offeredAssets = offer.offeredAssets as Array<{ type: AssetType; identifier: string }>;
+      const requestedAssets = offer.requestedAssets as Array<{ type: AssetType; identifier: string }>;
+      
+      // Debug: log the raw assets from database
+      console.log('[OfferManager] Raw offeredAssets from DB:', JSON.stringify(offer.offeredAssets));
+      console.log('[OfferManager] Raw requestedAssets from DB:', JSON.stringify(offer.requestedAssets));
+      
       const offeredSol = offer.offeredSolLamports ? BigInt(offer.offeredSolLamports) : BigInt(0);
       const requestedSol = offer.requestedSolLamports ? BigInt(offer.requestedSolLamports) : BigInt(0);
       
