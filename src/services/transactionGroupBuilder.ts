@@ -239,28 +239,56 @@ export class TransactionGroupBuilder {
         transactionCount = 1;
         reason = 'Forced single transaction';
       }
-    } else if (totalAllNfts <= 2 && totalCnfts === 0) {
-      // Simple swap: 1-2 SPL/Core NFTs, no cNFTs - use escrow program
-      strategy = SwapStrategy.SINGLE_TRANSACTION;
-      transactionCount = 1;
-      reason = 'Simple swap (1-2 NFTs) - standard single transaction via escrow';
-    } else if (totalCnfts >= 1 && totalNfts === 0 && totalCoreNfts === 0) {
-      // Pure cNFT swap - use direct Bubblegum bundle
+    } else if (totalCnfts > 0) {
+      // ANY swap with cNFTs needs bundle (proof nodes don't fit in single tx)
+      // This handles mixed cases like 1 cNFT + 1 SPL NFT
       const cnftsPerTx = MAX_CNFTS_PER_TRANSACTION_NO_PROOFS;
-      const cnftTxCount = Math.ceil(totalCnfts / cnftsPerTx);
-      const needsSolTx = hasSolTransfer || inputs.platformFeeLamports > BigInt(0);
-      transactionCount = cnftTxCount + (needsSolTx ? 1 : 0);
+      const splPerTx = MAX_SPL_NFTS_PER_TRANSACTION;
+      const corePerTx = MAX_CORE_NFTS_PER_TRANSACTION;
       
-      console.log(`[TransactionGroupBuilder] cNFT batching: ${totalCnfts} cNFTs ÷ ${cnftsPerTx}/tx = ${cnftTxCount} cNFT txs + ${needsSolTx ? 1 : 0} SOL tx = ${transactionCount} total`);
+      const cnftTxCount = Math.ceil(totalCnfts / cnftsPerTx);
+      const splTxCount = totalNfts > 0 ? Math.ceil(totalNfts / splPerTx) : 0;
+      const coreTxCount = totalCoreNfts > 0 ? Math.ceil(totalCoreNfts / corePerTx) : 0;
+      const needsSolTx = hasSolTransfer || inputs.platformFeeLamports > BigInt(0);
+      
+      transactionCount = cnftTxCount + splTxCount + coreTxCount + (needsSolTx ? 1 : 0);
+      
+      console.log(`[TransactionGroupBuilder] cNFT swap batching: cNFT txs=${cnftTxCount}, SPL txs=${splTxCount}, Core txs=${coreTxCount}, SOL tx=${needsSolTx ? 1 : 0}, total=${transactionCount}`);
       
       if (transactionCount > MAX_TRANSACTIONS_PER_BUNDLE) {
         strategy = SwapStrategy.CANNOT_FIT;
-        reason = `${totalCnfts} cNFTs would require ${transactionCount} transactions, exceeding Jito's ${MAX_TRANSACTIONS_PER_BUNDLE} limit`;
-      } else {
+        reason = `Swap would require ${transactionCount} transactions, exceeding Jito's ${MAX_TRANSACTIONS_PER_BUNDLE} limit`;
+      } else if (totalNfts === 0 && totalCoreNfts === 0) {
         strategy = SwapStrategy.DIRECT_BUBBLEGUM_BUNDLE;
         reason = `${totalCnfts} cNFT(s) using direct Bubblegum bundle (${transactionCount} transactions)`;
+      } else {
+        strategy = SwapStrategy.MIXED_NFT_BUNDLE;
+        reason = `Mixed swap with cNFTs: ${totalCnfts} cNFTs + ${totalNfts} SPL + ${totalCoreNfts} Core (${transactionCount} transactions)`;
       }
-    } else if (totalNfts >= JITO_BUNDLE_THRESHOLD && totalCnfts === 0 && totalCoreNfts === 0) {
+    } else if (totalAllNfts <= 2) {
+      // Simple swap: 1-2 SPL/Core NFTs total, no cNFTs
+      // BUT escrow program only supports 1 NFT per side!
+      const makerNftCount = inputs.makerAssets.filter(a => 
+        a.type === AssetType.NFT || a.type === AssetType.CORE_NFT ||
+        String(a.type).toLowerCase() === 'nft' || String(a.type).toLowerCase() === 'core_nft'
+      ).length;
+      const takerNftCount = inputs.takerAssets.filter(a => 
+        a.type === AssetType.NFT || a.type === AssetType.CORE_NFT ||
+        String(a.type).toLowerCase() === 'nft' || String(a.type).toLowerCase() === 'core_nft'
+      ).length;
+      
+      if (makerNftCount <= 1 && takerNftCount <= 1) {
+        // Escrow program can handle this
+        strategy = SwapStrategy.SINGLE_TRANSACTION;
+        transactionCount = 1;
+        reason = 'Simple swap (1 NFT per side max) - standard single transaction via escrow';
+      } else {
+        // 2 NFTs on same side - need bundle to bypass escrow limit
+        strategy = SwapStrategy.DIRECT_NFT_BUNDLE;
+        transactionCount = 2; // 1 SOL tx + 1 NFT tx
+        reason = `${totalAllNfts} NFTs with ${Math.max(makerNftCount, takerNftCount)} on one side - using direct bundle`;
+      }
+    } else if (totalNfts >= JITO_BUNDLE_THRESHOLD && totalCoreNfts === 0) {
       // Bulk SPL NFT swap - use direct SPL token bundle
       const splPerTx = MAX_SPL_NFTS_PER_TRANSACTION;
       const splTxCount = Math.ceil(totalNfts / splPerTx);
@@ -276,7 +304,7 @@ export class TransactionGroupBuilder {
         strategy = SwapStrategy.DIRECT_NFT_BUNDLE;
         reason = `${totalNfts} SPL NFT(s) using direct token bundle (${transactionCount} transactions)`;
       }
-    } else if (totalCoreNfts >= JITO_BUNDLE_THRESHOLD && totalCnfts === 0 && totalNfts === 0) {
+    } else if (totalCoreNfts >= JITO_BUNDLE_THRESHOLD && totalNfts === 0) {
       // Bulk Core NFT swap - use direct Core NFT bundle
       const corePerTx = MAX_CORE_NFTS_PER_TRANSACTION;
       const coreTxCount = Math.ceil(totalCoreNfts / corePerTx);

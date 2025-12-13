@@ -72,6 +72,7 @@ export class DirectCoreNftService {
    * - No token accounts needed
    * - Ownership is tracked directly on the asset account
    * - Transfer just updates the owner field on the asset
+   * - Collection is REQUIRED for collection NFTs or transfer fails
    */
   async buildTransferInstruction(
     params: DirectCoreNftTransferParams
@@ -83,6 +84,20 @@ export class DirectCoreNftService {
     });
 
     const assetPubkey = new PublicKey(params.assetAddress);
+    
+    // Fetch asset data to get collection (required for collection NFTs)
+    let collection: PublicKey | undefined = params.collection;
+    if (!collection) {
+      try {
+        const assetData = await this.fetchAssetData(params.assetAddress);
+        if (assetData.collection) {
+          collection = new PublicKey(assetData.collection);
+          console.log('[DirectCoreNftService] Fetched collection:', collection.toBase58());
+        }
+      } catch (error) {
+        console.warn('[DirectCoreNftService] Could not fetch collection, proceeding without:', error);
+      }
+    }
 
     // Build the transfer instruction data
     // Transfer instruction: discriminator (8 bytes) + compression_proof (optional, None = 1 byte)
@@ -108,9 +123,10 @@ export class DirectCoreNftService {
       { pubkey: params.toWallet, isSigner: false, isWritable: false }, // new_owner
     ];
 
-    // Add collection if provided
-    if (params.collection) {
-      keys.splice(1, 0, { pubkey: params.collection, isSigner: false, isWritable: false });
+    // Add collection if available (required for collection NFTs)
+    if (collection) {
+      keys.splice(1, 0, { pubkey: collection, isSigner: false, isWritable: false });
+      console.log('[DirectCoreNftService] Added collection to transfer:', collection.toBase58());
     }
 
     // Add system program (usually needed for rent)
