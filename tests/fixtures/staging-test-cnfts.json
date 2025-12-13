@@ -16,45 +16,154 @@
   },
   "testCnfts": [
     {
-      "assetId": "7yh4azbwUzRnVAhS83H7GC3dgjLYqrYCKAZfJDxcFKrG",
-      "leafIndex": 0,
+      "assetId": "J29niSGsHCxcy8kTmhoZxMQ6cx9N7n9Zn9aqnsoJnTZV",
+      "leafIndex": 3,
       "owner": "AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z",
       "name": "Full Canopy Test cNFT #1",
       "symbol": "FCTEST",
       "uri": "https://arweave.net/full-canopy-test-1"
     },
     {
-      "assetId": "BnN52cpzfFRLMX6NrZQj1ohUDSsVWGvm3frw1ryjncGi",
-      "leafIndex": 1,
+      "assetId": "D1bKDW4qnCJpMzPQrdpAzeJdx41M9XgsjBemsZmZeyRb",
+      "leafIndex": 8,
       "owner": "AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z",
-      "name": "Full Canopy Test cNFT #2",
-      "symbol": "FCTEST",
-      "uri": "https://arweave.net/full-canopy-test-2"
+      "name": "Bulk Test cNFT Maker #6",
+      "symbol": "BULK",
+      "uri": "https://arweave.net/bulk-test-maker-6"
     },
     {
-      "assetId": "CtpVpXRLLgVy6YVVWaapr9qGu7N83Nb61rt2ukWnN8PF",
-      "leafIndex": 2,
+      "assetId": "CZcspL6b5zzd7MpZJKdNgmT1KtUWWTG3LZAv3DbvmEPZ",
+      "leafIndex": 9,
       "owner": "AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z",
-      "name": "Full Canopy Test cNFT #3",
-      "symbol": "FCTEST",
-      "uri": "https://arweave.net/full-canopy-test-3"
+      "name": "Bulk Test cNFT Maker #7",
+      "symbol": "BULK",
+      "uri": "https://arweave.net/bulk-test-maker-7"
     },
     {
-      "assetId": "J29niSGsHCxcy8kTmhoZxMQ6cx9N7n9Zn9aqnsoJnTZV",
-      "leafIndex": 3,
+      "assetId": "BYsXmEtExp4jHb11GEnrYtnDvmLq5HKVrCWRAPRZcsN9",
+      "leafIndex": 12,
+      "owner": "AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z",
+      "name": "Bulk Test cNFT Maker #10",
+      "symbol": "BULK",
+      "uri": "https://arweave.net/bulk-test-maker-10"
+    },
+    {
+      "assetId": "6PSbSJUq7tjGZULDPj7X2yLpqSuQJpssMb3132w5o12i",
+      "leafIndex": 7,
+      "owner": "AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z",
+      "name": "Full Canopy Test cNFT #5",
+      "symbol": "FCTEST",
+      "uri": "https://arweave.net/full-canopy-test-5"
+    },
+    {
+      "assetId": "5tSZ4dm8RBB3rKrm2DvBuh2cNATzZHrEshgtQzR2oDHS",
+      "leafIndex": 6,
       "owner": "AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z",
       "name": "Full Canopy Test cNFT #4",
       "symbol": "FCTEST",
       "uri": "https://arweave.net/full-canopy-test-4"
     },
     {
+      "assetId": "4gMtZZ9MCWb7AeAx2WsQKibRuvh5XmLqdibTJnh1Y9Rv",
+      "leafIndex": 10,
+      "owner": "AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z",
+      "name": "Bulk Test cNFT Maker #8",
+      "symbol": "BULK",
+      "uri": "https://arweave.net/bulk-test-maker-8"
+    },
+    {
+      "assetId": "2vo42NZALwyK4jRCs2WmRXvft3UKiZgrBj1SBzmo3pd2",
+      "leafIndex": 11,
+      "owner": "AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z",
+      "name": "Bulk Test cNFT Maker #9",
+      "symbol": "BULK",
+      "uri": "https://arweave.net/bulk-test-maker-9"
+    },
+    {
+      "assetId": "2AhXjQWAmhci5oJS6AsNJxBDvPKwx29aBvmZG4zzPwG2",
+      "leafIndex": 5,
+      "owner": "AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z",
+      "name": "Full Canopy Test cNFT #3",
+      "symbol": "FCTEST",
+      "uri": "https://arweave.net/full-canopy-test-3"
+    },
+    {
+      "assetId": "FQ4vfVHrHRRVXPJ4XXyW45buYdPVoEcVdg1m8HicmMMQ",
+      "leafIndex": 13,
+      "owner": "5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4",
+      "name": "Bulk Test cNFT Taker #1",
+      "symbol": "BULK",
+      "uri": "https://arweave.net/bulk-test-taker-1"
+    },
+    {
+      "assetId": "CtpVpXRLLgVy6YVVWaapr9qGu7N83Nb61rt2ukWnN8PF",
+      "leafIndex": 2,
+      "owner": "5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4",
+      "name": "Full Canopy Test cNFT #1",
+      "symbol": "FCTEST",
+      "uri": "https://arweave.net/test-metadata"
+    },
+    {
+      "assetId": "BnN52cpzfFRLMX6NrZQj1ohUDSsVWGvm3frw1ryjncGi",
+      "leafIndex": 1,
+      "owner": "5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4",
+      "name": "Full Canopy Test cNFT #1",
+      "symbol": "FCTEST",
+      "uri": "https://arweave.net/test-metadata"
+    },
+    {
+      "assetId": "Am5iLH4riiLQjJGmBxnDaixK1btz5e5yZjwjg5x5NScS",
+      "leafIndex": 16,
+      "owner": "5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4",
+      "name": "Bulk Test cNFT Taker #4",
+      "symbol": "BULK",
+      "uri": "https://arweave.net/bulk-test-taker-4"
+    },
+    {
       "assetId": "9BeZcqraPx2S2YHyhFQXwuoa4rHwkv7hXm9vMnWiqbQg",
       "leafIndex": 4,
-      "owner": "AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z",
-      "name": "Full Canopy Test cNFT #5",
+      "owner": "5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4",
+      "name": "Full Canopy Test cNFT #2",
       "symbol": "FCTEST",
-      "uri": "https://arweave.net/full-canopy-test-5"
+      "uri": "https://arweave.net/full-canopy-test-2"
+    },
+    {
+      "assetId": "7yh4azbwUzRnVAhS83H7GC3dgjLYqrYCKAZfJDxcFKrG",
+      "leafIndex": 0,
+      "owner": "5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4",
+      "name": "Full Canopy Test cNFT #1",
+      "symbol": "FCTEST",
+      "uri": "https://arweave.net/test-metadata"
+    },
+    {
+      "assetId": "7RFheHpNLLJWKRiY6BSfLyiNweAgjuXFZj4C8HU4nPgn",
+      "leafIndex": 14,
+      "owner": "5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4",
+      "name": "Bulk Test cNFT Taker #2",
+      "symbol": "BULK",
+      "uri": "https://arweave.net/bulk-test-taker-2"
+    },
+    {
+      "assetId": "6QaL6CaoxACwvj5881r5VH7auy1xgCmV3FkeHzCYrxF5",
+      "leafIndex": 17,
+      "owner": "5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4",
+      "name": "Bulk Test cNFT Taker #5",
+      "symbol": "BULK",
+      "uri": "https://arweave.net/bulk-test-taker-5"
+    },
+    {
+      "assetId": "6Fjwbh6qyjr1Kt2qwozVt1h28JK5qCzMW46vxgxP48s5",
+      "leafIndex": 15,
+      "owner": "5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4",
+      "name": "Bulk Test cNFT Taker #3",
+      "symbol": "BULK",
+      "uri": "https://arweave.net/bulk-test-taker-3"
     }
   ],
-  "lastUpdated": "2025-12-12T03:15:04.601Z"
+  "lastUpdated": "2025-12-13T02:43:45.785Z",
+  "bulkTestInfo": {
+    "makerCnftCount": 9,
+    "takerCnftCount": 9,
+    "note": "For testing 10:1 bulk swaps"
+  }
 }

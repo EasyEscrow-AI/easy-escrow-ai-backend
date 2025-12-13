@@ -143,10 +143,15 @@ services:
         scope: RUN_TIME
       
       #
-      # Treasury PDA & Address Lookup Table for atomic swaps
-      # Treasury PDA: Collects platform fees from swaps
+      # Treasury Wallets & PDA for atomic swaps
+      # MAINNET_PROD_TREASURY_ADDRESS: Backend treasury wallet (receives fees)
+      # MAINNET_PROD_PDA_TREASURY_ADDRESS: On-chain PDA treasury (escrow program)
       # ALT: Reduces transaction size by ~450 bytes, enabling all cNFT swaps
       #
+      - key: MAINNET_PROD_TREASURY_ADDRESS
+        value: HMtLHzJZ5AUUaKjYBGZpB4RbjN4gYvcd69esNwtaUBFF
+        scope: RUN_TIME
+      
       - key: MAINNET_PROD_PDA_TREASURY_ADDRESS
         value: FPC3dgGpTNxHVRxV9sJKqz1hPWGf59Fn99bNSmwH1iVu
         scope: RUN_TIME
