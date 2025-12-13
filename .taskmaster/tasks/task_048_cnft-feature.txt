@@ -1,0 +1,77 @@
+# Task ID: 48
+# Title: Phase 3c - Enhanced Offer Management: Implement Cancel Swap Functionality
+# Status: pending
+# Dependencies: None
+# Priority: medium
+# Description: Implement comprehensive cancel swap functionality allowing makers and admins to cancel pending swap offers with proper validation, database updates, and resource cleanup.
+# Details:
+Implement the cancel swap functionality with the following comprehensive components:
+
+1. **Database Schema Updates**:
+   - Add cancelledAt DateTime? and cancelledBy String? fields to SwapOffer model in Prisma schema
+   - Create and run database migration to add new fields
+   - Update TypeScript types to reflect schema changes
+
+2. **Core Cancellation Logic in offerManager.ts**:
+   - Implement cancelOffer(offerId: string, cancelledBy: string, isAdmin: boolean) method
+   - Add validation to ensure only offers in 'open' or 'pending' status can be cancelled
+   - Implement permission checks: maker wallet address or admin authorization required
+   - Update offer status to 'cancelled' and set cancelledAt timestamp and cancelledBy fields
+   - Release any reserved nonce accounts associated with the offer back to the pool
+   - Handle cleanup of any pending transactions or escrow state
+
+3. **API Endpoint Implementation**:
+   - Create DELETE /api/offers/:id endpoint in src/routes/offers.routes.ts
+   - Alternative POST /api/offers/:id/cancel endpoint for better REST semantics
+   - Implement request validation middleware for offer ID format and existence
+   - Add authentication middleware to verify maker wallet signature or admin token
+   - Return appropriate HTTP status codes (200 for success, 403 for unauthorized, 404 for not found, 400 for invalid status)
+
+4. **Authorization and Security**:
+   - Implement maker wallet verification by comparing request signature with offer.makerWallet
+   - Add admin authorization check using existing admin authentication system
+   - Validate that cancellation requester matches either maker wallet or has admin privileges
+   - Add rate limiting to prevent abuse of cancellation endpoints
+
+5. **Resource Cleanup and State Management**:
+   - Release nonce accounts back to NoncePoolManager if they were reserved for the offer
+   - Clean up any temporary escrow accounts or pending transaction state
+   - Update related database records and maintain referential integrity
+   - Log cancellation events for audit trail and monitoring
+
+6. **Error Handling and Logging**:
+   - Implement comprehensive error handling for database failures, RPC errors, and validation failures
+   - Add structured logging for all cancellation attempts (successful and failed)
+   - Create specific error messages for different failure scenarios
+   - Ensure atomic operations where possible to prevent partial state updates
+
+# Test Strategy:
+1. **Core Functionality Testing**:
+   - Test cancelOffer() method with valid offers in 'open' and 'pending' status, verify status updates to 'cancelled'
+   - Test cancellation rejection for offers in 'completed', 'expired', or already 'cancelled' status
+   - Verify cancelledAt timestamp and cancelledBy fields are properly set in database
+   - Test nonce account release by checking NoncePoolManager pool size before and after cancellation
+
+2. **Authorization Testing**:
+   - Test maker wallet cancellation by creating offer with test wallet and cancelling with same wallet signature
+   - Test admin cancellation with valid admin token and verify admin bypass of maker wallet check
+   - Test unauthorized cancellation attempts (wrong wallet, no admin token) and verify 403 responses
+   - Verify cancellation fails when neither maker wallet nor admin authorization is provided
+
+3. **API Endpoint Testing**:
+   - Test DELETE /api/offers/:id with valid offer IDs and proper authentication
+   - Test POST /api/offers/:id/cancel alternative endpoint functionality
+   - Verify proper HTTP status codes for various scenarios (200, 403, 404, 400)
+   - Test malformed offer IDs and non-existent offers return appropriate errors
+
+4. **Edge Cases and Error Handling**:
+   - Test cancellation of offers with associated nonce accounts and verify proper cleanup
+   - Test database connection failures during cancellation and verify rollback behavior
+   - Test concurrent cancellation attempts on same offer and verify only one succeeds
+   - Verify cancellation works correctly for both regular and bulk swap offers
+
+5. **Integration Testing**:
+   - Test end-to-end cancellation flow from API request through database update and resource cleanup
+   - Verify cancelled offers no longer appear in active offer listings
+   - Test that cancelled offers cannot be accepted or modified further
+   - Confirm audit logging captures all cancellation events with proper details

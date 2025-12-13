@@ -11,6 +11,19 @@ import { NoncePoolManager } from './noncePoolManager';
 import { FeeCalculator, FeeBreakdown } from './feeCalculator';
 import { AssetValidator, AssetType, ValidationResult } from './assetValidator';
 import { TransactionBuilder, SwapAsset, TransactionBuildInputs } from './transactionBuilder';
+import { 
+  TransactionGroupBuilder, 
+  TransactionGroupResult, 
+  SwapStrategy,
+  createTransactionGroupBuilder 
+} from './transactionGroupBuilder';
+
+// Maximum assets allowed per side of a swap (maker's offered + taker's requested)
+// Bulk swaps with multiple assets are handled via transaction splitting (Task 44)
+const MAX_ASSETS_PER_SIDE = 10;
+
+// Minimum total assets required (at least one side must have assets or SOL)
+const MIN_TOTAL_VALUE = 1;
 
 export interface CreateOfferInput {
   /** Maker wallet address */
@@ -60,6 +73,7 @@ export class OfferManager {
   private feeCalculator: FeeCalculator;
   private assetValidator: AssetValidator;
   private transactionBuilder: TransactionBuilder;
+  private transactionGroupBuilder: TransactionGroupBuilder;
   private platformAuthority: Keypair;
   private treasuryPDA: PublicKey;
   private programId: PublicKey;
@@ -85,7 +99,17 @@ export class OfferManager {
     this.treasuryPDA = treasuryPDA;
     this.programId = programId;
     
+    // Initialize TransactionGroupBuilder for bulk swap support
+    // Uses the same ALT service as the TransactionBuilder
+    this.transactionGroupBuilder = createTransactionGroupBuilder(
+      connection,
+      platformAuthority,
+      treasuryPDA,
+      transactionBuilder.getALTService() || undefined
+    );
+    
     console.log('[OfferManager] Initialized');
+    console.log('[OfferManager] Bulk swap support: enabled');
   }
   
   /**
@@ -103,22 +127,50 @@ export class OfferManager {
       // 1. Ensure user exists
       await this.ensureUserExists(input.makerWallet);
       
-      // 2. Validate multi-asset restriction (on-chain program limitation)
-      // Current program only supports 1 NFT per side (or NFT ↔ SOL)
-      // Multi-asset support requires program upgrade (see transactionBuilder.ts:338-343)
-      if (input.offeredAssets.length > 1) {
+      // 2. Validate asset count limits
+      // Bulk swaps with multiple assets are supported - transaction splitting handles execution
+      if (input.offeredAssets.length > MAX_ASSETS_PER_SIDE) {
         throw new Error(
-          'Multi-asset swaps are not yet supported on-chain. ' +
-          'Currently only 1 NFT per side is allowed. ' +
-          'You can offer: 1 NFT, 1 NFT + SOL, or just SOL.'
+          `Too many offered assets (${input.offeredAssets.length}). ` +
+          `Maximum is ${MAX_ASSETS_PER_SIDE} assets per side.`
         );
       }
       
-      if (input.requestedAssets.length > 1) {
+      if (input.requestedAssets.length > MAX_ASSETS_PER_SIDE) {
         throw new Error(
-          'Multi-asset swaps are not yet supported on-chain. ' +
-          'Currently only 1 NFT per side is allowed. ' +
-          'You can request: 1 NFT, 1 NFT + SOL, or just SOL.'
+          `Too many requested assets (${input.requestedAssets.length}). ` +
+          `Maximum is ${MAX_ASSETS_PER_SIDE} assets per side.`
+        );
+      }
+      
+      // 2b. Validate minimum offer value (must offer something)
+      const hasOfferedAssets = input.offeredAssets.length > 0;
+      const hasOfferedSol = (input.offeredSol || BigInt(0)) > BigInt(0);
+      const hasRequestedAssets = input.requestedAssets.length > 0;
+      const hasRequestedSol = (input.requestedSol || BigInt(0)) > BigInt(0);
+      
+      if (!hasOfferedAssets && !hasOfferedSol) {
+        throw new Error('Maker must offer at least one asset or SOL');
+      }
+      
+      if (!hasRequestedAssets && !hasRequestedSol) {
+        throw new Error('Maker must request at least one asset or SOL');
+      }
+      
+      // 2c. Check for duplicate assets within each side
+      const offeredIdentifiers = input.offeredAssets.map(a => a.identifier.toLowerCase());
+      const offeredDuplicates = offeredIdentifiers.filter((id, idx) => offeredIdentifiers.indexOf(id) !== idx);
+      if (offeredDuplicates.length > 0) {
+        throw new Error(
+          `Duplicate assets in offered list: ${[...new Set(offeredDuplicates)].join(', ')}`
+        );
+      }
+      
+      const requestedIdentifiers = input.requestedAssets.map(a => a.identifier.toLowerCase());
+      const requestedDuplicates = requestedIdentifiers.filter((id, idx) => requestedIdentifiers.indexOf(id) !== idx);
+      if (requestedDuplicates.length > 0) {
+        throw new Error(
+          `Duplicate assets in requested list: ${[...new Set(requestedDuplicates)].join(', ')}`
         );
       }
       
@@ -277,6 +329,9 @@ export class OfferManager {
   async acceptOffer(offerId: number, takerWallet: string, authorizedAppId?: string): Promise<{ 
     serializedTransaction: string;
     offer: any; // SwapOffer from Prisma
+    // Bulk swap fields (populated for 3+ cNFT swaps)
+    isBulkSwap?: boolean;
+    transactionGroup?: TransactionGroupResult;
   }> {
     console.log('[OfferManager] Accepting offer:', { offerId, taker: takerWallet });
     
@@ -304,10 +359,19 @@ export class OfferManager {
         throw new Error('Offer has expired');
       }
       
-      // 3. Ensure taker exists
+      // 3. Check taker wallet restriction (private sales)
+      // If offer has a designated taker, only that wallet can accept
+      if (offer.takerWallet && offer.takerWallet !== takerWallet) {
+        throw new Error(
+          `This offer is a private sale for wallet ${offer.takerWallet}. ` +
+          `Only the designated taker can accept this offer.`
+        );
+      }
+      
+      // 4. Ensure taker exists
       await this.ensureUserExists(takerWallet);
       
-      // 4. Validate taker's asset ownership
+      // 5. Validate taker's asset ownership
       const requestedAssets = offer.requestedAssets as Array<{ type: AssetType; identifier: string }>;
       const takerAssetsValidation = await this.assetValidator.validateAssets(takerWallet, requestedAssets);
       
@@ -318,7 +382,7 @@ export class OfferManager {
         );
       }
       
-      // 5. Extract SOL amounts from offer
+      // 6. Extract SOL amounts from offer
       const offeredAssets = offer.offeredAssets as Array<{ type: AssetType; identifier: string }>;
       const offeredSol = offer.offeredSolLamports ? BigInt(offer.offeredSolLamports) : BigInt(0);
       const requestedSol = offer.requestedSolLamports ? BigInt(offer.requestedSolLamports) : BigInt(0);
@@ -336,7 +400,12 @@ export class OfferManager {
       // 7. Build transaction with retry logic for stale cNFT proofs
       // On devnet/staging, Merkle tree roots can change frequently if other cNFTs are modified
       // Retry with fresh proof if we detect a stale proof error
-      let buildResult: { serializedTransaction: string; nonceValue: string } | null = null;
+      let buildResult: { 
+        serializedTransaction: string; 
+        nonceValue: string;
+        isBulkSwap?: boolean;
+        transactionGroup?: TransactionGroupResult;
+      } | null = null;
       const maxAttempts = 2;
       
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -390,11 +459,17 @@ export class OfferManager {
         },
       });
       
-      console.log('[OfferManager] Offer accepted, transaction ready:', offerId);
+      console.log('[OfferManager] Offer accepted, transaction ready:', {
+        offerId,
+        isBulkSwap: buildResult.isBulkSwap || false,
+        transactionCount: buildResult.transactionGroup?.transactionCount || 1,
+      });
       
       return {
         serializedTransaction: buildResult.serializedTransaction,
         offer: updatedOffer,
+        isBulkSwap: buildResult.isBulkSwap,
+        transactionGroup: buildResult.transactionGroup,
       };
     } catch (error) {
       console.error('[OfferManager] Failed to accept offer:', error);
@@ -404,9 +479,13 @@ export class OfferManager {
   
   /**
    * Cancel an offer
+   * 
+   * @param offerId - The offer ID to cancel
+   * @param walletAddress - The wallet requesting cancellation
+   * @param isAdmin - Whether the requester is an admin (can cancel any offer)
    */
-  async cancelOffer(offerId: number, walletAddress: string): Promise<void> {
-    console.log('[OfferManager] Canceling offer:', { offerId, wallet: walletAddress });
+  async cancelOffer(offerId: number, walletAddress: string, isAdmin: boolean = false): Promise<void> {
+    console.log('[OfferManager] Canceling offer:', { offerId, wallet: walletAddress, isAdmin });
     
     try {
       // 1. Load offer
@@ -418,20 +497,32 @@ export class OfferManager {
         throw new Error('Offer not found');
       }
       
-      // 2. Verify only maker can cancel
-      if (offer.makerWallet !== walletAddress) {
-        throw new Error('Only the maker can cancel this offer');
+      // 2. Verify authorization: only maker or admin can cancel
+      const isMaker = offer.makerWallet === walletAddress;
+      if (!isMaker && !isAdmin) {
+        throw new Error('Only the maker or an admin can cancel this offer');
       }
       
-      // 3. Verify offer is cancelable (only ACTIVE offers can be cancelled)
-      if (offer.status !== OfferStatus.ACTIVE) {
+      // 3. Verify offer is cancelable (ACTIVE or ACCEPTED offers can be cancelled)
+      // ACCEPTED offers have pending transactions but haven't been executed yet
+      if (offer.status !== OfferStatus.ACTIVE && offer.status !== OfferStatus.ACCEPTED) {
         throw new Error(`Offer cannot be cancelled (status: ${offer.status})`);
       }
       
       // 4. Advance nonce to invalidate any pending transactions
       await this.noncePoolManager.advanceNonce(offer.nonceAccount);
       
-      // 5. Cancel all offers using this nonce account (including both ACTIVE and ACCEPTED)
+      // 5. Update this offer as cancelled with tracking info
+      await this.prisma.swapOffer.update({
+        where: { id: offerId },
+        data: {
+          status: OfferStatus.CANCELLED,
+          cancelledAt: new Date(),
+          cancelledBy: walletAddress,
+        },
+      });
+      
+      // 6. Cancel all OTHER offers using this nonce account (including both ACTIVE and ACCEPTED)
       // ACCEPTED offers also have pending transactions that would fail with consumed nonce
       await this.prisma.swapOffer.updateMany({
         where: {
@@ -442,10 +533,15 @@ export class OfferManager {
         data: {
           status: OfferStatus.CANCELLED,
           cancelledAt: new Date(),
+          cancelledBy: walletAddress,
         },
       });
       
-      console.log('[OfferManager] Offer cancelled:', offerId);
+      console.log('[OfferManager] Offer cancelled:', {
+        offerId,
+        cancelledBy: walletAddress,
+        role: isAdmin ? 'admin' : 'maker',
+      });
     } catch (error) {
       console.error('[OfferManager] Failed to cancel offer:', error);
       throw error;
@@ -454,6 +550,9 @@ export class OfferManager {
   
   /**
    * Build transaction for an offer
+   * 
+   * For simple swaps (1-2 total cNFTs): builds single transaction
+   * For bulk swaps (3+ total cNFTs): builds transaction group for Jito bundle
    */
   private async buildOfferTransaction(params: {
     offerId: number;
@@ -466,7 +565,13 @@ export class OfferManager {
     platformFee: bigint;
     nonceAccount: string;
     authorizedAppId?: string; // For zero-fee swaps
-  }): Promise<{ serializedTransaction: string; nonceValue: string }> {
+  }): Promise<{ 
+    serializedTransaction: string; 
+    nonceValue: string;
+    // Bulk swap fields (populated for 3+ cNFT swaps)
+    isBulkSwap?: boolean;
+    transactionGroup?: TransactionGroupResult;
+  }> {
     console.log('[OfferManager] buildOfferTransaction params:', {
       makerWallet: params.makerWallet,
       takerWallet: params.takerWallet,
@@ -492,7 +597,7 @@ export class OfferManager {
       platformFeeLamports: params.platformFee,
       nonceAccountPubkey: new PublicKey(params.nonceAccount),
       nonceAuthorityPubkey: this.platformAuthority.publicKey,
-      swapId: "", // Empty string saves 2 bytes (program only uses for logging, we track via offer ID)
+      swapId: `${params.offerId}`, // Use offer ID for tracking
       treasuryPDA: this.treasuryPDA,
       programId: this.programId,
       authorizedAppId: params.authorizedAppId ? new PublicKey(params.authorizedAppId) : undefined,
@@ -500,6 +605,45 @@ export class OfferManager {
     
     console.log('[OfferManager] TransactionBuildInputs makerAssets:', JSON.stringify(inputs.makerAssets));
     console.log('[OfferManager] TransactionBuildInputs takerAssets:', JSON.stringify(inputs.takerAssets));
+    
+    // Check if this is a bulk swap that needs transaction splitting
+    const requiresBulkSwap = this.transactionGroupBuilder.requiresJitoBundle(inputs);
+    
+    if (requiresBulkSwap) {
+      // Bulk swap: use TransactionGroupBuilder
+      console.log('[OfferManager] Bulk swap detected - using TransactionGroupBuilder');
+      
+      // Validate inputs using group builder
+      this.transactionGroupBuilder.validateInputs(inputs);
+      
+      // Build transaction group
+      const groupResult = await this.transactionGroupBuilder.buildTransactionGroup(inputs);
+      
+      console.log('[OfferManager] Transaction group built:', {
+        strategy: groupResult.strategy,
+        transactionCount: groupResult.transactionCount,
+        requiresJitoBundle: groupResult.requiresJitoBundle,
+        totalSizeBytes: groupResult.totalSizeBytes,
+      });
+      
+      // For bulk swaps, we return the first transaction but include the full group
+      // The API layer will handle Jito bundle submission
+      const firstTx = groupResult.transactions[0];
+      
+      if (!firstTx.transaction) {
+        throw new Error('Failed to build first transaction in group');
+      }
+      
+      return {
+        serializedTransaction: firstTx.transaction.serializedTransaction,
+        nonceValue: groupResult.nonceValue,
+        isBulkSwap: true,
+        transactionGroup: groupResult,
+      };
+    }
+    
+    // Simple swap: use standard TransactionBuilder
+    console.log('[OfferManager] Simple swap - using standard TransactionBuilder');
     
     // Validate inputs
     this.transactionBuilder.validateInputs(inputs);
@@ -510,6 +654,7 @@ export class OfferManager {
     return {
       serializedTransaction: result.serializedTransaction,
       nonceValue: result.nonceValue,
+      isBulkSwap: false,
     };
   }
   
@@ -568,14 +713,15 @@ export class OfferManager {
       return null;
     }
     
-    // Calculate fee for display
-    const offeredSol = BigInt(0); // TODO: Extract from offer
-    const requestedSol = BigInt(0); // TODO: Extract from offer
+    // Extract SOL amounts from offer for fee display
+    const offeredSol = offer.offeredSolLamports ? BigInt(offer.offeredSolLamports) : BigInt(0);
+    const requestedSol = offer.requestedSolLamports ? BigInt(offer.requestedSolLamports) : BigInt(0);
     const feeBreakdown = this.feeCalculator.calculateFee(offeredSol, requestedSol);
     
     return {
       id: offer.id,
       makerWallet: offer.makerWallet,
+      takerWallet: offer.takerWallet || undefined,
       offerType: offer.offerType,
       status: offer.status,
       offeredAssets: offer.offeredAssets as any[],
@@ -584,6 +730,7 @@ export class OfferManager {
       nonceAccount: offer.nonceAccount,
       expiresAt: offer.expiresAt,
       createdAt: offer.createdAt,
+      serializedTransaction: offer.serializedTransaction || undefined,
     };
   }
   
@@ -620,13 +767,15 @@ export class OfferManager {
     ]);
     
     const summaries: OfferSummary[] = offers.map((offer) => {
-      const offeredSol = BigInt(0); // TODO: Extract from offer
-      const requestedSol = BigInt(0); // TODO: Extract from offer
+      // Extract SOL amounts from offer for fee display
+      const offeredSol = offer.offeredSolLamports ? BigInt(offer.offeredSolLamports) : BigInt(0);
+      const requestedSol = offer.requestedSolLamports ? BigInt(offer.requestedSolLamports) : BigInt(0);
       const feeBreakdown = this.feeCalculator.calculateFee(offeredSol, requestedSol);
       
       return {
         id: offer.id,
         makerWallet: offer.makerWallet,
+        takerWallet: offer.takerWallet || undefined,
         offerType: offer.offerType,
         status: offer.status,
         offeredAssets: offer.offeredAssets as any[],
@@ -635,6 +784,7 @@ export class OfferManager {
         nonceAccount: offer.nonceAccount,
         expiresAt: offer.expiresAt,
         createdAt: offer.createdAt,
+        serializedTransaction: offer.serializedTransaction || undefined,
       };
     });
     
@@ -765,6 +915,200 @@ export class OfferManager {
       };
     } catch (error) {
       console.error('[OfferManager] Error creating counter-offer:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Update an existing offer (change SOL amounts or assets)
+   * Only the maker can update their own offer, and only while it's ACTIVE
+   * 
+   * @param offerId - The offer to update
+   * @param makerWallet - The maker's wallet (must match offer maker)
+   * @param updates - The fields to update
+   */
+  async updateOffer(params: {
+    offerId: number;
+    makerWallet: string;
+    offeredAssets?: Array<{ type: AssetType; identifier: string }>;
+    requestedAssets?: Array<{ type: AssetType; identifier: string }>;
+    offeredSol?: bigint;
+    requestedSol?: bigint;
+  }): Promise<OfferSummary> {
+    console.log('[OfferManager] Updating offer:', {
+      offerId: params.offerId,
+      maker: params.makerWallet,
+      hasOfferedAssets: !!params.offeredAssets,
+      hasRequestedAssets: !!params.requestedAssets,
+      hasOfferedSol: params.offeredSol !== undefined,
+      hasRequestedSol: params.requestedSol !== undefined,
+    });
+    
+    try {
+      // 1. Load offer
+      const offer = await this.prisma.swapOffer.findUnique({
+        where: { id: params.offerId },
+      });
+      
+      if (!offer) {
+        throw new Error(`Offer ${params.offerId} not found`);
+      }
+      
+      // 2. Verify maker authorization
+      if (offer.makerWallet !== params.makerWallet) {
+        throw new Error('Only the maker can update this offer');
+      }
+      
+      // 3. Verify offer is updateable (only ACTIVE offers)
+      if (offer.status !== OfferStatus.ACTIVE) {
+        throw new Error(`Offer cannot be updated (status: ${offer.status})`);
+      }
+      
+      // 4. Check expiration
+      if (offer.expiresAt < new Date()) {
+        await this.prisma.swapOffer.update({
+          where: { id: params.offerId },
+          data: { status: OfferStatus.EXPIRED },
+        });
+        throw new Error('Offer has expired');
+      }
+      
+      // 5. Merge updates with existing values
+      const currentOfferedAssets = offer.offeredAssets as Array<{ type: AssetType; identifier: string }>;
+      const currentRequestedAssets = offer.requestedAssets as Array<{ type: AssetType; identifier: string }>;
+      
+      const newOfferedAssets = params.offeredAssets ?? currentOfferedAssets;
+      const newRequestedAssets = params.requestedAssets ?? currentRequestedAssets;
+      const newOfferedSol = params.offeredSol ?? (offer.offeredSolLamports ? BigInt(offer.offeredSolLamports) : BigInt(0));
+      const newRequestedSol = params.requestedSol ?? (offer.requestedSolLamports ? BigInt(offer.requestedSolLamports) : BigInt(0));
+      
+      // 6. Validate new asset counts
+      if (newOfferedAssets.length > MAX_ASSETS_PER_SIDE) {
+        throw new Error(`Too many offered assets (${newOfferedAssets.length}). Maximum is ${MAX_ASSETS_PER_SIDE}`);
+      }
+      if (newRequestedAssets.length > MAX_ASSETS_PER_SIDE) {
+        throw new Error(`Too many requested assets (${newRequestedAssets.length}). Maximum is ${MAX_ASSETS_PER_SIDE}`);
+      }
+      
+      // 7. Validate offer still has value
+      const hasOfferedValue = newOfferedAssets.length > 0 || newOfferedSol > BigInt(0);
+      const hasRequestedValue = newRequestedAssets.length > 0 || newRequestedSol > BigInt(0);
+      
+      if (!hasOfferedValue) {
+        throw new Error('Maker must offer at least one asset or SOL');
+      }
+      if (!hasRequestedValue) {
+        throw new Error('Maker must request at least one asset or SOL');
+      }
+      
+      // 8. Check for duplicate assets
+      const offeredIdentifiers = newOfferedAssets.map(a => a.identifier.toLowerCase());
+      const offeredDuplicates = offeredIdentifiers.filter((id, idx) => offeredIdentifiers.indexOf(id) !== idx);
+      if (offeredDuplicates.length > 0) {
+        throw new Error(`Duplicate assets in offered list: ${[...new Set(offeredDuplicates)].join(', ')}`);
+      }
+      
+      const requestedIdentifiers = newRequestedAssets.map(a => a.identifier.toLowerCase());
+      const requestedDuplicates = requestedIdentifiers.filter((id, idx) => requestedIdentifiers.indexOf(id) !== idx);
+      if (requestedDuplicates.length > 0) {
+        throw new Error(`Duplicate assets in requested list: ${[...new Set(requestedDuplicates)].join(', ')}`);
+      }
+      
+      // 9. Validate maker owns any NEW offered assets
+      if (params.offeredAssets) {
+        const validation = await this.assetValidator.validateAssets(
+          params.makerWallet,
+          newOfferedAssets
+        );
+        
+        const invalidAssets = validation.filter((v) => !v.isValid);
+        if (invalidAssets.length > 0) {
+          throw new Error(
+            `Maker does not own the following assets: ${invalidAssets.map((a) => a.error).join(', ')}`
+          );
+        }
+      }
+      
+      // 10. Recalculate platform fee
+      const feeBreakdown = this.feeCalculator.calculateFee(newOfferedSol, newRequestedSol);
+      
+      // 11. Atomically update offer with status check to prevent race conditions
+      // First, lock the offer and verify it's still ACTIVE before proceeding
+      const updatedOffer = await this.prisma.$transaction(async (tx) => {
+        // Re-verify offer is still ACTIVE (prevents race condition)
+        const currentOffer = await tx.swapOffer.findUnique({
+          where: { id: params.offerId },
+        });
+        
+        if (!currentOffer || currentOffer.status !== OfferStatus.ACTIVE) {
+          throw new Error(`Offer cannot be updated (status changed to: ${currentOffer?.status || 'deleted'})`);
+        }
+        
+        // Advance nonce to invalidate any previously built transactions
+        // This ensures any signed transaction with old terms cannot be executed
+        await this.noncePoolManager.advanceNonce(offer.nonceAccount);
+        
+        // Get fresh nonce value
+        const currentNonceValue = await this.noncePoolManager.getCurrentNonce(offer.nonceAccount);
+        
+        // Update offer in database (with status check in WHERE for extra safety)
+        const result = await tx.swapOffer.updateMany({
+          where: { 
+            id: params.offerId,
+            status: OfferStatus.ACTIVE, // Only update if still ACTIVE
+          },
+          data: {
+            offeredAssets: newOfferedAssets as any,
+            requestedAssets: newRequestedAssets as any,
+            offeredSolLamports: newOfferedSol > BigInt(0) ? newOfferedSol : null,
+            requestedSolLamports: newRequestedSol > BigInt(0) ? newRequestedSol : null,
+            platformFeeLamports: feeBreakdown.feeLamports,
+            currentNonceValue,
+            serializedTransaction: null, // Clear any cached transaction
+          },
+        });
+        
+        if (result.count === 0) {
+          throw new Error('Offer was modified by another request. Please retry.');
+        }
+        
+        // Increment updateCount separately (updateMany doesn't support increment)
+        await tx.swapOffer.update({
+          where: { id: params.offerId },
+          data: { updateCount: { increment: 1 } },
+        });
+        
+        // Fetch and return the updated offer
+        return tx.swapOffer.findUnique({
+          where: { id: params.offerId },
+        });
+      });
+      
+      if (!updatedOffer) {
+        throw new Error('Failed to update offer');
+      }
+      
+      console.log('[OfferManager] Offer updated:', {
+        offerId: params.offerId,
+        updateCount: updatedOffer.updateCount,
+      });
+      
+      return {
+        id: updatedOffer.id,
+        makerWallet: updatedOffer.makerWallet,
+        takerWallet: updatedOffer.takerWallet || undefined,
+        offerType: updatedOffer.offerType,
+        status: updatedOffer.status,
+        offeredAssets: updatedOffer.offeredAssets as any[],
+        requestedAssets: updatedOffer.requestedAssets as any[],
+        platformFee: feeBreakdown,
+        nonceAccount: updatedOffer.nonceAccount,
+        expiresAt: updatedOffer.expiresAt,
+        createdAt: updatedOffer.createdAt,
+        serializedTransaction: undefined,
+      };
+    } catch (error) {
+      console.error('[OfferManager] Failed to update offer:', error);
       throw error;
     }
   }

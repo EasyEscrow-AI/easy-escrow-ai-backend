@@ -1,0 +1,107 @@
+# Task ID: 60
+# Title: Implement Bundle Failure Recovery and Monitoring
+# Status: pending
+# Dependencies: 45, 59, 50
+# Priority: medium
+# Description: Implement comprehensive bundle failure recovery procedures and monitoring system to track Jito bundle health, handle partial executions, and provide automated retry mechanisms with proper alerting.
+# Details:
+Implement comprehensive bundle failure recovery and monitoring system with the following components:
+
+1. **Bundle Status Tracking Database Schema**:
+   - Add BundleStatus enum (PENDING, SUBMITTED, LANDED, FAILED, PARTIAL) to Prisma schema
+   - Add bundleStatus field to SwapOffer model with default PENDING
+   - Add bundleSubmittedAt, bundleLandedAt, bundleFailedAt DateTime fields
+   - Add bundleRetryCount Int @default(0) and maxRetries Int @default(3)
+   - Add bundleFailureReason String? for error tracking
+   - Create database migration for new fields
+
+2. **Enhanced Bundle Status Tracking in EscrowProgramService**:
+   - Extend sendBundleViaJito() method to update bundle status throughout lifecycle
+   - Implement updateBundleStatus(offerId: string, status: BundleStatus, metadata?: any) method
+   - Add bundle confirmation polling with exponential backoff (5s, 10s, 20s, 40s intervals)
+   - Track bundle landing time and update bundleLandedAt timestamp
+   - Store Jito bundle signatures and transaction hashes for recovery
+
+3. **Bundle Recovery Script Implementation**:
+   - Create src/scripts/bundleRecovery.ts for partial bundle failure analysis
+   - Implement analyzePartialBundle(bundleId: string) to identify successful/failed transactions
+   - Add recoverPartialBundle() method to retry only failed transactions with fresh proofs
+   - Integrate with proof freshness strategy from Task 59 for retry attempts
+   - Create manual recovery CLI interface for admin operations
+
+4. **Automatic Retry Mechanism**:
+   - Implement retryFailedBundle(offerId: string) method in EscrowProgramService
+   - Add exponential backoff retry logic (1min, 5min, 15min delays)
+   - Fetch fresh Merkle proofs before each retry attempt using Task 59 proof freshness
+   - Update retry count and prevent infinite retries (max 3 attempts)
+   - Mark bundles as permanently failed after max retries exceeded
+
+5. **Monitoring Service Implementation**:
+   - Create src/services/monitoring.service.ts with comprehensive bundle metrics
+   - Implement collectBundleMetrics() method tracking success/failure rates over time windows
+   - Add calculateAverageLandingTime() for bundle performance monitoring
+   - Track tip amounts and transactions per bundle for optimization insights
+   - Store metrics in time-series format for historical analysis
+   - Create getBundleHealthReport() method for admin dashboard
+
+6. **Alerting Service Integration**:
+   - Create src/services/alerting.service.ts for bundle failure notifications
+   - Implement checkBundleFailureRate() with configurable thresholds (>20% failure rate)
+   - Add Slack/Discord webhook integration for high-priority alerts
+   - Create email notifications for bundle failure spikes
+   - Implement alert throttling to prevent notification spam
+
+7. **Frontend Status Polling Endpoint**:
+   - Add GET /api/bundles/:offerId/status endpoint for real-time status updates
+   - Implement WebSocket connection for live bundle status streaming
+   - Return detailed bundle information including retry attempts and failure reasons
+   - Add pagination for bundle history and status logs
+
+8. **Admin Management Endpoints**:
+   - Create POST /api/admin/bundles/:offerId/retry for manual bundle retry
+   - Add POST /api/admin/bundles/:offerId/cancel for bundle cancellation
+   - Implement GET /api/admin/bundles/failed for failed bundle dashboard
+   - Add bulk operations for managing multiple failed bundles
+
+9. **Documentation Updates**:
+   - Update docs/BULK_CNFT_SWAP_ARCHITECTURE.md with bundle recovery procedures
+   - Document bundle status lifecycle and failure scenarios
+   - Add troubleshooting guide for common bundle failures
+   - Create runbook for manual bundle recovery operations
+
+# Test Strategy:
+1. **Bundle Status Tracking Testing**:
+   - Test bundle status updates throughout complete lifecycle (PENDING → SUBMITTED → LANDED)
+   - Verify failure status tracking with simulated Jito bundle failures
+   - Test partial bundle status detection with mixed transaction success/failure scenarios
+   - Validate database schema changes and status field constraints
+
+2. **Recovery Mechanism Testing**:
+   - Test analyzePartialBundle() with bundles containing 2-3 failed transactions out of 5 total
+   - Verify retryFailedBundle() fetches fresh proofs and rebuilds only failed transactions
+   - Test exponential backoff retry timing (1min, 5min, 15min intervals)
+   - Validate max retry limit enforcement and permanent failure marking
+
+3. **Monitoring and Metrics Testing**:
+   - Test bundle success/failure rate calculations over various time windows (1h, 24h, 7d)
+   - Verify average landing time calculations with sample bundle data
+   - Test metric collection performance with high bundle volumes (100+ bundles/hour)
+   - Validate time-series data storage and retrieval accuracy
+
+4. **Alerting System Testing**:
+   - Test failure rate threshold detection with simulated high failure scenarios (>20% rate)
+   - Verify webhook notifications are sent to configured Slack/Discord channels
+   - Test alert throttling prevents spam during extended failure periods
+   - Validate email notification delivery for critical bundle failures
+
+5. **API Endpoint Testing**:
+   - Test GET /api/bundles/:offerId/status returns accurate real-time bundle status
+   - Verify WebSocket connections provide live status updates during bundle processing
+   - Test admin retry/cancel endpoints with proper authentication and authorization
+   - Validate bulk admin operations handle multiple bundle IDs correctly
+
+6. **Integration Testing**:
+   - Test end-to-end bundle failure recovery with actual Jito bundle submissions
+   - Verify integration with proof freshness strategy during retry attempts
+   - Test monitoring system accuracy during real bundle processing scenarios
+   - Validate documentation accuracy with actual recovery procedures

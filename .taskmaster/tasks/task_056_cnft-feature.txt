@@ -1,0 +1,66 @@
+# Task ID: 56
+# Title: Remove Unused Legacy cNFT Code
+# Status: pending
+# Dependencies: None
+# Priority: low
+# Description: Clean up legacy cNFT code that is not useful for the new atomic swap + cNFT implementation by identifying, removing, and archiving unused code while updating imports and references.
+# Details:
+Implement comprehensive legacy code cleanup with the following systematic approach:
+
+1. **Review and Identify Unused Legacy Code**:
+   - Audit src/services/*.ts files for legacy cNFT agreement-based services that are incompatible with atomic swap architecture
+   - Identify old cNFT validation code that predates the current AssetValidator service implementation (Task 4)
+   - Review tests/**/*.ts for deprecated test files that test removed functionality
+   - Search for commented-out code blocks that reference old cNFT implementation patterns
+   - Use grep/ripgrep to find references to deprecated cNFT-related imports and function calls
+
+2. **Remove or Archive Unused Code**:
+   - Create legacy/ folder structure to preserve historically significant code if needed
+   - Move deprecated services to legacy/services/ with clear README explaining why they were archived
+   - Delete confirmed unnecessary files after team review and approval
+   - Remove dead code blocks that are commented out and no longer relevant
+   - Archive old test files to legacy/tests/ if they contain useful patterns for future reference
+
+3. **Update Imports and References**:
+   - Remove dead imports from all TypeScript files using tools like ts-unused-exports
+   - Update any remaining references to removed code with modern equivalents
+   - Fix broken import paths that reference moved or deleted files
+   - Update barrel exports (index.ts files) to remove references to deleted modules
+   - Ensure all remaining imports resolve correctly
+
+4. **Clean Up Commented-Out Code**:
+   - Review all commented-out code blocks to determine if they should be removed or uncommented
+   - Document any temporarily disabled features with clear TODO comments and issue references
+   - Remove obsolete commented code that references deleted functionality
+   - Uncomment and fix any useful code sections that were temporarily disabled during development
+
+5. **Verify System Integrity After Cleanup**:
+   - Run TypeScript compiler (tsc --noEmit) to verify no broken imports remain
+   - Execute full test suite to confirm no regressions were introduced
+   - Test application startup to ensure all services initialize correctly
+   - Verify API endpoints still function properly after cleanup
+
+# Test Strategy:
+1. **Code Analysis and Identification Verification**:
+   - Use static analysis tools to scan for unused imports and dead code
+   - Run ts-unused-exports to identify orphaned exports and imports
+   - Verify that all identified legacy code is properly categorized as archive-worthy or deletable
+   - Document all removed code with justification for removal decision
+
+2. **Import and Reference Validation**:
+   - Run `tsc --noEmit` to verify TypeScript compilation succeeds with no import errors
+   - Use ESLint with unused variable rules to catch any remaining dead imports
+   - Test that all barrel exports (index.ts) correctly reference existing modules
+   - Verify no runtime import errors occur during application startup
+
+3. **Functional Testing After Cleanup**:
+   - Execute complete test suite (`npm test`) and verify 100% pass rate with no regressions
+   - Test application startup in development mode to ensure all services initialize
+   - Verify all API endpoints respond correctly and cNFT functionality remains intact
+   - Test both standard NFT and cNFT swap flows to confirm core functionality is unaffected
+
+4. **Documentation and Archive Verification**:
+   - Verify legacy/ folder structure is properly organized with clear README files
+   - Confirm archived code includes proper documentation explaining removal reasons
+   - Test that any preserved legacy code can still be referenced for historical context
+   - Validate that cleanup changes are properly documented in commit messages

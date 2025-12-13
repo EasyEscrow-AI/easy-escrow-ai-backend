@@ -1,0 +1,114 @@
+# Task ID: 41
+# Title: Sync Staging Environment with Production for cNFT Development
+# Status: pending
+# Dependencies: None
+# Priority: high
+# Description: Synchronize the staging environment on devnet with all recent production updates including program deployment, treasury initialization, address lookup table creation, and backend code sync to prepare for cNFT bulk swap development.
+# Details:
+Implement comprehensive staging environment synchronization with the following systematic approach:
+
+1. **Deploy Latest Program to Devnet Staging**:
+   - Build the latest escrow program from programs/escrow/ with all production features and optimizations
+   - Deploy to devnet using staging program ID with proper keypair authentication
+   - Upload updated IDL to devnet and save as src/generated/anchor/escrow-idl-staging.json
+   - Verify program deployment success and IDL accessibility through RPC calls
+
+2. **Initialize Treasury PDA on Devnet**:
+   - Derive Treasury PDA address using staging program ID and standard seeds
+   - Initialize treasury account using staging admin keypair with proper authority setup
+   - Test treasury fee collection functionality with small test transactions
+   - Document DEVNET_STAGING_PDA_TREASURY_ADDRESS in .env.staging file
+
+3. **Create Address Lookup Table (ALT) for Staging**:
+   - Create new ALT on devnet for optimized transaction size and cost reduction
+   - Populate ALT with essential program addresses: bubblegum_program, compression_program, system_program, log_wrapper, token_program
+   - Add frequently used PDAs and common account addresses to reduce transaction size
+   - Document DEVNET_STAGING_ALT_ADDRESS in .env.staging and verify accessibility
+
+4. **Sync Backend Code with Production**:
+   - Deploy all recent backend/API changes from production to staging environment
+   - Update staging environment variables in .env.staging with new addresses and configurations
+   - Verify API endpoints respond correctly on staging with proper CORS and authentication
+   - Test database connections and ensure staging DB schema matches production
+
+5. **Comprehensive Staging Environment Verification**:
+   - Execute existing atomic swap functionality tests on staging to ensure backward compatibility
+   - Verify Treasury PDA initialization and fee collection mechanisms work correctly
+   - Confirm ALT contains all required addresses and is accessible via RPC
+   - Run basic E2E test suite on staging environment to validate full system functionality
+   - Test cNFT-related services and ensure AssetValidator works with staging configuration
+
+**Key Configuration Updates**:
+- Update .env.staging with DEVNET_STAGING_ALT_ADDRESS and DEVNET_STAGING_PDA_TREASURY_ADDRESS
+- Ensure staging program ID is correctly configured across all services
+- Verify RPC endpoints and connection settings for devnet staging
+
+# Test Strategy:
+1. **Program Deployment Verification**:
+   - Use `solana program show <program_id>` to verify program is deployed on devnet
+   - Test IDL loading from src/generated/anchor/escrow-idl-staging.json in TypeScript
+   - Verify program account data can be read and parsed correctly
+   - Confirm program upgrade authority is set to staging admin
+
+2. **Treasury PDA Functionality Testing**:
+   - Create test transaction that pays fees to treasury and verify balance increase
+   - Test treasury PDA derivation matches expected address using program ID and seeds
+   - Verify treasury account has correct owner and data structure
+   - Test fee collection mechanism with small SOL amounts
+
+3. **Address Lookup Table Validation**:
+   - Query ALT using `solana address-lookup-table <alt_address>` to verify contents
+   - Test transaction creation using ALT addresses to ensure size optimization works
+   - Verify all required program addresses are present in ALT
+   - Test ALT accessibility from backend services using RPC calls
+
+4. **Backend Integration Testing**:
+   - Run `npm test` on staging environment to verify all tests pass
+   - Test API endpoints manually using curl or Postman with staging URLs
+   - Verify database connectivity and data persistence on staging
+   - Test authentication and authorization flows work correctly
+
+5. **End-to-End Staging Validation**:
+   - Execute atomic swap test scenarios on staging using real devnet assets
+   - Verify cNFT services work correctly with staging configuration
+   - Test offer creation, acceptance, and completion flows on staging
+   - Confirm all environment variables are properly loaded and functional
+   - Run smoke tests for critical user journeys to ensure system readiness
+
+# Subtasks:
+## 1. Build and Deploy Latest Escrow Program to Devnet Staging [pending]
+### Dependencies: None
+### Description: Build the latest escrow program from programs/escrow/ with all production features and deploy to devnet staging environment
+### Details:
+Build the escrow program using anchor build, deploy to devnet using staging program ID with proper keypair authentication, upload updated IDL to devnet and save as src/generated/anchor/escrow-idl-staging.json, verify program deployment success through RPC calls
+
+## 2. Initialize Treasury PDA on Devnet Staging [pending]
+### Dependencies: 41.1
+### Description: Create and initialize Treasury PDA account on devnet staging environment with proper authority setup
+### Details:
+Derive Treasury PDA address using staging program ID and standard seeds, initialize treasury account using staging admin keypair with proper authority setup, test treasury fee collection functionality with small test transactions, document DEVNET_STAGING_PDA_TREASURY_ADDRESS in .env.staging file
+
+## 3. Create Address Lookup Table (ALT) for Staging Environment [pending]
+### Dependencies: 41.1
+### Description: Create and populate new Address Lookup Table on devnet for optimized transaction size and cost reduction
+### Details:
+Create new ALT on devnet for staging environment, populate ALT with essential program addresses including bubblegum_program, compression_program, system_program, log_wrapper, token_program, add frequently used PDAs and common account addresses, document DEVNET_STAGING_ALT_ADDRESS in .env.staging
+
+## 4. Sync Backend Code with Production Environment [pending]
+### Dependencies: None
+### Description: Deploy all recent backend/API changes from production to staging environment with updated configurations
+### Details:
+Deploy all recent backend/API changes from production to staging environment, update staging environment variables with new addresses and configurations, verify API endpoints respond correctly on staging with proper CORS and authentication, test database connections and ensure staging DB schema matches production
+
+## 5. Update Staging Environment Variables and Configuration [pending]
+### Dependencies: 41.2, 41.3, 41.4
+### Description: Update .env.staging file with all new addresses and configuration values from previous deployment steps
+### Details:
+Update .env.staging with DEVNET_STAGING_ALT_ADDRESS and DEVNET_STAGING_PDA_TREASURY_ADDRESS, ensure staging program ID is correctly configured across all services, verify RPC endpoints and connection settings for devnet staging, update all relevant configuration files
+
+## 6. Comprehensive Staging Environment Verification and E2E Testing [pending]
+### Dependencies: 41.5
+### Description: Execute comprehensive testing suite to verify all staging environment components work correctly together
+### Details:
+Execute existing atomic swap functionality tests on staging to ensure backward compatibility, verify Treasury PDA initialization and fee collection mechanisms work correctly, confirm ALT contains all required addresses and is accessible via RPC, run basic E2E test suite on staging environment to validate full system functionality, test cNFT-related services and ensure AssetValidator works with staging configuration
+

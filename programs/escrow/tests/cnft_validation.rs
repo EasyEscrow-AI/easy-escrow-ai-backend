@@ -96,10 +96,11 @@ pub fn calculate_proof_length(max_depth: u32, canopy_depth: u32) -> usize {
 }
 
 /// Derive tree authority PDA (Bubblegum standard)
+/// Note: Bubblegum uses [tree_address] only, NOT [b"TreeConfig", tree_address]
 pub fn derive_tree_authority(tree_pubkey: &Pubkey) -> (Pubkey, u8) {
     let bubblegum_program_id = mpl_bubblegum::ID;
     Pubkey::find_program_address(
-        &[b"TreeConfig", tree_pubkey.as_ref()],
+        &[tree_pubkey.as_ref()],
         &bubblegum_program_id,
     )
 }

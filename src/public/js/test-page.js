@@ -95,121 +95,6 @@
 let MAKER_ADDRESS = '';
 let TAKER_ADDRESS = '';
 
-// ========================================
-// SPL NFT PLACEHOLDER IMAGES
-// ========================================
-// Placeholder images for SPL NFTs that don't have images
-// Images are assigned evenly between maker and taker (5 each), ordered by mint ID
-const SPL_PLACEHOLDER_IMAGES = [
-    'https://fastly.picsum.photos/id/21/3008/2008.jpg?hmac=T8DSVNvP-QldCew7WD4jj_S3mWwxZPqdF0CNPksSko4',
-    'https://fastly.picsum.photos/id/63/5000/2813.jpg?hmac=HvaeSK6WT-G9bYF_CyB2m1ARQirL8UMnygdU9W6PDvM',
-    'https://images.pexels.com/photos/47547/squirrel-animal-cute-rodents-47547.jpeg',
-    'https://images.pexels.com/photos/45201/kitty-cat-kitten-pet-45201.jpeg',
-    'https://images.pexels.com/photos/1661179/pexels-photo-1661179.jpeg',
-    'https://images.pexels.com/photos/62289/yemen-chameleon-chamaeleo-calyptratus-chameleon-reptile-62289.jpeg',
-    'https://images.pexels.com/photos/67552/giraffe-tall-mammal-africa-67552.jpeg',
-    'https://images.pexels.com/photos/162203/panthera-tigris-altaica-tiger-siberian-amurtiger-162203.jpeg',
-    'https://images.pexels.com/photos/326012/pexels-photo-326012.jpeg',
-    'https://images.pexels.com/photos/50577/hedgehog-animal-baby-cute-50577.jpeg',
-];
-
-// LocalStorage key for SPL NFT placeholder image assignments
-const SPL_IMAGE_STORAGE_KEY = 'splNftPlaceholderImages';
-
-/**
- * Get or create placeholder image assignments for SPL NFTs without images
- * Images are assigned evenly between maker (5) and taker (5) wallets
- * @returns {Object} Mapping of mint addresses to placeholder image URLs
- */
-function getSplImageAssignments() {
-    try {
-        const stored = localStorage.getItem(SPL_IMAGE_STORAGE_KEY);
-        if (stored) {
-            return JSON.parse(stored);
-        }
-    } catch (e) {
-        console.warn('Could not load SPL image assignments from localStorage:', e);
-    }
-    return {};
-}
-
-/**
- * Save SPL image assignments to localStorage
- * @param {Object} assignments - Mapping of mint addresses to image URLs
- */
-function saveSplImageAssignments(assignments) {
-    try {
-        localStorage.setItem(SPL_IMAGE_STORAGE_KEY, JSON.stringify(assignments));
-    } catch (e) {
-        console.warn('Could not save SPL image assignments to localStorage:', e);
-    }
-}
-
-/**
- * Assign placeholder images to SPL NFTs without images
- * - Evenly distributed between maker and taker (5 each)
- * - Ordered by mint ID, applied to first IDs
- * - Each image used only once
- */
-function assignPlaceholderImages() {
-    if (!makerData || !takerData) return;
-    
-    const assignments = getSplImageAssignments();
-    const usedImages = new Set(Object.values(assignments));
-    
-    // Get available images (not yet assigned)
-    const availableImages = SPL_PLACEHOLDER_IMAGES.filter(img => !usedImages.has(img));
-    
-    // Split available images: first 5 for maker, next 5 for taker
-    const makerImages = [];
-    const takerImages = [];
-    for (let i = 0; i < availableImages.length; i++) {
-        if (i % 2 === 0 && makerImages.length < 5) {
-            makerImages.push(availableImages[i]);
-        } else if (takerImages.length < 5) {
-            takerImages.push(availableImages[i]);
-        } else if (makerImages.length < 5) {
-            makerImages.push(availableImages[i]);
-        }
-    }
-    
-    // Helper function to assign images to SPL NFTs without images
-    const assignToWallet = (nfts, imagePool) => {
-        // Filter SPL NFTs without images, sorted by mint ID
-        const splNftsNoImage = nfts
-            .filter(nft => !nft.isCompressed && !nft.isCoreNft && !nft.image)
-            .filter(nft => !assignments[nft.mint]) // Not already assigned
-            .sort((a, b) => a.mint.localeCompare(b.mint));
-        
-        // Assign images to first NFTs
-        for (let i = 0; i < splNftsNoImage.length && imagePool.length > 0; i++) {
-            const nft = splNftsNoImage[i];
-            const image = imagePool.shift();
-            assignments[nft.mint] = image;
-            console.log(`📷 Assigned placeholder image to SPL NFT: ${nft.name || nft.mint.substring(0, 8)}...`);
-        }
-    };
-    
-    // Assign to maker NFTs first, then taker
-    assignToWallet(makerData.nfts, makerImages);
-    assignToWallet(takerData.nfts, takerImages);
-    
-    // Save updated assignments
-    saveSplImageAssignments(assignments);
-    
-    return assignments;
-}
-
-/**
- * Get placeholder image for an SPL NFT if assigned
- * @param {string} mint - The NFT mint address
- * @returns {string|null} The placeholder image URL or null if not assigned
- */
-function getPlaceholderImageForMint(mint) {
-    const assignments = getSplImageAssignments();
-    return assignments[mint] || null;
-}
-
 // State
 let makerData = null;
 let takerData = null;
@@ -482,13 +367,6 @@ async function loadWalletInfo(wallet) {
         // Enable swap button if both wallets loaded
         if (makerData && takerData) {
             document.getElementById('swap-btn').disabled = false;
-            
-            // Assign placeholder images to SPL NFTs without images
-            assignPlaceholderImages();
-            
-            // Re-render NFTs to show placeholder images
-            renderNFTs('maker', makerData.nfts);
-            renderNFTs('taker', takerData.nfts);
         }
     } catch (error) {
         console.error('Error loading wallet:', error);
@@ -563,19 +441,10 @@ function renderNFTs(wallet, nfts) {
     container.innerHTML = filteredNfts.map((nft, index) => {
         // Find original index in unfiltered array for toggle functionality
         const originalIndex = nfts.findIndex(n => n.mint === nft.mint);
-        
-        // Get image: use NFT image, placeholder assignment, or fallback SVG
-        let imageUrl = nft.image;
-        if (!imageUrl) {
-            // Check for assigned placeholder image (only for SPL NFTs)
-            const assignedPlaceholder = getPlaceholderImageForMint(nft.mint);
-            imageUrl = assignedPlaceholder || placeholderSvg;
-        }
-        
         return `
             <div class="nft-card" data-index="${originalIndex}">
                 <img class="nft-image" 
-                     src="${imageUrl}" 
+                     src="${nft.image || placeholderSvg}" 
                      alt="${nft.name}"
                      data-fallback="${placeholderSvg}">
                 <div class="nft-name">${nft.name || 'Unknown NFT'}</div>
@@ -675,7 +544,7 @@ function resetWallet(wallet) {
     addLog(`${wallet === 'maker' ? 'Maker' : 'Taker'} form reset`, 'info');
 }
 
-// Add log entry
+// Add log entry with support for cNFT/Jito log types
 function addLog(message, type = 'info') {
     const logContent = document.getElementById('activity-log-content');
     const timestamp = new Date().toLocaleTimeString();
@@ -696,6 +565,26 @@ function addLog(message, type = 'info') {
     logContent.insertBefore(entry, logContent.firstChild);
 }
 
+// Add detailed activity log for cNFT swaps
+function addActivityLog(message, type = 'info') {
+    addLog(message, type);
+}
+
+// Add Jito bundle progress log
+function addJitoLog(message) {
+    addLog(`🚀 ${message}`, 'jito');
+}
+
+// Add cNFT-specific log
+function addCnftLog(message) {
+    addLog(`🌳 ${message}`, 'cnft');
+}
+
+// Add bundle progress log
+function addBundleLog(message) {
+    addLog(`📦 ${message}`, 'bundle');
+}
+
 // HTML escape function to prevent XSS
 function escapeHtml(text) {
     const div = document.createElement('div');
@@ -705,6 +594,31 @@ function escapeHtml(text) {
 
 // Stored swap parameters (to prevent stale values)
 let confirmedSwapParams = null;
+
+// Check if any selected NFTs are cNFTs
+function hasCNFTs(nfts) {
+    return nfts.some(nft => nft.isCompressed);
+}
+
+// Count cNFTs in selection
+function countCNFTs(nfts) {
+    return nfts.filter(nft => nft.isCompressed).length;
+}
+
+// Determine swap type based on selected NFTs
+function getSwapType(makerNFTs, takerNFTs) {
+    const makerCNFTs = countCNFTs(makerNFTs);
+    const takerCNFTs = countCNFTs(takerNFTs);
+    const totalCNFTs = makerCNFTs + takerCNFTs;
+    
+    if (totalCNFTs === 0) {
+        return { type: 'atomic', label: 'Atomic Swap', icon: '⚡' };
+    } else if (totalCNFTs <= 2) {
+        return { type: 'cnft-single', label: 'cNFT Swap', icon: '🌳' };
+    } else {
+        return { type: 'cnft-bundle', label: 'cNFT Bulk Swap', icon: '🚀', requiresJito: true };
+    }
+}
 
 // Show confirmation modal
 function showConfirmationModal() {
@@ -722,13 +636,50 @@ function showConfirmationModal() {
         return;
     }
     
+    // Determine swap type
+    const swapType = getSwapType(selectedMakerNFTs, selectedTakerNFTs);
+    
     // Store confirmed parameters (prevent stale values bug)
     confirmedSwapParams = {
         offeredSol,
         requestedSol,
         selectedMakerNFTs: [...selectedMakerNFTs], // Clone arrays
         selectedTakerNFTs: [...selectedTakerNFTs],
+        swapType, // Include swap type info
     };
+    
+    // Update modal title based on swap type
+    const modalTitle = document.getElementById('modal-title');
+    const modalSubtitle = document.getElementById('modal-subtitle');
+    const swapTypeTitle = document.getElementById('modal-swap-type-title');
+    const executionType = document.getElementById('modal-execution-type');
+    const jitoInfo = document.getElementById('modal-jito-info');
+    
+    if (swapType.type === 'atomic') {
+        modalTitle.innerHTML = '⚡ Confirm Atomic Swap';
+        modalSubtitle.textContent = 'Review the swap details before executing';
+        swapTypeTitle.innerHTML = '<span class="atomic-swap-badge">⚡ Atomic Swap</span>';
+        executionType.textContent = 'Single Transaction';
+        jitoInfo.style.display = 'none';
+    } else if (swapType.type === 'cnft-single') {
+        modalTitle.innerHTML = '🌳 Confirm cNFT Swap';
+        modalSubtitle.textContent = 'This swap involves compressed NFTs';
+        swapTypeTitle.innerHTML = '<span class="cnft-swap-badge">🌳 cNFT Swap</span>';
+        executionType.textContent = 'Single Transaction (with Merkle proofs)';
+        jitoInfo.style.display = 'none';
+    } else if (swapType.type === 'cnft-bundle') {
+        const totalCNFTs = countCNFTs(selectedMakerNFTs) + countCNFTs(selectedTakerNFTs);
+        const estimatedTxCount = Math.ceil(totalCNFTs / 2) + 1; // +1 for payment/cleanup
+        
+        modalTitle.innerHTML = '🚀 Confirm cNFT Bulk Swap';
+        modalSubtitle.textContent = 'This swap requires multiple transactions via Jito bundle';
+        swapTypeTitle.innerHTML = '<span class="cnft-swap-badge">🚀 cNFT Bulk Swap</span>';
+        executionType.textContent = `Jito Bundle (${estimatedTxCount} transactions)`;
+        jitoInfo.style.display = 'block';
+        document.getElementById('modal-jito-tx-count').textContent = `${estimatedTxCount} Transactions`;
+        document.getElementById('modal-jito-tip').textContent = 'Calculating...';
+        document.getElementById('modal-bundle-strategy').textContent = 'Atomic execution via Jito Block Engine';
+    }
     
     // Populate modal with swap details (XSS-safe)
     const makerOffersEl = document.getElementById('modal-maker-offers');
@@ -766,10 +717,7 @@ function showConfirmationModal() {
             
             const img = document.createElement('img');
             img.className = 'nft-preview-image';
-            // Get image: use NFT image, placeholder assignment, or fallback SVG
-            const fallbackSvg = 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'50\' height=\'50\'%3E%3Crect fill=\'%23ddd\' width=\'50\' height=\'50\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23999\' font-family=\'Arial\' font-size=\'10\'%3ENone%3C/text%3E%3C/svg%3E';
-            const assignedPlaceholder = getPlaceholderImageForMint(nft.mint);
-            img.src = nft.image || assignedPlaceholder || fallbackSvg;
+            img.src = nft.image || 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'50\' height=\'50\'%3E%3Crect fill=\'%23ddd\' width=\'50\' height=\'50\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23999\' font-family=\'Arial\' font-size=\'10\'%3ENone%3C/text%3E%3C/svg%3E';
             img.alt = nft.name || 'Unknown NFT';
             
             const details = document.createElement('div');
@@ -822,10 +770,7 @@ function showConfirmationModal() {
             
             const img = document.createElement('img');
             img.className = 'nft-preview-image';
-            // Get image: use NFT image, placeholder assignment, or fallback SVG
-            const fallbackSvg = 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'50\' height=\'50\'%3E%3Crect fill=\'%23ddd\' width=\'50\' height=\'50\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23999\' font-family=\'Arial\' font-size=\'10\'%3ENone%3C/text%3E%3C/svg%3E';
-            const assignedPlaceholder = getPlaceholderImageForMint(nft.mint);
-            img.src = nft.image || assignedPlaceholder || fallbackSvg;
+            img.src = nft.image || 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'50\' height=\'50\'%3E%3Crect fill=\'%23ddd\' width=\'50\' height=\'50\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23999\' font-family=\'Arial\' font-size=\'10\'%3ENone%3C/text%3E%3C/svg%3E';
             img.alt = nft.name || 'Unknown NFT';
             
             const details = document.createElement('div');
@@ -934,6 +879,31 @@ async function fetchSwapQuote(makerNFTs, takerNFTs, offeredSol, requestedSol, ap
                 }
                 document.getElementById('modal-platform-fee-label').textContent = platformFeeLabel;
                 document.getElementById('modal-platform-fee').textContent = platformFee.display || '0 SOL';
+            }
+            
+            // Update Jito bundle info if applicable
+            const jitoInfo = document.getElementById('modal-jito-info');
+            if (quote.bulkSwap && quote.bulkSwap.isBulkSwap) {
+                jitoInfo.style.display = 'block';
+                document.getElementById('modal-jito-tx-count').textContent = `${quote.bulkSwap.transactionCount} Transactions`;
+                
+                // Format Jito tip
+                if (quote.bulkSwap.estimatedTipLamports) {
+                    const tipSol = (parseInt(quote.bulkSwap.estimatedTipLamports) / 1e9).toFixed(6);
+                    document.getElementById('modal-jito-tip').textContent = `~${tipSol} SOL`;
+                }
+                
+                // Update execution type
+                document.getElementById('modal-execution-type').textContent = 
+                    `Jito Bundle (${quote.bulkSwap.transactionCount} txs)`;
+                
+                // Update bundle strategy based on response
+                const strategy = quote.bulkSwap.strategy || 'JITO_BUNDLE';
+                document.getElementById('modal-bundle-strategy').textContent = 
+                    strategy === 'JITO_BUNDLE' ? 'Atomic execution via Jito Block Engine' : strategy;
+            } else if (quote.isCnftSwap) {
+                // Single-transaction cNFT swap
+                document.getElementById('modal-execution-type').textContent = 'Single Transaction (with Merkle proofs)';
             }
             
             // Update transaction size display
@@ -1169,7 +1139,31 @@ async function acceptOfferWithRetry(offerId, attempt = 1) {
 }
 
 // Helper: Execute swap with retry for stale proofs
-async function executeSwapWithRetry(offerId, acceptData) {
+async function executeSwapWithRetry(offerId, acceptData, isBulkSwap = false, bulkSwapInfo = null) {
+    // Build request body
+    const requestBody = {
+        serializedTransaction: acceptData.data.transaction.serialized,
+        requireSignatures: [MAKER_ADDRESS, TAKER_ADDRESS],
+        offerId: offerId, // Backend uses this for automatic retry with fresh proofs
+    };
+    
+    // Add bulk swap info if available
+    if (isBulkSwap && bulkSwapInfo) {
+        requestBody.isBulkSwap = true;
+        requestBody.bulkSwapInfo = {
+            transactionCount: bulkSwapInfo.transactionCount,
+            strategy: bulkSwapInfo.strategy,
+            requiresJitoBundle: bulkSwapInfo.requiresJitoBundle,
+            transactions: bulkSwapInfo.transactions?.map(tx => ({
+                index: tx.index,
+                purpose: tx.purpose,
+                serialized: tx.serialized,
+                requiredSigners: tx.requiredSigners || [], // Per-transaction signers
+            })),
+            tipInfo: bulkSwapInfo.tipInfo,
+        };
+    }
+    
     // Backend now handles all retry logic internally
     // Just call once and let the backend rebuild & retry as needed
     const response = await fetch('/api/test/execute-swap', {
@@ -1178,11 +1172,7 @@ async function executeSwapWithRetry(offerId, acceptData) {
             'Content-Type': 'application/json',
             'X-Test-Execution': 'true',
         },
-        body: JSON.stringify({
-            serializedTransaction: acceptData.data.transaction.serialized,
-            requireSignatures: [MAKER_ADDRESS, TAKER_ADDRESS],
-            offerId: offerId, // Backend uses this for automatic retry with fresh proofs
-        }),
+        body: JSON.stringify(requestBody),
     });
 
     const data = await response.json();
@@ -1199,7 +1189,16 @@ async function executeAtomicSwap(params) {
     
     // Set loading state
     swapBtn.disabled = true;
-    swapBtn.innerHTML = '⏳ Swap In-Progress...';
+    
+    // Determine swap type for button text
+    const { swapType } = params;
+    if (swapType && swapType.type === 'cnft-bundle') {
+        swapBtn.innerHTML = '⏳ Jito Bundle In-Progress...';
+    } else if (swapType && swapType.type.startsWith('cnft')) {
+        swapBtn.innerHTML = '⏳ cNFT Swap In-Progress...';
+    } else {
+        swapBtn.innerHTML = '⏳ Swap In-Progress...';
+    }
     swapBtn.style.animation = 'pulse 1.5s ease-in-out infinite';
 
     try {
@@ -1211,7 +1210,14 @@ async function executeAtomicSwap(params) {
         console.log('   Maker NFTs:', confirmedMakerNFTs);
         console.log('   Taker NFTs:', confirmedTakerNFTs);
 
-        addLog('🚀 Starting atomic swap...', 'info');
+        // Log swap type
+        if (swapType && swapType.type === 'cnft-bundle') {
+            addJitoLog('Starting cNFT bulk swap with Jito bundle...');
+        } else if (swapType && swapType.type.startsWith('cnft')) {
+            addCnftLog('Starting cNFT swap...');
+        } else {
+            addLog('🚀 Starting atomic swap...', 'info');
+        }
 
         // Performance tracking
         const timings = {
@@ -1286,8 +1292,25 @@ async function executeAtomicSwap(params) {
         const acceptStartTime = performance.now();
         
         let acceptData;
+        let isBulkSwap = false;
+        let bulkSwapInfo = null;
+        
         try {
             acceptData = await acceptOfferWithRetry(offerId);
+            
+            // Check if this is a bulk swap
+            if (acceptData.data && acceptData.data.bulkSwap) {
+                isBulkSwap = acceptData.data.bulkSwap.isBulkSwap;
+                bulkSwapInfo = acceptData.data.bulkSwap;
+                
+                if (isBulkSwap) {
+                    addJitoLog(`Bulk swap detected: ${bulkSwapInfo.transactionCount} transactions`);
+                    addBundleLog(`Strategy: ${bulkSwapInfo.strategy}`);
+                    if (bulkSwapInfo.requiresJitoBundle) {
+                        addJitoLog('Jito bundle required for atomic execution');
+                    }
+                }
+            }
         } catch (acceptError) {
             timings.accept = ((performance.now() - acceptStartTime) / 1000).toFixed(2);
             addLog(`❌ Accept failed after [${timings.accept}s]`, 'error');
@@ -1298,18 +1321,49 @@ async function executeAtomicSwap(params) {
         addLog(`✓ Offer accepted [${timings.accept}s]`, 'success');
 
         // Step 3: Execute the swap on-chain using test wallets
-        addLog('Step 3: Executing swap on-chain...', 'info');
-        addLog('🔐 Signing with test wallet private keys...', 'info');
+        if (isBulkSwap && bulkSwapInfo) {
+            addBundleLog(`Step 3: Executing ${bulkSwapInfo.transactionCount} transactions...`);
+            addLog('🔐 Signing with test wallet private keys...', 'info');
+            
+            // Log individual transaction details
+            if (bulkSwapInfo.transactions) {
+                bulkSwapInfo.transactions.forEach((tx, idx) => {
+                    const purpose = tx.purpose || `Transaction ${idx + 1}`;
+                    addLog(`   📝 TX ${idx + 1}: ${purpose}`, 'info');
+                });
+            }
+            
+            if (bulkSwapInfo.requiresJitoBundle) {
+                addJitoLog('Submitting bundle to Jito Block Engine...');
+            }
+        } else {
+            addLog('Step 3: Executing swap on-chain...', 'info');
+            addLog('🔐 Signing with test wallet private keys...', 'info');
+        }
         
         const executeStartTime = performance.now();
-        const executeData = await executeSwapWithRetry(offerId, acceptData);
+        const executeData = await executeSwapWithRetry(offerId, acceptData, isBulkSwap, bulkSwapInfo);
         timings.execute = ((performance.now() - executeStartTime) / 1000).toFixed(2);
         
         if (!executeData.success) {
             throw new Error(executeData.error || 'Failed to execute swap on-chain');
         }
 
-        addLog('✅ Transaction confirmed on blockchain!', 'success');
+        // Log success based on swap type
+        if (isBulkSwap) {
+            addJitoLog('Bundle confirmed on blockchain!');
+            if (executeData.data.bundleId) {
+                addBundleLog(`Bundle ID: ${executeData.data.bundleId}`);
+            }
+            if (executeData.data.signatures && executeData.data.signatures.length > 1) {
+                executeData.data.signatures.forEach((sig, idx) => {
+                    addLog(`   🔗 TX ${idx + 1}: <a href="${executeData.data.explorerUrl || `https://solscan.io/tx/${sig}?cluster=devnet`}" target="_blank" style="color: #22c55e;">${sig.substring(0, 20)}...</a>`, 'success');
+                });
+            }
+        } else {
+            addLog('✅ Transaction confirmed on blockchain!', 'success');
+        }
+        
         addLog(`🔗 Signature: <a href="${executeData.data.explorerUrl}" target="_blank" rel="noopener noreferrer" style="color: #22c55e; text-decoration: underline;">${executeData.data.signature}</a>`, 'success');
 
         // Fetch transaction fee from blockchain
@@ -1335,13 +1389,21 @@ async function executeAtomicSwap(params) {
 
         addLog(`⚡ Total time: ${executionTimeSec}s (Create: ${timings.create}s, Accept: ${timings.accept}s, Execute: ${timings.execute}s)`, 'success');
 
-        // Show transaction summary (pass confirmed params + execution data + timings + fee)
-        showTransactionSummary(createData.data, acceptData.data, executeData.data, params, timings, blockchainFee);
+        // Show transaction summary (pass confirmed params + execution data + timings + fee + bulk info)
+        showTransactionSummary(createData.data, acceptData.data, executeData.data, params, timings, blockchainFee, isBulkSwap, bulkSwapInfo);
 
         // Network from backend response (mainnet-beta or devnet)
         const network = executeData.data.network || 'devnet';
         const networkDisplay = network === 'mainnet-beta' ? 'MAINNET' : 'devnet';
-        addLog(`✅ Atomic swap completed successfully on ${networkDisplay}!`, 'success');
+        
+        // Log completion based on swap type
+        if (isBulkSwap) {
+            addJitoLog(`cNFT bulk swap completed successfully on ${networkDisplay}!`);
+        } else if (swapType && swapType.type.startsWith('cnft')) {
+            addCnftLog(`cNFT swap completed successfully on ${networkDisplay}!`);
+        } else {
+            addLog(`✅ Atomic swap completed successfully on ${networkDisplay}!`, 'success');
+        }
 
     } catch (error) {
         console.error('Swap error:', error);
@@ -1355,12 +1417,12 @@ async function executeAtomicSwap(params) {
 }
 
 // Show transaction summary
-function showTransactionSummary(createData, acceptData, executeData, params, timings, blockchainFee = null) {
+function showTransactionSummary(createData, acceptData, executeData, params, timings, blockchainFee = null, isBulkSwap = false, bulkSwapInfo = null) {
     const summary = document.getElementById('transaction-summary');
     const content = document.getElementById('summary-content');
 
     // Use confirmed parameters (not re-reading from inputs)
-    const { offeredSol, requestedSol, selectedMakerNFTs: confirmedMakerNFTs, selectedTakerNFTs: confirmedTakerNFTs } = params;
+    const { offeredSol, requestedSol, selectedMakerNFTs: confirmedMakerNFTs, selectedTakerNFTs: confirmedTakerNFTs, swapType } = params;
 
     // Format blockchain fee
     let feeDisplay = 'Fetching...';
@@ -1370,10 +1432,18 @@ function showTransactionSummary(createData, acceptData, executeData, params, tim
         feeDisplay = `💸 ${feeSol} SOL${feeUsd}`;
     }
 
+    // Determine swap type badge
+    let swapTypeBadge = '⚡ Atomic Swap';
+    if (isBulkSwap) {
+        swapTypeBadge = '🚀 cNFT Bulk Swap (Jito Bundle)';
+    } else if (swapType && swapType.type.startsWith('cnft')) {
+        swapTypeBadge = '🌳 cNFT Swap';
+    }
+
     // Build summary HTML safely (XSS-protected)
     content.innerHTML = `
         <div class="summary-section">
-            <h4>✅ Transaction Confirmed On-Chain</h4>
+            <h4>✅ ${swapTypeBadge} Confirmed</h4>
             <div class="summary-item">
                 <span class="summary-label">Signature:</span>
                 <span class="summary-value"><a href="${executeData.explorerUrl}" target="_blank" rel="noopener noreferrer">${escapeHtml(executeData.signature.substring(0, 20))}...</a></span>
@@ -1402,6 +1472,25 @@ function showTransactionSummary(createData, acceptData, executeData, params, tim
                 <span class="summary-label">Nonce Account:</span>
                 <span class="summary-value">${escapeHtml(acceptData.transaction.nonceAccount)}</span>
             </div>
+            ${isBulkSwap && bulkSwapInfo ? `
+            <div class="summary-item" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e2e8f0;">
+                <span class="summary-label" style="color: #f59e0b; font-weight: 600;">🚀 Jito Bundle Info:</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Transactions:</span>
+                <span class="summary-value">${bulkSwapInfo.transactionCount || 'N/A'}</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Strategy:</span>
+                <span class="summary-value">${bulkSwapInfo.strategy || 'JITO_BUNDLE'}</span>
+            </div>
+            ${executeData.bundleId ? `
+            <div class="summary-item">
+                <span class="summary-label">Bundle ID:</span>
+                <span class="summary-value" style="font-family: monospace; font-size: 0.8rem;">${escapeHtml(executeData.bundleId)}</span>
+            </div>
+            ` : ''}
+            ` : ''}
         </div>
 
         <div class="summary-section">

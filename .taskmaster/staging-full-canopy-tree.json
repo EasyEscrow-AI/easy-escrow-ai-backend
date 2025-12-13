@@ -1,0 +1,11 @@
+{
+  "address": "9UDL6tCt8MHDMxYGWCiUHvdjPtyjYBXFkaEb6S4dz39W",
+  "authority": "EoKvzhiYgpRopADBjAPkuXsbCed9y8DWEg9F2Xhns24Z",
+  "maxDepth": 5,
+  "maxBufferSize": 8,
+  "canopyDepth": 5,
+  "isFullCanopy": true,
+  "proofNodesRequired": 0,
+  "createdAt": "2025-12-12T03:06:58.519Z",
+  "note": "Tree already deployed on devnet. Private key removed for security - tree account is immutable once created."
+}

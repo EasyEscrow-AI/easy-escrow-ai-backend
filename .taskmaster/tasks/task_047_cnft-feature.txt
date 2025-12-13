@@ -1,0 +1,86 @@
+# Task ID: 47
+# Title: Phase 3b - Enhanced Offer Management: Implement Counter-Offer Functionality
+# Status: pending
+# Dependencies: None
+# Priority: medium
+# Description: Implement comprehensive counter-offer functionality allowing users to submit counter-offers for existing swap offers with proper validation, chain tracking, and workflow management.
+# Details:
+Implement the counter-offer functionality with the following comprehensive components:
+
+1. **Database Schema Verification**:
+   - Verify SwapOffer.parentOfferId field exists as Int? in prisma/schema.prisma for offer chain tracking
+   - Ensure proper foreign key relationship to parent SwapOffer records
+   - Confirm database supports recursive offer chain queries
+
+2. **Counter-Offer Creation Logic**:
+   - Implement submitCounterOffer() method in src/services/offerManager.ts
+   - Accept parameters: originalOfferId, counterOfferAssets, makerWallet, expirationTime
+   - Validate counter-offer assets against original offer context (ensure reasonable asset types)
+   - Link counter-offers to parent using parentOfferId field
+   - Generate unique counter-offer ID and set appropriate status (PENDING)
+
+3. **Offer Chain Management**:
+   - Implement getOfferChain() method to traverse counter-offer chains using parentOfferId
+   - Create recursive query logic to fetch complete offer history from root to latest counter-offer
+   - Add chain depth validation to prevent excessive counter-offer nesting (max 10 levels)
+   - Implement chain status tracking to identify active vs expired offers in chain
+
+4. **Original Offer Status Updates**:
+   - Update original offer status to COUNTER_OFFERED when counter-offer is submitted
+   - Implement status transition validation (only ACTIVE offers can receive counter-offers)
+   - Add timestamp tracking for counter-offer submission events
+   - Ensure original offer remains accessible for reference but marked as superseded
+
+5. **API Endpoint Implementation**:
+   - Create POST /api/offers/:id/counter-offer endpoint in src/routes/offers.routes.ts
+   - Implement request validation for counter-offer parameters
+   - Add authentication middleware to verify maker wallet ownership
+   - Return complete counter-offer details including chain position and parent reference
+
+6. **Counter-Offer Workflow Management**:
+   - Implement acceptCounterOffer() and rejectCounterOffer() methods
+   - Handle counter-offer acceptance by creating atomic swap transaction
+   - Manage counter-offer rejection with proper status updates and chain cleanup
+   - Add expiration handling for counter-offers with automatic status updates
+
+7. **Notification Hooks Preparation**:
+   - Add event emission points for counter-offer submission, acceptance, and rejection
+   - Implement structured event data format for future notification system integration
+   - Create placeholder hooks in offerManager.ts for notification service calls
+
+8. **API Documentation Updates**:
+   - Document counter-offer flow in API documentation
+   - Include request/response schemas for counter-offer endpoints
+   - Add examples showing complete counter-offer chain interactions
+   - Document error codes and validation rules for counter-offer operations
+
+# Test Strategy:
+1. **Counter-Offer Creation Testing**:
+   - Test submitCounterOffer() with valid original offers and verify counter-offer creation with correct parentOfferId linking
+   - Validate counter-offer asset validation against original offer context (reject incompatible asset types)
+   - Test counter-offer creation with invalid original offer IDs and verify proper error handling
+   - Verify original offer status updates to COUNTER_OFFERED when counter-offer is submitted
+
+2. **Offer Chain Functionality Testing**:
+   - Test getOfferChain() with single offers, simple chains (2-3 levels), and complex chains (5+ levels)
+   - Verify recursive chain traversal returns complete offer history in correct chronological order
+   - Test chain depth validation by attempting to create 11+ level chains and verify rejection
+   - Test chain queries with mixed offer statuses (active, expired, accepted, rejected)
+
+3. **API Endpoint Testing**:
+   - Test POST /api/offers/:id/counter-offer with valid authentication and offer data, verify 201 response with complete counter-offer details
+   - Test endpoint with invalid offer IDs, expired offers, and already-accepted offers, verify appropriate 400/404 error responses
+   - Test authentication middleware by attempting counter-offer creation without proper wallet verification
+   - Verify API response includes parentOfferId, chain position, and complete asset details
+
+4. **Counter-Offer Workflow Testing**:
+   - Test acceptCounterOffer() and rejectCounterOffer() methods with various chain positions and verify proper status transitions
+   - Test counter-offer acceptance creates atomic swap transaction using existing TransactionBuilder service
+   - Test counter-offer expiration handling with automated status updates and chain cleanup
+   - Verify notification event emission at all workflow transition points
+
+5. **Integration Testing**:
+   - Test complete counter-offer flow from creation through acceptance/rejection with real database operations
+   - Verify counter-offer functionality integrates properly with existing offer management and swap execution systems
+   - Test concurrent counter-offer operations on same original offer and verify proper conflict resolution
+   - Test counter-offer chain queries under load with multiple simultaneous chain traversals

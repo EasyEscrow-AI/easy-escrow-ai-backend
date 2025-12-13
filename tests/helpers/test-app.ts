@@ -1,10 +1,13 @@
 import express, { Application, Request, Response, NextFunction } from 'express';
-import { agreementRoutes } from '../../src/routes';
-import { corsOptions, helmetConfig, sanitizeInput, securityHeaders } from '../../src/middleware';
+import { offersRoutes, healthRoutes, testRoutes } from '../../src/routes';
+import { helmetConfig, sanitizeInput, securityHeaders } from '../../src/middleware';
 
 /**
  * Create test Express app without starting server or orchestrators
  * For integration testing purposes
+ * 
+ * NOTE: Updated to use atomic swap architecture (offers routes)
+ * Legacy agreement routes have been removed.
  */
 export const createTestApp = (): Application => {
   const app: Application = express();
@@ -12,9 +15,6 @@ export const createTestApp = (): Application => {
   // Security Middleware
   app.use(helmetConfig);
   app.use(securityHeaders);
-
-  // CORS Configuration
-  // app.use(cors(corsOptions)); // Disabled for testing
 
   // Request parsing middleware
   app.use(express.json({ limit: '10mb' }));
@@ -39,13 +39,15 @@ export const createTestApp = (): Application => {
       version: '1.0.0',
       endpoints: {
         health: '/health',
-        agreements: '/v1/agreements',
+        offers: '/api/offers',
       }
     });
   });
 
-  // API Routes
-  app.use(agreementRoutes);
+  // API Routes - Atomic Swap Architecture
+  app.use(offersRoutes);
+  app.use(healthRoutes);
+  app.use(testRoutes); // Includes /api/quote endpoint
 
   // 404 handler
   app.use((req: Request, res: Response) => {
