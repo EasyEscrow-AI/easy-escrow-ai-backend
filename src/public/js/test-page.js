@@ -675,10 +675,7 @@ function resetSelectionsAfterSwap() {
         updateNFTSelection('taker');
     }
     
-    // Update swap preview to show empty state
-    updateSwapPreview();
-    
-    // Update swap button state
+    // Update swap button state (disabled since no selections)
     updateSwapButton();
     
     addLog('🔄 Selections reset for next swap', 'info');
