@@ -40,6 +40,22 @@ info:
     - ✅ **Metaplex Core NFTs**
     - 🔜 **Additional blockchains** - Coming soon
     
+    ## Bulk Swap Support (NEW!)
+    
+    EasyEscrow.ai now supports **bulk swaps** with up to **10 assets on each side**:
+    
+    - **Up to 10 NFTs/cNFTs per side** - Swap multiple assets in a single offer
+    - **Mixed asset types** - Combine traditional NFTs, cNFTs, and SOL in one swap
+    - **Automatic transaction splitting** - Large swaps are split into multiple transactions
+    - **Atomic execution** - All transactions succeed or none do (via Jito bundles on mainnet)
+    
+    ### cNFT-Specific Features
+    
+    - **Direct Bubblegum transfers** - cNFTs transfer directly without escrow custody
+    - **Merkle proof handling** - Automatic proof fetching from DAS API
+    - **Full canopy tree support** - Eliminates stale proof issues
+    - **Rate-limited DAS API** - Built-in rate limiting, batching, and caching
+    
     ## Additional Features
     - **Custom expiry times (5 minutes - 24 hours)** with flexible input formats (presets, duration, timestamps)
     - On-chain non-custodial functionality (assets secured by Smart Contract)
@@ -64,10 +80,11 @@ info:
     
     ### Supported Asset Types
     
-    - ✅ **SPL NFTs** (Metaplex standard)
-    - ✅ **Compressed NFTs (cNFTs)** (Metaplex Bubblegum)
+    - ✅ **SPL NFTs** (Metaplex standard) - Up to 10 per side
+    - ✅ **Compressed NFTs (cNFTs)** (Metaplex Bubblegum) - Up to 10 per side
     - ✅ **SOL** (Native Solana currency)
-    - ✅ **Mixed swaps** (NFT ↔ SOL, NFT ↔ NFT, cNFT ↔ SOL, etc.)
+    - ✅ **Mixed swaps** (NFT ↔ SOL, NFT ↔ NFT, cNFT ↔ SOL, cNFT ↔ cNFT, etc.)
+    - ✅ **Bulk swaps** - Up to 10 assets on each side of the trade
     
     ### Key Features
     
@@ -114,6 +131,8 @@ tags:
     description: Swap quote and fee estimation
   - name: Offers
     description: Atomic swap offer lifecycle management
+  - name: Bundle Monitoring
+    description: cNFT bundle status and recovery (for bulk swaps)
 
 paths:
   /:
@@ -610,13 +629,21 @@ paths:
         - Offers
       summary: Accept offer
       description: |
-        Accept an active offer and receive the atomic swap transaction to sign.
+        Accept an active offer and receive the atomic swap transaction(s) to sign.
         
+        **Single Transaction (Simple swaps):**
         The API returns a base64-encoded transaction that you must:
         1. Deserialize
         2. Sign with your wallet
         3. Broadcast to Solana
         4. Call /confirm with the signature
+        
+        **Multiple Transactions (Bulk cNFT swaps):**
+        For swaps involving cNFTs, the API may return multiple transactions in a `bulkSwap` object:
+        - Each transaction must be signed by the appropriate party (maker or taker)
+        - Transactions should be sent sequentially or as a Jito bundle
+        - The `requiredSigners` array indicates which wallet(s) must sign each transaction
+        - On mainnet, transactions are bundled atomically via Jito
         
         **Requires idempotency key** to prevent duplicate nonce consumption.
       parameters:
@@ -676,6 +703,7 @@ paths:
                             description: In lamports
                       transaction:
                         type: object
+                        description: Single transaction (for simple swaps without cNFTs)
                         properties:
                           serialized:
                             type: string
@@ -684,6 +712,50 @@ paths:
                           nonceAccount:
                             type: string
                             description: Durable nonce account used in the transaction
+                      bulkSwap:
+                        type: object
+                        description: Multiple transactions (for cNFT swaps requiring transaction splitting)
+                        properties:
+                          isBulkSwap:
+                            type: boolean
+                            description: Indicates this is a bulk swap with multiple transactions
+                            example: true
+                          strategy:
+                            type: string
+                            description: Transaction strategy used
+                            enum: [SINGLE_TRANSACTION, DIRECT_BUBBLEGUM_BUNDLE]
+                            example: "DIRECT_BUBBLEGUM_BUNDLE"
+                          transactionCount:
+                            type: integer
+                            description: Number of transactions in the bundle
+                            example: 2
+                          requiresJitoBundle:
+                            type: boolean
+                            description: Whether Jito bundle is required (mainnet only)
+                            example: true
+                          transactions:
+                            type: array
+                            description: Array of transactions to sign and send
+                            items:
+                              type: object
+                              properties:
+                                index:
+                                  type: integer
+                                  description: Transaction index in the bundle
+                                  example: 0
+                                purpose:
+                                  type: string
+                                  description: Purpose of this transaction
+                                  example: "SOL transfers and platform fee"
+                                serializedTransaction:
+                                  type: string
+                                  description: Base64-encoded transaction
+                                requiredSigners:
+                                  type: array
+                                  description: Wallet addresses that must sign this transaction
+                                  items:
+                                    type: string
+                                  example: ["8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ"]
                   timestamp:
                     type: string
                     format: date-time
@@ -762,6 +834,193 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
           $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/offers/{offerId}/bundle-status:
+    get:
+      tags:
+        - Bundle Monitoring
+      summary: Get bundle execution status
+      description: |
+        Get the current status of a cNFT bulk swap bundle execution.
+        
+        Bundle statuses:
+        - **PENDING**: Bundle created, not yet submitted
+        - **SUBMITTED**: Bundle submitted to Jito/RPC
+        - **LANDED**: All transactions confirmed on-chain
+        - **FAILED**: Bundle execution failed
+        - **PARTIAL**: Some transactions succeeded, some failed
+        - **TIMEOUT**: Bundle submission timed out
+      parameters:
+        - $ref: '#/components/parameters/OfferId'
+      responses:
+        '200':
+          description: Bundle status retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      offerId:
+                        type: string
+                      bundleStatus:
+                        type: string
+                        enum: [PENDING, SUBMITTED, LANDED, FAILED, PARTIAL, TIMEOUT]
+                      transactionCount:
+                        type: integer
+                      confirmedCount:
+                        type: integer
+                      failedCount:
+                        type: integer
+                      signatures:
+                        type: array
+                        items:
+                          type: string
+                      error:
+                        type: string
+                        nullable: true
+                      updatedAt:
+                        type: string
+                        format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/offers/{offerId}/retry-bundle:
+    post:
+      tags:
+        - Bundle Monitoring
+      summary: Retry failed bundle
+      description: |
+        Retry a failed or timed-out cNFT bulk swap bundle.
+        
+        This endpoint will:
+        1. Fetch fresh Merkle proofs for all cNFTs
+        2. Rebuild the transaction bundle
+        3. Resubmit to Jito/RPC
+        
+        Only available for bundles in FAILED or TIMEOUT status.
+      parameters:
+        - $ref: '#/components/parameters/OfferId'
+      responses:
+        '200':
+          description: Bundle retry initiated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      offerId:
+                        type: string
+                      message:
+                        type: string
+                        example: "Bundle retry initiated"
+                      newBundleStatus:
+                        type: string
+                        example: "SUBMITTED"
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          description: Bundle not eligible for retry
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/offers/metrics/bundles:
+    get:
+      tags:
+        - Bundle Monitoring
+      summary: Get bundle metrics
+      description: |
+        Get aggregated metrics for cNFT bundle execution over the last 24 hours.
+        
+        Useful for monitoring bundle success rates and identifying issues.
+      responses:
+        '200':
+          description: Bundle metrics retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      period:
+                        type: string
+                        example: "24h"
+                      totals:
+                        type: object
+                        properties:
+                          total:
+                            type: integer
+                            example: 150
+                          landed:
+                            type: integer
+                            example: 142
+                          failed:
+                            type: integer
+                            example: 5
+                          timeout:
+                            type: integer
+                            example: 2
+                          pending:
+                            type: integer
+                            example: 1
+                      rates:
+                        type: object
+                        properties:
+                          successRate:
+                            type: string
+                            example: "94.67%"
+                          failureRate:
+                            type: string
+                            example: "3.33%"
+                      recentFailures:
+                        type: array
+                        description: Last 10 failed bundles for debugging
+                        items:
+                          type: object
+                          properties:
+                            offerId:
+                              type: string
+                            status:
+                              type: string
+                            createdAt:
+                              type: string
+                            maker:
+                              type: string
+                            taker:
+                              type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '500':
           $ref: '#/components/responses/InternalServerError'
 
