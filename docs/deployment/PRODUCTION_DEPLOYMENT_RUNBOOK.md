@@ -320,7 +320,7 @@ git push origin production-$(date +%Y%m%d)
 # - SOLANA_RPC_URL (mainnet RPC)
 # - SOLANA_ESCROW_PROGRAM_ID=2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx
 # - MAINNET_PROD_TREASURY_ADDRESS
-# - MAINNET_PRODUCTION_FEE_COLLECTOR_ADDRESS
+# - MAINNET_PROD_FEE_COLLECTOR_ADDRESS
 ```
 
 ---
@@ -497,7 +497,7 @@ git push
 - Automated weekly withdrawals to cold storage
 
 **Fee Collector:**
-- Address: `<MAINNET_PRODUCTION_FEE_COLLECTOR_ADDRESS>`
+- Address: `<MAINNET_PROD_FEE_COLLECTOR_ADDRESS>`
 - Should be a cold wallet (offline storage)
 - Multisig strongly recommended
 
