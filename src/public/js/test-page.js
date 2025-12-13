@@ -106,6 +106,87 @@ let makerSearchTerm = ''; // Search term for maker NFTs
 let takerSearchTerm = ''; // Search term for taker NFTs
 let solPriceUSD = null; // Cached SOL price in USD
 
+// ========================================
+// ANIMAL IMAGE SYSTEM (for cNFTs without images)
+// ========================================
+// Uses https://animals.maxz.dev/ free API for persistent cNFT images
+const ANIMAL_TYPES = ['cat', 'dog', 'fox', 'panda', 'red_panda', 'bird', 'koala', 'racoon'];
+const CNFT_IMAGE_STORAGE_KEY = 'cnft_animal_images';
+
+// Get or assign a persistent animal image for a cNFT
+function getCnftAnimalImage(assetId) {
+    if (!assetId) return null;
+    
+    // Load existing mappings from localStorage
+    let imageMap = {};
+    try {
+        const stored = localStorage.getItem(CNFT_IMAGE_STORAGE_KEY);
+        if (stored) {
+            imageMap = JSON.parse(stored);
+        }
+    } catch (e) {
+        console.warn('Failed to load cNFT image map:', e);
+    }
+    
+    // If this cNFT already has an assigned image, return it
+    if (imageMap[assetId]) {
+        return imageMap[assetId];
+    }
+    
+    // Assign a new random animal image
+    // Use asset ID hash to pick consistent animal type
+    const hash = assetId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const animalType = ANIMAL_TYPES[hash % ANIMAL_TYPES.length];
+    
+    // Generate unique image URL with asset-based seed for consistency
+    const imageUrl = `https://animals.maxz.dev/api/${animalType}?seed=${assetId.substring(0, 8)}`;
+    
+    // Store the mapping
+    imageMap[assetId] = imageUrl;
+    try {
+        localStorage.setItem(CNFT_IMAGE_STORAGE_KEY, JSON.stringify(imageMap));
+    } catch (e) {
+        console.warn('Failed to save cNFT image map:', e);
+    }
+    
+    console.log(`🐾 Assigned ${animalType} image to cNFT ${assetId.substring(0, 8)}...`);
+    return imageUrl;
+}
+
+// Get image for any NFT (uses animal API for cNFTs without images)
+function getNftImage(nft) {
+    // If NFT already has an image, use it
+    if (nft.image && !nft.image.includes('No Image')) {
+        return nft.image;
+    }
+    
+    // For cNFTs without images, get a persistent animal image
+    if (nft.isCompressed && nft.mint) {
+        return getCnftAnimalImage(nft.mint);
+    }
+    
+    // Fallback to placeholder
+    return null;
+}
+
+// Preload animal images for a list of NFTs
+async function preloadAnimalImages(nfts) {
+    const cnftsWithoutImages = nfts.filter(nft => 
+        nft.isCompressed && (!nft.image || nft.image.includes('No Image'))
+    );
+    
+    if (cnftsWithoutImages.length === 0) return;
+    
+    console.log(`🐾 Preloading ${cnftsWithoutImages.length} animal images for cNFTs...`);
+    
+    // Assign images to all cNFTs (this stores them in localStorage)
+    cnftsWithoutImages.forEach(nft => {
+        if (nft.mint) {
+            getCnftAnimalImage(nft.mint);
+        }
+    });
+}
+
 // Fetch SOL price in USD
 async function fetchSOLPrice() {
     try {
@@ -438,13 +519,18 @@ function renderNFTs(wallet, nfts) {
 
     const placeholderSvg = 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'%3E%3Crect fill=\'%23ddd\' width=\'100\' height=\'100\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23999\' font-family=\'Arial\' font-size=\'14\'%3ENo Image%3C/text%3E%3C/svg%3E';
     
+    // Preload animal images for cNFTs without images
+    preloadAnimalImages(filteredNfts);
+    
     container.innerHTML = filteredNfts.map((nft, index) => {
         // Find original index in unfiltered array for toggle functionality
         const originalIndex = nfts.findIndex(n => n.mint === nft.mint);
+        // Get image - uses animal API for cNFTs without images
+        const imageUrl = getNftImage(nft) || placeholderSvg;
         return `
             <div class="nft-card" data-index="${originalIndex}">
                 <img class="nft-image" 
-                     src="${nft.image || placeholderSvg}" 
+                     src="${imageUrl}" 
                      alt="${nft.name}"
                      data-fallback="${placeholderSvg}">
                 <div class="nft-name">${nft.name || 'Unknown NFT'}</div>
@@ -717,7 +803,9 @@ function showConfirmationModal() {
             
             const img = document.createElement('img');
             img.className = 'nft-preview-image';
-            img.src = nft.image || 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'50\' height=\'50\'%3E%3Crect fill=\'%23ddd\' width=\'50\' height=\'50\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23999\' font-family=\'Arial\' font-size=\'10\'%3ENone%3C/text%3E%3C/svg%3E';
+            // Use animal image for cNFTs without images
+            const previewPlaceholder = 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'50\' height=\'50\'%3E%3Crect fill=\'%23ddd\' width=\'50\' height=\'50\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23999\' font-family=\'Arial\' font-size=\'10\'%3ENone%3C/text%3E%3C/svg%3E';
+            img.src = getNftImage(nft) || previewPlaceholder;
             img.alt = nft.name || 'Unknown NFT';
             
             const details = document.createElement('div');
@@ -770,7 +858,9 @@ function showConfirmationModal() {
             
             const img = document.createElement('img');
             img.className = 'nft-preview-image';
-            img.src = nft.image || 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'50\' height=\'50\'%3E%3Crect fill=\'%23ddd\' width=\'50\' height=\'50\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23999\' font-family=\'Arial\' font-size=\'10\'%3ENone%3C/text%3E%3C/svg%3E';
+            // Use animal image for cNFTs without images
+            const takerPlaceholder = 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'50\' height=\'50\'%3E%3Crect fill=\'%23ddd\' width=\'50\' height=\'50\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23999\' font-family=\'Arial\' font-size=\'10\'%3ENone%3C/text%3E%3C/svg%3E';
+            img.src = getNftImage(nft) || takerPlaceholder;
             img.alt = nft.name || 'Unknown NFT';
             
             const details = document.createElement('div');
