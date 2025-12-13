@@ -1,0 +1,131 @@
+# Task ID: 44
+# Title: Phase 2b - Bulk Swap Support: Implement Transaction Splitting for Bulk cNFT Swaps
+# Status: pending
+# Dependencies: 41
+# Priority: high
+# Description: Implement intelligent transaction splitting for bulk cNFT swaps where each cNFT transfer requires ~7+ additional accounts, splitting into 1-2 cNFTs per transaction with Address Lookup Tables and Jito bundle atomicity.
+# Details:
+Implement the TransactionGroupBuilder class and bulk swap transaction splitting with the following comprehensive components:
+
+1. **TransactionGroupBuilder Class Creation**:
+   - Create new TransactionGroupBuilder class in src/services/transactionBuilder.ts
+   - Extend existing TransactionBuilder functionality to handle multi-transaction groups
+   - Implement transaction size estimation logic with 1,232 byte limit per transaction
+   - Add account counting for cNFT transfers (~7+ accounts per cNFT: merkle_tree, tree_authority, bubblegum_program, compression_program, log_wrapper, system_program, proof accounts)
+
+2. **Conservative Strategy Selection Logic**:
+   - Implement asset count analysis with conservative 1-2 cNFTs per transaction maximum
+   - Create threshold logic: 1-2 total cNFTs → single transaction (no bundle), 3+ total cNFTs → multi-transaction with Jito bundle
+   - Conservative approach ensures staying well under 1,232-byte limit even with full merkle proofs
+   - Add fallback logic for edge cases where even single cNFT exceeds transaction limits
+   - Future optimization path to 3-5 cNFTs per transaction after canopy depth testing
+
+3. **Transaction Splitting Implementation**:
+   - Split bulk swaps into groups of 1-2 cNFTs per transaction (conservative approach)
+   - Implement smart ordering: payments first → NFT transfers → SOL cleanup last
+   - Ensure proper nonce account assignment for each transaction in the group
+   - Maintain transaction dependencies and execution order
+   - Only use Jito bundles for swaps with 3+ total cNFTs
+
+4. **Address Lookup Tables (ALTs) Integration**:
+   - Create ALTs for common accounts (bubblegum_program, compression_program, system_program, log_wrapper)
+   - Implement ALT creation and management for frequently used program accounts
+   - Use Versioned Transactions with ALT support to reduce transaction size
+   - Add ALT caching and reuse logic for efficiency
+
+5. **Conditional Jito Bundle Atomicity**:
+   - Use Jito bundles only for swaps with 3+ total cNFTs requiring transaction splitting
+   - Implement bundle creation with proper transaction ordering for multi-transaction swaps
+   - Add bundle status tracking and confirmation logic
+   - Handle bundle failure scenarios with proper error reporting
+   - Skip bundle overhead for simple 1-2 cNFT swaps using single transactions
+
+6. **Database Schema Extensions**:
+   - Extend SwapOffer model or create new TransactionGroup model
+   - Add transactionGroup and bundleId fields for tracking multi-transaction swaps
+   - Implement transaction group status tracking (pending, submitted, confirmed, failed)
+   - Add partial execution tracking for rollback scenarios
+
+7. **Partial Failure Handling**:
+   - Implement transaction group rollback logic for partial failures
+   - Add compensation transaction creation for successful partial executions
+   - Create detailed failure reporting with specific transaction failure reasons
+   - Implement retry logic for transient failures
+
+# Test Strategy:
+1. **Conservative Transaction Splitting Logic Testing**:
+   - Test transaction size estimation accuracy with 1-2 cNFT combinations ensuring well under 1,232-byte limit
+   - Verify strategy selection: 1-2 total cNFTs → single transaction, 3+ total cNFTs → multi-transaction with bundle
+   - Test transaction grouping with conservative 1-2 cNFTs per transaction approach
+   - Test edge cases with maximum merkle proof sizes and account requirements
+
+2. **Address Lookup Table Testing**:
+   - Test ALT creation and population with common program accounts
+   - Verify Versioned Transaction construction with ALT references reduces transaction size
+   - Test ALT caching and reuse across multiple swap transactions
+   - Mock ALT failures and verify fallback to regular transactions
+
+3. **Conditional Jito Bundle Integration Testing**:
+   - Test single transaction execution for 1-2 cNFT swaps (no bundle)
+   - Test bundle creation for 3+ cNFT swaps with multiple transactions in correct execution order
+   - Verify bundle submission and status tracking functionality for multi-transaction swaps only
+   - Test bundle confirmation and failure handling scenarios
+   - Mock Jito API responses to test error handling and retry logic
+
+4. **Database Transaction Group Testing**:
+   - Test TransactionGroup model creation and status updates
+   - Verify transactionGroup and bundleId field tracking across swap lifecycle
+   - Test partial execution tracking and rollback scenario data integrity
+   - Verify database consistency during multi-transaction swap failures
+
+5. **End-to-End Conservative Bulk Swap Testing**:
+   - Test complete bulk cNFT swap flow from offer creation to confirmation
+   - Test 1-2 cNFT swaps using single transactions without bundles
+   - Test 3+ cNFT swaps using multi-transaction bundles with 1-2 cNFTs per transaction
+   - Verify atomicity guarantees with simulated network failures during bundle execution
+   - Test partial failure scenarios and verify proper rollback/compensation
+   - Performance test with conservative splitting approach ensuring transaction size safety
+
+# Subtasks:
+## 1. Create TransactionGroupBuilder Class Foundation [pending]
+### Dependencies: None
+### Description: Create the core TransactionGroupBuilder class in src/services/transactionBuilder.ts that extends existing TransactionBuilder functionality to handle multi-transaction groups for bulk cNFT swaps.
+### Details:
+Implement TransactionGroupBuilder class with constructor accepting swap parameters, group configuration, and ALT references. Add methods for transaction size estimation with 1,232 byte limit per transaction. Include account counting logic for cNFT transfers (~7+ accounts per cNFT: merkle_tree, tree_authority, bubblegum_program, compression_program, log_wrapper, system_program, proof accounts). Extend base TransactionBuilder with group-specific properties and validation.
+
+## 2. Implement Conservative Strategy Selection Logic [pending]
+### Dependencies: 44.1
+### Description: Implement conservative strategy selection logic that uses single transactions for 1-2 total cNFTs and multi-transaction bundles for 3+ cNFTs, with 1-2 cNFTs per transaction maximum.
+### Details:
+Create asset count analysis method with conservative thresholds: 1-2 total cNFTs use single transaction (no bundle needed), 3+ total cNFTs split into multiple transactions with Jito bundle. Implement 1-2 cNFTs per transaction maximum to ensure staying well under 1,232-byte limit even with full merkle proofs. Add fallback logic for edge cases where even single cNFT exceeds transaction limits. Include configuration for future optimization to 3-5 cNFTs per transaction after canopy depth testing.
+
+## 3. Implement Conservative Transaction Splitting and Smart Ordering [pending]
+### Dependencies: 44.2
+### Description: Implement conservative transaction splitting logic that divides bulk swaps into groups of 1-2 cNFTs per transaction with intelligent ordering and dependency management.
+### Details:
+Split bulk swaps into conservative groups of 1-2 cNFTs per transaction to ensure transaction size safety. Implement smart ordering strategy: payments first → NFT transfers → SOL cleanup last. Ensure proper nonce account assignment for each transaction in the group. Maintain transaction dependencies and execution order. Add transaction group validation and integrity checks. Only create multiple transactions for swaps with 3+ total cNFTs.
+
+## 4. Integrate Address Lookup Tables (ALTs) [pending]
+### Dependencies: 44.3
+### Description: Implement Address Lookup Tables integration to reduce transaction size by storing common program accounts and enabling Versioned Transactions support.
+### Details:
+Create ALTs for common accounts (bubblegum_program, compression_program, system_program, log_wrapper). Implement ALT creation and management for frequently used program accounts. Use Versioned Transactions with ALT support to reduce transaction size significantly. Add ALT caching and reuse logic for efficiency. Include ALT lifecycle management and cleanup procedures.
+
+## 5. Implement Conditional Jito Bundle Atomicity [pending]
+### Dependencies: 44.4
+### Description: Integrate conditional Jito bundle submission system that only uses bundles for swaps with 3+ total cNFTs, ensuring atomic execution of multi-transaction groups while avoiding bundle overhead for simple swaps.
+### Details:
+Implement conditional Jito bundle logic: use single transactions for 1-2 total cNFTs (no bundle), use bundles only for 3+ total cNFTs requiring transaction splitting. Implement bundle creation with proper transaction ordering and dependencies for multi-transaction swaps. Add bundle status tracking and confirmation logic with real-time monitoring. Handle bundle failure scenarios with detailed error reporting and rollback capabilities. Include bundle retry logic for transient network failures.
+
+## 6. Extend Database Schema for Transaction Groups [pending]
+### Dependencies: 44.5
+### Description: Extend the database schema to support transaction group tracking, bundle management, and partial execution status monitoring for bulk cNFT swaps.
+### Details:
+Extend SwapOffer model or create new TransactionGroup model with transactionGroup and bundleId fields. Add transaction group status tracking (pending, submitted, confirmed, failed). Implement partial execution tracking for rollback scenarios. Create database indexes for efficient transaction group queries. Add migration scripts for schema updates and data integrity constraints.
+
+## 7. Implement Partial Failure Handling and Recovery [pending]
+### Dependencies: 44.6
+### Description: Implement comprehensive partial failure handling with transaction group rollback logic, compensation transactions, and detailed error reporting for robust bulk swap execution.
+### Details:
+Implement transaction group rollback logic for partial failures with state restoration. Add compensation transaction creation for successful partial executions to maintain consistency. Create detailed failure reporting with specific transaction failure reasons and recovery suggestions. Implement retry logic for transient failures with exponential backoff. Add monitoring and alerting for partial failure scenarios.
+

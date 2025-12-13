@@ -88,10 +88,10 @@ describe('🚀 Production E2E: cNFT ↔ cNFT with ALT Support (Mainnet)', () => 
       console.log('\n🔍 Verifying ALT infrastructure...');
       
       // Check if the environment has ALT configured
-      const altAddress = process.env.PRODUCTION_ALT_ADDRESS;
+      const altAddress = process.env.MAINNET_PROD_ALT_ADDRESS;
       
       if (!altAddress) {
-        console.log('⚠️  PRODUCTION_ALT_ADDRESS not set in environment');
+        console.log('⚠️  MAINNET_PROD_ALT_ADDRESS not set in environment');
         console.log('   This is OK if running locally - ALT is configured on the server');
         this.skip();
         return;
@@ -117,7 +117,7 @@ describe('🚀 Production E2E: cNFT ↔ cNFT with ALT Support (Mainnet)', () => 
     it('should include correct Treasury PDA in ALT', async function() {
       this.timeout(30000);
       
-      const altAddress = process.env.PRODUCTION_ALT_ADDRESS;
+      const altAddress = process.env.MAINNET_PROD_ALT_ADDRESS;
       if (!altAddress) {
         this.skip();
         return;

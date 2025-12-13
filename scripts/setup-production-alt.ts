@@ -125,8 +125,8 @@ async function main() {
   
   // Check if ALT already exists in environment
   const existingALT = isProduction 
-    ? process.env.PRODUCTION_ALT_ADDRESS 
-    : process.env.STAGING_ALT_ADDRESS;
+    ? process.env.MAINNET_PROD_ALT_ADDRESS 
+    : process.env.DEVNET_STAGING_ALT_ADDRESS;
   
   if (existingALT) {
     console.log('⚠️  WARNING: ALT address already configured in environment:');
@@ -181,15 +181,15 @@ async function main() {
     console.log('1. Add this to your environment variables:');
     console.log();
     if (isProduction) {
-      console.log(`   PRODUCTION_ALT_ADDRESS=${lookupTableAddress.toBase58()}`);
+      console.log(`   MAINNET_PROD_ALT_ADDRESS=${lookupTableAddress.toBase58()}`);
     } else {
-      console.log(`   STAGING_ALT_ADDRESS=${lookupTableAddress.toBase58()}`);
+      console.log(`   DEVNET_STAGING_ALT_ADDRESS=${lookupTableAddress.toBase58()}`);
     }
     console.log();
     console.log('2. For DigitalOcean App Platform, add to app spec:');
     console.log();
     console.log('   envs:');
-    console.log(`     - key: ${isProduction ? 'PRODUCTION_ALT_ADDRESS' : 'STAGING_ALT_ADDRESS'}`);
+    console.log(`     - key: ${isProduction ? 'MAINNET_PROD_ALT_ADDRESS' : 'DEVNET_STAGING_ALT_ADDRESS'}`);
     console.log(`       value: ${lookupTableAddress.toBase58()}`);
     console.log('       scope: RUN_TIME');
     console.log();

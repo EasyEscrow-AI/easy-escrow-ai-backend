@@ -1,0 +1,116 @@
+# Task ID: 54
+# Title: Update API Routes for Bulk cNFT Swap Support
+# Status: pending
+# Dependencies: None
+# Priority: high
+# Description: Update the offers.routes.ts API endpoints to support bulk cNFT swaps and enhanced offer management including multi-asset validation, offer updates, counter-offers, cancellation, and multi-transaction response formats.
+# Details:
+Implement comprehensive API route updates to support bulk cNFT swap operations and enhanced offer management:
+
+1. **Update POST /api/offers for Multi-Asset Support**:
+   - Remove existing single-asset validation logic in offers.routes.ts
+   - Add validation middleware to enforce maximum 10 assets per side (offeredAssets and requestedAssets arrays)
+   - Support mixed asset types (NFTs, cNFTs, SOL) in request body validation
+   - Update request schema to accept arrays: { offeredAssets: Asset[], requestedAssets: Asset[], solAmount?: number }
+   - Integrate with updated OfferManager.createOffer() method from Task 43
+
+2. **Add PUT /api/offers/:id Endpoint**:
+   - Create new route handler for offer updates
+   - Validate maker wallet authorization using signature verification middleware
+   - Accept updated SOL amounts and asset arrays in request body
+   - Call OfferManager.updateOffer() method from Task 49
+   - Return updated offer details with version tracking information
+   - Add proper error handling for invalid offer states and unauthorized access
+
+3. **Add POST /api/offers/:id/counter-offer Endpoint**:
+   - Implement counter-offer creation route handler
+   - Accept counter-offer assets and link to parent offer via parentOfferId
+   - Validate counter-offer assets are compatible with original offer context
+   - Call OfferManager.submitCounterOffer() method from Task 47
+   - Return new offer object with parentOfferId relationship
+   - Include proper validation for offer chain depth limits
+
+4. **Add DELETE /api/offers/:id Endpoint**:
+   - Create cancellation route handler with maker/admin authorization
+   - Validate cancellation permissions (maker wallet or admin role)
+   - Call OfferManager.cancelOffer() method from Task 48
+   - Update offer status to 'cancelled' and set cancelledAt timestamp
+   - Return confirmation response with updated offer status
+   - Handle nonce account cleanup if offer was in 'pending' state
+
+5. **Update Response Format for Multi-Transaction Swaps**:
+   - Modify existing route responses to return transaction group arrays instead of single transactions
+   - Include bundleId field for Jito bundle submissions when multiple transactions are required
+   - Add status field for each transaction in the group (pending, submitted, confirmed, failed)
+   - Update TransactionBuilder integration to handle bulk swap transaction construction
+   - Ensure backward compatibility with single-transaction responses
+
+6. **Update OpenAPI/Swagger Documentation**:
+   - Update src/public/openapi.json with new endpoint definitions
+   - Add request/response schemas for bulk asset arrays and multi-transaction responses
+   - Include examples for cNFT assets with isCompressed: true and proof data
+   - Document new error codes and validation messages for bulk operations
+   - Add authentication requirements for protected endpoints
+
+# Test Strategy:
+1. **Multi-Asset Validation Testing**:
+   - Test POST /api/offers with 1-10 assets per side and verify acceptance
+   - Test with 11+ assets per side and verify rejection with appropriate error message
+   - Test mixed asset types (NFTs + cNFTs + SOL) in single offer creation
+   - Verify backward compatibility with existing single-asset offer format
+
+2. **Enhanced Endpoint Testing**:
+   - Test PUT /api/offers/:id with valid maker authorization and verify offer updates
+   - Test unauthorized update attempts and verify proper 403 Forbidden responses
+   - Test POST /api/offers/:id/counter-offer with valid parent offers and verify counter-offer creation
+   - Test DELETE /api/offers/:id with maker and admin authorization scenarios
+
+3. **Multi-Transaction Response Testing**:
+   - Create bulk swap offers requiring multiple transactions and verify response format includes transaction group array
+   - Test bundleId inclusion for Jito submissions when applicable
+   - Verify each transaction in group has proper status tracking
+   - Test backward compatibility with single-transaction swap responses
+
+4. **API Documentation Validation**:
+   - Validate updated OpenAPI specification using swagger-validator
+   - Test all documented endpoints match actual implementation
+   - Verify request/response examples are accurate and complete
+   - Test API documentation rendering in Swagger UI
+
+5. **Integration Testing**:
+   - Test complete bulk swap workflow from offer creation through acceptance
+   - Verify proper integration with updated OfferManager methods from dependent tasks
+   - Test error handling across all new endpoints with various failure scenarios
+   - Validate rate limiting and authentication middleware work correctly with new endpoints
+
+# Subtasks:
+## 1. Update POST /api/offers for Multi-Asset Support [pending]
+### Dependencies: None
+### Description: Remove existing single-asset validation logic and implement multi-asset validation middleware to support bulk cNFT swaps with mixed asset types.
+### Details:
+Remove existing single-asset validation logic in offers.routes.ts. Add validation middleware to enforce maximum 10 assets per side (offeredAssets and requestedAssets arrays). Support mixed asset types (NFTs, cNFTs, SOL) in request body validation. Update request schema to accept arrays: { offeredAssets: Asset[], requestedAssets: Asset[], solAmount?: number }. Integrate with updated OfferManager.createOffer() method from Task 43.
+
+## 2. Add PUT /api/offers/:id Endpoint for Offer Updates [pending]
+### Dependencies: None
+### Description: Create new route handler for offer updates with maker wallet authorization and proper validation for offer state changes.
+### Details:
+Create new route handler for offer updates. Validate maker wallet authorization using signature verification middleware. Accept updated SOL amounts and asset arrays in request body. Call OfferManager.updateOffer() method from Task 49. Return updated offer details with version tracking information. Add proper error handling for invalid offer states and unauthorized access.
+
+## 3. Add POST /api/offers/:id/counter-offer Endpoint [pending]
+### Dependencies: None
+### Description: Implement counter-offer creation route handler with parent offer linking and compatibility validation.
+### Details:
+Implement counter-offer creation route handler. Accept counter-offer assets and link to parent offer via parentOfferId. Validate counter-offer assets are compatible with original offer context. Call OfferManager.submitCounterOffer() method from Task 47. Return new offer object with parentOfferId relationship. Include proper validation for offer chain depth limits.
+
+## 4. Add DELETE /api/offers/:id Endpoint for Cancellation [pending]
+### Dependencies: None
+### Description: Create cancellation route handler with proper authorization and nonce account cleanup for pending offers.
+### Details:
+Create cancellation route handler with maker/admin authorization. Validate cancellation permissions (maker wallet or admin role). Call OfferManager.cancelOffer() method from Task 48. Update offer status to 'cancelled' and set cancelledAt timestamp. Return confirmation response with updated offer status. Handle nonce account cleanup if offer was in 'pending' state.
+
+## 5. Update Response Format for Multi-Transaction Swaps [pending]
+### Dependencies: 54.1, 54.2, 54.3, 54.4
+### Description: Modify route responses to support transaction group arrays and Jito bundle submissions for bulk swap operations.
+### Details:
+Modify existing route responses to return transaction group arrays instead of single transactions. Include bundleId field for Jito bundle submissions when multiple transactions are required. Add status field for each transaction in the group (pending, submitted, confirmed, failed). Update TransactionBuilder integration to handle bulk swap transaction construction. Ensure backward compatibility with single-transaction responses. Update OpenAPI/Swagger documentation in src/public/openapi.json with new endpoint definitions and bulk asset array schemas.
+

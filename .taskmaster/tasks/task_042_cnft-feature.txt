@@ -1,0 +1,111 @@
+# Task ID: 42
+# Title: Fix TransactionBuilder cNFT Integration
+# Status: pending
+# Dependencies: 41
+# Priority: high
+# Description: Replace the placeholder error in transactionBuilder.ts with actual cNFT transfer instruction building using CnftService integration and Bubblegum program support.
+# Details:
+Implement comprehensive cNFT transfer support in the TransactionBuilder service with the following components:
+
+1. **Replace Placeholder Implementation in buildAssetTransfers()**:
+   - Remove the current "throw new Error('cNFT transfers not yet implemented')" placeholder
+   - Add conditional logic to detect AssetType.CNFT vs AssetType.NFT in asset validation
+   - Maintain existing standard NFT transfer logic for backward compatibility
+
+2. **CnftService Integration**:
+   - Import CnftService from '../services/cnftService'
+   - Integrate CnftService.buildTransferParams() method to fetch Merkle proof data
+   - Handle async proof fetching with proper error handling for network failures
+   - Cache proof data temporarily during transaction building to avoid duplicate API calls
+
+3. **Bubblegum Transfer Instruction Building**:
+   - Import required types from @metaplex-foundation/mpl-bubblegum
+   - Build transfer instruction using createTransferInstruction from mpl-bubblegum
+   - Pass all required accounts: merkle_tree, tree_authority, bubblegum_program, compression_program, log_wrapper, noop_program
+   - Derive tree_authority PDA using [merkle_tree.publicKey, "tree_authority"] seeds
+
+4. **Merkle Proof Data Handling**:
+   - Extract proof data from CnftService response (root, dataHash, creatorHash, nonce, leafIndex)
+   - Handle canopy depth optimization by trimming proof array based on tree canopy depth
+   - Implement proof validation before instruction creation to catch invalid proofs early
+   - Add transaction size monitoring as proof arrays can significantly impact transaction size
+
+5. **Account Management**:
+   - Add all required Bubblegum program accounts to transaction
+   - Handle both maker and taker cNFT transfers in same transaction when applicable
+   - Ensure proper account ordering and signer requirements
+   - Add remaining accounts for Merkle proof verification
+
+6. **Error Handling and Validation**:
+   - Add specific error types for cNFT-related failures (InvalidMerkleProof, StaleProof, TreeNotFound)
+   - Implement retry logic for transient proof fetching failures
+   - Validate tree authority matches expected PDA derivation
+   - Check transaction size limits with proof data included
+
+7. **Backward Compatibility**:
+   - Ensure existing standard NFT transfer functionality remains unchanged
+   - Support mixed swaps (standard NFT + cNFT in same transaction)
+   - Maintain existing transaction structure and fee handling
+
+# Test Strategy:
+1. **Unit Testing**:
+   - Test buildAssetTransfers() with cNFT assets and verify Bubblegum instruction creation
+   - Mock CnftService.buildTransferParams() to test proof data integration
+   - Test error handling for invalid Merkle proofs and network failures
+   - Verify backward compatibility by testing standard NFT transfers still work
+   - Test mixed asset transfers (standard NFT + cNFT combinations)
+
+2. **Integration Testing**:
+   - Test complete transaction building with real cNFT assets on devnet
+   - Verify transaction size stays within 1232 byte limit with proof data
+   - Test canopy depth optimization with different Merkle tree configurations
+   - Validate all required accounts are properly included in instructions
+
+3. **Error Scenario Testing**:
+   - Test with stale Merkle proofs and verify proper error handling
+   - Test with invalid tree authority PDAs and verify validation
+   - Test network failures during proof fetching and verify retry logic
+   - Test transaction size limit exceeded scenarios with large proof arrays
+
+4. **Performance Testing**:
+   - Measure transaction building time with proof fetching
+   - Test concurrent proof fetching for multiple cNFTs
+   - Verify proof caching reduces redundant API calls during transaction building
+
+# Subtasks:
+## 1. Replace placeholder error with cNFT detection logic [pending]
+### Dependencies: None
+### Description: Remove the placeholder error in buildAssetTransfers() and implement conditional logic to detect cNFT vs standard NFT assets
+### Details:
+Remove 'throw new Error('cNFT transfers not yet implemented')' from buildAssetTransfers() method. Add conditional logic to check AssetType.CNFT vs AssetType.NFT in asset validation. Maintain existing standard NFT transfer logic for backward compatibility while adding cNFT-specific code path.
+
+## 2. Integrate CnftService for Merkle proof fetching [pending]
+### Dependencies: 42.1
+### Description: Import and integrate CnftService to fetch Merkle proof data required for cNFT transfers
+### Details:
+Import CnftService from '../services/cnftService'. Integrate CnftService.buildTransferParams() method to fetch Merkle proof data including root, dataHash, creatorHash, nonce, and leafIndex. Implement async proof fetching with proper error handling for network failures and add temporary caching to avoid duplicate API calls during transaction building.
+
+## 3. Build Bubblegum transfer instructions with required accounts [pending]
+### Dependencies: 42.2
+### Description: Implement Bubblegum program transfer instruction creation using mpl-bubblegum library
+### Details:
+Import required types from @metaplex-foundation/mpl-bubblegum. Build transfer instruction using createTransferInstruction with all required accounts: merkle_tree, tree_authority, bubblegum_program, compression_program, log_wrapper, noop_program. Derive tree_authority PDA using [merkle_tree.publicKey, 'tree_authority'] seeds and handle proper account ordering.
+
+## 4. Implement Merkle proof data handling and validation [pending]
+### Dependencies: 42.3
+### Description: Process and validate Merkle proof data from CnftService response before instruction creation
+### Details:
+Extract proof data from CnftService response including root, dataHash, creatorHash, nonce, and leafIndex. Handle canopy depth optimization by trimming proof array based on tree canopy depth. Implement proof validation before instruction creation to catch invalid proofs early. Add transaction size monitoring as proof arrays can significantly impact transaction size limits.
+
+## 5. Add comprehensive account management for cNFT transfers [pending]
+### Dependencies: 42.4
+### Description: Implement proper account management for both maker and taker cNFT transfers within the same transaction
+### Details:
+Add all required Bubblegum program accounts to transaction including remaining accounts for Merkle proof verification. Handle both maker and taker cNFT transfers in same transaction when applicable. Ensure proper account ordering and signer requirements are met. Support mixed swaps with standard NFT + cNFT in same transaction while maintaining existing transaction structure.
+
+## 6. Implement error handling and backward compatibility [pending]
+### Dependencies: 42.5
+### Description: Add comprehensive error handling for cNFT operations while maintaining backward compatibility
+### Details:
+Add specific error types for cNFT-related failures including InvalidMerkleProof, StaleProof, and TreeNotFound. Implement retry logic for transient proof fetching failures. Validate tree authority matches expected PDA derivation and check transaction size limits with proof data included. Ensure existing standard NFT transfer functionality remains unchanged and maintain existing fee handling.
+

@@ -143,10 +143,15 @@ services:
         scope: RUN_TIME
       
       #
-      # Address Lookup Table (ALT) for cNFT transaction optimization
-      # Reduces transaction size by ~450 bytes, enabling all cNFT swaps
+      # Treasury PDA & Address Lookup Table for atomic swaps
+      # Treasury PDA: Collects platform fees from swaps
+      # ALT: Reduces transaction size by ~450 bytes, enabling all cNFT swaps
       #
-      - key: PRODUCTION_ALT_ADDRESS
+      - key: MAINNET_PROD_PDA_TREASURY_ADDRESS
+        value: FPC3dgGpTNxHVRxV9sJKqz1hPWGf59Fn99bNSmwH1iVu
+        scope: RUN_TIME
+      
+      - key: MAINNET_PROD_ALT_ADDRESS
         value: 7U8iARw9TgABSrQcMoEgMXRs9ofHD4Rbzv2qtyRJyc2f
         scope: RUN_TIME
       

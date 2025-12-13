@@ -728,7 +728,7 @@ router.post('/api/test/estimate-size', async (req: Request, res: Response) => {
     }
     
     // Check if ALT is configured
-    const altAddress = process.env.PRODUCTION_ALT_ADDRESS || process.env.STAGING_ALT_ADDRESS;
+    const altAddress = process.env.MAINNET_PROD_ALT_ADDRESS || process.env.DEVNET_STAGING_ALT_ADDRESS;
     const altAvailable = !!altAddress;
     
     // Override recommendation if exceeds multi-asset limit
@@ -1095,7 +1095,7 @@ router.post('/api/quote', async (req: Request, res: Response) => {
     const willFitWithALT = estimatedSizeWithALT <= maxSize;
 
     // ALT availability
-    const altAddress = process.env.PRODUCTION_ALT_ADDRESS || process.env.STAGING_ALT_ADDRESS;
+    const altAddress = process.env.MAINNET_PROD_ALT_ADDRESS || process.env.DEVNET_STAGING_ALT_ADDRESS;
     const altAvailable = !!altAddress;
     const useALT = !willFit && willFitWithALT && altAvailable && !exceedsMultiAssetLimit;
 
@@ -1192,6 +1192,9 @@ router.post('/api/quote', async (req: Request, res: Response) => {
     res.json({
       success: true,
       data: {
+        // Timestamp for tracking when quote was generated
+        timestamp: new Date().toISOString(),
+        
         // Price data
         solPriceUSD,
 
