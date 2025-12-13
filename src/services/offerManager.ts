@@ -581,16 +581,25 @@ export class OfferManager {
       authorizedAppId: params.authorizedAppId || 'none',
     });
     
+    // Helper to normalize asset types (database JSON might have different casing)
+    const normalizeAssetType = (type: any): AssetType => {
+      if (!type) return AssetType.NFT;
+      const typeStr = String(type).toLowerCase();
+      if (typeStr === 'cnft' || typeStr === 'compressed') return AssetType.CNFT;
+      if (typeStr === 'core_nft' || typeStr === 'core') return AssetType.CORE_NFT;
+      return AssetType.NFT;
+    };
+    
     const inputs: TransactionBuildInputs = {
       makerPubkey: new PublicKey(params.makerWallet),
       takerPubkey: new PublicKey(params.takerWallet),
       makerAssets: params.offeredAssets.map((a) => ({
-        type: a.type,
+        type: normalizeAssetType(a.type),
         identifier: a.identifier,
       })),
       makerSolLamports: params.offeredSol,
       takerAssets: params.requestedAssets.map((a) => ({
-        type: a.type,
+        type: normalizeAssetType(a.type),
         identifier: a.identifier,
       })),
       takerSolLamports: params.requestedSol,
@@ -605,6 +614,11 @@ export class OfferManager {
     
     console.log('[OfferManager] TransactionBuildInputs makerAssets:', JSON.stringify(inputs.makerAssets));
     console.log('[OfferManager] TransactionBuildInputs takerAssets:', JSON.stringify(inputs.takerAssets));
+    
+    // Debug: count asset types
+    const makerCnftCount = inputs.makerAssets.filter(a => a.type === AssetType.CNFT).length;
+    const takerCnftCount = inputs.takerAssets.filter(a => a.type === AssetType.CNFT).length;
+    console.log(`[OfferManager] Asset type counts - maker cNFTs: ${makerCnftCount}, taker cNFTs: ${takerCnftCount}`);
     
     // Check if this is a bulk swap that needs transaction splitting
     const requiresBulkSwap = this.transactionGroupBuilder.requiresJitoBundle(inputs);
