@@ -275,7 +275,7 @@ DEVNET_STAGING_TREASURY_ADDRESS=AScijLJ1ApcQftktBRN818b8LDH4JJovQ5qrGDHfHuPu
 DEVNET_STAGING_TREASURY_PRIVATE_KEY=[1,2,3,...,64]  # NEVER commit real keys!
 ```
 
-### `MAINNET_PRODUCTION_TREASURY_ADDRESS`
+### `MAINNET_PROD_TREASURY_ADDRESS`
 - **Type**: String (Base58 Public Key)
 - **Required**: No (defaults to hardcoded production treasury)
 - **Description**: Production/mainnet treasury wallet where platform fees are initially collected.
@@ -283,17 +283,17 @@ DEVNET_STAGING_TREASURY_PRIVATE_KEY=[1,2,3,...,64]  # NEVER commit real keys!
 - **Security**: **HIGH PRIORITY** - This is a hot wallet holding active funds
 
 ```bash
-MAINNET_PRODUCTION_TREASURY_ADDRESS=HMtLHzJZ5AUUaKjYBGZpB4RbjN4gYvcd69esNwtaUBFF
+MAINNET_PROD_TREASURY_ADDRESS=HMtLHzJZ5AUUaKjYBGZpB4RbjN4gYvcd69esNwtaUBFF
 ```
 
-### `MAINNET_PRODUCTION_TREASURY_PRIVATE_KEY`
+### `MAINNET_PROD_TREASURY_PRIVATE_KEY`
 - **Type**: String (JSON array format)
 - **Required**: No (optional for manual treasury operations)
 - **Description**: Private key for production treasury wallet. Only needed if you need to manually sign transactions from treasury.
 - **Security**: **CRITICAL** - Keep this secret secure. Never commit to version control. Use hardware wallet if possible.
 
 ```bash
-MAINNET_PRODUCTION_TREASURY_PRIVATE_KEY=[1,2,3,...,64]  # NEVER commit real keys!
+MAINNET_PROD_TREASURY_PRIVATE_KEY=[1,2,3,...,64]  # NEVER commit real keys!
 ```
 
 ### `LOCAL_TREASURY_ADDRESS`
@@ -770,8 +770,8 @@ ESCROW_PROGRAM_ID=YOUR_MAINNET_PROGRAM_ID
 USDC_MINT_ADDRESS=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
 
 # Platform Fee Collection (CRITICAL - Keep treasury keypair secure!)
-MAINNET_PRODUCTION_TREASURY_ADDRESS=HMtLHzJZ5AUUaKjYBGZpB4RbjN4gYvcd69esNwtaUBFF
-MAINNET_PRODUCTION_TREASURY_PRIVATE_KEY=[1,2,3,...,64]  # Array of 64 bytes - NEVER commit real keys!
+MAINNET_PROD_TREASURY_ADDRESS=HMtLHzJZ5AUUaKjYBGZpB4RbjN4gYvcd69esNwtaUBFF
+MAINNET_PROD_TREASURY_PRIVATE_KEY=[1,2,3,...,64]  # Array of 64 bytes - NEVER commit real keys!
 MAINNET_PROD_FEE_COLLECTOR_ADDRESS=YOUR_COLD_STORAGE_COLLECTOR_ADDRESS
 
 # Security (use secrets management!)

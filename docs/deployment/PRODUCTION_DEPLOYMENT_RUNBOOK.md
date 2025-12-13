@@ -319,7 +319,7 @@ git push origin production-$(date +%Y%m%d)
 # Verify these are set correctly:
 # - SOLANA_RPC_URL (mainnet RPC)
 # - SOLANA_ESCROW_PROGRAM_ID=2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx
-# - MAINNET_PRODUCTION_TREASURY_ADDRESS
+# - MAINNET_PROD_TREASURY_ADDRESS
 # - MAINNET_PRODUCTION_FEE_COLLECTOR_ADDRESS
 ```
 
@@ -492,7 +492,7 @@ git push
 ### Treasury Management
 
 **Production Treasury:**
-- Address: `<MAINNET_PRODUCTION_TREASURY_ADDRESS>`
+- Address: `<MAINNET_PROD_TREASURY_ADDRESS>`
 - Should be a warm wallet (online but secured)
 - Automated weekly withdrawals to cold storage
 

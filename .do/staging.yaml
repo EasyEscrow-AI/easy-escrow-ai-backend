@@ -296,9 +296,14 @@ services:
         scope: RUN_TIME
       
       #
-      # Treasury PDA & Address Lookup Table
-      # Used for atomic swaps and transaction optimization
+      # Treasury Wallets & PDA
+      # DEVNET_STAGING_TREASURY_ADDRESS: Backend treasury wallet (receives fees)
+      # DEVNET_STAGING_PDA_TREASURY_ADDRESS: On-chain PDA treasury (escrow program)
       #
+      - key: DEVNET_STAGING_TREASURY_ADDRESS
+        value: AScijLJ1ApcQftktBRN818b8LDH4JJovQ5qrGDHfHuPu
+        scope: RUN_TIME
+      
       - key: DEVNET_STAGING_PDA_TREASURY_ADDRESS
         value: HXC4LXCw8hy9sREUH8Fk7d3HYdLFGprhJ9n7AyfZ4bMN
         scope: RUN_TIME
