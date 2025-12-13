@@ -1,14 +1,15 @@
 /**
  * Transaction Group Builder Service
  * 
- * Handles bulk cNFT swap transaction splitting and Jito bundle management.
+ * Handles bulk NFT swap transaction splitting and Jito bundle management.
+ * Supports ALL NFT types: SPL NFTs, cNFTs, and Core NFTs.
  * 
  * Key features:
- * - Splits bulk swaps into groups of 1-2 cNFTs per transaction (conservative approach)
- * - Uses single transactions for 1-2 total cNFTs (no bundle overhead)
- * - Uses Jito bundles for 3+ total cNFTs for atomic execution
+ * - Uses Jito bundles for 3+ total NFTs of ANY type for atomic execution
+ * - Splits bulk swaps into optimal transaction groups
  * - Smart ordering: payments first → NFT transfers → SOL cleanup
  * - Integrates with Address Lookup Tables (ALTs) for size optimization
+ * - Direct transfers bypass escrow program limitations
  */
 
 import {
@@ -29,12 +30,16 @@ import { TransactionBuilder, SwapAsset, TransactionBuildInputs, BuiltTransaction
 import { ALTService, TransactionSizeEstimate } from './altService';
 import { CnftService, createCnftService } from './cnftService';
 import { DirectBubblegumService, createDirectBubblegumService } from './directBubblegumService';
+import { DirectSplTokenService, createDirectSplTokenService } from './directSplTokenService';
+import { DirectCoreNftService, createDirectCoreNftService } from './directCoreNftService';
 
 // Conservative limits for transaction splitting
 // With full canopy trees (0 proof nodes), we can fit more cNFTs per transaction
 const MAX_CNFTS_PER_TRANSACTION_WITH_PROOFS = 1; // 1 cNFT when proofs are needed
 const MAX_CNFTS_PER_TRANSACTION_NO_PROOFS = 3; // 3 cNFTs when full canopy (0 proof nodes)
-const JITO_BUNDLE_THRESHOLD = 3; // Use Jito bundles for 3+ total cNFTs
+const MAX_SPL_NFTS_PER_TRANSACTION = 5; // SPL NFT transfers are small (~80 bytes each)
+const MAX_CORE_NFTS_PER_TRANSACTION = 4; // Core NFT transfers (~100 bytes each)
+const JITO_BUNDLE_THRESHOLD = 3; // Use Jito bundles for 3+ total NFTs
 const MAX_TRANSACTIONS_PER_BUNDLE = 5; // Jito limit
 
 // cNFT swaps ALWAYS need Jito bundles because proof nodes don't fit in single tx
@@ -44,11 +49,15 @@ const CNFT_ALWAYS_NEEDS_BUNDLE = true;
  * Strategy for executing a swap based on asset composition
  */
 export enum SwapStrategy {
-  /** Single transaction, no bundle needed (no cNFTs or cNFT with full canopy) */
+  /** Single transaction, no bundle needed (1-2 NFTs of any type, uses escrow program) */
   SINGLE_TRANSACTION = 'SINGLE_TRANSACTION',
-  /** Direct Bubblegum bundle - bypasses escrow program for cNFT+SOL swaps */
+  /** Direct Bubblegum bundle - bypasses escrow program for cNFT swaps */
   DIRECT_BUBBLEGUM_BUNDLE = 'DIRECT_BUBBLEGUM_BUNDLE',
-  /** Multiple transactions with Jito bundle for atomicity (bulk cNFTs) */
+  /** Direct NFT bundle - bypasses escrow program for bulk SPL/Core NFT swaps */
+  DIRECT_NFT_BUNDLE = 'DIRECT_NFT_BUNDLE',
+  /** Mixed bundle - handles combination of cNFTs, SPL NFTs, and Core NFTs */
+  MIXED_NFT_BUNDLE = 'MIXED_NFT_BUNDLE',
+  /** Multiple transactions with Jito bundle for atomicity (legacy) */
   JITO_BUNDLE = 'JITO_BUNDLE',
   /** Cannot fit even with splitting (rare edge case) */
   CANNOT_FIT = 'CANNOT_FIT',
@@ -135,6 +144,8 @@ export class TransactionGroupBuilder {
   private altService: ALTService | null = null;
   private cnftService: CnftService;
   private directBubblegumService: DirectBubblegumService;
+  private directSplTokenService: DirectSplTokenService;
+  private directCoreNftService: DirectCoreNftService;
   private treasuryPda: PublicKey | null = null;
   
   constructor(
@@ -148,6 +159,8 @@ export class TransactionGroupBuilder {
     this.transactionBuilder = new TransactionBuilder(connection, platformAuthority, treasuryPda);
     this.cnftService = createCnftService(connection);
     this.directBubblegumService = createDirectBubblegumService(connection);
+    this.directSplTokenService = createDirectSplTokenService(connection);
+    this.directCoreNftService = createDirectCoreNftService(connection);
     this.treasuryPda = treasuryPda || null;
     
     if (altService) {
@@ -159,7 +172,7 @@ export class TransactionGroupBuilder {
     console.log('[TransactionGroupBuilder] Platform Authority:', platformAuthority.publicKey.toBase58());
     console.log('[TransactionGroupBuilder] Treasury PDA:', treasuryPda?.toBase58() || 'not set');
     console.log('[TransactionGroupBuilder] ALT Service:', altService ? 'enabled' : 'disabled');
-    console.log('[TransactionGroupBuilder] Direct Bubblegum Service: enabled');
+    console.log('[TransactionGroupBuilder] Direct Services: Bubblegum, SPL Token, Core NFT');
   }
   
   /**
@@ -200,6 +213,10 @@ export class TransactionGroupBuilder {
     
     const hasSolTransfer = inputs.makerSolLamports > BigInt(0) || inputs.takerSolLamports > BigInt(0);
     
+    // Calculate total NFTs of all types
+    const totalAllNfts = totalCnfts + totalNfts + totalCoreNfts;
+    console.log(`[TransactionGroupBuilder] Total NFTs: ${totalAllNfts} (cNFTs: ${totalCnfts}, SPL: ${totalNfts}, Core: ${totalCoreNfts})`);
+    
     // Determine strategy
     let strategy: SwapStrategy;
     let transactionCount: number;
@@ -212,47 +229,97 @@ export class TransactionGroupBuilder {
         strategy = SwapStrategy.CANNOT_FIT;
         transactionCount = 0;
         reason = `cNFT swaps require Jito bundles (cannot fit in single transaction)`;
+      } else if (totalAllNfts > 2) {
+        // Bulk SPL/Core NFTs also need bundles to bypass escrow limit
+        strategy = SwapStrategy.CANNOT_FIT;
+        transactionCount = 0;
+        reason = `Bulk NFT swaps (${totalAllNfts} NFTs) require Jito bundles`;
       } else {
         strategy = SwapStrategy.SINGLE_TRANSACTION;
         transactionCount = 1;
         reason = 'Forced single transaction';
       }
-    } else if (totalCnfts === 0) {
-      // No cNFTs - single transaction
+    } else if (totalAllNfts <= 2 && totalCnfts === 0) {
+      // Simple swap: 1-2 SPL/Core NFTs, no cNFTs - use escrow program
       strategy = SwapStrategy.SINGLE_TRANSACTION;
       transactionCount = 1;
-      reason = 'No cNFTs - standard single transaction';
-    } else if (totalCnfts === 1 && (totalNfts === 0 && totalCoreNfts === 0)) {
-      // Single cNFT swap (cNFT↔SOL) - use direct Bubblegum bundle
-      // This bypasses our escrow program and uses Bubblegum directly
-      // Tx1: SOL transfers, Tx2: cNFT transfer via Bubblegum
-      strategy = SwapStrategy.DIRECT_BUBBLEGUM_BUNDLE;
-      transactionCount = 2;
-      reason = 'Single cNFT swap uses direct Bubblegum bundle (proof nodes require separate tx)';
-    } else if (totalCnfts >= 1) {
-      // Multiple cNFTs or mixed assets - use Jito bundle with direct Bubblegum
-      // With full canopy trees (0 proof nodes), we can batch multiple cNFTs per tx
-      // Note: We need a SOL tx if there's SOL transfer OR platform fee
-      const cnftsPerTx = MAX_CNFTS_PER_TRANSACTION_NO_PROOFS; // Assume full canopy for devnet
+      reason = 'Simple swap (1-2 NFTs) - standard single transaction via escrow';
+    } else if (totalCnfts >= 1 && totalNfts === 0 && totalCoreNfts === 0) {
+      // Pure cNFT swap - use direct Bubblegum bundle
+      const cnftsPerTx = MAX_CNFTS_PER_TRANSACTION_NO_PROOFS;
       const cnftTxCount = Math.ceil(totalCnfts / cnftsPerTx);
       const needsSolTx = hasSolTransfer || inputs.platformFeeLamports > BigInt(0);
       transactionCount = cnftTxCount + (needsSolTx ? 1 : 0);
       
       console.log(`[TransactionGroupBuilder] cNFT batching: ${totalCnfts} cNFTs ÷ ${cnftsPerTx}/tx = ${cnftTxCount} cNFT txs + ${needsSolTx ? 1 : 0} SOL tx = ${transactionCount} total`);
       
-      // Check if we exceed Jito's bundle limit
       if (transactionCount > MAX_TRANSACTIONS_PER_BUNDLE) {
         strategy = SwapStrategy.CANNOT_FIT;
         reason = `${totalCnfts} cNFTs would require ${transactionCount} transactions, exceeding Jito's ${MAX_TRANSACTIONS_PER_BUNDLE} limit`;
       } else {
         strategy = SwapStrategy.DIRECT_BUBBLEGUM_BUNDLE;
-        reason = `${totalCnfts} cNFT(s) using direct Bubblegum bundle (${transactionCount} transactions, ${cnftsPerTx} cNFTs/tx)`;
+        reason = `${totalCnfts} cNFT(s) using direct Bubblegum bundle (${transactionCount} transactions)`;
+      }
+    } else if (totalNfts >= JITO_BUNDLE_THRESHOLD && totalCnfts === 0 && totalCoreNfts === 0) {
+      // Bulk SPL NFT swap - use direct SPL token bundle
+      const splPerTx = MAX_SPL_NFTS_PER_TRANSACTION;
+      const splTxCount = Math.ceil(totalNfts / splPerTx);
+      const needsSolTx = hasSolTransfer || inputs.platformFeeLamports > BigInt(0);
+      transactionCount = splTxCount + (needsSolTx ? 1 : 0);
+      
+      console.log(`[TransactionGroupBuilder] SPL NFT batching: ${totalNfts} NFTs ÷ ${splPerTx}/tx = ${splTxCount} NFT txs + ${needsSolTx ? 1 : 0} SOL tx = ${transactionCount} total`);
+      
+      if (transactionCount > MAX_TRANSACTIONS_PER_BUNDLE) {
+        strategy = SwapStrategy.CANNOT_FIT;
+        reason = `${totalNfts} SPL NFTs would require ${transactionCount} transactions, exceeding Jito's ${MAX_TRANSACTIONS_PER_BUNDLE} limit`;
+      } else {
+        strategy = SwapStrategy.DIRECT_NFT_BUNDLE;
+        reason = `${totalNfts} SPL NFT(s) using direct token bundle (${transactionCount} transactions)`;
+      }
+    } else if (totalCoreNfts >= JITO_BUNDLE_THRESHOLD && totalCnfts === 0 && totalNfts === 0) {
+      // Bulk Core NFT swap - use direct Core NFT bundle
+      const corePerTx = MAX_CORE_NFTS_PER_TRANSACTION;
+      const coreTxCount = Math.ceil(totalCoreNfts / corePerTx);
+      const needsSolTx = hasSolTransfer || inputs.platformFeeLamports > BigInt(0);
+      transactionCount = coreTxCount + (needsSolTx ? 1 : 0);
+      
+      console.log(`[TransactionGroupBuilder] Core NFT batching: ${totalCoreNfts} NFTs ÷ ${corePerTx}/tx = ${coreTxCount} NFT txs + ${needsSolTx ? 1 : 0} SOL tx = ${transactionCount} total`);
+      
+      if (transactionCount > MAX_TRANSACTIONS_PER_BUNDLE) {
+        strategy = SwapStrategy.CANNOT_FIT;
+        reason = `${totalCoreNfts} Core NFTs would require ${transactionCount} transactions, exceeding Jito's ${MAX_TRANSACTIONS_PER_BUNDLE} limit`;
+      } else {
+        strategy = SwapStrategy.DIRECT_NFT_BUNDLE;
+        reason = `${totalCoreNfts} Core NFT(s) using direct token bundle (${transactionCount} transactions)`;
+      }
+    } else if (totalAllNfts >= JITO_BUNDLE_THRESHOLD) {
+      // Mixed NFT types - use mixed bundle strategy
+      // Calculate transactions needed for each type
+      const cnftsPerTx = MAX_CNFTS_PER_TRANSACTION_NO_PROOFS;
+      const splPerTx = MAX_SPL_NFTS_PER_TRANSACTION;
+      const corePerTx = MAX_CORE_NFTS_PER_TRANSACTION;
+      
+      const cnftTxCount = totalCnfts > 0 ? Math.ceil(totalCnfts / cnftsPerTx) : 0;
+      const splTxCount = totalNfts > 0 ? Math.ceil(totalNfts / splPerTx) : 0;
+      const coreTxCount = totalCoreNfts > 0 ? Math.ceil(totalCoreNfts / corePerTx) : 0;
+      const needsSolTx = hasSolTransfer || inputs.platformFeeLamports > BigInt(0);
+      
+      transactionCount = cnftTxCount + splTxCount + coreTxCount + (needsSolTx ? 1 : 0);
+      
+      console.log(`[TransactionGroupBuilder] Mixed NFT batching: cNFT txs=${cnftTxCount}, SPL txs=${splTxCount}, Core txs=${coreTxCount}, SOL tx=${needsSolTx ? 1 : 0}, total=${transactionCount}`);
+      
+      if (transactionCount > MAX_TRANSACTIONS_PER_BUNDLE) {
+        strategy = SwapStrategy.CANNOT_FIT;
+        reason = `Mixed NFT swap would require ${transactionCount} transactions, exceeding Jito's ${MAX_TRANSACTIONS_PER_BUNDLE} limit`;
+      } else {
+        strategy = SwapStrategy.MIXED_NFT_BUNDLE;
+        reason = `Mixed NFT swap: ${totalCnfts} cNFTs + ${totalNfts} SPL + ${totalCoreNfts} Core (${transactionCount} transactions)`;
       }
     } else {
-      // Fallback (shouldn't reach here with current logic)
+      // Fallback: simple swap via escrow
       strategy = SwapStrategy.SINGLE_TRANSACTION;
       transactionCount = 1;
-      reason = 'Default single transaction';
+      reason = 'Simple swap - standard single transaction via escrow';
     }
     
     const analysis: SwapAnalysis = {
@@ -294,15 +361,29 @@ export class TransactionGroupBuilder {
     // Get nonce value (same for all transactions in the group)
     const nonceValue = await this.getNonceValue(inputs.nonceAccountPubkey);
     
-    if (analysis.strategy === SwapStrategy.SINGLE_TRANSACTION) {
-      // Single transaction - use existing TransactionBuilder
-      return this.buildSingleTransaction(inputs, analysis, nonceValue);
-    } else if (analysis.strategy === SwapStrategy.DIRECT_BUBBLEGUM_BUNDLE) {
-      // Direct Bubblegum bundle - bypasses escrow program for cNFT swaps
-      return this.buildDirectBubblegumBundle(inputs, analysis, nonceValue);
-    } else {
-      // Multiple transactions - split and prepare for Jito bundle
-      return this.buildMultipleTransactions(inputs, analysis, nonceValue);
+    switch (analysis.strategy) {
+      case SwapStrategy.SINGLE_TRANSACTION:
+        // Single transaction - use existing TransactionBuilder (escrow program)
+        return this.buildSingleTransaction(inputs, analysis, nonceValue);
+        
+      case SwapStrategy.DIRECT_BUBBLEGUM_BUNDLE:
+        // Direct Bubblegum bundle - bypasses escrow program for cNFT swaps
+        return this.buildDirectBubblegumBundle(inputs, analysis, nonceValue);
+        
+      case SwapStrategy.DIRECT_NFT_BUNDLE:
+        // Direct NFT bundle - bypasses escrow program for bulk SPL/Core NFT swaps
+        return this.buildDirectNftBundle(inputs, analysis, nonceValue);
+        
+      case SwapStrategy.MIXED_NFT_BUNDLE:
+        // Mixed bundle - handles combination of cNFTs, SPL NFTs, and Core NFTs
+        return this.buildMixedNftBundle(inputs, analysis, nonceValue);
+        
+      case SwapStrategy.JITO_BUNDLE:
+        // Legacy Jito bundle for edge cases
+        return this.buildMultipleTransactions(inputs, analysis, nonceValue);
+        
+      default:
+        throw new Error(`Unsupported swap strategy: ${analysis.strategy}`);
     }
   }
   
@@ -689,6 +770,797 @@ export class TransactionGroupBuilder {
   }
   
   /**
+   * Build direct NFT bundle for bulk SPL or Core NFT swaps
+   * Bypasses escrow program by using direct token transfers
+   */
+  private async buildDirectNftBundle(
+    inputs: TransactionGroupInput,
+    analysis: SwapAnalysis,
+    nonceValue: string
+  ): Promise<TransactionGroupResult> {
+    console.log('[TransactionGroupBuilder] Building direct NFT bundle for SPL/Core NFT swap');
+    
+    if (!this.treasuryPda) {
+      throw new Error('Treasury PDA required for direct NFT bundles');
+    }
+    
+    const transactions: TransactionGroupItem[] = [];
+    let totalSizeBytes = 0;
+    
+    // Network mode detection
+    const isMainnet = process.env.SOLANA_NETWORK === 'mainnet-beta' || 
+                      process.env.NODE_ENV === 'production';
+    const useJitoNonces = isMainnet;
+    
+    console.log(`[TransactionGroupBuilder] Network mode: ${isMainnet ? 'mainnet (Jito bundles)' : 'devnet (sequential sends)'}`);
+    
+    // Collect all SPL NFTs
+    const makerSplNfts = inputs.makerAssets.filter(a => 
+      a.type === AssetType.NFT || String(a.type).toLowerCase() === 'nft'
+    );
+    const takerSplNfts = inputs.takerAssets.filter(a => 
+      a.type === AssetType.NFT || String(a.type).toLowerCase() === 'nft'
+    );
+    
+    // Collect all Core NFTs
+    const makerCoreNfts = inputs.makerAssets.filter(a => 
+      a.type === AssetType.CORE_NFT || String(a.type).toLowerCase() === 'core_nft'
+    );
+    const takerCoreNfts = inputs.takerAssets.filter(a => 
+      a.type === AssetType.CORE_NFT || String(a.type).toLowerCase() === 'core_nft'
+    );
+    
+    // === Transaction 1: SOL transfers (if any) ===
+    if (analysis.hasSolTransfer || inputs.platformFeeLamports > BigInt(0)) {
+      const solTx = await this.buildSolTransferTransaction(inputs, nonceValue, useJitoNonces);
+      transactions.push(solTx);
+      totalSizeBytes += solTx.transaction?.sizeBytes || 0;
+    }
+    
+    // === Transaction 2+: SPL NFT transfers ===
+    let txIndex = transactions.length;
+    
+    // Batch SPL NFTs efficiently (multiple per transaction)
+    const splPerTx = MAX_SPL_NFTS_PER_TRANSACTION;
+    
+    // Maker SPL NFTs → Taker
+    for (let i = 0; i < makerSplNfts.length; i += splPerTx) {
+      const batch = makerSplNfts.slice(i, i + splPerTx);
+      console.log(`[TransactionGroupBuilder] Building Tx${txIndex + 1}: Maker SPL NFT batch (${batch.length} NFTs)`);
+      
+      const splInstructions: TransactionInstruction[] = [];
+      
+      if (useJitoNonces) {
+        splInstructions.push(
+          SystemProgram.nonceAdvance({
+            noncePubkey: inputs.nonceAccountPubkey,
+            authorizedPubkey: this.platformAuthority.publicKey,
+          })
+        );
+      }
+      
+      // Build transfer instructions for each NFT in batch
+      for (const nft of batch) {
+        const result = await this.directSplTokenService.buildTransferInstruction({
+          mint: nft.identifier,
+          fromWallet: inputs.makerPubkey,
+          toWallet: inputs.takerPubkey,
+        });
+        splInstructions.push(...result.instructions);
+      }
+      
+      // Build transaction
+      let blockHash: string;
+      if (useJitoNonces) {
+        blockHash = nonceValue;
+      } else {
+        const { blockhash } = await this.connection.getLatestBlockhash('confirmed');
+        blockHash = blockhash;
+      }
+      
+      const splTx = new Transaction({
+        recentBlockhash: blockHash,
+        feePayer: this.platformAuthority.publicKey,
+      }).add(...splInstructions);
+      
+      splTx.partialSign(this.platformAuthority);
+      
+      const splTxSerialized = splTx.serialize({ requireAllSignatures: false });
+      const splTxSize = splTxSerialized.length;
+      
+      transactions.push({
+        index: txIndex,
+        purpose: `Maker SPL NFT transfers (${batch.length} NFTs)`,
+        assets: {
+          makerAssets: batch,
+          takerAssets: [],
+          makerSolLamports: BigInt(0),
+          takerSolLamports: BigInt(0),
+          platformFeeLamports: BigInt(0),
+        },
+        transaction: {
+          serializedTransaction: splTxSerialized.toString('base64'),
+          sizeBytes: splTxSize,
+          isVersioned: false,
+          nonceValue: blockHash,
+          estimatedComputeUnits: 50000 * batch.length,
+          requiredSigners: [inputs.makerPubkey.toBase58()],
+        },
+        isVersioned: false,
+      });
+      
+      totalSizeBytes += splTxSize;
+      txIndex++;
+      console.log(`[TransactionGroupBuilder] SPL NFT tx built: ${splTxSize} bytes, ${batch.length} transfers`);
+    }
+    
+    // Taker SPL NFTs → Maker
+    for (let i = 0; i < takerSplNfts.length; i += splPerTx) {
+      const batch = takerSplNfts.slice(i, i + splPerTx);
+      console.log(`[TransactionGroupBuilder] Building Tx${txIndex + 1}: Taker SPL NFT batch (${batch.length} NFTs)`);
+      
+      const splInstructions: TransactionInstruction[] = [];
+      
+      if (useJitoNonces) {
+        splInstructions.push(
+          SystemProgram.nonceAdvance({
+            noncePubkey: inputs.nonceAccountPubkey,
+            authorizedPubkey: this.platformAuthority.publicKey,
+          })
+        );
+      }
+      
+      for (const nft of batch) {
+        const result = await this.directSplTokenService.buildTransferInstruction({
+          mint: nft.identifier,
+          fromWallet: inputs.takerPubkey,
+          toWallet: inputs.makerPubkey,
+        });
+        splInstructions.push(...result.instructions);
+      }
+      
+      let blockHash: string;
+      if (useJitoNonces) {
+        blockHash = nonceValue;
+      } else {
+        const { blockhash } = await this.connection.getLatestBlockhash('confirmed');
+        blockHash = blockhash;
+      }
+      
+      const splTx = new Transaction({
+        recentBlockhash: blockHash,
+        feePayer: this.platformAuthority.publicKey,
+      }).add(...splInstructions);
+      
+      splTx.partialSign(this.platformAuthority);
+      
+      const splTxSerialized = splTx.serialize({ requireAllSignatures: false });
+      const splTxSize = splTxSerialized.length;
+      
+      transactions.push({
+        index: txIndex,
+        purpose: `Taker SPL NFT transfers (${batch.length} NFTs)`,
+        assets: {
+          makerAssets: [],
+          takerAssets: batch,
+          makerSolLamports: BigInt(0),
+          takerSolLamports: BigInt(0),
+          platformFeeLamports: BigInt(0),
+        },
+        transaction: {
+          serializedTransaction: splTxSerialized.toString('base64'),
+          sizeBytes: splTxSize,
+          isVersioned: false,
+          nonceValue: blockHash,
+          estimatedComputeUnits: 50000 * batch.length,
+          requiredSigners: [inputs.takerPubkey.toBase58()],
+        },
+        isVersioned: false,
+      });
+      
+      totalSizeBytes += splTxSize;
+      txIndex++;
+      console.log(`[TransactionGroupBuilder] SPL NFT tx built: ${splTxSize} bytes, ${batch.length} transfers`);
+    }
+    
+    // === Core NFT transfers ===
+    const corePerTx = MAX_CORE_NFTS_PER_TRANSACTION;
+    
+    // Maker Core NFTs → Taker
+    for (let i = 0; i < makerCoreNfts.length; i += corePerTx) {
+      const batch = makerCoreNfts.slice(i, i + corePerTx);
+      console.log(`[TransactionGroupBuilder] Building Tx${txIndex + 1}: Maker Core NFT batch (${batch.length} NFTs)`);
+      
+      const coreInstructions: TransactionInstruction[] = [];
+      
+      if (useJitoNonces) {
+        coreInstructions.push(
+          SystemProgram.nonceAdvance({
+            noncePubkey: inputs.nonceAccountPubkey,
+            authorizedPubkey: this.platformAuthority.publicKey,
+          })
+        );
+      }
+      
+      for (const nft of batch) {
+        const result = await this.directCoreNftService.buildTransferInstruction({
+          assetAddress: nft.identifier,
+          fromWallet: inputs.makerPubkey,
+          toWallet: inputs.takerPubkey,
+        });
+        coreInstructions.push(result.instruction);
+      }
+      
+      let blockHash: string;
+      if (useJitoNonces) {
+        blockHash = nonceValue;
+      } else {
+        const { blockhash } = await this.connection.getLatestBlockhash('confirmed');
+        blockHash = blockhash;
+      }
+      
+      const coreTx = new Transaction({
+        recentBlockhash: blockHash,
+        feePayer: this.platformAuthority.publicKey,
+      }).add(...coreInstructions);
+      
+      coreTx.partialSign(this.platformAuthority);
+      
+      const coreTxSerialized = coreTx.serialize({ requireAllSignatures: false });
+      const coreTxSize = coreTxSerialized.length;
+      
+      transactions.push({
+        index: txIndex,
+        purpose: `Maker Core NFT transfers (${batch.length} NFTs)`,
+        assets: {
+          makerAssets: batch,
+          takerAssets: [],
+          makerSolLamports: BigInt(0),
+          takerSolLamports: BigInt(0),
+          platformFeeLamports: BigInt(0),
+        },
+        transaction: {
+          serializedTransaction: coreTxSerialized.toString('base64'),
+          sizeBytes: coreTxSize,
+          isVersioned: false,
+          nonceValue: blockHash,
+          estimatedComputeUnits: 75000 * batch.length,
+          requiredSigners: [inputs.makerPubkey.toBase58()],
+        },
+        isVersioned: false,
+      });
+      
+      totalSizeBytes += coreTxSize;
+      txIndex++;
+      console.log(`[TransactionGroupBuilder] Core NFT tx built: ${coreTxSize} bytes, ${batch.length} transfers`);
+    }
+    
+    // Taker Core NFTs → Maker
+    for (let i = 0; i < takerCoreNfts.length; i += corePerTx) {
+      const batch = takerCoreNfts.slice(i, i + corePerTx);
+      console.log(`[TransactionGroupBuilder] Building Tx${txIndex + 1}: Taker Core NFT batch (${batch.length} NFTs)`);
+      
+      const coreInstructions: TransactionInstruction[] = [];
+      
+      if (useJitoNonces) {
+        coreInstructions.push(
+          SystemProgram.nonceAdvance({
+            noncePubkey: inputs.nonceAccountPubkey,
+            authorizedPubkey: this.platformAuthority.publicKey,
+          })
+        );
+      }
+      
+      for (const nft of batch) {
+        const result = await this.directCoreNftService.buildTransferInstruction({
+          assetAddress: nft.identifier,
+          fromWallet: inputs.takerPubkey,
+          toWallet: inputs.makerPubkey,
+        });
+        coreInstructions.push(result.instruction);
+      }
+      
+      let blockHash: string;
+      if (useJitoNonces) {
+        blockHash = nonceValue;
+      } else {
+        const { blockhash } = await this.connection.getLatestBlockhash('confirmed');
+        blockHash = blockhash;
+      }
+      
+      const coreTx = new Transaction({
+        recentBlockhash: blockHash,
+        feePayer: this.platformAuthority.publicKey,
+      }).add(...coreInstructions);
+      
+      coreTx.partialSign(this.platformAuthority);
+      
+      const coreTxSerialized = coreTx.serialize({ requireAllSignatures: false });
+      const coreTxSize = coreTxSerialized.length;
+      
+      transactions.push({
+        index: txIndex,
+        purpose: `Taker Core NFT transfers (${batch.length} NFTs)`,
+        assets: {
+          makerAssets: [],
+          takerAssets: batch,
+          makerSolLamports: BigInt(0),
+          takerSolLamports: BigInt(0),
+          platformFeeLamports: BigInt(0),
+        },
+        transaction: {
+          serializedTransaction: coreTxSerialized.toString('base64'),
+          sizeBytes: coreTxSize,
+          isVersioned: false,
+          nonceValue: blockHash,
+          estimatedComputeUnits: 75000 * batch.length,
+          requiredSigners: [inputs.takerPubkey.toBase58()],
+        },
+        isVersioned: false,
+      });
+      
+      totalSizeBytes += coreTxSize;
+      txIndex++;
+      console.log(`[TransactionGroupBuilder] Core NFT tx built: ${coreTxSize} bytes, ${batch.length} transfers`);
+    }
+    
+    console.log(`[TransactionGroupBuilder] Direct NFT bundle complete:`, {
+      transactionCount: transactions.length,
+      totalSizeBytes,
+      makerSplNfts: makerSplNfts.length,
+      takerSplNfts: takerSplNfts.length,
+      makerCoreNfts: makerCoreNfts.length,
+      takerCoreNfts: takerCoreNfts.length,
+      useJitoNonces,
+    });
+    
+    return {
+      strategy: SwapStrategy.DIRECT_NFT_BUNDLE,
+      analysis,
+      transactions,
+      transactionCount: transactions.length,
+      requiresJitoBundle: useJitoNonces,
+      totalSizeBytes,
+      nonceValue: useJitoNonces ? nonceValue : 'fresh-blockhash',
+    };
+  }
+  
+  /**
+   * Build mixed NFT bundle for swaps with combinations of cNFTs, SPL NFTs, and Core NFTs
+   */
+  private async buildMixedNftBundle(
+    inputs: TransactionGroupInput,
+    analysis: SwapAnalysis,
+    nonceValue: string
+  ): Promise<TransactionGroupResult> {
+    console.log('[TransactionGroupBuilder] Building mixed NFT bundle');
+    
+    if (!this.treasuryPda) {
+      throw new Error('Treasury PDA required for mixed NFT bundles');
+    }
+    
+    const transactions: TransactionGroupItem[] = [];
+    let totalSizeBytes = 0;
+    
+    // Network mode detection
+    const isMainnet = process.env.SOLANA_NETWORK === 'mainnet-beta' || 
+                      process.env.NODE_ENV === 'production';
+    const useJitoNonces = isMainnet;
+    
+    // Collect all NFT types
+    const makerCnfts = inputs.makerAssets.filter(a => 
+      a.type === AssetType.CNFT || String(a.type).toLowerCase() === 'cnft'
+    );
+    const takerCnfts = inputs.takerAssets.filter(a => 
+      a.type === AssetType.CNFT || String(a.type).toLowerCase() === 'cnft'
+    );
+    const makerSplNfts = inputs.makerAssets.filter(a => 
+      a.type === AssetType.NFT || String(a.type).toLowerCase() === 'nft'
+    );
+    const takerSplNfts = inputs.takerAssets.filter(a => 
+      a.type === AssetType.NFT || String(a.type).toLowerCase() === 'nft'
+    );
+    const makerCoreNfts = inputs.makerAssets.filter(a => 
+      a.type === AssetType.CORE_NFT || String(a.type).toLowerCase() === 'core_nft'
+    );
+    const takerCoreNfts = inputs.takerAssets.filter(a => 
+      a.type === AssetType.CORE_NFT || String(a.type).toLowerCase() === 'core_nft'
+    );
+    
+    console.log(`[TransactionGroupBuilder] Mixed bundle assets: cNFTs=${makerCnfts.length + takerCnfts.length}, SPL=${makerSplNfts.length + takerSplNfts.length}, Core=${makerCoreNfts.length + takerCoreNfts.length}`);
+    
+    // === Transaction 1: SOL transfers (if any) ===
+    if (analysis.hasSolTransfer || inputs.platformFeeLamports > BigInt(0)) {
+      const solTx = await this.buildSolTransferTransaction(inputs, nonceValue, useJitoNonces);
+      transactions.push(solTx);
+      totalSizeBytes += solTx.transaction?.sizeBytes || 0;
+    }
+    
+    let txIndex = transactions.length;
+    
+    // === cNFT transfers (1 per transaction due to proof nodes) ===
+    const cnftsPerTx = MAX_CNFTS_PER_TRANSACTION_NO_PROOFS;
+    const allCnfts = [
+      ...makerCnfts.map(c => ({ asset: c, from: inputs.makerPubkey, to: inputs.takerPubkey, side: 'maker' as const })),
+      ...takerCnfts.map(c => ({ asset: c, from: inputs.takerPubkey, to: inputs.makerPubkey, side: 'taker' as const })),
+    ];
+    
+    for (let i = 0; i < allCnfts.length; i += cnftsPerTx) {
+      const batch = allCnfts.slice(i, i + cnftsPerTx);
+      console.log(`[TransactionGroupBuilder] Building Tx${txIndex + 1}: cNFT batch (${batch.length} NFTs)`);
+      
+      const cnftInstructions: TransactionInstruction[] = [];
+      const requiredSigners: string[] = [];
+      
+      if (useJitoNonces) {
+        cnftInstructions.push(
+          SystemProgram.nonceAdvance({
+            noncePubkey: inputs.nonceAccountPubkey,
+            authorizedPubkey: this.platformAuthority.publicKey,
+          })
+        );
+      }
+      
+      for (const { asset, from, to, side } of batch) {
+        const result = await this.directBubblegumService.buildTransferInstruction({
+          assetId: asset.identifier,
+          fromWallet: from,
+          toWallet: to,
+        });
+        cnftInstructions.push(result.instruction);
+        if (!requiredSigners.includes(from.toBase58())) {
+          requiredSigners.push(from.toBase58());
+        }
+      }
+      
+      let blockHash: string;
+      if (useJitoNonces) {
+        blockHash = nonceValue;
+      } else {
+        const { blockhash } = await this.connection.getLatestBlockhash('confirmed');
+        blockHash = blockhash;
+      }
+      
+      const cnftTx = new Transaction({
+        recentBlockhash: blockHash,
+        feePayer: this.platformAuthority.publicKey,
+      }).add(...cnftInstructions);
+      
+      cnftTx.partialSign(this.platformAuthority);
+      
+      const cnftTxSerialized = cnftTx.serialize({ requireAllSignatures: false });
+      const cnftTxSize = cnftTxSerialized.length;
+      
+      transactions.push({
+        index: txIndex,
+        purpose: `cNFT transfers (${batch.length} NFTs)`,
+        assets: {
+          makerAssets: batch.filter(b => b.side === 'maker').map(b => b.asset),
+          takerAssets: batch.filter(b => b.side === 'taker').map(b => b.asset),
+          makerSolLamports: BigInt(0),
+          takerSolLamports: BigInt(0),
+          platformFeeLamports: BigInt(0),
+        },
+        transaction: {
+          serializedTransaction: cnftTxSerialized.toString('base64'),
+          sizeBytes: cnftTxSize,
+          isVersioned: false,
+          nonceValue: blockHash,
+          estimatedComputeUnits: 200000 * batch.length,
+          requiredSigners,
+        },
+        isVersioned: false,
+      });
+      
+      totalSizeBytes += cnftTxSize;
+      txIndex++;
+    }
+    
+    // === SPL NFT transfers ===
+    const splPerTx = MAX_SPL_NFTS_PER_TRANSACTION;
+    const allSplNfts = [
+      ...makerSplNfts.map(n => ({ asset: n, from: inputs.makerPubkey, to: inputs.takerPubkey, side: 'maker' as const })),
+      ...takerSplNfts.map(n => ({ asset: n, from: inputs.takerPubkey, to: inputs.makerPubkey, side: 'taker' as const })),
+    ];
+    
+    for (let i = 0; i < allSplNfts.length; i += splPerTx) {
+      const batch = allSplNfts.slice(i, i + splPerTx);
+      console.log(`[TransactionGroupBuilder] Building Tx${txIndex + 1}: SPL NFT batch (${batch.length} NFTs)`);
+      
+      const splInstructions: TransactionInstruction[] = [];
+      const requiredSigners: string[] = [];
+      
+      if (useJitoNonces) {
+        splInstructions.push(
+          SystemProgram.nonceAdvance({
+            noncePubkey: inputs.nonceAccountPubkey,
+            authorizedPubkey: this.platformAuthority.publicKey,
+          })
+        );
+      }
+      
+      for (const { asset, from, to } of batch) {
+        const result = await this.directSplTokenService.buildTransferInstruction({
+          mint: asset.identifier,
+          fromWallet: from,
+          toWallet: to,
+        });
+        splInstructions.push(...result.instructions);
+        if (!requiredSigners.includes(from.toBase58())) {
+          requiredSigners.push(from.toBase58());
+        }
+      }
+      
+      let blockHash: string;
+      if (useJitoNonces) {
+        blockHash = nonceValue;
+      } else {
+        const { blockhash } = await this.connection.getLatestBlockhash('confirmed');
+        blockHash = blockhash;
+      }
+      
+      const splTx = new Transaction({
+        recentBlockhash: blockHash,
+        feePayer: this.platformAuthority.publicKey,
+      }).add(...splInstructions);
+      
+      splTx.partialSign(this.platformAuthority);
+      
+      const splTxSerialized = splTx.serialize({ requireAllSignatures: false });
+      const splTxSize = splTxSerialized.length;
+      
+      transactions.push({
+        index: txIndex,
+        purpose: `SPL NFT transfers (${batch.length} NFTs)`,
+        assets: {
+          makerAssets: batch.filter(b => b.side === 'maker').map(b => b.asset),
+          takerAssets: batch.filter(b => b.side === 'taker').map(b => b.asset),
+          makerSolLamports: BigInt(0),
+          takerSolLamports: BigInt(0),
+          platformFeeLamports: BigInt(0),
+        },
+        transaction: {
+          serializedTransaction: splTxSerialized.toString('base64'),
+          sizeBytes: splTxSize,
+          isVersioned: false,
+          nonceValue: blockHash,
+          estimatedComputeUnits: 50000 * batch.length,
+          requiredSigners,
+        },
+        isVersioned: false,
+      });
+      
+      totalSizeBytes += splTxSize;
+      txIndex++;
+    }
+    
+    // === Core NFT transfers ===
+    const corePerTx = MAX_CORE_NFTS_PER_TRANSACTION;
+    const allCoreNfts = [
+      ...makerCoreNfts.map(n => ({ asset: n, from: inputs.makerPubkey, to: inputs.takerPubkey, side: 'maker' as const })),
+      ...takerCoreNfts.map(n => ({ asset: n, from: inputs.takerPubkey, to: inputs.makerPubkey, side: 'taker' as const })),
+    ];
+    
+    for (let i = 0; i < allCoreNfts.length; i += corePerTx) {
+      const batch = allCoreNfts.slice(i, i + corePerTx);
+      console.log(`[TransactionGroupBuilder] Building Tx${txIndex + 1}: Core NFT batch (${batch.length} NFTs)`);
+      
+      const coreInstructions: TransactionInstruction[] = [];
+      const requiredSigners: string[] = [];
+      
+      if (useJitoNonces) {
+        coreInstructions.push(
+          SystemProgram.nonceAdvance({
+            noncePubkey: inputs.nonceAccountPubkey,
+            authorizedPubkey: this.platformAuthority.publicKey,
+          })
+        );
+      }
+      
+      for (const { asset, from, to } of batch) {
+        const result = await this.directCoreNftService.buildTransferInstruction({
+          assetAddress: asset.identifier,
+          fromWallet: from,
+          toWallet: to,
+        });
+        coreInstructions.push(result.instruction);
+        if (!requiredSigners.includes(from.toBase58())) {
+          requiredSigners.push(from.toBase58());
+        }
+      }
+      
+      let blockHash: string;
+      if (useJitoNonces) {
+        blockHash = nonceValue;
+      } else {
+        const { blockhash } = await this.connection.getLatestBlockhash('confirmed');
+        blockHash = blockhash;
+      }
+      
+      const coreTx = new Transaction({
+        recentBlockhash: blockHash,
+        feePayer: this.platformAuthority.publicKey,
+      }).add(...coreInstructions);
+      
+      coreTx.partialSign(this.platformAuthority);
+      
+      const coreTxSerialized = coreTx.serialize({ requireAllSignatures: false });
+      const coreTxSize = coreTxSerialized.length;
+      
+      transactions.push({
+        index: txIndex,
+        purpose: `Core NFT transfers (${batch.length} NFTs)`,
+        assets: {
+          makerAssets: batch.filter(b => b.side === 'maker').map(b => b.asset),
+          takerAssets: batch.filter(b => b.side === 'taker').map(b => b.asset),
+          makerSolLamports: BigInt(0),
+          takerSolLamports: BigInt(0),
+          platformFeeLamports: BigInt(0),
+        },
+        transaction: {
+          serializedTransaction: coreTxSerialized.toString('base64'),
+          sizeBytes: coreTxSize,
+          isVersioned: false,
+          nonceValue: blockHash,
+          estimatedComputeUnits: 75000 * batch.length,
+          requiredSigners,
+        },
+        isVersioned: false,
+      });
+      
+      totalSizeBytes += coreTxSize;
+      txIndex++;
+    }
+    
+    console.log(`[TransactionGroupBuilder] Mixed NFT bundle complete:`, {
+      transactionCount: transactions.length,
+      totalSizeBytes,
+      cNfts: makerCnfts.length + takerCnfts.length,
+      splNfts: makerSplNfts.length + takerSplNfts.length,
+      coreNfts: makerCoreNfts.length + takerCoreNfts.length,
+      useJitoNonces,
+    });
+    
+    return {
+      strategy: SwapStrategy.MIXED_NFT_BUNDLE,
+      analysis,
+      transactions,
+      transactionCount: transactions.length,
+      requiresJitoBundle: useJitoNonces,
+      totalSizeBytes,
+      nonceValue: useJitoNonces ? nonceValue : 'fresh-blockhash',
+    };
+  }
+  
+  /**
+   * Helper: Build SOL transfer transaction for bundles
+   */
+  private async buildSolTransferTransaction(
+    inputs: TransactionGroupInput,
+    nonceValue: string,
+    useJitoNonces: boolean
+  ): Promise<TransactionGroupItem> {
+    console.log('[TransactionGroupBuilder] Building SOL transfer transaction');
+    
+    const solInstructions: TransactionInstruction[] = [];
+    
+    if (useJitoNonces) {
+      solInstructions.push(
+        SystemProgram.nonceAdvance({
+          noncePubkey: inputs.nonceAccountPubkey,
+          authorizedPubkey: this.platformAuthority.publicKey,
+        })
+      );
+    }
+    
+    // Maker sends SOL to taker
+    if (inputs.makerSolLamports > BigInt(0)) {
+      solInstructions.push(
+        SystemProgram.transfer({
+          fromPubkey: inputs.makerPubkey,
+          toPubkey: inputs.takerPubkey,
+          lamports: inputs.makerSolLamports,
+        })
+      );
+    }
+    
+    // Taker sends SOL to maker (minus fee)
+    if (inputs.takerSolLamports > BigInt(0)) {
+      const takerToMaker = inputs.takerSolLamports - inputs.platformFeeLamports;
+      if (takerToMaker > BigInt(0)) {
+        solInstructions.push(
+          SystemProgram.transfer({
+            fromPubkey: inputs.takerPubkey,
+            toPubkey: inputs.makerPubkey,
+            lamports: takerToMaker,
+          })
+        );
+      }
+    }
+    
+    // Platform fee
+    if (inputs.platformFeeLamports > BigInt(0) && this.treasuryPda) {
+      let feePayer: PublicKey;
+      if (inputs.takerSolLamports > BigInt(0)) {
+        feePayer = inputs.takerPubkey;
+      } else if (inputs.makerSolLamports > BigInt(0)) {
+        feePayer = inputs.makerPubkey;
+      } else {
+        feePayer = inputs.makerPubkey;
+      }
+      
+      solInstructions.push(
+        SystemProgram.transfer({
+          fromPubkey: feePayer,
+          toPubkey: this.treasuryPda,
+          lamports: inputs.platformFeeLamports,
+        })
+      );
+    }
+    
+    let blockHash: string;
+    if (useJitoNonces) {
+      blockHash = nonceValue;
+    } else {
+      const { blockhash } = await this.connection.getLatestBlockhash('confirmed');
+      blockHash = blockhash;
+    }
+    
+    const solTx = new Transaction({
+      recentBlockhash: blockHash,
+      feePayer: this.platformAuthority.publicKey,
+    }).add(...solInstructions);
+    
+    solTx.partialSign(this.platformAuthority);
+    
+    const solTxSerialized = solTx.serialize({ requireAllSignatures: false });
+    const solTxSize = solTxSerialized.length;
+    
+    // Determine required signers
+    const solTxSigners: string[] = [];
+    let feePayerIsMaker = false;
+    let feePayerIsTaker = false;
+    
+    if (inputs.platformFeeLamports > BigInt(0)) {
+      if (inputs.takerSolLamports > BigInt(0)) {
+        feePayerIsTaker = true;
+      } else {
+        feePayerIsMaker = true;
+      }
+    }
+    
+    if (inputs.makerSolLamports > BigInt(0) || feePayerIsMaker) {
+      solTxSigners.push(inputs.makerPubkey.toBase58());
+    }
+    if (inputs.takerSolLamports > BigInt(0) || feePayerIsTaker) {
+      solTxSigners.push(inputs.takerPubkey.toBase58());
+    }
+    
+    console.log(`[TransactionGroupBuilder] SOL tx built: ${solTxSize} bytes, signers: ${solTxSigners.join(', ')}`);
+    
+    return {
+      index: 0,
+      purpose: 'SOL transfers + platform fee',
+      assets: {
+        makerAssets: [],
+        takerAssets: [],
+        makerSolLamports: inputs.makerSolLamports,
+        takerSolLamports: inputs.takerSolLamports,
+        platformFeeLamports: inputs.platformFeeLamports,
+      },
+      transaction: {
+        serializedTransaction: solTxSerialized.toString('base64'),
+        sizeBytes: solTxSize,
+        isVersioned: false,
+        nonceValue: blockHash,
+        estimatedComputeUnits: 50000,
+        requiredSigners: solTxSigners,
+      },
+      isVersioned: false,
+    };
+  }
+  
+  /**
    * Build multiple transactions for bulk swap (for Jito bundle)
    */
   private async buildMultipleTransactions(
@@ -942,7 +1814,7 @@ export class TransactionGroupBuilder {
   }
   
   /**
-   * Check if a swap requires Jito bundle
+   * Check if a swap requires Jito bundle (for any bulk NFT swap)
    */
   requiresJitoBundle(inputs: TransactionGroupInput): boolean {
     console.log('[TransactionGroupBuilder] requiresJitoBundle called');
@@ -951,8 +1823,15 @@ export class TransactionGroupBuilder {
     
     const analysis = this.analyzeSwap(inputs);
     
-    const result = analysis.strategy === SwapStrategy.JITO_BUNDLE || 
-                   analysis.strategy === SwapStrategy.DIRECT_BUBBLEGUM_BUNDLE;
+    // All bundle strategies require Jito for atomic execution
+    const bundleStrategies = [
+      SwapStrategy.JITO_BUNDLE,
+      SwapStrategy.DIRECT_BUBBLEGUM_BUNDLE,
+      SwapStrategy.DIRECT_NFT_BUNDLE,
+      SwapStrategy.MIXED_NFT_BUNDLE,
+    ];
+    
+    const result = bundleStrategies.includes(analysis.strategy);
     
     console.log('[TransactionGroupBuilder] requiresJitoBundle result:', result, 'strategy:', analysis.strategy);
     

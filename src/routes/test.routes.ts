@@ -623,18 +623,16 @@ router.post('/api/test/estimate-size', async (req: Request, res: Response) => {
     const totalMakerNfts = makerAssets.length;
     const totalTakerNfts = takerAssets.length;
     
-    // Check for SPL/Core NFT multi-asset limitation (escrow program only supports 1 SPL/Core NFT per side)
-    // cNFTs can be handled in bulk via TransactionGroupBuilder (up to 10 per side)
-    const makerSplCoreCount = makerSplNfts.length + makerCoreNfts.length;
-    const takerSplCoreCount = takerSplNfts.length + takerCoreNfts.length;
-    const exceedsSplLimit = makerSplCoreCount > 1 || takerSplCoreCount > 1;
+    // Bulk swap limits for all NFT types (via Jito bundles)
+    // Max NFTs per side is determined by Jito bundle limit (5 transactions)
+    // - SPL NFTs: ~5 per transaction = ~20 per side
+    // - Core NFTs: ~4 per transaction = ~16 per side  
+    // - cNFTs: ~3 per transaction (full canopy) = ~12 per side
+    // For safety, we use a conservative limit of 10 per side for any type
+    const MAX_NFTS_PER_SIDE = 10;
     
-    // cNFTs have their own limits (Jito bundle max)
-    const MAX_CNFTS_PER_SIDE = 10;
-    const exceedsCnftLimit = makerCnfts.length > MAX_CNFTS_PER_SIDE || takerCnfts.length > MAX_CNFTS_PER_SIDE;
-    
-    // Combined limit check
-    const exceedsLimit = exceedsSplLimit || exceedsCnftLimit;
+    // Check if any side exceeds the limit
+    const exceedsLimit = totalMakerNfts > MAX_NFTS_PER_SIDE || totalTakerNfts > MAX_NFTS_PER_SIDE;
     
     // Base transaction size components
     const numSigners = 3; // maker, taker, platform authority
@@ -745,12 +743,9 @@ router.post('/api/test/estimate-size', async (req: Request, res: Response) => {
     let finalRecommendation = recommendation;
     let warning: string | null = null;
     
-    if (exceedsSplLimit) {
+    if (exceedsLimit) {
       finalRecommendation = 'cannot_fit';
-      warning = 'SPL/Core NFTs: Escrow program only supports 1 per side. Use cNFTs for bulk swaps (up to 10 per side).';
-    } else if (exceedsCnftLimit) {
-      finalRecommendation = 'cannot_fit';
-      warning = `cNFT limit exceeded: Maximum ${MAX_CNFTS_PER_SIDE} cNFTs per side (Jito bundle limit).`;
+      warning = `NFT limit exceeded: Maximum ${MAX_NFTS_PER_SIDE} NFTs per side (Jito bundle limit).`;
     }
     
     // Add warning for cNFTs with too many proof nodes
@@ -982,16 +977,9 @@ router.post('/api/quote', async (req: Request, res: Response) => {
     // ========================================
     // 7. ESTIMATE TRANSACTION SIZE
     // ========================================
-    // SPL/Core NFTs have escrow program limit (1 per side)
-    // cNFTs can be handled in bulk via TransactionGroupBuilder
-    const makerSplCoreCount = makerSplNfts.length + makerCoreNfts.length;
-    const takerSplCoreCount = takerSplNfts.length + takerCoreNfts.length;
-    const exceedsSplCoreLimit = makerSplCoreCount > 1 || takerSplCoreCount > 1;
-    
-    const MAX_CNFTS_PER_SIDE = 10;
-    const exceedsCnftLimit = makerCnfts.length > MAX_CNFTS_PER_SIDE || takerCnfts.length > MAX_CNFTS_PER_SIDE;
-    
-    const exceedsMultiAssetLimit = exceedsSplCoreLimit || exceedsCnftLimit;
+    // All NFT types now support bulk swaps via Jito bundles (up to 10 per side)
+    const MAX_NFTS_PER_SIDE = 10;
+    const exceedsMultiAssetLimit = totalMakerNfts > MAX_NFTS_PER_SIDE || totalTakerNfts > MAX_NFTS_PER_SIDE;
 
     // Base accounts
     const numSigners = 3;
@@ -1131,12 +1119,9 @@ router.post('/api/quote', async (req: Request, res: Response) => {
     const allProofsFetched = cnftProofDetails.every(d => d.fetched);
     const totalProofNodes = makerProofNodes + takerProofNodes;
 
-    if (exceedsSplCoreLimit) {
+    if (exceedsMultiAssetLimit) {
       transactionStatus = 'too_large';
-      warnings.push('SPL/Core NFTs: Escrow program only supports 1 per side. Use cNFTs for bulk swaps (up to 10 per side).');
-    } else if (exceedsCnftLimit) {
-      transactionStatus = 'too_large';
-      warnings.push(`cNFT limit exceeded: Maximum ${MAX_CNFTS_PER_SIDE} cNFTs per side (Jito bundle limit).`);
+      warnings.push(`NFT limit exceeded: Maximum ${MAX_NFTS_PER_SIDE} NFTs per side (Jito bundle limit).`);
     } else if (!willFit && !willFitWithALT) {
       transactionStatus = 'too_large';
       if (totalProofNodes > 0) {
