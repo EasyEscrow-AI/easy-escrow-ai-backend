@@ -367,8 +367,8 @@ DEVNET_STAGING_TREASURY_PRIVATE_KEY=<your-base58-private-key>  # NEVER commit re
 
 ```bash
 # .env.production
-MAINNET_PRODUCTION_TREASURY_ADDRESS=HMtLHzJZ5AUUaKjYBGZpB4RbjN4gYvcd69esNwtaUBFF
-MAINNET_PRODUCTION_TREASURY_PRIVATE_KEY=<your-base58-private-key>  # NEVER commit real keys!
+MAINNET_PROD_TREASURY_ADDRESS=HMtLHzJZ5AUUaKjYBGZpB4RbjN4gYvcd69esNwtaUBFF
+MAINNET_PROD_TREASURY_PRIVATE_KEY=<your-base58-private-key>  # NEVER commit real keys!
 ```
 
 ## Related Documentation

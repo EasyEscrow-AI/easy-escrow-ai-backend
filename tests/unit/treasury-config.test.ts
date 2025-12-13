@@ -93,9 +93,9 @@ describe('Treasury Wallet Configuration', () => {
         process.env.SOLANA_NETWORK = 'mainnet-beta';
       });
 
-      it('should return environment variable when MAINNET_PRODUCTION_TREASURY_ADDRESS is set', () => {
+      it('should return environment variable when MAINNET_PROD_TREASURY_ADDRESS is set', () => {
         const customAddress = 'ProductionTreasuryAddress123456789012345678';
-        process.env.MAINNET_PRODUCTION_TREASURY_ADDRESS = customAddress;
+        process.env.MAINNET_PROD_TREASURY_ADDRESS = customAddress;
 
         const address = getTreasuryAddress();
 
@@ -103,7 +103,7 @@ describe('Treasury Wallet Configuration', () => {
       });
 
       it('should return hardcoded fallback when no environment variable is set', () => {
-        delete process.env.MAINNET_PRODUCTION_TREASURY_ADDRESS;
+        delete process.env.MAINNET_PROD_TREASURY_ADDRESS;
         
         // Mock filesystem to simulate missing keypair file
         sandbox.stub(fs, 'existsSync').returns(false);
@@ -114,7 +114,7 @@ describe('Treasury Wallet Configuration', () => {
       });
 
       it('should load address from keypair file when file exists', () => {
-        delete process.env.MAINNET_PRODUCTION_TREASURY_ADDRESS;
+        delete process.env.MAINNET_PROD_TREASURY_ADDRESS;
         
         // Full 64-byte keypair matching the actual production treasury
         const mockKeypair = [140,62,47,189,37,133,75,38,8,58,197,137,35,197,120,192,29,151,91,119,219,112,121,138,16,62,145,218,120,223,101,13,126,33,136,186,167,133,40,28,80,63,3,163,122,13,164,253,168,200,19,32,158,52,129,200,102,112,19,8,202,110,116,23];
