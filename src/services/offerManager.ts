@@ -383,8 +383,8 @@ export class OfferManager {
       }
       
       // 6. Extract SOL amounts from offer
+      // Note: requestedAssets already declared above for validation
       const offeredAssets = offer.offeredAssets as Array<{ type: AssetType; identifier: string }>;
-      const requestedAssets = offer.requestedAssets as Array<{ type: AssetType; identifier: string }>;
       
       // Debug: log the raw assets from database
       console.log('[OfferManager] Raw offeredAssets from DB:', JSON.stringify(offer.offeredAssets));
