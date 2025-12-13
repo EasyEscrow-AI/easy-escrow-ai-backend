@@ -655,6 +655,35 @@ function resetWallet(wallet) {
     addLog(`${wallet === 'maker' ? 'Maker' : 'Taker'} form reset`, 'info');
 }
 
+// Reset selections after successful swap (keeps wallet data, just clears selections)
+function resetSelectionsAfterSwap() {
+    // Clear NFT selections
+    selectedMakerNFTs = [];
+    selectedTakerNFTs = [];
+    
+    // Clear SOL inputs
+    document.getElementById('maker-sol').value = '';
+    document.getElementById('taker-sol').value = '';
+    
+    // Re-render NFTs to clear selection highlights
+    if (makerData && makerData.nfts) {
+        renderNFTs('maker', makerData.nfts);
+        updateNFTSelection('maker');
+    }
+    if (takerData && takerData.nfts) {
+        renderNFTs('taker', takerData.nfts);
+        updateNFTSelection('taker');
+    }
+    
+    // Update swap preview to show empty state
+    updateSwapPreview();
+    
+    // Update swap button state
+    updateSwapButton();
+    
+    addLog('🔄 Selections reset for next swap', 'info');
+}
+
 // Add log entry with support for cNFT/Jito log types
 function addLog(message, type = 'info') {
     const logContent = document.getElementById('activity-log-content');
@@ -1490,15 +1519,28 @@ async function executeAtomicSwap(params) {
         addLog(`🔗 Signature: <a href="${executeData.data.explorerUrl}" target="_blank" rel="noopener noreferrer" style="color: #22c55e; text-decoration: underline;">${executeData.data.signature}</a>`, 'success');
 
         // Fetch transaction fee from blockchain
+        // For bulk swaps with multiple transactions, sum all fees
         let blockchainFee = null;
         try {
-            const feeResponse = await fetch(`/api/test/transaction-fee?signature=${executeData.data.signature}`);
-            const feeData = await feeResponse.json();
-            if (feeData.success && feeData.data.fee) {
-                blockchainFee = feeData.data.fee; // Fee in lamports
+            const signatures = executeData.data.signatures && executeData.data.signatures.length > 0 
+                ? executeData.data.signatures 
+                : [executeData.data.signature];
+            
+            let totalFee = 0;
+            for (const sig of signatures) {
+                const feeResponse = await fetch(`/api/test/transaction-fee?signature=${sig}`);
+                const feeData = await feeResponse.json();
+                if (feeData.success && feeData.data.fee) {
+                    totalFee += feeData.data.fee;
+                }
+            }
+            
+            if (totalFee > 0) {
+                blockchainFee = totalFee; // Total fee in lamports
                 const feeSol = (blockchainFee / 1e9).toFixed(6);
                 const feeUsd = solPriceUSD ? ` (~$${(blockchainFee / 1e9 * solPriceUSD).toFixed(4)} USD)` : '';
-                addLog(`💸 Blockchain fee: ${feeSol} SOL${feeUsd}`, 'info');
+                const txCount = signatures.length > 1 ? ` (${signatures.length} txns)` : '';
+                addLog(`💸 Blockchain fee: ${feeSol} SOL${feeUsd}${txCount}`, 'info');
             }
         } catch (feeError) {
             console.warn('Could not fetch transaction fee:', feeError);
@@ -1527,6 +1569,9 @@ async function executeAtomicSwap(params) {
         } else {
             addLog(`✅ Atomic swap completed successfully on ${networkDisplay}!`, 'success');
         }
+        
+        // Reset selections after successful swap
+        resetSelectionsAfterSwap();
 
     } catch (error) {
         console.error('Swap error:', error);
