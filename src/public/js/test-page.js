@@ -675,8 +675,8 @@ function resetSelectionsAfterSwap() {
         updateNFTSelection('taker');
     }
     
-    // Update swap button state (disabled since no selections)
-    updateSwapButton();
+    // Keep swap button enabled (wallets are still loaded)
+    // User can immediately select new NFTs for another swap
     
     addLog('🔄 Selections reset for next swap', 'info');
 }
