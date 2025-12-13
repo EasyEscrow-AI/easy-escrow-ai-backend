@@ -31,7 +31,9 @@ import { CnftService, createCnftService } from './cnftService';
 import { DirectBubblegumService, createDirectBubblegumService } from './directBubblegumService';
 
 // Conservative limits for transaction splitting
-const MAX_CNFTS_PER_TRANSACTION = 2; // Conservative: 1-2 cNFTs per transaction
+// With full canopy trees (0 proof nodes), we can fit more cNFTs per transaction
+const MAX_CNFTS_PER_TRANSACTION_WITH_PROOFS = 1; // 1 cNFT when proofs are needed
+const MAX_CNFTS_PER_TRANSACTION_NO_PROOFS = 3; // 3 cNFTs when full canopy (0 proof nodes)
 const JITO_BUNDLE_THRESHOLD = 3; // Use Jito bundles for 3+ total cNFTs
 const MAX_TRANSACTIONS_PER_BUNDLE = 5; // Jito limit
 
@@ -206,14 +208,10 @@ export class TransactionGroupBuilder {
     if (inputs.forceSingleTransaction) {
       // User explicitly requested single transaction
       if (totalCnfts > 0) {
-        // cNFT swaps with proof nodes CANNOT fit in single transaction
+        // cNFT swaps CANNOT fit in single transaction - always need bundles
         strategy = SwapStrategy.CANNOT_FIT;
         transactionCount = 0;
-        reason = `cNFT swaps require Jito bundles (proof nodes exceed single tx size limit)`;
-      } else if (totalCnfts > MAX_CNFTS_PER_TRANSACTION) {
-        strategy = SwapStrategy.CANNOT_FIT;
-        transactionCount = 0;
-        reason = `Cannot fit ${totalCnfts} cNFTs in single transaction (max ${MAX_CNFTS_PER_TRANSACTION})`;
+        reason = `cNFT swaps require Jito bundles (cannot fit in single transaction)`;
       } else {
         strategy = SwapStrategy.SINGLE_TRANSACTION;
         transactionCount = 1;
@@ -233,11 +231,14 @@ export class TransactionGroupBuilder {
       reason = 'Single cNFT swap uses direct Bubblegum bundle (proof nodes require separate tx)';
     } else if (totalCnfts >= 1) {
       // Multiple cNFTs or mixed assets - use Jito bundle with direct Bubblegum
-      // Calculate: 1 tx per cNFT + 1 tx for SOL/fee if applicable
+      // With full canopy trees (0 proof nodes), we can batch multiple cNFTs per tx
       // Note: We need a SOL tx if there's SOL transfer OR platform fee
-      const cnftTxCount = totalCnfts;
+      const cnftsPerTx = MAX_CNFTS_PER_TRANSACTION_NO_PROOFS; // Assume full canopy for devnet
+      const cnftTxCount = Math.ceil(totalCnfts / cnftsPerTx);
       const needsSolTx = hasSolTransfer || inputs.platformFeeLamports > BigInt(0);
       transactionCount = cnftTxCount + (needsSolTx ? 1 : 0);
+      
+      console.log(`[TransactionGroupBuilder] cNFT batching: ${totalCnfts} cNFTs ÷ ${cnftsPerTx}/tx = ${cnftTxCount} cNFT txs + ${needsSolTx ? 1 : 0} SOL tx = ${transactionCount} total`);
       
       // Check if we exceed Jito's bundle limit
       if (transactionCount > MAX_TRANSACTIONS_PER_BUNDLE) {
@@ -245,7 +246,7 @@ export class TransactionGroupBuilder {
         reason = `${totalCnfts} cNFTs would require ${transactionCount} transactions, exceeding Jito's ${MAX_TRANSACTIONS_PER_BUNDLE} limit`;
       } else {
         strategy = SwapStrategy.DIRECT_BUBBLEGUM_BUNDLE;
-        reason = `${totalCnfts} cNFT(s) using direct Bubblegum bundle (${transactionCount} transactions)`;
+        reason = `${totalCnfts} cNFT(s) using direct Bubblegum bundle (${transactionCount} transactions, ${cnftsPerTx} cNFTs/tx)`;
       }
     } else {
       // Fallback (shouldn't reach here with current logic)
@@ -810,9 +811,12 @@ export class TransactionGroupBuilder {
       ...takerCnfts.map(a => ({ asset: a, side: 'taker' as const })),
     ];
     
-    // Create groups of 1-2 cNFTs
-    for (let i = 0; i < allCnfts.length; i += MAX_CNFTS_PER_TRANSACTION) {
-      const chunk = allCnfts.slice(i, i + MAX_CNFTS_PER_TRANSACTION);
+    // Create groups of cNFTs (batch multiple when using full canopy trees)
+    const cnftsPerTx = MAX_CNFTS_PER_TRANSACTION_NO_PROOFS;
+    console.log(`[TransactionGroupBuilder] Batching ${allCnfts.length} cNFTs into groups of ${cnftsPerTx}`);
+    
+    for (let i = 0; i < allCnfts.length; i += cnftsPerTx) {
+      const chunk = allCnfts.slice(i, i + cnftsPerTx);
       
       const groupMakerAssets: SwapAsset[] = chunk
         .filter(c => c.side === 'maker')
@@ -824,7 +828,7 @@ export class TransactionGroupBuilder {
       // First transaction gets non-cNFT assets and SOL
       const isFirstGroup = groups.length === 0;
       // Last cNFT transaction gets the platform fee
-      const isLastCnftGroup = i + MAX_CNFTS_PER_TRANSACTION >= allCnfts.length;
+      const isLastCnftGroup = i + cnftsPerTx >= allCnfts.length;
       
       const group = {
         makerAssets: isFirstGroup ? [...groupMakerAssets, ...makerOther] : groupMakerAssets,
