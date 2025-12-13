@@ -945,9 +945,18 @@ export class TransactionGroupBuilder {
    * Check if a swap requires Jito bundle
    */
   requiresJitoBundle(inputs: TransactionGroupInput): boolean {
+    console.log('[TransactionGroupBuilder] requiresJitoBundle called');
+    console.log('[TransactionGroupBuilder] Input makerAssets count:', inputs.makerAssets?.length || 0);
+    console.log('[TransactionGroupBuilder] Input takerAssets count:', inputs.takerAssets?.length || 0);
+    
     const analysis = this.analyzeSwap(inputs);
-    return analysis.strategy === SwapStrategy.JITO_BUNDLE || 
-           analysis.strategy === SwapStrategy.DIRECT_BUBBLEGUM_BUNDLE;
+    
+    const result = analysis.strategy === SwapStrategy.JITO_BUNDLE || 
+                   analysis.strategy === SwapStrategy.DIRECT_BUBBLEGUM_BUNDLE;
+    
+    console.log('[TransactionGroupBuilder] requiresJitoBundle result:', result, 'strategy:', analysis.strategy);
+    
+    return result;
   }
   
   /**
