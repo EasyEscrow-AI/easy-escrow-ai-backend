@@ -525,13 +525,15 @@ function renderNFTs(wallet, nfts) {
     container.innerHTML = filteredNfts.map((nft, index) => {
         // Find original index in unfiltered array for toggle functionality
         const originalIndex = nfts.findIndex(n => n.mint === nft.mint);
-        // Get image - uses animal API for cNFTs without images
+        // Get image - uses animal API for cNFTs
         const imageUrl = getNftImage(nft) || placeholderSvg;
+        // Store mint for fallback animal image generation
         return `
             <div class="nft-card" data-index="${originalIndex}">
                 <img class="nft-image" 
                      src="${imageUrl}" 
                      alt="${nft.name}"
+                     data-mint="${nft.mint}"
                      data-fallback="${placeholderSvg}">
                 <div class="nft-name">${nft.name || 'Unknown NFT'}</div>
                 <div class="nft-type">${getNftTypeLabel(nft)}</div>
@@ -540,10 +542,18 @@ function renderNFTs(wallet, nfts) {
         `;
     }).join('');
     
-    // Add CSP-compliant error handlers after rendering
+    // Add CSP-compliant error handlers - use animal image as fallback for ALL NFTs
     container.querySelectorAll('.nft-image').forEach(img => {
         img.addEventListener('error', function() {
-            this.src = this.dataset.fallback;
+            const mint = this.dataset.mint;
+            if (mint) {
+                // Use animal image as fallback (same logic as cNFTs)
+                const animalUrl = getCnftAnimalImage(mint);
+                console.log(`🐾 Image failed, using animal fallback for ${mint.substring(0, 8)}...`);
+                this.src = animalUrl;
+            } else {
+                this.src = this.dataset.fallback;
+            }
         }, { once: true }); // Only fire once to prevent infinite loops
     });
 }
@@ -803,10 +813,14 @@ function showConfirmationModal() {
             
             const img = document.createElement('img');
             img.className = 'nft-preview-image';
-            // Use animal image for cNFTs without images
-            const previewPlaceholder = 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'50\' height=\'50\'%3E%3Crect fill=\'%23ddd\' width=\'50\' height=\'50\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23999\' font-family=\'Arial\' font-size=\'10\'%3ENone%3C/text%3E%3C/svg%3E';
-            img.src = getNftImage(nft) || previewPlaceholder;
+            // Use animal image for cNFTs, or NFT image for others
+            img.src = getNftImage(nft) || getCnftAnimalImage(nft.mint);
             img.alt = nft.name || 'Unknown NFT';
+            img.dataset.mint = nft.mint; // Store mint for fallback
+            // Add error handler for fallback
+            img.addEventListener('error', function() {
+                this.src = getCnftAnimalImage(this.dataset.mint);
+            }, { once: true });
             
             const details = document.createElement('div');
             details.className = 'nft-preview-details';
@@ -858,10 +872,14 @@ function showConfirmationModal() {
             
             const img = document.createElement('img');
             img.className = 'nft-preview-image';
-            // Use animal image for cNFTs without images
-            const takerPlaceholder = 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'50\' height=\'50\'%3E%3Crect fill=\'%23ddd\' width=\'50\' height=\'50\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23999\' font-family=\'Arial\' font-size=\'10\'%3ENone%3C/text%3E%3C/svg%3E';
-            img.src = getNftImage(nft) || takerPlaceholder;
+            // Use animal image for cNFTs, or NFT image for others
+            img.src = getNftImage(nft) || getCnftAnimalImage(nft.mint);
             img.alt = nft.name || 'Unknown NFT';
+            img.dataset.mint = nft.mint; // Store mint for fallback
+            // Add error handler for fallback
+            img.addEventListener('error', function() {
+                this.src = getCnftAnimalImage(this.dataset.mint);
+            }, { once: true });
             
             const details = document.createElement('div');
             details.className = 'nft-preview-details';
