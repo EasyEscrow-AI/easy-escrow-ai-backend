@@ -526,7 +526,18 @@ function renderNFTs(wallet, nfts) {
         // Find original index in unfiltered array for toggle functionality
         const originalIndex = nfts.findIndex(n => n.mint === nft.mint);
         // Get image - uses animal API for cNFTs
-        const imageUrl = getNftImage(nft) || placeholderSvg;
+        let imageUrl = getNftImage(nft);
+        
+        // Debug: log what image URL we're using for cNFTs
+        if (nft.isCompressed) {
+            console.log(`📷 cNFT ${nft.mint.substring(0, 8)}: isCompressed=${nft.isCompressed}, imageUrl=${imageUrl?.substring(0, 50)}...`);
+        }
+        
+        // Use placeholder if no image
+        if (!imageUrl) {
+            imageUrl = placeholderSvg;
+        }
+        
         // Store mint for fallback animal image generation
         return `
             <div class="nft-card" data-index="${originalIndex}">
