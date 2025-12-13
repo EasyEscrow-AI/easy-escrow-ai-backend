@@ -107,57 +107,59 @@ let takerSearchTerm = ''; // Search term for taker NFTs
 let solPriceUSD = null; // Cached SOL price in USD
 
 // ========================================
-// ANIMAL IMAGE SYSTEM (for cNFTs without images)
+// NFT PLACEHOLDER IMAGE SYSTEM
 // ========================================
-// Uses https://animals.maxz.dev/ free API for persistent cNFT images
-const ANIMAL_TYPES = ['cat', 'dog', 'fox', 'panda', 'red_panda', 'bird', 'koala', 'racoon'];
-const CNFT_IMAGE_STORAGE_KEY = 'cnft_animal_images';
+// Uses DiceBear API for deterministic avatar images based on NFT mint address
+// https://www.dicebear.com/ - free API that returns images directly from URL
+const AVATAR_STYLES = ['adventurer', 'avataaars', 'bottts', 'fun-emoji', 'lorelei', 'notionists', 'pixel-art', 'thumbs'];
+const NFT_IMAGE_STORAGE_KEY = 'nft_placeholder_images';
 
-// Get or assign a persistent animal image for a cNFT
-function getCnftAnimalImage(assetId) {
+// Get or generate a persistent placeholder image for any NFT
+function getPlaceholderImage(assetId) {
     if (!assetId) return null;
     
     // Load existing mappings from localStorage
     let imageMap = {};
     try {
-        const stored = localStorage.getItem(CNFT_IMAGE_STORAGE_KEY);
+        const stored = localStorage.getItem(NFT_IMAGE_STORAGE_KEY);
         if (stored) {
             imageMap = JSON.parse(stored);
         }
     } catch (e) {
-        console.warn('Failed to load cNFT image map:', e);
+        console.warn('Failed to load NFT image map:', e);
     }
     
-    // If this cNFT already has an assigned image, return it
+    // If this NFT already has an assigned image, return it
     if (imageMap[assetId]) {
         return imageMap[assetId];
     }
     
-    // Assign a new random animal image
-    // Use asset ID hash to pick consistent animal type
+    // Pick a consistent avatar style based on asset ID hash
     const hash = assetId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    const animalType = ANIMAL_TYPES[hash % ANIMAL_TYPES.length];
+    const style = AVATAR_STYLES[hash % AVATAR_STYLES.length];
     
-    // Generate unique image URL with asset-based seed for consistency
-    const imageUrl = `https://animals.maxz.dev/api/${animalType}?seed=${assetId.substring(0, 8)}`;
+    // DiceBear returns images directly - use asset ID as seed for consistency
+    // This guarantees the same NFT always gets the same image
+    const imageUrl = `https://api.dicebear.com/7.x/${style}/svg?seed=${assetId}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`;
     
     // Store the mapping
     imageMap[assetId] = imageUrl;
     try {
-        localStorage.setItem(CNFT_IMAGE_STORAGE_KEY, JSON.stringify(imageMap));
+        localStorage.setItem(NFT_IMAGE_STORAGE_KEY, JSON.stringify(imageMap));
     } catch (e) {
-        console.warn('Failed to save cNFT image map:', e);
+        console.warn('Failed to save NFT image map:', e);
     }
     
-    console.log(`🐾 Assigned ${animalType} image to cNFT ${assetId.substring(0, 8)}...`);
+    console.log(`🎨 Generated ${style} avatar for NFT ${assetId.substring(0, 8)}...`);
     return imageUrl;
 }
 
-// Get image for any NFT (uses animal API for cNFTs)
+
+// Get image for any NFT (uses placeholder for cNFTs, metadata for others)
 function getNftImage(nft) {
-    // For cNFTs, ALWAYS use animal images (metadata URIs are often fake/broken in test env)
+    // For cNFTs, ALWAYS use placeholder images (metadata URIs are often fake/broken in test env)
     if (nft.isCompressed && nft.mint) {
-        return getCnftAnimalImage(nft.mint);
+        return getPlaceholderImage(nft.mint);
     }
     
     // For regular NFTs, use their metadata image if available
@@ -165,24 +167,26 @@ function getNftImage(nft) {
         return nft.image;
     }
     
-    // Fallback to placeholder
+    // Fallback to placeholder based on mint
+    if (nft.mint) {
+        return getPlaceholderImage(nft.mint);
+    }
+    
     return null;
 }
 
-// Preload animal images for a list of NFTs
+// Preload placeholder images for cNFTs
 async function preloadAnimalImages(nfts) {
-    const cnftsWithoutImages = nfts.filter(nft => 
-        nft.isCompressed && (!nft.image || nft.image.includes('No Image'))
-    );
+    const cnftsNeedingImages = nfts.filter(nft => nft.isCompressed);
     
-    if (cnftsWithoutImages.length === 0) return;
+    if (cnftsNeedingImages.length === 0) return;
     
-    console.log(`🐾 Preloading ${cnftsWithoutImages.length} animal images for cNFTs...`);
+    console.log(`🎨 Preloading ${cnftsNeedingImages.length} placeholder images for cNFTs...`);
     
     // Assign images to all cNFTs (this stores them in localStorage)
-    cnftsWithoutImages.forEach(nft => {
+    cnftsNeedingImages.forEach(nft => {
         if (nft.mint) {
-            getCnftAnimalImage(nft.mint);
+            getPlaceholderImage(nft.mint);
         }
     });
 }
@@ -553,15 +557,15 @@ function renderNFTs(wallet, nfts) {
         `;
     }).join('');
     
-    // Add CSP-compliant error handlers - use animal image as fallback for ALL NFTs
+    // Add CSP-compliant error handlers - use placeholder image as fallback for ALL NFTs
     container.querySelectorAll('.nft-image').forEach(img => {
         img.addEventListener('error', function() {
             const mint = this.dataset.mint;
             if (mint) {
-                // Use animal image as fallback (same logic as cNFTs)
-                const animalUrl = getCnftAnimalImage(mint);
-                console.log(`🐾 Image failed, using animal fallback for ${mint.substring(0, 8)}...`);
-                this.src = animalUrl;
+                // Use placeholder image as fallback
+                const placeholderUrl = getPlaceholderImage(mint);
+                console.log(`🎨 Image failed, using placeholder for ${mint.substring(0, 8)}...`);
+                this.src = placeholderUrl;
             } else {
                 this.src = this.dataset.fallback;
             }
@@ -824,13 +828,13 @@ function showConfirmationModal() {
             
             const img = document.createElement('img');
             img.className = 'nft-preview-image';
-            // Use animal image for cNFTs, or NFT image for others
-            img.src = getNftImage(nft) || getCnftAnimalImage(nft.mint);
+            // Use NFT image or placeholder
+            img.src = getNftImage(nft) || getPlaceholderImage(nft.mint);
             img.alt = nft.name || 'Unknown NFT';
             img.dataset.mint = nft.mint; // Store mint for fallback
             // Add error handler for fallback
             img.addEventListener('error', function() {
-                this.src = getCnftAnimalImage(this.dataset.mint);
+                this.src = getPlaceholderImage(this.dataset.mint);
             }, { once: true });
             
             const details = document.createElement('div');
@@ -883,13 +887,13 @@ function showConfirmationModal() {
             
             const img = document.createElement('img');
             img.className = 'nft-preview-image';
-            // Use animal image for cNFTs, or NFT image for others
-            img.src = getNftImage(nft) || getCnftAnimalImage(nft.mint);
+            // Use NFT image or placeholder
+            img.src = getNftImage(nft) || getPlaceholderImage(nft.mint);
             img.alt = nft.name || 'Unknown NFT';
             img.dataset.mint = nft.mint; // Store mint for fallback
             // Add error handler for fallback
             img.addEventListener('error', function() {
-                this.src = getCnftAnimalImage(this.dataset.mint);
+                this.src = getPlaceholderImage(this.dataset.mint);
             }, { once: true });
             
             const details = document.createElement('div');
