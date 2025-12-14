@@ -1186,7 +1186,9 @@ router.post('/api/quote', async (req: Request, res: Response) => {
       }
     } else if (!willFit && willFitWithALT) {
       transactionStatus = 'alt_required';
-    } else if ((estimatedSize / maxSize) > 0.8) {
+    } else if ((estimatedSize / maxSize) > 0.8 && !isBulkSwap) {
+      // Bulk swaps are expected to exceed single-transaction limits and will be split
+      // across multiple transactions in a Jito bundle, so near_limit doesn't apply
       transactionStatus = 'near_limit';
     } else {
       transactionStatus = 'ok';
@@ -1367,10 +1369,12 @@ router.post('/api/quote', async (req: Request, res: Response) => {
         } : {
           isBulkSwap: false,
           strategy: swapAnalysis.strategy,
-          transactionCount: 1,
-          executionMethod: isCnftSwap 
-            ? 'Single transaction with cNFT (requires bundle)' 
-            : 'Standard escrow transaction',
+          transactionCount: swapAnalysis.transactionCount,
+          executionMethod: swapAnalysis.strategy === SwapStrategy.CANNOT_FIT
+            ? 'Swap cannot be executed (exceeds transaction limits)'
+            : isCnftSwap 
+              ? 'Single transaction with cNFT (requires bundle)' 
+              : 'Standard escrow transaction',
         },
 
         // cNFT swap indicator (for backward compatibility)
