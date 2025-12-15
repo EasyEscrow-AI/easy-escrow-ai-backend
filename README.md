@@ -29,6 +29,33 @@ EasyEscrow.ai is a **100% Atomic Swap platform** enabling instant, trustless exc
 
 **Note:** Bulk swap functionality supports up to 10 assets per side (cNFTs, standard NFTs, Core NFTs, SOL). Swaps with 3+ NFTs automatically use Jito bundles for atomic execution. See [Bulk Swap Architecture](docs/BULK_CNFT_SWAP_ARCHITECTURE.md) for details.
 
+### cNFT & Bulk Swap Capabilities
+
+#### Compressed NFT (cNFT) Support
+- ✅ **Full cNFT Integration**: Direct Bubblegum program transfers with Merkle proof handling
+- ✅ **Stale Proof Handling**: Automatic retry with fresh proofs (up to 3 attempts with progressive delays)
+- ✅ **Canopy Optimization**: Automatic proof trimming based on on-chain canopy depth
+- ✅ **DAS API Integration**: Rate-limited, cached proof fetching with tree sequence monitoring
+- ✅ **Production Ready**: Deployed and tested on Solana mainnet
+
+#### Bulk Swap Features
+- ✅ **Multi-Asset Swaps**: Up to 10 assets per side (any combination of SPL NFT, Core NFT, cNFT, SOL)
+- ✅ **Jito Bundle Atomicity**: Swaps with 3+ assets automatically use Jito bundles for all-or-nothing execution
+- ✅ **Transaction Splitting**: Intelligent splitting based on asset types and transaction size limits
+- ✅ **Address Lookup Tables**: Automatic ALT usage for transaction size optimization
+- ✅ **Smart Ordering**: Optimal transaction sequencing (fee first, tip last)
+
+#### Enhanced Offer Management
+- ✅ **Private Sales**: Restrict offers to specific taker wallets
+- ✅ **Counter-Offers**: Full counter-offer chain support with asset modification
+- ✅ **Offer Updates**: Update SOL amounts via `PUT /api/offers/:id`
+- ✅ **Offer Cancellation**: Maker and admin cancellation with nonce advancement
+
+For detailed technical information, see:
+- [Bulk cNFT Swap Architecture](docs/BULK_CNFT_SWAP_ARCHITECTURE.md) - Complete architecture documentation
+- [cNFT Testing Guide](docs/CNFT_TESTING_GUIDE.md) - Testing and setup guide
+- [cNFT Implementation Plan](docs/cnft-plan.md) - Implementation history and status
+
 ---
 
 ## 📌 Strategic Update
@@ -43,7 +70,9 @@ EasyEscrow.ai is a production-ready atomic swap platform built on Solana blockch
 
 - **⚡ Atomic Swaps**: Instant, trustless peer-to-peer asset exchanges
 - **🔐 Nonce-Based Transactions**: Durable transactions with automatic retry logic
-- **🎨 NFT Support**: Standard NFTs (Metaplex) and compressed NFTs (cNFT validation ready)
+- **🎨 NFT Support**: Standard NFTs (Metaplex), compressed NFTs (cNFTs), and Core NFTs
+- **📦 Bulk Swaps**: Up to 10 assets per side with automatic Jito bundle execution
+- **🌿 cNFT Features**: Full Merkle proof handling, stale proof retry, canopy optimization
 - **💸 SOL Integration**: Native SOL token transfers in swaps
 - **🌐 Multi-Environment**: Separate deployments for development, staging, and production
 - **📡 RESTful API**: Comprehensive REST endpoints with OpenAPI/Swagger documentation
