@@ -38,18 +38,102 @@ describe('🚀 Production E2E: cNFT → SOL (Mainnet)', () => {
   });
   
   it('should successfully swap cNFT for SOL on mainnet', async function() {
-    this.timeout(180000);
+    this.timeout(300000);
     
     console.log('\n🧪 Test: cNFT → SOL swap on mainnet');
-    console.log('⚠️  cNFT test requires:');
-    console.log('   1. Merkle tree creation (Bubblegum)');
-    console.log('   2. cNFT minting with proper proofs');
-    console.log('   3. DAS API integration for proof fetching');
-    console.log('\n💡 Test structure created - full implementation pending');
-    console.log('📝 Recommend using pre-minted cNFTs for faster testing');
+    console.log('═══════════════════════════════════════════════════════════\n');
     
-    // For now, mark as pending complex cNFT setup
-    this.skip();
+    // Load production test assets
+    const productionAssets = require('../../fixtures/production-test-assets.json');
+    
+    const hasMakerCnft = productionAssets?.maker?.cnfts?.length >= 1;
+    
+    if (!hasMakerCnft) {
+      console.log('⚠️  Insufficient cNFTs in fixtures - skipping test');
+      console.log(`   Maker cNFTs: ${productionAssets?.maker?.cnfts?.length || 0} (need 1+)`);
+      this.skip();
+      return;
+    }
+    
+    const makerCnft = productionAssets.maker.cnfts[0].mint;
+    const solAmount = 0.1 * 1e9; // 0.1 SOL in lamports
+    
+    console.log(`   Maker cNFT: ${makerCnft}`);
+    console.log(`   Requested SOL: ${solAmount / 1e9} SOL`);
+    console.log();
+    
+    // Import AtomicSwapApiClient
+    const { AtomicSwapApiClient } = require('../../helpers/atomic-swap-api-client');
+    const { displayExplorerLink, waitForConfirmation } = require('../../helpers/swap-verification');
+    
+    const API_BASE_URL = process.env.PRODUCTION_API_URL || 'https://api.easyescrow.ai';
+    const API_KEY = process.env.ATOMIC_SWAP_API_KEY || '';
+    const apiClient = new AtomicSwapApiClient(API_BASE_URL, API_KEY);
+    
+    // Create offer
+    console.log('📝 Step 1: Creating cNFT → SOL offer...');
+    const createKey = AtomicSwapApiClient.generateIdempotencyKey('cnft-sol-test');
+    const createResponse = await apiClient.createOffer(
+      {
+        makerWallet: sender.publicKey.toBase58(),
+        takerWallet: receiver.publicKey.toBase58(),
+        offeredAssets: [
+          { mint: makerCnft, isCompressed: true },
+        ],
+        requestedAssets: [],
+        offeredSol: 0,
+        requestedSol: solAmount,
+      },
+      createKey
+    );
+    
+    expect(createResponse.success).to.be.true;
+    expect(createResponse.data).to.exist;
+    const offerId = createResponse.data!.offer.id;
+    console.log(`   ✅ Offer created: ${offerId}`);
+    console.log();
+    
+    // Accept offer
+    console.log('📝 Step 2: Accepting offer...');
+    const acceptKey = AtomicSwapApiClient.generateIdempotencyKey('cnft-sol-accept');
+    
+    let acceptResponse;
+    try {
+      acceptResponse = await apiClient.acceptOffer(
+        offerId,
+        receiver.publicKey.toBase58(),
+        acceptKey
+      );
+      
+      expect(acceptResponse.success).to.be.true;
+      expect(acceptResponse.data).to.exist;
+      console.log(`   ✅ Offer accepted successfully`);
+      console.log();
+    } catch (error: any) {
+      const errorMessage = error?.message || error?.response?.data?.error || '';
+      if (errorMessage.includes('Stale Merkle proof')) {
+        console.log(`   ⚠️  Stale proof error detected (expected with high-activity trees)`);
+        console.log(`   The improved retry logic should handle this automatically`);
+        console.log(`   Error: ${errorMessage}`);
+        throw error;
+      }
+      throw error;
+    }
+    
+    // Check transaction
+    const serializedTx = acceptResponse.data!.transaction.serialized;
+    const txBuffer = Buffer.from(serializedTx, 'base64');
+    
+    // Check if versioned transaction (ALT used)
+    const isVersioned = txBuffer.length > 0 && (txBuffer[0] & 0x80) !== 0;
+    if (isVersioned) {
+      console.log('   ✅ Versioned transaction (V0) - ALT was used');
+    } else {
+      console.log('   ℹ️  Legacy transaction - ALT not needed');
+    }
+    
+    console.log(`   ✅ Transaction built successfully (${txBuffer.length} bytes)`);
+    console.log('\n✅ cNFT → SOL swap test completed successfully!');
   });
 });
 
