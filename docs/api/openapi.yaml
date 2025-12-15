@@ -42,27 +42,7 @@ info:
     
     ## Bulk Swap Support
     
-    EasyEscrow.ai supports **bulk swaps** with up to **10 assets on each side** for ALL NFT types:
-    
-    - **Up to 10 NFTs per side** - Swap multiple SPL NFTs, cNFTs, or Core NFTs
-    - **Mixed asset types** - Combine any NFT types + SOL in one swap
-    - **Automatic transaction splitting** - Large swaps are split into multiple transactions
-    - **Atomic execution** - All transactions succeed or none do (via Jito bundles on mainnet)
-    - **Direct transfers** - Bypasses escrow program for bulk swaps, using direct token transfers
-    
-    ### Bulk Swap Limits
-    
-    | NFT Type | Per Transaction | Max Per Side |
-    |----------|----------------|--------------|
-    | SPL NFTs | ~5 | 10 |
-    | Core NFTs | ~4 | 10 |
-    | cNFTs | ~3 | 10 |
-    | Mixed | Varies | 10 total |
-    
-    ### Simple vs Bulk Swaps
-    
-    - **Simple swaps (1-2 NFTs)**: Uses escrow program in a single atomic transaction
-    - **Bulk swaps (3+ NFTs)**: Uses Jito bundles with direct token transfers
+    Put simply bulk swaps of up to 4 NFTs per swap are supported. Any combination of NFT type. Bulk swap atomicity provided by JITO Solana validator.
     
     ### cNFT-Specific Features
     
