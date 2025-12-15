@@ -124,51 +124,14 @@ describe('🚀 Production E2E: cNFT Stale Proof Handling (Mainnet)', () => {
           acceptKey
         );
         
-        // Check if accept succeeded or failed
-        if (!acceptResponse.success) {
-          // Accept failed - check if it's a stale proof error
-          const errorMessage = acceptResponse.error || acceptResponse.message || '';
-          const isStaleProof = errorMessage.includes('Stale Merkle proof') ||
-                              errorMessage.includes('does not match on-chain root') ||
-                              errorMessage.includes('STALE_CNFT_PROOF') ||
-                              errorMessage.includes('Attempted refresh, still stale');
-          
-          if (isStaleProof) {
-            staleProofDetected = true;
-            console.log(`   ⚠️  Stale proof error detected: ${errorMessage}`);
-            console.log(`   This indicates the Merkle tree is updating faster than proofs can be fetched.`);
-            console.log(`   The system should have retried automatically (up to 3 attempts).`);
-            console.log();
-            
-            // Verify error message is helpful
-            expect(errorMessage).to.include('Stale');
-            expect(errorMessage.length).to.be.greaterThan(50); // Should have detailed message
-            
-            // This is expected in high-activity scenarios - test documents the behavior
-            console.log('   ℹ️  Stale proof errors are expected when:');
-            console.log('      - Merkle tree has high activity (many cNFT transfers)');
-            console.log('      - DAS API is slow to update');
-            console.log('      - Multiple swaps happen simultaneously');
-            console.log();
-            
-            // Test passes if we detect the error properly
-            // The retry logic should have attempted 3 times before failing
-            return;
-          } else {
-            // Non-stale proof error
-            console.log(`   ❌ Accept failed with non-stale proof error: ${errorMessage}`);
-            throw new Error(`Accept failed: ${errorMessage}`);
-          }
-        }
-        
-        // Accept succeeded
+        expect(acceptResponse.success).to.be.true;
         expect(acceptResponse.data).to.exist;
         console.log(`   ✅ Offer accepted successfully`);
         console.log(`   The improved retry logic handled any stale proofs automatically`);
         console.log();
         
       } catch (error: any) {
-        // Network or other errors
+        // Check if error is stale proof related
         const errorMessage = error?.message || error?.response?.data?.error || '';
         const isStaleProof = errorMessage.includes('Stale Merkle proof') ||
                             errorMessage.includes('does not match on-chain root') ||
@@ -178,15 +141,26 @@ describe('🚀 Production E2E: cNFT Stale Proof Handling (Mainnet)', () => {
         if (isStaleProof) {
           staleProofDetected = true;
           console.log(`   ⚠️  Stale proof error detected: ${errorMessage}`);
+          console.log(`   This indicates the Merkle tree is updating faster than proofs can be fetched.`);
           console.log(`   The system should have retried automatically (up to 3 attempts).`);
           console.log();
           
           // Verify error message is helpful
           expect(errorMessage).to.include('Stale');
+          expect(errorMessage.length).to.be.greaterThan(50); // Should have detailed message
+          
+          // This is expected in high-activity scenarios - test documents the behavior
+          console.log('   ℹ️  Stale proof errors are expected when:');
+          console.log('      - Merkle tree has high activity (many cNFT transfers)');
+          console.log('      - DAS API is slow to update');
+          console.log('      - Multiple swaps happen simultaneously');
+          console.log();
+          
+          // Test should pass if we detect the error properly
+          // The retry logic should have attempted 3 times before failing
           return;
         } else {
           // Non-stale proof error - rethrow
-          console.log(`   ❌ Unexpected error: ${errorMessage}`);
           throw error;
         }
       }
