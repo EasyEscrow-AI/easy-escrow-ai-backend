@@ -91,13 +91,14 @@ export class DirectBubblegumService {
     });
 
     // Fetch cNFT data and proof from DAS API
-    // If this is a retry, skip cache to get fresh proof
-    // Pass retryCount to enable cache-busting timestamp in makeDasRequest
+    // CRITICAL: On first attempt (retryCount === 0), skip cache to get fresh proof proactively
+    // This prevents stale proof errors on the first attempt
+    // On retries, also skip cache to ensure fresh proofs
     const transferParams = await this.cnftService.buildTransferParams(
       params.assetId,
       params.fromWallet,
       params.toWallet,
-      retryCount > 0, // Skip cache on retry
+      true, // Always skip cache to get fresh proofs (prevents first-attempt failures)
       retryCount // Pass retryCount for cache-busting timestamp
     );
 

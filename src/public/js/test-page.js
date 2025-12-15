@@ -1278,11 +1278,19 @@ async function acceptOfferWithRetry(offerId, attempt = 1) {
         addLog('✓ Offer accepted, transaction built', 'success');
         return data;
     } catch (error) {
-        if (attempt < 2) {
-            addLog(`⚠️  Attempt ${attempt} failed, retrying...`, 'warning');
+        // Only retry on network errors, not on stale proof errors (backend handles those)
+        const isNetworkError = error?.message?.includes('fetch') || 
+                              error?.message?.includes('network') ||
+                              error?.message?.includes('timeout');
+        
+        if (isNetworkError && attempt < 2) {
+            addLog(`⚠️  Network error on attempt ${attempt}, retrying...`, 'warning');
             await new Promise(resolve => setTimeout(resolve, 200));
             return acceptOfferWithRetry(offerId, attempt + 1);
         }
+        
+        // For other errors (including stale proof), let the backend handle retries
+        // Don't show "Attempt 1 failed" - backend will retry automatically
         throw error;
     }
 }

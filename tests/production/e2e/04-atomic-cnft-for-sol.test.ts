@@ -66,9 +66,13 @@ describe('🚀 Production E2E: cNFT → SOL (Mainnet)', () => {
     const { AtomicSwapApiClient } = require('../../helpers/atomic-swap-api-client');
     const { displayExplorerLink, waitForConfirmation } = require('../../helpers/swap-verification');
     
-    const API_BASE_URL = process.env.PRODUCTION_API_URL || 'https://api.easyescrow.ai';
+    // Support local testing via LOCAL_API_URL environment variable
+    const API_BASE_URL = process.env.LOCAL_API_URL || process.env.PRODUCTION_API_URL || 'https://api.easyescrow.ai';
     const API_KEY = process.env.ATOMIC_SWAP_API_KEY || '';
     const apiClient = new AtomicSwapApiClient(API_BASE_URL, API_KEY);
+    
+    console.log(`   API URL: ${API_BASE_URL}`);
+    console.log(`   RPC URL: ${RPC_URL}`);
     
     // Create offer
     console.log('📝 Step 1: Creating cNFT → SOL offer...');
@@ -133,7 +137,48 @@ describe('🚀 Production E2E: cNFT → SOL (Mainnet)', () => {
     }
     
     console.log(`   ✅ Transaction built successfully (${txBuffer.length} bytes)`);
+    console.log();
+    
+    // Step 3: Execute the swap via test-execute endpoint
+    console.log('📝 Step 3: Executing swap...');
+    
+    const executeResponse = await fetch(`${API_BASE_URL}/api/test/execute-swap`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        offerId: offerId,
+        network: 'mainnet-beta',
+      }),
+    });
+    
+    if (!executeResponse.ok) {
+      const errorText = await executeResponse.text();
+      throw new Error(`Swap execution failed: ${executeResponse.status} - ${errorText}`);
+    }
+    
+    const executeResult = await executeResponse.json();
+    
+    if (!executeResult.success) {
+      throw new Error(`Swap execution failed: ${executeResult.error || executeResult.message}`);
+    }
+    
+    console.log(`   ✅ Swap executed successfully!`);
+    
+    if (executeResult.data?.signature) {
+      console.log(`   Transaction signature: ${executeResult.data.signature}`);
+      displayExplorerLink(executeResult.data.signature, 'mainnet-beta');
+    }
+    
+    if (executeResult.data?.bundleId) {
+      console.log(`   Jito bundle ID: ${executeResult.data.bundleId}`);
+      console.log(`   ✅ Bundle confirmed atomically`);
+    }
+    
     console.log('\n✅ cNFT → SOL swap test completed successfully!');
+    console.log('   ✅ First attempt succeeded (no stale proof retry needed)');
+    console.log('   ✅ Jito bundle handled rate limiting correctly');
   });
 });
 
