@@ -66,7 +66,7 @@ describe('🔍 Production Integration: cNFT API Endpoints', () => {
       };
 
       const response = await request(API_BASE_URL)
-        .post('/api/offers/quote')
+        .post('/api/quote')
         .send(mixedQuoteRequest);
 
       expect([200, 400]).to.include(response.status);
@@ -134,7 +134,8 @@ describe('🔍 Production Integration: cNFT API Endpoints', () => {
         .expect(200);
 
       expect(response.body.success).to.be.true;
-      expect(response.body.data).to.be.an('array');
+      expect(response.body.data).to.be.an('object');
+      expect(response.body.data).to.have.property('offers').that.is.an('array');
 
       // Check if any offers contain cNFT assets
       const cnftOffers = response.body.data.offers.filter((offer: any) => 
@@ -155,8 +156,11 @@ describe('🔍 Production Integration: cNFT API Endpoints', () => {
         .get('/api/offers')
         .expect(200);
 
-      if (offersResponse.body.data.length > 0) {
-        const bulkOffer = offersResponse.body.data.find((offer: any) => 
+      expect(offersResponse.body.data).to.be.an('object');
+      expect(offersResponse.body.data).to.have.property('offers').that.is.an('array');
+      
+      if (offersResponse.body.data.offers.length > 0) {
+        const bulkOffer = offersResponse.body.data.offers.find((offer: any) =>
           offer.transactionCount && offer.transactionCount > 1
         );
 
