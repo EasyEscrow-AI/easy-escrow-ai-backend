@@ -386,6 +386,15 @@ export class CnftService {
   }
   
   /**
+   * Clear cached proof for a specific asset
+   * Use this when you detect a stale proof and need to force a fresh fetch
+   */
+  clearCachedProof(assetId: string): void {
+    this.proofCache.delete(assetId);
+    console.log(`[CnftService] Cleared cached proof for: ${assetId.substring(0, 12)}...`);
+  }
+  
+  /**
    * Derive tree authority PDA for a Merkle tree (Bubblegum standard)
    * Tree authority is required for all Bubblegum operations
    * Seeds: [merkle_tree_pubkey] - NOT ['TreeConfig', merkle_tree_pubkey]
@@ -412,18 +421,20 @@ export class CnftService {
   async buildTransferParams(
     assetId: string,
     fromAddress: PublicKey,
-    toAddress: PublicKey
+    toAddress: PublicKey,
+    skipCache = false
   ): Promise<CnftTransferParams> {
     console.log('[CnftService] Building cNFT transfer params:', {
       assetId,
       from: fromAddress.toBase58(),
       to: toAddress.toBase58(),
+      skipCache,
     });
-    
+
     // Fetch asset data and proof in parallel
     const [assetData, proofData] = await Promise.all([
       this.getCnftAsset(assetId),
-      this.getCnftProof(assetId),
+      this.getCnftProof(assetId, skipCache),
     ]);
     
     // Validate ownership

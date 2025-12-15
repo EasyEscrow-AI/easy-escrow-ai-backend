@@ -390,7 +390,10 @@ export class AtomicSwapApiClient {
         }
         
         const serialized = transaction.serialize();
-        signedTransactions.push(serialized.toString('base64'));
+        // VersionedTransaction.serialize() returns Uint8Array, need Buffer.from() for base64
+        // Transaction.serialize() returns Buffer, which supports toString('base64')
+        const serializedBase64 = Buffer.from(serialized).toString('base64');
+        signedTransactions.push(serializedBase64);
         
         console.log(`  ✅ Transaction ${tx.index + 1} signed: ${tx.purpose}`);
       } catch (error: any) {

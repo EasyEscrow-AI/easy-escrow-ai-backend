@@ -80,19 +80,23 @@ export class DirectBubblegumService {
    * including all necessary proof nodes as remaining accounts.
    */
   async buildTransferInstruction(
-    params: DirectBubblegumTransferParams
+    params: DirectBubblegumTransferParams,
+    retryCount = 0
   ): Promise<DirectBubblegumTransferResult> {
     console.log('[DirectBubblegumService] Building transfer instruction:', {
       assetId: params.assetId,
       from: params.fromWallet.toBase58(),
       to: params.toWallet.toBase58(),
+      retryAttempt: retryCount,
     });
 
     // Fetch cNFT data and proof from DAS API
+    // If this is a retry, skip cache to get fresh proof
     const transferParams = await this.cnftService.buildTransferParams(
       params.assetId,
       params.fromWallet,
-      params.toWallet
+      params.toWallet,
+      retryCount > 0 // Skip cache on retry
     );
 
     const {
@@ -123,16 +127,34 @@ export class DirectBubblegumService {
           treePubkey: treeAddress.toBase58(),
           currentSeq: treeAccount.getCurrentSeq().toString(),
           isFullCanopyTree,
+          retryCount,
         });
+        
+        // If this is the first attempt, clear cache and retry with fresh proof
+        if (retryCount === 0) {
+          console.log('[DirectBubblegumService] Clearing proof cache and fetching fresh proof...');
+          // Clear the cached proof for this asset
+          this.cnftService.clearCachedProof(params.assetId);
+          
+          // Wait a brief moment for any in-flight tree updates to complete
+          await new Promise(resolve => setTimeout(resolve, 200));
+          
+          // Retry with fresh proof (skip cache)
+          console.log('[DirectBubblegumService] Retrying with fresh proof...');
+          return this.buildTransferInstruction(params, retryCount + 1);
+        }
+        
+        // If retry also failed, throw error
         throw new Error(
           `Stale Merkle proof detected. DAS root ${proofRoot.toString('hex').slice(0, 16)}... ` +
-          `does not match on-chain root ${onChainRoot.toString('hex').slice(0, 16)}...`
+          `does not match on-chain root ${onChainRoot.toString('hex').slice(0, 16)}... ` +
+          `(Attempted refresh, still stale)`
         );
       }
       console.log('[DirectBubblegumService] ✅ Proof root validated against on-chain');
     } catch (validationError: any) {
-      // Always re-throw stale proof errors
-      if (validationError.message.includes('Stale Merkle proof')) {
+      // Always re-throw stale proof errors (unless we're retrying)
+      if (validationError.message.includes('Stale Merkle proof') && retryCount > 0) {
         throw validationError;
       }
       

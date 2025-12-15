@@ -736,7 +736,10 @@ export class TransactionBuilder {
         }
         if (tokenAccount.amount !== BigInt(1)) {
           throw new Error(
-            `Invalid NFT amount: token account has ${tokenAccount.amount} tokens, expected 1 for NFT`
+            `Invalid NFT amount: Maker token account ${makerNftAccount.toBase58()} has ${tokenAccount.amount} tokens, expected 1 for NFT. ` +
+            `Mint: ${nftMint.toBase58()}, Owner: ${tokenAccount.owner.toBase58()}. ` +
+            `This NFT may have already been transferred or the token account may be empty. ` +
+            `Please verify the maker owns this NFT before creating the swap.`
           );
         }
         if (!tokenAccount.owner.equals(inputs.makerPubkey)) {
@@ -832,7 +835,10 @@ export class TransactionBuilder {
         }
         if (tokenAccount.amount !== BigInt(1)) {
           throw new Error(
-            `Invalid NFT amount: token account has ${tokenAccount.amount} tokens, expected 1 for NFT`
+            `Invalid NFT amount: Taker token account ${takerNftAccount.toBase58()} has ${tokenAccount.amount} tokens, expected 1 for NFT. ` +
+            `Mint: ${nftMint.toBase58()}, Owner: ${tokenAccount.owner.toBase58()}. ` +
+            `This NFT may have already been transferred or the token account may be empty. ` +
+            `Please verify the taker owns this NFT before accepting the swap.`
           );
         }
         if (!tokenAccount.owner.equals(inputs.takerPubkey)) {

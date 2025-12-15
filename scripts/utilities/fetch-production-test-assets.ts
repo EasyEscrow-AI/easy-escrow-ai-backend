@@ -59,7 +59,7 @@ async function getCNFTs(connection: Connection, owner: PublicKey): Promise<Asset
     const rpcUrl = process.env.MAINNET_RPC_URL || RPC_URL;
     
     // Check if RPC supports DAS API (QuickNode, Helius, etc.)
-    const isDasSupported = rpcUrl.includes('quiknode') || 
+    const isDasSupported = rpcUrl.includes('quicknode') || 
                            rpcUrl.includes('helius') || 
                            rpcUrl.includes('underdog') ||
                            rpcUrl.includes('mainnet-beta');
@@ -124,7 +124,7 @@ async function getCoreNFTs(connection: Connection, owner: PublicKey): Promise<As
     const rpcUrl = process.env.MAINNET_RPC_URL || RPC_URL;
     
     // Check if RPC supports DAS API
-    const isDasSupported = rpcUrl.includes('quiknode') || 
+    const isDasSupported = rpcUrl.includes('quicknode') || 
                            rpcUrl.includes('helius') || 
                            rpcUrl.includes('underdog') ||
                            rpcUrl.includes('mainnet-beta');
