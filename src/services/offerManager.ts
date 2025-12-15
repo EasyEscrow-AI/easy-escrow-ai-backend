@@ -383,7 +383,13 @@ export class OfferManager {
       }
       
       // 6. Extract SOL amounts from offer
+      // Note: requestedAssets already declared above for validation
       const offeredAssets = offer.offeredAssets as Array<{ type: AssetType; identifier: string }>;
+      
+      // Debug: log the raw assets from database
+      console.log('[OfferManager] Raw offeredAssets from DB:', JSON.stringify(offer.offeredAssets));
+      console.log('[OfferManager] Raw requestedAssets from DB:', JSON.stringify(offer.requestedAssets));
+      
       const offeredSol = offer.offeredSolLamports ? BigInt(offer.offeredSolLamports) : BigInt(0);
       const requestedSol = offer.requestedSolLamports ? BigInt(offer.requestedSolLamports) : BigInt(0);
       
@@ -581,16 +587,36 @@ export class OfferManager {
       authorizedAppId: params.authorizedAppId || 'none',
     });
     
+    // Helper to normalize asset types (database JSON might have different casing)
+    const normalizeAssetType = (type: any): AssetType => {
+      if (!type) {
+        console.log(`[OfferManager] normalizeAssetType: type is null/undefined, defaulting to NFT`);
+        return AssetType.NFT;
+      }
+      const typeStr = String(type).toLowerCase();
+      console.log(`[OfferManager] normalizeAssetType: input="${type}" (typeof ${typeof type}), normalized="${typeStr}"`);
+      if (typeStr === 'cnft' || typeStr === 'compressed') {
+        console.log(`[OfferManager] normalizeAssetType: returning CNFT`);
+        return AssetType.CNFT;
+      }
+      if (typeStr === 'core_nft' || typeStr === 'core') {
+        console.log(`[OfferManager] normalizeAssetType: returning CORE_NFT`);
+        return AssetType.CORE_NFT;
+      }
+      console.log(`[OfferManager] normalizeAssetType: returning NFT (default)`);
+      return AssetType.NFT;
+    };
+    
     const inputs: TransactionBuildInputs = {
       makerPubkey: new PublicKey(params.makerWallet),
       takerPubkey: new PublicKey(params.takerWallet),
       makerAssets: params.offeredAssets.map((a) => ({
-        type: a.type,
+        type: normalizeAssetType(a.type),
         identifier: a.identifier,
       })),
       makerSolLamports: params.offeredSol,
       takerAssets: params.requestedAssets.map((a) => ({
-        type: a.type,
+        type: normalizeAssetType(a.type),
         identifier: a.identifier,
       })),
       takerSolLamports: params.requestedSol,
@@ -606,8 +632,23 @@ export class OfferManager {
     console.log('[OfferManager] TransactionBuildInputs makerAssets:', JSON.stringify(inputs.makerAssets));
     console.log('[OfferManager] TransactionBuildInputs takerAssets:', JSON.stringify(inputs.takerAssets));
     
+    // Debug: count asset types with detailed logging
+    const makerCnftCount = inputs.makerAssets.filter(a => {
+      const matches = a.type === AssetType.CNFT;
+      console.log(`[OfferManager] maker asset type check: "${a.type}" === "${AssetType.CNFT}" = ${matches}, typeof: ${typeof a.type}`);
+      return matches;
+    }).length;
+    const takerCnftCount = inputs.takerAssets.filter(a => {
+      const matches = a.type === AssetType.CNFT;
+      console.log(`[OfferManager] taker asset type check: "${a.type}" === "${AssetType.CNFT}" = ${matches}, typeof: ${typeof a.type}`);
+      return matches;
+    }).length;
+    console.log(`[OfferManager] Asset type counts - maker cNFTs: ${makerCnftCount}, taker cNFTs: ${takerCnftCount}`);
+    console.log(`[OfferManager] Total assets - maker: ${inputs.makerAssets.length}, taker: ${inputs.takerAssets.length}`);
+    
     // Check if this is a bulk swap that needs transaction splitting
     const requiresBulkSwap = this.transactionGroupBuilder.requiresJitoBundle(inputs);
+    console.log(`[OfferManager] requiresBulkSwap: ${requiresBulkSwap}`);
     
     if (requiresBulkSwap) {
       // Bulk swap: use TransactionGroupBuilder

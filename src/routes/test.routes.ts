@@ -7,6 +7,7 @@
 import { Router, Request, Response } from 'express';
 import { Connection, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import path from 'path';
+import { analyzeSwapStrategy, AssetType, SwapStrategy } from '../services/transactionGroupBuilder';
 
 const router = Router();
 
@@ -623,8 +624,16 @@ router.post('/api/test/estimate-size', async (req: Request, res: Response) => {
     const totalMakerNfts = makerAssets.length;
     const totalTakerNfts = takerAssets.length;
     
-    // Check for multi-asset limitation (current program only supports 1 NFT per side)
-    const exceedsLimit = totalMakerNfts > 1 || totalTakerNfts > 1;
+    // Bulk swap limits for all NFT types (via Jito bundles)
+    // Max NFTs per side is determined by Jito bundle limit (5 transactions)
+    // - SPL NFTs: ~5 per transaction = ~20 per side
+    // - Core NFTs: ~4 per transaction = ~16 per side  
+    // - cNFTs: ~3 per transaction (full canopy) = ~12 per side
+    // For safety, we use a conservative limit of 10 per side for any type
+    const MAX_NFTS_PER_SIDE = 10;
+    
+    // Check if any side exceeds the limit
+    const exceedsLimit = totalMakerNfts > MAX_NFTS_PER_SIDE || totalTakerNfts > MAX_NFTS_PER_SIDE;
     
     // Base transaction size components
     const numSigners = 3; // maker, taker, platform authority
@@ -737,7 +746,7 @@ router.post('/api/test/estimate-size', async (req: Request, res: Response) => {
     
     if (exceedsLimit) {
       finalRecommendation = 'cannot_fit';
-      warning = 'Current program only supports 1 NFT per side. Multi-NFT swaps require program upgrade.';
+      warning = `NFT limit exceeded: Maximum ${MAX_NFTS_PER_SIDE} NFTs per side (Jito bundle limit).`;
     }
     
     // Add warning for cNFTs with too many proof nodes
@@ -969,7 +978,9 @@ router.post('/api/quote', async (req: Request, res: Response) => {
     // ========================================
     // 7. ESTIMATE TRANSACTION SIZE
     // ========================================
-    const exceedsMultiAssetLimit = totalMakerNfts > 1 || totalTakerNfts > 1;
+    // All NFT types now support bulk swaps via Jito bundles (up to 10 per side)
+    const MAX_NFTS_PER_SIDE = 10;
+    const exceedsMultiAssetLimit = totalMakerNfts > MAX_NFTS_PER_SIDE || totalTakerNfts > MAX_NFTS_PER_SIDE;
 
     // Base accounts
     const numSigners = 3;
@@ -1100,7 +1111,46 @@ router.post('/api/quote', async (req: Request, res: Response) => {
     const useALT = !willFit && willFitWithALT && altAvailable && !exceedsMultiAssetLimit;
 
     // ========================================
-    // 8. DETERMINE STATUS AND WARNINGS
+    // 8. ANALYZE SWAP STRATEGY
+    // ========================================
+    // Use analyzeSwapStrategy to determine optimal execution strategy
+    const makerAssetsForAnalysis = makerAssets.map(a => ({
+      mint: a.mint,
+      type: a.isCompressed && !a.isCoreNft 
+        ? AssetType.CNFT 
+        : a.isCoreNft 
+          ? AssetType.CORE_NFT 
+          : AssetType.NFT,
+    }));
+    const takerAssetsForAnalysis = takerAssets.map(a => ({
+      mint: a.mint,
+      type: a.isCompressed && !a.isCoreNft 
+        ? AssetType.CNFT 
+        : a.isCoreNft 
+          ? AssetType.CORE_NFT 
+          : AssetType.NFT,
+    }));
+    
+    // Analyze swap to determine strategy
+    const swapAnalysis = analyzeSwapStrategy({
+      makerAssets: makerAssetsForAnalysis,
+      takerAssets: takerAssetsForAnalysis,
+      makerSolLamports: BigInt(makerSolLamports),
+      takerSolLamports: BigInt(takerSolLamports),
+      platformFeeLamports: BigInt(Math.round(platformFeeSol * LAMPORTS_PER_SOL)),
+    });
+    
+    // Determine if this is a bulk swap requiring Jito bundles
+    const isBulkSwap = swapAnalysis.strategy !== SwapStrategy.SINGLE_TRANSACTION && 
+                       swapAnalysis.strategy !== SwapStrategy.CANNOT_FIT;
+    const isCnftSwap = cNFTCount > 0;
+    
+    // Calculate Jito tip if bulk swap
+    const JITO_TIP_LAMPORTS = 10000; // 0.00001 SOL per tx in bundle
+    const estimatedJitoTipLamports = isBulkSwap ? JITO_TIP_LAMPORTS * swapAnalysis.transactionCount : 0;
+
+    // ========================================
+    // 9. DETERMINE STATUS AND WARNINGS
     // ========================================
     let transactionStatus: 'ok' | 'alt_required' | 'near_limit' | 'too_large';
     let warnings: string[] = [];
@@ -1109,10 +1159,13 @@ router.post('/api/quote', async (req: Request, res: Response) => {
     const allProofsFetched = cnftProofDetails.every(d => d.fetched);
     const totalProofNodes = makerProofNodes + takerProofNodes;
 
-    if (exceedsMultiAssetLimit) {
+    if (swapAnalysis.strategy === SwapStrategy.CANNOT_FIT) {
       transactionStatus = 'too_large';
-      warnings.push('Current program only supports 1 NFT per side. Multi-NFT swaps require program upgrade.');
-    } else if (!willFit && !willFitWithALT) {
+      warnings.push(`Swap cannot fit: ${swapAnalysis.reason}`);
+    } else if (exceedsMultiAssetLimit) {
+      transactionStatus = 'too_large';
+      warnings.push(`NFT limit exceeded: Maximum ${MAX_NFTS_PER_SIDE} NFTs per side (Jito bundle limit).`);
+    } else if (!willFit && !willFitWithALT && !isBulkSwap) {
       transactionStatus = 'too_large';
       if (totalProofNodes > 0) {
         // Provide specific info about proof nodes
@@ -1133,7 +1186,9 @@ router.post('/api/quote', async (req: Request, res: Response) => {
       }
     } else if (!willFit && willFitWithALT) {
       transactionStatus = 'alt_required';
-    } else if ((estimatedSize / maxSize) > 0.8) {
+    } else if ((estimatedSize / maxSize) > 0.8 && !isBulkSwap) {
+      // Bulk swaps are expected to exceed single-transaction limits and will be split
+      // across multiple transactions in a Jito bundle, so near_limit doesn't apply
       transactionStatus = 'near_limit';
     } else {
       transactionStatus = 'ok';
@@ -1141,8 +1196,8 @@ router.post('/api/quote', async (req: Request, res: Response) => {
 
     // Add info about proof nodes if cNFTs are involved and we fetched proofs successfully
     if (cnftProofDetails.length > 0 && allProofsFetched && transactionStatus !== 'too_large') {
-      const totalCnfts = cnftProofDetails.length;
-      const avgProofNodes = (totalProofNodes / totalCnfts).toFixed(1);
+      const totalCnftsForProof = cnftProofDetails.length;
+      const avgProofNodes = (totalProofNodes / totalCnftsForProof).toFixed(1);
       const canopyInfo = cnftProofDetails
         .filter(d => d.canopyDepth !== null)
         .map(d => d.canopyDepth)
@@ -1153,6 +1208,11 @@ router.post('/api/quote', async (req: Request, res: Response) => {
       }
     } else if (cnftSizeWarning) {
       warnings.push(cnftSizeWarning);
+    }
+
+    // Add swap strategy info
+    if (isBulkSwap && transactionStatus !== 'too_large') {
+      warnings.push(`ℹ️ Bulk swap detected: ${swapAnalysis.reason}. Will use Jito bundle for atomic execution.`);
     }
 
     // ========================================
@@ -1277,8 +1337,53 @@ router.post('/api/quote', async (req: Request, res: Response) => {
         // Warnings
         warnings,
 
+        // Swap strategy analysis
+        swapAnalysis: {
+          strategy: swapAnalysis.strategy,
+          transactionCount: swapAnalysis.transactionCount,
+          reason: swapAnalysis.reason,
+          breakdown: {
+            totalCnfts: swapAnalysis.totalCnfts,
+            makerCnfts: swapAnalysis.makerCnfts,
+            takerCnfts: swapAnalysis.takerCnfts,
+            totalSplNfts: swapAnalysis.totalNfts,
+            totalCoreNfts: swapAnalysis.totalCoreNfts,
+            hasSolTransfer: swapAnalysis.hasSolTransfer,
+          },
+        },
+
+        // Bulk swap info (for UI)
+        bulkSwap: isBulkSwap ? {
+          isBulkSwap: true,
+          strategy: swapAnalysis.strategy,
+          transactionCount: swapAnalysis.transactionCount,
+          estimatedTipLamports: estimatedJitoTipLamports,
+          estimatedTipSol: estimatedJitoTipLamports / LAMPORTS_PER_SOL,
+          executionMethod: swapAnalysis.strategy === SwapStrategy.DIRECT_BUBBLEGUM_BUNDLE
+            ? 'Direct Bubblegum transfers via Jito bundle'
+            : swapAnalysis.strategy === SwapStrategy.DIRECT_NFT_BUNDLE
+              ? 'Direct SPL/Core transfers via Jito bundle'
+              : swapAnalysis.strategy === SwapStrategy.MIXED_NFT_BUNDLE
+                ? 'Mixed NFT transfers via Jito bundle'
+                : 'Jito bundle',
+        } : {
+          isBulkSwap: false,
+          strategy: swapAnalysis.strategy,
+          transactionCount: swapAnalysis.transactionCount,
+          executionMethod: swapAnalysis.strategy === SwapStrategy.CANNOT_FIT
+            ? 'Swap cannot be executed (exceeds transaction limits)'
+            : isCnftSwap 
+              ? 'Single transaction with cNFT (requires bundle)' 
+              : 'Standard escrow transaction',
+        },
+
+        // cNFT swap indicator (for backward compatibility)
+        isCnftSwap,
+
         // Can proceed with swap?
-        canSwap: transactionStatus !== 'too_large' && !exceedsMultiAssetLimit,
+        canSwap: swapAnalysis.strategy !== SwapStrategy.CANNOT_FIT && 
+                 transactionStatus !== 'too_large' && 
+                 !exceedsMultiAssetLimit,
       },
       timestamp: new Date().toISOString(),
     });

@@ -213,6 +213,78 @@ interface Asset {
 }
 ```
 
+**Bulk cNFT Swap (3+ cNFTs):**
+```json
+{
+  "makerWallet": "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R",
+  "offeredAssets": [
+    {
+      "mint": "DRiP2Pn2K6fuMLKQmt5rZWqHheXMyUtCeXhe8kDQdxRu",
+      "isCompressed": true
+    },
+    {
+      "mint": "DRiP2Pn2K6fuMLKQmt5rZWqHheXMyUtCeXhe8kDQdxRu2",
+      "isCompressed": true
+    },
+    {
+      "mint": "DRiP2Pn2K6fuMLKQmt5rZWqHheXMyUtCeXhe8kDQdxRu3",
+      "isCompressed": true
+    }
+  ],
+  "requestedAssets": [],
+  "offeredSol": "0",
+  "requestedSol": "5000000000"
+}
+```
+
+**Response for Bulk Swap:**
+```json
+{
+  "success": true,
+  "data": {
+    "offer": {
+      "id": "1",
+      "status": "ACTIVE",
+      "isBulkSwap": true,
+      "transactionGroup": {
+        "strategy": "DIRECT_BUBBLEGUM_BUNDLE",
+        "transactionCount": 3,
+        "requiresJitoBundle": true,
+        "transactions": [
+          {
+            "index": 0,
+            "purpose": "Platform fee + first cNFT batch",
+            "serializedTransaction": "base64-encoded-tx-1",
+            "assets": {
+              "makerAssets": [{"identifier": "...", "type": "CNFT"}],
+              "takerAssets": []
+            }
+          },
+          {
+            "index": 1,
+            "purpose": "Second cNFT batch",
+            "serializedTransaction": "base64-encoded-tx-2",
+            "assets": {
+              "makerAssets": [{"identifier": "...", "type": "CNFT"}],
+              "takerAssets": []
+            }
+          },
+          {
+            "index": 2,
+            "purpose": "Final cNFT + SOL transfer",
+            "serializedTransaction": "base64-encoded-tx-3",
+            "assets": {
+              "makerAssets": [{"identifier": "...", "type": "CNFT"}],
+              "takerAssets": []
+            }
+          }
+        ]
+      }
+    }
+  }
+}
+```
+
 **NFT ↔ NFT:**
 ```json
 {
@@ -741,4 +813,6 @@ if (health !== 'ok') {
 **Last Updated:** December 2, 2025  
 **API Version:** 1.0.0  
 **Maintained By:** EasyEscrow.ai Development Team
+
+
 

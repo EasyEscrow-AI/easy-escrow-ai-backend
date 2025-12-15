@@ -590,57 +590,6 @@ export class CnftService {
   }
   
   /**
-   * Convert DAS proof response to CnftProof format expected by program
-   * @deprecated Use convertDasProofToCnftProofAsync instead
-   */
-  private convertDasProofToCnftProof(
-    dasProof: DasProofResponse,
-    assetData: CnftAssetData
-  ): CnftProof {
-    // Decode base58 strings to byte arrays
-    const root = Array.from(bs58.decode(dasProof.root));
-    
-    // FALLBACK: Use canopy depth 0 (send all proof nodes)
-    // This is safer for unknown trees - the canopy on-chain will validate correctly
-    // The transaction might be larger but will work with any tree configuration
-    const CANOPY_DEPTH = 0;
-    const maxDepth = dasProof.proof.length;
-    const proofNodesToSend = dasProof.proof.slice(CANOPY_DEPTH);
-    const proof = proofNodesToSend.map(node => Array.from(bs58.decode(node)));
-    
-    console.log(`[CnftService] Proof: sending all ${proof.length} nodes (fallback mode, canopy: ${CANOPY_DEPTH})`);
-    
-    // CRITICAL: Calculate leaf_index from node_index
-    const leafIndex = dasProof.node_index - Math.pow(2, maxDepth);
-    
-    console.log(`[CnftService] Index calculation: node_index=${dasProof.node_index}, maxDepth=${maxDepth}, leafIndex=${leafIndex}`);
-    
-    // CRITICAL: Use actual hashes from DAS API compression field
-    const dataHash = Array.from(bs58.decode(assetData.compression.data_hash));
-    const creatorHash = Array.from(bs58.decode(assetData.compression.creator_hash));
-    
-    const cnftProof = {
-      root,
-      dataHash,
-      creatorHash,
-      nonce: assetData.compression.leaf_id,
-      index: leafIndex,
-      proof,
-    };
-    
-    console.log('[CnftService] Full proof details:', {
-      root: root.slice(0, 8),
-      dataHashFirst8: dataHash.slice(0, 8),
-      creatorHashFirst8: creatorHash.slice(0, 8),
-      nonce: cnftProof.nonce,
-      index: cnftProof.index,
-      proofLength: proof.length,
-    });
-    
-    return cnftProof;
-  }
-  
-  /**
    * Make DAS API request with retry logic
    */
   private async makeDasRequest(
