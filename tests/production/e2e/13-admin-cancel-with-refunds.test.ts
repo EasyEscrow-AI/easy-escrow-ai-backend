@@ -108,21 +108,32 @@ describe('🚀 Production E2E: Admin Cancel with On-Chain Refund Verification (M
   it('should create NFT for SOL offer', async function () {
     console.log('📝 Step 1: Creating NFT for SOL offer...\n');
 
-    // NOTE: Replace with actual NFT mint and token account
-    const placeholderNftMint = 'PLACEHOLDER_NFT_MINT';
-    const placeholderTokenAccount = 'PLACEHOLDER_TOKEN_ACCOUNT';
+    // Load real NFT addresses from fixtures
+    let productionAssets: any = null;
+    try {
+      const assetsPath = path.join(__dirname, '../../fixtures/production-test-assets.json');
+      if (fs.existsSync(assetsPath)) {
+        productionAssets = JSON.parse(fs.readFileSync(assetsPath, 'utf8'));
+      }
+    } catch (error) {
+      console.warn('⚠️  Could not load production test assets:', error);
+    }
     
-    if (placeholderNftMint.startsWith('PLACEHOLDER')) {
+    if (!productionAssets || productionAssets.maker.splNfts.length < 1) {
       console.log('⚠️  Skipping: NFT addresses not configured');
       console.log('   To run this test:');
-      console.log('   1. Set testNftMint to actual NFT mint address');
-      console.log('   2. Set testNftTokenAccount to maker\'s token account for that NFT');
+      console.log('   1. Run: npx ts-node scripts/utilities/fetch-production-test-assets.ts');
+      console.log('   2. Ensure maker wallet has at least 1 NFT');
       this.skip();
       return;
     }
     
-    testNftMint = new PublicKey(placeholderNftMint);
-    testNftTokenAccount = new PublicKey(placeholderTokenAccount);
+    const nftAsset = productionAssets.maker.splNfts[0];
+    testNftMint = new PublicKey(nftAsset.mint);
+    testNftTokenAccount = new PublicKey(nftAsset.tokenAccount);
+    
+    console.log(`   Using NFT: ${nftAsset.mint}`);
+    console.log(`   Token Account: ${nftAsset.tokenAccount}`);
     
     // Get initial NFT balance
     initialMakerNftBalance = await getTokenBalance(connection, testNftTokenAccount);

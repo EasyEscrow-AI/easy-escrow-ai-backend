@@ -25,6 +25,18 @@ import { AtomicSwapApiClient } from '../../helpers/atomic-swap-api-client';
 import { waitForConfirmation, displayExplorerLink } from '../../helpers/swap-verification';
 import { wait } from '../../helpers/test-utils';
 
+// Load production test assets
+let productionAssets: any = null;
+try {
+  const assetsPath = path.join(__dirname, '../../fixtures/production-test-assets.json');
+  if (fs.existsSync(assetsPath)) {
+    productionAssets = JSON.parse(fs.readFileSync(assetsPath, 'utf8'));
+    console.log('✅ Loaded production test assets from fixtures');
+  }
+} catch (error) {
+  console.warn('⚠️  Could not load production test assets:', error);
+}
+
 // Test configuration
 const RPC_URL = process.env.MAINNET_RPC_URL || 'https://api.mainnet-beta.solana.com';
 const PROGRAM_ID = new PublicKey('2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx');
@@ -88,13 +100,25 @@ describe('🚀 Production E2E: Bulk Swap (2-4 NFTs) - Mainnet', () => {
       const idempotencyKey = AtomicSwapApiClient.generateIdempotencyKey('bulk-2-2');
       
       console.log('\n💫 Creating Bulk Swap Offer (2+2)...');
-      console.log('  ⚠️  NOTE: Replace placeholder asset IDs with actual NFT addresses');
       
-      // Placeholder - replace with actual NFT addresses
-      const makerNft1 = 'PLACEHOLDER_MAKER_NFT_1'; // Replace with actual NFT mint
-      const makerNft2 = 'PLACEHOLDER_MAKER_NFT_2'; // Replace with actual NFT mint
-      const takerNft1 = 'PLACEHOLDER_TAKER_NFT_1'; // Replace with actual NFT mint
-      const takerNft2 = 'PLACEHOLDER_TAKER_NFT_2'; // Replace with actual NFT mint
+      // Load real NFT addresses from fixtures
+      if (!productionAssets || productionAssets.maker.splNfts.length < 2 || productionAssets.taker.splNfts.length < 2) {
+        console.log('⚠️  Insufficient NFTs in fixtures - skipping test');
+        console.log(`   Maker NFTs: ${productionAssets?.maker?.splNfts?.length || 0}`);
+        console.log(`   Taker NFTs: ${productionAssets?.taker?.splNfts?.length || 0}`);
+        this.skip();
+        return;
+      }
+      
+      const makerNft1 = productionAssets.maker.splNfts[0].mint;
+      const makerNft2 = productionAssets.maker.splNfts[1].mint;
+      const takerNft1 = productionAssets.taker.splNfts[0].mint;
+      const takerNft2 = productionAssets.taker.splNfts[1].mint;
+      
+      console.log(`   Maker NFT 1: ${makerNft1}`);
+      console.log(`   Maker NFT 2: ${makerNft2}`);
+      console.log(`   Taker NFT 1: ${takerNft1}`);
+      console.log(`   Taker NFT 2: ${takerNft2}`);
       
       const createResponse = await apiClient.createOffer({
         makerWallet: maker.publicKey.toBase58(),
@@ -171,7 +195,7 @@ describe('🚀 Production E2E: Bulk Swap (2-4 NFTs) - Mainnet', () => {
       console.log(`\n✅ All ${bulkResult.signatures.length} transactions confirmed!`);
       bulkResult.signatures.forEach((sig, i) => {
         console.log(`  Tx ${i + 1}: ${sig}`);
-        displayExplorerLink(sig, 'mainnet');
+        displayExplorerLink(sig, 'mainnet-beta');
       });
       
       console.log('\n✅ Bulk swap 2+2 completed successfully!');
@@ -187,11 +211,17 @@ describe('🚀 Production E2E: Bulk Swap (2-4 NFTs) - Mainnet', () => {
       
       const idempotencyKey = AtomicSwapApiClient.generateIdempotencyKey('bulk-3-1');
       
-      // Placeholder - replace with actual NFT addresses
-      const makerNft1 = 'PLACEHOLDER_MAKER_NFT_1';
-      const makerNft2 = 'PLACEHOLDER_MAKER_NFT_2';
-      const makerNft3 = 'PLACEHOLDER_MAKER_NFT_3';
-      const takerNft1 = 'PLACEHOLDER_TAKER_NFT_1';
+      // Load real NFT addresses from fixtures
+      if (!productionAssets || productionAssets.maker.splNfts.length < 3 || productionAssets.taker.splNfts.length < 1) {
+        console.log('⚠️  Insufficient NFTs in fixtures - skipping test');
+        this.skip();
+        return;
+      }
+      
+      const makerNft1 = productionAssets.maker.splNfts[0].mint;
+      const makerNft2 = productionAssets.maker.splNfts[1].mint;
+      const makerNft3 = productionAssets.maker.splNfts[2].mint;
+      const takerNft1 = productionAssets.taker.splNfts[0].mint;
       
       const createResponse = await apiClient.createOffer({
         makerWallet: maker.publicKey.toBase58(),
@@ -266,11 +296,17 @@ describe('🚀 Production E2E: Bulk Swap (2-4 NFTs) - Mainnet', () => {
       const solAmount = 2 * LAMPORTS_PER_SOL; // 2 SOL
       const idempotencyKey = AtomicSwapApiClient.generateIdempotencyKey('bulk-4-0');
       
-      // Placeholder - replace with actual NFT addresses
-      const makerNft1 = 'PLACEHOLDER_MAKER_NFT_1';
-      const makerNft2 = 'PLACEHOLDER_MAKER_NFT_2';
-      const makerNft3 = 'PLACEHOLDER_MAKER_NFT_3';
-      const makerNft4 = 'PLACEHOLDER_MAKER_NFT_4';
+      // Load real NFT addresses from fixtures
+      if (!productionAssets || productionAssets.maker.splNfts.length < 4) {
+        console.log('⚠️  Insufficient NFTs in fixtures - skipping test');
+        this.skip();
+        return;
+      }
+      
+      const makerNft1 = productionAssets.maker.splNfts[0].mint;
+      const makerNft2 = productionAssets.maker.splNfts[1].mint;
+      const makerNft3 = productionAssets.maker.splNfts[2].mint;
+      const makerNft4 = productionAssets.maker.splNfts[3].mint;
       
       const createResponse = await apiClient.createOffer({
         makerWallet: maker.publicKey.toBase58(),
@@ -343,10 +379,21 @@ describe('🚀 Production E2E: Bulk Swap (2-4 NFTs) - Mainnet', () => {
       
       const idempotencyKey = AtomicSwapApiClient.generateIdempotencyKey('bulk-mixed');
       
-      // Placeholder - replace with actual asset addresses
-      const makerSplNft = 'PLACEHOLDER_MAKER_SPL_NFT';
-      const makerCoreNft = 'PLACEHOLDER_MAKER_CORE_NFT';
-      const takerCnft = 'PLACEHOLDER_TAKER_CNFT';
+      // Load real NFT addresses from fixtures
+      // Note: Mixed asset test requires SPL + Core + cNFT, but we only have SPL NFTs
+      // For now, we'll use SPL NFTs and skip if mixed types are required
+      if (!productionAssets || productionAssets.maker.splNfts.length < 2 || productionAssets.taker.splNfts.length < 1) {
+        console.log('⚠️  Insufficient NFTs in fixtures - skipping test');
+        this.skip();
+        return;
+      }
+      
+      // Using SPL NFTs as placeholders (Core/cNFT support pending)
+      const makerSplNft = productionAssets.maker.splNfts[0].mint;
+      const makerCoreNft = productionAssets.maker.splNfts[1].mint; // Using SPL as placeholder
+      const takerCnft = productionAssets.taker.splNfts[0].mint; // Using SPL as placeholder
+      
+      console.log('   ⚠️  NOTE: Using SPL NFTs as placeholders for Core/cNFT (mixed asset test)');
       
       const createResponse = await apiClient.createOffer({
         makerWallet: maker.publicKey.toBase58(),

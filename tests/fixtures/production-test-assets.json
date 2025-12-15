@@ -1,0 +1,160 @@
+{
+  "maker": {
+    "splNfts": [
+      {
+        "mint": "33fdWn6LtNwaDK6V7REb4sDFdzqXKZU1ysanrAh5qoQx",
+        "tokenAccount": "CZQmahdmmGxo8NDcyyDud3f1rJPC7oci352XsjPUk65u",
+        "type": "SPL"
+      },
+      {
+        "mint": "5HBxX1qzFYdMwDeBR4YWf6jKwsTd5MeRZNbLs4SQ2e71",
+        "tokenAccount": "8u5XzCjhwNmFq876fsrWGixZ24pVWU8ufXxpBYoU86tS",
+        "type": "SPL"
+      },
+      {
+        "mint": "3EFfazH4uqWRUwYDWomxrPzpX4Fcq7Ai2wzpkriy9XBF",
+        "tokenAccount": "GnYpSoGQYbf6wY8ycuELLJwPsFjCMMMK1Kcupnsvw9ck",
+        "type": "SPL"
+      },
+      {
+        "mint": "GFsJn5ErxxHcV2ADpGQk6qCcjaJM5rum4VQeLeyiVAEr",
+        "tokenAccount": "Fi4Q594BQdzEpsxHBtqbwE1YJMtQC5M1fkgU2sBvNoUa",
+        "type": "SPL"
+      },
+      {
+        "mint": "EiJC2hwH6QJ3xyhrUErgi3E76fPx1gZnJk6qCeecsesA",
+        "tokenAccount": "FVUmA4Jz3Wgsuf9NG9s2LWdBNne4YcJQVtPCvi5dihgh",
+        "type": "SPL"
+      },
+      {
+        "mint": "9QS4UFiUhVeRwJpDBNMrAL7wSau5rAGEhna1zx4Q6S9F",
+        "tokenAccount": "6CWYEC3C5nt6kXNk2PG4wLruVGGuPqZSCU31wnsD432Q",
+        "type": "SPL"
+      },
+      {
+        "mint": "CLBmVpVkJkcNCjLgXmYuugCEzHwYMjBPAUqqFMX15TAp",
+        "tokenAccount": "333PfmmvJ7j4yCHqJuFW6L2S2NS2DwZ2n3amFBeUpJd3",
+        "type": "SPL"
+      },
+      {
+        "mint": "5Sm1Jet6GR4XJRRhD2GpEgRmduGf7Xm9WvrxCodWxin7",
+        "tokenAccount": "BjSaceRCEUA5gUoxbTN3YhEX6XCkHJfHMG2qii6sasgk",
+        "type": "SPL"
+      },
+      {
+        "mint": "7QnqPJjtHfsghbj5RGMU4Sew3azhyHD6NVsL4u2FsvVt",
+        "tokenAccount": "HopazGm18X5WG8tUgKPC8cvV2oDHvNpgkghy4xtWyUnd",
+        "type": "SPL"
+      },
+      {
+        "mint": "5UvAAZe9KNdmTwzTcNurjGcmEWqbdJvQ9kGkTkqPaFMh",
+        "tokenAccount": "FPq1LHeugZer3Bvtbx6YkSAY5pjKomzLxh7gNzaP1gu1",
+        "type": "SPL"
+      },
+      {
+        "mint": "8aWRDwFkUb2jCJ18fL2MxZR7CtCcUUENztZdM8Htrvhr",
+        "tokenAccount": "4P6cWxq5FCBKjamJAH5WPmnex6H7q3gon9du5ix183GS",
+        "type": "SPL"
+      },
+      {
+        "mint": "DE9vUrn18xesG3ANohC4MMqy22S35zvpLpCT9cPL9Zeq",
+        "tokenAccount": "8Td4vKYHJwLyrDe7kP3Y9k2dTQAD7eNLeXFG8ig8a2jL",
+        "type": "SPL"
+      },
+      {
+        "mint": "DmAmjTogEhZApRVKxtXdmHzs1bL2mVSdM7PiZ9myT3Vp",
+        "tokenAccount": "Ebqn3Pa6izmYdbmPbm2bBeEsMozsGQ9dmLwAShARM7hk",
+        "type": "SPL"
+      },
+      {
+        "mint": "AHMUGWzFvHyGck1n4gDam3aWKXLypb5SSrsNUvyxo4JV",
+        "tokenAccount": "BuzcU1Kw64PpMfGJ3o7moGknmaQX4Qv98W93eZUhHdhn",
+        "type": "SPL"
+      }
+    ],
+    "cnfts": [],
+    "coreNfts": []
+  },
+  "taker": {
+    "splNfts": [
+      {
+        "mint": "4dwbgqBisAymANE1Hi6UoDmkkz1EigKy2c7kRfhc8MZg",
+        "tokenAccount": "HPL2e2iCjGzLHVSRxVtpdDoXSFrVsudKA5k7NpbHTt4",
+        "type": "SPL"
+      },
+      {
+        "mint": "D5GoDimCpDqZ4PSfxoZ2WwahKmS6YZXfdZH6cctg2U81",
+        "tokenAccount": "AnavBGSGbaf9AM5sz7rZCHowcj9D7E7SdzeJbEacHWte",
+        "type": "SPL"
+      },
+      {
+        "mint": "Go2e3TBSotDL6DDntffqqenNiE1sWUYT5ri9cxLWZyNG",
+        "tokenAccount": "E643NGK7qhW2nqQsTSkK9Rn8QiGubyVQEz7wuGGr7JZb",
+        "type": "SPL"
+      },
+      {
+        "mint": "DSkVxjrnhjtFFee2RWiUd97RJeUtTTZraRBcq1ipPKW",
+        "tokenAccount": "2DP4BSN6nwyPDYLUNxw3eYM6FFCkmnGXecgcmpZz3WFy",
+        "type": "SPL"
+      },
+      {
+        "mint": "2mivZpVT5oaR8fPSw5aYZYc49YnA2dc65pAWH4cSEeNc",
+        "tokenAccount": "BiH5T7Csitp32YYQiXZPK3nnkbQzdg9s1RD49KmDABEm",
+        "type": "SPL"
+      },
+      {
+        "mint": "HVquhFXeCoy835MrHPSRfTm1qWD4ubUdTM79ZmUYY9fW",
+        "tokenAccount": "21k69rrBsjaXXMtGARrds8GFPUmT6Wtw9ExrajCt8s4K",
+        "type": "SPL"
+      },
+      {
+        "mint": "CxQFyNfmvbaNY82YTFDawyMf4nKv59dwD5db4FiBHY4F",
+        "tokenAccount": "HqMo9uU6iRNvVQsvj7ZYMd2XNCnERuMnbacBixverd65",
+        "type": "SPL"
+      },
+      {
+        "mint": "HgytbagFHsrLTaQBC2R494BrdG23mCc5GftPCCC8Kskb",
+        "tokenAccount": "AK1Z6aTm7572xhKRRk6VzSbuKFXa6NTK55HgApunjD9e",
+        "type": "SPL"
+      },
+      {
+        "mint": "EwcP1jNqUcEF3QgeCa7BtX8VFWraeoHCzfaKK5FXnT5e",
+        "tokenAccount": "BYN1B7qfXscKFDzpGtoCCT8acjqm3gGhB1gkC8pAUFyR",
+        "type": "SPL"
+      },
+      {
+        "mint": "6SB4S2vG16bZ2U8JoosVjP5UkHFdNiqztXVhsrrmySKL",
+        "tokenAccount": "2TPzRDYMTWuNUP3ufGsUkCV7FJr1cAqWBdWNa6uuT4V5",
+        "type": "SPL"
+      },
+      {
+        "mint": "AawVXM54RWJ3M3WYd8DmJhaXAfN3jQ3411caWTABszQX",
+        "tokenAccount": "3wxLeMevW3fgb59tLpN6ziKRFrgu9RFVTLUgW6rT68EJ",
+        "type": "SPL"
+      },
+      {
+        "mint": "FUtBQPjk93xFhbzcjihFyCwmBRAPEBc1dTfQqm1k7L4Q",
+        "tokenAccount": "Fkwi8DRwCfR2tvPZ1vxiTJsWGQASRKDCmFrpGew8DQrn",
+        "type": "SPL"
+      },
+      {
+        "mint": "7FewySh4pdQBEN35Q1nCfSwHzmCWyqSwWDQVBGzgw4f",
+        "tokenAccount": "4x8rLVz2B9QATTYqhhMqBeJKFjrMY1KDykyoUrtiDMv6",
+        "type": "SPL"
+      },
+      {
+        "mint": "EJ1WeLh6mS8fjvsE79QLsAwirJ4WMPjAKjMmFDifri8m",
+        "tokenAccount": "E1J2kK5394R1oHK8dM2x9dmnbWKbYe2cXFYSAB2vSA5D",
+        "type": "SPL"
+      },
+      {
+        "mint": "suc5LBVUNj1jhmqpgwGwAz98tpbYxTWFCB1tLgCkwEd",
+        "tokenAccount": "CiTUjL7z3zpe1oUo8GctHkdJQuq52ctzkh7yEfcRbRF9",
+        "type": "SPL"
+      }
+    ],
+    "cnfts": [],
+    "coreNfts": []
+  },
+  "timestamp": "2025-12-15T08:07:40.936Z"
+}
