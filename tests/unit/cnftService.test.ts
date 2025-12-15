@@ -10,14 +10,16 @@ import { CnftService, CnftServiceConfig } from '../../src/services/cnftService';
 import { DasProofResponse, CnftAssetData } from '../../src/types/cnft';
 import { BUBBLEGUM_PROGRAM_ID } from '../../src/constants/bubblegum';
 
+// Store original fetch
+const originalFetch = global.fetch;
+
 describe('CnftService', () => {
   let connection: Connection;
   let cnftService: CnftService;
-  let mockConnection: any;
-  let originalRpcRequest: any;
+  let mockFetch: any;
 
   const mockAssetId = 'test-cnft-asset-id-123';
-  // Use valid base58 public keys (SystemProgram default is valid)
+  // Use valid base58 public keys
   const mockTreeAddress = PublicKey.default; // Valid placeholder
   const mockOwnerAddress = Keypair.generate().publicKey; // Valid generated key
   const mockToAddress = Keypair.generate().publicKey; // Valid generated key
@@ -55,31 +57,56 @@ describe('CnftService', () => {
   beforeEach(() => {
     // Create mock connection
     connection = new Connection('https://api.devnet.solana.com');
-    mockConnection = connection as any;
 
-    // Mock _rpcRequest method
-    originalRpcRequest = mockConnection._rpcRequest;
-    mockConnection._rpcRequest = async (method: string, params: any) => {
+    // Mock global fetch for DAS API calls
+    mockFetch = async (url: string, options?: any) => {
+      const body = options?.body ? JSON.parse(options.body) : {};
+      const method = body.method;
+
+      // Mock getAsset
       if (method === 'getAsset') {
         return {
-          result: mockAssetData,
-        };
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({
+            jsonrpc: '2.0',
+            id: body.id,
+            result: mockAssetData,
+          }),
+        } as Response;
       }
+
+      // Mock getAssetProof
       if (method === 'getAssetProof') {
         return {
-          result: mockProofResponse,
-        };
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({
+            jsonrpc: '2.0',
+            id: body.id,
+            result: mockProofResponse,
+          }),
+        } as Response;
       }
-      if (method === 'getAccountInfo') {
-        // Mock tree account info
-        return {
-          value: {
-            data: Buffer.alloc(1000), // Mock account data
-            owner: BUBBLEGUM_PROGRAM_ID.toBase58(),
-          },
-        };
-      }
-      throw new Error(`Unexpected RPC method: ${method}`);
+
+      // Default response
+      return {
+        ok: true,
+        status: 200,
+        text: async () => JSON.stringify({ jsonrpc: '2.0', id: body.id, result: null }),
+      } as Response;
+    };
+
+    global.fetch = mockFetch as any;
+
+    // Mock getAccountInfo for tree account
+    (connection as any).getAccountInfo = async () => {
+      return {
+        data: Buffer.alloc(1000), // Mock account data
+        owner: BUBBLEGUM_PROGRAM_ID,
+        executable: false,
+        lamports: 0,
+      };
     };
 
     const config: Partial<CnftServiceConfig> = {
@@ -94,10 +121,8 @@ describe('CnftService', () => {
   });
 
   afterEach(() => {
-    // Restore original RPC request
-    if (originalRpcRequest) {
-      mockConnection._rpcRequest = originalRpcRequest;
-    }
+    // Restore original fetch
+    global.fetch = originalFetch;
   });
 
   describe('getCnftAsset', () => {
@@ -112,16 +137,20 @@ describe('CnftService', () => {
     });
 
     it('should throw error for non-compressed asset', async () => {
-      mockConnection._rpcRequest = async (method: string) => {
-        if (method === 'getAsset') {
-          return {
+      global.fetch = (async () => {
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({
+            jsonrpc: '2.0',
+            id: 1,
             result: {
               ...mockAssetData,
               compression: { compressed: false },
             },
-          };
-        }
-      };
+          }),
+        } as Response;
+      }) as typeof fetch;
 
       try {
         await cnftService.getCnftAsset(mockAssetId);
@@ -132,9 +161,17 @@ describe('CnftService', () => {
     });
 
     it('should handle invalid asset ID', async () => {
-      mockConnection._rpcRequest = async () => {
-        return { result: null };
-      };
+      global.fetch = (async () => {
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({
+            jsonrpc: '2.0',
+            id: 1,
+            result: null,
+          }),
+        } as Response;
+      }) as typeof fetch;
 
       try {
         await cnftService.getCnftAsset('invalid-id');
@@ -146,13 +183,26 @@ describe('CnftService', () => {
 
     it('should handle network failures with retries', async () => {
       let attemptCount = 0;
-      mockConnection._rpcRequest = async () => {
+      global.fetch = (async () => {
         attemptCount++;
         if (attemptCount < 2) {
-          throw new Error('Network error');
+          return {
+            ok: false,
+            status: 500,
+            statusText: 'Internal Server Error',
+            text: async () => 'Network error',
+          } as Response;
         }
-        return { result: mockAssetData };
-      };
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({
+            jsonrpc: '2.0',
+            id: 1,
+            result: mockAssetData,
+          }),
+        } as Response;
+      }) as typeof fetch;
 
       const asset = await cnftService.getCnftAsset(mockAssetId);
       expect(asset).to.exist;
@@ -173,12 +223,18 @@ describe('CnftService', () => {
 
     it('should cache proof and return cached version', async () => {
       let fetchCount = 0;
-      mockConnection._rpcRequest = async (method: string) => {
-        if (method === 'getAssetProof') {
-          fetchCount++;
-          return { result: mockProofResponse };
-        }
-      };
+      global.fetch = (async () => {
+        fetchCount++;
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({
+            jsonrpc: '2.0',
+            id: 1,
+            result: mockProofResponse,
+          }),
+        } as Response;
+      }) as typeof fetch;
 
       // First fetch
       const proof1 = await cnftService.getCnftProof(mockAssetId);
@@ -192,12 +248,18 @@ describe('CnftService', () => {
 
     it('should skip cache when skipCache is true', async () => {
       let fetchCount = 0;
-      mockConnection._rpcRequest = async (method: string) => {
-        if (method === 'getAssetProof') {
-          fetchCount++;
-          return { result: mockProofResponse };
-        }
-      };
+      global.fetch = (async () => {
+        fetchCount++;
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({
+            jsonrpc: '2.0',
+            id: 1,
+            result: mockProofResponse,
+          }),
+        } as Response;
+      }) as typeof fetch;
 
       await cnftService.getCnftProof(mockAssetId);
       await cnftService.getCnftProof(mockAssetId, true); // Skip cache
@@ -205,9 +267,17 @@ describe('CnftService', () => {
     });
 
     it('should handle proof fetch failures', async () => {
-      mockConnection._rpcRequest = async () => {
-        return { result: null };
-      };
+      global.fetch = (async () => {
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({
+            jsonrpc: '2.0',
+            id: 1,
+            result: null,
+          }),
+        } as Response;
+      }) as typeof fetch;
 
       try {
         await cnftService.getCnftProof(mockAssetId);
@@ -231,12 +301,18 @@ describe('CnftService', () => {
       const assetIds = [mockAssetId, 'asset-2', 'asset-3'];
       let fetchCount = 0;
 
-      mockConnection._rpcRequest = async (method: string) => {
-        if (method === 'getAssetProof') {
-          fetchCount++;
-          return { result: mockProofResponse };
-        }
-      };
+      global.fetch = (async () => {
+        fetchCount++;
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({
+            jsonrpc: '2.0',
+            id: 1,
+            result: mockProofResponse,
+          }),
+        } as Response;
+      }) as typeof fetch;
 
       const results = await cnftService.batchGetCnftProofs(assetIds, 2);
 
@@ -248,12 +324,18 @@ describe('CnftService', () => {
       const assetIds = [mockAssetId, mockAssetId, mockAssetId];
       let fetchCount = 0;
 
-      mockConnection._rpcRequest = async (method: string) => {
-        if (method === 'getAssetProof') {
-          fetchCount++;
-          return { result: mockProofResponse };
-        }
-      };
+      global.fetch = (async () => {
+        fetchCount++;
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({
+            jsonrpc: '2.0',
+            id: 1,
+            result: mockProofResponse,
+          }),
+        } as Response;
+      }) as typeof fetch;
 
       // First batch
       await cnftService.batchGetCnftProofs(assetIds, 3);
@@ -269,15 +351,33 @@ describe('CnftService', () => {
       const assetIds = ['asset-1', 'asset-2', 'asset-3'];
       let fetchCount = 0;
 
-      mockConnection._rpcRequest = async (method: string, params: any) => {
-        if (method === 'getAssetProof') {
-          fetchCount++;
-          if (params.id === 'asset-2') {
-            throw new Error('Proof fetch failed');
-          }
-          return { result: mockProofResponse };
+      global.fetch = (async (url: string, options?: any) => {
+        fetchCount++;
+        const body = options?.body ? JSON.parse(options.body) : {};
+        if (body.params?.id === 'asset-2') {
+          return {
+            ok: true,
+            status: 200,
+            text: async () => JSON.stringify({
+              jsonrpc: '2.0',
+              id: body.id,
+              error: {
+                code: -32000,
+                message: 'Proof fetch failed',
+              },
+            }),
+          } as Response;
         }
-      };
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({
+            jsonrpc: '2.0',
+            id: body.id,
+            result: mockProofResponse,
+          }),
+        } as Response;
+      }) as typeof fetch;
 
       const results = await cnftService.batchGetCnftProofs(assetIds, 2);
 
@@ -306,8 +406,8 @@ describe('CnftService', () => {
     });
 
     it('should derive different authority for different trees', () => {
-      const tree1 = new PublicKey('11111111111111111111111111111111');
-      const tree2 = new PublicKey('22222222222222222222222222222222');
+      const tree1 = Keypair.generate().publicKey; // Use valid generated key
+      const tree2 = Keypair.generate().publicKey; // Use valid generated key
 
       const authority1 = cnftService.deriveTreeAuthority(tree1);
       const authority2 = cnftService.deriveTreeAuthority(tree2);
@@ -333,7 +433,7 @@ describe('CnftService', () => {
     });
 
     it('should throw error for ownership mismatch', async () => {
-      const wrongOwner = new PublicKey('99999999999999999999999999999999');
+      const wrongOwner = Keypair.generate().publicKey; // Use valid generated key
 
       try {
         await cnftService.buildTransferParams(mockAssetId, wrongOwner, mockToAddress);
@@ -347,16 +447,40 @@ describe('CnftService', () => {
       let assetFetched = false;
       let proofFetched = false;
 
-      mockConnection._rpcRequest = async (method: string) => {
+      global.fetch = (async (url: string, options?: any) => {
+        const body = options?.body ? JSON.parse(options.body) : {};
+        const method = body.method;
+
         if (method === 'getAsset') {
           assetFetched = true;
-          return { result: mockAssetData };
+          return {
+            ok: true,
+            status: 200,
+            text: async () => JSON.stringify({
+              jsonrpc: '2.0',
+              id: body.id,
+              result: mockAssetData,
+            }),
+          } as Response;
         }
         if (method === 'getAssetProof') {
           proofFetched = true;
-          return { result: mockProofResponse };
+          return {
+            ok: true,
+            status: 200,
+            text: async () => JSON.stringify({
+              jsonrpc: '2.0',
+              id: body.id,
+              result: mockProofResponse,
+            }),
+          } as Response;
         }
-      };
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({ jsonrpc: '2.0', id: body.id, result: null }),
+        } as Response;
+      }) as typeof fetch;
 
       await cnftService.buildTransferParams(mockAssetId, mockOwnerAddress, mockToAddress);
 
@@ -367,10 +491,8 @@ describe('CnftService', () => {
 
   describe('getTreeCanopyDepth', () => {
     it('should return default canopy depth when tree account not found', async () => {
-      mockConnection._rpcRequest = async (method: string) => {
-        if (method === 'getAccountInfo') {
-          return { value: null };
-        }
+      (connection as any).getAccountInfo = async () => {
+        return null; // Account not found
       };
 
       const depth = await cnftService.getTreeCanopyDepth(mockTreeAddress);
@@ -378,7 +500,7 @@ describe('CnftService', () => {
     });
 
     it('should handle tree account fetch errors gracefully', async () => {
-      mockConnection._rpcRequest = async () => {
+      (connection as any).getAccountInfo = async () => {
         throw new Error('RPC error');
       };
 
@@ -409,13 +531,21 @@ describe('CnftService', () => {
       let activeRequests = 0;
       let maxConcurrent = 0;
 
-      mockConnection._rpcRequest = async () => {
+      global.fetch = (async () => {
         activeRequests++;
         maxConcurrent = Math.max(maxConcurrent, activeRequests);
         await new Promise(resolve => setTimeout(resolve, 50));
         activeRequests--;
-        return { result: mockProofResponse };
-      };
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({
+            jsonrpc: '2.0',
+            id: 1,
+            result: mockProofResponse,
+          }),
+        } as Response;
+      }) as typeof fetch;
 
       // Start 5 concurrent requests
       const promises = Array.from({ length: 5 }, () =>
@@ -437,12 +567,18 @@ describe('CnftService', () => {
       const shortTtlService = new CnftService(connection, config);
 
       let fetchCount = 0;
-      mockConnection._rpcRequest = async (method: string) => {
-        if (method === 'getAssetProof') {
-          fetchCount++;
-          return { result: mockProofResponse };
-        }
-      };
+      global.fetch = (async () => {
+        fetchCount++;
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({
+            jsonrpc: '2.0',
+            id: 1,
+            result: mockProofResponse,
+          }),
+        } as Response;
+      }) as typeof fetch;
 
       // First fetch
       await shortTtlService.getCnftProof(mockAssetId);
@@ -457,4 +593,3 @@ describe('CnftService', () => {
     });
   });
 });
-
