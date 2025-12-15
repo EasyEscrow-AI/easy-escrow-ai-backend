@@ -615,6 +615,11 @@ export class CnftService {
       // CRITICAL: Use unique request IDs to prevent DAS API caching
       // Full cache-control headers break QuickNode's getAssetProof endpoint
       // but unique IDs should prevent caching without causing errors
+      // For getAssetProof, add timestamp to params to force fresh data
+      const requestParams = method === 'getAssetProof' && retryCount > 0
+        ? { ...params, _timestamp: Date.now() } // Add timestamp for cache busting on retries
+        : params;
+      
       const response = await fetch(this.config.rpcEndpoint, {
         method: 'POST',
         headers: { 
@@ -625,7 +630,7 @@ export class CnftService {
           // Unique ID: timestamp + random + retry count to ensure uniqueness
           id: `${Date.now()}-${Math.random().toString(36).substring(7)}-${retryCount}`,
           method,
-          params,
+          params: requestParams,
         }),
         signal: controller.signal,
       });

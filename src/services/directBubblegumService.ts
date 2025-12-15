@@ -121,6 +121,9 @@ export class DirectBubblegumService {
       const proofRoot = Buffer.from(proof.root);
       
       if (!onChainRoot.equals(proofRoot)) {
+        const maxRetries = 3; // Allow up to 3 retries for stale proofs
+        const retryDelays = [500, 1000, 2000]; // Progressive delays: 500ms, 1s, 2s
+        
         console.warn('[DirectBubblegumService] ⚠️ STALE PROOF DETECTED:', {
           onChainRoot: onChainRoot.toString('hex'),
           proofRoot: proofRoot.toString('hex'),
@@ -128,27 +131,50 @@ export class DirectBubblegumService {
           currentSeq: treeAccount.getCurrentSeq().toString(),
           isFullCanopyTree,
           retryCount,
+          maxRetries,
         });
         
-        // If this is the first attempt, clear cache and retry with fresh proof
-        if (retryCount === 0) {
-          console.log('[DirectBubblegumService] Clearing proof cache and fetching fresh proof...');
+        // If we haven't exhausted retries, clear cache and retry with fresh proof
+        if (retryCount < maxRetries) {
+          console.log(`[DirectBubblegumService] Clearing proof cache and fetching fresh proof (attempt ${retryCount + 1}/${maxRetries})...`);
+          
           // Clear the cached proof for this asset
           this.cnftService.clearCachedProof(params.assetId);
           
-          // Wait a brief moment for any in-flight tree updates to complete
-          await new Promise(resolve => setTimeout(resolve, 200));
+          // Progressive delay: longer waits for subsequent retries
+          // This gives the DAS API and tree more time to update
+          const delay = retryDelays[retryCount] || 2000;
+          console.log(`[DirectBubblegumService] Waiting ${delay}ms for tree updates to propagate...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          
+          // Check if tree is still updating by comparing sequence numbers
+          try {
+            const updatedTreeAccount = await ConcurrentMerkleTreeAccount.fromAccountAddress(
+              this.connection,
+              treeAddress
+            );
+            const updatedSeq = updatedTreeAccount.getCurrentSeq();
+            const originalSeq = treeAccount.getCurrentSeq();
+            
+            if (updatedSeq.toString() !== originalSeq.toString()) {
+              console.log(`[DirectBubblegumService] Tree sequence changed: ${originalSeq} → ${updatedSeq} (tree is actively updating)`);
+            }
+          } catch (seqError) {
+            console.warn('[DirectBubblegumService] Could not check tree sequence:', seqError);
+          }
           
           // Retry with fresh proof (skip cache)
           console.log('[DirectBubblegumService] Retrying with fresh proof...');
           return this.buildTransferInstruction(params, retryCount + 1);
         }
         
-        // If retry also failed, throw error
+        // If all retries failed, throw error with detailed information
         throw new Error(
-          `Stale Merkle proof detected. DAS root ${proofRoot.toString('hex').slice(0, 16)}... ` +
+          `Stale Merkle proof detected after ${maxRetries} refresh attempts. ` +
+          `DAS root ${proofRoot.toString('hex').slice(0, 16)}... ` +
           `does not match on-chain root ${onChainRoot.toString('hex').slice(0, 16)}... ` +
-          `(Attempted refresh, still stale)`
+          `This indicates the Merkle tree is updating faster than the DAS API can provide fresh proofs. ` +
+          `Tree: ${treeAddress.toBase58()}, Sequence: ${treeAccount.getCurrentSeq().toString()}`
         );
       }
       console.log('[DirectBubblegumService] ✅ Proof root validated against on-chain');

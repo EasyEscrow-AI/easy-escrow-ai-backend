@@ -136,38 +136,8 @@
   "taker": {
     "splNfts": [
       {
-        "mint": "4dwbgqBisAymANE1Hi6UoDmkkz1EigKy2c7kRfhc8MZg",
-        "tokenAccount": "HPL2e2iCjGzLHVSRxVtpdDoXSFrVsudKA5k7NpbHTt4",
-        "type": "SPL"
-      },
-      {
-        "mint": "D5GoDimCpDqZ4PSfxoZ2WwahKmS6YZXfdZH6cctg2U81",
-        "tokenAccount": "AnavBGSGbaf9AM5sz7rZCHowcj9D7E7SdzeJbEacHWte",
-        "type": "SPL"
-      },
-      {
-        "mint": "Go2e3TBSotDL6DDntffqqenNiE1sWUYT5ri9cxLWZyNG",
-        "tokenAccount": "E643NGK7qhW2nqQsTSkK9Rn8QiGubyVQEz7wuGGr7JZb",
-        "type": "SPL"
-      },
-      {
-        "mint": "DSkVxjrnhjtFFee2RWiUd97RJeUtTTZraRBcq1ipPKW",
-        "tokenAccount": "2DP4BSN6nwyPDYLUNxw3eYM6FFCkmnGXecgcmpZz3WFy",
-        "type": "SPL"
-      },
-      {
-        "mint": "2mivZpVT5oaR8fPSw5aYZYc49YnA2dc65pAWH4cSEeNc",
-        "tokenAccount": "BiH5T7Csitp32YYQiXZPK3nnkbQzdg9s1RD49KmDABEm",
-        "type": "SPL"
-      },
-      {
-        "mint": "HVquhFXeCoy835MrHPSRfTm1qWD4ubUdTM79ZmUYY9fW",
-        "tokenAccount": "21k69rrBsjaXXMtGARrds8GFPUmT6Wtw9ExrajCt8s4K",
-        "type": "SPL"
-      },
-      {
-        "mint": "CxQFyNfmvbaNY82YTFDawyMf4nKv59dwD5db4FiBHY4F",
-        "tokenAccount": "HqMo9uU6iRNvVQsvj7ZYMd2XNCnERuMnbacBixverd65",
+        "mint": "FUtBQPjk93xFhbzcjihFyCwmBRAPEBc1dTfQqm1k7L4Q",
+        "tokenAccount": "Fkwi8DRwCfR2tvPZ1vxiTJsWGQASRKDCmFrpGew8DQrn",
         "type": "SPL"
       },
       {
@@ -176,23 +146,23 @@
         "type": "SPL"
       },
       {
+        "mint": "EJ1WeLh6mS8fjvsE79QLsAwirJ4WMPjAKjMmFDifri8m",
+        "tokenAccount": "E1J2kK5394R1oHK8dM2x9dmnbWKbYe2cXFYSAB2vSA5D",
+        "type": "SPL"
+      },
+      {
+        "mint": "2mivZpVT5oaR8fPSw5aYZYc49YnA2dc65pAWH4cSEeNc",
+        "tokenAccount": "BiH5T7Csitp32YYQiXZPK3nnkbQzdg9s1RD49KmDABEm",
+        "type": "SPL"
+      },
+      {
         "mint": "EwcP1jNqUcEF3QgeCa7BtX8VFWraeoHCzfaKK5FXnT5e",
         "tokenAccount": "BYN1B7qfXscKFDzpGtoCCT8acjqm3gGhB1gkC8pAUFyR",
         "type": "SPL"
       },
       {
-        "mint": "6SB4S2vG16bZ2U8JoosVjP5UkHFdNiqztXVhsrrmySKL",
-        "tokenAccount": "2TPzRDYMTWuNUP3ufGsUkCV7FJr1cAqWBdWNa6uuT4V5",
-        "type": "SPL"
-      },
-      {
-        "mint": "AawVXM54RWJ3M3WYd8DmJhaXAfN3jQ3411caWTABszQX",
-        "tokenAccount": "3wxLeMevW3fgb59tLpN6ziKRFrgu9RFVTLUgW6rT68EJ",
-        "type": "SPL"
-      },
-      {
-        "mint": "FUtBQPjk93xFhbzcjihFyCwmBRAPEBc1dTfQqm1k7L4Q",
-        "tokenAccount": "Fkwi8DRwCfR2tvPZ1vxiTJsWGQASRKDCmFrpGew8DQrn",
+        "mint": "D5GoDimCpDqZ4PSfxoZ2WwahKmS6YZXfdZH6cctg2U81",
+        "tokenAccount": "AnavBGSGbaf9AM5sz7rZCHowcj9D7E7SdzeJbEacHWte",
         "type": "SPL"
       },
       {
@@ -201,13 +171,43 @@
         "type": "SPL"
       },
       {
-        "mint": "EJ1WeLh6mS8fjvsE79QLsAwirJ4WMPjAKjMmFDifri8m",
-        "tokenAccount": "E1J2kK5394R1oHK8dM2x9dmnbWKbYe2cXFYSAB2vSA5D",
+        "mint": "AawVXM54RWJ3M3WYd8DmJhaXAfN3jQ3411caWTABszQX",
+        "tokenAccount": "3wxLeMevW3fgb59tLpN6ziKRFrgu9RFVTLUgW6rT68EJ",
+        "type": "SPL"
+      },
+      {
+        "mint": "CxQFyNfmvbaNY82YTFDawyMf4nKv59dwD5db4FiBHY4F",
+        "tokenAccount": "HqMo9uU6iRNvVQsvj7ZYMd2XNCnERuMnbacBixverd65",
+        "type": "SPL"
+      },
+      {
+        "mint": "6SB4S2vG16bZ2U8JoosVjP5UkHFdNiqztXVhsrrmySKL",
+        "tokenAccount": "2TPzRDYMTWuNUP3ufGsUkCV7FJr1cAqWBdWNa6uuT4V5",
+        "type": "SPL"
+      },
+      {
+        "mint": "DSkVxjrnhjtFFee2RWiUd97RJeUtTTZraRBcq1ipPKW",
+        "tokenAccount": "2DP4BSN6nwyPDYLUNxw3eYM6FFCkmnGXecgcmpZz3WFy",
         "type": "SPL"
       },
       {
         "mint": "suc5LBVUNj1jhmqpgwGwAz98tpbYxTWFCB1tLgCkwEd",
         "tokenAccount": "CiTUjL7z3zpe1oUo8GctHkdJQuq52ctzkh7yEfcRbRF9",
+        "type": "SPL"
+      },
+      {
+        "mint": "4dwbgqBisAymANE1Hi6UoDmkkz1EigKy2c7kRfhc8MZg",
+        "tokenAccount": "HPL2e2iCjGzLHVSRxVtpdDoXSFrVsudKA5k7NpbHTt4",
+        "type": "SPL"
+      },
+      {
+        "mint": "HVquhFXeCoy835MrHPSRfTm1qWD4ubUdTM79ZmUYY9fW",
+        "tokenAccount": "21k69rrBsjaXXMtGARrds8GFPUmT6Wtw9ExrajCt8s4K",
+        "type": "SPL"
+      },
+      {
+        "mint": "Go2e3TBSotDL6DDntffqqenNiE1sWUYT5ri9cxLWZyNG",
+        "tokenAccount": "E643NGK7qhW2nqQsTSkK9Rn8QiGubyVQEz7wuGGr7JZb",
         "type": "SPL"
       }
     ],
@@ -232,5 +232,5 @@
       }
     ]
   },
-  "timestamp": "2025-12-15T08:22:32.104Z"
+  "timestamp": "2025-12-15T09:03:34.734Z"
 }

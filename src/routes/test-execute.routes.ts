@@ -219,9 +219,9 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
           
           console.log(`   ✅ TX ${i + 1} sent: ${signature.substring(0, 20)}...`);
           
-          // Wait for confirmation with extended timeout for mainnet
-          // Mainnet can be slow during congestion, especially for cNFT transactions
-          const confirmationTimeout = isMainnet ? 60 : 30; // 60s for mainnet, 30s for devnet
+          // Wait for confirmation
+          // Production transactions should complete within 30s - if they don't, something is wrong
+          const confirmationTimeout = 30; // 30s for all networks - if it takes longer, investigate root cause
           try {
             // Use confirmTransaction with commitment level
             // The default timeout is 30s, but we'll catch timeout errors and check status
@@ -503,8 +503,8 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
         });
         
         // Wait for confirmation AND check for errors
-        // Use extended timeout for mainnet (60s) to handle network congestion
-        const confirmationTimeout = isMainnet ? 60 : 30; // 60s for mainnet, 30s for devnet
+        // Production transactions should complete within 30s - if they don't, something is wrong
+        const confirmationTimeout = 30; // 30s for all networks - if it takes longer, investigate root cause
         let confirmation;
         try {
           // Use Promise.race to implement custom timeout
