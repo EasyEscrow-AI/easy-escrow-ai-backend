@@ -982,10 +982,13 @@ describe('TransactionBuilder - cNFT Integration', () => {
       } catch (error: any) {
         // If it fails, should be a size-related error or nonce account error
         // Transaction size errors or other validation errors are acceptable
+        const errorMessage = error?.message || String(error);
         expect(
-          error.message.includes('too large') ||
-          error.message.includes('size') ||
-          error.message.length > 0
+          errorMessage.includes('too large') ||
+          errorMessage.includes('size') ||
+          errorMessage.includes('nonce') ||
+          errorMessage.includes('exceeds') ||
+          errorMessage.includes('limit')
         ).to.be.true;
       }
     });
