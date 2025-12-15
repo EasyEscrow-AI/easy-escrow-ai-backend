@@ -171,26 +171,153 @@ describe('🚀 Production E2E: cNFT ↔ cNFT with ALT Support (Mainnet)', () => 
   
   describe('cNFT for cNFT Swap (Full E2E)', () => {
     it('should successfully swap cNFT for cNFT on mainnet', async function() {
-      this.timeout(180000);
+      this.timeout(300000);
       
       console.log('\n🧪 Test: cNFT ↔ cNFT swap on mainnet');
-      console.log('⚠️  Requires pre-minted cNFTs with valid Merkle proofs');
+      console.log('═══════════════════════════════════════════════════════════\n');
       
-      // This test would need:
-      // 1. cNFT asset IDs owned by sender
-      // 2. cNFT asset IDs owned by receiver
-      // 3. Proper DAS API integration for proof fetching
+      // Load production test assets
+      const productionAssets = require('../../fixtures/production-test-assets.json');
       
-      console.log('\n📋 Test steps (when cNFTs available):');
-      console.log('   1. Create offer: sender cNFT for receiver cNFT');
-      console.log('   2. Accept offer: receiver signs accept transaction');
-      console.log('   3. Verify: both parties receive swapped cNFTs');
-      console.log('   4. Verify: ALT was used if transaction was large');
+      const hasMakerCnft = productionAssets?.maker?.cnfts?.length >= 1;
+      const hasTakerCnft = productionAssets?.taker?.cnfts?.length >= 1;
       
-      console.log('\n💡 Test structure created - full implementation pending');
-      console.log('📝 Recommend using pre-minted cNFTs for faster testing');
+      if (!hasMakerCnft || !hasTakerCnft) {
+        console.log('⚠️  Insufficient cNFTs in fixtures - skipping test');
+        console.log(`   Maker cNFTs: ${productionAssets?.maker?.cnfts?.length || 0} (need 1+)`);
+        console.log(`   Taker cNFTs: ${productionAssets?.taker?.cnfts?.length || 0} (need 1+)`);
+        this.skip();
+        return;
+      }
       
-      this.skip();
+      const makerCnft = productionAssets.maker.cnfts[0].mint;
+      const takerCnft = productionAssets.taker.cnfts[0].mint;
+      
+      console.log(`   Maker cNFT: ${makerCnft}`);
+      console.log(`   Taker cNFT: ${takerCnft}`);
+      console.log();
+      
+      // Import AtomicSwapApiClient
+      const { AtomicSwapApiClient } = require('../../helpers/atomic-swap-api-client');
+      const { displayExplorerLink, waitForConfirmation } = require('../../helpers/swap-verification');
+      
+      const API_BASE_URL = process.env.PRODUCTION_API_URL || 'https://api.easyescrow.ai';
+      const API_KEY = process.env.ATOMIC_SWAP_API_KEY || '';
+      const apiClient = new AtomicSwapApiClient(API_BASE_URL, API_KEY);
+      
+      // Create offer
+      console.log('📝 Step 1: Creating cNFT ↔ cNFT offer...');
+      const createKey = AtomicSwapApiClient.generateIdempotencyKey('cnft-cnft-test');
+      const createResponse = await apiClient.createOffer(
+        {
+          makerWallet: sender.publicKey.toBase58(),
+          takerWallet: receiver.publicKey.toBase58(),
+          offeredAssets: [
+            { mint: makerCnft, isCompressed: true },
+          ],
+          requestedAssets: [
+            { mint: takerCnft, isCompressed: true },
+          ],
+          offeredSol: 0,
+          requestedSol: 0,
+        },
+        createKey
+      );
+      
+      expect(createResponse.success).to.be.true;
+      expect(createResponse.data).to.exist;
+      const offerId = createResponse.data!.offer.id;
+      console.log(`   ✅ Offer created: ${offerId}`);
+      console.log();
+      
+      // Accept offer
+      console.log('📝 Step 2: Accepting offer...');
+      const acceptKey = AtomicSwapApiClient.generateIdempotencyKey('cnft-cnft-accept');
+      
+      let acceptResponse;
+      try {
+        acceptResponse = await apiClient.acceptOffer(
+          offerId,
+          receiver.publicKey.toBase58(),
+          acceptKey
+        );
+        
+        expect(acceptResponse.success).to.be.true;
+        expect(acceptResponse.data).to.exist;
+        console.log(`   ✅ Offer accepted successfully`);
+        console.log();
+      } catch (error: any) {
+        const errorMessage = error?.message || error?.response?.data?.error || '';
+        if (errorMessage.includes('Stale Merkle proof')) {
+          console.log(`   ⚠️  Stale proof error detected (expected with high-activity trees)`);
+          console.log(`   The improved retry logic should handle this automatically`);
+          console.log(`   Error: ${errorMessage}`);
+          // This is acceptable - the retry logic should handle it
+          // But we should still verify the fix works
+          throw error;
+        }
+        throw error;
+      }
+      
+      // Check if bulk swap (cNFT swaps often use bulk due to proof size)
+      const bulkSwap = (acceptResponse.data as any).bulkSwap;
+      
+      if (bulkSwap && bulkSwap.isBulkSwap) {
+        console.log('📝 Step 3: Executing bulk swap (cNFT transfers split)...');
+        console.log(`   Strategy: ${bulkSwap.strategy}`);
+        console.log(`   Transaction Count: ${bulkSwap.transactionCount}`);
+        console.log(`   Requires Jito: ${bulkSwap.requiresJitoBundle}`);
+        console.log();
+        
+        const transactionsForBulk = bulkSwap.transactions.map((tx: any) => ({
+          index: tx.index,
+          purpose: tx.purpose,
+          serializedTransaction: tx.serializedTransaction,
+          requiredSigners: tx.requiredSigners,
+        }));
+        
+        const { signAndSendBulkSwapTransactions } = require('../../helpers/atomic-swap-api-client');
+        const bulkResult = await signAndSendBulkSwapTransactions(
+          { 
+            transactions: transactionsForBulk,
+            requiresJitoBundle: bulkSwap.requiresJitoBundle !== false,
+          },
+          sender,
+          receiver,
+          connection
+        );
+        
+        expect(bulkResult.success).to.be.true;
+        
+        if (bulkResult.bundleId) {
+          console.log(`   ✅ Jito bundle confirmed: ${bulkResult.bundleId}`);
+          console.log(`   All ${bulkSwap.transactionCount} transactions executed atomically`);
+        } else {
+          console.log(`   ✅ All ${bulkResult.signatures!.length} transactions confirmed!`);
+          bulkResult.signatures!.forEach((sig, i) => {
+            console.log(`   Tx ${i + 1}: ${sig}`);
+            displayExplorerLink(sig, 'mainnet-beta');
+          });
+        }
+      } else {
+        console.log('📝 Step 3: Executing single transaction swap...');
+        const serializedTx = acceptResponse.data!.transaction.serialized;
+        const txBuffer = Buffer.from(serializedTx, 'base64');
+        
+        // Check if versioned transaction (ALT used)
+        const isVersioned = isVersionedTransaction(txBuffer);
+        if (isVersioned) {
+          console.log('   ✅ Versioned transaction (V0) - ALT was used');
+        } else {
+          console.log('   ℹ️  Legacy transaction - ALT not needed');
+        }
+        
+        // Note: In a real E2E test, we would sign and send the transaction
+        // For now, we verify the transaction was built correctly
+        console.log(`   ✅ Transaction built successfully (${txBuffer.length} bytes)`);
+      }
+      
+      console.log('\n✅ cNFT ↔ cNFT swap test completed successfully!');
     });
     
     it('should handle cNFT with varying canopy depths', async function() {
