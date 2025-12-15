@@ -214,7 +214,7 @@ export class DirectCoreNftService {
       }),
     });
 
-    const data = await response.json();
+    const data = await response.json() as { error?: { message: string }; result?: any };
     
     if (data.error) {
       throw new Error(`DAS API error: ${data.error.message}`);
