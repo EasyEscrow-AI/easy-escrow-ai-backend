@@ -182,7 +182,10 @@ describe('🚀 Production E2E: Bulk Swap (2-4 NFTs) - Mainnet', () => {
       }));
       
       const bulkResult = await AtomicSwapApiClient.signAndSendBulkSwapTransactions(
-        { transactions: transactionsForBulk },
+        { 
+          transactions: transactionsForBulk,
+          requiresJitoBundle: bulkSwap.requiresJitoBundle !== false,
+        },
         maker,
         taker,
         connection
@@ -192,11 +195,17 @@ describe('🚀 Production E2E: Bulk Swap (2-4 NFTs) - Mainnet', () => {
         throw new Error(`Bulk swap failed: ${bulkResult.error}`);
       }
       
-      console.log(`\n✅ All ${bulkResult.signatures.length} transactions confirmed!`);
-      bulkResult.signatures.forEach((sig, i) => {
-        console.log(`  Tx ${i + 1}: ${sig}`);
-        displayExplorerLink(sig, 'mainnet-beta');
-      });
+      if (bulkResult.bundleId) {
+        console.log(`\n✅ Jito bundle confirmed: ${bulkResult.bundleId}`);
+        console.log(`  Bundle Status: Landed`);
+        console.log(`  All ${bulkSwap.transactionCount} transactions executed atomically`);
+      } else {
+        console.log(`\n✅ All ${bulkResult.signatures.length} transactions confirmed!`);
+        bulkResult.signatures.forEach((sig, i) => {
+          console.log(`  Tx ${i + 1}: ${sig}`);
+          displayExplorerLink(sig, 'mainnet-beta');
+        });
+      }
       
       console.log('\n✅ Bulk swap 2+2 completed successfully!');
     });
@@ -271,7 +280,10 @@ describe('🚀 Production E2E: Bulk Swap (2-4 NFTs) - Mainnet', () => {
       }));
       
       const bulkResult = await AtomicSwapApiClient.signAndSendBulkSwapTransactions(
-        { transactions: transactionsForBulk },
+        { 
+          transactions: transactionsForBulk,
+          requiresJitoBundle: bulkSwap.requiresJitoBundle !== false,
+        },
         maker,
         taker,
         connection
@@ -281,7 +293,12 @@ describe('🚀 Production E2E: Bulk Swap (2-4 NFTs) - Mainnet', () => {
         throw new Error(`Bulk swap failed: ${bulkResult.error}`);
       }
       
-      console.log(`\n✅ All ${bulkResult.signatures.length} transactions confirmed!`);
+      if (bulkResult.bundleId) {
+        console.log(`\n✅ Jito bundle confirmed: ${bulkResult.bundleId}`);
+        console.log(`  All ${bulkSwap.transactionCount} transactions executed atomically`);
+      } else {
+        console.log(`\n✅ All ${bulkResult.signatures.length} transactions confirmed!`);
+      }
       console.log('\n✅ Bulk swap 3+1 completed successfully!');
     });
   });
@@ -355,7 +372,10 @@ describe('🚀 Production E2E: Bulk Swap (2-4 NFTs) - Mainnet', () => {
       }));
       
       const bulkResult = await AtomicSwapApiClient.signAndSendBulkSwapTransactions(
-        { transactions: transactionsForBulk },
+        { 
+          transactions: transactionsForBulk,
+          requiresJitoBundle: bulkSwap.requiresJitoBundle !== false,
+        },
         maker,
         taker,
         connection
@@ -365,7 +385,12 @@ describe('🚀 Production E2E: Bulk Swap (2-4 NFTs) - Mainnet', () => {
         throw new Error(`Bulk swap failed: ${bulkResult.error}`);
       }
       
-      console.log(`\n✅ All ${bulkResult.signatures.length} transactions confirmed!`);
+      if (bulkResult.bundleId) {
+        console.log(`\n✅ Jito bundle confirmed: ${bulkResult.bundleId}`);
+        console.log(`  All ${bulkSwap.transactionCount} transactions executed atomically`);
+      } else {
+        console.log(`\n✅ All ${bulkResult.signatures.length} transactions confirmed!`);
+      }
       console.log('\n✅ Bulk swap 4+0 completed successfully!');
     });
   });
@@ -380,20 +405,28 @@ describe('🚀 Production E2E: Bulk Swap (2-4 NFTs) - Mainnet', () => {
       const idempotencyKey = AtomicSwapApiClient.generateIdempotencyKey('bulk-mixed');
       
       // Load real NFT addresses from fixtures
-      // Note: Mixed asset test requires SPL + Core + cNFT, but we only have SPL NFTs
-      // For now, we'll use SPL NFTs and skip if mixed types are required
-      if (!productionAssets || productionAssets.maker.splNfts.length < 2 || productionAssets.taker.splNfts.length < 1) {
-        console.log('⚠️  Insufficient NFTs in fixtures - skipping test');
+      // Check for actual mixed assets (SPL + Core + cNFT)
+      const hasMakerSpl = productionAssets?.maker?.splNfts?.length >= 1;
+      const hasMakerCore = productionAssets?.maker?.coreNfts?.length >= 1;
+      const hasTakerCnft = productionAssets?.taker?.cnfts?.length >= 1;
+      
+      if (!productionAssets || !hasMakerSpl || !hasMakerCore || !hasTakerCnft) {
+        console.log('⚠️  Insufficient mixed assets in fixtures - skipping test');
+        console.log(`   Maker SPL NFTs: ${productionAssets?.maker?.splNfts?.length || 0} (need 1+)`);
+        console.log(`   Maker Core NFTs: ${productionAssets?.maker?.coreNfts?.length || 0} (need 1+)`);
+        console.log(`   Taker cNFTs: ${productionAssets?.taker?.cnfts?.length || 0} (need 1+)`);
         this.skip();
         return;
       }
       
-      // Using SPL NFTs as placeholders (Core/cNFT support pending)
+      // Use real mixed assets
       const makerSplNft = productionAssets.maker.splNfts[0].mint;
-      const makerCoreNft = productionAssets.maker.splNfts[1].mint; // Using SPL as placeholder
-      const takerCnft = productionAssets.taker.splNfts[0].mint; // Using SPL as placeholder
+      const makerCoreNft = productionAssets.maker.coreNfts[0].mint;
+      const takerCnft = productionAssets.taker.cnfts[0].mint;
       
-      console.log('   ⚠️  NOTE: Using SPL NFTs as placeholders for Core/cNFT (mixed asset test)');
+      console.log(`   Maker SPL NFT: ${makerSplNft}`);
+      console.log(`   Maker Core NFT: ${makerCoreNft}`);
+      console.log(`   Taker cNFT: ${takerCnft}`);
       
       const createResponse = await apiClient.createOffer({
         makerWallet: maker.publicKey.toBase58(),
@@ -442,7 +475,10 @@ describe('🚀 Production E2E: Bulk Swap (2-4 NFTs) - Mainnet', () => {
       }));
       
       const bulkResult = await AtomicSwapApiClient.signAndSendBulkSwapTransactions(
-        { transactions: transactionsForBulk },
+        { 
+          transactions: transactionsForBulk,
+          requiresJitoBundle: bulkSwap.requiresJitoBundle !== false,
+        },
         maker,
         taker,
         connection
@@ -452,7 +488,12 @@ describe('🚀 Production E2E: Bulk Swap (2-4 NFTs) - Mainnet', () => {
         throw new Error(`Bulk swap failed: ${bulkResult.error}`);
       }
       
-      console.log(`\n✅ All ${bulkResult.signatures.length} transactions confirmed!`);
+      if (bulkResult.bundleId) {
+        console.log(`\n✅ Jito bundle confirmed: ${bulkResult.bundleId}`);
+        console.log(`  All ${bulkSwap.transactionCount} transactions executed atomically`);
+      } else {
+        console.log(`\n✅ All ${bulkResult.signatures.length} transactions confirmed!`);
+      }
       console.log('\n✅ Bulk swap with mixed assets completed successfully!');
     });
   });

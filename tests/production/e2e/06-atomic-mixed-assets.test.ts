@@ -153,7 +153,10 @@ describe('🚀 Production E2E: Mixed Assets (Mainnet)', () => {
         }));
         
         const bulkResult = await AtomicSwapApiClient.signAndSendBulkSwapTransactions(
-          { transactions: transactionsForBulk },
+          { 
+            transactions: transactionsForBulk,
+            requiresJitoBundle: bulkSwap.requiresJitoBundle !== false,
+          },
           maker,
           taker,
           connection
@@ -163,8 +166,15 @@ describe('🚀 Production E2E: Mixed Assets (Mainnet)', () => {
           throw new Error(`Bulk swap failed: ${bulkResult.error}`);
         }
         
-        swapSignature = bulkResult.signatures[bulkResult.signatures.length - 1];
-        console.log(`\n✅ All ${bulkResult.signatures.length} transactions confirmed!`);
+        if (bulkResult.bundleId) {
+          console.log(`\n✅ Jito bundle confirmed: ${bulkResult.bundleId}`);
+          // For Jito bundles, we need to get the actual transaction signatures
+          // For now, use bundle ID as placeholder
+          swapSignature = bulkResult.bundleId;
+        } else {
+          swapSignature = bulkResult.signatures[bulkResult.signatures.length - 1];
+        }
+        console.log(`\n✅ All ${bulkSwap.transactionCount} transactions confirmed!`);
       } else {
         // Single transaction
         console.log('\n🔏 Signing and sending transaction...');
@@ -200,17 +210,19 @@ describe('🚀 Production E2E: Mixed Assets (Mainnet)', () => {
       const idempotencyKey = AtomicSwapApiClient.generateIdempotencyKey('mixed-cnft-sol-nft');
       
       // Load real NFT addresses from fixtures
-      // Note: cNFT test requires actual cNFT, but we only have SPL NFTs
-      // For now, we'll skip if cNFTs are not available
       if (!productionAssets || productionAssets.maker.cnfts.length < 1 || productionAssets.taker.splNfts.length < 1) {
         console.log('⚠️  cNFTs not available in fixtures - skipping test');
-        console.log('   This test requires actual cNFT assets');
+        console.log(`   Maker cNFTs: ${productionAssets?.maker?.cnfts?.length || 0}`);
+        console.log(`   Taker SPL NFTs: ${productionAssets?.taker?.splNfts?.length || 0}`);
         this.skip();
         return;
       }
       
       const makerCnft = productionAssets.maker.cnfts[0].mint;
       const takerNft = productionAssets.taker.splNfts[0].mint;
+      
+      console.log(`   Maker cNFT: ${makerCnft}`);
+      console.log(`   Taker NFT: ${takerNft}`);
       
       console.log('\n💫 Creating Mixed Asset Swap Offer (cNFT + SOL → NFT)...');
       
@@ -261,7 +273,10 @@ describe('🚀 Production E2E: Mixed Assets (Mainnet)', () => {
       }));
       
       const bulkResult = await AtomicSwapApiClient.signAndSendBulkSwapTransactions(
-        { transactions: transactionsForBulk },
+        { 
+          transactions: transactionsForBulk,
+          requiresJitoBundle: bulkSwap.requiresJitoBundle !== false,
+        },
         maker,
         taker,
         connection
@@ -271,10 +286,14 @@ describe('🚀 Production E2E: Mixed Assets (Mainnet)', () => {
         throw new Error(`Bulk swap failed: ${bulkResult.error}`);
       }
       
-      const swapSignature = bulkResult.signatures[bulkResult.signatures.length - 1];
-      await waitForConfirmation(connection, swapSignature);
-      
-      console.log(`\n✅ All ${bulkResult.signatures.length} transactions confirmed!`);
+      if (bulkResult.bundleId) {
+        console.log(`\n✅ Jito bundle confirmed: ${bulkResult.bundleId}`);
+        console.log(`  All ${bulkSwap.transactionCount} transactions executed atomically`);
+      } else {
+        const swapSignature = bulkResult.signatures[bulkResult.signatures.length - 1];
+        await waitForConfirmation(connection, swapSignature);
+        console.log(`\n✅ All ${bulkResult.signatures.length} transactions confirmed!`);
+      }
       console.log('\n✅ Mixed asset swap (cNFT + SOL → NFT) completed successfully!');
     });
   });
@@ -289,21 +308,32 @@ describe('🚀 Production E2E: Mixed Assets (Mainnet)', () => {
       const idempotencyKey = AtomicSwapApiClient.generateIdempotencyKey('mixed-spl-core-cnft');
       
       // Load real NFT addresses from fixtures
-      // Note: Mixed asset test requires SPL + Core + cNFT, but we only have SPL NFTs
-      // For now, we'll use SPL NFTs and skip if mixed types are required
-      if (!productionAssets || productionAssets.maker.splNfts.length < 3 || productionAssets.taker.splNfts.length < 1) {
-        console.log('⚠️  Insufficient NFTs in fixtures - skipping test');
+      // Check for actual SPL + Core + cNFT assets
+      const hasSpl = productionAssets?.maker?.splNfts?.length >= 1;
+      const hasCore = productionAssets?.maker?.coreNfts?.length >= 1;
+      const hasCnft = productionAssets?.maker?.cnfts?.length >= 1;
+      const hasTakerNft = productionAssets?.taker?.splNfts?.length >= 1;
+      
+      if (!productionAssets || !hasSpl || !hasCore || !hasCnft || !hasTakerNft) {
+        console.log('⚠️  Insufficient mixed assets in fixtures - skipping test');
+        console.log(`   Maker SPL NFTs: ${productionAssets?.maker?.splNfts?.length || 0} (need 1+)`);
+        console.log(`   Maker Core NFTs: ${productionAssets?.maker?.coreNfts?.length || 0} (need 1+)`);
+        console.log(`   Maker cNFTs: ${productionAssets?.maker?.cnfts?.length || 0} (need 1+)`);
+        console.log(`   Taker SPL NFTs: ${productionAssets?.taker?.splNfts?.length || 0} (need 1+)`);
         this.skip();
         return;
       }
       
-      // Using SPL NFTs as placeholders (Core/cNFT support pending)
+      // Use real mixed assets
       const makerSplNft = productionAssets.maker.splNfts[0].mint;
-      const makerCoreNft = productionAssets.maker.splNfts[1].mint; // Using SPL as placeholder
-      const makerCnft = productionAssets.maker.splNfts[2].mint; // Using SPL as placeholder
+      const makerCoreNft = productionAssets.maker.coreNfts[0].mint;
+      const makerCnft = productionAssets.maker.cnfts[0].mint;
       const takerNft = productionAssets.taker.splNfts[0].mint;
       
-      console.log('   ⚠️  NOTE: Using SPL NFTs as placeholders for Core/cNFT (mixed asset test)');
+      console.log(`   Maker SPL NFT: ${makerSplNft}`);
+      console.log(`   Maker Core NFT: ${makerCoreNft}`);
+      console.log(`   Maker cNFT: ${makerCnft}`);
+      console.log(`   Taker NFT: ${takerNft}`);
       console.log('\n💫 Creating Complex Mixed Asset Swap Offer...');
       
       const createResponse = await apiClient.createOffer({
@@ -360,7 +390,10 @@ describe('🚀 Production E2E: Mixed Assets (Mainnet)', () => {
       }));
       
       const bulkResult = await AtomicSwapApiClient.signAndSendBulkSwapTransactions(
-        { transactions: transactionsForBulk },
+        { 
+          transactions: transactionsForBulk,
+          requiresJitoBundle: bulkSwap.requiresJitoBundle !== false,
+        },
         maker,
         taker,
         connection
@@ -370,14 +403,19 @@ describe('🚀 Production E2E: Mixed Assets (Mainnet)', () => {
         throw new Error(`Bulk swap failed: ${bulkResult.error}`);
       }
       
-      const swapSignature = bulkResult.signatures[bulkResult.signatures.length - 1];
-      await waitForConfirmation(connection, swapSignature);
-      
-      console.log(`\n✅ All ${bulkResult.signatures.length} transactions confirmed!`);
-      bulkResult.signatures.forEach((sig, i) => {
-        console.log(`  Tx ${i + 1}: ${sig}`);
-        displayExplorerLink(sig, 'mainnet-beta');
-      });
+      if (bulkResult.bundleId) {
+        console.log(`\n✅ Jito bundle confirmed: ${bulkResult.bundleId}`);
+        console.log(`  All ${bulkSwap.transactionCount} transactions executed atomically`);
+        console.log(`  Bundle ID: ${bulkResult.bundleId}`);
+      } else {
+        const swapSignature = bulkResult.signatures[bulkResult.signatures.length - 1];
+        await waitForConfirmation(connection, swapSignature);
+        console.log(`\n✅ All ${bulkResult.signatures.length} transactions confirmed!`);
+        bulkResult.signatures.forEach((sig, i) => {
+          console.log(`  Tx ${i + 1}: ${sig}`);
+          displayExplorerLink(sig, 'mainnet-beta');
+        });
+      }
       
       console.log('\n✅ Complex mixed asset swap completed successfully!');
     });

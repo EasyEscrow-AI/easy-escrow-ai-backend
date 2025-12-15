@@ -54,18 +54,147 @@ async function getSPLNFTs(connection: Connection, owner: PublicKey): Promise<Ass
   }
 }
 
-async function getCNFTs(owner: PublicKey): Promise<AssetInfo[]> {
-  // For cNFTs, we'd need to use DAS API
-  // This is a placeholder - would need DAS API integration
-  console.log(`⚠️  cNFT fetching not implemented - requires DAS API`);
-  return [];
+async function getCNFTs(connection: Connection, owner: PublicKey): Promise<AssetInfo[]> {
+  try {
+    const rpcUrl = process.env.MAINNET_RPC_URL || RPC_URL;
+    
+    // Check if RPC supports DAS API (QuickNode, Helius, etc.)
+    const isDasSupported = rpcUrl.includes('quiknode') || 
+                           rpcUrl.includes('helius') || 
+                           rpcUrl.includes('underdog') ||
+                           rpcUrl.includes('mainnet-beta');
+    
+    if (!isDasSupported) {
+      console.log(`⚠️  RPC URL doesn't appear to support DAS API: ${rpcUrl}`);
+      return [];
+    }
+    
+    // Use DAS API to get assets
+    const response = await fetch(rpcUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'getAssetsByOwner',
+        params: {
+          ownerAddress: owner.toBase58(),
+          page: 1,
+          limit: 1000,
+        },
+      }),
+    });
+    
+    const data = await response.json() as {
+      error?: { message?: string };
+      result?: { items?: any[] };
+    };
+    
+    if (data.error) {
+      console.error(`Error fetching cNFTs: ${data.error.message}`);
+      return [];
+    }
+    
+    const assets = data.result?.items || [];
+    
+    // Filter for compressed NFTs (cNFTs)
+    const cnfts: AssetInfo[] = assets
+      .filter((asset: any) => {
+        const isCompressed = asset.compression?.compressed === true;
+        const isOwned = asset.ownership?.owner === owner.toBase58();
+        const notBurnt = !asset.burnt;
+        const notFrozen = !asset.frozen;
+        
+        return isCompressed && isOwned && notBurnt && notFrozen;
+      })
+      .map((asset: any) => ({
+        mint: asset.id, // cNFT asset ID
+        type: 'cNFT' as const,
+      }));
+    
+    return cnfts;
+  } catch (error) {
+    console.error(`Error fetching cNFTs:`, error);
+    return [];
+  }
 }
 
-async function getCoreNFTs(owner: PublicKey): Promise<AssetInfo[]> {
-  // For Core NFTs, we'd need to query the Core program
-  // This is a placeholder - would need Core program integration
-  console.log(`⚠️  Core NFT fetching not implemented - requires Core program query`);
-  return [];
+async function getCoreNFTs(connection: Connection, owner: PublicKey): Promise<AssetInfo[]> {
+  try {
+    const rpcUrl = process.env.MAINNET_RPC_URL || RPC_URL;
+    
+    // Check if RPC supports DAS API
+    const isDasSupported = rpcUrl.includes('quiknode') || 
+                           rpcUrl.includes('helius') || 
+                           rpcUrl.includes('underdog') ||
+                           rpcUrl.includes('mainnet-beta');
+    
+    if (!isDasSupported) {
+      console.log(`⚠️  RPC URL doesn't appear to support DAS API: ${rpcUrl}`);
+      return [];
+    }
+    
+    // Use DAS API to get assets
+    const response = await fetch(rpcUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'getAssetsByOwner',
+        params: {
+          ownerAddress: owner.toBase58(),
+          page: 1,
+          limit: 1000,
+        },
+      }),
+    });
+    
+    const data = await response.json() as {
+      error?: { message?: string };
+      result?: { items?: any[] };
+    };
+    
+    if (data.error) {
+      console.error(`Error fetching Core NFTs: ${data.error.message}`);
+      return [];
+    }
+    
+    const assets = data.result?.items || [];
+    
+    // Filter for Metaplex Core NFTs
+    // IMPORTANT: Exclude cNFTs (they have compression.compressed = true)
+    const coreNfts: AssetInfo[] = assets
+      .filter((asset: any) => {
+        // FIRST: Exclude compressed NFTs (cNFTs) - they are NOT Core NFTs
+        const isCompressed = asset.compression?.compressed === true;
+        if (isCompressed) {
+          return false;
+        }
+        
+        // Metaplex Core NFTs have specific interface names
+        const interfaceName = asset.interface?.toLowerCase() || '';
+        const isCoreNft = interfaceName === 'mplcoreasset' ||
+                         interfaceName === 'mplcorecollection' ||
+                         asset.interface === 'MplCoreAsset' ||
+                         asset.interface === 'MplCoreCollection';
+        
+        const isOwned = asset.ownership?.owner === owner.toBase58();
+        const notBurnt = !asset.burnt;
+        const notFrozen = !asset.frozen;
+        
+        return isCoreNft && isOwned && notBurnt && notFrozen;
+      })
+      .map((asset: any) => ({
+        mint: asset.id, // Core NFT asset ID
+        type: 'Core' as const,
+      }));
+    
+    return coreNfts;
+  } catch (error) {
+    console.error(`Error fetching Core NFTs:`, error);
+    return [];
+  }
 }
 
 async function main() {
@@ -110,17 +239,46 @@ async function main() {
     console.log(`      Token Account: ${nft.tokenAccount}`);
   });
   
+  // Fetch cNFTs and Core NFTs
+  console.log('\n🔍 Fetching cNFTs...\n');
+  const makerCNFTs = await getCNFTs(connection, maker.publicKey);
+  const takerCNFTs = await getCNFTs(connection, taker.publicKey);
+  
+  console.log(`✅ Maker cNFTs: ${makerCNFTs.length}`);
+  makerCNFTs.forEach((cnft, i) => {
+    console.log(`   ${i + 1}. ${cnft.mint}`);
+  });
+  
+  console.log(`\n✅ Taker cNFTs: ${takerCNFTs.length}`);
+  takerCNFTs.forEach((cnft, i) => {
+    console.log(`   ${i + 1}. ${cnft.mint}`);
+  });
+  
+  console.log('\n🔍 Fetching Core NFTs...\n');
+  const makerCoreNFTs = await getCoreNFTs(connection, maker.publicKey);
+  const takerCoreNFTs = await getCoreNFTs(connection, taker.publicKey);
+  
+  console.log(`✅ Maker Core NFTs: ${makerCoreNFTs.length}`);
+  makerCoreNFTs.forEach((core, i) => {
+    console.log(`   ${i + 1}. ${core.mint}`);
+  });
+  
+  console.log(`\n✅ Taker Core NFTs: ${takerCoreNFTs.length}`);
+  takerCoreNFTs.forEach((core, i) => {
+    console.log(`   ${i + 1}. ${core.mint}`);
+  });
+  
   // Save to JSON file for test files to use
   const assetsData = {
     maker: {
       splNfts: makerSPLNFTs,
-      cnfts: await getCNFTs(maker.publicKey),
-      coreNfts: await getCoreNFTs(maker.publicKey),
+      cnfts: makerCNFTs,
+      coreNfts: makerCoreNFTs,
     },
     taker: {
       splNfts: takerSPLNFTs,
-      cnfts: await getCNFTs(taker.publicKey),
-      coreNfts: await getCoreNFTs(taker.publicKey),
+      cnfts: takerCNFTs,
+      coreNfts: takerCoreNFTs,
     },
     timestamp: new Date().toISOString(),
   };
