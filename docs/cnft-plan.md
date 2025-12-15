@@ -1,8 +1,9 @@
 # cNFT Swap Enhancement Plan
 
 **Date:** December 10, 2025  
-**Status:** 📋 Planning Phase  
-**Priority:** High - Core Feature Enhancement
+**Status:** ✅ Implementation Complete  
+**Priority:** High - Core Feature Enhancement  
+**Last Updated:** December 10, 2025
 
 ---
 
@@ -26,9 +27,9 @@ This plan outlines the implementation of enhanced cNFT swap functionality to ove
 | Core NFT ↔ SOL | ✅ Working | Metaplex Core support |
 | Core NFT ↔ Core NFT | ✅ Working | Single NFT per side |
 | Core NFT ↔ SPL NFT | ✅ Working | Mixed type support |
-| cNFT ↔ SOL | ⚠️ Partial | CPI exists but backend throws |
-| cNFT ↔ cNFT | ❌ Not Working | Backend implementation missing |
-| Bulk Swaps | ❌ Not Working | Limited to 1 NFT per side |
+| cNFT ↔ SOL | ✅ Working | Full support with Merkle proofs |
+| cNFT ↔ cNFT | ✅ Working | Single and bulk swaps supported |
+| Bulk Swaps | ✅ Working | Up to 10 assets per side with Jito bundles |
 
 ### What Needs Enhancement
 
