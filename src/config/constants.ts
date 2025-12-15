@@ -171,8 +171,8 @@ export function getTreasuryAddress(): string {
 
     case 'production':
       // Try environment variable first, then load from keypair file
-      if (process.env.MAINNET_PRODUCTION_TREASURY_ADDRESS) {
-        return process.env.MAINNET_PRODUCTION_TREASURY_ADDRESS;
+      if (process.env.MAINNET_PROD_TREASURY_ADDRESS) {
+        return process.env.MAINNET_PROD_TREASURY_ADDRESS;
       }
       
       try {
