@@ -439,8 +439,11 @@ export class OfferManager {
           if (!isLastAttempt && isStaleProofError) {
             console.warn(`⚠️  [OfferManager] Attempt ${attempt}/${maxAttempts} failed with stale cNFT proof, retrying...`);
             console.warn(`   Error: ${error.message}`);
-            // Brief delay before retry to let any in-flight tree updates complete
-            await new Promise(resolve => setTimeout(resolve, 100));
+            // Progressive delay: longer waits for subsequent retries
+            // This gives the DAS API and tree more time to update
+            const delay = attempt === 1 ? 500 : 1000; // 500ms for first retry, 1s for second
+            console.warn(`   Waiting ${delay}ms for tree updates to propagate before retry...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
             continue;
           }
           
@@ -707,12 +710,23 @@ export class OfferManager {
     const message = error?.message || '';
     const logs = error?.logs || [];
     const stack = error?.stack || '';
+    const errorCode = error?.errorCode;
+    
+    // Check for on-chain StaleProof error (error code 21)
+    if (errorCode === 21) {
+      return true;
+    }
     
     // Check for Merkle tree proof validation errors
     const staleProofIndicators = [
       'Invalid root recomputed from proof',
       'Error using concurrent merkle tree',
       'Merkle proof verification failed',
+      'Stale Merkle proof detected', // From directBubblegumService
+      'does not match on-chain root', // From directBubblegumService
+      'Attempted refresh, still stale', // From directBubblegumService
+      'Stale cNFT proof detected', // From API responses
+      'STALE_CNFT_PROOF', // Error code from API
     ];
     
     return staleProofIndicators.some(indicator =>

@@ -220,12 +220,61 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
           console.log(`   ✅ TX ${i + 1} sent: ${signature.substring(0, 20)}...`);
           
           // Wait for confirmation
-          const confirmation = await connection.confirmTransaction(signature, 'confirmed');
-          if (confirmation.value.err) {
-            throw new Error(`TX ${i + 1} failed on-chain: ${JSON.stringify(confirmation.value.err)}`);
+          // Production transactions should complete within 30s - if they don't, something is wrong
+          const confirmationTimeout = 30; // 30s for all networks - if it takes longer, investigate root cause
+          try {
+            // Use confirmTransaction with commitment level
+            // The default timeout is 30s, but we'll catch timeout errors and check status
+            const confirmation = await Promise.race([
+              connection.confirmTransaction(signature, 'confirmed'),
+              new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('TransactionExpiredTimeoutError')), confirmationTimeout * 1000)
+              ),
+            ]) as any;
+            
+            if (confirmation.value.err) {
+              throw new Error(`TX ${i + 1} failed on-chain: ${JSON.stringify(confirmation.value.err)}`);
+            }
+            console.log(`   ✅ TX ${i + 1} confirmed`);
+          } catch (confirmError: any) {
+            // If confirmation timed out, check if transaction actually succeeded
+            if (confirmError.name === 'TransactionExpiredTimeoutError' || 
+                confirmError.message === 'TransactionExpiredTimeoutError' ||
+                confirmError.message?.includes('not confirmed in')) {
+              console.warn(`   ⚠️  TX ${i + 1} confirmation timeout after ${confirmationTimeout}s - checking transaction status...`);
+              
+              // Wait a bit more for transaction to potentially land
+              await new Promise(resolve => setTimeout(resolve, 2000));
+              
+              // Fallback: Check if transaction actually succeeded
+              const txInfo = await connection.getTransaction(signature, {
+                commitment: 'confirmed',
+                maxSupportedTransactionVersion: 0,
+              });
+              
+              if (txInfo) {
+                if (txInfo.meta?.err) {
+                  throw new Error(`TX ${i + 1} failed on-chain: ${JSON.stringify(txInfo.meta.err)}`);
+                }
+                // Transaction succeeded, just slow confirmation
+                console.log(`   ✅ TX ${i + 1} succeeded (confirmed via fallback check)`);
+              } else {
+                // Transaction not found - might still be processing or dropped
+                // Provide helpful error with explorer link
+                const explorerUrl = isMainnet 
+                  ? `https://solscan.io/tx/${signature}`
+                  : `https://solscan.io/tx/${signature}?cluster=devnet`;
+                throw new Error(
+                  `TX ${i + 1} not confirmed in ${confirmationTimeout}s. ` +
+                  `It is unknown if it succeeded or failed. Check signature ${signature} using the Solana Explorer or CLI tools. ` +
+                  `Explorer: ${explorerUrl}`
+                );
+              }
+            } else {
+              // Re-throw non-timeout errors
+              throw confirmError;
+            }
           }
-          
-          console.log(`   ✅ TX ${i + 1} confirmed`);
           signatures.push(signature);
           
           // Small delay between transactions to avoid rate limiting
@@ -237,7 +286,7 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
           console.error(`   ❌ TX ${i + 1} failed:`, txError.message);
           return res.status(500).json({
             success: false,
-            error: `Transaction ${i + 1} (${txInfo.purpose}) failed: ${txError.message}`,
+            error: `Transaction ${i + 1} (${txInfo.purpose || 'unknown'}) failed: ${txError.message}`,
             signatures: signatures, // Return any successful signatures
             failedTxIndex: i,
             timestamp: new Date().toISOString(),
@@ -454,7 +503,57 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
         });
         
         // Wait for confirmation AND check for errors
-        const confirmation = await connection.confirmTransaction(signature, 'confirmed');
+        // Production transactions should complete within 30s - if they don't, something is wrong
+        const confirmationTimeout = 30; // 30s for all networks - if it takes longer, investigate root cause
+        let confirmation;
+        try {
+          // Use Promise.race to implement custom timeout
+          confirmation = await Promise.race([
+            connection.confirmTransaction(signature, 'confirmed'),
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('TransactionExpiredTimeoutError')), confirmationTimeout * 1000)
+            ),
+          ]) as any;
+        } catch (confirmError: any) {
+          // If confirmation timed out, check if transaction actually succeeded
+          if (confirmError.name === 'TransactionExpiredTimeoutError' || 
+              confirmError.message === 'TransactionExpiredTimeoutError' ||
+              confirmError.message?.includes('not confirmed in')) {
+            console.warn(`⚠️  Transaction confirmation timeout after ${confirmationTimeout}s - checking transaction status...`);
+            
+            // Wait a bit more for transaction to potentially land
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Fallback: Check if transaction actually succeeded
+            const txInfo = await connection.getTransaction(signature, {
+              commitment: 'confirmed',
+              maxSupportedTransactionVersion: 0,
+            });
+            
+            if (txInfo) {
+              if (txInfo.meta?.err) {
+                throw new Error(`Transaction failed: ${JSON.stringify(txInfo.meta.err)}`);
+              }
+              // Transaction succeeded, just slow confirmation
+              console.log(`✅ Transaction succeeded (confirmed via fallback check)`);
+              // Create a mock confirmation object for consistency
+              confirmation = { value: { err: null } };
+            } else {
+              // Transaction not found - might still be processing or dropped
+              const explorerUrl = isMainnet 
+                ? `https://solscan.io/tx/${signature}`
+                : `https://solscan.io/tx/${signature}?cluster=devnet`;
+              throw new Error(
+                `Transaction was not confirmed in ${confirmationTimeout}.00 seconds. ` +
+                `It is unknown if it succeeded or failed. Check signature ${signature} using the Solana Explorer or CLI tools. ` +
+                `Explorer: ${explorerUrl}`
+              );
+            }
+          } else {
+            // Re-throw non-timeout errors
+            throw confirmError;
+          }
+        }
         
         // CRITICAL: Check if transaction had errors (program errors are NOT thrown by confirmTransaction!)
         // A transaction can be "confirmed" but still have failed at the program level
