@@ -107,82 +107,86 @@ let takerSearchTerm = ''; // Search term for taker NFTs
 let solPriceUSD = null; // Cached SOL price in USD
 
 // ========================================
-// ANIMAL IMAGE SYSTEM (for cNFTs without images)
+// NFT PLACEHOLDER IMAGE SYSTEM
 // ========================================
-// Uses https://animals.maxz.dev/ free API for persistent cNFT images
-const ANIMAL_TYPES = ['cat', 'dog', 'fox', 'panda', 'red_panda', 'bird', 'koala', 'racoon'];
-const CNFT_IMAGE_STORAGE_KEY = 'cnft_animal_images';
+// Uses DiceBear API for deterministic avatar images based on NFT mint address
+// https://www.dicebear.com/ - free API that returns images directly from URL
+const AVATAR_STYLES = ['adventurer', 'avataaars', 'bottts', 'fun-emoji', 'lorelei', 'notionists', 'pixel-art', 'thumbs'];
+const NFT_IMAGE_STORAGE_KEY = 'nft_placeholder_images';
 
-// Get or assign a persistent animal image for a cNFT
-function getCnftAnimalImage(assetId) {
+// Get or generate a persistent placeholder image for any NFT
+function getPlaceholderImage(assetId) {
     if (!assetId) return null;
     
     // Load existing mappings from localStorage
     let imageMap = {};
     try {
-        const stored = localStorage.getItem(CNFT_IMAGE_STORAGE_KEY);
+        const stored = localStorage.getItem(NFT_IMAGE_STORAGE_KEY);
         if (stored) {
             imageMap = JSON.parse(stored);
         }
     } catch (e) {
-        console.warn('Failed to load cNFT image map:', e);
+        console.warn('Failed to load NFT image map:', e);
     }
     
-    // If this cNFT already has an assigned image, return it
+    // If this NFT already has an assigned image, return it
     if (imageMap[assetId]) {
         return imageMap[assetId];
     }
     
-    // Assign a new random animal image
-    // Use asset ID hash to pick consistent animal type
+    // Pick a consistent avatar style based on asset ID hash
     const hash = assetId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    const animalType = ANIMAL_TYPES[hash % ANIMAL_TYPES.length];
+    const style = AVATAR_STYLES[hash % AVATAR_STYLES.length];
     
-    // Generate unique image URL with asset-based seed for consistency
-    const imageUrl = `https://animals.maxz.dev/api/${animalType}?seed=${assetId.substring(0, 8)}`;
+    // DiceBear returns images directly - use asset ID as seed for consistency
+    // This guarantees the same NFT always gets the same image
+    const imageUrl = `https://api.dicebear.com/7.x/${style}/svg?seed=${assetId}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`;
     
     // Store the mapping
     imageMap[assetId] = imageUrl;
     try {
-        localStorage.setItem(CNFT_IMAGE_STORAGE_KEY, JSON.stringify(imageMap));
+        localStorage.setItem(NFT_IMAGE_STORAGE_KEY, JSON.stringify(imageMap));
     } catch (e) {
-        console.warn('Failed to save cNFT image map:', e);
+        console.warn('Failed to save NFT image map:', e);
     }
     
-    console.log(`🐾 Assigned ${animalType} image to cNFT ${assetId.substring(0, 8)}...`);
+    console.log(`🎨 Generated ${style} avatar for NFT ${assetId.substring(0, 8)}...`);
     return imageUrl;
 }
 
-// Get image for any NFT (uses animal API for cNFTs without images)
+
+// Get image for any NFT (uses placeholder for cNFTs, metadata for others)
 function getNftImage(nft) {
-    // If NFT already has an image, use it
+    // For cNFTs, ALWAYS use placeholder images (metadata URIs are often fake/broken in test env)
+    if (nft.isCompressed && nft.mint) {
+        return getPlaceholderImage(nft.mint);
+    }
+    
+    // For regular NFTs, use their metadata image if available
     if (nft.image && !nft.image.includes('No Image')) {
         return nft.image;
     }
     
-    // For cNFTs without images, get a persistent animal image
-    if (nft.isCompressed && nft.mint) {
-        return getCnftAnimalImage(nft.mint);
+    // Fallback to placeholder based on mint
+    if (nft.mint) {
+        return getPlaceholderImage(nft.mint);
     }
     
-    // Fallback to placeholder
     return null;
 }
 
-// Preload animal images for a list of NFTs
+// Preload placeholder images for cNFTs
 async function preloadAnimalImages(nfts) {
-    const cnftsWithoutImages = nfts.filter(nft => 
-        nft.isCompressed && (!nft.image || nft.image.includes('No Image'))
-    );
+    const cnftsNeedingImages = nfts.filter(nft => nft.isCompressed);
     
-    if (cnftsWithoutImages.length === 0) return;
+    if (cnftsNeedingImages.length === 0) return;
     
-    console.log(`🐾 Preloading ${cnftsWithoutImages.length} animal images for cNFTs...`);
+    console.log(`🎨 Preloading ${cnftsNeedingImages.length} placeholder images for cNFTs...`);
     
     // Assign images to all cNFTs (this stores them in localStorage)
-    cnftsWithoutImages.forEach(nft => {
+    cnftsNeedingImages.forEach(nft => {
         if (nft.mint) {
-            getCnftAnimalImage(nft.mint);
+            getPlaceholderImage(nft.mint);
         }
     });
 }
@@ -525,13 +529,26 @@ function renderNFTs(wallet, nfts) {
     container.innerHTML = filteredNfts.map((nft, index) => {
         // Find original index in unfiltered array for toggle functionality
         const originalIndex = nfts.findIndex(n => n.mint === nft.mint);
-        // Get image - uses animal API for cNFTs without images
-        const imageUrl = getNftImage(nft) || placeholderSvg;
+        // Get image - uses animal API for cNFTs
+        let imageUrl = getNftImage(nft);
+        
+        // Debug: log what image URL we're using for cNFTs
+        if (nft.isCompressed) {
+            console.log(`📷 cNFT ${nft.mint.substring(0, 8)}: isCompressed=${nft.isCompressed}, imageUrl=${imageUrl?.substring(0, 50)}...`);
+        }
+        
+        // Use placeholder if no image
+        if (!imageUrl) {
+            imageUrl = placeholderSvg;
+        }
+        
+        // Store mint for fallback animal image generation
         return `
             <div class="nft-card" data-index="${originalIndex}">
                 <img class="nft-image" 
                      src="${imageUrl}" 
                      alt="${nft.name}"
+                     data-mint="${nft.mint}"
                      data-fallback="${placeholderSvg}">
                 <div class="nft-name">${nft.name || 'Unknown NFT'}</div>
                 <div class="nft-type">${getNftTypeLabel(nft)}</div>
@@ -540,10 +557,18 @@ function renderNFTs(wallet, nfts) {
         `;
     }).join('');
     
-    // Add CSP-compliant error handlers after rendering
+    // Add CSP-compliant error handlers - use placeholder image as fallback for ALL NFTs
     container.querySelectorAll('.nft-image').forEach(img => {
         img.addEventListener('error', function() {
-            this.src = this.dataset.fallback;
+            const mint = this.dataset.mint;
+            if (mint) {
+                // Use placeholder image as fallback
+                const placeholderUrl = getPlaceholderImage(mint);
+                console.log(`🎨 Image failed, using placeholder for ${mint.substring(0, 8)}...`);
+                this.src = placeholderUrl;
+            } else {
+                this.src = this.dataset.fallback;
+            }
         }, { once: true }); // Only fire once to prevent infinite loops
     });
 }
@@ -628,6 +653,32 @@ function resetWallet(wallet) {
     }
     
     addLog(`${wallet === 'maker' ? 'Maker' : 'Taker'} form reset`, 'info');
+}
+
+// Reset selections after successful swap (keeps wallet data, just clears selections)
+function resetSelectionsAfterSwap() {
+    // Clear NFT selections
+    selectedMakerNFTs = [];
+    selectedTakerNFTs = [];
+    
+    // Clear SOL inputs
+    document.getElementById('maker-sol').value = '';
+    document.getElementById('taker-sol').value = '';
+    
+    // Re-render NFTs to clear selection highlights
+    if (makerData && makerData.nfts) {
+        renderNFTs('maker', makerData.nfts);
+        updateNFTSelection('maker');
+    }
+    if (takerData && takerData.nfts) {
+        renderNFTs('taker', takerData.nfts);
+        updateNFTSelection('taker');
+    }
+    
+    // Keep swap button enabled (wallets are still loaded)
+    // User can immediately select new NFTs for another swap
+    
+    addLog('🔄 Selections reset for next swap', 'info');
 }
 
 // Add log entry with support for cNFT/Jito log types
@@ -803,10 +854,14 @@ function showConfirmationModal() {
             
             const img = document.createElement('img');
             img.className = 'nft-preview-image';
-            // Use animal image for cNFTs without images
-            const previewPlaceholder = 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'50\' height=\'50\'%3E%3Crect fill=\'%23ddd\' width=\'50\' height=\'50\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23999\' font-family=\'Arial\' font-size=\'10\'%3ENone%3C/text%3E%3C/svg%3E';
-            img.src = getNftImage(nft) || previewPlaceholder;
+            // Use NFT image or placeholder
+            img.src = getNftImage(nft) || getPlaceholderImage(nft.mint);
             img.alt = nft.name || 'Unknown NFT';
+            img.dataset.mint = nft.mint; // Store mint for fallback
+            // Add error handler for fallback
+            img.addEventListener('error', function() {
+                this.src = getPlaceholderImage(this.dataset.mint);
+            }, { once: true });
             
             const details = document.createElement('div');
             details.className = 'nft-preview-details';
@@ -858,10 +913,14 @@ function showConfirmationModal() {
             
             const img = document.createElement('img');
             img.className = 'nft-preview-image';
-            // Use animal image for cNFTs without images
-            const takerPlaceholder = 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'50\' height=\'50\'%3E%3Crect fill=\'%23ddd\' width=\'50\' height=\'50\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' dy=\'.3em\' fill=\'%23999\' font-family=\'Arial\' font-size=\'10\'%3ENone%3C/text%3E%3C/svg%3E';
-            img.src = getNftImage(nft) || takerPlaceholder;
+            // Use NFT image or placeholder
+            img.src = getNftImage(nft) || getPlaceholderImage(nft.mint);
             img.alt = nft.name || 'Unknown NFT';
+            img.dataset.mint = nft.mint; // Store mint for fallback
+            // Add error handler for fallback
+            img.addEventListener('error', function() {
+                this.src = getPlaceholderImage(this.dataset.mint);
+            }, { once: true });
             
             const details = document.createElement('div');
             details.className = 'nft-preview-details';
@@ -1457,15 +1516,28 @@ async function executeAtomicSwap(params) {
         addLog(`🔗 Signature: <a href="${executeData.data.explorerUrl}" target="_blank" rel="noopener noreferrer" style="color: #22c55e; text-decoration: underline;">${executeData.data.signature}</a>`, 'success');
 
         // Fetch transaction fee from blockchain
+        // For bulk swaps with multiple transactions, sum all fees
         let blockchainFee = null;
         try {
-            const feeResponse = await fetch(`/api/test/transaction-fee?signature=${executeData.data.signature}`);
-            const feeData = await feeResponse.json();
-            if (feeData.success && feeData.data.fee) {
-                blockchainFee = feeData.data.fee; // Fee in lamports
+            const signatures = executeData.data.signatures && executeData.data.signatures.length > 0 
+                ? executeData.data.signatures 
+                : [executeData.data.signature];
+            
+            let totalFee = 0;
+            for (const sig of signatures) {
+                const feeResponse = await fetch(`/api/test/transaction-fee?signature=${sig}`);
+                const feeData = await feeResponse.json();
+                if (feeData.success && feeData.data.fee) {
+                    totalFee += feeData.data.fee;
+                }
+            }
+            
+            if (totalFee > 0) {
+                blockchainFee = totalFee; // Total fee in lamports
                 const feeSol = (blockchainFee / 1e9).toFixed(6);
                 const feeUsd = solPriceUSD ? ` (~$${(blockchainFee / 1e9 * solPriceUSD).toFixed(4)} USD)` : '';
-                addLog(`💸 Blockchain fee: ${feeSol} SOL${feeUsd}`, 'info');
+                const txCount = signatures.length > 1 ? ` (${signatures.length} txns)` : '';
+                addLog(`💸 Blockchain fee: ${feeSol} SOL${feeUsd}${txCount}`, 'info');
             }
         } catch (feeError) {
             console.warn('Could not fetch transaction fee:', feeError);
@@ -1494,6 +1566,9 @@ async function executeAtomicSwap(params) {
         } else {
             addLog(`✅ Atomic swap completed successfully on ${networkDisplay}!`, 'success');
         }
+        
+        // Reset selections after successful swap
+        resetSelectionsAfterSwap();
 
     } catch (error) {
         console.error('Swap error:', error);

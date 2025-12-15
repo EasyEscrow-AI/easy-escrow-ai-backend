@@ -40,14 +40,29 @@ info:
     - ✅ **Metaplex Core NFTs**
     - 🔜 **Additional blockchains** - Coming soon
     
-    ## Bulk Swap Support (NEW!)
+    ## Bulk Swap Support
     
-    EasyEscrow.ai now supports **bulk swaps** with up to **10 assets on each side**:
+    EasyEscrow.ai supports **bulk swaps** with up to **10 assets on each side** for ALL NFT types:
     
-    - **Up to 10 NFTs/cNFTs per side** - Swap multiple assets in a single offer
-    - **Mixed asset types** - Combine traditional NFTs, cNFTs, and SOL in one swap
+    - **Up to 10 NFTs per side** - Swap multiple SPL NFTs, cNFTs, or Core NFTs
+    - **Mixed asset types** - Combine any NFT types + SOL in one swap
     - **Automatic transaction splitting** - Large swaps are split into multiple transactions
     - **Atomic execution** - All transactions succeed or none do (via Jito bundles on mainnet)
+    - **Direct transfers** - Bypasses escrow program for bulk swaps, using direct token transfers
+    
+    ### Bulk Swap Limits
+    
+    | NFT Type | Per Transaction | Max Per Side |
+    |----------|----------------|--------------|
+    | SPL NFTs | ~5 | 10 |
+    | Core NFTs | ~4 | 10 |
+    | cNFTs | ~3 | 10 |
+    | Mixed | Varies | 10 total |
+    
+    ### Simple vs Bulk Swaps
+    
+    - **Simple swaps (1-2 NFTs)**: Uses escrow program in a single atomic transaction
+    - **Bulk swaps (3+ NFTs)**: Uses Jito bundles with direct token transfers
     
     ### cNFT-Specific Features
     
@@ -132,7 +147,7 @@ tags:
   - name: Offers
     description: Atomic swap offer lifecycle management
   - name: Bundle Monitoring
-    description: cNFT bundle status and recovery (for bulk swaps)
+    description: Bundle status and recovery for bulk swaps (all NFT types)
 
 paths:
   /:
@@ -638,8 +653,8 @@ paths:
         3. Broadcast to Solana
         4. Call /confirm with the signature
         
-        **Multiple Transactions (Bulk cNFT swaps):**
-        For swaps involving cNFTs, the API may return multiple transactions in a `bulkSwap` object:
+        **Multiple Transactions (Bulk swaps):**
+        For swaps involving 3+ NFTs of any type, the API may return multiple transactions in a `bulkSwap` object:
         - Each transaction must be signed by the appropriate party (maker or taker)
         - Transactions should be sent sequentially or as a Jito bundle
         - The `requiredSigners` array indicates which wallet(s) must sign each transaction
@@ -714,7 +729,7 @@ paths:
                             description: Durable nonce account used in the transaction
                       bulkSwap:
                         type: object
-                        description: Multiple transactions (for cNFT swaps requiring transaction splitting)
+                        description: Multiple transactions (for bulk swaps with 3+ NFTs of any type)
                         properties:
                           isBulkSwap:
                             type: boolean
@@ -722,6 +737,17 @@ paths:
                             example: true
                           strategy:
                             type: string
+                            description: |
+                              Swap strategy:
+                              - SINGLE_TRANSACTION: Simple swap via escrow program
+                              - DIRECT_BUBBLEGUM_BUNDLE: cNFT bulk swap
+                              - DIRECT_NFT_BUNDLE: SPL/Core NFT bulk swap
+                              - MIXED_NFT_BUNDLE: Mixed NFT types bulk swap
+                            enum:
+                              - SINGLE_TRANSACTION
+                              - DIRECT_BUBBLEGUM_BUNDLE
+                              - DIRECT_NFT_BUNDLE
+                              - MIXED_NFT_BUNDLE
                             description: Transaction strategy used
                             enum: [SINGLE_TRANSACTION, DIRECT_BUBBLEGUM_BUNDLE]
                             example: "DIRECT_BUBBLEGUM_BUNDLE"
@@ -843,7 +869,7 @@ paths:
         - Bundle Monitoring
       summary: Get bundle execution status
       description: |
-        Get the current status of a cNFT bulk swap bundle execution.
+        Get the current status of a bulk swap bundle execution (for swaps with 3+ NFTs).
         
         Bundle statuses:
         - **PENDING**: Bundle created, not yet submitted
@@ -903,7 +929,7 @@ paths:
         - Bundle Monitoring
       summary: Retry failed bundle
       description: |
-        Retry a failed or timed-out cNFT bulk swap bundle.
+        Retry a failed or timed-out bulk swap bundle (for swaps with 3+ NFTs).
         
         This endpoint will:
         1. Fetch fresh Merkle proofs for all cNFTs
