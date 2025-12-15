@@ -1146,8 +1146,11 @@ router.post('/api/quote', async (req: Request, res: Response) => {
     const isCnftSwap = cNFTCount > 0;
     
     // Calculate Jito tip if bulk swap
-    const JITO_TIP_LAMPORTS = 10000; // 0.00001 SOL per tx in bundle
-    const estimatedJitoTipLamports = isBulkSwap ? JITO_TIP_LAMPORTS * swapAnalysis.transactionCount : 0;
+    // Jito tip is per bundle (not per transaction)
+    // Default: 0.001 SOL (1,000,000 lamports) - above 50th percentile for reliable inclusion
+    // This matches DEFAULT_JITO_TIP_LAMPORTS in escrow-program.service.ts
+    const DEFAULT_JITO_TIP_LAMPORTS = 1_000_000; // 0.001 SOL per bundle
+    const estimatedJitoTipLamports = isBulkSwap ? DEFAULT_JITO_TIP_LAMPORTS : 0;
 
     // ========================================
     // 9. DETERMINE STATUS AND WARNINGS
