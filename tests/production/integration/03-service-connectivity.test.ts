@@ -96,7 +96,8 @@ describe('🔍 Production Integration: Service Connectivity', () => {
         .expect(200);
 
       expect(response.body.success).to.be.true;
-      expect(response.body.data).to.be.an('array');
+      expect(response.body.data).to.be.an('object');
+      expect(response.body.data).to.have.property('offers').that.is.an('array');
       console.log('✅ Database connectivity: Verified via API response');
     });
 

@@ -29,18 +29,12 @@ describe('TransactionBuilder - cNFT Integration', () => {
   let treasuryPDA: PublicKey;
   let nonceAccount: PublicKey;
   let programId: PublicKey;
-
+  let mockTreeAddress: PublicKey = PublicKey.default; // Initialize with default to satisfy TypeScript
+  let mockNftMint: PublicKey = Keypair.generate().publicKey; // Initialize with generated key
   const mockCnftAssetId = 'test-cnft-asset-123';
-  const mockTreeAddress = new PublicKey('11111111111111111111111111111111');
-  const mockNftMint = new PublicKey('22222222222222222222222222222222');
 
-  const mockProofResponse: DasProofResponse = {
-    root: 'root-hash-123',
-    proof: ['proof-node-1', 'proof-node-2', 'proof-node-3'],
-    node_index: 0,
-    leaf: 'leaf-hash-123',
-    tree_id: mockTreeAddress.toBase58(),
-  };
+  // Mock proof response will be created in beforeEach after mockTreeAddress is initialized
+  let mockProofResponse: DasProofResponse;
 
   // Mock transfer params will be created in beforeEach after keypairs are initialized
   let mockCnftTransferParams: CnftTransferParams;
@@ -50,6 +44,19 @@ describe('TransactionBuilder - cNFT Integration', () => {
     platformAuthority = Keypair.generate();
     makerKeypair = Keypair.generate();
     takerKeypair = Keypair.generate();
+    
+    // Re-initialize valid public keys for mocks (overwrite defaults)
+    mockTreeAddress = PublicKey.default; // Valid placeholder
+    mockNftMint = Keypair.generate().publicKey; // Valid generated key
+    
+    // Create mock proof response after mockTreeAddress is initialized
+    mockProofResponse = {
+      root: 'root-hash-123',
+      proof: ['proof-node-1', 'proof-node-2', 'proof-node-3'],
+      node_index: 0,
+      leaf: 'leaf-hash-123',
+      tree_id: mockTreeAddress.toBase58(),
+    };
     
     // Create mock transfer params after keypairs are initialized
     mockCnftTransferParams = {
@@ -117,12 +124,11 @@ describe('TransactionBuilder - cNFT Integration', () => {
       getCnftProof: async () => mockProofResponse,
     } as any;
 
-    // Create TransactionBuilder with mocked CnftService
+    // Create TransactionBuilder (cnftService is now initialized internally)
     transactionBuilder = new TransactionBuilder(
       connection,
       platformAuthority,
-      undefined, // altService
-      cnftService
+      treasuryPDA // treasuryPDA is optional third parameter
     );
   });
 
@@ -510,8 +516,7 @@ describe('TransactionBuilder - cNFT Integration', () => {
       const builderWithoutCnft = new TransactionBuilder(
         connection,
         platformAuthority,
-        undefined,
-        spyCnftService as any
+        treasuryPDA // treasuryPDA is optional third parameter
       );
 
       const inputs: TransactionBuildInputs = {

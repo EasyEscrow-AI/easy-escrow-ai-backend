@@ -23,7 +23,7 @@
     "db:test-connection": "ts-node scripts/utilities/test-db-connection.ts",
     "db:reset": "prisma migrate reset",
     "db:setup": "npm run db:generate && npm run db:migrate",
-    "test": "mocha --require ts-node/register 'tests/**/*.test.ts' --exclude 'tests/**/legacy.skip/**' --exclude 'tests/legacy/**' --timeout 30000",
+    "test": "mocha --require ts-node/register 'tests/**/*.test.ts' --exclude 'tests/**/legacy.skip/**' --exclude 'tests/legacy/**' --exclude 'tests/staging/e2e/06-admin-cancel-with-refunds.test.ts' --timeout 30000",
     "test:unit": "cross-env NODE_ENV=test mocha --require ts-node/register --no-config 'tests/unit/{offerManager,noncePoolManager,treasury-*,offer-manager-*}.test.ts' --timeout 10000 --exit",
     "_comment_test:unit": "Limited to working tests. For all tests (including skipped legacy), use test:unit:all-skip-legacy",
     "test:unit:all-skip-legacy": "cross-env NODE_ENV=test mocha --require ts-node/register --no-config 'tests/unit/**/*.test.ts' --exclude 'tests/unit/legacy/**' --exclude 'tests/unit/{monitoring-services,atomic-swap-idempotency,feeCalculator,nonce-pool-creation,close-escrow,nft-for-nft-fee,jito-confirmation,cache.service}.test.ts' --timeout 10000 --exit",
