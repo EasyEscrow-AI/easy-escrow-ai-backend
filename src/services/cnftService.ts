@@ -550,9 +550,11 @@ export class CnftService {
     const canopyDepth = await this.getTreeCanopyDepth(treeAddress, maxDepth);
     
     // CRITICAL: Trim proof based on actual canopy depth
-    // We only need the last (maxDepth - canopyDepth) proof nodes
-    // The first `canopyDepth` levels are stored on-chain in the canopy
-    const proofNodesToSend = dasProof.proof.slice(canopyDepth);
+    // The canopy stores the uppermost levels (closest to root) on-chain
+    // We need to remove the LAST `canopyDepth` nodes (closest to root)
+    // and keep the FIRST (maxDepth - canopyDepth) nodes (closest to leaf)
+    // Correct operation: .slice(0, proof.length - canopyDepth)
+    const proofNodesToSend = dasProof.proof.slice(0, dasProof.proof.length - canopyDepth);
     const proof = proofNodesToSend.map(node => Array.from(bs58.decode(node)));
     
     // Calculate estimated proof size contribution to transaction
