@@ -15,6 +15,7 @@ import { Router, Request, Response } from 'express';
 import { Connection, Keypair, Transaction, VersionedTransaction, sendAndConfirmTransaction } from '@solana/web3.js';
 import bs58 from 'bs58';
 import { offerManager } from './offers.routes';
+import { getEscrowProgramService } from '../services/escrow-program.service';
 
 // Helper function to detect if transaction is versioned (V0)
 function isVersionedTransaction(buffer: Buffer): boolean {
@@ -122,10 +123,11 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
     }
     
     // ========== BULK SWAP HANDLING ==========
-    // cNFT swaps require multiple transactions executed sequentially
+    // Bulk swaps can use Jito bundles (mainnet) or sequential execution (devnet)
     if (bulkSwapInfo && bulkSwapInfo.transactions && bulkSwapInfo.transactions.length > 1) {
       console.log(`\n🚀 BULK SWAP DETECTED: ${bulkSwapInfo.transactions.length} transactions`);
       console.log(`   Strategy: ${bulkSwapInfo.strategy}`);
+      console.log(`   Requires Jito Bundle: ${bulkSwapInfo.requiresJitoBundle || false}`);
       
       // Load keypairs first
       let makerPrivateKey: string | undefined;
@@ -156,9 +158,127 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
       console.log('   Maker:', makerAddress);
       console.log('   Taker:', takerAddress);
       
+      // Check if Jito bundle is required (mainnet with requiresJitoBundle flag)
+      if (bulkSwapInfo.requiresJitoBundle && isMainnet) {
+        console.log('\n📦 Using Jito Bundle for atomic execution...');
+        
+        try {
+          // Collect and sign all transactions
+          const signedTransactions: string[] = [];
+          
+          for (let i = 0; i < bulkSwapInfo.transactions.length; i++) {
+            const txInfo = bulkSwapInfo.transactions[i];
+            console.log(`\n📝 Signing TX ${i + 1}/${bulkSwapInfo.transactions.length}: ${txInfo.purpose}`);
+            
+            if (!txInfo.serialized) {
+              return res.status(400).json({
+                success: false,
+                error: `Transaction ${i + 1} missing serialized data`,
+                timestamp: new Date().toISOString(),
+              });
+            }
+            
+            const txBuffer = Buffer.from(txInfo.serialized, 'base64');
+            const isVersioned = (txBuffer[0] & 0x80) !== 0;
+            
+            // Determine signers for THIS specific transaction
+            const txRequiredSigners = txInfo.requiredSigners || requireSignatures || [];
+            const signers: Keypair[] = [];
+            
+            if (txRequiredSigners.includes(makerAddress)) {
+              signers.push(makerKeypair);
+              console.log('   🔐 Adding Maker signature');
+            }
+            
+            if (txRequiredSigners.includes(takerAddress)) {
+              signers.push(takerKeypair);
+              console.log('   🔐 Adding Taker signature');
+            }
+            
+            // Sign the transaction
+            let signedTxBuffer: Buffer;
+            if (isVersioned) {
+              const versionedTx = VersionedTransaction.deserialize(txBuffer);
+              if (signers.length > 0) {
+                versionedTx.sign(signers);
+              }
+              signedTxBuffer = Buffer.from(versionedTx.serialize());
+            } else {
+              const tx = Transaction.from(txBuffer);
+              if (signers.length > 0) {
+                tx.partialSign(...signers);
+              }
+              signedTxBuffer = tx.serialize();
+            }
+            
+            // Convert to base64 for Jito bundle submission
+            signedTransactions.push(signedTxBuffer.toString('base64'));
+            console.log(`   ✅ TX ${i + 1} signed`);
+          }
+          
+          // Submit bundle to Jito
+          console.log(`\n🚀 Submitting ${signedTransactions.length} transactions as Jito bundle...`);
+          const escrowProgramService = getEscrowProgramService();
+          
+          const bundleResult = await escrowProgramService.sendBundleViaJito(signedTransactions, {
+            skipSimulation: false,
+            description: `Bulk swap: ${bulkSwapInfo.strategy}`,
+          });
+          
+          if (!bundleResult.success || !bundleResult.bundleId) {
+            return res.status(500).json({
+              success: false,
+              error: `Jito bundle submission failed: ${bundleResult.error || 'Unknown error'}`,
+              timestamp: new Date().toISOString(),
+            });
+          }
+          
+          const bundleId = bundleResult.bundleId;
+          console.log(`✅ Bundle submitted to Jito: ${bundleId}`);
+          
+          // Wait for bundle confirmation
+          console.log('⏳ Waiting for bundle confirmation...');
+          const confirmation = await escrowProgramService.waitForBundleConfirmation(bundleId, 60); // 60s timeout for mainnet
+          
+          if (!confirmation.confirmed) {
+            return res.status(500).json({
+              success: false,
+              error: `Jito bundle ${confirmation.status}: ${confirmation.error || 'Bundle did not land'}`,
+              bundleId,
+              bundleStatus: confirmation.status,
+              timestamp: new Date().toISOString(),
+            });
+          }
+          
+          console.log(`✅ Bundle landed in slot ${confirmation.slot}`);
+          
+          return res.json({
+            success: true,
+            data: {
+              bundleId,
+              bundleStatus: confirmation.status,
+              slot: confirmation.slot,
+              network: networkName,
+              isBulkSwap: true,
+              transactionCount: bulkSwapInfo.transactions.length,
+            },
+            timestamp: new Date().toISOString(),
+          });
+          
+        } catch (bundleError: any) {
+          console.error('❌ Jito bundle error:', bundleError);
+          return res.status(500).json({
+            success: false,
+            error: `Jito bundle execution failed: ${bundleError.message || 'Unknown error'}`,
+            timestamp: new Date().toISOString(),
+          });
+        }
+      }
+      
+      // Fallback: Execute each transaction sequentially (for devnet or when Jito not required)
+      console.log('\n📦 Executing transactions sequentially...');
       const signatures: string[] = [];
       
-      // Execute each transaction sequentially
       for (let i = 0; i < bulkSwapInfo.transactions.length; i++) {
         const txInfo = bulkSwapInfo.transactions[i];
         console.log(`\n📝 Processing TX ${i + 1}/${bulkSwapInfo.transactions.length}: ${txInfo.purpose}`);
