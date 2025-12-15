@@ -42,27 +42,7 @@ info:
     
     ## Bulk Swap Support
     
-    EasyEscrow.ai supports **bulk swaps** with up to **10 assets on each side** for ALL NFT types:
-    
-    - **Up to 10 NFTs per side** - Swap multiple SPL NFTs, cNFTs, or Core NFTs
-    - **Mixed asset types** - Combine any NFT types + SOL in one swap
-    - **Automatic transaction splitting** - Large swaps are split into multiple transactions
-    - **Atomic execution** - All transactions succeed or none do (via Jito bundles on mainnet)
-    - **Direct transfers** - Bypasses escrow program for bulk swaps, using direct token transfers
-    
-    ### Bulk Swap Limits
-    
-    | NFT Type | Per Transaction | Max Per Side |
-    |----------|----------------|--------------|
-    | SPL NFTs | ~5 | 10 |
-    | Core NFTs | ~4 | 10 |
-    | cNFTs | ~3 | 10 |
-    | Mixed | Varies | 10 total |
-    
-    ### Simple vs Bulk Swaps
-    
-    - **Simple swaps (1-2 NFTs)**: Uses escrow program in a single atomic transaction
-    - **Bulk swaps (3+ NFTs)**: Uses Jito bundles with direct token transfers
+    Put simply bulk swaps of up to 4 NFTs per swap are supported. Any combination of NFT type. Bulk swap atomicity provided by JITO Solana validator.
     
     ### cNFT-Specific Features
     
@@ -72,15 +52,14 @@ info:
     - **Rate-limited DAS API** - Built-in rate limiting, batching, and caching
     
     ## Additional Features
-    - **Custom expiry times (5 minutes - 24 hours)** with flexible input formats (presets, duration, timestamps)
-    - On-chain non-custodial functionality (assets secured by Smart Contract)
-    - Automatic atomic settlement when both assets are verified on-chain
-    - Automatic agreement expiry and refund handling (auto return to sender)
-    - Comprehensive webhook notifications (real-time updates)
-    - Receipt generation and on-chain verification of assets
-    - Transaction logging and monitoring to ensure a smooth escrow
-    - Rate Limiting: 10 agreement requests per 15 minutes
-    - Idempotency: Agreement creation endpoints support idempotency keys to prevent duplicates
+    - **Custom expiry times** - Offers can be set to expire between 5 minutes and 24 hours
+    - **On-chain non-custodial functionality** - Assets secured by Smart Contract, never held in escrow
+    - **Automatic atomic settlement** - Swaps execute atomically when both parties sign the transaction
+    - **Automatic offer expiry** - Expired offers are automatically marked as expired
+    - **Comprehensive webhook notifications** - Real-time updates for all swap lifecycle events
+    - **Transaction logging and monitoring** - Complete audit trail of all swap transactions
+    - **Rate Limiting** - Standard endpoints: 100 requests per 15 minutes per IP; Strict endpoints: 20 requests per 15 minutes per IP
+    - **Idempotency** - Offer creation endpoints support idempotency keys to prevent duplicate offers
     
     EasyEscrow.ai uses **atomic swaps** - instant, non-custodial exchanges that execute in a single transaction.
     Your assets are NEVER held in escrow. The swap happens atomically or not at all.
