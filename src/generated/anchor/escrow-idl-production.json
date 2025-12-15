@@ -1,5 +1,5 @@
 {
-  "address": "AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei",
+  "address": "2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx",
   "metadata": {
     "name": "escrow",
     "version": "0.1.0",
@@ -398,8 +398,6 @@
           "optional": true
         },
         {
-<<<<<<< HEAD
-=======
           "name": "maker_core_collection",
           "docs": [
             "Maker's Core NFT collection (required if maker's Core NFT belongs to a collection)"
@@ -407,7 +405,6 @@
           "optional": true
         },
         {
->>>>>>> origin/master
           "name": "taker_core_asset",
           "docs": [
             "Taker's Core NFT asset account (for Core NFT transfers)"
@@ -416,8 +413,6 @@
           "optional": true
         },
         {
-<<<<<<< HEAD
-=======
           "name": "taker_core_collection",
           "docs": [
             "Taker's Core NFT collection (required if taker's Core NFT belongs to a collection)"
@@ -425,7 +420,6 @@
           "optional": true
         },
         {
->>>>>>> origin/master
           "name": "mpl_core_program",
           "docs": [
             "Metaplex Core program for Core NFT transfers"
