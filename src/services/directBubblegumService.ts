@@ -147,20 +147,49 @@ export class DirectBubblegumService {
           console.log(`[DirectBubblegumService] Waiting ${delay}ms for tree updates to propagate...`);
           await new Promise(resolve => setTimeout(resolve, delay));
           
-          // Check if tree is still updating by comparing sequence numbers
-          try {
-            const updatedTreeAccount = await ConcurrentMerkleTreeAccount.fromAccountAddress(
-              this.connection,
-              treeAddress
-            );
-            const updatedSeq = updatedTreeAccount.getCurrentSeq();
-            const originalSeq = treeAccount.getCurrentSeq();
+          // CRITICAL: Wait for tree sequence to stabilize before retrying
+          // If the tree is actively updating, we need to wait until it stops changing
+          // This prevents fetching proofs while the tree is mid-update
+          const maxStabilityChecks = 5; // Check up to 5 times
+          const stabilityCheckInterval = 500; // Check every 500ms
+          let lastSeq = treeAccount.getCurrentSeq();
+          let stableCount = 0;
+          const requiredStableChecks = 2; // Need 2 consecutive stable checks
+          
+          console.log(`[DirectBubblegumService] Waiting for tree sequence to stabilize (current: ${lastSeq.toString()})...`);
+          
+          for (let check = 0; check < maxStabilityChecks; check++) {
+            await new Promise(resolve => setTimeout(resolve, stabilityCheckInterval));
             
-            if (updatedSeq.toString() !== originalSeq.toString()) {
-              console.log(`[DirectBubblegumService] Tree sequence changed: ${originalSeq} → ${updatedSeq} (tree is actively updating)`);
+            try {
+              const currentTreeAccount = await ConcurrentMerkleTreeAccount.fromAccountAddress(
+                this.connection,
+                treeAddress
+              );
+              const currentSeq = currentTreeAccount.getCurrentSeq();
+              
+              if (currentSeq.toString() === lastSeq.toString()) {
+                stableCount++;
+                console.log(`[DirectBubblegumService] Tree sequence stable: ${currentSeq.toString()} (${stableCount}/${requiredStableChecks} checks)`);
+                
+                if (stableCount >= requiredStableChecks) {
+                  console.log(`[DirectBubblegumService] ✅ Tree sequence stabilized at ${currentSeq.toString()}`);
+                  break;
+                }
+              } else {
+                console.log(`[DirectBubblegumService] Tree sequence changed: ${lastSeq.toString()} → ${currentSeq.toString()} (tree still updating)`);
+                lastSeq = currentSeq;
+                stableCount = 0; // Reset stability counter
+              }
+            } catch (seqError) {
+              console.warn('[DirectBubblegumService] Could not check tree sequence:', seqError);
+              // Continue anyway - we'll retry with fresh proof
+              break;
             }
-          } catch (seqError) {
-            console.warn('[DirectBubblegumService] Could not check tree sequence:', seqError);
+          }
+          
+          if (stableCount < requiredStableChecks) {
+            console.warn(`[DirectBubblegumService] ⚠️ Tree sequence did not fully stabilize (${stableCount}/${requiredStableChecks} stable checks), but proceeding with retry`);
           }
           
           // Retry with fresh proof (skip cache)
