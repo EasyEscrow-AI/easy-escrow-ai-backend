@@ -171,7 +171,7 @@ describe('🚀 Production E2E: Bulk Swap (2-4 NFTs) - Mainnet', () => {
       console.log(`\n✅ All ${bulkResult.signatures.length} transactions confirmed!`);
       bulkResult.signatures.forEach((sig, i) => {
         console.log(`  Tx ${i + 1}: ${sig}`);
-        displayExplorerLink(sig, 'mainnet');
+        displayExplorerLink(sig, 'mainnet-beta');
       });
       
       console.log('\n✅ Bulk swap 2+2 completed successfully!');

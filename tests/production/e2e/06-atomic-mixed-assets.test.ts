@@ -171,7 +171,7 @@ describe('🚀 Production E2E: Mixed Assets (Mainnet)', () => {
       console.log('\n⏳ Waiting for confirmation...');
       await waitForConfirmation(connection, swapSignature!);
       console.log('✅ Transaction confirmed!');
-      displayExplorerLink(swapSignature!, 'mainnet');
+      displayExplorerLink(swapSignature!, 'mainnet-beta');
       
       console.log('\n✅ Mixed asset swap (NFT + SOL → NFT) completed successfully!');
     });
@@ -345,7 +345,7 @@ describe('🚀 Production E2E: Mixed Assets (Mainnet)', () => {
       console.log(`\n✅ All ${bulkResult.signatures.length} transactions confirmed!`);
       bulkResult.signatures.forEach((sig, i) => {
         console.log(`  Tx ${i + 1}: ${sig}`);
-        displayExplorerLink(sig, 'mainnet');
+        displayExplorerLink(sig, 'mainnet-beta');
       });
       
       console.log('\n✅ Complex mixed asset swap completed successfully!');
