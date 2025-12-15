@@ -153,7 +153,7 @@ services:
         scope: RUN_TIME
       
       - key: MAINNET_PROD_PDA_TREASURY_ADDRESS
-        value: FPC3dgGpTNxHVRxV9sJKqz1hPWGf59Fn99bNSmwH1iVu
+        value: BMFrxDVvrXiTAoM8VhFkpcHS97162bHv9Eo3D55oMCGq
         scope: RUN_TIME
       
       - key: MAINNET_PROD_ALT_ADDRESS
