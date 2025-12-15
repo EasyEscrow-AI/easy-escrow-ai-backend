@@ -288,15 +288,267 @@ export class AtomicSwapApiClient {
   }
 
   /**
-   * Helper: Sign and send multiple transactions for Jito bundle (devnet sequential mode)
+   * Helper: Sign and send multiple transactions for bulk swaps
    * 
-   * For bulk swaps (cNFT swaps), the API returns multiple transactions:
+   * For bulk swaps, the API returns multiple transactions:
    * - Transaction 0: SOL transfers (signed by maker + taker)
-   * - Transaction 1+: cNFT transfers (signed by the cNFT owner)
+   * - Transaction 1+: NFT transfers (signed by the NFT owner)
    * 
-   * On devnet, these are submitted sequentially. On mainnet, they'd be bundled via Jito.
+   * Uses Jito bundles on mainnet for atomic execution (prevents blockhash expiration).
+   * Falls back to sequential submission on devnet or if Jito is unavailable.
    */
   static async signAndSendBulkSwapTransactions(
+    bulkSwapData: {
+      transactions: Array<{
+        index: number;
+        purpose: string;
+        serializedTransaction: string;
+        requiredSigners?: string[];
+      }>;
+      requiresJitoBundle?: boolean;
+    },
+    maker: Keypair,
+    taker: Keypair,
+    connection: any
+  ): Promise<{ signatures: string[]; success: boolean; error?: string; bundleId?: string }> {
+    console.log(`[AtomicSwapApiClient] Processing bulk swap with ${bulkSwapData.transactions.length} transactions`);
+    
+    // Check if Jito bundle is required (mainnet production)
+    const requiresJito = bulkSwapData.requiresJitoBundle !== false; // Default to true for mainnet
+    const isMainnet = connection.rpcEndpoint?.includes('mainnet') || 
+                      process.env.MAINNET_RPC_URL?.includes('mainnet');
+    
+    if (requiresJito && isMainnet) {
+      console.log(`[AtomicSwapApiClient] Using Jito bundle for atomic execution`);
+      return await this.submitJitoBundle(bulkSwapData, maker, taker, connection);
+    } else {
+      console.log(`[AtomicSwapApiClient] Using sequential submission (devnet or Jito disabled)`);
+      return await this.submitSequentially(bulkSwapData, maker, taker, connection);
+    }
+  }
+  
+  /**
+   * Submit transactions as a Jito bundle for atomic execution
+   */
+  private static async submitJitoBundle(
+    bulkSwapData: {
+      transactions: Array<{
+        index: number;
+        purpose: string;
+        serializedTransaction: string;
+        requiredSigners?: string[];
+      }>;
+    },
+    maker: Keypair,
+    taker: Keypair,
+    connection: any
+  ): Promise<{ signatures: string[]; success: boolean; error?: string; bundleId?: string }> {
+    const JITO_BUNDLE_ENDPOINT = 'https://mainnet.block-engine.jito.wtf/api/v1/bundles';
+    
+    console.log(`[AtomicSwapApiClient] Preparing Jito bundle with ${bulkSwapData.transactions.length} transactions...`);
+    
+    // Sign all transactions first
+    const signedTransactions: string[] = [];
+    
+    for (const tx of bulkSwapData.transactions) {
+      try {
+        // Determine which signers are needed
+        const signers: Keypair[] = [];
+        const requiredSigners = tx.requiredSigners || [];
+        
+        if (requiredSigners.includes(maker.publicKey.toBase58())) {
+          signers.push(maker);
+        }
+        if (requiredSigners.includes(taker.publicKey.toBase58())) {
+          signers.push(taker);
+        }
+        
+        // Default signers based on transaction purpose
+        if (signers.length === 0 && tx.purpose.toLowerCase().includes('sol')) {
+          signers.push(maker, taker);
+        } else if (signers.length === 0 && tx.purpose.toLowerCase().includes('maker')) {
+          signers.push(maker);
+        } else if (signers.length === 0 && tx.purpose.toLowerCase().includes('taker')) {
+          signers.push(taker);
+        } else if (signers.length === 0) {
+          signers.push(maker, taker);
+        }
+        
+        // Deserialize, sign, and re-serialize
+        const { Transaction, VersionedTransaction } = await import('@solana/web3.js');
+        const txBuffer = Buffer.from(tx.serializedTransaction, 'base64');
+        
+        // Try to deserialize as VersionedTransaction first, fallback to Transaction
+        let transaction: Transaction | VersionedTransaction;
+        try {
+          transaction = VersionedTransaction.deserialize(txBuffer);
+          // Sign versioned transaction
+          transaction.sign(signers);
+        } catch {
+          transaction = Transaction.from(txBuffer);
+          transaction.sign(...signers);
+        }
+        
+        const serialized = transaction.serialize();
+        signedTransactions.push(serialized.toString('base64'));
+        
+        console.log(`  ✅ Transaction ${tx.index + 1} signed: ${tx.purpose}`);
+      } catch (error: any) {
+        console.error(`  ❌ Failed to sign transaction ${tx.index + 1}:`, error.message);
+        return {
+          success: false,
+          signatures: [],
+          error: `Failed to sign transaction ${tx.index + 1}: ${error.message}`,
+        };
+      }
+    }
+    
+    // Submit bundle to Jito
+    try {
+      console.log(`[AtomicSwapApiClient] Submitting bundle to Jito...`);
+      
+      const response = await fetch(JITO_BUNDLE_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'sendBundle',
+          params: [signedTransactions],
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Jito bundle submission failed: HTTP ${response.status} - ${errorText}`);
+      }
+      
+      const result = await response.json() as {
+        result?: { bundleId?: string };
+        error?: { message?: string };
+      };
+      
+      if (result.error) {
+        throw new Error(`Jito bundle error: ${result.error.message}`);
+      }
+      
+      const bundleId = result.result?.bundleId;
+      if (!bundleId) {
+        throw new Error('Jito bundle submission succeeded but no bundle ID returned');
+      }
+      
+      console.log(`[AtomicSwapApiClient] ✅ Bundle submitted: ${bundleId}`);
+      console.log(`[AtomicSwapApiClient] ⏳ Waiting for bundle confirmation...`);
+      
+      // Poll for bundle status
+      const confirmation = await this.waitForBundleConfirmation(bundleId);
+      
+      if (confirmation.confirmed) {
+        console.log(`[AtomicSwapApiClient] ✅ Bundle landed in slot ${confirmation.slot}`);
+        // Extract signatures from bundle (we'll need to track them separately)
+        // For now, return bundle ID - signatures will be in the bundle status
+        return {
+          success: true,
+          signatures: [bundleId], // Bundle ID as placeholder
+          bundleId,
+        };
+      } else {
+        return {
+          success: false,
+          signatures: [],
+          bundleId,
+          error: `Bundle ${confirmation.status}: ${confirmation.error || 'Unknown error'}`,
+        };
+      }
+    } catch (error: any) {
+      console.error(`[AtomicSwapApiClient] ❌ Jito bundle submission failed:`, error.message);
+      return {
+        success: false,
+        signatures: [],
+        error: `Jito bundle failed: ${error.message}`,
+      };
+    }
+  }
+  
+  /**
+   * Wait for Jito bundle confirmation
+   */
+  private static async waitForBundleConfirmation(
+    bundleId: string,
+    timeoutSeconds: number = 30
+  ): Promise<{ confirmed: boolean; status: string; slot?: number; error?: string }> {
+    const JITO_BUNDLE_ENDPOINT = 'https://mainnet.block-engine.jito.wtf/api/v1/bundles';
+    const startTime = Date.now();
+    const timeoutMs = timeoutSeconds * 1000;
+    let pollCount = 0;
+    
+    while (Date.now() - startTime < timeoutMs) {
+      pollCount++;
+      const elapsed = (Date.now() - startTime) / 1000;
+      
+      try {
+        const response = await fetch(JITO_BUNDLE_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0',
+            id: 1,
+            method: 'getBundleStatuses',
+            params: [[bundleId]],
+          }),
+        });
+        
+        const result = await response.json() as {
+          result?: { value?: Array<{ bundle_id: string; status: string; slot?: number }> };
+          error?: { message?: string };
+        };
+        
+        if (result.error) {
+          console.warn(`[AtomicSwapApiClient] Bundle status error: ${result.error.message}`);
+        } else {
+          const statuses = result.result?.value || [];
+          const bundleStatus = statuses.find(s => s.bundle_id === bundleId);
+          
+          if (bundleStatus) {
+            console.log(`[AtomicSwapApiClient] Bundle poll #${pollCount}: ${bundleStatus.status} (${elapsed.toFixed(1)}s)`);
+            
+            if (bundleStatus.status === 'Landed' || bundleStatus.status === 'landed') {
+              return {
+                confirmed: true,
+                status: 'Landed',
+                slot: bundleStatus.slot,
+              };
+            }
+            
+            if (bundleStatus.status === 'Failed' || bundleStatus.status === 'failed') {
+              return {
+                confirmed: false,
+                status: 'Failed',
+                error: 'Bundle execution failed',
+              };
+            }
+          }
+        }
+      } catch (error: any) {
+        console.warn(`[AtomicSwapApiClient] Bundle status check error: ${error.message}`);
+      }
+      
+      // Poll interval: faster at start, slower after 15s
+      const pollInterval = elapsed < 15 ? 1500 : 2500;
+      await new Promise(resolve => setTimeout(resolve, pollInterval));
+    }
+    
+    return {
+      confirmed: false,
+      status: 'Timeout',
+      error: `Bundle confirmation timeout after ${timeoutSeconds}s`,
+    };
+  }
+  
+  /**
+   * Submit transactions sequentially (fallback for devnet or when Jito unavailable)
+   */
+  private static async submitSequentially(
     bulkSwapData: {
       transactions: Array<{
         index: number;
@@ -309,8 +561,6 @@ export class AtomicSwapApiClient {
     taker: Keypair,
     connection: any
   ): Promise<{ signatures: string[]; success: boolean; error?: string }> {
-    console.log(`[AtomicSwapApiClient] Processing bulk swap with ${bulkSwapData.transactions.length} transactions`);
-    
     const signatures: string[] = [];
     
     for (const tx of bulkSwapData.transactions) {

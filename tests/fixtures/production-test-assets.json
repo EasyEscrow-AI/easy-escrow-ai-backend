@@ -72,8 +72,66 @@
         "type": "SPL"
       }
     ],
-    "cnfts": [],
-    "coreNfts": []
+    "cnfts": [
+      {
+        "mint": "3u8EQKQyaW6yaho2Pdz8MZvdqYaJW36s8V1NUKCnu5JH",
+        "type": "cNFT"
+      },
+      {
+        "mint": "6QKeLBeiLCHBT4FTZAFD1SKtPUMrBUSm5ESA3PusY1gP",
+        "type": "cNFT"
+      },
+      {
+        "mint": "9Xk93KBuWbnNRYATRUD8SzPzhS3xAxdKX2wsTXH3HVkr",
+        "type": "cNFT"
+      },
+      {
+        "mint": "9og28y6XXTzgMD2C1PuGkvZQxFTsn5WUnqdAhaoqTeuy",
+        "type": "cNFT"
+      },
+      {
+        "mint": "AC1ZSfQX9a7DEFrMdXxL9cNjokg9pqawrQ4VEo7KKERF",
+        "type": "cNFT"
+      },
+      {
+        "mint": "BoQhmB2wgvdB1Wrumoy1LYQBjzaScVdMhtkMHRQdSRPt",
+        "type": "cNFT"
+      },
+      {
+        "mint": "D8r7Nr45AAnmbz4LXAFy24BNmHPZzJXXUFrReBXTeNYA",
+        "type": "cNFT"
+      },
+      {
+        "mint": "HXZj2n8zy1KruNmWBJsQNabLNTsoehcqQS35GJByVauX",
+        "type": "cNFT"
+      }
+    ],
+    "coreNfts": [
+      {
+        "mint": "4kzr9eYwqb6umJrWS32FqDcJFLBsnSNBBnfyzaodZKoR",
+        "type": "Core"
+      },
+      {
+        "mint": "5DUwZgy6BQPEuuUxsy84v19RLqHvHhgbvnxvyHfu7v5y",
+        "type": "Core"
+      },
+      {
+        "mint": "5aviDz11uoU6XfE64HWpRCDVjDS8C8rgVqXKF6o8FRiD",
+        "type": "Core"
+      },
+      {
+        "mint": "7xmPtzwJt6ZNz3fb7GHUNpfHjccHAeqs5gsbfVhWVfAW",
+        "type": "Core"
+      },
+      {
+        "mint": "9erRwSpYjgAXKzdhyuLdmaytDMk7qot85iFApN2P6BdX",
+        "type": "Core"
+      },
+      {
+        "mint": "DR2FBbhGtkjDL5yqpKQnnSznWodJZ5anV5nBCGPdHoBA",
+        "type": "Core"
+      }
+    ]
   },
   "taker": {
     "splNfts": [
@@ -153,8 +211,26 @@
         "type": "SPL"
       }
     ],
-    "cnfts": [],
-    "coreNfts": []
+    "cnfts": [
+      {
+        "mint": "5JaQFFxdkmbQhG5PJsQ6pmXxVtDYKfZLfcHb8wiC31H4",
+        "type": "cNFT"
+      },
+      {
+        "mint": "JCsWH1rmQTz1Spo1S9HV561Cx6ryf5GG64CaynHCasQE",
+        "type": "cNFT"
+      }
+    ],
+    "coreNfts": [
+      {
+        "mint": "27RfbxYRXwRpt9NvJPnP3cVikz9nJkSMh67gupQAhAdL",
+        "type": "Core"
+      },
+      {
+        "mint": "9RUoSPKq3SnwMCHLmpnokt8KWF6Ju1KH7cVJhiLLQJiD",
+        "type": "Core"
+      }
+    ]
   },
-  "timestamp": "2025-12-15T08:07:40.936Z"
+  "timestamp": "2025-12-15T08:22:32.104Z"
 }
