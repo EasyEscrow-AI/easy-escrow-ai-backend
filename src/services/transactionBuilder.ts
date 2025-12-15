@@ -706,6 +706,54 @@ export class TransactionBuilder {
       const nftMint = new PublicKey(inputs.makerAssets[0].identifier);
       makerNftAccount = await getAssociatedTokenAddress(nftMint, inputs.makerPubkey);
       takerNftDestination = await getAssociatedTokenAddress(nftMint, inputs.takerPubkey);
+      
+      // Validate token account exists and has correct mint
+      const makerAccountInfo = await this.connection.getAccountInfo(makerNftAccount);
+      if (!makerAccountInfo) {
+        throw new Error(
+          `Maker NFT token account does not exist: ${makerNftAccount.toBase58()}. ` +
+          `The maker must own the NFT with mint ${nftMint.toBase58()} before creating a swap.`
+        );
+      }
+      
+      // Verify it's a token account (owned by Token Program)
+      if (!makerAccountInfo.owner.equals(TOKEN_PROGRAM_ID)) {
+        throw new Error(
+          `Invalid token account: ${makerNftAccount.toBase58()} is not owned by Token Program. ` +
+          `Owner: ${makerAccountInfo.owner.toBase58()}`
+        );
+      }
+      
+      // Parse token account to verify mint matches
+      try {
+        const { getAccount } = await import('@solana/spl-token');
+        const tokenAccount = await getAccount(this.connection, makerNftAccount);
+        if (!tokenAccount.mint.equals(nftMint)) {
+          throw new Error(
+            `Token account mint mismatch: account ${makerNftAccount.toBase58()} has mint ${tokenAccount.mint.toBase58()}, ` +
+            `but expected ${nftMint.toBase58()}`
+          );
+        }
+        if (tokenAccount.amount !== BigInt(1)) {
+          throw new Error(
+            `Invalid NFT amount: token account has ${tokenAccount.amount} tokens, expected 1 for NFT`
+          );
+        }
+        if (!tokenAccount.owner.equals(inputs.makerPubkey)) {
+          throw new Error(
+            `Token account owner mismatch: account owned by ${tokenAccount.owner.toBase58()}, ` +
+            `but maker is ${inputs.makerPubkey.toBase58()}`
+          );
+        }
+      } catch (error: any) {
+        if (error.message.includes('InvalidAccountOwner') || error.message.includes('could not find account')) {
+          throw new Error(
+            `Maker NFT token account does not exist or is invalid: ${makerNftAccount.toBase58()}. ` +
+            `Error: ${error.message}`
+          );
+        }
+        throw error;
+      }
     } else if (makerSendsCnft) {
       makerCnftParams = await this.cnftService.buildTransferParams(
         inputs.makerAssets[0].identifier,
@@ -754,6 +802,54 @@ export class TransactionBuilder {
       const nftMint = new PublicKey(inputs.takerAssets[0].identifier);
       takerNftAccount = await getAssociatedTokenAddress(nftMint, inputs.takerPubkey);
       makerNftDestination = await getAssociatedTokenAddress(nftMint, inputs.makerPubkey);
+      
+      // Validate token account exists and has correct mint
+      const takerAccountInfo = await this.connection.getAccountInfo(takerNftAccount);
+      if (!takerAccountInfo) {
+        throw new Error(
+          `Taker NFT token account does not exist: ${takerNftAccount.toBase58()}. ` +
+          `The taker must own the NFT with mint ${nftMint.toBase58()} before accepting a swap.`
+        );
+      }
+      
+      // Verify it's a token account (owned by Token Program)
+      if (!takerAccountInfo.owner.equals(TOKEN_PROGRAM_ID)) {
+        throw new Error(
+          `Invalid token account: ${takerNftAccount.toBase58()} is not owned by Token Program. ` +
+          `Owner: ${takerAccountInfo.owner.toBase58()}`
+        );
+      }
+      
+      // Parse token account to verify mint matches
+      try {
+        const { getAccount } = await import('@solana/spl-token');
+        const tokenAccount = await getAccount(this.connection, takerNftAccount);
+        if (!tokenAccount.mint.equals(nftMint)) {
+          throw new Error(
+            `Token account mint mismatch: account ${takerNftAccount.toBase58()} has mint ${tokenAccount.mint.toBase58()}, ` +
+            `but expected ${nftMint.toBase58()}`
+          );
+        }
+        if (tokenAccount.amount !== BigInt(1)) {
+          throw new Error(
+            `Invalid NFT amount: token account has ${tokenAccount.amount} tokens, expected 1 for NFT`
+          );
+        }
+        if (!tokenAccount.owner.equals(inputs.takerPubkey)) {
+          throw new Error(
+            `Token account owner mismatch: account owned by ${tokenAccount.owner.toBase58()}, ` +
+            `but taker is ${inputs.takerPubkey.toBase58()}`
+          );
+        }
+      } catch (error: any) {
+        if (error.message.includes('InvalidAccountOwner') || error.message.includes('could not find account')) {
+          throw new Error(
+            `Taker NFT token account does not exist or is invalid: ${takerNftAccount.toBase58()}. ` +
+            `Error: ${error.message}`
+          );
+        }
+        throw error;
+      }
     } else if (takerSendsCnft) {
       takerCnftParams = await this.cnftService.buildTransferParams(
         inputs.takerAssets[0].identifier,
