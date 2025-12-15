@@ -99,9 +99,8 @@ describe('cNFT Transfer - Integration Tests', () => {
     cnftService = new CnftService(connection);
     transactionBuilder = new TransactionBuilder(
       connection,
-      platformAuthority,
-      undefined, // altService
-      cnftService
+      platformAuthority
+      // treasuryPDA is optional and will be derived internally if needed
     );
   });
 
