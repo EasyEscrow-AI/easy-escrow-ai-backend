@@ -17,9 +17,10 @@ describe('CnftService', () => {
   let originalRpcRequest: any;
 
   const mockAssetId = 'test-cnft-asset-id-123';
-  const mockTreeAddress = new PublicKey('11111111111111111111111111111111');
-  const mockOwnerAddress = new PublicKey('22222222222222222222222222222222');
-  const mockToAddress = new PublicKey('33333333333333333333333333333333');
+  // Use valid base58 public keys (SystemProgram default is valid)
+  const mockTreeAddress = PublicKey.default; // Valid placeholder
+  const mockOwnerAddress = Keypair.generate().publicKey; // Valid generated key
+  const mockToAddress = Keypair.generate().publicKey; // Valid generated key
 
   const mockAssetData: CnftAssetData = {
     id: mockAssetId,
