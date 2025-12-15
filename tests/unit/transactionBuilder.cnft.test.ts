@@ -42,29 +42,33 @@ describe('TransactionBuilder - cNFT Integration', () => {
     tree_id: mockTreeAddress.toBase58(),
   };
 
-  const mockCnftTransferParams: CnftTransferParams = {
-    treeAddress: mockTreeAddress,
-    treeAuthorityAddress: PublicKey.findProgramAddressSync(
-      [mockTreeAddress.toBuffer()],
-      BUBBLEGUM_PROGRAM_ID
-    )[0],
-    fromAddress: makerKeypair.publicKey,
-    toAddress: takerKeypair.publicKey,
-    proof: {
-      root: Buffer.from('root-hash-123'),
-      dataHash: Buffer.from('data-hash-123'),
-      creatorHash: Buffer.from('creator-hash-123'),
-      nonce: 0,
-      index: 0,
-      proof: [Buffer.from('proof-1'), Buffer.from('proof-2'), Buffer.from('proof-3')],
-    },
-  };
+  // Mock transfer params will be created in beforeEach after keypairs are initialized
+  let mockCnftTransferParams: CnftTransferParams;
 
   beforeEach(() => {
     // Generate keypairs
     platformAuthority = Keypair.generate();
     makerKeypair = Keypair.generate();
     takerKeypair = Keypair.generate();
+    
+    // Create mock transfer params after keypairs are initialized
+    mockCnftTransferParams = {
+      treeAddress: mockTreeAddress,
+      treeAuthorityAddress: PublicKey.findProgramAddressSync(
+        [mockTreeAddress.toBuffer()],
+        BUBBLEGUM_PROGRAM_ID
+      )[0],
+      fromAddress: makerKeypair.publicKey,
+      toAddress: takerKeypair.publicKey,
+      proof: {
+        root: Buffer.from('root-hash-123'),
+        dataHash: Buffer.from('data-hash-123'),
+        creatorHash: Buffer.from('creator-hash-123'),
+        nonce: 0,
+        index: 0,
+        proof: [Buffer.from('proof-1'), Buffer.from('proof-2'), Buffer.from('proof-3')],
+      },
+    };
     treasuryPDA = Keypair.generate().publicKey;
     nonceAccount = Keypair.generate().publicKey;
     programId = Keypair.generate().publicKey;

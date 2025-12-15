@@ -261,7 +261,7 @@ describe('CnftService', () => {
       // Second batch should use cache
       const results = await cnftService.batchGetCnftProofs(assetIds, 3);
       expect(fetchCount).to.equal(1); // Still only one fetch
-      expect(results.size).to.equal(3);
+      expect(results.size).to.equal(1); // Map has unique keys, so size is 1 for duplicate assetIds
     });
 
     it('should handle partial failures in batch', async () => {
