@@ -247,7 +247,7 @@ export class CnftService {
       // Use skipCache=true since we already checked the cache above
       const batchPromises = batch.map(async (assetId) => {
         try {
-          const proof = await this.getCnftProof(assetId, true); // Skip cache - already checked
+          const proof = await this.getCnftProof(assetId, true, 0); // Skip cache - already checked
           return { assetId, proof, error: null };
         } catch (error: any) {
           return { assetId, proof: null, error: error.message };
@@ -316,8 +316,11 @@ export class CnftService {
   
   /**
    * Fetch Merkle proof for cNFT transfer
+   * @param assetId - The cNFT asset ID
+   * @param skipCache - Whether to bypass the cache
+   * @param retryCount - Number of retries (used for cache-busting on stale proof retries)
    */
-  async getCnftProof(assetId: string, skipCache = false): Promise<DasProofResponse> {
+  async getCnftProof(assetId: string, skipCache = false, retryCount = 0): Promise<DasProofResponse> {
     console.log('[CnftService] Fetching Merkle proof for:', assetId);
     
     // Check cache first (unless skip requested)
@@ -336,10 +339,13 @@ export class CnftService {
     
     try {
       // Use rate limiting for the actual fetch
+      // Pass retryCount to makeDasRequest for cache-busting on stale proof retries
+      // Capture retryCount in closure for use inside withRateLimit callback
+      const capturedRetryCount = retryCount;
       const proofData = await this.withRateLimit(async () => {
         const response = await this.makeDasRequest('getAssetProof', {
           id: assetId,
-        });
+        }, capturedRetryCount);
         
         // Handle both wrapped and direct responses
         const data = response.result || response;
@@ -382,7 +388,7 @@ export class CnftService {
    * Use this when you need to ensure proof is absolutely current
    */
   async getFreshCnftProof(assetId: string): Promise<DasProofResponse> {
-    return this.getCnftProof(assetId, true);
+    return this.getCnftProof(assetId, true, 0);
   }
   
   /**
@@ -417,12 +423,14 @@ export class CnftService {
   /**
    * Build cNFT transfer parameters from DAS API data
    * Combines asset data and proof into format needed by transaction builder
+   * @param retryCount - Number of retries (used for cache-busting on stale proof retries)
    */
   async buildTransferParams(
     assetId: string,
     fromAddress: PublicKey,
     toAddress: PublicKey,
-    skipCache = false
+    skipCache = false,
+    retryCount = 0
   ): Promise<CnftTransferParams> {
     console.log('[CnftService] Building cNFT transfer params:', {
       assetId,
@@ -432,9 +440,10 @@ export class CnftService {
     });
 
     // Fetch asset data and proof in parallel
+    // Pass retryCount to getCnftProof for cache-busting on stale proof retries
     const [assetData, proofData] = await Promise.all([
       this.getCnftAsset(assetId),
-      this.getCnftProof(assetId, skipCache),
+      this.getCnftProof(assetId, skipCache, retryCount),
     ]);
     
     // Validate ownership
@@ -553,9 +562,22 @@ export class CnftService {
     // The canopy stores the uppermost levels (closest to root) on-chain
     // We need to remove the LAST `canopyDepth` nodes (closest to root)
     // and keep the FIRST (maxDepth - canopyDepth) nodes (closest to leaf)
-    // Correct operation: .slice(0, proof.length - canopyDepth)
-    const proofNodesToSend = dasProof.proof.slice(0, dasProof.proof.length - canopyDepth);
-    const proof = proofNodesToSend.map(node => Array.from(bs58.decode(node)));
+    // 
+    // IMPORTANT: Handle edge case where canopyDepth >= proof.length (full canopy)
+    // In this case, all proof nodes are stored on-chain, so we send an empty array
+    // This prevents negative slice indices which would incorrectly return nodes
+    let proof: number[][];
+    
+    if (canopyDepth >= dasProof.proof.length) {
+      // Full canopy tree - all proof nodes are on-chain
+      console.log(`[CnftService] Full canopy detected (canopyDepth ${canopyDepth} >= proof length ${dasProof.proof.length}) - sending empty proof array`);
+      proof = [];
+    } else {
+      // Partial canopy - send only the nodes not in the canopy
+      // Correct operation: .slice(0, proof.length - canopyDepth)
+      const proofNodesToSend = dasProof.proof.slice(0, dasProof.proof.length - canopyDepth);
+      proof = proofNodesToSend.map(node => Array.from(bs58.decode(node)));
+    }
     
     // Calculate estimated proof size contribution to transaction
     const proofSizeBytes = proof.length * 32;
