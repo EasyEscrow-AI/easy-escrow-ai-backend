@@ -21,7 +21,11 @@ if (fs.existsSync(envPath)) {
 const RPC_URL = process.env.STAGING_SOLANA_RPC_URL || 'https://api.devnet.solana.com';
 const PROGRAM_ID = new PublicKey('AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei'); // Staging program ID
 const ADMIN_KEYPAIR_PATH = process.env.STAGING_ADMIN_PRIVATE_KEY_PATH || 
-  path.join(__dirname, '../../../wallets/staging/staging-deployer.json');
+  path.join(__dirname, '../../../wallets/staging/staging-admin.json');
+const WITHDRAWAL_WALLET_PATH = path.join(__dirname, '../../../wallets/staging/staging-fee-collector.json');
+
+// Treasury seed prefix (MUST match Rust program: b"main_treasury")
+const TREASURY_SEED_PREFIX = Buffer.from('main_treasury');
 
 async function main() {
   console.log('\n╔══════════════════════════════════════════════════════════════╗');
@@ -78,9 +82,9 @@ async function main() {
   
   console.log('\n✅ Program loaded successfully\n');
   
-  // Derive treasury PDA
+  // Derive treasury PDA using correct seeds (must match Rust program)
   const [treasuryPda, treasuryBump] = PublicKey.findProgramAddressSync(
-    [Buffer.from('treasury'), adminKeypair.publicKey.toBuffer()],
+    [TREASURY_SEED_PREFIX, adminKeypair.publicKey.toBuffer()],
     PROGRAM_ID
   );
   
@@ -117,13 +121,24 @@ async function main() {
     process.exit(0);
   }
   
+  // Load withdrawal wallet for authorization
+  console.log('\n🔐 Loading authorized withdrawal wallet...');
+  if (!fs.existsSync(WITHDRAWAL_WALLET_PATH)) {
+    console.error('❌ Withdrawal wallet not found at:', WITHDRAWAL_WALLET_PATH);
+    process.exit(1);
+  }
+  const withdrawalSecret = JSON.parse(fs.readFileSync(WITHDRAWAL_WALLET_PATH, 'utf8'));
+  const withdrawalWallet = Keypair.fromSecretKey(new Uint8Array(withdrawalSecret));
+  console.log('   Authorized Withdrawal Wallet:', withdrawalWallet.publicKey.toBase58());
+  
   // Initialize treasury
   console.log('\n🔨 Initializing treasury...');
   console.log('   This will create the treasury PDA and set you as the authority');
+  console.log('   Withdrawals will ONLY be allowed to:', withdrawalWallet.publicKey.toBase58());
   
   try {
     const tx = await program.methods
-      .initializeTreasury()
+      .initializeTreasury(withdrawalWallet.publicKey)
       .accounts({
         authority: adminKeypair.publicKey,
         treasury: treasuryPda,
@@ -150,6 +165,8 @@ async function main() {
     console.log('\n╔══════════════════════════════════════════════════════════════╗');
     console.log('║   ✅ TREASURY INITIALIZATION COMPLETE                        ║');
     console.log('╚══════════════════════════════════════════════════════════════╝');
+    console.log('\n📝 Add this to your .env.staging:');
+    console.log(`   DEVNET_STAGING_PDA_TREASURY_ADDRESS=${treasuryPda.toBase58()}`);
     console.log('\nYou can now run atomic swap tests:');
     console.log('  npm run test:staging:e2e:atomic-swaps\n');
     

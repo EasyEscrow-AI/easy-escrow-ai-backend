@@ -332,34 +332,9 @@ export class AlertingService {
     );
   }
   
-  // Legacy Treasury Alerts (deprecated - treasury PDA not used for fee payments)
-  async alertTreasuryCritical(balance: number, address: string): Promise<void> {
-    await this.sendAlert(
-      'treasury_critical',
-      AlertSeverity.CRITICAL,
-      'Treasury Balance Critical',
-      `Treasury PDA balance is critically low: ${(balance / 1e9).toFixed(4)} SOL`,
-      { component: 'treasury', balance, address }
-    );
-  }
-  
-  async alertTreasuryLow(balance: number, address: string): Promise<void> {
-    await this.sendAlert(
-      'treasury_low',
-      AlertSeverity.HIGH,
-      'Treasury Balance Low',
-      `Treasury PDA balance is running low: ${(balance / 1e9).toFixed(4)} SOL`,
-      { component: 'treasury', balance, address }
-    );
-  }
-  
-  async alertTreasuryRecovered(balance: number, address: string): Promise<void> {
-    await this.sendRecovery(
-      'treasury_critical',
-      `Treasury balance replenished: ${(balance / 1e9).toFixed(4)} SOL`,
-      { component: 'treasury', balance, address }
-    );
-  }
+  // NOTE: Treasury balance alerts removed - treasury PDA only collects fees, doesn't pay for transactions.
+  // The admin/platform authority wallet is what pays for transactions, not the treasury.
+  // Use alertFeePayer* methods for monitoring the wallet that actually pays for transactions.
   
   async alertHighErrorRate(errorRate: number, timeWindow: string): Promise<void> {
     await this.sendAlert(

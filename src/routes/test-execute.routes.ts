@@ -42,10 +42,27 @@ const networkName = isMainnet ? 'mainnet-beta' : 'devnet';
 
 /**
  * Check if error is caused by stale cNFT Merkle proof
+ * 
+ * Stale proofs can be detected in multiple ways:
+ * 1. During preflight simulation: error.message or error.logs contain known indicators
+ * 2. On-chain failure: error.errorCode === 21 (StaleProof from AtomicSwapError)
+ * 3. Message contains the error code reference
  */
 function isCnftProofStaleError(error: any): boolean {
   const message = error?.message || '';
   const logs = error?.logs || [];
+  const errorCode = error?.errorCode;
+  
+  // Check for on-chain StaleProof error (error code 21)
+  // This catches errors thrown from confirmation.value.err
+  if (errorCode === 21) {
+    return true;
+  }
+  
+  // Also check if the error message mentions error code 21 (StaleProof)
+  if (message.includes('error code 21') || message.includes('StaleProof')) {
+    return true;
+  }
   
   const staleProofIndicators = [
     'Invalid root recomputed from proof',
@@ -97,12 +114,152 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
   console.log('📍 Network:', process.env.SOLANA_RPC_URL);
   
   try {
-    let { serializedTransaction, requireSignatures, offerId } = req.body;
+    let { serializedTransaction, requireSignatures, offerId, bulkSwapInfo } = req.body;
     
     // offerId is optional - used for cNFT proof retry logic
     if (offerId) {
       console.log('📋 Offer ID:', offerId, '(will rebuild transaction if proof is stale)');
     }
+    
+    // ========== BULK SWAP HANDLING ==========
+    // cNFT swaps require multiple transactions executed sequentially
+    if (bulkSwapInfo && bulkSwapInfo.transactions && bulkSwapInfo.transactions.length > 1) {
+      console.log(`\n🚀 BULK SWAP DETECTED: ${bulkSwapInfo.transactions.length} transactions`);
+      console.log(`   Strategy: ${bulkSwapInfo.strategy}`);
+      
+      // Load keypairs first
+      let makerPrivateKey: string | undefined;
+      let takerPrivateKey: string | undefined;
+      
+      if (isMainnet) {
+        makerPrivateKey = process.env.MAINNET_PROD_SENDER_PRIVATE_KEY;
+        takerPrivateKey = process.env.MAINNET_PROD_RECEIVER_PRIVATE_KEY;
+      } else {
+        makerPrivateKey = process.env.DEVNET_STAGING_SENDER_PRIVATE_KEY;
+        takerPrivateKey = process.env.DEVNET_STAGING_RECEIVER_PRIVATE_KEY;
+      }
+      
+      if (!makerPrivateKey || !takerPrivateKey) {
+        return res.status(500).json({
+          success: false,
+          error: `Test wallet private keys not configured for ${networkName}`,
+          timestamp: new Date().toISOString(),
+        });
+      }
+      
+      const makerKeypair = Keypair.fromSecretKey(bs58.decode(makerPrivateKey));
+      const takerKeypair = Keypair.fromSecretKey(bs58.decode(takerPrivateKey));
+      const makerAddress = makerKeypair.publicKey.toBase58();
+      const takerAddress = takerKeypair.publicKey.toBase58();
+      
+      console.log('✅ Keypairs loaded for bulk swap');
+      console.log('   Maker:', makerAddress);
+      console.log('   Taker:', takerAddress);
+      
+      const signatures: string[] = [];
+      
+      // Execute each transaction sequentially
+      for (let i = 0; i < bulkSwapInfo.transactions.length; i++) {
+        const txInfo = bulkSwapInfo.transactions[i];
+        console.log(`\n📝 Processing TX ${i + 1}/${bulkSwapInfo.transactions.length}: ${txInfo.purpose}`);
+        
+        if (!txInfo.serialized) {
+          console.error(`❌ TX ${i + 1} missing serialized data`);
+          return res.status(400).json({
+            success: false,
+            error: `Transaction ${i + 1} missing serialized data`,
+            timestamp: new Date().toISOString(),
+          });
+        }
+        
+        // Determine signers for THIS specific transaction
+        // Use requiredSigners from the transaction if available, otherwise fall back to global
+        const txRequiredSigners = txInfo.requiredSigners || requireSignatures || [];
+        const signers: Keypair[] = [];
+        
+        if (txRequiredSigners.includes(makerAddress)) {
+          signers.push(makerKeypair);
+          console.log('   🔐 Adding Maker signature');
+        }
+        
+        if (txRequiredSigners.includes(takerAddress)) {
+          signers.push(takerKeypair);
+          console.log('   🔐 Adding Taker signature');
+        }
+        
+        if (signers.length === 0) {
+          console.warn(`   ⚠️ No test wallet signatures needed for TX ${i + 1} (platform-only?)`);
+        }
+        
+        try {
+          const txBuffer = Buffer.from(txInfo.serialized, 'base64');
+          const isVersioned = (txBuffer[0] & 0x80) !== 0;
+          
+          let signature: string;
+          
+          if (isVersioned) {
+            const versionedTx = VersionedTransaction.deserialize(txBuffer);
+            if (signers.length > 0) {
+              versionedTx.sign(signers);
+            }
+            signature = await connection.sendRawTransaction(versionedTx.serialize(), {
+              skipPreflight: false,
+              preflightCommitment: 'confirmed',
+            });
+          } else {
+            const tx = Transaction.from(txBuffer);
+            if (signers.length > 0) {
+              tx.partialSign(...signers);
+            }
+            signature = await connection.sendRawTransaction(tx.serialize(), {
+              skipPreflight: false,
+              preflightCommitment: 'confirmed',
+            });
+          }
+          
+          console.log(`   ✅ TX ${i + 1} sent: ${signature.substring(0, 20)}...`);
+          
+          // Wait for confirmation
+          const confirmation = await connection.confirmTransaction(signature, 'confirmed');
+          if (confirmation.value.err) {
+            throw new Error(`TX ${i + 1} failed on-chain: ${JSON.stringify(confirmation.value.err)}`);
+          }
+          
+          console.log(`   ✅ TX ${i + 1} confirmed`);
+          signatures.push(signature);
+          
+          // Small delay between transactions to avoid rate limiting
+          if (i < bulkSwapInfo.transactions.length - 1) {
+            await new Promise(r => setTimeout(r, 200));
+          }
+          
+        } catch (txError: any) {
+          console.error(`   ❌ TX ${i + 1} failed:`, txError.message);
+          return res.status(500).json({
+            success: false,
+            error: `Transaction ${i + 1} (${txInfo.purpose}) failed: ${txError.message}`,
+            signatures: signatures, // Return any successful signatures
+            failedTxIndex: i,
+            timestamp: new Date().toISOString(),
+          });
+        }
+      }
+      
+      console.log(`\n✅ BULK SWAP COMPLETE: ${signatures.length} transactions confirmed`);
+      
+      return res.json({
+        success: true,
+        data: {
+          signatures,
+          signature: signatures[signatures.length - 1], // Last signature for backwards compat
+          network: networkName,
+          isBulkSwap: true,
+          transactionCount: signatures.length,
+        },
+        timestamp: new Date().toISOString(),
+      });
+    }
+    // ========== END BULK SWAP HANDLING ==========
     
     if (!serializedTransaction) {
       return res.status(400).json({
@@ -177,7 +334,13 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
         const txBuffer = Buffer.from(serializedTransaction, 'base64');
         const isVersioned = isVersionedTransaction(txBuffer);
         
-        console.log(`🔄 Transaction type: ${isVersioned ? 'Versioned (V0) with ALT' : 'Legacy'}`);
+        console.log(`🔄 Transaction buffer info:`, {
+          length: txBuffer.length,
+          firstByte: txBuffer[0],
+          firstByteHex: txBuffer[0]?.toString(16),
+          isVersioned,
+          base64Preview: serializedTransaction.substring(0, 50) + '...',
+        });
         
         // Determine which signers are needed
         const signers: Keypair[] = [];
@@ -259,9 +422,15 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
             console.log('✅ Legacy transaction deserialized');
           } catch (error) {
             console.error('❌ Failed to deserialize legacy transaction:', error);
+            console.error('❌ Transaction buffer info:', {
+              length: txBuffer.length,
+              firstByte: txBuffer[0],
+              firstByteHex: txBuffer[0]?.toString(16),
+              errorMessage: error instanceof Error ? error.message : 'Unknown error',
+            });
             return res.status(400).json({
               success: false,
-              error: 'Invalid transaction format',
+              error: `Invalid transaction format. Buffer length: ${txBuffer.length}, first byte: 0x${txBuffer[0]?.toString(16) || 'undefined'}. This may indicate a versioned transaction being incorrectly detected as legacy.`,
               timestamp: new Date().toISOString(),
             });
           }
@@ -284,10 +453,64 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
           preflightCommitment: 'confirmed',
         });
         
-        // Wait for confirmation
-        await connection.confirmTransaction(signature, 'confirmed');
+        // Wait for confirmation AND check for errors
+        const confirmation = await connection.confirmTransaction(signature, 'confirmed');
         
-        console.log(`✅ TRANSACTION CONFIRMED on attempt ${attempt}!`);
+        // CRITICAL: Check if transaction had errors (program errors are NOT thrown by confirmTransaction!)
+        // A transaction can be "confirmed" but still have failed at the program level
+        if (confirmation.value.err) {
+          const errorJson = JSON.stringify(confirmation.value.err);
+          console.error('❌ Transaction confirmed but FAILED with program error:', errorJson);
+          
+          // Parse error to give a better message
+          let errorMessage = `Transaction failed: ${errorJson}`;
+          let customErrorCode: number | undefined;
+          const err = confirmation.value.err as any;
+          
+          // Check for custom program error (InstructionError with Custom code)
+          if (err.InstructionError) {
+            const [instructionIndex, errorDetail] = err.InstructionError;
+            if (errorDetail?.Custom !== undefined) {
+              const code = errorDetail.Custom as number;
+              customErrorCode = code;
+              
+              // Try to provide helpful context based on known error codes
+              const errorCodes: { [key: number]: string } = {
+                0: 'Unauthorized',
+                21: 'StaleProof - Merkle root has changed since proof generation',
+                24: 'MissingCoreAsset - Core NFT asset account is missing',
+                25: 'MissingMplCoreProgram - The mpl-core program account is missing from the transaction',
+                26: 'InvalidMplCoreProgram - Wrong mpl-core program ID provided',
+              };
+              
+              const errorName = errorCodes[code] || `Unknown error code ${code}`;
+              errorMessage = `Program error: Instruction #${instructionIndex + 1} failed with custom error code ${code} (${errorName})`;
+            }
+          }
+          
+          // Create error with additional properties for retry logic
+          // The stale proof check in isCnftProofStaleError needs errorCode to detect on-chain failures
+          const programError = new Error(errorMessage) as any;
+          programError.errorCode = customErrorCode;
+          
+          // Try to fetch transaction logs for debugging and stale proof detection
+          try {
+            const txInfo = await connection.getTransaction(signature, {
+              commitment: 'confirmed',
+              maxSupportedTransactionVersion: 0,
+            });
+            if (txInfo?.meta?.logMessages) {
+              programError.logs = txInfo.meta.logMessages;
+              console.error('Transaction logs:', programError.logs);
+            }
+          } catch (logError) {
+            console.warn('Could not fetch transaction logs:', logError);
+          }
+          
+          throw programError;
+        }
+        
+        console.log(`✅ TRANSACTION CONFIRMED AND SUCCEEDED on attempt ${attempt}!`);
         console.log('   Signature:', signature);
         const explorerUrl = isMainnet 
           ? `https://solscan.io/tx/${signature}`

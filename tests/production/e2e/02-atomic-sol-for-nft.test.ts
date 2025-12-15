@@ -11,7 +11,7 @@ import { Connection, Keypair, PublicKey, LAMPORTS_PER_SOL, Transaction, Versione
 import * as fs from 'fs';
 import * as path from 'path';
 import axios, { AxiosInstance } from 'axios';
-import { wait } from '../../helpers/test-utils';
+import { wait, confirmTransactionAndCheckError } from '../../helpers/test-utils';
 
 // Helper to detect versioned transactions
 function isVersionedTransaction(buffer: Buffer): boolean {
@@ -157,8 +157,8 @@ describe('🚀 Production E2E: SOL → NFT (Mainnet)', () => {
     
     // Wait for confirmation
     console.log('\n⏳ Waiting for transaction confirmation...');
-    await connection.confirmTransaction(signature, 'confirmed');
-    console.log(`  ✅ Transaction confirmed!`);
+    await confirmTransactionAndCheckError(connection, signature, 'confirmed');
+    console.log(`  ✅ Transaction confirmed and verified!`);
     await wait(2000); // Extra buffer for balance updates
     
     const senderBalanceAfter = await connection.getBalance(sender.publicKey);

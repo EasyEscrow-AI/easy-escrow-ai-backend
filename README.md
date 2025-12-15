@@ -23,10 +23,11 @@ EasyEscrow.ai is a **100% Atomic Swap platform** enabling instant, trustless exc
 | **NFT ↔ SOL** | Exchange NFT for SOL tokens | ✅ **LIVE** |
 | **NFT ↔ NFT (fee)** | NFT for NFT with platform fee | ✅ **LIVE** |
 | **NFT ↔ NFT + SOL** | NFT for another NFT plus SOL | ✅ **LIVE** |
-| **cNFT ↔ SOL** | Compressed NFT for SOL | ⚠️ Validation Ready |
-| **NFT ↔ cNFT** | Standard NFT for compressed NFT | ⚠️ Validation Ready |
+| **cNFT ↔ SOL** | Compressed NFT for SOL | ✅ **LIVE** |
+| **NFT ↔ cNFT** | Standard NFT for compressed NFT | ✅ **LIVE** |
+| **Bulk Swaps** | Multiple NFTs (up to 10 per side) | ✅ **LIVE** |
 
-**Note:** Compressed NFT (cNFT) validation is complete and tested. Transaction building and on-chain transfers are in development. See [cNFT Implementation Plan](docs/tasks/CNFT_SWAP_SUPPORT.md) for details.
+**Note:** Bulk swap functionality supports up to 10 assets per side (cNFTs, standard NFTs, Core NFTs, SOL). Swaps with 3+ NFTs automatically use Jito bundles for atomic execution. See [Bulk Swap Architecture](docs/BULK_CNFT_SWAP_ARCHITECTURE.md) for details.
 
 ---
 

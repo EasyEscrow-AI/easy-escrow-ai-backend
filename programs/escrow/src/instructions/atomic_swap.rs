@@ -155,10 +155,18 @@ pub struct AtomicSwapWithFee<'info> {
     #[account(mut)]
     pub maker_core_asset: Option<AccountInfo<'info>>,
     
+    /// Maker's Core NFT collection (required if maker's Core NFT belongs to a collection)
+    /// CHECK: Verified by mpl-core CPI
+    pub maker_core_collection: Option<AccountInfo<'info>>,
+    
     /// Taker's Core NFT asset account (for Core NFT transfers)
     /// CHECK: Verified by mpl-core CPI
     #[account(mut)]
     pub taker_core_asset: Option<AccountInfo<'info>>,
+    
+    /// Taker's Core NFT collection (required if taker's Core NFT belongs to a collection)
+    /// CHECK: Verified by mpl-core CPI
+    pub taker_core_collection: Option<AccountInfo<'info>>,
     
     /// Metaplex Core program for Core NFT transfers
     /// CHECK: Program ID verified in instruction
@@ -312,11 +320,14 @@ pub fn atomic_swap_handler(ctx: Context<AtomicSwapWithFee>, params: SwapParams) 
             .ok_or(AtomicSwapError::MissingCoreAsset)?;
         let mpl_core = ctx.accounts.mpl_core_program.as_ref()
             .ok_or(AtomicSwapError::MissingMplCoreProgram)?;
+        // Collection is optional - only needed if the Core NFT belongs to a collection
+        let collection = ctx.accounts.maker_core_collection.as_ref();
         
         transfer_core_nft(
             &ctx.accounts.maker.to_account_info(),
             &ctx.accounts.taker.to_account_info(),
             core_asset,
+            collection,
             mpl_core,
         )?;
         
@@ -381,11 +392,14 @@ pub fn atomic_swap_handler(ctx: Context<AtomicSwapWithFee>, params: SwapParams) 
             .ok_or(AtomicSwapError::MissingCoreAsset)?;
         let mpl_core = ctx.accounts.mpl_core_program.as_ref()
             .ok_or(AtomicSwapError::MissingMplCoreProgram)?;
+        // Collection is optional - only needed if the Core NFT belongs to a collection
+        let collection = ctx.accounts.taker_core_collection.as_ref();
         
         transfer_core_nft(
             &ctx.accounts.taker.to_account_info(),
             &ctx.accounts.maker.to_account_info(),
             core_asset,
+            collection,
             mpl_core,
         )?;
         
@@ -594,10 +608,15 @@ fn transfer_cnft<'info>(
 }
 
 /// Transfer a Metaplex Core NFT using mpl-core CPI
+/// 
+/// If the Core NFT belongs to a collection, the collection account MUST be provided.
+/// The mpl-core program will return "Missing collection" error (0x19) if the NFT
+/// belongs to a collection but the collection account is not passed.
 fn transfer_core_nft<'info>(
     from: &AccountInfo<'info>,
     to: &AccountInfo<'info>,
     asset: &AccountInfo<'info>,
+    collection: Option<&AccountInfo<'info>>,
     mpl_core_program: &AccountInfo<'info>,
 ) -> Result<()> {
     // Verify mpl-core program ID
@@ -610,14 +629,19 @@ fn transfer_core_nft<'info>(
     msg!("  From: {}", from.key());
     msg!("  To: {}", to.key());
     msg!("  Asset: {}", asset.key());
+    if let Some(coll) = collection {
+        msg!("  Collection: {}", coll.key());
+    }
     
     // Build mpl-core transfer CPI
     // In atomic swaps, the owner (from) is a signer
+    // If the NFT belongs to a collection, the collection account MUST be provided
     mpl_core::instructions::TransferV1CpiBuilder::new(mpl_core_program)
         .asset(asset)
         .payer(from)  // Payer for any rent changes
         .authority(Some(from))  // Owner must sign (owner is the authority)
         .new_owner(to)  // Destination owner (AccountInfo)
+        .collection(collection)  // Required for collection NFTs
         .invoke()?;
     
     msg!("Core NFT transferred successfully");

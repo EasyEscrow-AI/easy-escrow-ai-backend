@@ -147,6 +147,21 @@ services:
         type: SECRET
         scope: RUN_AND_BUILD_TIME
       
+      # Treasury Wallets & PDA
+      # DEVNET_STAGING_TREASURY_ADDRESS: Backend treasury wallet (receives fees)
+      # DEVNET_STAGING_PDA_TREASURY_ADDRESS: On-chain PDA treasury (escrow program)
+      - key: DEVNET_STAGING_TREASURY_ADDRESS
+        value: AScijLJ1ApcQftktBRN818b8LDH4JJovQ5qrGDHfHuPu
+        scope: RUN_TIME
+      
+      - key: DEVNET_STAGING_PDA_TREASURY_ADDRESS
+        value: HXC4LXCw8hy9sREUH8Fk7d3HYdLFGprhJ9n7AyfZ4bMN
+        scope: RUN_TIME
+      
+      - key: DEVNET_STAGING_ALT_ADDRESS
+        value: DvxKxLpq3pFCYfNguCBibVSSEYmMEdoU3mTqUwo1mw7J
+        scope: RUN_TIME
+      
       # DigitalOcean Spaces (Secrets - set via console)
       - key: SPACES_ACCESS_KEY_ID
         type: SECRET

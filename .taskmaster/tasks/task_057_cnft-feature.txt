@@ -1,0 +1,64 @@
+# Task ID: 57
+# Title: Mint Additional Test cNFTs for Bulk Swap Testing
+# Status: pending
+# Dependencies: 41
+# Priority: high
+# Description: Mint at least 20 additional test cNFTs in the staging environment to support comprehensive bulk swap testing with up to 10 assets per side, distributing them across multiple test wallets.
+# Details:
+Implement comprehensive test cNFT minting and distribution for bulk swap testing with the following systematic approach:
+
+1. **Review Existing Test cNFT Infrastructure**:
+   - Analyze tests/fixtures/staging-test-cnfts.json to understand current test cNFT structure and metadata format
+   - Review scripts/setup-test-cnfts-staging.ts to understand existing minting process and configuration
+   - Examine tests/helpers/test-cnft-manager.ts for current test cNFT management utilities
+
+2. **Mint Additional Test cNFTs**:
+   - Execute scripts/setup-test-cnfts-staging.ts to mint 20+ additional cNFTs to the shared Merkle tree on devnet
+   - Ensure all new cNFTs use consistent metadata structure with unique identifiers for testing
+   - Verify minting transactions are confirmed and cNFTs are properly indexed by DAS API
+
+3. **Distribute Test cNFTs Across Wallets**:
+   - Transfer newly minted cNFTs to multiple test wallets (maker/taker pairs) for realistic testing scenarios
+   - Ensure balanced distribution to support various bulk swap combinations
+   - Maintain at least 3-4 test wallets with sufficient cNFT holdings for comprehensive testing
+
+4. **Update Test Fixtures and Configuration**:
+   - Update tests/fixtures/staging-test-cnfts.json with new cNFT asset IDs, metadata, and wallet assignments
+   - Add structured test data for bulk scenarios: 2, 5, and 10 cNFTs per side
+   - Include mixed asset test configurations combining cNFTs with standard NFTs
+
+5. **Verify DAS API Integration**:
+   - Test all new cNFT asset IDs are accessible via DAS API getAsset calls
+   - Verify proof generation works correctly for all new cNFTs using getAssetProof
+   - Confirm metadata and ownership information is properly indexed and retrievable
+
+6. **Create Bulk Testing Scenarios**:
+   - Define test data structures for 2v2, 5v5, and 10v10 cNFT swap scenarios
+   - Create mixed asset scenarios combining cNFTs, standard NFTs, and SOL
+   - Document wallet assignments and asset distributions for each test scenario
+
+# Test Strategy:
+1. **Test cNFT Minting Verification**:
+   - Run scripts/setup-test-cnfts-staging.ts and verify successful minting of 20+ new cNFTs
+   - Check Solana Explorer on devnet to confirm all minting transactions are successful
+   - Verify total cNFT count reaches at least 25 test cNFTs in staging environment
+
+2. **DAS API Integration Testing**:
+   - Test DAS API getAsset calls for all new cNFT asset IDs to ensure proper indexing
+   - Verify getAssetProof returns valid proofs for all newly minted cNFTs
+   - Confirm metadata retrieval works correctly for all test cNFTs
+
+3. **Test Fixture Validation**:
+   - Load tests/fixtures/staging-test-cnfts.json and verify it contains all new asset IDs
+   - Validate JSON structure matches expected format with proper wallet assignments
+   - Test that test-cnft-manager.ts can successfully load and manage all new test data
+
+4. **Bulk Scenario Testing**:
+   - Create test offers using 2, 5, and 10 cNFTs per side to verify sufficient test assets
+   - Test mixed asset scenarios combining cNFTs with standard NFTs
+   - Verify all test wallets have adequate cNFT holdings for their assigned test scenarios
+
+5. **End-to-End Verification**:
+   - Run existing cNFT integration tests to ensure new test data doesn't break existing functionality
+   - Verify test cNFTs can be successfully used in offer creation and swap execution
+   - Confirm all bulk swap test scenarios have sufficient test assets available

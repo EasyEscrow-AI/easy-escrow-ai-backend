@@ -1,0 +1,129 @@
+# Task ID: 45
+# Title: Implement Jito Bundle Submission for Bulk Swap Parallel Execution
+# Status: pending
+# Dependencies: 41
+# Priority: high
+# Description: Extend the existing Jito integration to support bundle submission for bulk swaps with 3+ total cNFTs, enabling atomic parallel transaction execution with proper ordering, simulation, and confirmation handling.
+# Details:
+Implement comprehensive Jito bundle submission functionality in src/services/escrow-program.service.ts with the following components:
+
+1. **Extend Existing Jito Integration**:
+   - Build upon existing sendTransactionViaJito() method documented in docs/JITO_FREE_INTEGRATION_SUMMARY.md
+   - Maintain compatibility with current single transaction Jito submissions
+   - Reuse existing Jito endpoint configuration and authentication setup
+
+2. **Bundle Creation and Management**:
+   - Implement sendBundleViaJito() method that accepts array of Transaction objects
+   - Create Jito bundle with proper transaction ordering (nonce advance first, transfers, fee collection last)
+   - Implement bundle size validation (max 5 transactions per bundle as per Jito limits)
+   - Add bundle threshold logic: use bundles for swaps with 3+ total cNFTs (since 1-2 cNFTs fit in single transaction, but 3+ require multiple transactions due to account limits), otherwise use single transaction
+
+3. **Dynamic Tip Calculation**:
+   - Implement dynamic Jito tip calculation based on current network congestion
+   - Query Jito tip stream API for recommended tip amounts
+   - Include tip as final instruction in last transaction of bundle
+   - Add fallback tip amounts for API failures (0.001 SOL default)
+
+4. **Bundle Simulation and Validation**:
+   - Implement bundle simulation using Jito's simulateBundle endpoint before submission
+   - Validate all transactions in bundle pass simulation
+   - Handle simulation failures with detailed error reporting
+   - Add retry logic with fresh Merkle proofs on simulation failures
+
+5. **Bundle Submission and Confirmation**:
+   - Submit bundle via Jito's sendBundle endpoint
+   - Implement bundle ID tracking in database with new bundle_id column in swap_transactions table
+   - Use getBundleStatuses endpoint for confirmation polling
+   - Handle bundle landing rate monitoring and timeout scenarios (30 second timeout)
+
+6. **Error Handling and Retry Logic**:
+   - Implement exponential backoff retry for bundle failures
+   - Refresh Merkle proofs on retry attempts for cNFT transactions
+   - Handle partial bundle confirmation scenarios
+   - Add fallback to individual transaction submission on repeated bundle failures
+
+7. **Comprehensive Logging**:
+   - Log complete bundle lifecycle: creation, simulation, submission, confirmation
+   - Include bundle ID, transaction count, tip amount, and timing metrics
+   - Add structured logging for bundle performance analytics
+   - Implement error categorization for bundle failure analysis
+
+8. **Integration with Existing Services**:
+   - Update TransactionBuilder service to flag transactions suitable for bundling
+   - Modify OfferManager to trigger bundle submission for qualifying bulk swaps
+   - Ensure compatibility with existing nonce pool management and fee calculation
+
+# Test Strategy:
+1. **Bundle Creation Testing**:
+   - Test sendBundleViaJito() with various transaction counts (2-5 transactions)
+   - Verify proper transaction ordering in bundles (nonce advance first, fee collection last)
+   - Test bundle threshold logic with swaps containing exactly 3 cNFTs vs 2 cNFTs
+   - Validate bundle size limits and rejection of oversized bundles
+
+2. **Simulation and Validation Testing**:
+   - Test bundle simulation with valid transactions and verify successful simulation
+   - Mock simulation failures and verify proper error handling and retry logic
+   - Test Merkle proof refresh on simulation failures for cNFT transactions
+   - Verify fallback to individual transactions after repeated simulation failures
+
+3. **Tip Calculation Testing**:
+   - Test dynamic tip calculation with mocked Jito tip stream API responses
+   - Verify tip inclusion in final transaction of bundle
+   - Test fallback tip amounts when API is unavailable
+   - Validate tip amounts are reasonable and within expected ranges
+
+4. **Bundle Submission and Confirmation Testing**:
+   - Test bundle submission to Jito with mock bundle IDs
+   - Verify bundle ID storage in database and proper tracking
+   - Test confirmation polling with getBundleStatuses endpoint
+   - Mock various bundle statuses (pending, confirmed, failed) and verify handling
+
+5. **Integration Testing**:
+   - Test end-to-end bulk swap flow with 3+ cNFTs triggering bundle submission
+   - Verify compatibility with existing single transaction flows
+   - Test integration with NoncePoolManager for proper nonce handling in bundles
+   - Validate fee calculation and collection works correctly in bundle context
+
+6. **Performance and Reliability Testing**:
+   - Test bundle submission under network congestion scenarios
+   - Verify timeout handling and retry logic with exponential backoff
+   - Test logging output for bundle lifecycle events and performance metrics
+   - Validate error categorization and reporting for different failure types
+
+# Subtasks:
+## 1. Extend sendTransactionViaJito() for Bundle Compatibility [pending]
+### Dependencies: None
+### Description: Extend the existing sendTransactionViaJito() method to support bundle submission while maintaining backward compatibility with single transaction submissions.
+### Details:
+Modify the existing sendTransactionViaJito() method in src/services/escrow-program.service.ts to add bundle support parameters. Add optional bundleMode flag and bundleTransactions array parameter. Maintain existing single transaction flow as default behavior. Reuse existing Jito endpoint configuration and authentication setup from docs/JITO_FREE_INTEGRATION_SUMMARY.md. Ensure no breaking changes to current single transaction Jito submissions.
+
+## 2. Implement sendBundleViaJito() Method with Transaction Ordering [pending]
+### Dependencies: 45.1
+### Description: Create new sendBundleViaJito() method that accepts array of Transaction objects and creates properly ordered Jito bundles.
+### Details:
+Implement sendBundleViaJito() method that accepts Transaction[] parameter. Create Jito bundle with proper transaction ordering: nonce advance transactions first, transfer transactions in middle, fee collection transactions last. Implement bundle size validation with maximum 5 transactions per bundle as per Jito limits. Add bundle threshold logic to use bundles for swaps with 3+ total cNFTs (since 1-2 cNFTs fit in single transaction, but 3+ require multiple transactions due to account limits), otherwise fallback to single transaction submission.
+
+## 3. Implement Dynamic Tip Calculation with Jito API Integration [pending]
+### Dependencies: 45.2
+### Description: Implement dynamic Jito tip calculation based on current network congestion using Jito tip stream API.
+### Details:
+Query Jito tip stream API for recommended tip amounts based on current network congestion. Implement dynamic tip calculation logic that adjusts based on network conditions. Include tip as final instruction in last transaction of bundle. Add fallback tip amounts for API failures with 0.001 SOL default. Create tip calculation helper functions with proper error handling and timeout logic.
+
+## 4. Implement Bundle Simulation and Validation System [pending]
+### Dependencies: 45.3
+### Description: Implement comprehensive bundle simulation using Jito's simulateBundle endpoint with validation and retry logic.
+### Details:
+Implement bundle simulation using Jito's simulateBundle endpoint before submission. Validate all transactions in bundle pass simulation with detailed error reporting. Handle simulation failures with proper error categorization and logging. Add retry logic with fresh Merkle proofs on simulation failures for cNFT transactions. Implement simulation timeout handling and fallback strategies.
+
+## 5. Implement Bundle Submission and Confirmation Tracking [pending]
+### Dependencies: 45.4
+### Description: Implement bundle submission via Jito's sendBundle endpoint with database tracking and confirmation polling.
+### Details:
+Submit bundle via Jito's sendBundle endpoint with proper error handling. Implement bundle ID tracking in database by adding bundle_id column to swap_transactions table. Use getBundleStatuses endpoint for confirmation polling with 30 second timeout. Handle bundle landing rate monitoring and timeout scenarios. Implement confirmation status updates in database with proper transaction state management.
+
+## 6. Implement Comprehensive Error Handling and Retry Logic [pending]
+### Dependencies: 45.5
+### Description: Implement robust error handling, retry logic, and comprehensive logging for the complete bundle submission lifecycle.
+### Details:
+Implement exponential backoff retry for bundle failures with configurable retry limits. Refresh Merkle proofs on retry attempts for cNFT transactions. Handle partial bundle confirmation scenarios with proper cleanup. Add fallback to individual transaction submission on repeated bundle failures. Implement comprehensive logging for complete bundle lifecycle including creation, simulation, submission, and confirmation. Add structured logging with bundle ID, transaction count, tip amount, and timing metrics. Include error categorization for bundle failure analysis and performance analytics.
+

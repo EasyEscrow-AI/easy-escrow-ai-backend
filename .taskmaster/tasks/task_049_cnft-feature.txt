@@ -1,0 +1,98 @@
+# Task ID: 49
+# Title: Phase 3d - Enhanced Offer Management: Implement Update Listing Functionality
+# Status: pending
+# Dependencies: None
+# Priority: medium
+# Description: Implement comprehensive functionality for makers to update their existing swap listings, allowing modifications to SOL amounts and swap assets while maintaining proper validation and version tracking.
+# Details:
+Implement the complete update listing functionality with the following comprehensive components:
+
+1. **Database Schema Updates**:
+   - Add previousVersionId Int? field to SwapOffer model for version tracking
+   - Add updateCount Int default 0 field to track number of updates
+   - Create database migration to add these fields to existing offers table
+   - Ensure proper indexing on previousVersionId for efficient version queries
+
+2. **Core updateOffer() Method Implementation**:
+   - Create updateOffer(offerId, updateData, makerWallet) method in src/services/offerManager.ts
+   - Validate offer exists and is in 'open' status (reject 'accepted', 'completed', 'cancelled' offers)
+   - Verify maker wallet authorization matches original offer creator
+   - Support modification of: SOL amounts (makerSolAmount, takerSolAmount), offered assets array, requested assets array
+   - Increment updateCount and set previousVersionId to current offer version
+
+3. **Asset Re-validation and Fee Recalculation**:
+   - Re-validate all updated assets using existing asset validation logic
+   - Verify NFT/cNFT ownership for newly added offered assets
+   - Recalculate platform fees using FeeCalculator service based on new asset values
+   - Update offer totals and fee breakdowns in database
+
+4. **Transaction Invalidation Handling**:
+   - Check for any pending transactions associated with the offer
+   - Invalidate existing prepared transactions that reference old offer data
+   - Clear any cached transaction builders or nonce assignments
+   - Log transaction invalidations for monitoring purposes
+
+5. **API Endpoint Implementation**:
+   - Create PUT /api/offers/:id endpoint in src/routes/offers.routes.ts
+   - Add request validation middleware for update payload structure
+   - Implement proper error handling for unauthorized updates, invalid status, and validation failures
+   - Return updated offer data with new version information
+
+6. **Update Cooldown and Spam Prevention**:
+   - Implement configurable update cooldown period (e.g., 5 minutes between updates)
+   - Store lastUpdatedAt timestamp and validate against cooldown period
+   - Add rate limiting specifically for offer updates per wallet address
+   - Log excessive update attempts for monitoring
+
+7. **Version History and Audit Trail**:
+   - Maintain complete audit trail of offer modifications
+   - Store previous offer state before applying updates
+   - Enable version history queries for debugging and analytics
+   - Implement soft deletion approach for version tracking
+
+8. **API Documentation Updates**:
+   - Document PUT /api/offers/:id endpoint with request/response schemas
+   - Include error response codes and validation requirements
+   - Add examples for different update scenarios (SOL only, assets only, combined)
+   - Document version tracking and cooldown behavior
+
+# Test Strategy:
+1. **Core Functionality Testing**:
+   - Test updateOffer() method with valid updates to SOL amounts, offered assets, and requested assets
+   - Verify only 'open' status offers can be updated (test rejection of 'accepted', 'completed', 'cancelled' offers)
+   - Test maker wallet authorization by attempting updates with wrong wallet addresses
+   - Verify updateCount increments correctly and previousVersionId is set properly
+
+2. **Asset Validation and Fee Testing**:
+   - Test asset re-validation with newly added NFTs/cNFTs (verify ownership checks)
+   - Test removal of assets from offers and ensure proper validation
+   - Verify fee recalculation accuracy using FeeCalculator service with updated asset values
+   - Test edge cases like removing all SOL amounts or all assets
+
+3. **API Endpoint Testing**:
+   - Test PUT /api/offers/:id with valid update payloads and verify 200 responses
+   - Test unauthorized update attempts and verify 403 responses
+   - Test updates on non-existent offers and verify 404 responses
+   - Test updates on offers with invalid status and verify 400 responses with proper error messages
+
+4. **Update Cooldown and Rate Limiting Testing**:
+   - Test update cooldown by making rapid successive updates and verify rejection after cooldown period
+   - Test rate limiting by exceeding update limits per wallet and verify 429 responses
+   - Verify cooldown resets properly after waiting period expires
+
+5. **Transaction Invalidation Testing**:
+   - Create offer with pending prepared transaction, then update offer and verify transaction is invalidated
+   - Test that updated offers require new transaction preparation
+   - Verify nonce assignments are cleared when offers are updated
+
+6. **Version History and Database Testing**:
+   - Verify database schema changes are applied correctly with migration
+   - Test version tracking by making multiple updates and querying version history
+   - Test previousVersionId linking and updateCount accuracy across multiple updates
+   - Verify database constraints and indexing work properly for version fields
+
+7. **Integration Testing**:
+   - Test complete update flow from API request through database update and response
+   - Verify updated offers appear correctly in listing queries
+   - Test interaction with existing offer management functionality (creation, acceptance, cancellation)
+   - Test update functionality with various offer types (NFT-to-NFT, NFT-to-SOL, bulk swaps)

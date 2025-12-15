@@ -1,0 +1,73 @@
+# Task ID: 50
+# Title: Database Schema Updates for Bulk cNFT Swaps
+# Status: pending
+# Dependencies: None
+# Priority: high
+# Description: Update Prisma schema to support bulk swap tracking and enhanced offer management features for compressed NFT swaps.
+# Details:
+Implement comprehensive database schema updates to support bulk cNFT swap operations and enhanced offer management:
+
+1. **Update SwapOffer Model with Bulk Swap Fields**:
+   - Add `transactionGroup: String?` for multi-transaction bundle tracking
+   - Add `bundleId: String?` for Jito bundle ID storage
+   - Add `previousVersionId: Int?` for offer update versioning and history tracking
+   - Add `updateCount: Int @default(0)` to track number of offer modifications
+   - Add `cancelledAt: DateTime?` to timestamp offer cancellations
+   - Add `cancelledBy: String?` to track which wallet cancelled the offer
+
+2. **Create Optional TransactionGroup Model**:
+   - Evaluate need for separate TransactionGroup model for complex bundle tracking
+   - If needed, create model with fields: id, groupId, bundleId, status, createdAt, updatedAt
+   - Add relation to SwapOffer if TransactionGroup model is created
+
+3. **Database Migration Process**:
+   - Generate Prisma migration using `npx prisma migrate dev --name bulk-swap-support`
+   - Review generated migration SQL for correctness
+   - Apply migration to development database
+   - Test migration rollback capability if needed
+
+4. **Update Prisma Client Types**:
+   - Run `npx prisma generate` to update TypeScript types
+   - Verify new fields are properly typed in generated client
+   - Update any existing TypeScript interfaces that reference SwapOffer
+
+5. **Database Operations Testing**:
+   - Test CRUD operations with new optional fields
+   - Verify default values work correctly (updateCount: 0)
+   - Test null handling for optional fields
+   - Validate foreign key constraints if TransactionGroup model is added
+
+6. **Seed Data Updates**:
+   - Update prisma/seed.ts if it creates SwapOffer records
+   - Ensure seed data works with new schema structure
+   - Add sample data for testing bulk swap scenarios if applicable
+
+# Test Strategy:
+1. **Schema Validation Testing**:
+   - Run `npx prisma validate` to ensure schema syntax is correct
+   - Verify `npx prisma generate` completes without errors
+   - Confirm TypeScript compilation succeeds with updated types
+
+2. **Migration Testing**:
+   - Apply migration to clean development database and verify success
+   - Test migration on database with existing SwapOffer records
+   - Verify all new fields have correct types and constraints in database
+   - Test migration rollback if supported
+
+3. **Database Operations Testing**:
+   - Create SwapOffer records with new fields populated and verify storage
+   - Create SwapOffer records with new fields as null and verify handling
+   - Test updateCount increments correctly when offers are modified
+   - Verify cancelledAt and cancelledBy fields work for offer cancellation tracking
+   - If TransactionGroup model is created, test relationships and foreign key constraints
+
+4. **Integration Testing**:
+   - Run existing test suite to ensure no breaking changes
+   - Test that existing API endpoints still work with updated schema
+   - Verify seed script runs successfully with new schema
+   - Test Prisma Client queries with new fields in development environment
+
+5. **Production Readiness**:
+   - Generate production migration script and review for safety
+   - Verify migration can be applied to production without data loss
+   - Test that application starts successfully with updated schema

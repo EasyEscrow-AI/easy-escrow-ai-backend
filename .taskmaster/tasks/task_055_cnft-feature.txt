@@ -1,0 +1,81 @@
+# Task ID: 55
+# Title: Update Documentation for cNFT Bulk Swap Support
+# Status: pending
+# Dependencies: None
+# Priority: medium
+# Description: Update all documentation to reflect the new cNFT bulk swap functionality including implementation progress, architecture details, API examples, and testing guides.
+# Details:
+Implement comprehensive documentation updates to reflect the new cNFT bulk swap functionality with the following structured approach:
+
+1. **Update Implementation Progress Documentation**:
+   - Update docs/cnft-plan.md to mark completed tasks and reflect current implementation status
+   - Document any deviations from original plan and lessons learned during implementation
+   - Add timeline updates and next phase planning information
+
+2. **Create Comprehensive Architecture Documentation**:
+   - Create docs/BULK_CNFT_SWAP_ARCHITECTURE.md covering:
+     * Transaction splitting strategy for handling 1-2 cNFTs per transaction due to account limits
+     * Jito bundle integration for atomic multi-transaction execution
+     * Smart ordering logic for transaction sequencing and dependency management
+     * Error handling and retry mechanisms for failed bundle submissions
+     * Address Lookup Table (ALT) usage for account compression
+     * Bundle confirmation and finality verification processes
+
+3. **Update API Documentation**:
+   - Update docs/api/offers.md with:
+     * Multi-asset request/response examples showing arrays of assets
+     * Counter-offer workflow documentation with parentOfferId relationships
+     * Cancel and update endpoints with proper authorization requirements
+     * Private sales documentation with takerWallet restrictions
+     * Bulk swap limitations (maximum 10 assets per side)
+     * Transaction group response formats for multi-transaction swaps
+
+4. **Update Main Documentation Files**:
+   - Update README.md to include:
+     * cNFT swap capabilities and supported operations
+     * Bulk swap limitations and requirements
+     * Jito bundle requirements for large swaps (5+ total cNFTs)
+     * Quick start examples for bulk cNFT swaps
+   - Update docs/architecture/ATOMIC_SWAP_ARCHITECTURE.md with:
+     * cNFT integration details and Bubblegum program interaction
+     * Transaction group flow for bulk operations
+     * Bundle confirmation process and atomicity guarantees
+
+5. **Create Testing Documentation**:
+   - Create docs/CNFT_TESTING_GUIDE.md covering:
+     * Test setup requirements for cNFT swaps including RPC configuration
+     * Merkle tree creation for testing environments
+     * Common issues and solutions for cNFT testing
+     * Mock data setup and test asset preparation
+     * Integration test execution and validation steps
+
+6. **Documentation Cross-References and Consistency**:
+   - Ensure all documentation files reference each other appropriately
+   - Maintain consistent terminology and examples across all documents
+   - Update any outdated references to single-asset limitations
+   - Verify all code examples compile and execute correctly
+
+# Test Strategy:
+1. **Documentation Completeness Verification**:
+   - Review each updated documentation file against the actual implementation to ensure accuracy
+   - Verify all API examples in docs/api/offers.md match the actual request/response formats from Task 54
+   - Cross-reference architecture documentation with the actual TransactionGroupBuilder implementation from Task 44
+   - Confirm Jito bundle documentation aligns with the implementation from Task 45
+
+2. **Technical Accuracy Testing**:
+   - Execute all code examples provided in documentation to ensure they work correctly
+   - Verify API endpoint examples by testing them against the actual running application
+   - Test cNFT testing guide procedures by following the setup instructions step-by-step
+   - Validate that all referenced file paths and configuration options exist and are correct
+
+3. **Documentation Consistency Review**:
+   - Ensure consistent terminology usage across all documentation files
+   - Verify that bulk swap limitations (10 assets per side) are consistently documented
+   - Check that Jito bundle thresholds (5+ total cNFTs) are accurately reflected everywhere
+   - Confirm all cross-references between documents are valid and up-to-date
+
+4. **User Experience Validation**:
+   - Have team members follow the documentation to perform bulk cNFT swaps and verify clarity
+   - Test the CNFT_TESTING_GUIDE.md by setting up a fresh testing environment following the instructions
+   - Verify that README.md provides sufficient information for new users to understand bulk swap capabilities
+   - Ensure architecture documentation provides adequate detail for developers to understand the system

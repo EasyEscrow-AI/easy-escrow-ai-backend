@@ -155,7 +155,7 @@ export class TransactionBuilder {
     
     // Initialize ALT service if treasury PDA is provided
     if (treasuryPda) {
-      const altAddress = process.env.PRODUCTION_ALT_ADDRESS || process.env.STAGING_ALT_ADDRESS;
+      const altAddress = process.env.MAINNET_PROD_ALT_ADDRESS || process.env.DEVNET_STAGING_ALT_ADDRESS;
       this.altService = createALTService(connection, {
         platformAuthority: platformAuthority.publicKey,
         treasuryPda,
@@ -399,7 +399,7 @@ export class TransactionBuilder {
         if (this.altService && sizeEstimate.estimatedSizeWithALT && 
             sizeEstimate.estimatedSizeWithALT <= TransactionBuilder.MAX_TRANSACTION_SIZE) {
           errorMessage += '. This transaction could fit using Address Lookup Tables (ALT). ' +
-            'Enable ALT support or configure PRODUCTION_ALT_ADDRESS environment variable.';
+            'Enable ALT support or configure MAINNET_PROD_ALT_ADDRESS environment variable.';
         } else {
           errorMessage += '. cNFT transfers require Merkle proofs which can exceed Solana\'s transaction size limit. ' +
             'This cNFT\'s Merkle tree may have a low canopy depth, requiring more proof data. ' +
@@ -589,12 +589,11 @@ export class TransactionBuilder {
           )
         );
       } else if (asset.type === AssetType.CNFT) {
-        // Compressed NFT transfer (placeholder - requires Bubblegum program integration)
-        // TODO: Implement actual cNFT transfer using Metaplex Bubblegum
-        console.warn('[TransactionBuilder] cNFT transfer not yet implemented:', asset.identifier);
-        
-        // For now, throw error to indicate unsupported
-        throw new Error('cNFT transfers not yet implemented');
+        // Compressed NFT transfers are handled by the atomic swap program via Bubblegum CPI
+        // This code path is only for standalone transfers (not atomic swaps)
+        // For atomic swaps, use createAtomicSwapInstruction() which properly handles cNFT proofs
+        console.log('[TransactionBuilder] cNFT transfer handled by atomic swap program:', asset.identifier);
+        // No additional instructions needed here - the atomic swap instruction handles everything
       } else if (asset.type === AssetType.CORE_NFT) {
         // Metaplex Core NFT transfer - handled by the program via mpl-core CPI
         // Core NFTs are single-account assets - the asset address is the NFT mint/ID
@@ -613,21 +612,78 @@ export class TransactionBuilder {
   private async createAtomicSwapInstruction(inputs: TransactionBuildInputs): Promise<TransactionInstruction> {
     console.log('[TransactionBuilder] Creating atomic_swap_with_fee instruction');
     
-    // Validate: Program only supports 1 NFT per side
+    // Validate: Single transaction supports 1 NFT per side
+    // For bulk swaps with multiple NFTs, use TransactionGroupBuilder (Task 44)
     if (inputs.makerAssets.length > 1) {
-      throw new Error('Program only supports 1 NFT from maker. Use multiple transactions for multi-NFT swaps.');
+      throw new Error(
+        `Single transaction supports max 1 NFT from maker (got ${inputs.makerAssets.length}). ` +
+        'For bulk swaps, use transaction splitting via TransactionGroupBuilder.'
+      );
     }
     if (inputs.takerAssets.length > 1) {
-      throw new Error('Program only supports 1 NFT from taker. Use multiple transactions for multi-NFT swaps.');
+      throw new Error(
+        `Single transaction supports max 1 NFT from taker (got ${inputs.takerAssets.length}). ` +
+        'For bulk swaps, use transaction splitting via TransactionGroupBuilder.'
+      );
     }
     
     // Determine asset types
-    const makerSendsNft = inputs.makerAssets.length > 0 && inputs.makerAssets[0].type === AssetType.NFT;
-    const takerSendsNft = inputs.takerAssets.length > 0 && inputs.takerAssets[0].type === AssetType.NFT;
-    const makerSendsCnft = inputs.makerAssets.length > 0 && inputs.makerAssets[0].type === AssetType.CNFT;
-    const takerSendsCnft = inputs.takerAssets.length > 0 && inputs.takerAssets[0].type === AssetType.CNFT;
-    const makerSendsCoreNft = inputs.makerAssets.length > 0 && inputs.makerAssets[0].type === AssetType.CORE_NFT;
-    const takerSendsCoreNft = inputs.takerAssets.length > 0 && inputs.takerAssets[0].type === AssetType.CORE_NFT;
+    // Use explicit string comparison to handle JSON-parsed values robustly
+    // JSON from Prisma gives plain strings, which may not match enum directly in all cases
+    const getAssetTypeString = (type: any): string => {
+      if (typeof type === 'string') return type.toLowerCase();
+      return String(type).toLowerCase();
+    };
+    
+    // DEBUG: Log exact types for troubleshooting
+    if (inputs.makerAssets.length > 0) {
+      const makerType = getAssetTypeString(inputs.makerAssets[0].type);
+      console.log('[TransactionBuilder] Maker asset[0] type debug:', {
+        rawType: inputs.makerAssets[0].type,
+        normalizedType: makerType,
+        typeofType: typeof inputs.makerAssets[0].type,
+        isNFT: makerType === 'nft',
+        isCNFT: makerType === 'cnft',
+        isCoreNFT: makerType === 'core_nft',
+        assetTypeNFT: AssetType.NFT,
+        assetTypeCNFT: AssetType.CNFT,
+        assetTypeCoreNFT: AssetType.CORE_NFT,
+      });
+    }
+    if (inputs.takerAssets.length > 0) {
+      const takerType = getAssetTypeString(inputs.takerAssets[0].type);
+      console.log('[TransactionBuilder] Taker asset[0] type debug:', {
+        rawType: inputs.takerAssets[0].type,
+        normalizedType: takerType,
+        typeofType: typeof inputs.takerAssets[0].type,
+        isNFT: takerType === 'nft',
+        isCNFT: takerType === 'cnft',
+        isCoreNFT: takerType === 'core_nft',
+        assetTypeNFT: AssetType.NFT,
+        assetTypeCNFT: AssetType.CNFT,
+        assetTypeCoreNFT: AssetType.CORE_NFT,
+      });
+    }
+    
+    // Use string comparison for robustness (handles JSON-parsed plain strings)
+    const makerTypeStr = inputs.makerAssets.length > 0 ? getAssetTypeString(inputs.makerAssets[0].type) : '';
+    const takerTypeStr = inputs.takerAssets.length > 0 ? getAssetTypeString(inputs.takerAssets[0].type) : '';
+    
+    const makerSendsNft = makerTypeStr === 'nft';
+    const takerSendsNft = takerTypeStr === 'nft';
+    const makerSendsCnft = makerTypeStr === 'cnft';
+    const takerSendsCnft = takerTypeStr === 'cnft';
+    const makerSendsCoreNft = makerTypeStr === 'core_nft';
+    const takerSendsCoreNft = takerTypeStr === 'core_nft';
+    
+    console.log('[TransactionBuilder] Asset type detection results:', {
+      makerSendsNft,
+      takerSendsNft,
+      makerSendsCnft,
+      takerSendsCnft,
+      makerSendsCoreNft,
+      takerSendsCoreNft,
+    });
     
     // Get NFT token accounts (if applicable)
     let makerNftAccount: PublicKey | null = null;
@@ -642,11 +698,62 @@ export class TransactionBuilder {
     // Get Core NFT asset accounts (if applicable)
     let makerCoreAsset: PublicKey | null = null;
     let takerCoreAsset: PublicKey | null = null;
+    // Core NFT collection accounts (required if NFT belongs to a collection)
+    let makerCoreCollection: PublicKey | null = null;
+    let takerCoreCollection: PublicKey | null = null;
     
     if (makerSendsNft) {
       const nftMint = new PublicKey(inputs.makerAssets[0].identifier);
       makerNftAccount = await getAssociatedTokenAddress(nftMint, inputs.makerPubkey);
       takerNftDestination = await getAssociatedTokenAddress(nftMint, inputs.takerPubkey);
+      
+      // Validate token account exists and has correct mint
+      const makerAccountInfo = await this.connection.getAccountInfo(makerNftAccount);
+      if (!makerAccountInfo) {
+        throw new Error(
+          `Maker NFT token account does not exist: ${makerNftAccount.toBase58()}. ` +
+          `The maker must own the NFT with mint ${nftMint.toBase58()} before creating a swap.`
+        );
+      }
+      
+      // Verify it's a token account (owned by Token Program)
+      if (!makerAccountInfo.owner.equals(TOKEN_PROGRAM_ID)) {
+        throw new Error(
+          `Invalid token account: ${makerNftAccount.toBase58()} is not owned by Token Program. ` +
+          `Owner: ${makerAccountInfo.owner.toBase58()}`
+        );
+      }
+      
+      // Parse token account to verify mint matches
+      try {
+        const { getAccount } = await import('@solana/spl-token');
+        const tokenAccount = await getAccount(this.connection, makerNftAccount);
+        if (!tokenAccount.mint.equals(nftMint)) {
+          throw new Error(
+            `Token account mint mismatch: account ${makerNftAccount.toBase58()} has mint ${tokenAccount.mint.toBase58()}, ` +
+            `but expected ${nftMint.toBase58()}`
+          );
+        }
+        if (tokenAccount.amount !== BigInt(1)) {
+          throw new Error(
+            `Invalid NFT amount: token account has ${tokenAccount.amount} tokens, expected 1 for NFT`
+          );
+        }
+        if (!tokenAccount.owner.equals(inputs.makerPubkey)) {
+          throw new Error(
+            `Token account owner mismatch: account owned by ${tokenAccount.owner.toBase58()}, ` +
+            `but maker is ${inputs.makerPubkey.toBase58()}`
+          );
+        }
+      } catch (error: any) {
+        if (error.message.includes('InvalidAccountOwner') || error.message.includes('could not find account')) {
+          throw new Error(
+            `Maker NFT token account does not exist or is invalid: ${makerNftAccount.toBase58()}. ` +
+            `Error: ${error.message}`
+          );
+        }
+        throw error;
+      }
     } else if (makerSendsCnft) {
       makerCnftParams = await this.cnftService.buildTransferParams(
         inputs.makerAssets[0].identifier,
@@ -660,11 +767,19 @@ export class TransactionBuilder {
       const baseTransactionSize = 900; // Approximate base size without proof
       const estimatedSize = baseTransactionSize + estimatedProofBytes;
       
-      console.log(`[TransactionBuilder] cNFT proof size estimate: ${proofLength} nodes, ~${estimatedProofBytes} bytes, total ~${estimatedSize} bytes`);
+      // Calculate estimated size with ALT (saves ~500-600 bytes by compressing account addresses)
+      const altSavings = this.altService ? 526 : 0; // Approximate ALT savings
+      const estimatedSizeWithALT = estimatedSize - altSavings;
+      const hasALT = this.altService !== null;
       
-      if (estimatedSize > TransactionBuilder.MAX_TRANSACTION_SIZE) {
+      console.log(`[TransactionBuilder] cNFT proof size estimate: ${proofLength} nodes, ~${estimatedProofBytes} bytes, total ~${estimatedSize} bytes`);
+      console.log(`[TransactionBuilder] ALT available: ${hasALT}, size with ALT: ~${estimatedSizeWithALT} bytes`);
+      
+      // Only reject if too large even WITH ALT
+      const effectiveSize = hasALT ? estimatedSizeWithALT : estimatedSize;
+      if (effectiveSize > TransactionBuilder.MAX_TRANSACTION_SIZE) {
         throw new Error(
-          `cNFT transaction would be too large (~${estimatedSize} bytes, limit: ${TransactionBuilder.MAX_TRANSACTION_SIZE}). ` +
+          `cNFT transaction would be too large (~${estimatedSize} bytes${hasALT ? `, ~${estimatedSizeWithALT} with ALT` : ''}, limit: ${TransactionBuilder.MAX_TRANSACTION_SIZE}). ` +
           `This cNFT's Merkle tree has ${proofLength} proof nodes (low canopy depth). ` +
           `Please use a different cNFT from a collection with higher canopy depth, or use a regular SPL NFT instead.`
         );
@@ -673,12 +788,68 @@ export class TransactionBuilder {
       // Core NFT - the asset account is the NFT's mint address (which is also its asset address)
       makerCoreAsset = new PublicKey(inputs.makerAssets[0].identifier);
       console.log('[TransactionBuilder] Maker sending Core NFT:', makerCoreAsset.toBase58());
+      
+      // Fetch collection address if the Core NFT belongs to a collection
+      // This is REQUIRED by mpl-core for collection NFTs, otherwise transfer fails with "Missing collection"
+      const makerCoreCollectionAddress = await this.fetchCoreNftCollection(inputs.makerAssets[0].identifier);
+      if (makerCoreCollectionAddress) {
+        makerCoreCollection = new PublicKey(makerCoreCollectionAddress);
+        console.log('[TransactionBuilder] Maker Core NFT collection:', makerCoreCollection.toBase58());
+      }
     }
     
     if (takerSendsNft) {
       const nftMint = new PublicKey(inputs.takerAssets[0].identifier);
       takerNftAccount = await getAssociatedTokenAddress(nftMint, inputs.takerPubkey);
       makerNftDestination = await getAssociatedTokenAddress(nftMint, inputs.makerPubkey);
+      
+      // Validate token account exists and has correct mint
+      const takerAccountInfo = await this.connection.getAccountInfo(takerNftAccount);
+      if (!takerAccountInfo) {
+        throw new Error(
+          `Taker NFT token account does not exist: ${takerNftAccount.toBase58()}. ` +
+          `The taker must own the NFT with mint ${nftMint.toBase58()} before accepting a swap.`
+        );
+      }
+      
+      // Verify it's a token account (owned by Token Program)
+      if (!takerAccountInfo.owner.equals(TOKEN_PROGRAM_ID)) {
+        throw new Error(
+          `Invalid token account: ${takerNftAccount.toBase58()} is not owned by Token Program. ` +
+          `Owner: ${takerAccountInfo.owner.toBase58()}`
+        );
+      }
+      
+      // Parse token account to verify mint matches
+      try {
+        const { getAccount } = await import('@solana/spl-token');
+        const tokenAccount = await getAccount(this.connection, takerNftAccount);
+        if (!tokenAccount.mint.equals(nftMint)) {
+          throw new Error(
+            `Token account mint mismatch: account ${takerNftAccount.toBase58()} has mint ${tokenAccount.mint.toBase58()}, ` +
+            `but expected ${nftMint.toBase58()}`
+          );
+        }
+        if (tokenAccount.amount !== BigInt(1)) {
+          throw new Error(
+            `Invalid NFT amount: token account has ${tokenAccount.amount} tokens, expected 1 for NFT`
+          );
+        }
+        if (!tokenAccount.owner.equals(inputs.takerPubkey)) {
+          throw new Error(
+            `Token account owner mismatch: account owned by ${tokenAccount.owner.toBase58()}, ` +
+            `but taker is ${inputs.takerPubkey.toBase58()}`
+          );
+        }
+      } catch (error: any) {
+        if (error.message.includes('InvalidAccountOwner') || error.message.includes('could not find account')) {
+          throw new Error(
+            `Taker NFT token account does not exist or is invalid: ${takerNftAccount.toBase58()}. ` +
+            `Error: ${error.message}`
+          );
+        }
+        throw error;
+      }
     } else if (takerSendsCnft) {
       takerCnftParams = await this.cnftService.buildTransferParams(
         inputs.takerAssets[0].identifier,
@@ -692,11 +863,19 @@ export class TransactionBuilder {
       const baseTransactionSize = 900; // Approximate base size without proof
       const estimatedSize = baseTransactionSize + estimatedProofBytes;
       
-      console.log(`[TransactionBuilder] cNFT proof size estimate: ${proofLength} nodes, ~${estimatedProofBytes} bytes, total ~${estimatedSize} bytes`);
+      // Calculate estimated size with ALT (saves ~500-600 bytes by compressing account addresses)
+      const altSavings = this.altService ? 526 : 0; // Approximate ALT savings
+      const estimatedSizeWithALT = estimatedSize - altSavings;
+      const hasALT = this.altService !== null;
       
-      if (estimatedSize > TransactionBuilder.MAX_TRANSACTION_SIZE) {
+      console.log(`[TransactionBuilder] cNFT proof size estimate: ${proofLength} nodes, ~${estimatedProofBytes} bytes, total ~${estimatedSize} bytes`);
+      console.log(`[TransactionBuilder] ALT available: ${hasALT}, size with ALT: ~${estimatedSizeWithALT} bytes`);
+      
+      // Only reject if too large even WITH ALT
+      const effectiveSize = hasALT ? estimatedSizeWithALT : estimatedSize;
+      if (effectiveSize > TransactionBuilder.MAX_TRANSACTION_SIZE) {
         throw new Error(
-          `cNFT transaction would be too large (~${estimatedSize} bytes, limit: ${TransactionBuilder.MAX_TRANSACTION_SIZE}). ` +
+          `cNFT transaction would be too large (~${estimatedSize} bytes${hasALT ? `, ~${estimatedSizeWithALT} with ALT` : ''}, limit: ${TransactionBuilder.MAX_TRANSACTION_SIZE}). ` +
           `This cNFT's Merkle tree has ${proofLength} proof nodes (low canopy depth). ` +
           `Please use a different cNFT from a collection with higher canopy depth, or use a regular SPL NFT instead.`
         );
@@ -705,6 +884,14 @@ export class TransactionBuilder {
       // Core NFT - the asset account is the NFT's mint address (which is also its asset address)
       takerCoreAsset = new PublicKey(inputs.takerAssets[0].identifier);
       console.log('[TransactionBuilder] Taker sending Core NFT:', takerCoreAsset.toBase58());
+      
+      // Fetch collection address if the Core NFT belongs to a collection
+      // This is REQUIRED by mpl-core for collection NFTs, otherwise transfer fails with "Missing collection"
+      const takerCoreCollectionAddress = await this.fetchCoreNftCollection(inputs.takerAssets[0].identifier);
+      if (takerCoreCollectionAddress) {
+        takerCoreCollection = new PublicKey(takerCoreCollectionAddress);
+        console.log('[TransactionBuilder] Taker Core NFT collection:', takerCoreCollection.toBase58());
+      }
     }
     
     // Build swap parameters (including cNFT proof data)
@@ -750,13 +937,48 @@ export class TransactionBuilder {
       logWrapper: SPL_NOOP_PROGRAM_ID,
       // Core NFT accounts (optional, use placeholder if not needed)
       makerCoreAsset: makerCoreAsset || PROGRAM_ID,
+      makerCoreCollection: makerCoreCollection || PROGRAM_ID,
       takerCoreAsset: takerCoreAsset || PROGRAM_ID,
+      takerCoreCollection: takerCoreCollection || PROGRAM_ID,
       mplCoreProgram: (makerSendsCoreNft || takerSendsCoreNft) ? MPL_CORE_PROGRAM_ID : PROGRAM_ID,
-      // Optional: Authorized app signer for zero-fee swaps
-      // Pass null for standard swaps (with fee), only provide for zero-fee swaps
-      // Note: This must be null (not a placeholder pubkey) because it's an optional Signer
-      authorizedApp: inputs.authorizedAppId || null,
     };
+    
+    // CRITICAL VALIDATION: Log and verify mplCoreProgram setting
+    const shouldUseMplCore = makerSendsCoreNft || takerSendsCoreNft;
+    const actualMplCoreProgramId = accounts.mplCoreProgram.toBase58();
+    const expectedMplCoreProgramId = shouldUseMplCore ? MPL_CORE_PROGRAM_ID.toBase58() : PROGRAM_ID.toBase58();
+    
+    console.log('[TransactionBuilder] *** Core NFT Configuration ***');
+    console.log('[TransactionBuilder] makerSendsCoreNft:', makerSendsCoreNft);
+    console.log('[TransactionBuilder] takerSendsCoreNft:', takerSendsCoreNft);
+    console.log('[TransactionBuilder] shouldUseMplCore:', shouldUseMplCore);
+    console.log('[TransactionBuilder] MPL_CORE_PROGRAM_ID:', MPL_CORE_PROGRAM_ID.toBase58());
+    console.log('[TransactionBuilder] PROGRAM_ID (escrow):', PROGRAM_ID.toBase58());
+    console.log('[TransactionBuilder] accounts.mplCoreProgram:', actualMplCoreProgramId);
+    
+    if (shouldUseMplCore && actualMplCoreProgramId !== MPL_CORE_PROGRAM_ID.toBase58()) {
+      throw new Error(
+        `CRITICAL BUG: Core NFT detected (maker: ${makerSendsCoreNft}, taker: ${takerSendsCoreNft}) ` +
+        `but mplCoreProgram is ${actualMplCoreProgramId} instead of ${MPL_CORE_PROGRAM_ID.toBase58()}`
+      );
+    }
+    
+    // Also validate makerCoreAsset and takerCoreAsset
+    if (makerSendsCoreNft && !makerCoreAsset) {
+      throw new Error(
+        `CRITICAL BUG: makerSendsCoreNft is true but makerCoreAsset is null. ` +
+        `makerTypeStr: '${makerTypeStr}', rawType: '${inputs.makerAssets[0]?.type}'`
+      );
+    }
+    if (takerSendsCoreNft && !takerCoreAsset) {
+      throw new Error(
+        `CRITICAL BUG: takerSendsCoreNft is true but takerCoreAsset is null. ` +
+        `takerTypeStr: '${takerTypeStr}', rawType: '${inputs.takerAssets[0]?.type}'`
+      );
+    }
+    
+    // Add authorized app for zero-fee swaps
+    accounts.authorizedApp = inputs.authorizedAppId || null;
     
     console.log('[TransactionBuilder] Swap params:', {
       ...swapParams,
@@ -909,10 +1131,104 @@ export class TransactionBuilder {
       throw new Error('Platform fee cannot be negative');
     }
     
-    // Check total asset count (to prevent oversized transactions)
-    const totalAssets = inputs.makerAssets.length + inputs.takerAssets.length;
-    if (totalAssets > 10) {
-      throw new Error(`Too many assets (${totalAssets}). Maximum is 10 per swap.`);
+    // Check per-side asset count limits
+    // Maximum 10 assets per side - bulk swaps use transaction splitting (Task 44)
+    const MAX_ASSETS_PER_SIDE = 10;
+    
+    if (inputs.makerAssets.length > MAX_ASSETS_PER_SIDE) {
+      throw new Error(
+        `Too many maker assets (${inputs.makerAssets.length}). ` +
+        `Maximum is ${MAX_ASSETS_PER_SIDE} per side.`
+      );
+    }
+    
+    if (inputs.takerAssets.length > MAX_ASSETS_PER_SIDE) {
+      throw new Error(
+        `Too many taker assets (${inputs.takerAssets.length}). ` +
+        `Maximum is ${MAX_ASSETS_PER_SIDE} per side.`
+      );
+    }
+  }
+  
+  /**
+   * Fetch collection address for a Metaplex Core NFT
+   * 
+   * Core NFTs that belong to a collection require the collection account
+   * to be passed in the transfer instruction. This method fetches the
+   * collection address from the NFT's on-chain data via DAS API.
+   * 
+   * @param assetId - The Core NFT asset ID
+   * @returns The collection address or null if NFT is not in a collection
+   * @throws Error if DAS API fails (prevents confusing downstream errors)
+   */
+  private async fetchCoreNftCollection(assetId: string, retryCount = 0): Promise<string | null> {
+    const MAX_RETRIES = 2;
+    
+    try {
+      console.log('[TransactionBuilder] Fetching Core NFT collection for:', assetId);
+      
+      // Use DAS API to get asset data
+      const response = await (this.connection as any)._rpcRequest('getAsset', {
+        id: assetId,
+      });
+      
+      // Check for JSON-RPC error response (like assetValidator.ts does)
+      if (response?.error) {
+        const errorMsg = response.error.message || JSON.stringify(response.error);
+        console.error('[TransactionBuilder] DAS API returned error:', errorMsg);
+        throw new Error(`DAS API error fetching Core NFT ${assetId}: ${errorMsg}`);
+      }
+      
+      if (!response) {
+        throw new Error(`No response from DAS API for Core NFT ${assetId}`);
+      }
+      
+      // Handle JSON-RPC wrapper
+      const assetData = response.result || response;
+      
+      if (!assetData) {
+        throw new Error(`No asset data returned from DAS API for Core NFT ${assetId}`);
+      }
+      
+      // Check for collection in grouping data
+      // DAS API returns collection info in the "grouping" array
+      const grouping = assetData.grouping || [];
+      const collectionGroup = grouping.find((g: any) => g.group_key === 'collection');
+      
+      if (collectionGroup && collectionGroup.group_value) {
+        console.log('[TransactionBuilder] Found collection:', collectionGroup.group_value);
+        return collectionGroup.group_value;
+      }
+      
+      // Also check update_authority structure (alternative format)
+      // Some Core NFTs have collection in update_authority
+      if (assetData.update_authority?.collection) {
+        console.log('[TransactionBuilder] Found collection in update_authority:', assetData.update_authority.collection);
+        return assetData.update_authority.collection;
+      }
+      
+      // Successfully fetched data - NFT is genuinely not in a collection
+      console.log('[TransactionBuilder] Core NFT is not in a collection (confirmed by DAS API)');
+      return null;
+      
+    } catch (error) {
+      console.error(`[TransactionBuilder] Error fetching Core NFT collection (attempt ${retryCount + 1}/${MAX_RETRIES + 1}):`, error);
+      
+      // Retry on transient errors (rate limiting, network issues)
+      if (retryCount < MAX_RETRIES) {
+        const delay = Math.pow(2, retryCount) * 500; // 500ms, 1000ms
+        console.log(`[TransactionBuilder] Retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return this.fetchCoreNftCollection(assetId, retryCount + 1);
+      }
+      
+      // After retries exhausted, throw a clear error
+      // This prevents the confusing "Missing collection" error downstream
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(
+        `Failed to fetch Core NFT collection info for ${assetId} after ${MAX_RETRIES + 1} attempts: ${errorMessage}. ` +
+        `Cannot proceed - if this NFT belongs to a collection, the transaction would fail with "Missing collection" error.`
+      );
     }
   }
 }

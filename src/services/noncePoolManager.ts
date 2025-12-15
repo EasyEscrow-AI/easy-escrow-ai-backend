@@ -569,7 +569,7 @@ export class NoncePoolManager {
   }
   
   /**
-   * Clean up expired nonce accounts
+   * Clean up expired nonce accounts and reclaim them for reuse
    */
   private async cleanupExpiredNonces(): Promise<void> {
     console.log('[NoncePoolManager] Running cleanup job...');
@@ -577,7 +577,7 @@ export class NoncePoolManager {
     try {
       const expirationDate = new Date(Date.now() - this.config.expirationThresholdMs);
       
-      // Find nonce accounts that haven't been used recently and are not AVAILABLE
+      // Step 1: Find and mark IN_USE nonces as EXPIRED
       const expiredNonces = await this.prisma.noncePool.findMany({
         where: {
           lastUsedAt: { lt: expirationDate },
@@ -585,22 +585,265 @@ export class NoncePoolManager {
         },
       });
       
-      console.log(`[NoncePoolManager] Found ${expiredNonces.length} expired nonce accounts`);
+      console.log(`[NoncePoolManager] Found ${expiredNonces.length} expired nonce accounts to mark`);
       
       for (const nonce of expiredNonces) {
-        // Mark as EXPIRED
         await this.prisma.noncePool.update({
           where: { nonceAccount: nonce.nonceAccount },
           data: { status: NonceStatus.EXPIRED },
         });
-        
         console.log(`[NoncePoolManager] Marked nonce account as expired: ${nonce.nonceAccount}`);
       }
       
-      // TODO: Implement logic to reclaim expired accounts and return to pool
-      // This would involve checking if there are any pending transactions using these nonces
+      // Step 2: Reclaim EXPIRED nonces back to AVAILABLE
+      const reclaimResult = await this.reclaimExpiredNonces();
+      console.log(`[NoncePoolManager] Reclaimed ${reclaimResult.reclaimed} nonce accounts`);
+      
     } catch (error) {
       console.error('[NoncePoolManager] Cleanup failed:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Reclaim expired nonce accounts back to the available pool
+   * 
+   * Process:
+   * 1. Find EXPIRED nonces
+   * 2. Verify account still exists on-chain
+   * 3. Clear User.nonceAccount references
+   * 4. Advance the nonce to invalidate any pending transactions
+   * 5. Return to AVAILABLE status
+   * 
+   * @param batchSize - Maximum number of nonces to reclaim in one run (default: 10)
+   * @returns Object with reclaimed count and any errors
+   */
+  async reclaimExpiredNonces(batchSize: number = 10): Promise<{ reclaimed: number; failed: number; errors: string[] }> {
+    console.log(`[NoncePoolManager] Starting nonce reclamation (batch size: ${batchSize})...`);
+    
+    const errors: string[] = [];
+    let reclaimed = 0;
+    let failed = 0;
+    
+    try {
+      // Find EXPIRED nonces to reclaim
+      const expiredNonces = await this.prisma.noncePool.findMany({
+        where: { status: NonceStatus.EXPIRED },
+        take: batchSize,
+        orderBy: { lastUsedAt: 'asc' }, // Oldest first
+      });
+      
+      if (expiredNonces.length === 0) {
+        console.log('[NoncePoolManager] No expired nonces to reclaim');
+        return { reclaimed: 0, failed: 0, errors: [] };
+      }
+      
+      console.log(`[NoncePoolManager] Found ${expiredNonces.length} expired nonces to reclaim`);
+      
+      for (const nonce of expiredNonces) {
+        try {
+          console.log(`[NoncePoolManager] Reclaiming nonce: ${nonce.nonceAccount}`);
+          
+          // Step 1: Verify nonce account still exists on-chain
+          const noncePubkey = new PublicKey(nonce.nonceAccount);
+          const accountInfo = await this.connection.getAccountInfo(noncePubkey);
+          
+          if (!accountInfo) {
+            console.warn(`[NoncePoolManager] Nonce account ${nonce.nonceAccount} no longer exists on-chain, removing from pool`);
+            await this.prisma.noncePool.delete({
+              where: { nonceAccount: nonce.nonceAccount },
+            });
+            // Also clear any user references
+            await this.prisma.user.updateMany({
+              where: { nonceAccount: nonce.nonceAccount },
+              data: { nonceAccount: null },
+            });
+            failed++;
+            errors.push(`Nonce ${nonce.nonceAccount} not found on-chain, removed from pool`);
+            continue;
+          }
+          
+          // Step 2: Clear User.nonceAccount references for any users using this nonce
+          const usersUpdated = await this.prisma.user.updateMany({
+            where: { nonceAccount: nonce.nonceAccount },
+            data: { nonceAccount: null },
+          });
+          
+          if (usersUpdated.count > 0) {
+            console.log(`[NoncePoolManager] Cleared nonce reference from ${usersUpdated.count} user(s)`);
+          }
+          
+          // Step 3: Advance the nonce to invalidate any old pending transactions
+          try {
+            await this.advanceNonce(nonce.nonceAccount);
+            console.log(`[NoncePoolManager] Advanced nonce ${nonce.nonceAccount}`);
+          } catch (advanceError) {
+            // If advance fails, the nonce might be in a bad state
+            // Log but continue - we'll try again next cleanup cycle
+            console.warn(`[NoncePoolManager] Failed to advance nonce ${nonce.nonceAccount}:`, advanceError);
+            errors.push(`Failed to advance nonce ${nonce.nonceAccount}: ${advanceError instanceof Error ? advanceError.message : 'Unknown error'}`);
+            failed++;
+            continue;
+          }
+          
+          // Step 4: Return to AVAILABLE status
+          await this.prisma.noncePool.update({
+            where: { nonceAccount: nonce.nonceAccount },
+            data: {
+              status: NonceStatus.AVAILABLE,
+              lastUsedAt: new Date(), // Reset last used time
+            },
+          });
+          
+          // Clear from cache
+          this.nonceCache.delete(nonce.nonceAccount);
+          
+          console.log(`[NoncePoolManager] Successfully reclaimed nonce: ${nonce.nonceAccount}`);
+          reclaimed++;
+          
+        } catch (nonceError) {
+          console.error(`[NoncePoolManager] Error reclaiming nonce ${nonce.nonceAccount}:`, nonceError);
+          errors.push(`Error reclaiming ${nonce.nonceAccount}: ${nonceError instanceof Error ? nonceError.message : 'Unknown error'}`);
+          failed++;
+        }
+      }
+      
+      console.log(`[NoncePoolManager] Reclamation complete: ${reclaimed} reclaimed, ${failed} failed`);
+      return { reclaimed, failed, errors };
+      
+    } catch (error) {
+      console.error('[NoncePoolManager] Reclamation failed:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Close a nonce account and reclaim the rent SOL
+   * 
+   * Use this for truly abandoned nonces that should be permanently removed.
+   * The ~0.00144 SOL rent will be returned to the authority wallet.
+   * 
+   * @param nonceAccount - The nonce account address to close
+   * @returns Transaction signature
+   */
+  async closeNonceAccount(nonceAccount: string): Promise<string> {
+    console.log(`[NoncePoolManager] Closing nonce account: ${nonceAccount}`);
+    
+    try {
+      const noncePubkey = new PublicKey(nonceAccount);
+      
+      // Verify account exists
+      const accountInfo = await this.connection.getAccountInfo(noncePubkey);
+      if (!accountInfo) {
+        throw new Error(`Nonce account ${nonceAccount} does not exist on-chain`);
+      }
+      
+      // Create withdraw (close) instruction
+      // This withdraws all lamports, effectively closing the account
+      const transaction = new Transaction().add(
+        SystemProgram.nonceWithdraw({
+          noncePubkey,
+          authorizedPubkey: this.authority.publicKey,
+          toPubkey: this.authority.publicKey, // Send rent back to authority
+          lamports: accountInfo.lamports, // Withdraw everything
+        })
+      );
+      
+      const { blockhash } = await this.connection.getLatestBlockhash('confirmed');
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = this.authority.publicKey;
+      
+      const signature = await this.connection.sendTransaction(transaction, [this.authority]);
+      await this.connection.confirmTransaction(signature, 'confirmed');
+      
+      console.log(`[NoncePoolManager] Nonce account closed, rent reclaimed. Signature: ${signature}`);
+      
+      // Remove from database
+      await this.prisma.noncePool.delete({
+        where: { nonceAccount },
+      });
+      
+      // Clear any user references
+      await this.prisma.user.updateMany({
+        where: { nonceAccount },
+        data: { nonceAccount: null },
+      });
+      
+      // Clear from cache
+      this.nonceCache.delete(nonceAccount);
+      
+      return signature;
+      
+    } catch (error) {
+      console.error(`[NoncePoolManager] Failed to close nonce account ${nonceAccount}:`, error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Close multiple expired nonce accounts and reclaim rent
+   * 
+   * Use this to permanently remove stale nonces and recover ~0.00144 SOL per account.
+   * Only closes nonces in EXPIRED status.
+   * 
+   * @param batchSize - Maximum number to close (default: 5)
+   * @returns Results including SOL reclaimed
+   */
+  async closeExpiredNonces(batchSize: number = 5): Promise<{ closed: number; solReclaimed: number; errors: string[] }> {
+    console.log(`[NoncePoolManager] Closing expired nonces (batch size: ${batchSize})...`);
+    
+    const errors: string[] = [];
+    let closed = 0;
+    let totalLamportsReclaimed = 0;
+    
+    try {
+      const expiredNonces = await this.prisma.noncePool.findMany({
+        where: { status: NonceStatus.EXPIRED },
+        take: batchSize,
+        orderBy: { lastUsedAt: 'asc' },
+      });
+      
+      if (expiredNonces.length === 0) {
+        console.log('[NoncePoolManager] No expired nonces to close');
+        return { closed: 0, solReclaimed: 0, errors: [] };
+      }
+      
+      console.log(`[NoncePoolManager] Found ${expiredNonces.length} expired nonces to close`);
+      
+      for (const nonce of expiredNonces) {
+        try {
+          const noncePubkey = new PublicKey(nonce.nonceAccount);
+          const accountInfo = await this.connection.getAccountInfo(noncePubkey);
+          
+          if (!accountInfo) {
+            // Already gone, just clean up database
+            await this.prisma.noncePool.delete({
+              where: { nonceAccount: nonce.nonceAccount },
+            });
+            await this.prisma.user.updateMany({
+              where: { nonceAccount: nonce.nonceAccount },
+              data: { nonceAccount: null },
+            });
+            continue;
+          }
+          
+          const lamportsBefore = accountInfo.lamports;
+          await this.closeNonceAccount(nonce.nonceAccount);
+          totalLamportsReclaimed += lamportsBefore;
+          closed++;
+          
+        } catch (error) {
+          errors.push(`Failed to close ${nonce.nonceAccount}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+      }
+      
+      const solReclaimed = totalLamportsReclaimed / LAMPORTS_PER_SOL;
+      console.log(`[NoncePoolManager] Closed ${closed} nonces, reclaimed ${solReclaimed.toFixed(6)} SOL`);
+      
+      return { closed, solReclaimed, errors };
+      
+    } catch (error) {
+      console.error('[NoncePoolManager] Failed to close expired nonces:', error);
       throw error;
     }
   }
@@ -618,15 +861,17 @@ export class NoncePoolManager {
   
   /**
    * Public method for external cleanup scheduler
-   * Returns count of cleaned nonces
+   * Marks expired nonces and reclaims them back to the pool
+   * 
+   * @returns Object with counts of marked and reclaimed nonces
    */
-  async cleanup(): Promise<{ cleaned: number }> {
+  async cleanup(): Promise<{ marked: number; reclaimed: number; failed: number }> {
     console.log('[NoncePoolManager] External cleanup triggered');
     
     try {
       const expirationDate = new Date(Date.now() - this.config.expirationThresholdMs);
       
-      // Find nonce accounts that haven't been used recently and are not AVAILABLE
+      // Step 1: Find and mark IN_USE nonces as EXPIRED
       const expiredNonces = await this.prisma.noncePool.findMany({
         where: {
           lastUsedAt: { lt: expirationDate },
@@ -634,19 +879,24 @@ export class NoncePoolManager {
         },
       });
       
-      console.log(`[NoncePoolManager] Found ${expiredNonces.length} expired nonce accounts`);
+      console.log(`[NoncePoolManager] Found ${expiredNonces.length} expired nonce accounts to mark`);
       
       for (const nonce of expiredNonces) {
-        // Mark as EXPIRED
         await this.prisma.noncePool.update({
           where: { nonceAccount: nonce.nonceAccount },
           data: { status: NonceStatus.EXPIRED },
         });
-        
         console.log(`[NoncePoolManager] Marked nonce account as expired: ${nonce.nonceAccount}`);
       }
       
-      return { cleaned: expiredNonces.length };
+      // Step 2: Reclaim EXPIRED nonces back to AVAILABLE
+      const reclaimResult = await this.reclaimExpiredNonces();
+      
+      return {
+        marked: expiredNonces.length,
+        reclaimed: reclaimResult.reclaimed,
+        failed: reclaimResult.failed,
+      };
     } catch (error) {
       console.error('[NoncePoolManager] Cleanup failed:', error);
       throw error;

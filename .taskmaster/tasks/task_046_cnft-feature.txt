@@ -1,0 +1,53 @@
+# Task ID: 46
+# Title: Enhance Private Sales with Taker Wallet Restriction
+# Status: pending
+# Dependencies: None
+# Priority: medium
+# Description: Enhance the private sales functionality by allowing makers to optionally specify a taker wallet address, restricting who can accept the offer.
+# Details:
+Implement comprehensive private sales functionality with taker wallet restrictions:
+
+1. **Verify Database Schema**:
+   - Confirm SwapOffer.takerWallet field exists in Prisma schema as String? (optional field)
+   - Ensure proper database migration if field modifications are needed
+
+2. **Update Offer Creation Logic**:
+   - Modify createOffer() function in src/services/offerManager.ts to accept optional takerWallet parameter
+   - Add Solana public key validation using @solana/web3.js PublicKey constructor with try-catch for invalid keys
+   - Store takerWallet in database when provided, null for public offers
+
+3. **Implement Taker Wallet Enforcement**:
+   - Update acceptOffer() function to check if offer has takerWallet restriction
+   - Compare requesting taker's wallet address with stored takerWallet using PublicKey.equals()
+   - Return HTTP 403 with clear error message "This is a private offer restricted to a specific wallet" for unauthorized attempts
+
+4. **API Enhancements**:
+   - Update offer listing endpoints in src/routes/offers.routes.ts to include isPrivate boolean field (true when takerWallet is not null)
+   - Add "my-private-offers" endpoint filtering offers where takerWallet matches authenticated user's wallet
+   - Implement query parameter filtering for public vs private offers in general listing
+
+5. **API Documentation Updates**:
+   - Update OpenAPI specification to document new takerWallet parameter in createOffer endpoint
+   - Document new isPrivate field in offer response schemas
+   - Add examples showing private offer creation and restriction behavior
+
+# Test Strategy:
+1. **Database and Validation Testing**:
+   - Verify SwapOffer.takerWallet field accepts valid Solana public keys and null values
+   - Test createOffer() with valid public keys, invalid keys (should reject), and null values
+   - Confirm database stores takerWallet correctly for both private and public offers
+
+2. **Private Offer Enforcement Testing**:
+   - Create private offer with specific taker wallet, attempt acceptance from authorized wallet (should succeed)
+   - Attempt acceptance from unauthorized wallet (should return 403 error with appropriate message)
+   - Test public offers (takerWallet=null) can be accepted by any wallet
+
+3. **API Endpoint Testing**:
+   - Test offer listing includes correct isPrivate field values
+   - Verify "my-private-offers" endpoint returns only offers where user's wallet matches takerWallet
+   - Test filtering parameters for public vs private offers work correctly
+
+4. **Integration Testing**:
+   - End-to-end test creating private offer, listing it, and completing swap with authorized taker
+   - Verify private offers don't appear in general public listings unless specifically requested
+   - Test API documentation examples work as documented

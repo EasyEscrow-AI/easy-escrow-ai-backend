@@ -17,7 +17,7 @@ import { Program, AnchorProvider, Wallet } from '@coral-xyz/anchor';
 import * as fs from 'fs';
 import * as path from 'path';
 import axios, { AxiosInstance } from 'axios';
-import { wait } from '../../helpers/test-utils';
+import { wait, confirmTransactionAndCheckError } from '../../helpers/test-utils';
 
 // Production configuration
 const RPC_URL = process.env.MAINNET_RPC_URL || 'https://api.mainnet-beta.solana.com';
@@ -258,8 +258,8 @@ describe('🚀 Production E2E: NFT → SOL - Happy Path (Mainnet)', () => {
     
     // Wait for confirmation
     console.log('\n⏳ Waiting for transaction confirmation...');
-    await connection.confirmTransaction(signature, 'confirmed');
-    console.log(`  ✅ Transaction confirmed!`);
+    await confirmTransactionAndCheckError(connection, signature, 'confirmed');
+    console.log(`  ✅ Transaction confirmed and verified!`);
     await wait(2000); // Extra buffer for balance updates
     
     // Verify balances after
