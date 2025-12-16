@@ -151,7 +151,7 @@ export class DASPerformanceTester {
           }),
         });
 
-        const data = await response.json();
+        const data = await response.json() as { error?: { message?: string }; result?: any };
         const latency = Date.now() - startTime;
 
         if (data.error) {
@@ -194,7 +194,7 @@ export class DASPerformanceTester {
           }),
         });
 
-        const data = await response.json();
+        const data = await response.json() as { error?: { message?: string }; result?: any };
         const latency = Date.now() - startTime;
 
         if (data.error) {
@@ -239,7 +239,7 @@ export class DASPerformanceTester {
           }),
         });
 
-        const data = await response.json();
+        const data = await response.json() as { error?: { message?: string }; result?: any };
         const latency = Date.now() - startTime;
 
         if (data.error) {

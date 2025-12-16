@@ -30,9 +30,19 @@ function getTestAssetIds(): string[] {
     const fixturesPath = path.join(__dirname, '../../tests/fixtures/production-test-assets.json');
     if (fs.existsSync(fixturesPath)) {
       const fixtures = JSON.parse(fs.readFileSync(fixturesPath, 'utf8'));
-      const cnftAssets = fixtures.cnfts || [];
-      if (cnftAssets.length >= 100) {
-        return cnftAssets.slice(0, 100).map((asset: any) => asset.identifier || asset.id);
+      // Extract cNFT IDs from both maker and taker
+      const makerCnfts = fixtures.maker?.cnfts || [];
+      const takerCnfts = fixtures.taker?.cnfts || [];
+      const allCnfts = [...makerCnfts, ...takerCnfts];
+      
+      if (allCnfts.length > 0) {
+        // Extract mint/identifier from cNFT objects
+        const assetIds = allCnfts.map((asset: any) => asset.mint || asset.identifier || asset.id).filter(Boolean);
+        if (assetIds.length >= 10) {
+          // Use up to 100 for batch testing
+          return assetIds.slice(0, Math.min(100, assetIds.length));
+        }
+        return assetIds;
       }
     }
   } catch (error) {
