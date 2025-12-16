@@ -538,7 +538,10 @@ export class TransactionGroupBuilder {
     
     // === Transaction 1: SOL transfers ===
     // This handles: maker SOL → taker, taker SOL → maker, platform fee → treasury
-    if (analysis.hasSolTransfer || inputs.platformFeeLamports > BigInt(0)) {
+    const willHaveSolTx = analysis.hasSolTransfer || inputs.platformFeeLamports > BigInt(0);
+    const tipInSolTx = useJitoNonces && willHaveSolTx; // Prefer tip lock in Tx1 when present
+
+    if (willHaveSolTx) {
       console.log('[TransactionGroupBuilder] Building Tx1: SOL transfers');
       
       const solInstructions: TransactionInstruction[] = [];
@@ -600,6 +603,36 @@ export class TransactionGroupBuilder {
             fromPubkey: feePayer,
             toPubkey: this.treasuryPda,
             lamports: inputs.platformFeeLamports,
+          })
+        );
+      }
+
+      // Jito tip: ensure bundle write-locks a tip account.
+      // We prefer placing the tip on Tx1 (SOL + platform fee) because it always exists for cNFT-for-cNFT swaps
+      // and makes the bundle eligible for the auction immediately.
+      if (tipInSolTx) {
+        const JITO_TIP_ACCOUNTS = [
+          'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
+          'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
+          'HFqU5x63VTqvQss8hp11i4bVmkdzGHnsRRskfJ2J4ybE',
+          '96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5',
+          '3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT',
+          'ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49',
+          'Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY',
+          'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
+        ];
+
+        const jitoTipAccount = new PublicKey(
+          JITO_TIP_ACCOUNTS[Math.floor(Math.random() * JITO_TIP_ACCOUNTS.length)]
+        );
+        const tipAmount = 1_000_000; // 0.001 SOL
+        console.log(`[TransactionGroupBuilder] Adding Jito tip on Tx1: ${tipAmount} lamports to ${jitoTipAccount.toString()} (LAST instruction)`);
+
+        solInstructions.push(
+          SystemProgram.transfer({
+            fromPubkey: this.platformAuthority.publicKey,
+            toPubkey: jitoTipAccount,
+            lamports: tipAmount,
           })
         );
       }
@@ -689,7 +722,7 @@ export class TransactionGroupBuilder {
       cnftTransactionCount++;
       const isLastTransaction = cnftTransactionCount === totalCnftTransactions; // Last cNFT transaction overall
       
-      console.log(`[TransactionGroupBuilder] Building Tx${txIndex + 1}: Maker cNFT transfer${isLastTransaction ? ' (LAST - will add Jito tip)' : ''}`);
+      console.log(`[TransactionGroupBuilder] Building Tx${txIndex + 1}: Maker cNFT transfer${(isLastTransaction && !tipInSolTx) ? ' (LAST - will add Jito tip)' : ''}`);
       
       // Use pre-fetched proof if available (for JITO bundles with 2+ cNFTs)
       const preFetchedProof = preFetchedProofs.get(cnft.identifier);
@@ -723,8 +756,9 @@ export class TransactionGroupBuilder {
       
       cnftInstructions.push(transferResult.instruction);
       
-      // CRITICAL: Add Jito tip as LAST instruction in LAST transaction (required for Jito bundles)
-      if (useJitoNonces && isLastTransaction) {
+      // Add Jito tip as LAST instruction in LAST transaction ONLY if Tx1 doesn't exist.
+      // (Preferred location is Tx1 when present; this is a fallback for bundles without a SOL tx.)
+      if (useJitoNonces && isLastTransaction && !tipInSolTx) {
         const JITO_TIP_ACCOUNTS = [
           'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
           'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
@@ -803,7 +837,7 @@ export class TransactionGroupBuilder {
       cnftTransactionCount++;
       const isLastTransaction = cnftTransactionCount === totalCnftTransactions; // Last cNFT transaction overall
       
-      console.log(`[TransactionGroupBuilder] Building Tx${txIndex + 1}: Taker cNFT transfer${isLastTransaction ? ' (LAST - will add Jito tip)' : ''}`);
+      console.log(`[TransactionGroupBuilder] Building Tx${txIndex + 1}: Taker cNFT transfer${(isLastTransaction && !tipInSolTx) ? ' (LAST - will add Jito tip)' : ''}`);
       
       // Use pre-fetched proof if available (for JITO bundles with 2+ cNFTs)
       const preFetchedProof = preFetchedProofs.get(cnft.identifier);
@@ -837,8 +871,9 @@ export class TransactionGroupBuilder {
       
       cnftInstructions.push(transferResult.instruction);
       
-      // CRITICAL: Add Jito tip as LAST instruction in LAST transaction (required for Jito bundles)
-      if (useJitoNonces && isLastTransaction) {
+      // Add Jito tip as LAST instruction in LAST transaction ONLY if Tx1 doesn't exist.
+      // (Preferred location is Tx1 when present; this is a fallback for bundles without a SOL tx.)
+      if (useJitoNonces && isLastTransaction && !tipInSolTx) {
         const JITO_TIP_ACCOUNTS = [
           'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
           'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
