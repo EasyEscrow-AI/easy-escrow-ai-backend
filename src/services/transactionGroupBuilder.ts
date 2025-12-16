@@ -679,9 +679,16 @@ export class TransactionGroupBuilder {
     // Each cNFT gets its own transaction (proof nodes require significant space)
     let txIndex = transactions.length;
     
+    // Calculate total cNFT transactions to determine which is last
+    const totalCnftTransactions = makerCnfts.length + takerCnfts.length;
+    let cnftTransactionCount = 0;
+    
     // Maker cNFT → Taker
     for (const cnft of makerCnfts) {
-      console.log(`[TransactionGroupBuilder] Building Tx${txIndex + 1}: Maker cNFT transfer`);
+      cnftTransactionCount++;
+      const isLastTransaction = cnftTransactionCount === totalCnftTransactions; // Last cNFT transaction overall
+      
+      console.log(`[TransactionGroupBuilder] Building Tx${txIndex + 1}: Maker cNFT transfer${isLastTransaction ? ' (LAST - will add Jito tip)' : ''}`);
       
       // Use pre-fetched proof if available (for JITO bundles with 2+ cNFTs)
       const preFetchedProof = preFetchedProofs.get(cnft.identifier);
@@ -705,6 +712,35 @@ export class TransactionGroupBuilder {
       }
       
       cnftInstructions.push(transferResult.instruction);
+      
+      // CRITICAL: Add Jito tip as LAST instruction in LAST transaction (required for Jito bundles)
+      if (useJitoNonces && isLastTransaction) {
+        const JITO_TIP_ACCOUNTS = [
+          'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
+          'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
+          'HFqU5x63VTqvQss8hp11i4bVmkdzGHnsRRskfJ2J4ybE',
+          '96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5',
+          '3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT',
+          'ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49',
+          'Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY',
+          'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
+        ];
+        
+        const jitoTipAccount = new PublicKey(
+          JITO_TIP_ACCOUNTS[Math.floor(Math.random() * JITO_TIP_ACCOUNTS.length)]
+        );
+        const tipAmount = 1_000_000; // 0.001 SOL (default Jito tip)
+        
+        console.log(`[TransactionGroupBuilder] Adding Jito tip: ${tipAmount} lamports to ${jitoTipAccount.toString()} (LAST instruction in LAST transaction)`);
+        
+        cnftInstructions.push(
+          SystemProgram.transfer({
+            fromPubkey: this.platformAuthority.publicKey,
+            toPubkey: jitoTipAccount,
+            lamports: tipAmount,
+          })
+        );
+      }
       
       // Get blockhash (fresh for devnet, nonce for mainnet)
       let cnftBlockhash: string;
@@ -753,9 +789,9 @@ export class TransactionGroupBuilder {
     }
     
     // Taker cNFT → Maker
-    for (let cnftIndex = 0; cnftIndex < takerCnfts.length; cnftIndex++) {
-      const cnft = takerCnfts[cnftIndex];
-      const isLastTransaction = cnftIndex === takerCnfts.length - 1; // Last cNFT = last transaction in bundle
+    for (const cnft of takerCnfts) {
+      cnftTransactionCount++;
+      const isLastTransaction = cnftTransactionCount === totalCnftTransactions; // Last cNFT transaction overall
       
       console.log(`[TransactionGroupBuilder] Building Tx${txIndex + 1}: Taker cNFT transfer${isLastTransaction ? ' (LAST - will add Jito tip)' : ''}`);
       
