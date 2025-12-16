@@ -142,6 +142,9 @@ export class EscrowProgramService {
   // Jito rate limiting: 1 request per second across all instances
   private static lastJitoRequestTime: number = 0;
   private static readonly JITO_RATE_LIMIT_MS = 1000; // 1 second between requests
+
+  // Some forwarders do not expose getInflightBundleStatuses. Cache capability per instance.
+  private inflightBundleStatusesSupported: boolean | null = null;
   
   // Public getter for programId
   public get programId(): PublicKey {
@@ -1132,12 +1135,27 @@ export class EscrowProgramService {
 
       if (result.error) {
         console.error('[EscrowProgramService] Inflight status RPC error:', result.error);
+
+        // Some endpoints do not support this method; mark unsupported so callers can fall back.
+        const msg = (result.error.message || '').toLowerCase();
+        if (result.error.code === -32601 || msg.includes('method not found') || msg.includes('invalid method')) {
+          this.inflightBundleStatusesSupported = false;
+          return bundleIds.map(id => ({
+            bundleId: id,
+            status: 'Invalid' as const,
+            error: 'Inflight bundle status unsupported (method not found)',
+          }));
+        }
+
         // Treat rate limits as no-signal
         if (result.error.code === -32097 || result.error.message?.toLowerCase().includes('rate')) {
           return bundleIds.map(id => ({ bundleId: id, status: 'Pending' as const, error: result.error?.message || 'Rate limited' }));
         }
         return bundleIds.map(id => ({ bundleId: id, status: 'Invalid' as const, error: result.error?.message }));
       }
+
+      // If we got a successful response, mark as supported.
+      this.inflightBundleStatusesSupported = true;
 
       const statuses = Array.isArray(result.result)
         ? result.result
@@ -1216,13 +1234,19 @@ export class EscrowProgramService {
       const jitter = 0.8 + Math.random() * 0.4; // ±20%
       const pollInterval = Math.round(baseIntervalMs * jitter);
 
-      // Prefer inflight status right after submission; fallback to getBundleStatuses.
+      // Prefer inflight status right after submission; fall back to getBundleStatuses when inflight is unsupported.
       let statusResult: { bundleId: string; status: 'Invalid' | 'Pending' | 'Failed' | 'Landed'; slot?: number; error?: string } | undefined;
-      try {
+
+      if (this.inflightBundleStatusesSupported !== false) {
         const [s] = await this.getInflightBundleStatuses([bundleId]);
-        statusResult = s;
-      } catch {
-        // ignore, will fall back
+
+        // If inflight method is unsupported, fall back to getBundleStatuses.
+        const inflightUnsupported =
+          s.status === 'Invalid' && String(s.error || '').toLowerCase().includes('unsupported');
+
+        if (!inflightUnsupported) {
+          statusResult = s;
+        }
       }
 
       if (!statusResult) {

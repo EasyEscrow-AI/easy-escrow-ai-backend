@@ -338,10 +338,20 @@ export class CnftService {
       console.warn('[CnftService] getAssetProofBatch is disabled for this RPC (previously returned -32601 Method not found). Falling back to individual proof fetching.');
       this.metrics.batchProofFallbacks++;
       const results = new Map<string, DasProofResponse>();
+      const errors: Array<{ assetId: string; error: string }> = [];
       for (const assetId of assetIds) {
-        const proof = await this.getCnftProof(assetId, skipCache, 0);
-        this.metrics.individualProofFetches++;
-        results.set(assetId, proof);
+        try {
+          const proof = await this.getCnftProof(assetId, skipCache, 0);
+          this.metrics.individualProofFetches++;
+          results.set(assetId, proof);
+        } catch (err: any) {
+          console.error(`[CnftService] Failed to fetch individual proof for ${assetId}:`, err?.message || err);
+          errors.push({ assetId, error: err?.message || 'Unknown error' });
+        }
+      }
+
+      if (errors.length > 0) {
+        console.warn(`[CnftService] ${errors.length} proof fetch failures while batch mode disabled:`, errors);
       }
       return results;
     }
