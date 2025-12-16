@@ -143,6 +143,11 @@ export class EscrowProgramService {
   private static lastJitoRequestTime: number = 0;
   private static readonly JITO_RATE_LIMIT_MS = 1000; // 1 second between requests
 
+  // Jito status endpoints are also rate limited (often more aggressively during congestion).
+  // Enforce a hard, process-wide limiter so concurrent swaps don't DOS ourselves into 429/-32097.
+  private static lastJitoStatusRequestTime: number = 0;
+  private static readonly JITO_STATUS_RATE_LIMIT_MS = 1000; // 1 req/sec max for status calls
+
   // Some forwarders do not expose getInflightBundleStatuses. Cache capability per instance.
   private inflightBundleStatusesSupported: boolean | null = null;
   
@@ -1064,6 +1069,17 @@ export class EscrowProgramService {
     console.log(`[EscrowProgramService] Checking status of ${bundleIds.length} bundle(s)...`);
     
     try {
+      // Hard rate limiter for status calls (process-wide)
+      {
+        const now = Date.now();
+        const nextAvailableTime = EscrowProgramService.lastJitoStatusRequestTime + EscrowProgramService.JITO_STATUS_RATE_LIMIT_MS;
+        const delayMs = Math.max(0, nextAvailableTime - now);
+        if (delayMs > 0) {
+          await new Promise(resolve => setTimeout(resolve, delayMs));
+        }
+        EscrowProgramService.lastJitoStatusRequestTime = Math.max(now, nextAvailableTime);
+      }
+
       // Jito Block Engine uses JSON-RPC format (verified with test helper and E2E tests)
       // For multiple bundle IDs, use nested array format: [[id1], [id2], ...]
       // This matches the test helper format for single IDs: [[bundleId]]
@@ -1157,6 +1173,17 @@ export class EscrowProgramService {
     console.log(`[EscrowProgramService] Checking inflight status of ${bundleIds.length} bundle(s)...`);
 
     try {
+      // Hard rate limiter for status calls (process-wide)
+      {
+        const now = Date.now();
+        const nextAvailableTime = EscrowProgramService.lastJitoStatusRequestTime + EscrowProgramService.JITO_STATUS_RATE_LIMIT_MS;
+        const delayMs = Math.max(0, nextAvailableTime - now);
+        if (delayMs > 0) {
+          await new Promise(resolve => setTimeout(resolve, delayMs));
+        }
+        EscrowProgramService.lastJitoStatusRequestTime = Math.max(now, nextAvailableTime);
+      }
+
       const response = await fetch(EscrowProgramService.JITO_BUNDLE_ENDPOINT_MAINNET, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1178,7 +1205,9 @@ export class EscrowProgramService {
       }
 
       const result = await response.json() as {
-        result?: { value?: Array<{ bundle_id: string; status: string; slot?: number }> } | Array<{ bundle_id: string; status: string; slot?: number }>;
+        // Jito inflight response commonly uses landed_slot (not slot).
+        result?: { value?: Array<{ bundle_id: string; status: string; landed_slot?: number | null; slot?: number }> | null } |
+                 Array<{ bundle_id: string; status: string; landed_slot?: number | null; slot?: number }>;
         error?: { message?: string; code?: number };
       };
 
@@ -1213,8 +1242,11 @@ export class EscrowProgramService {
           return { bundleId, status: 'Pending' as const, error: 'Bundle not found' };
         }
 
+        // Jito inflight "Invalid" is not a detailed failure reason; treat as UNKNOWN/Pending.
+        // During congestion, status propagation can lag, so this is safest.
         let status: 'Invalid' | 'Pending' | 'Failed' | 'Landed';
-        switch (bundleStatus.status) {
+        const rawStatus = String(bundleStatus.status || '').toLowerCase();
+        switch (rawStatus) {
           case 'Landed':
           case 'landed':
             status = 'Landed';
@@ -1227,11 +1259,21 @@ export class EscrowProgramService {
           case 'failed':
             status = 'Failed';
             break;
+          case 'Invalid':
+          case 'invalid':
+            status = 'Pending';
+            break;
           default:
-            status = 'Invalid';
+            status = 'Pending';
         }
 
-        return { bundleId, status, slot: bundleStatus.slot };
+        const landedSlot = bundleStatus.landed_slot ?? bundleStatus.slot;
+        return {
+          bundleId,
+          status,
+          slot: landedSlot ?? undefined,
+          error: status === 'Pending' && rawStatus === 'invalid' ? 'Inflight status invalid (treating as pending)' : undefined,
+        };
       });
     } catch (error) {
       console.error('[EscrowProgramService] Inflight status check error:', error);
@@ -1321,13 +1363,14 @@ export class EscrowProgramService {
       }
       
       if (statusResult.status === 'Invalid') {
-        // Invalid is often "bundle not found yet" or "not in inflight window" — not a definitive failure.
-        console.warn(`[EscrowProgramService] Bundle ${bundleId} status invalid: ${statusResult.error}`);
+        // Treat Invalid as unknown/no-signal (status endpoints may lag or omit error strings).
+        console.warn(`[EscrowProgramService] Bundle ${bundleId} status invalid (treating as pending): ${statusResult.error || 'no details'}`);
       }
 
       // Fallback confirmation: check on-chain signatures if provided.
       // This protects against status plumbing lag and rate limits.
-      if (txSignatures && txSignatures.length > 0 && pollCount % 2 === 0) {
+      // Confirmation fallback: this does not hit Jito, so it remains useful even when Jito status endpoints are rate-limited.
+      if (txSignatures && txSignatures.length > 0) {
         try {
           const sigStatuses = await this.provider.connection.getSignatureStatuses(txSignatures);
           const values = sigStatuses?.value || [];
