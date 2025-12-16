@@ -889,7 +889,7 @@ export class EscrowProgramService {
       const statuses = result.result?.value || [];
       
       return bundleIds.map(bundleId => {
-        const bundleStatus = statuses.find(s => s.bundle_id === bundleId);
+        const bundleStatus = statuses.find((s: any) => s.bundle_id === bundleId);
         if (!bundleStatus) {
           return { bundleId, status: 'Invalid' as const, error: 'Bundle not found' };
         }
