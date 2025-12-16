@@ -562,10 +562,20 @@ function renderNFTs(wallet, nfts) {
     container.querySelectorAll('.nft-image').forEach(img => {
         img.addEventListener('error', function() {
             const mint = this.dataset.mint;
+            const failedUrl = this.src;
+            
+            // Log detailed error information for debugging
+            console.warn(`🎨 Image failed to load:`, {
+                mint: mint?.substring(0, 12) + '...',
+                url: failedUrl?.substring(0, 100) + (failedUrl?.length > 100 ? '...' : ''),
+                urlLength: failedUrl?.length,
+                isCompressed: img.closest('.nft-card')?.querySelector('.nft-type')?.textContent?.includes('cNFT'),
+            });
+            
             if (mint) {
                 // Use placeholder image as fallback
                 const placeholderUrl = getPlaceholderImage(mint);
-                console.log(`🎨 Image failed, using placeholder for ${mint.substring(0, 8)}...`);
+                console.log(`🎨 Using placeholder for ${mint.substring(0, 8)}...`);
                 this.src = placeholderUrl;
             } else {
                 this.src = this.dataset.fallback;
