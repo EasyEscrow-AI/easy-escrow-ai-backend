@@ -532,6 +532,8 @@ export class EscrowProgramService {
         
         EscrowProgramService.lastJitoRequestTime = Math.max(now, nextAvailableTime);
         
+        // Jito Block Engine uses JSON-RPC format (as per legacy working code)
+        // Endpoint: POST /api/v1/bundles with JSON-RPC body
         const response = await fetch(EscrowProgramService.JITO_BUNDLE_ENDPOINT_MAINNET, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -739,6 +741,8 @@ export class EscrowProgramService {
           
           EscrowProgramService.lastJitoRequestTime = Math.max(now, nextAvailableTime);
           
+          // Jito Block Engine uses JSON-RPC format (as per legacy working code)
+          // Endpoint: POST /api/v1/bundles with JSON-RPC body
           const response = await fetch(EscrowProgramService.JITO_BUNDLE_ENDPOINT_MAINNET, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -854,34 +858,45 @@ export class EscrowProgramService {
     console.log(`[EscrowProgramService] Checking status of ${bundleIds.length} bundle(s)...`);
     
     try {
-      const response = await fetch(EscrowProgramService.JITO_BUNDLE_ENDPOINT_MAINNET, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          id: 1,
-          method: 'getBundleStatuses',
-          params: [bundleIds],
-        }),
+      // Jito REST API: GET /api/v1/bundles/{bundleId} for status check
+      // For multiple bundle IDs, we need to check each one individually
+      const statusPromises = bundleIds.map(async (bundleId) => {
+        try {
+          const response = await fetch(`${EscrowProgramService.JITO_BUNDLE_ENDPOINT_MAINNET}/${bundleId}`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+          });
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`[EscrowProgramService] Bundle status HTTP error for ${bundleId}: ${response.status}`, errorText);
+            return { bundleId, status: 'Invalid' as const, error: `HTTP ${response.status}` };
+          }
+          
+          const result = await response.json() as {
+            bundleId?: string;
+            status?: string;
+            slot?: number;
+            error?: { message?: string };
+          };
+          
+          if (result.error) {
+            console.error('[EscrowProgramService] Bundle status error for', bundleId, ':', result.error);
+            return { bundleId, status: 'Invalid' as const, error: result.error.message };
+          }
+          
+          return {
+            bundleId: result.bundleId || bundleId,
+            status: (result.status || 'Unknown') as 'Processed' | 'Dropped' | 'Finalized' | 'Invalid',
+            slot: result.slot,
+          };
+        } catch (error) {
+          console.error('[EscrowProgramService] Bundle status check error for', bundleId, ':', error);
+          return { bundleId, status: 'Invalid' as const, error: error instanceof Error ? error.message : 'Unknown error' };
+        }
       });
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`[EscrowProgramService] Bundle status HTTP error: ${response.status}`, errorText);
-        return bundleIds.map(id => ({ bundleId: id, status: 'Invalid' as const, error: `HTTP ${response.status}` }));
-      }
-      
-      const result = await response.json() as {
-        result?: { value?: Array<{ bundle_id: string; status: string; slot?: number }> };
-        error?: { message?: string };
-      };
-      
-      if (result.error) {
-        console.error('[EscrowProgramService] Bundle status RPC error:', result.error);
-        return bundleIds.map(id => ({ bundleId: id, status: 'Invalid' as const, error: result.error?.message }));
-      }
-      
-      const statuses = result.result?.value || [];
+      const statuses = await Promise.all(statusPromises);
       
       return bundleIds.map(bundleId => {
         const bundleStatus = statuses.find(s => s.bundle_id === bundleId);
