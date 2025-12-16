@@ -710,15 +710,17 @@ export class EscrowProgramService {
       
       EscrowProgramService.lastJitoRequestTime = Math.max(now, nextAvailableTime);
       
-      // Simulate bundle first (unless skipped)
+      // NOTE: Jito Block Engine API does NOT support simulateBundle method
+      // The simulateBundle method returns -32601 "Invalid method" error
+      // Instead, we skip simulation for Jito bundles and rely on:
+      // 1. Proper transaction validation before bundling
+      // 2. Jito's own validation when accepting the bundle
+      // 3. Bundle status polling to detect failures
       if (!skipSimulation) {
-        const simulation = await this.simulateBundle(serializedTransactions);
-        if (!simulation.success) {
-          return {
-            success: false,
-            error: `Bundle simulation failed: ${simulation.error}`,
-          };
-        }
+        console.log('[EscrowProgramService] ⚠️ Bundle simulation skipped - Jito API does not support simulateBundle method');
+        console.log('[EscrowProgramService] Relying on transaction validation and Jito bundle status polling');
+        // Note: We could simulate transactions individually via regular RPC if needed,
+        // but that's expensive and Jito will validate anyway
       }
       
       // Submit bundle to Jito with retry logic for rate limiting

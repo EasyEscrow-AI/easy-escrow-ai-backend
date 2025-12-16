@@ -95,7 +95,7 @@ export class BulkSwapExecutor {
     const {
       waitForConfirmation = true,
       confirmationTimeoutSeconds = 30,
-      skipSimulation = false,
+      skipSimulation = true, // Default to true - Jito API doesn't support simulateBundle
       description = 'Bulk swap',
     } = options;
     
