@@ -370,13 +370,15 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
                 }, null, 2));
               }
               
-              // For cNFTs minted with image URL directly in uri field (non-standard but works for testing)
-              // Try: content structure, then fall back to root uri field (where we set it during minting)
+              // Extract image URL from Helius DAS API response
+              // Helius provides images in content.files[0].uri or content.links.image
+              // Also check content.metadata for image field
               const imageUrl = asset.content?.files?.[0]?.uri || 
                               asset.content?.links?.image || 
+                              asset.content?.metadata?.image ||
                               asset.content?.json_uri ||
                               asset.content?.metadata?.uri ||
-                              asset.uri || // Root uri field (set during minting)
+                              asset.uri || // Root uri field (fallback)
                               null;
               
               return {
