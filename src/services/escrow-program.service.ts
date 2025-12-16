@@ -142,6 +142,9 @@ export class EscrowProgramService {
   // Jito rate limiting: 1 request per second across all instances
   private static lastJitoRequestTime: number = 0;
   private static readonly JITO_RATE_LIMIT_MS = 1000; // 1 second between requests
+
+  // Some forwarders do not expose getInflightBundleStatuses. Cache capability per instance.
+  private inflightBundleStatusesSupported: boolean | null = null;
   
   // Public getter for programId
   public get programId(): PublicKey {
@@ -690,6 +693,10 @@ export class EscrowProgramService {
       };
     }
     
+    // Extract tx signatures (best-effort) for confirmation fallback.
+    // We do this before submission so status polling can fall back to on-chain signature checks.
+    const txSignatures: string[] = [];
+
     // Validate transaction encoding
     for (let i = 0; i < serializedTransactions.length; i++) {
       const tx = serializedTransactions[i];
@@ -755,6 +762,11 @@ export class EscrowProgramService {
               };
             }
             console.log(`[EscrowProgramService] Transaction ${i} has ${versionedTx.signatures.length} valid signatures (versioned)`);
+
+            // Best-effort: first signature is the transaction id
+            if (versionedTx.signatures?.[0]?.length === 64) {
+              txSignatures.push(bs58.encode(Buffer.from(versionedTx.signatures[0])));
+            }
           } else {
             const legacyTx = Transaction.from(decoded);
             // Check if all signatures are present (not null/empty)
@@ -768,6 +780,12 @@ export class EscrowProgramService {
               };
             }
             console.log(`[EscrowProgramService] Transaction ${i} has ${legacyTx.signatures.length} valid signatures (legacy)`);
+
+            // Best-effort: first signature is the transaction id
+            const firstSig = legacyTx.signatures?.[0]?.signature;
+            if (firstSig && firstSig.length === 64 && !firstSig.every(byte => byte === 0)) {
+              txSignatures.push(bs58.encode(Buffer.from(firstSig)));
+            }
           }
         } catch (sigError: any) {
           // If we can't deserialize to check signatures, that's also a problem
@@ -947,6 +965,7 @@ export class EscrowProgramService {
           return {
             success: true,
             bundleId,
+            signatures: txSignatures.length === serializedTransactions.length ? txSignatures : undefined,
           };
           
         } catch (error) {
@@ -1013,6 +1032,10 @@ export class EscrowProgramService {
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`[EscrowProgramService] Bundle status HTTP error: ${response.status}`, errorText);
+        // Treat 429 as transient/no-signal. Jito/forwarders can be globally rate limited.
+        if (response.status === 429) {
+          return bundleIds.map(id => ({ bundleId: id, status: 'Pending' as const, error: 'HTTP 429 rate limited' }));
+        }
         return bundleIds.map(id => ({ bundleId: id, status: 'Invalid' as const, error: `HTTP ${response.status}` }));
       }
       
@@ -1031,7 +1054,9 @@ export class EscrowProgramService {
       return bundleIds.map(bundleId => {
         const bundleStatus = statuses.find((s: any) => s.bundle_id === bundleId);
         if (!bundleStatus) {
-          return { bundleId, status: 'Invalid' as const, error: 'Bundle not found' };
+          // "Bundle not found" is common immediately after submission (status plumbing lags).
+          // Treat as Pending rather than a definitive failure.
+          return { bundleId, status: 'Pending' as const, error: 'Bundle not found' };
         }
         
         // Map Jito status to our enum
@@ -1071,6 +1096,108 @@ export class EscrowProgramService {
   }
 
   /**
+   * Get inflight bundle status (most useful immediately after submission).
+   * Some forwarders (e.g. QuickNode) expose getInflightBundleStatuses which looks back ~5 minutes.
+   */
+  async getInflightBundleStatuses(bundleIds: string[]): Promise<{
+    bundleId: string;
+    status: 'Invalid' | 'Pending' | 'Failed' | 'Landed';
+    slot?: number;
+    error?: string;
+  }[]> {
+    console.log(`[EscrowProgramService] Checking inflight status of ${bundleIds.length} bundle(s)...`);
+
+    try {
+      const response = await fetch(EscrowProgramService.JITO_BUNDLE_ENDPOINT_MAINNET, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'getInflightBundleStatuses',
+          params: bundleIds.map(id => [id]),
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[EscrowProgramService] Inflight status HTTP error: ${response.status}`, errorText);
+        if (response.status === 429) {
+          return bundleIds.map(id => ({ bundleId: id, status: 'Pending' as const, error: 'HTTP 429 rate limited' }));
+        }
+        return bundleIds.map(id => ({ bundleId: id, status: 'Invalid' as const, error: `HTTP ${response.status}` }));
+      }
+
+      const result = await response.json() as {
+        result?: { value?: Array<{ bundle_id: string; status: string; slot?: number }> } | Array<{ bundle_id: string; status: string; slot?: number }>;
+        error?: { message?: string; code?: number };
+      };
+
+      if (result.error) {
+        console.error('[EscrowProgramService] Inflight status RPC error:', result.error);
+
+        // Some endpoints do not support this method; mark unsupported so callers can fall back.
+        const msg = (result.error.message || '').toLowerCase();
+        if (result.error.code === -32601 || msg.includes('method not found') || msg.includes('invalid method')) {
+          this.inflightBundleStatusesSupported = false;
+          return bundleIds.map(id => ({
+            bundleId: id,
+            status: 'Invalid' as const,
+            error: 'Inflight bundle status unsupported (method not found)',
+          }));
+        }
+
+        // Treat rate limits as no-signal
+        if (result.error.code === -32097 || result.error.message?.toLowerCase().includes('rate')) {
+          return bundleIds.map(id => ({ bundleId: id, status: 'Pending' as const, error: result.error?.message || 'Rate limited' }));
+        }
+        return bundleIds.map(id => ({ bundleId: id, status: 'Invalid' as const, error: result.error?.message }));
+      }
+
+      // If we got a successful response, mark as supported.
+      this.inflightBundleStatusesSupported = true;
+
+      const statuses = Array.isArray(result.result)
+        ? result.result
+        : result.result?.value || [];
+
+      return bundleIds.map(bundleId => {
+        const bundleStatus = statuses.find((s: any) => s.bundle_id === bundleId);
+        if (!bundleStatus) {
+          return { bundleId, status: 'Pending' as const, error: 'Bundle not found' };
+        }
+
+        let status: 'Invalid' | 'Pending' | 'Failed' | 'Landed';
+        switch (bundleStatus.status) {
+          case 'Landed':
+          case 'landed':
+            status = 'Landed';
+            break;
+          case 'Pending':
+          case 'pending':
+            status = 'Pending';
+            break;
+          case 'Failed':
+          case 'failed':
+            status = 'Failed';
+            break;
+          default:
+            status = 'Invalid';
+        }
+
+        return { bundleId, status, slot: bundleStatus.slot };
+      });
+    } catch (error) {
+      console.error('[EscrowProgramService] Inflight status check error:', error);
+      return bundleIds.map(id => ({
+        bundleId: id,
+        status: 'Pending' as const,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      }));
+    }
+  }
+
+  /**
    * Wait for bundle confirmation with polling
    * 
    * @param bundleId - Bundle ID to track
@@ -1079,7 +1206,8 @@ export class EscrowProgramService {
    */
   async waitForBundleConfirmation(
     bundleId: string,
-    timeoutSeconds: number = EscrowProgramService.BUNDLE_CONFIRMATION_TIMEOUT_SECONDS
+    timeoutSeconds: number = EscrowProgramService.BUNDLE_CONFIRMATION_TIMEOUT_SECONDS,
+    txSignatures?: string[]
   ): Promise<{
     confirmed: boolean;
     status: 'Landed' | 'Failed' | 'Pending' | 'Timeout';
@@ -1091,40 +1219,92 @@ export class EscrowProgramService {
     const startTime = Date.now();
     const timeoutMs = timeoutSeconds * 1000;
     let pollCount = 0;
+
+    // Delay briefly before first poll to avoid immediate "not found" and reduce rate limits.
+    const initialDelayMs = 2000 + Math.floor(Math.random() * 1000); // 2–3s
+    await new Promise(resolve => setTimeout(resolve, initialDelayMs));
     
     while (Date.now() - startTime < timeoutMs) {
       pollCount++;
       
-      // Tiered polling: faster at start, slower after 15s
       const elapsed = (Date.now() - startTime) / 1000;
-      const pollInterval = elapsed < 15 ? 1500 : 2500;
+
+      // Backoff + jitter to avoid global 429s. Cap at ~20s.
+      const baseIntervalMs = Math.min(20000, Math.round(3000 * Math.pow(1.6, pollCount - 1))); // 3s, 4.8s, 7.7s, ...
+      const jitter = 0.8 + Math.random() * 0.4; // ±20%
+      const pollInterval = Math.round(baseIntervalMs * jitter);
+
+      // Prefer inflight status right after submission; fall back to getBundleStatuses when inflight is unsupported.
+      let statusResult: { bundleId: string; status: 'Invalid' | 'Pending' | 'Failed' | 'Landed'; slot?: number; error?: string } | undefined;
+
+      if (this.inflightBundleStatusesSupported !== false) {
+        const [s] = await this.getInflightBundleStatuses([bundleId]);
+
+        // If inflight method is unsupported, fall back to getBundleStatuses.
+        const inflightUnsupported =
+          s.status === 'Invalid' && String(s.error || '').toLowerCase().includes('unsupported');
+
+        if (!inflightUnsupported) {
+          statusResult = s;
+        }
+      }
+
+      if (!statusResult) {
+        const [s] = await this.getBundleStatuses([bundleId]);
+        statusResult = s;
+      }
       
-      const [status] = await this.getBundleStatuses([bundleId]);
+      console.log(`[EscrowProgramService] Bundle poll #${pollCount}: ${statusResult.status} (${elapsed.toFixed(1)}s elapsed)`);
       
-      console.log(`[EscrowProgramService] Bundle poll #${pollCount}: ${status.status} (${elapsed.toFixed(1)}s elapsed)`);
-      
-      if (status.status === 'Landed') {
-        console.log(`[EscrowProgramService] ✅ Bundle ${bundleId} landed in slot ${status.slot}`);
+      if (statusResult.status === 'Landed') {
+        console.log(`[EscrowProgramService] ✅ Bundle ${bundleId} landed in slot ${statusResult.slot}`);
         return {
           confirmed: true,
           status: 'Landed',
-          slot: status.slot,
+          slot: statusResult.slot,
         };
       }
       
-      if (status.status === 'Failed') {
-        console.error(`[EscrowProgramService] ❌ Bundle ${bundleId} failed: ${status.error}`);
+      if (statusResult.status === 'Failed') {
+        console.error(`[EscrowProgramService] ❌ Bundle ${bundleId} failed: ${statusResult.error}`);
         return {
           confirmed: false,
           status: 'Failed',
-          error: status.error || 'Bundle execution failed',
+          error: statusResult.error || 'Bundle execution failed',
         };
       }
       
-      if (status.status === 'Invalid') {
-        // Invalid might mean bundle was dropped or not found
-        console.warn(`[EscrowProgramService] Bundle ${bundleId} status invalid: ${status.error}`);
-        // Continue polling - it might just be pending
+      if (statusResult.status === 'Invalid') {
+        // Invalid is often "bundle not found yet" or "not in inflight window" — not a definitive failure.
+        console.warn(`[EscrowProgramService] Bundle ${bundleId} status invalid: ${statusResult.error}`);
+      }
+
+      // Fallback confirmation: check on-chain signatures if provided.
+      // This protects against status plumbing lag and rate limits.
+      if (txSignatures && txSignatures.length > 0 && pollCount % 2 === 0) {
+        try {
+          const sigStatuses = await this.provider.connection.getSignatureStatuses(txSignatures);
+          const values = sigStatuses?.value || [];
+
+          // If any signature has an explicit error, consider the bundle failed.
+          const anyErr = values.some(v => v?.err);
+          if (anyErr) {
+            return {
+              confirmed: false,
+              status: 'Failed',
+              error: 'One or more transactions in the bundle failed on-chain (signature status error)',
+            };
+          }
+
+          // Consider landed once we see at least one signature confirmed/finalized.
+          const anyConfirmed = values.some(v => v && (v.confirmationStatus === 'confirmed' || v.confirmationStatus === 'finalized'));
+          if (anyConfirmed) {
+            console.log(`[EscrowProgramService] ✅ Bundle ${bundleId} confirmed via on-chain signature status`);
+            return { confirmed: true, status: 'Landed' };
+          }
+        } catch (sigErr) {
+          // Ignore; signature status is best-effort
+        }
       }
       
       await new Promise(resolve => setTimeout(resolve, pollInterval));

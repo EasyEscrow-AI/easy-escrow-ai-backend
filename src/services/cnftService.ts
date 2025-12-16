@@ -94,6 +94,9 @@ export class CnftService {
   private connection: Connection;
   private batchConnection?: Connection; // Optional separate connection for batch operations
   private config: CnftServiceConfig;
+
+  // Some RPC providers do not support DAS getAssetProofBatch. Cache this to avoid repeated retries.
+  private batchProofSupported: boolean | null = null;
   
   // Proof cache with TTL
   private proofCache: Map<string, ProofCacheEntry> = new Map();
@@ -329,6 +332,29 @@ export class CnftService {
     if (assetIds.length === 0) {
       return new Map();
     }
+
+    // If this RPC doesn't support getAssetProofBatch, skip batch mode entirely.
+    if (this.batchProofSupported === false) {
+      console.warn('[CnftService] getAssetProofBatch is disabled for this RPC (previously returned -32601 Method not found). Falling back to individual proof fetching.');
+      this.metrics.batchProofFallbacks++;
+      const results = new Map<string, DasProofResponse>();
+      const errors: Array<{ assetId: string; error: string }> = [];
+      for (const assetId of assetIds) {
+        try {
+          const proof = await this.getCnftProof(assetId, skipCache, 0);
+          this.metrics.individualProofFetches++;
+          results.set(assetId, proof);
+        } catch (err: any) {
+          console.error(`[CnftService] Failed to fetch individual proof for ${assetId}:`, err?.message || err);
+          errors.push({ assetId, error: err?.message || 'Unknown error' });
+        }
+      }
+
+      if (errors.length > 0) {
+        console.warn(`[CnftService] ${errors.length} proof fetch failures while batch mode disabled:`, errors);
+      }
+      return results;
+    }
     
     // Validate batch size (max 50 per Helius/QuickNode best practices)
     const MAX_BATCH_SIZE = 50;
@@ -479,6 +505,14 @@ export class CnftService {
     } catch (error: any) {
       console.error(`[CnftService] Batch proof fetch failed: ${error.message}`);
       this.metrics.batchProofFallbacks++;
+
+      // If provider returns -32601 for getAssetProofBatch, disable batch mode for this instance to avoid repeated retries.
+      const rpcCode = (error as any)?.rpcCode;
+      if (rpcCode === -32601 || String(error.message || '').toLowerCase().includes('method not found')) {
+        this.batchProofSupported = false;
+        console.warn('[CnftService] Disabling getAssetProofBatch for this RPC due to -32601 Method not found. Future calls will skip batch mode.');
+      }
+
       console.log(`[CnftService] Falling back to individual proof fetching for all ${uncachedIds.length} assets`);
       
       // Fallback to individual calls if batch fails
@@ -1024,12 +1058,26 @@ export class CnftService {
       
       if (data?.error) {
         console.error('[CnftService] DAS API returned error:', data.error);
-        throw new Error(`DAS API error: ${data.error.message || JSON.stringify(data.error)}`);
+        const err = new Error(`DAS API error: ${data.error.message || JSON.stringify(data.error)}`);
+        // Preserve RPC code for smarter retry handling
+        (err as any).rpcCode = data.error.code;
+        (err as any).rpcError = data.error;
+        throw err;
       }
       
       return data;
     } catch (error: any) {
       clearTimeout(timeoutId);
+
+      // Do not retry unsupported methods (e.g. getAssetProofBatch on providers without DAS batch).
+      // This prevents burning ~7s on repeated -32601 retries.
+      if (method === 'getAssetProofBatch') {
+        const rpcCode = (error as any)?.rpcCode;
+        if (rpcCode === -32601 || String(error.message || '').toLowerCase().includes('method not found')) {
+          this.batchProofSupported = false;
+          throw error;
+        }
+      }
       
       // Retry on network errors or timeouts
       if (retryCount < this.config.maxRetries) {
@@ -1042,7 +1090,7 @@ export class CnftService {
         const delay = Math.min(1000 * Math.pow(2, retryCount), 10000);
         await new Promise(resolve => setTimeout(resolve, delay));
         
-        return this.makeDasRequest(method, params, retryCount + 1);
+        return this.makeDasRequest(method, params, retryCount + 1, useBatchConnection);
       }
       
       throw error;

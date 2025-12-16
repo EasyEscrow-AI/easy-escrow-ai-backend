@@ -22,6 +22,7 @@ import {
   VersionedTransaction,
   AddressLookupTableAccount,
   SystemProgram,
+  ComputeBudgetProgram,
   NonceAccount,
   LAMPORTS_PER_SOL,
 } from '@solana/web3.js';
@@ -710,6 +711,15 @@ export class TransactionGroupBuilder {
           })
         );
       }
+
+      // Priority fee + compute budget (recommended alongside Jito tip during congestion)
+      // Note: For durable nonce transactions, nonceAdvance must be first. ComputeBudget can follow it safely.
+      if (useJitoNonces) {
+        cnftInstructions.push(
+          ComputeBudgetProgram.setComputeUnitLimit({ units: 400_000 }),
+          ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 50_000 })
+        );
+      }
       
       cnftInstructions.push(transferResult.instruction);
       
@@ -813,6 +823,15 @@ export class TransactionGroupBuilder {
             noncePubkey: inputs.nonceAccountPubkey,
             authorizedPubkey: this.platformAuthority.publicKey,
           })
+        );
+      }
+
+      // Priority fee + compute budget (recommended alongside Jito tip during congestion)
+      // Note: For durable nonce transactions, nonceAdvance must be first. ComputeBudget can follow it safely.
+      if (useJitoNonces) {
+        cnftInstructions.push(
+          ComputeBudgetProgram.setComputeUnitLimit({ units: 400_000 }),
+          ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 50_000 })
         );
       }
       

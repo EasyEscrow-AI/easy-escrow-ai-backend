@@ -319,7 +319,11 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
           
           // Wait for bundle confirmation
           console.log('⏳ Waiting for bundle confirmation...');
-          const confirmation = await escrowProgramService.waitForBundleConfirmation(bundleId, 60); // 60s timeout for mainnet
+          const confirmation = await escrowProgramService.waitForBundleConfirmation(
+            bundleId,
+            60, // 60s timeout for mainnet
+            bundleResult.signatures
+          );
           
           if (!confirmation.confirmed) {
             return res.status(500).json({
