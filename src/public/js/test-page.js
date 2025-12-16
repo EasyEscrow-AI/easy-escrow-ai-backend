@@ -155,19 +155,18 @@ function getPlaceholderImage(assetId) {
 }
 
 
-// Get image for any NFT (uses placeholder for cNFTs, metadata for others)
+// Get image for any NFT (uses actual image if available, placeholder as fallback)
 function getNftImage(nft) {
-    // For cNFTs, ALWAYS use placeholder images (metadata URIs are often fake/broken in test env)
-    if (nft.isCompressed && nft.mint) {
-        return getPlaceholderImage(nft.mint);
-    }
-    
-    // For regular NFTs, use their metadata image if available
-    if (nft.image && !nft.image.includes('No Image')) {
+    // For ALL NFTs (including cNFTs), try to use actual image URL first
+    // Helius DAS API provides valid image URLs that should be used
+    if (nft.image && 
+        !nft.image.includes('No Image') && 
+        !nft.image.includes('data:image/svg+xml') && // Skip SVG placeholders
+        (nft.image.startsWith('http://') || nft.image.startsWith('https://') || nft.image.startsWith('ipfs://'))) {
         return nft.image;
     }
     
-    // Fallback to placeholder based on mint
+    // Fallback to placeholder for cNFTs or NFTs without valid image URLs
     if (nft.mint) {
         return getPlaceholderImage(nft.mint);
     }
@@ -529,12 +528,14 @@ function renderNFTs(wallet, nfts) {
     container.innerHTML = filteredNfts.map((nft, index) => {
         // Find original index in unfiltered array for toggle functionality
         const originalIndex = nfts.findIndex(n => n.mint === nft.mint);
-        // Get image - uses animal API for cNFTs
+        // Get image - tries actual image URL first, falls back to placeholder
         let imageUrl = getNftImage(nft);
         
         // Debug: log what image URL we're using for cNFTs
         if (nft.isCompressed) {
-            console.log(`📷 cNFT ${nft.mint.substring(0, 8)}: isCompressed=${nft.isCompressed}, imageUrl=${imageUrl?.substring(0, 50)}...`);
+            const isPlaceholder = imageUrl && imageUrl.includes('dicebear.com');
+            const imageSource = isPlaceholder ? 'placeholder' : 'actual';
+            console.log(`📷 cNFT ${nft.mint.substring(0, 8)}: isCompressed=${nft.isCompressed}, source=${imageSource}, imageUrl=${imageUrl?.substring(0, 80)}...`);
         }
         
         // Use placeholder if no image
