@@ -106,7 +106,7 @@ export class CnftService {
     maxRetries: 3,
     maxConcurrentRequests: 5, // Limit concurrent DAS API requests
     batchDelayMs: 200, // Delay between batches
-    proofCacheTtlSeconds: 30, // Cache proofs for 30 seconds
+    proofCacheTtlSeconds: 5, // Cache proofs for 5 seconds (reduced from 30s for high-activity trees)
   };
   
   constructor(connection: Connection, config?: Partial<CnftServiceConfig>) {
@@ -174,14 +174,19 @@ export class CnftService {
    */
   /**
    * Cache proof with TTL
-   * IMPROVEMENT: Use shorter TTL (5s) for high-activity trees to ensure freshness
+   * IMPROVEMENT: Use shorter TTL for high-activity trees to ensure freshness
    * Research shows proofs can become stale in seconds on active trees
+   * 
+   * @param assetId - The cNFT asset ID
+   * @param proof - The proof data to cache
+   * @param ttlSeconds - Optional override TTL (defaults to config.proofCacheTtlSeconds)
+   *                    For high-activity trees, can override with shorter TTL (e.g., 5s)
    */
   private cacheProof(assetId: string, proof: DasProofResponse, ttlSeconds?: number): void {
     const now = Date.now();
-    // Use shorter TTL (5 seconds) for high-activity trees instead of default 30s
-    // This ensures proofs are fresh even on very active trees
-    const ttl = ttlSeconds || 5; // Default to 5 seconds for critical freshness
+    // Use provided TTL override, or fall back to config value
+    // Config defaults to 30s, but can be overridden per-call for critical freshness
+    const ttl = ttlSeconds ?? this.config.proofCacheTtlSeconds;
     this.proofCache.set(assetId, {
       proof,
       fetchedAt: now,
@@ -400,10 +405,10 @@ export class CnftService {
         root: proofData.root ? proofData.root.substring(0, 16) + '...' : 'N/A',
       });
       
-      // Cache the result with SHORT TTL (5 seconds) for high-activity trees
+      // Cache the result with configurable TTL (default 5s for high-activity trees)
       // Research shows: proofs can become stale in seconds on high-activity trees
-      // Using 5s TTL instead of 30s ensures we get fresh proofs even if cached recently
-      this.cacheProof(assetId, proofData, 5);
+      // Config defaults to 5s, but can be overridden via CnftServiceConfig
+      this.cacheProof(assetId, proofData);
       
       return proofData;
     } catch (error: any) {
