@@ -1,7 +1,7 @@
 # cNFT Testing Guide
 
-**Last Updated:** December 10, 2025  
-**Status:** ✅ Production Ready
+**Last Updated:** December 15, 2025  
+**Status:** ✅ Production Ready & Deployed
 
 ---
 
@@ -333,7 +333,10 @@ process.env.LOG_LEVEL = 'debug';
 | `Asset is not a compressed NFT` | Invalid asset ID or not a cNFT | Verify asset ID and type |
 | `Ownership mismatch` | Asset not owned by expected wallet | Check wallet address |
 | `Proof fetch failed` | DAS API error | Check RPC provider and retry |
-| `Tree root mismatch` | Stale proof | Fetch fresh proof |
+| `Tree root mismatch` | Stale proof | Automatic retry with fresh proof (up to 3 attempts) |
+| `Stale Merkle proof detected` | Tree updated faster than DAS API | System automatically retries with tree sequence stability check |
+| `Invalid NFT amount` | Token account has 0 tokens | Verify NFT ownership before swap |
+| `Transaction not confirmed` | Blockhash expired or network congestion | System uses Jito bundles for bulk swaps to prevent expiration |
 
 ---
 
@@ -345,6 +348,20 @@ process.env.LOG_LEVEL = 'debug';
 
 ---
 
-**Status:** ✅ Production Ready  
-**Last Updated:** December 10, 2025
+**Status:** ✅ Production Ready & Deployed  
+**Last Updated:** December 15, 2025
+
+## Production Deployment Status
+
+✅ **All cNFT and bulk swap features are deployed and operational on Solana mainnet:**
+
+- ✅ Single cNFT swaps (cNFT ↔ SOL, cNFT ↔ cNFT)
+- ✅ Bulk swaps (up to 10 assets per side)
+- ✅ Mixed asset swaps (SPL NFT + Core NFT + cNFT + SOL)
+- ✅ Jito bundle execution for atomic multi-transaction swaps
+- ✅ Stale proof handling with automatic retry
+- ✅ Production E2E tests passing
+- ✅ Production integration and smoke tests passing
+
+See [Task 64 Completion](tasks/TASK_64_COMPLETION.md) for deployment details.
 

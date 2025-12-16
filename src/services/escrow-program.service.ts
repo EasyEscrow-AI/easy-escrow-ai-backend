@@ -515,67 +515,118 @@ export class EscrowProgramService {
   }> {
     console.log(`[EscrowProgramService] Simulating bundle with ${serializedTransactions.length} transactions...`);
     
-    try {
-      const response = await fetch(EscrowProgramService.JITO_BUNDLE_ENDPOINT_MAINNET, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          id: 1,
-          method: 'simulateBundle',
-          params: [
-            { 
-              encodedTransactions: serializedTransactions 
-            }
-          ],
-        }),
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`[EscrowProgramService] Bundle simulation HTTP error: ${response.status}`, errorText);
+    const MAX_RETRIES = 3;
+    const BASE_DELAY_MS = 1000; // 1 second base delay
+    
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        // Rate limiting: ensure minimum 1 second between Jito requests
+        const now = Date.now();
+        const nextAvailableTime = EscrowProgramService.lastJitoRequestTime + EscrowProgramService.JITO_RATE_LIMIT_MS;
+        const delayMs = Math.max(0, nextAvailableTime - now);
+        
+        if (delayMs > 0 && attempt === 1) {
+          console.log(`[EscrowProgramService] Rate limiting: Waiting ${delayMs}ms before bundle simulation`);
+          await new Promise(resolve => setTimeout(resolve, delayMs));
+        }
+        
+        EscrowProgramService.lastJitoRequestTime = Math.max(now, nextAvailableTime);
+        
+        const response = await fetch(EscrowProgramService.JITO_BUNDLE_ENDPOINT_MAINNET, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0',
+            id: 1,
+            method: 'simulateBundle',
+            params: [
+              { 
+                encodedTransactions: serializedTransactions 
+              }
+            ],
+          }),
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          
+          // Handle rate limiting (429) with retry
+          if (response.status === 429 && attempt < MAX_RETRIES) {
+            const retryDelay = BASE_DELAY_MS * Math.pow(2, attempt - 1); // Exponential backoff: 1s, 2s, 4s
+            console.warn(`[EscrowProgramService] Bundle simulation rate limited (429), retrying in ${retryDelay}ms (attempt ${attempt}/${MAX_RETRIES})...`);
+            await new Promise(resolve => setTimeout(resolve, retryDelay));
+            continue; // Retry
+          }
+          
+          console.error(`[EscrowProgramService] Bundle simulation HTTP error: ${response.status}`, errorText);
+          return {
+            success: false,
+            error: `HTTP ${response.status}: ${errorText.substring(0, 200)}`,
+          };
+        }
+        
+        const result = await response.json() as {
+          result?: { value?: { transactionResults?: Array<{ error?: any; logs?: string[] }> } };
+          error?: { message?: string; code?: number };
+        };
+        
+        // Handle RPC-level rate limiting errors
+        if (result.error) {
+          const isRateLimit = result.error.code === -32097 || 
+                             (result.error.message && result.error.message.includes('rate limit'));
+          
+          if (isRateLimit && attempt < MAX_RETRIES) {
+            const retryDelay = BASE_DELAY_MS * Math.pow(2, attempt - 1); // Exponential backoff: 1s, 2s, 4s
+            console.warn(`[EscrowProgramService] Bundle simulation rate limited (RPC error), retrying in ${retryDelay}ms (attempt ${attempt}/${MAX_RETRIES})...`);
+            await new Promise(resolve => setTimeout(resolve, retryDelay));
+            continue; // Retry
+          }
+          
+          console.error('[EscrowProgramService] Bundle simulation RPC error:', result.error);
+          return {
+            success: false,
+            error: result.error.message || JSON.stringify(result.error),
+          };
+        }
+        
+        // Check if any transaction failed
+        const txResults = result.result?.value?.transactionResults || [];
+        const failedTx = txResults.find((tx: any) => tx.error);
+        
+        if (failedTx) {
+          console.error('[EscrowProgramService] Bundle simulation: Transaction failed:', failedTx.error);
+          return {
+            success: false,
+            error: `Transaction simulation failed: ${JSON.stringify(failedTx.error)}`,
+            logs: failedTx.logs,
+          };
+        }
+        
+        console.log('[EscrowProgramService] ✅ Bundle simulation successful');
+        return { success: true };
+        
+      } catch (error) {
+        // Network errors - retry with exponential backoff
+        if (attempt < MAX_RETRIES) {
+          const retryDelay = BASE_DELAY_MS * Math.pow(2, attempt - 1);
+          console.warn(`[EscrowProgramService] Bundle simulation network error, retrying in ${retryDelay}ms (attempt ${attempt}/${MAX_RETRIES})...`);
+          await new Promise(resolve => setTimeout(resolve, retryDelay));
+          continue; // Retry
+        }
+        
+        console.error('[EscrowProgramService] Bundle simulation error:', error);
         return {
           success: false,
-          error: `HTTP ${response.status}: ${errorText.substring(0, 200)}`,
+          error: error instanceof Error ? error.message : 'Unknown simulation error',
         };
       }
-      
-      const result = await response.json() as {
-        result?: { value?: { transactionResults?: Array<{ error?: any; logs?: string[] }> } };
-        error?: { message?: string };
-      };
-      
-      if (result.error) {
-        console.error('[EscrowProgramService] Bundle simulation RPC error:', result.error);
-        return {
-          success: false,
-          error: result.error.message || JSON.stringify(result.error),
-        };
-      }
-      
-      // Check if any transaction failed
-      const txResults = result.result?.value?.transactionResults || [];
-      const failedTx = txResults.find((tx: any) => tx.error);
-      
-      if (failedTx) {
-        console.error('[EscrowProgramService] Bundle simulation: Transaction failed:', failedTx.error);
-        return {
-          success: false,
-          error: `Transaction simulation failed: ${JSON.stringify(failedTx.error)}`,
-          logs: failedTx.logs,
-        };
-      }
-      
-      console.log('[EscrowProgramService] ✅ Bundle simulation successful');
-      return { success: true };
-      
-    } catch (error) {
-      console.error('[EscrowProgramService] Bundle simulation error:', error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown simulation error',
-      };
     }
+    
+    // If we get here, all retries exhausted
+    return {
+      success: false,
+      error: 'Bundle simulation failed after all retries',
+    };
   }
 
   /**
@@ -668,65 +719,115 @@ export class EscrowProgramService {
         }
       }
       
-      // Submit bundle to Jito
+      // Submit bundle to Jito with retry logic for rate limiting
       console.log('[EscrowProgramService] Submitting bundle to Jito Block Engine...');
       
-      const response = await fetch(EscrowProgramService.JITO_BUNDLE_ENDPOINT_MAINNET, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          id: 1,
-          method: 'sendBundle',
-          params: [serializedTransactions],
-        }),
-      });
+      const MAX_BUNDLE_RETRIES = 3;
+      const BASE_BUNDLE_DELAY_MS = 1000; // 1 second base delay
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        
-        // Handle rate limiting
-        if (response.status === 429) {
-          console.warn('[EscrowProgramService] Jito bundle rate limit hit (429)');
+      for (let attempt = 1; attempt <= MAX_BUNDLE_RETRIES; attempt++) {
+        try {
+          // Rate limiting: ensure minimum 1 second between Jito requests
+          const now = Date.now();
+          const nextAvailableTime = EscrowProgramService.lastJitoRequestTime + EscrowProgramService.JITO_RATE_LIMIT_MS;
+          const delayMs = Math.max(0, nextAvailableTime - now);
+          
+          if (delayMs > 0 && attempt === 1) {
+            console.log(`[EscrowProgramService] Rate limiting: Waiting ${delayMs}ms before bundle submission`);
+            await new Promise(resolve => setTimeout(resolve, delayMs));
+          }
+          
+          EscrowProgramService.lastJitoRequestTime = Math.max(now, nextAvailableTime);
+          
+          const response = await fetch(EscrowProgramService.JITO_BUNDLE_ENDPOINT_MAINNET, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              jsonrpc: '2.0',
+              id: 1,
+              method: 'sendBundle',
+              params: [serializedTransactions],
+            }),
+          });
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            
+            // Handle rate limiting (429) with retry
+            if (response.status === 429 && attempt < MAX_BUNDLE_RETRIES) {
+              const retryDelay = BASE_BUNDLE_DELAY_MS * Math.pow(2, attempt - 1); // Exponential backoff: 1s, 2s, 4s
+              console.warn(`[EscrowProgramService] Jito bundle rate limit hit (429), retrying in ${retryDelay}ms (attempt ${attempt}/${MAX_BUNDLE_RETRIES})...`);
+              await new Promise(resolve => setTimeout(resolve, retryDelay));
+              continue; // Retry
+            }
+            
+            console.error(`[EscrowProgramService] Jito bundle HTTP error: ${response.status}`, errorText);
+            return {
+              success: false,
+              error: `HTTP ${response.status}: ${errorText.substring(0, 200)}`,
+            };
+          }
+          
+          const result = await response.json() as {
+            result?: string;  // Bundle ID (UUID)
+            error?: { message?: string; code?: number };
+          };
+          
+          // Handle RPC-level rate limiting errors
+          if (result.error) {
+            const isRateLimit = result.error.code === -32097 || 
+                               (result.error.message && result.error.message.includes('rate limit'));
+            
+            if (isRateLimit && attempt < MAX_BUNDLE_RETRIES) {
+              const retryDelay = BASE_BUNDLE_DELAY_MS * Math.pow(2, attempt - 1);
+              console.warn(`[EscrowProgramService] Jito bundle rate limited (RPC error), retrying in ${retryDelay}ms (attempt ${attempt}/${MAX_BUNDLE_RETRIES})...`);
+              await new Promise(resolve => setTimeout(resolve, retryDelay));
+              continue; // Retry
+            }
+            
+            console.error('[EscrowProgramService] Jito bundle RPC error:', result.error);
+            return {
+              success: false,
+              error: result.error.message || JSON.stringify(result.error),
+            };
+          }
+          
+          if (!result.result) {
+            return {
+              success: false,
+              error: 'Jito sendBundle returned no bundle ID',
+            };
+          }
+          
+          const bundleId = result.result;
+          console.log(`[EscrowProgramService] ✅ Bundle submitted to Jito: ${bundleId}`);
+          
+          return {
+            success: true,
+            bundleId,
+          };
+          
+        } catch (error) {
+          // Network errors - retry with exponential backoff
+          if (attempt < MAX_BUNDLE_RETRIES) {
+            const retryDelay = BASE_BUNDLE_DELAY_MS * Math.pow(2, attempt - 1);
+            console.warn(`[EscrowProgramService] Bundle submission network error, retrying in ${retryDelay}ms (attempt ${attempt}/${MAX_BUNDLE_RETRIES})...`);
+            await new Promise(resolve => setTimeout(resolve, retryDelay));
+            continue; // Retry
+          }
+          
+          console.error('[EscrowProgramService] Bundle submission error:', error);
           return {
             success: false,
-            error: 'Jito rate limit exceeded. Please retry in a few seconds.',
+            error: error instanceof Error ? error.message : 'Unknown bundle submission error',
           };
         }
-        
-        console.error(`[EscrowProgramService] Jito bundle HTTP error: ${response.status}`, errorText);
-        return {
-          success: false,
-          error: `HTTP ${response.status}: ${errorText.substring(0, 200)}`,
-        };
       }
       
-      const result = await response.json() as {
-        result?: string;  // Bundle ID (UUID)
-        error?: { message?: string; code?: number };
-      };
-      
-      if (result.error) {
-        console.error('[EscrowProgramService] Jito bundle RPC error:', result.error);
-        return {
-          success: false,
-          error: result.error.message || JSON.stringify(result.error),
-        };
-      }
-      
-      if (!result.result) {
-        return {
-          success: false,
-          error: 'Jito sendBundle returned no bundle ID',
-        };
-      }
-      
-      const bundleId = result.result;
-      console.log(`[EscrowProgramService] ✅ Bundle submitted to Jito: ${bundleId}`);
-      
+      // If we get here, all retries exhausted
       return {
-        success: true,
-        bundleId,
+        success: false,
+        error: 'Bundle submission failed after all retries',
       };
       
     } catch (error) {

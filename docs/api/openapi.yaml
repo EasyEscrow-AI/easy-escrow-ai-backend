@@ -42,7 +42,7 @@ info:
     
     ## Bulk Swap Support
     
-    Put simply bulk swaps of up to 4 NFTs per swap are supported. Any combination of NFT type. Bulk swap atomicity provided by JITO Solana validator.
+    Bulk swaps of up to **10 assets per side** are supported. Any combination of NFT type (SPL NFT, Core NFT, cNFT) and SOL. Bulk swap atomicity provided by JITO Solana validator for swaps requiring multiple transactions (3+ total assets).
     
     ### cNFT-Specific Features
     
