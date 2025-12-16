@@ -312,11 +312,11 @@ export class CnftService {
         // Handle both wrapped and direct responses
         const data = response.result || response;
         
-        if (!data || !Array.isArray(data)) {
-          throw new Error('Invalid batch proof response from DAS API');
+        if (!data) {
+          throw new Error('Empty batch proof response from DAS API');
         }
         
-        return data as DasProofResponse[];
+        return data;
       });
       
       // Track fetch time
@@ -328,22 +328,46 @@ export class CnftService {
       this.metrics.avgFetchTimeMs = 
         this.metrics.lastFetchTimes.reduce((a, b) => a + b, 0) / this.metrics.lastFetchTimes.length;
       
-      // Map results back to assetIds (DAS API returns proofs in same order as input)
-      for (let i = 0; i < uncachedIds.length; i++) {
-        const assetId = uncachedIds[i];
-        const proof = batchResponse[i];
-        
-        if (!proof || !proof.proof) {
-          errors.push({ 
-            assetId, 
-            error: `No proof data returned for asset ${assetId.substring(0, 12)}...` 
-          });
-          continue;
+      // Handle both response formats:
+      // 1. Array format: [proof1, proof2, ...] (same order as input IDs)
+      // 2. Object/map format: {assetId1: proof1, assetId2: proof2, ...} (keyed by asset ID)
+      if (Array.isArray(batchResponse)) {
+        // Array format: DAS API returns proofs in same order as input IDs
+        for (let i = 0; i < uncachedIds.length; i++) {
+          const assetId = uncachedIds[i];
+          const proof = batchResponse[i];
+          
+          if (!proof || !proof.proof) {
+            errors.push({ 
+              assetId, 
+              error: `No proof data returned for asset ${assetId.substring(0, 12)}...` 
+            });
+            continue;
+          }
+          
+          // Cache the result
+          this.cacheProof(assetId, proof);
+          results.set(assetId, proof);
         }
-        
-        // Cache the result
-        this.cacheProof(assetId, proof);
-        results.set(assetId, proof);
+      } else if (typeof batchResponse === 'object' && batchResponse !== null) {
+        // Object/map format: DAS API returns proofs keyed by asset ID
+        for (const assetId of uncachedIds) {
+          const proof = (batchResponse as Record<string, any>)[assetId];
+          
+          if (!proof || !proof.proof) {
+            errors.push({ 
+              assetId, 
+              error: `No proof data returned for asset ${assetId.substring(0, 12)}...` 
+            });
+            continue;
+          }
+          
+          // Cache the result
+          this.cacheProof(assetId, proof);
+          results.set(assetId, proof);
+        }
+      } else {
+        throw new Error(`Invalid batch proof response format from DAS API: expected array or object, got ${typeof batchResponse}`);
       }
       
       console.log(`[CnftService] Batch proof fetch complete: ${results.size}/${uncachedIds.length} proofs fetched in ${fetchTime}ms`);
