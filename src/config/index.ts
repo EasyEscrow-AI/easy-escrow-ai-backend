@@ -24,7 +24,9 @@ export const config = {
   // Solana
   solana: {
     rpcUrl: process.env.SOLANA_RPC_URL || 'http://localhost:8899',
-    rpcUrlFallback: process.env.SOLANA_RPC_URL_FALLBACK || 'https://api.devnet.solana.com',
+    rpcUrlFallback: process.env.SOLANA_RPC_URL_FALLBACK || process.env.SOLANA_RPC_URL_2 || 'https://api.devnet.solana.com',
+    // Batch operations RPC (defaults to primary, but can be overridden for better batch performance)
+    rpcUrlBatch: process.env.SOLANA_RPC_URL_BATCH || process.env.SOLANA_RPC_URL || 'http://localhost:8899',
     network: process.env.SOLANA_NETWORK || 'localnet',
     escrowProgramId: process.env.ESCROW_PROGRAM_ID || '',
     rpcTimeout: parseInt(process.env.SOLANA_RPC_TIMEOUT || '30000', 10),
