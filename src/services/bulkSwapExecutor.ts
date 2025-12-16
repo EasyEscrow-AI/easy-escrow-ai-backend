@@ -228,7 +228,8 @@ export class BulkSwapExecutor {
     if (options.waitForConfirmation && bundleResult.bundleId) {
       const confirmation = await this.escrowProgramService.waitForBundleConfirmation(
         bundleResult.bundleId,
-        options.confirmationTimeoutSeconds
+        options.confirmationTimeoutSeconds,
+        bundleResult.signatures
       );
       
       return {
