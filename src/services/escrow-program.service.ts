@@ -1135,7 +1135,6 @@ export class EscrowProgramService {
 
       if (result.error) {
         console.error('[EscrowProgramService] Inflight status RPC error:', result.error);
-
         // Some endpoints do not support this method; mark unsupported so callers can fall back.
         const msg = (result.error.message || '').toLowerCase();
         if (result.error.code === -32601 || msg.includes('method not found') || msg.includes('invalid method')) {
@@ -1146,7 +1145,6 @@ export class EscrowProgramService {
             error: 'Inflight bundle status unsupported (method not found)',
           }));
         }
-
         // Treat rate limits as no-signal
         if (result.error.code === -32097 || result.error.message?.toLowerCase().includes('rate')) {
           return bundleIds.map(id => ({ bundleId: id, status: 'Pending' as const, error: result.error?.message || 'Rate limited' }));
@@ -1156,7 +1154,6 @@ export class EscrowProgramService {
 
       // If we got a successful response, mark as supported.
       this.inflightBundleStatusesSupported = true;
-
       const statuses = Array.isArray(result.result)
         ? result.result
         : result.result?.value || [];
