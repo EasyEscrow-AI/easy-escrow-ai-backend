@@ -1072,12 +1072,16 @@ export class EscrowProgramService {
       // Hard rate limiter for status calls (process-wide)
       {
         const now = Date.now();
-        const nextAvailableTime = EscrowProgramService.lastJitoStatusRequestTime + EscrowProgramService.JITO_STATUS_RATE_LIMIT_MS;
-        const delayMs = Math.max(0, nextAvailableTime - now);
+        const scheduledTime = Math.max(
+          now,
+          EscrowProgramService.lastJitoStatusRequestTime + EscrowProgramService.JITO_STATUS_RATE_LIMIT_MS
+        );
+        // Claim the slot BEFORE awaiting to avoid concurrent callers bunching up.
+        EscrowProgramService.lastJitoStatusRequestTime = scheduledTime;
+        const delayMs = scheduledTime - now;
         if (delayMs > 0) {
           await new Promise(resolve => setTimeout(resolve, delayMs));
         }
-        EscrowProgramService.lastJitoStatusRequestTime = Math.max(now, nextAvailableTime);
       }
 
       // Jito Block Engine uses JSON-RPC format (verified with test helper and E2E tests)
@@ -1176,12 +1180,16 @@ export class EscrowProgramService {
       // Hard rate limiter for status calls (process-wide)
       {
         const now = Date.now();
-        const nextAvailableTime = EscrowProgramService.lastJitoStatusRequestTime + EscrowProgramService.JITO_STATUS_RATE_LIMIT_MS;
-        const delayMs = Math.max(0, nextAvailableTime - now);
+        const scheduledTime = Math.max(
+          now,
+          EscrowProgramService.lastJitoStatusRequestTime + EscrowProgramService.JITO_STATUS_RATE_LIMIT_MS
+        );
+        // Claim the slot BEFORE awaiting to avoid concurrent callers bunching up.
+        EscrowProgramService.lastJitoStatusRequestTime = scheduledTime;
+        const delayMs = scheduledTime - now;
         if (delayMs > 0) {
           await new Promise(resolve => setTimeout(resolve, delayMs));
         }
-        EscrowProgramService.lastJitoStatusRequestTime = Math.max(now, nextAvailableTime);
       }
 
       const response = await fetch(EscrowProgramService.JITO_BUNDLE_ENDPOINT_MAINNET, {
