@@ -47,6 +47,9 @@ export interface CnftServiceConfig {
   /** RPC endpoint with DAS API support (e.g., Helius) */
   rpcEndpoint: string;
   
+  /** Optional separate RPC endpoint for batch operations (defaults to rpcEndpoint) */
+  batchRpcEndpoint?: string;
+  
   /** Request timeout in milliseconds */
   requestTimeout: number;
   
@@ -61,6 +64,9 @@ export interface CnftServiceConfig {
   
   /** Proof cache TTL in seconds */
   proofCacheTtlSeconds: number;
+  
+  /** Enable parallel fetching for individual proofs (reduces stale proof risk) */
+  enableParallelProofFetching?: boolean;
 }
 
 /** Cached proof entry with expiration */
@@ -86,6 +92,7 @@ interface CnftServiceMetrics {
 
 export class CnftService {
   private connection: Connection;
+  private batchConnection?: Connection; // Optional separate connection for batch operations
   private config: CnftServiceConfig;
   
   // Proof cache with TTL
@@ -115,21 +122,34 @@ export class CnftService {
     maxConcurrentRequests: 5, // Limit concurrent DAS API requests
     batchDelayMs: 200, // Delay between batches
     proofCacheTtlSeconds: 5, // Cache proofs for 5 seconds (reduced from 30s for high-activity trees)
+    enableParallelProofFetching: true, // Enable parallel fetching by default
   };
   
   constructor(connection: Connection, config?: Partial<CnftServiceConfig>) {
     this.connection = connection;
     this.config = {
       rpcEndpoint: connection.rpcEndpoint,
+      batchRpcEndpoint: config?.batchRpcEndpoint,
       ...CnftService.DEFAULT_CONFIG,
       ...config,
     } as CnftServiceConfig;
+    
+    // Create separate connection for batch operations if specified
+    if (this.config.batchRpcEndpoint && this.config.batchRpcEndpoint !== connection.rpcEndpoint) {
+      const { Connection } = require('@solana/web3.js');
+      this.batchConnection = new Connection(this.config.batchRpcEndpoint, {
+        commitment: 'confirmed',
+        confirmTransactionInitialTimeout: 60000,
+      });
+      console.log('[CnftService] Batch operations will use separate RPC:', this.config.batchRpcEndpoint);
+    }
     
     console.log('[CnftService] Initialized with RPC:', this.config.rpcEndpoint);
     console.log('[CnftService] Rate limiting:', {
       maxConcurrent: this.config.maxConcurrentRequests,
       batchDelayMs: this.config.batchDelayMs,
       cacheTtlSeconds: this.config.proofCacheTtlSeconds,
+      parallelFetching: this.config.enableParallelProofFetching,
     });
     
     // Periodic cache cleanup (every 60 seconds)
@@ -227,8 +247,68 @@ export class CnftService {
   }
   
   /**
+   * Fetch multiple proofs in parallel (for individual cNFTs)
+   * This reduces stale proof risk by fetching all proofs simultaneously
+   * 
+   * @param assetIds - Array of cNFT asset IDs
+   * @param skipCache - Whether to bypass the cache
+   * @returns Map of assetId -> DasProofResponse
+   */
+  async getCnftProofsParallel(
+    assetIds: string[],
+    skipCache = false
+  ): Promise<Map<string, DasProofResponse>> {
+    if (!this.config.enableParallelProofFetching || assetIds.length <= 1) {
+      // Fallback to sequential if parallel is disabled or only one asset
+      const results = new Map<string, DasProofResponse>();
+      for (const assetId of assetIds) {
+        const proof = await this.getCnftProof(assetId, skipCache);
+        results.set(assetId, proof);
+      }
+      return results;
+    }
+    
+    console.log(`[CnftService] Parallel fetching ${assetIds.length} proofs (reduces stale proof risk)`);
+    const startTime = Date.now();
+    
+    // Fetch all proofs in parallel
+    const proofPromises = assetIds.map(async (assetId) => {
+      try {
+        const proof = await this.getCnftProof(assetId, skipCache);
+        return { assetId, proof, error: null };
+      } catch (error: any) {
+        return { assetId, proof: null, error: error.message };
+      }
+    });
+    
+    const results = await Promise.all(proofPromises);
+    const fetchTime = Date.now() - startTime;
+    
+    const proofMap = new Map<string, DasProofResponse>();
+    const errors: Array<{ assetId: string; error: string }> = [];
+    
+    for (const result of results) {
+      if (result.error) {
+        errors.push({ assetId: result.assetId, error: result.error });
+        console.error(`[CnftService] Failed to fetch proof for ${result.assetId}: ${result.error}`);
+      } else if (result.proof) {
+        proofMap.set(result.assetId, result.proof);
+      }
+    }
+    
+    console.log(`[CnftService] Parallel fetch complete: ${proofMap.size}/${assetIds.length} proofs in ${fetchTime}ms`);
+    
+    if (errors.length > 0) {
+      console.warn(`[CnftService] ${errors.length} proofs failed during parallel fetch`);
+    }
+    
+    return proofMap;
+  }
+  
+  /**
    * Fetch proofs for multiple cNFTs in batches
    * Handles rate limiting and caching automatically
+   * @deprecated Use getAssetProofBatch for batch operations or getCnftProofsParallel for parallel individual fetches
    */
   /**
    * Fetch multiple Merkle proofs in a single DAS API call using getAssetProofBatch
@@ -304,10 +384,11 @@ export class CnftService {
     
     try {
       // Use rate limiting for the batch request
+      // Use batch connection (Helius) for better batch performance
       const batchResponse = await this.withRateLimit(async () => {
         const response = await this.makeDasRequest('getAssetProofBatch', {
           ids: uncachedIds,
-        }, 0);
+        }, 0, true); // Use batch connection for batch operations
         
         // Handle both wrapped and direct responses
         const data = response.result || response;
@@ -873,21 +954,28 @@ export class CnftService {
   
   /**
    * Make DAS API request with retry logic
+   * @param useBatchConnection - If true, use batch connection (Helius) for better batch performance
    */
   private async makeDasRequest(
     method: string,
     params: Record<string, any>,
-    retryCount = 0
+    retryCount = 0,
+    useBatchConnection = false
   ): Promise<any> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.config.requestTimeout);
+    
+    // Use batch connection for batch operations if available
+    const endpoint = useBatchConnection && this.batchConnection 
+      ? this.batchConnection.rpcEndpoint 
+      : this.config.rpcEndpoint;
     
     try {
       // CRITICAL: Use unique request IDs to prevent DAS API caching
       // Full cache-control headers break QuickNode's getAssetProof endpoint
       // but unique IDs should prevent caching without causing errors
       // Cache-busting is handled via unique JSON-RPC request IDs, not params
-      const response = await fetch(this.config.rpcEndpoint, {
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -988,11 +1076,24 @@ export class CnftService {
 
 /**
  * Create CnftService instance
+ * Automatically configures batch RPC from config if available
  */
 export function createCnftService(
   connection: Connection,
   config?: Partial<CnftServiceConfig>
 ): CnftService {
+  // Import config to get batch RPC URL if not provided
+  if (!config?.batchRpcEndpoint) {
+    const { config: appConfig } = require('../config');
+    if (appConfig?.solana?.rpcUrlBatch && appConfig.solana.rpcUrlBatch !== connection.rpcEndpoint) {
+      config = {
+        ...config,
+        batchRpcEndpoint: appConfig.solana.rpcUrlBatch,
+      };
+      console.log('[CnftService] Using batch RPC from config:', appConfig.solana.rpcUrlBatch.substring(0, 30) + '...');
+    }
+  }
+  
   return new CnftService(connection, config);
 }
 
