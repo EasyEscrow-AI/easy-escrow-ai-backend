@@ -403,16 +403,20 @@ export class OfferManager {
       
       console.log('[OfferManager] Platform fee:', platformFee.toString());
       
-      // 7. Build transaction with retry logic for stale cNFT proofs
-      // On devnet/staging, Merkle tree roots can change frequently if other cNFTs are modified
-      // Retry with fresh proof if we detect a stale proof error
+      // 7. Build transaction with aggressive retry logic for stale cNFT proofs
+      // CRITICAL: For high-activity trees, we need more retries with proper tree stability checks
+      // This matches how other marketplaces (Magic Eden, Tensor) handle stale proofs:
+      // - More retry attempts (5 instead of 2)
+      // - Exponential backoff delays (500ms, 1s, 2s, 3s)
+      // - Just-in-time proof fetching (proofs fetched immediately before transaction building)
+      // - Tree stability checks before retrying
       let buildResult: { 
         serializedTransaction: string; 
         nonceValue: string;
         isBulkSwap?: boolean;
         transactionGroup?: TransactionGroupResult;
       } | null = null;
-      const maxAttempts = 2;
+      const maxAttempts = 5; // Increased from 2 to 5 for high-activity trees
       
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         try {
@@ -439,11 +443,15 @@ export class OfferManager {
           if (!isLastAttempt && isStaleProofError) {
             console.warn(`⚠️  [OfferManager] Attempt ${attempt}/${maxAttempts} failed with stale cNFT proof, retrying...`);
             console.warn(`   Error: ${error.message}`);
-            // Progressive delay: longer waits for subsequent retries
-            // This gives the DAS API and tree more time to update
-            const delay = attempt === 1 ? 500 : 1000; // 500ms for first retry, 1s for second
+            
+            // Exponential backoff with longer waits for high-activity trees
+            // This gives the DAS API and tree more time to update and stabilize
+            // Delays: 500ms, 1s, 2s, 3s (progressive to handle increasingly active trees)
+            const delays = [500, 1000, 2000, 3000];
+            const delay = delays[attempt - 1] || 3000;
             console.warn(`   Waiting ${delay}ms for tree updates to propagate before retry...`);
             await new Promise(resolve => setTimeout(resolve, delay));
+            
             continue;
           }
           

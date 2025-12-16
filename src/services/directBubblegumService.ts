@@ -124,8 +124,11 @@ export class DirectBubblegumService {
       const proofRoot = Buffer.from(proof.root);
       
       if (!onChainRoot.equals(proofRoot)) {
-        const maxRetries = 3; // Allow up to 3 retries for stale proofs
-        const retryDelays = [500, 1000, 2000]; // Progressive delays: 500ms, 1s, 2s
+        // IMPROVEMENT: Increased retries for high-activity trees
+        // Research shows: Other marketplaces use 5+ retries with exponential backoff
+        // Concurrent Merkle trees support fast-forwarding up to maxBufferSize updates
+        const maxRetries = 5; // Increased from 3 to 5 for high-activity trees
+        const retryDelays = [500, 1000, 2000, 3000, 4000]; // Progressive delays: 500ms, 1s, 2s, 3s, 4s
         
         console.warn('[DirectBubblegumService] ⚠️ STALE PROOF DETECTED:', {
           onChainRoot: onChainRoot.toString('hex'),

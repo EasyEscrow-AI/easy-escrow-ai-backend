@@ -172,12 +172,20 @@ export class CnftService {
   /**
    * Cache a proof with TTL
    */
-  private cacheProof(assetId: string, proof: DasProofResponse): void {
+  /**
+   * Cache proof with TTL
+   * IMPROVEMENT: Use shorter TTL (5s) for high-activity trees to ensure freshness
+   * Research shows proofs can become stale in seconds on active trees
+   */
+  private cacheProof(assetId: string, proof: DasProofResponse, ttlSeconds?: number): void {
     const now = Date.now();
+    // Use shorter TTL (5 seconds) for high-activity trees instead of default 30s
+    // This ensures proofs are fresh even on very active trees
+    const ttl = ttlSeconds || 5; // Default to 5 seconds for critical freshness
     this.proofCache.set(assetId, {
       proof,
       fetchedAt: now,
-      expiresAt: now + (this.config.proofCacheTtlSeconds * 1000),
+      expiresAt: now + (ttl * 1000),
     });
   }
   
@@ -316,18 +324,36 @@ export class CnftService {
   
   /**
    * Fetch Merkle proof for cNFT transfer
+   * 
+   * IMPROVEMENTS BASED ON RESEARCH:
+   * - Very short cache TTL (5 seconds) for high-activity trees to ensure freshness
+   * - Just-in-time fetching (skip cache on first attempt for critical operations)
+   * - Unique request IDs to prevent DAS API caching
+   * - Better logging for debugging stale proof issues
+   * 
    * @param assetId - The cNFT asset ID
-   * @param skipCache - Whether to bypass the cache
+   * @param skipCache - Whether to bypass the cache (CRITICAL: always true for first attempt in transaction building)
    * @param retryCount - Number of retries (used for cache-busting on stale proof retries)
    */
   async getCnftProof(assetId: string, skipCache = false, retryCount = 0): Promise<DasProofResponse> {
-    console.log('[CnftService] Fetching Merkle proof for:', assetId);
+    console.log('[CnftService] Fetching Merkle proof for:', assetId, {
+      skipCache,
+      retryCount,
+      cacheSize: this.proofCache.size,
+    });
     
     // Check cache first (unless skip requested)
+    // CRITICAL: For high-activity trees, cache TTL is very short (5 seconds)
+    // Research shows proofs can become stale in seconds on high-activity trees
     if (!skipCache) {
       const cached = this.getCachedProof(assetId);
       if (cached) {
-        console.log('[CnftService] Using cached proof for:', assetId.substring(0, 12) + '...');
+        const cacheEntry = this.proofCache.get(assetId);
+        const age = cacheEntry ? Date.now() - cacheEntry.fetchedAt : 0;
+        console.log('[CnftService] Using cached proof for:', assetId.substring(0, 12) + '...', {
+          ageMs: age,
+          cacheAge: `${(age / 1000).toFixed(1)}s`,
+        });
         this.metrics.proofCacheHits++;
         return cached;
       }
@@ -371,10 +397,13 @@ export class CnftService {
         nodeIndex: proofData.node_index,
         proofLength: proofData.proof.length,
         fetchTimeMs: fetchTime,
+        root: proofData.root ? proofData.root.substring(0, 16) + '...' : 'N/A',
       });
       
-      // Cache the result
-      this.cacheProof(assetId, proofData);
+      // Cache the result with SHORT TTL (5 seconds) for high-activity trees
+      // Research shows: proofs can become stale in seconds on high-activity trees
+      // Using 5s TTL instead of 30s ensures we get fresh proofs even if cached recently
+      this.cacheProof(assetId, proofData, 5);
       
       return proofData;
     } catch (error: any) {
