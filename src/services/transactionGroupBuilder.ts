@@ -462,6 +462,39 @@ export class TransactionGroupBuilder {
    * 
    * Used for cNFT↔SOL and cNFT↔cNFT swaps where proof nodes don't fit in single tx
    */
+  /**
+   * Pre-fetch all cNFT proofs in batch for JITO bundles
+   * This optimizes performance by fetching all proofs simultaneously (reduces stale proof risk)
+   * 
+   * @param assetIds - Array of unique cNFT asset IDs
+   * @returns Map of assetId -> DasProofResponse
+   */
+  private async preFetchProofs(assetIds: string[]): Promise<Map<string, any>> {
+    if (assetIds.length === 0) {
+      return new Map();
+    }
+    
+    // Use batch fetching for 2+ cNFTs (optimization for JITO bundles)
+    if (assetIds.length >= 2) {
+      console.log(`[TransactionGroupBuilder] Pre-fetching ${assetIds.length} proofs in batch for JITO bundle`);
+      const startTime = Date.now();
+      
+      try {
+        const proofMap = await this.cnftService.getAssetProofBatch(assetIds, true); // Skip cache for fresh proofs
+        const fetchTime = Date.now() - startTime;
+        console.log(`[TransactionGroupBuilder] ✅ Batch proof fetch complete: ${proofMap.size}/${assetIds.length} proofs in ${fetchTime}ms`);
+        return proofMap;
+      } catch (error: any) {
+        console.error(`[TransactionGroupBuilder] Batch proof fetch failed: ${error.message}`);
+        // Fallback handled by getAssetProofBatch internally
+        return new Map();
+      }
+    }
+    
+    // For single cNFT, no pre-fetch needed (DirectBubblegumService handles it)
+    return new Map();
+  }
+
   private async buildDirectBubblegumBundle(
     inputs: TransactionGroupInput,
     analysis: SwapAnalysis,
@@ -492,6 +525,15 @@ export class TransactionGroupBuilder {
     const takerCnfts = inputs.takerAssets.filter(a => 
       a.type === AssetType.CNFT || String(a.type).toLowerCase() === 'cnft'
     );
+    
+    // Pre-fetch all proofs in batch for 2+ cNFTs (JITO bundle optimization)
+    const allCnftAssetIds = [
+      ...makerCnfts.map(c => c.identifier),
+      ...takerCnfts.map(c => c.identifier),
+    ];
+    const preFetchedProofs = allCnftAssetIds.length >= 2 
+      ? await this.preFetchProofs(allCnftAssetIds)
+      : new Map<string, any>();
     
     // === Transaction 1: SOL transfers ===
     // This handles: maker SOL → taker, taker SOL → maker, platform fee → treasury
@@ -641,11 +683,13 @@ export class TransactionGroupBuilder {
     for (const cnft of makerCnfts) {
       console.log(`[TransactionGroupBuilder] Building Tx${txIndex + 1}: Maker cNFT transfer`);
       
+      // Use pre-fetched proof if available (for JITO bundles with 2+ cNFTs)
+      const preFetchedProof = preFetchedProofs.get(cnft.identifier);
       const transferResult = await this.directBubblegumService.buildTransferInstruction({
         assetId: cnft.identifier,
         fromWallet: inputs.makerPubkey,
         toWallet: inputs.takerPubkey,
-      });
+      }, 0, preFetchedProof);
       
       // Build transaction
       const cnftInstructions: TransactionInstruction[] = [];
@@ -712,11 +756,13 @@ export class TransactionGroupBuilder {
     for (const cnft of takerCnfts) {
       console.log(`[TransactionGroupBuilder] Building Tx${txIndex + 1}: Taker cNFT transfer`);
       
+      // Use pre-fetched proof if available (for JITO bundles with 2+ cNFTs)
+      const preFetchedProof = preFetchedProofs.get(cnft.identifier);
       const transferResult = await this.directBubblegumService.buildTransferInstruction({
         assetId: cnft.identifier,
         fromWallet: inputs.takerPubkey,
         toWallet: inputs.makerPubkey,
-      });
+      }, 0, preFetchedProof);
       
       // Build transaction
       const cnftInstructions: TransactionInstruction[] = [];
@@ -1206,6 +1252,15 @@ export class TransactionGroupBuilder {
     
     let txIndex = transactions.length;
     
+    // Pre-fetch all proofs in batch for 2+ cNFTs (JITO bundle optimization)
+    const allCnftAssetIds = [
+      ...makerCnfts.map(c => c.identifier),
+      ...takerCnfts.map(c => c.identifier),
+    ];
+    const preFetchedProofs = allCnftAssetIds.length >= 2 
+      ? await this.preFetchProofs(allCnftAssetIds)
+      : new Map<string, any>();
+    
     // === cNFT transfers (1 per transaction due to proof nodes) ===
     const cnftsPerTx = MAX_CNFTS_PER_TRANSACTION_NO_PROOFS;
     const allCnfts = [
@@ -1230,11 +1285,13 @@ export class TransactionGroupBuilder {
       }
       
       for (const { asset, from, to, side } of batch) {
+        // Use pre-fetched proof if available (for JITO bundles with 2+ cNFTs)
+        const preFetchedProof = preFetchedProofs.get(asset.identifier);
         const result = await this.directBubblegumService.buildTransferInstruction({
           assetId: asset.identifier,
           fromWallet: from,
           toWallet: to,
-        });
+        }, 0, preFetchedProof);
         cnftInstructions.push(result.instruction);
         if (!requiredSigners.includes(from.toBase58())) {
           requiredSigners.push(from.toBase58());

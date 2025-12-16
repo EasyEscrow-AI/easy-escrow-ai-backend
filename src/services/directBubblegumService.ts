@@ -78,29 +78,83 @@ export class DirectBubblegumService {
    * 
    * This creates a transfer instruction that calls Bubblegum directly,
    * including all necessary proof nodes as remaining accounts.
+   * 
+   * @param params - Transfer parameters
+   * @param retryCount - Retry attempt number (for stale proof retries)
+   * @param preFetchedProof - Optional pre-fetched proof from batch fetch (for JITO bundles)
    */
   async buildTransferInstruction(
     params: DirectBubblegumTransferParams,
-    retryCount = 0
+    retryCount = 0,
+    preFetchedProof?: any
   ): Promise<DirectBubblegumTransferResult> {
     console.log('[DirectBubblegumService] Building transfer instruction:', {
       assetId: params.assetId,
       from: params.fromWallet.toBase58(),
       to: params.toWallet.toBase58(),
       retryAttempt: retryCount,
+      usingPreFetchedProof: !!preFetchedProof,
     });
 
-    // Fetch cNFT data and proof from DAS API
-    // CRITICAL: On first attempt (retryCount === 0), skip cache to get fresh proof proactively
-    // This prevents stale proof errors on the first attempt
-    // On retries, also skip cache to ensure fresh proofs
-    const transferParams = await this.cnftService.buildTransferParams(
-      params.assetId,
-      params.fromWallet,
-      params.toWallet,
-      true, // Always skip cache to get fresh proofs (prevents first-attempt failures)
-      retryCount // Pass retryCount for cache-busting (via unique JSON-RPC request IDs)
-    );
+    let transferParams: any;
+    
+    // Use pre-fetched proof if provided (from batch fetch for JITO bundles)
+    if (preFetchedProof) {
+      console.log(`[DirectBubblegumService] Using batched proof for asset ${params.assetId.substring(0, 12)}...`);
+      
+      // Validate pre-fetched proof structure
+      if (!preFetchedProof.proof || !preFetchedProof.root) {
+        console.warn(`[DirectBubblegumService] Invalid pre-fetched proof structure, falling back to individual fetch`);
+        // Fallback to individual fetch
+        transferParams = await this.cnftService.buildTransferParams(
+          params.assetId,
+          params.fromWallet,
+          params.toWallet,
+          true,
+          retryCount
+        );
+      } else {
+        // Use pre-fetched proof - still need to fetch asset data for tree/authority
+        const assetData = await this.cnftService.getCnftAsset(params.assetId);
+        
+        // Validate ownership
+        if (assetData.ownership.owner !== params.fromWallet.toBase58()) {
+          throw new Error(
+            `Ownership mismatch: Asset owned by ${assetData.ownership.owner}, expected ${params.fromWallet.toBase58()}`
+          );
+        }
+        
+        const treeAddress = new PublicKey(assetData.compression.tree);
+        const treeAuthorityAddress = this.cnftService.deriveTreeAuthority(treeAddress);
+        
+        // Convert pre-fetched proof to CnftProof format
+        const cnftProof = await this.cnftService.convertDasProofToCnftProofAsync(preFetchedProof, assetData);
+        
+        transferParams = {
+          treeAddress,
+          treeAuthorityAddress,
+          fromAddress: params.fromWallet,
+          toAddress: params.toWallet,
+          proof: cnftProof,
+          delegateAddress: assetData.ownership.delegate 
+            ? new PublicKey(assetData.ownership.delegate) 
+            : undefined,
+        };
+      }
+    } else {
+      // Fetch cNFT data and proof from DAS API (individual fetch)
+      console.log(`[DirectBubblegumService] Using individual proof for asset ${params.assetId.substring(0, 12)}...`);
+      // CRITICAL: On first attempt (retryCount === 0), skip cache to get fresh proof proactively
+      // This prevents stale proof errors on the first attempt
+      // On retries, also skip cache to ensure fresh proofs
+      transferParams = await this.cnftService.buildTransferParams(
+        params.assetId,
+        params.fromWallet,
+        params.toWallet,
+        true, // Always skip cache to get fresh proofs (prevents first-attempt failures)
+        retryCount // Pass retryCount for cache-busting (via unique JSON-RPC request IDs)
+      );
+    }
 
     const {
       treeAddress,
@@ -239,7 +293,7 @@ export class DirectBubblegumService {
 
     // Convert proof nodes to PublicKey array for remaining accounts
     // Each proof node is a 32-byte array
-    const proofNodes: PublicKey[] = proofNodesRaw.map((node) => {
+    const proofNodes: PublicKey[] = proofNodesRaw.map((node: number[] | Uint8Array) => {
       // Handle both number[] and Uint8Array types
       const nodeBuffer = node instanceof Uint8Array ? node : Buffer.from(node);
       return new PublicKey(nodeBuffer);

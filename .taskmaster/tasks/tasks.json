@@ -909,11 +909,161 @@
         ],
         "priority": "high",
         "subtasks": []
+      },
+      {
+        "id": 70,
+        "title": "Implement getAssetProofBatch for JITO Bundles",
+        "description": "Implement batched Merkle proof fetching using DAS API's getAssetProofBatch method to optimize JITO bundle performance for multi-cNFT swaps by reducing API calls from N to 1 and minimizing stale proof risks.",
+        "details": "Implement getAssetProofBatch functionality leveraging the DAS API's batch proof endpoint (confirmed supported by Helius RPC[1][2]) with the following comprehensive components:\n\n1. **CnftService Enhancements**:\n   - Add `getAssetProofBatch(assetIds: string[]): Promise<any[]>` method using existing DAS RPC client\n   - Construct JSON-RPC payload: `{jsonrpc: '2.0', id: 1, method: 'getAssetProofBatch', params: {ids: assetIds}}`[2]\n   - Handle response parsing: return array of proof objects in input order with structure `{root, leaf_id, leaf, proof: string[], node_index}`[2]\n   - Integrate with existing rate limiting from Task 58 (reuse p-limit and RateLimitConfig)\n   - Add batch size validation (max 50 assetIds per call per Helius best practices)\n   - Implement fallback to individual `getAssetProof` calls if batch fails\n   - Update proof freshness cache from Task 59 to store batched proofs with `assetId -> proof` mapping\n\n2. **TransactionGroupBuilder Integration**:\n   - Modify `buildTransactionGroup()` to accept/pre-fetch proofs via new `preFetchProofs(assetIds: string[])` method\n   - Extract all unique cNFT assetIds from swap offer before transaction building\n   - Call `cnftService.getAssetProofBatch(assetIds)` and cache results\n   - Pass proof map `{[assetId]: proof}` to individual transaction builders\n   - Maintain backward compatibility for single-cNFT swaps\n\n3. **DirectBubblegumService Updates**:\n   - Update `buildTransferInstruction()` to accept optional `preFetchedProof?: any`\n   - Skip individual proof fetching if `preFetchedProof` provided (check `if (preFetchedProof) return preFetchedProof`)\n   - Validate proof structure matches expected DAS format before using\n   - Add logging for batch vs individual proof usage: `logger.info('Using batched proof for asset ${assetId}')`\n\n4. **JITO Bundle Optimization**:\n   - Update bundle threshold logic in Task 45's `sendBundleViaJito()` to trigger batch proofing for 2+ cNFTs\n   - Ensure all proofs fetched simultaneously before bundle simulation\n   - Add bundle proof timing metrics: `const start = Date.now(); ... logger.info('Batch proof fetch took ${Date.now()-start}ms for ${assetIds.length} assets')`\n\n5. **Error Handling & Monitoring**:\n   - Handle partial batch failures: retry failed proofs individually with exponential backoff\n   - Integrate with Task 60 bundle monitoring: add `proofFetchMethod: 'batch' | 'individual'` to BundleStatus tracking\n   - Add Prometheus metrics for batch proof success rate and timing\n\n**TypeScript Interfaces**:\n```typescript\ninterface BatchProofResponse {\n  jsonrpc: string;\n  result: Array<{\n    root: string;\n    leaf_id: string;\n    leaf: string;\n    proof: string[];\n    node_index: number;\n  }>;\n}\ninterface ProofCacheEntry {\n  proof: any;\n  assetId: string;\n  fetchedAt: number;\n}\n```",
+        "testStrategy": "1. **Unit Testing CnftService**:\n   - Mock DAS RPC response for `getAssetProofBatch` with 1, 5, 10 valid cNFT proofs[2]\n   - Verify returned proofs match input order and contain required fields (`root`, `proof`, `node_index`)\n   - Test batch size limits (51+ ids → split into multiple calls)\n   - Test fallback to individual proofs when batch returns 429 or empty array\n   - Test integration with existing rate limiter (max 5 concurrent batches)\n\n2. **Integration Testing TransactionGroupBuilder**:\n   - Test 5-cNFT swap: verify single batch call instead of 5 individual calls\n   - Measure timing: batch <500ms vs sequential >2s for 5 proofs\n   - Verify all proofs passed correctly to `DirectBubblegumService.buildTransferInstruction()`\n\n3. **JITO Bundle End-to-End Testing**:\n   - Create test swap offer with 3-5 cNFTs triggering bundle path (Task 45 logic)\n   - Verify bundle contains valid proofs from batch fetch (check transaction serialization)\n   - Simulate DAS API latency (500ms+ per call) → confirm batch reduces total fetch time\n   - Test bundle simulation success rate with batched vs individual proofs\n\n4. **Performance & Error Testing**:\n   - Load test: 10 concurrent 5-cNFT bundle builds → verify rate limits respected\n   - Chaos test: inject 50% batch failures → verify fallback to individual proofs succeeds\n   - Monitor metrics: confirm 5x reduction in DAS calls for 5-cNFT bundles\n\n5. **Coverage Verification**:\n   - Ensure 90%+ coverage for new batch methods\n   - Test proof freshness integration: stale batch proofs trigger refresh before bundle submission",
+        "status": "pending",
+        "dependencies": [
+          45,
+          44,
+          58,
+          59
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Implement getAssetProofBatch method in CnftService",
+            "description": "Add batched Merkle proof fetching method using DAS API getAssetProofBatch endpoint with rate limiting, batch size validation, fallback logic, and proof cache integration.",
+            "dependencies": [],
+            "details": "Implement getAssetProofBatch(assetIds: string[]): Promise<any[]> using existing DAS RPC client. Construct JSON-RPC payload {jsonrpc: '2.0', id: 1, method: 'getAssetProofBatch', params: {ids: assetIds}}. Parse response to return array of {root, leaf_id, leaf, proof: string[], node_index} in input order. Add max 50 assetIds validation, fallback to individual getAssetProof calls on failure, integrate Task 58 p-limit rate limiting, and update Task 59 proof cache with assetId -> proof mapping.[1][2]",
+            "status": "pending",
+            "testStrategy": "Mock DAS RPC responses for 1, 5, 10, 50+ assetIds. Verify proofs match input order and structure. Test batch size splitting, rate limiting enforcement, fallback on 429/500 errors, and cache storage/retrieval."
+          },
+          {
+            "id": 2,
+            "title": "Integrate batch proof pre-fetching in TransactionGroupBuilder",
+            "description": "Modify buildTransactionGroup to extract unique cNFT assetIds from swap offer, pre-fetch batch proofs via CnftService, cache results, and pass proof map to transaction builders while maintaining single-cNFT compatibility.",
+            "dependencies": [
+              1
+            ],
+            "details": "Add preFetchProofs(assetIds: string[]) method calling cnftService.getAssetProofBatch(assetIds). Extract all unique assetIds from swap offer before building. Create proof map {[assetId]: proof} from batch response. Pass proofs to individual transaction builders. Ensure backward compatibility for single swaps using existing individual proof flow.",
+            "status": "pending",
+            "testStrategy": "Test with 1, 3, 10 cNFT swaps. Verify unique assetIds extraction, batch proof fetching, proof map creation, and correct passing to builders. Confirm single-cNFT backward compatibility."
+          },
+          {
+            "id": 3,
+            "title": "Update DirectBubblegumService to use pre-fetched proofs",
+            "description": "Modify buildTransferInstruction to accept optional preFetchedProof parameter, skip individual fetching when provided, validate proof structure, and add batch vs individual usage logging.",
+            "dependencies": [
+              1,
+              2
+            ],
+            "details": "Update buildTransferInstruction(..., preFetchedProof?: any). Add if (preFetchedProof) return preFetchedProof after validating structure matches DAS format {root, leaf_id, leaf, proof, node_index}. Add logger.info('Using batched proof for asset ${assetId}') when using pre-fetched vs individual logger.info('Using individual proof for asset ${assetId}').",
+            "status": "pending",
+            "testStrategy": "Test with/without preFetchedProof. Verify skips individual fetch when provided, validates structure, logs correct messages, and uses valid proofs in transfer instructions."
+          },
+          {
+            "id": 4,
+            "title": "Add JITO bundle optimization with batch proof timing",
+            "description": "Update sendBundleViaJito from Task 45 to trigger batch proofing for 2+ cNFTs, ensure simultaneous proof fetching before simulation, and add comprehensive timing metrics.",
+            "dependencies": [
+              1,
+              2,
+              3
+            ],
+            "details": "Modify bundle threshold logic to call preFetchProofs when assetIds.length >= 2. Ensure all proofs fetched before bundle simulation. Add timing: const start = Date.now(); ... logger.info('Batch proof fetch took ${Date.now()-start}ms for ${assetIds.length} assets'). Integrate with existing Task 45 bundle flow.",
+            "status": "pending",
+            "testStrategy": "Test bundle creation with 1, 2, 5 cNFTs. Verify batch triggering threshold, timing metrics accuracy, proof availability before simulation, and bundle success rates."
+          },
+          {
+            "id": 5,
+            "title": "Implement comprehensive error handling and monitoring",
+            "description": "Add partial batch failure recovery with individual retries, integrate proofFetchMethod tracking with Task 60 BundleStatus, and add Prometheus metrics for batch performance.",
+            "dependencies": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "details": "Handle partial batch failures by retrying failed proofs individually with exponential backoff. Add proofFetchMethod: 'batch' | 'individual' to Task 60 BundleStatus tracking. Implement Prometheus metrics for batch_success_rate, batch_timing_ms, fallback_count. Log partial failures with specific assetIds.",
+            "status": "pending",
+            "testStrategy": "Simulate partial batch failures (2/5 proofs fail). Verify individual retry logic, exponential backoff, BundleStatus proofFetchMethod tracking, and Prometheus metric emission accuracy."
+          }
+        ]
+      },
+      {
+        "id": 71,
+        "title": "Research and Evaluate Direct DAS API Access Options for Performance Optimization",
+        "description": "Research availability of direct DAS API endpoints, benchmark performance against current RPC provider, evaluate RPC provider alternatives, and implement optional direct DAS configuration with fallback if beneficial.",
+        "details": "Conduct comprehensive research and optional implementation for optimizing DAS API performance by evaluating direct access options and RPC provider alternatives, following current Solana DAS best practices:\n\n1. **DAS API Endpoint Research (Primary Investigation)**:\n   - Confirm no standalone public DAS API endpoints exist (DAS requires RPC providers with DAS add-on enabled per Helius/QuickNode documentation)\n   - Document supported RPC providers: Helius (das.helius-rpc.com), QuickNode (with DAS add-on), Triton One, GenesysGo\n   - Research provider-specific DAS performance: Helius Enhanced DAS API vs standard RPC DAS\n   - Verify getAssetProofBatch endpoint availability across providers using test calls\n\n2. **Performance Benchmarking Suite**:\n   - Create DASPerformanceTester class in test/utils/ with methods:\n     ```typescript\n     interface DasBenchmarkConfig {\n       providers: Array<{name: string, endpoint: string, apiKey?: string}>;\n       testAssetIds: string[];\n       iterations: number;\n       metrics: 'latency' | 'throughput' | 'successRate';\n     }\n     ```\n   - Benchmark current RPC (this.config.rpcEndpoint) vs alternative providers\n   - Test single getAsset, getAssetProof, getAssetProofBatch (10, 50, 100 assets)\n   - Measure: p50/p95 latency, throughput (req/s), error rates, rate limit behavior\n   - Run benchmarks during low network congestion (use Solana Beach/Explorer for timing)\n\n3. **RPC Provider Comparison Matrix**:\n   | Provider | DAS Add-on | getAssetProofBatch | Rate Limits | Pricing | Latency (ms) |\n   |----------|------------|-------------------|-------------|---------|---------------|\n   | Current  | Yes        | Yes               | ?/?         | ?       | Baseline      |\n   | Helius   | Enhanced   | Yes               | 100/s       | $0.00025M | ?\n   | QuickNode| Standard   | Yes               | 25/s        | $9/mo    | ?\n\n4. **Multi-Provider Connection Pooling (If Beneficial)**:\n   - Add DasProviderPool class with health checks and failover:\n     ```typescript\n     class DasProviderPool {\n       private providers: DasProvider[];\n       private healthyProviders: Set<string> = new Set();\n       async getHealthyProvider(): Promise<DasProvider>;\n       async healthCheck(): Promise<void>;\n     }\n     ```\n   - Implement round-robin with exponential backoff for failed providers\n   - Config: `dasProviders: Array<{endpoint: string, priority: number, weight: number}>`\n\n5. **Configuration Enhancement (Optional Implementation)**:\n   - Add to config schema: `dasConfig: { useDirectDas?: boolean; providers?: DasProviderConfig[]; primaryProvider?: string; fallbackEnabled?: boolean }`\n   - Update CnftService to use provider pool: `this.dasClient = new DasProviderPool(config.dasProviders)`\n   - Add RPC fallback: if direct DAS fails >3 times, fallback to original RPC\n\n6. **Documentation and Recommendations**:\n   - Create docs/performance/das-optimization.md with benchmark results, provider matrix, implementation guide\n   - Include migration guide if switching providers recommended\n   - Document rate limit handling best practices (p-limit concurrency, exponential backoff)\n\n**Best Practices Incorporated**:\n- Use connection pooling with health checks (industry standard for RPC reliability)\n- Provider benchmarking with p50/p95 metrics (SRE best practice)\n- Graceful fallback mechanisms\n- Comprehensive documentation of findings\n\n**Note**: Implementation only if benchmarking shows >20% performance improvement over current RPC.",
+        "testStrategy": "1. **Research Completion Verification**:\n   - Confirm docs/performance/das-optimization.md exists with complete provider matrix, benchmark results, and recommendations\n   - Verify all major providers (Helius, QuickNode, Triton) researched with documented DAS capabilities\n   - Check benchmark results include p50/p95 latency, throughput, success rates for getAssetProofBatch(10,50,100)\n\n2. **Performance Benchmark Testing**:\n   - Run DASPerformanceTester: `npm run test:das:benchmark`\n   - Verify baseline comparison: current RPC vs 2+ alternative providers\n   - Confirm tests complete with <5% variance across 3 iterations\n   - Validate metrics logged: avg_latency_ms, p95_latency_ms, req_per_sec, error_rate\n\n3. **Configuration Testing (If Implemented)**:\n   - Test config validation: invalid dasProviders throws ConfigError\n   - Verify CnftService uses primary provider by default\n   - Test fallback: mock primary provider failure → uses fallback RPC\n   - Confirm getAssetProofBatch works with connection pool\n\n4. **Production Impact Assessment**:\n   - Deploy to staging, monitor DAS call latency before/after (Prometheus/Grafana)\n   - Verify no regression in bulk swap success rate (>99%)\n   - Test rate limit resilience: 100 concurrent proof requests → <5% failure rate\n\n5. **Documentation Review**:\n   - Validate docs include migration guide, benchmark charts, provider comparison\n   - Confirm recommendations include specific provider + expected perf gain %\n\n**Success Criteria**:\n- Complete research documentation OR implemented optimization with ≥15% latency improvement\n- All tests pass with documented performance metrics\n- Zero production regressions confirmed via staging monitoring",
+        "status": "pending",
+        "dependencies": [
+          70,
+          58
+        ],
+        "priority": "medium",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Conduct DAS API Endpoint Research and Provider Documentation",
+            "description": "Research availability of standalone DAS API endpoints and document all supported RPC providers with DAS capabilities including Helius, QuickNode, Triton One, and GenesysGo.",
+            "dependencies": [],
+            "details": "Confirm no public standalone DAS endpoints exist per Helius/QuickNode docs. Document endpoints like das.helius-rpc.com, verify getAssetProofBatch support via test calls, and note provider-specific features like Helius Enhanced DAS vs standard RPC DAS.",
+            "status": "pending",
+            "testStrategy": "Verify research completion by checking documented providers list, test call logs for getAssetProofBatch on each provider, and confirmation of no standalone endpoints."
+          },
+          {
+            "id": 2,
+            "title": "Develop and Implement DAS Performance Benchmarking Suite",
+            "description": "Create DASPerformanceTester class to benchmark current RPC against alternative providers measuring latency, throughput, and error rates.",
+            "dependencies": [
+              1
+            ],
+            "details": "Implement in test/utils/ with DasBenchmarkConfig interface. Test getAsset, getAssetProof, getAssetProofBatch for 10/50/100 assets. Measure p50/p95 latency, req/s, error rates. Run during low congestion using Solana Beach timing.",
+            "status": "pending",
+            "testStrategy": "Validate benchmark suite runs successfully with sample assetIds, produces metrics output (JSON/CSV), and compares current RPC baseline against at least 3 providers."
+          },
+          {
+            "id": 3,
+            "title": "Create RPC Provider Comparison Matrix with Benchmark Results",
+            "description": "Compile comprehensive comparison matrix of RPC providers including DAS features, rate limits, pricing, and measured performance metrics.",
+            "dependencies": [
+              1,
+              2
+            ],
+            "details": "Populate table with: Provider, DAS Add-on type, getAssetProofBatch support, Rate Limits, Pricing, Latency (p50/p95 from benchmarks). Include current RPC as baseline. Identify top performers.",
+            "status": "pending",
+            "testStrategy": "Review matrix for completeness across all researched providers, verify benchmark data accuracy against raw test logs, ensure >20% improvement threshold analysis included."
+          },
+          {
+            "id": 4,
+            "title": "Design and Implement Multi-Provider DAS Connection Pooling",
+            "description": "Develop DasProviderPool class with health checks, failover, and load balancing only if benchmarks show >20% performance gains.",
+            "dependencies": [
+              1,
+              2,
+              3
+            ],
+            "details": "Implement with providers array, healthyProviders Set, getHealthyProvider(), healthCheck(). Add round-robin with exponential backoff. Config support for priority/weight. Conditional implementation based on benchmark results.",
+            "status": "pending",
+            "testStrategy": "Test healthCheck() detects failed providers, getHealthyProvider() returns only healthy ones, failover works under simulated failures, and throughput improves vs single provider."
+          },
+          {
+            "id": 5,
+            "title": "Enhance Configuration, Integrate Pooling, Add Fallbacks and Documentation",
+            "description": "Update config schema for DAS providers, integrate into CnftService, implement RPC fallback, and create comprehensive documentation.",
+            "dependencies": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "details": "Add dasConfig with useDirectDas, providers, primaryProvider, fallbackEnabled. Update CnftService to use DasProviderPool. Fallback to original RPC after 3 failures. Create docs/performance/das-optimization.md with results, matrix, migration guide, rate limit best practices.",
+            "status": "pending",
+            "testStrategy": "Verify config schema updates, CnftService uses pool with fallback (simulate 4+ failures), docs file exists with all sections complete, and end-to-end DAS calls succeed with pooling."
+          }
+        ]
       }
     ],
     "metadata": {
       "created": "2025-12-10T05:00:32.418Z",
-      "updated": "2025-12-15T23:53:00.540Z",
+      "updated": "2025-12-16T05:33:22.003Z",
       "description": "cNFT Bulk Swap Enhancement - Single cNFT swaps, bulk NFT swaps (max 10 per side), private sales, counter-offers, Jito bundles"
     }
   }

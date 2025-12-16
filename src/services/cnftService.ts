@@ -78,6 +78,10 @@ interface CnftServiceMetrics {
   rateLimitHits: number;
   avgFetchTimeMs: number;
   lastFetchTimes: number[];
+  batchProofFetches: number; // Number of batch proof fetch calls
+  batchProofSuccesses: number; // Successful batch fetches
+  batchProofFallbacks: number; // Batch fetches that fell back to individual
+  individualProofFetches: number; // Individual proof fetches (non-batch)
 }
 
 export class CnftService {
@@ -99,6 +103,10 @@ export class CnftService {
     rateLimitHits: 0,
     avgFetchTimeMs: 0,
     lastFetchTimes: [],
+    batchProofFetches: 0,
+    batchProofSuccesses: 0,
+    batchProofFallbacks: 0,
+    individualProofFetches: 0,
   };
   
   private static readonly DEFAULT_CONFIG: Partial<CnftServiceConfig> = {
@@ -222,8 +230,211 @@ export class CnftService {
    * Fetch proofs for multiple cNFTs in batches
    * Handles rate limiting and caching automatically
    */
+  /**
+   * Fetch multiple Merkle proofs in a single DAS API call using getAssetProofBatch
+   * 
+   * This is the optimized method for JITO bundles with multiple cNFTs.
+   * Reduces API calls from N to 1 and minimizes stale proof risk by fetching all proofs simultaneously.
+   * 
+   * @param assetIds - Array of cNFT asset IDs (max 50 per DAS API best practices)
+   * @param skipCache - Whether to bypass the cache
+   * @returns Map of assetId -> DasProofResponse
+   */
+  async getAssetProofBatch(
+    assetIds: string[],
+    skipCache = false
+  ): Promise<Map<string, DasProofResponse>> {
+    console.log(`[CnftService] Batch fetching ${assetIds.length} proofs using getAssetProofBatch`);
+    
+    if (assetIds.length === 0) {
+      return new Map();
+    }
+    
+    // Validate batch size (max 50 per Helius/QuickNode best practices)
+    const MAX_BATCH_SIZE = 50;
+    if (assetIds.length > MAX_BATCH_SIZE) {
+      console.warn(`[CnftService] Batch size ${assetIds.length} exceeds max ${MAX_BATCH_SIZE}, splitting into multiple calls`);
+      // Split into multiple batches and combine results
+      const results = new Map<string, DasProofResponse>();
+      for (let i = 0; i < assetIds.length; i += MAX_BATCH_SIZE) {
+        const batch = assetIds.slice(i, i + MAX_BATCH_SIZE);
+        const batchResults = await this.getAssetProofBatch(batch, skipCache);
+        for (const [assetId, proof] of batchResults) {
+          results.set(assetId, proof);
+        }
+      }
+      return results;
+    }
+    
+    const results = new Map<string, DasProofResponse>();
+    const errors: Array<{ assetId: string; error: string }> = [];
+    
+    // Check cache first (unless skip requested)
+    const uncachedIds: string[] = [];
+    const cachedProofs = new Map<string, DasProofResponse>();
+    
+    if (!skipCache) {
+      for (const assetId of assetIds) {
+        const cached = this.getCachedProof(assetId);
+        if (cached) {
+          cachedProofs.set(assetId, cached);
+          results.set(assetId, cached);
+          this.metrics.proofCacheHits++;
+          console.log(`[CnftService] Cache hit for ${assetId.substring(0, 12)}...`);
+        } else {
+          uncachedIds.push(assetId);
+          this.metrics.proofCacheMisses++;
+        }
+      }
+    } else {
+      uncachedIds.push(...assetIds);
+      this.metrics.proofCacheMisses += assetIds.length;
+    }
+    
+    if (uncachedIds.length === 0) {
+      console.log(`[CnftService] All ${assetIds.length} proofs served from cache`);
+      return results;
+    }
+    
+    console.log(`[CnftService] Fetching ${uncachedIds.length} uncached proofs via getAssetProofBatch`);
+    
+    const startTime = Date.now();
+    this.metrics.totalProofFetches++;
+    this.metrics.batchProofFetches++;
+    
+    try {
+      // Use rate limiting for the batch request
+      const batchResponse = await this.withRateLimit(async () => {
+        const response = await this.makeDasRequest('getAssetProofBatch', {
+          ids: uncachedIds,
+        }, 0);
+        
+        // Handle both wrapped and direct responses
+        const data = response.result || response;
+        
+        if (!data) {
+          throw new Error('Empty batch proof response from DAS API');
+        }
+        
+        return data;
+      });
+      
+      // Track fetch time
+      const fetchTime = Date.now() - startTime;
+      this.metrics.lastFetchTimes.push(fetchTime);
+      if (this.metrics.lastFetchTimes.length > 100) {
+        this.metrics.lastFetchTimes.shift();
+      }
+      this.metrics.avgFetchTimeMs = 
+        this.metrics.lastFetchTimes.reduce((a, b) => a + b, 0) / this.metrics.lastFetchTimes.length;
+      
+      // Handle both response formats:
+      // 1. Array format: [proof1, proof2, ...] (same order as input IDs)
+      // 2. Object/map format: {assetId1: proof1, assetId2: proof2, ...} (keyed by asset ID)
+      if (Array.isArray(batchResponse)) {
+        // Array format: DAS API returns proofs in same order as input IDs
+        for (let i = 0; i < uncachedIds.length; i++) {
+          const assetId = uncachedIds[i];
+          const proof = batchResponse[i];
+          
+          if (!proof || !proof.proof) {
+            errors.push({ 
+              assetId, 
+              error: `No proof data returned for asset ${assetId.substring(0, 12)}...` 
+            });
+            continue;
+          }
+          
+          // Cache the result
+          this.cacheProof(assetId, proof);
+          results.set(assetId, proof);
+        }
+      } else if (typeof batchResponse === 'object' && batchResponse !== null) {
+        // Object/map format: DAS API returns proofs keyed by asset ID
+        for (const assetId of uncachedIds) {
+          const proof = (batchResponse as Record<string, any>)[assetId];
+          
+          if (!proof || !proof.proof) {
+            errors.push({ 
+              assetId, 
+              error: `No proof data returned for asset ${assetId.substring(0, 12)}...` 
+            });
+            continue;
+          }
+          
+          // Cache the result
+          this.cacheProof(assetId, proof);
+          results.set(assetId, proof);
+        }
+      } else {
+        throw new Error(`Invalid batch proof response format from DAS API: expected array or object, got ${typeof batchResponse}`);
+      }
+      
+      console.log(`[CnftService] Batch proof fetch complete: ${results.size}/${uncachedIds.length} proofs fetched in ${fetchTime}ms`);
+      
+      if (errors.length > 0) {
+        console.warn(`[CnftService] ${errors.length} proof fetch failures in batch:`, errors);
+        this.metrics.batchProofFallbacks++;
+        
+        // Fallback to individual calls for failed proofs
+        console.log(`[CnftService] Falling back to individual proof fetching for ${errors.length} failed assets`);
+        for (const { assetId, error } of errors) {
+          try {
+            const individualProof = await this.getCnftProof(assetId, true, 0);
+            this.metrics.individualProofFetches++;
+            results.set(assetId, individualProof);
+            console.log(`[CnftService] Successfully fetched individual proof for ${assetId.substring(0, 12)}...`);
+          } catch (individualError: any) {
+            console.error(`[CnftService] Failed to fetch individual proof for ${assetId}:`, individualError.message);
+            // Keep the error - will be handled by caller
+          }
+        }
+      } else {
+        this.metrics.batchProofSuccesses++;
+      }
+      
+      return results;
+      
+    } catch (error: any) {
+      console.error(`[CnftService] Batch proof fetch failed: ${error.message}`);
+      this.metrics.batchProofFallbacks++;
+      console.log(`[CnftService] Falling back to individual proof fetching for all ${uncachedIds.length} assets`);
+      
+      // Fallback to individual calls if batch fails
+      const fallbackResults = new Map<string, DasProofResponse>();
+      for (const assetId of uncachedIds) {
+        try {
+          const proof = await this.getCnftProof(assetId, true, 0);
+          this.metrics.individualProofFetches++;
+          fallbackResults.set(assetId, proof);
+        } catch (individualError: any) {
+          console.error(`[CnftService] Failed to fetch individual proof for ${assetId}:`, individualError.message);
+          errors.push({ assetId, error: individualError.message });
+        }
+      }
+      
+      // Merge cached, batch, and fallback results
+      for (const [assetId, proof] of cachedProofs) {
+        results.set(assetId, proof);
+      }
+      for (const [assetId, proof] of fallbackResults) {
+        results.set(assetId, proof);
+      }
+      
+      if (errors.length > 0) {
+        console.warn(`[CnftService] ${errors.length} proof fetch failures after fallback:`, errors);
+      }
+      
+      return results;
+    }
+  }
+
+  /**
+   * @deprecated Use getAssetProofBatch instead for better performance
+   * Legacy method that fetches proofs individually in parallel
+   */
   async batchGetCnftProofs(assetIds: string[], batchSize = 3): Promise<Map<string, DasProofResponse>> {
-    console.log(`[CnftService] Batch fetching ${assetIds.length} proofs (batch size: ${batchSize})`);
+    console.log(`[CnftService] Batch fetching ${assetIds.length} proofs (batch size: ${batchSize}) - DEPRECATED: Use getAssetProofBatch`);
     const results = new Map<string, DasProofResponse>();
     const errors: Array<{ assetId: string; error: string }> = [];
     
@@ -365,10 +576,11 @@ export class CnftService {
       this.metrics.proofCacheMisses++;
     }
     
-    const startTime = Date.now();
-    this.metrics.totalProofFetches++;
-    
-    try {
+      const startTime = Date.now();
+      this.metrics.totalProofFetches++;
+      this.metrics.individualProofFetches++;
+      
+      try {
       // Use rate limiting for the actual fetch
       // Pass retryCount to makeDasRequest for cache-busting on stale proof retries
       // Capture retryCount in closure for use inside withRateLimit callback
@@ -579,8 +791,9 @@ export class CnftService {
   
   /**
    * Convert DAS proof response to CnftProof format expected by program
+   * Made public to support pre-fetched batch proofs for JITO bundles
    */
-  private async convertDasProofToCnftProofAsync(
+  async convertDasProofToCnftProofAsync(
     dasProof: DasProofResponse,
     assetData: CnftAssetData
   ): Promise<CnftProof> {
