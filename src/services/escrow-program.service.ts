@@ -802,7 +802,14 @@ export class EscrowProgramService {
       }
     }
 
-    // Jito bundle requirement: at least one transaction must write-lock an official tip account.
+    // For devnet, submit transactions individually (Jito bundles don't work on devnet)
+    const isMainnet = isMainnetNetwork(this.provider.connection);
+    if (!isMainnet) {
+      console.log('[EscrowProgramService] Devnet detected - submitting transactions individually');
+      return this.submitTransactionsIndividually(serializedTransactions);
+    }
+
+    // Jito bundle requirement (mainnet only): at least one transaction must write-lock an official tip account.
     // If we don't include it, Jito will reject the bundle with:
     // "Bundles must write lock at least one tip account to be eligible for the auction."
     if (serializedTransactions.length > 1) {
@@ -849,13 +856,6 @@ export class EscrowProgramService {
       } catch (tipCheckErr) {
         // Best-effort: do not fail submission due to tip-check parsing issues.
       }
-    }
-    
-    // For devnet, submit transactions individually (Jito bundles don't work on devnet)
-    const isMainnet = isMainnetNetwork(this.provider.connection);
-    if (!isMainnet) {
-      console.log('[EscrowProgramService] Devnet detected - submitting transactions individually');
-      return this.submitTransactionsIndividually(serializedTransactions);
     }
     
     try {
