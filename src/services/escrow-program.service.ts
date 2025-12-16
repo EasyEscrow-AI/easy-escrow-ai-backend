@@ -701,6 +701,16 @@ export class EscrowProgramService {
       }
       
       // Validate base64 format
+      // Buffer.from() with 'base64' doesn't throw on invalid input, so we need to validate properly
+      // Check if string matches base64 pattern and can be decoded/re-encoded correctly
+      const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
+      if (!base64Regex.test(tx)) {
+        return {
+          success: false,
+          error: `Transaction ${i} contains invalid base64 characters`,
+        };
+      }
+      
       try {
         const decoded = Buffer.from(tx, 'base64');
         if (decoded.length === 0) {
@@ -710,12 +720,26 @@ export class EscrowProgramService {
           };
         }
         
+        // Verify base64 encoding by re-encoding and comparing
+        // This catches cases where Buffer.from() silently ignores invalid characters
+        const reEncoded = decoded.toString('base64');
+        // Remove padding for comparison (base64 padding can vary)
+        const normalizedOriginal = tx.replace(/=+$/, '');
+        const normalizedReEncoded = reEncoded.replace(/=+$/, '');
+        
+        if (normalizedOriginal !== normalizedReEncoded) {
+          return {
+            success: false,
+            error: `Transaction ${i} is not valid base64: decoded and re-encoded string does not match`,
+          };
+        }
+        
         // Log transaction size for debugging
         console.log(`[EscrowProgramService] Transaction ${i} size: ${decoded.length} bytes`);
       } catch (error: any) {
         return {
           success: false,
-          error: `Transaction ${i} is not valid base64: ${error.message}`,
+          error: `Transaction ${i} base64 validation error: ${error.message}`,
         };
       }
     }

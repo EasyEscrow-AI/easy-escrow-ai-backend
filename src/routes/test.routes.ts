@@ -385,15 +385,18 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
                 
                 // Log image extraction for debugging
                 if (imageUrl) {
-                console.log('[Test Route] cNFT image extracted:', {
-                  assetId: asset.id.substring(0, 12) + '...',
-                  imageUrl: imageUrl.substring(0, 100) + (imageUrl.length > 100 ? '...' : ''),
-                  source: asset.content?.files?.[0]?.uri ? 'files[0].uri' :
-                          asset.content?.links?.image ? 'links.image' :
-                          asset.content?.metadata?.image ? 'metadata.image' :
-                          asset.content?.json_uri ? 'json_uri' :
-                          asset.uri ? 'uri' : 'unknown',
-                });
+                  console.log('[Test Route] cNFT image extracted:', {
+                    assetId: asset.id.substring(0, 12) + '...',
+                    imageUrl: imageUrl.substring(0, 100) + (imageUrl.length > 100 ? '...' : ''),
+                    source: asset.content?.files?.[0]?.uri ? 'files[0].uri' :
+                            asset.content?.links?.image ? 'links.image' :
+                            asset.content?.metadata?.image ? 'metadata.image' :
+                            asset.content?.json_uri ? 'json_uri' :
+                            asset.uri ? 'uri' : 'unknown',
+                  });
+                }
+                
+                isFirstLog = false; // Set to false after all first-log operations
               }
               
               return {
