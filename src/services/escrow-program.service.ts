@@ -6,7 +6,7 @@
  */
 
 import { AnchorProvider, Program, BN, Wallet } from '@coral-xyz/anchor';
-import { Connection, Keypair, PublicKey, SystemProgram } from '@solana/web3.js';
+import { Connection, Keypair, PublicKey, SystemProgram, Transaction, VersionedTransaction } from '@solana/web3.js';
 import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { config } from '../config';
 import { Escrow } from '../generated/anchor/escrow';
@@ -736,6 +736,44 @@ export class EscrowProgramService {
         
         // Log transaction size for debugging
         console.log(`[EscrowProgramService] Transaction ${i} size: ${decoded.length} bytes`);
+        
+        // Validate that transaction is fully signed (Jito requires this)
+        try {
+          const isVersioned = (decoded[0] & 0x80) !== 0;
+          if (isVersioned) {
+            const versionedTx = VersionedTransaction.deserialize(decoded);
+            // Check if all signatures are present (not null/empty)
+            const hasAllSignatures = versionedTx.signatures.every(sig => 
+              sig && sig.length === 64 && !sig.every(byte => byte === 0)
+            );
+            if (!hasAllSignatures) {
+              return {
+                success: false,
+                error: `Transaction ${i} is not fully signed. Jito requires all signatures to be present. Found ${versionedTx.signatures.length} signature slots, but some are missing or invalid.`,
+              };
+            }
+            console.log(`[EscrowProgramService] Transaction ${i} has ${versionedTx.signatures.length} valid signatures`);
+          } else {
+            const legacyTx = Transaction.from(decoded);
+            // Check if all signatures are present (not null/empty)
+            const hasAllSignatures = legacyTx.signatures.every(sig => 
+              sig && sig.signature && sig.signature.length === 64 && !sig.signature.every(byte => byte === 0)
+            );
+            if (!hasAllSignatures) {
+              return {
+                success: false,
+                error: `Transaction ${i} is not fully signed. Jito requires all signatures to be present. Found ${legacyTx.signatures.length} signature slots, but some are missing or invalid.`,
+              };
+            }
+            console.log(`[EscrowProgramService] Transaction ${i} has ${legacyTx.signatures.length} valid signatures`);
+          }
+        } catch (sigError: any) {
+          // If we can't deserialize to check signatures, that's also a problem
+          return {
+            success: false,
+            error: `Transaction ${i} could not be decoded to verify signatures: ${sigError.message}. Ensure it is a valid, fully signed transaction.`,
+          };
+        }
       } catch (error: any) {
         return {
           success: false,

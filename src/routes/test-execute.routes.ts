@@ -206,7 +206,9 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
             } else {
               const tx = Transaction.from(txBuffer);
               if (signers.length > 0) {
-                tx.partialSign(...signers);
+                // Use sign() instead of partialSign() to ensure all signatures are properly set
+                // Jito requires ALL signatures to be present
+                tx.sign(...signers);
               }
               signedTxBuffer = tx.serialize();
             }
@@ -221,7 +223,7 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
           const escrowProgramService = getEscrowProgramService();
           
           const bundleResult = await escrowProgramService.sendBundleViaJito(signedTransactions, {
-            skipSimulation: false,
+            skipSimulation: true, // Jito doesn't support simulateBundle method
             description: `Bulk swap: ${bulkSwapInfo.strategy}`,
           });
           
