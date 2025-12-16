@@ -127,13 +127,13 @@ async function main() {
   // Print results
   tester.printResults(summaries);
 
-  // Export results
+  // Export results (pass summaries to avoid re-running benchmarks)
   const outputDir = path.join(__dirname, '../../temp');
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
   }
   const outputPath = path.join(outputDir, 'das-benchmark-results.json');
-  await tester.exportResults(outputPath);
+  await tester.exportResults(summaries, outputPath);
 
   // Print recommendations
   console.log('\n📋 RECOMMENDATIONS');

@@ -328,18 +328,36 @@ export class DASPerformanceTester {
    */
   private calculateSummary(provider: string, results: BenchmarkResult[]): BenchmarkSummary {
     const allLatencies = results.flatMap(r => r.rawLatencies);
+    
+    // Handle case where all requests failed (empty latencies array)
+    if (allLatencies.length === 0) {
+      const totalIterations = results.reduce((sum, r) => sum + r.iterations, 0);
+      const totalSuccess = results.reduce((sum, r) => sum + (r.metrics.successRate * r.iterations), 0);
+      
+      return {
+        provider,
+        overallAvgLatencyMs: 0,
+        overallP95LatencyMs: 0,
+        overallSuccessRate: totalSuccess / totalIterations,
+        overallThroughput: 0,
+        methodResults: results,
+        recommendation: 'keep', // Will be updated in comparison
+      };
+    }
+    
     const sorted = allLatencies.sort((a, b) => a - b);
     const total = allLatencies.reduce((a, b) => a + b, 0);
+    const avgLatency = total / allLatencies.length;
 
     const totalSuccess = results.reduce((sum, r) => sum + (r.metrics.successRate * r.iterations), 0);
     const totalIterations = results.reduce((sum, r) => sum + r.iterations, 0);
 
     return {
       provider,
-      overallAvgLatencyMs: total / allLatencies.length,
+      overallAvgLatencyMs: avgLatency,
       overallP95LatencyMs: sorted[Math.floor(sorted.length * 0.95)],
       overallSuccessRate: totalSuccess / totalIterations,
-      overallThroughput: (1000 / (total / allLatencies.length)),
+      overallThroughput: avgLatency > 0 ? (1000 / avgLatency) : 0,
       methodResults: results,
       recommendation: 'keep', // Will be updated in comparison
     };
@@ -347,10 +365,12 @@ export class DASPerformanceTester {
 
   /**
    * Export results to JSON file
+   * 
+   * @param summaries - Pre-computed benchmark summaries (from runBenchmarks())
+   * @param filePath - Path to export JSON file
    */
-  async exportResults(filePath: string): Promise<void> {
+  async exportResults(summaries: BenchmarkSummary[], filePath: string): Promise<void> {
     const fs = await import('fs/promises');
-    const summaries = await this.runBenchmarks();
     
     const exportData = {
       timestamp: new Date().toISOString(),
