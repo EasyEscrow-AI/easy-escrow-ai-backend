@@ -756,8 +756,11 @@ export class EscrowProgramService {
       // Submit bundle to Jito with retry logic for rate limiting
       console.log('[EscrowProgramService] Submitting bundle to Jito Block Engine...');
       
-      const MAX_BUNDLE_RETRIES = 3;
-      const BASE_BUNDLE_DELAY_MS = 1000; // 1 second base delay
+      // Increased retries and delays for global rate limiting
+      // Jito has global rate limits that can affect all users during network congestion
+      const MAX_BUNDLE_RETRIES = 5; // Increased from 3 to 5
+      const BASE_BUNDLE_DELAY_MS = 2000; // Increased from 1s to 2s base delay
+      const GLOBAL_RATE_LIMIT_DELAY_MS = 5000; // Special longer delay for global rate limits
       
       for (let attempt = 1; attempt <= MAX_BUNDLE_RETRIES; attempt++) {
         try {
@@ -814,10 +817,17 @@ export class EscrowProgramService {
           if (result.error) {
             const isRateLimit = result.error.code === -32097 || 
                                (result.error.message && result.error.message.includes('rate limit'));
+            const isGlobalRateLimit = result.error.code === -32097 && 
+                                     (result.error.message?.includes('globally') || result.error.message?.includes('Network congested'));
             
             if (isRateLimit && attempt < MAX_BUNDLE_RETRIES) {
-              const retryDelay = BASE_BUNDLE_DELAY_MS * Math.pow(2, attempt - 1);
-              console.warn(`[EscrowProgramService] Jito bundle rate limited (RPC error), retrying in ${retryDelay}ms (attempt ${attempt}/${MAX_BUNDLE_RETRIES})...`);
+              // Use longer delay for global rate limits (network congestion)
+              const retryDelay = isGlobalRateLimit 
+                ? GLOBAL_RATE_LIMIT_DELAY_MS * attempt // 5s, 10s, 15s, 20s, 25s for global limits
+                : BASE_BUNDLE_DELAY_MS * Math.pow(2, attempt - 1); // 2s, 4s, 8s, 16s, 32s for regular limits
+              
+              console.warn(`[EscrowProgramService] Jito bundle rate limited (${isGlobalRateLimit ? 'GLOBAL' : 'regular'}), retrying in ${retryDelay}ms (attempt ${attempt}/${MAX_BUNDLE_RETRIES})...`);
+              console.warn(`[EscrowProgramService] Rate limit error: ${result.error.message}`);
               await new Promise(resolve => setTimeout(resolve, retryDelay));
               continue; // Retry
             }
