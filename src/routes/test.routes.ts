@@ -358,21 +358,50 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
           
           // Map cNFTs to our format
           let isFirstLog = true;
-          const mappedCNfts = filteredCNfts.map((asset: any) => {
+          const mappedCNfts = await Promise.all(filteredCNfts.map(async (asset: any) => {
               // Extract image URL from Helius DAS API response
               // Helius provides images in multiple locations:
               // 1. content.files[0].uri - Direct file URI
               // 2. content.links.image - Image link
               // 3. content.metadata.image - Metadata image field
-              // 4. content.json_uri - JSON metadata URI (may contain image)
+              // 4. content.json_uri - JSON metadata URI (fetch JSON and extract image field)
               // 5. asset.uri - Root URI field (fallback)
-              const imageUrl = asset.content?.files?.[0]?.uri || 
-                              asset.content?.links?.image || 
-                              asset.content?.metadata?.image ||
-                              asset.content?.json_uri ||
-                              asset.content?.metadata?.uri ||
-                              asset.uri || // Root uri field (fallback)
+              
+              let imageUrl = asset.content?.files?.[0]?.uri || 
+                            asset.content?.links?.image || 
+                            asset.content?.metadata?.image ||
+                            null;
+              
+              // If no direct image URL, try fetching from JSON metadata
+              if (!imageUrl && (asset.content?.json_uri || asset.content?.metadata?.uri || asset.uri)) {
+                const jsonUri = asset.content?.json_uri || asset.content?.metadata?.uri || asset.uri;
+                try {
+                  // Fetch JSON metadata and extract image field
+                  const metadataResponse = await fetch(jsonUri, {
+                    headers: { 'Accept': 'application/json' },
+                    signal: AbortSignal.timeout(5000), // 5 second timeout
+                  });
+                  
+                  if (metadataResponse.ok) {
+                    const metadata = await metadataResponse.json() as any;
+                    // Extract image from JSON metadata (standard NFT metadata format)
+                    imageUrl = metadata.image || 
+                              metadata.properties?.files?.[0]?.uri ||
+                              metadata.properties?.image ||
                               null;
+                  }
+                } catch (error: any) {
+                  // Silently fail - we'll use fallback
+                  if (isFirstLog) {
+                    console.warn(`[Test Route] Failed to fetch JSON metadata from ${jsonUri}:`, error.message);
+                  }
+                }
+              }
+              
+              // Final fallback to URI if still no image
+              if (!imageUrl) {
+                imageUrl = asset.uri || null;
+              }
               
               // Debug: Log the asset structure and image extraction for the first cNFT
               if (isFirstLog) {
@@ -385,14 +414,15 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
                 
                 // Log image extraction for debugging
                 if (imageUrl) {
+                  const source = asset.content?.files?.[0]?.uri ? 'files[0].uri' :
+                                asset.content?.links?.image ? 'links.image' :
+                                asset.content?.metadata?.image ? 'metadata.image' :
+                                (asset.content?.json_uri || asset.content?.metadata?.uri || asset.uri) ? 'json_metadata' :
+                                'unknown';
                   console.log('[Test Route] cNFT image extracted:', {
                     assetId: asset.id.substring(0, 12) + '...',
                     imageUrl: imageUrl.substring(0, 100) + (imageUrl.length > 100 ? '...' : ''),
-                    source: asset.content?.files?.[0]?.uri ? 'files[0].uri' :
-                            asset.content?.links?.image ? 'links.image' :
-                            asset.content?.metadata?.image ? 'metadata.image' :
-                            asset.content?.json_uri ? 'json_uri' :
-                            asset.uri ? 'uri' : 'unknown',
+                    source,
                   });
                 }
                 
@@ -408,7 +438,7 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
                 image: imageUrl,
                 symbol: asset.content?.metadata?.symbol || '',
               };
-            });
+            }));
           
           // Map Metaplex Core NFTs to our format
           const mappedCoreNfts = coreNfts.map((asset: any) => {
