@@ -441,6 +441,25 @@ export class OfferManager {
           const isStaleProofError = this.isCnftProofStaleError(error);
           
           if (!isLastAttempt && isStaleProofError) {
+            // CRITICAL: If DirectBubblegumService already exhausted its retries (5 attempts),
+            // and DAS API keeps returning the same stale proof, we should fail fast
+            // to prevent infinite loops that hang the frontend
+            const errorMessage = error.message || '';
+            const hasExhaustedDirectRetries = errorMessage.includes('after 5 refresh attempts');
+            
+            if (hasExhaustedDirectRetries && attempt >= 2) {
+              // DAS API is consistently returning stale proofs - fail fast after 2 attempts
+              console.error(`❌ [OfferManager] DAS API consistently returning stale proofs after ${attempt} attempts`);
+              console.error(`   DirectBubblegumService already exhausted 5 retries`);
+              console.error(`   DAS API root mismatch persists - failing fast to prevent infinite loop`);
+              throw new Error(
+                `Stale Merkle proof: DAS API is unable to provide fresh proofs for this cNFT. ` +
+                `The Merkle tree is updating faster than the DAS API can index. ` +
+                `Please try again in a few moments, or use a different cNFT from a less active tree. ` +
+                `Tree: ${errorMessage.match(/Tree: ([A-Za-z0-9]+)/)?.[1] || 'unknown'}`
+              );
+            }
+            
             console.warn(`⚠️  [OfferManager] Attempt ${attempt}/${maxAttempts} failed with stale cNFT proof, retrying...`);
             console.warn(`   Error: ${error.message}`);
             

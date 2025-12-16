@@ -710,6 +710,19 @@ router.post(
 
       const errorMessage = error instanceof Error ? error.message : 'Failed to accept offer';
 
+      // Check for stale proof errors - return user-friendly message
+      if (errorMessage.includes('Stale Merkle proof') || 
+          errorMessage.includes('DAS API is unable to provide fresh proofs')) {
+        res.status(503).json({
+          success: false,
+          error: 'Service Temporarily Unavailable',
+          message: errorMessage,
+          errorCode: 'STALE_CNFT_PROOF',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
       // Check for authorization errors (including private sales)
       if (errorMessage.includes('designated taker') || 
           errorMessage.includes('private sale') ||
