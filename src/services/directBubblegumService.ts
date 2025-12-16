@@ -99,7 +99,7 @@ export class DirectBubblegumService {
       params.fromWallet,
       params.toWallet,
       true, // Always skip cache to get fresh proofs (prevents first-attempt failures)
-      retryCount // Pass retryCount for cache-busting timestamp
+      retryCount // Pass retryCount for cache-busting (via unique JSON-RPC request IDs)
     );
 
     const {
