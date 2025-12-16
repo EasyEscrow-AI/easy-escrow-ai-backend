@@ -801,12 +801,61 @@ export class EscrowProgramService {
         };
       }
     }
-    
+
     // For devnet, submit transactions individually (Jito bundles don't work on devnet)
     const isMainnet = isMainnetNetwork(this.provider.connection);
     if (!isMainnet) {
       console.log('[EscrowProgramService] Devnet detected - submitting transactions individually');
       return this.submitTransactionsIndividually(serializedTransactions);
+    }
+
+    // Jito bundle requirement (mainnet only): at least one transaction must write-lock an official tip account.
+    // If we don't include it, Jito will reject the bundle with:
+    // "Bundles must write lock at least one tip account to be eligible for the auction."
+    if (serializedTransactions.length > 1) {
+      try {
+        const tipAccounts = new Set(this.getJitoTipAccounts());
+        let hasTipLock = false;
+
+        for (let i = 0; i < serializedTransactions.length; i++) {
+          const decoded = Buffer.from(serializedTransactions[i], 'base64');
+          const isVersioned = (decoded[0] & 0x80) !== 0;
+
+          if (isVersioned) {
+            const vtx = VersionedTransaction.deserialize(decoded);
+            const keys = vtx.message.staticAccountKeys.map(k => k.toBase58());
+            for (let k = 0; k < keys.length; k++) {
+              if (tipAccounts.has(keys[k]) && vtx.message.isAccountWritable(k)) {
+                hasTipLock = true;
+                break;
+              }
+            }
+          } else {
+            const ltx = Transaction.from(decoded);
+            const msg = ltx.compileMessage();
+            const keys = msg.accountKeys.map(k => k.toBase58());
+            for (let k = 0; k < keys.length; k++) {
+              if (tipAccounts.has(keys[k]) && msg.isAccountWritable(k)) {
+                hasTipLock = true;
+                break;
+              }
+            }
+          }
+
+          if (hasTipLock) break;
+        }
+
+        if (!hasTipLock) {
+          return {
+            success: false,
+            error:
+              'Jito bundle tip missing: no writable Jito tip account found in any transaction. ' +
+              'Ensure a SystemProgram.transfer to an official tip account is included as the last instruction of at least one transaction in the bundle.',
+          };
+        }
+      } catch (tipCheckErr) {
+        // Best-effort: do not fail submission due to tip-check parsing issues.
+      }
     }
     
     try {
@@ -1135,7 +1184,6 @@ export class EscrowProgramService {
 
       if (result.error) {
         console.error('[EscrowProgramService] Inflight status RPC error:', result.error);
-
         // Some endpoints do not support this method; mark unsupported so callers can fall back.
         const msg = (result.error.message || '').toLowerCase();
         if (result.error.code === -32601 || msg.includes('method not found') || msg.includes('invalid method')) {
@@ -1146,7 +1194,6 @@ export class EscrowProgramService {
             error: 'Inflight bundle status unsupported (method not found)',
           }));
         }
-
         // Treat rate limits as no-signal
         if (result.error.code === -32097 || result.error.message?.toLowerCase().includes('rate')) {
           return bundleIds.map(id => ({ bundleId: id, status: 'Pending' as const, error: result.error?.message || 'Rate limited' }));
@@ -1156,7 +1203,6 @@ export class EscrowProgramService {
 
       // If we got a successful response, mark as supported.
       this.inflightBundleStatusesSupported = true;
-
       const statuses = Array.isArray(result.result)
         ? result.result
         : result.result?.value || [];
