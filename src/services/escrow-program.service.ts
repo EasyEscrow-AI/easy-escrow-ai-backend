@@ -690,6 +690,36 @@ export class EscrowProgramService {
       };
     }
     
+    // Validate transaction encoding
+    for (let i = 0; i < serializedTransactions.length; i++) {
+      const tx = serializedTransactions[i];
+      if (!tx || typeof tx !== 'string') {
+        return {
+          success: false,
+          error: `Transaction ${i} is invalid: expected base64 string, got ${typeof tx}`,
+        };
+      }
+      
+      // Validate base64 format
+      try {
+        const decoded = Buffer.from(tx, 'base64');
+        if (decoded.length === 0) {
+          return {
+            success: false,
+            error: `Transaction ${i} decodes to empty buffer`,
+          };
+        }
+        
+        // Log transaction size for debugging
+        console.log(`[EscrowProgramService] Transaction ${i} size: ${decoded.length} bytes`);
+      } catch (error: any) {
+        return {
+          success: false,
+          error: `Transaction ${i} is not valid base64: ${error.message}`,
+        };
+      }
+    }
+    
     // For devnet, submit transactions individually (Jito bundles don't work on devnet)
     const isMainnet = isMainnetNetwork(this.provider.connection);
     if (!isMainnet) {
@@ -793,6 +823,27 @@ export class EscrowProgramService {
             }
             
             console.error('[EscrowProgramService] Jito bundle RPC error:', result.error);
+            
+            // Provide more detailed error information for decode errors
+            if (result.error.code === -32602) {
+              const errorMsg = result.error.message || '';
+              // Check if it's a transaction decode error
+              if (errorMsg.includes('could not be decoded') || errorMsg.includes('transaction')) {
+                console.error('[EscrowProgramService] Transaction decode error details:', {
+                  errorCode: result.error.code,
+                  errorMessage: errorMsg,
+                  transactionCount: serializedTransactions.length,
+                  firstTxLength: serializedTransactions[0]?.length,
+                  firstTxPreview: serializedTransactions[0]?.substring(0, 50) + '...',
+                });
+                
+                return {
+                  success: false,
+                  error: `Transaction encoding error: ${errorMsg}. Transactions must be fully signed and properly base64 encoded. Check transaction serialization.`,
+                };
+              }
+            }
+            
             return {
               success: false,
               error: result.error.message || JSON.stringify(result.error),

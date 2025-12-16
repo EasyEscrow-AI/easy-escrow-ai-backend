@@ -371,8 +371,12 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
               }
               
               // Extract image URL from Helius DAS API response
-              // Helius provides images in content.files[0].uri or content.links.image
-              // Also check content.metadata for image field
+              // Helius provides images in multiple locations:
+              // 1. content.files[0].uri - Direct file URI
+              // 2. content.links.image - Image link
+              // 3. content.metadata.image - Metadata image field
+              // 4. content.json_uri - JSON metadata URI (may contain image)
+              // 5. asset.uri - Root URI field (fallback)
               const imageUrl = asset.content?.files?.[0]?.uri || 
                               asset.content?.links?.image || 
                               asset.content?.metadata?.image ||
@@ -380,6 +384,19 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
                               asset.content?.metadata?.uri ||
                               asset.uri || // Root uri field (fallback)
                               null;
+              
+              // Log image extraction for debugging
+              if (isFirstLog && imageUrl) {
+                console.log('[Test Route] cNFT image extracted:', {
+                  assetId: asset.id.substring(0, 12) + '...',
+                  imageUrl: imageUrl.substring(0, 100) + (imageUrl.length > 100 ? '...' : ''),
+                  source: asset.content?.files?.[0]?.uri ? 'files[0].uri' :
+                          asset.content?.links?.image ? 'links.image' :
+                          asset.content?.metadata?.image ? 'metadata.image' :
+                          asset.content?.json_uri ? 'json_uri' :
+                          asset.uri ? 'uri' : 'unknown',
+                });
+              }
               
               return {
                 mint: asset.id,
