@@ -544,13 +544,17 @@ function renderNFTs(wallet, nfts) {
         }
         
         // Store mint for fallback animal image generation
+        // Add loading="lazy" and crossorigin="anonymous" for better image loading
         return `
             <div class="nft-card" data-index="${originalIndex}">
                 <img class="nft-image" 
                      src="${imageUrl}" 
                      alt="${nft.name}"
                      data-mint="${nft.mint}"
-                     data-fallback="${placeholderSvg}">
+                     data-fallback="${placeholderSvg}"
+                     loading="lazy"
+                     crossorigin="anonymous"
+                     referrerpolicy="no-referrer">
                 <div class="nft-name">${nft.name || 'Unknown NFT'}</div>
                 <div class="nft-type">${getNftTypeLabel(nft)}</div>
                 <div class="nft-mint">${nft.mint.substring(0, 8)}...</div>

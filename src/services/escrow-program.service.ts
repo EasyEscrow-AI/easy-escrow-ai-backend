@@ -701,6 +701,16 @@ export class EscrowProgramService {
       }
       
       // Validate base64 format
+      // Buffer.from() with 'base64' doesn't throw on invalid input, so we need to validate properly
+      // Check if string matches base64 pattern and can be decoded/re-encoded correctly
+      const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
+      if (!base64Regex.test(tx)) {
+        return {
+          success: false,
+          error: `Transaction ${i} contains invalid base64 characters`,
+        };
+      }
+      
       try {
         const decoded = Buffer.from(tx, 'base64');
         if (decoded.length === 0) {
@@ -710,12 +720,26 @@ export class EscrowProgramService {
           };
         }
         
+        // Verify base64 encoding by re-encoding and comparing
+        // This catches cases where Buffer.from() silently ignores invalid characters
+        const reEncoded = decoded.toString('base64');
+        // Remove padding for comparison (base64 padding can vary)
+        const normalizedOriginal = tx.replace(/=+$/, '');
+        const normalizedReEncoded = reEncoded.replace(/=+$/, '');
+        
+        if (normalizedOriginal !== normalizedReEncoded) {
+          return {
+            success: false,
+            error: `Transaction ${i} is not valid base64: decoded and re-encoded string does not match`,
+          };
+        }
+        
         // Log transaction size for debugging
         console.log(`[EscrowProgramService] Transaction ${i} size: ${decoded.length} bytes`);
       } catch (error: any) {
         return {
           success: false,
-          error: `Transaction ${i} is not valid base64: ${error.message}`,
+          error: `Transaction ${i} base64 validation error: ${error.message}`,
         };
       }
     }
@@ -756,8 +780,11 @@ export class EscrowProgramService {
       // Submit bundle to Jito with retry logic for rate limiting
       console.log('[EscrowProgramService] Submitting bundle to Jito Block Engine...');
       
-      const MAX_BUNDLE_RETRIES = 3;
-      const BASE_BUNDLE_DELAY_MS = 1000; // 1 second base delay
+      // Increased retries and delays for global rate limiting
+      // Jito has global rate limits that can affect all users during network congestion
+      const MAX_BUNDLE_RETRIES = 5; // Increased from 3 to 5
+      const BASE_BUNDLE_DELAY_MS = 2000; // Increased from 1s to 2s base delay
+      const GLOBAL_RATE_LIMIT_DELAY_MS = 5000; // Special longer delay for global rate limits
       
       for (let attempt = 1; attempt <= MAX_BUNDLE_RETRIES; attempt++) {
         try {
@@ -814,10 +841,17 @@ export class EscrowProgramService {
           if (result.error) {
             const isRateLimit = result.error.code === -32097 || 
                                (result.error.message && result.error.message.includes('rate limit'));
+            const isGlobalRateLimit = result.error.code === -32097 && 
+                                     (result.error.message?.includes('globally') || result.error.message?.includes('Network congested'));
             
             if (isRateLimit && attempt < MAX_BUNDLE_RETRIES) {
-              const retryDelay = BASE_BUNDLE_DELAY_MS * Math.pow(2, attempt - 1);
-              console.warn(`[EscrowProgramService] Jito bundle rate limited (RPC error), retrying in ${retryDelay}ms (attempt ${attempt}/${MAX_BUNDLE_RETRIES})...`);
+              // Use longer delay for global rate limits (network congestion)
+              const retryDelay = isGlobalRateLimit 
+                ? GLOBAL_RATE_LIMIT_DELAY_MS * attempt // 5s, 10s, 15s, 20s, 25s for global limits
+                : BASE_BUNDLE_DELAY_MS * Math.pow(2, attempt - 1); // 2s, 4s, 8s, 16s, 32s for regular limits
+              
+              console.warn(`[EscrowProgramService] Jito bundle rate limited (${isGlobalRateLimit ? 'GLOBAL' : 'regular'}), retrying in ${retryDelay}ms (attempt ${attempt}/${MAX_BUNDLE_RETRIES})...`);
+              console.warn(`[EscrowProgramService] Rate limit error: ${result.error.message}`);
               await new Promise(resolve => setTimeout(resolve, retryDelay));
               continue; // Retry
             }
