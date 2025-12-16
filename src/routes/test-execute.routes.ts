@@ -206,9 +206,10 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
             } else {
               const tx = Transaction.from(txBuffer);
               if (signers.length > 0) {
-                // Use sign() instead of partialSign() to ensure all signatures are properly set
-                // Jito requires ALL signatures to be present
-                tx.sign(...signers);
+                // CRITICAL: Use partialSign() to preserve platform authority signature
+                // Transaction already has platform authority signature from TransactionGroupBuilder
+                // partialSign() adds maker/taker signatures without overwriting existing signatures
+                tx.partialSign(...signers);
               }
               signedTxBuffer = tx.serialize();
             }

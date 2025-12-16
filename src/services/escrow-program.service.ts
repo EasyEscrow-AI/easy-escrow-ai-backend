@@ -738,34 +738,36 @@ export class EscrowProgramService {
         console.log(`[EscrowProgramService] Transaction ${i} size: ${decoded.length} bytes`);
         
         // Validate that transaction is fully signed (Jito requires this)
+        // Note: Transactions are pre-signed with platform authority in TransactionGroupBuilder
+        // and then maker/taker signatures are added via partialSign() in test-execute route
         try {
           const isVersioned = (decoded[0] & 0x80) !== 0;
           if (isVersioned) {
             const versionedTx = VersionedTransaction.deserialize(decoded);
             // Check if all signatures are present (not null/empty)
-            const hasAllSignatures = versionedTx.signatures.every(sig => 
+            const validSignatures = versionedTx.signatures.filter(sig => 
               sig && sig.length === 64 && !sig.every(byte => byte === 0)
             );
-            if (!hasAllSignatures) {
+            if (validSignatures.length !== versionedTx.signatures.length) {
               return {
                 success: false,
-                error: `Transaction ${i} is not fully signed. Jito requires all signatures to be present. Found ${versionedTx.signatures.length} signature slots, but some are missing or invalid.`,
+                error: `Transaction ${i} is not fully signed. Jito requires all signatures to be present. Found ${versionedTx.signatures.length} signature slots, but only ${validSignatures.length} are valid. Missing signatures will cause Jito to reject the bundle.`,
               };
             }
-            console.log(`[EscrowProgramService] Transaction ${i} has ${versionedTx.signatures.length} valid signatures`);
+            console.log(`[EscrowProgramService] Transaction ${i} has ${versionedTx.signatures.length} valid signatures (versioned)`);
           } else {
             const legacyTx = Transaction.from(decoded);
             // Check if all signatures are present (not null/empty)
-            const hasAllSignatures = legacyTx.signatures.every(sig => 
+            const validSignatures = legacyTx.signatures.filter(sig => 
               sig && sig.signature && sig.signature.length === 64 && !sig.signature.every(byte => byte === 0)
             );
-            if (!hasAllSignatures) {
+            if (validSignatures.length !== legacyTx.signatures.length) {
               return {
                 success: false,
-                error: `Transaction ${i} is not fully signed. Jito requires all signatures to be present. Found ${legacyTx.signatures.length} signature slots, but some are missing or invalid.`,
+                error: `Transaction ${i} is not fully signed. Jito requires all signatures to be present. Found ${legacyTx.signatures.length} signature slots, but only ${validSignatures.length} are valid. Missing signatures will cause Jito to reject the bundle.`,
               };
             }
-            console.log(`[EscrowProgramService] Transaction ${i} has ${legacyTx.signatures.length} valid signatures`);
+            console.log(`[EscrowProgramService] Transaction ${i} has ${legacyTx.signatures.length} valid signatures (legacy)`);
           }
         } catch (sigError: any) {
           // If we can't deserialize to check signatures, that's also a problem
