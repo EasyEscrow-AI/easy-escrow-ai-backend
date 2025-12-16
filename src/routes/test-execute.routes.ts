@@ -216,13 +216,21 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
                   });
                 });
                 
-                // Check if this is a durable nonce transaction
-                const isDurableNonce = tx.recentBlockhash && tx.recentBlockhash.length === 44; // Nonce values are 44 chars
-                const hasNonceAdvance = tx.instructions.some(ix => 
-                  ix.programId.equals(SystemProgram.programId) && 
-                  ix.data.length === 4 && // nonceAdvance instruction is 4 bytes
-                  ix.data[0] === 4 // SystemProgram instruction 4 = nonceAdvance
-                );
+                // Check if this is a durable nonce transaction by looking for nonce advance instruction
+                // SystemProgram.nonceAdvance() creates an instruction with:
+                // - programId = SystemProgram.programId
+                // - data = [4, 0, 0, 0] (instruction discriminator for nonceAdvance)
+                const hasNonceAdvance = tx.instructions.some(ix => {
+                  if (!ix.programId.equals(SystemProgram.programId)) return false;
+                  if (ix.data.length !== 4) return false;
+                  // SystemProgram instruction 4 = nonceAdvance
+                  // Data format: [instruction_discriminator (4 bytes)]
+                  return ix.data[0] === 4 && ix.data[1] === 0 && ix.data[2] === 0 && ix.data[3] === 0;
+                });
+                
+                // Note: We can't reliably detect durable nonces by blockhash length alone
+                // Both regular blockhashes and nonce values are 32-byte base58-encoded (43-44 chars)
+                // The presence of a nonce advance instruction is the definitive indicator
                 
                 console.log(`   🔍 TX ${i + 1} structure:`, {
                   instructionCount: tx.instructions.length,
@@ -230,7 +238,7 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
                   feePayer: tx.feePayer?.toBase58(),
                   recentBlockhash: tx.recentBlockhash?.substring(0, 16) + '...',
                   recentBlockhashLength: tx.recentBlockhash?.length,
-                  isDurableNonce: isDurableNonce,
+                  isDurableNonce: hasNonceAdvance, // Use instruction check, not length
                   hasNonceAdvance: hasNonceAdvance,
                   firstInstructionProgram: tx.instructions[0]?.programId?.toBase58(),
                   firstInstructionDataLength: tx.instructions[0]?.data.length,
