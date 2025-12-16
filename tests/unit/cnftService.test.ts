@@ -389,6 +389,204 @@ describe('CnftService', () => {
     });
   });
 
+  describe('getAssetProofBatch', () => {
+    it('should fetch multiple proofs in a single batch call (array format)', async () => {
+      const assetIds = [mockAssetId, 'asset-2', 'asset-3'];
+      let fetchCount = 0;
+
+      global.fetch = (async () => {
+        fetchCount++;
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({
+            jsonrpc: '2.0',
+            id: 1,
+            result: [
+              mockProofResponse,
+              { ...mockProofResponse, root: 'root-2' },
+              { ...mockProofResponse, root: 'root-3' },
+            ],
+          }),
+        } as Response;
+      }) as typeof fetch;
+
+      const results = await cnftService.getAssetProofBatch(assetIds, true);
+
+      expect(results.size).to.equal(3);
+      expect(fetchCount).to.equal(1); // Single batch call
+      expect(results.get(mockAssetId)?.root).to.equal(mockProofResponse.root);
+      expect(results.get('asset-2')?.root).to.equal('root-2');
+      expect(results.get('asset-3')?.root).to.equal('root-3');
+    });
+
+    it('should handle object/map format response from DAS API', async () => {
+      const assetIds = [mockAssetId, 'asset-2'];
+      let fetchCount = 0;
+
+      global.fetch = (async () => {
+        fetchCount++;
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({
+            jsonrpc: '2.0',
+            id: 1,
+            result: {
+              [mockAssetId]: mockProofResponse,
+              'asset-2': { ...mockProofResponse, root: 'root-2' },
+            },
+          }),
+        } as Response;
+      }) as typeof fetch;
+
+      const results = await cnftService.getAssetProofBatch(assetIds, true);
+
+      expect(results.size).to.equal(2);
+      expect(fetchCount).to.equal(1); // Single batch call
+      expect(results.get(mockAssetId)?.root).to.equal(mockProofResponse.root);
+      expect(results.get('asset-2')?.root).to.equal('root-2');
+    });
+
+    it('should fallback to individual fetches on batch failure', async () => {
+      const assetIds = [mockAssetId, 'asset-2'];
+      let fetchCount = 0;
+
+      global.fetch = (async (url: string, options?: any) => {
+        fetchCount++;
+        const body = options?.body ? JSON.parse(options.body) : {};
+        
+        // First call (batch) fails
+        if (body.method === 'getAssetProofBatch') {
+          return {
+            ok: true,
+            status: 200,
+            text: async () => JSON.stringify({
+              jsonrpc: '2.0',
+              id: body.id,
+              error: {
+                code: -32000,
+                message: 'Batch proof fetch failed',
+              },
+            }),
+          } as Response;
+        }
+        
+        // Fallback to individual calls
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({
+            jsonrpc: '2.0',
+            id: body.id,
+            result: mockProofResponse,
+          }),
+        } as Response;
+      }) as typeof fetch;
+
+      const results = await cnftService.getAssetProofBatch(assetIds, true);
+
+      // Should fallback to individual fetches
+      expect(results.size).to.equal(2);
+      expect(fetchCount).to.be.greaterThan(1); // Multiple calls (batch failed, then individual)
+    });
+
+    it('should handle partial failures in batch with fallback', async () => {
+      const assetIds = [mockAssetId, 'asset-2', 'asset-3'];
+      let fetchCount = 0;
+
+      global.fetch = (async (url: string, options?: any) => {
+        fetchCount++;
+        const body = options?.body ? JSON.parse(options.body) : {};
+        
+        // Batch call returns array with missing proof for asset-2
+        if (body.method === 'getAssetProofBatch') {
+          return {
+            ok: true,
+            status: 200,
+            text: async () => JSON.stringify({
+              jsonrpc: '2.0',
+              id: body.id,
+              result: [
+                mockProofResponse,
+                null, // Missing proof for asset-2
+                { ...mockProofResponse, root: 'root-3' },
+              ],
+            }),
+          } as Response;
+        }
+        
+        // Fallback individual call for asset-2
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({
+            jsonrpc: '2.0',
+            id: body.id,
+            result: { ...mockProofResponse, root: 'root-2-fallback' },
+          }),
+        } as Response;
+      }) as typeof fetch;
+
+      const results = await cnftService.getAssetProofBatch(assetIds, true);
+
+      expect(results.size).to.equal(3);
+      expect(results.get(mockAssetId)?.root).to.equal(mockProofResponse.root);
+      expect(results.get('asset-2')?.root).to.equal('root-2-fallback');
+      expect(results.get('asset-3')?.root).to.equal('root-3');
+    });
+
+    it('should split large batches exceeding max size', async () => {
+      const assetIds = Array.from({ length: 60 }, (_, i) => `asset-${i}`);
+      let fetchCount = 0;
+
+      global.fetch = (async () => {
+        fetchCount++;
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({
+            jsonrpc: '2.0',
+            id: 1,
+            result: assetIds.slice(0, 50).map(() => mockProofResponse),
+          }),
+        } as Response;
+      }) as typeof fetch;
+
+      const results = await cnftService.getAssetProofBatch(assetIds, true);
+
+      // Should split into 2 batches (50 + 10)
+      expect(fetchCount).to.equal(2);
+      expect(results.size).to.equal(60);
+    });
+
+    it('should use cache when skipCache is false', async () => {
+      const assetIds = [mockAssetId];
+      let fetchCount = 0;
+
+      global.fetch = (async () => {
+        fetchCount++;
+        return {
+          ok: true,
+          status: 200,
+          text: async () => JSON.stringify({
+            jsonrpc: '2.0',
+            id: 1,
+            result: [mockProofResponse],
+          }),
+        } as Response;
+      }) as typeof fetch;
+
+      // First call
+      await cnftService.getAssetProofBatch(assetIds, false);
+      expect(fetchCount).to.equal(1);
+
+      // Second call should use cache
+      await cnftService.getAssetProofBatch(assetIds, false);
+      expect(fetchCount).to.equal(1); // Still only one fetch
+    });
+  });
+
   describe('deriveTreeAuthority', () => {
     it('should derive correct tree authority PDA', () => {
       const treeAuthority = cnftService.deriveTreeAuthority(mockTreeAddress);
