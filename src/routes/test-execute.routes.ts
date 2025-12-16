@@ -205,13 +205,46 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
               signedTxBuffer = Buffer.from(versionedTx.serialize());
             } else {
               const tx = Transaction.from(txBuffer);
+              
+              // Debug: Log transaction structure for troubleshooting
+              if (i === 0) {
+                console.log(`   🔍 TX ${i + 1} structure:`, {
+                  instructionCount: tx.instructions.length,
+                  signatureCount: tx.signatures.length,
+                  feePayer: tx.feePayer?.toBase58(),
+                  recentBlockhash: tx.recentBlockhash?.substring(0, 16) + '...',
+                  firstInstructionProgram: tx.instructions[0]?.programId?.toBase58(),
+                });
+              }
+              
               if (signers.length > 0) {
                 // CRITICAL: Use partialSign() to preserve platform authority signature
                 // Transaction already has platform authority signature from TransactionGroupBuilder
                 // partialSign() adds maker/taker signatures without overwriting existing signatures
                 tx.partialSign(...signers);
               }
-              signedTxBuffer = tx.serialize();
+              
+              // Verify all signatures are present before serializing
+              const validSignatures = tx.signatures.filter(sig => 
+                sig && sig.signature && sig.signature.length === 64 && !sig.signature.every(byte => byte === 0)
+              );
+              if (validSignatures.length !== tx.signatures.length) {
+                console.warn(`   ⚠️ TX ${i + 1} has ${tx.signatures.length} signature slots but only ${validSignatures.length} are valid`);
+              }
+              
+              // Serialize with requireAllSignatures: true to ensure all signatures are included
+              // This is critical for Jito bundles - they require fully signed transactions
+              try {
+                signedTxBuffer = tx.serialize({ requireAllSignatures: true });
+              } catch (serializeError: any) {
+                // If serialization fails, it means not all required signatures are present
+                console.error(`   ❌ TX ${i + 1} serialization failed:`, serializeError.message);
+                return res.status(400).json({
+                  success: false,
+                  error: `Transaction ${i + 1} cannot be serialized: ${serializeError.message}. Ensure all required signers have signed.`,
+                  timestamp: new Date().toISOString(),
+                });
+              }
             }
             
             // Convert to base64 for Jito bundle submission
