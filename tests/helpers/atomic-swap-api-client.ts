@@ -426,16 +426,26 @@ export class AtomicSwapApiClient {
         throw new Error(`Jito bundle submission failed: HTTP ${response.status} - ${errorText}`);
       }
       
+      // Jito JSON-RPC response format (supports both formats for compatibility)
       const result = await response.json() as {
-        result?: { bundleId?: string };
-        error?: { message?: string };
+        result?: { bundleId?: string } | string;  // Can be object with bundleId or direct string
+        error?: { message?: string; code?: number };
       };
       
       if (result.error) {
-        throw new Error(`Jito bundle error: ${result.error.message}`);
+        throw new Error(`Jito bundle error: ${result.error.message || JSON.stringify(result.error)}`);
       }
       
-      const bundleId = result.result?.bundleId;
+      // Extract bundle ID - support both formats for compatibility
+      let bundleId: string | undefined;
+      if (typeof result.result === 'string') {
+        // Direct string format (legacy)
+        bundleId = result.result;
+      } else if (result.result && typeof result.result === 'object' && 'bundleId' in result.result) {
+        // Nested object format (verified working format)
+        bundleId = result.result.bundleId;
+      }
+      
       if (!bundleId) {
         throw new Error('Jito bundle submission succeeded but no bundle ID returned');
       }

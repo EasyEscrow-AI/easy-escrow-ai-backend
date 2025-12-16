@@ -294,7 +294,7 @@ describe('🚀 Production E2E: cNFT ↔ cNFT with ALT Support (Mainnet)', () => 
           console.log(`   All ${bulkSwap.transactionCount} transactions executed atomically`);
         } else {
           console.log(`   ✅ All ${bulkResult.signatures!.length} transactions confirmed!`);
-          bulkResult.signatures!.forEach((sig, i) => {
+          bulkResult.signatures!.forEach((sig: string, i: number) => {
             console.log(`   Tx ${i + 1}: ${sig}`);
             displayExplorerLink(sig, 'mainnet-beta');
           });

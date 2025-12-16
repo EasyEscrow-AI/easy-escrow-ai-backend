@@ -532,6 +532,8 @@ export class EscrowProgramService {
         
         EscrowProgramService.lastJitoRequestTime = Math.max(now, nextAvailableTime);
         
+        // Jito Block Engine uses JSON-RPC format (as per legacy working code)
+        // Endpoint: POST /api/v1/bundles with JSON-RPC body
         const response = await fetch(EscrowProgramService.JITO_BUNDLE_ENDPOINT_MAINNET, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -739,6 +741,8 @@ export class EscrowProgramService {
           
           EscrowProgramService.lastJitoRequestTime = Math.max(now, nextAvailableTime);
           
+          // Jito Block Engine uses JSON-RPC format (as per legacy working code)
+          // Endpoint: POST /api/v1/bundles with JSON-RPC body
           const response = await fetch(EscrowProgramService.JITO_BUNDLE_ENDPOINT_MAINNET, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -768,8 +772,9 @@ export class EscrowProgramService {
             };
           }
           
+          // Jito JSON-RPC response format (verified with test helper and E2E tests)
           const result = await response.json() as {
-            result?: string;  // Bundle ID (UUID)
+            result?: { bundleId?: string } | string;  // Can be object with bundleId or direct string
             error?: { message?: string; code?: number };
           };
           
@@ -792,14 +797,22 @@ export class EscrowProgramService {
             };
           }
           
-          if (!result.result) {
+          // Extract bundle ID - support both formats for compatibility
+          let bundleId: string | undefined;
+          if (typeof result.result === 'string') {
+            // Direct string format (legacy)
+            bundleId = result.result;
+          } else if (result.result && typeof result.result === 'object' && 'bundleId' in result.result) {
+            // Nested object format (test helper format, verified working)
+            bundleId = result.result.bundleId;
+          }
+          
+          if (!bundleId) {
             return {
               success: false,
               error: 'Jito sendBundle returned no bundle ID',
             };
           }
-          
-          const bundleId = result.result;
           console.log(`[EscrowProgramService] ✅ Bundle submitted to Jito: ${bundleId}`);
           
           return {
@@ -854,6 +867,9 @@ export class EscrowProgramService {
     console.log(`[EscrowProgramService] Checking status of ${bundleIds.length} bundle(s)...`);
     
     try {
+      // Jito Block Engine uses JSON-RPC format (verified with test helper and E2E tests)
+      // For multiple bundle IDs, use nested array format: [[id1], [id2], ...]
+      // This matches the test helper format for single IDs: [[bundleId]]
       const response = await fetch(EscrowProgramService.JITO_BUNDLE_ENDPOINT_MAINNET, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -861,7 +877,7 @@ export class EscrowProgramService {
           jsonrpc: '2.0',
           id: 1,
           method: 'getBundleStatuses',
-          params: [bundleIds],
+          params: bundleIds.map(id => [id]), // Nested array format for consistency
         }),
       });
       
@@ -884,7 +900,7 @@ export class EscrowProgramService {
       const statuses = result.result?.value || [];
       
       return bundleIds.map(bundleId => {
-        const bundleStatus = statuses.find(s => s.bundle_id === bundleId);
+        const bundleStatus = statuses.find((s: any) => s.bundle_id === bundleId);
         if (!bundleStatus) {
           return { bundleId, status: 'Invalid' as const, error: 'Bundle not found' };
         }
