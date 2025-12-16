@@ -840,7 +840,9 @@ export class EscrowProgramService {
           
           EscrowProgramService.lastJitoRequestTime = Math.max(now, nextAvailableTime);
           
-          // Jito Block Engine uses JSON-RPC format (as per legacy working code)
+          // Jito Block Engine uses JSON-RPC format
+          // CRITICAL: Must specify encoding: "base64" when sending base64-encoded transactions
+          // Without this flag, Jito defaults to base58 and will fail to decode transaction #0
           // Endpoint: POST /api/v1/bundles with JSON-RPC body
           const response = await fetch(EscrowProgramService.JITO_BUNDLE_ENDPOINT_MAINNET, {
             method: 'POST',
@@ -849,7 +851,7 @@ export class EscrowProgramService {
               jsonrpc: '2.0',
               id: 1,
               method: 'sendBundle',
-              params: [serializedTransactions],
+              params: [serializedTransactions, { encoding: 'base64' }],
             }),
           });
           

@@ -995,7 +995,9 @@ router.post('/api/quote', async (req: Request, res: Response) => {
     const baseFee = 0.00002; // 3-4 signatures worth as buffer
     const perRegularNFTFee = 0.000005; // Small buffer per SPL/Core NFT
     const perCNFTFee = 0.00002; // Higher buffer per cNFT (more compute)
-    const networkFeeSol = baseFee + (regularNFTCount * perRegularNFTFee) + (cNFTCount * perCNFTFee);
+    let networkFeeSol = baseFee + (regularNFTCount * perRegularNFTFee) + (cNFTCount * perCNFTFee);
+    
+    // Add Jito tip if this is a bulk swap (will be determined later, but we'll add it to the response)
 
     // ========================================
     // 6. CALCULATE PLATFORM FEE
@@ -1201,6 +1203,12 @@ router.post('/api/quote', async (req: Request, res: Response) => {
     // This matches DEFAULT_JITO_TIP_LAMPORTS in escrow-program.service.ts
     const DEFAULT_JITO_TIP_LAMPORTS = 1_000_000; // 0.001 SOL per bundle
     const estimatedJitoTipLamports = isBulkSwap ? DEFAULT_JITO_TIP_LAMPORTS : 0;
+    const estimatedJitoTipSol = estimatedJitoTipLamports / LAMPORTS_PER_SOL;
+    
+    // Add Jito tip to network fee estimate
+    if (isBulkSwap) {
+      networkFeeSol += estimatedJitoTipSol;
+    }
 
     // ========================================
     // 9. DETERMINE STATUS AND WARNINGS
@@ -1342,7 +1350,14 @@ router.post('/api/quote', async (req: Request, res: Response) => {
         // Fees
         networkFee: {
           ...formatSolWithUSD(networkFeeSol),
-          display: `~${formatSolWithUSD(networkFeeSol).display}`,
+          display: isBulkSwap 
+            ? `~${formatSolWithUSD(networkFeeSol).display} (includes ${formatSolDisplay(estimatedJitoTipSol)} SOL Jito tip)`
+            : `~${formatSolWithUSD(networkFeeSol).display}`,
+          jitoTip: isBulkSwap ? {
+            lamports: estimatedJitoTipLamports,
+            sol: estimatedJitoTipSol,
+            display: formatSolDisplay(estimatedJitoTipSol),
+          } : null,
         },
         platformFee: {
           ...formatSolWithUSD(platformFeeSol),

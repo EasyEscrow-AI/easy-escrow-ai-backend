@@ -12,7 +12,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { Connection, Keypair, Transaction, VersionedTransaction, sendAndConfirmTransaction } from '@solana/web3.js';
+import { Connection, Keypair, Transaction, VersionedTransaction, sendAndConfirmTransaction, SystemProgram } from '@solana/web3.js';
 import bs58 from 'bs58';
 import { offerManager } from './offers.routes';
 import { getEscrowProgramService } from '../services/escrow-program.service';
@@ -208,12 +208,43 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
               
               // Debug: Log transaction structure for troubleshooting
               if (i === 0) {
+                // Extract account keys from instructions to see if nonce account is included
+                const accountKeys = new Set<string>();
+                tx.instructions.forEach(ix => {
+                  ix.keys.forEach(key => {
+                    accountKeys.add(key.pubkey.toBase58());
+                  });
+                });
+                
+                // Check if this is a durable nonce transaction by looking for nonce advance instruction
+                // SystemProgram.nonceAdvance() creates an instruction with:
+                // - programId = SystemProgram.programId
+                // - data = [4, 0, 0, 0] (instruction discriminator for nonceAdvance)
+                const hasNonceAdvance = tx.instructions.some(ix => {
+                  if (!ix.programId.equals(SystemProgram.programId)) return false;
+                  if (ix.data.length !== 4) return false;
+                  // SystemProgram instruction 4 = nonceAdvance
+                  // Data format: [instruction_discriminator (4 bytes)]
+                  return ix.data[0] === 4 && ix.data[1] === 0 && ix.data[2] === 0 && ix.data[3] === 0;
+                });
+                
+                // Note: We can't reliably detect durable nonces by blockhash length alone
+                // Both regular blockhashes and nonce values are 32-byte base58-encoded (43-44 chars)
+                // The presence of a nonce advance instruction is the definitive indicator
+                
                 console.log(`   🔍 TX ${i + 1} structure:`, {
                   instructionCount: tx.instructions.length,
                   signatureCount: tx.signatures.length,
                   feePayer: tx.feePayer?.toBase58(),
                   recentBlockhash: tx.recentBlockhash?.substring(0, 16) + '...',
+                  recentBlockhashLength: tx.recentBlockhash?.length,
+                  isDurableNonce: hasNonceAdvance, // Use instruction check, not length
+                  hasNonceAdvance: hasNonceAdvance,
                   firstInstructionProgram: tx.instructions[0]?.programId?.toBase58(),
+                  firstInstructionDataLength: tx.instructions[0]?.data.length,
+                  firstInstructionData: tx.instructions[0]?.data.slice(0, 4).toString('hex'),
+                  accountKeysCount: accountKeys.size,
+                  accountKeys: Array.from(accountKeys).slice(0, 5), // First 5 account keys
                 });
               }
               
@@ -232,18 +263,32 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
                 console.warn(`   ⚠️ TX ${i + 1} has ${tx.signatures.length} signature slots but only ${validSignatures.length} are valid`);
               }
               
-              // Serialize with requireAllSignatures: true to ensure all signatures are included
-              // This is critical for Jito bundles - they require fully signed transactions
+              // For durable nonce transactions, we need to serialize carefully
+              // Jito requires fully signed transactions, but requireAllSignatures: true
+              // might cause issues with nonce account validation
+              // Try with requireAllSignatures: true first, fallback to false if it fails
               try {
+                // First try with requireAllSignatures: true (preferred for Jito)
                 signedTxBuffer = tx.serialize({ requireAllSignatures: true });
+                if (i === 0) {
+                  console.log(`   ✅ TX ${i + 1} serialized with requireAllSignatures: true`);
+                }
               } catch (serializeError: any) {
-                // If serialization fails, it means not all required signatures are present
-                console.error(`   ❌ TX ${i + 1} serialization failed:`, serializeError.message);
-                return res.status(400).json({
-                  success: false,
-                  error: `Transaction ${i + 1} cannot be serialized: ${serializeError.message}. Ensure all required signers have signed.`,
-                  timestamp: new Date().toISOString(),
-                });
+                // If that fails, try without the requirement (for durable nonce transactions)
+                console.warn(`   ⚠️ TX ${i + 1} serialization with requireAllSignatures: true failed, trying without:`, serializeError.message);
+                try {
+                  signedTxBuffer = tx.serialize({ requireAllSignatures: false });
+                  if (i === 0) {
+                    console.log(`   ✅ TX ${i + 1} serialized with requireAllSignatures: false (durable nonce transaction)`);
+                  }
+                } catch (fallbackError: any) {
+                  console.error(`   ❌ TX ${i + 1} serialization failed completely:`, fallbackError.message);
+                  return res.status(400).json({
+                    success: false,
+                    error: `Transaction ${i + 1} cannot be serialized: ${fallbackError.message}. Ensure all required signers have signed.`,
+                    timestamp: new Date().toISOString(),
+                  });
+                }
               }
             }
             

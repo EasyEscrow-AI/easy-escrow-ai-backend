@@ -1555,12 +1555,19 @@ async function executeAtomicSwap(params) {
                 }
             }
             
+            // Add Jito tip for bulk swaps (0.001 SOL = 1,000,000 lamports)
+            const JITO_TIP_LAMPORTS = 1_000_000; // 0.001 SOL
+            if (isBulkSwap) {
+                totalFee += JITO_TIP_LAMPORTS;
+            }
+            
             if (totalFee > 0) {
-                blockchainFee = totalFee; // Total fee in lamports
+                blockchainFee = totalFee; // Total fee in lamports (includes Jito tip for bulk swaps)
                 const feeSol = (blockchainFee / 1e9).toFixed(6);
                 const feeUsd = solPriceUSD ? ` (~$${(blockchainFee / 1e9 * solPriceUSD).toFixed(4)} USD)` : '';
                 const txCount = signatures.length > 1 ? ` (${signatures.length} txns)` : '';
-                addLog(`💸 Blockchain fee: ${feeSol} SOL${feeUsd}${txCount}`, 'info');
+                const jitoTipNote = isBulkSwap ? ' (includes 0.001 SOL Jito tip)' : '';
+                addLog(`💸 Total network fees: ${feeSol} SOL${feeUsd}${txCount}${jitoTipNote}`, 'info');
             }
         } catch (feeError) {
             console.warn('Could not fetch transaction fee:', feeError);
@@ -1612,12 +1619,13 @@ function showTransactionSummary(createData, acceptData, executeData, params, tim
     // Use confirmed parameters (not re-reading from inputs)
     const { offeredSol, requestedSol, selectedMakerNFTs: confirmedMakerNFTs, selectedTakerNFTs: confirmedTakerNFTs, swapType } = params;
 
-    // Format blockchain fee
+    // Format blockchain fee (includes Jito tip for bulk swaps)
     let feeDisplay = 'Fetching...';
     if (blockchainFee !== null) {
         const feeSol = (blockchainFee / 1e9).toFixed(6);
         const feeUsd = solPriceUSD ? ` (~$${(blockchainFee / 1e9 * solPriceUSD).toFixed(4)} USD)` : '';
-        feeDisplay = `💸 ${feeSol} SOL${feeUsd}`;
+        const jitoTipNote = isBulkSwap ? ' (includes 0.001 SOL Jito tip)' : '';
+        feeDisplay = `💸 ${feeSol} SOL${feeUsd}${jitoTipNote}`;
     }
 
     // Determine swap type badge
@@ -1641,7 +1649,7 @@ function showTransactionSummary(createData, acceptData, executeData, params, tim
                 <span class="summary-value highlight">⚡ ${timings.total}s</span>
             </div>
             <div class="summary-item">
-                <span class="summary-label">Blockchain Fee:</span>
+                <span class="summary-label">Total Network Fees:</span>
                 <span class="summary-value">${feeDisplay}</span>
             </div>
             <div class="summary-item">
