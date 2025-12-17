@@ -14,6 +14,7 @@ import { getEscrowIdl } from '../utils/idl-loader';
 import bs58 from 'bs58';
 import { PriorityFeeService } from './priority-fee.service';
 import { JitoHttpRateLimiter } from './jito-http-rate-limiter';
+import { JitoRegionRouter } from './jito-region-router';
 
 /**
  * Detect Solana network from RPC URL
@@ -161,6 +162,12 @@ export class EscrowProgramService {
     return process.env.JITO_BLOCK_ENGINE_URL || 'https://mainnet.block-engine.jito.wtf';
   }
 
+  private static async pickJitoRegionalBaseUrl(): Promise<string> {
+    // If operator overrides, honor it. Otherwise pick a hardcoded region (sticky per bundle).
+    if (process.env.JITO_BLOCK_ENGINE_URL) return process.env.JITO_BLOCK_ENGINE_URL;
+    return await JitoRegionRouter.pickRegion();
+  }
+
   private static getJitoAuthHeaders(): Record<string, string> {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     // Optional UUID auth for higher limits (set in deployment secrets)
@@ -273,7 +280,7 @@ export class EscrowProgramService {
     }
 
     // For mainnet, send directly to Jito Block Engine (FREE!)
-    const jitoBaseUrl = EscrowProgramService.getJitoBaseUrl();
+    const jitoBaseUrl = await EscrowProgramService.pickJitoRegionalBaseUrl();
     
     const serializedTransaction = transaction.serialize().toString('base64');
     
@@ -305,6 +312,7 @@ export class EscrowProgramService {
           
           // Special handling for rate limit (429) - retry with exponential backoff
           if (response.status === 429 && attempt < MAX_RETRIES) {
+            await JitoRegionRouter.markRateLimited(jitoBaseUrl, 15_000);
             const retryAfter = 1000 * (attempt + 1); // Exponential backoff: 1s, 2s, 3s
             console.warn(
               `[EscrowProgramService] Jito rate limit hit (429). Retry ${attempt + 1}/${MAX_RETRIES} after ${retryAfter}ms`
@@ -469,8 +477,9 @@ export class EscrowProgramService {
   /**
    * Jito Bundle API endpoints
    */
-  private static getJitoBundleEndpointMainnet(): string {
-    return `${EscrowProgramService.getJitoBaseUrl()}/api/v1/bundles`;
+  private static getJitoBundleEndpointMainnet(baseUrl?: string): string {
+    const url = baseUrl || EscrowProgramService.getJitoBaseUrl();
+    return `${url}/api/v1/bundles`;
   }
 
   // Tip floor endpoint (not block-engine regional). Can optionally be overridden.
@@ -901,6 +910,10 @@ export class EscrowProgramService {
       const MAX_BUNDLE_RETRIES = 5; // Increased from 3 to 5
       const BASE_BUNDLE_DELAY_MS = 2000; // Increased from 1s to 2s base delay
       const GLOBAL_RATE_LIMIT_DELAY_MS = 5000; // Special longer delay for global rate limits
+      const REGION_COOLDOWN_MS = 15000;
+      
+      // Pick a region for this bundle. If we hit rate limits, we will switch regions on retry.
+      let jitoBaseUrl = await EscrowProgramService.pickJitoRegionalBaseUrl();
       
       for (let attempt = 1; attempt <= MAX_BUNDLE_RETRIES; attempt++) {
         try {
@@ -911,7 +924,7 @@ export class EscrowProgramService {
           // CRITICAL: Must specify encoding: "base64" when sending base64-encoded transactions
           // Without this flag, Jito defaults to base58 and will fail to decode transaction #0
           // Endpoint: POST /api/v1/bundles with JSON-RPC body
-          const response = await fetch(EscrowProgramService.getJitoBundleEndpointMainnet(), {
+          const response = await fetch(EscrowProgramService.getJitoBundleEndpointMainnet(jitoBaseUrl), {
             method: 'POST',
             headers: EscrowProgramService.getJitoAuthHeaders(),
             body: JSON.stringify({
@@ -927,9 +940,11 @@ export class EscrowProgramService {
             
             // Handle rate limiting (429) with retry
             if (response.status === 429 && attempt < MAX_BUNDLE_RETRIES) {
+              await JitoRegionRouter.markRateLimited(jitoBaseUrl, REGION_COOLDOWN_MS);
               const retryDelay = BASE_BUNDLE_DELAY_MS * Math.pow(2, attempt - 1); // Exponential backoff: 1s, 2s, 4s
               console.warn(`[EscrowProgramService] Jito bundle rate limit hit (429), retrying in ${retryDelay}ms (attempt ${attempt}/${MAX_BUNDLE_RETRIES})...`);
               await new Promise(resolve => setTimeout(resolve, retryDelay));
+              jitoBaseUrl = await EscrowProgramService.pickJitoRegionalBaseUrl();
               continue; // Retry
             }
             
@@ -954,6 +969,7 @@ export class EscrowProgramService {
                                      (result.error.message?.includes('globally') || result.error.message?.includes('Network congested'));
             
             if (isRateLimit && attempt < MAX_BUNDLE_RETRIES) {
+              await JitoRegionRouter.markRateLimited(jitoBaseUrl, REGION_COOLDOWN_MS);
               // Use longer delay for global rate limits (network congestion)
               const retryDelay = isGlobalRateLimit 
                 ? GLOBAL_RATE_LIMIT_DELAY_MS * attempt // 5s, 10s, 15s, 20s, 25s for global limits
@@ -962,6 +978,7 @@ export class EscrowProgramService {
               console.warn(`[EscrowProgramService] Jito bundle rate limited (${isGlobalRateLimit ? 'GLOBAL' : 'regular'}), retrying in ${retryDelay}ms (attempt ${attempt}/${MAX_BUNDLE_RETRIES})...`);
               console.warn(`[EscrowProgramService] Rate limit error: ${result.error.message}`);
               await new Promise(resolve => setTimeout(resolve, retryDelay));
+              jitoBaseUrl = await EscrowProgramService.pickJitoRegionalBaseUrl();
               continue; // Retry
             }
             
@@ -1009,6 +1026,7 @@ export class EscrowProgramService {
               error: 'Jito sendBundle returned no bundle ID',
             };
           }
+          await JitoRegionRouter.rememberBundleRegion(bundleId, jitoBaseUrl);
           console.log(`[EscrowProgramService] ✅ Bundle submitted to Jito: ${bundleId}`);
           
           return {
@@ -1055,7 +1073,7 @@ export class EscrowProgramService {
    * @param bundleIds - Array of bundle IDs to check
    * @returns Bundle status results
    */
-  async getBundleStatuses(bundleIds: string[]): Promise<{
+  async getBundleStatuses(bundleIds: string[], jitoBaseUrl?: string): Promise<{
     bundleId: string;
     status: 'Invalid' | 'Pending' | 'Failed' | 'Landed';
     slot?: number;
@@ -1076,7 +1094,7 @@ export class EscrowProgramService {
       // For multiple bundle IDs, use nested array format: [[id1], [id2], ...]
       // This matches the test helper format for single IDs: [[bundleId]]
       await EscrowProgramService.rateLimitJitoHttp();
-      const response = await fetch(EscrowProgramService.getJitoBundleEndpointMainnet(), {
+      const response = await fetch(EscrowProgramService.getJitoBundleEndpointMainnet(jitoBaseUrl), {
         method: 'POST',
         headers: EscrowProgramService.getJitoAuthHeaders(),
         body: JSON.stringify({
@@ -1092,6 +1110,9 @@ export class EscrowProgramService {
         console.error(`[EscrowProgramService] Bundle status HTTP error: ${response.status}`, errorText);
         // Treat 429 as transient/no-signal. Jito/forwarders can be globally rate limited.
         if (response.status === 429) {
+          if (jitoBaseUrl) {
+            await JitoRegionRouter.markRateLimited(jitoBaseUrl, 15000);
+          }
           EscrowProgramService.jitoStatusCooldownUntilMs =
             Date.now() + (Number.isFinite(EscrowProgramService.JITO_STATUS_COOLDOWN_MS) ? EscrowProgramService.JITO_STATUS_COOLDOWN_MS : 10000);
           return bundleIds.map(id => ({ bundleId: id, status: 'Pending' as const, error: 'HTTP 429 rate limited' }));
@@ -1108,6 +1129,9 @@ export class EscrowProgramService {
         console.error('[EscrowProgramService] Bundle status RPC error:', result.error);
         const msg = (result.error?.message || '').toLowerCase();
         if (msg.includes('rate') || msg.includes('globally rate limited') || msg.includes('network congested')) {
+          if (jitoBaseUrl) {
+            await JitoRegionRouter.markRateLimited(jitoBaseUrl, 15000);
+          }
           EscrowProgramService.jitoStatusCooldownUntilMs =
             Date.now() + (Number.isFinite(EscrowProgramService.JITO_STATUS_COOLDOWN_MS) ? EscrowProgramService.JITO_STATUS_COOLDOWN_MS : 10000);
           return bundleIds.map(id => ({ bundleId: id, status: 'Pending' as const, error: result.error?.message || 'Rate limited' }));
@@ -1165,7 +1189,7 @@ export class EscrowProgramService {
    * Get inflight bundle status (most useful immediately after submission).
    * Some forwarders (e.g. QuickNode) expose getInflightBundleStatuses which looks back ~5 minutes.
    */
-  async getInflightBundleStatuses(bundleIds: string[]): Promise<{
+  async getInflightBundleStatuses(bundleIds: string[], jitoBaseUrl?: string): Promise<{
     bundleId: string;
     status: 'Invalid' | 'Pending' | 'Failed' | 'Landed';
     slot?: number;
@@ -1183,7 +1207,7 @@ export class EscrowProgramService {
         }));
       }
       await EscrowProgramService.rateLimitJitoHttp();
-      const response = await fetch(EscrowProgramService.getJitoBundleEndpointMainnet(), {
+      const response = await fetch(EscrowProgramService.getJitoBundleEndpointMainnet(jitoBaseUrl), {
         method: 'POST',
         headers: EscrowProgramService.getJitoAuthHeaders(),
         body: JSON.stringify({
@@ -1198,6 +1222,9 @@ export class EscrowProgramService {
         const errorText = await response.text();
         console.error(`[EscrowProgramService] Inflight status HTTP error: ${response.status}`, errorText);
         if (response.status === 429) {
+          if (jitoBaseUrl) {
+            await JitoRegionRouter.markRateLimited(jitoBaseUrl, 15000);
+          }
           EscrowProgramService.jitoStatusCooldownUntilMs =
             Date.now() + (Number.isFinite(EscrowProgramService.JITO_STATUS_COOLDOWN_MS) ? EscrowProgramService.JITO_STATUS_COOLDOWN_MS : 10000);
           return bundleIds.map(id => ({ bundleId: id, status: 'Pending' as const, error: 'HTTP 429 rate limited' }));
@@ -1226,6 +1253,9 @@ export class EscrowProgramService {
         }
         // Treat rate limits as no-signal
         if (result.error.code === -32097 || result.error.message?.toLowerCase().includes('rate')) {
+          if (jitoBaseUrl) {
+            await JitoRegionRouter.markRateLimited(jitoBaseUrl, 15000);
+          }
           EscrowProgramService.jitoStatusCooldownUntilMs =
             Date.now() + (Number.isFinite(EscrowProgramService.JITO_STATUS_COOLDOWN_MS) ? EscrowProgramService.JITO_STATUS_COOLDOWN_MS : 10000);
           return bundleIds.map(id => ({ bundleId: id, status: 'Pending' as const, error: result.error?.message || 'Rate limited' }));
@@ -1306,6 +1336,11 @@ export class EscrowProgramService {
     error?: string;
   }> {
     console.log(`[EscrowProgramService] Waiting for bundle ${bundleId} confirmation...`);
+
+    // IMPORTANT: status polling must hit the same Block Engine region that received the submission.
+    // We store bundleId -> region at submission time (best-effort via Redis/in-memory).
+    const bundleRegionBaseUrl =
+      (await JitoRegionRouter.getBundleRegion(bundleId)) || undefined;
     
     const startTime = Date.now();
     const timeoutMs = timeoutSeconds * 1000;
@@ -1329,7 +1364,7 @@ export class EscrowProgramService {
       let statusResult: { bundleId: string; status: 'Invalid' | 'Pending' | 'Failed' | 'Landed'; slot?: number; error?: string } | undefined;
 
       if (this.inflightBundleStatusesSupported !== false) {
-        const [s] = await this.getInflightBundleStatuses([bundleId]);
+        const [s] = await this.getInflightBundleStatuses([bundleId], bundleRegionBaseUrl);
 
         // If inflight method is unsupported, fall back to getBundleStatuses.
         const inflightUnsupported =
@@ -1341,7 +1376,7 @@ export class EscrowProgramService {
       }
 
       if (!statusResult) {
-        const [s] = await this.getBundleStatuses([bundleId]);
+        const [s] = await this.getBundleStatuses([bundleId], bundleRegionBaseUrl);
         statusResult = s;
       }
       
