@@ -154,11 +154,6 @@ export class EscrowProgramService {
 
   // Some forwarders do not expose getInflightBundleStatuses. Cache capability per instance.
   private inflightBundleStatusesSupported: boolean | null = null;
-  
-  // During congestion, Jito status endpoints can be globally rate limited (-32097 / HTTP 429).
-  // When that happens, avoid hammering status endpoints; rely on on-chain signature checks until cooldown expires.
-  private static jitoStatusCooldownUntilMs = 0;
-  private static readonly JITO_STATUS_COOLDOWN_MS = parseInt(process.env.JITO_STATUS_COOLDOWN_MS || '10000', 10); // 10s default
 
   private static getJitoBaseUrl(): string {
     // Prefer regional endpoint when provided (e.g. https://singapore.mainnet.block-engine.jito.wtf)
@@ -182,6 +177,11 @@ export class EscrowProgramService {
       intervalMs: EscrowProgramService.JITO_HTTP_MIN_INTERVAL_MS,
     });
   }
+  
+  // During congestion, Jito status endpoints can be globally rate limited (-32097 / HTTP 429).
+  // When that happens, avoid hammering status endpoints; rely on on-chain signature checks until cooldown expires.
+  private static jitoStatusCooldownUntilMs = 0;
+  private static readonly JITO_STATUS_COOLDOWN_MS = parseInt(process.env.JITO_STATUS_COOLDOWN_MS || '10000', 10); // 10s default
   
   // Public getter for programId
   public get programId(): PublicKey {
@@ -1182,7 +1182,6 @@ export class EscrowProgramService {
           error: 'Jito inflight status cooldown active (recent global rate limit)',
         }));
       }
-
       await EscrowProgramService.rateLimitJitoHttp();
       const response = await fetch(EscrowProgramService.getJitoBundleEndpointMainnet(), {
         method: 'POST',
