@@ -481,7 +481,10 @@ export class TransactionGroupBuilder {
       const startTime = Date.now();
       
       try {
-        const proofMap = await this.cnftService.getAssetProofBatch(assetIds, true); // Skip cache for fresh proofs
+        // Do NOT always force skipCache here:
+        // - Proof cache TTL is intentionally short to reduce staleness risk
+        // - Always skipping cache increases DAS load and can trigger provider RPS limits (e.g. QuickNode -32007)
+        const proofMap = await this.cnftService.getAssetProofBatch(assetIds, false);
         const fetchTime = Date.now() - startTime;
         console.log(`[TransactionGroupBuilder] ✅ Batch proof fetch complete: ${proofMap.size}/${assetIds.length} proofs in ${fetchTime}ms`);
         return proofMap;

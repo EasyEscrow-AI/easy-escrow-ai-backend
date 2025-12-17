@@ -97,6 +97,8 @@ export class CnftService {
 
   // Some RPC providers do not support DAS getAssetProofBatch. Cache this to avoid repeated retries.
   private batchProofSupported: boolean | null = null;
+  // Some RPC providers implement a different batch proof method (e.g. getAssetProofs).
+  private assetProofsSupported: boolean | null = null;
   
   // Proof cache with TTL
   private proofCache: Map<string, ProofCacheEntry> = new Map();
@@ -333,9 +335,60 @@ export class CnftService {
       return new Map();
     }
 
-    // If this RPC doesn't support getAssetProofBatch, skip batch mode entirely.
+    // If this RPC doesn't support getAssetProofBatch, try getAssetProofs (plural) if available,
+    // otherwise fall back to individual proof fetching.
     if (this.batchProofSupported === false) {
-      console.warn('[CnftService] getAssetProofBatch is disabled for this RPC (previously returned -32601 Method not found). Falling back to individual proof fetching.');
+      // Try getAssetProofs (plural) to reduce N individual calls -> 1 call (helps under strict RPS limits).
+      if (this.assetProofsSupported !== false) {
+        try {
+          console.log('[CnftService] getAssetProofBatch disabled; attempting getAssetProofs batch call instead...');
+          const response = await this.withRateLimit(async () => {
+            const r = await this.makeDasRequest('getAssetProofs', { ids: assetIds }, 0, false);
+            return r.result || r;
+          });
+
+          const results = new Map<string, DasProofResponse>();
+          // Heuristics: support array, map keyed by asset id, or object containing items/proofs arrays.
+          const data: any = response;
+          let list: any[] | null = null;
+
+          if (Array.isArray(data)) {
+            list = data;
+          } else if (data && typeof data === 'object') {
+            if (Array.isArray(data.items)) list = data.items;
+            else if (Array.isArray(data.proofs)) list = data.proofs;
+          }
+
+          if (list) {
+            for (let i = 0; i < assetIds.length; i++) {
+              const assetId = assetIds[i];
+              const proof = list[i];
+              if (proof && proof.proof) results.set(assetId, proof);
+            }
+          } else if (data && typeof data === 'object') {
+            for (const assetId of assetIds) {
+              const proof = data[assetId];
+              if (proof && proof.proof) results.set(assetId, proof);
+            }
+          }
+
+          if (results.size > 0) {
+            for (const [assetId, proof] of results) this.cacheProof(assetId, proof);
+            return results;
+          }
+
+          throw new Error('getAssetProofs returned no usable proofs');
+        } catch (err: any) {
+          const rpcCode = (err as any)?.rpcCode;
+          if (rpcCode === -32601 || String(err?.message || '').toLowerCase().includes('method not found')) {
+            this.assetProofsSupported = false;
+            console.warn('[CnftService] Disabling getAssetProofs for this RPC due to -32601 Method not found.');
+          }
+          console.warn('[CnftService] getAssetProofs batch attempt failed; falling back to individual proof fetching:', err?.message || err);
+        }
+      }
+
+      console.warn('[CnftService] Batch proof methods unavailable; falling back to individual proof fetching.');
       this.metrics.batchProofFallbacks++;
       const results = new Map<string, DasProofResponse>();
       const errors: Array<{ assetId: string; error: string }> = [];
@@ -412,6 +465,22 @@ export class CnftService {
       // Use rate limiting for the batch request
       // Use batch connection (Helius) for better batch performance
       const batchResponse = await this.withRateLimit(async () => {
+        // If we don't have a dedicated batch RPC, and we haven't confirmed getAssetProofBatch support,
+        // prefer getAssetProofs (plural) to avoid burning a request on a method that may be unsupported.
+        if (!this.batchConnection && this.assetProofsSupported !== false) {
+          try {
+            const r = await this.makeDasRequest('getAssetProofs', { ids: uncachedIds }, 0, false);
+            const d = r.result || r;
+            if (d) return d;
+          } catch (e: any) {
+            const rpcCode = (e as any)?.rpcCode;
+            if (rpcCode === -32601 || String(e?.message || '').toLowerCase().includes('method not found')) {
+              this.assetProofsSupported = false;
+            }
+            // Continue to getAssetProofBatch attempt below.
+          }
+        }
+
         const response = await this.makeDasRequest('getAssetProofBatch', {
           ids: uncachedIds,
         }, 0, true); // Use batch connection for batch operations
@@ -435,14 +504,25 @@ export class CnftService {
       this.metrics.avgFetchTimeMs = 
         this.metrics.lastFetchTimes.reduce((a, b) => a + b, 0) / this.metrics.lastFetchTimes.length;
       
+      // Some providers wrap batch proof responses (e.g. { items: [...] } or { proofs: [...] }).
+      // Normalize these wrappers so downstream parsing works for both getAssetProofBatch and getAssetProofs.
+      const normalizedBatchResponse: any = (() => {
+        if (Array.isArray(batchResponse)) return batchResponse;
+        if (batchResponse && typeof batchResponse === 'object') {
+          if (Array.isArray((batchResponse as any).items)) return (batchResponse as any).items;
+          if (Array.isArray((batchResponse as any).proofs)) return (batchResponse as any).proofs;
+        }
+        return batchResponse;
+      })();
+      
       // Handle both response formats:
       // 1. Array format: [proof1, proof2, ...] (same order as input IDs)
       // 2. Object/map format: {assetId1: proof1, assetId2: proof2, ...} (keyed by asset ID)
-      if (Array.isArray(batchResponse)) {
+      if (Array.isArray(normalizedBatchResponse)) {
         // Array format: DAS API returns proofs in same order as input IDs
         for (let i = 0; i < uncachedIds.length; i++) {
           const assetId = uncachedIds[i];
-          const proof = batchResponse[i];
+          const proof = normalizedBatchResponse[i];
           
           if (!proof || !proof.proof) {
             errors.push({ 
@@ -456,10 +536,10 @@ export class CnftService {
           this.cacheProof(assetId, proof);
           results.set(assetId, proof);
         }
-      } else if (typeof batchResponse === 'object' && batchResponse !== null) {
+      } else if (typeof normalizedBatchResponse === 'object' && normalizedBatchResponse !== null) {
         // Object/map format: DAS API returns proofs keyed by asset ID
         for (const assetId of uncachedIds) {
-          const proof = (batchResponse as Record<string, any>)[assetId];
+          const proof = (normalizedBatchResponse as Record<string, any>)[assetId];
           
           if (!proof || !proof.proof) {
             errors.push({ 
@@ -474,7 +554,7 @@ export class CnftService {
           results.set(assetId, proof);
         }
       } else {
-        throw new Error(`Invalid batch proof response format from DAS API: expected array or object, got ${typeof batchResponse}`);
+        throw new Error(`Invalid batch proof response format from DAS API: expected array or object, got ${typeof normalizedBatchResponse}`);
       }
       
       console.log(`[CnftService] Batch proof fetch complete: ${results.size}/${uncachedIds.length} proofs fetched in ${fetchTime}ms`);
@@ -1087,10 +1167,11 @@ export class CnftService {
 
       // Do not retry unsupported methods (e.g. getAssetProofBatch on providers without DAS batch).
       // This prevents burning ~7s on repeated -32601 retries.
-      if (method === 'getAssetProofBatch') {
+      if (method === 'getAssetProofBatch' || method === 'getAssetProofs') {
         const rpcCode = (error as any)?.rpcCode;
         if (rpcCode === -32601 || String(error.message || '').toLowerCase().includes('method not found')) {
-          this.batchProofSupported = false;
+          if (method === 'getAssetProofBatch') this.batchProofSupported = false;
+          if (method === 'getAssetProofs') this.assetProofsSupported = false;
           throw error;
         }
       }
