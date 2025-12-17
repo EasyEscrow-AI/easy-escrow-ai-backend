@@ -17,6 +17,7 @@ import {
   DasProofResponse,
 } from '../types/cnft';
 import { BUBBLEGUM_PROGRAM_ID } from '../constants/bubblegum';
+import { DasHttpRateLimiter } from './das-http-rate-limiter';
 
 // Concurrent Merkle Tree account header size (before canopy data)
 // Based on SPL Account Compression v0.2: discriminator (8) + header (54) + changelog buffer + rightmost proof
@@ -1005,6 +1006,9 @@ export class CnftService {
       : this.config.rpcEndpoint;
     
     try {
+      // Distributed DAS rate limiter to protect against strict provider RPS caps (e.g. QuickNode -32007).
+      await DasHttpRateLimiter.waitForSlot(endpoint);
+
       // CRITICAL: Use unique request IDs to prevent DAS API caching
       // Full cache-control headers break QuickNode's getAssetProof endpoint
       // but unique IDs should prevent caching without causing errors
@@ -1033,6 +1037,15 @@ export class CnftService {
           statusText: response.statusText,
           body: errorText,
         });
+
+        // Respect Retry-After if present (some providers set this on 429)
+        const retryAfterHeader = response.headers.get('retry-after');
+        if (retryAfterHeader) {
+          const seconds = parseFloat(retryAfterHeader);
+          if (Number.isFinite(seconds) && seconds > 0) {
+            await new Promise(resolve => setTimeout(resolve, Math.min(30000, Math.round(seconds * 1000))));
+          }
+        }
         // If primary DAS RPC is rate-limited and we have a separate batch RPC (e.g., Helius),
         // retry the same request once against the batch RPC to improve first-try success.
         const isRateLimited =
