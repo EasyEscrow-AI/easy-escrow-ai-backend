@@ -17,6 +17,7 @@ import {
   DasProofResponse,
 } from '../types/cnft';
 import { BUBBLEGUM_PROGRAM_ID } from '../constants/bubblegum';
+import { DasHttpRateLimiter } from './das-http-rate-limiter';
 
 // Concurrent Merkle Tree account header size (before canopy data)
 // Based on SPL Account Compression v0.2: discriminator (8) + header (54) + changelog buffer + rightmost proof
@@ -1076,15 +1077,21 @@ export class CnftService {
     retryCount = 0,
     useBatchConnection = false
   ): Promise<any> {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), this.config.requestTimeout);
-    
     // Use batch connection for batch operations if available
     const endpoint = useBatchConnection && this.batchConnection 
       ? this.batchConnection.rpcEndpoint 
       : this.config.rpcEndpoint;
     
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
     try {
+      // Distributed DAS rate limiter to protect against strict provider RPS caps (e.g. QuickNode -32007).
+      await DasHttpRateLimiter.waitForSlot(endpoint);
+
+      // Start request timeout AFTER the rate limiter wait so queuing doesn't eat into the HTTP timeout.
+      const controller = new AbortController();
+      timeoutId = setTimeout(() => controller.abort(), this.config.requestTimeout);
+
       // CRITICAL: Use unique request IDs to prevent DAS API caching
       // Full cache-control headers break QuickNode's getAssetProof endpoint
       // but unique IDs should prevent caching without causing errors
@@ -1104,7 +1111,7 @@ export class CnftService {
         signal: controller.signal,
       });
       
-      clearTimeout(timeoutId);
+      if (timeoutId) clearTimeout(timeoutId);
       
       if (!response.ok) {
         const errorText = await response.text();
@@ -1113,6 +1120,15 @@ export class CnftService {
           statusText: response.statusText,
           body: errorText,
         });
+
+        // Respect Retry-After if present (some providers set this on 429)
+        const retryAfterHeader = response.headers.get('retry-after');
+        if (retryAfterHeader) {
+          const seconds = parseFloat(retryAfterHeader);
+          if (Number.isFinite(seconds) && seconds > 0) {
+            await new Promise(resolve => setTimeout(resolve, Math.min(30000, Math.round(seconds * 1000))));
+          }
+        }
         // If primary DAS RPC is rate-limited and we have a separate batch RPC (e.g., Helius),
         // retry the same request once against the batch RPC to improve first-try success.
         const isRateLimited =
@@ -1163,7 +1179,7 @@ export class CnftService {
       
       return data;
     } catch (error: any) {
-      clearTimeout(timeoutId);
+      if (timeoutId) clearTimeout(timeoutId);
 
       // Do not retry unsupported methods (e.g. getAssetProofBatch on providers without DAS batch).
       // This prevents burning ~7s on repeated -32601 retries.
