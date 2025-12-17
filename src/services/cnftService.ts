@@ -1033,6 +1033,22 @@ export class CnftService {
           statusText: response.statusText,
           body: errorText,
         });
+        // If primary DAS RPC is rate-limited and we have a separate batch RPC (e.g., Helius),
+        // retry the same request once against the batch RPC to improve first-try success.
+        const isRateLimited =
+          response.status === 429 ||
+          errorText.includes('"code":-32007') ||
+          errorText.toLowerCase().includes('request limit reached');
+        const hasAlt = !!this.batchConnection && this.batchConnection.rpcEndpoint !== this.config.rpcEndpoint;
+        if (!useBatchConnection && hasAlt && isRateLimited && method !== 'getAssetProofBatch') {
+          console.warn('[CnftService] Primary DAS RPC rate-limited; retrying request against batch RPC:', {
+            method,
+            primary: this.config.rpcEndpoint,
+            batch: this.batchConnection!.rpcEndpoint,
+          });
+          return this.makeDasRequest(method, params, retryCount, true);
+        }
+
         throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
       }
       
