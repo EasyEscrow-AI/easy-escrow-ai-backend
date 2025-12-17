@@ -13,6 +13,7 @@ import { Escrow } from '../generated/anchor/escrow';
 import { getEscrowIdl } from '../utils/idl-loader';
 import bs58 from 'bs58';
 import { PriorityFeeService } from './priority-fee.service';
+import { JitoHttpRateLimiter } from './jito-http-rate-limiter';
 
 /**
  * Detect Solana network from RPC URL
@@ -138,18 +139,38 @@ export class EscrowProgramService {
   private provider: AnchorProvider;
   public program: Program<Escrow>; // Made public for access from other services
   private adminKeypair: Keypair;
-  
-  // Jito rate limiting: 1 request per second across all instances
-  private static lastJitoRequestTime: number = 0;
-  private static readonly JITO_RATE_LIMIT_MS = 1000; // 1 second between requests
-
-  // Jito status endpoints are also rate limited (often more aggressively during congestion).
-  // Enforce a hard, process-wide limiter so concurrent swaps don't DOS ourselves into 429/-32097.
-  private static lastJitoStatusRequestTime: number = 0;
-  private static readonly JITO_STATUS_RATE_LIMIT_MS = 1000; // 1 req/sec max for status calls
+ 
+  /**
+   * Jito HTTP calls are rate limited per public IP / region.
+   * In production we can have multiple instances behind one NAT, so we enforce a distributed limiter (Redis-backed).
+   */
+  private static readonly JITO_HTTP_MIN_INTERVAL_MS = parseInt(process.env.JITO_HTTP_MIN_INTERVAL_MS || '1000', 10);
 
   // Some forwarders do not expose getInflightBundleStatuses. Cache capability per instance.
   private inflightBundleStatusesSupported: boolean | null = null;
+
+  private static getJitoBaseUrl(): string {
+    // Prefer regional endpoint when provided (e.g. https://singapore.mainnet.block-engine.jito.wtf)
+    // Fallback to global mainnet endpoint.
+    return process.env.JITO_BLOCK_ENGINE_URL || 'https://mainnet.block-engine.jito.wtf';
+  }
+
+  private static getJitoAuthHeaders(): Record<string, string> {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    // Optional UUID auth for higher limits (set in deployment secrets)
+    const uuid = process.env.JITO_AUTH_UUID;
+    if (uuid) {
+      headers['x-jito-auth'] = uuid;
+    }
+    return headers;
+  }
+
+  private static async rateLimitJitoHttp(): Promise<void> {
+    await JitoHttpRateLimiter.waitForSlot({
+      redisKey: 'rate_limit:jito:http',
+      intervalMs: EscrowProgramService.JITO_HTTP_MIN_INTERVAL_MS,
+    });
+  }
   
   // Public getter for programId
   public get programId(): PublicKey {
@@ -241,7 +262,7 @@ export class EscrowProgramService {
     }
 
     // For mainnet, send directly to Jito Block Engine (FREE!)
-    const JITO_BLOCK_ENGINE_MAINNET = 'https://mainnet.block-engine.jito.wtf';
+    const jitoBaseUrl = EscrowProgramService.getJitoBaseUrl();
     
     const serializedTransaction = transaction.serialize().toString('base64');
     
@@ -253,23 +274,12 @@ export class EscrowProgramService {
     
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
       try {
-        // Rate limiting: Ensure at least 1 second between Jito requests
-        // Atomically reserve next slot to prevent race conditions
-        const now = Date.now();
-        const nextAvailableTime = EscrowProgramService.lastJitoRequestTime + EscrowProgramService.JITO_RATE_LIMIT_MS;
-        const delayMs = Math.max(0, nextAvailableTime - now);
+        // Distributed rate limiting (Redis-backed) to respect per-IP limits across pods
+        await EscrowProgramService.rateLimitJitoHttp();
         
-        // Reserve slot BEFORE waiting (prevents concurrent requests from bypassing rate limit)
-        EscrowProgramService.lastJitoRequestTime = Math.max(now, nextAvailableTime);
-        
-        if (delayMs > 0) {
-          console.log(`[EscrowProgramService] Rate limiting: Waiting ${delayMs}ms before Jito request (attempt ${attempt + 1}/${MAX_RETRIES + 1})`);
-          await new Promise(resolve => setTimeout(resolve, delayMs));
-        }
-        
-        const response = await fetch(`${JITO_BLOCK_ENGINE_MAINNET}/api/v1/transactions`, {
+        const response = await fetch(`${jitoBaseUrl}/api/v1/transactions`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: EscrowProgramService.getJitoAuthHeaders(),
           body: JSON.stringify({
             jsonrpc: '2.0',
             id: 1,
@@ -448,8 +458,12 @@ export class EscrowProgramService {
   /**
    * Jito Bundle API endpoints
    */
-  private static readonly JITO_BUNDLE_ENDPOINT_MAINNET = 'https://mainnet.block-engine.jito.wtf/api/v1/bundles';
-  private static readonly JITO_TIP_ENDPOINT_MAINNET = 'https://bundles.jito.wtf/api/v1/bundles/tip_floor';
+  private static getJitoBundleEndpointMainnet(): string {
+    return `${EscrowProgramService.getJitoBaseUrl()}/api/v1/bundles`;
+  }
+
+  // Tip floor endpoint (not block-engine regional). Can optionally be overridden.
+  private static readonly JITO_TIP_ENDPOINT_MAINNET = process.env.JITO_TIP_API_URL || 'https://bundles.jito.wtf/api/v1/bundles/tip_floor';
   
   /**
    * Default Jito tip amount in lamports (fallback when tip API fails)
@@ -528,23 +542,14 @@ export class EscrowProgramService {
     
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
       try {
-        // Rate limiting: ensure minimum 1 second between Jito requests
-        const now = Date.now();
-        const nextAvailableTime = EscrowProgramService.lastJitoRequestTime + EscrowProgramService.JITO_RATE_LIMIT_MS;
-        const delayMs = Math.max(0, nextAvailableTime - now);
-        
-        if (delayMs > 0 && attempt === 1) {
-          console.log(`[EscrowProgramService] Rate limiting: Waiting ${delayMs}ms before bundle simulation`);
-          await new Promise(resolve => setTimeout(resolve, delayMs));
-        }
-        
-        EscrowProgramService.lastJitoRequestTime = Math.max(now, nextAvailableTime);
+        // Distributed rate limiting (Redis-backed) to respect per-IP limits across pods
+        await EscrowProgramService.rateLimitJitoHttp();
         
         // Jito Block Engine uses JSON-RPC format (as per legacy working code)
         // Endpoint: POST /api/v1/bundles with JSON-RPC body
-        const response = await fetch(EscrowProgramService.JITO_BUNDLE_ENDPOINT_MAINNET, {
+        const response = await fetch(EscrowProgramService.getJitoBundleEndpointMainnet(), {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: EscrowProgramService.getJitoAuthHeaders(),
           body: JSON.stringify({
             jsonrpc: '2.0',
             id: 1,
@@ -864,17 +869,8 @@ export class EscrowProgramService {
     }
     
     try {
-      // Rate limiting
-      const now = Date.now();
-      const nextAvailableTime = EscrowProgramService.lastJitoRequestTime + EscrowProgramService.JITO_RATE_LIMIT_MS;
-      const delayMs = Math.max(0, nextAvailableTime - now);
-      
-      if (delayMs > 0) {
-        console.log(`[EscrowProgramService] Rate limiting: Waiting ${delayMs}ms before Jito bundle request`);
-        await new Promise(resolve => setTimeout(resolve, delayMs));
-      }
-      
-      EscrowProgramService.lastJitoRequestTime = Math.max(now, nextAvailableTime);
+      // Distributed rate limiting (Redis-backed) to respect per-IP limits across pods
+      await EscrowProgramService.rateLimitJitoHttp();
       
       // NOTE: Jito Block Engine API does NOT support simulateBundle method
       // The simulateBundle method returns -32601 "Invalid method" error
@@ -900,25 +896,16 @@ export class EscrowProgramService {
       
       for (let attempt = 1; attempt <= MAX_BUNDLE_RETRIES; attempt++) {
         try {
-          // Rate limiting: ensure minimum 1 second between Jito requests
-          const now = Date.now();
-          const nextAvailableTime = EscrowProgramService.lastJitoRequestTime + EscrowProgramService.JITO_RATE_LIMIT_MS;
-          const delayMs = Math.max(0, nextAvailableTime - now);
-          
-          if (delayMs > 0 && attempt === 1) {
-            console.log(`[EscrowProgramService] Rate limiting: Waiting ${delayMs}ms before bundle submission`);
-            await new Promise(resolve => setTimeout(resolve, delayMs));
-          }
-          
-          EscrowProgramService.lastJitoRequestTime = Math.max(now, nextAvailableTime);
+          // Distributed rate limiting (Redis-backed) to respect per-IP limits across pods
+          await EscrowProgramService.rateLimitJitoHttp();
           
           // Jito Block Engine uses JSON-RPC format
           // CRITICAL: Must specify encoding: "base64" when sending base64-encoded transactions
           // Without this flag, Jito defaults to base58 and will fail to decode transaction #0
           // Endpoint: POST /api/v1/bundles with JSON-RPC body
-          const response = await fetch(EscrowProgramService.JITO_BUNDLE_ENDPOINT_MAINNET, {
+          const response = await fetch(EscrowProgramService.getJitoBundleEndpointMainnet(), {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: EscrowProgramService.getJitoAuthHeaders(),
             body: JSON.stringify({
               jsonrpc: '2.0',
               id: 1,
@@ -1069,27 +1056,13 @@ export class EscrowProgramService {
     console.log(`[EscrowProgramService] Checking status of ${bundleIds.length} bundle(s)...`);
     
     try {
-      // Hard rate limiter for status calls (process-wide)
-      {
-        const now = Date.now();
-        const scheduledTime = Math.max(
-          now,
-          EscrowProgramService.lastJitoStatusRequestTime + EscrowProgramService.JITO_STATUS_RATE_LIMIT_MS
-        );
-        // Claim the slot BEFORE awaiting to avoid concurrent callers bunching up.
-        EscrowProgramService.lastJitoStatusRequestTime = scheduledTime;
-        const delayMs = scheduledTime - now;
-        if (delayMs > 0) {
-          await new Promise(resolve => setTimeout(resolve, delayMs));
-        }
-      }
-
       // Jito Block Engine uses JSON-RPC format (verified with test helper and E2E tests)
       // For multiple bundle IDs, use nested array format: [[id1], [id2], ...]
       // This matches the test helper format for single IDs: [[bundleId]]
-      const response = await fetch(EscrowProgramService.JITO_BUNDLE_ENDPOINT_MAINNET, {
+      await EscrowProgramService.rateLimitJitoHttp();
+      const response = await fetch(EscrowProgramService.getJitoBundleEndpointMainnet(), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: EscrowProgramService.getJitoAuthHeaders(),
         body: JSON.stringify({
           jsonrpc: '2.0',
           id: 1,
@@ -1177,24 +1150,10 @@ export class EscrowProgramService {
     console.log(`[EscrowProgramService] Checking inflight status of ${bundleIds.length} bundle(s)...`);
 
     try {
-      // Hard rate limiter for status calls (process-wide)
-      {
-        const now = Date.now();
-        const scheduledTime = Math.max(
-          now,
-          EscrowProgramService.lastJitoStatusRequestTime + EscrowProgramService.JITO_STATUS_RATE_LIMIT_MS
-        );
-        // Claim the slot BEFORE awaiting to avoid concurrent callers bunching up.
-        EscrowProgramService.lastJitoStatusRequestTime = scheduledTime;
-        const delayMs = scheduledTime - now;
-        if (delayMs > 0) {
-          await new Promise(resolve => setTimeout(resolve, delayMs));
-        }
-      }
-
-      const response = await fetch(EscrowProgramService.JITO_BUNDLE_ENDPOINT_MAINNET, {
+      await EscrowProgramService.rateLimitJitoHttp();
+      const response = await fetch(EscrowProgramService.getJitoBundleEndpointMainnet(), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: EscrowProgramService.getJitoAuthHeaders(),
         body: JSON.stringify({
           jsonrpc: '2.0',
           id: 1,
