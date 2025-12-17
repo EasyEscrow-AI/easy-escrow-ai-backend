@@ -154,6 +154,11 @@ export class EscrowProgramService {
 
   // Some forwarders do not expose getInflightBundleStatuses. Cache capability per instance.
   private inflightBundleStatusesSupported: boolean | null = null;
+  
+  // During congestion, Jito status endpoints can be globally rate limited (-32097 / HTTP 429).
+  // When that happens, avoid hammering status endpoints; rely on on-chain signature checks until cooldown expires.
+  private static jitoStatusCooldownUntilMs = 0;
+  private static readonly JITO_STATUS_COOLDOWN_MS = parseInt(process.env.JITO_STATUS_COOLDOWN_MS || '10000', 10); // 10s default
 
   private static getJitoBaseUrl(): string {
     // Prefer regional endpoint when provided (e.g. https://singapore.mainnet.block-engine.jito.wtf)
@@ -1059,6 +1064,14 @@ export class EscrowProgramService {
     console.log(`[EscrowProgramService] Checking status of ${bundleIds.length} bundle(s)...`);
     
     try {
+      const now = Date.now();
+      if (now < EscrowProgramService.jitoStatusCooldownUntilMs) {
+        return bundleIds.map(id => ({
+          bundleId: id,
+          status: 'Pending' as const,
+          error: 'Jito status cooldown active (recent global rate limit)',
+        }));
+      }
       // Jito Block Engine uses JSON-RPC format (verified with test helper and E2E tests)
       // For multiple bundle IDs, use nested array format: [[id1], [id2], ...]
       // This matches the test helper format for single IDs: [[bundleId]]
@@ -1079,6 +1092,8 @@ export class EscrowProgramService {
         console.error(`[EscrowProgramService] Bundle status HTTP error: ${response.status}`, errorText);
         // Treat 429 as transient/no-signal. Jito/forwarders can be globally rate limited.
         if (response.status === 429) {
+          EscrowProgramService.jitoStatusCooldownUntilMs =
+            Date.now() + (Number.isFinite(EscrowProgramService.JITO_STATUS_COOLDOWN_MS) ? EscrowProgramService.JITO_STATUS_COOLDOWN_MS : 10000);
           return bundleIds.map(id => ({ bundleId: id, status: 'Pending' as const, error: 'HTTP 429 rate limited' }));
         }
         return bundleIds.map(id => ({ bundleId: id, status: 'Invalid' as const, error: `HTTP ${response.status}` }));
@@ -1091,6 +1106,12 @@ export class EscrowProgramService {
       
       if (result.error) {
         console.error('[EscrowProgramService] Bundle status RPC error:', result.error);
+        const msg = (result.error?.message || '').toLowerCase();
+        if (msg.includes('rate') || msg.includes('globally rate limited') || msg.includes('network congested')) {
+          EscrowProgramService.jitoStatusCooldownUntilMs =
+            Date.now() + (Number.isFinite(EscrowProgramService.JITO_STATUS_COOLDOWN_MS) ? EscrowProgramService.JITO_STATUS_COOLDOWN_MS : 10000);
+          return bundleIds.map(id => ({ bundleId: id, status: 'Pending' as const, error: result.error?.message || 'Rate limited' }));
+        }
         return bundleIds.map(id => ({ bundleId: id, status: 'Invalid' as const, error: result.error?.message }));
       }
       
@@ -1153,6 +1174,15 @@ export class EscrowProgramService {
     console.log(`[EscrowProgramService] Checking inflight status of ${bundleIds.length} bundle(s)...`);
 
     try {
+      const now = Date.now();
+      if (now < EscrowProgramService.jitoStatusCooldownUntilMs) {
+        return bundleIds.map(id => ({
+          bundleId: id,
+          status: 'Pending' as const,
+          error: 'Jito inflight status cooldown active (recent global rate limit)',
+        }));
+      }
+
       await EscrowProgramService.rateLimitJitoHttp();
       const response = await fetch(EscrowProgramService.getJitoBundleEndpointMainnet(), {
         method: 'POST',
@@ -1169,6 +1199,8 @@ export class EscrowProgramService {
         const errorText = await response.text();
         console.error(`[EscrowProgramService] Inflight status HTTP error: ${response.status}`, errorText);
         if (response.status === 429) {
+          EscrowProgramService.jitoStatusCooldownUntilMs =
+            Date.now() + (Number.isFinite(EscrowProgramService.JITO_STATUS_COOLDOWN_MS) ? EscrowProgramService.JITO_STATUS_COOLDOWN_MS : 10000);
           return bundleIds.map(id => ({ bundleId: id, status: 'Pending' as const, error: 'HTTP 429 rate limited' }));
         }
         return bundleIds.map(id => ({ bundleId: id, status: 'Invalid' as const, error: `HTTP ${response.status}` }));
@@ -1195,6 +1227,8 @@ export class EscrowProgramService {
         }
         // Treat rate limits as no-signal
         if (result.error.code === -32097 || result.error.message?.toLowerCase().includes('rate')) {
+          EscrowProgramService.jitoStatusCooldownUntilMs =
+            Date.now() + (Number.isFinite(EscrowProgramService.JITO_STATUS_COOLDOWN_MS) ? EscrowProgramService.JITO_STATUS_COOLDOWN_MS : 10000);
           return bundleIds.map(id => ({ bundleId: id, status: 'Pending' as const, error: result.error?.message || 'Rate limited' }));
         }
         return bundleIds.map(id => ({ bundleId: id, status: 'Invalid' as const, error: result.error?.message }));
