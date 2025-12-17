@@ -45,10 +45,10 @@ return scheduled - now
     const jitter = 0.8 + Math.random() * 0.4;
     const effectiveInterval = Math.max(1, Math.floor(interval * jitter));
 
-    const now = Date.now();
     const key = DasHttpRateLimiter.keyForEndpoint(endpoint);
 
     try {
+      const now = Date.now();
       const delayMs = await (redisClient as any).eval(
         DasHttpRateLimiter.RESERVE_LUA,
         1,
@@ -61,6 +61,8 @@ return scheduled - now
       if (delay > 0) await new Promise(resolve => setTimeout(resolve, delay));
       return;
     } catch {
+      // Redis may take time to fail (timeouts). Recompute now so spacing remains correct.
+      const now = Date.now();
       const current = DasHttpRateLimiter.inMemoryNextTimeMs.get(key) || 0;
       const scheduled = Math.max(now, current);
       DasHttpRateLimiter.inMemoryNextTimeMs.set(key, scheduled + effectiveInterval);

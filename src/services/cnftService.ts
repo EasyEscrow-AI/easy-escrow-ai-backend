@@ -997,17 +997,20 @@ export class CnftService {
     retryCount = 0,
     useBatchConnection = false
   ): Promise<any> {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), this.config.requestTimeout);
-    
     // Use batch connection for batch operations if available
     const endpoint = useBatchConnection && this.batchConnection 
       ? this.batchConnection.rpcEndpoint 
       : this.config.rpcEndpoint;
     
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
     try {
       // Distributed DAS rate limiter to protect against strict provider RPS caps (e.g. QuickNode -32007).
       await DasHttpRateLimiter.waitForSlot(endpoint);
+
+      // Start request timeout AFTER the rate limiter wait so queuing doesn't eat into the HTTP timeout.
+      const controller = new AbortController();
+      timeoutId = setTimeout(() => controller.abort(), this.config.requestTimeout);
 
       // CRITICAL: Use unique request IDs to prevent DAS API caching
       // Full cache-control headers break QuickNode's getAssetProof endpoint
@@ -1028,7 +1031,7 @@ export class CnftService {
         signal: controller.signal,
       });
       
-      clearTimeout(timeoutId);
+      if (timeoutId) clearTimeout(timeoutId);
       
       if (!response.ok) {
         const errorText = await response.text();
@@ -1096,7 +1099,7 @@ export class CnftService {
       
       return data;
     } catch (error: any) {
-      clearTimeout(timeoutId);
+      if (timeoutId) clearTimeout(timeoutId);
 
       // Do not retry unsupported methods (e.g. getAssetProofBatch on providers without DAS batch).
       // This prevents burning ~7s on repeated -32601 retries.
