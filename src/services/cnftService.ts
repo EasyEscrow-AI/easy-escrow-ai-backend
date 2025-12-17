@@ -504,14 +504,25 @@ export class CnftService {
       this.metrics.avgFetchTimeMs = 
         this.metrics.lastFetchTimes.reduce((a, b) => a + b, 0) / this.metrics.lastFetchTimes.length;
       
+      // Some providers wrap batch proof responses (e.g. { items: [...] } or { proofs: [...] }).
+      // Normalize these wrappers so downstream parsing works for both getAssetProofBatch and getAssetProofs.
+      const normalizedBatchResponse: any = (() => {
+        if (Array.isArray(batchResponse)) return batchResponse;
+        if (batchResponse && typeof batchResponse === 'object') {
+          if (Array.isArray((batchResponse as any).items)) return (batchResponse as any).items;
+          if (Array.isArray((batchResponse as any).proofs)) return (batchResponse as any).proofs;
+        }
+        return batchResponse;
+      })();
+      
       // Handle both response formats:
       // 1. Array format: [proof1, proof2, ...] (same order as input IDs)
       // 2. Object/map format: {assetId1: proof1, assetId2: proof2, ...} (keyed by asset ID)
-      if (Array.isArray(batchResponse)) {
+      if (Array.isArray(normalizedBatchResponse)) {
         // Array format: DAS API returns proofs in same order as input IDs
         for (let i = 0; i < uncachedIds.length; i++) {
           const assetId = uncachedIds[i];
-          const proof = batchResponse[i];
+          const proof = normalizedBatchResponse[i];
           
           if (!proof || !proof.proof) {
             errors.push({ 
@@ -525,10 +536,10 @@ export class CnftService {
           this.cacheProof(assetId, proof);
           results.set(assetId, proof);
         }
-      } else if (typeof batchResponse === 'object' && batchResponse !== null) {
+      } else if (typeof normalizedBatchResponse === 'object' && normalizedBatchResponse !== null) {
         // Object/map format: DAS API returns proofs keyed by asset ID
         for (const assetId of uncachedIds) {
-          const proof = (batchResponse as Record<string, any>)[assetId];
+          const proof = (normalizedBatchResponse as Record<string, any>)[assetId];
           
           if (!proof || !proof.proof) {
             errors.push({ 
@@ -543,7 +554,7 @@ export class CnftService {
           results.set(assetId, proof);
         }
       } else {
-        throw new Error(`Invalid batch proof response format from DAS API: expected array or object, got ${typeof batchResponse}`);
+        throw new Error(`Invalid batch proof response format from DAS API: expected array or object, got ${typeof normalizedBatchResponse}`);
       }
       
       console.log(`[CnftService] Batch proof fetch complete: ${results.size}/${uncachedIds.length} proofs fetched in ${fetchTime}ms`);
