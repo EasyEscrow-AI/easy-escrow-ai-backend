@@ -37,7 +37,11 @@ return scheduled - now
     intervalMs?: number;
   }): Promise<void> {
     const redisKey = options?.redisKey || JitoHttpRateLimiter.DEFAULT_REDIS_KEY;
-    const intervalMs = options?.intervalMs ?? JitoHttpRateLimiter.DEFAULT_INTERVAL_MS;
+    const intervalCandidate = options?.intervalMs ?? JitoHttpRateLimiter.DEFAULT_INTERVAL_MS;
+    const intervalMs =
+      Number.isFinite(intervalCandidate) && intervalCandidate > 0
+        ? Math.floor(intervalCandidate)
+        : JitoHttpRateLimiter.DEFAULT_INTERVAL_MS;
     const now = Date.now();
 
     // Prefer Redis to coordinate across pods; fall back to in-memory if Redis errors.

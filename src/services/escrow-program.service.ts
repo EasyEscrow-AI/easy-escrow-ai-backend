@@ -144,7 +144,13 @@ export class EscrowProgramService {
    * Jito HTTP calls are rate limited per public IP / region.
    * In production we can have multiple instances behind one NAT, so we enforce a distributed limiter (Redis-backed).
    */
-  private static readonly JITO_HTTP_MIN_INTERVAL_MS = parseInt(process.env.JITO_HTTP_MIN_INTERVAL_MS || '1000', 10);
+  private static readonly JITO_HTTP_MIN_INTERVAL_MS = (() => {
+    const raw = process.env.JITO_HTTP_MIN_INTERVAL_MS;
+    const parsed = raw ? Number(raw) : 1000;
+    // Guard against NaN / invalid configs silently disabling throttling
+    if (!Number.isFinite(parsed) || parsed <= 0) return 1000;
+    return Math.floor(parsed);
+  })();
 
   // Some forwarders do not expose getInflightBundleStatuses. Cache capability per instance.
   private inflightBundleStatusesSupported: boolean | null = null;
@@ -869,9 +875,6 @@ export class EscrowProgramService {
     }
     
     try {
-      // Distributed rate limiting (Redis-backed) to respect per-IP limits across pods
-      await EscrowProgramService.rateLimitJitoHttp();
-      
       // NOTE: Jito Block Engine API does NOT support simulateBundle method
       // The simulateBundle method returns -32601 "Invalid method" error
       // Instead, we skip simulation for Jito bundles and rely on:
