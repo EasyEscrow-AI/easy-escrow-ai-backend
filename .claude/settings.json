@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash",
+      "Edit",
+      "Read",
+      "Write",
+      "WebFetch",
+      "LSP",
+      "Grep",
+      "Glob",
+      "LS",
+      "Git",
+      "Bash(node:*)",
+      "Bash(git fetch:*)",
+      "Bash(git checkout:*)",
+      "Bash(git pull:*)",
+      "Bash(git worktree:*)",
+      "Bash(cat:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git restore:*)",
+      "Bash(git push:*)",
+      "Bash(gh pr)",
+      "Bash(gh pr create:*)",
+      "Bash(gh pr list:*)",
+      "Bash(ls:*)",
+      "Bash(npm:*)",
+      "Bash(npx:*)",
+      "Bash(claude mcp add taskmaster-ai -- npx -y task-master-ai)"
+    ]
+  }
+}
