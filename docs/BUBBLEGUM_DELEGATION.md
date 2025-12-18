@@ -201,7 +201,7 @@ await transfer(umi, {
 |----------|---------|----------|------------|----------|
 | **Freeze + Delegate** | Owner retains | Lower | Medium | High |
 | **Transfer to Escrow** | Program holds | Higher | Lower | High |
-| **JITO Bundle Only** | Owner retains | Variable | Low | Medium |
+| **Sequential Transactions** | Owner retains | Low | Low | Medium |
 
 ---
 
@@ -319,21 +319,11 @@ await transfer(umi, { ...freshProof, ... }).sendAndConfirm(umi);
 
 **Mitigation Strategies**:
 
-1. **JITO Bundles** - Bundle swap transactions atomically
-   ```javascript
-   // Bundle ensures atomic execution
-   const bundle = [
-     delegateAndFreezeTx,
-     settlementTx
-   ];
-   await jitoClient.sendBundle(bundle);
-   ```
-
-2. **Freeze Lock** - Freeze cNFT before swap window
+1. **Freeze Lock** - Freeze cNFT before swap window
    - Prevents any transfer until thaw
    - Attacker cannot front-run frozen asset
 
-3. **Private RPC** - Use protected endpoints
+2. **Private RPC** - Use protected endpoints
    - Bypass public mempool
    - Reduce visibility to searchers
 
@@ -498,7 +488,7 @@ Auctioneer Delegate Flow:
 | Magic Eden | Yes | Transfer to escrow | Full custody | Private RPC |
 | Tensor | Yes | AMM pools | Pool-based | Priority fees |
 | Sorare | Yes | Delegate to PDA | Non-custodial | Proof freshness |
-| **Recommended** | Yes | Freeze + Delegate | Non-custodial | JITO bundles |
+| **Recommended** | Yes | Freeze + Delegate | Non-custodial | Freeze + Priority fees |
 
 ---
 
@@ -519,26 +509,14 @@ Auctioneer Delegate Flow:
 ```
 Base Fee:     0.000005 SOL (5,000 lamports) per signature
 Priority Fee: Variable (0 - 0.001+ SOL based on congestion)
-JITO Tip:     Minimum 1,000 lamports, typical 10,000-100,000+
 ```
 
-### 6.3 JITO Bundles vs Priority Fees
-
-| Factor | Priority Fees | JITO Bundles |
-|--------|---------------|--------------|
-| **Inclusion Guarantee** | Non-deterministic | High (auction winner) |
-| **Atomicity** | Single tx only | Up to 5 transactions |
-| **Cost Predictability** | Variable | Auction-based |
-| **MEV Protection** | Low | High |
-| **Speed** | Network dependent | ~200ms auction cycles |
-| **Market Share** | ~34% of fees | ~66% of fees (Dec 2024) |
-
-### 6.4 Swap Transaction Cost Estimates
+### 6.3 Swap Transaction Cost Estimates
 
 **Basic Delegation Swap (3 transactions)**:
 ```
 1. Delegate cNFT to escrow PDA:    ~0.00001 SOL
-2. Lock USDC in escrow:            ~0.00001 SOL
+2. Lock SOL in escrow:             ~0.00001 SOL
 3. Settlement (transfer both):     ~0.00002 SOL
                                    -----------
 Total (no priority):               ~0.00004 SOL ($0.008 at $200/SOL)
@@ -552,23 +530,15 @@ Priority fees (3 tx):              ~0.0003 SOL
 Total:                             ~0.00034 SOL ($0.068)
 ```
 
-**JITO Bundle (recommended for atomicity)**:
-```
-Base fees:                         ~0.00004 SOL
-JITO tip (competitive):            ~0.0001-0.001 SOL
-                                   -----------
-Total:                             ~0.0001-0.001 SOL ($0.02-0.20)
-```
-
-### 6.5 Freeze vs Transfer Escrow Costs
+### 6.4 Freeze vs Transfer Escrow Costs
 
 | Approach | Transactions | Estimated Cost | Notes |
 |----------|--------------|----------------|-------|
 | **Delegate + Freeze** | 3 | ~0.00004 SOL | Non-custodial |
 | **Transfer to Escrow** | 4 | ~0.00005 SOL | Extra transfer |
-| **JITO Bundle (D+F)** | 3 (bundled) | ~0.0002 SOL | Atomic + MEV safe |
+| **Sequential (D+F)** | 3 (sequential) | ~0.00004 SOL | Simple, reliable |
 
-### 6.6 Cost Optimization Strategies
+### 6.5 Cost Optimization Strategies
 
 1. **Use `truncateCanopy: true`**
    - Reduces proof size in transaction
@@ -590,22 +560,6 @@ Total:                             ~0.0001-0.001 SOL ($0.02-0.20)
    - Trade-off: Higher upfront tree cost
    - Optimal for high-volume collections
 
-### 6.7 Break-Even Analysis: JITO vs Priority Fees
-
-```
-JITO makes sense when:
-- Swap value > 1 SOL (MEV risk increases with value)
-- Network congestion high (priority fees spike)
-- Atomicity required (multi-step swaps)
-- Time-sensitive execution needed
-
-Priority fees sufficient when:
-- Low-value swaps (< 0.1 SOL)
-- Network uncongested
-- Single transaction operations
-- Cost minimization priority
-```
-
 ---
 
 ## References
@@ -618,7 +572,6 @@ Priority fees sufficient when:
 - [Helius Compression Guide](https://www.helius.dev/blog/all-you-need-to-know-about-compression-on-solana)
 - [Solana State Compression](https://solana.com/news/state-compression-compressed-nfts-solana)
 - [Solana Fees Guide](https://www.helius.dev/blog/solana-fees-in-theory-and-practice)
-- [JITO MEV Economics](https://blog.quicknode.com/solana-mev-economics-jito-bundles-liquid-staking-guide/)
 - [MEV Protection on Solana](https://www.quicknode.com/guides/solana-development/defi/mev-on-solana)
 
 ---

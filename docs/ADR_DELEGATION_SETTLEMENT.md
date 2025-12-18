@@ -6,7 +6,7 @@
 
 ## Context
 
-EasyEscrow.ai requires a settlement mechanism for compressed NFT (cNFT) atomic swaps that balances security, cost efficiency, and user experience. The platform needs to support trustless swaps between cNFTs and USDC while protecting against front-running, double-spend, and MEV attacks.
+EasyEscrow.ai requires a settlement mechanism for compressed NFT (cNFT) atomic swaps that balances security, cost efficiency, and user experience. The platform needs to support trustless swaps between cNFTs and SOL while protecting against front-running, double-spend, and MEV attacks.
 
 ### Current Challenge
 
@@ -21,13 +21,13 @@ Compressed NFTs on Solana use Merkle tree state compression, which changes how o
 
 1. **Option A: Transfer-to-Escrow (Traditional)**
 2. **Option B: Delegation + Freeze (Non-Custodial)**
-3. **Option C: JITO Bundle Only (No Lock)**
+3. **Option C: No Lock (Rejected)**
 
 ## Decision
 
-**We will implement Option B: Delegation + Freeze with JITO Bundle settlement.**
+**We will implement Option B: Delegation + Freeze with sequential transaction settlement.**
 
-This hybrid approach uses Bubblegum V2's `delegateAndFreezeV2` for secure asset locking, combined with JITO bundles for atomic settlement execution.
+This approach uses Bubblegum V2's `delegateAndFreezeV2` for secure asset locking, with sequential transactions for settlement execution.
 
 ## Rationale
 
@@ -36,8 +36,8 @@ This hybrid approach uses Bubblegum V2's `delegateAndFreezeV2` for secure asset 
 ```
 Flow:
 1. Seller transfers cNFT to escrow vault
-2. Buyer deposits USDC to escrow
-3. On settlement: transfer cNFT to buyer, USDC to seller
+2. Buyer deposits SOL to escrow
+3. On settlement: transfer cNFT to buyer, SOL to seller
 4. On cancel: return cNFT to seller
 ```
 
@@ -61,8 +61,8 @@ Flow:
 ```
 Flow:
 1. Seller delegates cNFT to escrow PDA + freezes (atomic)
-2. Buyer deposits USDC to escrow
-3. On settlement: thaw + transfer via delegate (JITO bundle)
+2. Buyer deposits SOL to escrow
+3. On settlement: thaw + transfer via delegate (sequential txs)
 4. On cancel: thaw + revoke delegation
 ```
 
@@ -82,13 +82,13 @@ Flow:
 
 ---
 
-### Option C: JITO Bundle Only (Rejected)
+### Option C: No Lock (Rejected)
 
 ```
 Flow:
 1. Seller signs transfer authorization offline
-2. Buyer deposits USDC
-3. Backend bundles: USDC transfer + cNFT transfer atomically
+2. Buyer deposits SOL
+3. Backend transfers SOL + cNFT sequentially
 4. No pre-lock mechanism
 ```
 
@@ -100,8 +100,7 @@ Flow:
 **Cons:**
 - No protection during listing window
 - Seller can transfer cNFT before settlement
-- Relies entirely on JITO availability
-- Higher MEV risk if bundle fails
+- Higher risk if transactions fail between steps
 
 **Verdict**: Rejected due to insufficient security guarantees.
 
@@ -131,25 +130,26 @@ Flow:
 │                                                                  │
 │  Buyer                     Escrow Program                        │
 │    │                            │                                │
-│    │── Deposit USDC ───────────▶│  USDC locked in vault PDA     │
+│    │── Deposit SOL ────────────▶│  SOL locked in escrow PDA     │
 │    │                            │                                │
 │    │◀── Deposit Confirmed ──────│  Track: buyer, amount, time   │
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────┐
-│                   SETTLEMENT PHASE (JITO BUNDLE)                 │
+│                   SETTLEMENT PHASE (Sequential)                  │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
-│  Backend                   JITO                    Blockchain    │
-│    │                        │                          │         │
-│    │── Create Bundle ──────▶│                          │         │
-│    │   [thawV2,             │                          │         │
-│    │    transferCNFT,       │                          │         │
-│    │    transferUSDC]       │                          │         │
-│    │                        │── Atomic Execution ─────▶│         │
-│    │                        │                          │         │
-│    │◀── Bundle Landed ──────│◀── Confirmation ─────────│         │
+│  Backend                                         Blockchain      │
+│    │                                                  │          │
+│    │── 1. Thaw cNFT ─────────────────────────────────▶│          │
+│    │◀── Confirmed ────────────────────────────────────│          │
+│    │                                                  │          │
+│    │── 2. Transfer cNFT to buyer ────────────────────▶│          │
+│    │◀── Confirmed ────────────────────────────────────│          │
+│    │                                                  │          │
+│    │── 3. Transfer SOL to seller (minus fees) ───────▶│          │
+│    │◀── Confirmed ────────────────────────────────────│          │
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -170,14 +170,13 @@ pub struct EscrowAgreement {
     // Asset Details
     pub cnft_asset_id: Pubkey,
     pub cnft_merkle_tree: Pubkey,
-    pub usdc_mint: Pubkey,
-    pub price: u64,
+    pub price: u64,  // Price in lamports (SOL)
 
     // State
     pub status: EscrowStatus,
     pub cnft_delegated: bool,
     pub cnft_frozen: bool,
-    pub usdc_deposited: u64,
+    pub sol_deposited: u64,
 
     // Timing
     pub created_at: i64,
@@ -192,7 +191,7 @@ pub struct EscrowAgreement {
 pub enum EscrowStatus {
     Created,        // Agreement initialized
     CnftLocked,     // cNFT delegated + frozen
-    Funded,         // USDC deposited
+    Funded,         // SOL deposited
     Settled,        // Swap complete
     Cancelled,      // Expired or cancelled
     Refunded,       // Assets returned
@@ -205,8 +204,8 @@ pub enum EscrowStatus {
 // Escrow Agreement PDA
 seeds = [b"escrow", agreement_id.as_ref()]
 
-// USDC Vault PDA
-seeds = [b"usdc_vault", agreement_id.as_ref()]
+// SOL Vault PDA (escrow holds native SOL)
+seeds = [b"sol_vault", agreement_id.as_ref()]
 
 // This PDA becomes the cNFT delegate
 // allowing it to authorize transfers via CPI
@@ -233,11 +232,11 @@ pub fn settle(ctx: Context<Settle>) -> Result<()> {
     let fee_amount = calculate_fee(agreement.price, agreement.fee_bps);
     let seller_amount = agreement.price - fee_amount;
 
-    // 4. Transfer USDC to seller
-    transfer_usdc_to_seller(&ctx, seller_amount)?;
+    // 4. Transfer SOL to seller
+    transfer_sol_to_seller(&ctx, seller_amount)?;
 
     // 5. Transfer fee to platform
-    transfer_usdc_to_fee_vault(&ctx, fee_amount)?;
+    transfer_sol_to_fee_vault(&ctx, fee_amount)?;
 
     // 6. Update state
     agreement.status = EscrowStatus::Settled;
@@ -254,65 +253,49 @@ pub fn settle(ctx: Context<Settle>) -> Result<()> {
 }
 ```
 
-### JITO Bundle Construction
+### Sequential Settlement Execution
 
 ```typescript
-async function createSettlementBundle(
-  agreement: EscrowAgreement,
-  assetProof: AssetWithProof
-): Promise<VersionedTransaction[]> {
-
-  // Transaction 1: Thaw cNFT
-  const thawIx = await createThawV2Instruction({
-    authority: escrowPda,
-    leafOwner: agreement.seller,
-    merkleTree: agreement.cnftMerkleTree,
-    ...assetProof,
-  });
-
-  // Transaction 2: Transfer cNFT (delegate-signed)
-  const transferCnftIx = await createTransferInstruction({
-    leafOwner: agreement.seller,
-    leafDelegate: escrowPda,
-    newLeafOwner: agreement.buyer,
-    merkleTree: agreement.cnftMerkleTree,
-    ...assetProof,
-  });
-
-  // Transaction 3: Transfer USDC + fees
-  const settleIx = await program.methods
-    .settle()
-    .accounts({
-      agreement: agreementPda,
-      seller: agreement.seller,
-      buyer: agreement.buyer,
-      usdcVault: usdcVaultPda,
-      feeVault: feeVaultPda,
-      // ... other accounts
-    })
-    .instruction();
-
-  // Bundle all transactions
-  return bundleTransactions([thawIx, transferCnftIx, settleIx]);
-}
-
 async function executeSettlement(agreement: EscrowAgreement) {
   // Get fresh proof
   const assetProof = await getAssetWithProof(umi, agreement.cnftAssetId, {
     truncateCanopy: true
   });
 
-  // Create bundle
-  const bundle = await createSettlementBundle(agreement, assetProof);
+  // Step 1: Thaw cNFT
+  const thawTx = await createThawV2Transaction({
+    authority: escrowPda,
+    leafOwner: agreement.seller,
+    merkleTree: agreement.cnftMerkleTree,
+    ...assetProof,
+  });
+  await sendAndConfirmTransaction(connection, thawTx);
 
-  // Add JITO tip
-  const tipIx = createJitoTipInstruction(TIP_AMOUNT);
-  bundle[bundle.length - 1].instructions.push(tipIx);
+  // Step 2: Transfer cNFT to buyer (delegate-signed)
+  const transferCnftTx = await createTransferTransaction({
+    leafOwner: agreement.seller,
+    leafDelegate: escrowPda,
+    newLeafOwner: agreement.buyer,
+    merkleTree: agreement.cnftMerkleTree,
+    ...assetProof,
+  });
+  await sendAndConfirmTransaction(connection, transferCnftTx);
 
-  // Submit to JITO
-  const result = await jitoClient.sendBundle(bundle);
+  // Step 3: Transfer SOL + fees via settle instruction
+  const settleTx = await program.methods
+    .settle()
+    .accounts({
+      agreement: agreementPda,
+      seller: agreement.seller,
+      buyer: agreement.buyer,
+      solVault: solVaultPda,
+      feeVault: feeVaultPda,
+      systemProgram: SystemProgram.programId,
+    })
+    .transaction();
+  await sendAndConfirmTransaction(connection, settleTx);
 
-  return result;
+  return { success: true };
 }
 ```
 
@@ -322,15 +305,15 @@ async function executeSettlement(agreement: EscrowAgreement) {
 
 1. **Non-Custodial**: Users retain visual ownership during listing
 2. **Secure**: Frozen assets cannot be double-spent
-3. **Atomic**: JITO bundles ensure all-or-nothing settlement
-4. **MEV Protected**: Private bundle submission
-5. **Cost Efficient**: Fewer transactions than transfer-to-escrow
-6. **Recoverable**: Cancellation returns asset to owner
+3. **Simple**: Sequential transactions are straightforward to implement
+4. **Cost Efficient**: Fewer transactions than transfer-to-escrow
+5. **Recoverable**: Cancellation returns asset to owner
+6. **Reliable**: No dependency on third-party bundle services
 
 ### Negative
 
 1. **V2 Dependency**: Requires Bubblegum V2 features
-2. **JITO Dependency**: Settlement relies on JITO infrastructure
+2. **Non-Atomic**: Sequential transactions could fail mid-settlement
 3. **Complexity**: More moving parts than simple escrow
 4. **Proof Freshness**: Must fetch proofs just before settlement
 
@@ -338,32 +321,35 @@ async function executeSettlement(agreement: EscrowAgreement) {
 
 | Risk | Likelihood | Impact | Mitigation |
 |------|------------|--------|------------|
-| JITO unavailable | Low | High | Fallback to priority fee submission |
+| Transaction fails mid-settlement | Low | High | Retry logic, admin recovery |
 | Stale proof at settlement | Medium | Medium | Retry with fresh proof |
 | Freeze state desync | Low | Medium | On-chain verification |
-| Bundle rejected | Medium | Low | Exponential backoff retry |
+| Network congestion | Medium | Low | Priority fees, exponential backoff |
 
 ## Implementation Plan
 
 ### Phase 1: Core Infrastructure
 - [ ] Implement escrow program with delegation support
 - [ ] Add freeze/thaw CPI wrappers
-- [ ] Create USDC vault management
+- [ ] Create SOL vault management
 
 ### Phase 2: Settlement Engine
-- [ ] Build JITO bundle construction
+- [ ] Build sequential settlement execution
 - [ ] Implement proof fetching service
 - [ ] Add settlement monitoring
+- [ ] Implement retry logic for failed transactions
 
 ### Phase 3: Safety Features
 - [ ] Expiry-based cancellation
 - [ ] Admin emergency controls
-- [ ] Retry logic with circuit breaker
+- [ ] Recovery for partial settlements
+- [ ] Circuit breaker for repeated failures
 
 ### Phase 4: Testing
 - [ ] Unit tests for all instructions
 - [ ] Integration tests on devnet
 - [ ] Load testing settlement engine
+- [ ] Failure scenario testing
 
 ## Alternatives Not Selected
 
@@ -390,21 +376,20 @@ Pre-sign transactions with time validity. Rejected because:
 
 ## Related Decisions
 
-- **ADR-002**: JITO Integration Strategy (pending)
-- **ADR-003**: Fee Distribution Model (pending)
-- **ADR-004**: Proof Caching Strategy (pending)
+- **ADR-002**: Fee Distribution Model (pending)
+- **ADR-003**: Proof Caching Strategy (pending)
+- **ADR-004**: Recovery Procedures (pending)
 
 ## References
 
 - [Bubblegum V2 Documentation](https://developers.metaplex.com/bubblegum-v2)
-- [JITO Bundle Documentation](https://jito-labs.gitbook.io/mev/searcher-resources/bundles)
 - [Solana State Compression](https://solana.com/docs/advanced/state-compression)
 - [EasyEscrow PRD](../.taskmaster/docs/prd.txt)
 - [Sorare cNFT Analysis](../.taskmaster/docs/research/2025-11-28_analyze-sorares-solana-cnft-transfer-proxy-program.md)
 
 ---
 
-*ADR Version: 1.0*
+*ADR Version: 1.1*
 *Authors: Engineering Team*
 *Date: December 2024*
 *Task: cnft-delegation-swap #2*
