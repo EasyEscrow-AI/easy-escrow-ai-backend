@@ -110,15 +110,14 @@ groups:
       # Rate Limiting Active
       - alert: RateLimitingActive
         expr: |
-          sum(rate(easyescrow_rate_limit_hits_total[5m])) > 0.5
+          sum by (service) (rate(easyescrow_rate_limit_hits_total[5m])) > 0.5
         for: 5m
         labels:
           severity: warning
-          service: easyescrow
           component: rate_limit
         annotations:
-          summary: "Rate limiting is active"
-          description: "Rate limit hits: {{ $value }} per second on {{ $labels.service }}"
+          summary: "Rate limiting is active on {{ $labels.service }}"
+          description: "Rate limit hits: {{ $value | printf \"%.2f\" }} per second on {{ $labels.service }}"
           runbook_url: "https://docs.easyescrow.ai/runbooks/rate-limiting"
 
       # Stale Proof Errors
