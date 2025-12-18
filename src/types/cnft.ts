@@ -81,16 +81,27 @@ export interface CnftAssetData {
   ownership: {
     owner: string;
     delegate?: string;
+    frozen?: boolean; // Bubblegum v2 freeze status
   };
 
   /** Metadata */
-  content: {
+  content?: {
     metadata?: {
       name?: string;
       symbol?: string;
     };
     json_uri?: string;
+    links?: {
+      image?: string;
+      external_url?: string;
+    };
   };
+
+  /** Collection grouping (DAS API format) */
+  grouping?: Array<{
+    group_key: string;
+    group_value: string;
+  }>;
 }
 
 /**

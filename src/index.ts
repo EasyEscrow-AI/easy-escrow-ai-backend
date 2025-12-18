@@ -8,7 +8,7 @@ import { connectDatabase, checkDatabaseHealth } from './config/database';
 import { connectRedis, checkRedisHealth, disconnectRedis } from './config/redis';
 // DISABLED: Agreement routes - migrated to atomic swap architecture
 // import { agreementRoutes } from './routes';
-import { expiryCancellationRoutes, webhookRoutes, receiptRoutes, transactionLogRoutes, healthRoutes, offersRoutes, testRoutes, testExecuteRoutes, authorizedAppsRoutes, noncePoolAdminRoutes } from './routes';
+import { expiryCancellationRoutes, webhookRoutes, receiptRoutes, transactionLogRoutes, healthRoutes, offersRoutes, listingsRoutes, testRoutes, testExecuteRoutes, authorizedAppsRoutes, noncePoolAdminRoutes } from './routes';
 import { noncePoolManager, healthCheckService } from './routes/offers.routes';
 import {
   corsOptions,
@@ -183,6 +183,7 @@ app.get('/', (_req: Request, res: Response) => {
       health: '/health',
       // agreements: '/v1/agreements', // DISABLED: Migrated to atomic swap - use /api/offers
       offers: '/api/offers',
+      listings: '/api/listings', // cNFT listings with delegation
       receipts: '/v1/receipts',
       transactions: '/v1/transactions',
       expiryCancellation: '/api/expiry-cancellation',
@@ -227,6 +228,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // See docs/MIGRATION_FROM_LEGACY_ESCROW.md for details
 // app.use(agreementRoutes);
 app.use(offersRoutes);
+app.use(listingsRoutes); // cNFT listings with delegation
 app.use(receiptRoutes);
 app.use('/v1/transactions', transactionLogRoutes);
 app.use('/api/expiry-cancellation', expiryCancellationRoutes);

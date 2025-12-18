@@ -18,19 +18,21 @@ import receiptRoutes from './receipt.routes';
 import transactionLogRoutes from './transaction-log.routes';
 import healthRoutes from './health.routes';
 import offersRoutes from './offers.routes';
+import listingsRoutes from './listings.routes';
 import testRoutes from './test.routes';
 import testExecuteRoutes from './test-execute.routes';
 import authorizedAppsRoutes from './admin/authorized-apps.routes';
 import noncePoolAdminRoutes from './admin/nonce-pool.routes';
 
-export { 
+export {
   // agreementRoutes, // DISABLED: Migrated to atomic swap
-  expiryCancellationRoutes, 
-  webhookRoutes, 
+  expiryCancellationRoutes,
+  webhookRoutes,
   receiptRoutes,
   transactionLogRoutes,
   healthRoutes,
   offersRoutes,
+  listingsRoutes,
   testRoutes,
   testExecuteRoutes,
   authorizedAppsRoutes,
