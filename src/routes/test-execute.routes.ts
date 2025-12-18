@@ -1023,6 +1023,198 @@ router.post('/api/test/execute-listing-delegation', requireTestEnvironment, asyn
 });
 
 /**
+ * POST /api/test/execute-buy-transaction
+ *
+ * TEST ONLY - Executes a buy transaction for marketplace listings (Task 18)
+ * Uses the taker (buyer) wallet to sign the buy transaction
+ *
+ * The buy transaction:
+ * 1. Transfers SOL from buyer to seller
+ * 2. Transfers platform fee to fee collector
+ * 3. Transfers cNFT from seller to buyer via delegation
+ */
+router.post('/api/test/execute-buy-transaction', requireTestEnvironment, async (req: Request, res: Response) => {
+  console.log('\n🧪 TEST BUY TRANSACTION EXECUTION (Task 18)');
+  console.log('⏰ Timestamp:', new Date().toISOString());
+
+  try {
+    const { listingId, serializedTransaction, buyer } = req.body;
+
+    if (!serializedTransaction) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing serializedTransaction',
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    console.log('📋 Listing ID:', listingId);
+    console.log('👤 Buyer:', buyer);
+
+    // Load taker (buyer) private key
+    let takerPrivateKey: string | undefined;
+
+    if (isMainnet) {
+      takerPrivateKey = process.env.MAINNET_PROD_RECEIVER_PRIVATE_KEY;
+    } else {
+      takerPrivateKey = process.env.DEVNET_STAGING_RECEIVER_PRIVATE_KEY;
+    }
+
+    if (!takerPrivateKey) {
+      return res.status(500).json({
+        success: false,
+        error: `Test wallet private key not configured for ${networkName}`,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    const takerKeypair = Keypair.fromSecretKey(bs58.decode(takerPrivateKey));
+    console.log('✅ Taker (buyer) keypair loaded:', takerKeypair.publicKey.toBase58());
+
+    // Verify buyer address matches taker keypair
+    if (buyer && buyer !== takerKeypair.publicKey.toBase58()) {
+      console.warn('⚠️ Buyer address does not match taker keypair');
+      console.warn('   Expected:', takerKeypair.publicKey.toBase58());
+      console.warn('   Got:', buyer);
+    }
+
+    // Deserialize and sign transaction
+    const txBuffer = Buffer.from(serializedTransaction, 'base64');
+    const isVersioned = isVersionedTransaction(txBuffer);
+
+    let signature: string;
+
+    if (isVersioned) {
+      const versionedTx = VersionedTransaction.deserialize(txBuffer);
+
+      // Store existing signatures before signing
+      const existingSignatures = [...versionedTx.signatures];
+
+      // Sign with buyer
+      versionedTx.sign([takerKeypair]);
+
+      // Restore non-null existing signatures that were overwritten (platform authority)
+      const staticKeys = versionedTx.message.staticAccountKeys;
+      for (let i = 0; i < existingSignatures.length && i < staticKeys.length; i++) {
+        const existingSig = existingSignatures[i];
+        if (existingSig && !existingSig.every(b => b === 0)) {
+          const newSig = versionedTx.signatures[i];
+          if (!newSig || newSig.every(b => b === 0)) {
+            versionedTx.signatures[i] = existingSig;
+            console.log(`   Restored signature at index ${i}`);
+          }
+        }
+      }
+
+      signature = await connection.sendRawTransaction(versionedTx.serialize(), {
+        skipPreflight: false,
+        preflightCommitment: 'confirmed',
+      });
+    } else {
+      const transaction = Transaction.from(txBuffer);
+      transaction.partialSign(takerKeypair);
+      signature = await connection.sendRawTransaction(transaction.serialize(), {
+        skipPreflight: false,
+        preflightCommitment: 'confirmed',
+      });
+    }
+
+    console.log('📤 Buy transaction sent:', signature);
+
+    // Wait for confirmation with timeout
+    const confirmationTimeout = 30; // 30s timeout
+    let confirmation;
+
+    try {
+      confirmation = await Promise.race([
+        connection.confirmTransaction(signature, 'confirmed'),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('TransactionExpiredTimeoutError')), confirmationTimeout * 1000)
+        ),
+      ]) as any;
+    } catch (confirmError: any) {
+      if (confirmError.message === 'TransactionExpiredTimeoutError' ||
+        confirmError.message?.includes('not confirmed in')) {
+        console.warn('⚠️ Confirmation timeout - checking transaction status...');
+
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        const txInfo = await connection.getTransaction(signature, {
+          commitment: 'confirmed',
+          maxSupportedTransactionVersion: 0,
+        });
+
+        if (txInfo) {
+          if (txInfo.meta?.err) {
+            throw new Error(`Transaction failed: ${JSON.stringify(txInfo.meta.err)}`);
+          }
+          console.log('✅ Buy transaction succeeded (confirmed via fallback check)');
+          confirmation = { value: { err: null } };
+        } else {
+          const explorerUrl = isMainnet
+            ? `https://solscan.io/tx/${signature}`
+            : `https://solscan.io/tx/${signature}?cluster=devnet`;
+          throw new Error(
+            `Transaction not confirmed in ${confirmationTimeout}s. Check: ${explorerUrl}`
+          );
+        }
+      } else {
+        throw confirmError;
+      }
+    }
+
+    if (confirmation.value.err) {
+      const errorJson = JSON.stringify(confirmation.value.err);
+      console.error('❌ Buy transaction failed:', errorJson);
+
+      // Parse error for helpful message
+      let errorMessage = `Transaction failed: ${errorJson}`;
+      const err = confirmation.value.err as any;
+
+      if (err.InstructionError) {
+        const [instructionIndex, errorDetail] = err.InstructionError;
+        if (errorDetail?.Custom !== undefined) {
+          const code = errorDetail.Custom as number;
+          const errorCodes: { [key: number]: string } = {
+            0: 'Unauthorized',
+            21: 'StaleProof - Merkle root has changed',
+          };
+          const errorName = errorCodes[code] || `Error code ${code}`;
+          errorMessage = `Program error: Instruction #${instructionIndex + 1} failed with ${errorName}`;
+        }
+      }
+
+      throw new Error(errorMessage);
+    }
+
+    console.log('✅ Buy transaction confirmed!');
+
+    const explorerUrl = isMainnet
+      ? `https://solscan.io/tx/${signature}`
+      : `https://solscan.io/tx/${signature}?cluster=devnet`;
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        signature,
+        explorerUrl,
+        network: networkName,
+        listingId,
+      },
+      message: 'Buy transaction executed successfully',
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    console.error('❌ Buy transaction execution error:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Buy transaction failed',
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+/**
  * POST /api/test/execute-listing-revoke
  *
  * TEST ONLY - Executes a cNFT revoke transaction for cancelled listings
