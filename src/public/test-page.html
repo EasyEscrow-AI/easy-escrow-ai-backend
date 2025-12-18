@@ -2387,6 +2387,376 @@
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
         }
 
+        /* ========================================
+           CONFIRMATION MODAL ENHANCEMENTS (Task 19)
+           ======================================== */
+
+        /* Transaction Status Display in Modals */
+        .modal-tx-status {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .modal-tx-status.waiting {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 1px solid #f59e0b;
+            color: #92400e;
+        }
+
+        .modal-tx-status.processing {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            border: 1px solid #3b82f6;
+            color: #1e40af;
+        }
+
+        .modal-tx-status.confirming {
+            background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+            border: 1px solid #6366f1;
+            color: #4338ca;
+        }
+
+        .modal-tx-status.success {
+            background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+            border: 1px solid #22c55e;
+            color: #166534;
+        }
+
+        .modal-tx-status.error {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            border: 1px solid #ef4444;
+            color: #991b1b;
+        }
+
+        .modal-tx-status-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .modal-tx-status-spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-top-color: currentColor;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            flex-shrink: 0;
+        }
+
+        .modal-tx-status-content {
+            flex: 1;
+        }
+
+        .modal-tx-status-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 2px;
+        }
+
+        .modal-tx-status-message {
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+
+        .modal-tx-status-link {
+            margin-top: 8px;
+        }
+
+        .modal-tx-status-link a {
+            color: inherit;
+            text-decoration: underline;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+        }
+
+        /* Delegation Warning Box */
+        .delegation-warning {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 12px 15px;
+            margin: 15px 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .delegation-warning-icon {
+            font-size: 1.2rem;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .delegation-warning-content {
+            flex: 1;
+        }
+
+        .delegation-warning-title {
+            font-weight: 600;
+            color: #92400e;
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+        }
+
+        .delegation-warning-text {
+            font-size: 0.85rem;
+            color: #78350f;
+            line-height: 1.4;
+        }
+
+        .delegation-warning-note {
+            font-size: 0.8rem;
+            color: #92400e;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        /* Fee Breakdown Enhancement */
+        .fee-breakdown {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .fee-breakdown-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #333;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .fee-breakdown-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 0.9rem;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .fee-breakdown-row:last-child {
+            border-bottom: none;
+        }
+
+        .fee-breakdown-row.total {
+            margin-top: 8px;
+            padding-top: 12px;
+            border-top: 2px solid #e0e0e0;
+            border-bottom: none;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .fee-breakdown-label {
+            color: #666;
+        }
+
+        .fee-breakdown-value {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .fee-breakdown-value.highlight {
+            color: #22c55e;
+        }
+
+        .fee-breakdown-value.warning {
+            color: #f59e0b;
+        }
+
+        .fee-breakdown-value.error {
+            color: #ef4444;
+        }
+
+        /* Balance After Purchase Display */
+        .balance-after-purchase {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .balance-after-purchase.warning {
+            background: #fefce8;
+            border-color: #fde047;
+        }
+
+        .balance-after-purchase.danger {
+            background: #fef2f2;
+            border-color: #fecaca;
+        }
+
+        .balance-after-label {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .balance-after-value {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #166534;
+        }
+
+        .balance-after-purchase.warning .balance-after-value {
+            color: #a16207;
+        }
+
+        .balance-after-purchase.danger .balance-after-value {
+            color: #dc2626;
+        }
+
+        /* Cancel Listing Modal */
+        .cancel-listing-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .cancel-listing-modal.show {
+            display: flex;
+        }
+
+        .cancel-listing-modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            max-width: 450px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s ease-out;
+        }
+
+        .cancel-listing-modal-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .cancel-listing-modal-header h3 {
+            font-size: 1.4rem;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .cancel-listing-modal-header p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .cancel-listing-modal-preview {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .cancel-listing-modal-image {
+            width: 70px;
+            height: 70px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+
+        .cancel-listing-modal-details {
+            flex: 1;
+        }
+
+        .cancel-listing-modal-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .cancel-listing-modal-price {
+            font-size: 0.9rem;
+            color: #22c55e;
+            font-weight: 600;
+        }
+
+        .cancel-listing-modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .cancel-listing-modal-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .cancel-listing-modal-btn.keep {
+            background: #e5e7eb;
+            color: #6b7280;
+        }
+
+        .cancel-listing-modal-btn.keep:hover {
+            background: #d1d5db;
+        }
+
+        .cancel-listing-modal-btn.cancel {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+
+        .cancel-listing-modal-btn.cancel:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        }
+
+        .cancel-listing-modal-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Retry Button in Error State */
+        .modal-retry-btn {
+            margin-top: 10px;
+            padding: 8px 16px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .modal-retry-btn:hover {
+            background: #dc2626;
+            transform: translateY(-1px);
+        }
+
         /* Mobile Responsive for Marketplace */
         @media (max-width: 768px) {
             .marketplace-section {
@@ -2754,11 +3124,12 @@
         </div>
     </div>
 
-    <!-- Quick List Modal -->
+    <!-- Quick List Modal (Enhanced for Task 19) -->
     <div class="quick-list-modal" id="quick-list-modal">
         <div class="quick-list-modal-content">
             <div class="quick-list-modal-header">
-                <h3>📝 Quick List for Sale</h3>
+                <h3>📝 Confirm Listing</h3>
+                <p style="color: #666; font-size: 0.9rem; margin-top: 5px;">Review the details before listing your asset</p>
             </div>
 
             <div class="quick-list-modal-preview">
@@ -2772,7 +3143,7 @@
 
             <div class="quick-list-modal-form">
                 <div class="listing-form-group">
-                    <label class="listing-label">Price (SOL)</label>
+                    <label class="listing-label">Listing Price (SOL)</label>
                     <input type="number" class="listing-input" id="quick-list-price" placeholder="0.00" step="0.001" min="0.001">
                     <div class="listing-input-hint" id="quick-list-price-usd"></div>
                 </div>
@@ -2788,14 +3159,56 @@
                 </div>
             </div>
 
-            <div class="quick-list-modal-actions">
+            <!-- Fee Breakdown -->
+            <div class="fee-breakdown" id="quick-list-fee-breakdown">
+                <div class="fee-breakdown-title">💰 Fee Breakdown</div>
+                <div class="fee-breakdown-row">
+                    <span class="fee-breakdown-label">Listing Price:</span>
+                    <span class="fee-breakdown-value" id="quick-list-display-price">-- SOL</span>
+                </div>
+                <div class="fee-breakdown-row">
+                    <span class="fee-breakdown-label">Platform Fee (1%):</span>
+                    <span class="fee-breakdown-value" id="quick-list-fee">-- SOL</span>
+                </div>
+                <div class="fee-breakdown-row total">
+                    <span class="fee-breakdown-label">You Receive:</span>
+                    <span class="fee-breakdown-value highlight" id="quick-list-receive">-- SOL</span>
+                </div>
+            </div>
+
+            <!-- Delegation Warning -->
+            <div class="delegation-warning">
+                <span class="delegation-warning-icon">🔐</span>
+                <div class="delegation-warning-content">
+                    <div class="delegation-warning-title">Asset Delegation Required</div>
+                    <div class="delegation-warning-text">
+                        This will delegate your cNFT to the marketplace, allowing it to be transferred when purchased.
+                        Your asset remains in your wallet until sold.
+                    </div>
+                    <div class="delegation-warning-note">
+                        ✓ You can cancel the listing at any time to revoke delegation
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transaction Status (hidden by default) -->
+            <div class="modal-tx-status" id="quick-list-tx-status" style="display: none;">
+                <div class="modal-tx-status-spinner"></div>
+                <div class="modal-tx-status-content">
+                    <div class="modal-tx-status-title" id="quick-list-status-title">Processing...</div>
+                    <div class="modal-tx-status-message" id="quick-list-status-message"></div>
+                    <div class="modal-tx-status-link" id="quick-list-status-link"></div>
+                </div>
+            </div>
+
+            <div class="quick-list-modal-actions" id="quick-list-actions">
                 <button class="quick-list-modal-btn cancel" id="quick-list-cancel">Cancel</button>
-                <button class="quick-list-modal-btn confirm" id="quick-list-confirm">List for Sale</button>
+                <button class="quick-list-modal-btn confirm" id="quick-list-confirm">List Asset</button>
             </div>
         </div>
     </div>
 
-    <!-- Buy Confirmation Modal (Task 18) -->
+    <!-- Buy Confirmation Modal (Enhanced for Task 19) -->
     <div class="buy-modal" id="buy-modal">
         <div class="buy-modal-content">
             <div class="buy-modal-header">
@@ -2830,13 +3243,29 @@
                 </div>
             </div>
 
+            <!-- Balance After Purchase (Task 19) -->
+            <div class="balance-after-purchase" id="buy-balance-after">
+                <span class="balance-after-label">Balance After Purchase:</span>
+                <span class="balance-after-value" id="buy-balance-after-value">-- SOL</span>
+            </div>
+
             <div class="buy-balance-warning hidden" id="buy-balance-warning">
                 ⚠️ Insufficient balance to complete this purchase
             </div>
 
-            <div class="buy-modal-actions">
+            <!-- Transaction Status (hidden by default) -->
+            <div class="modal-tx-status" id="buy-tx-status" style="display: none;">
+                <div class="modal-tx-status-spinner"></div>
+                <div class="modal-tx-status-content">
+                    <div class="modal-tx-status-title" id="buy-status-title">Processing...</div>
+                    <div class="modal-tx-status-message" id="buy-status-message"></div>
+                    <div class="modal-tx-status-link" id="buy-status-link"></div>
+                </div>
+            </div>
+
+            <div class="buy-modal-actions" id="buy-modal-actions">
                 <button class="buy-modal-btn cancel" id="buy-modal-cancel">Cancel</button>
-                <button class="buy-modal-btn confirm" id="buy-modal-confirm">Confirm Purchase</button>
+                <button class="buy-modal-btn confirm" id="buy-modal-confirm">Buy Now</button>
             </div>
         </div>
     </div>
@@ -2864,6 +3293,50 @@
             </div>
 
             <button class="purchase-success-btn" id="success-close-btn">Close</button>
+        </div>
+    </div>
+
+    <!-- Cancel Listing Confirmation Modal (Task 19) -->
+    <div class="cancel-listing-modal" id="cancel-listing-modal">
+        <div class="cancel-listing-modal-content">
+            <div class="cancel-listing-modal-header">
+                <h3>🚫 Cancel Listing</h3>
+                <p>Are you sure you want to cancel this listing?</p>
+            </div>
+
+            <div class="cancel-listing-modal-preview">
+                <img class="cancel-listing-modal-image" id="cancel-listing-image" src="" alt="">
+                <div class="cancel-listing-modal-details">
+                    <div class="cancel-listing-modal-name" id="cancel-listing-name">--</div>
+                    <div class="cancel-listing-modal-price" id="cancel-listing-price">-- SOL</div>
+                </div>
+            </div>
+
+            <div class="delegation-warning">
+                <span class="delegation-warning-icon">🔓</span>
+                <div class="delegation-warning-content">
+                    <div class="delegation-warning-title">Revoke Marketplace Delegation</div>
+                    <div class="delegation-warning-text">
+                        This will revoke the marketplace's permission to transfer your cNFT.
+                        Your asset will no longer be available for purchase.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transaction Status (hidden by default) -->
+            <div class="modal-tx-status" id="cancel-listing-tx-status" style="display: none;">
+                <div class="modal-tx-status-spinner"></div>
+                <div class="modal-tx-status-content">
+                    <div class="modal-tx-status-title" id="cancel-listing-status-title">Processing...</div>
+                    <div class="modal-tx-status-message" id="cancel-listing-status-message"></div>
+                    <div class="modal-tx-status-link" id="cancel-listing-status-link"></div>
+                </div>
+            </div>
+
+            <div class="cancel-listing-modal-actions" id="cancel-listing-actions">
+                <button class="cancel-listing-modal-btn keep" id="cancel-listing-keep">Keep Listed</button>
+                <button class="cancel-listing-modal-btn cancel" id="cancel-listing-confirm">Cancel Listing</button>
+            </div>
         </div>
     </div>
 
