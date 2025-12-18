@@ -62,11 +62,19 @@ if (!programIdStr) {
 }
 const programId = new PublicKey(programIdStr);
 
-// Initialize listing manager
-const listingManager = createListingManager(connection, prisma, platformAuthority, programId);
+// Get fee collector address
+const feeCollectorStr =
+  process.env.DEVNET_STAGING_FEE_COLLECTOR_ADDRESS ||
+  process.env.MAINNET_PROD_FEE_COLLECTOR_ADDRESS;
+
+const feeCollector = feeCollectorStr ? new PublicKey(feeCollectorStr) : undefined;
+
+// Initialize listing manager with fee collector
+const listingManager = createListingManager(connection, prisma, platformAuthority, programId, feeCollector);
 
 console.log('[ListingsRoutes] Initialized');
 console.log('[ListingsRoutes] Marketplace PDA:', listingManager.getMarketplacePda().toBase58());
+console.log('[ListingsRoutes] Fee Collector:', feeCollector?.toBase58() || platformAuthority.publicKey.toBase58());
 
 /**
  * POST /api/listings
@@ -618,6 +626,203 @@ router.get(
         success: false,
         error: 'Internal Server Error',
         message: error instanceof Error ? error.message : 'Failed to get seller listings',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * POST /api/listings/:id/buy
+ * Buy a listed cNFT (Task 5 - Primary)
+ *
+ * Builds an atomic transaction that:
+ * 1. Transfers SOL from buyer to seller (price - fee)
+ * 2. Transfers platform fee to fee collector
+ * 3. Transfers cNFT from seller to buyer via marketplace delegate
+ *
+ * Request body:
+ * - buyer: string (buyer wallet address)
+ *
+ * Response:
+ * - listing: Listing details
+ * - transaction: Buy transaction to sign
+ * - costs: Cost breakdown
+ */
+router.post(
+  '/api/listings/:id/buy',
+  strictRateLimiter,
+  requiredIdempotency,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const listingId = req.params.id;
+      const { buyer } = req.body;
+
+      if (!buyer) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation Error',
+          message: 'buyer is required',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Validate wallet address
+      try {
+        new PublicKey(buyer);
+      } catch (error) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation Error',
+          message: 'Invalid buyer wallet address format',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const result = await listingManager.buyListing({
+        listingId,
+        buyer,
+      });
+
+      res.status(200).json({
+        success: true,
+        data: result,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Error building buy transaction:', error);
+
+      const errorMessage = error instanceof Error ? error.message : 'Failed to build buy transaction';
+
+      // Handle specific errors
+      if (errorMessage.includes('not found')) {
+        res.status(404).json({
+          success: false,
+          error: 'Not Found',
+          message: errorMessage,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      if (
+        errorMessage.includes('expected ACTIVE') ||
+        errorMessage.includes('expired') ||
+        errorMessage.includes('revoked') ||
+        errorMessage.includes('no longer owns') ||
+        errorMessage.includes('Buyer cannot be')
+      ) {
+        res.status(400).json({
+          success: false,
+          error: 'Invalid Request',
+          message: errorMessage,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      res.status(500).json({
+        success: false,
+        error: 'Internal Server Error',
+        message: errorMessage,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * POST /api/listings/:id/confirm-purchase
+ * Confirm a purchase after buyer has signed and submitted the transaction
+ *
+ * Request body:
+ * - signature: string (transaction signature)
+ * - buyer: string (buyer wallet address)
+ */
+router.post(
+  '/api/listings/:id/confirm-purchase',
+  standardRateLimiter,
+  requiredIdempotency,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const listingId = req.params.id;
+      const { signature, buyer } = req.body;
+
+      if (!signature) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation Error',
+          message: 'signature is required',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      if (!buyer) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation Error',
+          message: 'buyer is required',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const listing = await listingManager.confirmPurchase({
+        listingId,
+        signature,
+        buyer,
+      });
+
+      res.status(200).json({
+        success: true,
+        data: {
+          listing: {
+            id: listing.id,
+            listingId: listing.listingId,
+            status: listing.status,
+            buyer: listing.buyer,
+            soldAt: listing.soldAt?.toISOString(),
+            settleTxId: listing.settleTxId,
+          },
+          message: 'Purchase confirmed. The cNFT is now in your wallet!',
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Error confirming purchase:', error);
+
+      const errorMessage = error instanceof Error ? error.message : 'Failed to confirm purchase';
+
+      if (errorMessage.includes('not found')) {
+        res.status(404).json({
+          success: false,
+          error: 'Not Found',
+          message: errorMessage,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      if (
+        errorMessage.includes('expected ACTIVE') ||
+        errorMessage.includes('still owned by')
+      ) {
+        res.status(400).json({
+          success: false,
+          error: 'Invalid Request',
+          message: errorMessage,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      res.status(500).json({
+        success: false,
+        error: 'Internal Server Error',
+        message: errorMessage,
         timestamp: new Date().toISOString(),
       });
     }

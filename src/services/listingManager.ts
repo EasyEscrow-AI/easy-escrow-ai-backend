@@ -16,6 +16,8 @@ import {
   Keypair,
   VersionedTransaction,
   TransactionMessage,
+  Transaction,
+  SystemProgram,
 } from '@solana/web3.js';
 import { PrismaClient, Listing, DelegationStatus, ListingStatus } from '../generated/prisma';
 import { v4 as uuidv4 } from 'uuid';
@@ -134,6 +136,57 @@ export interface ListingFilters {
 }
 
 /**
+ * Parameters for buying a listing
+ */
+export interface BuyListingParams {
+  /** Listing ID (external) */
+  listingId: string;
+  /** Buyer wallet address */
+  buyer: string;
+}
+
+/**
+ * Result of buying a listing
+ */
+export interface BuyListingResult {
+  /** Listing details */
+  listing: {
+    id: string;
+    listingId: string;
+    seller: string;
+    assetId: string;
+    priceLamports: string;
+  };
+  /** Buy transaction for buyer to sign */
+  transaction: {
+    serializedTransaction: string;
+    blockhash: string;
+    lastValidBlockHeight: number;
+    requiredSigners: string[];
+    isVersioned: boolean;
+  };
+  /** Cost breakdown */
+  costs: {
+    priceLamports: string;
+    platformFeeLamports: string;
+    sellerReceivesLamports: string;
+    estimatedNetworkFee: string;
+  };
+}
+
+/**
+ * Parameters for confirming a purchase
+ */
+export interface ConfirmPurchaseParams {
+  /** Listing ID (external) */
+  listingId: string;
+  /** Transaction signature */
+  signature: string;
+  /** Buyer wallet address */
+  buyer: string;
+}
+
+/**
  * Listing Manager - handles cNFT listing lifecycle
  */
 export class ListingManager {
@@ -143,18 +196,25 @@ export class ListingManager {
   private feeCalculator: FeeCalculator;
   private marketplacePda: PublicKey;
   private programId: PublicKey;
+  private platformAuthority: Keypair;
+  private feeCollector: PublicKey;
 
   constructor(
     connection: Connection,
     prisma: PrismaClient,
     platformAuthority: Keypair,
-    programId: PublicKey
+    programId: PublicKey,
+    feeCollector?: PublicKey
   ) {
     this.connection = connection;
     this.prisma = prisma;
     this.programId = programId;
+    this.platformAuthority = platformAuthority;
     this.delegationService = createCnftDelegationService(connection);
     this.feeCalculator = new FeeCalculator();
+
+    // Fee collector - defaults to platform authority if not specified
+    this.feeCollector = feeCollector || platformAuthority.publicKey;
 
     // Derive marketplace PDA for delegations using the delegation service
     const [pda] = this.delegationService.deriveMarketplaceDelegatePDA(
@@ -165,6 +225,7 @@ export class ListingManager {
 
     console.log('[ListingManager] Initialized');
     console.log('[ListingManager] Marketplace PDA:', this.marketplacePda.toBase58());
+    console.log('[ListingManager] Fee Collector:', this.feeCollector.toBase58());
   }
 
   /**
@@ -622,6 +683,245 @@ export class ListingManager {
   }
 
   /**
+   * Buy a listed cNFT (Task 5 - Primary)
+   *
+   * Builds an atomic transaction that:
+   * 1. Transfers SOL from buyer to seller (price - fee)
+   * 2. Transfers platform fee from buyer to fee collector
+   * 3. Transfers cNFT from seller to buyer via marketplace delegate
+   *
+   * The marketplace authority signs the cNFT transfer.
+   * The buyer signs for SOL transfers when they submit the transaction.
+   */
+  async buyListing(params: BuyListingParams): Promise<BuyListingResult> {
+    console.log('[ListingManager] Building buy transaction:', {
+      listingId: params.listingId,
+      buyer: params.buyer,
+    });
+
+    // Validate buyer wallet
+    let buyerPubkey: PublicKey;
+    try {
+      buyerPubkey = new PublicKey(params.buyer);
+    } catch {
+      throw new Error('Invalid buyer wallet address');
+    }
+
+    // Load listing
+    const listing = await this.prisma.listing.findFirst({
+      where: {
+        listingId: params.listingId,
+      },
+    });
+
+    if (!listing) {
+      throw new Error(`Listing ${params.listingId} not found`);
+    }
+
+    // Validate listing status
+    if (listing.status !== 'ACTIVE') {
+      throw new Error(`Listing is ${listing.status}, expected ACTIVE`);
+    }
+
+    // Check expiry
+    if (listing.expiresAt <= new Date()) {
+      // Mark as expired
+      await this.prisma.listing.update({
+        where: { id: listing.id },
+        data: { status: 'EXPIRED' },
+      });
+      throw new Error(`Listing expired at ${listing.expiresAt.toISOString()}`);
+    }
+
+    // Ensure buyer !== seller
+    if (params.buyer === listing.seller) {
+      throw new Error('Buyer cannot be the same as seller');
+    }
+
+    // Verify delegation is still valid on-chain
+    const delegationStatus = await this.delegationService.getDelegationStatus(listing.assetId);
+
+    if (
+      delegationStatus.status === DelegationStatusEnum.NOT_DELEGATED ||
+      delegationStatus.delegate !== this.marketplacePda.toBase58()
+    ) {
+      // Delegation was revoked - mark listing as cancelled
+      await this.prisma.listing.update({
+        where: { id: listing.id },
+        data: {
+          status: 'CANCELLED',
+          delegationStatus: 'REVOKED',
+          cancelledAt: new Date(),
+        },
+      });
+      throw new Error('Seller has revoked delegation. Listing cancelled.');
+    }
+
+    // Verify seller still owns the cNFT
+    if (delegationStatus.owner !== listing.seller) {
+      await this.prisma.listing.update({
+        where: { id: listing.id },
+        data: {
+          status: 'CANCELLED',
+          cancelledAt: new Date(),
+        },
+      });
+      throw new Error('Seller no longer owns the cNFT. Listing cancelled.');
+    }
+
+    // Calculate amounts
+    const platformFeeLamports = (listing.priceLamports * BigInt(listing.feeBps)) / BigInt(10000);
+    const sellerReceivesLamports = listing.priceLamports - platformFeeLamports;
+    const sellerPubkey = new PublicKey(listing.seller);
+
+    console.log('[ListingManager] Buy transaction amounts:', {
+      price: listing.priceLamports.toString(),
+      platformFee: platformFeeLamports.toString(),
+      sellerReceives: sellerReceivesLamports.toString(),
+    });
+
+    // Build atomic transaction
+    const transaction = new Transaction();
+
+    // Instruction 1: Transfer SOL to seller (price - platform fee)
+    transaction.add(
+      SystemProgram.transfer({
+        fromPubkey: buyerPubkey,
+        toPubkey: sellerPubkey,
+        lamports: sellerReceivesLamports,
+      })
+    );
+
+    // Instruction 2: Transfer platform fee to fee collector
+    if (platformFeeLamports > 0n) {
+      transaction.add(
+        SystemProgram.transfer({
+          fromPubkey: buyerPubkey,
+          toPubkey: this.feeCollector,
+          lamports: platformFeeLamports,
+        })
+      );
+    }
+
+    // Instruction 3: Transfer cNFT from seller to buyer via delegate
+    const transferResult = await this.delegationService.transferAsDelegate({
+      assetId: listing.assetId,
+      fromOwner: sellerPubkey,
+      toRecipient: buyerPubkey,
+      delegatePDA: this.marketplacePda,
+    });
+
+    transaction.add(transferResult.instruction);
+
+    // Get recent blockhash
+    const { blockhash, lastValidBlockHeight } = await this.connection.getLatestBlockhash();
+    transaction.recentBlockhash = blockhash;
+    transaction.feePayer = buyerPubkey;
+
+    // Platform authority signs the cNFT transfer instruction
+    // (buyer will sign when they submit the transaction)
+    transaction.partialSign(this.platformAuthority);
+
+    // Serialize for client
+    const serializedTransaction = transaction
+      .serialize({
+        requireAllSignatures: false,
+        verifySignatures: false,
+      })
+      .toString('base64');
+
+    console.log('[ListingManager] Buy transaction built:', {
+      listingId: params.listingId,
+      serializedSize: serializedTransaction.length,
+    });
+
+    return {
+      listing: {
+        id: listing.id,
+        listingId: listing.listingId,
+        seller: listing.seller,
+        assetId: listing.assetId,
+        priceLamports: listing.priceLamports.toString(),
+      },
+      transaction: {
+        serializedTransaction,
+        blockhash,
+        lastValidBlockHeight,
+        requiredSigners: [params.buyer],
+        isVersioned: false,
+      },
+      costs: {
+        priceLamports: listing.priceLamports.toString(),
+        platformFeeLamports: platformFeeLamports.toString(),
+        sellerReceivesLamports: sellerReceivesLamports.toString(),
+        estimatedNetworkFee: '5000', // ~5000 lamports for transaction fee
+      },
+    };
+  }
+
+  /**
+   * Confirm a purchase after buyer has signed and submitted the transaction
+   *
+   * Verifies the ownership transfer on-chain and marks the listing as SOLD.
+   */
+  async confirmPurchase(params: ConfirmPurchaseParams): Promise<Listing> {
+    console.log('[ListingManager] Confirming purchase:', {
+      listingId: params.listingId,
+      buyer: params.buyer,
+      signature: params.signature.substring(0, 12) + '...',
+    });
+
+    // Load listing
+    const listing = await this.prisma.listing.findFirst({
+      where: {
+        listingId: params.listingId,
+      },
+    });
+
+    if (!listing) {
+      throw new Error(`Listing ${params.listingId} not found`);
+    }
+
+    // If already sold, return success
+    if (listing.status === 'SOLD') {
+      console.log('[ListingManager] Purchase already confirmed');
+      return listing;
+    }
+
+    if (listing.status !== 'ACTIVE') {
+      throw new Error(`Listing is ${listing.status}, expected ACTIVE`);
+    }
+
+    // Verify ownership transferred on-chain
+    const delegationStatus = await this.delegationService.getDelegationStatus(listing.assetId);
+
+    if (delegationStatus.owner !== params.buyer) {
+      throw new Error(
+        `Asset ${listing.assetId} is still owned by ${delegationStatus.owner}, expected ${params.buyer}`
+      );
+    }
+
+    // Update listing to SOLD
+    const updatedListing = await this.prisma.listing.update({
+      where: { id: listing.id },
+      data: {
+        status: 'SOLD',
+        buyer: params.buyer,
+        settleTxId: params.signature,
+        soldAt: new Date(),
+      },
+    });
+
+    console.log('[ListingManager] Purchase confirmed:', {
+      listingId: params.listingId,
+      buyer: params.buyer,
+      soldAt: updatedListing.soldAt,
+    });
+
+    return updatedListing;
+  }
+
+  /**
    * Get marketplace PDA
    */
   getMarketplacePda(): PublicKey {
@@ -636,7 +936,8 @@ export function createListingManager(
   connection: Connection,
   prisma: PrismaClient,
   platformAuthority: Keypair,
-  programId: PublicKey
+  programId: PublicKey,
+  feeCollector?: PublicKey
 ): ListingManager {
-  return new ListingManager(connection, prisma, platformAuthority, programId);
+  return new ListingManager(connection, prisma, platformAuthority, programId, feeCollector);
 }
