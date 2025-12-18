@@ -78,6 +78,16 @@ export type AuthorizedApp = $Result.DefaultSelection<Prisma.$AuthorizedAppPayloa
  * 
  */
 export type ZeroFeeSwapLog = $Result.DefaultSelection<Prisma.$ZeroFeeSwapLogPayload>
+/**
+ * Model CnftOffer
+ * 
+ */
+export type CnftOffer = $Result.DefaultSelection<Prisma.$CnftOfferPayload>
+/**
+ * Model Listing
+ * 
+ */
+export type Listing = $Result.DefaultSelection<Prisma.$ListingPayload>
 
 /**
  * Enums
@@ -196,6 +206,40 @@ export const TransactionStatus: {
 
 export type TransactionStatus = (typeof TransactionStatus)[keyof typeof TransactionStatus]
 
+
+export const OfferEscrowStatus: {
+  PENDING: 'PENDING',
+  ACTIVE: 'ACTIVE',
+  ACCEPTED: 'ACCEPTED',
+  COUNTERED: 'COUNTERED',
+  CANCELLED: 'CANCELLED',
+  EXPIRED: 'EXPIRED',
+  REJECTED: 'REJECTED'
+};
+
+export type OfferEscrowStatus = (typeof OfferEscrowStatus)[keyof typeof OfferEscrowStatus]
+
+
+export const DelegationStatus: {
+  PENDING: 'PENDING',
+  DELEGATED: 'DELEGATED',
+  FROZEN: 'FROZEN',
+  REVOKED: 'REVOKED'
+};
+
+export type DelegationStatus = (typeof DelegationStatus)[keyof typeof DelegationStatus]
+
+
+export const ListingStatus: {
+  PENDING: 'PENDING',
+  ACTIVE: 'ACTIVE',
+  SOLD: 'SOLD',
+  CANCELLED: 'CANCELLED',
+  EXPIRED: 'EXPIRED'
+};
+
+export type ListingStatus = (typeof ListingStatus)[keyof typeof ListingStatus]
+
 }
 
 export type AgreementStatus = $Enums.AgreementStatus
@@ -241,6 +285,18 @@ export const OfferStatus: typeof $Enums.OfferStatus
 export type TransactionStatus = $Enums.TransactionStatus
 
 export const TransactionStatus: typeof $Enums.TransactionStatus
+
+export type OfferEscrowStatus = $Enums.OfferEscrowStatus
+
+export const OfferEscrowStatus: typeof $Enums.OfferEscrowStatus
+
+export type DelegationStatus = $Enums.DelegationStatus
+
+export const DelegationStatus: typeof $Enums.DelegationStatus
+
+export type ListingStatus = $Enums.ListingStatus
+
+export const ListingStatus: typeof $Enums.ListingStatus
 
 /**
  * ##  Prisma Client ʲˢ
@@ -489,6 +545,26 @@ export class PrismaClient<
     * ```
     */
   get zeroFeeSwapLog(): Prisma.ZeroFeeSwapLogDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.cnftOffer`: Exposes CRUD operations for the **CnftOffer** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more CnftOffers
+    * const cnftOffers = await prisma.cnftOffer.findMany()
+    * ```
+    */
+  get cnftOffer(): Prisma.CnftOfferDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.listing`: Exposes CRUD operations for the **Listing** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Listings
+    * const listings = await prisma.listing.findMany()
+    * ```
+    */
+  get listing(): Prisma.ListingDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -941,7 +1017,9 @@ export namespace Prisma {
     SwapOffer: 'SwapOffer',
     SwapTransaction: 'SwapTransaction',
     AuthorizedApp: 'AuthorizedApp',
-    ZeroFeeSwapLog: 'ZeroFeeSwapLog'
+    ZeroFeeSwapLog: 'ZeroFeeSwapLog',
+    CnftOffer: 'CnftOffer',
+    Listing: 'Listing'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -960,7 +1038,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "agreement" | "deposit" | "idempotencyKey" | "settlement" | "receipt" | "transactionLog" | "webhook" | "user" | "noncePool" | "swapOffer" | "swapTransaction" | "authorizedApp" | "zeroFeeSwapLog"
+      modelProps: "agreement" | "deposit" | "idempotencyKey" | "settlement" | "receipt" | "transactionLog" | "webhook" | "user" | "noncePool" | "swapOffer" | "swapTransaction" | "authorizedApp" | "zeroFeeSwapLog" | "cnftOffer" | "listing"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1926,6 +2004,154 @@ export namespace Prisma {
           }
         }
       }
+      CnftOffer: {
+        payload: Prisma.$CnftOfferPayload<ExtArgs>
+        fields: Prisma.CnftOfferFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.CnftOfferFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CnftOfferPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.CnftOfferFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CnftOfferPayload>
+          }
+          findFirst: {
+            args: Prisma.CnftOfferFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CnftOfferPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.CnftOfferFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CnftOfferPayload>
+          }
+          findMany: {
+            args: Prisma.CnftOfferFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CnftOfferPayload>[]
+          }
+          create: {
+            args: Prisma.CnftOfferCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CnftOfferPayload>
+          }
+          createMany: {
+            args: Prisma.CnftOfferCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.CnftOfferCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CnftOfferPayload>[]
+          }
+          delete: {
+            args: Prisma.CnftOfferDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CnftOfferPayload>
+          }
+          update: {
+            args: Prisma.CnftOfferUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CnftOfferPayload>
+          }
+          deleteMany: {
+            args: Prisma.CnftOfferDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.CnftOfferUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.CnftOfferUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CnftOfferPayload>[]
+          }
+          upsert: {
+            args: Prisma.CnftOfferUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CnftOfferPayload>
+          }
+          aggregate: {
+            args: Prisma.CnftOfferAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateCnftOffer>
+          }
+          groupBy: {
+            args: Prisma.CnftOfferGroupByArgs<ExtArgs>
+            result: $Utils.Optional<CnftOfferGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.CnftOfferCountArgs<ExtArgs>
+            result: $Utils.Optional<CnftOfferCountAggregateOutputType> | number
+          }
+        }
+      }
+      Listing: {
+        payload: Prisma.$ListingPayload<ExtArgs>
+        fields: Prisma.ListingFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ListingFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ListingPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ListingFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ListingPayload>
+          }
+          findFirst: {
+            args: Prisma.ListingFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ListingPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ListingFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ListingPayload>
+          }
+          findMany: {
+            args: Prisma.ListingFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ListingPayload>[]
+          }
+          create: {
+            args: Prisma.ListingCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ListingPayload>
+          }
+          createMany: {
+            args: Prisma.ListingCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ListingCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ListingPayload>[]
+          }
+          delete: {
+            args: Prisma.ListingDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ListingPayload>
+          }
+          update: {
+            args: Prisma.ListingUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ListingPayload>
+          }
+          deleteMany: {
+            args: Prisma.ListingDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ListingUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.ListingUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ListingPayload>[]
+          }
+          upsert: {
+            args: Prisma.ListingUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ListingPayload>
+          }
+          aggregate: {
+            args: Prisma.ListingAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateListing>
+          }
+          groupBy: {
+            args: Prisma.ListingGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ListingGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ListingCountArgs<ExtArgs>
+            result: $Utils.Optional<ListingCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -2035,6 +2261,8 @@ export namespace Prisma {
     swapTransaction?: SwapTransactionOmit
     authorizedApp?: AuthorizedAppOmit
     zeroFeeSwapLog?: ZeroFeeSwapLogOmit
+    cnftOffer?: CnftOfferOmit
+    listing?: ListingOmit
   }
 
   /* Types for Logging */
@@ -2307,6 +2535,77 @@ export namespace Prisma {
    */
   export type AuthorizedAppCountOutputTypeCountZeroFeeSwapLogsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ZeroFeeSwapLogWhereInput
+  }
+
+
+  /**
+   * Count Type CnftOfferCountOutputType
+   */
+
+  export type CnftOfferCountOutputType = {
+    counterOffers: number
+    childOffers: number
+  }
+
+  export type CnftOfferCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    counterOffers?: boolean | CnftOfferCountOutputTypeCountCounterOffersArgs
+    childOffers?: boolean | CnftOfferCountOutputTypeCountChildOffersArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * CnftOfferCountOutputType without action
+   */
+  export type CnftOfferCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CnftOfferCountOutputType
+     */
+    select?: CnftOfferCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * CnftOfferCountOutputType without action
+   */
+  export type CnftOfferCountOutputTypeCountCounterOffersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CnftOfferWhereInput
+  }
+
+  /**
+   * CnftOfferCountOutputType without action
+   */
+  export type CnftOfferCountOutputTypeCountChildOffersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CnftOfferWhereInput
+  }
+
+
+  /**
+   * Count Type ListingCountOutputType
+   */
+
+  export type ListingCountOutputType = {
+    offers: number
+  }
+
+  export type ListingCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    offers?: boolean | ListingCountOutputTypeCountOffersArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * ListingCountOutputType without action
+   */
+  export type ListingCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ListingCountOutputType
+     */
+    select?: ListingCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * ListingCountOutputType without action
+   */
+  export type ListingCountOutputTypeCountOffersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CnftOfferWhereInput
   }
 
 
@@ -18375,6 +18674,2882 @@ export namespace Prisma {
 
 
   /**
+   * Model CnftOffer
+   */
+
+  export type AggregateCnftOffer = {
+    _count: CnftOfferCountAggregateOutputType | null
+    _avg: CnftOfferAvgAggregateOutputType | null
+    _sum: CnftOfferSumAggregateOutputType | null
+    _min: CnftOfferMinAggregateOutputType | null
+    _max: CnftOfferMaxAggregateOutputType | null
+  }
+
+  export type CnftOfferAvgAggregateOutputType = {
+    leafIndex: number | null
+    offerLamports: number | null
+    feeLamports: number | null
+    feeBps: number | null
+    escrowBump: number | null
+  }
+
+  export type CnftOfferSumAggregateOutputType = {
+    leafIndex: number | null
+    offerLamports: bigint | null
+    feeLamports: bigint | null
+    feeBps: number | null
+    escrowBump: number | null
+  }
+
+  export type CnftOfferMinAggregateOutputType = {
+    id: string | null
+    offerId: string | null
+    bidderWallet: string | null
+    targetAssetId: string | null
+    merkleTree: string | null
+    leafIndex: number | null
+    ownerWallet: string | null
+    offerLamports: bigint | null
+    feeLamports: bigint | null
+    feeBps: number | null
+    escrowPda: string | null
+    escrowBump: number | null
+    status: $Enums.OfferEscrowStatus | null
+    expiresAt: Date | null
+    escrowTxId: string | null
+    acceptTxId: string | null
+    cancelTxId: string | null
+    rejectTxId: string | null
+    counterOfferId: string | null
+    parentOfferId: string | null
+    acceptedAt: Date | null
+    cancelledAt: Date | null
+    rejectedAt: Date | null
+    expiredAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    listingId: string | null
+  }
+
+  export type CnftOfferMaxAggregateOutputType = {
+    id: string | null
+    offerId: string | null
+    bidderWallet: string | null
+    targetAssetId: string | null
+    merkleTree: string | null
+    leafIndex: number | null
+    ownerWallet: string | null
+    offerLamports: bigint | null
+    feeLamports: bigint | null
+    feeBps: number | null
+    escrowPda: string | null
+    escrowBump: number | null
+    status: $Enums.OfferEscrowStatus | null
+    expiresAt: Date | null
+    escrowTxId: string | null
+    acceptTxId: string | null
+    cancelTxId: string | null
+    rejectTxId: string | null
+    counterOfferId: string | null
+    parentOfferId: string | null
+    acceptedAt: Date | null
+    cancelledAt: Date | null
+    rejectedAt: Date | null
+    expiredAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    listingId: string | null
+  }
+
+  export type CnftOfferCountAggregateOutputType = {
+    id: number
+    offerId: number
+    bidderWallet: number
+    targetAssetId: number
+    merkleTree: number
+    leafIndex: number
+    ownerWallet: number
+    offerLamports: number
+    feeLamports: number
+    feeBps: number
+    escrowPda: number
+    escrowBump: number
+    status: number
+    expiresAt: number
+    escrowTxId: number
+    acceptTxId: number
+    cancelTxId: number
+    rejectTxId: number
+    counterOfferId: number
+    parentOfferId: number
+    acceptedAt: number
+    cancelledAt: number
+    rejectedAt: number
+    expiredAt: number
+    createdAt: number
+    updatedAt: number
+    metadata: number
+    listingId: number
+    _all: number
+  }
+
+
+  export type CnftOfferAvgAggregateInputType = {
+    leafIndex?: true
+    offerLamports?: true
+    feeLamports?: true
+    feeBps?: true
+    escrowBump?: true
+  }
+
+  export type CnftOfferSumAggregateInputType = {
+    leafIndex?: true
+    offerLamports?: true
+    feeLamports?: true
+    feeBps?: true
+    escrowBump?: true
+  }
+
+  export type CnftOfferMinAggregateInputType = {
+    id?: true
+    offerId?: true
+    bidderWallet?: true
+    targetAssetId?: true
+    merkleTree?: true
+    leafIndex?: true
+    ownerWallet?: true
+    offerLamports?: true
+    feeLamports?: true
+    feeBps?: true
+    escrowPda?: true
+    escrowBump?: true
+    status?: true
+    expiresAt?: true
+    escrowTxId?: true
+    acceptTxId?: true
+    cancelTxId?: true
+    rejectTxId?: true
+    counterOfferId?: true
+    parentOfferId?: true
+    acceptedAt?: true
+    cancelledAt?: true
+    rejectedAt?: true
+    expiredAt?: true
+    createdAt?: true
+    updatedAt?: true
+    listingId?: true
+  }
+
+  export type CnftOfferMaxAggregateInputType = {
+    id?: true
+    offerId?: true
+    bidderWallet?: true
+    targetAssetId?: true
+    merkleTree?: true
+    leafIndex?: true
+    ownerWallet?: true
+    offerLamports?: true
+    feeLamports?: true
+    feeBps?: true
+    escrowPda?: true
+    escrowBump?: true
+    status?: true
+    expiresAt?: true
+    escrowTxId?: true
+    acceptTxId?: true
+    cancelTxId?: true
+    rejectTxId?: true
+    counterOfferId?: true
+    parentOfferId?: true
+    acceptedAt?: true
+    cancelledAt?: true
+    rejectedAt?: true
+    expiredAt?: true
+    createdAt?: true
+    updatedAt?: true
+    listingId?: true
+  }
+
+  export type CnftOfferCountAggregateInputType = {
+    id?: true
+    offerId?: true
+    bidderWallet?: true
+    targetAssetId?: true
+    merkleTree?: true
+    leafIndex?: true
+    ownerWallet?: true
+    offerLamports?: true
+    feeLamports?: true
+    feeBps?: true
+    escrowPda?: true
+    escrowBump?: true
+    status?: true
+    expiresAt?: true
+    escrowTxId?: true
+    acceptTxId?: true
+    cancelTxId?: true
+    rejectTxId?: true
+    counterOfferId?: true
+    parentOfferId?: true
+    acceptedAt?: true
+    cancelledAt?: true
+    rejectedAt?: true
+    expiredAt?: true
+    createdAt?: true
+    updatedAt?: true
+    metadata?: true
+    listingId?: true
+    _all?: true
+  }
+
+  export type CnftOfferAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CnftOffer to aggregate.
+     */
+    where?: CnftOfferWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CnftOffers to fetch.
+     */
+    orderBy?: CnftOfferOrderByWithRelationInput | CnftOfferOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: CnftOfferWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CnftOffers from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CnftOffers.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned CnftOffers
+    **/
+    _count?: true | CnftOfferCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: CnftOfferAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: CnftOfferSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: CnftOfferMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: CnftOfferMaxAggregateInputType
+  }
+
+  export type GetCnftOfferAggregateType<T extends CnftOfferAggregateArgs> = {
+        [P in keyof T & keyof AggregateCnftOffer]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateCnftOffer[P]>
+      : GetScalarType<T[P], AggregateCnftOffer[P]>
+  }
+
+
+
+
+  export type CnftOfferGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CnftOfferWhereInput
+    orderBy?: CnftOfferOrderByWithAggregationInput | CnftOfferOrderByWithAggregationInput[]
+    by: CnftOfferScalarFieldEnum[] | CnftOfferScalarFieldEnum
+    having?: CnftOfferScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: CnftOfferCountAggregateInputType | true
+    _avg?: CnftOfferAvgAggregateInputType
+    _sum?: CnftOfferSumAggregateInputType
+    _min?: CnftOfferMinAggregateInputType
+    _max?: CnftOfferMaxAggregateInputType
+  }
+
+  export type CnftOfferGroupByOutputType = {
+    id: string
+    offerId: string
+    bidderWallet: string
+    targetAssetId: string
+    merkleTree: string | null
+    leafIndex: number | null
+    ownerWallet: string
+    offerLamports: bigint
+    feeLamports: bigint
+    feeBps: number
+    escrowPda: string
+    escrowBump: number
+    status: $Enums.OfferEscrowStatus
+    expiresAt: Date
+    escrowTxId: string | null
+    acceptTxId: string | null
+    cancelTxId: string | null
+    rejectTxId: string | null
+    counterOfferId: string | null
+    parentOfferId: string | null
+    acceptedAt: Date | null
+    cancelledAt: Date | null
+    rejectedAt: Date | null
+    expiredAt: Date | null
+    createdAt: Date
+    updatedAt: Date
+    metadata: JsonValue | null
+    listingId: string | null
+    _count: CnftOfferCountAggregateOutputType | null
+    _avg: CnftOfferAvgAggregateOutputType | null
+    _sum: CnftOfferSumAggregateOutputType | null
+    _min: CnftOfferMinAggregateOutputType | null
+    _max: CnftOfferMaxAggregateOutputType | null
+  }
+
+  type GetCnftOfferGroupByPayload<T extends CnftOfferGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<CnftOfferGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof CnftOfferGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], CnftOfferGroupByOutputType[P]>
+            : GetScalarType<T[P], CnftOfferGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type CnftOfferSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    offerId?: boolean
+    bidderWallet?: boolean
+    targetAssetId?: boolean
+    merkleTree?: boolean
+    leafIndex?: boolean
+    ownerWallet?: boolean
+    offerLamports?: boolean
+    feeLamports?: boolean
+    feeBps?: boolean
+    escrowPda?: boolean
+    escrowBump?: boolean
+    status?: boolean
+    expiresAt?: boolean
+    escrowTxId?: boolean
+    acceptTxId?: boolean
+    cancelTxId?: boolean
+    rejectTxId?: boolean
+    counterOfferId?: boolean
+    parentOfferId?: boolean
+    acceptedAt?: boolean
+    cancelledAt?: boolean
+    rejectedAt?: boolean
+    expiredAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    metadata?: boolean
+    listingId?: boolean
+    counterOffer?: boolean | CnftOffer$counterOfferArgs<ExtArgs>
+    counterOffers?: boolean | CnftOffer$counterOffersArgs<ExtArgs>
+    parentOffer?: boolean | CnftOffer$parentOfferArgs<ExtArgs>
+    childOffers?: boolean | CnftOffer$childOffersArgs<ExtArgs>
+    listing?: boolean | CnftOffer$listingArgs<ExtArgs>
+    _count?: boolean | CnftOfferCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["cnftOffer"]>
+
+  export type CnftOfferSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    offerId?: boolean
+    bidderWallet?: boolean
+    targetAssetId?: boolean
+    merkleTree?: boolean
+    leafIndex?: boolean
+    ownerWallet?: boolean
+    offerLamports?: boolean
+    feeLamports?: boolean
+    feeBps?: boolean
+    escrowPda?: boolean
+    escrowBump?: boolean
+    status?: boolean
+    expiresAt?: boolean
+    escrowTxId?: boolean
+    acceptTxId?: boolean
+    cancelTxId?: boolean
+    rejectTxId?: boolean
+    counterOfferId?: boolean
+    parentOfferId?: boolean
+    acceptedAt?: boolean
+    cancelledAt?: boolean
+    rejectedAt?: boolean
+    expiredAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    metadata?: boolean
+    listingId?: boolean
+    counterOffer?: boolean | CnftOffer$counterOfferArgs<ExtArgs>
+    parentOffer?: boolean | CnftOffer$parentOfferArgs<ExtArgs>
+    listing?: boolean | CnftOffer$listingArgs<ExtArgs>
+  }, ExtArgs["result"]["cnftOffer"]>
+
+  export type CnftOfferSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    offerId?: boolean
+    bidderWallet?: boolean
+    targetAssetId?: boolean
+    merkleTree?: boolean
+    leafIndex?: boolean
+    ownerWallet?: boolean
+    offerLamports?: boolean
+    feeLamports?: boolean
+    feeBps?: boolean
+    escrowPda?: boolean
+    escrowBump?: boolean
+    status?: boolean
+    expiresAt?: boolean
+    escrowTxId?: boolean
+    acceptTxId?: boolean
+    cancelTxId?: boolean
+    rejectTxId?: boolean
+    counterOfferId?: boolean
+    parentOfferId?: boolean
+    acceptedAt?: boolean
+    cancelledAt?: boolean
+    rejectedAt?: boolean
+    expiredAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    metadata?: boolean
+    listingId?: boolean
+    counterOffer?: boolean | CnftOffer$counterOfferArgs<ExtArgs>
+    parentOffer?: boolean | CnftOffer$parentOfferArgs<ExtArgs>
+    listing?: boolean | CnftOffer$listingArgs<ExtArgs>
+  }, ExtArgs["result"]["cnftOffer"]>
+
+  export type CnftOfferSelectScalar = {
+    id?: boolean
+    offerId?: boolean
+    bidderWallet?: boolean
+    targetAssetId?: boolean
+    merkleTree?: boolean
+    leafIndex?: boolean
+    ownerWallet?: boolean
+    offerLamports?: boolean
+    feeLamports?: boolean
+    feeBps?: boolean
+    escrowPda?: boolean
+    escrowBump?: boolean
+    status?: boolean
+    expiresAt?: boolean
+    escrowTxId?: boolean
+    acceptTxId?: boolean
+    cancelTxId?: boolean
+    rejectTxId?: boolean
+    counterOfferId?: boolean
+    parentOfferId?: boolean
+    acceptedAt?: boolean
+    cancelledAt?: boolean
+    rejectedAt?: boolean
+    expiredAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    metadata?: boolean
+    listingId?: boolean
+  }
+
+  export type CnftOfferOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "offerId" | "bidderWallet" | "targetAssetId" | "merkleTree" | "leafIndex" | "ownerWallet" | "offerLamports" | "feeLamports" | "feeBps" | "escrowPda" | "escrowBump" | "status" | "expiresAt" | "escrowTxId" | "acceptTxId" | "cancelTxId" | "rejectTxId" | "counterOfferId" | "parentOfferId" | "acceptedAt" | "cancelledAt" | "rejectedAt" | "expiredAt" | "createdAt" | "updatedAt" | "metadata" | "listingId", ExtArgs["result"]["cnftOffer"]>
+  export type CnftOfferInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    counterOffer?: boolean | CnftOffer$counterOfferArgs<ExtArgs>
+    counterOffers?: boolean | CnftOffer$counterOffersArgs<ExtArgs>
+    parentOffer?: boolean | CnftOffer$parentOfferArgs<ExtArgs>
+    childOffers?: boolean | CnftOffer$childOffersArgs<ExtArgs>
+    listing?: boolean | CnftOffer$listingArgs<ExtArgs>
+    _count?: boolean | CnftOfferCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type CnftOfferIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    counterOffer?: boolean | CnftOffer$counterOfferArgs<ExtArgs>
+    parentOffer?: boolean | CnftOffer$parentOfferArgs<ExtArgs>
+    listing?: boolean | CnftOffer$listingArgs<ExtArgs>
+  }
+  export type CnftOfferIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    counterOffer?: boolean | CnftOffer$counterOfferArgs<ExtArgs>
+    parentOffer?: boolean | CnftOffer$parentOfferArgs<ExtArgs>
+    listing?: boolean | CnftOffer$listingArgs<ExtArgs>
+  }
+
+  export type $CnftOfferPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "CnftOffer"
+    objects: {
+      counterOffer: Prisma.$CnftOfferPayload<ExtArgs> | null
+      counterOffers: Prisma.$CnftOfferPayload<ExtArgs>[]
+      parentOffer: Prisma.$CnftOfferPayload<ExtArgs> | null
+      childOffers: Prisma.$CnftOfferPayload<ExtArgs>[]
+      listing: Prisma.$ListingPayload<ExtArgs> | null
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      offerId: string
+      bidderWallet: string
+      targetAssetId: string
+      merkleTree: string | null
+      leafIndex: number | null
+      ownerWallet: string
+      offerLamports: bigint
+      feeLamports: bigint
+      feeBps: number
+      escrowPda: string
+      escrowBump: number
+      status: $Enums.OfferEscrowStatus
+      expiresAt: Date
+      escrowTxId: string | null
+      acceptTxId: string | null
+      cancelTxId: string | null
+      rejectTxId: string | null
+      counterOfferId: string | null
+      parentOfferId: string | null
+      acceptedAt: Date | null
+      cancelledAt: Date | null
+      rejectedAt: Date | null
+      expiredAt: Date | null
+      createdAt: Date
+      updatedAt: Date
+      metadata: Prisma.JsonValue | null
+      listingId: string | null
+    }, ExtArgs["result"]["cnftOffer"]>
+    composites: {}
+  }
+
+  type CnftOfferGetPayload<S extends boolean | null | undefined | CnftOfferDefaultArgs> = $Result.GetResult<Prisma.$CnftOfferPayload, S>
+
+  type CnftOfferCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<CnftOfferFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: CnftOfferCountAggregateInputType | true
+    }
+
+  export interface CnftOfferDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['CnftOffer'], meta: { name: 'CnftOffer' } }
+    /**
+     * Find zero or one CnftOffer that matches the filter.
+     * @param {CnftOfferFindUniqueArgs} args - Arguments to find a CnftOffer
+     * @example
+     * // Get one CnftOffer
+     * const cnftOffer = await prisma.cnftOffer.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends CnftOfferFindUniqueArgs>(args: SelectSubset<T, CnftOfferFindUniqueArgs<ExtArgs>>): Prisma__CnftOfferClient<$Result.GetResult<Prisma.$CnftOfferPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one CnftOffer that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {CnftOfferFindUniqueOrThrowArgs} args - Arguments to find a CnftOffer
+     * @example
+     * // Get one CnftOffer
+     * const cnftOffer = await prisma.cnftOffer.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends CnftOfferFindUniqueOrThrowArgs>(args: SelectSubset<T, CnftOfferFindUniqueOrThrowArgs<ExtArgs>>): Prisma__CnftOfferClient<$Result.GetResult<Prisma.$CnftOfferPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first CnftOffer that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CnftOfferFindFirstArgs} args - Arguments to find a CnftOffer
+     * @example
+     * // Get one CnftOffer
+     * const cnftOffer = await prisma.cnftOffer.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends CnftOfferFindFirstArgs>(args?: SelectSubset<T, CnftOfferFindFirstArgs<ExtArgs>>): Prisma__CnftOfferClient<$Result.GetResult<Prisma.$CnftOfferPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first CnftOffer that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CnftOfferFindFirstOrThrowArgs} args - Arguments to find a CnftOffer
+     * @example
+     * // Get one CnftOffer
+     * const cnftOffer = await prisma.cnftOffer.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends CnftOfferFindFirstOrThrowArgs>(args?: SelectSubset<T, CnftOfferFindFirstOrThrowArgs<ExtArgs>>): Prisma__CnftOfferClient<$Result.GetResult<Prisma.$CnftOfferPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more CnftOffers that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CnftOfferFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all CnftOffers
+     * const cnftOffers = await prisma.cnftOffer.findMany()
+     * 
+     * // Get first 10 CnftOffers
+     * const cnftOffers = await prisma.cnftOffer.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const cnftOfferWithIdOnly = await prisma.cnftOffer.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends CnftOfferFindManyArgs>(args?: SelectSubset<T, CnftOfferFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CnftOfferPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a CnftOffer.
+     * @param {CnftOfferCreateArgs} args - Arguments to create a CnftOffer.
+     * @example
+     * // Create one CnftOffer
+     * const CnftOffer = await prisma.cnftOffer.create({
+     *   data: {
+     *     // ... data to create a CnftOffer
+     *   }
+     * })
+     * 
+     */
+    create<T extends CnftOfferCreateArgs>(args: SelectSubset<T, CnftOfferCreateArgs<ExtArgs>>): Prisma__CnftOfferClient<$Result.GetResult<Prisma.$CnftOfferPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many CnftOffers.
+     * @param {CnftOfferCreateManyArgs} args - Arguments to create many CnftOffers.
+     * @example
+     * // Create many CnftOffers
+     * const cnftOffer = await prisma.cnftOffer.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends CnftOfferCreateManyArgs>(args?: SelectSubset<T, CnftOfferCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many CnftOffers and returns the data saved in the database.
+     * @param {CnftOfferCreateManyAndReturnArgs} args - Arguments to create many CnftOffers.
+     * @example
+     * // Create many CnftOffers
+     * const cnftOffer = await prisma.cnftOffer.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many CnftOffers and only return the `id`
+     * const cnftOfferWithIdOnly = await prisma.cnftOffer.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends CnftOfferCreateManyAndReturnArgs>(args?: SelectSubset<T, CnftOfferCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CnftOfferPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a CnftOffer.
+     * @param {CnftOfferDeleteArgs} args - Arguments to delete one CnftOffer.
+     * @example
+     * // Delete one CnftOffer
+     * const CnftOffer = await prisma.cnftOffer.delete({
+     *   where: {
+     *     // ... filter to delete one CnftOffer
+     *   }
+     * })
+     * 
+     */
+    delete<T extends CnftOfferDeleteArgs>(args: SelectSubset<T, CnftOfferDeleteArgs<ExtArgs>>): Prisma__CnftOfferClient<$Result.GetResult<Prisma.$CnftOfferPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one CnftOffer.
+     * @param {CnftOfferUpdateArgs} args - Arguments to update one CnftOffer.
+     * @example
+     * // Update one CnftOffer
+     * const cnftOffer = await prisma.cnftOffer.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends CnftOfferUpdateArgs>(args: SelectSubset<T, CnftOfferUpdateArgs<ExtArgs>>): Prisma__CnftOfferClient<$Result.GetResult<Prisma.$CnftOfferPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more CnftOffers.
+     * @param {CnftOfferDeleteManyArgs} args - Arguments to filter CnftOffers to delete.
+     * @example
+     * // Delete a few CnftOffers
+     * const { count } = await prisma.cnftOffer.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends CnftOfferDeleteManyArgs>(args?: SelectSubset<T, CnftOfferDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CnftOffers.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CnftOfferUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many CnftOffers
+     * const cnftOffer = await prisma.cnftOffer.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends CnftOfferUpdateManyArgs>(args: SelectSubset<T, CnftOfferUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CnftOffers and returns the data updated in the database.
+     * @param {CnftOfferUpdateManyAndReturnArgs} args - Arguments to update many CnftOffers.
+     * @example
+     * // Update many CnftOffers
+     * const cnftOffer = await prisma.cnftOffer.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more CnftOffers and only return the `id`
+     * const cnftOfferWithIdOnly = await prisma.cnftOffer.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends CnftOfferUpdateManyAndReturnArgs>(args: SelectSubset<T, CnftOfferUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CnftOfferPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one CnftOffer.
+     * @param {CnftOfferUpsertArgs} args - Arguments to update or create a CnftOffer.
+     * @example
+     * // Update or create a CnftOffer
+     * const cnftOffer = await prisma.cnftOffer.upsert({
+     *   create: {
+     *     // ... data to create a CnftOffer
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the CnftOffer we want to update
+     *   }
+     * })
+     */
+    upsert<T extends CnftOfferUpsertArgs>(args: SelectSubset<T, CnftOfferUpsertArgs<ExtArgs>>): Prisma__CnftOfferClient<$Result.GetResult<Prisma.$CnftOfferPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of CnftOffers.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CnftOfferCountArgs} args - Arguments to filter CnftOffers to count.
+     * @example
+     * // Count the number of CnftOffers
+     * const count = await prisma.cnftOffer.count({
+     *   where: {
+     *     // ... the filter for the CnftOffers we want to count
+     *   }
+     * })
+    **/
+    count<T extends CnftOfferCountArgs>(
+      args?: Subset<T, CnftOfferCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], CnftOfferCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a CnftOffer.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CnftOfferAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends CnftOfferAggregateArgs>(args: Subset<T, CnftOfferAggregateArgs>): Prisma.PrismaPromise<GetCnftOfferAggregateType<T>>
+
+    /**
+     * Group by CnftOffer.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CnftOfferGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends CnftOfferGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: CnftOfferGroupByArgs['orderBy'] }
+        : { orderBy?: CnftOfferGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, CnftOfferGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetCnftOfferGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the CnftOffer model
+   */
+  readonly fields: CnftOfferFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for CnftOffer.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__CnftOfferClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    counterOffer<T extends CnftOffer$counterOfferArgs<ExtArgs> = {}>(args?: Subset<T, CnftOffer$counterOfferArgs<ExtArgs>>): Prisma__CnftOfferClient<$Result.GetResult<Prisma.$CnftOfferPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    counterOffers<T extends CnftOffer$counterOffersArgs<ExtArgs> = {}>(args?: Subset<T, CnftOffer$counterOffersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CnftOfferPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    parentOffer<T extends CnftOffer$parentOfferArgs<ExtArgs> = {}>(args?: Subset<T, CnftOffer$parentOfferArgs<ExtArgs>>): Prisma__CnftOfferClient<$Result.GetResult<Prisma.$CnftOfferPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    childOffers<T extends CnftOffer$childOffersArgs<ExtArgs> = {}>(args?: Subset<T, CnftOffer$childOffersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CnftOfferPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    listing<T extends CnftOffer$listingArgs<ExtArgs> = {}>(args?: Subset<T, CnftOffer$listingArgs<ExtArgs>>): Prisma__ListingClient<$Result.GetResult<Prisma.$ListingPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the CnftOffer model
+   */
+  interface CnftOfferFieldRefs {
+    readonly id: FieldRef<"CnftOffer", 'String'>
+    readonly offerId: FieldRef<"CnftOffer", 'String'>
+    readonly bidderWallet: FieldRef<"CnftOffer", 'String'>
+    readonly targetAssetId: FieldRef<"CnftOffer", 'String'>
+    readonly merkleTree: FieldRef<"CnftOffer", 'String'>
+    readonly leafIndex: FieldRef<"CnftOffer", 'Int'>
+    readonly ownerWallet: FieldRef<"CnftOffer", 'String'>
+    readonly offerLamports: FieldRef<"CnftOffer", 'BigInt'>
+    readonly feeLamports: FieldRef<"CnftOffer", 'BigInt'>
+    readonly feeBps: FieldRef<"CnftOffer", 'Int'>
+    readonly escrowPda: FieldRef<"CnftOffer", 'String'>
+    readonly escrowBump: FieldRef<"CnftOffer", 'Int'>
+    readonly status: FieldRef<"CnftOffer", 'OfferEscrowStatus'>
+    readonly expiresAt: FieldRef<"CnftOffer", 'DateTime'>
+    readonly escrowTxId: FieldRef<"CnftOffer", 'String'>
+    readonly acceptTxId: FieldRef<"CnftOffer", 'String'>
+    readonly cancelTxId: FieldRef<"CnftOffer", 'String'>
+    readonly rejectTxId: FieldRef<"CnftOffer", 'String'>
+    readonly counterOfferId: FieldRef<"CnftOffer", 'String'>
+    readonly parentOfferId: FieldRef<"CnftOffer", 'String'>
+    readonly acceptedAt: FieldRef<"CnftOffer", 'DateTime'>
+    readonly cancelledAt: FieldRef<"CnftOffer", 'DateTime'>
+    readonly rejectedAt: FieldRef<"CnftOffer", 'DateTime'>
+    readonly expiredAt: FieldRef<"CnftOffer", 'DateTime'>
+    readonly createdAt: FieldRef<"CnftOffer", 'DateTime'>
+    readonly updatedAt: FieldRef<"CnftOffer", 'DateTime'>
+    readonly metadata: FieldRef<"CnftOffer", 'Json'>
+    readonly listingId: FieldRef<"CnftOffer", 'String'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * CnftOffer findUnique
+   */
+  export type CnftOfferFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CnftOffer
+     */
+    select?: CnftOfferSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CnftOffer
+     */
+    omit?: CnftOfferOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CnftOfferInclude<ExtArgs> | null
+    /**
+     * Filter, which CnftOffer to fetch.
+     */
+    where: CnftOfferWhereUniqueInput
+  }
+
+  /**
+   * CnftOffer findUniqueOrThrow
+   */
+  export type CnftOfferFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CnftOffer
+     */
+    select?: CnftOfferSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CnftOffer
+     */
+    omit?: CnftOfferOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CnftOfferInclude<ExtArgs> | null
+    /**
+     * Filter, which CnftOffer to fetch.
+     */
+    where: CnftOfferWhereUniqueInput
+  }
+
+  /**
+   * CnftOffer findFirst
+   */
+  export type CnftOfferFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CnftOffer
+     */
+    select?: CnftOfferSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CnftOffer
+     */
+    omit?: CnftOfferOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CnftOfferInclude<ExtArgs> | null
+    /**
+     * Filter, which CnftOffer to fetch.
+     */
+    where?: CnftOfferWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CnftOffers to fetch.
+     */
+    orderBy?: CnftOfferOrderByWithRelationInput | CnftOfferOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CnftOffers.
+     */
+    cursor?: CnftOfferWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CnftOffers from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CnftOffers.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CnftOffers.
+     */
+    distinct?: CnftOfferScalarFieldEnum | CnftOfferScalarFieldEnum[]
+  }
+
+  /**
+   * CnftOffer findFirstOrThrow
+   */
+  export type CnftOfferFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CnftOffer
+     */
+    select?: CnftOfferSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CnftOffer
+     */
+    omit?: CnftOfferOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CnftOfferInclude<ExtArgs> | null
+    /**
+     * Filter, which CnftOffer to fetch.
+     */
+    where?: CnftOfferWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CnftOffers to fetch.
+     */
+    orderBy?: CnftOfferOrderByWithRelationInput | CnftOfferOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CnftOffers.
+     */
+    cursor?: CnftOfferWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CnftOffers from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CnftOffers.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CnftOffers.
+     */
+    distinct?: CnftOfferScalarFieldEnum | CnftOfferScalarFieldEnum[]
+  }
+
+  /**
+   * CnftOffer findMany
+   */
+  export type CnftOfferFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CnftOffer
+     */
+    select?: CnftOfferSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CnftOffer
+     */
+    omit?: CnftOfferOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CnftOfferInclude<ExtArgs> | null
+    /**
+     * Filter, which CnftOffers to fetch.
+     */
+    where?: CnftOfferWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CnftOffers to fetch.
+     */
+    orderBy?: CnftOfferOrderByWithRelationInput | CnftOfferOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing CnftOffers.
+     */
+    cursor?: CnftOfferWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CnftOffers from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CnftOffers.
+     */
+    skip?: number
+    distinct?: CnftOfferScalarFieldEnum | CnftOfferScalarFieldEnum[]
+  }
+
+  /**
+   * CnftOffer create
+   */
+  export type CnftOfferCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CnftOffer
+     */
+    select?: CnftOfferSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CnftOffer
+     */
+    omit?: CnftOfferOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CnftOfferInclude<ExtArgs> | null
+    /**
+     * The data needed to create a CnftOffer.
+     */
+    data: XOR<CnftOfferCreateInput, CnftOfferUncheckedCreateInput>
+  }
+
+  /**
+   * CnftOffer createMany
+   */
+  export type CnftOfferCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many CnftOffers.
+     */
+    data: CnftOfferCreateManyInput | CnftOfferCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * CnftOffer createManyAndReturn
+   */
+  export type CnftOfferCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CnftOffer
+     */
+    select?: CnftOfferSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the CnftOffer
+     */
+    omit?: CnftOfferOmit<ExtArgs> | null
+    /**
+     * The data used to create many CnftOffers.
+     */
+    data: CnftOfferCreateManyInput | CnftOfferCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CnftOfferIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * CnftOffer update
+   */
+  export type CnftOfferUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CnftOffer
+     */
+    select?: CnftOfferSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CnftOffer
+     */
+    omit?: CnftOfferOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CnftOfferInclude<ExtArgs> | null
+    /**
+     * The data needed to update a CnftOffer.
+     */
+    data: XOR<CnftOfferUpdateInput, CnftOfferUncheckedUpdateInput>
+    /**
+     * Choose, which CnftOffer to update.
+     */
+    where: CnftOfferWhereUniqueInput
+  }
+
+  /**
+   * CnftOffer updateMany
+   */
+  export type CnftOfferUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update CnftOffers.
+     */
+    data: XOR<CnftOfferUpdateManyMutationInput, CnftOfferUncheckedUpdateManyInput>
+    /**
+     * Filter which CnftOffers to update
+     */
+    where?: CnftOfferWhereInput
+    /**
+     * Limit how many CnftOffers to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * CnftOffer updateManyAndReturn
+   */
+  export type CnftOfferUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CnftOffer
+     */
+    select?: CnftOfferSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the CnftOffer
+     */
+    omit?: CnftOfferOmit<ExtArgs> | null
+    /**
+     * The data used to update CnftOffers.
+     */
+    data: XOR<CnftOfferUpdateManyMutationInput, CnftOfferUncheckedUpdateManyInput>
+    /**
+     * Filter which CnftOffers to update
+     */
+    where?: CnftOfferWhereInput
+    /**
+     * Limit how many CnftOffers to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CnftOfferIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * CnftOffer upsert
+   */
+  export type CnftOfferUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CnftOffer
+     */
+    select?: CnftOfferSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CnftOffer
+     */
+    omit?: CnftOfferOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CnftOfferInclude<ExtArgs> | null
+    /**
+     * The filter to search for the CnftOffer to update in case it exists.
+     */
+    where: CnftOfferWhereUniqueInput
+    /**
+     * In case the CnftOffer found by the `where` argument doesn't exist, create a new CnftOffer with this data.
+     */
+    create: XOR<CnftOfferCreateInput, CnftOfferUncheckedCreateInput>
+    /**
+     * In case the CnftOffer was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<CnftOfferUpdateInput, CnftOfferUncheckedUpdateInput>
+  }
+
+  /**
+   * CnftOffer delete
+   */
+  export type CnftOfferDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CnftOffer
+     */
+    select?: CnftOfferSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CnftOffer
+     */
+    omit?: CnftOfferOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CnftOfferInclude<ExtArgs> | null
+    /**
+     * Filter which CnftOffer to delete.
+     */
+    where: CnftOfferWhereUniqueInput
+  }
+
+  /**
+   * CnftOffer deleteMany
+   */
+  export type CnftOfferDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CnftOffers to delete
+     */
+    where?: CnftOfferWhereInput
+    /**
+     * Limit how many CnftOffers to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * CnftOffer.counterOffer
+   */
+  export type CnftOffer$counterOfferArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CnftOffer
+     */
+    select?: CnftOfferSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CnftOffer
+     */
+    omit?: CnftOfferOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CnftOfferInclude<ExtArgs> | null
+    where?: CnftOfferWhereInput
+  }
+
+  /**
+   * CnftOffer.counterOffers
+   */
+  export type CnftOffer$counterOffersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CnftOffer
+     */
+    select?: CnftOfferSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CnftOffer
+     */
+    omit?: CnftOfferOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CnftOfferInclude<ExtArgs> | null
+    where?: CnftOfferWhereInput
+    orderBy?: CnftOfferOrderByWithRelationInput | CnftOfferOrderByWithRelationInput[]
+    cursor?: CnftOfferWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: CnftOfferScalarFieldEnum | CnftOfferScalarFieldEnum[]
+  }
+
+  /**
+   * CnftOffer.parentOffer
+   */
+  export type CnftOffer$parentOfferArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CnftOffer
+     */
+    select?: CnftOfferSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CnftOffer
+     */
+    omit?: CnftOfferOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CnftOfferInclude<ExtArgs> | null
+    where?: CnftOfferWhereInput
+  }
+
+  /**
+   * CnftOffer.childOffers
+   */
+  export type CnftOffer$childOffersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CnftOffer
+     */
+    select?: CnftOfferSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CnftOffer
+     */
+    omit?: CnftOfferOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CnftOfferInclude<ExtArgs> | null
+    where?: CnftOfferWhereInput
+    orderBy?: CnftOfferOrderByWithRelationInput | CnftOfferOrderByWithRelationInput[]
+    cursor?: CnftOfferWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: CnftOfferScalarFieldEnum | CnftOfferScalarFieldEnum[]
+  }
+
+  /**
+   * CnftOffer.listing
+   */
+  export type CnftOffer$listingArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Listing
+     */
+    select?: ListingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Listing
+     */
+    omit?: ListingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ListingInclude<ExtArgs> | null
+    where?: ListingWhereInput
+  }
+
+  /**
+   * CnftOffer without action
+   */
+  export type CnftOfferDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CnftOffer
+     */
+    select?: CnftOfferSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CnftOffer
+     */
+    omit?: CnftOfferOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CnftOfferInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model Listing
+   */
+
+  export type AggregateListing = {
+    _count: ListingCountAggregateOutputType | null
+    _avg: ListingAvgAggregateOutputType | null
+    _sum: ListingSumAggregateOutputType | null
+    _min: ListingMinAggregateOutputType | null
+    _max: ListingMaxAggregateOutputType | null
+  }
+
+  export type ListingAvgAggregateOutputType = {
+    leafIndex: number | null
+    priceLamports: number | null
+    feeBps: number | null
+  }
+
+  export type ListingSumAggregateOutputType = {
+    leafIndex: number | null
+    priceLamports: bigint | null
+    feeBps: number | null
+  }
+
+  export type ListingMinAggregateOutputType = {
+    id: string | null
+    listingId: string | null
+    seller: string | null
+    assetId: string | null
+    merkleTree: string | null
+    leafIndex: number | null
+    priceLamports: bigint | null
+    delegationStatus: $Enums.DelegationStatus | null
+    delegatePda: string | null
+    delegatedAt: Date | null
+    isFrozen: boolean | null
+    status: $Enums.ListingStatus | null
+    expiresAt: Date | null
+    delegateTxId: string | null
+    settleTxId: string | null
+    revokeTxId: string | null
+    buyer: string | null
+    soldAt: Date | null
+    feeBps: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    cancelledAt: Date | null
+  }
+
+  export type ListingMaxAggregateOutputType = {
+    id: string | null
+    listingId: string | null
+    seller: string | null
+    assetId: string | null
+    merkleTree: string | null
+    leafIndex: number | null
+    priceLamports: bigint | null
+    delegationStatus: $Enums.DelegationStatus | null
+    delegatePda: string | null
+    delegatedAt: Date | null
+    isFrozen: boolean | null
+    status: $Enums.ListingStatus | null
+    expiresAt: Date | null
+    delegateTxId: string | null
+    settleTxId: string | null
+    revokeTxId: string | null
+    buyer: string | null
+    soldAt: Date | null
+    feeBps: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    cancelledAt: Date | null
+  }
+
+  export type ListingCountAggregateOutputType = {
+    id: number
+    listingId: number
+    seller: number
+    assetId: number
+    merkleTree: number
+    leafIndex: number
+    priceLamports: number
+    delegationStatus: number
+    delegatePda: number
+    delegatedAt: number
+    isFrozen: number
+    status: number
+    expiresAt: number
+    delegateTxId: number
+    settleTxId: number
+    revokeTxId: number
+    buyer: number
+    soldAt: number
+    feeBps: number
+    createdAt: number
+    updatedAt: number
+    cancelledAt: number
+    metadata: number
+    _all: number
+  }
+
+
+  export type ListingAvgAggregateInputType = {
+    leafIndex?: true
+    priceLamports?: true
+    feeBps?: true
+  }
+
+  export type ListingSumAggregateInputType = {
+    leafIndex?: true
+    priceLamports?: true
+    feeBps?: true
+  }
+
+  export type ListingMinAggregateInputType = {
+    id?: true
+    listingId?: true
+    seller?: true
+    assetId?: true
+    merkleTree?: true
+    leafIndex?: true
+    priceLamports?: true
+    delegationStatus?: true
+    delegatePda?: true
+    delegatedAt?: true
+    isFrozen?: true
+    status?: true
+    expiresAt?: true
+    delegateTxId?: true
+    settleTxId?: true
+    revokeTxId?: true
+    buyer?: true
+    soldAt?: true
+    feeBps?: true
+    createdAt?: true
+    updatedAt?: true
+    cancelledAt?: true
+  }
+
+  export type ListingMaxAggregateInputType = {
+    id?: true
+    listingId?: true
+    seller?: true
+    assetId?: true
+    merkleTree?: true
+    leafIndex?: true
+    priceLamports?: true
+    delegationStatus?: true
+    delegatePda?: true
+    delegatedAt?: true
+    isFrozen?: true
+    status?: true
+    expiresAt?: true
+    delegateTxId?: true
+    settleTxId?: true
+    revokeTxId?: true
+    buyer?: true
+    soldAt?: true
+    feeBps?: true
+    createdAt?: true
+    updatedAt?: true
+    cancelledAt?: true
+  }
+
+  export type ListingCountAggregateInputType = {
+    id?: true
+    listingId?: true
+    seller?: true
+    assetId?: true
+    merkleTree?: true
+    leafIndex?: true
+    priceLamports?: true
+    delegationStatus?: true
+    delegatePda?: true
+    delegatedAt?: true
+    isFrozen?: true
+    status?: true
+    expiresAt?: true
+    delegateTxId?: true
+    settleTxId?: true
+    revokeTxId?: true
+    buyer?: true
+    soldAt?: true
+    feeBps?: true
+    createdAt?: true
+    updatedAt?: true
+    cancelledAt?: true
+    metadata?: true
+    _all?: true
+  }
+
+  export type ListingAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Listing to aggregate.
+     */
+    where?: ListingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Listings to fetch.
+     */
+    orderBy?: ListingOrderByWithRelationInput | ListingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ListingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Listings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Listings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Listings
+    **/
+    _count?: true | ListingCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: ListingAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ListingSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ListingMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ListingMaxAggregateInputType
+  }
+
+  export type GetListingAggregateType<T extends ListingAggregateArgs> = {
+        [P in keyof T & keyof AggregateListing]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateListing[P]>
+      : GetScalarType<T[P], AggregateListing[P]>
+  }
+
+
+
+
+  export type ListingGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ListingWhereInput
+    orderBy?: ListingOrderByWithAggregationInput | ListingOrderByWithAggregationInput[]
+    by: ListingScalarFieldEnum[] | ListingScalarFieldEnum
+    having?: ListingScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ListingCountAggregateInputType | true
+    _avg?: ListingAvgAggregateInputType
+    _sum?: ListingSumAggregateInputType
+    _min?: ListingMinAggregateInputType
+    _max?: ListingMaxAggregateInputType
+  }
+
+  export type ListingGroupByOutputType = {
+    id: string
+    listingId: string
+    seller: string
+    assetId: string
+    merkleTree: string
+    leafIndex: number
+    priceLamports: bigint
+    delegationStatus: $Enums.DelegationStatus
+    delegatePda: string | null
+    delegatedAt: Date | null
+    isFrozen: boolean
+    status: $Enums.ListingStatus
+    expiresAt: Date
+    delegateTxId: string | null
+    settleTxId: string | null
+    revokeTxId: string | null
+    buyer: string | null
+    soldAt: Date | null
+    feeBps: number
+    createdAt: Date
+    updatedAt: Date
+    cancelledAt: Date | null
+    metadata: JsonValue | null
+    _count: ListingCountAggregateOutputType | null
+    _avg: ListingAvgAggregateOutputType | null
+    _sum: ListingSumAggregateOutputType | null
+    _min: ListingMinAggregateOutputType | null
+    _max: ListingMaxAggregateOutputType | null
+  }
+
+  type GetListingGroupByPayload<T extends ListingGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ListingGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ListingGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ListingGroupByOutputType[P]>
+            : GetScalarType<T[P], ListingGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ListingSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    listingId?: boolean
+    seller?: boolean
+    assetId?: boolean
+    merkleTree?: boolean
+    leafIndex?: boolean
+    priceLamports?: boolean
+    delegationStatus?: boolean
+    delegatePda?: boolean
+    delegatedAt?: boolean
+    isFrozen?: boolean
+    status?: boolean
+    expiresAt?: boolean
+    delegateTxId?: boolean
+    settleTxId?: boolean
+    revokeTxId?: boolean
+    buyer?: boolean
+    soldAt?: boolean
+    feeBps?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    cancelledAt?: boolean
+    metadata?: boolean
+    offers?: boolean | Listing$offersArgs<ExtArgs>
+    _count?: boolean | ListingCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["listing"]>
+
+  export type ListingSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    listingId?: boolean
+    seller?: boolean
+    assetId?: boolean
+    merkleTree?: boolean
+    leafIndex?: boolean
+    priceLamports?: boolean
+    delegationStatus?: boolean
+    delegatePda?: boolean
+    delegatedAt?: boolean
+    isFrozen?: boolean
+    status?: boolean
+    expiresAt?: boolean
+    delegateTxId?: boolean
+    settleTxId?: boolean
+    revokeTxId?: boolean
+    buyer?: boolean
+    soldAt?: boolean
+    feeBps?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    cancelledAt?: boolean
+    metadata?: boolean
+  }, ExtArgs["result"]["listing"]>
+
+  export type ListingSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    listingId?: boolean
+    seller?: boolean
+    assetId?: boolean
+    merkleTree?: boolean
+    leafIndex?: boolean
+    priceLamports?: boolean
+    delegationStatus?: boolean
+    delegatePda?: boolean
+    delegatedAt?: boolean
+    isFrozen?: boolean
+    status?: boolean
+    expiresAt?: boolean
+    delegateTxId?: boolean
+    settleTxId?: boolean
+    revokeTxId?: boolean
+    buyer?: boolean
+    soldAt?: boolean
+    feeBps?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    cancelledAt?: boolean
+    metadata?: boolean
+  }, ExtArgs["result"]["listing"]>
+
+  export type ListingSelectScalar = {
+    id?: boolean
+    listingId?: boolean
+    seller?: boolean
+    assetId?: boolean
+    merkleTree?: boolean
+    leafIndex?: boolean
+    priceLamports?: boolean
+    delegationStatus?: boolean
+    delegatePda?: boolean
+    delegatedAt?: boolean
+    isFrozen?: boolean
+    status?: boolean
+    expiresAt?: boolean
+    delegateTxId?: boolean
+    settleTxId?: boolean
+    revokeTxId?: boolean
+    buyer?: boolean
+    soldAt?: boolean
+    feeBps?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    cancelledAt?: boolean
+    metadata?: boolean
+  }
+
+  export type ListingOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "listingId" | "seller" | "assetId" | "merkleTree" | "leafIndex" | "priceLamports" | "delegationStatus" | "delegatePda" | "delegatedAt" | "isFrozen" | "status" | "expiresAt" | "delegateTxId" | "settleTxId" | "revokeTxId" | "buyer" | "soldAt" | "feeBps" | "createdAt" | "updatedAt" | "cancelledAt" | "metadata", ExtArgs["result"]["listing"]>
+  export type ListingInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    offers?: boolean | Listing$offersArgs<ExtArgs>
+    _count?: boolean | ListingCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type ListingIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type ListingIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $ListingPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Listing"
+    objects: {
+      offers: Prisma.$CnftOfferPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      listingId: string
+      seller: string
+      assetId: string
+      merkleTree: string
+      leafIndex: number
+      priceLamports: bigint
+      delegationStatus: $Enums.DelegationStatus
+      delegatePda: string | null
+      delegatedAt: Date | null
+      isFrozen: boolean
+      status: $Enums.ListingStatus
+      expiresAt: Date
+      delegateTxId: string | null
+      settleTxId: string | null
+      revokeTxId: string | null
+      buyer: string | null
+      soldAt: Date | null
+      feeBps: number
+      createdAt: Date
+      updatedAt: Date
+      cancelledAt: Date | null
+      metadata: Prisma.JsonValue | null
+    }, ExtArgs["result"]["listing"]>
+    composites: {}
+  }
+
+  type ListingGetPayload<S extends boolean | null | undefined | ListingDefaultArgs> = $Result.GetResult<Prisma.$ListingPayload, S>
+
+  type ListingCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<ListingFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: ListingCountAggregateInputType | true
+    }
+
+  export interface ListingDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Listing'], meta: { name: 'Listing' } }
+    /**
+     * Find zero or one Listing that matches the filter.
+     * @param {ListingFindUniqueArgs} args - Arguments to find a Listing
+     * @example
+     * // Get one Listing
+     * const listing = await prisma.listing.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ListingFindUniqueArgs>(args: SelectSubset<T, ListingFindUniqueArgs<ExtArgs>>): Prisma__ListingClient<$Result.GetResult<Prisma.$ListingPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one Listing that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {ListingFindUniqueOrThrowArgs} args - Arguments to find a Listing
+     * @example
+     * // Get one Listing
+     * const listing = await prisma.listing.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ListingFindUniqueOrThrowArgs>(args: SelectSubset<T, ListingFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ListingClient<$Result.GetResult<Prisma.$ListingPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Listing that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ListingFindFirstArgs} args - Arguments to find a Listing
+     * @example
+     * // Get one Listing
+     * const listing = await prisma.listing.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ListingFindFirstArgs>(args?: SelectSubset<T, ListingFindFirstArgs<ExtArgs>>): Prisma__ListingClient<$Result.GetResult<Prisma.$ListingPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Listing that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ListingFindFirstOrThrowArgs} args - Arguments to find a Listing
+     * @example
+     * // Get one Listing
+     * const listing = await prisma.listing.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ListingFindFirstOrThrowArgs>(args?: SelectSubset<T, ListingFindFirstOrThrowArgs<ExtArgs>>): Prisma__ListingClient<$Result.GetResult<Prisma.$ListingPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Listings that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ListingFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Listings
+     * const listings = await prisma.listing.findMany()
+     * 
+     * // Get first 10 Listings
+     * const listings = await prisma.listing.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const listingWithIdOnly = await prisma.listing.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends ListingFindManyArgs>(args?: SelectSubset<T, ListingFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ListingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a Listing.
+     * @param {ListingCreateArgs} args - Arguments to create a Listing.
+     * @example
+     * // Create one Listing
+     * const Listing = await prisma.listing.create({
+     *   data: {
+     *     // ... data to create a Listing
+     *   }
+     * })
+     * 
+     */
+    create<T extends ListingCreateArgs>(args: SelectSubset<T, ListingCreateArgs<ExtArgs>>): Prisma__ListingClient<$Result.GetResult<Prisma.$ListingPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Listings.
+     * @param {ListingCreateManyArgs} args - Arguments to create many Listings.
+     * @example
+     * // Create many Listings
+     * const listing = await prisma.listing.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ListingCreateManyArgs>(args?: SelectSubset<T, ListingCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Listings and returns the data saved in the database.
+     * @param {ListingCreateManyAndReturnArgs} args - Arguments to create many Listings.
+     * @example
+     * // Create many Listings
+     * const listing = await prisma.listing.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Listings and only return the `id`
+     * const listingWithIdOnly = await prisma.listing.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ListingCreateManyAndReturnArgs>(args?: SelectSubset<T, ListingCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ListingPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a Listing.
+     * @param {ListingDeleteArgs} args - Arguments to delete one Listing.
+     * @example
+     * // Delete one Listing
+     * const Listing = await prisma.listing.delete({
+     *   where: {
+     *     // ... filter to delete one Listing
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ListingDeleteArgs>(args: SelectSubset<T, ListingDeleteArgs<ExtArgs>>): Prisma__ListingClient<$Result.GetResult<Prisma.$ListingPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one Listing.
+     * @param {ListingUpdateArgs} args - Arguments to update one Listing.
+     * @example
+     * // Update one Listing
+     * const listing = await prisma.listing.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ListingUpdateArgs>(args: SelectSubset<T, ListingUpdateArgs<ExtArgs>>): Prisma__ListingClient<$Result.GetResult<Prisma.$ListingPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Listings.
+     * @param {ListingDeleteManyArgs} args - Arguments to filter Listings to delete.
+     * @example
+     * // Delete a few Listings
+     * const { count } = await prisma.listing.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ListingDeleteManyArgs>(args?: SelectSubset<T, ListingDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Listings.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ListingUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Listings
+     * const listing = await prisma.listing.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ListingUpdateManyArgs>(args: SelectSubset<T, ListingUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Listings and returns the data updated in the database.
+     * @param {ListingUpdateManyAndReturnArgs} args - Arguments to update many Listings.
+     * @example
+     * // Update many Listings
+     * const listing = await prisma.listing.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more Listings and only return the `id`
+     * const listingWithIdOnly = await prisma.listing.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends ListingUpdateManyAndReturnArgs>(args: SelectSubset<T, ListingUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ListingPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one Listing.
+     * @param {ListingUpsertArgs} args - Arguments to update or create a Listing.
+     * @example
+     * // Update or create a Listing
+     * const listing = await prisma.listing.upsert({
+     *   create: {
+     *     // ... data to create a Listing
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Listing we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ListingUpsertArgs>(args: SelectSubset<T, ListingUpsertArgs<ExtArgs>>): Prisma__ListingClient<$Result.GetResult<Prisma.$ListingPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of Listings.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ListingCountArgs} args - Arguments to filter Listings to count.
+     * @example
+     * // Count the number of Listings
+     * const count = await prisma.listing.count({
+     *   where: {
+     *     // ... the filter for the Listings we want to count
+     *   }
+     * })
+    **/
+    count<T extends ListingCountArgs>(
+      args?: Subset<T, ListingCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ListingCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Listing.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ListingAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ListingAggregateArgs>(args: Subset<T, ListingAggregateArgs>): Prisma.PrismaPromise<GetListingAggregateType<T>>
+
+    /**
+     * Group by Listing.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ListingGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ListingGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ListingGroupByArgs['orderBy'] }
+        : { orderBy?: ListingGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ListingGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetListingGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Listing model
+   */
+  readonly fields: ListingFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Listing.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ListingClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    offers<T extends Listing$offersArgs<ExtArgs> = {}>(args?: Subset<T, Listing$offersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CnftOfferPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Listing model
+   */
+  interface ListingFieldRefs {
+    readonly id: FieldRef<"Listing", 'String'>
+    readonly listingId: FieldRef<"Listing", 'String'>
+    readonly seller: FieldRef<"Listing", 'String'>
+    readonly assetId: FieldRef<"Listing", 'String'>
+    readonly merkleTree: FieldRef<"Listing", 'String'>
+    readonly leafIndex: FieldRef<"Listing", 'Int'>
+    readonly priceLamports: FieldRef<"Listing", 'BigInt'>
+    readonly delegationStatus: FieldRef<"Listing", 'DelegationStatus'>
+    readonly delegatePda: FieldRef<"Listing", 'String'>
+    readonly delegatedAt: FieldRef<"Listing", 'DateTime'>
+    readonly isFrozen: FieldRef<"Listing", 'Boolean'>
+    readonly status: FieldRef<"Listing", 'ListingStatus'>
+    readonly expiresAt: FieldRef<"Listing", 'DateTime'>
+    readonly delegateTxId: FieldRef<"Listing", 'String'>
+    readonly settleTxId: FieldRef<"Listing", 'String'>
+    readonly revokeTxId: FieldRef<"Listing", 'String'>
+    readonly buyer: FieldRef<"Listing", 'String'>
+    readonly soldAt: FieldRef<"Listing", 'DateTime'>
+    readonly feeBps: FieldRef<"Listing", 'Int'>
+    readonly createdAt: FieldRef<"Listing", 'DateTime'>
+    readonly updatedAt: FieldRef<"Listing", 'DateTime'>
+    readonly cancelledAt: FieldRef<"Listing", 'DateTime'>
+    readonly metadata: FieldRef<"Listing", 'Json'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Listing findUnique
+   */
+  export type ListingFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Listing
+     */
+    select?: ListingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Listing
+     */
+    omit?: ListingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ListingInclude<ExtArgs> | null
+    /**
+     * Filter, which Listing to fetch.
+     */
+    where: ListingWhereUniqueInput
+  }
+
+  /**
+   * Listing findUniqueOrThrow
+   */
+  export type ListingFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Listing
+     */
+    select?: ListingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Listing
+     */
+    omit?: ListingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ListingInclude<ExtArgs> | null
+    /**
+     * Filter, which Listing to fetch.
+     */
+    where: ListingWhereUniqueInput
+  }
+
+  /**
+   * Listing findFirst
+   */
+  export type ListingFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Listing
+     */
+    select?: ListingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Listing
+     */
+    omit?: ListingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ListingInclude<ExtArgs> | null
+    /**
+     * Filter, which Listing to fetch.
+     */
+    where?: ListingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Listings to fetch.
+     */
+    orderBy?: ListingOrderByWithRelationInput | ListingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Listings.
+     */
+    cursor?: ListingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Listings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Listings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Listings.
+     */
+    distinct?: ListingScalarFieldEnum | ListingScalarFieldEnum[]
+  }
+
+  /**
+   * Listing findFirstOrThrow
+   */
+  export type ListingFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Listing
+     */
+    select?: ListingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Listing
+     */
+    omit?: ListingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ListingInclude<ExtArgs> | null
+    /**
+     * Filter, which Listing to fetch.
+     */
+    where?: ListingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Listings to fetch.
+     */
+    orderBy?: ListingOrderByWithRelationInput | ListingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Listings.
+     */
+    cursor?: ListingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Listings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Listings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Listings.
+     */
+    distinct?: ListingScalarFieldEnum | ListingScalarFieldEnum[]
+  }
+
+  /**
+   * Listing findMany
+   */
+  export type ListingFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Listing
+     */
+    select?: ListingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Listing
+     */
+    omit?: ListingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ListingInclude<ExtArgs> | null
+    /**
+     * Filter, which Listings to fetch.
+     */
+    where?: ListingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Listings to fetch.
+     */
+    orderBy?: ListingOrderByWithRelationInput | ListingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Listings.
+     */
+    cursor?: ListingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Listings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Listings.
+     */
+    skip?: number
+    distinct?: ListingScalarFieldEnum | ListingScalarFieldEnum[]
+  }
+
+  /**
+   * Listing create
+   */
+  export type ListingCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Listing
+     */
+    select?: ListingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Listing
+     */
+    omit?: ListingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ListingInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Listing.
+     */
+    data: XOR<ListingCreateInput, ListingUncheckedCreateInput>
+  }
+
+  /**
+   * Listing createMany
+   */
+  export type ListingCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Listings.
+     */
+    data: ListingCreateManyInput | ListingCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Listing createManyAndReturn
+   */
+  export type ListingCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Listing
+     */
+    select?: ListingSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Listing
+     */
+    omit?: ListingOmit<ExtArgs> | null
+    /**
+     * The data used to create many Listings.
+     */
+    data: ListingCreateManyInput | ListingCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Listing update
+   */
+  export type ListingUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Listing
+     */
+    select?: ListingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Listing
+     */
+    omit?: ListingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ListingInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Listing.
+     */
+    data: XOR<ListingUpdateInput, ListingUncheckedUpdateInput>
+    /**
+     * Choose, which Listing to update.
+     */
+    where: ListingWhereUniqueInput
+  }
+
+  /**
+   * Listing updateMany
+   */
+  export type ListingUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Listings.
+     */
+    data: XOR<ListingUpdateManyMutationInput, ListingUncheckedUpdateManyInput>
+    /**
+     * Filter which Listings to update
+     */
+    where?: ListingWhereInput
+    /**
+     * Limit how many Listings to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Listing updateManyAndReturn
+   */
+  export type ListingUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Listing
+     */
+    select?: ListingSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Listing
+     */
+    omit?: ListingOmit<ExtArgs> | null
+    /**
+     * The data used to update Listings.
+     */
+    data: XOR<ListingUpdateManyMutationInput, ListingUncheckedUpdateManyInput>
+    /**
+     * Filter which Listings to update
+     */
+    where?: ListingWhereInput
+    /**
+     * Limit how many Listings to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Listing upsert
+   */
+  export type ListingUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Listing
+     */
+    select?: ListingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Listing
+     */
+    omit?: ListingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ListingInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Listing to update in case it exists.
+     */
+    where: ListingWhereUniqueInput
+    /**
+     * In case the Listing found by the `where` argument doesn't exist, create a new Listing with this data.
+     */
+    create: XOR<ListingCreateInput, ListingUncheckedCreateInput>
+    /**
+     * In case the Listing was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ListingUpdateInput, ListingUncheckedUpdateInput>
+  }
+
+  /**
+   * Listing delete
+   */
+  export type ListingDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Listing
+     */
+    select?: ListingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Listing
+     */
+    omit?: ListingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ListingInclude<ExtArgs> | null
+    /**
+     * Filter which Listing to delete.
+     */
+    where: ListingWhereUniqueInput
+  }
+
+  /**
+   * Listing deleteMany
+   */
+  export type ListingDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Listings to delete
+     */
+    where?: ListingWhereInput
+    /**
+     * Limit how many Listings to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * Listing.offers
+   */
+  export type Listing$offersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CnftOffer
+     */
+    select?: CnftOfferSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CnftOffer
+     */
+    omit?: CnftOfferOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CnftOfferInclude<ExtArgs> | null
+    where?: CnftOfferWhereInput
+    orderBy?: CnftOfferOrderByWithRelationInput | CnftOfferOrderByWithRelationInput[]
+    cursor?: CnftOfferWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: CnftOfferScalarFieldEnum | CnftOfferScalarFieldEnum[]
+  }
+
+  /**
+   * Listing without action
+   */
+  export type ListingDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Listing
+     */
+    select?: ListingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Listing
+     */
+    omit?: ListingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ListingInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -18649,6 +21824,69 @@ export namespace Prisma {
   };
 
   export type ZeroFeeSwapLogScalarFieldEnum = (typeof ZeroFeeSwapLogScalarFieldEnum)[keyof typeof ZeroFeeSwapLogScalarFieldEnum]
+
+
+  export const CnftOfferScalarFieldEnum: {
+    id: 'id',
+    offerId: 'offerId',
+    bidderWallet: 'bidderWallet',
+    targetAssetId: 'targetAssetId',
+    merkleTree: 'merkleTree',
+    leafIndex: 'leafIndex',
+    ownerWallet: 'ownerWallet',
+    offerLamports: 'offerLamports',
+    feeLamports: 'feeLamports',
+    feeBps: 'feeBps',
+    escrowPda: 'escrowPda',
+    escrowBump: 'escrowBump',
+    status: 'status',
+    expiresAt: 'expiresAt',
+    escrowTxId: 'escrowTxId',
+    acceptTxId: 'acceptTxId',
+    cancelTxId: 'cancelTxId',
+    rejectTxId: 'rejectTxId',
+    counterOfferId: 'counterOfferId',
+    parentOfferId: 'parentOfferId',
+    acceptedAt: 'acceptedAt',
+    cancelledAt: 'cancelledAt',
+    rejectedAt: 'rejectedAt',
+    expiredAt: 'expiredAt',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
+    metadata: 'metadata',
+    listingId: 'listingId'
+  };
+
+  export type CnftOfferScalarFieldEnum = (typeof CnftOfferScalarFieldEnum)[keyof typeof CnftOfferScalarFieldEnum]
+
+
+  export const ListingScalarFieldEnum: {
+    id: 'id',
+    listingId: 'listingId',
+    seller: 'seller',
+    assetId: 'assetId',
+    merkleTree: 'merkleTree',
+    leafIndex: 'leafIndex',
+    priceLamports: 'priceLamports',
+    delegationStatus: 'delegationStatus',
+    delegatePda: 'delegatePda',
+    delegatedAt: 'delegatedAt',
+    isFrozen: 'isFrozen',
+    status: 'status',
+    expiresAt: 'expiresAt',
+    delegateTxId: 'delegateTxId',
+    settleTxId: 'settleTxId',
+    revokeTxId: 'revokeTxId',
+    buyer: 'buyer',
+    soldAt: 'soldAt',
+    feeBps: 'feeBps',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
+    cancelledAt: 'cancelledAt',
+    metadata: 'metadata'
+  };
+
+  export type ListingScalarFieldEnum = (typeof ListingScalarFieldEnum)[keyof typeof ListingScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -18946,6 +22184,48 @@ export namespace Prisma {
    * Reference to a field of type 'TransactionStatus[]'
    */
   export type ListEnumTransactionStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TransactionStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'OfferEscrowStatus'
+   */
+  export type EnumOfferEscrowStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OfferEscrowStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'OfferEscrowStatus[]'
+   */
+  export type ListEnumOfferEscrowStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OfferEscrowStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'DelegationStatus'
+   */
+  export type EnumDelegationStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DelegationStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'DelegationStatus[]'
+   */
+  export type ListEnumDelegationStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DelegationStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'ListingStatus'
+   */
+  export type EnumListingStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ListingStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'ListingStatus[]'
+   */
+  export type ListEnumListingStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ListingStatus[]'>
     
 
 
@@ -20338,6 +23618,337 @@ export namespace Prisma {
     ipAddress?: StringNullableWithAggregatesFilter<"ZeroFeeSwapLog"> | string | null
     userAgent?: StringNullableWithAggregatesFilter<"ZeroFeeSwapLog"> | string | null
     executedAt?: DateTimeWithAggregatesFilter<"ZeroFeeSwapLog"> | Date | string
+  }
+
+  export type CnftOfferWhereInput = {
+    AND?: CnftOfferWhereInput | CnftOfferWhereInput[]
+    OR?: CnftOfferWhereInput[]
+    NOT?: CnftOfferWhereInput | CnftOfferWhereInput[]
+    id?: StringFilter<"CnftOffer"> | string
+    offerId?: StringFilter<"CnftOffer"> | string
+    bidderWallet?: StringFilter<"CnftOffer"> | string
+    targetAssetId?: StringFilter<"CnftOffer"> | string
+    merkleTree?: StringNullableFilter<"CnftOffer"> | string | null
+    leafIndex?: IntNullableFilter<"CnftOffer"> | number | null
+    ownerWallet?: StringFilter<"CnftOffer"> | string
+    offerLamports?: BigIntFilter<"CnftOffer"> | bigint | number
+    feeLamports?: BigIntFilter<"CnftOffer"> | bigint | number
+    feeBps?: IntFilter<"CnftOffer"> | number
+    escrowPda?: StringFilter<"CnftOffer"> | string
+    escrowBump?: IntFilter<"CnftOffer"> | number
+    status?: EnumOfferEscrowStatusFilter<"CnftOffer"> | $Enums.OfferEscrowStatus
+    expiresAt?: DateTimeFilter<"CnftOffer"> | Date | string
+    escrowTxId?: StringNullableFilter<"CnftOffer"> | string | null
+    acceptTxId?: StringNullableFilter<"CnftOffer"> | string | null
+    cancelTxId?: StringNullableFilter<"CnftOffer"> | string | null
+    rejectTxId?: StringNullableFilter<"CnftOffer"> | string | null
+    counterOfferId?: StringNullableFilter<"CnftOffer"> | string | null
+    parentOfferId?: StringNullableFilter<"CnftOffer"> | string | null
+    acceptedAt?: DateTimeNullableFilter<"CnftOffer"> | Date | string | null
+    cancelledAt?: DateTimeNullableFilter<"CnftOffer"> | Date | string | null
+    rejectedAt?: DateTimeNullableFilter<"CnftOffer"> | Date | string | null
+    expiredAt?: DateTimeNullableFilter<"CnftOffer"> | Date | string | null
+    createdAt?: DateTimeFilter<"CnftOffer"> | Date | string
+    updatedAt?: DateTimeFilter<"CnftOffer"> | Date | string
+    metadata?: JsonNullableFilter<"CnftOffer">
+    listingId?: StringNullableFilter<"CnftOffer"> | string | null
+    counterOffer?: XOR<CnftOfferNullableScalarRelationFilter, CnftOfferWhereInput> | null
+    counterOffers?: CnftOfferListRelationFilter
+    parentOffer?: XOR<CnftOfferNullableScalarRelationFilter, CnftOfferWhereInput> | null
+    childOffers?: CnftOfferListRelationFilter
+    listing?: XOR<ListingNullableScalarRelationFilter, ListingWhereInput> | null
+  }
+
+  export type CnftOfferOrderByWithRelationInput = {
+    id?: SortOrder
+    offerId?: SortOrder
+    bidderWallet?: SortOrder
+    targetAssetId?: SortOrder
+    merkleTree?: SortOrderInput | SortOrder
+    leafIndex?: SortOrderInput | SortOrder
+    ownerWallet?: SortOrder
+    offerLamports?: SortOrder
+    feeLamports?: SortOrder
+    feeBps?: SortOrder
+    escrowPda?: SortOrder
+    escrowBump?: SortOrder
+    status?: SortOrder
+    expiresAt?: SortOrder
+    escrowTxId?: SortOrderInput | SortOrder
+    acceptTxId?: SortOrderInput | SortOrder
+    cancelTxId?: SortOrderInput | SortOrder
+    rejectTxId?: SortOrderInput | SortOrder
+    counterOfferId?: SortOrderInput | SortOrder
+    parentOfferId?: SortOrderInput | SortOrder
+    acceptedAt?: SortOrderInput | SortOrder
+    cancelledAt?: SortOrderInput | SortOrder
+    rejectedAt?: SortOrderInput | SortOrder
+    expiredAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    metadata?: SortOrderInput | SortOrder
+    listingId?: SortOrderInput | SortOrder
+    counterOffer?: CnftOfferOrderByWithRelationInput
+    counterOffers?: CnftOfferOrderByRelationAggregateInput
+    parentOffer?: CnftOfferOrderByWithRelationInput
+    childOffers?: CnftOfferOrderByRelationAggregateInput
+    listing?: ListingOrderByWithRelationInput
+  }
+
+  export type CnftOfferWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    offerId?: string
+    AND?: CnftOfferWhereInput | CnftOfferWhereInput[]
+    OR?: CnftOfferWhereInput[]
+    NOT?: CnftOfferWhereInput | CnftOfferWhereInput[]
+    bidderWallet?: StringFilter<"CnftOffer"> | string
+    targetAssetId?: StringFilter<"CnftOffer"> | string
+    merkleTree?: StringNullableFilter<"CnftOffer"> | string | null
+    leafIndex?: IntNullableFilter<"CnftOffer"> | number | null
+    ownerWallet?: StringFilter<"CnftOffer"> | string
+    offerLamports?: BigIntFilter<"CnftOffer"> | bigint | number
+    feeLamports?: BigIntFilter<"CnftOffer"> | bigint | number
+    feeBps?: IntFilter<"CnftOffer"> | number
+    escrowPda?: StringFilter<"CnftOffer"> | string
+    escrowBump?: IntFilter<"CnftOffer"> | number
+    status?: EnumOfferEscrowStatusFilter<"CnftOffer"> | $Enums.OfferEscrowStatus
+    expiresAt?: DateTimeFilter<"CnftOffer"> | Date | string
+    escrowTxId?: StringNullableFilter<"CnftOffer"> | string | null
+    acceptTxId?: StringNullableFilter<"CnftOffer"> | string | null
+    cancelTxId?: StringNullableFilter<"CnftOffer"> | string | null
+    rejectTxId?: StringNullableFilter<"CnftOffer"> | string | null
+    counterOfferId?: StringNullableFilter<"CnftOffer"> | string | null
+    parentOfferId?: StringNullableFilter<"CnftOffer"> | string | null
+    acceptedAt?: DateTimeNullableFilter<"CnftOffer"> | Date | string | null
+    cancelledAt?: DateTimeNullableFilter<"CnftOffer"> | Date | string | null
+    rejectedAt?: DateTimeNullableFilter<"CnftOffer"> | Date | string | null
+    expiredAt?: DateTimeNullableFilter<"CnftOffer"> | Date | string | null
+    createdAt?: DateTimeFilter<"CnftOffer"> | Date | string
+    updatedAt?: DateTimeFilter<"CnftOffer"> | Date | string
+    metadata?: JsonNullableFilter<"CnftOffer">
+    listingId?: StringNullableFilter<"CnftOffer"> | string | null
+    counterOffer?: XOR<CnftOfferNullableScalarRelationFilter, CnftOfferWhereInput> | null
+    counterOffers?: CnftOfferListRelationFilter
+    parentOffer?: XOR<CnftOfferNullableScalarRelationFilter, CnftOfferWhereInput> | null
+    childOffers?: CnftOfferListRelationFilter
+    listing?: XOR<ListingNullableScalarRelationFilter, ListingWhereInput> | null
+  }, "id" | "offerId">
+
+  export type CnftOfferOrderByWithAggregationInput = {
+    id?: SortOrder
+    offerId?: SortOrder
+    bidderWallet?: SortOrder
+    targetAssetId?: SortOrder
+    merkleTree?: SortOrderInput | SortOrder
+    leafIndex?: SortOrderInput | SortOrder
+    ownerWallet?: SortOrder
+    offerLamports?: SortOrder
+    feeLamports?: SortOrder
+    feeBps?: SortOrder
+    escrowPda?: SortOrder
+    escrowBump?: SortOrder
+    status?: SortOrder
+    expiresAt?: SortOrder
+    escrowTxId?: SortOrderInput | SortOrder
+    acceptTxId?: SortOrderInput | SortOrder
+    cancelTxId?: SortOrderInput | SortOrder
+    rejectTxId?: SortOrderInput | SortOrder
+    counterOfferId?: SortOrderInput | SortOrder
+    parentOfferId?: SortOrderInput | SortOrder
+    acceptedAt?: SortOrderInput | SortOrder
+    cancelledAt?: SortOrderInput | SortOrder
+    rejectedAt?: SortOrderInput | SortOrder
+    expiredAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    metadata?: SortOrderInput | SortOrder
+    listingId?: SortOrderInput | SortOrder
+    _count?: CnftOfferCountOrderByAggregateInput
+    _avg?: CnftOfferAvgOrderByAggregateInput
+    _max?: CnftOfferMaxOrderByAggregateInput
+    _min?: CnftOfferMinOrderByAggregateInput
+    _sum?: CnftOfferSumOrderByAggregateInput
+  }
+
+  export type CnftOfferScalarWhereWithAggregatesInput = {
+    AND?: CnftOfferScalarWhereWithAggregatesInput | CnftOfferScalarWhereWithAggregatesInput[]
+    OR?: CnftOfferScalarWhereWithAggregatesInput[]
+    NOT?: CnftOfferScalarWhereWithAggregatesInput | CnftOfferScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"CnftOffer"> | string
+    offerId?: StringWithAggregatesFilter<"CnftOffer"> | string
+    bidderWallet?: StringWithAggregatesFilter<"CnftOffer"> | string
+    targetAssetId?: StringWithAggregatesFilter<"CnftOffer"> | string
+    merkleTree?: StringNullableWithAggregatesFilter<"CnftOffer"> | string | null
+    leafIndex?: IntNullableWithAggregatesFilter<"CnftOffer"> | number | null
+    ownerWallet?: StringWithAggregatesFilter<"CnftOffer"> | string
+    offerLamports?: BigIntWithAggregatesFilter<"CnftOffer"> | bigint | number
+    feeLamports?: BigIntWithAggregatesFilter<"CnftOffer"> | bigint | number
+    feeBps?: IntWithAggregatesFilter<"CnftOffer"> | number
+    escrowPda?: StringWithAggregatesFilter<"CnftOffer"> | string
+    escrowBump?: IntWithAggregatesFilter<"CnftOffer"> | number
+    status?: EnumOfferEscrowStatusWithAggregatesFilter<"CnftOffer"> | $Enums.OfferEscrowStatus
+    expiresAt?: DateTimeWithAggregatesFilter<"CnftOffer"> | Date | string
+    escrowTxId?: StringNullableWithAggregatesFilter<"CnftOffer"> | string | null
+    acceptTxId?: StringNullableWithAggregatesFilter<"CnftOffer"> | string | null
+    cancelTxId?: StringNullableWithAggregatesFilter<"CnftOffer"> | string | null
+    rejectTxId?: StringNullableWithAggregatesFilter<"CnftOffer"> | string | null
+    counterOfferId?: StringNullableWithAggregatesFilter<"CnftOffer"> | string | null
+    parentOfferId?: StringNullableWithAggregatesFilter<"CnftOffer"> | string | null
+    acceptedAt?: DateTimeNullableWithAggregatesFilter<"CnftOffer"> | Date | string | null
+    cancelledAt?: DateTimeNullableWithAggregatesFilter<"CnftOffer"> | Date | string | null
+    rejectedAt?: DateTimeNullableWithAggregatesFilter<"CnftOffer"> | Date | string | null
+    expiredAt?: DateTimeNullableWithAggregatesFilter<"CnftOffer"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"CnftOffer"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"CnftOffer"> | Date | string
+    metadata?: JsonNullableWithAggregatesFilter<"CnftOffer">
+    listingId?: StringNullableWithAggregatesFilter<"CnftOffer"> | string | null
+  }
+
+  export type ListingWhereInput = {
+    AND?: ListingWhereInput | ListingWhereInput[]
+    OR?: ListingWhereInput[]
+    NOT?: ListingWhereInput | ListingWhereInput[]
+    id?: StringFilter<"Listing"> | string
+    listingId?: StringFilter<"Listing"> | string
+    seller?: StringFilter<"Listing"> | string
+    assetId?: StringFilter<"Listing"> | string
+    merkleTree?: StringFilter<"Listing"> | string
+    leafIndex?: IntFilter<"Listing"> | number
+    priceLamports?: BigIntFilter<"Listing"> | bigint | number
+    delegationStatus?: EnumDelegationStatusFilter<"Listing"> | $Enums.DelegationStatus
+    delegatePda?: StringNullableFilter<"Listing"> | string | null
+    delegatedAt?: DateTimeNullableFilter<"Listing"> | Date | string | null
+    isFrozen?: BoolFilter<"Listing"> | boolean
+    status?: EnumListingStatusFilter<"Listing"> | $Enums.ListingStatus
+    expiresAt?: DateTimeFilter<"Listing"> | Date | string
+    delegateTxId?: StringNullableFilter<"Listing"> | string | null
+    settleTxId?: StringNullableFilter<"Listing"> | string | null
+    revokeTxId?: StringNullableFilter<"Listing"> | string | null
+    buyer?: StringNullableFilter<"Listing"> | string | null
+    soldAt?: DateTimeNullableFilter<"Listing"> | Date | string | null
+    feeBps?: IntFilter<"Listing"> | number
+    createdAt?: DateTimeFilter<"Listing"> | Date | string
+    updatedAt?: DateTimeFilter<"Listing"> | Date | string
+    cancelledAt?: DateTimeNullableFilter<"Listing"> | Date | string | null
+    metadata?: JsonNullableFilter<"Listing">
+    offers?: CnftOfferListRelationFilter
+  }
+
+  export type ListingOrderByWithRelationInput = {
+    id?: SortOrder
+    listingId?: SortOrder
+    seller?: SortOrder
+    assetId?: SortOrder
+    merkleTree?: SortOrder
+    leafIndex?: SortOrder
+    priceLamports?: SortOrder
+    delegationStatus?: SortOrder
+    delegatePda?: SortOrderInput | SortOrder
+    delegatedAt?: SortOrderInput | SortOrder
+    isFrozen?: SortOrder
+    status?: SortOrder
+    expiresAt?: SortOrder
+    delegateTxId?: SortOrderInput | SortOrder
+    settleTxId?: SortOrderInput | SortOrder
+    revokeTxId?: SortOrderInput | SortOrder
+    buyer?: SortOrderInput | SortOrder
+    soldAt?: SortOrderInput | SortOrder
+    feeBps?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    cancelledAt?: SortOrderInput | SortOrder
+    metadata?: SortOrderInput | SortOrder
+    offers?: CnftOfferOrderByRelationAggregateInput
+  }
+
+  export type ListingWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    listingId?: string
+    AND?: ListingWhereInput | ListingWhereInput[]
+    OR?: ListingWhereInput[]
+    NOT?: ListingWhereInput | ListingWhereInput[]
+    seller?: StringFilter<"Listing"> | string
+    assetId?: StringFilter<"Listing"> | string
+    merkleTree?: StringFilter<"Listing"> | string
+    leafIndex?: IntFilter<"Listing"> | number
+    priceLamports?: BigIntFilter<"Listing"> | bigint | number
+    delegationStatus?: EnumDelegationStatusFilter<"Listing"> | $Enums.DelegationStatus
+    delegatePda?: StringNullableFilter<"Listing"> | string | null
+    delegatedAt?: DateTimeNullableFilter<"Listing"> | Date | string | null
+    isFrozen?: BoolFilter<"Listing"> | boolean
+    status?: EnumListingStatusFilter<"Listing"> | $Enums.ListingStatus
+    expiresAt?: DateTimeFilter<"Listing"> | Date | string
+    delegateTxId?: StringNullableFilter<"Listing"> | string | null
+    settleTxId?: StringNullableFilter<"Listing"> | string | null
+    revokeTxId?: StringNullableFilter<"Listing"> | string | null
+    buyer?: StringNullableFilter<"Listing"> | string | null
+    soldAt?: DateTimeNullableFilter<"Listing"> | Date | string | null
+    feeBps?: IntFilter<"Listing"> | number
+    createdAt?: DateTimeFilter<"Listing"> | Date | string
+    updatedAt?: DateTimeFilter<"Listing"> | Date | string
+    cancelledAt?: DateTimeNullableFilter<"Listing"> | Date | string | null
+    metadata?: JsonNullableFilter<"Listing">
+    offers?: CnftOfferListRelationFilter
+  }, "id" | "listingId">
+
+  export type ListingOrderByWithAggregationInput = {
+    id?: SortOrder
+    listingId?: SortOrder
+    seller?: SortOrder
+    assetId?: SortOrder
+    merkleTree?: SortOrder
+    leafIndex?: SortOrder
+    priceLamports?: SortOrder
+    delegationStatus?: SortOrder
+    delegatePda?: SortOrderInput | SortOrder
+    delegatedAt?: SortOrderInput | SortOrder
+    isFrozen?: SortOrder
+    status?: SortOrder
+    expiresAt?: SortOrder
+    delegateTxId?: SortOrderInput | SortOrder
+    settleTxId?: SortOrderInput | SortOrder
+    revokeTxId?: SortOrderInput | SortOrder
+    buyer?: SortOrderInput | SortOrder
+    soldAt?: SortOrderInput | SortOrder
+    feeBps?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    cancelledAt?: SortOrderInput | SortOrder
+    metadata?: SortOrderInput | SortOrder
+    _count?: ListingCountOrderByAggregateInput
+    _avg?: ListingAvgOrderByAggregateInput
+    _max?: ListingMaxOrderByAggregateInput
+    _min?: ListingMinOrderByAggregateInput
+    _sum?: ListingSumOrderByAggregateInput
+  }
+
+  export type ListingScalarWhereWithAggregatesInput = {
+    AND?: ListingScalarWhereWithAggregatesInput | ListingScalarWhereWithAggregatesInput[]
+    OR?: ListingScalarWhereWithAggregatesInput[]
+    NOT?: ListingScalarWhereWithAggregatesInput | ListingScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"Listing"> | string
+    listingId?: StringWithAggregatesFilter<"Listing"> | string
+    seller?: StringWithAggregatesFilter<"Listing"> | string
+    assetId?: StringWithAggregatesFilter<"Listing"> | string
+    merkleTree?: StringWithAggregatesFilter<"Listing"> | string
+    leafIndex?: IntWithAggregatesFilter<"Listing"> | number
+    priceLamports?: BigIntWithAggregatesFilter<"Listing"> | bigint | number
+    delegationStatus?: EnumDelegationStatusWithAggregatesFilter<"Listing"> | $Enums.DelegationStatus
+    delegatePda?: StringNullableWithAggregatesFilter<"Listing"> | string | null
+    delegatedAt?: DateTimeNullableWithAggregatesFilter<"Listing"> | Date | string | null
+    isFrozen?: BoolWithAggregatesFilter<"Listing"> | boolean
+    status?: EnumListingStatusWithAggregatesFilter<"Listing"> | $Enums.ListingStatus
+    expiresAt?: DateTimeWithAggregatesFilter<"Listing"> | Date | string
+    delegateTxId?: StringNullableWithAggregatesFilter<"Listing"> | string | null
+    settleTxId?: StringNullableWithAggregatesFilter<"Listing"> | string | null
+    revokeTxId?: StringNullableWithAggregatesFilter<"Listing"> | string | null
+    buyer?: StringNullableWithAggregatesFilter<"Listing"> | string | null
+    soldAt?: DateTimeNullableWithAggregatesFilter<"Listing"> | Date | string | null
+    feeBps?: IntWithAggregatesFilter<"Listing"> | number
+    createdAt?: DateTimeWithAggregatesFilter<"Listing"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"Listing"> | Date | string
+    cancelledAt?: DateTimeNullableWithAggregatesFilter<"Listing"> | Date | string | null
+    metadata?: JsonNullableWithAggregatesFilter<"Listing">
   }
 
   export type AgreementCreateInput = {
@@ -21935,6 +25546,414 @@ export namespace Prisma {
     executedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type CnftOfferCreateInput = {
+    id?: string
+    offerId: string
+    bidderWallet: string
+    targetAssetId: string
+    merkleTree?: string | null
+    leafIndex?: number | null
+    ownerWallet: string
+    offerLamports: bigint | number
+    feeLamports: bigint | number
+    feeBps?: number
+    escrowPda: string
+    escrowBump: number
+    status?: $Enums.OfferEscrowStatus
+    expiresAt: Date | string
+    escrowTxId?: string | null
+    acceptTxId?: string | null
+    cancelTxId?: string | null
+    rejectTxId?: string | null
+    acceptedAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    rejectedAt?: Date | string | null
+    expiredAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    counterOffer?: CnftOfferCreateNestedOneWithoutCounterOffersInput
+    counterOffers?: CnftOfferCreateNestedManyWithoutCounterOfferInput
+    parentOffer?: CnftOfferCreateNestedOneWithoutChildOffersInput
+    childOffers?: CnftOfferCreateNestedManyWithoutParentOfferInput
+    listing?: ListingCreateNestedOneWithoutOffersInput
+  }
+
+  export type CnftOfferUncheckedCreateInput = {
+    id?: string
+    offerId: string
+    bidderWallet: string
+    targetAssetId: string
+    merkleTree?: string | null
+    leafIndex?: number | null
+    ownerWallet: string
+    offerLamports: bigint | number
+    feeLamports: bigint | number
+    feeBps?: number
+    escrowPda: string
+    escrowBump: number
+    status?: $Enums.OfferEscrowStatus
+    expiresAt: Date | string
+    escrowTxId?: string | null
+    acceptTxId?: string | null
+    cancelTxId?: string | null
+    rejectTxId?: string | null
+    counterOfferId?: string | null
+    parentOfferId?: string | null
+    acceptedAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    rejectedAt?: Date | string | null
+    expiredAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    listingId?: string | null
+    counterOffers?: CnftOfferUncheckedCreateNestedManyWithoutCounterOfferInput
+    childOffers?: CnftOfferUncheckedCreateNestedManyWithoutParentOfferInput
+  }
+
+  export type CnftOfferUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    offerId?: StringFieldUpdateOperationsInput | string
+    bidderWallet?: StringFieldUpdateOperationsInput | string
+    targetAssetId?: StringFieldUpdateOperationsInput | string
+    merkleTree?: NullableStringFieldUpdateOperationsInput | string | null
+    leafIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    ownerWallet?: StringFieldUpdateOperationsInput | string
+    offerLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    feeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    feeBps?: IntFieldUpdateOperationsInput | number
+    escrowPda?: StringFieldUpdateOperationsInput | string
+    escrowBump?: IntFieldUpdateOperationsInput | number
+    status?: EnumOfferEscrowStatusFieldUpdateOperationsInput | $Enums.OfferEscrowStatus
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    escrowTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    rejectTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    expiredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    counterOffer?: CnftOfferUpdateOneWithoutCounterOffersNestedInput
+    counterOffers?: CnftOfferUpdateManyWithoutCounterOfferNestedInput
+    parentOffer?: CnftOfferUpdateOneWithoutChildOffersNestedInput
+    childOffers?: CnftOfferUpdateManyWithoutParentOfferNestedInput
+    listing?: ListingUpdateOneWithoutOffersNestedInput
+  }
+
+  export type CnftOfferUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    offerId?: StringFieldUpdateOperationsInput | string
+    bidderWallet?: StringFieldUpdateOperationsInput | string
+    targetAssetId?: StringFieldUpdateOperationsInput | string
+    merkleTree?: NullableStringFieldUpdateOperationsInput | string | null
+    leafIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    ownerWallet?: StringFieldUpdateOperationsInput | string
+    offerLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    feeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    feeBps?: IntFieldUpdateOperationsInput | number
+    escrowPda?: StringFieldUpdateOperationsInput | string
+    escrowBump?: IntFieldUpdateOperationsInput | number
+    status?: EnumOfferEscrowStatusFieldUpdateOperationsInput | $Enums.OfferEscrowStatus
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    escrowTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    rejectTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    counterOfferId?: NullableStringFieldUpdateOperationsInput | string | null
+    parentOfferId?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    expiredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    listingId?: NullableStringFieldUpdateOperationsInput | string | null
+    counterOffers?: CnftOfferUncheckedUpdateManyWithoutCounterOfferNestedInput
+    childOffers?: CnftOfferUncheckedUpdateManyWithoutParentOfferNestedInput
+  }
+
+  export type CnftOfferCreateManyInput = {
+    id?: string
+    offerId: string
+    bidderWallet: string
+    targetAssetId: string
+    merkleTree?: string | null
+    leafIndex?: number | null
+    ownerWallet: string
+    offerLamports: bigint | number
+    feeLamports: bigint | number
+    feeBps?: number
+    escrowPda: string
+    escrowBump: number
+    status?: $Enums.OfferEscrowStatus
+    expiresAt: Date | string
+    escrowTxId?: string | null
+    acceptTxId?: string | null
+    cancelTxId?: string | null
+    rejectTxId?: string | null
+    counterOfferId?: string | null
+    parentOfferId?: string | null
+    acceptedAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    rejectedAt?: Date | string | null
+    expiredAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    listingId?: string | null
+  }
+
+  export type CnftOfferUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    offerId?: StringFieldUpdateOperationsInput | string
+    bidderWallet?: StringFieldUpdateOperationsInput | string
+    targetAssetId?: StringFieldUpdateOperationsInput | string
+    merkleTree?: NullableStringFieldUpdateOperationsInput | string | null
+    leafIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    ownerWallet?: StringFieldUpdateOperationsInput | string
+    offerLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    feeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    feeBps?: IntFieldUpdateOperationsInput | number
+    escrowPda?: StringFieldUpdateOperationsInput | string
+    escrowBump?: IntFieldUpdateOperationsInput | number
+    status?: EnumOfferEscrowStatusFieldUpdateOperationsInput | $Enums.OfferEscrowStatus
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    escrowTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    rejectTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    expiredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+  }
+
+  export type CnftOfferUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    offerId?: StringFieldUpdateOperationsInput | string
+    bidderWallet?: StringFieldUpdateOperationsInput | string
+    targetAssetId?: StringFieldUpdateOperationsInput | string
+    merkleTree?: NullableStringFieldUpdateOperationsInput | string | null
+    leafIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    ownerWallet?: StringFieldUpdateOperationsInput | string
+    offerLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    feeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    feeBps?: IntFieldUpdateOperationsInput | number
+    escrowPda?: StringFieldUpdateOperationsInput | string
+    escrowBump?: IntFieldUpdateOperationsInput | number
+    status?: EnumOfferEscrowStatusFieldUpdateOperationsInput | $Enums.OfferEscrowStatus
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    escrowTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    rejectTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    counterOfferId?: NullableStringFieldUpdateOperationsInput | string | null
+    parentOfferId?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    expiredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    listingId?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type ListingCreateInput = {
+    id?: string
+    listingId: string
+    seller: string
+    assetId: string
+    merkleTree: string
+    leafIndex: number
+    priceLamports: bigint | number
+    delegationStatus?: $Enums.DelegationStatus
+    delegatePda?: string | null
+    delegatedAt?: Date | string | null
+    isFrozen?: boolean
+    status?: $Enums.ListingStatus
+    expiresAt: Date | string
+    delegateTxId?: string | null
+    settleTxId?: string | null
+    revokeTxId?: string | null
+    buyer?: string | null
+    soldAt?: Date | string | null
+    feeBps?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    cancelledAt?: Date | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    offers?: CnftOfferCreateNestedManyWithoutListingInput
+  }
+
+  export type ListingUncheckedCreateInput = {
+    id?: string
+    listingId: string
+    seller: string
+    assetId: string
+    merkleTree: string
+    leafIndex: number
+    priceLamports: bigint | number
+    delegationStatus?: $Enums.DelegationStatus
+    delegatePda?: string | null
+    delegatedAt?: Date | string | null
+    isFrozen?: boolean
+    status?: $Enums.ListingStatus
+    expiresAt: Date | string
+    delegateTxId?: string | null
+    settleTxId?: string | null
+    revokeTxId?: string | null
+    buyer?: string | null
+    soldAt?: Date | string | null
+    feeBps?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    cancelledAt?: Date | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    offers?: CnftOfferUncheckedCreateNestedManyWithoutListingInput
+  }
+
+  export type ListingUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    listingId?: StringFieldUpdateOperationsInput | string
+    seller?: StringFieldUpdateOperationsInput | string
+    assetId?: StringFieldUpdateOperationsInput | string
+    merkleTree?: StringFieldUpdateOperationsInput | string
+    leafIndex?: IntFieldUpdateOperationsInput | number
+    priceLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    delegationStatus?: EnumDelegationStatusFieldUpdateOperationsInput | $Enums.DelegationStatus
+    delegatePda?: NullableStringFieldUpdateOperationsInput | string | null
+    delegatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isFrozen?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumListingStatusFieldUpdateOperationsInput | $Enums.ListingStatus
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    delegateTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    settleTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    revokeTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    buyer?: NullableStringFieldUpdateOperationsInput | string | null
+    soldAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    feeBps?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    offers?: CnftOfferUpdateManyWithoutListingNestedInput
+  }
+
+  export type ListingUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    listingId?: StringFieldUpdateOperationsInput | string
+    seller?: StringFieldUpdateOperationsInput | string
+    assetId?: StringFieldUpdateOperationsInput | string
+    merkleTree?: StringFieldUpdateOperationsInput | string
+    leafIndex?: IntFieldUpdateOperationsInput | number
+    priceLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    delegationStatus?: EnumDelegationStatusFieldUpdateOperationsInput | $Enums.DelegationStatus
+    delegatePda?: NullableStringFieldUpdateOperationsInput | string | null
+    delegatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isFrozen?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumListingStatusFieldUpdateOperationsInput | $Enums.ListingStatus
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    delegateTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    settleTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    revokeTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    buyer?: NullableStringFieldUpdateOperationsInput | string | null
+    soldAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    feeBps?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    offers?: CnftOfferUncheckedUpdateManyWithoutListingNestedInput
+  }
+
+  export type ListingCreateManyInput = {
+    id?: string
+    listingId: string
+    seller: string
+    assetId: string
+    merkleTree: string
+    leafIndex: number
+    priceLamports: bigint | number
+    delegationStatus?: $Enums.DelegationStatus
+    delegatePda?: string | null
+    delegatedAt?: Date | string | null
+    isFrozen?: boolean
+    status?: $Enums.ListingStatus
+    expiresAt: Date | string
+    delegateTxId?: string | null
+    settleTxId?: string | null
+    revokeTxId?: string | null
+    buyer?: string | null
+    soldAt?: Date | string | null
+    feeBps?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    cancelledAt?: Date | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+  }
+
+  export type ListingUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    listingId?: StringFieldUpdateOperationsInput | string
+    seller?: StringFieldUpdateOperationsInput | string
+    assetId?: StringFieldUpdateOperationsInput | string
+    merkleTree?: StringFieldUpdateOperationsInput | string
+    leafIndex?: IntFieldUpdateOperationsInput | number
+    priceLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    delegationStatus?: EnumDelegationStatusFieldUpdateOperationsInput | $Enums.DelegationStatus
+    delegatePda?: NullableStringFieldUpdateOperationsInput | string | null
+    delegatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isFrozen?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumListingStatusFieldUpdateOperationsInput | $Enums.ListingStatus
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    delegateTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    settleTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    revokeTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    buyer?: NullableStringFieldUpdateOperationsInput | string | null
+    soldAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    feeBps?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+  }
+
+  export type ListingUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    listingId?: StringFieldUpdateOperationsInput | string
+    seller?: StringFieldUpdateOperationsInput | string
+    assetId?: StringFieldUpdateOperationsInput | string
+    merkleTree?: StringFieldUpdateOperationsInput | string
+    leafIndex?: IntFieldUpdateOperationsInput | number
+    priceLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    delegationStatus?: EnumDelegationStatusFieldUpdateOperationsInput | $Enums.DelegationStatus
+    delegatePda?: NullableStringFieldUpdateOperationsInput | string | null
+    delegatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isFrozen?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumListingStatusFieldUpdateOperationsInput | $Enums.ListingStatus
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    delegateTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    settleTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    revokeTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    buyer?: NullableStringFieldUpdateOperationsInput | string | null
+    soldAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    feeBps?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+  }
+
   export type StringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -23426,6 +27445,272 @@ export namespace Prisma {
     totalValueLamports?: SortOrder
   }
 
+  export type EnumOfferEscrowStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.OfferEscrowStatus | EnumOfferEscrowStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.OfferEscrowStatus[] | ListEnumOfferEscrowStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OfferEscrowStatus[] | ListEnumOfferEscrowStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumOfferEscrowStatusFilter<$PrismaModel> | $Enums.OfferEscrowStatus
+  }
+
+  export type CnftOfferNullableScalarRelationFilter = {
+    is?: CnftOfferWhereInput | null
+    isNot?: CnftOfferWhereInput | null
+  }
+
+  export type CnftOfferListRelationFilter = {
+    every?: CnftOfferWhereInput
+    some?: CnftOfferWhereInput
+    none?: CnftOfferWhereInput
+  }
+
+  export type ListingNullableScalarRelationFilter = {
+    is?: ListingWhereInput | null
+    isNot?: ListingWhereInput | null
+  }
+
+  export type CnftOfferOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type CnftOfferCountOrderByAggregateInput = {
+    id?: SortOrder
+    offerId?: SortOrder
+    bidderWallet?: SortOrder
+    targetAssetId?: SortOrder
+    merkleTree?: SortOrder
+    leafIndex?: SortOrder
+    ownerWallet?: SortOrder
+    offerLamports?: SortOrder
+    feeLamports?: SortOrder
+    feeBps?: SortOrder
+    escrowPda?: SortOrder
+    escrowBump?: SortOrder
+    status?: SortOrder
+    expiresAt?: SortOrder
+    escrowTxId?: SortOrder
+    acceptTxId?: SortOrder
+    cancelTxId?: SortOrder
+    rejectTxId?: SortOrder
+    counterOfferId?: SortOrder
+    parentOfferId?: SortOrder
+    acceptedAt?: SortOrder
+    cancelledAt?: SortOrder
+    rejectedAt?: SortOrder
+    expiredAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    metadata?: SortOrder
+    listingId?: SortOrder
+  }
+
+  export type CnftOfferAvgOrderByAggregateInput = {
+    leafIndex?: SortOrder
+    offerLamports?: SortOrder
+    feeLamports?: SortOrder
+    feeBps?: SortOrder
+    escrowBump?: SortOrder
+  }
+
+  export type CnftOfferMaxOrderByAggregateInput = {
+    id?: SortOrder
+    offerId?: SortOrder
+    bidderWallet?: SortOrder
+    targetAssetId?: SortOrder
+    merkleTree?: SortOrder
+    leafIndex?: SortOrder
+    ownerWallet?: SortOrder
+    offerLamports?: SortOrder
+    feeLamports?: SortOrder
+    feeBps?: SortOrder
+    escrowPda?: SortOrder
+    escrowBump?: SortOrder
+    status?: SortOrder
+    expiresAt?: SortOrder
+    escrowTxId?: SortOrder
+    acceptTxId?: SortOrder
+    cancelTxId?: SortOrder
+    rejectTxId?: SortOrder
+    counterOfferId?: SortOrder
+    parentOfferId?: SortOrder
+    acceptedAt?: SortOrder
+    cancelledAt?: SortOrder
+    rejectedAt?: SortOrder
+    expiredAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    listingId?: SortOrder
+  }
+
+  export type CnftOfferMinOrderByAggregateInput = {
+    id?: SortOrder
+    offerId?: SortOrder
+    bidderWallet?: SortOrder
+    targetAssetId?: SortOrder
+    merkleTree?: SortOrder
+    leafIndex?: SortOrder
+    ownerWallet?: SortOrder
+    offerLamports?: SortOrder
+    feeLamports?: SortOrder
+    feeBps?: SortOrder
+    escrowPda?: SortOrder
+    escrowBump?: SortOrder
+    status?: SortOrder
+    expiresAt?: SortOrder
+    escrowTxId?: SortOrder
+    acceptTxId?: SortOrder
+    cancelTxId?: SortOrder
+    rejectTxId?: SortOrder
+    counterOfferId?: SortOrder
+    parentOfferId?: SortOrder
+    acceptedAt?: SortOrder
+    cancelledAt?: SortOrder
+    rejectedAt?: SortOrder
+    expiredAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    listingId?: SortOrder
+  }
+
+  export type CnftOfferSumOrderByAggregateInput = {
+    leafIndex?: SortOrder
+    offerLamports?: SortOrder
+    feeLamports?: SortOrder
+    feeBps?: SortOrder
+    escrowBump?: SortOrder
+  }
+
+  export type EnumOfferEscrowStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.OfferEscrowStatus | EnumOfferEscrowStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.OfferEscrowStatus[] | ListEnumOfferEscrowStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OfferEscrowStatus[] | ListEnumOfferEscrowStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumOfferEscrowStatusWithAggregatesFilter<$PrismaModel> | $Enums.OfferEscrowStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumOfferEscrowStatusFilter<$PrismaModel>
+    _max?: NestedEnumOfferEscrowStatusFilter<$PrismaModel>
+  }
+
+  export type EnumDelegationStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.DelegationStatus | EnumDelegationStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.DelegationStatus[] | ListEnumDelegationStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.DelegationStatus[] | ListEnumDelegationStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumDelegationStatusFilter<$PrismaModel> | $Enums.DelegationStatus
+  }
+
+  export type EnumListingStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.ListingStatus | EnumListingStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ListingStatus[] | ListEnumListingStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ListingStatus[] | ListEnumListingStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumListingStatusFilter<$PrismaModel> | $Enums.ListingStatus
+  }
+
+  export type ListingCountOrderByAggregateInput = {
+    id?: SortOrder
+    listingId?: SortOrder
+    seller?: SortOrder
+    assetId?: SortOrder
+    merkleTree?: SortOrder
+    leafIndex?: SortOrder
+    priceLamports?: SortOrder
+    delegationStatus?: SortOrder
+    delegatePda?: SortOrder
+    delegatedAt?: SortOrder
+    isFrozen?: SortOrder
+    status?: SortOrder
+    expiresAt?: SortOrder
+    delegateTxId?: SortOrder
+    settleTxId?: SortOrder
+    revokeTxId?: SortOrder
+    buyer?: SortOrder
+    soldAt?: SortOrder
+    feeBps?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    cancelledAt?: SortOrder
+    metadata?: SortOrder
+  }
+
+  export type ListingAvgOrderByAggregateInput = {
+    leafIndex?: SortOrder
+    priceLamports?: SortOrder
+    feeBps?: SortOrder
+  }
+
+  export type ListingMaxOrderByAggregateInput = {
+    id?: SortOrder
+    listingId?: SortOrder
+    seller?: SortOrder
+    assetId?: SortOrder
+    merkleTree?: SortOrder
+    leafIndex?: SortOrder
+    priceLamports?: SortOrder
+    delegationStatus?: SortOrder
+    delegatePda?: SortOrder
+    delegatedAt?: SortOrder
+    isFrozen?: SortOrder
+    status?: SortOrder
+    expiresAt?: SortOrder
+    delegateTxId?: SortOrder
+    settleTxId?: SortOrder
+    revokeTxId?: SortOrder
+    buyer?: SortOrder
+    soldAt?: SortOrder
+    feeBps?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    cancelledAt?: SortOrder
+  }
+
+  export type ListingMinOrderByAggregateInput = {
+    id?: SortOrder
+    listingId?: SortOrder
+    seller?: SortOrder
+    assetId?: SortOrder
+    merkleTree?: SortOrder
+    leafIndex?: SortOrder
+    priceLamports?: SortOrder
+    delegationStatus?: SortOrder
+    delegatePda?: SortOrder
+    delegatedAt?: SortOrder
+    isFrozen?: SortOrder
+    status?: SortOrder
+    expiresAt?: SortOrder
+    delegateTxId?: SortOrder
+    settleTxId?: SortOrder
+    revokeTxId?: SortOrder
+    buyer?: SortOrder
+    soldAt?: SortOrder
+    feeBps?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    cancelledAt?: SortOrder
+  }
+
+  export type ListingSumOrderByAggregateInput = {
+    leafIndex?: SortOrder
+    priceLamports?: SortOrder
+    feeBps?: SortOrder
+  }
+
+  export type EnumDelegationStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.DelegationStatus | EnumDelegationStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.DelegationStatus[] | ListEnumDelegationStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.DelegationStatus[] | ListEnumDelegationStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumDelegationStatusWithAggregatesFilter<$PrismaModel> | $Enums.DelegationStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumDelegationStatusFilter<$PrismaModel>
+    _max?: NestedEnumDelegationStatusFilter<$PrismaModel>
+  }
+
+  export type EnumListingStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ListingStatus | EnumListingStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ListingStatus[] | ListEnumListingStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ListingStatus[] | ListEnumListingStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumListingStatusWithAggregatesFilter<$PrismaModel> | $Enums.ListingStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumListingStatusFilter<$PrismaModel>
+    _max?: NestedEnumListingStatusFilter<$PrismaModel>
+  }
+
   export type DepositCreateNestedManyWithoutAgreementInput = {
     create?: XOR<DepositCreateWithoutAgreementInput, DepositUncheckedCreateWithoutAgreementInput> | DepositCreateWithoutAgreementInput[] | DepositUncheckedCreateWithoutAgreementInput[]
     connectOrCreate?: DepositCreateOrConnectWithoutAgreementInput | DepositCreateOrConnectWithoutAgreementInput[]
@@ -24194,6 +28479,192 @@ export namespace Prisma {
     update?: XOR<XOR<AuthorizedAppUpdateToOneWithWhereWithoutZeroFeeSwapLogsInput, AuthorizedAppUpdateWithoutZeroFeeSwapLogsInput>, AuthorizedAppUncheckedUpdateWithoutZeroFeeSwapLogsInput>
   }
 
+  export type CnftOfferCreateNestedOneWithoutCounterOffersInput = {
+    create?: XOR<CnftOfferCreateWithoutCounterOffersInput, CnftOfferUncheckedCreateWithoutCounterOffersInput>
+    connectOrCreate?: CnftOfferCreateOrConnectWithoutCounterOffersInput
+    connect?: CnftOfferWhereUniqueInput
+  }
+
+  export type CnftOfferCreateNestedManyWithoutCounterOfferInput = {
+    create?: XOR<CnftOfferCreateWithoutCounterOfferInput, CnftOfferUncheckedCreateWithoutCounterOfferInput> | CnftOfferCreateWithoutCounterOfferInput[] | CnftOfferUncheckedCreateWithoutCounterOfferInput[]
+    connectOrCreate?: CnftOfferCreateOrConnectWithoutCounterOfferInput | CnftOfferCreateOrConnectWithoutCounterOfferInput[]
+    createMany?: CnftOfferCreateManyCounterOfferInputEnvelope
+    connect?: CnftOfferWhereUniqueInput | CnftOfferWhereUniqueInput[]
+  }
+
+  export type CnftOfferCreateNestedOneWithoutChildOffersInput = {
+    create?: XOR<CnftOfferCreateWithoutChildOffersInput, CnftOfferUncheckedCreateWithoutChildOffersInput>
+    connectOrCreate?: CnftOfferCreateOrConnectWithoutChildOffersInput
+    connect?: CnftOfferWhereUniqueInput
+  }
+
+  export type CnftOfferCreateNestedManyWithoutParentOfferInput = {
+    create?: XOR<CnftOfferCreateWithoutParentOfferInput, CnftOfferUncheckedCreateWithoutParentOfferInput> | CnftOfferCreateWithoutParentOfferInput[] | CnftOfferUncheckedCreateWithoutParentOfferInput[]
+    connectOrCreate?: CnftOfferCreateOrConnectWithoutParentOfferInput | CnftOfferCreateOrConnectWithoutParentOfferInput[]
+    createMany?: CnftOfferCreateManyParentOfferInputEnvelope
+    connect?: CnftOfferWhereUniqueInput | CnftOfferWhereUniqueInput[]
+  }
+
+  export type ListingCreateNestedOneWithoutOffersInput = {
+    create?: XOR<ListingCreateWithoutOffersInput, ListingUncheckedCreateWithoutOffersInput>
+    connectOrCreate?: ListingCreateOrConnectWithoutOffersInput
+    connect?: ListingWhereUniqueInput
+  }
+
+  export type CnftOfferUncheckedCreateNestedManyWithoutCounterOfferInput = {
+    create?: XOR<CnftOfferCreateWithoutCounterOfferInput, CnftOfferUncheckedCreateWithoutCounterOfferInput> | CnftOfferCreateWithoutCounterOfferInput[] | CnftOfferUncheckedCreateWithoutCounterOfferInput[]
+    connectOrCreate?: CnftOfferCreateOrConnectWithoutCounterOfferInput | CnftOfferCreateOrConnectWithoutCounterOfferInput[]
+    createMany?: CnftOfferCreateManyCounterOfferInputEnvelope
+    connect?: CnftOfferWhereUniqueInput | CnftOfferWhereUniqueInput[]
+  }
+
+  export type CnftOfferUncheckedCreateNestedManyWithoutParentOfferInput = {
+    create?: XOR<CnftOfferCreateWithoutParentOfferInput, CnftOfferUncheckedCreateWithoutParentOfferInput> | CnftOfferCreateWithoutParentOfferInput[] | CnftOfferUncheckedCreateWithoutParentOfferInput[]
+    connectOrCreate?: CnftOfferCreateOrConnectWithoutParentOfferInput | CnftOfferCreateOrConnectWithoutParentOfferInput[]
+    createMany?: CnftOfferCreateManyParentOfferInputEnvelope
+    connect?: CnftOfferWhereUniqueInput | CnftOfferWhereUniqueInput[]
+  }
+
+  export type EnumOfferEscrowStatusFieldUpdateOperationsInput = {
+    set?: $Enums.OfferEscrowStatus
+  }
+
+  export type CnftOfferUpdateOneWithoutCounterOffersNestedInput = {
+    create?: XOR<CnftOfferCreateWithoutCounterOffersInput, CnftOfferUncheckedCreateWithoutCounterOffersInput>
+    connectOrCreate?: CnftOfferCreateOrConnectWithoutCounterOffersInput
+    upsert?: CnftOfferUpsertWithoutCounterOffersInput
+    disconnect?: CnftOfferWhereInput | boolean
+    delete?: CnftOfferWhereInput | boolean
+    connect?: CnftOfferWhereUniqueInput
+    update?: XOR<XOR<CnftOfferUpdateToOneWithWhereWithoutCounterOffersInput, CnftOfferUpdateWithoutCounterOffersInput>, CnftOfferUncheckedUpdateWithoutCounterOffersInput>
+  }
+
+  export type CnftOfferUpdateManyWithoutCounterOfferNestedInput = {
+    create?: XOR<CnftOfferCreateWithoutCounterOfferInput, CnftOfferUncheckedCreateWithoutCounterOfferInput> | CnftOfferCreateWithoutCounterOfferInput[] | CnftOfferUncheckedCreateWithoutCounterOfferInput[]
+    connectOrCreate?: CnftOfferCreateOrConnectWithoutCounterOfferInput | CnftOfferCreateOrConnectWithoutCounterOfferInput[]
+    upsert?: CnftOfferUpsertWithWhereUniqueWithoutCounterOfferInput | CnftOfferUpsertWithWhereUniqueWithoutCounterOfferInput[]
+    createMany?: CnftOfferCreateManyCounterOfferInputEnvelope
+    set?: CnftOfferWhereUniqueInput | CnftOfferWhereUniqueInput[]
+    disconnect?: CnftOfferWhereUniqueInput | CnftOfferWhereUniqueInput[]
+    delete?: CnftOfferWhereUniqueInput | CnftOfferWhereUniqueInput[]
+    connect?: CnftOfferWhereUniqueInput | CnftOfferWhereUniqueInput[]
+    update?: CnftOfferUpdateWithWhereUniqueWithoutCounterOfferInput | CnftOfferUpdateWithWhereUniqueWithoutCounterOfferInput[]
+    updateMany?: CnftOfferUpdateManyWithWhereWithoutCounterOfferInput | CnftOfferUpdateManyWithWhereWithoutCounterOfferInput[]
+    deleteMany?: CnftOfferScalarWhereInput | CnftOfferScalarWhereInput[]
+  }
+
+  export type CnftOfferUpdateOneWithoutChildOffersNestedInput = {
+    create?: XOR<CnftOfferCreateWithoutChildOffersInput, CnftOfferUncheckedCreateWithoutChildOffersInput>
+    connectOrCreate?: CnftOfferCreateOrConnectWithoutChildOffersInput
+    upsert?: CnftOfferUpsertWithoutChildOffersInput
+    disconnect?: CnftOfferWhereInput | boolean
+    delete?: CnftOfferWhereInput | boolean
+    connect?: CnftOfferWhereUniqueInput
+    update?: XOR<XOR<CnftOfferUpdateToOneWithWhereWithoutChildOffersInput, CnftOfferUpdateWithoutChildOffersInput>, CnftOfferUncheckedUpdateWithoutChildOffersInput>
+  }
+
+  export type CnftOfferUpdateManyWithoutParentOfferNestedInput = {
+    create?: XOR<CnftOfferCreateWithoutParentOfferInput, CnftOfferUncheckedCreateWithoutParentOfferInput> | CnftOfferCreateWithoutParentOfferInput[] | CnftOfferUncheckedCreateWithoutParentOfferInput[]
+    connectOrCreate?: CnftOfferCreateOrConnectWithoutParentOfferInput | CnftOfferCreateOrConnectWithoutParentOfferInput[]
+    upsert?: CnftOfferUpsertWithWhereUniqueWithoutParentOfferInput | CnftOfferUpsertWithWhereUniqueWithoutParentOfferInput[]
+    createMany?: CnftOfferCreateManyParentOfferInputEnvelope
+    set?: CnftOfferWhereUniqueInput | CnftOfferWhereUniqueInput[]
+    disconnect?: CnftOfferWhereUniqueInput | CnftOfferWhereUniqueInput[]
+    delete?: CnftOfferWhereUniqueInput | CnftOfferWhereUniqueInput[]
+    connect?: CnftOfferWhereUniqueInput | CnftOfferWhereUniqueInput[]
+    update?: CnftOfferUpdateWithWhereUniqueWithoutParentOfferInput | CnftOfferUpdateWithWhereUniqueWithoutParentOfferInput[]
+    updateMany?: CnftOfferUpdateManyWithWhereWithoutParentOfferInput | CnftOfferUpdateManyWithWhereWithoutParentOfferInput[]
+    deleteMany?: CnftOfferScalarWhereInput | CnftOfferScalarWhereInput[]
+  }
+
+  export type ListingUpdateOneWithoutOffersNestedInput = {
+    create?: XOR<ListingCreateWithoutOffersInput, ListingUncheckedCreateWithoutOffersInput>
+    connectOrCreate?: ListingCreateOrConnectWithoutOffersInput
+    upsert?: ListingUpsertWithoutOffersInput
+    disconnect?: ListingWhereInput | boolean
+    delete?: ListingWhereInput | boolean
+    connect?: ListingWhereUniqueInput
+    update?: XOR<XOR<ListingUpdateToOneWithWhereWithoutOffersInput, ListingUpdateWithoutOffersInput>, ListingUncheckedUpdateWithoutOffersInput>
+  }
+
+  export type CnftOfferUncheckedUpdateManyWithoutCounterOfferNestedInput = {
+    create?: XOR<CnftOfferCreateWithoutCounterOfferInput, CnftOfferUncheckedCreateWithoutCounterOfferInput> | CnftOfferCreateWithoutCounterOfferInput[] | CnftOfferUncheckedCreateWithoutCounterOfferInput[]
+    connectOrCreate?: CnftOfferCreateOrConnectWithoutCounterOfferInput | CnftOfferCreateOrConnectWithoutCounterOfferInput[]
+    upsert?: CnftOfferUpsertWithWhereUniqueWithoutCounterOfferInput | CnftOfferUpsertWithWhereUniqueWithoutCounterOfferInput[]
+    createMany?: CnftOfferCreateManyCounterOfferInputEnvelope
+    set?: CnftOfferWhereUniqueInput | CnftOfferWhereUniqueInput[]
+    disconnect?: CnftOfferWhereUniqueInput | CnftOfferWhereUniqueInput[]
+    delete?: CnftOfferWhereUniqueInput | CnftOfferWhereUniqueInput[]
+    connect?: CnftOfferWhereUniqueInput | CnftOfferWhereUniqueInput[]
+    update?: CnftOfferUpdateWithWhereUniqueWithoutCounterOfferInput | CnftOfferUpdateWithWhereUniqueWithoutCounterOfferInput[]
+    updateMany?: CnftOfferUpdateManyWithWhereWithoutCounterOfferInput | CnftOfferUpdateManyWithWhereWithoutCounterOfferInput[]
+    deleteMany?: CnftOfferScalarWhereInput | CnftOfferScalarWhereInput[]
+  }
+
+  export type CnftOfferUncheckedUpdateManyWithoutParentOfferNestedInput = {
+    create?: XOR<CnftOfferCreateWithoutParentOfferInput, CnftOfferUncheckedCreateWithoutParentOfferInput> | CnftOfferCreateWithoutParentOfferInput[] | CnftOfferUncheckedCreateWithoutParentOfferInput[]
+    connectOrCreate?: CnftOfferCreateOrConnectWithoutParentOfferInput | CnftOfferCreateOrConnectWithoutParentOfferInput[]
+    upsert?: CnftOfferUpsertWithWhereUniqueWithoutParentOfferInput | CnftOfferUpsertWithWhereUniqueWithoutParentOfferInput[]
+    createMany?: CnftOfferCreateManyParentOfferInputEnvelope
+    set?: CnftOfferWhereUniqueInput | CnftOfferWhereUniqueInput[]
+    disconnect?: CnftOfferWhereUniqueInput | CnftOfferWhereUniqueInput[]
+    delete?: CnftOfferWhereUniqueInput | CnftOfferWhereUniqueInput[]
+    connect?: CnftOfferWhereUniqueInput | CnftOfferWhereUniqueInput[]
+    update?: CnftOfferUpdateWithWhereUniqueWithoutParentOfferInput | CnftOfferUpdateWithWhereUniqueWithoutParentOfferInput[]
+    updateMany?: CnftOfferUpdateManyWithWhereWithoutParentOfferInput | CnftOfferUpdateManyWithWhereWithoutParentOfferInput[]
+    deleteMany?: CnftOfferScalarWhereInput | CnftOfferScalarWhereInput[]
+  }
+
+  export type CnftOfferCreateNestedManyWithoutListingInput = {
+    create?: XOR<CnftOfferCreateWithoutListingInput, CnftOfferUncheckedCreateWithoutListingInput> | CnftOfferCreateWithoutListingInput[] | CnftOfferUncheckedCreateWithoutListingInput[]
+    connectOrCreate?: CnftOfferCreateOrConnectWithoutListingInput | CnftOfferCreateOrConnectWithoutListingInput[]
+    createMany?: CnftOfferCreateManyListingInputEnvelope
+    connect?: CnftOfferWhereUniqueInput | CnftOfferWhereUniqueInput[]
+  }
+
+  export type CnftOfferUncheckedCreateNestedManyWithoutListingInput = {
+    create?: XOR<CnftOfferCreateWithoutListingInput, CnftOfferUncheckedCreateWithoutListingInput> | CnftOfferCreateWithoutListingInput[] | CnftOfferUncheckedCreateWithoutListingInput[]
+    connectOrCreate?: CnftOfferCreateOrConnectWithoutListingInput | CnftOfferCreateOrConnectWithoutListingInput[]
+    createMany?: CnftOfferCreateManyListingInputEnvelope
+    connect?: CnftOfferWhereUniqueInput | CnftOfferWhereUniqueInput[]
+  }
+
+  export type EnumDelegationStatusFieldUpdateOperationsInput = {
+    set?: $Enums.DelegationStatus
+  }
+
+  export type EnumListingStatusFieldUpdateOperationsInput = {
+    set?: $Enums.ListingStatus
+  }
+
+  export type CnftOfferUpdateManyWithoutListingNestedInput = {
+    create?: XOR<CnftOfferCreateWithoutListingInput, CnftOfferUncheckedCreateWithoutListingInput> | CnftOfferCreateWithoutListingInput[] | CnftOfferUncheckedCreateWithoutListingInput[]
+    connectOrCreate?: CnftOfferCreateOrConnectWithoutListingInput | CnftOfferCreateOrConnectWithoutListingInput[]
+    upsert?: CnftOfferUpsertWithWhereUniqueWithoutListingInput | CnftOfferUpsertWithWhereUniqueWithoutListingInput[]
+    createMany?: CnftOfferCreateManyListingInputEnvelope
+    set?: CnftOfferWhereUniqueInput | CnftOfferWhereUniqueInput[]
+    disconnect?: CnftOfferWhereUniqueInput | CnftOfferWhereUniqueInput[]
+    delete?: CnftOfferWhereUniqueInput | CnftOfferWhereUniqueInput[]
+    connect?: CnftOfferWhereUniqueInput | CnftOfferWhereUniqueInput[]
+    update?: CnftOfferUpdateWithWhereUniqueWithoutListingInput | CnftOfferUpdateWithWhereUniqueWithoutListingInput[]
+    updateMany?: CnftOfferUpdateManyWithWhereWithoutListingInput | CnftOfferUpdateManyWithWhereWithoutListingInput[]
+    deleteMany?: CnftOfferScalarWhereInput | CnftOfferScalarWhereInput[]
+  }
+
+  export type CnftOfferUncheckedUpdateManyWithoutListingNestedInput = {
+    create?: XOR<CnftOfferCreateWithoutListingInput, CnftOfferUncheckedCreateWithoutListingInput> | CnftOfferCreateWithoutListingInput[] | CnftOfferUncheckedCreateWithoutListingInput[]
+    connectOrCreate?: CnftOfferCreateOrConnectWithoutListingInput | CnftOfferCreateOrConnectWithoutListingInput[]
+    upsert?: CnftOfferUpsertWithWhereUniqueWithoutListingInput | CnftOfferUpsertWithWhereUniqueWithoutListingInput[]
+    createMany?: CnftOfferCreateManyListingInputEnvelope
+    set?: CnftOfferWhereUniqueInput | CnftOfferWhereUniqueInput[]
+    disconnect?: CnftOfferWhereUniqueInput | CnftOfferWhereUniqueInput[]
+    delete?: CnftOfferWhereUniqueInput | CnftOfferWhereUniqueInput[]
+    connect?: CnftOfferWhereUniqueInput | CnftOfferWhereUniqueInput[]
+    update?: CnftOfferUpdateWithWhereUniqueWithoutListingInput | CnftOfferUpdateWithWhereUniqueWithoutListingInput[]
+    updateMany?: CnftOfferUpdateManyWithWhereWithoutListingInput | CnftOfferUpdateManyWithWhereWithoutListingInput[]
+    deleteMany?: CnftOfferScalarWhereInput | CnftOfferScalarWhereInput[]
+  }
+
   export type NestedStringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -24734,6 +29205,57 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumTransactionStatusFilter<$PrismaModel>
     _max?: NestedEnumTransactionStatusFilter<$PrismaModel>
+  }
+
+  export type NestedEnumOfferEscrowStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.OfferEscrowStatus | EnumOfferEscrowStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.OfferEscrowStatus[] | ListEnumOfferEscrowStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OfferEscrowStatus[] | ListEnumOfferEscrowStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumOfferEscrowStatusFilter<$PrismaModel> | $Enums.OfferEscrowStatus
+  }
+
+  export type NestedEnumOfferEscrowStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.OfferEscrowStatus | EnumOfferEscrowStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.OfferEscrowStatus[] | ListEnumOfferEscrowStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OfferEscrowStatus[] | ListEnumOfferEscrowStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumOfferEscrowStatusWithAggregatesFilter<$PrismaModel> | $Enums.OfferEscrowStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumOfferEscrowStatusFilter<$PrismaModel>
+    _max?: NestedEnumOfferEscrowStatusFilter<$PrismaModel>
+  }
+
+  export type NestedEnumDelegationStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.DelegationStatus | EnumDelegationStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.DelegationStatus[] | ListEnumDelegationStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.DelegationStatus[] | ListEnumDelegationStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumDelegationStatusFilter<$PrismaModel> | $Enums.DelegationStatus
+  }
+
+  export type NestedEnumListingStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.ListingStatus | EnumListingStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ListingStatus[] | ListEnumListingStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ListingStatus[] | ListEnumListingStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumListingStatusFilter<$PrismaModel> | $Enums.ListingStatus
+  }
+
+  export type NestedEnumDelegationStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.DelegationStatus | EnumDelegationStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.DelegationStatus[] | ListEnumDelegationStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.DelegationStatus[] | ListEnumDelegationStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumDelegationStatusWithAggregatesFilter<$PrismaModel> | $Enums.DelegationStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumDelegationStatusFilter<$PrismaModel>
+    _max?: NestedEnumDelegationStatusFilter<$PrismaModel>
+  }
+
+  export type NestedEnumListingStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ListingStatus | EnumListingStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ListingStatus[] | ListEnumListingStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ListingStatus[] | ListEnumListingStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumListingStatusWithAggregatesFilter<$PrismaModel> | $Enums.ListingStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumListingStatusFilter<$PrismaModel>
+    _max?: NestedEnumListingStatusFilter<$PrismaModel>
   }
 
   export type DepositCreateWithoutAgreementInput = {
@@ -27069,6 +31591,718 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type CnftOfferCreateWithoutCounterOffersInput = {
+    id?: string
+    offerId: string
+    bidderWallet: string
+    targetAssetId: string
+    merkleTree?: string | null
+    leafIndex?: number | null
+    ownerWallet: string
+    offerLamports: bigint | number
+    feeLamports: bigint | number
+    feeBps?: number
+    escrowPda: string
+    escrowBump: number
+    status?: $Enums.OfferEscrowStatus
+    expiresAt: Date | string
+    escrowTxId?: string | null
+    acceptTxId?: string | null
+    cancelTxId?: string | null
+    rejectTxId?: string | null
+    acceptedAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    rejectedAt?: Date | string | null
+    expiredAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    counterOffer?: CnftOfferCreateNestedOneWithoutCounterOffersInput
+    parentOffer?: CnftOfferCreateNestedOneWithoutChildOffersInput
+    childOffers?: CnftOfferCreateNestedManyWithoutParentOfferInput
+    listing?: ListingCreateNestedOneWithoutOffersInput
+  }
+
+  export type CnftOfferUncheckedCreateWithoutCounterOffersInput = {
+    id?: string
+    offerId: string
+    bidderWallet: string
+    targetAssetId: string
+    merkleTree?: string | null
+    leafIndex?: number | null
+    ownerWallet: string
+    offerLamports: bigint | number
+    feeLamports: bigint | number
+    feeBps?: number
+    escrowPda: string
+    escrowBump: number
+    status?: $Enums.OfferEscrowStatus
+    expiresAt: Date | string
+    escrowTxId?: string | null
+    acceptTxId?: string | null
+    cancelTxId?: string | null
+    rejectTxId?: string | null
+    counterOfferId?: string | null
+    parentOfferId?: string | null
+    acceptedAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    rejectedAt?: Date | string | null
+    expiredAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    listingId?: string | null
+    childOffers?: CnftOfferUncheckedCreateNestedManyWithoutParentOfferInput
+  }
+
+  export type CnftOfferCreateOrConnectWithoutCounterOffersInput = {
+    where: CnftOfferWhereUniqueInput
+    create: XOR<CnftOfferCreateWithoutCounterOffersInput, CnftOfferUncheckedCreateWithoutCounterOffersInput>
+  }
+
+  export type CnftOfferCreateWithoutCounterOfferInput = {
+    id?: string
+    offerId: string
+    bidderWallet: string
+    targetAssetId: string
+    merkleTree?: string | null
+    leafIndex?: number | null
+    ownerWallet: string
+    offerLamports: bigint | number
+    feeLamports: bigint | number
+    feeBps?: number
+    escrowPda: string
+    escrowBump: number
+    status?: $Enums.OfferEscrowStatus
+    expiresAt: Date | string
+    escrowTxId?: string | null
+    acceptTxId?: string | null
+    cancelTxId?: string | null
+    rejectTxId?: string | null
+    acceptedAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    rejectedAt?: Date | string | null
+    expiredAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    counterOffers?: CnftOfferCreateNestedManyWithoutCounterOfferInput
+    parentOffer?: CnftOfferCreateNestedOneWithoutChildOffersInput
+    childOffers?: CnftOfferCreateNestedManyWithoutParentOfferInput
+    listing?: ListingCreateNestedOneWithoutOffersInput
+  }
+
+  export type CnftOfferUncheckedCreateWithoutCounterOfferInput = {
+    id?: string
+    offerId: string
+    bidderWallet: string
+    targetAssetId: string
+    merkleTree?: string | null
+    leafIndex?: number | null
+    ownerWallet: string
+    offerLamports: bigint | number
+    feeLamports: bigint | number
+    feeBps?: number
+    escrowPda: string
+    escrowBump: number
+    status?: $Enums.OfferEscrowStatus
+    expiresAt: Date | string
+    escrowTxId?: string | null
+    acceptTxId?: string | null
+    cancelTxId?: string | null
+    rejectTxId?: string | null
+    parentOfferId?: string | null
+    acceptedAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    rejectedAt?: Date | string | null
+    expiredAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    listingId?: string | null
+    counterOffers?: CnftOfferUncheckedCreateNestedManyWithoutCounterOfferInput
+    childOffers?: CnftOfferUncheckedCreateNestedManyWithoutParentOfferInput
+  }
+
+  export type CnftOfferCreateOrConnectWithoutCounterOfferInput = {
+    where: CnftOfferWhereUniqueInput
+    create: XOR<CnftOfferCreateWithoutCounterOfferInput, CnftOfferUncheckedCreateWithoutCounterOfferInput>
+  }
+
+  export type CnftOfferCreateManyCounterOfferInputEnvelope = {
+    data: CnftOfferCreateManyCounterOfferInput | CnftOfferCreateManyCounterOfferInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type CnftOfferCreateWithoutChildOffersInput = {
+    id?: string
+    offerId: string
+    bidderWallet: string
+    targetAssetId: string
+    merkleTree?: string | null
+    leafIndex?: number | null
+    ownerWallet: string
+    offerLamports: bigint | number
+    feeLamports: bigint | number
+    feeBps?: number
+    escrowPda: string
+    escrowBump: number
+    status?: $Enums.OfferEscrowStatus
+    expiresAt: Date | string
+    escrowTxId?: string | null
+    acceptTxId?: string | null
+    cancelTxId?: string | null
+    rejectTxId?: string | null
+    acceptedAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    rejectedAt?: Date | string | null
+    expiredAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    counterOffer?: CnftOfferCreateNestedOneWithoutCounterOffersInput
+    counterOffers?: CnftOfferCreateNestedManyWithoutCounterOfferInput
+    parentOffer?: CnftOfferCreateNestedOneWithoutChildOffersInput
+    listing?: ListingCreateNestedOneWithoutOffersInput
+  }
+
+  export type CnftOfferUncheckedCreateWithoutChildOffersInput = {
+    id?: string
+    offerId: string
+    bidderWallet: string
+    targetAssetId: string
+    merkleTree?: string | null
+    leafIndex?: number | null
+    ownerWallet: string
+    offerLamports: bigint | number
+    feeLamports: bigint | number
+    feeBps?: number
+    escrowPda: string
+    escrowBump: number
+    status?: $Enums.OfferEscrowStatus
+    expiresAt: Date | string
+    escrowTxId?: string | null
+    acceptTxId?: string | null
+    cancelTxId?: string | null
+    rejectTxId?: string | null
+    counterOfferId?: string | null
+    parentOfferId?: string | null
+    acceptedAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    rejectedAt?: Date | string | null
+    expiredAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    listingId?: string | null
+    counterOffers?: CnftOfferUncheckedCreateNestedManyWithoutCounterOfferInput
+  }
+
+  export type CnftOfferCreateOrConnectWithoutChildOffersInput = {
+    where: CnftOfferWhereUniqueInput
+    create: XOR<CnftOfferCreateWithoutChildOffersInput, CnftOfferUncheckedCreateWithoutChildOffersInput>
+  }
+
+  export type CnftOfferCreateWithoutParentOfferInput = {
+    id?: string
+    offerId: string
+    bidderWallet: string
+    targetAssetId: string
+    merkleTree?: string | null
+    leafIndex?: number | null
+    ownerWallet: string
+    offerLamports: bigint | number
+    feeLamports: bigint | number
+    feeBps?: number
+    escrowPda: string
+    escrowBump: number
+    status?: $Enums.OfferEscrowStatus
+    expiresAt: Date | string
+    escrowTxId?: string | null
+    acceptTxId?: string | null
+    cancelTxId?: string | null
+    rejectTxId?: string | null
+    acceptedAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    rejectedAt?: Date | string | null
+    expiredAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    counterOffer?: CnftOfferCreateNestedOneWithoutCounterOffersInput
+    counterOffers?: CnftOfferCreateNestedManyWithoutCounterOfferInput
+    childOffers?: CnftOfferCreateNestedManyWithoutParentOfferInput
+    listing?: ListingCreateNestedOneWithoutOffersInput
+  }
+
+  export type CnftOfferUncheckedCreateWithoutParentOfferInput = {
+    id?: string
+    offerId: string
+    bidderWallet: string
+    targetAssetId: string
+    merkleTree?: string | null
+    leafIndex?: number | null
+    ownerWallet: string
+    offerLamports: bigint | number
+    feeLamports: bigint | number
+    feeBps?: number
+    escrowPda: string
+    escrowBump: number
+    status?: $Enums.OfferEscrowStatus
+    expiresAt: Date | string
+    escrowTxId?: string | null
+    acceptTxId?: string | null
+    cancelTxId?: string | null
+    rejectTxId?: string | null
+    counterOfferId?: string | null
+    acceptedAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    rejectedAt?: Date | string | null
+    expiredAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    listingId?: string | null
+    counterOffers?: CnftOfferUncheckedCreateNestedManyWithoutCounterOfferInput
+    childOffers?: CnftOfferUncheckedCreateNestedManyWithoutParentOfferInput
+  }
+
+  export type CnftOfferCreateOrConnectWithoutParentOfferInput = {
+    where: CnftOfferWhereUniqueInput
+    create: XOR<CnftOfferCreateWithoutParentOfferInput, CnftOfferUncheckedCreateWithoutParentOfferInput>
+  }
+
+  export type CnftOfferCreateManyParentOfferInputEnvelope = {
+    data: CnftOfferCreateManyParentOfferInput | CnftOfferCreateManyParentOfferInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type ListingCreateWithoutOffersInput = {
+    id?: string
+    listingId: string
+    seller: string
+    assetId: string
+    merkleTree: string
+    leafIndex: number
+    priceLamports: bigint | number
+    delegationStatus?: $Enums.DelegationStatus
+    delegatePda?: string | null
+    delegatedAt?: Date | string | null
+    isFrozen?: boolean
+    status?: $Enums.ListingStatus
+    expiresAt: Date | string
+    delegateTxId?: string | null
+    settleTxId?: string | null
+    revokeTxId?: string | null
+    buyer?: string | null
+    soldAt?: Date | string | null
+    feeBps?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    cancelledAt?: Date | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+  }
+
+  export type ListingUncheckedCreateWithoutOffersInput = {
+    id?: string
+    listingId: string
+    seller: string
+    assetId: string
+    merkleTree: string
+    leafIndex: number
+    priceLamports: bigint | number
+    delegationStatus?: $Enums.DelegationStatus
+    delegatePda?: string | null
+    delegatedAt?: Date | string | null
+    isFrozen?: boolean
+    status?: $Enums.ListingStatus
+    expiresAt: Date | string
+    delegateTxId?: string | null
+    settleTxId?: string | null
+    revokeTxId?: string | null
+    buyer?: string | null
+    soldAt?: Date | string | null
+    feeBps?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    cancelledAt?: Date | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+  }
+
+  export type ListingCreateOrConnectWithoutOffersInput = {
+    where: ListingWhereUniqueInput
+    create: XOR<ListingCreateWithoutOffersInput, ListingUncheckedCreateWithoutOffersInput>
+  }
+
+  export type CnftOfferUpsertWithoutCounterOffersInput = {
+    update: XOR<CnftOfferUpdateWithoutCounterOffersInput, CnftOfferUncheckedUpdateWithoutCounterOffersInput>
+    create: XOR<CnftOfferCreateWithoutCounterOffersInput, CnftOfferUncheckedCreateWithoutCounterOffersInput>
+    where?: CnftOfferWhereInput
+  }
+
+  export type CnftOfferUpdateToOneWithWhereWithoutCounterOffersInput = {
+    where?: CnftOfferWhereInput
+    data: XOR<CnftOfferUpdateWithoutCounterOffersInput, CnftOfferUncheckedUpdateWithoutCounterOffersInput>
+  }
+
+  export type CnftOfferUpdateWithoutCounterOffersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    offerId?: StringFieldUpdateOperationsInput | string
+    bidderWallet?: StringFieldUpdateOperationsInput | string
+    targetAssetId?: StringFieldUpdateOperationsInput | string
+    merkleTree?: NullableStringFieldUpdateOperationsInput | string | null
+    leafIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    ownerWallet?: StringFieldUpdateOperationsInput | string
+    offerLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    feeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    feeBps?: IntFieldUpdateOperationsInput | number
+    escrowPda?: StringFieldUpdateOperationsInput | string
+    escrowBump?: IntFieldUpdateOperationsInput | number
+    status?: EnumOfferEscrowStatusFieldUpdateOperationsInput | $Enums.OfferEscrowStatus
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    escrowTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    rejectTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    expiredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    counterOffer?: CnftOfferUpdateOneWithoutCounterOffersNestedInput
+    parentOffer?: CnftOfferUpdateOneWithoutChildOffersNestedInput
+    childOffers?: CnftOfferUpdateManyWithoutParentOfferNestedInput
+    listing?: ListingUpdateOneWithoutOffersNestedInput
+  }
+
+  export type CnftOfferUncheckedUpdateWithoutCounterOffersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    offerId?: StringFieldUpdateOperationsInput | string
+    bidderWallet?: StringFieldUpdateOperationsInput | string
+    targetAssetId?: StringFieldUpdateOperationsInput | string
+    merkleTree?: NullableStringFieldUpdateOperationsInput | string | null
+    leafIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    ownerWallet?: StringFieldUpdateOperationsInput | string
+    offerLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    feeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    feeBps?: IntFieldUpdateOperationsInput | number
+    escrowPda?: StringFieldUpdateOperationsInput | string
+    escrowBump?: IntFieldUpdateOperationsInput | number
+    status?: EnumOfferEscrowStatusFieldUpdateOperationsInput | $Enums.OfferEscrowStatus
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    escrowTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    rejectTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    counterOfferId?: NullableStringFieldUpdateOperationsInput | string | null
+    parentOfferId?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    expiredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    listingId?: NullableStringFieldUpdateOperationsInput | string | null
+    childOffers?: CnftOfferUncheckedUpdateManyWithoutParentOfferNestedInput
+  }
+
+  export type CnftOfferUpsertWithWhereUniqueWithoutCounterOfferInput = {
+    where: CnftOfferWhereUniqueInput
+    update: XOR<CnftOfferUpdateWithoutCounterOfferInput, CnftOfferUncheckedUpdateWithoutCounterOfferInput>
+    create: XOR<CnftOfferCreateWithoutCounterOfferInput, CnftOfferUncheckedCreateWithoutCounterOfferInput>
+  }
+
+  export type CnftOfferUpdateWithWhereUniqueWithoutCounterOfferInput = {
+    where: CnftOfferWhereUniqueInput
+    data: XOR<CnftOfferUpdateWithoutCounterOfferInput, CnftOfferUncheckedUpdateWithoutCounterOfferInput>
+  }
+
+  export type CnftOfferUpdateManyWithWhereWithoutCounterOfferInput = {
+    where: CnftOfferScalarWhereInput
+    data: XOR<CnftOfferUpdateManyMutationInput, CnftOfferUncheckedUpdateManyWithoutCounterOfferInput>
+  }
+
+  export type CnftOfferScalarWhereInput = {
+    AND?: CnftOfferScalarWhereInput | CnftOfferScalarWhereInput[]
+    OR?: CnftOfferScalarWhereInput[]
+    NOT?: CnftOfferScalarWhereInput | CnftOfferScalarWhereInput[]
+    id?: StringFilter<"CnftOffer"> | string
+    offerId?: StringFilter<"CnftOffer"> | string
+    bidderWallet?: StringFilter<"CnftOffer"> | string
+    targetAssetId?: StringFilter<"CnftOffer"> | string
+    merkleTree?: StringNullableFilter<"CnftOffer"> | string | null
+    leafIndex?: IntNullableFilter<"CnftOffer"> | number | null
+    ownerWallet?: StringFilter<"CnftOffer"> | string
+    offerLamports?: BigIntFilter<"CnftOffer"> | bigint | number
+    feeLamports?: BigIntFilter<"CnftOffer"> | bigint | number
+    feeBps?: IntFilter<"CnftOffer"> | number
+    escrowPda?: StringFilter<"CnftOffer"> | string
+    escrowBump?: IntFilter<"CnftOffer"> | number
+    status?: EnumOfferEscrowStatusFilter<"CnftOffer"> | $Enums.OfferEscrowStatus
+    expiresAt?: DateTimeFilter<"CnftOffer"> | Date | string
+    escrowTxId?: StringNullableFilter<"CnftOffer"> | string | null
+    acceptTxId?: StringNullableFilter<"CnftOffer"> | string | null
+    cancelTxId?: StringNullableFilter<"CnftOffer"> | string | null
+    rejectTxId?: StringNullableFilter<"CnftOffer"> | string | null
+    counterOfferId?: StringNullableFilter<"CnftOffer"> | string | null
+    parentOfferId?: StringNullableFilter<"CnftOffer"> | string | null
+    acceptedAt?: DateTimeNullableFilter<"CnftOffer"> | Date | string | null
+    cancelledAt?: DateTimeNullableFilter<"CnftOffer"> | Date | string | null
+    rejectedAt?: DateTimeNullableFilter<"CnftOffer"> | Date | string | null
+    expiredAt?: DateTimeNullableFilter<"CnftOffer"> | Date | string | null
+    createdAt?: DateTimeFilter<"CnftOffer"> | Date | string
+    updatedAt?: DateTimeFilter<"CnftOffer"> | Date | string
+    metadata?: JsonNullableFilter<"CnftOffer">
+    listingId?: StringNullableFilter<"CnftOffer"> | string | null
+  }
+
+  export type CnftOfferUpsertWithoutChildOffersInput = {
+    update: XOR<CnftOfferUpdateWithoutChildOffersInput, CnftOfferUncheckedUpdateWithoutChildOffersInput>
+    create: XOR<CnftOfferCreateWithoutChildOffersInput, CnftOfferUncheckedCreateWithoutChildOffersInput>
+    where?: CnftOfferWhereInput
+  }
+
+  export type CnftOfferUpdateToOneWithWhereWithoutChildOffersInput = {
+    where?: CnftOfferWhereInput
+    data: XOR<CnftOfferUpdateWithoutChildOffersInput, CnftOfferUncheckedUpdateWithoutChildOffersInput>
+  }
+
+  export type CnftOfferUpdateWithoutChildOffersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    offerId?: StringFieldUpdateOperationsInput | string
+    bidderWallet?: StringFieldUpdateOperationsInput | string
+    targetAssetId?: StringFieldUpdateOperationsInput | string
+    merkleTree?: NullableStringFieldUpdateOperationsInput | string | null
+    leafIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    ownerWallet?: StringFieldUpdateOperationsInput | string
+    offerLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    feeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    feeBps?: IntFieldUpdateOperationsInput | number
+    escrowPda?: StringFieldUpdateOperationsInput | string
+    escrowBump?: IntFieldUpdateOperationsInput | number
+    status?: EnumOfferEscrowStatusFieldUpdateOperationsInput | $Enums.OfferEscrowStatus
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    escrowTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    rejectTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    expiredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    counterOffer?: CnftOfferUpdateOneWithoutCounterOffersNestedInput
+    counterOffers?: CnftOfferUpdateManyWithoutCounterOfferNestedInput
+    parentOffer?: CnftOfferUpdateOneWithoutChildOffersNestedInput
+    listing?: ListingUpdateOneWithoutOffersNestedInput
+  }
+
+  export type CnftOfferUncheckedUpdateWithoutChildOffersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    offerId?: StringFieldUpdateOperationsInput | string
+    bidderWallet?: StringFieldUpdateOperationsInput | string
+    targetAssetId?: StringFieldUpdateOperationsInput | string
+    merkleTree?: NullableStringFieldUpdateOperationsInput | string | null
+    leafIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    ownerWallet?: StringFieldUpdateOperationsInput | string
+    offerLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    feeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    feeBps?: IntFieldUpdateOperationsInput | number
+    escrowPda?: StringFieldUpdateOperationsInput | string
+    escrowBump?: IntFieldUpdateOperationsInput | number
+    status?: EnumOfferEscrowStatusFieldUpdateOperationsInput | $Enums.OfferEscrowStatus
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    escrowTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    rejectTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    counterOfferId?: NullableStringFieldUpdateOperationsInput | string | null
+    parentOfferId?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    expiredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    listingId?: NullableStringFieldUpdateOperationsInput | string | null
+    counterOffers?: CnftOfferUncheckedUpdateManyWithoutCounterOfferNestedInput
+  }
+
+  export type CnftOfferUpsertWithWhereUniqueWithoutParentOfferInput = {
+    where: CnftOfferWhereUniqueInput
+    update: XOR<CnftOfferUpdateWithoutParentOfferInput, CnftOfferUncheckedUpdateWithoutParentOfferInput>
+    create: XOR<CnftOfferCreateWithoutParentOfferInput, CnftOfferUncheckedCreateWithoutParentOfferInput>
+  }
+
+  export type CnftOfferUpdateWithWhereUniqueWithoutParentOfferInput = {
+    where: CnftOfferWhereUniqueInput
+    data: XOR<CnftOfferUpdateWithoutParentOfferInput, CnftOfferUncheckedUpdateWithoutParentOfferInput>
+  }
+
+  export type CnftOfferUpdateManyWithWhereWithoutParentOfferInput = {
+    where: CnftOfferScalarWhereInput
+    data: XOR<CnftOfferUpdateManyMutationInput, CnftOfferUncheckedUpdateManyWithoutParentOfferInput>
+  }
+
+  export type ListingUpsertWithoutOffersInput = {
+    update: XOR<ListingUpdateWithoutOffersInput, ListingUncheckedUpdateWithoutOffersInput>
+    create: XOR<ListingCreateWithoutOffersInput, ListingUncheckedCreateWithoutOffersInput>
+    where?: ListingWhereInput
+  }
+
+  export type ListingUpdateToOneWithWhereWithoutOffersInput = {
+    where?: ListingWhereInput
+    data: XOR<ListingUpdateWithoutOffersInput, ListingUncheckedUpdateWithoutOffersInput>
+  }
+
+  export type ListingUpdateWithoutOffersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    listingId?: StringFieldUpdateOperationsInput | string
+    seller?: StringFieldUpdateOperationsInput | string
+    assetId?: StringFieldUpdateOperationsInput | string
+    merkleTree?: StringFieldUpdateOperationsInput | string
+    leafIndex?: IntFieldUpdateOperationsInput | number
+    priceLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    delegationStatus?: EnumDelegationStatusFieldUpdateOperationsInput | $Enums.DelegationStatus
+    delegatePda?: NullableStringFieldUpdateOperationsInput | string | null
+    delegatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isFrozen?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumListingStatusFieldUpdateOperationsInput | $Enums.ListingStatus
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    delegateTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    settleTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    revokeTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    buyer?: NullableStringFieldUpdateOperationsInput | string | null
+    soldAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    feeBps?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+  }
+
+  export type ListingUncheckedUpdateWithoutOffersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    listingId?: StringFieldUpdateOperationsInput | string
+    seller?: StringFieldUpdateOperationsInput | string
+    assetId?: StringFieldUpdateOperationsInput | string
+    merkleTree?: StringFieldUpdateOperationsInput | string
+    leafIndex?: IntFieldUpdateOperationsInput | number
+    priceLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    delegationStatus?: EnumDelegationStatusFieldUpdateOperationsInput | $Enums.DelegationStatus
+    delegatePda?: NullableStringFieldUpdateOperationsInput | string | null
+    delegatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isFrozen?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumListingStatusFieldUpdateOperationsInput | $Enums.ListingStatus
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    delegateTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    settleTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    revokeTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    buyer?: NullableStringFieldUpdateOperationsInput | string | null
+    soldAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    feeBps?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+  }
+
+  export type CnftOfferCreateWithoutListingInput = {
+    id?: string
+    offerId: string
+    bidderWallet: string
+    targetAssetId: string
+    merkleTree?: string | null
+    leafIndex?: number | null
+    ownerWallet: string
+    offerLamports: bigint | number
+    feeLamports: bigint | number
+    feeBps?: number
+    escrowPda: string
+    escrowBump: number
+    status?: $Enums.OfferEscrowStatus
+    expiresAt: Date | string
+    escrowTxId?: string | null
+    acceptTxId?: string | null
+    cancelTxId?: string | null
+    rejectTxId?: string | null
+    acceptedAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    rejectedAt?: Date | string | null
+    expiredAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    counterOffer?: CnftOfferCreateNestedOneWithoutCounterOffersInput
+    counterOffers?: CnftOfferCreateNestedManyWithoutCounterOfferInput
+    parentOffer?: CnftOfferCreateNestedOneWithoutChildOffersInput
+    childOffers?: CnftOfferCreateNestedManyWithoutParentOfferInput
+  }
+
+  export type CnftOfferUncheckedCreateWithoutListingInput = {
+    id?: string
+    offerId: string
+    bidderWallet: string
+    targetAssetId: string
+    merkleTree?: string | null
+    leafIndex?: number | null
+    ownerWallet: string
+    offerLamports: bigint | number
+    feeLamports: bigint | number
+    feeBps?: number
+    escrowPda: string
+    escrowBump: number
+    status?: $Enums.OfferEscrowStatus
+    expiresAt: Date | string
+    escrowTxId?: string | null
+    acceptTxId?: string | null
+    cancelTxId?: string | null
+    rejectTxId?: string | null
+    counterOfferId?: string | null
+    parentOfferId?: string | null
+    acceptedAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    rejectedAt?: Date | string | null
+    expiredAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    counterOffers?: CnftOfferUncheckedCreateNestedManyWithoutCounterOfferInput
+    childOffers?: CnftOfferUncheckedCreateNestedManyWithoutParentOfferInput
+  }
+
+  export type CnftOfferCreateOrConnectWithoutListingInput = {
+    where: CnftOfferWhereUniqueInput
+    create: XOR<CnftOfferCreateWithoutListingInput, CnftOfferUncheckedCreateWithoutListingInput>
+  }
+
+  export type CnftOfferCreateManyListingInputEnvelope = {
+    data: CnftOfferCreateManyListingInput | CnftOfferCreateManyListingInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type CnftOfferUpsertWithWhereUniqueWithoutListingInput = {
+    where: CnftOfferWhereUniqueInput
+    update: XOR<CnftOfferUpdateWithoutListingInput, CnftOfferUncheckedUpdateWithoutListingInput>
+    create: XOR<CnftOfferCreateWithoutListingInput, CnftOfferUncheckedCreateWithoutListingInput>
+  }
+
+  export type CnftOfferUpdateWithWhereUniqueWithoutListingInput = {
+    where: CnftOfferWhereUniqueInput
+    data: XOR<CnftOfferUpdateWithoutListingInput, CnftOfferUncheckedUpdateWithoutListingInput>
+  }
+
+  export type CnftOfferUpdateManyWithWhereWithoutListingInput = {
+    where: CnftOfferScalarWhereInput
+    data: XOR<CnftOfferUpdateManyMutationInput, CnftOfferUncheckedUpdateManyWithoutListingInput>
+  }
+
   export type DepositCreateManyAgreementInput = {
     id?: string
     type: $Enums.DepositType
@@ -27942,6 +33176,378 @@ export namespace Prisma {
     ipAddress?: NullableStringFieldUpdateOperationsInput | string | null
     userAgent?: NullableStringFieldUpdateOperationsInput | string | null
     executedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CnftOfferCreateManyCounterOfferInput = {
+    id?: string
+    offerId: string
+    bidderWallet: string
+    targetAssetId: string
+    merkleTree?: string | null
+    leafIndex?: number | null
+    ownerWallet: string
+    offerLamports: bigint | number
+    feeLamports: bigint | number
+    feeBps?: number
+    escrowPda: string
+    escrowBump: number
+    status?: $Enums.OfferEscrowStatus
+    expiresAt: Date | string
+    escrowTxId?: string | null
+    acceptTxId?: string | null
+    cancelTxId?: string | null
+    rejectTxId?: string | null
+    parentOfferId?: string | null
+    acceptedAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    rejectedAt?: Date | string | null
+    expiredAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    listingId?: string | null
+  }
+
+  export type CnftOfferCreateManyParentOfferInput = {
+    id?: string
+    offerId: string
+    bidderWallet: string
+    targetAssetId: string
+    merkleTree?: string | null
+    leafIndex?: number | null
+    ownerWallet: string
+    offerLamports: bigint | number
+    feeLamports: bigint | number
+    feeBps?: number
+    escrowPda: string
+    escrowBump: number
+    status?: $Enums.OfferEscrowStatus
+    expiresAt: Date | string
+    escrowTxId?: string | null
+    acceptTxId?: string | null
+    cancelTxId?: string | null
+    rejectTxId?: string | null
+    counterOfferId?: string | null
+    acceptedAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    rejectedAt?: Date | string | null
+    expiredAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    listingId?: string | null
+  }
+
+  export type CnftOfferUpdateWithoutCounterOfferInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    offerId?: StringFieldUpdateOperationsInput | string
+    bidderWallet?: StringFieldUpdateOperationsInput | string
+    targetAssetId?: StringFieldUpdateOperationsInput | string
+    merkleTree?: NullableStringFieldUpdateOperationsInput | string | null
+    leafIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    ownerWallet?: StringFieldUpdateOperationsInput | string
+    offerLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    feeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    feeBps?: IntFieldUpdateOperationsInput | number
+    escrowPda?: StringFieldUpdateOperationsInput | string
+    escrowBump?: IntFieldUpdateOperationsInput | number
+    status?: EnumOfferEscrowStatusFieldUpdateOperationsInput | $Enums.OfferEscrowStatus
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    escrowTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    rejectTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    expiredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    counterOffers?: CnftOfferUpdateManyWithoutCounterOfferNestedInput
+    parentOffer?: CnftOfferUpdateOneWithoutChildOffersNestedInput
+    childOffers?: CnftOfferUpdateManyWithoutParentOfferNestedInput
+    listing?: ListingUpdateOneWithoutOffersNestedInput
+  }
+
+  export type CnftOfferUncheckedUpdateWithoutCounterOfferInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    offerId?: StringFieldUpdateOperationsInput | string
+    bidderWallet?: StringFieldUpdateOperationsInput | string
+    targetAssetId?: StringFieldUpdateOperationsInput | string
+    merkleTree?: NullableStringFieldUpdateOperationsInput | string | null
+    leafIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    ownerWallet?: StringFieldUpdateOperationsInput | string
+    offerLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    feeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    feeBps?: IntFieldUpdateOperationsInput | number
+    escrowPda?: StringFieldUpdateOperationsInput | string
+    escrowBump?: IntFieldUpdateOperationsInput | number
+    status?: EnumOfferEscrowStatusFieldUpdateOperationsInput | $Enums.OfferEscrowStatus
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    escrowTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    rejectTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    parentOfferId?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    expiredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    listingId?: NullableStringFieldUpdateOperationsInput | string | null
+    counterOffers?: CnftOfferUncheckedUpdateManyWithoutCounterOfferNestedInput
+    childOffers?: CnftOfferUncheckedUpdateManyWithoutParentOfferNestedInput
+  }
+
+  export type CnftOfferUncheckedUpdateManyWithoutCounterOfferInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    offerId?: StringFieldUpdateOperationsInput | string
+    bidderWallet?: StringFieldUpdateOperationsInput | string
+    targetAssetId?: StringFieldUpdateOperationsInput | string
+    merkleTree?: NullableStringFieldUpdateOperationsInput | string | null
+    leafIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    ownerWallet?: StringFieldUpdateOperationsInput | string
+    offerLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    feeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    feeBps?: IntFieldUpdateOperationsInput | number
+    escrowPda?: StringFieldUpdateOperationsInput | string
+    escrowBump?: IntFieldUpdateOperationsInput | number
+    status?: EnumOfferEscrowStatusFieldUpdateOperationsInput | $Enums.OfferEscrowStatus
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    escrowTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    rejectTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    parentOfferId?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    expiredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    listingId?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type CnftOfferUpdateWithoutParentOfferInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    offerId?: StringFieldUpdateOperationsInput | string
+    bidderWallet?: StringFieldUpdateOperationsInput | string
+    targetAssetId?: StringFieldUpdateOperationsInput | string
+    merkleTree?: NullableStringFieldUpdateOperationsInput | string | null
+    leafIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    ownerWallet?: StringFieldUpdateOperationsInput | string
+    offerLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    feeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    feeBps?: IntFieldUpdateOperationsInput | number
+    escrowPda?: StringFieldUpdateOperationsInput | string
+    escrowBump?: IntFieldUpdateOperationsInput | number
+    status?: EnumOfferEscrowStatusFieldUpdateOperationsInput | $Enums.OfferEscrowStatus
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    escrowTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    rejectTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    expiredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    counterOffer?: CnftOfferUpdateOneWithoutCounterOffersNestedInput
+    counterOffers?: CnftOfferUpdateManyWithoutCounterOfferNestedInput
+    childOffers?: CnftOfferUpdateManyWithoutParentOfferNestedInput
+    listing?: ListingUpdateOneWithoutOffersNestedInput
+  }
+
+  export type CnftOfferUncheckedUpdateWithoutParentOfferInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    offerId?: StringFieldUpdateOperationsInput | string
+    bidderWallet?: StringFieldUpdateOperationsInput | string
+    targetAssetId?: StringFieldUpdateOperationsInput | string
+    merkleTree?: NullableStringFieldUpdateOperationsInput | string | null
+    leafIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    ownerWallet?: StringFieldUpdateOperationsInput | string
+    offerLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    feeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    feeBps?: IntFieldUpdateOperationsInput | number
+    escrowPda?: StringFieldUpdateOperationsInput | string
+    escrowBump?: IntFieldUpdateOperationsInput | number
+    status?: EnumOfferEscrowStatusFieldUpdateOperationsInput | $Enums.OfferEscrowStatus
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    escrowTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    rejectTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    counterOfferId?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    expiredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    listingId?: NullableStringFieldUpdateOperationsInput | string | null
+    counterOffers?: CnftOfferUncheckedUpdateManyWithoutCounterOfferNestedInput
+    childOffers?: CnftOfferUncheckedUpdateManyWithoutParentOfferNestedInput
+  }
+
+  export type CnftOfferUncheckedUpdateManyWithoutParentOfferInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    offerId?: StringFieldUpdateOperationsInput | string
+    bidderWallet?: StringFieldUpdateOperationsInput | string
+    targetAssetId?: StringFieldUpdateOperationsInput | string
+    merkleTree?: NullableStringFieldUpdateOperationsInput | string | null
+    leafIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    ownerWallet?: StringFieldUpdateOperationsInput | string
+    offerLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    feeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    feeBps?: IntFieldUpdateOperationsInput | number
+    escrowPda?: StringFieldUpdateOperationsInput | string
+    escrowBump?: IntFieldUpdateOperationsInput | number
+    status?: EnumOfferEscrowStatusFieldUpdateOperationsInput | $Enums.OfferEscrowStatus
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    escrowTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    rejectTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    counterOfferId?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    expiredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    listingId?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type CnftOfferCreateManyListingInput = {
+    id?: string
+    offerId: string
+    bidderWallet: string
+    targetAssetId: string
+    merkleTree?: string | null
+    leafIndex?: number | null
+    ownerWallet: string
+    offerLamports: bigint | number
+    feeLamports: bigint | number
+    feeBps?: number
+    escrowPda: string
+    escrowBump: number
+    status?: $Enums.OfferEscrowStatus
+    expiresAt: Date | string
+    escrowTxId?: string | null
+    acceptTxId?: string | null
+    cancelTxId?: string | null
+    rejectTxId?: string | null
+    counterOfferId?: string | null
+    parentOfferId?: string | null
+    acceptedAt?: Date | string | null
+    cancelledAt?: Date | string | null
+    rejectedAt?: Date | string | null
+    expiredAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+  }
+
+  export type CnftOfferUpdateWithoutListingInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    offerId?: StringFieldUpdateOperationsInput | string
+    bidderWallet?: StringFieldUpdateOperationsInput | string
+    targetAssetId?: StringFieldUpdateOperationsInput | string
+    merkleTree?: NullableStringFieldUpdateOperationsInput | string | null
+    leafIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    ownerWallet?: StringFieldUpdateOperationsInput | string
+    offerLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    feeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    feeBps?: IntFieldUpdateOperationsInput | number
+    escrowPda?: StringFieldUpdateOperationsInput | string
+    escrowBump?: IntFieldUpdateOperationsInput | number
+    status?: EnumOfferEscrowStatusFieldUpdateOperationsInput | $Enums.OfferEscrowStatus
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    escrowTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    rejectTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    expiredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    counterOffer?: CnftOfferUpdateOneWithoutCounterOffersNestedInput
+    counterOffers?: CnftOfferUpdateManyWithoutCounterOfferNestedInput
+    parentOffer?: CnftOfferUpdateOneWithoutChildOffersNestedInput
+    childOffers?: CnftOfferUpdateManyWithoutParentOfferNestedInput
+  }
+
+  export type CnftOfferUncheckedUpdateWithoutListingInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    offerId?: StringFieldUpdateOperationsInput | string
+    bidderWallet?: StringFieldUpdateOperationsInput | string
+    targetAssetId?: StringFieldUpdateOperationsInput | string
+    merkleTree?: NullableStringFieldUpdateOperationsInput | string | null
+    leafIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    ownerWallet?: StringFieldUpdateOperationsInput | string
+    offerLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    feeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    feeBps?: IntFieldUpdateOperationsInput | number
+    escrowPda?: StringFieldUpdateOperationsInput | string
+    escrowBump?: IntFieldUpdateOperationsInput | number
+    status?: EnumOfferEscrowStatusFieldUpdateOperationsInput | $Enums.OfferEscrowStatus
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    escrowTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    rejectTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    counterOfferId?: NullableStringFieldUpdateOperationsInput | string | null
+    parentOfferId?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    expiredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    counterOffers?: CnftOfferUncheckedUpdateManyWithoutCounterOfferNestedInput
+    childOffers?: CnftOfferUncheckedUpdateManyWithoutParentOfferNestedInput
+  }
+
+  export type CnftOfferUncheckedUpdateManyWithoutListingInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    offerId?: StringFieldUpdateOperationsInput | string
+    bidderWallet?: StringFieldUpdateOperationsInput | string
+    targetAssetId?: StringFieldUpdateOperationsInput | string
+    merkleTree?: NullableStringFieldUpdateOperationsInput | string | null
+    leafIndex?: NullableIntFieldUpdateOperationsInput | number | null
+    ownerWallet?: StringFieldUpdateOperationsInput | string
+    offerLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    feeLamports?: BigIntFieldUpdateOperationsInput | bigint | number
+    feeBps?: IntFieldUpdateOperationsInput | number
+    escrowPda?: StringFieldUpdateOperationsInput | string
+    escrowBump?: IntFieldUpdateOperationsInput | number
+    status?: EnumOfferEscrowStatusFieldUpdateOperationsInput | $Enums.OfferEscrowStatus
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    escrowTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    rejectTxId?: NullableStringFieldUpdateOperationsInput | string | null
+    counterOfferId?: NullableStringFieldUpdateOperationsInput | string | null
+    parentOfferId?: NullableStringFieldUpdateOperationsInput | string | null
+    acceptedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    expiredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    metadata?: NullableJsonNullValueInput | InputJsonValue
   }
 
 

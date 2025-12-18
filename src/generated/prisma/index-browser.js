@@ -344,6 +344,63 @@ exports.Prisma.ZeroFeeSwapLogScalarFieldEnum = {
   executedAt: 'executedAt'
 };
 
+exports.Prisma.CnftOfferScalarFieldEnum = {
+  id: 'id',
+  offerId: 'offerId',
+  bidderWallet: 'bidderWallet',
+  targetAssetId: 'targetAssetId',
+  merkleTree: 'merkleTree',
+  leafIndex: 'leafIndex',
+  ownerWallet: 'ownerWallet',
+  offerLamports: 'offerLamports',
+  feeLamports: 'feeLamports',
+  feeBps: 'feeBps',
+  escrowPda: 'escrowPda',
+  escrowBump: 'escrowBump',
+  status: 'status',
+  expiresAt: 'expiresAt',
+  escrowTxId: 'escrowTxId',
+  acceptTxId: 'acceptTxId',
+  cancelTxId: 'cancelTxId',
+  rejectTxId: 'rejectTxId',
+  counterOfferId: 'counterOfferId',
+  parentOfferId: 'parentOfferId',
+  acceptedAt: 'acceptedAt',
+  cancelledAt: 'cancelledAt',
+  rejectedAt: 'rejectedAt',
+  expiredAt: 'expiredAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  metadata: 'metadata',
+  listingId: 'listingId'
+};
+
+exports.Prisma.ListingScalarFieldEnum = {
+  id: 'id',
+  listingId: 'listingId',
+  seller: 'seller',
+  assetId: 'assetId',
+  merkleTree: 'merkleTree',
+  leafIndex: 'leafIndex',
+  priceLamports: 'priceLamports',
+  delegationStatus: 'delegationStatus',
+  delegatePda: 'delegatePda',
+  delegatedAt: 'delegatedAt',
+  isFrozen: 'isFrozen',
+  status: 'status',
+  expiresAt: 'expiresAt',
+  delegateTxId: 'delegateTxId',
+  settleTxId: 'settleTxId',
+  revokeTxId: 'revokeTxId',
+  buyer: 'buyer',
+  soldAt: 'soldAt',
+  feeBps: 'feeBps',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  cancelledAt: 'cancelledAt',
+  metadata: 'metadata'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -454,6 +511,31 @@ exports.TransactionStatus = exports.$Enums.TransactionStatus = {
   CANCELLED: 'CANCELLED'
 };
 
+exports.OfferEscrowStatus = exports.$Enums.OfferEscrowStatus = {
+  PENDING: 'PENDING',
+  ACTIVE: 'ACTIVE',
+  ACCEPTED: 'ACCEPTED',
+  COUNTERED: 'COUNTERED',
+  CANCELLED: 'CANCELLED',
+  EXPIRED: 'EXPIRED',
+  REJECTED: 'REJECTED'
+};
+
+exports.DelegationStatus = exports.$Enums.DelegationStatus = {
+  PENDING: 'PENDING',
+  DELEGATED: 'DELEGATED',
+  FROZEN: 'FROZEN',
+  REVOKED: 'REVOKED'
+};
+
+exports.ListingStatus = exports.$Enums.ListingStatus = {
+  PENDING: 'PENDING',
+  ACTIVE: 'ACTIVE',
+  SOLD: 'SOLD',
+  CANCELLED: 'CANCELLED',
+  EXPIRED: 'EXPIRED'
+};
+
 exports.Prisma.ModelName = {
   Agreement: 'Agreement',
   Deposit: 'Deposit',
@@ -467,7 +549,9 @@ exports.Prisma.ModelName = {
   SwapOffer: 'SwapOffer',
   SwapTransaction: 'SwapTransaction',
   AuthorizedApp: 'AuthorizedApp',
-  ZeroFeeSwapLog: 'ZeroFeeSwapLog'
+  ZeroFeeSwapLog: 'ZeroFeeSwapLog',
+  CnftOffer: 'CnftOffer',
+  Listing: 'Listing'
 };
 
 /**
