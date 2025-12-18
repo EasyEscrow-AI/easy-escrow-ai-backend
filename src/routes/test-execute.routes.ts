@@ -921,5 +921,207 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
   }
 });
 
+/**
+ * POST /api/test/execute-listing-delegation
+ *
+ * TEST ONLY - Executes a cNFT delegation transaction for listings
+ * Uses the maker (seller) wallet to sign the delegation
+ */
+router.post('/api/test/execute-listing-delegation', requireTestEnvironment, async (req: Request, res: Response) => {
+  console.log('\n🧪 TEST LISTING DELEGATION EXECUTION');
+  console.log('⏰ Timestamp:', new Date().toISOString());
+
+  try {
+    const { listingId, serializedTransaction } = req.body;
+
+    if (!serializedTransaction) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing serializedTransaction',
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    console.log('📋 Listing ID:', listingId);
+
+    // Load maker (seller) private key
+    let makerPrivateKey: string | undefined;
+
+    if (isMainnet) {
+      makerPrivateKey = process.env.MAINNET_PROD_SENDER_PRIVATE_KEY;
+    } else {
+      makerPrivateKey = process.env.DEVNET_STAGING_SENDER_PRIVATE_KEY;
+    }
+
+    if (!makerPrivateKey) {
+      return res.status(500).json({
+        success: false,
+        error: `Test wallet private key not configured for ${networkName}`,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    const makerKeypair = Keypair.fromSecretKey(bs58.decode(makerPrivateKey));
+    console.log('✅ Maker keypair loaded:', makerKeypair.publicKey.toBase58());
+
+    // Deserialize and sign transaction
+    const txBuffer = Buffer.from(serializedTransaction, 'base64');
+    const isVersioned = isVersionedTransaction(txBuffer);
+
+    let signature: string;
+
+    if (isVersioned) {
+      const versionedTx = VersionedTransaction.deserialize(txBuffer);
+      versionedTx.sign([makerKeypair]);
+      signature = await connection.sendRawTransaction(versionedTx.serialize(), {
+        skipPreflight: false,
+        preflightCommitment: 'confirmed',
+      });
+    } else {
+      const transaction = Transaction.from(txBuffer);
+      transaction.partialSign(makerKeypair);
+      signature = await connection.sendRawTransaction(transaction.serialize(), {
+        skipPreflight: false,
+        preflightCommitment: 'confirmed',
+      });
+    }
+
+    console.log('📤 Transaction sent:', signature);
+
+    // Wait for confirmation
+    const confirmation = await connection.confirmTransaction(signature, 'confirmed');
+
+    if (confirmation.value.err) {
+      throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}`);
+    }
+
+    console.log('✅ Delegation transaction confirmed!');
+
+    const explorerUrl = isMainnet
+      ? `https://solscan.io/tx/${signature}`
+      : `https://solscan.io/tx/${signature}?cluster=devnet`;
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        signature,
+        explorerUrl,
+        network: networkName,
+        listingId,
+      },
+      message: 'Delegation transaction executed successfully',
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    console.error('❌ Delegation execution error:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Delegation transaction failed',
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+/**
+ * POST /api/test/execute-listing-revoke
+ *
+ * TEST ONLY - Executes a cNFT revoke transaction for cancelled listings
+ * Uses the maker (seller) wallet to sign the revoke
+ */
+router.post('/api/test/execute-listing-revoke', requireTestEnvironment, async (req: Request, res: Response) => {
+  console.log('\n🧪 TEST LISTING REVOKE EXECUTION');
+  console.log('⏰ Timestamp:', new Date().toISOString());
+
+  try {
+    const { listingId, serializedTransaction } = req.body;
+
+    if (!serializedTransaction) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing serializedTransaction',
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    console.log('📋 Listing ID:', listingId);
+
+    // Load maker (seller) private key
+    let makerPrivateKey: string | undefined;
+
+    if (isMainnet) {
+      makerPrivateKey = process.env.MAINNET_PROD_SENDER_PRIVATE_KEY;
+    } else {
+      makerPrivateKey = process.env.DEVNET_STAGING_SENDER_PRIVATE_KEY;
+    }
+
+    if (!makerPrivateKey) {
+      return res.status(500).json({
+        success: false,
+        error: `Test wallet private key not configured for ${networkName}`,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    const makerKeypair = Keypair.fromSecretKey(bs58.decode(makerPrivateKey));
+    console.log('✅ Maker keypair loaded:', makerKeypair.publicKey.toBase58());
+
+    // Deserialize and sign transaction
+    const txBuffer = Buffer.from(serializedTransaction, 'base64');
+    const isVersioned = isVersionedTransaction(txBuffer);
+
+    let signature: string;
+
+    if (isVersioned) {
+      const versionedTx = VersionedTransaction.deserialize(txBuffer);
+      versionedTx.sign([makerKeypair]);
+      signature = await connection.sendRawTransaction(versionedTx.serialize(), {
+        skipPreflight: false,
+        preflightCommitment: 'confirmed',
+      });
+    } else {
+      const transaction = Transaction.from(txBuffer);
+      transaction.partialSign(makerKeypair);
+      signature = await connection.sendRawTransaction(transaction.serialize(), {
+        skipPreflight: false,
+        preflightCommitment: 'confirmed',
+      });
+    }
+
+    console.log('📤 Transaction sent:', signature);
+
+    // Wait for confirmation
+    const confirmation = await connection.confirmTransaction(signature, 'confirmed');
+
+    if (confirmation.value.err) {
+      throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}`);
+    }
+
+    console.log('✅ Revoke transaction confirmed!');
+
+    const explorerUrl = isMainnet
+      ? `https://solscan.io/tx/${signature}`
+      : `https://solscan.io/tx/${signature}?cluster=devnet`;
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        signature,
+        explorerUrl,
+        network: networkName,
+        listingId,
+      },
+      message: 'Revoke transaction executed successfully',
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    console.error('❌ Revoke execution error:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Revoke transaction failed',
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
 export default router;
 

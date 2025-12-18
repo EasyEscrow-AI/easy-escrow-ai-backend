@@ -545,10 +545,13 @@ function renderNFTs(wallet, nfts) {
         
         // Store mint for fallback animal image generation
         // Add loading="lazy" and crossorigin="anonymous" for better image loading
+        // Add quick list button for cNFTs in maker wallet
+        const showListButton = wallet === 'maker' && nft.isCompressed;
+
         return `
             <div class="nft-card" data-index="${originalIndex}">
-                <img class="nft-image" 
-                     src="${imageUrl}" 
+                <img class="nft-image"
+                     src="${imageUrl}"
                      alt="${nft.name}"
                      data-mint="${nft.mint}"
                      data-fallback="${placeholderSvg}"
@@ -558,6 +561,13 @@ function renderNFTs(wallet, nfts) {
                 <div class="nft-name">${nft.name || 'Unknown NFT'}</div>
                 <div class="nft-type">${getNftTypeLabel(nft)}</div>
                 <div class="nft-mint">${nft.mint.substring(0, 8)}...</div>
+                ${showListButton ? `
+                    <div class="nft-card-actions">
+                        <button class="quick-list-btn" data-mint="${nft.mint}" onclick="event.stopPropagation(); showQuickListModal(makerData.nfts.find(n => n.mint === '${nft.mint}'))">
+                            📝 List
+                        </button>
+                    </div>
+                ` : ''}
             </div>
         `;
     }).join('');
@@ -1739,3 +1749,678 @@ function showTransactionSummary(createData, acceptData, executeData, params, tim
 if (document.getElementById('env-badge')) {
     setEnvironmentBadge();
 }
+
+// ========================================
+// LISTING FUNCTIONALITY
+// ========================================
+
+// Listing state
+let selectedListingDuration = 604800; // 7 days default
+let selectedListingAsset = null;
+let activeListings = [];
+let quickListAsset = null;
+let quickListDuration = 604800;
+
+// Initialize listing functionality after DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    // Wait a bit to ensure main init is complete
+    setTimeout(initializeListingFeatures, 100);
+});
+
+function initializeListingFeatures() {
+    console.log('📋 Initializing listing features...');
+
+    // Asset selector change handler
+    const assetSelect = document.getElementById('listing-asset-select');
+    if (assetSelect) {
+        assetSelect.addEventListener('change', handleAssetSelectChange);
+    }
+
+    // Price input handler for USD display
+    const priceInput = document.getElementById('listing-price');
+    if (priceInput) {
+        priceInput.addEventListener('input', updateListingPriceDisplay);
+    }
+
+    // Duration button handlers
+    const durationButtons = document.querySelectorAll('.listing-section .listing-duration-btn');
+    durationButtons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            durationButtons.forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            selectedListingDuration = parseInt(e.target.dataset.duration);
+        });
+    });
+
+    // List button handler
+    const listBtn = document.getElementById('list-btn');
+    if (listBtn) {
+        listBtn.addEventListener('click', handleCreateListing);
+    }
+
+    // Refresh listings button
+    const refreshListingsBtn = document.getElementById('refresh-listings-btn');
+    if (refreshListingsBtn) {
+        refreshListingsBtn.addEventListener('click', loadActiveListings);
+    }
+
+    // Quick list modal handlers
+    const quickListCancel = document.getElementById('quick-list-cancel');
+    if (quickListCancel) {
+        quickListCancel.addEventListener('click', hideQuickListModal);
+    }
+
+    const quickListConfirm = document.getElementById('quick-list-confirm');
+    if (quickListConfirm) {
+        quickListConfirm.addEventListener('click', handleQuickListConfirm);
+    }
+
+    // Quick list duration buttons
+    const quickListDurationBtns = document.querySelectorAll('#quick-list-duration-buttons .listing-duration-btn');
+    quickListDurationBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            quickListDurationBtns.forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            quickListDuration = parseInt(e.target.dataset.duration);
+        });
+    });
+
+    // Quick list price input handler
+    const quickListPrice = document.getElementById('quick-list-price');
+    if (quickListPrice) {
+        quickListPrice.addEventListener('input', updateQuickListPriceDisplay);
+    }
+
+    console.log('✅ Listing features initialized');
+}
+
+// Populate asset selector when maker wallet is loaded
+function populateAssetSelector() {
+    const assetSelect = document.getElementById('listing-asset-select');
+    if (!assetSelect || !makerData || !makerData.nfts) {
+        return;
+    }
+
+    // Clear existing options
+    assetSelect.innerHTML = '<option value="">-- Select an asset to list --</option>';
+
+    // Only show cNFTs for listing (delegation-based marketplace)
+    const listableAssets = makerData.nfts.filter(nft => nft.isCompressed);
+
+    if (listableAssets.length === 0) {
+        assetSelect.innerHTML = '<option value="">-- No cNFTs available --</option>';
+        assetSelect.disabled = true;
+        return;
+    }
+
+    listableAssets.forEach((nft, index) => {
+        const option = document.createElement('option');
+        option.value = nft.mint;
+        option.textContent = `${nft.name || 'Unknown'} (${nft.mint.substring(0, 8)}...)`;
+        option.dataset.index = index;
+        assetSelect.appendChild(option);
+    });
+
+    assetSelect.disabled = false;
+
+    // Enable list button check
+    updateListButtonState();
+}
+
+// Handle asset select change
+function handleAssetSelectChange(e) {
+    const mint = e.target.value;
+    const preview = document.getElementById('listing-asset-preview');
+
+    if (!mint || !makerData) {
+        preview.style.display = 'none';
+        selectedListingAsset = null;
+        updateListButtonState();
+        return;
+    }
+
+    const nft = makerData.nfts.find(n => n.mint === mint);
+    if (!nft) {
+        preview.style.display = 'none';
+        selectedListingAsset = null;
+        updateListButtonState();
+        return;
+    }
+
+    selectedListingAsset = nft;
+
+    // Update preview
+    document.getElementById('listing-preview-image').src = getNftImage(nft) || getPlaceholderImage(nft.mint);
+    document.getElementById('listing-preview-name').textContent = nft.name || 'Unknown NFT';
+    document.getElementById('listing-preview-type').textContent = getNftTypeLabel(nft);
+    document.getElementById('listing-preview-mint').textContent = nft.mint;
+    preview.style.display = 'flex';
+
+    updateListButtonState();
+}
+
+// Update price display with USD
+function updateListingPriceDisplay() {
+    const priceInput = document.getElementById('listing-price');
+    const usdDisplay = document.getElementById('listing-price-usd');
+
+    if (!priceInput || !usdDisplay) return;
+
+    const solValue = parseFloat(priceInput.value);
+    if (solValue > 0 && solPriceUSD) {
+        const usdValue = (solValue * solPriceUSD).toFixed(2);
+        usdDisplay.textContent = `≈ $${usdValue} USD`;
+    } else {
+        usdDisplay.textContent = '';
+    }
+
+    updateListButtonState();
+}
+
+// Update list button state
+function updateListButtonState() {
+    const listBtn = document.getElementById('list-btn');
+    const priceInput = document.getElementById('listing-price');
+
+    if (!listBtn) return;
+
+    const hasAsset = selectedListingAsset !== null;
+    const hasPrice = priceInput && parseFloat(priceInput.value) > 0;
+
+    listBtn.disabled = !hasAsset || !hasPrice;
+}
+
+// Handle create listing
+async function handleCreateListing() {
+    if (!selectedListingAsset) {
+        addLog('❌ Please select an asset to list', 'error');
+        return;
+    }
+
+    const priceInput = document.getElementById('listing-price');
+    const price = parseFloat(priceInput.value);
+
+    if (!price || price <= 0) {
+        addLog('❌ Please enter a valid price', 'error');
+        return;
+    }
+
+    const listBtn = document.getElementById('list-btn');
+    const originalText = listBtn.innerHTML;
+
+    try {
+        listBtn.disabled = true;
+        listBtn.innerHTML = '⏳ Creating listing...';
+
+        addLog(`📝 Creating listing for ${selectedListingAsset.name}...`, 'info');
+
+        // Convert SOL to lamports
+        const priceLamports = Math.floor(price * 1e9);
+
+        // Call create listing API
+        const response = await fetch('/api/listings', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'idempotency-key': `listing-${Date.now()}-${selectedListingAsset.mint.substring(0, 8)}`,
+            },
+            body: JSON.stringify({
+                seller: MAKER_ADDRESS,
+                assetId: selectedListingAsset.mint,
+                priceLamports: priceLamports.toString(),
+                durationSeconds: selectedListingDuration,
+            }),
+        });
+
+        const result = await response.json();
+
+        if (!result.success) {
+            throw new Error(result.message || result.error || 'Failed to create listing');
+        }
+
+        addLog(`✓ Listing created! ID: ${result.data.listing.listingId}`, 'success');
+        addLog('🔐 Signing delegation transaction...', 'info');
+
+        listBtn.innerHTML = '⏳ Signing delegation...';
+
+        // Execute the delegation transaction via test endpoint
+        const execResponse = await fetch('/api/test/execute-listing-delegation', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Test-Execution': 'true',
+            },
+            body: JSON.stringify({
+                listingId: result.data.listing.listingId,
+                serializedTransaction: result.data.transaction.serialized,
+            }),
+        });
+
+        const execResult = await execResponse.json();
+
+        if (!execResult.success) {
+            throw new Error(execResult.error || 'Failed to execute delegation transaction');
+        }
+
+        addLog(`✓ Delegation confirmed! TX: ${execResult.data.signature.substring(0, 20)}...`, 'success');
+
+        // Confirm the listing
+        const confirmResponse = await fetch(`/api/listings/${result.data.listing.listingId}/confirm`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'idempotency-key': `confirm-${result.data.listing.listingId}-${Date.now()}`,
+            },
+            body: JSON.stringify({
+                signature: execResult.data.signature,
+            }),
+        });
+
+        const confirmResult = await confirmResponse.json();
+
+        if (!confirmResult.success) {
+            addLog(`⚠️ Listing created but confirmation pending: ${confirmResult.message}`, 'warning');
+        } else {
+            addLog(`✅ Listing is now ACTIVE!`, 'success');
+        }
+
+        // Reset form
+        document.getElementById('listing-asset-select').value = '';
+        document.getElementById('listing-price').value = '';
+        document.getElementById('listing-price-usd').textContent = '';
+        document.getElementById('listing-asset-preview').style.display = 'none';
+        selectedListingAsset = null;
+
+        // Refresh listings
+        await loadActiveListings();
+
+        // Refresh maker wallet to update available assets
+        await loadWalletInfo('maker');
+
+    } catch (error) {
+        console.error('Create listing error:', error);
+        addLog(`❌ Failed to create listing: ${error.message}`, 'error');
+    } finally {
+        listBtn.innerHTML = originalText;
+        updateListButtonState();
+    }
+}
+
+// Load active listings
+async function loadActiveListings() {
+    const container = document.getElementById('active-listings-container');
+    if (!container || !MAKER_ADDRESS) {
+        return;
+    }
+
+    container.innerHTML = '<div class="loading"><div class="spinner"></div>Loading listings...</div>';
+
+    try {
+        const response = await fetch(`/api/listings/seller/${MAKER_ADDRESS}`);
+        const result = await response.json();
+
+        if (!result.success) {
+            throw new Error(result.message || 'Failed to load listings');
+        }
+
+        activeListings = result.data.listings || [];
+        renderActiveListings();
+
+    } catch (error) {
+        console.error('Load listings error:', error);
+        container.innerHTML = `<div class="error-message">Failed to load listings: ${error.message}</div>`;
+    }
+}
+
+// Render active listings
+function renderActiveListings() {
+    const container = document.getElementById('active-listings-container');
+    if (!container) return;
+
+    if (activeListings.length === 0) {
+        container.innerHTML = '<div class="empty-state">No active listings. List an asset to see it here.</div>';
+        return;
+    }
+
+    container.innerHTML = activeListings.map(listing => {
+        const metadata = listing.metadata || {};
+        const imageUrl = metadata.image || getPlaceholderImage(listing.assetId);
+        const name = metadata.name || 'Unknown NFT';
+        const priceSol = (parseInt(listing.priceLamports) / 1e9).toFixed(4);
+        const expiresAt = new Date(listing.expiresAt);
+        const createdAt = new Date(listing.createdAt);
+
+        // Determine status class
+        let statusClass = listing.status.toLowerCase();
+        if (listing.delegationStatus === 'PENDING') {
+            statusClass = 'pending';
+        }
+
+        // Check if expired
+        const isExpired = expiresAt < new Date();
+        if (isExpired && listing.status === 'ACTIVE') {
+            statusClass = 'expired';
+        }
+
+        return `
+            <div class="listing-card" data-listing-id="${listing.listingId}">
+                <div class="listing-card-header">
+                    <img class="listing-card-image" src="${imageUrl}" alt="${escapeHtml(name)}"
+                         onerror="this.src='${getPlaceholderImage(listing.assetId)}'">
+                    <div class="listing-card-info">
+                        <div class="listing-card-name">${escapeHtml(name)}</div>
+                        <div class="listing-card-type">cNFT</div>
+                    </div>
+                </div>
+
+                <div class="listing-card-details">
+                    <div class="listing-card-row">
+                        <span class="listing-card-label">Price:</span>
+                        <span class="listing-card-value price">${priceSol} SOL</span>
+                    </div>
+                    <div class="listing-card-row">
+                        <span class="listing-card-label">Status:</span>
+                        <span class="listing-status-badge ${statusClass}">${isExpired ? 'EXPIRED' : listing.status}</span>
+                    </div>
+                    <div class="listing-card-row">
+                        <span class="listing-card-label">Expires:</span>
+                        <span class="listing-card-value">${expiresAt.toLocaleDateString()}</span>
+                    </div>
+                    <div class="listing-card-row">
+                        <span class="listing-card-label">Created:</span>
+                        <span class="listing-card-value">${createdAt.toLocaleDateString()}</span>
+                    </div>
+                </div>
+
+                <div class="listing-card-actions">
+                    ${listing.status === 'ACTIVE' || listing.status === 'PENDING' ? `
+                        <button class="listing-action-btn cancel" onclick="handleCancelListing('${listing.listingId}')">
+                            Cancel
+                        </button>
+                    ` : ''}
+                    <button class="listing-action-btn view" onclick="viewListingDetails('${listing.listingId}')">
+                        View
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Handle cancel listing
+async function handleCancelListing(listingId) {
+    if (!confirm('Are you sure you want to cancel this listing?')) {
+        return;
+    }
+
+    const card = document.querySelector(`[data-listing-id="${listingId}"]`);
+    const cancelBtn = card ? card.querySelector('.listing-action-btn.cancel') : null;
+
+    try {
+        if (cancelBtn) {
+            cancelBtn.disabled = true;
+            cancelBtn.textContent = 'Cancelling...';
+        }
+
+        addLog(`🔄 Cancelling listing ${listingId}...`, 'info');
+
+        // Call cancel API
+        const response = await fetch(`/api/listings/${listingId}/cancel`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'idempotency-key': `cancel-${listingId}-${Date.now()}`,
+            },
+            body: JSON.stringify({
+                seller: MAKER_ADDRESS,
+            }),
+        });
+
+        const result = await response.json();
+
+        if (!result.success) {
+            throw new Error(result.message || 'Failed to cancel listing');
+        }
+
+        // If there's a revoke transaction, execute it
+        if (result.data.transaction) {
+            addLog('🔐 Signing revoke transaction...', 'info');
+
+            const execResponse = await fetch('/api/test/execute-listing-revoke', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Test-Execution': 'true',
+                },
+                body: JSON.stringify({
+                    listingId: listingId,
+                    serializedTransaction: result.data.transaction.serialized,
+                }),
+            });
+
+            const execResult = await execResponse.json();
+
+            if (!execResult.success) {
+                throw new Error(execResult.error || 'Failed to execute revoke transaction');
+            }
+
+            addLog(`✓ Revoke confirmed! TX: ${execResult.data.signature.substring(0, 20)}...`, 'success');
+
+            // Confirm revoke
+            await fetch(`/api/listings/${listingId}/confirm-revoke`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'idempotency-key': `confirm-revoke-${listingId}-${Date.now()}`,
+                },
+                body: JSON.stringify({
+                    signature: execResult.data.signature,
+                }),
+            });
+        }
+
+        addLog(`✅ Listing cancelled successfully!`, 'success');
+
+        // Refresh listings
+        await loadActiveListings();
+
+        // Refresh maker wallet
+        await loadWalletInfo('maker');
+
+    } catch (error) {
+        console.error('Cancel listing error:', error);
+        addLog(`❌ Failed to cancel listing: ${error.message}`, 'error');
+
+        if (cancelBtn) {
+            cancelBtn.disabled = false;
+            cancelBtn.textContent = 'Cancel';
+        }
+    }
+}
+
+// View listing details
+function viewListingDetails(listingId) {
+    const listing = activeListings.find(l => l.listingId === listingId);
+    if (!listing) {
+        addLog('❌ Listing not found', 'error');
+        return;
+    }
+
+    const priceSol = (parseInt(listing.priceLamports) / 1e9).toFixed(4);
+    const priceUsd = solPriceUSD ? ` (~$${(parseInt(listing.priceLamports) / 1e9 * solPriceUSD).toFixed(2)})` : '';
+
+    addLog(`📋 Listing Details:`, 'info');
+    addLog(`   ID: ${listing.listingId}`, 'info');
+    addLog(`   Asset: ${listing.assetId}`, 'info');
+    addLog(`   Price: ${priceSol} SOL${priceUsd}`, 'info');
+    addLog(`   Status: ${listing.status}`, 'info');
+    addLog(`   Delegation: ${listing.delegationStatus}`, 'info');
+}
+
+// Quick list modal functions
+function showQuickListModal(nft) {
+    if (!nft || !nft.isCompressed) {
+        addLog('❌ Only cNFTs can be listed', 'error');
+        return;
+    }
+
+    quickListAsset = nft;
+    quickListDuration = 604800; // Reset to 7 days
+
+    // Update modal content
+    document.getElementById('quick-list-image').src = getNftImage(nft) || getPlaceholderImage(nft.mint);
+    document.getElementById('quick-list-name').textContent = nft.name || 'Unknown NFT';
+    document.getElementById('quick-list-type').textContent = getNftTypeLabel(nft);
+    document.getElementById('quick-list-mint').textContent = nft.mint;
+    document.getElementById('quick-list-price').value = '';
+    document.getElementById('quick-list-price-usd').textContent = '';
+
+    // Reset duration buttons
+    const durationBtns = document.querySelectorAll('#quick-list-duration-buttons .listing-duration-btn');
+    durationBtns.forEach(btn => {
+        btn.classList.remove('active');
+        if (parseInt(btn.dataset.duration) === 604800) {
+            btn.classList.add('active');
+        }
+    });
+
+    document.getElementById('quick-list-modal').classList.add('show');
+}
+
+function hideQuickListModal() {
+    document.getElementById('quick-list-modal').classList.remove('show');
+    quickListAsset = null;
+}
+
+function updateQuickListPriceDisplay() {
+    const priceInput = document.getElementById('quick-list-price');
+    const usdDisplay = document.getElementById('quick-list-price-usd');
+
+    if (!priceInput || !usdDisplay) return;
+
+    const solValue = parseFloat(priceInput.value);
+    if (solValue > 0 && solPriceUSD) {
+        const usdValue = (solValue * solPriceUSD).toFixed(2);
+        usdDisplay.textContent = `≈ $${usdValue} USD`;
+    } else {
+        usdDisplay.textContent = '';
+    }
+}
+
+async function handleQuickListConfirm() {
+    if (!quickListAsset) {
+        addLog('❌ No asset selected', 'error');
+        return;
+    }
+
+    const priceInput = document.getElementById('quick-list-price');
+    const price = parseFloat(priceInput.value);
+
+    if (!price || price <= 0) {
+        addLog('❌ Please enter a valid price', 'error');
+        return;
+    }
+
+    const confirmBtn = document.getElementById('quick-list-confirm');
+    const originalText = confirmBtn.innerHTML;
+
+    try {
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = 'Creating...';
+
+        addLog(`📝 Creating listing for ${quickListAsset.name}...`, 'info');
+
+        // Convert SOL to lamports
+        const priceLamports = Math.floor(price * 1e9);
+
+        // Call create listing API
+        const response = await fetch('/api/listings', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'idempotency-key': `quick-listing-${Date.now()}-${quickListAsset.mint.substring(0, 8)}`,
+            },
+            body: JSON.stringify({
+                seller: MAKER_ADDRESS,
+                assetId: quickListAsset.mint,
+                priceLamports: priceLamports.toString(),
+                durationSeconds: quickListDuration,
+            }),
+        });
+
+        const result = await response.json();
+
+        if (!result.success) {
+            throw new Error(result.message || result.error || 'Failed to create listing');
+        }
+
+        addLog(`✓ Listing created! ID: ${result.data.listing.listingId}`, 'success');
+
+        confirmBtn.innerHTML = 'Signing...';
+
+        // Execute the delegation transaction
+        const execResponse = await fetch('/api/test/execute-listing-delegation', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Test-Execution': 'true',
+            },
+            body: JSON.stringify({
+                listingId: result.data.listing.listingId,
+                serializedTransaction: result.data.transaction.serialized,
+            }),
+        });
+
+        const execResult = await execResponse.json();
+
+        if (!execResult.success) {
+            throw new Error(execResult.error || 'Failed to execute delegation transaction');
+        }
+
+        addLog(`✓ Delegation confirmed!`, 'success');
+
+        // Confirm the listing
+        await fetch(`/api/listings/${result.data.listing.listingId}/confirm`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'idempotency-key': `confirm-${result.data.listing.listingId}-${Date.now()}`,
+            },
+            body: JSON.stringify({
+                signature: execResult.data.signature,
+            }),
+        });
+
+        addLog(`✅ Listing is now ACTIVE!`, 'success');
+
+        hideQuickListModal();
+
+        // Refresh listings and wallet
+        await loadActiveListings();
+        await loadWalletInfo('maker');
+
+    } catch (error) {
+        console.error('Quick list error:', error);
+        addLog(`❌ Failed to create listing: ${error.message}`, 'error');
+    } finally {
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = originalText;
+    }
+}
+
+// Override loadWalletInfo to also populate asset selector and load listings
+const originalLoadWalletInfo = loadWalletInfo;
+loadWalletInfo = async function(wallet) {
+    await originalLoadWalletInfo.call(this, wallet);
+
+    // After maker wallet loads, populate asset selector
+    if (wallet === 'maker' && makerData) {
+        populateAssetSelector();
+        loadActiveListings();
+    }
+};
+
+// Make functions available globally
+window.handleCancelListing = handleCancelListing;
+window.viewListingDetails = viewListingDetails;
+window.showQuickListModal = showQuickListModal;
