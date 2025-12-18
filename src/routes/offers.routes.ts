@@ -45,6 +45,14 @@ import {
   createSwapStateMachine,
 } from '../services/swapStateMachine';
 import { TwoPhaseSwapStatus } from '../generated/prisma';
+// Swap flow routing for Task 12 - API delegation flow
+import {
+  determineSwapFlow,
+  SwapFlowType,
+  SwapFlowResult,
+  isJitoBundlesEnabled,
+} from '../utils/swapFlowRouter';
+// Swap progress service for Task 13
 import {
   createSwapProgressService,
   SwapProgressService,
@@ -431,6 +439,15 @@ router.post(
       const transformedOfferedAssets = transformAssets(offeredAssets, 'offeredAssets');
       const transformedRequestedAssets = transformAssets(requestedAssets, 'requestedAssets');
 
+      // Determine the swap flow type based on asset types (Task 12)
+      const flowResult = determineSwapFlow(
+        transformedOfferedAssets,
+        transformedRequestedAssets,
+        offeredSol ? BigInt(offeredSol) : undefined,
+        requestedSol ? BigInt(requestedSol) : undefined
+      );
+      console.log(`[Offers Route] Swap flow determined:`, JSON.stringify(flowResult));
+
       // Create offer
       const offer = await offerManager.createOffer({
         makerWallet,
@@ -442,26 +459,48 @@ router.post(
         customFee: customFee ? BigInt(customFee) : undefined,
       });
 
+      // Build response with flow type information for frontend routing
+      const responseData: Record<string, any> = {
+        offer: {
+          id: offer.id.toString(),
+          status: offer.status,
+          makerWallet: offer.makerWallet,
+          takerWallet: offer.takerWallet || null,
+          offeredAssets: offer.offeredAssets,
+          requestedAssets: offer.requestedAssets,
+          offeredSol: offeredSol?.toString() || '0',
+          requestedSol: requestedSol?.toString() || '0',
+          createdAt: offer.createdAt.toISOString(),
+        },
+        // Transaction will be built when offer is accepted (needs both signatures)
+        transaction: {
+          nonceAccount: offer.nonceAccount,
+          message: 'Transaction will be built when offer is accepted',
+        },
+        // Task 12: Include swap flow routing information
+        swapFlow: {
+          flowType: flowResult.flowType,
+          requiresDelegation: flowResult.requiresDelegation,
+          requiresTwoPhase: flowResult.requiresTwoPhase,
+          canUseJito: flowResult.canUseJito,
+          reason: flowResult.reason,
+        },
+      };
+
+      // For two-phase swaps, include additional guidance
+      if (flowResult.requiresTwoPhase) {
+        responseData.swapFlow.nextAction = 'Use POST /api/offers/bulk/:id/accept for two-phase settlement';
+        responseData.swapFlow.twoPhaseEndpoint = `/api/offers/bulk/${offer.id}`;
+      }
+
+      // For cNFT delegation swaps, indicate the flow
+      if (flowResult.requiresDelegation && !flowResult.requiresTwoPhase) {
+        responseData.swapFlow.nextAction = 'Taker accepts via POST /api/offers/:id/accept - delegation handled automatically';
+      }
+
       res.status(201).json({
         success: true,
-        data: {
-          offer: {
-            id: offer.id.toString(),
-            status: offer.status,
-            makerWallet: offer.makerWallet,
-            takerWallet: offer.takerWallet || null,
-            offeredAssets: offer.offeredAssets,
-            requestedAssets: offer.requestedAssets,
-            offeredSol: offeredSol?.toString() || '0',
-            requestedSol: requestedSol?.toString() || '0',
-            createdAt: offer.createdAt.toISOString(),
-          },
-          // Transaction will be built when offer is accepted (needs both signatures)
-          transaction: {
-            nonceAccount: offer.nonceAccount,
-            message: 'Transaction will be built when offer is accepted',
-          },
-        },
+        data: responseData,
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
@@ -789,6 +828,14 @@ router.post(
         throw new Error('Offer not returned from acceptOffer');
       }
 
+      // Determine swap flow for the response (Task 12)
+      const flowResult = determineSwapFlow(
+        result.offer.offeredAssets.map((a: any) => ({ type: a.type, identifier: a.identifier })),
+        result.offer.requestedAssets.map((a: any) => ({ type: a.type, identifier: a.identifier })),
+        result.offer.offeredSolLamports ? BigInt(result.offer.offeredSolLamports) : undefined,
+        result.offer.requestedSolLamports ? BigInt(result.offer.requestedSolLamports) : undefined
+      );
+
       // Build response based on whether this is a bulk swap
       const responseData: any = {
         offer: {
@@ -804,6 +851,13 @@ router.post(
         transaction: {
           serialized: result.serializedTransaction,
           nonceAccount: result.offer.nonceAccount,
+        },
+        // Task 12: Include swap flow information in accept response
+        swapFlow: {
+          flowType: flowResult.flowType,
+          requiresDelegation: flowResult.requiresDelegation,
+          requiresTwoPhase: flowResult.requiresTwoPhase,
+          canUseJito: flowResult.canUseJito,
         },
       };
 
@@ -2989,6 +3043,234 @@ router.get(
     } catch (error) {
       console.error('[OffersRoutes] Get delegation status error:', error);
       const message = error instanceof Error ? error.message : 'Failed to get delegation status';
+
+      res.status(500).json({
+        success: false,
+        error: 'Internal Server Error',
+        message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+// =============================================================================
+// Swap Status Endpoints (Task 12)
+// =============================================================================
+
+/**
+ * GET /api/swaps/:id/status
+ * Get the full swap state for a two-phase swap
+ *
+ * Returns:
+ * - Current phase (CREATED, LOCKING, LOCKED, SETTLING, COMPLETED, etc.)
+ * - Progress information (completed transfers, remaining)
+ * - Lock status for both parties
+ * - Settlement progress
+ *
+ * This endpoint is part of Task 12: Update Existing API Endpoints for Delegation Flow
+ */
+router.get(
+  '/api/swaps/:id/status',
+  standardRateLimiter,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { id } = req.params;
+
+      // Try to get the swap from two-phase swap service
+      const swap = await twoPhaseSwapLockService.getSwap(id);
+
+      if (!swap) {
+        // If not found in two-phase, check if it's a regular offer ID
+        const offerId = parseInt(id, 10);
+        if (!isNaN(offerId)) {
+          const offer = await prisma.swapOffer.findUnique({
+            where: { id: offerId },
+            select: {
+              id: true,
+              status: true,
+              isBulkSwap: true,
+              bundleStatus: true,
+              transactionCount: true,
+              transactionSignature: true,
+              createdAt: true,
+              updatedAt: true,
+              filledAt: true,
+              cancelledAt: true,
+              expiresAt: true,
+              offeredAssets: true,
+              requestedAssets: true,
+              makerWallet: true,
+              takerWallet: true,
+            },
+          });
+
+          if (offer) {
+            // Determine the flow type
+            const flowResult = determineSwapFlow(
+              (offer.offeredAssets as any[]).map((a: any) => ({ type: a.type, identifier: a.identifier })),
+              (offer.requestedAssets as any[]).map((a: any) => ({ type: a.type, identifier: a.identifier })),
+              undefined,
+              undefined
+            );
+
+            res.status(200).json({
+              success: true,
+              data: {
+                swapType: 'atomic',
+                offerId: offer.id,
+                status: offer.status,
+                isBulkSwap: offer.isBulkSwap || false,
+                bundleStatus: offer.bundleStatus,
+                swapFlow: {
+                  flowType: flowResult.flowType,
+                  requiresDelegation: flowResult.requiresDelegation,
+                  requiresTwoPhase: flowResult.requiresTwoPhase,
+                },
+                parties: {
+                  maker: offer.makerWallet,
+                  taker: offer.takerWallet,
+                },
+                timing: {
+                  created: offer.createdAt?.toISOString(),
+                  updated: offer.updatedAt?.toISOString(),
+                  filled: offer.filledAt?.toISOString() || null,
+                  cancelled: offer.cancelledAt?.toISOString() || null,
+                  expires: offer.expiresAt?.toISOString(),
+                },
+              },
+              timestamp: new Date().toISOString(),
+            });
+            return;
+          }
+        }
+
+        res.status(404).json({
+          success: false,
+          error: 'Not Found',
+          message: `Swap ${id} not found`,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // This is a two-phase swap - return full state
+      const [delegatePDA] = twoPhaseSwapLockService.deriveDelegatePDA(id);
+      const [solVaultA] = twoPhaseSwapLockService.deriveSolVaultPDA(id, 'A');
+      const [solVaultB] = twoPhaseSwapLockService.deriveSolVaultPDA(id, 'B');
+
+      // Calculate progress
+      const settledCount = swap.settleTxs?.length || 0;
+      const totalToSettle = swap.totalSettleTxs || 0;
+      const settlementProgress = totalToSettle > 0
+        ? Math.round((settledCount / totalToSettle) * 100)
+        : 0;
+
+      // Determine current phase description
+      let phaseDescription = '';
+      switch (swap.status) {
+        case TwoPhaseSwapStatus.CREATED:
+          phaseDescription = 'Waiting for counterparty to accept';
+          break;
+        case TwoPhaseSwapStatus.ACCEPTED:
+          phaseDescription = 'Accepted, waiting for Party A to lock assets';
+          break;
+        case TwoPhaseSwapStatus.LOCKING_PARTY_A:
+          phaseDescription = 'Party A is locking their assets';
+          break;
+        case TwoPhaseSwapStatus.PARTY_A_LOCKED:
+          phaseDescription = 'Party A locked, waiting for Party B to lock';
+          break;
+        case TwoPhaseSwapStatus.LOCKING_PARTY_B:
+          phaseDescription = 'Party B is locking their assets';
+          break;
+        case TwoPhaseSwapStatus.FULLY_LOCKED:
+          phaseDescription = 'Both parties locked, ready for settlement';
+          break;
+        case TwoPhaseSwapStatus.SETTLING:
+          phaseDescription = `Settlement in progress (${settledCount}/${totalToSettle} complete)`;
+          break;
+        case TwoPhaseSwapStatus.PARTIAL_SETTLE:
+          phaseDescription = `Partial settlement (${settledCount}/${totalToSettle} complete)`;
+          break;
+        case TwoPhaseSwapStatus.COMPLETED:
+          phaseDescription = 'Swap completed successfully';
+          break;
+        case TwoPhaseSwapStatus.FAILED:
+          phaseDescription = swap.errorMessage || 'Swap failed';
+          break;
+        case TwoPhaseSwapStatus.CANCELLED:
+          phaseDescription = 'Swap was cancelled';
+          break;
+        case TwoPhaseSwapStatus.EXPIRED:
+          phaseDescription = 'Swap expired';
+          break;
+        default:
+          phaseDescription = 'Unknown state';
+      }
+
+      res.status(200).json({
+        success: true,
+        data: {
+          swapType: 'two-phase',
+          swapId: id,
+          status: swap.status,
+          phase: {
+            current: swap.status,
+            description: phaseDescription,
+          },
+          parties: {
+            partyA: swap.partyA,
+            partyB: swap.partyB,
+          },
+          assets: {
+            partyA: swap.assetsA,
+            partyB: swap.assetsB,
+            solAmountA: swap.solAmountA?.toString() || null,
+            solAmountB: swap.solAmountB?.toString() || null,
+          },
+          lockStatus: {
+            partyALocked: !!swap.lockConfirmedA,
+            partyBLocked: !!swap.lockConfirmedB,
+            lockTxA: swap.lockTxA || null,
+            lockTxB: swap.lockTxB || null,
+            lockConfirmedA: swap.lockConfirmedA?.toISOString() || null,
+            lockConfirmedB: swap.lockConfirmedB?.toISOString() || null,
+          },
+          settlement: {
+            inProgress: swap.status === TwoPhaseSwapStatus.SETTLING ||
+                       swap.status === TwoPhaseSwapStatus.PARTIAL_SETTLE,
+            completed: swap.status === TwoPhaseSwapStatus.COMPLETED,
+            settledCount,
+            totalToSettle,
+            progressPercent: settlementProgress,
+            currentIndex: swap.currentSettleIndex || 0,
+            settleTxs: swap.settleTxs || [],
+            finalSettleTx: swap.finalSettleTx || null,
+          },
+          pdas: {
+            delegatePDA: delegatePDA.toBase58(),
+            solVaultA: solVaultA.toBase58(),
+            solVaultB: solVaultB.toBase58(),
+          },
+          timing: {
+            created: swap.createdAt?.toISOString(),
+            updated: swap.updatedAt?.toISOString(),
+            expires: swap.expiresAt?.toISOString(),
+            settledAt: swap.settledAt?.toISOString() || null,
+            cancelledAt: swap.cancelledAt?.toISOString() || null,
+            failedAt: swap.failedAt?.toISOString() || null,
+          },
+          error: swap.errorMessage ? {
+            message: swap.errorMessage,
+            code: swap.errorCode || null,
+          } : null,
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('[OffersRoutes] Get swap status error:', error);
+      const message = error instanceof Error ? error.message : 'Failed to get swap status';
 
       res.status(500).json({
         success: false,
