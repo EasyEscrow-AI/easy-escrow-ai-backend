@@ -1,0 +1,164 @@
+# EasyEscrow Delegation Settlement Alerting Rules
+#
+# These rules should be added to your Prometheus configuration.
+# See: https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/
+#
+# Task 16: Add Monitoring and Observability for Delegation Settlement
+
+groups:
+  - name: easyescrow_swap_alerts
+    rules:
+      # High Failure Rate Alert
+      # Triggers when swap failure rate exceeds 5% over 15 minutes
+      - alert: HighSwapFailureRate
+        expr: |
+          (
+            sum(rate(easyescrow_swap_failed_total[15m])) /
+            (sum(rate(easyescrow_swap_completed_total[15m])) + sum(rate(easyescrow_swap_failed_total[15m])))
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          service: easyescrow
+          component: swap
+        annotations:
+          summary: "High swap failure rate detected"
+          description: "Swap failure rate is {{ $value | humanizePercentage }} (threshold: 5%)"
+          runbook_url: "https://docs.easyescrow.ai/runbooks/high-swap-failure-rate"
+
+      # Stuck Swaps Alert
+      # Triggers when swaps are stuck in non-terminal states for more than 10 minutes
+      - alert: StuckSwaps
+        expr: |
+          sum(easyescrow_active_swaps_by_status{status=~"locking_party_a|locking_party_b|settling|partial_settle"}) > 0
+          and
+          changes(easyescrow_active_swaps_by_status{status=~"locking_party_a|locking_party_b|settling|partial_settle"}[10m]) == 0
+        for: 10m
+        labels:
+          severity: warning
+          service: easyescrow
+          component: swap
+        annotations:
+          summary: "Swaps stuck in intermediate state"
+          description: "{{ $value }} swap(s) have been stuck in intermediate states for more than 10 minutes"
+          runbook_url: "https://docs.easyescrow.ai/runbooks/stuck-swaps"
+
+      # Settlement Timeout Alert
+      # Triggers when settlement duration exceeds 5 minutes (p99)
+      - alert: SettlementTimeout
+        expr: |
+          histogram_quantile(0.99, sum(rate(easyescrow_settlement_duration_seconds_bucket[5m])) by (le)) > 300
+        for: 5m
+        labels:
+          severity: warning
+          service: easyescrow
+          component: settlement
+        annotations:
+          summary: "Settlement timeout detected"
+          description: "99th percentile settlement duration is {{ $value | humanizeDuration }} (threshold: 5 minutes)"
+          runbook_url: "https://docs.easyescrow.ai/runbooks/settlement-timeout"
+
+  - name: easyescrow_delegation_alerts
+    rules:
+      # High Delegation Failure Rate
+      - alert: HighDelegationFailureRate
+        expr: |
+          (
+            sum(rate(easyescrow_delegation_failure_total[15m])) /
+            (sum(rate(easyescrow_delegation_success_total[15m])) + sum(rate(easyescrow_delegation_failure_total[15m])))
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          service: easyescrow
+          component: delegation
+        annotations:
+          summary: "High delegation failure rate detected"
+          description: "Delegation failure rate is {{ $value | humanizePercentage }} (threshold: 5%)"
+          runbook_url: "https://docs.easyescrow.ai/runbooks/high-delegation-failure-rate"
+
+      # Delegation Latency Alert
+      - alert: HighDelegationLatency
+        expr: |
+          histogram_quantile(0.95, sum(rate(easyescrow_delegation_latency_seconds_bucket[5m])) by (le)) > 10
+        for: 5m
+        labels:
+          severity: warning
+          service: easyescrow
+          component: delegation
+        annotations:
+          summary: "High delegation latency detected"
+          description: "95th percentile delegation latency is {{ $value | humanizeDuration }} (threshold: 10 seconds)"
+          runbook_url: "https://docs.easyescrow.ai/runbooks/high-delegation-latency"
+
+  - name: easyescrow_error_alerts
+    rules:
+      # Network Errors Spike
+      - alert: NetworkErrorsSpike
+        expr: |
+          sum(rate(easyescrow_errors_by_category_total{category="network"}[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: easyescrow
+          component: network
+        annotations:
+          summary: "Network errors spike detected"
+          description: "Network error rate is {{ $value }} errors/second"
+          runbook_url: "https://docs.easyescrow.ai/runbooks/network-errors"
+
+      # Rate Limiting Active
+      - alert: RateLimitingActive
+        expr: |
+          sum by (service) (rate(easyescrow_rate_limit_hits_total[5m])) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          component: rate_limit
+        annotations:
+          summary: "Rate limiting is active on {{ $labels.service }}"
+          description: "Rate limit hits: {{ $value | printf \"%.2f\" }} per second on {{ $labels.service }}"
+          runbook_url: "https://docs.easyescrow.ai/runbooks/rate-limiting"
+
+      # Stale Proof Errors
+      - alert: StaleProofErrors
+        expr: |
+          sum(rate(easyescrow_errors_by_category_total{category="stale_proof"}[15m])) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: easyescrow
+          component: cnft
+        annotations:
+          summary: "Stale proof errors detected"
+          description: "Stale proof error rate is {{ $value }} errors/second - may indicate DAS API issues"
+          runbook_url: "https://docs.easyescrow.ai/runbooks/stale-proof-errors"
+
+  - name: easyescrow_health_alerts
+    rules:
+      # Service Unhealthy
+      - alert: ServiceUnhealthy
+        expr: |
+          easyescrow_service_health == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: easyescrow
+        annotations:
+          summary: "EasyEscrow service component unhealthy"
+          description: "Service component {{ $labels.component }} is unhealthy"
+          runbook_url: "https://docs.easyescrow.ai/runbooks/service-unhealthy"
+
+      # No Recent Successful Operations
+      - alert: NoRecentOperations
+        expr: |
+          time() - easyescrow_last_successful_operation_timestamp{operation="swap_complete"} > 1800
+        for: 5m
+        labels:
+          severity: warning
+          service: easyescrow
+          component: swap
+        annotations:
+          summary: "No successful swap completions recently"
+          description: "No swap has completed successfully in the last 30 minutes"
+          runbook_url: "https://docs.easyescrow.ai/runbooks/no-recent-operations"
