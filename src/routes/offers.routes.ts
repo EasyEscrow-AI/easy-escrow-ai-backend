@@ -32,6 +32,10 @@ import {
   createTwoPhaseSwapLockService,
   TwoPhaseSwapLockService,
 } from '../services/twoPhaseSwapLockService';
+import {
+  createTwoPhaseSwapSettleService,
+  TwoPhaseSwapSettleService,
+} from '../services/twoPhaseSwapSettleService';
 import { TwoPhaseSwapStatus } from '../generated/prisma';
 
 const router = Router();
@@ -163,6 +167,16 @@ const twoPhaseSwapLockService = createTwoPhaseSwapLockService(
   feeCollector
 );
 console.log('[OffersRoutes] Two-Phase Swap Lock Service initialized');
+
+// Initialize two-phase swap settle service for settlement execution
+const twoPhaseSwapSettleService = createTwoPhaseSwapSettleService(
+  connection,
+  prisma,
+  programId,
+  feeCollector,
+  platformAuthority // Backend signer for settlement transactions
+);
+console.log('[OffersRoutes] Two-Phase Swap Settle Service initialized');
 
 // Initialize health check service
 const healthCheckService = new HealthCheckService(
@@ -2895,6 +2909,331 @@ router.get(
   }
 );
 
+// =============================================================================
+// Two-Phase Swap Settlement Endpoints (Task 10)
+// =============================================================================
+
+/**
+ * POST /api/offers/bulk/:id/settle
+ * Start settlement for a fully-locked bulk swap
+ *
+ * This endpoint triggers the settlement phase for a swap that has
+ * both parties locked. The backend will execute transfers in chunks.
+ *
+ * Request body:
+ * - triggeredBy: string - Wallet address triggering settlement (or 'system')
+ */
+router.post(
+  '/api/offers/bulk/:id/settle',
+  standardRateLimiter,
+  requiredIdempotency,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const { triggeredBy = 'system' } = req.body;
+
+      console.log('[OffersRoutes] Starting settlement:', { swapId: id, triggeredBy });
+
+      // Execute settlement
+      const result = await twoPhaseSwapSettleService.startSettlement({
+        swapId: id,
+        triggeredBy,
+      });
+
+      if (!result.success) {
+        res.status(400).json({
+          success: false,
+          error: 'Settlement Failed',
+          message: result.error || 'Settlement failed',
+          data: {
+            offer: serializeTwoPhaseSwap(result.swap),
+            chunkResults: result.chunkResults.map((r) => ({
+              chunkIndex: r.chunkIndex,
+              success: r.success,
+              signature: r.signature || null,
+              error: r.error,
+              retryCount: r.retryCount,
+            })),
+            executionTimeMs: result.executionTimeMs,
+          },
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      res.status(200).json({
+        success: true,
+        data: {
+          offer: serializeTwoPhaseSwap(result.swap),
+          message: 'Settlement completed successfully',
+          chunkResults: result.chunkResults.map((r) => ({
+            chunkIndex: r.chunkIndex,
+            success: r.success,
+            signature: r.signature,
+            retryCount: r.retryCount,
+          })),
+          executionTimeMs: result.executionTimeMs,
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('[OffersRoutes] Settlement error:', error);
+      const message = error instanceof Error ? error.message : 'Failed to execute settlement';
+
+      // Check for specific error types
+      if (message.includes('not ready for settlement') || message.includes('FULLY_LOCKED')) {
+        res.status(400).json({
+          success: false,
+          error: 'Invalid State',
+          message,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      if (message.includes('not found')) {
+        res.status(404).json({
+          success: false,
+          error: 'Not Found',
+          message,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      res.status(500).json({
+        success: false,
+        error: 'Settlement Error',
+        message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/offers/bulk/:id/settlement-progress
+ * Get current settlement progress for a swap
+ *
+ * Clients can poll this endpoint to track settlement progress.
+ */
+router.get(
+  '/api/offers/bulk/:id/settlement-progress',
+  standardRateLimiter,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { id } = req.params;
+
+      const progress = await twoPhaseSwapSettleService.getSettlementProgress(id);
+
+      res.status(200).json({
+        success: true,
+        data: {
+          swapId: progress.swapId,
+          status: progress.status,
+          progress: {
+            currentChunk: progress.currentChunk,
+            totalChunks: progress.totalChunks,
+            percentComplete: progress.percentComplete,
+            estimatedTimeRemainingMs: progress.estimatedTimeRemainingMs,
+          },
+          completedTxs: progress.completedTxs,
+          error: progress.error,
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('[OffersRoutes] Get settlement progress error:', error);
+      const message = error instanceof Error ? error.message : 'Failed to get settlement progress';
+
+      if (message.includes('not found')) {
+        res.status(404).json({
+          success: false,
+          error: 'Not Found',
+          message,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      res.status(500).json({
+        success: false,
+        error: 'Internal Server Error',
+        message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/offers/bulk/:id/settlement-chunks
+ * Preview settlement chunks for a swap (before settlement starts)
+ *
+ * This endpoint shows how the settlement will be chunked without
+ * actually executing it. Useful for UI display and estimation.
+ */
+router.get(
+  '/api/offers/bulk/:id/settlement-chunks',
+  standardRateLimiter,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { id } = req.params;
+
+      // Get swap data
+      const swap = await twoPhaseSwapLockService.getSwap(id);
+      if (!swap) {
+        res.status(404).json({
+          success: false,
+          error: 'Not Found',
+          message: `Bulk offer ${id} not found`,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Calculate chunks (preview)
+      const chunkResult = await twoPhaseSwapSettleService.calculateSettlementChunks(swap);
+
+      res.status(200).json({
+        success: true,
+        data: {
+          swapId: id,
+          currentStatus: swap.status,
+          isReadyForSettlement: swap.status === TwoPhaseSwapStatus.FULLY_LOCKED,
+          settlement: {
+            strategy: chunkResult.strategy,
+            totalChunks: chunkResult.totalChunks,
+            totalAssets: chunkResult.totalAssets,
+            chunks: chunkResult.chunks.map((chunk) => ({
+              index: chunk.index,
+              purpose: chunk.purpose,
+              estimatedSize: chunk.estimatedSize,
+              assets: chunk.assets.map((a) => ({
+                assetId: a.assetId,
+                type: a.type,
+                from: a.from,
+                to: a.to,
+                fromParty: a.fromParty,
+              })),
+              solTransfers: chunk.solTransfers.map((s) => ({
+                from: s.from,
+                to: s.to,
+                amount: s.amount.toString(),
+                type: s.type,
+                fromParty: s.fromParty,
+              })),
+            })),
+          },
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('[OffersRoutes] Get settlement chunks error:', error);
+      const message = error instanceof Error ? error.message : 'Failed to get settlement chunks';
+
+      res.status(500).json({
+        success: false,
+        error: 'Internal Server Error',
+        message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/offers/bulk/ready-for-settlement
+ * List swaps that are ready for settlement (FULLY_LOCKED status)
+ *
+ * Query params:
+ * - limit: number - Maximum number of results (default 10, max 50)
+ */
+router.get(
+  '/api/offers/bulk/ready-for-settlement',
+  standardRateLimiter,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const limit = Math.min(parseInt(req.query.limit as string) || 10, 50);
+
+      const swaps = await twoPhaseSwapSettleService.getSwapsReadyForSettlement(limit);
+
+      res.status(200).json({
+        success: true,
+        data: {
+          count: swaps.length,
+          swaps: swaps.map((swap) => serializeTwoPhaseSwap(swap)),
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('[OffersRoutes] Get swaps ready for settlement error:', error);
+      const message = error instanceof Error ? error.message : 'Failed to get swaps';
+
+      res.status(500).json({
+        success: false,
+        error: 'Internal Server Error',
+        message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/offers/bulk/in-settlement
+ * List swaps currently in settlement (SETTLING or PARTIAL_SETTLE status)
+ *
+ * Query params:
+ * - limit: number - Maximum number of results (default 10, max 50)
+ */
+router.get(
+  '/api/offers/bulk/in-settlement',
+  standardRateLimiter,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const limit = Math.min(parseInt(req.query.limit as string) || 10, 50);
+
+      const swaps = await twoPhaseSwapSettleService.getSwapsInSettlement(limit);
+
+      res.status(200).json({
+        success: true,
+        data: {
+          count: swaps.length,
+          swaps: swaps.map((swap) => ({
+            ...serializeTwoPhaseSwap(swap),
+            progress: {
+              currentChunk: swap.currentSettleIndex,
+              totalChunks: swap.totalSettleTxs,
+              percentComplete: swap.totalSettleTxs > 0
+                ? Math.round((swap.currentSettleIndex / swap.totalSettleTxs) * 100)
+                : 0,
+            },
+          })),
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('[OffersRoutes] Get swaps in settlement error:', error);
+      const message = error instanceof Error ? error.message : 'Failed to get swaps';
+
+      res.status(500).json({
+        success: false,
+        error: 'Internal Server Error',
+        message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
 export default router;
-export { noncePoolManager, offerManager, healthCheckService, cnftOfferManager, twoPhaseSwapLockService };
+export {
+  noncePoolManager,
+  offerManager,
+  healthCheckService,
+  cnftOfferManager,
+  twoPhaseSwapLockService,
+  twoPhaseSwapSettleService,
+};
 
