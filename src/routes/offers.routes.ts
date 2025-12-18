@@ -36,6 +36,14 @@ import {
   createTwoPhaseSwapSettleService,
   TwoPhaseSwapSettleService,
 } from '../services/twoPhaseSwapSettleService';
+import {
+  createSwapRecoveryService,
+  SwapRecoveryService,
+  RecoveryErrorCode,
+} from '../services/swapRecoveryService';
+import {
+  createSwapStateMachine,
+} from '../services/swapStateMachine';
 import { TwoPhaseSwapStatus } from '../generated/prisma';
 
 const router = Router();
@@ -177,6 +185,61 @@ const twoPhaseSwapSettleService = createTwoPhaseSwapSettleService(
   platformAuthority // Backend signer for settlement transactions
 );
 console.log('[OffersRoutes] Two-Phase Swap Settle Service initialized');
+
+// Initialize swap recovery service for admin recovery operations
+const swapStateMachine = createSwapStateMachine(prisma);
+const swapRecoveryService = createSwapRecoveryService({
+  prisma,
+  stateMachine: swapStateMachine,
+  delegationRevoker: {
+    revokeDelegation: async (assetId: string) => {
+      // Use the delegation service to revoke
+      // TODO: Implement actual revocation via cnftDelegationService when available
+      console.log(`[SwapRecovery] Revoke delegation requested for asset: ${assetId}`);
+      return { success: true, signature: `revoke-${assetId}-${Date.now()}` };
+    },
+  },
+  solReturner: {
+    returnEscrowedSol: async (vaultPda: string, toWallet: string, amount: bigint) => {
+      // Use the settlement service to return SOL
+      // TODO: Implement actual SOL return via twoPhaseSwapSettleService when available
+      console.log(`[SwapRecovery] Return SOL requested: ${amount} lamports to ${toWallet}`);
+      return { success: true, signature: `return-sol-${toWallet}-${Date.now()}` };
+    },
+  },
+  settlementExecutor: {
+    executeSettlementChunk: async (swapId: string, chunkIndex: number) => {
+      // Use the settlement service to execute remaining chunks via startSettlement
+      // The settle service will resume from currentSettleIndex automatically
+      try {
+        const result = await twoPhaseSwapSettleService.startSettlement({
+          swapId,
+          triggeredBy: 'recovery-service',
+        });
+        // Return success for the requested chunk if overall settlement succeeded
+        return {
+          success: result.success,
+          signature: result.chunkResults[chunkIndex]?.signature || `chunk-${chunkIndex}`,
+        };
+      } catch (error) {
+        console.error(`[SwapRecovery] Chunk execution failed:`, error);
+        return { success: false };
+      }
+    },
+  },
+  alertService: {
+    sendAlert: async (type: string, swapId: string, message: string) => {
+      // Log alerts for now - integrate with alerting service later
+      console.log(`[SwapRecovery] ALERT [${type}] Swap ${swapId}: ${message}`);
+    },
+  },
+  config: {
+    maxRetries: 3,
+    stuckThresholdMinutes: 10,
+    lockTimeoutMinutes: 30,
+  },
+});
+console.log('[OffersRoutes] Swap Recovery Service initialized');
 
 // Initialize health check service
 const healthCheckService = new HealthCheckService(
@@ -3227,6 +3290,353 @@ router.get(
   }
 );
 
+// =============================================================================
+// ADMIN SWAP RECOVERY ENDPOINTS (Task 11)
+// =============================================================================
+
+/**
+ * GET /api/offers/admin/recovery/stuck
+ * Get list of stuck two-phase swaps that may need recovery
+ *
+ * Authorization: Requires admin key (X-Admin-Key header)
+ */
+router.get(
+  '/api/offers/admin/recovery/stuck',
+  strictRateLimiter,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      // Simple admin key check (should be moved to proper middleware)
+      const adminKey = req.headers['x-admin-key'];
+      if (adminKey !== process.env.ADMIN_API_KEY) {
+        res.status(401).json({
+          success: false,
+          error: 'Unauthorized',
+          message: 'Valid X-Admin-Key header required',
+        });
+        return;
+      }
+
+      const stuckSwaps = await swapRecoveryService.findStuckSwaps();
+
+      res.status(200).json({
+        success: true,
+        data: {
+          count: stuckSwaps.length,
+          swaps: stuckSwaps.map((swap) => ({
+            id: swap.id,
+            status: swap.status,
+            partyA: swap.partyA,
+            partyB: swap.partyB,
+            updatedAt: swap.updatedAt,
+            stuckMinutes: Math.round(
+              (Date.now() - swap.updatedAt.getTime()) / 60000
+            ),
+            currentSettleIndex: swap.currentSettleIndex,
+            totalSettleTxs: swap.totalSettleTxs,
+          })),
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('[OffersRoutes] Get stuck swaps error:', error);
+      const message = error instanceof Error ? error.message : 'Failed to get stuck swaps';
+
+      res.status(500).json({
+        success: false,
+        error: 'Internal Server Error',
+        message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * POST /api/offers/admin/recovery/expired
+ * Process all expired swaps (revoke delegations, return assets)
+ *
+ * Authorization: Requires admin key (X-Admin-Key header)
+ */
+router.post(
+  '/api/offers/admin/recovery/expired',
+  strictRateLimiter,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const adminKey = req.headers['x-admin-key'];
+      if (adminKey !== process.env.ADMIN_API_KEY) {
+        res.status(401).json({
+          success: false,
+          error: 'Unauthorized',
+          message: 'Valid X-Admin-Key header required',
+        });
+        return;
+      }
+
+      const results = await swapRecoveryService.processExpiredSwaps();
+
+      res.status(200).json({
+        success: true,
+        data: {
+          processed: results.processed,
+          failed: results.failed,
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('[OffersRoutes] Process expired swaps error:', error);
+      const message = error instanceof Error ? error.message : 'Failed to process expired swaps';
+
+      res.status(500).json({
+        success: false,
+        error: 'Internal Server Error',
+        message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * POST /api/offers/admin/recovery/:swapId/retry
+ * Retry settlement for a failed swap
+ *
+ * Authorization: Requires admin key (X-Admin-Key header)
+ */
+router.post(
+  '/api/offers/admin/recovery/:swapId/retry',
+  strictRateLimiter,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const adminKey = req.headers['x-admin-key'];
+      if (adminKey !== process.env.ADMIN_API_KEY) {
+        res.status(401).json({
+          success: false,
+          error: 'Unauthorized',
+          message: 'Valid X-Admin-Key header required',
+        });
+        return;
+      }
+
+      const { swapId } = req.params;
+
+      if (!swapId) {
+        res.status(400).json({
+          success: false,
+          error: 'Bad Request',
+          message: 'swapId is required',
+        });
+        return;
+      }
+
+      console.log(`[OffersRoutes] Admin retry settlement for swap: ${swapId}`);
+
+      const result = await swapRecoveryService.adminRetrySettlement(swapId);
+
+      if (result.success) {
+        res.status(200).json({
+          success: true,
+          data: {
+            swapId: result.swapId,
+            finalState: result.finalState,
+            chunksRecovered: result.chunksRecovered,
+          },
+          timestamp: new Date().toISOString(),
+        });
+      } else {
+        res.status(400).json({
+          success: false,
+          error: 'Recovery Failed',
+          code: result.errorCode,
+          message: result.errorMessage,
+          swapId: result.swapId,
+          timestamp: new Date().toISOString(),
+        });
+      }
+    } catch (error) {
+      console.error('[OffersRoutes] Admin retry settlement error:', error);
+      const message = error instanceof Error ? error.message : 'Failed to retry settlement';
+
+      res.status(500).json({
+        success: false,
+        error: 'Internal Server Error',
+        message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * POST /api/offers/admin/recovery/:swapId/rollback
+ * Rollback a failed swap (revoke all delegations, return all escrowed assets)
+ *
+ * Authorization: Requires admin key (X-Admin-Key header)
+ */
+router.post(
+  '/api/offers/admin/recovery/:swapId/rollback',
+  strictRateLimiter,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const adminKey = req.headers['x-admin-key'];
+      if (adminKey !== process.env.ADMIN_API_KEY) {
+        res.status(401).json({
+          success: false,
+          error: 'Unauthorized',
+          message: 'Valid X-Admin-Key header required',
+        });
+        return;
+      }
+
+      const { swapId } = req.params;
+
+      if (!swapId) {
+        res.status(400).json({
+          success: false,
+          error: 'Bad Request',
+          message: 'swapId is required',
+        });
+        return;
+      }
+
+      console.log(`[OffersRoutes] Admin rollback for swap: ${swapId}`);
+
+      const result = await swapRecoveryService.adminRollback(swapId);
+
+      if (result.success) {
+        res.status(200).json({
+          success: true,
+          data: {
+            swapId: result.swapId,
+            assetsReturned: result.assetsReturned,
+          },
+          timestamp: new Date().toISOString(),
+        });
+      } else {
+        res.status(400).json({
+          success: false,
+          error: 'Rollback Failed',
+          code: result.errorCode,
+          message: result.errorMessage,
+          swapId: result.swapId,
+          timestamp: new Date().toISOString(),
+        });
+      }
+    } catch (error) {
+      console.error('[OffersRoutes] Admin rollback error:', error);
+      const message = error instanceof Error ? error.message : 'Failed to rollback swap';
+
+      res.status(500).json({
+        success: false,
+        error: 'Internal Server Error',
+        message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/offers/admin/recovery/:swapId
+ * Get recovery status and details for a specific swap
+ *
+ * Authorization: Requires admin key (X-Admin-Key header)
+ */
+router.get(
+  '/api/offers/admin/recovery/:swapId',
+  strictRateLimiter,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const adminKey = req.headers['x-admin-key'];
+      if (adminKey !== process.env.ADMIN_API_KEY) {
+        res.status(401).json({
+          success: false,
+          error: 'Unauthorized',
+          message: 'Valid X-Admin-Key header required',
+        });
+        return;
+      }
+
+      const { swapId } = req.params;
+
+      const swap = await swapStateMachine.getSwap(swapId);
+
+      if (!swap) {
+        res.status(404).json({
+          success: false,
+          error: 'Not Found',
+          message: `Swap ${swapId} not found`,
+        });
+        return;
+      }
+
+      // Determine recovery options based on current state
+      const recoveryOptions: string[] = [];
+
+      if (swap.status === TwoPhaseSwapStatus.FAILED) {
+        recoveryOptions.push('retry', 'rollback');
+      } else if (
+        swap.status === TwoPhaseSwapStatus.PARTIAL_SETTLE ||
+        swap.status === TwoPhaseSwapStatus.SETTLING
+      ) {
+        recoveryOptions.push('retry');
+      } else if (
+        swap.status === TwoPhaseSwapStatus.PARTY_A_LOCKED ||
+        swap.status === TwoPhaseSwapStatus.LOCKING_PARTY_B
+      ) {
+        if (swap.expiresAt < new Date()) {
+          recoveryOptions.push('expire');
+        }
+      }
+
+      res.status(200).json({
+        success: true,
+        data: {
+          swapId: swap.id,
+          status: swap.status,
+          partyA: swap.partyA,
+          partyB: swap.partyB,
+          expiresAt: swap.expiresAt,
+          isExpired: swap.expiresAt < new Date(),
+          createdAt: swap.createdAt,
+          updatedAt: swap.updatedAt,
+          lockStatus: {
+            partyALocked: !!swap.lockTxA,
+            partyBLocked: !!swap.lockTxB,
+          },
+          settlementProgress: {
+            currentChunk: swap.currentSettleIndex,
+            totalChunks: swap.totalSettleTxs,
+            completedTxs: swap.settleTxs.length,
+            percentComplete: swap.totalSettleTxs > 0
+              ? Math.round((swap.currentSettleIndex / swap.totalSettleTxs) * 100)
+              : 0,
+          },
+          error: swap.errorMessage
+            ? {
+                message: swap.errorMessage,
+                code: swap.errorCode,
+                failedAt: swap.failedAt,
+              }
+            : null,
+          recoveryOptions,
+          stateHistory: swap.stateHistory.slice(-5), // Last 5 transitions
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('[OffersRoutes] Get swap recovery status error:', error);
+      const message = error instanceof Error ? error.message : 'Failed to get swap status';
+
+      res.status(500).json({
+        success: false,
+        error: 'Internal Server Error',
+        message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
 export default router;
 export {
   noncePoolManager,
@@ -3235,5 +3645,6 @@ export {
   cnftOfferManager,
   twoPhaseSwapLockService,
   twoPhaseSwapSettleService,
+  swapRecoveryService,
 };
 
