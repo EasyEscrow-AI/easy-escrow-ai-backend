@@ -35,4 +35,4 @@ export * from './resource-tracker.service';
 export * from './sol-tracker.service';
 export * from './database-tracker.service';
 export * from './cost-analyzer.service';
-
+export * from './cnftDelegationService';
