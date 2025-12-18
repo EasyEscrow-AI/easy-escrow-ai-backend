@@ -11,6 +11,17 @@ pub mod errors;
 
 use instructions::*;
 
+// Re-export offer escrow types for use in program module
+pub use instructions::offer_escrow::{
+    CreateOfferEscrow, AcceptOfferEscrow, CancelOfferEscrow,
+    RejectOfferEscrow, ExpireOfferEscrow, CloseOfferEscrow,
+    create_offer_escrow as offer_escrow_create,
+    accept_offer_escrow as offer_escrow_accept,
+    cancel_offer_escrow as offer_escrow_cancel,
+    reject_offer_escrow as offer_escrow_reject,
+    expire_offer_escrow as offer_escrow_expire,
+};
+
 // Environment-specific Program IDs
 // Automatically selected based on build features
 // Build with: anchor build --features <environment>
@@ -1446,7 +1457,7 @@ pub mod escrow {
     }
     
     /// Close Treasury PDA and refund rent to authority
-    /// 
+    ///
     /// Closes an existing Treasury PDA account and refunds rent to the authority.
     /// Typically used for:
     /// - Migrating from old structure to new structure
@@ -1467,6 +1478,116 @@ pub mod escrow {
     /// * `Unauthorized` - Caller is not platform authority
     pub fn close_treasury(ctx: Context<CloseTreasury>) -> Result<()> {
         instructions::close::close_treasury_handler(ctx)
+    }
+
+    // ============================================================================
+    // CNFT OFFER ESCROW INSTRUCTIONS
+    // ============================================================================
+
+    /// Create a new cNFT offer with SOL escrow
+    ///
+    /// Bidder deposits SOL to a PDA to make an offer on a cNFT. The SOL is held
+    /// in escrow until the offer is accepted, cancelled, rejected, or expired.
+    ///
+    /// # Arguments
+    /// * `ctx` - Context with bidder, owner, and escrow accounts
+    /// * `offer_id` - Unique 32-byte offer identifier (matches database)
+    /// * `asset_id` - Target cNFT asset ID (32 bytes, DAS format)
+    /// * `merkle_tree` - Merkle tree address containing the cNFT
+    /// * `leaf_index` - Leaf index in the merkle tree
+    /// * `offer_amount` - SOL amount for the offer (lamports)
+    /// * `platform_fee` - Platform fee (lamports)
+    /// * `expiry_timestamp` - Unix timestamp when offer expires
+    pub fn create_offer_escrow(
+        ctx: Context<CreateOfferEscrow>,
+        offer_id: [u8; 32],
+        asset_id: [u8; 32],
+        merkle_tree: Pubkey,
+        leaf_index: u32,
+        offer_amount: u64,
+        platform_fee: u64,
+        expiry_timestamp: i64,
+    ) -> Result<()> {
+        offer_escrow_create(
+            ctx, offer_id, asset_id, merkle_tree, leaf_index,
+            offer_amount, platform_fee, expiry_timestamp
+        )
+    }
+
+    /// Accept a cNFT offer
+    ///
+    /// cNFT owner accepts the offer. SOL is released from escrow to the seller
+    /// and platform fee is sent to fee collector. cNFT transfer happens via
+    /// DirectBubblegumService in the backend (separate instruction).
+    ///
+    /// # Arguments
+    /// * `ctx` - Context with owner, bidder, and escrow accounts
+    /// * `offer_id` - The offer identifier to accept
+    pub fn accept_offer_escrow(
+        ctx: Context<AcceptOfferEscrow>,
+        offer_id: [u8; 32],
+    ) -> Result<()> {
+        offer_escrow_accept(ctx, offer_id)
+    }
+
+    /// Cancel a cNFT offer
+    ///
+    /// Bidder cancels their offer. SOL is refunded from escrow back to the bidder.
+    ///
+    /// # Arguments
+    /// * `ctx` - Context with bidder and escrow accounts
+    /// * `offer_id` - The offer identifier to cancel
+    pub fn cancel_offer_escrow(
+        ctx: Context<CancelOfferEscrow>,
+        offer_id: [u8; 32],
+    ) -> Result<()> {
+        offer_escrow_cancel(ctx, offer_id)
+    }
+
+    /// Reject a cNFT offer
+    ///
+    /// cNFT owner rejects the offer. SOL is refunded from escrow to the bidder.
+    ///
+    /// # Arguments
+    /// * `ctx` - Context with owner, bidder, and escrow accounts
+    /// * `offer_id` - The offer identifier to reject
+    pub fn reject_offer_escrow(
+        ctx: Context<RejectOfferEscrow>,
+        offer_id: [u8; 32],
+    ) -> Result<()> {
+        offer_escrow_reject(ctx, offer_id)
+    }
+
+    /// Expire a cNFT offer (permissionless after expiry)
+    ///
+    /// Anyone can trigger expiry once the offer has passed its expiry timestamp.
+    /// SOL is refunded from escrow to the bidder.
+    ///
+    /// # Arguments
+    /// * `ctx` - Context with authority, bidder, and escrow accounts
+    /// * `offer_id` - The offer identifier to expire
+    pub fn expire_offer_escrow(
+        ctx: Context<ExpireOfferEscrow>,
+        offer_id: [u8; 32],
+    ) -> Result<()> {
+        offer_escrow_expire(ctx, offer_id)
+    }
+
+    /// Close an offer escrow account
+    ///
+    /// After an offer is resolved (accepted, cancelled, rejected, or expired),
+    /// the bidder can close the escrow account to reclaim rent.
+    ///
+    /// # Arguments
+    /// * `ctx` - Context with bidder and escrow accounts
+    /// * `offer_id` - The offer identifier to close
+    pub fn close_offer_escrow(
+        _ctx: Context<CloseOfferEscrow>,
+        _offer_id: [u8; 32],
+    ) -> Result<()> {
+        // The close = bidder constraint handles the account closure
+        msg!("Closing offer escrow account, rent returned to bidder");
+        Ok(())
     }
 }
 
@@ -1553,9 +1674,40 @@ pub enum EscrowError {
     
     #[msg("Amount below minimum: $1.00 (BETA limit)")]
     AmountTooLow,
-    
+
     #[msg("Amount exceeds maximum: $3,000.00 (BETA limit)")]
     AmountTooHigh,
+
+    // Offer Escrow errors
+    #[msg("Offer amount below minimum (0.01 SOL)")]
+    OfferAmountTooLow,
+
+    #[msg("Offer amount exceeds maximum (10,000 SOL)")]
+    OfferAmountTooHigh,
+
+    #[msg("Offer duration too short (minimum 1 hour)")]
+    OfferDurationTooShort,
+
+    #[msg("Offer duration too long (maximum 30 days)")]
+    OfferDurationTooLong,
+
+    #[msg("Bidder cannot be the same as owner")]
+    BidderCannotBeOwner,
+
+    #[msg("Invalid bidder address")]
+    InvalidBidder,
+
+    #[msg("Invalid offer status for this operation")]
+    InvalidOfferStatus,
+
+    #[msg("Offer has expired")]
+    OfferExpired,
+
+    #[msg("Offer has not expired yet")]
+    OfferNotExpired,
+
+    #[msg("Offer is still active - cannot close")]
+    OfferStillActive,
 }
 
 // ============================================================================

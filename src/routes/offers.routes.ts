@@ -20,6 +20,14 @@ import { prisma, checkDatabaseHealth } from '../config/database';
 import { checkRedisHealth } from '../config/redis';
 import { getIdempotencyService } from '../services';
 import bs58 from 'bs58';
+// cNFT offer escrow imports
+import {
+  createCnftOfferEscrowManager,
+  CreateOfferParams as CnftOfferParams,
+  OfferFilters as CnftOfferFilters,
+} from '../services/cnftOfferEscrowManager';
+import { createCnftService } from '../services/cnftService';
+import { DirectBubblegumService } from '../services/directBubblegumService';
 
 const router = Router();
 
@@ -128,6 +136,19 @@ const offerManager = new OfferManager(
   treasuryPDA,
   programId
 );
+
+// Initialize cNFT offer escrow services
+const cnftService = createCnftService(connection);
+const directBubblegumService = new DirectBubblegumService(connection);
+const cnftOfferManager = createCnftOfferEscrowManager(
+  connection,
+  prisma,
+  cnftService,
+  directBubblegumService,
+  programId,
+  feeCollector
+);
+console.log('[OffersRoutes] cNFT Offer Escrow Manager initialized');
 
 // Initialize health check service
 const healthCheckService = new HealthCheckService(
@@ -1563,6 +1584,567 @@ router.get(
   }
 );
 
+// ==========================================
+// cNFT OFFER ESCROW ENDPOINTS
+// Routes for cNFT offers with SOL escrow
+// Uses /api/offers/cnft/* path structure
+// ==========================================
+
+/**
+ * POST /api/offers/cnft
+ * Create a new cNFT offer with SOL escrow
+ *
+ * Bidder deposits SOL to a PDA to make an offer on a cNFT.
+ * The SOL is held in escrow until the offer is accepted, cancelled, rejected, or expired.
+ */
+router.post(
+  '/api/offers/cnft',
+  strictRateLimiter,
+  requiredIdempotency,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { bidderWallet, targetAssetId, offerLamports, durationSeconds, feeBps, listingId } = req.body;
+
+      // Validate required fields
+      if (!bidderWallet) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation Error',
+          message: 'bidderWallet is required',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      if (!targetAssetId) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation Error',
+          message: 'targetAssetId is required',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      if (!offerLamports) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation Error',
+          message: 'offerLamports is required',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Validate wallet address
+      try {
+        new PublicKey(bidderWallet);
+      } catch (error) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation Error',
+          message: 'Invalid bidderWallet address format',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Parse offer amount
+      let offerAmount: bigint;
+      try {
+        offerAmount = BigInt(offerLamports);
+      } catch (error) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation Error',
+          message: 'Invalid offerLamports format - must be a valid integer',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Create offer
+      const params: CnftOfferParams = {
+        bidderWallet,
+        targetAssetId,
+        offerLamports: offerAmount,
+        durationSeconds: durationSeconds ? parseInt(durationSeconds, 10) : undefined,
+        feeBps: feeBps ? parseInt(feeBps, 10) : undefined,
+        listingId,
+      };
+
+      const result = await cnftOfferManager.createOffer(params);
+
+      res.status(201).json({
+        success: true,
+        data: result,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      console.error('[OffersRoutes] Create cNFT offer error:', error);
+      res.status(error.message?.includes('not found') ? 404 : 422).json({
+        success: false,
+        error: 'Offer Creation Failed',
+        message: error.message || 'Failed to create offer',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/offers/cnft
+ * List cNFT offers with optional filters
+ */
+router.get(
+  '/api/offers/cnft',
+  standardRateLimiter,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { bidderWallet, ownerWallet, targetAssetId, status, listingId, includeExpired, limit, offset } =
+        req.query;
+
+      const filters: CnftOfferFilters = {};
+
+      if (bidderWallet) filters.bidderWallet = bidderWallet as string;
+      if (ownerWallet) filters.ownerWallet = ownerWallet as string;
+      if (targetAssetId) filters.targetAssetId = targetAssetId as string;
+      if (status) filters.status = status as any;
+      if (listingId) filters.listingId = listingId as string;
+      if (includeExpired === 'true') filters.includeExpired = true;
+      if (limit) filters.limit = parseInt(limit as string, 10);
+      if (offset) filters.offset = parseInt(offset as string, 10);
+
+      const { offers, total } = await cnftOfferManager.getOffers(filters);
+
+      res.status(200).json({
+        success: true,
+        data: {
+          offers: offers.map((o) => ({
+            ...o,
+            offerLamports: o.offerLamports.toString(),
+            feeLamports: o.feeLamports.toString(),
+          })),
+          total,
+          limit: filters.limit ?? 20,
+          offset: filters.offset ?? 0,
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      console.error('[OffersRoutes] List cNFT offers error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Server Error',
+        message: error.message || 'Failed to list offers',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/offers/cnft/asset/:assetId
+ * Get all offers on a specific cNFT
+ */
+router.get(
+  '/api/offers/cnft/asset/:assetId',
+  standardRateLimiter,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { assetId } = req.params;
+
+      const offers = await cnftOfferManager.getOffersOnAsset(assetId);
+
+      res.status(200).json({
+        success: true,
+        data: {
+          offers: offers.map((o) => ({
+            ...o,
+            offerLamports: o.offerLamports.toString(),
+            feeLamports: o.feeLamports.toString(),
+          })),
+          count: offers.length,
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      console.error('[OffersRoutes] Get cNFT asset offers error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Server Error',
+        message: error.message || 'Failed to get asset offers',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/offers/cnft/bidder/:wallet
+ * Get all cNFT offers made by a bidder
+ */
+router.get(
+  '/api/offers/cnft/bidder/:wallet',
+  standardRateLimiter,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { wallet } = req.params;
+
+      // Validate wallet address
+      try {
+        new PublicKey(wallet);
+      } catch (error) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation Error',
+          message: 'Invalid wallet address format',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const offers = await cnftOfferManager.getBidderOffers(wallet);
+
+      res.status(200).json({
+        success: true,
+        data: {
+          offers: offers.map((o) => ({
+            ...o,
+            offerLamports: o.offerLamports.toString(),
+            feeLamports: o.feeLamports.toString(),
+          })),
+          count: offers.length,
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      console.error('[OffersRoutes] Get cNFT bidder offers error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Server Error',
+        message: error.message || 'Failed to get bidder offers',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/offers/cnft/owner/:wallet
+ * Get all cNFT offers received by an owner
+ */
+router.get(
+  '/api/offers/cnft/owner/:wallet',
+  standardRateLimiter,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { wallet } = req.params;
+
+      // Validate wallet address
+      try {
+        new PublicKey(wallet);
+      } catch (error) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation Error',
+          message: 'Invalid wallet address format',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const offers = await cnftOfferManager.getOwnerOffers(wallet);
+
+      res.status(200).json({
+        success: true,
+        data: {
+          offers: offers.map((o) => ({
+            ...o,
+            offerLamports: o.offerLamports.toString(),
+            feeLamports: o.feeLamports.toString(),
+          })),
+          count: offers.length,
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      console.error('[OffersRoutes] Get cNFT owner offers error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Server Error',
+        message: error.message || 'Failed to get owner offers',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/offers/cnft/:offerId
+ * Get a specific cNFT offer by ID
+ */
+router.get(
+  '/api/offers/cnft/:offerId',
+  standardRateLimiter,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { offerId } = req.params;
+
+      const offer = await cnftOfferManager.getOffer(offerId);
+
+      if (!offer) {
+        res.status(404).json({
+          success: false,
+          error: 'Not Found',
+          message: `Offer ${offerId} not found`,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      res.status(200).json({
+        success: true,
+        data: {
+          offer: {
+            ...offer,
+            offerLamports: offer.offerLamports.toString(),
+            feeLamports: offer.feeLamports.toString(),
+          },
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      console.error('[OffersRoutes] Get cNFT offer error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Server Error',
+        message: error.message || 'Failed to get offer',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * POST /api/offers/cnft/:offerId/confirm
+ * Confirm a cNFT offer after escrow transaction is confirmed on-chain
+ */
+router.post(
+  '/api/offers/cnft/:offerId/confirm',
+  strictRateLimiter,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { offerId } = req.params;
+      const { signature } = req.body;
+
+      if (!signature) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation Error',
+          message: 'signature is required',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const offer = await cnftOfferManager.confirmOffer({ offerId, signature });
+
+      res.status(200).json({
+        success: true,
+        data: {
+          offer: {
+            id: offer.id,
+            offerId: offer.offerId,
+            status: offer.status,
+            escrowTxId: offer.escrowTxId,
+          },
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      console.error('[OffersRoutes] Confirm cNFT offer error:', error);
+      res.status(error.message?.includes('not found') ? 404 : 422).json({
+        success: false,
+        error: 'Offer Confirmation Failed',
+        message: error.message || 'Failed to confirm offer',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * POST /api/offers/cnft/:offerId/accept
+ * Accept a cNFT offer (owner accepts, cNFT transfers to bidder, SOL to owner)
+ */
+router.post(
+  '/api/offers/cnft/:offerId/accept',
+  strictRateLimiter,
+  requiredIdempotency,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { offerId } = req.params;
+      const { ownerWallet } = req.body;
+
+      if (!ownerWallet) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation Error',
+          message: 'ownerWallet is required',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Validate wallet address
+      try {
+        new PublicKey(ownerWallet);
+      } catch (error) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation Error',
+          message: 'Invalid ownerWallet address format',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const result = await cnftOfferManager.acceptOffer({ offerId, ownerWallet });
+
+      res.status(200).json({
+        success: true,
+        data: result,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      console.error('[OffersRoutes] Accept cNFT offer error:', error);
+      res.status(error.message?.includes('not found') ? 404 : 422).json({
+        success: false,
+        error: 'Offer Accept Failed',
+        message: error.message || 'Failed to accept offer',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * POST /api/offers/cnft/:offerId/cancel
+ * Cancel a cNFT offer (bidder cancels, SOL refunded)
+ */
+router.post(
+  '/api/offers/cnft/:offerId/cancel',
+  strictRateLimiter,
+  requiredIdempotency,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { offerId } = req.params;
+      const { bidderWallet } = req.body;
+
+      if (!bidderWallet) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation Error',
+          message: 'bidderWallet is required',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Validate wallet address
+      try {
+        new PublicKey(bidderWallet);
+      } catch (error) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation Error',
+          message: 'Invalid bidderWallet address format',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const result = await cnftOfferManager.cancelOffer({ offerId, bidderWallet });
+
+      res.status(200).json({
+        success: true,
+        data: result,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      console.error('[OffersRoutes] Cancel cNFT offer error:', error);
+      res.status(error.message?.includes('not found') ? 404 : 422).json({
+        success: false,
+        error: 'Offer Cancel Failed',
+        message: error.message || 'Failed to cancel offer',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * POST /api/offers/cnft/:offerId/reject
+ * Reject a cNFT offer (owner rejects, SOL refunded to bidder)
+ */
+router.post(
+  '/api/offers/cnft/:offerId/reject',
+  strictRateLimiter,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { offerId } = req.params;
+      const { ownerWallet } = req.body;
+
+      if (!ownerWallet) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation Error',
+          message: 'ownerWallet is required',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Validate wallet address
+      try {
+        new PublicKey(ownerWallet);
+      } catch (error) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation Error',
+          message: 'Invalid ownerWallet address format',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const offer = await cnftOfferManager.rejectOffer(offerId, ownerWallet);
+
+      res.status(200).json({
+        success: true,
+        data: {
+          offer: {
+            id: offer.id,
+            offerId: offer.offerId,
+            status: offer.status,
+            rejectedAt: offer.rejectedAt,
+          },
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      console.error('[OffersRoutes] Reject cNFT offer error:', error);
+      res.status(error.message?.includes('not found') ? 404 : 422).json({
+        success: false,
+        error: 'Offer Reject Failed',
+        message: error.message || 'Failed to reject offer',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
 export default router;
-export { noncePoolManager, offerManager, healthCheckService };
+export { noncePoolManager, offerManager, healthCheckService, cnftOfferManager };
 
