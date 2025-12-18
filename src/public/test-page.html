@@ -1277,6 +1277,639 @@
                 font-size: 0.8rem;
             }
         }
+
+        /* ========================================
+           LIST FOR SALE SECTION STYLES
+           ======================================== */
+
+        .listing-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-top: 20px;
+        }
+
+        .listing-header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .listing-title {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .listing-subtitle {
+            font-size: 0.95rem;
+            color: #666;
+        }
+
+        .listing-form-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .listing-form-group {
+            margin-bottom: 20px;
+        }
+
+        .listing-label {
+            display: block;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .listing-select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            background: white;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        .listing-select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .listing-select:disabled {
+            background: #f5f5f5;
+            cursor: not-allowed;
+        }
+
+        .listing-asset-preview {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-top: 12px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .listing-preview-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            object-fit: cover;
+            background: #e0e0e0;
+        }
+
+        .listing-preview-details {
+            flex: 1;
+        }
+
+        .listing-preview-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .listing-preview-type {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #667eea;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .listing-preview-mint {
+            font-size: 0.75rem;
+            color: #999;
+            font-family: 'Courier New', monospace;
+        }
+
+        .listing-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .listing-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .listing-input-hint {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 6px;
+        }
+
+        .listing-duration-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .listing-duration-btn {
+            flex: 1;
+            min-width: 80px;
+            padding: 10px 16px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .listing-duration-btn:hover {
+            border-color: #667eea;
+            background: #f0f3ff;
+        }
+
+        .listing-duration-btn.active {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+
+        .listing-fee-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .listing-fee-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            font-size: 0.9rem;
+        }
+
+        .listing-fee-row:first-child {
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .listing-fee-row span:last-child {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .listing-button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+        }
+
+        .listing-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
+        }
+
+        .listing-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .listing-info-note {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: #92400e;
+        }
+
+        .listing-info-note strong {
+            color: #b45309;
+        }
+
+        /* ========================================
+           ACTIVE LISTINGS SECTION STYLES
+           ======================================== */
+
+        .active-listings-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-top: 20px;
+        }
+
+        .active-listings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .active-listings-title {
+            font-size: 1.5rem;
+            color: #333;
+            margin: 0;
+        }
+
+        .active-listings-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .listing-card {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 15px;
+            transition: all 0.3s;
+        }
+
+        .listing-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+        }
+
+        .listing-card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .listing-card-image {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            object-fit: cover;
+            background: #e0e0e0;
+        }
+
+        .listing-card-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .listing-card-name {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #333;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 4px;
+        }
+
+        .listing-card-type {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #667eea;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .listing-card-details {
+            margin-bottom: 12px;
+        }
+
+        .listing-card-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            font-size: 0.85rem;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .listing-card-row:last-child {
+            border-bottom: none;
+        }
+
+        .listing-card-label {
+            color: #666;
+        }
+
+        .listing-card-value {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .listing-card-value.price {
+            color: #22c55e;
+        }
+
+        .listing-status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .listing-status-badge.pending {
+            background: #fef3c7;
+            color: #b45309;
+        }
+
+        .listing-status-badge.active {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .listing-status-badge.sold {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .listing-status-badge.cancelled {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .listing-status-badge.expired {
+            background: #e5e7eb;
+            color: #6b7280;
+        }
+
+        .listing-card-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .listing-action-btn {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .listing-action-btn.cancel {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .listing-action-btn.cancel:hover {
+            background: #fecaca;
+        }
+
+        .listing-action-btn.view {
+            background: #e0e7ff;
+            color: #4f46e5;
+        }
+
+        .listing-action-btn.view:hover {
+            background: #c7d2fe;
+        }
+
+        /* Quick List Button on NFT Cards */
+        .nft-card-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .quick-list-btn {
+            flex: 1;
+            padding: 6px 8px;
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .quick-list-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(34, 197, 94, 0.4);
+        }
+
+        .quick-list-btn.disabled {
+            background: #e5e7eb;
+            color: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Quick List Modal */
+        .quick-list-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .quick-list-modal.show {
+            display: flex;
+        }
+
+        .quick-list-modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            max-width: 450px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s ease-out;
+        }
+
+        .quick-list-modal-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .quick-list-modal-header h3 {
+            font-size: 1.3rem;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .quick-list-modal-preview {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .quick-list-modal-image {
+            width: 70px;
+            height: 70px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+
+        .quick-list-modal-form {
+            margin-bottom: 20px;
+        }
+
+        .quick-list-modal-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .quick-list-modal-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .quick-list-modal-btn.cancel {
+            background: #e5e7eb;
+            color: #6b7280;
+        }
+
+        .quick-list-modal-btn.cancel:hover {
+            background: #d1d5db;
+        }
+
+        .quick-list-modal-btn.confirm {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: white;
+        }
+
+        .quick-list-modal-btn.confirm:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+        }
+
+        /* Listing Status Indicator */
+        .listing-status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 15px;
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .listing-status-indicator.pending {
+            background: #fef3c7;
+            border-color: #fbbf24;
+        }
+
+        .listing-status-indicator.error {
+            background: #fef2f2;
+            border-color: #fca5a5;
+        }
+
+        .status-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #e5e7eb;
+            border-top-color: #22c55e;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .listing-status-indicator.pending .status-spinner {
+            border-top-color: #f59e0b;
+        }
+
+        /* Mobile Responsive for Listing Sections */
+        @media (max-width: 768px) {
+            .listing-section,
+            .active-listings-section {
+                padding: 20px;
+            }
+
+            .listing-title,
+            .active-listings-title {
+                font-size: 1.3rem;
+            }
+
+            .listing-duration-buttons {
+                flex-wrap: wrap;
+            }
+
+            .listing-duration-btn {
+                flex: 1 1 45%;
+            }
+
+            .active-listings-container {
+                grid-template-columns: 1fr;
+            }
+
+            .listing-asset-preview {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .listing-preview-image {
+                width: 100px;
+                height: 100px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .listing-section,
+            .active-listings-section {
+                padding: 15px;
+            }
+
+            .listing-title,
+            .active-listings-title {
+                font-size: 1.1rem;
+            }
+
+            .listing-button {
+                font-size: 1rem;
+                padding: 12px;
+            }
+
+            .quick-list-modal-content {
+                padding: 20px;
+            }
+
+            .active-listings-header {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
+        }
     </style>
   </head>
   <body>
@@ -1381,6 +2014,86 @@
             <button class="swap-button" id="swap-btn" disabled>
                 ⚡ Execute Atomic Swap
             </button>
+        </div>
+
+        <!-- List for Sale Section -->
+        <div class="listing-section">
+            <div class="listing-header">
+                <h2 class="listing-title">📋 List Asset for Sale</h2>
+                <p class="listing-subtitle">List your cNFTs for sale with delegation-based marketplace</p>
+            </div>
+
+            <div class="listing-form-container">
+                <div class="listing-form">
+                    <!-- Asset Selection -->
+                    <div class="listing-form-group">
+                        <label class="listing-label">Select Asset to List</label>
+                        <select class="listing-select" id="listing-asset-select" disabled>
+                            <option value="">-- Load Maker wallet first --</option>
+                        </select>
+                        <div class="listing-asset-preview" id="listing-asset-preview" style="display: none;">
+                            <img class="listing-preview-image" id="listing-preview-image" src="" alt="">
+                            <div class="listing-preview-details">
+                                <div class="listing-preview-name" id="listing-preview-name"></div>
+                                <div class="listing-preview-type" id="listing-preview-type"></div>
+                                <div class="listing-preview-mint" id="listing-preview-mint"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Price Input -->
+                    <div class="listing-form-group">
+                        <label class="listing-label">Price (SOL)</label>
+                        <input type="number" class="listing-input" id="listing-price" placeholder="0.00" step="0.001" min="0.001">
+                        <div class="listing-input-hint" id="listing-price-usd"></div>
+                    </div>
+
+                    <!-- Expiry Duration -->
+                    <div class="listing-form-group">
+                        <label class="listing-label">Listing Duration</label>
+                        <div class="listing-duration-buttons">
+                            <button class="listing-duration-btn" data-duration="3600">1 Hour</button>
+                            <button class="listing-duration-btn" data-duration="86400">24 Hours</button>
+                            <button class="listing-duration-btn active" data-duration="604800">7 Days</button>
+                            <button class="listing-duration-btn" data-duration="2592000">30 Days</button>
+                        </div>
+                    </div>
+
+                    <!-- Fee Info -->
+                    <div class="listing-fee-info">
+                        <div class="listing-fee-row">
+                            <span>Platform Fee:</span>
+                            <span id="listing-fee-display">1% (calculated on sale)</span>
+                        </div>
+                        <div class="listing-fee-row">
+                            <span>You Receive:</span>
+                            <span id="listing-receive-display">99% of sale price</span>
+                        </div>
+                    </div>
+
+                    <!-- List Button -->
+                    <button class="listing-button" id="list-btn" disabled>
+                        📝 Create Listing
+                    </button>
+
+                    <div class="listing-info-note">
+                        <strong>How it works:</strong> Your cNFT remains in your wallet but is delegated to the marketplace.
+                        When someone buys it, the cNFT is automatically transferred and you receive SOL instantly.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Listings Section -->
+        <div class="active-listings-section">
+            <div class="active-listings-header">
+                <h2 class="active-listings-title">📦 Your Active Listings</h2>
+                <button class="refresh-btn" id="refresh-listings-btn">Refresh</button>
+            </div>
+
+            <div class="active-listings-container" id="active-listings-container">
+                <div class="empty-state">No active listings. List an asset to see it here.</div>
+            </div>
         </div>
 
         <div class="activity-log">
@@ -1489,6 +2202,47 @@
             <div class="modal-actions">
                 <button class="modal-btn modal-btn-cancel" id="modal-cancel">Cancel</button>
                 <button class="modal-btn modal-btn-confirm" id="modal-confirm">Confirm Swap</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick List Modal -->
+    <div class="quick-list-modal" id="quick-list-modal">
+        <div class="quick-list-modal-content">
+            <div class="quick-list-modal-header">
+                <h3>📝 Quick List for Sale</h3>
+            </div>
+
+            <div class="quick-list-modal-preview">
+                <img class="quick-list-modal-image" id="quick-list-image" src="" alt="">
+                <div class="quick-list-modal-details">
+                    <div class="listing-preview-name" id="quick-list-name"></div>
+                    <div class="listing-preview-type" id="quick-list-type"></div>
+                    <div class="listing-preview-mint" id="quick-list-mint"></div>
+                </div>
+            </div>
+
+            <div class="quick-list-modal-form">
+                <div class="listing-form-group">
+                    <label class="listing-label">Price (SOL)</label>
+                    <input type="number" class="listing-input" id="quick-list-price" placeholder="0.00" step="0.001" min="0.001">
+                    <div class="listing-input-hint" id="quick-list-price-usd"></div>
+                </div>
+
+                <div class="listing-form-group">
+                    <label class="listing-label">Duration</label>
+                    <div class="listing-duration-buttons" id="quick-list-duration-buttons">
+                        <button class="listing-duration-btn" data-duration="3600">1h</button>
+                        <button class="listing-duration-btn" data-duration="86400">24h</button>
+                        <button class="listing-duration-btn active" data-duration="604800">7d</button>
+                        <button class="listing-duration-btn" data-duration="2592000">30d</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quick-list-modal-actions">
+                <button class="quick-list-modal-btn cancel" id="quick-list-cancel">Cancel</button>
+                <button class="quick-list-modal-btn confirm" id="quick-list-confirm">List for Sale</button>
             </div>
         </div>
     </div>
