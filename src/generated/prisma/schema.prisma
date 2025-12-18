@@ -389,6 +389,7 @@ model SwapOffer {
   counterOffers       SwapOffer[]       @relation("CounterOffers")
   transactions        SwapTransaction[] @relation("OfferTransactions")
   counterTransactions SwapTransaction[] @relation("CounterOfferTransactions")
+  twoPhaseSwap        TwoPhaseSwap?     @relation("TwoPhaseSwapOffer")
 
   @@index([makerWallet])
   @@index([takerWallet])
@@ -498,94 +499,93 @@ model ZeroFeeSwapLog {
 }
 
 // ============================================
-// CNFT OFFER ESCROW SYSTEM
+// TWO-PHASE SWAP STATE MACHINE (Task 8)
 // ============================================
 
-// Enum for cNFT offer escrow status
-enum OfferEscrowStatus {
-  PENDING // Offer created, awaiting SOL escrow confirmation
-  ACTIVE // SOL escrowed, awaiting seller response
-  ACCEPTED // Seller accepted the offer
-  COUNTERED // Seller proposed different terms
-  CANCELLED // Bidder cancelled the offer
-  EXPIRED // Offer expired based on expiresAt
-  REJECTED // Seller explicitly rejected the offer
+// Enum for two-phase swap status
+// Supports bulk and cNFT swaps with lock → settle phases
+enum TwoPhaseSwapStatus {
+  CREATED // Swap offer created, awaiting acceptance
+  ACCEPTED // Both parties agreed, ready to lock
+  LOCKING_PARTY_A // Party A locking assets (delegation/escrow in progress)
+  PARTY_A_LOCKED // Party A assets delegated/escrowed
+  LOCKING_PARTY_B // Party B locking assets
+  FULLY_LOCKED // Both parties locked, ready to settle
+  SETTLING // Transfers in progress
+  PARTIAL_SETTLE // Some transfers complete, continuing
+  COMPLETED // All transfers successful
+  FAILED // Unrecoverable error, needs intervention
+  CANCELLED // User cancelled before full lock
+  EXPIRED // Timeout during lock phase
 }
 
-// cNFT Offer table - offers on listed or unlisted cNFTs with SOL escrow
-model CnftOffer {
-  id      String @id @default(uuid())
-  offerId String @unique @map("offer_id") // External-facing ID
+// Two-phase swap state tracking for bulk and cNFT swaps
+model TwoPhaseSwap {
+  id String @id @default(uuid())
 
-  // Bidder info
-  bidderWallet String @map("bidder_wallet") // Offer creator wallet
+  // Status and timestamps
+  status    TwoPhaseSwapStatus @default(CREATED)
+  createdAt DateTime           @default(now()) @map("created_at")
+  updatedAt DateTime           @updatedAt @map("updated_at")
+  expiresAt DateTime           @map("expires_at") // Timeout for lock phase
 
-  // Target cNFT details
-  targetAssetId String  @map("target_asset_id") // cNFT asset ID being bid on
-  merkleTree    String? @map("merkle_tree") // Cached merkle tree address
-  leafIndex     Int?    @map("leaf_index") // Cached leaf index
+  // Party information
+  partyA String  @map("party_a") // Initiator wallet address
+  partyB String? @map("party_b") // Counterparty wallet address (null for open swaps)
 
-  // cNFT owner (seller)
-  ownerWallet String @map("owner_wallet") // Current owner of the cNFT
+  // Assets being swapped (stored as JSON arrays)
+  assetsA Json @map("assets_a") // Party A's assets to transfer
+  assetsB Json @map("assets_b") // Party B's assets to transfer
 
-  // Offer amount (SOL only - no USDC)
-  offerLamports BigInt @map("offer_lamports") // Offer amount in lamports
+  // SOL amounts (in lamports)
+  solAmountA BigInt? @map("sol_amount_a") // SOL from Party A
+  solAmountB BigInt? @map("sol_amount_b") // SOL from Party B
+
+  // Lock phase transaction signatures
+  lockTxA        String?   @map("lock_tx_a") // Party A lock transaction signature
+  lockTxB        String?   @map("lock_tx_b") // Party B lock transaction signature
+  lockConfirmedA DateTime? @map("lock_confirmed_a") // When Party A lock was confirmed
+  lockConfirmedB DateTime? @map("lock_confirmed_b") // When Party B lock was confirmed
+
+  // Settlement phase tracking
+  settleTxs          Json @default("[]") @map("settle_txs") // Array of settlement tx signatures
+  currentSettleIndex Int  @default(0) @map("current_settle_index") // Progress tracker for multi-tx settlement
+  totalSettleTxs     Int  @default(1) @map("total_settle_txs") // Total number of settlement transactions
+
+  // Final settlement transaction (main atomic swap tx)
+  finalSettleTx String?   @map("final_settle_tx") // Final settlement signature
+  settledAt     DateTime? @map("settled_at") // When swap completed
+
+  // Error tracking
+  errorMessage String?   @map("error_message") // Error details if FAILED
+  errorCode    String?   @map("error_code") // Error code for categorization
+  failedAt     DateTime? @map("failed_at") // When swap failed
+
+  // Cancellation tracking
+  cancelledBy  String?   @map("cancelled_by") // Wallet that cancelled
+  cancelledAt  DateTime? @map("cancelled_at") // When cancelled
+  cancelReason String?   @map("cancel_reason") // Reason for cancellation
 
   // Platform fee
-  feeLamports BigInt @map("fee_lamports") // Platform fee in lamports
-  feeBps      Int    @default(100) @map("fee_bps") // Fee basis points (100 = 1%)
+  platformFeeLamports BigInt @map("platform_fee_lamports")
 
-  // Escrow PDA
-  escrowPda  String @map("escrow_pda") // PDA holding bidder's SOL
-  escrowBump Int    @map("escrow_bump") // PDA bump seed
+  // Reference to original swap offer (if created from offer)
+  swapOfferId Int?       @unique @map("swap_offer_id")
+  swapOffer   SwapOffer? @relation("TwoPhaseSwapOffer", fields: [swapOfferId], references: [id])
 
-  // Status and timing
-  status    OfferEscrowStatus @default(PENDING)
-  expiresAt DateTime          @map("expires_at")
+  // Delegation tracking for cNFTs
+  delegationStatus Json @default("{}") @map("delegation_status") // Per-asset delegation status
 
-  // Transaction references
-  escrowTxId String? @map("escrow_tx_id") // SOL escrow transaction
-  acceptTxId String? @map("accept_tx_id") // Accept transaction (cNFT + SOL transfer)
-  cancelTxId String? @map("cancel_tx_id") // Cancel/refund transaction
-  rejectTxId String? @map("reject_tx_id") // Rejection transaction
+  // State transition history (audit trail)
+  stateHistory Json @default("[]") @map("state_history") // Array of {state, timestamp, reason}
 
-  // Counter-offer chain
-  counterOfferId String? @map("counter_offer_id") // Reference to counter offer
-  parentOfferId  String? @map("parent_offer_id") // If this is a counter, reference to original
-
-  // Resolution timestamps
-  acceptedAt  DateTime? @map("accepted_at")
-  cancelledAt DateTime? @map("cancelled_at")
-  rejectedAt  DateTime? @map("rejected_at")
-  expiredAt   DateTime? @map("expired_at")
-
-  // Timestamps
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  // cNFT metadata cache (optional, for display)
-  metadata Json? // Cached cNFT metadata (name, image, etc.)
-
-  // Relations - self-referential for counter-offers
-  counterOffer  CnftOffer?  @relation("CounterOffers", fields: [counterOfferId], references: [id])
-  counterOffers CnftOffer[] @relation("CounterOffers")
-  parentOffer   CnftOffer?  @relation("ParentOffers", fields: [parentOfferId], references: [id])
-  childOffers   CnftOffer[] @relation("ParentOffers")
-
-  // Link to listing if offer is on a listed cNFT
-  listingId String?  @map("listing_id")
-  listing   Listing? @relation(fields: [listingId], references: [id])
-
-  @@index([offerId])
-  @@index([bidderWallet])
-  @@index([ownerWallet])
-  @@index([targetAssetId])
   @@index([status])
+  @@index([partyA])
+  @@index([partyB])
   @@index([expiresAt])
   @@index([createdAt])
-  @@index([listingId])
-  @@index([status, expiresAt], name: "idx_offer_escrow_status_expiry")
-  @@map("cnft_offers")
+  @@index([status, expiresAt], name: "idx_two_phase_status_expiry")
+  @@map("two_phase_swaps")
 }
 
 // ============================================
@@ -654,9 +654,6 @@ model Listing {
 
   // cNFT metadata cache (optional, for display)
   metadata Json? // Cached cNFT metadata (name, image, etc.)
-
-  // Relation to offers on this listing
-  offers CnftOffer[]
 
   @@index([listingId])
   @@index([seller])
