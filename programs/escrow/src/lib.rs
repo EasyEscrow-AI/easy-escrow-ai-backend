@@ -1697,6 +1697,9 @@ pub enum EscrowError {
     #[msg("Invalid bidder address")]
     InvalidBidder,
 
+    #[msg("Fee collector does not match the one stored at offer creation")]
+    InvalidFeeCollector,
+
     #[msg("Invalid offer status for this operation")]
     InvalidOfferStatus,
 
