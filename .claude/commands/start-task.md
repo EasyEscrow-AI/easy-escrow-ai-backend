@@ -19,12 +19,54 @@ You are working in a git worktree for a specific task from the cNFT delegation f
    - `feat/two-phase-settle-chunks` → Task 10: Implement Settle Phase (Chunked Transfers)
    - `feat/swap-state-recovery` → Task 11: Implement Swap State Recovery and Monitoring
    - `feat/api-delegation-flow` → Task 12: Update Existing API Endpoints for Delegation Flow
+   - `feat/swap-progress-endpoint` → Task 13: Add Swap Progress Websocket/Polling Endpoint
    - `feat/test-page-list-for-sale` → Task 17: Add 'List for Sale' Feature to Test Page
    - `feat/test-page-buy-listed` → Task 18: Add 'Buy Listed Asset' Feature for Taker
    - `feat/confirmation-modals` → Task 19: Add Confirmation Modal for Delegation-Based Actions
    - `feat/listing-api-endpoints` → Task 20: Implement Listing API Endpoints
 
-4. **Implement the task using TDD approach**:
+4. **Check prerequisite tasks and cherry-pick pending PRs**:
+
+   **Task Dependencies**:
+   - Task 4 → depends on Task 3
+   - Task 5 → depends on Task 4
+   - Task 6 → depends on Task 3
+   - Task 7 → depends on Tasks 4, 6
+   - Task 9 → depends on Task 8
+   - Task 10 → depends on Task 9
+   - Task 11 → depends on Task 10
+   - Task 12 → depends on Tasks 7, 11
+   - Task 13 → depends on Task 12
+   - Task 17 → depends on Task 4
+   - Task 18 → depends on Tasks 5, 17
+   - Task 19 → depends on Tasks 17, 18
+   - Task 20 → depends on Tasks 4, 5
+
+   **Check for pending dependency PRs**:
+   ```bash
+   # List open PRs for dependency branches
+   gh pr list --state open --json number,title,headRefName
+   ```
+
+   **If a dependency PR is open but not merged**:
+   1. Identify the PR branch name from the dependency
+   2. Fetch and cherry-pick the commits:
+      ```bash
+      git fetch origin <dependency-branch>
+      git cherry-pick origin/<dependency-branch> --no-commit
+      # Or for multiple commits:
+      git cherry-pick origin/master..origin/<dependency-branch> --no-commit
+      ```
+   3. Review the cherry-picked changes to ensure they're needed
+   4. Commit or reset as appropriate
+
+   **If dependency is already merged to master**:
+   ```bash
+   git fetch origin master
+   git merge origin/master
+   ```
+
+5. **Implement the task using TDD approach**:
    - Follow the PRD requirements exactly
    - Use TodoWrite to track progress
    - **Prefer Test-Driven Development (TDD)**:
@@ -32,7 +74,7 @@ You are working in a git worktree for a specific task from the cNFT delegation f
      2. Implement the minimum code to make tests pass
      3. Refactor while keeping tests green
 
-5. **Write/Update Tests** (required for all features):
+6. **Write/Update Tests** (required for all features):
    - **Unit tests** (`tests/unit/`): Test individual functions and services in isolation
      - Mock external dependencies (DAS API, RPC, database)
      - Test edge cases and error handling
@@ -49,7 +91,7 @@ You are working in a git worktree for a specific task from the cNFT delegation f
    - API routes: `tests/integration/<routeName>.routes.test.ts`
    - E2E flows: `tests/staging/e2e/XX-<flow-description>.test.ts`
 
-6. **After each meaningful commit**:
+7. **After each meaningful commit**:
    - Stage and commit changes with a descriptive message
    - Create or update the draft PR:
      ```bash
@@ -57,7 +99,7 @@ You are working in a git worktree for a specific task from the cNFT delegation f
      ```
    - If PR already exists, push will update it automatically
 
-7. **When task is complete**:
+8. **When task is complete**:
    - Ensure all changes are committed and pushed
    - Check for merge conflicts with master:
      ```bash
@@ -74,7 +116,7 @@ You are working in a git worktree for a specific task from the cNFT delegation f
      git merge --abort
      ```
 
-8. **Final verification**:
+9. **Final verification**:
    - Run all relevant tests and ensure they pass:
      ```bash
      # Unit tests for the feature
