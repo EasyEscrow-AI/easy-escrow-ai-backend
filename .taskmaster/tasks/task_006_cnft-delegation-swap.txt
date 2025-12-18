@@ -1,0 +1,47 @@
+# Task ID: 6
+# Title: Implement cNFT Offer System with SOL Escrow
+# Status: pending
+# Dependencies: 3
+# Priority: high
+# Description: Implement offer/bid system where bidder escrows SOL to marketplace PDA for cNFT purchase offers.
+# Details:
+**Offer Flow:**
+
+1. **Bidder creates offer** via POST /offers:
+   - Validate target cNFT exists
+   - Validate offer amount
+   - Build escrow transaction: SOL → marketplace PDA
+   - Create offer state in database
+   - Return transaction for bidder to sign
+
+2. **Offer State Management**:
+   - PENDING: Created, awaiting escrow
+   - ACTIVE: SOL escrowed, awaiting response
+   - ACCEPTED: Owner accepted
+   - COUNTERED: Owner proposed different terms
+   - CANCELLED: Bidder cancelled
+   - EXPIRED: Past expiry time
+   - REJECTED: Owner explicitly rejected
+
+3. **Database Schema - OfferState:**
+   - id: unique identifier
+   - bidderAddress: offer creator
+   - targetAssetId: cNFT being bid on
+   - offerAmount: SOL amount in lamports
+   - escrowAddress: PDA holding SOL
+   - status: enum above
+   - createdAt, expiresAt, updatedAt
+   - counterOfferId: reference to counter if any
+
+4. **Escrow PDA**:
+   - Seeds: ['offer', offerId]
+   - Holds bidder's SOL until resolution
+   - Released to seller on accept, bidder on cancel/expire
+
+# Test Strategy:
+1. E2E test: create offer, verify SOL escrowed
+2. Test offer cancellation and refund
+3. Test offer expiry handling
+4. Test multiple offers on same cNFT
+5. Test offer amount validation
+6. Verify escrow balance matches offer

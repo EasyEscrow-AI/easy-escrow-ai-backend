@@ -1,0 +1,50 @@
+# Task ID: 15
+# Title: Create E2E Tests for Delegation-Based Flows
+# Status: pending
+# Dependencies: 12
+# Priority: high
+# Description: Comprehensive E2E test suite for all delegation-based settlement flows.
+# Details:
+**Test Cases:**
+
+1. **Listing Tests:**
+   - List cNFT with delegation
+   - Verify delegation on-chain
+   - Cancel listing, verify revocation
+   - List with various prices
+
+2. **Buy Tests:**
+   - Buy listed cNFT
+   - Verify ownership transfer
+   - Verify payment to seller
+   - Verify platform fee
+   - Concurrent buy attempts (race condition)
+
+3. **Offer Tests:**
+   - Create offer, verify escrow
+   - Accept offer, verify transfer + payment
+   - Counter offer flow
+   - Cancel offer, verify refund
+   - Expired offer handling
+
+4. **Two-Phase Swap Tests:**
+   - Complete swap: create → lock → settle → complete
+   - Cancel at each phase
+   - Timeout at lock phase
+   - Recovery from partial settlement
+   - Mixed assets (cNFT + SOL)
+   - Multi-cNFT swap (chunked settlement)
+
+5. **Error Scenarios:**
+   - Insufficient balance
+   - Asset not owned
+   - Invalid delegation
+   - Network failures
+
+**Test Infrastructure:**
+- Devnet test fixtures
+- Automated test wallet funding
+- Test result reporting
+
+# Test Strategy:
+All tests passing with >95% success rate on staging

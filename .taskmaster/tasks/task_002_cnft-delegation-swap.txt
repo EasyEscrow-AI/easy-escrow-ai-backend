@@ -1,0 +1,46 @@
+# Task ID: 2
+# Title: Research and Document Bubblegum Delegation API
+# Status: pending
+# Dependencies: None
+# Priority: high
+# Description: Conduct thorough research on Metaplex Bubblegum delegation capabilities for cNFT marketplace operations and document findings.
+# Details:
+**Research Topics:**
+
+1. **Bubblegum Delegate Instruction**:
+   - How to delegate cNFT transfer authority to a PDA
+   - Instruction parameters and required accounts
+   - Delegate vs owner authority for transfers
+
+2. **Bubblegum v2 Freeze/Thaw**:
+   - Optional freezing to prevent owner transfers during swap
+   - Freeze authority requirements
+   - Thaw on completion or cancellation
+
+3. **Transfer Authorization**:
+   - Owner-signed transfers (current approach)
+   - Delegate-signed transfers (new approach)
+   - CPI patterns for marketplace programs
+
+4. **Security Considerations**:
+   - Revoke delegation patterns
+   - PDA authority vs user authority
+   - Attack vectors and mitigations
+
+5. **Existing Implementations**:
+   - Magic Eden cNFT marketplace patterns
+   - Tensor compression support
+   - Other marketplace approaches
+
+6. **Cost Analysis**:
+   - Gas costs: delegation approach vs JITO bundles
+   - Number of transactions comparison
+   - Compute unit requirements
+
+**Deliverables:**
+1. docs/BUBBLEGUM_DELEGATION.md - Technical documentation
+2. docs/ADR_DELEGATION_SETTLEMENT.md - Architecture decision record
+3. Comparison matrix in documentation
+
+# Test Strategy:
+Deliverables review: documentation completeness, technical accuracy, code examples validity

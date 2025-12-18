@@ -1,0 +1,42 @@
+# Task ID: 1
+# Title: Create JITO Feature Flag to Disable Bundles
+# Status: pending
+# Dependencies: None
+# Priority: high
+# Description: Implement a feature flag system to disable JITO bundle functionality globally while preserving all existing JITO code for future re-enablement.
+# Details:
+**Implementation Requirements:**
+
+1. **Environment Variable**: Add ENABLE_JITO_BUNDLES environment variable (default: false for staging, true for production initially)
+
+2. **Feature Flag Utility**: Create src/utils/featureFlags.ts with:
+   - isJitoBundlesEnabled(): boolean - reads from env
+   - Centralized feature flag checking for consistency
+
+3. **Update JITO Entry Points** - check flag before executing:
+   - src/services/bulkSwapExecutor.ts - sendBundleViaJito()
+   - src/services/transactionGroupBuilder.ts - JITO-related code paths
+   - src/services/offerManager.ts - bundle submission logic
+   - src/services/directBubblegumService.ts - JITO integration
+   - src/services/jito-http-rate-limiter.ts - rate limiting (bypass when disabled)
+   - src/services/jito-region-router.ts - region routing (bypass when disabled)
+
+4. **Fallback Behavior**: When JITO disabled:
+   - Use standard sendTransaction() for single txs
+   - Log warning that JITO is disabled
+   - Return gracefully without throwing
+
+5. **Preserve All Code**: No deletions - wrap JITO paths in conditionals
+
+6. **Configuration Updates**:
+   - Update .env.example with ENABLE_JITO_BUNDLES=false
+   - Update .env.staging template
+   - Update .env.production template
+   - Document in README or deployment docs
+
+# Test Strategy:
+1. Unit test feature flag utility with env var mocking
+2. Integration test: verify JITO code paths bypassed when flag=false
+3. Integration test: verify JITO works when flag=true
+4. Verify logging indicates when fallback is used
+5. E2E test swap completion with JITO disabled

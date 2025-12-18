@@ -1,0 +1,54 @@
+# Task ID: 10
+# Title: Implement Settle Phase (Chunked Transfers)
+# Status: pending
+# Dependencies: 9
+# Priority: high
+# Description: Implement Phase B of two-phase swap executing transfers in chunks with progress tracking.
+# Details:
+**Settlement Phase:**
+
+1. **Triggered automatically** when Status = FULLY_LOCKED:
+   - Status → SETTLING
+   - Calculate settlement chunks
+
+2. **Chunking Strategy:**
+   - 1-2 cNFT transfers per tx (based on proof size)
+   - SPL/SOL transfers can batch more
+   - Each chunk is independent tx
+   - Progress tracked in SwapState.settleTxs[]
+
+3. **Execute Settlement Loop:**
+   ```
+   for each chunk:
+     build transfer instructions
+     sign as delegate (backend)
+     submit transaction
+     wait for confirmation
+     update currentSettleIndex
+     if failed: retry up to 3 times
+     if still failed: mark FAILED
+   all done: mark COMPLETED
+   ```
+
+4. **Transfer Instructions per chunk:**
+   - cNFT: Bubblegum transfer with delegate authority
+   - SOL: Transfer from escrow PDA
+   - SPL: Token transfer from escrow ATA
+
+5. **Chunk Size Calculation:**
+   - Deep trees (proof > 20 nodes): 1 cNFT/tx
+   - Shallow trees (proof <= 10 nodes): 2 cNFTs/tx
+   - Consider 1232 byte tx limit
+
+6. **Progress Tracking:**
+   - settleTxs array stores each tx signature
+   - currentSettleIndex tracks position
+   - Client can poll for progress
+
+# Test Strategy:
+1. E2E test: full swap from lock to complete
+2. Test chunking with various asset counts
+3. Test retry logic on tx failure
+4. Test progress tracking accuracy
+5. Test concurrent settlement (shouldn't happen)
+6. Verify all assets transferred correctly

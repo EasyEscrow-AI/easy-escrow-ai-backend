@@ -1,0 +1,41 @@
+# Task ID: 3
+# Title: Implement cNFT Delegation Service with Bubblegum
+# Status: pending
+# Dependencies: 2
+# Priority: high
+# Description: Create a new service for managing cNFT delegation operations using Metaplex Bubblegum delegate authority.
+# Details:
+**Implementation:**
+
+1. **Create src/services/cnftDelegationService.ts** with methods:
+   - delegateCnft(assetId, ownerPubkey, delegatePDA) - build delegate instruction
+   - revokeDelegation(assetId, ownerPubkey) - build revoke instruction
+   - transferAsDelegate(assetId, fromOwner, toRecipient, delegatePDA) - build transfer using delegate
+   - buildDelegateInstruction(params) - low-level instruction builder
+   - buildRevokeInstruction(params) - low-level revoke builder
+   - isDelegatedToProgram(assetId, delegatePDA) - check delegation status via DAS
+   - getDelegationStatus(assetId) - get current delegate if any
+
+2. **PDA Derivation**:
+   - Define marketplace delegate PDA seeds: ['delegate', marketplaceId]
+   - Ensure PDA can be used for CPI transfers
+   - Document PDA structure
+
+3. **Integration with Existing Services**:
+   - Reuse Merkle proof fetching from cnftService.ts
+   - Reuse DAS API connections and rate limiting
+   - Share caching infrastructure
+
+4. **Error Handling**:
+   - DelegationFailedError - delegation tx failed
+   - AlreadyDelegatedError - cNFT already delegated elsewhere
+   - NotDelegatedError - transfer attempted without delegation
+   - InvalidDelegateError - wrong delegate authority
+   - Retry logic for transient failures
+
+# Test Strategy:
+1. Unit tests for each method with mocked Bubblegum instructions
+2. Integration tests on devnet with test cNFTs
+3. Test delegation → transfer → verify ownership flow
+4. Test revocation scenarios
+5. Error handling tests for each error type

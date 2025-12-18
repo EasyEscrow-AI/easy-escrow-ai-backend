@@ -1,0 +1,42 @@
+# Task ID: 4
+# Title: Implement cNFT Listing with Delegation
+# Status: pending
+# Dependencies: 3
+# Priority: high
+# Description: Implement cNFT listing flow where seller delegates cNFT transfer authority to marketplace PDA.
+# Details:
+**Listing Flow:**
+
+1. **Seller initiates listing** via POST /listings:
+   - Validate cNFT ownership
+   - Validate listing parameters (price, duration)
+   - Build delegate instruction for cNFT → marketplace PDA
+   - Optional: Include freeze instruction (Bubblegum v2)
+   - Return unsigned transaction for seller
+
+2. **Seller signs and submits**:
+   - Transaction confirmation
+   - cNFT now delegated to marketplace
+
+3. **Create listing record**:
+   - Store in database with delegationStatus='DELEGATED'
+   - Track delegation timestamp
+   - Store delegate PDA reference
+   - Store listing price, expiry
+
+**Database Schema Updates:**
+- Add to Listing model: delegationStatus (PENDING|DELEGATED|REVOKED)
+- Add delegatedAt timestamp
+- Add delegatePDA reference
+
+**API Response:**
+- Return transaction to sign
+- Include listing preview
+- Estimated fees
+
+# Test Strategy:
+1. E2E test: list cNFT, verify delegation on-chain
+2. Test listing with various price points
+3. Test duplicate listing prevention
+4. Test listing expiry handling
+5. Test delegation status updates
