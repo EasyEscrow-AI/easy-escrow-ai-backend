@@ -399,9 +399,12 @@ export class CnftDelegationService {
     try {
       const status = await this.getDelegationStatus(assetId);
 
+      // Check for both DELEGATED and DELEGATED_AND_FROZEN states
+      const isDelegatedStatus =
+        status.status === DelegationStatus.DELEGATED ||
+        status.status === DelegationStatus.DELEGATED_AND_FROZEN;
       const isDelegated =
-        status.status === DelegationStatus.DELEGATED &&
-        status.delegate === delegatePDA.toBase58();
+        isDelegatedStatus && status.delegate === delegatePDA.toBase58();
 
       console.log('[CnftDelegationService] isDelegatedToProgram result:', isDelegated);
       return isDelegated;
