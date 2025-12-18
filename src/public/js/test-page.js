@@ -2876,3 +2876,779 @@ loadWalletInfo = async function(wallet) {
 window.showBuyModal = showBuyModal;
 window.hideBuyModal = hideBuyModal;
 window.loadMarketplaceListings = loadMarketplaceListings;
+
+// ========================================
+// CONFIRMATION MODAL ENHANCEMENTS (Task 19)
+// ========================================
+
+// Cancel Listing Modal State
+let cancelListingData = null;
+
+// Initialize enhanced modal features
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(initializeEnhancedModals, 200);
+});
+
+function initializeEnhancedModals() {
+    console.log('🔧 Initializing enhanced confirmation modals (Task 19)...');
+
+    // Cancel Listing Modal handlers
+    const cancelListingKeep = document.getElementById('cancel-listing-keep');
+    if (cancelListingKeep) {
+        cancelListingKeep.addEventListener('click', hideCancelListingModal);
+    }
+
+    const cancelListingConfirm = document.getElementById('cancel-listing-confirm');
+    if (cancelListingConfirm) {
+        cancelListingConfirm.addEventListener('click', handleConfirmCancelListing);
+    }
+
+    // Quick List price input handler for fee breakdown
+    const quickListPrice = document.getElementById('quick-list-price');
+    if (quickListPrice) {
+        quickListPrice.addEventListener('input', updateQuickListFeeBreakdown);
+    }
+
+    // Add keyboard navigation (Escape to close modals)
+    document.addEventListener('keydown', handleModalKeyboard);
+
+    console.log('✅ Enhanced confirmation modals initialized');
+}
+
+// Keyboard navigation for modals
+function handleModalKeyboard(e) {
+    if (e.key === 'Escape') {
+        // Close modals in order of z-index priority
+        if (document.getElementById('cancel-listing-modal').classList.contains('show')) {
+            hideCancelListingModal();
+        } else if (document.getElementById('purchase-success-modal').classList.contains('show')) {
+            hidePurchaseSuccessModal();
+        } else if (document.getElementById('buy-modal').classList.contains('show')) {
+            hideBuyModal();
+        } else if (document.getElementById('quick-list-modal').classList.contains('show')) {
+            hideQuickListModal();
+        } else if (document.getElementById('confirm-modal').classList.contains('show')) {
+            hideConfirmationModal();
+        }
+    }
+}
+
+// ========================================
+// CANCEL LISTING MODAL FUNCTIONS
+// ========================================
+
+function showCancelListingModal(listingId) {
+    const listing = activeListings.find(l => l.listingId === listingId);
+    if (!listing) {
+        addLog('❌ Listing not found', 'error');
+        return;
+    }
+
+    cancelListingData = listing;
+
+    // Populate modal
+    const metadata = listing.metadata || {};
+    const imageUrl = metadata.image || getPlaceholderImage(listing.assetId);
+    const name = metadata.name || 'Unknown cNFT';
+    const priceSol = (parseInt(listing.priceLamports) / 1e9).toFixed(4);
+
+    document.getElementById('cancel-listing-image').src = imageUrl;
+    document.getElementById('cancel-listing-name').textContent = name;
+    document.getElementById('cancel-listing-price').textContent = `${priceSol} SOL`;
+
+    // Reset modal state
+    resetCancelListingModalState();
+
+    // Show modal
+    document.getElementById('cancel-listing-modal').classList.add('show');
+}
+
+function hideCancelListingModal() {
+    document.getElementById('cancel-listing-modal').classList.remove('show');
+    cancelListingData = null;
+    resetCancelListingModalState();
+}
+
+function resetCancelListingModalState() {
+    // Hide transaction status
+    const txStatus = document.getElementById('cancel-listing-tx-status');
+    if (txStatus) {
+        txStatus.style.display = 'none';
+    }
+
+    // Show action buttons
+    const actions = document.getElementById('cancel-listing-actions');
+    if (actions) {
+        actions.style.display = 'flex';
+    }
+
+    // Reset button states
+    const confirmBtn = document.getElementById('cancel-listing-confirm');
+    if (confirmBtn) {
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = 'Cancel Listing';
+    }
+}
+
+function updateCancelListingTxStatus(status, title, message, link = null) {
+    const txStatusEl = document.getElementById('cancel-listing-tx-status');
+    const titleEl = document.getElementById('cancel-listing-status-title');
+    const messageEl = document.getElementById('cancel-listing-status-message');
+    const linkEl = document.getElementById('cancel-listing-status-link');
+
+    if (!txStatusEl) return;
+
+    // Remove all status classes
+    txStatusEl.classList.remove('waiting', 'processing', 'confirming', 'success', 'error');
+    txStatusEl.classList.add(status);
+
+    // Update icon based on status
+    const iconEl = txStatusEl.querySelector('.modal-tx-status-spinner, .modal-tx-status-icon');
+    if (iconEl) {
+        if (status === 'success') {
+            iconEl.className = 'modal-tx-status-icon';
+            iconEl.textContent = '✓';
+        } else if (status === 'error') {
+            iconEl.className = 'modal-tx-status-icon';
+            iconEl.textContent = '✗';
+        } else {
+            iconEl.className = 'modal-tx-status-spinner';
+            iconEl.textContent = '';
+        }
+    }
+
+    titleEl.textContent = title;
+    messageEl.textContent = message;
+
+    if (link) {
+        linkEl.innerHTML = `<a href="${link}" target="_blank" rel="noopener noreferrer">View Transaction</a>`;
+    } else {
+        linkEl.innerHTML = '';
+    }
+
+    txStatusEl.style.display = 'flex';
+}
+
+async function handleConfirmCancelListing() {
+    if (!cancelListingData) {
+        addLog('❌ No listing selected', 'error');
+        return;
+    }
+
+    const listingId = cancelListingData.listingId;
+    const confirmBtn = document.getElementById('cancel-listing-confirm');
+    const actions = document.getElementById('cancel-listing-actions');
+
+    try {
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = 'Processing...';
+
+        // Show waiting status
+        updateCancelListingTxStatus('waiting', 'Preparing Transaction', 'Building revoke transaction...');
+
+        addLog(`🔄 Cancelling listing ${listingId}...`, 'info');
+
+        // Call cancel API
+        const response = await fetch(`/api/listings/${listingId}/cancel`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'idempotency-key': `cancel-${listingId}-${Date.now()}`,
+            },
+            body: JSON.stringify({
+                seller: MAKER_ADDRESS,
+            }),
+        });
+
+        const result = await response.json();
+
+        if (!result.success) {
+            throw new Error(result.message || 'Failed to cancel listing');
+        }
+
+        // If there's a revoke transaction, execute it
+        if (result.data.transaction) {
+            updateCancelListingTxStatus('processing', 'Signing Transaction', 'Please confirm in your wallet...');
+
+            const execResponse = await fetch('/api/test/execute-listing-revoke', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Test-Execution': 'true',
+                },
+                body: JSON.stringify({
+                    listingId: listingId,
+                    serializedTransaction: result.data.transaction.serializedTransaction,
+                }),
+            });
+
+            const execResult = await execResponse.json();
+
+            if (!execResult.success) {
+                throw new Error(execResult.error || 'Failed to execute revoke transaction');
+            }
+
+            updateCancelListingTxStatus('confirming', 'Confirming Transaction', 'Waiting for blockchain confirmation...');
+
+            // Confirm revoke
+            await fetch(`/api/listings/${listingId}/confirm-revoke`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'idempotency-key': `confirm-revoke-${listingId}-${Date.now()}`,
+                },
+                body: JSON.stringify({
+                    signature: execResult.data.signature,
+                }),
+            });
+
+            // Build explorer URL
+            const isDevnet = window.location.hostname.includes('staging') ||
+                           window.location.hostname.includes('dev') ||
+                           window.location.hostname === 'localhost' ||
+                           window.location.hostname === '127.0.0.1';
+            const explorerUrl = `https://solscan.io/tx/${execResult.data.signature}${isDevnet ? '?cluster=devnet' : ''}`;
+
+            updateCancelListingTxStatus('success', 'Listing Cancelled!', 'Your asset delegation has been revoked.', explorerUrl);
+
+            addLog(`✓ Revoke confirmed! TX: ${execResult.data.signature.substring(0, 20)}...`, 'success');
+        } else {
+            updateCancelListingTxStatus('success', 'Listing Cancelled!', 'Your listing has been removed.');
+        }
+
+        addLog(`✅ Listing cancelled successfully!`, 'success');
+
+        // Hide action buttons on success
+        actions.style.display = 'none';
+
+        // Auto-close and refresh after delay
+        setTimeout(async () => {
+            hideCancelListingModal();
+            await loadActiveListings();
+            await loadWalletInfo('maker');
+        }, 2000);
+
+    } catch (error) {
+        console.error('Cancel listing error:', error);
+        addLog(`❌ Failed to cancel listing: ${error.message}`, 'error');
+
+        updateCancelListingTxStatus('error', 'Cancellation Failed', error.message);
+
+        // Add retry button
+        const linkEl = document.getElementById('cancel-listing-status-link');
+        if (linkEl) {
+            linkEl.innerHTML = `<button class="modal-retry-btn" onclick="handleConfirmCancelListing()">Retry</button>`;
+        }
+
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = 'Cancel Listing';
+    }
+}
+
+// Override the old handleCancelListing to use the modal
+const originalHandleCancelListing = handleCancelListing;
+handleCancelListing = function(listingId) {
+    showCancelListingModal(listingId);
+};
+
+// ========================================
+// ENHANCED QUICK LIST MODAL FUNCTIONS
+// ========================================
+
+function updateQuickListFeeBreakdown() {
+    const priceInput = document.getElementById('quick-list-price');
+    const displayPrice = document.getElementById('quick-list-display-price');
+    const feeDisplay = document.getElementById('quick-list-fee');
+    const receiveDisplay = document.getElementById('quick-list-receive');
+
+    if (!priceInput || !displayPrice) return;
+
+    const price = parseFloat(priceInput.value) || 0;
+    const fee = price * 0.01; // 1% fee
+    const receive = price - fee;
+
+    displayPrice.textContent = price > 0 ? `${price.toFixed(4)} SOL` : '-- SOL';
+    feeDisplay.textContent = price > 0 ? `${fee.toFixed(4)} SOL` : '-- SOL';
+    receiveDisplay.textContent = price > 0 ? `${receive.toFixed(4)} SOL` : '-- SOL';
+
+    // Also update USD if available
+    updateQuickListPriceDisplay();
+}
+
+function updateQuickListTxStatus(status, title, message, link = null) {
+    const txStatusEl = document.getElementById('quick-list-tx-status');
+    const titleEl = document.getElementById('quick-list-status-title');
+    const messageEl = document.getElementById('quick-list-status-message');
+    const linkEl = document.getElementById('quick-list-status-link');
+
+    if (!txStatusEl) return;
+
+    // Remove all status classes
+    txStatusEl.classList.remove('waiting', 'processing', 'confirming', 'success', 'error');
+    txStatusEl.classList.add(status);
+
+    // Update icon based on status
+    const iconEl = txStatusEl.querySelector('.modal-tx-status-spinner, .modal-tx-status-icon');
+    if (iconEl) {
+        if (status === 'success') {
+            iconEl.className = 'modal-tx-status-icon';
+            iconEl.textContent = '✓';
+        } else if (status === 'error') {
+            iconEl.className = 'modal-tx-status-icon';
+            iconEl.textContent = '✗';
+        } else {
+            iconEl.className = 'modal-tx-status-spinner';
+            iconEl.textContent = '';
+        }
+    }
+
+    titleEl.textContent = title;
+    messageEl.textContent = message;
+
+    if (link) {
+        linkEl.innerHTML = `<a href="${link}" target="_blank" rel="noopener noreferrer">View Transaction</a>`;
+    } else {
+        linkEl.innerHTML = '';
+    }
+
+    txStatusEl.style.display = 'flex';
+}
+
+// Override handleQuickListConfirm with enhanced version
+const originalHandleQuickListConfirm = handleQuickListConfirm;
+handleQuickListConfirm = async function() {
+    if (!quickListAsset) {
+        addLog('❌ No asset selected', 'error');
+        return;
+    }
+
+    const priceInput = document.getElementById('quick-list-price');
+    const price = parseFloat(priceInput.value);
+
+    if (!price || price <= 0) {
+        addLog('❌ Please enter a valid price', 'error');
+        return;
+    }
+
+    const confirmBtn = document.getElementById('quick-list-confirm');
+    const actions = document.getElementById('quick-list-actions');
+    const originalText = confirmBtn.innerHTML;
+
+    try {
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = 'Processing...';
+
+        // Show waiting status
+        updateQuickListTxStatus('waiting', 'Creating Listing', 'Building delegation transaction...');
+
+        addLog(`📝 Creating listing for ${quickListAsset.name}...`, 'info');
+
+        // Convert SOL to lamports
+        const priceLamports = Math.floor(price * 1e9);
+
+        // Call create listing API
+        const response = await fetch('/api/listings', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'idempotency-key': `quick-listing-${Date.now()}-${quickListAsset.mint.substring(0, 8)}`,
+            },
+            body: JSON.stringify({
+                seller: MAKER_ADDRESS,
+                assetId: quickListAsset.mint,
+                priceLamports: priceLamports.toString(),
+                durationSeconds: quickListDuration,
+            }),
+        });
+
+        const result = await response.json();
+
+        if (!result.success) {
+            throw new Error(result.message || result.error || 'Failed to create listing');
+        }
+
+        addLog(`✓ Listing created! ID: ${result.data.listing.listingId}`, 'success');
+
+        updateQuickListTxStatus('processing', 'Signing Transaction', 'Please confirm delegation in your wallet...');
+
+        // Execute the delegation transaction
+        const execResponse = await fetch('/api/test/execute-listing-delegation', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Test-Execution': 'true',
+            },
+            body: JSON.stringify({
+                listingId: result.data.listing.listingId,
+                serializedTransaction: result.data.transaction.serializedTransaction,
+            }),
+        });
+
+        const execResult = await execResponse.json();
+
+        if (!execResult.success) {
+            throw new Error(execResult.error || 'Failed to execute delegation transaction');
+        }
+
+        updateQuickListTxStatus('confirming', 'Confirming Delegation', 'Waiting for blockchain confirmation...');
+
+        // Confirm the listing
+        await fetch(`/api/listings/${result.data.listing.listingId}/confirm`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'idempotency-key': `confirm-${result.data.listing.listingId}-${Date.now()}`,
+            },
+            body: JSON.stringify({
+                signature: execResult.data.signature,
+            }),
+        });
+
+        // Build explorer URL
+        const isDevnet = window.location.hostname.includes('staging') ||
+                       window.location.hostname.includes('dev') ||
+                       window.location.hostname === 'localhost' ||
+                       window.location.hostname === '127.0.0.1';
+        const explorerUrl = execResult.data.explorerUrl ||
+                          `https://solscan.io/tx/${execResult.data.signature}${isDevnet ? '?cluster=devnet' : ''}`;
+
+        updateQuickListTxStatus('success', 'Listing Active!', 'Your asset is now listed for sale.', explorerUrl);
+
+        addLog(`✅ Listing is now ACTIVE!`, 'success');
+
+        // Hide action buttons on success
+        actions.style.display = 'none';
+
+        // Auto-close and refresh after delay
+        setTimeout(async () => {
+            hideQuickListModal();
+            await loadActiveListings();
+            await loadWalletInfo('maker');
+        }, 2000);
+
+    } catch (error) {
+        console.error('Quick list error:', error);
+        addLog(`❌ Failed to create listing: ${error.message}`, 'error');
+
+        updateQuickListTxStatus('error', 'Listing Failed', error.message);
+
+        // Add retry button
+        const linkEl = document.getElementById('quick-list-status-link');
+        if (linkEl) {
+            linkEl.innerHTML = `<button class="modal-retry-btn" onclick="handleQuickListConfirm()">Retry</button>`;
+        }
+
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = originalText;
+    }
+};
+
+// Reset quick list modal state when showing
+const originalShowQuickListModal = showQuickListModal;
+showQuickListModal = function(nft) {
+    originalShowQuickListModal.call(this, nft);
+
+    // Reset transaction status
+    const txStatus = document.getElementById('quick-list-tx-status');
+    if (txStatus) {
+        txStatus.style.display = 'none';
+    }
+
+    // Show action buttons
+    const actions = document.getElementById('quick-list-actions');
+    if (actions) {
+        actions.style.display = 'flex';
+    }
+
+    // Update fee breakdown
+    updateQuickListFeeBreakdown();
+};
+
+// ========================================
+// ENHANCED BUY MODAL FUNCTIONS
+// ========================================
+
+function updateBuyTxStatus(status, title, message, link = null) {
+    const txStatusEl = document.getElementById('buy-tx-status');
+    const titleEl = document.getElementById('buy-status-title');
+    const messageEl = document.getElementById('buy-status-message');
+    const linkEl = document.getElementById('buy-status-link');
+
+    if (!txStatusEl) return;
+
+    // Remove all status classes
+    txStatusEl.classList.remove('waiting', 'processing', 'confirming', 'success', 'error');
+    txStatusEl.classList.add(status);
+
+    // Update icon based on status
+    const iconEl = txStatusEl.querySelector('.modal-tx-status-spinner, .modal-tx-status-icon');
+    if (iconEl) {
+        if (status === 'success') {
+            iconEl.className = 'modal-tx-status-icon';
+            iconEl.textContent = '✓';
+        } else if (status === 'error') {
+            iconEl.className = 'modal-tx-status-icon';
+            iconEl.textContent = '✗';
+        } else {
+            iconEl.className = 'modal-tx-status-spinner';
+            iconEl.textContent = '';
+        }
+    }
+
+    titleEl.textContent = title;
+    messageEl.textContent = message;
+
+    if (link) {
+        linkEl.innerHTML = `<a href="${link}" target="_blank" rel="noopener noreferrer">View Transaction</a>`;
+    } else {
+        linkEl.innerHTML = '';
+    }
+
+    txStatusEl.style.display = 'flex';
+}
+
+// Override showBuyModal to add balance after purchase
+const originalShowBuyModal = showBuyModal;
+showBuyModal = function(listingId) {
+    const listing = marketplaceListings.find(l => l.listingId === listingId);
+    if (!listing) {
+        addLog('❌ Listing not found', 'error');
+        return;
+    }
+
+    selectedBuyListing = listing;
+
+    // Check if taker wallet is loaded
+    if (!takerData) {
+        addLog('❌ Please load the Taker wallet first to buy listings', 'error');
+        return;
+    }
+
+    // Populate modal
+    const metadata = listing.metadata || {};
+    const imageUrl = metadata.image || getPlaceholderImage(listing.assetId);
+    const name = metadata.name || 'Unknown cNFT';
+    const priceLamports = parseInt(listing.priceLamports);
+    const priceSol = priceLamports / 1e9;
+    const feeBps = listing.feeBps || 100; // Default 1%
+    const feeLamports = Math.floor(priceLamports * feeBps / 10000);
+    const feeSol = feeLamports / 1e9;
+    const totalLamports = priceLamports; // Fee is included in price, not added
+    const totalSol = totalLamports / 1e9;
+    const sellerDisplay = `${listing.seller.substring(0, 8)}...${listing.seller.substring(listing.seller.length - 6)}`;
+
+    // Update modal elements
+    document.getElementById('buy-modal-image').src = imageUrl;
+    document.getElementById('buy-modal-name').textContent = name;
+    document.getElementById('buy-modal-seller').textContent = `Seller: ${sellerDisplay}`;
+    document.getElementById('buy-listing-price').textContent = `${priceSol.toFixed(4)} SOL`;
+    document.getElementById('buy-platform-fee').textContent = `${feeSol.toFixed(4)} SOL (included)`;
+    document.getElementById('buy-total-cost').textContent = `${totalSol.toFixed(4)} SOL`;
+
+    // Check balance
+    const takerBalance = takerData.solBalance || 0;
+    document.getElementById('buy-your-balance').textContent = `${takerBalance.toFixed(4)} SOL`;
+
+    // Calculate and show balance after purchase
+    const networkFeeBuffer = 0.001; // ~0.001 SOL for network fees
+    const balanceAfter = takerBalance - totalSol - networkFeeBuffer;
+    const balanceAfterEl = document.getElementById('buy-balance-after');
+    const balanceAfterValue = document.getElementById('buy-balance-after-value');
+
+    if (balanceAfterValue) {
+        balanceAfterValue.textContent = `${Math.max(0, balanceAfter).toFixed(4)} SOL`;
+    }
+
+    // Style balance after based on remaining amount
+    if (balanceAfterEl) {
+        balanceAfterEl.classList.remove('warning', 'danger');
+        if (balanceAfter < 0) {
+            balanceAfterEl.classList.add('danger');
+        } else if (balanceAfter < 0.01) {
+            balanceAfterEl.classList.add('warning');
+        }
+    }
+
+    // Check if sufficient balance
+    const hasInsufficientBalance = takerBalance < (totalSol + networkFeeBuffer);
+
+    const balanceWarning = document.getElementById('buy-balance-warning');
+    const confirmBtn = document.getElementById('buy-modal-confirm');
+
+    if (hasInsufficientBalance) {
+        balanceWarning.classList.remove('hidden');
+        confirmBtn.disabled = true;
+    } else {
+        balanceWarning.classList.add('hidden');
+        confirmBtn.disabled = false;
+    }
+
+    // Reset transaction status
+    const txStatus = document.getElementById('buy-tx-status');
+    if (txStatus) {
+        txStatus.style.display = 'none';
+    }
+
+    // Show action buttons
+    const actions = document.getElementById('buy-modal-actions');
+    if (actions) {
+        actions.style.display = 'flex';
+    }
+
+    // Show modal
+    document.getElementById('buy-modal').classList.add('show');
+};
+
+// Override handleConfirmPurchase with enhanced version
+const originalHandleConfirmPurchase = handleConfirmPurchase;
+handleConfirmPurchase = async function() {
+    if (!selectedBuyListing) {
+        addLog('❌ No listing selected', 'error');
+        return;
+    }
+
+    if (!TAKER_ADDRESS) {
+        addLog('❌ Taker wallet not loaded', 'error');
+        return;
+    }
+
+    const confirmBtn = document.getElementById('buy-modal-confirm');
+    const actions = document.getElementById('buy-modal-actions');
+    const originalText = confirmBtn.innerHTML;
+
+    try {
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = 'Processing...';
+
+        const listingId = selectedBuyListing.listingId;
+        const metadata = selectedBuyListing.metadata || {};
+        const name = metadata.name || 'Unknown cNFT';
+        const priceSol = (parseInt(selectedBuyListing.priceLamports) / 1e9).toFixed(4);
+
+        // Show waiting status
+        updateBuyTxStatus('waiting', 'Building Transaction', 'Preparing purchase transaction...');
+
+        addLog(`🛒 Initiating purchase of ${name}...`, 'info');
+
+        // Step 1: Call buy endpoint to get transaction
+        addLog('Step 1: Building buy transaction...', 'info');
+        const buyResponse = await fetch(`/api/listings/${listingId}/buy`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'idempotency-key': `buy-${listingId}-${Date.now()}`,
+            },
+            body: JSON.stringify({
+                buyer: TAKER_ADDRESS,
+            }),
+        });
+
+        const buyResult = await buyResponse.json();
+
+        if (!buyResult.success) {
+            throw new Error(buyResult.message || buyResult.error || 'Failed to build buy transaction');
+        }
+
+        addLog('✓ Buy transaction built', 'success');
+
+        // Step 2: Execute the transaction via test endpoint
+        updateBuyTxStatus('processing', 'Signing Transaction', 'Please confirm in your wallet...');
+
+        addLog('Step 2: Signing and executing transaction...', 'info');
+
+        const execResponse = await fetch('/api/test/execute-buy-transaction', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Test-Execution': 'true',
+            },
+            body: JSON.stringify({
+                listingId: listingId,
+                serializedTransaction: buyResult.data.transaction.serializedTransaction,
+                buyer: TAKER_ADDRESS,
+            }),
+        });
+
+        const execResult = await execResponse.json();
+
+        if (!execResult.success) {
+            throw new Error(execResult.error || 'Failed to execute buy transaction');
+        }
+
+        addLog(`✓ Transaction confirmed! TX: ${execResult.data.signature.substring(0, 20)}...`, 'success');
+
+        // Step 3: Confirm the purchase
+        updateBuyTxStatus('confirming', 'Confirming Purchase', 'Verifying asset transfer...');
+
+        addLog('Step 3: Confirming purchase...', 'info');
+
+        const confirmResponse = await fetch(`/api/listings/${listingId}/confirm-purchase`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'idempotency-key': `confirm-purchase-${listingId}-${Date.now()}`,
+            },
+            body: JSON.stringify({
+                signature: execResult.data.signature,
+                buyer: TAKER_ADDRESS,
+            }),
+        });
+
+        const confirmResult = await confirmResponse.json();
+
+        if (!confirmResult.success) {
+            addLog(`⚠️ Purchase executed but confirmation pending: ${confirmResult.message || 'Unknown'}`, 'warning');
+        } else {
+            addLog(`✅ Purchase confirmed! Asset is now in your wallet!`, 'success');
+        }
+
+        // Build explorer URL
+        const isDevnet = window.location.hostname.includes('staging') ||
+                       window.location.hostname.includes('dev') ||
+                       window.location.hostname === 'localhost' ||
+                       window.location.hostname === '127.0.0.1';
+        const explorerUrl = execResult.data.explorerUrl ||
+                          `https://solscan.io/tx/${execResult.data.signature}${isDevnet ? '?cluster=devnet' : ''}`;
+
+        updateBuyTxStatus('success', 'Purchase Complete!', 'The cNFT is now in your wallet.', explorerUrl);
+
+        // Hide action buttons on success
+        actions.style.display = 'none';
+
+        // Auto-close and show success modal after delay
+        setTimeout(async () => {
+            hideBuyModal();
+            showPurchaseSuccessModal(name, priceSol, execResult.data.signature, explorerUrl);
+            await loadMarketplaceListings();
+            await loadWalletInfo('taker');
+            await loadActiveListings();
+        }, 1500);
+
+    } catch (error) {
+        console.error('Purchase error:', error);
+        addLog(`❌ Purchase failed: ${error.message}`, 'error');
+
+        updateBuyTxStatus('error', 'Purchase Failed', error.message);
+
+        // Add retry button
+        const linkEl = document.getElementById('buy-status-link');
+        if (linkEl) {
+            linkEl.innerHTML = `<button class="modal-retry-btn" onclick="handleConfirmPurchase()">Retry</button>`;
+        }
+
+        // Check for specific error types
+        if (error.message.includes('expected ACTIVE') || error.message.includes('no longer')) {
+            addLog('💡 This listing may have already been sold or cancelled', 'info');
+            setTimeout(() => loadMarketplaceListings(), 2000);
+        }
+
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = originalText;
+    }
+};
+
+// Make enhanced modal functions available globally
+window.showCancelListingModal = showCancelListingModal;
+window.hideCancelListingModal = hideCancelListingModal;
+window.handleConfirmCancelListing = handleConfirmCancelListing;
+window.handleQuickListConfirm = handleQuickListConfirm;
