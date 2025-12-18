@@ -33,6 +33,13 @@ import {
   TwoPhaseSwapLockService,
 } from '../services/twoPhaseSwapLockService';
 import { TwoPhaseSwapStatus } from '../generated/prisma';
+import {
+  createSwapProgressService,
+  SwapProgressService,
+} from '../services/swapProgress.service';
+import { createSwapStateMachine, SwapStateMachine } from '../services/swapStateMachine';
+import { CacheService } from '../services/cache.service';
+import rateLimit from 'express-rate-limit';
 
 const router = Router();
 
@@ -163,6 +170,37 @@ const twoPhaseSwapLockService = createTwoPhaseSwapLockService(
   feeCollector
 );
 console.log('[OffersRoutes] Two-Phase Swap Lock Service initialized');
+
+// Initialize swap progress service (Task 13)
+const swapStateMachine = createSwapStateMachine(prisma);
+const progressCacheService = new CacheService({ prefix: 'progress:', ttl: 2 });
+const swapProgressService = createSwapProgressService(swapStateMachine, progressCacheService);
+console.log('[OffersRoutes] Swap Progress Service initialized');
+
+// Create specialized rate limiter for progress endpoint (1 request per second per swap)
+const progressRateLimiter = rateLimit({
+  windowMs: 1000, // 1 second window
+  max: process.env.ENABLE_E2E_TESTING === 'true' ? 100 : 1, // 1 request per second (100 for testing)
+  keyGenerator: (req: Request) => `progress:${req.params.id}:${req.ip}`,
+  message: {
+    success: false,
+    error: 'Too Many Requests',
+    message: 'Rate limit exceeded. Maximum 1 request per second per swap.',
+    retryAfterSeconds: 1,
+    timestamp: new Date().toISOString(),
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req: Request, res: Response) => {
+    res.status(429).json({
+      success: false,
+      error: 'Too Many Requests',
+      message: 'Rate limit exceeded. Maximum 1 request per second per swap.',
+      retryAfterSeconds: 1,
+      timestamp: new Date().toISOString(),
+    });
+  },
+});
 
 // Initialize health check service
 const healthCheckService = new HealthCheckService(
@@ -2895,6 +2933,127 @@ router.get(
   }
 );
 
+// =============================================================================
+// Swap Progress Endpoint (Task 13)
+// =============================================================================
+
+/**
+ * GET /api/offers/bulk/:id/progress
+ * Get detailed progress information for a two-phase swap
+ *
+ * Response:
+ * {
+ *   "swapId": "xxx",
+ *   "status": "SETTLING",
+ *   "phase": "settle",
+ *   "progress": {
+ *     "totalTransfers": 5,
+ *     "completedTransfers": 3,
+ *     "currentChunk": 4,
+ *     "percentComplete": 60
+ *   },
+ *   "timestamps": {
+ *     "created": "...",
+ *     "lockedAt": "...",
+ *     "settleStarted": "...",
+ *     "estimatedCompletion": "..."
+ *   },
+ *   "transactions": [
+ *     { "sig": "xxx", "status": "confirmed", "type": "lock_a" },
+ *     { "sig": "yyy", "status": "confirmed", "type": "lock_b" },
+ *     { "sig": "zzz", "status": "confirmed", "type": "settle_1" }
+ *   ]
+ * }
+ */
+router.get(
+  '/api/offers/bulk/:id/progress',
+  progressRateLimiter,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { id } = req.params;
+
+      // Get progress from the service (includes caching)
+      const progress = await swapProgressService.getProgress(id);
+
+      if (!progress) {
+        res.status(404).json({
+          success: false,
+          error: 'Not Found',
+          message: `Bulk offer ${id} not found`,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      res.status(200).json({
+        success: true,
+        data: progress,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('[OffersRoutes] Get progress error:', error);
+      const message = error instanceof Error ? error.message : 'Failed to get swap progress';
+
+      res.status(500).json({
+        success: false,
+        error: 'Internal Server Error',
+        message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/swaps/:id/progress
+ * Alias for /api/offers/bulk/:id/progress for cleaner API
+ */
+router.get(
+  '/api/swaps/:id/progress',
+  progressRateLimiter,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { id } = req.params;
+
+      // Get progress from the service (includes caching)
+      const progress = await swapProgressService.getProgress(id);
+
+      if (!progress) {
+        res.status(404).json({
+          success: false,
+          error: 'Not Found',
+          message: `Swap ${id} not found`,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      res.status(200).json({
+        success: true,
+        data: progress,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('[OffersRoutes] Get progress error:', error);
+      const message = error instanceof Error ? error.message : 'Failed to get swap progress';
+
+      res.status(500).json({
+        success: false,
+        error: 'Internal Server Error',
+        message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
 export default router;
-export { noncePoolManager, offerManager, healthCheckService, cnftOfferManager, twoPhaseSwapLockService };
+export {
+  noncePoolManager,
+  offerManager,
+  healthCheckService,
+  cnftOfferManager,
+  twoPhaseSwapLockService,
+  swapProgressService,
+};
 
