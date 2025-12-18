@@ -2594,7 +2594,8 @@ function renderMarketplaceListings() {
         const priceSol = (parseInt(listing.priceLamports) / 1e9).toFixed(4);
         const priceUsd = solPriceUSD ? (parseInt(listing.priceLamports) / 1e9 * solPriceUSD).toFixed(2) : null;
         const seller = listing.seller;
-        const isOwnListing = seller === MAKER_ADDRESS;
+        // Check if this listing belongs to the taker (buyer) - they can't buy their own listings
+        const isOwnListing = TAKER_ADDRESS && seller === TAKER_ADDRESS;
 
         // Truncate seller address
         const sellerDisplay = `${seller.substring(0, 4)}...${seller.substring(seller.length - 4)}`;
