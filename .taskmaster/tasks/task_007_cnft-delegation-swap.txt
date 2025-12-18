@@ -1,0 +1,45 @@
+# Task ID: 7
+# Title: Implement Accept/Counter-Offer with Delegation
+# Status: pending
+# Dependencies: 5, 6
+# Priority: high
+# Description: Implement accept and counter-offer flows using delegation for atomic settlement.
+# Details:
+**Accept Flow (Single Atomic TX):**
+
+1. **Owner accepts offer** via POST /offers/:id/accept:
+   - Validate offer is ACTIVE
+   - Validate owner owns the cNFT
+   - If cNFT not delegated: include delegate instruction
+   - Build atomic transaction:
+     a. Delegate cNFT to marketplace (if needed)
+     b. Transfer cNFT via delegate → bidder
+     c. Release escrow SOL → owner (minus fees)
+     d. Transfer platform fee
+     e. Close offer state
+
+2. **Counter-Offer Flow:**
+   - Owner proposes different amount via POST /offers/:id/counter
+   - Creates new offer state linked to original
+   - Original offer status → COUNTERED
+   - Bidder can accept counter or reject
+
+3. **Counter-Accept Flow:**
+   - Bidder accepts counter via POST /offers/:counterId/accept
+   - If counter amount > original escrow: bidder pays difference
+   - If counter amount < original escrow: refund difference to bidder
+   - Execute same atomic settlement as regular accept
+
+**Transaction for Accept:**
+- Owner signs: delegate instruction (if needed)
+- Backend signs: transfer as delegate, release escrow
+- Single transaction, atomic settlement
+
+# Test Strategy:
+1. E2E test: offer → accept → verify transfer + payment
+2. E2E test: offer → counter → accept counter
+3. Test accept with cNFT already delegated
+4. Test accept with cNFT not delegated
+5. Test counter with higher/lower amount
+6. Test rejection flow
+7. Verify fees calculated correctly

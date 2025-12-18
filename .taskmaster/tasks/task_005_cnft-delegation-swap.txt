@@ -1,0 +1,41 @@
+# Task ID: 5
+# Title: Implement cNFT Buy with Delegate Authority Transfer
+# Status: pending
+# Dependencies: 4
+# Priority: high
+# Description: Implement buy flow using delegate authority for atomic cNFT transfer without seller signature.
+# Details:
+**Buy Flow (Single Atomic TX):**
+
+1. **Buyer initiates purchase** via POST /listings/:id/buy:
+   - Validate listing is active and delegated
+   - Validate buyer has sufficient SOL
+   - Build atomic transaction with:
+     a. SOL transfer: buyer → seller (minus fees)
+     b. Platform fee transfer: buyer → fee collector
+     c. cNFT transfer via delegate (marketplace PDA signs)
+     d. Close listing account
+
+2. **Key Insight**:
+   - Transfer is valid because delegate (marketplace PDA) authorizes it
+   - Seller does NOT need to sign
+   - Single transaction = atomic settlement
+
+3. **Transaction Structure**:
+   - Instruction 1: Transfer SOL to seller
+   - Instruction 2: Transfer platform fee
+   - Instruction 3: Bubblegum transfer with delegate authority
+   - Instruction 4: Update listing status
+
+4. **Backend Signing**:
+   - Backend holds marketplace keypair
+   - Signs as delegate authority for cNFT transfer
+   - Buyer signs for SOL transfer only
+
+# Test Strategy:
+1. E2E test: list → buy → verify ownership transfer
+2. Test SOL amounts (price + fees)
+3. Test insufficient balance handling
+4. Test listing not delegated error
+5. Test concurrent buy attempts
+6. Verify seller receives funds atomically

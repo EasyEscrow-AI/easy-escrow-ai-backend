@@ -1,0 +1,52 @@
+# Task ID: 13
+# Title: Add Swap Progress Polling Endpoint
+# Status: pending
+# Dependencies: 12
+# Priority: medium
+# Description: Add endpoint for clients to poll two-phase swap progress and optional WebSocket support.
+# Details:
+**Polling Endpoint:**
+
+GET /swaps/:id/progress
+
+Response:
+```json
+{
+  "swapId": "xxx",
+  "status": "SETTLING",
+  "phase": "settle",
+  "progress": {
+    "totalTransfers": 5,
+    "completedTransfers": 3,
+    "currentChunk": 4,
+    "percentComplete": 60
+  },
+  "timestamps": {
+    "created": "...",
+    "lockedAt": "...",
+    "settleStarted": "...",
+    "estimatedCompletion": "..."
+  },
+  "transactions": [
+    { "sig": "xxx", "status": "confirmed", "type": "lock_a" },
+    { "sig": "yyy", "status": "confirmed", "type": "lock_b" },
+    { "sig": "zzz", "status": "confirmed", "type": "settle_1" }
+  ]
+}
+```
+
+**Optional WebSocket (future):**
+- ws://host/swaps/:id/subscribe
+- Push updates on state changes
+- Reduces polling overhead
+
+**Rate Limiting:**
+- Max 1 request/second per swap
+- Cache response for 2 seconds
+
+# Test Strategy:
+1. Test progress accuracy at each phase
+2. Test rate limiting
+3. Test response format
+4. Test with completed/failed swaps
+5. Load test polling endpoint

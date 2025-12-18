@@ -1,0 +1,44 @@
+# Task ID: 12
+# Title: Update Existing API Endpoints for Delegation Flow
+# Status: pending
+# Dependencies: 7, 11
+# Priority: high
+# Description: Update existing API endpoints to automatically route to delegation-based settlement for cNFT and bulk swaps.
+# Details:
+**Routing Logic:**
+
+1. **POST /offers** - Asset type detection:
+   - Single NFT/SPL for NFT/SPL → Existing atomic swap
+   - Any cNFT involved → Delegation-based flow (Tasks 4-7)
+   - Bulk (>1 asset per side) → Two-phase swap (Tasks 8-11)
+   - cNFT-for-SOL only → Single-tx delegate transfer
+
+2. **POST /offers/:id/accept**:
+   - Check offer type from stored data
+   - Route to appropriate settlement
+   - Return correct transaction structure
+
+3. **POST /swaps** (existing bulk endpoint):
+   - Always use two-phase for bulk
+   - Support both atomic (JITO when enabled) and delegation
+
+4. **GET /swaps/:id/status**:
+   - Return full SwapState for two-phase swaps
+   - Include: phase, progress, completed transfers, remaining
+
+**Backward Compatibility:**
+- Existing single NFT swaps unchanged
+- API response format consistent
+- Error codes maintained
+
+**Feature Detection:**
+- Check ENABLE_JITO_BUNDLES flag
+- If JITO disabled: always use delegation for cNFT
+- If JITO enabled: use JITO for atomic multi-cNFT (future)
+
+# Test Strategy:
+1. Test routing for each asset combination
+2. Test backward compatibility with existing flows
+3. Test API response format consistency
+4. Test with JITO flag on/off
+5. Integration test full flow via API

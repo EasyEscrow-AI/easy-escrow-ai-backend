@@ -1,0 +1,74 @@
+# Task ID: 20
+# Title: Implement Listing API Endpoints
+# Status: pending
+# Dependencies: 4, 5
+# Priority: high
+# Description: Create backend API endpoints for listing management: create, get, buy, and cancel listings.
+# Details:
+**New API Endpoints:**
+
+1. **POST /api/listings** - Create new listing:
+   - Request body: { assetId, assetType, price, expiresIn? }
+   - Validates ownership
+   - Builds delegation transaction
+   - Creates Listing record in database (status: PENDING_DELEGATION)
+   - Returns: { listingId, transaction (base64), estimatedFees }
+
+2. **POST /api/listings/:id/confirm** - Confirm delegation tx:
+   - Request body: { signature }
+   - Verifies transaction confirmed on-chain
+   - Updates Listing status to ACTIVE
+   - Returns: { listing, status: 'active' }
+
+3. **GET /api/listings** - Get all active listings:
+   - Query params: ?assetType=cNFT&minPrice=0&maxPrice=100&seller=xxx
+   - Returns paginated list of active listings
+   - Includes asset metadata, price, seller info
+
+4. **GET /api/listings/:id** - Get single listing:
+   - Returns full listing details
+   - Include asset metadata from DAS/chain
+   - Include seller info
+
+5. **POST /api/listings/:id/buy** - Purchase listed asset:
+   - Request body: { buyerAddress }
+   - Validates listing is ACTIVE
+   - Builds atomic purchase transaction
+   - Returns: { transaction (base64), breakdown: { price, fee, total } }
+
+6. **POST /api/listings/:id/cancel** - Cancel listing:
+   - Validates caller is seller
+   - Builds revoke delegation transaction
+   - Returns: { transaction (base64) }
+
+7. **POST /api/listings/:id/cancel/confirm** - Confirm cancellation:
+   - Request body: { signature }
+   - Updates Listing status to CANCELLED
+   - Returns: { listing, status: 'cancelled' }
+
+**Database Schema:**
+```prisma
+model Listing {
+  id              String   @id @default(uuid())
+  assetId         String
+  assetType       String   // CNFT, CORE_NFT, NFT
+  sellerAddress   String
+  price           BigInt   // in lamports
+  status          String   // PENDING_DELEGATION, ACTIVE, SOLD, CANCELLED, EXPIRED
+  delegatePDA     String?
+  delegationTx    String?
+  buyTx           String?
+  buyerAddress    String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  expiresAt       DateTime?
+}
+```
+
+# Test Strategy:
+1. Unit test each endpoint
+2. Integration test full flow: create → confirm → buy
+3. Test validation errors
+4. Test concurrent buy attempts
+5. Test cancellation flow
+6. Test expired listings handling

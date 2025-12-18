@@ -1,0 +1,43 @@
+# Task ID: 14
+# Title: Configure Staging Environment for Delegation Testing
+# Status: pending
+# Dependencies: 1
+# Priority: high
+# Description: Set up staging environment with JITO disabled and configured for delegation-based testing.
+# Details:
+**Staging Configuration:**
+
+1. **Environment Variables:**
+   - ENABLE_JITO_BUNDLES=false
+   - SOLANA_NETWORK=devnet
+   - MARKETPLACE_KEYPAIR=<staging keypair>
+
+2. **Test Assets:**
+   - Ensure test cNFTs available in staging wallets
+   - Ensure test SOL/SPL tokens available
+   - Document test asset addresses
+
+3. **Monitoring Setup:**
+   - Enable detailed logging for delegation operations
+   - Set up alerts for failed swaps
+   - Dashboard access for staging
+
+4. **Database:**
+   - Run migrations for new SwapState schema
+   - Seed test data if needed
+
+5. **RPC Configuration:**
+   - Devnet RPC with DAS API support
+   - Rate limiting configured
+
+6. **Documentation:**
+   - Staging deployment guide
+   - Test wallet setup guide
+   - Manual testing checklist
+
+# Test Strategy:
+1. Verify staging deployment works
+2. Verify JITO is disabled in logs
+3. Verify test assets accessible
+4. Run smoke tests on staging
+5. Verify monitoring/alerts work

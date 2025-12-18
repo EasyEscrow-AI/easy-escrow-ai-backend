@@ -1,0 +1,54 @@
+# Task ID: 18
+# Title: Add 'Buy Listed Asset' Feature for Taker on Test Page
+# Status: pending
+# Dependencies: 5, 17
+# Priority: high
+# Description: Add UI for Taker to browse and purchase listed assets with SOL on the /test page.
+# Details:
+**Taker Purchase Flow UI:**
+
+1. **Browse Listings Section:**
+   - New section: 'Available Listings' or 'Marketplace'
+   - Grid/list view of all active listings
+   - Each card shows: asset image, name, price in SOL, seller address (truncated)
+   - Filter options: asset type (cNFT, NFT, Core NFT), price range
+   - Search by asset name or ID
+
+2. **Listing Detail View:**
+   - Click listing to expand/modal with full details
+   - Asset metadata display
+   - Seller information
+   - Price breakdown: listing price + platform fee
+   - 'Buy Now' button
+
+3. **Purchase Flow:**
+   - On 'Buy Now' click:
+     a. Validate Taker wallet connected
+     b. Check Taker has sufficient SOL balance
+     c. Call POST /listings/:id/buy endpoint
+     d. Display transaction for Taker to sign
+     e. Show processing status
+     f. On success: show confirmation, update listings
+
+4. **Purchase Confirmation:**
+   - Success modal with:
+     - 'Asset purchased successfully!'
+     - Asset image and name
+     - Transaction signature (link to explorer)
+     - SOL amount paid
+     - 'View in Wallet' prompt
+   - Refresh Taker's asset list to show new ownership
+
+5. **Error Handling UI:**
+   - Insufficient balance warning before tx
+   - Listing no longer available (sold/cancelled)
+   - Transaction failed with retry option
+   - Network error handling
+
+# Test Strategy:
+1. E2E: Maker lists → Taker buys → verify ownership
+2. Test insufficient balance error
+3. Test concurrent purchase attempt
+4. Test purchase of each asset type
+5. Verify fee calculation display
+6. Test on mobile viewport
