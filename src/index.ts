@@ -8,7 +8,7 @@ import { connectDatabase, checkDatabaseHealth } from './config/database';
 import { connectRedis, checkRedisHealth, disconnectRedis } from './config/redis';
 // DISABLED: Agreement routes - migrated to atomic swap architecture
 // import { agreementRoutes } from './routes';
-import { expiryCancellationRoutes, webhookRoutes, receiptRoutes, transactionLogRoutes, healthRoutes, offersRoutes, listingsRoutes, testRoutes, testExecuteRoutes, authorizedAppsRoutes, noncePoolAdminRoutes } from './routes';
+import { expiryCancellationRoutes, webhookRoutes, receiptRoutes, transactionLogRoutes, healthRoutes, offersRoutes, listingsRoutes, metricsRoutes, testRoutes, testExecuteRoutes, authorizedAppsRoutes, noncePoolAdminRoutes } from './routes';
 import { noncePoolManager, healthCheckService } from './routes/offers.routes';
 import {
   corsOptions,
@@ -236,6 +236,7 @@ app.use('/v1/transactions', transactionLogRoutes);
 app.use('/api/expiry-cancellation', expiryCancellationRoutes);
 app.use('/api', webhookRoutes);
 app.use('/health', healthRoutes);
+app.use('/metrics', metricsRoutes); // Prometheus metrics endpoint
 app.use(authorizedAppsRoutes); // Admin endpoints for zero-fee API key management
 app.use('/admin/nonce-pool', noncePoolAdminRoutes); // Admin endpoints for nonce pool management
 app.use(testRoutes);

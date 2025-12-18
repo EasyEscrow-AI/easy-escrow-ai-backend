@@ -37,3 +37,4 @@ export * from './database-tracker.service';
 export * from './cost-analyzer.service';
 export * from './cnftDelegationService';
 export * from './swapStateMachine';
+export * from './delegationMetrics.service';
