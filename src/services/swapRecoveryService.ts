@@ -730,6 +730,16 @@ export class SwapRecoveryService {
         };
       }
 
+      // Validate swap is in FAILED status - cannot rollback completed or in-progress swaps
+      if (swap.status !== TwoPhaseSwapStatus.FAILED) {
+        return {
+          success: false,
+          swapId,
+          errorCode: RecoveryErrorCode.INVALID_STATE,
+          errorMessage: `Cannot rollback swap in state ${swap.status}. Rollback is only allowed for FAILED swaps.`,
+        };
+      }
+
       const delegationStatus = swap.delegationStatus || {};
       let assetsReturned = 0;
       let failures: string[] = [];
