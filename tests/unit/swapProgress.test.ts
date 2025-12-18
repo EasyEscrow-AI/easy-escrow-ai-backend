@@ -650,7 +650,8 @@ describe('SwapProgressService', () => {
       await progressService.getProgress(swap.id);
 
       // Check cache was set with correct TTL
-      const cacheKey = `progress:${swap.id}`;
+      // Note: CacheService adds prefix internally, so use swapId directly
+      const cacheKey = swap.id;
       const cached = await mockCache.get(cacheKey);
       expect(cached).to.exist;
     });

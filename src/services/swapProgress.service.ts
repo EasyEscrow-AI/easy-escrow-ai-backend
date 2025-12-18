@@ -132,9 +132,6 @@ export interface RateLimitResult {
 /** Cache TTL in seconds */
 const CACHE_TTL_SECONDS = 2;
 
-/** Cache key prefix */
-const CACHE_PREFIX = 'progress:';
-
 /** Rate limit: requests per second per swap */
 const RATE_LIMIT_REQUESTS_PER_SECOND = 1;
 
@@ -167,8 +164,8 @@ export class SwapProgressService {
    */
   async getProgress(swapId: string): Promise<SwapProgressResponse | null> {
     // Check cache first (unless terminal state)
-    const cacheKey = `${CACHE_PREFIX}${swapId}`;
-    const cached = await this.cache.get<SwapProgressResponse>(cacheKey);
+    // Note: CacheService already applies prefix, so just use swapId
+    const cached = await this.cache.get<SwapProgressResponse>(swapId);
     if (cached && !this.isTerminalPhase(cached.phase)) {
       return cached;
     }
@@ -184,7 +181,7 @@ export class SwapProgressService {
 
     // Cache response (skip for terminal states - they won't change)
     if (!this.isTerminalPhase(response.phase)) {
-      await this.cache.set(cacheKey, response, CACHE_TTL_SECONDS);
+      await this.cache.set(swapId, response, CACHE_TTL_SECONDS);
     }
 
     return response;
