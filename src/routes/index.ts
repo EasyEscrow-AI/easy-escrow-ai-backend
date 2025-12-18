@@ -35,6 +35,7 @@ export {
   offersRoutes,
   listingsRoutes,
   // cnftOffersRoutes - INTEGRATED: Now part of offersRoutes at /api/offers/cnft/*
+  // Two-phase swap routes are also integrated into offersRoutes at /api/offers/two-phase/*
   testRoutes,
   testExecuteRoutes,
   authorizedAppsRoutes,
