@@ -1,6 +1,6 @@
 # Task ID: 4
 # Title: Implement cNFT Listing with Delegation
-# Status: pending
+# Status: done
 # Dependencies: 3
 # Priority: high
 # Description: Implement cNFT listing flow where seller delegates cNFT transfer authority to marketplace PDA.
