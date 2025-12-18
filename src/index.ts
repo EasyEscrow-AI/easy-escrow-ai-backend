@@ -182,7 +182,9 @@ app.get('/', (_req: Request, res: Response) => {
     endpoints: {
       health: '/health',
       // agreements: '/v1/agreements', // DISABLED: Migrated to atomic swap - use /api/offers
-      offers: '/api/offers',
+      offers: '/api/offers', // Standard swaps (NFT↔NFT, NFT↔SOL)
+      offersCnft: '/api/offers/cnft', // cNFT offers with SOL escrow
+      offersBulk: '/api/offers/bulk', // Bulk swaps (two-phase lock/settle)
       listings: '/api/listings', // cNFT listings with delegation
       receipts: '/v1/receipts',
       transactions: '/v1/transactions',
@@ -227,7 +229,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Agreement-based escrow has been superseded by atomic swaps via /api/offers
 // See docs/MIGRATION_FROM_LEGACY_ESCROW.md for details
 // app.use(agreementRoutes);
-app.use(offersRoutes);
+app.use(offersRoutes); // Includes atomic swaps (/api/offers) and two-phase swaps (/api/offers/two-phase)
 app.use(listingsRoutes); // cNFT listings with delegation
 app.use(receiptRoutes);
 app.use('/v1/transactions', transactionLogRoutes);
