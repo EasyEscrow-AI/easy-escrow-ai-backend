@@ -563,7 +563,7 @@ function renderNFTs(wallet, nfts) {
                 <div class="nft-mint">${nft.mint.substring(0, 8)}...</div>
                 ${showListButton ? `
                     <div class="nft-card-actions">
-                        <button class="quick-list-btn" data-mint="${nft.mint}" onclick="event.stopPropagation(); showQuickListModal(makerData.nfts.find(n => n.mint === '${nft.mint}'))">
+                        <button class="quick-list-btn" data-mint="${nft.mint}">
                             📝 List
                         </button>
                     </div>
@@ -595,6 +595,20 @@ function renderNFTs(wallet, nfts) {
                 this.src = this.dataset.fallback;
             }
         }, { once: true }); // Only fire once to prevent infinite loops
+    });
+
+    // Add CSP-compliant click handlers for quick list buttons
+    container.querySelectorAll('.quick-list-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation(); // Prevent NFT card selection
+            const mint = this.dataset.mint;
+            if (mint && makerData && makerData.nfts) {
+                const nft = makerData.nfts.find(n => n.mint === mint);
+                if (nft) {
+                    showQuickListModal(nft);
+                }
+            }
+        });
     });
 }
 
@@ -1992,7 +2006,7 @@ async function handleCreateListing() {
             },
             body: JSON.stringify({
                 listingId: result.data.listing.listingId,
-                serializedTransaction: result.data.transaction.serialized,
+                serializedTransaction: result.data.transaction.serializedTransaction,
             }),
         });
 
@@ -2106,7 +2120,7 @@ function renderActiveListings() {
             <div class="listing-card" data-listing-id="${listing.listingId}">
                 <div class="listing-card-header">
                     <img class="listing-card-image" src="${imageUrl}" alt="${escapeHtml(name)}"
-                         onerror="this.src='${getPlaceholderImage(listing.assetId)}'">
+                         data-asset-id="${listing.assetId}">
                     <div class="listing-card-info">
                         <div class="listing-card-name">${escapeHtml(name)}</div>
                         <div class="listing-card-type">cNFT</div>
@@ -2134,17 +2148,40 @@ function renderActiveListings() {
 
                 <div class="listing-card-actions">
                     ${listing.status === 'ACTIVE' || listing.status === 'PENDING' ? `
-                        <button class="listing-action-btn cancel" onclick="handleCancelListing('${listing.listingId}')">
+                        <button class="listing-action-btn cancel" data-action="cancel" data-listing-id="${listing.listingId}">
                             Cancel
                         </button>
                     ` : ''}
-                    <button class="listing-action-btn view" onclick="viewListingDetails('${listing.listingId}')">
+                    <button class="listing-action-btn view" data-action="view" data-listing-id="${listing.listingId}">
                         View
                     </button>
                 </div>
             </div>
         `;
     }).join('');
+
+    // Add CSP-compliant event handlers for listing action buttons
+    container.querySelectorAll('.listing-action-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const action = this.dataset.action;
+            const listingId = this.dataset.listingId;
+            if (action === 'cancel') {
+                handleCancelListing(listingId);
+            } else if (action === 'view') {
+                viewListingDetails(listingId);
+            }
+        });
+    });
+
+    // Add CSP-compliant error handlers for listing card images
+    container.querySelectorAll('.listing-card-image').forEach(img => {
+        img.addEventListener('error', function() {
+            const assetId = this.dataset.assetId;
+            if (assetId) {
+                this.src = getPlaceholderImage(assetId);
+            }
+        }, { once: true });
+    });
 }
 
 // Handle cancel listing
@@ -2194,7 +2231,7 @@ async function handleCancelListing(listingId) {
                 },
                 body: JSON.stringify({
                     listingId: listingId,
-                    serializedTransaction: result.data.transaction.serialized,
+                    serializedTransaction: result.data.transaction.serializedTransaction,
                 }),
             });
 
@@ -2367,7 +2404,7 @@ async function handleQuickListConfirm() {
             },
             body: JSON.stringify({
                 listingId: result.data.listing.listingId,
-                serializedTransaction: result.data.transaction.serialized,
+                serializedTransaction: result.data.transaction.serializedTransaction,
             }),
         });
 
