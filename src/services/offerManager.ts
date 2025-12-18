@@ -348,6 +348,13 @@ export class OfferManager {
       }
       
       // 2. Validate offer is active and not expired
+      // COUNTERED offers cannot be accepted - must accept the counter-offer instead
+      if (offer.status === OfferStatus.COUNTERED) {
+        throw new Error(
+          `Offer has been countered and cannot be directly accepted. ` +
+          `Accept the counter-offer instead or wait for the counter-offer to expire/be rejected.`
+        );
+      }
       if (offer.status !== OfferStatus.ACTIVE) {
         throw new Error(`Offer is not active (status: ${offer.status})`);
       }
@@ -541,9 +548,11 @@ export class OfferManager {
         throw new Error('Only the maker or an admin can cancel this offer');
       }
       
-      // 3. Verify offer is cancelable (ACTIVE or ACCEPTED offers can be cancelled)
+      // 3. Verify offer is cancelable (ACTIVE, ACCEPTED, or COUNTERED offers can be cancelled)
       // ACCEPTED offers have pending transactions but haven't been executed yet
-      if (offer.status !== OfferStatus.ACTIVE && offer.status !== OfferStatus.ACCEPTED) {
+      // COUNTERED offers have pending counter-offers that should also be cancelled
+      const cancelableStatuses: OfferStatus[] = [OfferStatus.ACTIVE, OfferStatus.ACCEPTED, OfferStatus.COUNTERED];
+      if (!cancelableStatuses.includes(offer.status)) {
         throw new Error(`Offer cannot be cancelled (status: ${offer.status})`);
       }
       
@@ -559,13 +568,28 @@ export class OfferManager {
           cancelledBy: walletAddress,
         },
       });
-      
-      // 6. Cancel all OTHER offers using this nonce account (including both ACTIVE and ACCEPTED)
-      // ACCEPTED offers also have pending transactions that would fail with consumed nonce
+
+      // 6. Cancel all OTHER offers using this nonce account (including ACTIVE, ACCEPTED, and COUNTERED)
+      // ACCEPTED offers have pending transactions that would fail with consumed nonce
+      // COUNTERED offers should also be cancelled when the nonce is invalidated
       await this.prisma.swapOffer.updateMany({
         where: {
           nonceAccount: offer.nonceAccount,
           id: { not: offerId },
+          status: { in: [OfferStatus.ACTIVE, OfferStatus.ACCEPTED, OfferStatus.COUNTERED] },
+        },
+        data: {
+          status: OfferStatus.CANCELLED,
+          cancelledAt: new Date(),
+          cancelledBy: walletAddress,
+        },
+      });
+
+      // 7. Cancel any counter-offers linked to this offer
+      // This ensures counter-offers are cancelled when parent is cancelled
+      await this.prisma.swapOffer.updateMany({
+        where: {
+          parentOfferId: offerId,
           status: { in: [OfferStatus.ACTIVE, OfferStatus.ACCEPTED] },
         },
         data: {
@@ -930,11 +954,12 @@ export class OfferManager {
       
       // 7. Reuse the parent's nonce account
       const nonceAccount = parentOffer.nonceAccount;
-      
-      // 8. Calculate fee (same logic as parent)
-      // Note: SOL amounts would need to be extracted from JSONB if stored
-      const offeredSol = BigInt(0); // TODO: Extract from offeredAssets JSONB if SOL is included
-      const requestedSol = BigInt(0); // TODO: Extract from requestedAssets JSONB if SOL is included
+
+      // 8. Extract SOL amounts from parent offer (counter-offer reverses the roles)
+      // Parent's requestedSol becomes counter's offeredSol (what counter-maker offers)
+      // Parent's offeredSol becomes counter's requestedSol (what counter-maker requests)
+      const offeredSol = parentOffer.requestedSolLamports ? BigInt(parentOffer.requestedSolLamports) : BigInt(0);
+      const requestedSol = parentOffer.offeredSolLamports ? BigInt(parentOffer.offeredSolLamports) : BigInt(0);
       const feeBreakdown = this.feeCalculator.calculateFee(offeredSol, requestedSol);
       const platformFee = feeBreakdown.feeLamports;
       
@@ -960,22 +985,37 @@ export class OfferManager {
       const expirationMs = Math.min(remainingTime, defaultExpiration);
       const expiresAt = new Date(Date.now() + expirationMs);
       
-      // 11. Save counter-offer to database
-      const counterOffer = await this.prisma.swapOffer.create({
-        data: {
-          offerType: OfferType.COUNTER,
-          status: OfferStatus.ACTIVE,
-          makerWallet: params.counterMakerWallet,
-          takerWallet: parentOffer.makerWallet,
-          offeredAssets: offeredAssets as any,
-          requestedAssets: requestedAssets as any,
-          platformFeeLamports: platformFee,
-          nonceAccount,
-          currentNonceValue: buildResult.nonceValue,
-          serializedTransaction: buildResult.serializedTransaction,
-          parentOfferId: params.parentOfferId,
-          expiresAt,
-        },
+      // 11. Save counter-offer and mark parent as COUNTERED atomically
+      const counterOffer = await this.prisma.$transaction(async (tx) => {
+        // Create the counter-offer
+        const newCounterOffer = await tx.swapOffer.create({
+          data: {
+            offerType: OfferType.COUNTER,
+            status: OfferStatus.ACTIVE,
+            makerWallet: params.counterMakerWallet,
+            takerWallet: parentOffer.makerWallet,
+            offeredAssets: offeredAssets as any,
+            requestedAssets: requestedAssets as any,
+            offeredSolLamports: offeredSol > BigInt(0) ? offeredSol : null,
+            requestedSolLamports: requestedSol > BigInt(0) ? requestedSol : null,
+            platformFeeLamports: platformFee,
+            nonceAccount,
+            currentNonceValue: buildResult.nonceValue,
+            serializedTransaction: buildResult.serializedTransaction,
+            parentOfferId: params.parentOfferId,
+            expiresAt,
+          },
+        });
+
+        // Mark the parent offer as COUNTERED
+        await tx.swapOffer.update({
+          where: { id: params.parentOfferId },
+          data: {
+            status: OfferStatus.COUNTERED,
+          },
+        });
+
+        return newCounterOffer;
       });
       
       console.log('[OfferManager] Counter-offer created:', {
