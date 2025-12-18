@@ -28,6 +28,11 @@ import {
 } from '../services/cnftOfferEscrowManager';
 import { createCnftService } from '../services/cnftService';
 import { DirectBubblegumService } from '../services/directBubblegumService';
+import {
+  createTwoPhaseSwapLockService,
+  TwoPhaseSwapLockService,
+} from '../services/twoPhaseSwapLockService';
+import { TwoPhaseSwapStatus } from '../generated/prisma';
 
 const router = Router();
 
@@ -149,6 +154,15 @@ const cnftOfferManager = createCnftOfferEscrowManager(
   feeCollector
 );
 console.log('[OffersRoutes] cNFT Offer Escrow Manager initialized');
+
+// Initialize two-phase swap lock service for complex/bulk swaps
+const twoPhaseSwapLockService = createTwoPhaseSwapLockService(
+  connection,
+  prisma,
+  programId,
+  feeCollector
+);
+console.log('[OffersRoutes] Two-Phase Swap Lock Service initialized');
 
 // Initialize health check service
 const healthCheckService = new HealthCheckService(
@@ -2145,6 +2159,716 @@ router.post(
   }
 );
 
+// =============================================================================
+// Two-Phase Swap Lock Routes (for bulk/complex swaps)
+// =============================================================================
+
+/**
+ * Helper to serialize two-phase swap data for API response (handle BigInt)
+ */
+function serializeTwoPhaseSwap(swap: any): any {
+  return {
+    ...swap,
+    solAmountA: swap.solAmountA?.toString() || null,
+    solAmountB: swap.solAmountB?.toString() || null,
+    platformFeeLamports: swap.platformFeeLamports?.toString() || '0',
+    createdAt: swap.createdAt?.toISOString?.() || swap.createdAt,
+    updatedAt: swap.updatedAt?.toISOString?.() || swap.updatedAt,
+    expiresAt: swap.expiresAt?.toISOString?.() || swap.expiresAt,
+    lockConfirmedA: swap.lockConfirmedA?.toISOString?.() || swap.lockConfirmedA || null,
+    lockConfirmedB: swap.lockConfirmedB?.toISOString?.() || swap.lockConfirmedB || null,
+    settledAt: swap.settledAt?.toISOString?.() || swap.settledAt || null,
+    failedAt: swap.failedAt?.toISOString?.() || swap.failedAt || null,
+    cancelledAt: swap.cancelledAt?.toISOString?.() || swap.cancelledAt || null,
+  };
+}
+
+/**
+ * POST /api/offers/two-phase
+ * Create a two-phase swap offer (for bulk/complex swaps)
+ *
+ * Use this endpoint when:
+ * - Swapping multiple cNFTs (3+ assets per side)
+ * - Complex multi-asset swaps that need lock/settle pattern
+ *
+ * Request body:
+ * - partyA: string - Initiator wallet address
+ * - partyB?: string - Counterparty wallet (optional for open offers)
+ * - assetsA: Array<{mint, isCompressed?, isCoreNft?}> - Party A's assets
+ * - assetsB: Array<{mint, isCompressed?, isCoreNft?}> - Party B's assets
+ * - solAmountA?: string - SOL from Party A (lamports)
+ * - solAmountB?: string - SOL from Party B (lamports)
+ */
+router.post(
+  '/api/offers/two-phase',
+  strictRateLimiter,
+  requiredIdempotency,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const {
+        partyA,
+        partyB,
+        assetsA = [],
+        assetsB = [],
+        solAmountA,
+        solAmountB,
+        lockTimeoutSeconds,
+        platformFeeLamports,
+      } = req.body;
+
+      // Validate required fields
+      if (!partyA) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation Error',
+          message: 'partyA is required',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Validate wallet addresses
+      try {
+        new PublicKey(partyA);
+        if (partyB) {
+          new PublicKey(partyB);
+        }
+      } catch (error) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation Error',
+          message: 'Invalid wallet address format',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Validate at least one side has assets or SOL
+      if (assetsA.length === 0 && !solAmountA) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation Error',
+          message: 'Party A must offer at least one asset or SOL',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      if (assetsB.length === 0 && !solAmountB) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation Error',
+          message: 'Party B must offer at least one asset or SOL',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Transform assets to internal format
+      const transformAssets = (assets: any[]) =>
+        assets.map((asset: any) => {
+          let type: 'NFT' | 'CNFT' | 'CORE_NFT' = 'NFT';
+          if (asset.isCoreNft || asset.type === 'CORE_NFT') {
+            type = 'CORE_NFT';
+          } else if (asset.isCompressed || asset.type === 'CNFT') {
+            type = 'CNFT';
+          }
+          return {
+            type,
+            identifier: asset.mint || asset.identifier || asset.assetId,
+            metadata: asset.metadata,
+          };
+        });
+
+      // Create two-phase swap
+      const result = await twoPhaseSwapLockService.createSwap({
+        partyA,
+        partyB,
+        assetsA: transformAssets(assetsA),
+        assetsB: transformAssets(assetsB),
+        solAmountA: solAmountA ? BigInt(solAmountA) : undefined,
+        solAmountB: solAmountB ? BigInt(solAmountB) : undefined,
+        lockTimeoutSeconds: lockTimeoutSeconds
+          ? parseInt(lockTimeoutSeconds, 10)
+          : undefined,
+        platformFeeLamports: platformFeeLamports
+          ? BigInt(platformFeeLamports)
+          : undefined,
+      });
+
+      res.status(201).json({
+        success: true,
+        data: {
+          offer: serializeTwoPhaseSwap(result.swap),
+          offerId: result.swapId,
+          executionStrategy: 'two-phase',
+          requiresLockPhase: true,
+          message: 'Two-phase offer created. Waiting for acceptance.',
+          nextAction: 'Counterparty should call POST /api/offers/:id/accept',
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('[OffersRoutes] Create two-phase offer error:', error);
+      const message = error instanceof Error ? error.message : 'Failed to create offer';
+
+      res.status(500).json({
+        success: false,
+        error: 'Internal Server Error',
+        message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/offers/two-phase/:id
+ * Get a two-phase swap offer by ID
+ */
+router.get(
+  '/api/offers/two-phase/:id',
+  standardRateLimiter,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { id } = req.params;
+
+      const swap = await twoPhaseSwapLockService.getSwap(id);
+
+      if (!swap) {
+        res.status(404).json({
+          success: false,
+          error: 'Not Found',
+          message: `Two-phase offer ${id} not found`,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Derive PDAs for reference
+      const [delegatePDA] = twoPhaseSwapLockService.deriveDelegatePDA(id);
+      const [solVaultA] = twoPhaseSwapLockService.deriveSolVaultPDA(id, 'A');
+      const [solVaultB] = twoPhaseSwapLockService.deriveSolVaultPDA(id, 'B');
+
+      res.status(200).json({
+        success: true,
+        data: {
+          offer: serializeTwoPhaseSwap(swap),
+          executionStrategy: 'two-phase',
+          pdas: {
+            delegatePDA: delegatePDA.toBase58(),
+            solVaultA: solVaultA.toBase58(),
+            solVaultB: solVaultB.toBase58(),
+          },
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('[OffersRoutes] Get two-phase offer error:', error);
+      const message = error instanceof Error ? error.message : 'Failed to get offer';
+
+      res.status(500).json({
+        success: false,
+        error: 'Internal Server Error',
+        message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * POST /api/offers/two-phase/:id/accept
+ * Accept a two-phase swap offer
+ *
+ * Request body:
+ * - partyB: string - Wallet address of the accepting party
+ */
+router.post(
+  '/api/offers/two-phase/:id/accept',
+  strictRateLimiter,
+  requiredIdempotency,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const { partyB } = req.body;
+
+      if (!partyB) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation Error',
+          message: 'partyB wallet address is required',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Validate wallet address
+      try {
+        new PublicKey(partyB);
+      } catch (error) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation Error',
+          message: 'Invalid wallet address format',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Accept swap
+      const result = await twoPhaseSwapLockService.acceptSwap({ swapId: id, partyB });
+
+      // Build lock instructions for Party A
+      const lockTxResult = await twoPhaseSwapLockService.buildLockTransaction({
+        swapId: id,
+        walletAddress: result.swap.partyA,
+        party: 'A',
+      });
+
+      res.status(200).json({
+        success: true,
+        data: {
+          offer: serializeTwoPhaseSwap(result.swap),
+          lockTransaction: {
+            serialized: lockTxResult.serializedTransaction,
+            requiredSigners: lockTxResult.requiredSigners,
+            delegatePDA: lockTxResult.delegatePDA.toBase58(),
+            solVaultPDA: lockTxResult.solVaultPDA.toBase58(),
+            lockedAssets: lockTxResult.lockedAssets,
+            solAmountEscrowed: lockTxResult.solAmountEscrowed.toString(),
+          },
+          message: 'Offer accepted. Party A should now lock their assets.',
+          nextAction: 'Party A signs and submits the lock transaction',
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('[OffersRoutes] Accept two-phase offer error:', error);
+      const message = error instanceof Error ? error.message : 'Failed to accept offer';
+
+      if (message.includes('not found')) {
+        res.status(404).json({
+          success: false,
+          error: 'Not Found',
+          message,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      res.status(500).json({
+        success: false,
+        error: 'Internal Server Error',
+        message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * POST /api/offers/two-phase/:id/lock
+ * Build lock transaction for a two-phase swap
+ *
+ * Request body:
+ * - walletAddress: string - Wallet of the party locking assets
+ */
+router.post(
+  '/api/offers/two-phase/:id/lock',
+  strictRateLimiter,
+  requiredIdempotency,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const { walletAddress } = req.body;
+
+      if (!walletAddress) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation Error',
+          message: 'walletAddress is required',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Validate wallet address
+      try {
+        new PublicKey(walletAddress);
+      } catch (error) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation Error',
+          message: 'Invalid wallet address format',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Get swap to determine party
+      const swap = await twoPhaseSwapLockService.getSwap(id);
+      if (!swap) {
+        res.status(404).json({
+          success: false,
+          error: 'Not Found',
+          message: `Two-phase offer ${id} not found`,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Determine party
+      let party: 'A' | 'B';
+      if (swap.partyA === walletAddress) {
+        party = 'A';
+      } else if (swap.partyB === walletAddress) {
+        party = 'B';
+      } else {
+        res.status(403).json({
+          success: false,
+          error: 'Forbidden',
+          message: `Wallet ${walletAddress} is not a party to this offer`,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Validate state
+      const validStates: Record<'A' | 'B', TwoPhaseSwapStatus[]> = {
+        A: [TwoPhaseSwapStatus.ACCEPTED, TwoPhaseSwapStatus.LOCKING_PARTY_A],
+        B: [TwoPhaseSwapStatus.PARTY_A_LOCKED, TwoPhaseSwapStatus.LOCKING_PARTY_B],
+      };
+
+      if (!validStates[party].includes(swap.status)) {
+        res.status(400).json({
+          success: false,
+          error: 'Invalid State',
+          message: `Cannot lock as Party ${party} in state ${swap.status}`,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Build lock transaction
+      const lockTxResult = await twoPhaseSwapLockService.buildLockTransaction({
+        swapId: id,
+        walletAddress,
+        party,
+      });
+
+      // Transition to LOCKING state
+      if (
+        swap.status === TwoPhaseSwapStatus.ACCEPTED ||
+        swap.status === TwoPhaseSwapStatus.PARTY_A_LOCKED
+      ) {
+        await twoPhaseSwapLockService.startLock(id, party, walletAddress);
+      }
+
+      res.status(200).json({
+        success: true,
+        data: {
+          party,
+          lockTransaction: {
+            serialized: lockTxResult.serializedTransaction,
+            requiredSigners: lockTxResult.requiredSigners,
+            delegatePDA: lockTxResult.delegatePDA.toBase58(),
+            solVaultPDA: lockTxResult.solVaultPDA.toBase58(),
+            lockedAssets: lockTxResult.lockedAssets,
+            solAmountEscrowed: lockTxResult.solAmountEscrowed.toString(),
+          },
+          message: `Lock transaction built for Party ${party}. Sign and submit.`,
+          nextAction: 'Sign and submit, then call POST /api/offers/two-phase/:id/confirm-lock',
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('[OffersRoutes] Lock error:', error);
+      const message = error instanceof Error ? error.message : 'Failed to build lock transaction';
+
+      res.status(500).json({
+        success: false,
+        error: 'Internal Server Error',
+        message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * POST /api/offers/two-phase/:id/confirm-lock
+ * Confirm a lock transaction was executed on-chain
+ *
+ * Request body:
+ * - walletAddress: string - Wallet that executed the lock
+ * - signature: string - Transaction signature
+ */
+router.post(
+  '/api/offers/two-phase/:id/confirm-lock',
+  strictRateLimiter,
+  requiredIdempotency,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const { walletAddress, signature } = req.body;
+
+      if (!walletAddress) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation Error',
+          message: 'walletAddress is required',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      if (!signature) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation Error',
+          message: 'signature is required',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Get swap to determine party
+      const swap = await twoPhaseSwapLockService.getSwap(id);
+      if (!swap) {
+        res.status(404).json({
+          success: false,
+          error: 'Not Found',
+          message: `Two-phase offer ${id} not found`,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Determine party
+      let party: 'A' | 'B';
+      if (swap.partyA === walletAddress) {
+        party = 'A';
+      } else if (swap.partyB === walletAddress) {
+        party = 'B';
+      } else {
+        res.status(403).json({
+          success: false,
+          error: 'Forbidden',
+          message: `Wallet ${walletAddress} is not a party to this offer`,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Confirm lock
+      const result = await twoPhaseSwapLockService.confirmLock({
+        swapId: id,
+        signature,
+        party,
+        walletAddress,
+      });
+
+      // Build response
+      const responseData: any = {
+        offer: serializeTwoPhaseSwap(result.swap),
+        fullyLocked: result.fullyLocked,
+        message: result.fullyLocked
+          ? 'Both parties locked. Ready for settlement.'
+          : `Party ${party} lock confirmed. Waiting for Party ${party === 'A' ? 'B' : 'A'}.`,
+      };
+
+      // If Party A just locked, include lock tx for Party B
+      if (result.nextAction === 'LOCK_PARTY_B' && swap.partyB) {
+        const partyBLockTx = await twoPhaseSwapLockService.buildLockTransaction({
+          swapId: id,
+          walletAddress: swap.partyB,
+          party: 'B',
+        });
+
+        responseData.lockTransaction = {
+          serialized: partyBLockTx.serializedTransaction,
+          requiredSigners: partyBLockTx.requiredSigners,
+          delegatePDA: partyBLockTx.delegatePDA.toBase58(),
+          solVaultPDA: partyBLockTx.solVaultPDA.toBase58(),
+          lockedAssets: partyBLockTx.lockedAssets,
+          solAmountEscrowed: partyBLockTx.solAmountEscrowed.toString(),
+        };
+        responseData.nextAction = 'Party B signs and submits lock transaction';
+      } else if (result.nextAction === 'READY_FOR_SETTLEMENT') {
+        responseData.nextAction = 'Call POST /api/offers/two-phase/:id/settle';
+      }
+
+      res.status(200).json({
+        success: true,
+        data: responseData,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('[OffersRoutes] Confirm lock error:', error);
+      const message = error instanceof Error ? error.message : 'Failed to confirm lock';
+
+      res.status(400).json({
+        success: false,
+        error: 'Confirmation Error',
+        message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * POST /api/offers/two-phase/:id/cancel
+ * Cancel a two-phase swap offer
+ *
+ * Request body:
+ * - walletAddress: string - Wallet requesting cancellation
+ * - reason?: string - Optional cancellation reason
+ */
+router.post(
+  '/api/offers/two-phase/:id/cancel',
+  standardRateLimiter,
+  requiredIdempotency,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const { walletAddress, reason } = req.body;
+
+      if (!walletAddress) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation Error',
+          message: 'walletAddress is required',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      const swap = await twoPhaseSwapLockService.cancelSwap(id, walletAddress, reason);
+
+      res.status(200).json({
+        success: true,
+        data: {
+          offer: serializeTwoPhaseSwap(swap),
+          message: 'Offer cancelled successfully',
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('[OffersRoutes] Cancel two-phase offer error:', error);
+      const message = error instanceof Error ? error.message : 'Failed to cancel offer';
+
+      if (message.includes('not found')) {
+        res.status(404).json({
+          success: false,
+          error: 'Not Found',
+          message,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      res.status(500).json({
+        success: false,
+        error: 'Internal Server Error',
+        message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/offers/two-phase/:id/delegation-status
+ * Check delegation status for cNFT assets in a two-phase offer
+ */
+router.get(
+  '/api/offers/two-phase/:id/delegation-status',
+  standardRateLimiter,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { id } = req.params;
+
+      const swap = await twoPhaseSwapLockService.getSwap(id);
+      if (!swap) {
+        res.status(404).json({
+          success: false,
+          error: 'Not Found',
+          message: `Two-phase offer ${id} not found`,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Check delegation status for cNFT assets
+      const [delegatePDA] = twoPhaseSwapLockService.deriveDelegatePDA(id);
+      const delegationService = twoPhaseSwapLockService.getDelegationService();
+
+      const delegationStatus: Record<string, any> = {};
+
+      // Check Party A assets
+      for (const asset of swap.assetsA) {
+        if (asset.type === 'CNFT') {
+          try {
+            const status = await delegationService.getDelegationStatus(asset.identifier);
+            delegationStatus[asset.identifier] = {
+              party: 'A',
+              ...status,
+              isDelegatedToOffer: status.delegate === delegatePDA.toBase58(),
+            };
+          } catch (error: any) {
+            delegationStatus[asset.identifier] = {
+              party: 'A',
+              error: error.message,
+            };
+          }
+        }
+      }
+
+      // Check Party B assets
+      for (const asset of swap.assetsB) {
+        if (asset.type === 'CNFT') {
+          try {
+            const status = await delegationService.getDelegationStatus(asset.identifier);
+            delegationStatus[asset.identifier] = {
+              party: 'B',
+              ...status,
+              isDelegatedToOffer: status.delegate === delegatePDA.toBase58(),
+            };
+          } catch (error: any) {
+            delegationStatus[asset.identifier] = {
+              party: 'B',
+              error: error.message,
+            };
+          }
+        }
+      }
+
+      res.status(200).json({
+        success: true,
+        data: {
+          offerId: id,
+          offerStatus: swap.status,
+          delegatePDA: delegatePDA.toBase58(),
+          delegationStatus,
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('[OffersRoutes] Get delegation status error:', error);
+      const message = error instanceof Error ? error.message : 'Failed to get delegation status';
+
+      res.status(500).json({
+        success: false,
+        error: 'Internal Server Error',
+        message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
+
 export default router;
-export { noncePoolManager, offerManager, healthCheckService, cnftOfferManager };
+export { noncePoolManager, offerManager, healthCheckService, cnftOfferManager, twoPhaseSwapLockService };
 

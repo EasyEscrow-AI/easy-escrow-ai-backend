@@ -8,7 +8,7 @@ import { connectDatabase, checkDatabaseHealth } from './config/database';
 import { connectRedis, checkRedisHealth, disconnectRedis } from './config/redis';
 // DISABLED: Agreement routes - migrated to atomic swap architecture
 // import { agreementRoutes } from './routes';
-import { expiryCancellationRoutes, webhookRoutes, receiptRoutes, transactionLogRoutes, healthRoutes, offersRoutes, listingsRoutes, swapsRoutes, testRoutes, testExecuteRoutes, authorizedAppsRoutes, noncePoolAdminRoutes } from './routes';
+import { expiryCancellationRoutes, webhookRoutes, receiptRoutes, transactionLogRoutes, healthRoutes, offersRoutes, listingsRoutes, testRoutes, testExecuteRoutes, authorizedAppsRoutes, noncePoolAdminRoutes } from './routes';
 import { noncePoolManager, healthCheckService } from './routes/offers.routes';
 import {
   corsOptions,
@@ -182,9 +182,9 @@ app.get('/', (_req: Request, res: Response) => {
     endpoints: {
       health: '/health',
       // agreements: '/v1/agreements', // DISABLED: Migrated to atomic swap - use /api/offers
-      offers: '/api/offers',
+      offers: '/api/offers', // Atomic swaps (single tx)
+      offersTwoPhase: '/api/offers/two-phase', // Two-phase swaps (lock/settle for bulk)
       listings: '/api/listings', // cNFT listings with delegation
-      swaps: '/api/swaps', // Two-phase swaps with lock/settle architecture
       receipts: '/v1/receipts',
       transactions: '/v1/transactions',
       expiryCancellation: '/api/expiry-cancellation',
@@ -228,9 +228,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Agreement-based escrow has been superseded by atomic swaps via /api/offers
 // See docs/MIGRATION_FROM_LEGACY_ESCROW.md for details
 // app.use(agreementRoutes);
-app.use(offersRoutes);
+app.use(offersRoutes); // Includes atomic swaps (/api/offers) and two-phase swaps (/api/offers/two-phase)
 app.use(listingsRoutes); // cNFT listings with delegation
-app.use(swapsRoutes); // Two-phase swaps with lock/settle architecture
 app.use(receiptRoutes);
 app.use('/v1/transactions', transactionLogRoutes);
 app.use('/api/expiry-cancellation', expiryCancellationRoutes);
