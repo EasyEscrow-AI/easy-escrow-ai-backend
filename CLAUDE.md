@@ -73,6 +73,30 @@ cd ../..
 anchor idl build    # Generate IDL separately
 ```
 
+### Parallel Development with Git Worktrees
+
+For running multiple Claude Code sessions in parallel on different tasks:
+
+```bash
+# Create worktrees from master
+git worktree add ../escrow-task-1-jito-flag -b feat/task-1-description master
+git worktree add ../escrow-task-2-research -b feat/task-2-description master
+
+# Run npm install in each worktree
+cd ../escrow-task-1-jito-flag && npm install
+```
+
+**⚠️ Terminal Tab Naming Convention:**
+- Prefix terminal tabs with `Task #X:` or `PR #XXX:` for easy identification
+- Example: `Task #1: JITO Flag` or `PR #459: Feature Flag`
+- This helps track which Claude session is working on which task
+
+**Workflow:**
+1. Create worktree with descriptive branch name
+2. Open new terminal, rename tab to `Task #X: Description`
+3. Navigate to worktree and run `claude`
+4. Create PR to master (never push directly to master)
+
 ---
 
 ## Critical Rules
