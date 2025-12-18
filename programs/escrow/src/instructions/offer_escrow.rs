@@ -83,8 +83,11 @@ pub struct AcceptOfferEscrow<'info> {
     pub sol_vault: UncheckedAccount<'info>,
 
     /// Platform fee collector wallet
-    /// CHECK: Must match the fee collector used at creation
-    #[account(mut)]
+    /// CHECK: Validated by constraint - must match the fee_collector stored in offer_escrow at creation
+    #[account(
+        mut,
+        constraint = fee_collector.key() == offer_escrow.fee_collector @ EscrowError::InvalidFeeCollector
+    )]
     pub fee_collector: UncheckedAccount<'info>,
 
     /// System program for SOL transfers
@@ -286,6 +289,7 @@ pub fn create_offer_escrow(
     offer_escrow.leaf_index = leaf_index;
     offer_escrow.offer_amount = offer_amount;
     offer_escrow.platform_fee = platform_fee;
+    offer_escrow.fee_collector = ctx.accounts.fee_collector.key();
     offer_escrow.status = OfferEscrowStatus::Active;
     offer_escrow.expiry_timestamp = expiry_timestamp;
     offer_escrow.created_at = clock.unix_timestamp;

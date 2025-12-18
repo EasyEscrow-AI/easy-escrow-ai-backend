@@ -2758,21 +2758,26 @@
     },
     {
       "code": 6030,
+      "name": "InvalidFeeCollector",
+      "msg": "Fee collector does not match the one stored at offer creation"
+    },
+    {
+      "code": 6031,
       "name": "InvalidOfferStatus",
       "msg": "Invalid offer status for this operation"
     },
     {
-      "code": 6031,
+      "code": 6032,
       "name": "OfferExpired",
       "msg": "Offer has expired"
     },
     {
-      "code": 6032,
+      "code": 6033,
       "name": "OfferNotExpired",
       "msg": "Offer has not expired yet"
     },
     {
-      "code": 6033,
+      "code": 6034,
       "name": "OfferStillActive",
       "msg": "Offer is still active - cannot close"
     }
@@ -3075,6 +3080,13 @@
               "Platform fee in lamports"
             ],
             "type": "u64"
+          },
+          {
+            "name": "fee_collector",
+            "docs": [
+              "Fee collector wallet address (stored at creation, validated at acceptance)"
+            ],
+            "type": "pubkey"
           },
           {
             "name": "status",

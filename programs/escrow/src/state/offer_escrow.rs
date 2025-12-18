@@ -30,6 +30,9 @@ pub struct OfferEscrow {
     /// Platform fee in lamports
     pub platform_fee: u64,
 
+    /// Fee collector wallet address (stored at creation, validated at acceptance)
+    pub fee_collector: Pubkey,
+
     /// Offer status
     pub status: OfferEscrowStatus,
 
@@ -50,8 +53,8 @@ impl OfferEscrow {
     /// Space required for OfferEscrow account
     /// Discriminator (8) + offer_id (32) + bidder (32) + owner (32) + asset_id (32) +
     /// merkle_tree (32) + leaf_index (4) + offer_amount (8) + platform_fee (8) +
-    /// status (1) + expiry_timestamp (8) + created_at (8) + resolved_at (8) + bump (1) = 214 bytes
-    pub const LEN: usize = 8 + 32 + 32 + 32 + 32 + 32 + 4 + 8 + 8 + 1 + 8 + 8 + 8 + 1;
+    /// fee_collector (32) + status (1) + expiry_timestamp (8) + created_at (8) + resolved_at (8) + bump (1) = 246 bytes
+    pub const LEN: usize = 8 + 32 + 32 + 32 + 32 + 32 + 4 + 8 + 8 + 32 + 1 + 8 + 8 + 8 + 1;
 
     /// OfferEscrow PDA seeds prefix
     pub const SEED_PREFIX: &'static [u8] = b"offer_escrow";
@@ -99,7 +102,7 @@ mod tests {
 
     #[test]
     fn test_offer_escrow_size() {
-        assert_eq!(OfferEscrow::LEN, 214);
+        assert_eq!(OfferEscrow::LEN, 246);
     }
 
     #[test]
