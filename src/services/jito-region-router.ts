@@ -1,4 +1,5 @@
 import { redisClient } from '../config/redis';
+import { isJitoBundlesEnabled } from '../utils/featureFlags';
 
 /**
  * Picks a Jito Block Engine region for bundle submission, and keeps that region "sticky" for
@@ -32,6 +33,11 @@ export class JitoRegionRouter {
    * If all are in cooldown, choose the region with the soonest cooldown expiry.
    */
   static async pickRegion(): Promise<string> {
+    // If JITO bundles are disabled, return first region as fallback (won't actually be used)
+    if (!isJitoBundlesEnabled()) {
+      return JitoRegionRouter.REGIONS[0];
+    }
+    
     const now = Date.now();
     const regions = JitoRegionRouter.REGIONS;
 

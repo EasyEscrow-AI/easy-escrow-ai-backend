@@ -18,6 +18,7 @@ import {
 } from './transactionGroupBuilder';
 import { getEscrowProgramService, EscrowProgramService } from './escrow-program.service';
 import { ALTService } from './altService';
+import { isJitoBundlesEnabled } from '../utils/featureFlags';
 
 /**
  * Result of bulk swap execution
@@ -75,7 +76,9 @@ export class BulkSwapExecutor {
     );
     this.escrowProgramService = getEscrowProgramService();
     
+    const jitoEnabled = isJitoBundlesEnabled();
     console.log('[BulkSwapExecutor] Initialized');
+    console.log(`[BulkSwapExecutor] JITO bundles: ${jitoEnabled ? 'ENABLED' : 'DISABLED (will use sequential transactions)'}`);
   }
   
   /**

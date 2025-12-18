@@ -1,4 +1,5 @@
 import { redisClient } from '../config/redis';
+import { isJitoBundlesEnabled } from '../utils/featureFlags';
 
 /**
  * Distributed (Redis-backed) rate limiter for Jito HTTP endpoints.
@@ -36,6 +37,11 @@ return scheduled - now
     /** Minimum time between requests in ms (default: 1000) */
     intervalMs?: number;
   }): Promise<void> {
+    // Skip rate limiting if JITO bundles are disabled
+    if (!isJitoBundlesEnabled()) {
+      return;
+    }
+    
     const redisKey = options?.redisKey || JitoHttpRateLimiter.DEFAULT_REDIS_KEY;
     const intervalCandidate = options?.intervalMs ?? JitoHttpRateLimiter.DEFAULT_INTERVAL_MS;
     const intervalMs =

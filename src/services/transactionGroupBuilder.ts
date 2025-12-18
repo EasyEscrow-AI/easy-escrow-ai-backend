@@ -33,6 +33,7 @@ import { CnftService, createCnftService } from './cnftService';
 import { DirectBubblegumService, createDirectBubblegumService } from './directBubblegumService';
 import { DirectSplTokenService, createDirectSplTokenService } from './directSplTokenService';
 import { DirectCoreNftService, createDirectCoreNftService } from './directCoreNftService';
+import { isJitoBundlesEnabled } from '../utils/featureFlags';
 
 // Conservative limits for transaction splitting
 // With full canopy trees (0 proof nodes), we can fit more cNFTs per transaction
@@ -518,7 +519,7 @@ export class TransactionGroupBuilder {
     // On mainnet, Jito bundles handle atomicity with durable nonces
     const isMainnet = process.env.SOLANA_NETWORK === 'mainnet-beta' || 
                       process.env.NODE_ENV === 'production';
-    const useJitoNonces = isMainnet; // Only use durable nonces on mainnet with Jito
+    const useJitoNonces = isMainnet && isJitoBundlesEnabled(); // Only use durable nonces when JITO bundles are enabled
     
     console.log(`[TransactionGroupBuilder] Network mode: ${isMainnet ? 'mainnet (Jito bundles)' : 'devnet (sequential sends)'}`);
     
@@ -960,7 +961,7 @@ export class TransactionGroupBuilder {
     // Network mode detection
     const isMainnet = process.env.SOLANA_NETWORK === 'mainnet-beta' || 
                       process.env.NODE_ENV === 'production';
-    const useJitoNonces = isMainnet;
+    const useJitoNonces = isMainnet && isJitoBundlesEnabled();
     
     console.log(`[TransactionGroupBuilder] Network mode: ${isMainnet ? 'mainnet (Jito bundles)' : 'devnet (sequential sends)'}`);
     
@@ -1315,7 +1316,7 @@ export class TransactionGroupBuilder {
     // Network mode detection
     const isMainnet = process.env.SOLANA_NETWORK === 'mainnet-beta' || 
                       process.env.NODE_ENV === 'production';
-    const useJitoNonces = isMainnet;
+    const useJitoNonces = isMainnet && isJitoBundlesEnabled();
     
     // Collect all NFT types
     const makerCnfts = inputs.makerAssets.filter(a => 
@@ -1999,6 +2000,12 @@ export class TransactionGroupBuilder {
    */
   requiresJitoBundle(inputs: TransactionGroupInput): boolean {
     console.log('[TransactionGroupBuilder] requiresJitoBundle called');
+    
+    // If JITO bundles are disabled, always return false
+    if (!isJitoBundlesEnabled()) {
+      console.log('[TransactionGroupBuilder] JITO bundles disabled via feature flag, returning false');
+      return false;
+    }
     console.log('[TransactionGroupBuilder] Input makerAssets count:', inputs.makerAssets?.length || 0);
     console.log('[TransactionGroupBuilder] Input takerAssets count:', inputs.takerAssets?.length || 0);
     
