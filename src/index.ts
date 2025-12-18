@@ -182,8 +182,9 @@ app.get('/', (_req: Request, res: Response) => {
     endpoints: {
       health: '/health',
       // agreements: '/v1/agreements', // DISABLED: Migrated to atomic swap - use /api/offers
-      offers: '/api/offers', // Atomic swaps (single tx)
-      offersTwoPhase: '/api/offers/two-phase', // Two-phase swaps (lock/settle for bulk)
+      offers: '/api/offers', // Standard swaps (NFT↔NFT, NFT↔SOL)
+      offersCnft: '/api/offers/cnft', // cNFT offers with SOL escrow
+      offersBulk: '/api/offers/bulk', // Bulk swaps (two-phase lock/settle)
       listings: '/api/listings', // cNFT listings with delegation
       receipts: '/v1/receipts',
       transactions: '/v1/transactions',

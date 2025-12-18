@@ -2160,7 +2160,15 @@ router.post(
 );
 
 // =============================================================================
-// Two-Phase Swap Lock Routes (for bulk/complex swaps)
+// Two-Phase Swap Routes (for bulk/complex swaps)
+// =============================================================================
+//
+// These endpoints handle swaps that require a lock/settle pattern:
+// - Bulk swaps with 3+ cNFTs per side
+// - Complex multi-asset swaps
+//
+// The backend automatically uses two-phase when needed. Responses include
+// `executionStrategy: "two-phase"` to indicate lock phase is required.
 // =============================================================================
 
 /**
@@ -2184,12 +2192,30 @@ function serializeTwoPhaseSwap(swap: any): any {
 }
 
 /**
- * POST /api/offers/two-phase
- * Create a two-phase swap offer (for bulk/complex swaps)
+ * Determine execution strategy based on swap parameters
+ * - Atomic: Simple swaps (1-2 assets, single cNFT↔SOL)
+ * - Two-phase: Complex swaps (3+ cNFTs, bulk assets)
+ */
+function determineExecutionStrategy(assetsA: any[], assetsB: any[]): 'atomic' | 'two-phase' {
+  const cnftCountA = assetsA.filter((a: any) => a.isCompressed || a.type === 'CNFT').length;
+  const cnftCountB = assetsB.filter((a: any) => a.isCompressed || a.type === 'CNFT').length;
+  const totalAssets = assetsA.length + assetsB.length;
+
+  // Use two-phase for:
+  // - 3+ cNFTs on either side
+  // - 5+ total assets
+  if (cnftCountA >= 3 || cnftCountB >= 3 || totalAssets >= 5) {
+    return 'two-phase';
+  }
+
+  return 'atomic';
+}
+
+/**
+ * POST /api/offers/bulk
+ * Create a bulk/complex swap offer (uses two-phase lock/settle)
  *
- * Use this endpoint when:
- * - Swapping multiple cNFTs (3+ assets per side)
- * - Complex multi-asset swaps that need lock/settle pattern
+ * For simpler swaps, use POST /api/offers which auto-detects strategy.
  *
  * Request body:
  * - partyA: string - Initiator wallet address
@@ -2200,7 +2226,7 @@ function serializeTwoPhaseSwap(swap: any): any {
  * - solAmountB?: string - SOL from Party B (lamports)
  */
 router.post(
-  '/api/offers/two-phase',
+  '/api/offers/bulk',
   strictRateLimiter,
   requiredIdempotency,
   async (req: Request, res: Response): Promise<void> => {
@@ -2303,13 +2329,13 @@ router.post(
           offerId: result.swapId,
           executionStrategy: 'two-phase',
           requiresLockPhase: true,
-          message: 'Two-phase offer created. Waiting for acceptance.',
-          nextAction: 'Counterparty should call POST /api/offers/:id/accept',
+          message: 'Bulk offer created. Waiting for acceptance.',
+          nextAction: 'Counterparty should call POST /api/offers/bulk/:id/accept',
         },
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
-      console.error('[OffersRoutes] Create two-phase offer error:', error);
+      console.error('[OffersRoutes] Create bulk offer error:', error);
       const message = error instanceof Error ? error.message : 'Failed to create offer';
 
       res.status(500).json({
@@ -2323,11 +2349,11 @@ router.post(
 );
 
 /**
- * GET /api/offers/two-phase/:id
- * Get a two-phase swap offer by ID
+ * GET /api/offers/bulk/:id
+ * Get a bulk swap offer by ID
  */
 router.get(
-  '/api/offers/two-phase/:id',
+  '/api/offers/bulk/:id',
   standardRateLimiter,
   async (req: Request, res: Response): Promise<void> => {
     try {
@@ -2339,7 +2365,7 @@ router.get(
         res.status(404).json({
           success: false,
           error: 'Not Found',
-          message: `Two-phase offer ${id} not found`,
+          message: `Bulk offer ${id} not found`,
           timestamp: new Date().toISOString(),
         });
         return;
@@ -2364,7 +2390,7 @@ router.get(
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
-      console.error('[OffersRoutes] Get two-phase offer error:', error);
+      console.error('[OffersRoutes] Get bulk offer error:', error);
       const message = error instanceof Error ? error.message : 'Failed to get offer';
 
       res.status(500).json({
@@ -2378,14 +2404,14 @@ router.get(
 );
 
 /**
- * POST /api/offers/two-phase/:id/accept
- * Accept a two-phase swap offer
+ * POST /api/offers/bulk/:id/accept
+ * Accept a bulk swap offer
  *
  * Request body:
  * - partyB: string - Wallet address of the accepting party
  */
 router.post(
-  '/api/offers/two-phase/:id/accept',
+  '/api/offers/bulk/:id/accept',
   strictRateLimiter,
   requiredIdempotency,
   async (req: Request, res: Response): Promise<void> => {
@@ -2444,7 +2470,7 @@ router.post(
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
-      console.error('[OffersRoutes] Accept two-phase offer error:', error);
+      console.error('[OffersRoutes] Accept bulk offer error:', error);
       const message = error instanceof Error ? error.message : 'Failed to accept offer';
 
       if (message.includes('not found')) {
@@ -2468,14 +2494,14 @@ router.post(
 );
 
 /**
- * POST /api/offers/two-phase/:id/lock
- * Build lock transaction for a two-phase swap
+ * POST /api/offers/bulk/:id/lock
+ * Build lock transaction for a bulk swap
  *
  * Request body:
  * - walletAddress: string - Wallet of the party locking assets
  */
 router.post(
-  '/api/offers/two-phase/:id/lock',
+  '/api/offers/bulk/:id/lock',
   strictRateLimiter,
   requiredIdempotency,
   async (req: Request, res: Response): Promise<void> => {
@@ -2512,7 +2538,7 @@ router.post(
         res.status(404).json({
           success: false,
           error: 'Not Found',
-          message: `Two-phase offer ${id} not found`,
+          message: `Bulk offer ${id} not found`,
           timestamp: new Date().toISOString(),
         });
         return;
@@ -2578,7 +2604,7 @@ router.post(
             solAmountEscrowed: lockTxResult.solAmountEscrowed.toString(),
           },
           message: `Lock transaction built for Party ${party}. Sign and submit.`,
-          nextAction: 'Sign and submit, then call POST /api/offers/two-phase/:id/confirm-lock',
+          nextAction: 'Sign and submit, then call POST /api/offers/bulk/:id/confirm-lock',
         },
         timestamp: new Date().toISOString(),
       });
@@ -2597,7 +2623,7 @@ router.post(
 );
 
 /**
- * POST /api/offers/two-phase/:id/confirm-lock
+ * POST /api/offers/bulk/:id/confirm-lock
  * Confirm a lock transaction was executed on-chain
  *
  * Request body:
@@ -2605,7 +2631,7 @@ router.post(
  * - signature: string - Transaction signature
  */
 router.post(
-  '/api/offers/two-phase/:id/confirm-lock',
+  '/api/offers/bulk/:id/confirm-lock',
   strictRateLimiter,
   requiredIdempotency,
   async (req: Request, res: Response): Promise<void> => {
@@ -2639,7 +2665,7 @@ router.post(
         res.status(404).json({
           success: false,
           error: 'Not Found',
-          message: `Two-phase offer ${id} not found`,
+          message: `Bulk offer ${id} not found`,
           timestamp: new Date().toISOString(),
         });
         return;
@@ -2696,7 +2722,7 @@ router.post(
         };
         responseData.nextAction = 'Party B signs and submits lock transaction';
       } else if (result.nextAction === 'READY_FOR_SETTLEMENT') {
-        responseData.nextAction = 'Call POST /api/offers/two-phase/:id/settle';
+        responseData.nextAction = 'Call POST /api/offers/bulk/:id/settle';
       }
 
       res.status(200).json({
@@ -2719,15 +2745,15 @@ router.post(
 );
 
 /**
- * POST /api/offers/two-phase/:id/cancel
- * Cancel a two-phase swap offer
+ * POST /api/offers/bulk/:id/cancel
+ * Cancel a bulk swap offer
  *
  * Request body:
  * - walletAddress: string - Wallet requesting cancellation
  * - reason?: string - Optional cancellation reason
  */
 router.post(
-  '/api/offers/two-phase/:id/cancel',
+  '/api/offers/bulk/:id/cancel',
   standardRateLimiter,
   requiredIdempotency,
   async (req: Request, res: Response): Promise<void> => {
@@ -2756,7 +2782,7 @@ router.post(
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
-      console.error('[OffersRoutes] Cancel two-phase offer error:', error);
+      console.error('[OffersRoutes] Cancel bulk offer error:', error);
       const message = error instanceof Error ? error.message : 'Failed to cancel offer';
 
       if (message.includes('not found')) {
@@ -2780,11 +2806,11 @@ router.post(
 );
 
 /**
- * GET /api/offers/two-phase/:id/delegation-status
- * Check delegation status for cNFT assets in a two-phase offer
+ * GET /api/offers/bulk/:id/delegation-status
+ * Check delegation status for cNFT assets in a bulk offer
  */
 router.get(
-  '/api/offers/two-phase/:id/delegation-status',
+  '/api/offers/bulk/:id/delegation-status',
   standardRateLimiter,
   async (req: Request, res: Response): Promise<void> => {
     try {
@@ -2795,7 +2821,7 @@ router.get(
         res.status(404).json({
           success: false,
           error: 'Not Found',
-          message: `Two-phase offer ${id} not found`,
+          message: `Bulk offer ${id} not found`,
           timestamp: new Date().toISOString(),
         });
         return;
