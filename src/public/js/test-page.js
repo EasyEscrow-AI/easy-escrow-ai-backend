@@ -3091,7 +3091,7 @@ async function handleConfirmCancelListing() {
             updateCancelListingTxStatus('confirming', 'Confirming Transaction', 'Waiting for blockchain confirmation...');
 
             // Confirm revoke
-            await fetch(`/api/listings/${listingId}/confirm-revoke`, {
+            const confirmRevokeResponse = await fetch(`/api/listings/${listingId}/confirm-revoke`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -3102,6 +3102,8 @@ async function handleConfirmCancelListing() {
                 }),
             });
 
+            const confirmRevokeResult = await confirmRevokeResponse.json();
+
             // Build explorer URL
             const isDevnet = window.location.hostname.includes('staging') ||
                            window.location.hostname.includes('dev') ||
@@ -3109,7 +3111,13 @@ async function handleConfirmCancelListing() {
                            window.location.hostname === '127.0.0.1';
             const explorerUrl = `https://solscan.io/tx/${execResult.data.signature}${isDevnet ? '?cluster=devnet' : ''}`;
 
-            updateCancelListingTxStatus('success', 'Listing Cancelled!', 'Your asset delegation has been revoked.', explorerUrl);
+            if (!confirmRevokeResult.success) {
+                // Revoke transaction succeeded but confirmation failed - warn but don't fail
+                addLog(`⚠️ Revoke executed but confirmation pending: ${confirmRevokeResult.message || 'Unknown'}`, 'warning');
+                updateCancelListingTxStatus('success', 'Listing Cancelled!', 'Revoke executed (confirmation pending).', explorerUrl);
+            } else {
+                updateCancelListingTxStatus('success', 'Listing Cancelled!', 'Your asset delegation has been revoked.', explorerUrl);
+            }
 
             addLog(`✓ Revoke confirmed! TX: ${execResult.data.signature.substring(0, 20)}...`, 'success');
         } else {
@@ -3293,7 +3301,7 @@ handleQuickListConfirm = async function() {
         updateQuickListTxStatus('confirming', 'Confirming Delegation', 'Waiting for blockchain confirmation...');
 
         // Confirm the listing
-        await fetch(`/api/listings/${result.data.listing.listingId}/confirm`, {
+        const confirmListingResponse = await fetch(`/api/listings/${result.data.listing.listingId}/confirm`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -3304,6 +3312,8 @@ handleQuickListConfirm = async function() {
             }),
         });
 
+        const confirmListingResult = await confirmListingResponse.json();
+
         // Build explorer URL
         const isDevnet = window.location.hostname.includes('staging') ||
                        window.location.hostname.includes('dev') ||
@@ -3312,9 +3322,14 @@ handleQuickListConfirm = async function() {
         const explorerUrl = execResult.data.explorerUrl ||
                           `https://solscan.io/tx/${execResult.data.signature}${isDevnet ? '?cluster=devnet' : ''}`;
 
-        updateQuickListTxStatus('success', 'Listing Active!', 'Your asset is now listed for sale.', explorerUrl);
-
-        addLog(`✅ Listing is now ACTIVE!`, 'success');
+        if (!confirmListingResult.success) {
+            // Delegation transaction succeeded but confirmation failed - warn but don't fail
+            addLog(`⚠️ Delegation executed but confirmation pending: ${confirmListingResult.message || 'Unknown'}`, 'warning');
+            updateQuickListTxStatus('success', 'Listing Created!', 'Delegation executed (confirmation pending).', explorerUrl);
+        } else {
+            updateQuickListTxStatus('success', 'Listing Active!', 'Your asset is now listed for sale.', explorerUrl);
+            addLog(`✅ Listing is now ACTIVE!`, 'success');
+        }
 
         // Hide action buttons on success
         actions.style.display = 'none';
