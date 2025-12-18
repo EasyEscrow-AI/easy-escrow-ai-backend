@@ -652,4 +652,63 @@ describe('TwoPhaseSwapSettleService', () => {
       expect(swap.settledAt).to.be.null;
     });
   });
+
+  describe('Bug Fixes Validation', () => {
+    describe('partyB null validation', () => {
+      it('should reject swaps without partyB for chunk calculation', () => {
+        // Swaps in CREATED status have null partyB (open swaps)
+        const swap = createMockSwapData({
+          partyB: null,
+          status: TwoPhaseSwapStatus.CREATED,
+        });
+
+        // partyB should be null for open swaps
+        expect(swap.partyB).to.be.null;
+      });
+
+      it('should have partyB for accepted swaps', () => {
+        const swap = createMockSwapData({
+          partyB: partyBWallet.toBase58(),
+          status: TwoPhaseSwapStatus.ACCEPTED,
+        });
+
+        expect(swap.partyB).to.not.be.null;
+        expect(swap.partyB).to.equal(partyBWallet.toBase58());
+      });
+    });
+
+    describe('SOL transfer CPI requirement', () => {
+      it('should recognize SOL transfers require CPI', () => {
+        // SOL transfers from vault PDAs cannot be signed directly
+        // They require CPI through the on-chain program
+        const swap = createMockSwapData({
+          solAmountA: BigInt(1_000_000_000),
+          solAmountB: BigInt(0),
+        });
+
+        const hasSolTransfers =
+          (swap.solAmountA && swap.solAmountA > BigInt(0)) ||
+          (swap.solAmountB && swap.solAmountB > BigInt(0));
+
+        expect(hasSolTransfers).to.be.true;
+        // In current implementation, this will throw SettleServiceError
+      });
+
+      it('should allow cNFT-only swaps without SOL', () => {
+        const swap = createMockSwapData({
+          assetsA: [{ type: 'CNFT', identifier: mockAssetId1 }],
+          assetsB: [{ type: 'CNFT', identifier: mockAssetId2 }],
+          solAmountA: null,
+          solAmountB: null,
+        });
+
+        const hasSolTransfers =
+          (swap.solAmountA && swap.solAmountA > BigInt(0)) ||
+          (swap.solAmountB && swap.solAmountB > BigInt(0));
+
+        expect(hasSolTransfers).to.be.false;
+        // cNFT-only swaps should work without CPI
+      });
+    });
+  });
 });

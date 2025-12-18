@@ -336,6 +336,14 @@ export class TwoPhaseSwapSettleService {
       solAmountB: swap.solAmountB?.toString(),
     });
 
+    // Validate that both parties are present (required for settlement)
+    if (!swap.partyB) {
+      throw new SettleServiceError(
+        `Cannot calculate settlement chunks: swap ${swap.id} has no counterparty (partyB). ` +
+        `This is an open swap that hasn't been accepted yet.`
+      );
+    }
+
     const chunks: SettlementChunk[] = [];
     let currentChunk: SettlementChunk | null = null;
 
@@ -634,10 +642,7 @@ export class TwoPhaseSwapSettleService {
       }
     }
 
-    // Get final swap state
-    const finalSwap = (await this.stateMachine.getSwap(params.swapId))!;
-
-    // Handle failure
+    // Handle failure - must update state BEFORE fetching final swap
     if (hasError) {
       await this.stateMachine.failSwap(
         params.swapId,
@@ -646,6 +651,9 @@ export class TwoPhaseSwapSettleService {
         params.triggeredBy
       );
     }
+
+    // Get final swap state AFTER any status updates
+    const finalSwap = (await this.stateMachine.getSwap(params.swapId))!;
 
     const executionTimeMs = Date.now() - startTime;
 
@@ -784,33 +792,17 @@ export class TwoPhaseSwapSettleService {
     }
 
     // Build SOL transfer instructions
-    for (const solTransfer of chunk.solTransfers) {
-      if (solTransfer.type === 'escrow_release') {
-        // Transfer from vault PDA to recipient
-        // Note: This requires the vault PDA to sign, which needs CPI through the program
-        // For now, we'll use a simple System transfer signed by backend authority
-        // In production, this should be a CPI instruction to the escrow program
-        const [vaultPDA] = this.deriveSolVaultPDA(swapId, solTransfer.fromParty);
-
-        const transferIx = SystemProgram.transfer({
-          fromPubkey: vaultPDA,
-          toPubkey: new PublicKey(solTransfer.to),
-          lamports: solTransfer.amount,
-        });
-
-        instructions.push(transferIx);
-      } else if (solTransfer.type === 'platform_fee') {
-        // Platform fee transfer
-        const [vaultPDA] = this.deriveSolVaultPDA(swapId, solTransfer.fromParty);
-
-        const feeIx = SystemProgram.transfer({
-          fromPubkey: vaultPDA,
-          toPubkey: this.feeCollector,
-          lamports: solTransfer.amount,
-        });
-
-        instructions.push(feeIx);
-      }
+    // NOTE: SOL transfers from vault PDAs require CPI through the on-chain escrow program.
+    // PDAs cannot sign transactions directly - they can only authorize through CPI.
+    // This is a known limitation that requires on-chain program integration.
+    if (chunk.solTransfers.length > 0) {
+      // For now, throw an error for SOL transfers until CPI is implemented
+      // TODO: Implement escrow program CPI for SOL vault releases
+      throw new SettleServiceError(
+        'SOL transfers from escrow vaults require on-chain program CPI. ' +
+        'This feature is not yet implemented. For cNFT-only swaps, settlement will work. ' +
+        'SOL escrow release requires integration with the escrow program\'s release_sol instruction.'
+      );
     }
 
     // Create transaction
