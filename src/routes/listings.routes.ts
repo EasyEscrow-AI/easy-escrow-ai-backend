@@ -73,7 +73,7 @@ const feeCollector = feeCollectorStr ? new PublicKey(feeCollectorStr) : undefine
 const listingManager = createListingManager(connection, prisma, platformAuthority, programId, feeCollector);
 
 console.log('[ListingsRoutes] Initialized');
-console.log('[ListingsRoutes] Marketplace PDA:', listingManager.getMarketplacePda().toBase58());
+console.log('[ListingsRoutes] Delegate Authority:', listingManager.getDelegateAuthority().toBase58());
 console.log('[ListingsRoutes] Fee Collector:', feeCollector?.toBase58() || platformAuthority.publicKey.toBase58());
 
 /**
@@ -830,17 +830,21 @@ router.post(
 );
 
 /**
- * GET /api/listings/marketplace-pda
- * Get the marketplace PDA for delegation
+ * GET /api/listings/delegate-authority
+ * Get the delegate authority public key for cNFT delegation
+ * Note: This is the platform authority keypair's public key, not a PDA
  */
 router.get(
-  '/api/listings/marketplace-pda',
+  '/api/listings/delegate-authority',
   standardRateLimiter,
   async (req: Request, res: Response): Promise<void> => {
+    const delegateAuthority = listingManager.getDelegateAuthority().toBase58();
     res.status(200).json({
       success: true,
       data: {
-        marketplacePda: listingManager.getMarketplacePda().toBase58(),
+        delegateAuthority,
+        // Keep for backwards compatibility
+        marketplacePda: delegateAuthority,
         programId: programId.toBase58(),
       },
       timestamp: new Date().toISOString(),

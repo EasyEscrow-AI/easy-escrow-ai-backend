@@ -194,7 +194,7 @@ export class ListingManager {
   private prisma: PrismaClient;
   private delegationService: CnftDelegationService;
   private feeCalculator: FeeCalculator;
-  private marketplacePda: PublicKey;
+  private delegateAuthority: PublicKey;
   private programId: PublicKey;
   private platformAuthority: Keypair;
   private feeCollector: PublicKey;
@@ -216,15 +216,15 @@ export class ListingManager {
     // Fee collector - defaults to platform authority if not specified
     this.feeCollector = feeCollector || platformAuthority.publicKey;
 
-    // Derive marketplace PDA for delegations using the delegation service
-    const [pda] = this.delegationService.deriveMarketplaceDelegatePDA(
-      programId,
-      'easyescrow-marketplace'
-    );
-    this.marketplacePda = pda;
+    // Use platformAuthority.publicKey as the delegate authority
+    // IMPORTANT: We use a regular keypair (not a PDA) because:
+    // - PDAs can only "sign" via CPI from their owning program
+    // - We need to sign client-side transactions during buy flow
+    // - The platformAuthority keypair can sign directly
+    this.delegateAuthority = platformAuthority.publicKey;
 
     console.log('[ListingManager] Initialized');
-    console.log('[ListingManager] Marketplace PDA:', this.marketplacePda.toBase58());
+    console.log('[ListingManager] Delegate Authority:', this.delegateAuthority.toBase58());
     console.log('[ListingManager] Fee Collector:', this.feeCollector.toBase58());
   }
 
@@ -272,7 +272,7 @@ export class ListingManager {
     const validationResult = await this.delegationService.validateCanDelegate(
       params.assetId,
       sellerPubkey,
-      this.marketplacePda
+      this.delegateAuthority
     );
 
     if (!validationResult.valid) {
@@ -291,7 +291,7 @@ export class ListingManager {
     const isDelegated = delegationStatus.status === DelegationStatusEnum.DELEGATED ||
                         delegationStatus.status === DelegationStatusEnum.DELEGATED_AND_FROZEN;
 
-    if (isDelegated && delegationStatus.delegate !== this.marketplacePda.toBase58()) {
+    if (isDelegated && delegationStatus.delegate !== this.delegateAuthority.toBase58()) {
       throw new Error(
         `cNFT ${params.assetId.substring(0, 12)}... is already delegated to another address`
       );
@@ -318,7 +318,7 @@ export class ListingManager {
     const delegationResult = await this.delegationService.delegateCnft(
       params.assetId,
       sellerPubkey,
-      this.marketplacePda
+      this.delegateAuthority
     );
 
     // Build transaction from instruction
@@ -347,7 +347,7 @@ export class ListingManager {
         leafIndex,
         priceLamports: params.priceLamports,
         delegationStatus: 'PENDING',
-        delegatePda: this.marketplacePda.toBase58(),
+        delegatePda: this.delegateAuthority.toBase58(),
         status: 'PENDING',
         expiresAt,
         feeBps,
@@ -432,7 +432,7 @@ export class ListingManager {
     // Verify delegation on-chain using isDelegatedToProgram
     const isDelegatedToMarketplace = await this.delegationService.isDelegatedToProgram(
       listing.assetId,
-      this.marketplacePda
+      this.delegateAuthority
     );
 
     if (!isDelegatedToMarketplace) {
@@ -601,7 +601,7 @@ export class ListingManager {
     // Verify delegation revoked on-chain
     const stillDelegatedToMarketplace = await this.delegationService.isDelegatedToProgram(
       listing.assetId,
-      this.marketplacePda
+      this.delegateAuthority
     );
 
     if (stillDelegatedToMarketplace) {
@@ -743,7 +743,7 @@ export class ListingManager {
 
     if (
       delegationStatus.status === DelegationStatusEnum.NOT_DELEGATED ||
-      delegationStatus.delegate !== this.marketplacePda.toBase58()
+      delegationStatus.delegate !== this.delegateAuthority.toBase58()
     ) {
       // Delegation was revoked - mark listing as cancelled
       await this.prisma.listing.update({
@@ -808,7 +808,7 @@ export class ListingManager {
       assetId: listing.assetId,
       fromOwner: sellerPubkey,
       toRecipient: buyerPubkey,
-      delegatePDA: this.marketplacePda,
+      delegatePDA: this.delegateAuthority,
     });
 
     transaction.add(transferResult.instruction);
@@ -922,10 +922,18 @@ export class ListingManager {
   }
 
   /**
-   * Get marketplace PDA
+   * Get delegate authority public key
+   * Note: This is the platformAuthority.publicKey, not a PDA
+   */
+  getDelegateAuthority(): PublicKey {
+    return this.delegateAuthority;
+  }
+
+  /**
+   * @deprecated Use getDelegateAuthority() instead
    */
   getMarketplacePda(): PublicKey {
-    return this.marketplacePda;
+    return this.delegateAuthority;
   }
 }
 
