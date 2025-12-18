@@ -1,0 +1,50 @@
+# Task ID: 9
+# Title: Implement Lock Phase (Asset Delegation)
+# Status: pending
+# Dependencies: 8
+# Priority: high
+# Description: Implement Phase A of two-phase swap where both parties delegate/escrow assets to marketplace PDA.
+# Details:
+**Lock Phase Implementation:**
+
+1. **Create Swap Intent** via POST /swaps:
+   - Party A proposes swap: my assets for your assets
+   - Validate all assets exist and are owned
+   - Create SwapState in CREATED status
+   - Return swap ID
+
+2. **Accept Swap** via POST /swaps/:id/accept:
+   - Party B accepts terms
+   - Status → ACCEPTED
+   - Return lock instructions for Party A
+
+3. **Lock Party A Assets** via POST /swaps/:id/lock:
+   - Build delegation instructions for each cNFT
+   - Build escrow instructions for SOL/SPL tokens
+   - Party A signs and submits
+   - On confirmation: Status → PARTY_A_LOCKED
+   - Return lock instructions for Party B
+
+4. **Lock Party B Assets**:
+   - Same process for Party B
+   - On confirmation: Status → FULLY_LOCKED
+   - Trigger settlement phase
+
+**Lock Transaction per party:**
+- Delegate each cNFT to marketplace PDA
+- Transfer SOL/SPL to escrow PDA
+- Optional: Freeze cNFTs (Bubblegum v2)
+
+**Safety Guarantees:**
+- Delegated assets can't be moved by owner
+- Escrowed tokens are locked
+- Swap is resumable if Party B doesn't lock
+- Timeout releases Party A's assets
+
+# Test Strategy:
+1. E2E test: create → accept → lock A → lock B → verify FULLY_LOCKED
+2. Test partial lock (A locks, B doesn't)
+3. Test timeout and release
+4. Test multi-asset lock per party
+5. Test mixed assets (cNFT + SOL)
+6. Verify assets actually delegated on-chain

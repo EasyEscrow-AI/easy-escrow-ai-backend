@@ -1,0 +1,63 @@
+# Task ID: 19
+# Title: Add Confirmation Modal for Delegation-Based Actions
+# Status: pending
+# Dependencies: 17, 18
+# Priority: high
+# Description: Implement confirmation modals for listing, buying, and delegation-based swap actions with clear transaction previews.
+# Details:
+**Confirmation Modal System:**
+
+1. **Generic Confirmation Modal Component:**
+   - Reusable modal for all delegation actions
+   - Title, description, action details
+   - 'Confirm' and 'Cancel' buttons
+   - Loading state during transaction
+   - Success/error result display
+
+2. **List for Sale Confirmation:**
+   - Title: 'Confirm Listing'
+   - Show: Asset being listed (image, name)
+   - Show: Listing price in SOL
+   - Show: Platform fee (percentage)
+   - Show: You will receive (after fees)
+   - Warning: 'This will delegate your asset to the marketplace'
+   - Explain: 'You can cancel the listing at any time'
+   - Buttons: 'List Asset' / 'Cancel'
+
+3. **Buy Now Confirmation:**
+   - Title: 'Confirm Purchase'
+   - Show: Asset being purchased (image, name)
+   - Show: Price breakdown:
+     - Listing price: X SOL
+     - Platform fee: Y SOL
+     - Total: Z SOL
+   - Show: Your SOL balance / After purchase balance
+   - Warning if low balance after purchase
+   - Buttons: 'Buy Now' / 'Cancel'
+
+4. **Cancel Listing Confirmation:**
+   - Title: 'Cancel Listing'
+   - Show: Asset being unlisted
+   - Explain: 'This will revoke marketplace delegation'
+   - Buttons: 'Cancel Listing' / 'Keep Listed'
+
+5. **Two-Phase Swap Confirmations:**
+   - Lock Phase: 'You are about to lock your assets for this swap'
+   - Show all assets being locked
+   - Explain recovery process if other party doesn't lock
+   - Settlement Progress: Show chunked transfer progress
+
+6. **Transaction Status in Modal:**
+   - Waiting for wallet: 'Please confirm in your wallet'
+   - Processing: Spinner + 'Transaction submitted...'
+   - Confirming: 'Waiting for confirmation...'
+   - Success: Green checkmark + tx link
+   - Failed: Red X + error message + retry option
+
+# Test Strategy:
+1. Test modal appears for each action type
+2. Test cancel dismisses modal without action
+3. Test loading states display correctly
+4. Test success/error states
+5. Test modal on mobile (scrollable, buttons accessible)
+6. Test keyboard navigation (Escape to close)

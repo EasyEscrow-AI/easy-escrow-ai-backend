@@ -1,0 +1,51 @@
+# Task ID: 8
+# Title: Design Two-Phase Swap State Machine
+# Status: pending
+# Dependencies: 3
+# Priority: high
+# Description: Design and implement the state machine for two-phase swaps (lock → settle) for bulk and cNFT swaps.
+# Details:
+**Swap States:**
+
+1. **CREATED** - Swap offer created, awaiting acceptance
+2. **ACCEPTED** - Both parties agreed, ready to lock
+3. **LOCKING_PARTY_A** - Party A locking assets
+4. **PARTY_A_LOCKED** - Party A assets delegated/escrowed
+5. **LOCKING_PARTY_B** - Party B locking assets
+6. **FULLY_LOCKED** - Both parties locked, ready to settle
+7. **SETTLING** - Transfers in progress
+8. **PARTIAL_SETTLE** - Some transfers complete, continuing
+9. **COMPLETED** - All transfers successful
+10. **FAILED** - Unrecoverable error, needs intervention
+11. **CANCELLED** - User cancelled before full lock
+12. **EXPIRED** - Timeout during lock phase
+
+**Database Schema - SwapState:**
+- id, status, createdAt, updatedAt
+- partyA, partyB addresses
+- assetsA[], assetsB[] - asset details
+- lockTxA, lockTxB - lock transaction signatures
+- settleTxs[] - array of settlement tx signatures
+- currentSettleIndex - progress tracker
+- errorMessage - if FAILED
+- expiresAt - timeout for lock phase
+
+**State Transitions:**
+- CREATED → ACCEPTED (both parties agree)
+- ACCEPTED → LOCKING_PARTY_A (initiator starts)
+- LOCKING_PARTY_A → PARTY_A_LOCKED (tx confirmed)
+- PARTY_A_LOCKED → LOCKING_PARTY_B (other party's turn)
+- LOCKING_PARTY_B → FULLY_LOCKED (tx confirmed)
+- FULLY_LOCKED → SETTLING (begin transfers)
+- SETTLING → PARTIAL_SETTLE (some done)
+- PARTIAL_SETTLE → COMPLETED (all done)
+- Any → FAILED (unrecoverable)
+- CREATED/ACCEPTED → CANCELLED (user action)
+- Lock phases → EXPIRED (timeout)
+
+# Test Strategy:
+1. Unit test all state transitions
+2. Test invalid transition prevention
+3. Test timeout handling
+4. Test cancellation at each state
+5. Test failure recovery logic

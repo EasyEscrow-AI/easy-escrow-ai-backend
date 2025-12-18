@@ -6,6 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 EasyEscrow.ai is a **production-ready Solana atomic swap platform** enabling trustless peer-to-peer NFT/cNFT/SOL exchanges. The backend is a Node.js/Express/TypeScript API with PostgreSQL/Prisma, deployed on DigitalOcean.
 
+**⚠️ IMPORTANT: This platform uses SOL only - NO USDC support.**
+- All swaps use native SOL for payments and fees
+- Legacy USDC code has been removed
+- Do not add USDC/SPL token payment functionality
+
 **Key capabilities:**
 - Atomic swaps: NFT↔SOL, NFT↔NFT, cNFT↔SOL, bulk swaps (up to 10 assets per side)
 - Compressed NFT (cNFT) support with Merkle proof handling via DAS API
@@ -68,11 +73,47 @@ cd ../..
 anchor idl build    # Generate IDL separately
 ```
 
+### Parallel Development with Git Worktrees
+
+For running multiple Claude Code sessions in parallel on different tasks:
+
+```bash
+# Create worktrees from master
+git worktree add ../escrow-task-1-jito-flag -b feat/task-1-description master
+git worktree add ../escrow-task-2-research -b feat/task-2-description master
+
+# Run npm install in each worktree
+cd ../escrow-task-1-jito-flag && npm install
+```
+
+**⚠️ Terminal Tab Naming Convention:**
+- Prefix terminal tabs with `Task #X:` or `PR #XXX:` for easy identification
+- Example: `Task #1: JITO Flag` or `PR #459: Feature Flag`
+- This helps track which Claude session is working on which task
+
+**Workflow:**
+1. Create worktree with descriptive branch name
+2. Open new terminal, rename tab to `Task #X: Description`
+3. Navigate to worktree and run `claude`
+4. Create PR to master (never push directly to master)
+
 ---
 
 ## Critical Rules
 
-### 1. Docker Graceful Restart (CRITICAL)
+### 1. SOL Only - No USDC (CRITICAL)
+
+**This platform uses native SOL exclusively. USDC is NOT supported.**
+
+- ✅ All payments: Native SOL transfers via System Program
+- ✅ All fees: Collected in SOL
+- ✅ NFT↔SOL, NFT↔NFT (with SOL fee), cNFT↔SOL
+- ❌ NO USDC deposits, payments, or SPL token escrow
+- ❌ Do not reference or add USDC functionality
+
+Legacy USDC code was removed during SOL migration. Archived task files in `.taskmaster/tasks/legacy-usdc-archived/` contain historical USDC references - do not use these as implementation guides.
+
+### 2. Docker Graceful Restart (CRITICAL)
 
 **NEVER use process killing commands** with Docker services:
 - ❌ `pkill node`, `taskkill /F /IM node.exe`, `killall node`, `kill -9`
@@ -89,7 +130,7 @@ anchor idl build    # Generate IDL separately
 
 Process killing causes data corruption in PostgreSQL/Redis, incomplete transactions, and orphaned connections.
 
-### 2. Testing Rules (CRITICAL)
+### 3. Testing Rules (CRITICAL)
 
 **NEVER use:** `npm test -- path/to/test.ts` - this loads ALL tests due to glob patterns.
 
@@ -105,7 +146,7 @@ cross-env NODE_ENV=test mocha --require ts-node/register --no-config tests/unit/
 - `--timeout X`: Unit=10s, Integration=20s, E2E=180s
 - `cross-env NODE_ENV=test`: Required for unit tests
 
-### 3. IDL Program ID Verification (CRITICAL)
+### 4. IDL Program ID Verification (CRITICAL)
 
 Each environment has a **different program ID**. IDL files must have the correct address:
 
@@ -126,7 +167,7 @@ Get-Content src\generated\anchor\escrow-idl-production.json | Select-String "add
 # Must show: 2GFDPMZawisx4AMadZEjbcNJPUsLKMzcG4rLEbKtTQUx
 ```
 
-### 4. Solana Program Build (Windows)
+### 5. Solana Program Build (Windows)
 
 **Problem:** Building from project root fails with path length errors (error 123).
 
@@ -145,7 +186,7 @@ anchor idl build         # Generate IDL separately from project root
 - Program binary: `target/deploy/easyescrow.so`
 - IDL file: `target/idl/escrow.json`
 
-### 5. Command Timeout Rules
+### 6. Command Timeout Rules
 
 **Run fast commands DIRECTLY (no timeout wrapper):**
 - `git status`, `git branch`, `git log`, `git diff`

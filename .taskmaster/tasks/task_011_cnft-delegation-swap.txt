@@ -1,0 +1,56 @@
+# Task ID: 11
+# Title: Implement Swap State Recovery and Monitoring
+# Status: pending
+# Dependencies: 10
+# Priority: high
+# Description: Implement recovery mechanisms for interrupted swaps and monitoring dashboard.
+# Details:
+**Recovery Scenarios:**
+
+1. **Lock tx failed:**
+   - Retry submission up to 3 times
+   - If persistent: revert to previous state
+   - Notify user of failure
+
+2. **One party locked, other didn't (timeout):**
+   - After expiry (e.g., 30 min)
+   - Revoke delegation for locked party
+   - Release escrowed assets
+   - Status → EXPIRED
+
+3. **Partial settlement:**
+   - Resume from SwapState.currentSettleIndex
+   - Retry failed chunk
+   - Continue to completion
+
+4. **Complete failure:**
+   - Status → FAILED
+   - Alert admin
+   - Manual intervention to:
+     a. Retry settlement
+     b. Rollback (revoke delegations, return escrow)
+
+**Recovery Service:**
+- Periodic job checks for stuck swaps
+- Stuck = no progress for N minutes
+- Attempts automatic recovery
+- Escalates to admin if unrecoverable
+
+**Admin Dashboard:**
+- List swaps by status
+- View swap details and history
+- Manual actions: retry, cancel, rollback
+- Metrics: completion rate, avg time, failure reasons
+
+**Monitoring:**
+- Alert on FAILED status
+- Alert on swaps stuck > 10 min
+- Daily report of swap statistics
+
+# Test Strategy:
+1. Test recovery from each failure scenario
+2. Test timeout and auto-release
+3. Test manual admin recovery
+4. Test stuck swap detection
+5. Test concurrent recovery attempts
+6. Verify assets returned on failure

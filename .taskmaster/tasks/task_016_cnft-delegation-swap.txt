@@ -1,0 +1,51 @@
+# Task ID: 16
+# Title: Add Monitoring and Observability for Delegation Settlement
+# Status: pending
+# Dependencies: 15
+# Priority: medium
+# Description: Add comprehensive monitoring, metrics, and observability for delegation-based settlement.
+# Details:
+**Metrics (Prometheus):**
+
+1. **Delegation Metrics:**
+   - delegation_success_total
+   - delegation_failure_total
+   - delegation_latency_seconds
+
+2. **Settlement Metrics:**
+   - settlement_complete_total
+   - settlement_failed_total
+   - settlement_duration_seconds
+   - settlement_chunks_total
+   - settlement_retries_total
+
+3. **Swap Metrics:**
+   - swap_created_total
+   - swap_completed_total
+   - swap_failed_total
+   - swap_cancelled_total
+   - swap_expired_total
+   - swap_phase_duration_seconds (by phase)
+
+**Logging:**
+- Structured logs for phase transitions
+- Error categorization (network, validation, timeout)
+- Performance timing for optimization
+- Transaction signature logging
+
+**Dashboards:**
+- Grafana dashboard for swap metrics
+- Real-time swap status view
+- Error rate alerting
+
+**Alerts:**
+- High failure rate (>5%)
+- Stuck swaps (>10 min)
+- Settlement timeout
+- Delegation failures
+
+# Test Strategy:
+1. Verify metrics exposed correctly
+2. Verify logging format
+3. Test alert triggers
+4. Dashboard displays correctly

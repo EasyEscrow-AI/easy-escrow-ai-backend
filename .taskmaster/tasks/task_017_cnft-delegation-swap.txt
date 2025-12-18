@@ -1,0 +1,46 @@
+# Task ID: 17
+# Title: Add 'List for Sale' Feature to Test Page
+# Status: pending
+# Dependencies: 4
+# Priority: high
+# Description: Add a 'List for Sale' button and UI section to the /test page allowing Maker to list cNFTs/NFTs for sale with SOL pricing.
+# Details:
+**Test Page Updates (src/public/test-page.html & src/public/js/test-page.js):**
+
+1. **New 'List for Sale' Section:**
+   - Add new card/section: 'List Asset for Sale'
+   - Asset selector dropdown (from Maker's loaded assets)
+   - Price input field (SOL amount)
+   - Optional: Expiry duration selector (1h, 24h, 7d, 30d)
+   - 'List for Sale' button
+
+2. **List Flow UI:**
+   - On click: Call POST /listings endpoint
+   - Show transaction to sign in wallet
+   - Display delegation status (pending → delegated)
+   - Show success with listing ID and shareable link
+   - Add listing to 'Active Listings' section
+
+3. **Active Listings Display:**
+   - New section showing Maker's active listings
+   - Each listing shows: asset image, name, price, status, created date
+   - 'Cancel Listing' button for each
+   - Status indicator: PENDING_DELEGATION, ACTIVE, SOLD, CANCELLED
+
+4. **Asset Selection Enhancement:**
+   - Add 'List' action button next to each asset in Maker's inventory
+   - Quick-list modal with price input
+   - Support cNFTs, Core NFTs, and standard NFTs
+
+5. **Styling:**
+   - Match existing test page design
+   - Clear visual distinction between swap and listing sections
+   - Mobile-responsive layout
+
+# Test Strategy:
+1. Manual test: List cNFT, verify delegation tx
+2. Manual test: List Core NFT
+3. Test cancel listing flow
+4. Test price validation (min/max)
+5. Verify listing appears in Active Listings
+6. Test on mobile viewport
