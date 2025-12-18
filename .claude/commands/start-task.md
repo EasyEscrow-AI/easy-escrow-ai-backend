@@ -24,9 +24,32 @@ You are working in a git worktree for a specific task from the cNFT delegation f
    - `feat/confirmation-modals` → Task 19: Add Confirmation Modal for Delegation-Based Actions
    - `feat/listing-api-endpoints` → Task 20: Implement Listing API Endpoints
 
-4. **Implement the task**: Follow the PRD requirements exactly. Use TodoWrite to track progress.
+4. **Implement the task using TDD approach**:
+   - Follow the PRD requirements exactly
+   - Use TodoWrite to track progress
+   - **Prefer Test-Driven Development (TDD)**:
+     1. Write failing tests first that define expected behavior
+     2. Implement the minimum code to make tests pass
+     3. Refactor while keeping tests green
 
-5. **After each meaningful commit**:
+5. **Write/Update Tests** (required for all features):
+   - **Unit tests** (`tests/unit/`): Test individual functions and services in isolation
+     - Mock external dependencies (DAS API, RPC, database)
+     - Test edge cases and error handling
+     - Run with: `cross-env NODE_ENV=test mocha --require ts-node/register --no-config tests/unit/YOUR_TEST.test.ts --timeout 10000`
+   - **Integration tests** (`tests/integration/`): Test service interactions
+     - Test database operations with test database
+     - Test API endpoint behavior
+   - **E2E tests** (`tests/staging/e2e/` or `tests/production/e2e/`): Test full flows on devnet/mainnet
+     - Only for critical user-facing flows
+     - Test with real blockchain transactions on staging
+
+   **Test file naming convention**:
+   - Service: `tests/unit/<serviceName>.test.ts`
+   - API routes: `tests/integration/<routeName>.routes.test.ts`
+   - E2E flows: `tests/staging/e2e/XX-<flow-description>.test.ts`
+
+6. **After each meaningful commit**:
    - Stage and commit changes with a descriptive message
    - Create or update the draft PR:
      ```bash
@@ -34,7 +57,7 @@ You are working in a git worktree for a specific task from the cNFT delegation f
      ```
    - If PR already exists, push will update it automatically
 
-6. **When task is complete**:
+7. **When task is complete**:
    - Ensure all changes are committed and pushed
    - Check for merge conflicts with master:
      ```bash
@@ -51,14 +74,21 @@ You are working in a git worktree for a specific task from the cNFT delegation f
      git merge --abort
      ```
 
-7. **Final verification**:
-   - Run relevant tests if applicable
+8. **Final verification**:
+   - Run all relevant tests and ensure they pass:
+     ```bash
+     # Unit tests for the feature
+     cross-env NODE_ENV=test mocha --require ts-node/register --no-config tests/unit/<your-test>.test.ts --timeout 10000
+     ```
+   - Verify no regressions in existing tests
    - Ensure PR is ready for review
    - Report the PR URL to the user
 
 ## Important Rules
 
 - Follow all rules in CLAUDE.md (SOL only, Docker commands, testing rules, etc.)
+- **Tests are required** - no feature is complete without tests
+- Prefer TDD: write tests before implementation when possible
 - Create atomic, focused commits
 - Keep PR scope limited to the specific task
 - Do not modify unrelated files
