@@ -3,10 +3,12 @@ pub mod atomic_swap;
 pub mod withdraw;
 pub mod pause;
 pub mod close;
+pub mod offer_escrow;
 
 pub use initialize::*;
 pub use atomic_swap::*;
 pub use withdraw::*;
 pub use pause::*;
 pub use close::*;
+pub use offer_escrow::*;
 

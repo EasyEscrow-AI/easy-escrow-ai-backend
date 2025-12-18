@@ -498,6 +498,97 @@ model ZeroFeeSwapLog {
 }
 
 // ============================================
+// CNFT OFFER ESCROW SYSTEM
+// ============================================
+
+// Enum for cNFT offer escrow status
+enum OfferEscrowStatus {
+  PENDING   // Offer created, awaiting SOL escrow confirmation
+  ACTIVE    // SOL escrowed, awaiting seller response
+  ACCEPTED  // Seller accepted the offer
+  COUNTERED // Seller proposed different terms
+  CANCELLED // Bidder cancelled the offer
+  EXPIRED   // Offer expired based on expiresAt
+  REJECTED  // Seller explicitly rejected the offer
+}
+
+// cNFT Offer table - offers on listed or unlisted cNFTs with SOL escrow
+model CnftOffer {
+  id              String             @id @default(uuid())
+  offerId         String             @unique @map("offer_id") // External-facing ID
+
+  // Bidder info
+  bidderWallet    String             @map("bidder_wallet") // Offer creator wallet
+
+  // Target cNFT details
+  targetAssetId   String             @map("target_asset_id") // cNFT asset ID being bid on
+  merkleTree      String?            @map("merkle_tree") // Cached merkle tree address
+  leafIndex       Int?               @map("leaf_index") // Cached leaf index
+
+  // cNFT owner (seller)
+  ownerWallet     String             @map("owner_wallet") // Current owner of the cNFT
+
+  // Offer amount (SOL only - no USDC)
+  offerLamports   BigInt             @map("offer_lamports") // Offer amount in lamports
+
+  // Platform fee
+  feeLamports     BigInt             @map("fee_lamports") // Platform fee in lamports
+  feeBps          Int                @default(100) @map("fee_bps") // Fee basis points (100 = 1%)
+
+  // Escrow PDA
+  escrowPda       String             @map("escrow_pda") // PDA holding bidder's SOL
+  escrowBump      Int                @map("escrow_bump") // PDA bump seed
+
+  // Status and timing
+  status          OfferEscrowStatus  @default(PENDING)
+  expiresAt       DateTime           @map("expires_at")
+
+  // Transaction references
+  escrowTxId      String?            @map("escrow_tx_id") // SOL escrow transaction
+  acceptTxId      String?            @map("accept_tx_id") // Accept transaction (cNFT + SOL transfer)
+  cancelTxId      String?            @map("cancel_tx_id") // Cancel/refund transaction
+  rejectTxId      String?            @map("reject_tx_id") // Rejection transaction
+
+  // Counter-offer chain
+  counterOfferId  String?            @map("counter_offer_id") // Reference to counter offer
+  parentOfferId   String?            @map("parent_offer_id") // If this is a counter, reference to original
+
+  // Resolution timestamps
+  acceptedAt      DateTime?          @map("accepted_at")
+  cancelledAt     DateTime?          @map("cancelled_at")
+  rejectedAt      DateTime?          @map("rejected_at")
+  expiredAt       DateTime?          @map("expired_at")
+
+  // Timestamps
+  createdAt       DateTime           @default(now()) @map("created_at")
+  updatedAt       DateTime           @updatedAt @map("updated_at")
+
+  // cNFT metadata cache (optional, for display)
+  metadata        Json?              // Cached cNFT metadata (name, image, etc.)
+
+  // Relations - self-referential for counter-offers
+  counterOffer    CnftOffer?         @relation("CounterOffers", fields: [counterOfferId], references: [id])
+  counterOffers   CnftOffer[]        @relation("CounterOffers")
+  parentOffer     CnftOffer?         @relation("ParentOffers", fields: [parentOfferId], references: [id])
+  childOffers     CnftOffer[]        @relation("ParentOffers")
+
+  // Link to listing if offer is on a listed cNFT
+  listingId       String?            @map("listing_id")
+  listing         Listing?           @relation(fields: [listingId], references: [id])
+
+  @@index([offerId])
+  @@index([bidderWallet])
+  @@index([ownerWallet])
+  @@index([targetAssetId])
+  @@index([status])
+  @@index([expiresAt])
+  @@index([createdAt])
+  @@index([listingId])
+  @@index([status, expiresAt], name: "idx_offer_escrow_status_expiry")
+  @@map("cnft_offers")
+}
+
+// ============================================
 // CNFT LISTING WITH DELEGATION SYSTEM
 // ============================================
 
@@ -563,6 +654,9 @@ model Listing {
 
   // cNFT metadata cache (optional, for display)
   metadata        Json?            // Cached cNFT metadata (name, image, etc.)
+
+  // Relation to offers on this listing
+  offers          CnftOffer[]
 
   @@index([listingId])
   @@index([seller])
