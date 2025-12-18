@@ -1,0 +1,478 @@
+# cNFT Delegation-Based Settlement PRD
+# Replacing JITO Bundles with Bubblegum Delegate Authority
+
+## Overview
+
+This PRD outlines the implementation of a delegation-based settlement system for compressed NFTs (cNFTs) and bulk swaps, replacing the current JITO bundle approach which is not working reliably.
+
+The new approach uses Metaplex Bubblegum's delegation primitive, where the marketplace program PDA becomes the delegate and can drive settlement across multiple normal transactions without needing cross-tx atomicity.
+
+## Core Principles
+
+1. **Singles (sales, offers, 1-for-1 where it fits)**: One atomic settlement tx (already fully working)
+2. **Everything "cNFT" or "bulk"**: Lock → Chunked Settle → Finalize with on-chain progress, using Bubblegum delegation
+
+## Target Environment
+
+- **Initial deployment**: Staging server (devnet)
+- **Production deployment**: After staging validation
+
+---
+
+## Feature 1: JITO Feature Flag
+
+### Task 1: Create JITO Feature Flag to Disable Bundles
+
+**Priority**: High
+**Dependencies**: None
+
+**Description**: Implement a feature flag system to disable JITO bundle functionality globally while preserving all existing JITO code for future re-enablement.
+
+**Requirements**:
+1. Add ENABLE_JITO_BUNDLES environment variable (default: false for staging)
+2. Create feature flag utility in src/utils/featureFlags.ts
+3. Update all JITO bundle entry points to check flag:
+   - sendBundleViaJito in bulkSwapExecutor.ts
+   - JITO-related code in transactionGroupBuilder.ts
+   - Bundle submission logic in offerManager.ts
+   - directBubblegumService.ts JITO integration
+4. When JITO disabled, fall back to standard transaction submission
+5. Add logging when JITO is bypassed
+6. Preserve all existing JITO code (no deletions)
+7. Update .env.staging and .env.production templates
+
+**Test Strategy**:
+- Verify JITO code paths are bypassed when flag is false
+- Verify JITO code works when flag is true
+- Verify logging indicates when fallback is used
+
+---
+
+## Feature 2: Bubblegum Delegation Research & Infrastructure
+
+### Task 2: Research and Document Bubblegum Delegation API
+
+**Priority**: High
+**Dependencies**: None
+
+**Description**: Conduct research on Metaplex Bubblegum delegation for cNFT marketplace operations.
+
+**Research Topics**:
+1. Bubblegum delegate instruction - how to delegate cNFT transfer authority to a PDA
+2. Bubblegum v2 freeze/thaw capabilities for swap safety
+3. Transfer authorization - owner vs delegate signing
+4. CPI patterns for marketplace programs
+5. Revoke delegation patterns and security
+6. Gas costs comparison vs JITO bundles
+7. Existing implementations (Magic Eden, Tensor patterns)
+
+**Deliverables**:
+1. Technical documentation in docs/BUBBLEGUM_DELEGATION.md
+2. Architecture decision record
+3. Comparison matrix: JITO vs delegation approach
+
+---
+
+### Task 3: Implement cNFT Delegation Service
+
+**Priority**: High
+**Dependencies**: Task 2
+
+**Description**: Create service for managing cNFT delegation operations using Bubblegum.
+
+**Implementation**:
+1. Create src/services/cnftDelegationService.ts:
+   - delegateCnft(assetId, ownerPubkey, delegatePDA)
+   - revokeDelegation(assetId, ownerPubkey)
+   - transferAsDelegate(assetId, fromOwner, toRecipient)
+   - buildDelegateInstruction()
+   - buildRevokeInstruction()
+   - isDelegatedToProgram(assetId)
+2. PDA derivation for marketplace delegate authority
+3. Integration with existing cnftService.ts (Merkle proofs, DAS API)
+4. Error handling for delegation failures
+
+**Test Strategy**:
+- Unit tests for delegation instruction building
+- Integration tests with devnet cNFTs
+- Test delegation verification
+
+---
+
+## Feature 3: cNFT Marketplace Operations (Single TX)
+
+### Task 4: Implement cNFT Listing with Delegation
+
+**Priority**: High
+**Dependencies**: Task 3
+
+**Description**: Implement cNFT listing where seller delegates to marketplace PDA.
+
+**Flow**:
+1. Seller calls list endpoint
+2. Backend builds delegate instruction for cNFT → marketplace PDA
+3. Creates listing account/record in database
+4. Optional: Include freeze instruction for Bubblegum v2
+5. Return transaction for seller to sign
+
+**Database Updates**:
+- Add delegationStatus to listing record
+- Track delegation timestamp
+- Store delegate PDA reference
+
+---
+
+### Task 5: Implement cNFT Buy with Delegate Authority
+
+**Priority**: High
+**Dependencies**: Task 4
+
+**Description**: Implement buy flow using delegate authority transfer.
+
+**Flow**:
+1. Buyer sends SOL to escrow
+2. Backend builds Bubblegum Transfer CPI using delegate authority
+3. Single atomic transaction:
+   - SOL transfer from buyer → seller
+   - cNFT transfer via delegate (buyer) ← seller's delegated cNFT
+   - Platform fees paid
+   - Listing closed
+
+**Key Points**:
+- Transfer is valid because delegate (marketplace PDA) signs
+- No need for seller to be online for purchase
+- Single transaction = atomic settlement
+
+---
+
+### Task 6: Implement cNFT Offer System with SOL Escrow
+
+**Priority**: High
+**Dependencies**: Task 3
+
+**Description**: Implement offer/bid system where bidder escrows SOL.
+
+**Flow**:
+1. Bidder creates offer → SOL escrowed to marketplace PDA
+2. Create offer state account in database
+3. Offer can be:
+   - Accepted by owner
+   - Countered
+   - Cancelled/expired
+
+**Database Schema**:
+- OfferState: id, bidder, amount, targetAssetId, status, createdAt, expiresAt
+
+---
+
+### Task 7: Implement Accept/Counter-Offer with Delegation
+
+**Priority**: High
+**Dependencies**: Task 4, Task 6
+
+**Description**: Implement accept and counter-offer flows.
+
+**Accept Flow** (single tx):
+1. Owner accepts offer
+2. Backend builds:
+   - Bubblegum transfer (delegate-signed) → cNFT to bidder
+   - SOL release from escrow → seller
+   - Platform fees
+3. Single atomic transaction
+
+**Counter-Offer Flow**:
+1. Owner proposes different terms
+2. Creates new offer state
+3. Original bidder can accept/reject
+
+---
+
+## Feature 4: Two-Phase cNFT Swap (Multi-Asset)
+
+### Task 8: Design Two-Phase Swap State Machine
+
+**Priority**: High
+**Dependencies**: Task 3
+
+**Description**: Design state machine for two-phase swaps.
+
+**States**:
+1. CREATED - Swap offer created, awaiting both parties
+2. LOCKING_PHASE - Assets being delegated/locked
+3. PARTY_A_LOCKED - One party has locked assets
+4. FULLY_LOCKED - Both parties locked
+5. SETTLING_PHASE - Transfers in progress
+6. PARTIAL_SETTLE - Some transfers complete
+7. COMPLETED - All transfers done
+8. FAILED - Requires manual intervention
+9. CANCELLED - User cancelled before lock
+
+**Database Schema**:
+- SwapState: id, status, partyA, partyB, assetsA, assetsB, lockTxA, lockTxB, settleTxs[], completedAt
+
+---
+
+### Task 9: Implement Lock Phase (Delegation)
+
+**Priority**: High
+**Dependencies**: Task 8
+
+**Description**: Implement Phase A - both parties delegate assets to PDA.
+
+**Flow**:
+1. Create swap intent
+2. Build delegate instructions for Party A's assets
+3. Party A signs → assets delegated to marketplace PDA
+4. Optionally freeze assets (Bubblegum v2)
+5. Build delegate instructions for Party B's assets
+6. Party B signs → assets delegated
+7. Update swap state to FULLY_LOCKED
+
+**Safety Guarantees**:
+- Delegated/frozen assets cannot be moved by owner
+- Swap is resumable if one tx fails
+- Neither party can "rug" mid-flight
+
+---
+
+### Task 10: Implement Settle Phase (Chunked Transfers)
+
+**Priority**: High
+**Dependencies**: Task 9
+
+**Description**: Implement Phase B - execute transfers in chunks.
+
+**Flow**:
+1. Once FULLY_LOCKED, begin settlement
+2. Execute transfers in batches (1-2 cNFTs per tx based on proof size)
+3. Track progress in SwapState.settleTxs
+4. Handle partial failures with retry logic
+5. Mark COMPLETED when all transfers done
+
+**Chunking Strategy**:
+- 1 cNFT per tx if proofs are large (deep trees)
+- 2 cNFTs if proofs fit in tx size limit
+- Progress tracked on-chain and in database
+
+---
+
+### Task 11: Implement Swap State Recovery and Monitoring
+
+**Priority**: High
+**Dependencies**: Task 10
+
+**Description**: Implement recovery for interrupted swaps.
+
+**Recovery Scenarios**:
+1. Lock tx failed → Retry lock, revert if persistent
+2. One party locked, other didn't → Timeout and revoke delegation
+3. Partial settlement → Resume from last confirmed tx
+4. Complete failure → Admin intervention, refund delegated assets
+
+**Monitoring**:
+- Dashboard for swap states
+- Alerts for stuck swaps
+- Automatic retry for transient failures
+
+---
+
+## Feature 5: API Integration
+
+### Task 12: Update Existing API Endpoints for Delegation Flow
+
+**Priority**: High
+**Dependencies**: Task 7, Task 11
+
+**Description**: Update existing API endpoints to use delegation-based settlement.
+
+**Endpoints to Update**:
+1. POST /offers - Detect asset types and route to appropriate flow
+2. POST /offers/:id/accept - Use delegation for cNFT transfers
+3. POST /swaps - Route to two-phase flow for bulk/cNFT swaps
+4. GET /swaps/:id/status - Return swap state including settlement progress
+
+**Routing Logic**:
+- Single NFT/SPL for NFT/SPL → Existing atomic swap
+- Any cNFT involved → Delegation-based flow
+- Bulk (>1 asset per side) → Two-phase swap
+- cNFT-for-SOL → Single-tx delegate transfer
+
+---
+
+### Task 13: Add Swap Progress Websocket/Polling Endpoint
+
+**Priority**: Medium
+**Dependencies**: Task 12
+
+**Description**: Add real-time progress updates for two-phase swaps.
+
+**Implementation**:
+1. GET /swaps/:id/progress - Poll endpoint for swap status
+2. Optional: WebSocket endpoint for real-time updates
+3. Return: current phase, completed transfers, remaining transfers, estimated time
+
+---
+
+## Feature 6: Staging Environment & Testing
+
+### Task 14: Configure Staging Environment for Delegation Testing
+
+**Priority**: High
+**Dependencies**: Task 1
+
+**Description**: Set up staging environment with JITO disabled.
+
+**Configuration**:
+1. Set ENABLE_JITO_BUNDLES=false in staging
+2. Ensure devnet RPC is configured
+3. Set up test wallets with cNFTs
+4. Configure monitoring for new flows
+
+---
+
+### Task 15: Create E2E Tests for Delegation-Based Flows
+
+**Priority**: High
+**Dependencies**: Task 12
+
+**Description**: Comprehensive E2E test suite for new flows.
+
+**Test Cases**:
+1. cNFT listing with delegation
+2. cNFT buy with delegate transfer
+3. cNFT offer/accept flow
+4. Two-phase swap: lock → settle → complete
+5. Two-phase swap: recovery from partial failure
+6. Mixed swap: cNFT + SOL
+7. Cancel scenarios at each phase
+
+---
+
+### Task 16: Add Monitoring and Observability
+
+**Priority**: Medium
+**Dependencies**: Task 15
+
+**Description**: Add monitoring for delegation-based settlement.
+
+**Metrics**:
+1. Delegation success/failure rate
+2. Two-phase swap completion time
+3. Settlement chunk size distribution
+4. Recovery operation frequency
+5. Gas costs comparison
+
+**Logging**:
+- Structured logs for each phase transition
+- Error categorization for debugging
+- Performance timing for optimization
+
+---
+
+## Feature 7: Test Page UI & Confirmation Modals
+
+### Task 17: Add 'List for Sale' Feature to Test Page
+
+**Priority**: High
+**Dependencies**: Task 4
+
+**Description**: Add a 'List for Sale' button and UI section to the /test page allowing Maker to list cNFTs/NFTs for sale with SOL pricing.
+
+**UI Components**:
+1. New 'List Asset for Sale' section with asset selector and price input
+2. 'List for Sale' button that triggers delegation transaction
+3. 'Active Listings' section showing Maker's listings
+4. Quick-list action button next to each asset in inventory
+5. Support for cNFTs, Core NFTs, and standard NFTs
+
+---
+
+### Task 18: Add 'Buy Listed Asset' Feature for Taker
+
+**Priority**: High
+**Dependencies**: Task 5, Task 17
+
+**Description**: Add UI for Taker to browse and purchase listed assets with SOL.
+
+**UI Components**:
+1. 'Available Listings' / 'Marketplace' section with grid view
+2. Listing cards with asset image, name, price, seller
+3. Listing detail view/modal with full metadata
+4. 'Buy Now' button with price breakdown
+5. Purchase confirmation and success display
+6. Error handling for insufficient balance, sold items
+
+---
+
+### Task 19: Add Confirmation Modal for Delegation-Based Actions
+
+**Priority**: High
+**Dependencies**: Task 17, Task 18
+
+**Description**: Implement confirmation modals for all delegation-based actions.
+
+**Modal Types**:
+1. **List Confirmation**: Asset preview, price, fee breakdown, delegation warning
+2. **Buy Confirmation**: Asset preview, price breakdown, balance check
+3. **Cancel Listing Confirmation**: Asset preview, revocation explanation
+4. **Two-Phase Swap Confirmation**: Lock phase warning, settlement progress
+5. **Transaction Status**: Wallet prompt, processing, confirming, success/error states
+
+---
+
+### Task 20: Implement Listing API Endpoints
+
+**Priority**: High
+**Dependencies**: Task 4, Task 5
+
+**Description**: Create backend API endpoints for listing management.
+
+**Endpoints**:
+1. POST /api/listings - Create new listing (returns delegation tx)
+2. POST /api/listings/:id/confirm - Confirm delegation tx
+3. GET /api/listings - Get all active listings (with filters)
+4. GET /api/listings/:id - Get single listing details
+5. POST /api/listings/:id/buy - Purchase listed asset
+6. POST /api/listings/:id/cancel - Cancel listing (returns revoke tx)
+
+**Database**: New Listing model with status tracking
+
+---
+
+## Implementation Order
+
+1. Task 1: JITO Feature Flag (blocks nothing, enables safe development)
+2. Task 2: Research (informs all subsequent tasks)
+3. Task 3: Delegation Service (core infrastructure)
+4. Task 8: State Machine Design (architecture for swaps)
+5. Tasks 4-7: Single-TX marketplace operations (parallel)
+6. Tasks 9-11: Two-phase swap implementation (sequential)
+7. Task 12: API integration
+8. Task 20: Listing API endpoints
+9. Tasks 17-19: Test page UI and confirmation modals
+10. Tasks 13-16: Polish and monitoring
+
+---
+
+## Success Criteria
+
+1. JITO bundles disabled without breaking existing functionality
+2. cNFT listings work with delegation
+3. cNFT purchases complete in single atomic tx
+4. Two-phase swaps complete reliably with recovery
+5. All existing API contracts maintained
+6. Staging tests pass with >95% success rate
+7. Monitoring shows settlement times < 30 seconds
+8. Test page allows Maker to list and Taker to buy with SOL
+9. Confirmation modals display for all delegation actions
+
+---
+
+## Out of Scope (Future)
+
+1. Bubblegum v2 freeze optimization (research first)
+2. Production deployment (after staging validation)
+3. JITO re-enablement (keep code, evaluate later)
+4. Cross-program CPI optimization
+
+
