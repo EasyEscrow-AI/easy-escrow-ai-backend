@@ -300,6 +300,7 @@ enum OfferStatus {
   FILLED    // Swap has been executed successfully
   CANCELLED // Offer was cancelled by maker
   EXPIRED   // Offer expired based on expires_at timestamp
+  COUNTERED // Original offer received a counter-offer
 }
 
 // Enum for swap transaction status
