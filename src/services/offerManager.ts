@@ -17,6 +17,7 @@ import {
   SwapStrategy,
   createTransactionGroupBuilder 
 } from './transactionGroupBuilder';
+import { isJitoBundlesEnabled } from '../utils/featureFlags';
 
 // Maximum assets allowed per side of a swap (maker's offered + taker's requested)
 // Bulk swaps with multiple assets are handled via transaction splitting (Task 44)
@@ -110,6 +111,7 @@ export class OfferManager {
     
     console.log('[OfferManager] Initialized');
     console.log('[OfferManager] Bulk swap support: enabled');
+    console.log(`[OfferManager] JITO bundles: ${isJitoBundlesEnabled() ? 'ENABLED' : 'DISABLED'}`);
   }
   
   /**

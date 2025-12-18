@@ -29,6 +29,7 @@ import {
   BUBBLEGUM_PROGRAM_ID,
 } from '../constants/bubblegum';
 import { CnftService, createCnftService } from './cnftService';
+import { isJitoBundlesEnabled } from '../utils/featureFlags';
 
 /**
  * Parameters for building a direct Bubblegum transfer instruction
@@ -71,6 +72,7 @@ export class DirectBubblegumService {
     this.connection = connection;
     this.cnftService = createCnftService(connection);
     console.log('[DirectBubblegumService] Initialized');
+    console.log(`[DirectBubblegumService] JITO bundles: ${isJitoBundlesEnabled() ? 'ENABLED' : 'DISABLED'}`);
   }
 
   /**

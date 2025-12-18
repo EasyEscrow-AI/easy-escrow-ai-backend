@@ -15,6 +15,7 @@ import bs58 from 'bs58';
 import { PriorityFeeService } from './priority-fee.service';
 import { JitoHttpRateLimiter } from './jito-http-rate-limiter';
 import { JitoRegionRouter } from './jito-region-router';
+import { isJitoBundlesEnabled, logJitoBundlesStatus } from '../utils/featureFlags';
 
 /**
  * Detect Solana network from RPC URL
@@ -255,9 +256,12 @@ export class EscrowProgramService {
     transaction: any,
     isMainnet: boolean
   ): Promise<string> {
-    // For devnet, use regular RPC (no Jito needed, cheaper)
-    if (!isMainnet) {
-      console.log('[EscrowProgramService] Sending via regular RPC (devnet)');
+    // For devnet or when JITO is disabled, use regular RPC
+    const jitoEnabled = isJitoBundlesEnabled();
+    if (!isMainnet || !jitoEnabled) {
+      const reason = !isMainnet ? 'devnet' : 'JITO disabled via feature flag';
+      console.log(`[EscrowProgramService] Sending via regular RPC (${reason})`);
+
       const txId = await this.provider.connection.sendRawTransaction(transaction.serialize(), {
         skipPreflight: false,
         preflightCommitment: 'confirmed',
@@ -832,10 +836,17 @@ export class EscrowProgramService {
       }
     }
 
-    // For devnet, submit transactions individually (Jito bundles don't work on devnet)
+    // For devnet or when JITO bundles are disabled, submit transactions individually
     const isMainnet = isMainnetNetwork(this.provider.connection);
+    const jitoEnabled = isJitoBundlesEnabled();
+    
     if (!isMainnet) {
       console.log('[EscrowProgramService] Devnet detected - submitting transactions individually');
+      return this.submitTransactionsIndividually(serializedTransactions);
+    }
+    
+    if (!jitoEnabled) {
+      console.log('[EscrowProgramService] JITO bundles disabled via feature flag - submitting transactions individually');
       return this.submitTransactionsIndividually(serializedTransactions);
     }
 

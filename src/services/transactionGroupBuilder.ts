@@ -33,6 +33,7 @@ import { CnftService, createCnftService } from './cnftService';
 import { DirectBubblegumService, createDirectBubblegumService } from './directBubblegumService';
 import { DirectSplTokenService, createDirectSplTokenService } from './directSplTokenService';
 import { DirectCoreNftService, createDirectCoreNftService } from './directCoreNftService';
+import { isJitoBundlesEnabled } from '../utils/featureFlags';
 
 // Conservative limits for transaction splitting
 // With full canopy trees (0 proof nodes), we can fit more cNFTs per transaction
@@ -1999,6 +2000,12 @@ export class TransactionGroupBuilder {
    */
   requiresJitoBundle(inputs: TransactionGroupInput): boolean {
     console.log('[TransactionGroupBuilder] requiresJitoBundle called');
+    
+    // If JITO bundles are disabled, always return false
+    if (!isJitoBundlesEnabled()) {
+      console.log('[TransactionGroupBuilder] JITO bundles disabled via feature flag, returning false');
+      return false;
+    }
     console.log('[TransactionGroupBuilder] Input makerAssets count:', inputs.makerAssets?.length || 0);
     console.log('[TransactionGroupBuilder] Input takerAssets count:', inputs.takerAssets?.length || 0);
     

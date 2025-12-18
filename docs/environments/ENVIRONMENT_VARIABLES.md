@@ -8,6 +8,7 @@ Complete reference for all environment variables used by the EasyEscrow.ai backe
 - [Database Configuration](#database-configuration)
 - [Redis Configuration](#redis-configuration)
 - [Solana Blockchain](#solana-blockchain)
+- [JITO Configuration](#jito-configuration)
 - [Authentication & Security](#authentication--security)
 - [Monitoring & Background Jobs](#monitoring--background-jobs)
 - [Webhooks](#webhooks)
@@ -243,6 +244,44 @@ STAGING_TEST_TREE=DAiT7CHVD5yuQfDAnRwfvwEFNkUKedrs4Evec2U7Gm7Q
 2. Add the tree address to `.env` as `STAGING_TEST_TREE`
 3. Mint test cNFTs to this tree using `scripts/mint-two-fresh-test-monkeys.ts`
 4. The `/test` page will automatically filter cNFTs to show only those from this tree
+
+---
+
+## JITO Configuration
+
+### `ENABLE_JITO_BUNDLES`
+- **Type**: Boolean
+- **Default**: `false`
+- **Options**: `true`, `false`, `1`, `0`
+- **Required**: No
+- **Description**: Enable/disable JITO bundle submission for atomic multi-transaction execution.
+
+```bash
+# Staging/Devnet (disabled by default)
+ENABLE_JITO_BUNDLES=false
+
+# Mainnet (recommended to enable)
+ENABLE_JITO_BUNDLES=true
+```
+
+**Purpose:**
+JITO bundles provide atomic execution of multiple transactions on Solana mainnet, ensuring that either all transactions in a bundle land in the same slot or none do. This is critical for bulk NFT swaps where multiple cNFT transfers must be executed atomically.
+
+**Behavior when disabled:**
+- Transactions are submitted individually via standard Solana RPC
+- Each transaction is confirmed before the next is sent
+- No atomicity guarantee between transactions
+- Suitable for staging/testing environments
+
+**Behavior when enabled:**
+- Transactions are bundled and submitted to JITO Block Engine
+- All transactions land atomically in the same slot or none do
+- Uses JITO regional routing and rate limiting
+- Required for production mainnet deployments with bulk NFT swaps
+
+**Environments:**
+- `staging`: Set to `false` (default) - avoids JITO dependencies during testing
+- `production`: Set to `true` - enables atomic bundle execution on mainnet
 
 ---
 
