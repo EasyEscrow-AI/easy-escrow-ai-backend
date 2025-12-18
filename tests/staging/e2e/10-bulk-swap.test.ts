@@ -47,6 +47,24 @@ const PROGRAM_ID = new PublicKey('AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei')
 const STAGING_API_URL = process.env.STAGING_API_URL || 'https://staging-api.easyescrow.ai';
 const ATOMIC_SWAP_API_KEY = process.env.ATOMIC_SWAP_API_KEY || '';
 
+/**
+ * IMPORTANT: Asset Index Strategy
+ *
+ * Each test uses DIFFERENT NFT indices to avoid ownership conflicts when running sequentially.
+ * After a swap completes, NFT ownership transfers, so tests cannot reuse the same assets.
+ *
+ * Asset allocation per test:
+ * - Test 2+2: maker splNfts[0,1], taker splNfts[0,1]
+ * - Test 3+1: maker splNfts[2,3,4], taker splNfts[2]
+ * - Test 4+0: maker splNfts[5,6,7,8]
+ * - Test mixed: maker splNfts[9], maker cnfts[0], taker cnfts[0]
+ *
+ * Required minimum assets in staging-test-assets.json:
+ * - maker.splNfts: 10 NFTs
+ * - taker.splNfts: 3 NFTs
+ * - maker.cnfts: 1 cNFT
+ * - taker.cnfts: 1 cNFT
+ */
 describe('🚀 Staging E2E: Bulk Swap (2-4 NFTs) - Devnet', () => {
   let connection: Connection;
   let wallets: DevnetWallets;
@@ -220,18 +238,21 @@ describe('🚀 Staging E2E: Bulk Swap (2-4 NFTs) - Devnet', () => {
       const idempotencyKey = AtomicSwapApiClient.generateIdempotencyKey('staging-bulk-3-1');
 
       // Load real NFT addresses from fixtures
+      // Uses indices [2,3,4] for maker and [2] for taker to avoid conflicts with 2+2 test
       if (!stagingAssets ||
-          !stagingAssets.maker?.splNfts?.length || stagingAssets.maker.splNfts.length < 3 ||
-          !stagingAssets.taker?.splNfts?.length || stagingAssets.taker.splNfts.length < 1) {
+          !stagingAssets.maker?.splNfts?.length || stagingAssets.maker.splNfts.length < 5 ||
+          !stagingAssets.taker?.splNfts?.length || stagingAssets.taker.splNfts.length < 3) {
         console.log('⚠️  Insufficient NFTs in fixtures - skipping test');
+        console.log(`   Maker NFTs: ${stagingAssets?.maker?.splNfts?.length || 0} (need 5+)`);
+        console.log(`   Taker NFTs: ${stagingAssets?.taker?.splNfts?.length || 0} (need 3+)`);
         this.skip();
         return;
       }
 
-      const makerNft1 = stagingAssets.maker.splNfts[0].mint;
-      const makerNft2 = stagingAssets.maker.splNfts[1].mint;
-      const makerNft3 = stagingAssets.maker.splNfts[2].mint;
-      const takerNft1 = stagingAssets.taker.splNfts[0].mint;
+      const makerNft1 = stagingAssets.maker.splNfts[2].mint;
+      const makerNft2 = stagingAssets.maker.splNfts[3].mint;
+      const makerNft3 = stagingAssets.maker.splNfts[4].mint;
+      const takerNft1 = stagingAssets.taker.splNfts[2].mint;
 
       const createResponse = await apiClient.createOffer({
         makerWallet: wallets.sender.publicKey.toBase58(),
@@ -315,16 +336,18 @@ describe('🚀 Staging E2E: Bulk Swap (2-4 NFTs) - Devnet', () => {
       const idempotencyKey = AtomicSwapApiClient.generateIdempotencyKey('staging-bulk-4-0');
 
       // Load real NFT addresses from fixtures
-      if (!stagingAssets || !stagingAssets.maker?.splNfts?.length || stagingAssets.maker.splNfts.length < 4) {
+      // Uses indices [5,6,7,8] for maker to avoid conflicts with 2+2 and 3+1 tests
+      if (!stagingAssets || !stagingAssets.maker?.splNfts?.length || stagingAssets.maker.splNfts.length < 9) {
         console.log('⚠️  Insufficient NFTs in fixtures - skipping test');
+        console.log(`   Maker NFTs: ${stagingAssets?.maker?.splNfts?.length || 0} (need 9+)`);
         this.skip();
         return;
       }
 
-      const makerNft1 = stagingAssets.maker.splNfts[0].mint;
-      const makerNft2 = stagingAssets.maker.splNfts[1].mint;
-      const makerNft3 = stagingAssets.maker.splNfts[2].mint;
-      const makerNft4 = stagingAssets.maker.splNfts[3].mint;
+      const makerNft1 = stagingAssets.maker.splNfts[5].mint;
+      const makerNft2 = stagingAssets.maker.splNfts[6].mint;
+      const makerNft3 = stagingAssets.maker.splNfts[7].mint;
+      const makerNft4 = stagingAssets.maker.splNfts[8].mint;
 
       const createResponse = await apiClient.createOffer({
         makerWallet: wallets.sender.publicKey.toBase58(),
@@ -407,21 +430,22 @@ describe('🚀 Staging E2E: Bulk Swap (2-4 NFTs) - Devnet', () => {
 
       // Load real NFT addresses from fixtures
       // Check for actual mixed assets (SPL + cNFT)
-      const hasMakerSpl = stagingAssets?.maker?.splNfts?.length >= 1;
+      // Uses index [9] for maker splNfts to avoid conflicts with other tests
+      const hasMakerSpl = stagingAssets?.maker?.splNfts?.length >= 10;
       const hasMakerCnft = stagingAssets?.maker?.cnfts?.length >= 1;
       const hasTakerCnft = stagingAssets?.taker?.cnfts?.length >= 1;
 
       if (!stagingAssets || !hasMakerSpl || !hasMakerCnft || !hasTakerCnft) {
         console.log('⚠️  Insufficient mixed assets in fixtures - skipping test');
-        console.log(`   Maker SPL NFTs: ${stagingAssets?.maker?.splNfts?.length || 0} (need 1+)`);
+        console.log(`   Maker SPL NFTs: ${stagingAssets?.maker?.splNfts?.length || 0} (need 10+)`);
         console.log(`   Maker cNFTs: ${stagingAssets?.maker?.cnfts?.length || 0} (need 1+)`);
         console.log(`   Taker cNFTs: ${stagingAssets?.taker?.cnfts?.length || 0} (need 1+)`);
         this.skip();
         return;
       }
 
-      // Use real mixed assets
-      const makerSplNft = stagingAssets.maker.splNfts[0].mint;
+      // Use real mixed assets - index [9] for SPL to avoid conflicts
+      const makerSplNft = stagingAssets.maker.splNfts[9].mint;
       const makerCnft = stagingAssets.maker.cnfts[0].mint;
       const takerCnft = stagingAssets.taker.cnfts[0].mint;
 
@@ -518,7 +542,9 @@ describe('🚀 Staging E2E: Bulk Swap (2-4 NFTs) - Devnet', () => {
  *
  * 4. Create staging test assets fixture:
  *    - Create tests/fixtures/staging-test-assets.json
- *    - Include maker/taker SPL NFTs and cNFTs
+ *    - Required: maker.splNfts[0-9] (10 NFTs), taker.splNfts[0-2] (3 NFTs)
+ *    - Required: maker.cnfts[0] (1 cNFT), taker.cnfts[0] (1 cNFT)
+ *    - Each test uses different indices to avoid ownership conflicts
  *
  * 5. Run tests:
  *    npm run test:staging:e2e:bulk-swap
