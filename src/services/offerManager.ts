@@ -587,10 +587,11 @@ export class OfferManager {
 
       // 7. Cancel any counter-offers linked to this offer
       // This ensures counter-offers are cancelled when parent is cancelled
+      // Include COUNTERED status for consistency (counter-offers can themselves be countered)
       await this.prisma.swapOffer.updateMany({
         where: {
           parentOfferId: offerId,
-          status: { in: [OfferStatus.ACTIVE, OfferStatus.ACCEPTED] },
+          status: { in: [OfferStatus.ACTIVE, OfferStatus.ACCEPTED, OfferStatus.COUNTERED] },
         },
         data: {
           status: OfferStatus.CANCELLED,
@@ -987,6 +988,20 @@ export class OfferManager {
       
       // 11. Save counter-offer and mark parent as COUNTERED atomically
       const counterOffer = await this.prisma.$transaction(async (tx) => {
+        // Re-verify parent status inside transaction to prevent TOCTOU race condition
+        // Another user might have accepted, cancelled, or countered the offer between validation and now
+        const currentParent = await tx.swapOffer.findUnique({
+          where: { id: params.parentOfferId },
+          select: { status: true },
+        });
+
+        if (!currentParent || currentParent.status !== OfferStatus.ACTIVE) {
+          throw new Error(
+            `Parent offer is no longer active (status: ${currentParent?.status || 'not found'}). ` +
+            `It may have been accepted, cancelled, or countered by another user.`
+          );
+        }
+
         // Create the counter-offer
         const newCounterOffer = await tx.swapOffer.create({
           data: {
@@ -1007,7 +1022,7 @@ export class OfferManager {
           },
         });
 
-        // Mark the parent offer as COUNTERED
+        // Mark the parent offer as COUNTERED (safe now after re-verification)
         await tx.swapOffer.update({
           where: { id: params.parentOfferId },
           data: {

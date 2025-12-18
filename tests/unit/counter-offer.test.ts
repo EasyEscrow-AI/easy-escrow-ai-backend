@@ -276,12 +276,13 @@ describe('Counter-Offer Functionality', () => {
       }
 
       // Cancel counter-offers linked to parent
-      const activeStatuses: OfferStatus[] = [OfferStatus.ACTIVE, OfferStatus.ACCEPTED];
+      // Include COUNTERED for consistency (counter-offers can themselves be countered)
+      const cancelableCounterStatuses: OfferStatus[] = [OfferStatus.ACTIVE, OfferStatus.ACCEPTED, OfferStatus.COUNTERED];
       offers
         .filter(
           (o) =>
             o.parentOfferId === cancelledOfferId &&
-            activeStatuses.includes(o.status)
+            cancelableCounterStatuses.includes(o.status)
         )
         .forEach((o) => {
           o.status = OfferStatus.CANCELLED;
