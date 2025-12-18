@@ -2461,3 +2461,418 @@ loadWalletInfo = async function(wallet) {
 window.handleCancelListing = handleCancelListing;
 window.viewListingDetails = viewListingDetails;
 window.showQuickListModal = showQuickListModal;
+
+// ========================================
+// MARKETPLACE FUNCTIONALITY (Task 18)
+// ========================================
+
+// Marketplace state
+let marketplaceListings = [];
+let marketplaceSearchTerm = '';
+let marketplacePriceFilter = 'all';
+let selectedBuyListing = null;
+
+// Initialize marketplace functionality after DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    // Wait for main init to complete
+    setTimeout(initializeMarketplaceFeatures, 150);
+});
+
+function initializeMarketplaceFeatures() {
+    console.log('🛒 Initializing marketplace features...');
+
+    // Search input handler
+    const searchInput = document.getElementById('marketplace-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            marketplaceSearchTerm = e.target.value.toLowerCase();
+            renderMarketplaceListings();
+        });
+    }
+
+    // Price filter handler
+    const priceFilter = document.getElementById('marketplace-price-filter');
+    if (priceFilter) {
+        priceFilter.addEventListener('change', (e) => {
+            marketplacePriceFilter = e.target.value;
+            renderMarketplaceListings();
+        });
+    }
+
+    // Refresh button handler
+    const refreshBtn = document.getElementById('refresh-marketplace-btn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', loadMarketplaceListings);
+    }
+
+    // Buy modal handlers
+    const buyModalCancel = document.getElementById('buy-modal-cancel');
+    if (buyModalCancel) {
+        buyModalCancel.addEventListener('click', hideBuyModal);
+    }
+
+    const buyModalConfirm = document.getElementById('buy-modal-confirm');
+    if (buyModalConfirm) {
+        buyModalConfirm.addEventListener('click', handleConfirmPurchase);
+    }
+
+    // Success modal close button
+    const successCloseBtn = document.getElementById('success-close-btn');
+    if (successCloseBtn) {
+        successCloseBtn.addEventListener('click', hidePurchaseSuccessModal);
+    }
+
+    console.log('✅ Marketplace features initialized');
+}
+
+// Load marketplace listings (all active listings from all sellers)
+async function loadMarketplaceListings() {
+    const container = document.getElementById('marketplace-grid');
+    if (!container) {
+        return;
+    }
+
+    container.innerHTML = '<div class="loading"><div class="spinner"></div>Loading marketplace...</div>';
+
+    try {
+        // Fetch all active listings
+        const response = await fetch('/api/listings?status=ACTIVE');
+        const result = await response.json();
+
+        if (!result.success) {
+            throw new Error(result.message || 'Failed to load marketplace');
+        }
+
+        marketplaceListings = result.data.listings || [];
+        console.log(`🛒 Loaded ${marketplaceListings.length} marketplace listings`);
+        renderMarketplaceListings();
+
+    } catch (error) {
+        console.error('Load marketplace error:', error);
+        container.innerHTML = `<div class="error-message">Failed to load marketplace: ${error.message}</div>`;
+    }
+}
+
+// Render marketplace listings
+function renderMarketplaceListings() {
+    const container = document.getElementById('marketplace-grid');
+    if (!container) return;
+
+    // Apply filters
+    let filteredListings = marketplaceListings.filter(listing => {
+        // Filter out expired listings
+        const expiresAt = new Date(listing.expiresAt);
+        if (expiresAt < new Date()) return false;
+
+        // Search filter
+        if (marketplaceSearchTerm) {
+            const name = (listing.metadata?.name || '').toLowerCase();
+            const assetId = (listing.assetId || '').toLowerCase();
+            if (!name.includes(marketplaceSearchTerm) && !assetId.includes(marketplaceSearchTerm)) {
+                return false;
+            }
+        }
+
+        // Price filter
+        const priceSol = parseInt(listing.priceLamports) / 1e9;
+        if (marketplacePriceFilter === 'low' && priceSol >= 0.1) return false;
+        if (marketplacePriceFilter === 'mid' && (priceSol < 0.1 || priceSol > 1)) return false;
+        if (marketplacePriceFilter === 'high' && priceSol <= 1) return false;
+
+        return true;
+    });
+
+    if (filteredListings.length === 0) {
+        container.innerHTML = '<div class="empty-state">No listings available. Check back later!</div>';
+        return;
+    }
+
+    container.innerHTML = filteredListings.map(listing => {
+        const metadata = listing.metadata || {};
+        const imageUrl = metadata.image || getPlaceholderImage(listing.assetId);
+        const name = metadata.name || 'Unknown cNFT';
+        const priceSol = (parseInt(listing.priceLamports) / 1e9).toFixed(4);
+        const priceUsd = solPriceUSD ? (parseInt(listing.priceLamports) / 1e9 * solPriceUSD).toFixed(2) : null;
+        const seller = listing.seller;
+        // Check if this listing belongs to the taker (buyer) - they can't buy their own listings
+        const isOwnListing = TAKER_ADDRESS && seller === TAKER_ADDRESS;
+
+        // Truncate seller address
+        const sellerDisplay = `${seller.substring(0, 4)}...${seller.substring(seller.length - 4)}`;
+
+        return `
+            <div class="marketplace-card" data-listing-id="${listing.listingId}">
+                <div class="marketplace-card-header">
+                    <img class="marketplace-card-image" src="${imageUrl}" alt="${escapeHtml(name)}"
+                         data-asset-id="${listing.assetId}">
+                    <div class="marketplace-card-info">
+                        <div class="marketplace-card-name">${escapeHtml(name)}</div>
+                        <div class="marketplace-card-type">cNFT</div>
+                        <div class="marketplace-card-seller">Seller: ${sellerDisplay}</div>
+                    </div>
+                </div>
+
+                <div class="marketplace-card-details">
+                    <div class="marketplace-card-row">
+                        <span class="marketplace-card-label">Price:</span>
+                        <span class="marketplace-card-value price">${priceSol} SOL</span>
+                    </div>
+                    ${priceUsd ? `
+                    <div class="marketplace-card-row">
+                        <span class="marketplace-card-label"></span>
+                        <span class="marketplace-card-value price-usd">≈ $${priceUsd} USD</span>
+                    </div>
+                    ` : ''}
+                </div>
+
+                <div class="marketplace-card-actions">
+                    ${isOwnListing ? `
+                        <button class="buy-now-btn own-listing" disabled>Your Listing</button>
+                    ` : `
+                        <button class="buy-now-btn" data-action="buy" data-listing-id="${listing.listingId}">
+                            🛒 Buy Now
+                        </button>
+                    `}
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    // Add CSP-compliant event handlers for buy buttons
+    container.querySelectorAll('.buy-now-btn[data-action="buy"]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const listingId = this.dataset.listingId;
+            showBuyModal(listingId);
+        });
+    });
+
+    // Add CSP-compliant error handlers for marketplace card images
+    container.querySelectorAll('.marketplace-card-image').forEach(img => {
+        img.addEventListener('error', function() {
+            const assetId = this.dataset.assetId;
+            if (assetId) {
+                this.src = getPlaceholderImage(assetId);
+            }
+        }, { once: true });
+    });
+}
+
+// Show buy confirmation modal
+function showBuyModal(listingId) {
+    const listing = marketplaceListings.find(l => l.listingId === listingId);
+    if (!listing) {
+        addLog('❌ Listing not found', 'error');
+        return;
+    }
+
+    selectedBuyListing = listing;
+
+    // Check if taker wallet is loaded
+    if (!takerData) {
+        addLog('❌ Please load the Taker wallet first to buy listings', 'error');
+        return;
+    }
+
+    // Populate modal
+    const metadata = listing.metadata || {};
+    const imageUrl = metadata.image || getPlaceholderImage(listing.assetId);
+    const name = metadata.name || 'Unknown cNFT';
+    const priceLamports = parseInt(listing.priceLamports);
+    const priceSol = priceLamports / 1e9;
+    const feeBps = listing.feeBps || 100; // Default 1%
+    const feeLamports = Math.floor(priceLamports * feeBps / 10000);
+    const feeSol = feeLamports / 1e9;
+    const totalLamports = priceLamports; // Fee is included in price, not added
+    const totalSol = totalLamports / 1e9;
+    const sellerDisplay = `${listing.seller.substring(0, 8)}...${listing.seller.substring(listing.seller.length - 6)}`;
+
+    // Update modal elements
+    document.getElementById('buy-modal-image').src = imageUrl;
+    document.getElementById('buy-modal-name').textContent = name;
+    document.getElementById('buy-modal-seller').textContent = `Seller: ${sellerDisplay}`;
+    document.getElementById('buy-listing-price').textContent = `${priceSol.toFixed(4)} SOL`;
+    document.getElementById('buy-platform-fee').textContent = `${feeSol.toFixed(4)} SOL (included)`;
+    document.getElementById('buy-total-cost').textContent = `${totalSol.toFixed(4)} SOL`;
+
+    // Check balance
+    const takerBalance = takerData.solBalance || 0;
+    document.getElementById('buy-your-balance').textContent = `${takerBalance.toFixed(4)} SOL`;
+
+    // Check if sufficient balance (add small buffer for network fees)
+    const networkFeeBuffer = 0.001; // ~0.001 SOL for network fees
+    const hasInsufficientBalance = takerBalance < (totalSol + networkFeeBuffer);
+
+    const balanceWarning = document.getElementById('buy-balance-warning');
+    const confirmBtn = document.getElementById('buy-modal-confirm');
+
+    if (hasInsufficientBalance) {
+        balanceWarning.classList.remove('hidden');
+        confirmBtn.disabled = true;
+    } else {
+        balanceWarning.classList.add('hidden');
+        confirmBtn.disabled = false;
+    }
+
+    // Show modal
+    document.getElementById('buy-modal').classList.add('show');
+}
+
+// Hide buy modal
+function hideBuyModal() {
+    document.getElementById('buy-modal').classList.remove('show');
+    selectedBuyListing = null;
+}
+
+// Handle confirm purchase
+async function handleConfirmPurchase() {
+    if (!selectedBuyListing) {
+        addLog('❌ No listing selected', 'error');
+        return;
+    }
+
+    if (!TAKER_ADDRESS) {
+        addLog('❌ Taker wallet not loaded', 'error');
+        return;
+    }
+
+    const confirmBtn = document.getElementById('buy-modal-confirm');
+    const originalText = confirmBtn.innerHTML;
+
+    try {
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '⏳ Processing...';
+
+        const listingId = selectedBuyListing.listingId;
+        const metadata = selectedBuyListing.metadata || {};
+        const name = metadata.name || 'Unknown cNFT';
+        const priceSol = (parseInt(selectedBuyListing.priceLamports) / 1e9).toFixed(4);
+
+        addLog(`🛒 Initiating purchase of ${name}...`, 'info');
+
+        // Step 1: Call buy endpoint to get transaction
+        addLog('Step 1: Building buy transaction...', 'info');
+        const buyResponse = await fetch(`/api/listings/${listingId}/buy`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'idempotency-key': `buy-${listingId}-${Date.now()}`,
+            },
+            body: JSON.stringify({
+                buyer: TAKER_ADDRESS,
+            }),
+        });
+
+        const buyResult = await buyResponse.json();
+
+        if (!buyResult.success) {
+            throw new Error(buyResult.message || buyResult.error || 'Failed to build buy transaction');
+        }
+
+        addLog('✓ Buy transaction built', 'success');
+
+        // Step 2: Execute the transaction via test endpoint
+        addLog('Step 2: Signing and executing transaction...', 'info');
+        confirmBtn.innerHTML = '⏳ Signing...';
+
+        const execResponse = await fetch('/api/test/execute-buy-transaction', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Test-Execution': 'true',
+            },
+            body: JSON.stringify({
+                listingId: listingId,
+                serializedTransaction: buyResult.data.transaction.serializedTransaction,
+                buyer: TAKER_ADDRESS,
+            }),
+        });
+
+        const execResult = await execResponse.json();
+
+        if (!execResult.success) {
+            throw new Error(execResult.error || 'Failed to execute buy transaction');
+        }
+
+        addLog(`✓ Transaction confirmed! TX: ${execResult.data.signature.substring(0, 20)}...`, 'success');
+
+        // Step 3: Confirm the purchase
+        addLog('Step 3: Confirming purchase...', 'info');
+        confirmBtn.innerHTML = '⏳ Confirming...';
+
+        const confirmResponse = await fetch(`/api/listings/${listingId}/confirm-purchase`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'idempotency-key': `confirm-purchase-${listingId}-${Date.now()}`,
+            },
+            body: JSON.stringify({
+                signature: execResult.data.signature,
+                buyer: TAKER_ADDRESS,
+            }),
+        });
+
+        const confirmResult = await confirmResponse.json();
+
+        if (!confirmResult.success) {
+            // Purchase may have succeeded even if confirmation fails
+            addLog(`⚠️ Purchase executed but confirmation pending: ${confirmResult.message || 'Unknown'}`, 'warning');
+        } else {
+            addLog(`✅ Purchase confirmed! Asset is now in your wallet!`, 'success');
+        }
+
+        // Hide buy modal and show success modal
+        hideBuyModal();
+        showPurchaseSuccessModal(name, priceSol, execResult.data.signature, execResult.data.explorerUrl);
+
+        // Refresh marketplace and taker wallet
+        await loadMarketplaceListings();
+        await loadWalletInfo('taker');
+        await loadActiveListings();
+
+    } catch (error) {
+        console.error('Purchase error:', error);
+        addLog(`❌ Purchase failed: ${error.message}`, 'error');
+
+        // Check for specific error types
+        if (error.message.includes('expected ACTIVE') || error.message.includes('no longer')) {
+            addLog('💡 This listing may have already been sold or cancelled', 'info');
+            await loadMarketplaceListings();
+        }
+    } finally {
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = originalText;
+    }
+}
+
+// Show purchase success modal
+function showPurchaseSuccessModal(assetName, amountPaid, signature, explorerUrl) {
+    document.getElementById('success-asset-name').textContent = assetName;
+    document.getElementById('success-amount-paid').textContent = `${amountPaid} SOL`;
+
+    const txLink = document.getElementById('success-transaction-link');
+    const shortSig = `${signature.substring(0, 12)}...`;
+    txLink.innerHTML = `<a href="${explorerUrl || `https://solscan.io/tx/${signature}?cluster=devnet`}" target="_blank" rel="noopener noreferrer">${shortSig}</a>`;
+
+    document.getElementById('purchase-success-modal').classList.add('show');
+}
+
+// Hide purchase success modal
+function hidePurchaseSuccessModal() {
+    document.getElementById('purchase-success-modal').classList.remove('show');
+}
+
+// Override loadWalletInfo to also load marketplace
+const originalLoadWalletInfoForMarketplace = loadWalletInfo;
+loadWalletInfo = async function(wallet) {
+    await originalLoadWalletInfoForMarketplace.call(this, wallet);
+
+    // After any wallet loads, load marketplace (only once)
+    if (wallet === 'taker' && marketplaceListings.length === 0) {
+        loadMarketplaceListings();
+    }
+};
+
+// Make marketplace functions available globally
+window.showBuyModal = showBuyModal;
+window.hideBuyModal = hideBuyModal;
+window.loadMarketplaceListings = loadMarketplaceListings;

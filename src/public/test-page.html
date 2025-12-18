@@ -1910,6 +1910,533 @@
                 align-items: flex-start;
             }
         }
+
+        /* ========================================
+           MARKETPLACE SECTION STYLES (Task 18)
+           ======================================== */
+
+        .marketplace-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-top: 20px;
+        }
+
+        .marketplace-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .marketplace-title {
+            font-size: 1.5rem;
+            color: #333;
+            margin: 0;
+        }
+
+        .marketplace-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .marketplace-search {
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            min-width: 200px;
+            transition: border-color 0.3s;
+        }
+
+        .marketplace-search:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .marketplace-filter {
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            background: white;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        .marketplace-filter:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .marketplace-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .marketplace-card {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 15px;
+            transition: all 0.3s;
+        }
+
+        .marketplace-card:hover {
+            border-color: #764ba2;
+            box-shadow: 0 4px 12px rgba(118, 75, 162, 0.15);
+        }
+
+        .marketplace-card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .marketplace-card-image {
+            width: 70px;
+            height: 70px;
+            border-radius: 8px;
+            object-fit: cover;
+            background: #e0e0e0;
+        }
+
+        .marketplace-card-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .marketplace-card-name {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #333;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 4px;
+        }
+
+        .marketplace-card-type {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #764ba2;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .marketplace-card-seller {
+            font-size: 0.7rem;
+            color: #666;
+            font-family: 'Courier New', monospace;
+        }
+
+        .marketplace-card-details {
+            margin-bottom: 12px;
+        }
+
+        .marketplace-card-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            font-size: 0.85rem;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .marketplace-card-row:last-child {
+            border-bottom: none;
+        }
+
+        .marketplace-card-label {
+            color: #666;
+        }
+
+        .marketplace-card-value {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .marketplace-card-value.price {
+            color: #22c55e;
+            font-size: 1.1rem;
+        }
+
+        .marketplace-card-value.price-usd {
+            color: #666;
+            font-size: 0.8rem;
+            font-weight: normal;
+        }
+
+        .marketplace-card-actions {
+            margin-top: 12px;
+        }
+
+        .buy-now-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(118, 75, 162, 0.3);
+        }
+
+        .buy-now-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(118, 75, 162, 0.4);
+        }
+
+        .buy-now-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .buy-now-btn.own-listing {
+            background: #e5e7eb;
+            color: #9ca3af;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        /* Buy Confirmation Modal */
+        .buy-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .buy-modal.show {
+            display: flex;
+        }
+
+        .buy-modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s ease-out;
+        }
+
+        .buy-modal-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .buy-modal-header h3 {
+            font-size: 1.4rem;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .buy-modal-header p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .buy-modal-preview {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .buy-modal-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+
+        .buy-modal-details {
+            flex: 1;
+        }
+
+        .buy-modal-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .buy-modal-seller {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .buy-price-breakdown {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .buy-price-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 0.9rem;
+        }
+
+        .buy-price-row.total {
+            border-top: 2px solid #e0e0e0;
+            margin-top: 8px;
+            padding-top: 12px;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .buy-price-row .label {
+            color: #666;
+        }
+
+        .buy-price-row .value {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .buy-price-row.total .value {
+            color: #764ba2;
+        }
+
+        .buy-balance-warning {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #dc2626;
+            font-size: 0.9rem;
+        }
+
+        .buy-balance-warning.hidden {
+            display: none;
+        }
+
+        .buy-modal-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .buy-modal-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .buy-modal-btn.cancel {
+            background: #e5e7eb;
+            color: #6b7280;
+        }
+
+        .buy-modal-btn.cancel:hover {
+            background: #d1d5db;
+        }
+
+        .buy-modal-btn.confirm {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            color: white;
+        }
+
+        .buy-modal-btn.confirm:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(118, 75, 162, 0.4);
+        }
+
+        .buy-modal-btn.confirm:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Purchase Success Modal */
+        .purchase-success-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .purchase-success-modal.show {
+            display: flex;
+        }
+
+        .purchase-success-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 450px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s ease-out;
+        }
+
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 2.5rem;
+            color: white;
+        }
+
+        .purchase-success-content h3 {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .purchase-success-content p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .purchase-success-details {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .purchase-success-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            font-size: 0.9rem;
+        }
+
+        .purchase-success-row .label {
+            color: #666;
+        }
+
+        .purchase-success-row .value {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .purchase-success-row .value a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .purchase-success-row .value a:hover {
+            text-decoration: underline;
+        }
+
+        .purchase-success-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .purchase-success-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Mobile Responsive for Marketplace */
+        @media (max-width: 768px) {
+            .marketplace-section {
+                padding: 20px;
+            }
+
+            .marketplace-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .marketplace-controls {
+                width: 100%;
+            }
+
+            .marketplace-search {
+                flex: 1;
+                min-width: 0;
+            }
+
+            .marketplace-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .buy-modal-content,
+            .purchase-success-content {
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .marketplace-title {
+                font-size: 1.2rem;
+            }
+
+            .marketplace-card-header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .marketplace-card-image {
+                width: 80px;
+                height: 80px;
+            }
+
+            .buy-modal-preview {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
     </style>
   </head>
   <body>
@@ -2096,6 +2623,27 @@
             </div>
         </div>
 
+        <!-- Marketplace Section (Task 18 - Buy Listed Assets) -->
+        <div class="marketplace-section">
+            <div class="marketplace-header">
+                <h2 class="marketplace-title">🛒 Marketplace - Buy Listed Assets</h2>
+                <div class="marketplace-controls">
+                    <input type="text" class="marketplace-search" id="marketplace-search" placeholder="Search by name...">
+                    <select class="marketplace-filter" id="marketplace-price-filter">
+                        <option value="all">All Prices</option>
+                        <option value="low">Under 0.1 SOL</option>
+                        <option value="mid">0.1 - 1 SOL</option>
+                        <option value="high">Over 1 SOL</option>
+                    </select>
+                    <button class="refresh-btn" id="refresh-marketplace-btn">Refresh</button>
+                </div>
+            </div>
+
+            <div class="marketplace-grid" id="marketplace-grid">
+                <div class="empty-state">Loading marketplace listings...</div>
+            </div>
+        </div>
+
         <div class="activity-log">
             <h3>📋 Activity Log</h3>
             <div id="activity-log-content">
@@ -2244,6 +2792,78 @@
                 <button class="quick-list-modal-btn cancel" id="quick-list-cancel">Cancel</button>
                 <button class="quick-list-modal-btn confirm" id="quick-list-confirm">List for Sale</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Buy Confirmation Modal (Task 18) -->
+    <div class="buy-modal" id="buy-modal">
+        <div class="buy-modal-content">
+            <div class="buy-modal-header">
+                <h3>🛒 Confirm Purchase</h3>
+                <p>Review the details before buying</p>
+            </div>
+
+            <div class="buy-modal-preview">
+                <img class="buy-modal-image" id="buy-modal-image" src="" alt="">
+                <div class="buy-modal-details">
+                    <div class="buy-modal-name" id="buy-modal-name"></div>
+                    <div class="buy-modal-seller" id="buy-modal-seller"></div>
+                </div>
+            </div>
+
+            <div class="buy-price-breakdown" id="buy-price-breakdown">
+                <div class="buy-price-row">
+                    <span class="label">Listing Price:</span>
+                    <span class="value" id="buy-listing-price">-- SOL</span>
+                </div>
+                <div class="buy-price-row">
+                    <span class="label">Platform Fee (1%):</span>
+                    <span class="value" id="buy-platform-fee">-- SOL</span>
+                </div>
+                <div class="buy-price-row total">
+                    <span class="label">Total Cost:</span>
+                    <span class="value" id="buy-total-cost">-- SOL</span>
+                </div>
+                <div class="buy-price-row" style="color: #666; font-size: 0.85rem;">
+                    <span class="label">Your Balance:</span>
+                    <span class="value" id="buy-your-balance">-- SOL</span>
+                </div>
+            </div>
+
+            <div class="buy-balance-warning hidden" id="buy-balance-warning">
+                ⚠️ Insufficient balance to complete this purchase
+            </div>
+
+            <div class="buy-modal-actions">
+                <button class="buy-modal-btn cancel" id="buy-modal-cancel">Cancel</button>
+                <button class="buy-modal-btn confirm" id="buy-modal-confirm">Confirm Purchase</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Purchase Success Modal (Task 18) -->
+    <div class="purchase-success-modal" id="purchase-success-modal">
+        <div class="purchase-success-content">
+            <div class="success-icon">✓</div>
+            <h3>Purchase Successful!</h3>
+            <p>The cNFT is now in your wallet</p>
+
+            <div class="purchase-success-details">
+                <div class="purchase-success-row">
+                    <span class="label">Asset:</span>
+                    <span class="value" id="success-asset-name">--</span>
+                </div>
+                <div class="purchase-success-row">
+                    <span class="label">Amount Paid:</span>
+                    <span class="value" id="success-amount-paid">-- SOL</span>
+                </div>
+                <div class="purchase-success-row">
+                    <span class="label">Transaction:</span>
+                    <span class="value" id="success-transaction-link">--</span>
+                </div>
+            </div>
+
+            <button class="purchase-success-btn" id="success-close-btn">Close</button>
         </div>
     </div>
 
