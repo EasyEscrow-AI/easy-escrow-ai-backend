@@ -29,7 +29,7 @@ import {
 import {
   hasTestCnfts,
   getTestCnft,
-  getTestCnfts,
+  loadTestCnfts,
 } from '../../helpers/test-cnft-manager';
 import { wait } from '../../helpers/test-utils';
 import { waitForConfirmation, displayExplorerLink } from '../../helpers/swap-verification';
@@ -76,11 +76,16 @@ describe('Staging E2E: Two-Phase Swap Flows (Devnet)', () => {
 
     // Load test cNFTs for both parties
     if (hasTestCnfts()) {
-      const allCnfts = getTestCnfts();
+      // Use loadTestCnfts().testCnfts to get ALL available cNFTs
+      const config = loadTestCnfts();
+      const allCnfts = config.testCnfts;
       // Split cNFTs between parties for swap testing
       if (allCnfts.length >= 2) {
         partyACnfts = allCnfts.slice(0, Math.ceil(allCnfts.length / 2)).map((c: any) => c.assetId);
         partyBCnfts = allCnfts.slice(Math.ceil(allCnfts.length / 2)).map((c: any) => c.assetId);
+      } else if (allCnfts.length === 1) {
+        // Only 1 cNFT available - use it for Party A, Party B will use SOL
+        partyACnfts = [allCnfts[0].assetId];
       }
     } else if (stagingAssets) {
       if (stagingAssets.maker?.cnfts?.length > 0) {

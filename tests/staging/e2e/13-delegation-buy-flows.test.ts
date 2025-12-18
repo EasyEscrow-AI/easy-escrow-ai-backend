@@ -335,7 +335,7 @@ describe('Staging E2E: Delegation-Based Buy Flows (Devnet)', () => {
 
   describe('Buy Validation', () => {
     it('should reject buy from seller (self-buy)', async function() {
-      this.timeout(60000);
+      this.timeout(120000);
 
       if (!testCnftAssetId) {
         this.skip();
@@ -363,7 +363,34 @@ describe('Staging E2E: Delegation-Based Buy Flows (Devnet)', () => {
 
       const listingId = createResponse.body.data.listing.listingId;
 
-      // Try to buy own listing
+      // Sign and confirm the listing to ACTIVE status first
+      if (createResponse.body.data.transaction?.serializedTransaction) {
+        const delegationTxSerialized = createResponse.body.data.transaction.serializedTransaction;
+        const txBuffer = Buffer.from(delegationTxSerialized, 'base64');
+        const isVersioned = txBuffer.length > 0 && (txBuffer[0] & 0x80) !== 0;
+
+        let signature: string;
+        if (isVersioned) {
+          const { VersionedTransaction } = await import('@solana/web3.js');
+          const versionedTx = VersionedTransaction.deserialize(txBuffer);
+          versionedTx.sign([wallets.sender]);
+          signature = await connection.sendTransaction(versionedTx);
+        } else {
+          const { Transaction } = await import('@solana/web3.js');
+          const legacyTx = Transaction.from(txBuffer);
+          legacyTx.partialSign(wallets.sender);
+          signature = await connection.sendRawTransaction(legacyTx.serialize());
+        }
+
+        await waitForConfirmation(connection, signature);
+
+        // Confirm listing to ACTIVE
+        await request(STAGING_API_URL)
+          .post(`/api/listings/${listingId}/confirm`)
+          .send({ signature });
+      }
+
+      // Try to buy own ACTIVE listing
       const buyResponse = await request(STAGING_API_URL)
         .post(`/api/listings/${listingId}/buy`)
         .send({
@@ -396,7 +423,7 @@ describe('Staging E2E: Delegation-Based Buy Flows (Devnet)', () => {
     });
 
     it('should reject buy on cancelled listing', async function() {
-      this.timeout(90000);
+      this.timeout(180000);
 
       if (!testCnftAssetId) {
         this.skip();
@@ -406,7 +433,7 @@ describe('Staging E2E: Delegation-Based Buy Flows (Devnet)', () => {
       console.log('\nTEST: Reject Buy on Cancelled Listing');
       console.log('===========================================================\n');
 
-      // Create and cancel a listing
+      // Create a listing
       const createResponse = await request(STAGING_API_URL)
         .post('/api/listings')
         .set('x-idempotency-key', `test-cancelled-buy-${Date.now()}`)
@@ -424,10 +451,63 @@ describe('Staging E2E: Delegation-Based Buy Flows (Devnet)', () => {
 
       const listingId = createResponse.body.data.listing.listingId;
 
-      // Cancel the listing
-      await request(STAGING_API_URL)
+      // Sign and confirm the listing to ACTIVE status first
+      if (createResponse.body.data.transaction?.serializedTransaction) {
+        const delegationTxSerialized = createResponse.body.data.transaction.serializedTransaction;
+        const txBuffer = Buffer.from(delegationTxSerialized, 'base64');
+        const isVersioned = txBuffer.length > 0 && (txBuffer[0] & 0x80) !== 0;
+
+        let signature: string;
+        if (isVersioned) {
+          const { VersionedTransaction } = await import('@solana/web3.js');
+          const versionedTx = VersionedTransaction.deserialize(txBuffer);
+          versionedTx.sign([wallets.sender]);
+          signature = await connection.sendTransaction(versionedTx);
+        } else {
+          const { Transaction } = await import('@solana/web3.js');
+          const legacyTx = Transaction.from(txBuffer);
+          legacyTx.partialSign(wallets.sender);
+          signature = await connection.sendRawTransaction(legacyTx.serialize());
+        }
+
+        await waitForConfirmation(connection, signature);
+
+        // Confirm listing to ACTIVE
+        await request(STAGING_API_URL)
+          .post(`/api/listings/${listingId}/confirm`)
+          .send({ signature });
+
+        console.log('   Listing confirmed to ACTIVE');
+      }
+
+      // Now cancel the ACTIVE listing
+      const cancelResponse = await request(STAGING_API_URL)
         .delete(`/api/listings/${listingId}`)
         .send({ seller: wallets.sender.publicKey.toBase58() });
+
+      // Handle revocation transaction if needed
+      if (cancelResponse.body.data?.transaction?.serializedTransaction) {
+        const revokeTxSerialized = cancelResponse.body.data.transaction.serializedTransaction;
+        const txBuffer = Buffer.from(revokeTxSerialized, 'base64');
+        const isVersioned = txBuffer.length > 0 && (txBuffer[0] & 0x80) !== 0;
+
+        let signature: string;
+        if (isVersioned) {
+          const { VersionedTransaction } = await import('@solana/web3.js');
+          const versionedTx = VersionedTransaction.deserialize(txBuffer);
+          versionedTx.sign([wallets.sender]);
+          signature = await connection.sendTransaction(versionedTx);
+        } else {
+          const { Transaction } = await import('@solana/web3.js');
+          const legacyTx = Transaction.from(txBuffer);
+          legacyTx.partialSign(wallets.sender);
+          signature = await connection.sendRawTransaction(legacyTx.serialize());
+        }
+
+        await waitForConfirmation(connection, signature);
+      }
+
+      console.log('   Listing cancelled');
 
       // Try to buy cancelled listing
       const buyResponse = await request(STAGING_API_URL)
