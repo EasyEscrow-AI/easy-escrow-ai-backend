@@ -41,8 +41,7 @@ export interface CreateOfferParams {
   durationSeconds?: number;
   /** Custom fee in basis points (default: 100 = 1%) */
   feeBps?: number;
-  /** Optional: Link to existing listing */
-  listingId?: string;
+  // REMOVED: listingId - Easy Escrow is pure offer infrastructure
 }
 
 /**
@@ -166,8 +165,7 @@ export interface OfferFilters {
   targetAssetId?: string;
   /** Filter by status */
   status?: OfferEscrowStatus;
-  /** Filter by listing */
-  listingId?: string;
+  // REMOVED: listingId filter - Easy Escrow is pure offer infrastructure
   /** Include expired offers */
   includeExpired?: boolean;
   /** Limit results */
@@ -370,7 +368,7 @@ export class CnftOfferEscrowManager {
         escrowBump,
         status: 'PENDING',
         expiresAt,
-        listingId: params.listingId || null,
+        // REMOVED: listingId - Easy Escrow is pure offer infrastructure
         metadata: {
           name: assetData.content?.metadata?.name || null,
           image: assetData.content?.links?.image || null,
@@ -769,9 +767,7 @@ export class CnftOfferEscrowManager {
       where.status = filters.status;
     }
 
-    if (filters.listingId) {
-      where.listingId = filters.listingId;
-    }
+    // REMOVED: listingId filter - Easy Escrow is pure offer infrastructure
 
     if (!filters.includeExpired) {
       where.OR = [

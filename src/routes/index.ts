@@ -18,7 +18,8 @@ import receiptRoutes from './receipt.routes';
 import transactionLogRoutes from './transaction-log.routes';
 import healthRoutes from './health.routes';
 import offersRoutes from './offers.routes';
-import listingsRoutes from './listings.routes';
+// REMOVED: listingsRoutes - Easy Escrow is now pure offer infrastructure
+// Marketplace listing semantics handled by wrapper service
 import metricsRoutes from './metrics.routes';
 // cNFT offer escrow routes are now integrated into offers.routes.ts as /api/offers/cnft/*
 import testRoutes from './test.routes';
@@ -34,7 +35,6 @@ export {
   transactionLogRoutes,
   healthRoutes,
   offersRoutes,
-  listingsRoutes,
   metricsRoutes,
   // cnftOffersRoutes - INTEGRATED: Now part of offersRoutes at /api/offers/cnft/*
   // Two-phase swap routes are also integrated into offersRoutes at /api/offers/two-phase/*

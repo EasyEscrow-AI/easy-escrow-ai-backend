@@ -574,9 +574,7 @@ model CnftOffer {
   parentOffer     CnftOffer?         @relation("ParentOffers", fields: [parentOfferId], references: [id])
   childOffers     CnftOffer[]        @relation("ParentOffers")
 
-  // Link to listing if offer is on a listed cNFT
-  listingId       String?            @map("listing_id")
-  listing         Listing?           @relation(fields: [listingId], references: [id])
+  // REMOVED: listingId/listing - Easy Escrow is pure offer infrastructure
 
   @@index([offerId])
   @@index([bidderWallet])
@@ -585,7 +583,6 @@ model CnftOffer {
   @@index([status])
   @@index([expiresAt])
   @@index([createdAt])
-  @@index([listingId])
   @@index([status, expiresAt], name: "idx_offer_escrow_status_expiry")
   @@map("cnft_offers")
 }
@@ -681,82 +678,8 @@ model TwoPhaseSwap {
 }
 
 // ============================================
-// CNFT LISTING WITH DELEGATION SYSTEM
+// CNFT LISTINGS - REMOVED
 // ============================================
-
-// Enum for delegation status in cNFT listings
-enum DelegationStatus {
-  PENDING   // Delegation transaction not yet confirmed
-  DELEGATED // cNFT delegated to marketplace PDA
-  FROZEN    // cNFT delegated and frozen (Bubblegum v2)
-  REVOKED   // Delegation revoked (listing cancelled)
-}
-
-// Enum for listing status
-enum ListingStatus {
-  PENDING   // Listing created, awaiting delegation confirmation
-  ACTIVE    // cNFT delegated, listing is live
-  SOLD      // Listing completed via purchase
-  CANCELLED // Listing cancelled by seller
-  EXPIRED   // Listing expired based on expiry timestamp
-}
-
-// cNFT Listings table - marketplace listings with delegation
-model Listing {
-  id              String           @id @default(uuid())
-  listingId       String           @unique @map("listing_id") // External-facing ID
-
-  // Seller info
-  seller          String           // Seller wallet address
-
-  // cNFT details
-  assetId         String           @map("asset_id") // cNFT asset ID (Metaplex DAS format)
-  merkleTree      String           @map("merkle_tree") // Merkle tree address
-  leafIndex       Int              @map("leaf_index") // Leaf index in tree
-
-  // Pricing (SOL only - no USDC)
-  priceLamports   BigInt           @map("price_lamports") // Price in lamports
-
-  // Delegation state
-  delegationStatus DelegationStatus @default(PENDING) @map("delegation_status")
-  delegatePda      String?          @map("delegate_pda") // Marketplace PDA that has delegation
-  delegatedAt      DateTime?        @map("delegated_at") // When delegation was confirmed
-  isFrozen         Boolean          @default(false) @map("is_frozen") // Bubblegum v2 freeze status
-
-  // Listing state
-  status          ListingStatus    @default(PENDING)
-  expiresAt       DateTime         @map("expires_at")
-
-  // Transaction references
-  delegateTxId    String?          @map("delegate_tx_id") // Delegation transaction
-  settleTxId      String?          @map("settle_tx_id") // Settlement transaction
-  revokeTxId      String?          @map("revoke_tx_id") // Revocation transaction
-
-  // Buyer info (when sold)
-  buyer           String?
-  soldAt          DateTime?        @map("sold_at")
-
-  // Platform fee
-  feeBps          Int              @default(100) @map("fee_bps") // Default 1% (100 bps)
-
-  // Timestamps
-  createdAt       DateTime         @default(now()) @map("created_at")
-  updatedAt       DateTime         @updatedAt @map("updated_at")
-  cancelledAt     DateTime?        @map("cancelled_at")
-
-  // cNFT metadata cache (optional, for display)
-  metadata        Json?            // Cached cNFT metadata (name, image, etc.)
-
-  // Relation to offers on this listing
-  offers          CnftOffer[]
-
-  @@index([listingId])
-  @@index([seller])
-  @@index([assetId])
-  @@index([status])
-  @@index([delegationStatus])
-  @@index([expiresAt])
-  @@index([createdAt])
-  @@index([status, expiresAt], name: "idx_listing_status_expiry")
-  @@map("listings")
-}
+// Easy Escrow is now pure offer/swap infrastructure.
+// Marketplace listing semantics are handled by a separate wrapper service.
+// See: refactor/remove-listings-from-escrow branch

@@ -8,7 +8,7 @@ import { connectDatabase, checkDatabaseHealth } from './config/database';
 import { connectRedis, checkRedisHealth, disconnectRedis } from './config/redis';
 // DISABLED: Agreement routes - migrated to atomic swap architecture
 // import { agreementRoutes } from './routes';
-import { expiryCancellationRoutes, webhookRoutes, receiptRoutes, transactionLogRoutes, healthRoutes, offersRoutes, listingsRoutes, metricsRoutes, testRoutes, testExecuteRoutes, authorizedAppsRoutes, noncePoolAdminRoutes } from './routes';
+import { expiryCancellationRoutes, webhookRoutes, receiptRoutes, transactionLogRoutes, healthRoutes, offersRoutes, metricsRoutes, testRoutes, testExecuteRoutes, authorizedAppsRoutes, noncePoolAdminRoutes } from './routes';
 import { noncePoolManager, healthCheckService } from './routes/offers.routes';
 import {
   corsOptions,
@@ -185,7 +185,7 @@ app.get('/', (_req: Request, res: Response) => {
       offers: '/api/offers', // Standard swaps (NFT↔NFT, NFT↔SOL)
       offersCnft: '/api/offers/cnft', // cNFT offers with SOL escrow
       offersBulk: '/api/offers/bulk', // Bulk swaps (two-phase lock/settle)
-      listings: '/api/listings', // cNFT listings with delegation
+      // REMOVED: listings - Easy Escrow is pure offer infrastructure
       receipts: '/v1/receipts',
       transactions: '/v1/transactions',
       expiryCancellation: '/api/expiry-cancellation',
@@ -230,7 +230,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // See docs/MIGRATION_FROM_LEGACY_ESCROW.md for details
 // app.use(agreementRoutes);
 app.use(offersRoutes); // Includes atomic swaps (/api/offers) and two-phase swaps (/api/offers/two-phase)
-app.use(listingsRoutes); // cNFT listings with delegation
+// REMOVED: listingsRoutes - Easy Escrow is now pure offer infrastructure
 app.use(receiptRoutes);
 app.use('/v1/transactions', transactionLogRoutes);
 app.use('/api/expiry-cancellation', expiryCancellationRoutes);
