@@ -184,10 +184,12 @@ export class DirectBubblegumService {
         // Research shows: Trees like treeGzx9ZNFS3YwB6NPba8uePLctVRHz8uhWQYqjEys can update
         // faster than DAS APIs can index, requiring much longer delays between retries.
         // QuickNode free tier has 2 req/sec limit, so we need to space retries further apart.
-        const maxRetries = parseInt(process.env.CNFT_STALE_PROOF_MAX_RETRIES || '8', 10);
-        // Much longer delays to give DAS indexer time to catch up:
-        // 2s, 4s, 6s, 8s, 10s, 12s, 15s, 20s = up to ~77s total wait time
-        const retryDelays = [2000, 4000, 6000, 8000, 10000, 12000, 15000, 20000];
+        // Reduced retry count - if DAS is consistently stale, more retries won't help
+        // Most swaps should work on first try, second try with delay should catch indexer lag
+        const maxRetriesEnv = parseInt(process.env.CNFT_STALE_PROOF_MAX_RETRIES || '3', 10);
+        const maxRetries = Number.isFinite(maxRetriesEnv) && maxRetriesEnv > 0 ? maxRetriesEnv : 3;
+        // Longer delays to give DAS indexer time to catch up: 3s, 6s, 10s
+        const retryDelays = [3000, 6000, 10000];
         
         console.warn('[DirectBubblegumService] ⚠️ STALE PROOF DETECTED:', {
           onChainRoot: onChainRoot.toString('hex'),
@@ -215,13 +217,15 @@ export class DirectBubblegumService {
           // CRITICAL: Wait for tree sequence to stabilize before retrying
           // If the tree is actively updating, we need to wait until it stops changing
           // This prevents fetching proofs while the tree is mid-update
-          // For high-activity trees, we need longer intervals between checks
-          const maxStabilityChecks = parseInt(process.env.CNFT_STABILITY_MAX_CHECKS || '6', 10);
-          // Use longer check intervals for better accuracy on high-activity trees
-          const stabilityCheckInterval = parseInt(process.env.CNFT_STABILITY_CHECK_INTERVAL || '1000', 10);
+          // Reduced checks - if tree doesn't stabilize quickly, it's too active to swap
+          const maxStabilityChecksEnv = parseInt(process.env.CNFT_STABILITY_MAX_CHECKS || '3', 10);
+          const maxStabilityChecks = Number.isFinite(maxStabilityChecksEnv) && maxStabilityChecksEnv > 0 ? maxStabilityChecksEnv : 3;
+          const stabilityCheckIntervalEnv = parseInt(process.env.CNFT_STABILITY_CHECK_INTERVAL || '1000', 10);
+          const stabilityCheckInterval = Number.isFinite(stabilityCheckIntervalEnv) && stabilityCheckIntervalEnv > 0 ? stabilityCheckIntervalEnv : 1000;
           let lastSeq = treeAccount.getCurrentSeq();
           let stableCount = 0;
-          const requiredStableChecks = parseInt(process.env.CNFT_STABILITY_REQUIRED_CHECKS || '3', 10);
+          const requiredStableChecksEnv = parseInt(process.env.CNFT_STABILITY_REQUIRED_CHECKS || '2', 10);
+          const requiredStableChecks = Number.isFinite(requiredStableChecksEnv) && requiredStableChecksEnv > 0 ? requiredStableChecksEnv : 2;
           
           console.log(`[DirectBubblegumService] Waiting for tree sequence to stabilize (current: ${lastSeq.toString()})...`);
           

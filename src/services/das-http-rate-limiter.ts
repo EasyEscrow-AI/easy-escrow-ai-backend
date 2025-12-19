@@ -12,7 +12,10 @@ import crypto from 'crypto';
 export class DasHttpRateLimiter {
   // QuickNode free tier has 2 req/sec limit, but under load this can be problematic
   // Use 750ms (~1.33 rps) as safer default to avoid 429 errors on high-activity trees
-  private static readonly DEFAULT_INTERVAL_MS = parseInt(process.env.DAS_RATE_LIMIT_INTERVAL_MS || '750', 10);
+  private static readonly DEFAULT_INTERVAL_MS = (() => {
+    const envVal = parseInt(process.env.DAS_RATE_LIMIT_INTERVAL_MS || '750', 10);
+    return Number.isFinite(envVal) && envVal > 0 ? envVal : 750;
+  })();
   private static readonly DEFAULT_KEY_PREFIX = 'rate_limit:das:http:';
 
   // In-memory fallback
