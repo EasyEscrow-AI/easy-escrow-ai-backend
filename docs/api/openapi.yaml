@@ -88,7 +88,23 @@ info:
     - **Low fees**: 1% platform fee on SOL swaps, 0.005 SOL flat fee for NFT-only swaps
     - **Instant settlement**: No waiting for confirmations or multi-step processes
     - **Cancel anytime**: Cancel offers instantly by advancing the durable nonce
-    
+
+    ### Unified Swaps API (NEW)
+
+    A new unified API is available at `/api/swaps/*` that consolidates offers and listings into a single interface:
+
+    - `POST /api/swaps/offers` - Create any offer type (auto-detected: listing, bid, atomic, bulk)
+    - `GET /api/swaps/offers` - List all offers with type/status filters
+    - `GET /api/swaps/offers/{id}` - Get offer details
+    - `POST /api/swaps/offers/{id}/accept` - Accept any offer type
+    - `POST /api/swaps/offers/{id}/cancel` - Cancel an offer
+    - `GET /api/swaps/delegations/authority` - Get delegate authority
+    - `POST /api/swaps/delegations/{offerId}/confirm` - Confirm delegation
+    - `POST /api/swaps/delegations/{offerId}/revoke` - Revoke delegation
+
+    The unified API treats SOL as an asset type, enabling future extensibility for USDC and other tokens.
+    Legacy `/api/offers/*` and `/api/listings/*` endpoints remain available for backwards compatibility.
+
     ### Platform Fees
     
     - **NFT-only swaps**: 0.005 SOL flat fee (paid by taker)

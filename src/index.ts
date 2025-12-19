@@ -8,7 +8,7 @@ import { connectDatabase, checkDatabaseHealth } from './config/database';
 import { connectRedis, checkRedisHealth, disconnectRedis } from './config/redis';
 // DISABLED: Agreement routes - migrated to atomic swap architecture
 // import { agreementRoutes } from './routes';
-import { expiryCancellationRoutes, webhookRoutes, receiptRoutes, transactionLogRoutes, healthRoutes, offersRoutes, listingsRoutes, metricsRoutes, testRoutes, testExecuteRoutes, authorizedAppsRoutes, noncePoolAdminRoutes } from './routes';
+import { expiryCancellationRoutes, webhookRoutes, receiptRoutes, transactionLogRoutes, healthRoutes, offersRoutes, listingsRoutes, swapsRoutes, metricsRoutes, testRoutes, testExecuteRoutes, authorizedAppsRoutes, noncePoolAdminRoutes } from './routes';
 import { noncePoolManager, healthCheckService } from './routes/offers.routes';
 import {
   corsOptions,
@@ -182,6 +182,8 @@ app.get('/', (_req: Request, res: Response) => {
     endpoints: {
       health: '/health',
       // agreements: '/v1/agreements', // DISABLED: Migrated to atomic swap - use /api/offers
+      swaps: '/api/swaps/offers', // NEW: Unified swaps API (auto-detects type)
+      swapsDelegations: '/api/swaps/delegations', // NEW: Delegation management
       offers: '/api/offers', // Standard swaps (NFT↔NFT, NFT↔SOL)
       offersCnft: '/api/offers/cnft', // cNFT offers with SOL escrow
       offersBulk: '/api/offers/bulk', // Bulk swaps (two-phase lock/settle)
@@ -231,6 +233,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // app.use(agreementRoutes);
 app.use(offersRoutes); // Includes atomic swaps (/api/offers) and two-phase swaps (/api/offers/two-phase)
 app.use(listingsRoutes); // cNFT listings with delegation
+app.use(swapsRoutes); // NEW: Unified /api/swaps/* endpoints (Tasks 9-12)
 app.use(receiptRoutes);
 app.use('/v1/transactions', transactionLogRoutes);
 app.use('/api/expiry-cancellation', expiryCancellationRoutes);
