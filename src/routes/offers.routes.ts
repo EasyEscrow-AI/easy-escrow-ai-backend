@@ -59,6 +59,15 @@ import {
 } from '../services/swapProgress.service';
 import { CacheService } from '../services/cache.service';
 import rateLimit from 'express-rate-limit';
+// Unified offer normalizer for API consolidation (Tasks 1-2)
+import {
+  normalizeOfferRequest,
+  validateUnifiedRequest,
+  OfferType,
+  getOfferTypeDescription,
+  isCnftBidRequest,
+  NormalizationResult,
+} from '../utils/unifiedOfferNormalizer';
 
 const router = Router();
 
@@ -302,7 +311,14 @@ noncePoolManager.initialize().catch((error) => {
 
 /**
  * POST /api/offers
- * Create a new swap offer (direct or open)
+ * Create a new swap offer (unified endpoint)
+ *
+ * Supports three input formats with auto-detection:
+ * 1. Atomic swap: {makerWallet, offeredAssets[], requestedAssets[], ...}
+ * 2. cNFT bid: {bidderWallet, targetAssetId, offerLamports, ...}
+ * 3. Bulk swap (partyA/B): {partyA, assetsA[], assetsB[], ...}
+ *
+ * @see Tasks 1-2: API Consolidation
  */
 router.post(
   '/api/offers',
@@ -311,196 +327,262 @@ router.post(
   requiredIdempotency, // Prevent duplicate offer creation on retry
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const {
-        makerWallet,
-        takerWallet,
-        offeredAssets,
-        requestedAssets,
-        offeredSol,
-        requestedSol,
-        customFee,
-      } = req.body;
-
-      // Validate required fields
-      if (!makerWallet) {
+      // === Step 1: Validate unified request format ===
+      const validation = validateUnifiedRequest(req.body);
+      if (!validation.isValid) {
         res.status(400).json({
           success: false,
           error: 'Validation Error',
-          message: 'makerWallet is required',
+          message: validation.errors.map((e) => e.message).join('; '),
+          details: validation.errors,
           timestamp: new Date().toISOString(),
         });
         return;
       }
 
-      // Validate wallet addresses
+      // === Step 2: Normalize and detect offer type ===
+      let normalized: NormalizationResult;
       try {
-        new PublicKey(makerWallet);
-        if (takerWallet) {
-          new PublicKey(takerWallet);
-        }
+        normalized = normalizeOfferRequest(req.body);
       } catch (error) {
+        const message = error instanceof Error ? error.message : 'Request normalization failed';
         res.status(400).json({
           success: false,
           error: 'Validation Error',
-          message: 'Invalid wallet address format',
+          message,
           timestamp: new Date().toISOString(),
         });
         return;
       }
 
-      // Validate arrays
-      if (!Array.isArray(offeredAssets) || !Array.isArray(requestedAssets)) {
-        res.status(400).json({
-          success: false,
-          error: 'Validation Error',
-          message: 'offeredAssets and requestedAssets must be arrays',
-          timestamp: new Date().toISOString(),
-        });
-        return;
-      }
-
-      // Validate mint addresses before transformation
-      const validateMintAddresses = (assets: any[], arrayName: string) => {
-        assets.forEach((asset, index) => {
-          if (!asset.mint) {
-            throw new Error(`Asset ${index} in ${arrayName} is missing 'mint' field`);
-          }
-          
-          // Validate that mint is a valid Solana address format
-          try {
-            new PublicKey(asset.mint);
-          } catch (error) {
-            throw new Error(`Invalid mint address format in ${arrayName}[${index}]: ${asset.mint}`);
-          }
-        });
-      };
-      
-      // Validate mint addresses early
-      validateMintAddresses(offeredAssets, 'offeredAssets');
-      validateMintAddresses(requestedAssets, 'requestedAssets');
-      
-      // Zero-fee authorization check
-      const zeroFeeRequest = req as ZeroFeeAuthorizedRequest;
-      const requestsZeroFee = customFee !== undefined && BigInt(customFee) === BigInt(0);
-      
-      if (requestsZeroFee && !zeroFeeRequest.isZeroFeeAuthorized) {
-        res.status(403).json({
-          success: false,
-          error: 'Forbidden',
-          message: 'Zero-fee swaps require valid API key authorization',
-          timestamp: new Date().toISOString(),
-        });
-        return;
-      }
-      
-      // Transform asset format from API format to internal format
-      // API format: { mint, isCompressed, isCoreNft?, merkleTree?, amount?, assetType? }
-      // Internal format: { identifier, type }
-      const transformAssets = (assets: any[], arrayName: string) => {
-        return assets.map((asset, index) => {
-          console.log(`[Offers Route] Transforming ${arrayName}[${index}]:`, JSON.stringify(asset));
-          
-          // EXPLICIT DEBUG: Log isCoreNft flag type and value
-          console.log(`[Offers Route] ${arrayName}[${index}] isCoreNft debug:`, {
-            rawValue: asset.isCoreNft,
-            typeOf: typeof asset.isCoreNft,
-            isTruthy: !!asset.isCoreNft,
-            isCompressed: asset.isCompressed,
-          });
-          
-          if (!asset.mint) {
-            console.error(`[Offers Route] Missing mint in ${arrayName}[${index}]:`, asset);
-            throw new Error(`Asset ${index} in ${arrayName} is missing 'mint' field`);
-          }
-          
-          // Determine asset type: Core NFT > cNFT > SPL NFT
-          let assetType = AssetType.NFT;
-          if (asset.isCoreNft) {
-            assetType = AssetType.CORE_NFT;
-            console.log(`[Offers Route] *** ${arrayName}[${index}] detected as CORE NFT ***`);
-          } else if (asset.isCompressed) {
-            assetType = AssetType.CNFT;
-            console.log(`[Offers Route] *** ${arrayName}[${index}] detected as CNFT ***`);
-          } else {
-            console.log(`[Offers Route] *** ${arrayName}[${index}] detected as SPL NFT ***`);
-          }
-          
-          const transformed = {
-            identifier: asset.mint,
-            type: assetType,
-          };
-          
-          console.log(`[Offers Route] Transformed to:`, JSON.stringify(transformed));
-          console.log(`[Offers Route] AssetType.CORE_NFT value:`, AssetType.CORE_NFT);
-          return transformed;
-        });
-      };
-
-      const transformedOfferedAssets = transformAssets(offeredAssets, 'offeredAssets');
-      const transformedRequestedAssets = transformAssets(requestedAssets, 'requestedAssets');
-
-      // Determine the swap flow type based on asset types (Task 12)
-      const flowResult = determineSwapFlow(
-        transformedOfferedAssets,
-        transformedRequestedAssets,
-        offeredSol ? BigInt(offeredSol) : undefined,
-        requestedSol ? BigInt(requestedSol) : undefined
+      console.log(
+        `[Offers Route] Unified endpoint - detected type: ${normalized.offerType} (${getOfferTypeDescription(normalized.offerType)})`
       );
-      console.log(`[Offers Route] Swap flow determined:`, JSON.stringify(flowResult));
 
-      // Create offer
-      const offer = await offerManager.createOffer({
-        makerWallet,
-        takerWallet: takerWallet || undefined,
-        offeredAssets: transformedOfferedAssets,
-        requestedAssets: transformedRequestedAssets,
-        offeredSol: offeredSol ? BigInt(offeredSol) : undefined,
-        requestedSol: requestedSol ? BigInt(requestedSol) : undefined,
-        customFee: customFee ? BigInt(customFee) : undefined,
-      });
-
-      // Build response with flow type information for frontend routing
-      const responseData: Record<string, any> = {
-        offer: {
-          id: offer.id.toString(),
-          status: offer.status,
-          makerWallet: offer.makerWallet,
-          takerWallet: offer.takerWallet || null,
-          offeredAssets: offer.offeredAssets,
-          requestedAssets: offer.requestedAssets,
-          offeredSol: offeredSol?.toString() || '0',
-          requestedSol: requestedSol?.toString() || '0',
-          createdAt: offer.createdAt.toISOString(),
-        },
-        // Transaction will be built when offer is accepted (needs both signatures)
-        transaction: {
-          nonceAccount: offer.nonceAccount,
-          message: 'Transaction will be built when offer is accepted',
-        },
-        // Task 12: Include swap flow routing information
-        swapFlow: {
-          flowType: flowResult.flowType,
-          requiresDelegation: flowResult.requiresDelegation,
-          requiresTwoPhase: flowResult.requiresTwoPhase,
-          canUseJito: flowResult.canUseJito,
-          reason: flowResult.reason,
-        },
-      };
-
-      // For two-phase swaps, include additional guidance
-      if (flowResult.requiresTwoPhase) {
-        responseData.swapFlow.nextAction = 'Use POST /api/offers/bulk/:id/accept for two-phase settlement';
-        responseData.swapFlow.twoPhaseEndpoint = `/api/offers/bulk/${offer.id}`;
+      // Log any warnings about ambiguous input
+      if (normalized.warnings.length > 0) {
+        console.warn('[Offers Route] Request warnings:', normalized.warnings);
       }
 
-      // For cNFT delegation swaps, indicate the flow
-      if (flowResult.requiresDelegation && !flowResult.requiresTwoPhase) {
-        responseData.swapFlow.nextAction = 'Taker accepts via POST /api/offers/:id/accept - delegation handled automatically';
+      // === Step 3: Route to appropriate handler based on detected type ===
+
+      // --- cNFT Bid Flow ---
+      if (normalized.offerType === OfferType.CNFT_BID && normalized.cnftBidRequest) {
+        const bidRequest = normalized.cnftBidRequest;
+
+        // Validate wallet address
+        try {
+          new PublicKey(bidRequest.bidderWallet);
+        } catch (error) {
+          res.status(400).json({
+            success: false,
+            error: 'Validation Error',
+            message: 'Invalid bidderWallet address format',
+            timestamp: new Date().toISOString(),
+          });
+          return;
+        }
+
+        // Create cNFT offer via cnftOfferManager
+        const result = await cnftOfferManager.createOffer({
+          bidderWallet: bidRequest.bidderWallet,
+          targetAssetId: bidRequest.targetAssetId,
+          offerLamports: bidRequest.offerLamports,
+          durationSeconds: bidRequest.durationSeconds,
+          feeBps: bidRequest.feeBps,
+          listingId: bidRequest.listingId,
+        });
+
+        res.status(201).json({
+          success: true,
+          data: {
+            ...result,
+            offerType: OfferType.CNFT_BID,
+            executionStrategy: 'cnft-escrow',
+          },
+          timestamp: new Date().toISOString(),
+        });
+        return;
       }
 
-      res.status(201).json({
-        success: true,
-        data: responseData,
+      // --- Bulk Two-Phase Flow ---
+      if (normalized.offerType === OfferType.BULK_TWO_PHASE && normalized.bulkRequest) {
+        const bulkReq = normalized.bulkRequest;
+
+        // Validate wallet addresses
+        try {
+          new PublicKey(bulkReq.partyA);
+          if (bulkReq.partyB) {
+            new PublicKey(bulkReq.partyB);
+          }
+        } catch (error) {
+          res.status(400).json({
+            success: false,
+            error: 'Validation Error',
+            message: 'Invalid wallet address format',
+            timestamp: new Date().toISOString(),
+          });
+          return;
+        }
+
+        // Transform assets to service format
+        const transformToServiceFormat = (assets: typeof bulkReq.assetsA) =>
+          assets.map((a) => ({
+            type: a.type === AssetType.CORE_NFT ? 'CORE_NFT' : a.type === AssetType.CNFT ? 'CNFT' : 'NFT',
+            identifier: a.identifier,
+            metadata: a.metadata,
+          }));
+
+        // Create two-phase swap
+        const result = await twoPhaseSwapLockService.createSwap({
+          partyA: bulkReq.partyA,
+          partyB: bulkReq.partyB,
+          assetsA: transformToServiceFormat(bulkReq.assetsA) as any,
+          assetsB: transformToServiceFormat(bulkReq.assetsB) as any,
+          solAmountA: bulkReq.solAmountA,
+          solAmountB: bulkReq.solAmountB,
+          lockTimeoutSeconds: bulkReq.lockTimeoutSeconds,
+          platformFeeLamports: bulkReq.platformFeeLamports,
+        });
+
+        res.status(201).json({
+          success: true,
+          data: {
+            offer: serializeTwoPhaseSwap(result.swap),
+            offerId: result.swapId,
+            offerType: OfferType.BULK_TWO_PHASE,
+            executionStrategy: 'two-phase',
+            requiresLockPhase: true,
+            message: 'Bulk offer created. Waiting for acceptance.',
+            nextAction: 'Counterparty should call POST /api/offers/bulk/:id/accept',
+          },
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // --- Atomic Swap Flow (default) ---
+      if (normalized.atomicRequest) {
+        const atomicReq = normalized.atomicRequest;
+
+        // Validate wallet addresses
+        try {
+          new PublicKey(atomicReq.makerWallet);
+          if (atomicReq.takerWallet) {
+            new PublicKey(atomicReq.takerWallet);
+          }
+        } catch (error) {
+          res.status(400).json({
+            success: false,
+            error: 'Validation Error',
+            message: 'Invalid wallet address format',
+            timestamp: new Date().toISOString(),
+          });
+          return;
+        }
+
+        // Validate asset identifiers
+        const validateAssetIdentifiers = (assets: typeof atomicReq.offeredAssets, arrayName: string) => {
+          assets.forEach((asset, index) => {
+            try {
+              new PublicKey(asset.identifier);
+            } catch (error) {
+              throw new Error(`Invalid asset identifier in ${arrayName}[${index}]: ${asset.identifier}`);
+            }
+          });
+        };
+
+        validateAssetIdentifiers(atomicReq.offeredAssets, 'offeredAssets');
+        validateAssetIdentifiers(atomicReq.requestedAssets, 'requestedAssets');
+
+        // Zero-fee authorization check
+        const zeroFeeRequest = req as ZeroFeeAuthorizedRequest;
+        const requestsZeroFee = atomicReq.customFee !== undefined && atomicReq.customFee === BigInt(0);
+
+        if (requestsZeroFee && !zeroFeeRequest.isZeroFeeAuthorized) {
+          res.status(403).json({
+            success: false,
+            error: 'Forbidden',
+            message: 'Zero-fee swaps require valid API key authorization',
+            timestamp: new Date().toISOString(),
+          });
+          return;
+        }
+
+        // Determine flow type for response metadata
+        const flowResult = determineSwapFlow(
+          atomicReq.offeredAssets,
+          atomicReq.requestedAssets,
+          atomicReq.offeredSol,
+          atomicReq.requestedSol
+        );
+
+        console.log(`[Offers Route] Atomic swap flow:`, JSON.stringify(flowResult));
+
+        // Create offer via offerManager
+        const offer = await offerManager.createOffer({
+          makerWallet: atomicReq.makerWallet,
+          takerWallet: atomicReq.takerWallet,
+          offeredAssets: atomicReq.offeredAssets,
+          requestedAssets: atomicReq.requestedAssets,
+          offeredSol: atomicReq.offeredSol,
+          requestedSol: atomicReq.requestedSol,
+          customFee: atomicReq.customFee,
+        });
+
+        // Build response
+        const responseData: Record<string, any> = {
+          offer: {
+            id: offer.id.toString(),
+            status: offer.status,
+            makerWallet: offer.makerWallet,
+            takerWallet: offer.takerWallet || null,
+            offeredAssets: offer.offeredAssets,
+            requestedAssets: offer.requestedAssets,
+            offeredSol: atomicReq.offeredSol?.toString() || '0',
+            requestedSol: atomicReq.requestedSol?.toString() || '0',
+            createdAt: offer.createdAt.toISOString(),
+          },
+          offerType: OfferType.ATOMIC,
+          executionStrategy: 'atomic',
+          transaction: {
+            nonceAccount: offer.nonceAccount,
+            message: 'Transaction will be built when offer is accepted',
+          },
+          swapFlow: {
+            flowType: flowResult.flowType,
+            requiresDelegation: flowResult.requiresDelegation,
+            requiresTwoPhase: flowResult.requiresTwoPhase,
+            canUseJito: flowResult.canUseJito,
+            reason: flowResult.reason,
+          },
+        };
+
+        // For two-phase guidance (when flow router recommends it)
+        if (flowResult.requiresTwoPhase) {
+          responseData.swapFlow.nextAction = 'Use POST /api/offers/bulk/:id/accept for two-phase settlement';
+          responseData.swapFlow.twoPhaseEndpoint = `/api/offers/bulk/${offer.id}`;
+        }
+
+        // For cNFT delegation swaps
+        if (flowResult.requiresDelegation && !flowResult.requiresTwoPhase) {
+          responseData.swapFlow.nextAction =
+            'Taker accepts via POST /api/offers/:id/accept - delegation handled automatically';
+        }
+
+        res.status(201).json({
+          success: true,
+          data: responseData,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Should not reach here - all paths handled above
+      res.status(400).json({
+        success: false,
+        error: 'Validation Error',
+        message: 'Unable to determine offer type from request',
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
@@ -508,32 +590,24 @@ router.post(
 
       // Handle validation errors with 422 status
       const errorMessage = error instanceof Error ? error.message : 'Failed to create offer';
-      
+
       // Check if this is a validation error based on specific patterns
-      // Use precise matching to avoid misclassifying server/infrastructure errors
-      const isValidationError = 
-        // Asset ownership validation
+      const isValidationError =
         errorMessage.includes('does not own') ||
-        // On-chain asset validation
         errorMessage.includes('not found on-chain') ||
-        // Mint address validation (be specific to avoid "Failed to mint transaction")
         errorMessage.includes('Invalid mint address') ||
         errorMessage.includes('invalid mint address') ||
-        // Explicit validation errors
+        errorMessage.includes('Invalid asset identifier') ||
         (errorMessage.includes('validation') && !errorMessage.includes('RPC')) ||
         (errorMessage.includes('Validation') && !errorMessage.includes('RPC')) ||
-        // Missing required fields (be specific)
         (errorMessage.includes('required') && !errorMessage.includes('connection')) ||
-        // Token account errors (specific to asset validation)
         errorMessage.includes('Token account') ||
         errorMessage.includes('token account') ||
-        // Frozen assets
         errorMessage.includes('frozen') ||
         errorMessage.includes('Frozen') ||
-        // Asset amount validation
         errorMessage.includes('Invalid token amount') ||
         errorMessage.includes('expected 1, got');
-      
+
       if (isValidationError) {
         res.status(422).json({
           success: false,
@@ -1764,8 +1838,22 @@ router.get(
 // ==========================================
 
 /**
+ * Helper to add deprecation headers to responses
+ * @deprecated Use POST /api/offers with auto-detection instead
+ */
+function addDeprecationHeaders(res: Response, endpoint: string): void {
+  res.setHeader('Deprecation', 'true');
+  res.setHeader('Sunset', 'Wed, 01 Jul 2025 00:00:00 GMT');
+  res.setHeader('Link', '</api/offers>; rel="successor-version"');
+  console.warn(`[OffersRoutes] DEPRECATED: ${endpoint} called - use POST /api/offers instead`);
+}
+
+/**
  * POST /api/offers/cnft
  * Create a new cNFT offer with SOL escrow
+ *
+ * @deprecated Use POST /api/offers with {bidderWallet, targetAssetId, offerLamports} instead.
+ * The unified endpoint auto-detects cNFT bid requests.
  *
  * Bidder deposits SOL to a PDA to make an offer on a cNFT.
  * The SOL is held in escrow until the offer is accepted, cancelled, rejected, or expired.
@@ -1775,6 +1863,9 @@ router.post(
   strictRateLimiter,
   requiredIdempotency,
   async (req: Request, res: Response): Promise<void> => {
+    // Add deprecation notice
+    addDeprecationHeaders(res, 'POST /api/offers/cnft');
+
     try {
       const { bidderWallet, targetAssetId, offerLamports, durationSeconds, feeBps, listingId } = req.body;
 
@@ -1851,6 +1942,9 @@ router.post(
       res.status(201).json({
         success: true,
         data: result,
+        _deprecated: true,
+        _deprecationMessage: 'This endpoint is deprecated. Use POST /api/offers with auto-detection instead.',
+        _successorEndpoint: '/api/offers',
         timestamp: new Date().toISOString(),
       });
     } catch (error: any) {
@@ -2374,7 +2468,8 @@ function determineExecutionStrategy(assetsA: any[], assetsB: any[]): 'atomic' | 
  * POST /api/offers/bulk
  * Create a bulk/complex swap offer (uses two-phase lock/settle)
  *
- * For simpler swaps, use POST /api/offers which auto-detects strategy.
+ * @deprecated Use POST /api/offers with partyA/assetsA/assetsB format instead.
+ * The unified endpoint auto-detects bulk swaps (3+ cNFTs or 5+ total assets).
  *
  * Request body:
  * - partyA: string - Initiator wallet address
@@ -2389,6 +2484,9 @@ router.post(
   strictRateLimiter,
   requiredIdempotency,
   async (req: Request, res: Response): Promise<void> => {
+    // Add deprecation notice
+    addDeprecationHeaders(res, 'POST /api/offers/bulk');
+
     try {
       const {
         partyA,
@@ -2491,6 +2589,9 @@ router.post(
           message: 'Bulk offer created. Waiting for acceptance.',
           nextAction: 'Counterparty should call POST /api/offers/bulk/:id/accept',
         },
+        _deprecated: true,
+        _deprecationMessage: 'This endpoint is deprecated. Use POST /api/offers with auto-detection instead.',
+        _successorEndpoint: '/api/offers',
         timestamp: new Date().toISOString(),
       });
     } catch (error) {

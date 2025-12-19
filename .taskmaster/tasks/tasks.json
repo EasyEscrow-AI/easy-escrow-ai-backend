@@ -7,7 +7,7 @@
         "description": "Merge the separate /api/offers/* and /api/offers/cnft/* endpoints into a single /api/offers endpoint. Move asset type detection logic (NFT vs cNFT) to the backend service layer so the API consumer doesn't need to know which endpoint to call. The backend should automatically determine the asset type and route to appropriate handlers.",
         "details": "",
         "testStrategy": "",
-        "status": "pending",
+        "status": "done",
         "dependencies": [],
         "priority": "high",
         "subtasks": []
@@ -18,7 +18,7 @@
         "description": "Merge /api/offers/bulk endpoint into the main /api/offers endpoint. The backend should automatically detect bulk vs single swaps based on the number of assets provided and route to the appropriate transaction builder (single tx vs Jito bundle). Remove the need for API consumers to explicitly choose between bulk and single endpoints.",
         "details": "",
         "testStrategy": "",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           "1"
         ],
