@@ -72,10 +72,6 @@ const feeCollector = feeCollectorStr ? new PublicKey(feeCollectorStr) : undefine
 // Initialize listing manager with fee collector
 const listingManager = createListingManager(connection, prisma, platformAuthority, programId, feeCollector);
 
-console.log('[ListingsRoutes] Initialized');
-console.log('[ListingsRoutes] Delegate Authority:', listingManager.getDelegateAuthority().toBase58());
-console.log('[ListingsRoutes] Fee Collector:', feeCollector?.toBase58() || platformAuthority.publicKey.toBase58());
-
 /**
  * POST /api/listings
  * Create a new cNFT listing
