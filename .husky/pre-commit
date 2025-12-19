@@ -4,10 +4,24 @@
 # Pattern explanation:
 #   wallets/.*\.json - any JSON files in wallets/ directories
 #   .*keypair.*\.json - any files with "keypair" in name
-#   \.env\.[^/.]*$ - .env.<environment> files (but NOT .env.<environment>.example)
-if git diff --cached --name-only | grep -qE "wallets/.*\.json|.*keypair.*\.json|\.env\.[^/.]*$"; then
+#   \.env\.[^/.]+$ - .env.<environment> files (but NOT .env.example which is safe)
+# Note: We explicitly allow .env.example as it's a template without real secrets
+
+# Get staged files that match the dangerous patterns
+DANGEROUS_FILES=$(git diff --cached --name-only | grep -E "wallets/.*\.json|.*keypair.*\.json" || true)
+
+# Also check for .env files that are NOT .env.example
+ENV_FILES=$(git diff --cached --name-only | grep -E "^\.env\.[^/]+$" | grep -v "\.env\.example$" || true)
+
+if [ -n "$DANGEROUS_FILES" ] || [ -n "$ENV_FILES" ]; then
   echo "🚨 CRITICAL: You are about to commit PRIVATE KEYS or secrets!"
   echo "This is a SECURITY RISK and should NEVER be done."
+  if [ -n "$DANGEROUS_FILES" ]; then
+    echo "Dangerous files: $DANGEROUS_FILES"
+  fi
+  if [ -n "$ENV_FILES" ]; then
+    echo "Environment files with potential secrets: $ENV_FILES"
+  fi
   echo "❌ Commit BLOCKED for your protection."
   exit 1
 fi
