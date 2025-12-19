@@ -71,6 +71,27 @@ import {
 
 const router = Router();
 
+/**
+ * Safely parse a numeric offer ID from string.
+ * Returns null if the string is not a valid positive integer.
+ *
+ * NOTE: parseInt('9bd811e9-...', 10) returns 9 (not NaN) because it
+ * parses until the first non-digit character. This helper ensures
+ * the entire string is a valid integer.
+ */
+function parseOfferId(idStr: string): number | null {
+  // Must be a non-empty string containing only digits
+  if (!idStr || !/^\d+$/.test(idStr)) {
+    return null;
+  }
+  const id = parseInt(idStr, 10);
+  // Ensure it's a valid positive integer
+  if (!Number.isFinite(id) || id <= 0) {
+    return null;
+  }
+  return id;
+}
+
 // Initialize services
 const connection = new Connection(
   process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com',
@@ -693,13 +714,13 @@ router.get(
   standardRateLimiter,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const offerId = parseInt(req.params.id, 10);
+      const offerId = parseOfferId(req.params.id);
 
-      if (isNaN(offerId)) {
+      if (offerId === null) {
         res.status(400).json({
           success: false,
           error: 'Validation Error',
-          message: 'Invalid offer ID',
+          message: 'Invalid offer ID - must be a positive integer',
           timestamp: new Date().toISOString(),
         });
         return;
@@ -752,14 +773,14 @@ router.post(
   requiredIdempotency, // Prevent duplicate counter-offer creation on retry
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const parentOfferId = parseInt(req.params.id, 10);
+      const parentOfferId = parseOfferId(req.params.id);
       const { counterMakerWallet } = req.body;
 
-      if (isNaN(parentOfferId)) {
+      if (parentOfferId === null) {
         res.status(400).json({
           success: false,
           error: 'Validation Error',
-          message: 'Invalid offer ID',
+          message: 'Invalid offer ID - must be a positive integer',
           timestamp: new Date().toISOString(),
         });
         return;
@@ -854,14 +875,14 @@ router.post(
   requiredIdempotency, // CRITICAL: Prevent duplicate nonce consumption on retry
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const offerId = parseInt(req.params.id, 10);
+      const offerId = parseOfferId(req.params.id);
       const { takerWallet } = req.body;
 
-      if (isNaN(offerId)) {
+      if (offerId === null) {
         res.status(400).json({
           success: false,
           error: 'Validation Error',
-          message: 'Invalid offer ID',
+          message: 'Invalid offer ID - must be a positive integer',
           timestamp: new Date().toISOString(),
         });
         return;
@@ -1039,13 +1060,13 @@ router.post(
   requiredIdempotency, // CRITICAL: Prevent duplicate rebuilds
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const offerId = parseInt(req.params.id, 10);
+      const offerId = parseOfferId(req.params.id);
 
-      if (isNaN(offerId)) {
+      if (offerId === null) {
         res.status(400).json({
           success: false,
           error: 'Validation Error',
-          message: 'Invalid offer ID',
+          message: 'Invalid offer ID - must be a positive integer',
           timestamp: new Date().toISOString(),
         });
         return;
@@ -1115,13 +1136,13 @@ router.get(
   standardRateLimiter,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const offerId = parseInt(req.params.id, 10);
+      const offerId = parseOfferId(req.params.id);
 
-      if (isNaN(offerId)) {
+      if (offerId === null) {
         res.status(400).json({
           success: false,
           error: 'Validation Error',
-          message: 'Invalid offer ID',
+          message: 'Invalid offer ID - must be a positive integer',
           timestamp: new Date().toISOString(),
         });
         return;
@@ -1207,13 +1228,13 @@ router.post(
   requiredIdempotency,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const offerId = parseInt(req.params.id, 10);
+      const offerId = parseOfferId(req.params.id);
 
-      if (isNaN(offerId)) {
+      if (offerId === null) {
         res.status(400).json({
           success: false,
           error: 'Validation Error',
-          message: 'Invalid offer ID',
+          message: 'Invalid offer ID - must be a positive integer',
           timestamp: new Date().toISOString(),
         });
         return;
@@ -1294,7 +1315,7 @@ router.put(
   requiredIdempotency, // Prevent duplicate updates on retry
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const offerId = parseInt(req.params.id, 10);
+      const offerId = parseOfferId(req.params.id);
       const {
         makerWallet,
         offeredAssets,
@@ -1303,11 +1324,11 @@ router.put(
         requestedSol,
       } = req.body;
 
-      if (isNaN(offerId)) {
+      if (offerId === null) {
         res.status(400).json({
           success: false,
           error: 'Validation Error',
-          message: 'Invalid offer ID',
+          message: 'Invalid offer ID - must be a positive integer',
           timestamp: new Date().toISOString(),
         });
         return;
@@ -1427,14 +1448,14 @@ router.post(
   requiredIdempotency, // CRITICAL: Prevent multiple nonce advances on retry
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const offerId = parseInt(req.params.id, 10);
+      const offerId = parseOfferId(req.params.id);
       const { walletAddress, isAdmin } = req.body;
 
-      if (isNaN(offerId)) {
+      if (offerId === null) {
         res.status(400).json({
           success: false,
           error: 'Validation Error',
-          message: 'Invalid offer ID',
+          message: 'Invalid offer ID - must be a positive integer',
           timestamp: new Date().toISOString(),
         });
         return;
@@ -1520,16 +1541,16 @@ router.delete(
   requiredIdempotency, // CRITICAL: Prevent multiple nonce advances on retry
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const offerId = parseInt(req.params.id, 10);
+      const offerId = parseOfferId(req.params.id);
       // Accept walletAddress from query params (DELETE convention) or body
       const walletAddress = (req.query.walletAddress as string) || req.body?.walletAddress;
       const isAdmin = req.query.isAdmin === 'true' || req.body?.isAdmin;
 
-      if (isNaN(offerId)) {
+      if (offerId === null) {
         res.status(400).json({
           success: false,
           error: 'Validation Error',
-          message: 'Invalid offer ID',
+          message: 'Invalid offer ID - must be a positive integer',
           timestamp: new Date().toISOString(),
         });
         return;
@@ -1608,14 +1629,14 @@ router.post(
   requiredIdempotency, // CRITICAL: Prevent double-marking offer as FILLED on retry
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const offerId = parseInt(req.params.id, 10);
+      const offerId = parseOfferId(req.params.id);
       const { signature } = req.body;
 
-      if (isNaN(offerId)) {
+      if (offerId === null) {
         res.status(400).json({
           success: false,
           error: 'Validation Error',
-          message: 'Invalid offer ID',
+          message: 'Invalid offer ID - must be a positive integer',
           timestamp: new Date().toISOString(),
         });
         return;
@@ -3187,8 +3208,8 @@ router.get(
 
       if (!swap) {
         // If not found in two-phase, check if it's a regular offer ID
-        const offerId = parseInt(id, 10);
-        if (!isNaN(offerId)) {
+        const offerId = parseOfferId(id);
+        if (offerId !== null) {
           const offer = await prisma.swapOffer.findUnique({
             where: { id: offerId },
             select: {
