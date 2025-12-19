@@ -27,7 +27,7 @@ import { AssetType } from '../../src/services/assetValidator';
 describe('Swap Flow Router - Integration Scenarios', () => {
   describe('Offer Creation Flow Detection', () => {
     it('should correctly identify atomic flow for simple NFT swap', () => {
-      // Simulates: POST /api/offers with 2 regular NFTs
+      // Simulates: POST /api/swaps/offers with 2 regular NFTs
       const offeredAssets = [
         { type: AssetType.NFT, identifier: 'nft-mint-1' },
       ];
@@ -53,7 +53,7 @@ describe('Swap Flow Router - Integration Scenarios', () => {
     });
 
     it('should correctly identify delegation flow for cNFT-for-SOL swap', () => {
-      // Simulates: POST /api/offers with cNFT for SOL
+      // Simulates: POST /api/swaps/offers with cNFT for SOL
       const offeredAssets = [
         { type: AssetType.CNFT, identifier: 'cnft-asset-id-1' },
       ];
@@ -79,7 +79,7 @@ describe('Swap Flow Router - Integration Scenarios', () => {
     });
 
     it('should correctly identify two-phase flow for bulk cNFT swap', () => {
-      // Simulates: POST /api/offers/bulk with 3+ cNFTs
+      // Simulates: POST /api/swaps/offers/bulk with 3+ cNFTs
       const offeredAssets = [
         { type: AssetType.CNFT, identifier: 'cnft-1' },
         { type: AssetType.CNFT, identifier: 'cnft-2' },

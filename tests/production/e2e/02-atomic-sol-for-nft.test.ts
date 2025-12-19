@@ -77,7 +77,7 @@ describe('🚀 Production E2E: SOL → NFT (Mainnet)', () => {
     
     // Create offer: Maker (sender) offers SOL, wants NFT
     console.log('\n📤 Creating offer...');
-    const createResponse = await apiClient.post('/api/offers', {
+    const createResponse = await apiClient.post('/api/swaps/offers', {
       makerWallet: sender.publicKey.toBase58(),
       takerWallet: receiver.publicKey.toBase58(),
       offeredAssets: [],
@@ -96,7 +96,7 @@ describe('🚀 Production E2E: SOL → NFT (Mainnet)', () => {
     
     // Step 2: Accept offer
     console.log('\n✅ Step 2: Accepting offer...');
-    const acceptResponse = await apiClient.post(`/api/offers/${offer.id}/accept`, {
+    const acceptResponse = await apiClient.post(`/api/swaps/offers/${offer.id}/accept`, {
       takerWallet: receiver.publicKey.toBase58(),
     }, {
       headers: { 'idempotency-key': `prod-accept-sol-nft-${Date.now()}` },

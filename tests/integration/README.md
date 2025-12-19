@@ -32,13 +32,13 @@ Integration tests verify that services work correctly together with real depende
 **Purpose:** Test HTTP API endpoints with supertest
 
 **Coverage:**
-- ✅ `POST /api/offers` - Create offers (direct and open)
-- ✅ `GET /api/offers` - List and filter offers
-- ✅ `GET /api/offers/:id` - Get offer details
-- ✅ `POST /api/offers/:id/counter` - Create counter-offers
-- ✅ `POST /api/offers/:id/accept` - Accept offers
-- ✅ `POST /api/offers/:id/cancel` - Cancel offers
-- ✅ `POST /api/offers/:id/confirm` - Confirm swaps
+- ✅ `POST /api/swaps/offers` - Create offers (direct and open)
+- ✅ `GET /api/swaps/offers` - List and filter offers
+- ✅ `GET /api/swaps/offers/:id` - Get offer details
+- ✅ `POST /api/swaps/offers/:id/counter` - Create counter-offers
+- ✅ `POST /api/swaps/offers/:id/accept` - Accept offers
+- ✅ `POST /api/swaps/offers/:id/cancel` - Cancel offers
+- ✅ `POST /api/swaps/offers/:id/confirm` - Confirm swaps
 - ✅ Input validation and error responses
 - ✅ Authorization checks
 - ✅ Rate limiting (if implemented)

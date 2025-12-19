@@ -25,7 +25,7 @@
 
 ```typescript
 // 1. Maker creates an offer
-const offerResponse = await fetch('https://api.easyescrow.ai/api/offers', {
+const offerResponse = await fetch('https://api.easyescrow.ai/api/swaps/offers', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
@@ -49,7 +49,7 @@ const offerResponse = await fetch('https://api.easyescrow.ai/api/offers', {
 const { offer } = await offerResponse.json();
 
 // 2. Taker accepts the offer
-const acceptResponse = await fetch(`https://api.easyescrow.ai/api/offers/${offer.id}/accept`, {
+const acceptResponse = await fetch(`https://api.easyescrow.ai/api/swaps/offers/${offer.id}/accept`, {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
@@ -68,7 +68,7 @@ const signedTx = await wallet.signTransaction(tx);
 const signature = await connection.sendRawTransaction(signedTx.serialize());
 
 // 4. Taker confirms with backend
-await fetch(`https://api.easyescrow.ai/api/offers/${offer.id}/confirm`, {
+await fetch(`https://api.easyescrow.ai/api/swaps/offers/${offer.id}/confirm`, {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
@@ -123,7 +123,7 @@ headers: {
 
 ### 1. Create Offer
 
-**Endpoint:** `POST /api/offers`
+**Endpoint:** `POST /api/swaps/offers`
 
 **Description:** Create a new atomic swap offer.
 
@@ -311,7 +311,7 @@ interface Asset {
 
 ### 2. List Offers
 
-**Endpoint:** `GET /api/offers`
+**Endpoint:** `GET /api/swaps/offers`
 
 **Query Parameters:**
 ```
@@ -338,14 +338,14 @@ offset?: number (default: 0)
 
 **Example:**
 ```bash
-GET /api/offers?status=PENDING&limit=20
+GET /api/swaps/offers?status=PENDING&limit=20
 ```
 
 ---
 
 ### 3. Get Offer Details
 
-**Endpoint:** `GET /api/offers/:offerId`
+**Endpoint:** `GET /api/swaps/offers/:offerId`
 
 **Response (200 OK):**
 ```typescript
@@ -377,7 +377,7 @@ GET /api/offers?status=PENDING&limit=20
 
 ### 4. Accept Offer
 
-**Endpoint:** `POST /api/offers/:offerId/accept`
+**Endpoint:** `POST /api/swaps/offers/:offerId/accept`
 
 **Description:** Accept an offer and receive the transaction to sign.
 
@@ -418,7 +418,7 @@ Idempotency-Key: <uuid>  # Required
 
 ### 5. Confirm Swap Execution
 
-**Endpoint:** `POST /api/offers/:offerId/confirm`
+**Endpoint:** `POST /api/swaps/offers/:offerId/confirm`
 
 **Description:** Confirm that the swap transaction was broadcast.
 
@@ -453,7 +453,7 @@ Idempotency-Key: <uuid>  # Required
 
 ### 6. Cancel Offer
 
-**Endpoint:** `POST /api/offers/:offerId/cancel`
+**Endpoint:** `POST /api/swaps/offers/:offerId/cancel`
 
 **Description:** Cancel your own offer (maker only).
 
@@ -482,7 +482,7 @@ Idempotency-Key: <uuid>  # Required
 
 ### 7. Create Counter-Offer
 
-**Endpoint:** `POST /api/offers/:offerId/counter`
+**Endpoint:** `POST /api/swaps/offers/:offerId/counter`
 
 **Description:** Create a counter-offer with different terms.
 
@@ -624,12 +624,12 @@ try {
 
 | Endpoint | Without API Key | With API Key |
 |----------|----------------|--------------|
-| `GET /api/offers` | 100/15min | 1000/15min |
-| `GET /api/offers/:id` | 100/15min | 1000/15min |
-| `POST /api/offers` | 10/15min | 50/15min |
-| `POST /api/offers/:id/accept` | 10/15min | 50/15min |
-| `POST /api/offers/:id/confirm` | 10/15min | 50/15min |
-| `POST /api/offers/:id/cancel` | 20/15min | 100/15min |
+| `GET /api/swaps/offers` | 100/15min | 1000/15min |
+| `GET /api/swaps/offers/:id` | 100/15min | 1000/15min |
+| `POST /api/swaps/offers` | 10/15min | 50/15min |
+| `POST /api/swaps/offers/:id/accept` | 10/15min | 50/15min |
+| `POST /api/swaps/offers/:id/confirm` | 10/15min | 50/15min |
+| `POST /api/swaps/offers/:id/cancel` | 20/15min | 100/15min |
 
 ### Rate Limit Headers
 
@@ -643,7 +643,7 @@ X-RateLimit-Reset: 1733149200
 ### Handling Rate Limits
 
 ```typescript
-const response = await fetch('/api/offers', { ... });
+const response = await fetch('/api/swaps/offers', { ... });
 
 if (response.status === 429) {
   const resetTime = parseInt(response.headers.get('X-RateLimit-Reset'));
@@ -653,7 +653,7 @@ if (response.status === 429) {
   await sleep(waitSeconds * 1000);
   
   // Retry request
-  return fetch('/api/offers', { ... });
+  return fetch('/api/swaps/offers', { ... });
 }
 ```
 

@@ -69,9 +69,9 @@ describe('Atomic Swap System - Smoke Tests', () => {
       expect(response.body).to.have.property('endpoints');
     });
     
-    it('GET /api/offers should list offers', async () => {
+    it('GET /api/swaps/offers should list offers', async () => {
       const response = await request(app)
-        .get('/api/offers')
+        .get('/api/swaps/offers')
         .expect(200);
       
       expect(response.body).to.have.property('offers');
@@ -79,18 +79,18 @@ describe('Atomic Swap System - Smoke Tests', () => {
       expect(response.body.offers).to.be.an('array');
     });
     
-    it('POST /api/offers should validate required fields', async () => {
+    it('POST /api/swaps/offers should validate required fields', async () => {
       const response = await request(app)
-        .post('/api/offers')
+        .post('/api/swaps/offers')
         .send({}) // Empty body
         .expect(400);
       
       expect(response.body).to.have.property('error');
     });
     
-    it('GET /api/offers/:id should handle not found', async () => {
+    it('GET /api/swaps/offers/:id should handle not found', async () => {
       const response = await request(app)
-        .get('/api/offers/99999999')
+        .get('/api/swaps/offers/99999999')
         .expect(404);
       
       expect(response.body).to.have.property('error');
@@ -118,7 +118,7 @@ describe('Atomic Swap System - Smoke Tests', () => {
       // This would require importing FeeCalculator
       // For smoke test, just verify the API accepts fee-related params
       const response = await request(app)
-        .post('/api/offers')
+        .post('/api/swaps/offers')
         .send({
           makerWallet: Keypair.generate().publicKey.toBase58(),
           takerWallet: Keypair.generate().publicKey.toBase58(),
@@ -137,7 +137,7 @@ describe('Atomic Swap System - Smoke Tests', () => {
   describe('Error Handling', () => {
     it('should handle malformed requests gracefully', async () => {
       const response = await request(app)
-        .post('/api/offers')
+        .post('/api/swaps/offers')
         .send('invalid json')
         .set('Content-Type', 'application/json')
         .expect(400);
@@ -147,7 +147,7 @@ describe('Atomic Swap System - Smoke Tests', () => {
     
     it('should handle invalid wallet addresses', async () => {
       const response = await request(app)
-        .post('/api/offers')
+        .post('/api/swaps/offers')
         .send({
           makerWallet: 'invalid-address',
           takerWallet: 'invalid-address',

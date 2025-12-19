@@ -137,7 +137,7 @@ describe('🔍 Production Integration: cNFT API Endpoints', () => {
       this.timeout(30000);
 
       const response = await request(API_BASE_URL)
-        .get('/api/offers')
+        .get('/api/swaps/offers')
         .expect(200);
 
       expect(response.body.success).to.be.true;
@@ -160,7 +160,7 @@ describe('🔍 Production Integration: cNFT API Endpoints', () => {
 
       // First, get existing offers to check for bulk swaps
       const offersResponse = await request(API_BASE_URL)
-        .get('/api/offers')
+        .get('/api/swaps/offers')
         .expect(200);
 
       expect(offersResponse.body.data).to.be.an('object');

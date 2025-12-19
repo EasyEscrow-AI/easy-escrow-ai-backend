@@ -102,7 +102,7 @@ describe('🚀 Production E2E: Zero-Fee Authorization (Mainnet)', () => {
     
     // Create offer with API key
     console.log('\n📤 Creating offer with API key...');
-    const createResponse = await apiClient.post('/api/offers', {
+    const createResponse = await apiClient.post('/api/swaps/offers', {
       makerWallet: sender.publicKey.toBase58(),
       takerWallet: receiver.publicKey.toBase58(),
       offeredAssets: [{
@@ -124,7 +124,7 @@ describe('🚀 Production E2E: Zero-Fee Authorization (Mainnet)', () => {
     console.log(`  ✅ Offer created: ${offer.id}`);
     
     // Fetch offer to check platform fee
-    const offerResponse = await apiClient.get(`/api/offers/${offer.id}`);
+    const offerResponse = await apiClient.get(`/api/swaps/offers/${offer.id}`);
     const offerDetails = offerResponse.data.data.offer;
     
     console.log(`     Platform fee: ${offerDetails.platformFee} lamports`);
@@ -133,7 +133,7 @@ describe('🚀 Production E2E: Zero-Fee Authorization (Mainnet)', () => {
     
     // Accept offer
     console.log('\n✅ Accepting zero-fee offer...');
-    const acceptResponse = await apiClient.post(`/api/offers/${offer.id}/accept`, {
+    const acceptResponse = await apiClient.post(`/api/swaps/offers/${offer.id}/accept`, {
       takerWallet: receiver.publicKey.toBase58(),
     }, {
       headers: {
@@ -173,7 +173,7 @@ describe('🚀 Production E2E: Zero-Fee Authorization (Mainnet)', () => {
     
     // Create offer with INVALID API key
     console.log('\n📤 Creating offer with invalid API key...');
-    const createResponse = await apiClient.post('/api/offers', {
+    const createResponse = await apiClient.post('/api/swaps/offers', {
       makerWallet: sender.publicKey.toBase58(),
       takerWallet: receiver.publicKey.toBase58(),
       offeredAssets: [{
@@ -194,7 +194,7 @@ describe('🚀 Production E2E: Zero-Fee Authorization (Mainnet)', () => {
     console.log(`  ✅ Offer created: ${offer.id}`);
     
     // Fetch offer to check platform fee
-    const offerResponse = await apiClient.get(`/api/offers/${offer.id}`);
+    const offerResponse = await apiClient.get(`/api/swaps/offers/${offer.id}`);
     const offerDetails = offerResponse.data.data.offer;
     
     console.log(`     Platform fee: ${offerDetails.platformFee} lamports`);
@@ -219,7 +219,7 @@ describe('🚀 Production E2E: Zero-Fee Authorization (Mainnet)', () => {
     
     // Create offer without API key
     console.log('\n📤 Creating offer without API key...');
-    const createResponse = await apiClient.post('/api/offers', {
+    const createResponse = await apiClient.post('/api/swaps/offers', {
       makerWallet: sender.publicKey.toBase58(),
       takerWallet: receiver.publicKey.toBase58(),
       offeredAssets: [{
@@ -239,7 +239,7 @@ describe('🚀 Production E2E: Zero-Fee Authorization (Mainnet)', () => {
     console.log(`  ✅ Offer created: ${offer.id}`);
     
     // Fetch offer to check platform fee
-    const offerResponse = await apiClient.get(`/api/offers/${offer.id}`);
+    const offerResponse = await apiClient.get(`/api/swaps/offers/${offer.id}`);
     const offerDetails = offerResponse.data.data.offer;
     
     console.log(`     Platform fee: ${offerDetails.platformFee} lamports`);

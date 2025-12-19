@@ -59,11 +59,11 @@ describe('🔍 Production Integration: API Endpoints', () => {
   });
 
   describe('Offer Management Endpoints', () => {
-    it('should return 200 OK from GET /api/offers', async function() {
+    it('should return 200 OK from GET /api/swaps/offers', async function() {
       this.timeout(30000);
 
       const response = await request(API_BASE_URL)
-        .get('/api/offers')
+        .get('/api/swaps/offers')
         .expect(200);
 
       expect(response.body).to.have.property('success');
@@ -72,14 +72,14 @@ describe('🔍 Production Integration: API Endpoints', () => {
       expect(response.body.data).to.have.property('offers');
       expect(response.body.data.offers).to.be.an('array');
       expect(response.body.data).to.have.property('total');
-      console.log(`✅ GET /api/offers: ${response.body.data.total} total offers, ${response.body.data.offers.length} returned`);
+      console.log(`✅ GET /api/swaps/offers: ${response.body.data.total} total offers, ${response.body.data.offers.length} returned`);
     });
 
     it('should handle offer filtering parameters', async function() {
       this.timeout(30000);
 
       const response = await request(API_BASE_URL)
-        .get('/api/offers')
+        .get('/api/swaps/offers')
         .query({ status: 'PENDING', limit: 10 });
 
       // Accept both 200 (success) and 500 (if filtering causes issues)
@@ -98,7 +98,7 @@ describe('🔍 Production Integration: API Endpoints', () => {
 
       const fakeOfferId = '00000000-0000-0000-0000-000000000000';
       const response = await request(API_BASE_URL)
-        .get(`/api/offers/${fakeOfferId}`)
+        .get(`/api/swaps/offers/${fakeOfferId}`)
         .expect(404);
 
       expect(response.body).to.have.property('success');
@@ -170,7 +170,7 @@ describe('🔍 Production Integration: API Endpoints', () => {
       this.timeout(30000);
 
       const response = await request(API_BASE_URL)
-        .post('/api/offers')
+        .post('/api/swaps/offers')
         .send({ invalid: 'data' })
         .expect(400);
 
@@ -184,7 +184,7 @@ describe('🔍 Production Integration: API Endpoints', () => {
       this.timeout(30000);
 
       const response = await request(API_BASE_URL)
-        .post('/api/offers')
+        .post('/api/swaps/offers')
         .send({})
         .expect(400);
 
@@ -199,7 +199,7 @@ describe('🔍 Production Integration: API Endpoints', () => {
       this.timeout(30000);
 
       const response = await request(API_BASE_URL)
-        .get('/api/offers')
+        .get('/api/swaps/offers')
         .expect(200);
 
       expect(response.body).to.have.property('success');

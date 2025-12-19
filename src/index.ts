@@ -181,9 +181,9 @@ app.get('/', (_req: Request, res: Response) => {
     version: '1.0.0',
     endpoints: {
       health: '/health',
-      offers: '/api/offers',
-      offersCnft: '/api/offers/cnft',
-      offersBulk: '/api/offers/bulk',
+      offers: '/api/swaps/offers',
+      offersCnft: '/api/swaps/offers/cnft',
+      offersBulk: '/api/swaps/offers/bulk',
       receipts: '/v1/receipts',
       transactions: '/v1/transactions',
       expiryCancellation: '/api/expiry-cancellation',

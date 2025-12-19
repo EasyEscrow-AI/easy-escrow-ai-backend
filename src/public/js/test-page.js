@@ -1334,7 +1334,7 @@ async function confirmAndExecuteSwap() {
 // Helper: Accept offer with retry
 async function acceptOfferWithRetry(offerId, attempt = 1) {
   try {
-    const response = await fetch(`/api/offers/${offerId}/accept`, {
+    const response = await fetch(`/api/swaps/offers/${offerId}/accept`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1512,7 +1512,7 @@ async function executeAtomicSwap(params) {
       addLog(`🔑 Using API key for potential zero-fee swap`, 'info');
     }
 
-    const createResponse = await fetch('/api/offers', {
+    const createResponse = await fetch('/api/swaps/offers', {
       method: 'POST',
       headers: headers,
       body: JSON.stringify(requestPayload),

@@ -88,21 +88,6 @@ info:
     - **Instant settlement**: No waiting for confirmations or multi-step processes
     - **Cancel anytime**: Cancel offers instantly by advancing the durable nonce
 
-    ### Unified Swaps API (NEW)
-
-    A new unified API is available at `/api/swaps/*` that consolidates offers and listings into a single interface:
-
-    - `POST /api/swaps/offers` - Create any offer type (auto-detected: listing, bid, atomic, bulk)
-    - `GET /api/swaps/offers` - List all offers with type/status filters
-    - `GET /api/swaps/offers/{id}` - Get offer details
-    - `POST /api/swaps/offers/{id}/accept` - Accept any offer type
-    - `POST /api/swaps/offers/{id}/cancel` - Cancel an offer
-    - `GET /api/swaps/delegations/authority` - Get delegate authority
-    - `POST /api/swaps/delegations/{offerId}/confirm` - Confirm delegation
-    - `POST /api/swaps/delegations/{offerId}/revoke` - Revoke delegation
-
-    The unified API treats SOL as an asset type, enabling future extensibility for USDC and other tokens.
-    Legacy `/api/offers/*` and `/api/listings/*` endpoints remain available for backwards compatibility.
 
     ### Platform Fees
     
@@ -172,7 +157,7 @@ paths:
                         example: /health
                       offers:
                         type: string
-                        example: /api/offers
+                        example: /api/swaps/offers
                   documentation:
                     type: string
                     example: /docs
@@ -281,7 +266,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /api/offers:
+  /api/swaps/offers:
     get:
       tags:
         - Offers
@@ -509,7 +494,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /api/offers/{offerId}:
+  /api/swaps/offers/{offerId}:
     get:
       tags:
         - Offers
@@ -538,7 +523,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /api/offers/{offerId}/counter:
+  /api/swaps/offers/{offerId}/counter:
     post:
       tags:
         - Offers
@@ -594,7 +579,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /api/offers/{offerId}/cancel:
+  /api/swaps/offers/{offerId}/cancel:
     post:
       tags:
         - Offers
@@ -660,7 +645,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /api/offers/{offerId}/accept:
+  /api/swaps/offers/{offerId}/accept:
     post:
       tags:
         - Offers
@@ -824,7 +809,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /api/offers/{offerId}/confirm:
+  /api/swaps/offers/{offerId}/confirm:
     post:
       tags:
         - Offers
@@ -883,7 +868,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /api/offers/{offerId}/bundle-status:
+  /api/swaps/offers/{offerId}/bundle-status:
     get:
       tags:
         - Bundle Monitoring
@@ -943,7 +928,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /api/offers/{offerId}/retry-bundle:
+  /api/swaps/offers/{offerId}/retry-bundle:
     post:
       tags:
         - Bundle Monitoring
@@ -995,7 +980,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /api/offers/metrics/bundles:
+  /api/swaps/offers/metrics/bundles:
     get:
       tags:
         - Bundle Monitoring
@@ -1074,7 +1059,7 @@ paths:
   # OFFER MANAGEMENT - ADDITIONAL ENDPOINTS
   # =============================================================================
 
-  /api/offers/{offerId}/rebuild-transaction:
+  /api/swaps/offers/{offerId}/rebuild-transaction:
     post:
       tags:
         - Offers

@@ -1,7 +1,7 @@
 /**
  * Integration Tests for Swap Progress Endpoint
  *
- * Tests the GET /api/swaps/:id/progress and /api/offers/bulk/:id/progress endpoints
+ * Tests the GET /api/swaps/:id/progress and /api/swaps/offers/bulk/:id/progress endpoints
  * including response format, rate limiting, and caching behavior.
  *
  * @see .taskmaster/tasks/task_013_cnft-delegation-swap.txt
@@ -142,7 +142,7 @@ describe('Swap Progress API - Integration Tests', () => {
       );
 
       app.get(
-        '/api/offers/bulk/:id/progress',
+        '/api/swaps/offers/bulk/:id/progress',
         progressRateLimiter,
         async (req: Request, res: Response): Promise<void> => {
           try {
@@ -437,7 +437,7 @@ describe('Swap Progress API - Integration Tests', () => {
   // Bulk API Alias Tests
   // ===========================================================================
 
-  describe('GET /api/offers/bulk/:id/progress', () => {
+  describe('GET /api/swaps/offers/bulk/:id/progress', () => {
     it('should return same data as /api/swaps/:id/progress', async function () {
       if (!app) this.skip();
 
@@ -449,7 +449,7 @@ describe('Swap Progress API - Integration Tests', () => {
 
       const [response1, response2] = await Promise.all([
         request(app).get(`/api/swaps/${swapId}/progress`),
-        request(app).get(`/api/offers/bulk/${swapId}/progress`),
+        request(app).get(`/api/swaps/offers/bulk/${swapId}/progress`),
       ]);
 
       expect(response1.status).to.equal(200);
@@ -467,7 +467,7 @@ describe('Swap Progress API - Integration Tests', () => {
     it('should return 404 for non-existent bulk offer', async function () {
       if (!app) this.skip();
 
-      const response = await request(app).get('/api/offers/bulk/non-existent/progress');
+      const response = await request(app).get('/api/swaps/offers/bulk/non-existent/progress');
 
       expect(response.status).to.equal(404);
       expect(response.body.error).to.equal('Not Found');

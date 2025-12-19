@@ -198,7 +198,7 @@ describe('🚀 Production E2E: Admin Cancel with On-Chain Refund Verification (M
       // Admin cancels the offer
       console.log('   Requesting admin cancellation...');
       const cancelResponse = await axios.post(
-        `${PRODUCTION_API_URL}/api/offers/${testOfferId}/cancel`,
+        `${PRODUCTION_API_URL}/api/swaps/offers/${testOfferId}/cancel`,
         {
           reason: 'E2E test - verifying refund functionality',
         },

@@ -39,7 +39,7 @@ export const createTestApp = (): Application => {
       version: '1.0.0',
       endpoints: {
         health: '/health',
-        offers: '/api/offers',
+        offers: '/api/swaps/offers',
       }
     });
   });

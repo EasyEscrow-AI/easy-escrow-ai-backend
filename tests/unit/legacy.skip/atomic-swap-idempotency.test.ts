@@ -30,7 +30,7 @@ describe.skip('Atomic Swap Idempotency Protection (SKIPPED - Jest syntax)', () =
     // Setup mock request
     mockRequest = {
       method: 'POST',
-      path: '/api/offers',
+      path: '/api/swaps/offers',
       body: {
         makerWallet: 'test-wallet',
         offeredAssets: [],
@@ -175,7 +175,7 @@ describe.skip('Atomic Swap Idempotency Protection (SKIPPED - Jest syntax)', () =
 
       expect(mockIdempotencyService.storeIdempotency).toHaveBeenCalledWith(
         idempotencyKey,
-        expect.stringContaining('/api/offers'),
+        expect.stringContaining('/api/swaps/offers'),
         mockRequest.body,
         mockResponse.statusCode,
         responseBody
@@ -185,11 +185,11 @@ describe.skip('Atomic Swap Idempotency Protection (SKIPPED - Jest syntax)', () =
 
   describe('Critical Endpoint Protection', () => {
     const criticalEndpoints = [
-      { path: '/api/offers', description: 'Create offer' },
-      { path: '/api/offers/:id/accept', description: 'Accept offer (nonce consumption)' },
-      { path: '/api/offers/:id/cancel', description: 'Cancel offer (nonce advance)' },
-      { path: '/api/offers/:id/confirm', description: 'Confirm swap (mark FILLED)' },
-      { path: '/api/offers/:id/counter', description: 'Counter offer' },
+      { path: '/api/swaps/offers', description: 'Create offer' },
+      { path: '/api/swaps/offers/:id/accept', description: 'Accept offer (nonce consumption)' },
+      { path: '/api/swaps/offers/:id/cancel', description: 'Cancel offer (nonce advance)' },
+      { path: '/api/swaps/offers/:id/confirm', description: 'Confirm swap (mark FILLED)' },
+      { path: '/api/swaps/offers/:id/counter', description: 'Counter offer' },
     ];
 
     criticalEndpoints.forEach(({ path, description }) => {
