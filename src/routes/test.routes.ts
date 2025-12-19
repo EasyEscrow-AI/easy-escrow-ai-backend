@@ -9,6 +9,7 @@ import { Connection, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import path from 'path';
 import { analyzeSwapStrategy, AssetType, SwapStrategy } from '../services/transactionGroupBuilder';
 
+import { isJitoBundlesEnabled } from '../utils/featureFlags';
 const router = Router();
 
 // Initialize connection
@@ -1196,17 +1197,20 @@ router.post('/api/quote', async (req: Request, res: Response) => {
     const isBulkSwap = swapAnalysis.strategy !== SwapStrategy.SINGLE_TRANSACTION && 
                        swapAnalysis.strategy !== SwapStrategy.CANNOT_FIT;
     const isCnftSwap = cNFTCount > 0;
+
+    // Check if Jito bundles are actually enabled
+    const jitoEnabled = isJitoBundlesEnabled();
     
     // Calculate Jito tip if bulk swap
     // Jito tip is per bundle (not per transaction)
     // Default: 0.001 SOL (1,000,000 lamports) - above 50th percentile for reliable inclusion
     // This matches DEFAULT_JITO_TIP_LAMPORTS in escrow-program.service.ts
     const DEFAULT_JITO_TIP_LAMPORTS = 1_000_000; // 0.001 SOL per bundle
-    const estimatedJitoTipLamports = isBulkSwap ? DEFAULT_JITO_TIP_LAMPORTS : 0;
+    const estimatedJitoTipLamports = (isBulkSwap && jitoEnabled) ? DEFAULT_JITO_TIP_LAMPORTS : 0;
     const estimatedJitoTipSol = estimatedJitoTipLamports / LAMPORTS_PER_SOL;
     
     // Add Jito tip to network fee estimate
-    if (isBulkSwap) {
+    if (isBulkSwap && jitoEnabled) {
       networkFeeSol += estimatedJitoTipSol;
     }
 
@@ -1273,7 +1277,10 @@ router.post('/api/quote', async (req: Request, res: Response) => {
 
     // Add swap strategy info
     if (isBulkSwap && transactionStatus !== 'too_large') {
-      warnings.push(`ℹ️ Bulk swap detected: ${swapAnalysis.reason}. Will use Jito bundle for atomic execution.`);
+      const executionNote = jitoEnabled
+        ? 'Will use Jito bundle for atomic execution.'
+        : 'Will use sequential transactions (Jito disabled).';
+      warnings.push(`ℹ️ Bulk swap detected: ${swapAnalysis.reason}. ${executionNote}`);
     }
 
     // ========================================
@@ -1350,10 +1357,10 @@ router.post('/api/quote', async (req: Request, res: Response) => {
         // Fees
         networkFee: {
           ...formatSolWithUSD(networkFeeSol),
-          display: isBulkSwap 
+          display: (isBulkSwap && jitoEnabled)
             ? `~${formatSolWithUSD(networkFeeSol).display} (includes ${formatSolDisplay(estimatedJitoTipSol)} SOL Jito tip)`
             : `~${formatSolWithUSD(networkFeeSol).display}`,
-          jitoTip: isBulkSwap ? {
+          jitoTip: (isBulkSwap && jitoEnabled) ? {
             lamports: estimatedJitoTipLamports,
             sol: estimatedJitoTipSol,
             display: formatSolDisplay(estimatedJitoTipSol),
@@ -1423,25 +1430,29 @@ router.post('/api/quote', async (req: Request, res: Response) => {
         // Bulk swap info (for UI)
         bulkSwap: isBulkSwap ? {
           isBulkSwap: true,
+          jitoEnabled,
           strategy: swapAnalysis.strategy,
           transactionCount: swapAnalysis.transactionCount,
           estimatedTipLamports: estimatedJitoTipLamports,
           estimatedTipSol: estimatedJitoTipLamports / LAMPORTS_PER_SOL,
-          executionMethod: swapAnalysis.strategy === SwapStrategy.DIRECT_BUBBLEGUM_BUNDLE
-            ? 'Direct Bubblegum transfers via Jito bundle'
-            : swapAnalysis.strategy === SwapStrategy.DIRECT_NFT_BUNDLE
-              ? 'Direct SPL/Core transfers via Jito bundle'
-              : swapAnalysis.strategy === SwapStrategy.MIXED_NFT_BUNDLE
-                ? 'Mixed NFT transfers via Jito bundle'
-                : 'Jito bundle',
+          executionMethod: !jitoEnabled
+            ? 'Sequential transactions (Jito disabled)'
+            : swapAnalysis.strategy === SwapStrategy.DIRECT_BUBBLEGUM_BUNDLE
+              ? 'Direct Bubblegum transfers via Jito bundle'
+              : swapAnalysis.strategy === SwapStrategy.DIRECT_NFT_BUNDLE
+                ? 'Direct SPL/Core transfers via Jito bundle'
+                : swapAnalysis.strategy === SwapStrategy.MIXED_NFT_BUNDLE
+                  ? 'Mixed NFT transfers via Jito bundle'
+                  : 'Jito bundle',
         } : {
           isBulkSwap: false,
+          jitoEnabled,
           strategy: swapAnalysis.strategy,
           transactionCount: swapAnalysis.transactionCount,
           executionMethod: swapAnalysis.strategy === SwapStrategy.CANNOT_FIT
             ? 'Swap cannot be executed (exceeds transaction limits)'
-            : isCnftSwap 
-              ? 'Single transaction with cNFT (requires bundle)' 
+            : isCnftSwap
+              ? 'Single transaction with cNFT (requires bundle)'
               : 'Standard escrow transaction',
         },
 
