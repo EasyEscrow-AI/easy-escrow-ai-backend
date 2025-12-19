@@ -31,7 +31,7 @@
         "description": "Remove Admin Recovery endpoints from public Swagger documentation. These should not be exposed as API endpoints - convert recovery operations to internal monitoring jobs that run automatically. Evaluate whether these endpoints should exist at all or be replaced with scheduled background jobs for recovery detection and handling.",
         "details": "",
         "testStrategy": "",
-        "status": "pending",
+        "status": "done",
         "dependencies": [],
         "priority": "medium",
         "subtasks": []
@@ -42,7 +42,7 @@
         "description": "Remove the Swap Status endpoint section from Swagger/API documentation as it doesn't make sense in the current context. Review whether this endpoint is still needed or should be deprecated/removed entirely.",
         "details": "",
         "testStrategy": "",
-        "status": "pending",
+        "status": "done",
         "dependencies": [],
         "priority": "medium",
         "subtasks": []
@@ -53,7 +53,7 @@
         "description": "Review and correct the API documentation (/docs) for accuracy. Key fixes needed:\n\n1. **Fee Payment (WRONG)**: Docs say \"50% split\" - Actually taker pays by default (FeePayer.BUYER). The platform fee comes from whoever is sending SOL (taker if taker sends SOL, maker if maker sends SOL, maker for pure cNFT swaps).\n\n2. **Expiry Times (WRONG)**: Docs say \"5 minutes to 24 hours\" - Actually with durable nonces: min 1 hour, max 30 days, default 7 days.\n\n3. **Asset Limits (CORRECT)**: 10 per side is correct. Two-phase settlement is for resumable transactions, not larger batches. Keep at 10.\n\nReview all other documentation sections for similar inaccuracies and fix them.",
         "details": "",
         "testStrategy": "",
-        "status": "pending",
+        "status": "done",
         "dependencies": [],
         "priority": "high",
         "subtasks": []
@@ -64,7 +64,7 @@
         "description": "On production (https://api.easyescrow.ai/test), cNFT <> cNFT swaps are failing with error:\n\"Swap failed: Failed during accept: Transaction too large: 2220 > 1232\"\n\n**Issue:** The system appears to be attempting an atomic swap (single transaction) instead of detecting cNFTs and routing to two-phase settlement.\n\n**Expected behavior:** When cNFTs are detected, the logic should automatically use two-phase settlement (delegation-based) which splits the operation into multiple smaller transactions.\n\n**Environment notes:**\n- JITO env flag is FALSE on production\n- Two-phase settlement should be the active path for cNFT swaps\n\n**Investigation needed:**\n1. Check why cNFT detection is not triggering two-phase flow\n2. Verify the routing logic in offerManager/transactionBuilder\n3. Confirm JITO_ENABLED flag is being read correctly\n4. Test the fix on staging before production deployment",
         "details": "",
         "testStrategy": "",
-        "status": "pending",
+        "status": "done",
         "dependencies": [],
         "priority": "high",
         "subtasks": []
@@ -75,15 +75,77 @@
         "description": "Update the test page at https://api.easyescrow.ai/test with the following changes:\n\n1. **List Asset for Sale - Support all NFT types**: Currently only works for cNFT. Update to support any NFT type (SPL NFTs, cNFTs, etc.)\n\n2. **Add NFT type filter**: Include a filter/dropdown to select NFT type when listing assets\n\n3. **Remove \"How it works\" section**: Delete this section from the test page\n\n4. **Add Settings title**: Add \"Settings\" as a title/header above the \"🔑 Zero-Fee API Key (Optional)\" section\n\nFile to modify: src/public/js/test-page.js and related HTML/CSS",
         "details": "",
         "testStrategy": "",
-        "status": "pending",
+        "status": "done",
         "dependencies": [],
         "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 8,
+        "title": "Fix /test page production errors - missing listings table and CORS image issues",
+        "description": "Fix production errors on https://api.easyescrow.ai/test page:\n\n**Error 1: Missing listings table (CRITICAL)**\n```\nInvalid `prisma.listing.findMany()` invocation:\nThe table `public.listings` does not exist in the current database.\n```\n- Endpoints affected: `/api/listings?status=ACTIVE` and `/api/listings/seller/:address`\n- Both return 500 Internal Server Error\n- Need to run database migration to create the `listings` table on production\n\n**Error 2: CORS image loading failure (Minor)**\n```\nAccess to image at 'https://curved.pinit.io/...' from origin 'https://api.easyescrow.ai' has been blocked by CORS policy\n```\n- Some NFT images fail to load due to CORS restrictions on third-party image hosts\n- Current fallback to placeholder is working but logs error\n- Consider adding image proxy or improving error handling silently\n\n**Fix needed:**\n1. Run `prisma migrate deploy` on production to create listings table\n2. Optionally improve CORS image error handling to fail silently",
+        "details": "",
+        "testStrategy": "",
+        "status": "pending",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 9,
+        "title": "Create Unified Types & Extend Normalizer",
+        "description": "Create unified offer types with SOL as asset type and extend normalizer for listings",
+        "details": "",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 10,
+        "title": "Create Unified Offer Service",
+        "description": "Create facade service wrapping existing managers, routing operations based on offer type",
+        "details": "",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [
+          9
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 11,
+        "title": "Create New Swaps Routes",
+        "description": "Create /api/swaps/* routes and remove old /api/offers/* and /api/listings/* routes",
+        "details": "",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [
+          9,
+          10
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 12,
+        "title": "Update Test Page & Documentation",
+        "description": "Update test page API calls and Swagger documentation for new /api/swaps/* endpoints",
+        "details": "",
+        "testStrategy": "",
+        "status": "done",
+        "dependencies": [
+          11
+        ],
+        "priority": "high",
         "subtasks": []
       }
     ],
     "metadata": {
       "created": "2025-12-19T01:18:23.901Z",
-      "updated": "2025-12-19T01:25:09.814Z",
+      "updated": "2025-12-19T03:19:13.435Z",
       "description": "API endpoint consolidation and simplification - merging offers endpoints and cleaning up docs",
       "renamed": {
         "from": "api-consolidation",

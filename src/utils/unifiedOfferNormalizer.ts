@@ -82,7 +82,6 @@ export interface UnifiedOfferRequest {
   customFee?: string | number;
   durationSeconds?: string | number;
   feeBps?: string | number;
-  listingId?: string;
   lockTimeoutSeconds?: string | number;
   platformFeeLamports?: string | number;
 }
@@ -116,7 +115,6 @@ export interface NormalizedCnftBidRequest {
   offerLamports: bigint;
   durationSeconds?: number;
   feeBps?: number;
-  listingId?: string;
 }
 
 /**
@@ -280,7 +278,7 @@ export function normalizeOfferRequest(body: UnifiedOfferRequest): NormalizationR
 
   // === Detection Phase ===
 
-  // 1. Check for cNFT bid (highest priority - distinct request type)
+  // 1. Check for cNFT bid (SOL offer on a specific cNFT)
   if (isCnftBidRequest(body)) {
     return {
       offerType: OfferType.CNFT_BID,
@@ -290,7 +288,6 @@ export function normalizeOfferRequest(body: UnifiedOfferRequest): NormalizationR
         offerLamports: normalizeSolAmount(body.offerLamports)!,
         durationSeconds: parseIntSafe(body.durationSeconds),
         feeBps: parseIntSafe(body.feeBps),
-        listingId: body.listingId,
       },
       warnings,
     };
