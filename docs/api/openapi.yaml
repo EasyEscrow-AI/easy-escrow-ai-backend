@@ -342,14 +342,32 @@ paths:
     post:
       tags:
         - Offers
-      summary: Create offer
+      summary: Create offer (unified endpoint)
       description: |
-        Create a new atomic swap offer.
-        
-        You can create:
-        - **Direct offers** (specify takerWallet) - only that address can accept
-        - **Open offers** (omit takerWallet) - anyone can accept
-        
+        Create a new swap offer with automatic type detection.
+
+        This unified endpoint supports **three offer types**:
+
+        ### 1. Atomic Swap (default)
+        Standard swaps for NFT↔NFT, NFT↔SOL, cNFT↔SOL.
+        Use `makerWallet`, `offeredAssets`, `requestedAssets`, etc.
+
+        ### 2. cNFT Bid (auto-detected when bidderWallet + targetAssetId + offerLamports present)
+        Make a SOL bid on a specific cNFT.
+        Use `bidderWallet`, `targetAssetId`, `offerLamports`.
+
+        ### 3. Bulk Two-Phase Swap (auto-detected for 3+ cNFTs or 5+ total assets)
+        Complex multi-asset swaps using lock/settle pattern.
+        Use `partyA`, `assetsA`, `assetsB`, or standard fields.
+
+        **Field Aliases Supported:**
+        - `partyA` → `makerWallet`
+        - `partyB` → `takerWallet`
+        - `assetsA` → `offeredAssets`
+        - `assetsB` → `requestedAssets`
+        - `solAmountA` → `offeredSol`
+        - `solAmountB` → `requestedSol`
+
         **Rate Limited**: 10 requests per 15 minutes
       requestBody:
         required: true
@@ -359,7 +377,7 @@ paths:
               $ref: '#/components/schemas/CreateOfferRequest'
             examples:
               nftForSol:
-                summary: NFT ↔ SOL
+                summary: NFT ↔ SOL (Atomic)
                 value:
                   makerWallet: "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"
                   takerWallet: "8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ"
@@ -369,31 +387,8 @@ paths:
                   requestedAssets: []
                   offeredSol: "0"
                   requestedSol: "1000000000"
-              solForNft:
-                summary: SOL ↔ NFT (Open Offer)
-                value:
-                  makerWallet: "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"
-                  offeredAssets: []
-                  requestedAssets:
-                    - mint: "8xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
-                      isCompressed: false
-                  offeredSol: "500000000"
-                  requestedSol: "0"
-              nftForNft:
-                summary: NFT ↔ NFT
-                value:
-                  makerWallet: "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"
-                  takerWallet: "8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ"
-                  offeredAssets:
-                    - mint: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
-                      isCompressed: false
-                  requestedAssets:
-                    - mint: "8xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
-                      isCompressed: false
-                  offeredSol: "0"
-                  requestedSol: "0"
               cnftForSol:
-                summary: cNFT ↔ SOL
+                summary: cNFT ↔ SOL (Atomic)
                 value:
                   makerWallet: "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"
                   offeredAssets:
@@ -402,6 +397,30 @@ paths:
                   requestedAssets: []
                   offeredSol: "0"
                   requestedSol: "2000000000"
+              cnftBid:
+                summary: cNFT Bid (auto-detected)
+                value:
+                  bidderWallet: "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"
+                  targetAssetId: "DRiP2Pn2K6fuMLKQmt5rZWqHheXMyUtCeXhe8kDQdxRu"
+                  offerLamports: "1000000000"
+                  durationSeconds: 86400
+              bulkSwapPartyStyle:
+                summary: Bulk Swap (partyA/B style)
+                value:
+                  partyA: "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"
+                  partyB: "8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ"
+                  assetsA:
+                    - mint: "Asset1MintAddress"
+                      isCompressed: true
+                    - mint: "Asset2MintAddress"
+                      isCompressed: true
+                    - mint: "Asset3MintAddress"
+                      isCompressed: true
+                  assetsB:
+                    - mint: "Asset4MintAddress"
+                      isCompressed: false
+                  solAmountA: "0"
+                  solAmountB: "500000000"
       responses:
         '201':
           description: Offer created successfully
