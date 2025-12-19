@@ -702,14 +702,27 @@ export class OfferManager {
     }).length;
     console.log(`[OfferManager] Asset type counts - maker cNFTs: ${makerCnftCount}, taker cNFTs: ${takerCnftCount}`);
     console.log(`[OfferManager] Total assets - maker: ${inputs.makerAssets.length}, taker: ${inputs.takerAssets.length}`);
-    
-    // Check if this is a bulk swap that needs transaction splitting
-    const requiresBulkSwap = this.transactionGroupBuilder.requiresJitoBundle(inputs);
-    console.log(`[OfferManager] requiresBulkSwap: ${requiresBulkSwap}`);
-    
+
+    // Task 6 Fix: Check if this swap involves cNFTs
+    // cNFT swaps ALWAYS need TransactionGroupBuilder because:
+    // - Merkle proofs are too large to fit in a single atomic transaction
+    // - TransactionGroupBuilder builds direct Bubblegum bundles that bypass escrow
+    // - When JITO is disabled, it sends transactions sequentially instead of as a bundle
+    const totalCnftCount = makerCnftCount + takerCnftCount;
+    const hasCnfts = totalCnftCount > 0;
+
+    // Check if this is a bulk swap that needs JITO bundles (3+ cNFTs or JITO enabled with cNFTs)
+    const requiresJitoBulkSwap = this.transactionGroupBuilder.requiresJitoBundle(inputs);
+    console.log(`[OfferManager] hasCnfts: ${hasCnfts}, totalCnftCount: ${totalCnftCount}, requiresJitoBulkSwap: ${requiresJitoBulkSwap}`);
+
+    // Use TransactionGroupBuilder for ANY cNFT swap (even with JITO disabled)
+    // or when JITO bulk swap is required
+    const requiresBulkSwap = hasCnfts || requiresJitoBulkSwap;
+    console.log(`[OfferManager] requiresBulkSwap: ${requiresBulkSwap} (hasCnfts=${hasCnfts} || requiresJitoBulkSwap=${requiresJitoBulkSwap})`);
+
     if (requiresBulkSwap) {
-      // Bulk swap: use TransactionGroupBuilder
-      console.log('[OfferManager] Bulk swap detected - using TransactionGroupBuilder');
+      // cNFT or bulk swap: use TransactionGroupBuilder for multi-transaction handling
+      console.log(`[OfferManager] ${hasCnfts ? 'cNFT' : 'Bulk'} swap detected - using TransactionGroupBuilder`);
       
       // Validate inputs using group builder
       this.transactionGroupBuilder.validateInputs(inputs);
