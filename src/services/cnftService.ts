@@ -1198,11 +1198,25 @@ export class CnftService {
           `[CnftService] DAS request failed (attempt ${retryCount + 1}/${this.config.maxRetries}):`,
           error.message
         );
-        
-        // Exponential backoff
-        const delay = Math.min(1000 * Math.pow(2, retryCount), 10000);
+
+        // Check if this is a rate limit error (429 or QuickNode -32007)
+        const isRateLimitError = error.message?.includes('429') ||
+          error.message?.includes('-32007') ||
+          error.message?.toLowerCase().includes('request limit');
+
+        // Use longer backoff for rate limit errors
+        // QuickNode free tier has 2 req/sec limit, so we need substantial delays
+        let delay: number;
+        if (isRateLimitError) {
+          // Rate limit: use much longer delays (3s, 6s, 12s, 24s...)
+          delay = Math.min(3000 * Math.pow(2, retryCount), 30000);
+          console.warn(`[CnftService] Rate limit detected, using extended delay: ${delay}ms`);
+        } else {
+          // Standard exponential backoff (1s, 2s, 4s, 8s...)
+          delay = Math.min(1000 * Math.pow(2, retryCount), 10000);
+        }
         await new Promise(resolve => setTimeout(resolve, delay));
-        
+
         return this.makeDasRequest(method, params, retryCount + 1, useBatchConnection);
       }
       

@@ -180,11 +180,14 @@ export class DirectBubblegumService {
       const proofRoot = Buffer.from(proof.root);
       
       if (!onChainRoot.equals(proofRoot)) {
-        // IMPROVEMENT: Increased retries for high-activity trees
-        // Research shows: Other marketplaces use 5+ retries with exponential backoff
-        // Concurrent Merkle trees support fast-forwarding up to maxBufferSize updates
-        const maxRetries = 5; // Increased from 3 to 5 for high-activity trees
-        const retryDelays = [500, 1000, 2000, 3000, 4000]; // Progressive delays: 500ms, 1s, 2s, 3s, 4s
+        // IMPROVEMENT: Significantly increased retries and delays for high-activity trees
+        // Research shows: Trees like treeGzx9ZNFS3YwB6NPba8uePLctVRHz8uhWQYqjEys can update
+        // faster than DAS APIs can index, requiring much longer delays between retries.
+        // QuickNode free tier has 2 req/sec limit, so we need to space retries further apart.
+        const maxRetries = parseInt(process.env.CNFT_STALE_PROOF_MAX_RETRIES || '8', 10);
+        // Much longer delays to give DAS indexer time to catch up:
+        // 2s, 4s, 6s, 8s, 10s, 12s, 15s, 20s = up to ~77s total wait time
+        const retryDelays = [2000, 4000, 6000, 8000, 10000, 12000, 15000, 20000];
         
         console.warn('[DirectBubblegumService] ⚠️ STALE PROOF DETECTED:', {
           onChainRoot: onChainRoot.toString('hex'),
@@ -212,11 +215,13 @@ export class DirectBubblegumService {
           // CRITICAL: Wait for tree sequence to stabilize before retrying
           // If the tree is actively updating, we need to wait until it stops changing
           // This prevents fetching proofs while the tree is mid-update
-          const maxStabilityChecks = 5; // Check up to 5 times
-          const stabilityCheckInterval = 500; // Check every 500ms
+          // For high-activity trees, we need longer intervals between checks
+          const maxStabilityChecks = parseInt(process.env.CNFT_STABILITY_MAX_CHECKS || '6', 10);
+          // Use longer check intervals for better accuracy on high-activity trees
+          const stabilityCheckInterval = parseInt(process.env.CNFT_STABILITY_CHECK_INTERVAL || '1000', 10);
           let lastSeq = treeAccount.getCurrentSeq();
           let stableCount = 0;
-          const requiredStableChecks = 2; // Need 2 consecutive stable checks
+          const requiredStableChecks = parseInt(process.env.CNFT_STABILITY_REQUIRED_CHECKS || '3', 10);
           
           console.log(`[DirectBubblegumService] Waiting for tree sequence to stabilize (current: ${lastSeq.toString()})...`);
           
