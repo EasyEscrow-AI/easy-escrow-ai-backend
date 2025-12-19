@@ -1,6 +1,6 @@
 # Task ID: 2
 # Title: Research and Document Bubblegum Delegation API
-# Status: pending
+# Status: done
 # Dependencies: None
 # Priority: high
 # Description: Conduct thorough research on Metaplex Bubblegum delegation capabilities for cNFT marketplace operations and document findings.

@@ -1,6 +1,6 @@
 # Task ID: 1
 # Title: Create JITO Feature Flag to Disable Bundles
-# Status: pending
+# Status: done
 # Dependencies: None
 # Priority: high
 # Description: Implement a feature flag system to disable JITO bundle functionality globally while preserving all existing JITO code for future re-enablement.
