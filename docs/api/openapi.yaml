@@ -18,10 +18,10 @@ info:
     - **Min/Max:** 0.1 SOL minimum, 15 SOL maximum (up to $5,000 AUD limit)
     
     ### 2. NFT <> NFT (with SOL fee)
-    Exchange of two NFTs with a separate SOL fee payment.
-    - **Seller provides:** NFT A (Traditional NFT) + 0.0025 SOL (50% of platform fee)
-    - **Buyer provides:** NFT B (Traditional NFT) + 0.0025 SOL (50% of platform fee)
-    - **Platform fee:** 0.005 SOL total - split 50/50 between seller and buyer
+    Exchange of two NFTs with a flat SOL platform fee.
+    - **Seller provides:** NFT A (Traditional NFT)
+    - **Buyer provides:** NFT B (Traditional NFT) + 0.005 SOL platform fee
+    - **Platform fee:** 0.005 SOL flat fee (paid by taker/buyer by default)
     - **Blockchain fees:** Covered by EasyEscrow (no additional cost to users)
     - **Min/Max:** 0.1 SOL minimum, 15 SOL maximum (up to $5,000 AUD limit)
     
@@ -52,7 +52,7 @@ info:
     - **Rate-limited DAS API** - Built-in rate limiting, batching, and caching
     
     ## Additional Features
-    - **Custom expiry times** - Offers can be set to expire between 5 minutes and 24 hours
+    - **Custom expiry times** - Offers can be set to expire between 1 hour and 30 days (default: 7 days)
     - **On-chain non-custodial functionality** - Assets secured by Smart Contract, never held in escrow
     - **Automatic atomic settlement** - Swaps execute atomically when both parties sign the transaction
     - **Automatic offer expiry** - Expired offers are automatically marked as expired
@@ -133,10 +133,6 @@ tags:
     description: cNFT offer system with SOL escrow (bids on cNFTs)
   - name: Bulk Swaps
     description: Two-phase lock/settle swaps for bulk and complex multi-asset exchanges
-  - name: Swap Status
-    description: Swap progress tracking and status monitoring
-  - name: Admin Recovery
-    description: Admin endpoints for swap recovery and maintenance (requires X-Admin-Key header)
 
 paths:
   /:
@@ -3129,360 +3125,6 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  # =============================================================================
-  # SWAP STATUS API
-  # =============================================================================
-
-  /api/swaps/{id}/status:
-    get:
-      tags:
-        - Swap Status
-      summary: Get full swap status
-      description: |
-        Get the complete status for any swap (atomic or two-phase).
-
-        Returns:
-        - Current phase and description
-        - Lock status for both parties
-        - Settlement progress (for two-phase)
-        - Timing information
-        - Error details if failed
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-          description: Swap ID (atomic offer ID or two-phase swap ID)
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                oneOf:
-                  - $ref: '#/components/schemas/AtomicSwapStatus'
-                  - $ref: '#/components/schemas/TwoPhaseSwapStatus'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  # =============================================================================
-  # ADMIN RECOVERY API
-  # =============================================================================
-
-  /api/offers/admin/recovery/stuck:
-    get:
-      tags:
-        - Admin Recovery
-      summary: Get stuck swaps
-      description: |
-        Get list of stuck two-phase swaps that may need recovery.
-
-        **Requires X-Admin-Key header**
-      parameters:
-        - in: header
-          name: X-Admin-Key
-          required: true
-          schema:
-            type: string
-          description: Admin API key
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: object
-                    properties:
-                      count:
-                        type: integer
-                      swaps:
-                        type: array
-                        items:
-                          type: object
-                          properties:
-                            id:
-                              type: string
-                            status:
-                              type: string
-                            partyA:
-                              type: string
-                            partyB:
-                              type: string
-                            updatedAt:
-                              type: string
-                              format: date-time
-                            stuckMinutes:
-                              type: integer
-                            currentSettleIndex:
-                              type: integer
-                            totalSettleTxs:
-                              type: integer
-                  timestamp:
-                    type: string
-                    format: date-time
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /api/offers/admin/recovery/expired:
-    post:
-      tags:
-        - Admin Recovery
-      summary: Process expired swaps
-      description: |
-        Process all expired swaps (revoke delegations, return assets).
-
-        **Requires X-Admin-Key header**
-      parameters:
-        - in: header
-          name: X-Admin-Key
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: object
-                    properties:
-                      processed:
-                        type: integer
-                      failed:
-                        type: integer
-                  timestamp:
-                    type: string
-                    format: date-time
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /api/offers/admin/recovery/{swapId}:
-    get:
-      tags:
-        - Admin Recovery
-      summary: Get swap recovery status
-      description: |
-        Get recovery status and details for a specific swap.
-
-        **Requires X-Admin-Key header**
-      parameters:
-        - in: path
-          name: swapId
-          required: true
-          schema:
-            type: string
-        - in: header
-          name: X-Admin-Key
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: object
-                    properties:
-                      swapId:
-                        type: string
-                      status:
-                        type: string
-                      partyA:
-                        type: string
-                      partyB:
-                        type: string
-                      isExpired:
-                        type: boolean
-                      lockStatus:
-                        type: object
-                        properties:
-                          partyALocked:
-                            type: boolean
-                          partyBLocked:
-                            type: boolean
-                      settlementProgress:
-                        type: object
-                        properties:
-                          currentChunk:
-                            type: integer
-                          totalChunks:
-                            type: integer
-                          percentComplete:
-                            type: integer
-                      error:
-                        type: object
-                        nullable: true
-                      recoveryOptions:
-                        type: array
-                        items:
-                          type: string
-                          enum: [retry, rollback, expire]
-                      stateHistory:
-                        type: array
-                        items:
-                          type: object
-                  timestamp:
-                    type: string
-                    format: date-time
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /api/offers/admin/recovery/{swapId}/retry:
-    post:
-      tags:
-        - Admin Recovery
-      summary: Retry failed settlement
-      description: |
-        Retry settlement for a failed swap.
-
-        **Requires X-Admin-Key header**
-      parameters:
-        - in: path
-          name: swapId
-          required: true
-          schema:
-            type: string
-        - in: header
-          name: X-Admin-Key
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Retry successful
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: object
-                    properties:
-                      swapId:
-                        type: string
-                      finalState:
-                        type: string
-                      chunksRecovered:
-                        type: integer
-                  timestamp:
-                    type: string
-                    format: date-time
-        '400':
-          description: Recovery failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  /api/offers/admin/recovery/{swapId}/rollback:
-    post:
-      tags:
-        - Admin Recovery
-      summary: Rollback failed swap
-      description: |
-        Rollback a failed swap (revoke all delegations, return all escrowed assets).
-
-        **Requires X-Admin-Key header**
-      parameters:
-        - in: path
-          name: swapId
-          required: true
-          schema:
-            type: string
-        - in: header
-          name: X-Admin-Key
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Rollback successful
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: object
-                    properties:
-                      swapId:
-                        type: string
-                      assetsReturned:
-                        type: integer
-                  timestamp:
-                    type: string
-                    format: date-time
-        '400':
-          description: Rollback failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
 components:
   parameters:
     OfferId:
@@ -3947,10 +3589,10 @@ components:
           default: 'NFT_FOR_SOL'
           description: |
             Type of swap to execute:
-            - **NFT_FOR_SOL**: Direct exchange of NFT for SOL (1% platform fee, blockchain fees covered)
-            - **NFT_FOR_NFT_WITH_FEE**: Exchange two NFTs (0.005 SOL fee split 50/50, blockchain fees covered)
-            - **NFT_FOR_NFT_PLUS_SOL**: Exchange NFT + SOL for another NFT (1% platform fee, blockchain fees covered)
-            
+            - **NFT_FOR_SOL**: Direct exchange of NFT for SOL (1% platform fee paid by taker, blockchain fees covered)
+            - **NFT_FOR_NFT_WITH_FEE**: Exchange two NFTs (0.005 SOL flat fee paid by taker, blockchain fees covered)
+            - **NFT_FOR_NFT_PLUS_SOL**: Exchange NFT + SOL for another NFT (1% platform fee paid by taker, blockchain fees covered)
+
             **Limits for all types:** Min 0.1 SOL, Max 15 SOL (up to $5,000 AUD)
           example: "NFT_FOR_SOL"
         solAmount:
@@ -3978,47 +3620,48 @@ components:
               format: date-time
             - type: number
             - type: string
-              enum: ["5m", "1h", "6h", "12h", "24h"]
+              enum: ["1h", "6h", "12h", "24h", "7d", "30d"]
           description: |
-            Agreement expiry time. Supports multiple formats for flexibility:
-            
+            Agreement expiry time. Supports multiple formats for flexibility.
+            Uses durable nonces for extended validity periods.
+
             **Format Options:**
             - **ISO 8601 timestamp** (absolute time): "2025-11-04T12:00:00Z"
-            - **Duration in hours** (number 0.0833-24, where 0.0833 = 5 minutes): 12
-            - **Preset string**: "5m", "1h", "6h", "12h", "24h"
-            - **Optional**: If not provided, defaults to 5 minutes from creation
-            
+            - **Duration in hours** (number 1-720): 24
+            - **Preset string**: "1h", "6h", "12h", "24h", "7d", "30d"
+            - **Optional**: If not provided, defaults to 7 days
+
             **Constraints:**
-            - Minimum duration: 5 minutes from creation
-            - Maximum duration: 24 hours from creation
-            - Default: 5 minutes (when not specified)
+            - Minimum duration: 1 hour
+            - Maximum duration: 30 days (720 hours)
+            - Default: 7 days (when not specified)
             - Expiry must be in the future
-            
+
             **Examples:**
             - Absolute: "2025-11-04T12:00:00Z" (expires at specific time)
-            - Duration: 12 (expires 12 hours from now)
-            - Preset: "5m" (expires 5 minutes from now - default)
-            - Preset: "6h" (expires 6 hours from now)
-            - Omitted: Uses default of 5 minutes from now
-            
+            - Duration: 24 (expires 24 hours from now)
+            - Preset: "7d" (expires 7 days from now - default)
+            - Preset: "1h" (expires 1 hour from now - minimum)
+            - Omitted: Uses default of 7 days
+
             **Note:** A 60-second buffer is added on-chain to prevent clock skew issues.
-          example: "5m"
+          example: "7d"
         expiryDurationHours:
           type: number
-          minimum: 0.0833
-          maximum: 24
+          minimum: 1
+          maximum: 720
           description: |
             Optional: Explicit duration in hours (alternative to expiry field).
-            Minimum is 0.0833 hours (5 minutes). Default is 0.0833 hours (5 minutes) if not provided.
+            Minimum is 1 hour. Maximum is 720 hours (30 days). Default is 168 hours (7 days) if not provided.
             If both expiry and expiryDurationHours are provided, expiry takes precedence.
-          example: 6
+          example: 168
         feeBps:
           type: integer
           description: |
             Platform fee in basis points (100 = 1%).
-            - For NFT_FOR_SOL: 1% (100 bps) of SOL amount
-            - For NFT_FOR_NFT_WITH_FEE: Fixed 0.005 SOL total (split 50/50)
-            - For NFT_FOR_NFT_PLUS_SOL: 1% (100 bps) of SOL amount
+            - For NFT_FOR_SOL: 1% (100 bps) of SOL amount (paid by taker)
+            - For NFT_FOR_NFT_WITH_FEE: Fixed 0.005 SOL flat fee (paid by taker)
+            - For NFT_FOR_NFT_PLUS_SOL: 1% (100 bps) of SOL amount (paid by taker)
           minimum: 0
           maximum: 10000
           example: 100
@@ -4864,209 +4507,6 @@ components:
         solAmountEscrowed:
           type: string
           description: SOL amount being escrowed (lamports)
-
-    # ==========================================================================
-    # SWAP STATUS SCHEMAS
-    # ==========================================================================
-
-    AtomicSwapStatus:
-      type: object
-      description: Status for atomic (single-transaction) swaps
-      properties:
-        success:
-          type: boolean
-          example: true
-        data:
-          type: object
-          properties:
-            swapType:
-              type: string
-              example: "atomic"
-            offerId:
-              type: integer
-            status:
-              type: string
-            isBulkSwap:
-              type: boolean
-            bundleStatus:
-              type: string
-              nullable: true
-            swapFlow:
-              type: object
-              properties:
-                flowType:
-                  type: string
-                  enum: [DIRECT, DELEGATE_TRANSFER, TWO_PHASE]
-                requiresDelegation:
-                  type: boolean
-                requiresTwoPhase:
-                  type: boolean
-            parties:
-              type: object
-              properties:
-                maker:
-                  type: string
-                taker:
-                  type: string
-            timing:
-              type: object
-              properties:
-                created:
-                  type: string
-                  format: date-time
-                updated:
-                  type: string
-                  format: date-time
-                filled:
-                  type: string
-                  format: date-time
-                  nullable: true
-                cancelled:
-                  type: string
-                  format: date-time
-                  nullable: true
-                expires:
-                  type: string
-                  format: date-time
-        timestamp:
-          type: string
-          format: date-time
-
-    TwoPhaseSwapStatus:
-      type: object
-      description: Detailed status for two-phase swaps
-      properties:
-        success:
-          type: boolean
-          example: true
-        data:
-          type: object
-          properties:
-            swapType:
-              type: string
-              example: "two-phase"
-            swapId:
-              type: string
-            status:
-              type: string
-            phase:
-              type: object
-              properties:
-                current:
-                  type: string
-                description:
-                  type: string
-            parties:
-              type: object
-              properties:
-                partyA:
-                  type: string
-                partyB:
-                  type: string
-            assets:
-              type: object
-              properties:
-                partyA:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/SwapAsset'
-                partyB:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/SwapAsset'
-                solAmountA:
-                  type: string
-                  nullable: true
-                solAmountB:
-                  type: string
-                  nullable: true
-            lockStatus:
-              type: object
-              properties:
-                partyALocked:
-                  type: boolean
-                partyBLocked:
-                  type: boolean
-                lockTxA:
-                  type: string
-                  nullable: true
-                lockTxB:
-                  type: string
-                  nullable: true
-                lockConfirmedA:
-                  type: string
-                  format: date-time
-                  nullable: true
-                lockConfirmedB:
-                  type: string
-                  format: date-time
-                  nullable: true
-            settlement:
-              type: object
-              properties:
-                inProgress:
-                  type: boolean
-                completed:
-                  type: boolean
-                settledCount:
-                  type: integer
-                totalToSettle:
-                  type: integer
-                progressPercent:
-                  type: integer
-                currentIndex:
-                  type: integer
-                settleTxs:
-                  type: array
-                  items:
-                    type: string
-                finalSettleTx:
-                  type: string
-                  nullable: true
-            pdas:
-              type: object
-              properties:
-                delegatePDA:
-                  type: string
-                solVaultA:
-                  type: string
-                solVaultB:
-                  type: string
-            timing:
-              type: object
-              properties:
-                created:
-                  type: string
-                  format: date-time
-                updated:
-                  type: string
-                  format: date-time
-                expires:
-                  type: string
-                  format: date-time
-                settledAt:
-                  type: string
-                  format: date-time
-                  nullable: true
-                cancelledAt:
-                  type: string
-                  format: date-time
-                  nullable: true
-                failedAt:
-                  type: string
-                  format: date-time
-                  nullable: true
-            error:
-              type: object
-              nullable: true
-              properties:
-                message:
-                  type: string
-                code:
-                  type: string
-        timestamp:
-          type: string
-          format: date-time
 
     ErrorResponse:
       type: object
