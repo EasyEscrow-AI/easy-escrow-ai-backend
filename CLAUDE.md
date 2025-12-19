@@ -77,25 +77,29 @@ anchor idl build    # Generate IDL separately
 
 For running multiple Claude Code sessions in parallel on different tasks:
 
+**Branch Naming Convention:**
+- Single task: `feat/<date>-task<N>-<description>`
+- Multiple tasks: `feat/<date>-tasks<N>-<M>-<description>`
+
+**Examples:**
 ```bash
-# Create worktrees from master
-git worktree add ../escrow-task-1-jito-flag -b feat/task-1-description master
-git worktree add ../escrow-task-2-research -b feat/task-2-description master
+# Create worktrees from master with task numbers in branch name
+git worktree add ../escrow-19dec-task6-cnft-fix -b feat/19dec-task6-cnft-fix origin/master
+git worktree add ../escrow-19dec-tasks1-2-api -b feat/19dec-tasks1-2-api origin/master
 
 # Run npm install in each worktree
-cd ../escrow-task-1-jito-flag && npm install
+cd ../escrow-19dec-task6-cnft-fix && npm install
 ```
 
-**⚠️ Terminal Tab Naming Convention:**
-- Prefix terminal tabs with `Task #X:` or `PR #XXX:` for easy identification
-- Example: `Task #1: JITO Flag` or `PR #459: Feature Flag`
-- This helps track which Claude session is working on which task
+**Worktree Naming:** `escrow-<date>-task<N>-<short-desc>` or `escrow-<date>-<feature>`
 
 **Workflow:**
-1. Create worktree with descriptive branch name
-2. Open new terminal, rename tab to `Task #X: Description`
-3. Navigate to worktree and run `claude`
-4. Create PR to master (never push directly to master)
+1. Create worktree with task number(s) in branch name
+2. Copy Task Master files: `cp .taskmaster/tasks/tasks.json <worktree>/.taskmaster/tasks/`
+3. Copy Claude settings: `cp -r .claude/ <worktree>/.claude/`
+4. Open terminal, navigate to worktree, run `claude`
+5. Run `/start-task` to auto-detect task from branch name
+6. Create PR to master (never push directly to master)
 
 ---
 
