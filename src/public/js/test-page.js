@@ -1784,6 +1784,19 @@ document.addEventListener('DOMContentLoaded', () => {
 function initializeListingFeatures() {
     console.log('📋 Initializing listing features...');
 
+    // NFT Type filter change handler
+    const typeFilter = document.getElementById('listing-type-filter');
+    if (typeFilter) {
+        typeFilter.addEventListener('change', () => {
+            // Re-populate assets when filter changes
+            populateAssetSelector();
+            // Clear current selection
+            selectedListingAsset = null;
+            document.getElementById('listing-asset-preview').style.display = 'none';
+            updateListButtonState();
+        });
+    }
+
     // Asset selector change handler
     const assetSelect = document.getElementById('listing-asset-select');
     if (assetSelect) {
@@ -1848,6 +1861,12 @@ function initializeListingFeatures() {
     console.log('✅ Listing features initialized');
 }
 
+// Get the current listing type filter value
+function getListingTypeFilter() {
+    const filterSelect = document.getElementById('listing-type-filter');
+    return filterSelect ? filterSelect.value : 'all';
+}
+
 // Populate asset selector when maker wallet is loaded
 function populateAssetSelector() {
     const assetSelect = document.getElementById('listing-asset-select');
@@ -1858,11 +1877,26 @@ function populateAssetSelector() {
     // Clear existing options
     assetSelect.innerHTML = '<option value="">-- Select an asset to list --</option>';
 
-    // Only show cNFTs for listing (delegation-based marketplace)
-    const listableAssets = makerData.nfts.filter(nft => nft.isCompressed);
+    // Get the current type filter
+    const typeFilter = getListingTypeFilter();
+
+    // Filter assets based on selected type
+    let listableAssets = makerData.nfts;
+
+    if (typeFilter === 'cnft') {
+        listableAssets = makerData.nfts.filter(nft => nft.isCompressed);
+    } else if (typeFilter === 'spl') {
+        listableAssets = makerData.nfts.filter(nft => !nft.isCompressed && !nft.isCoreNft);
+    } else if (typeFilter === 'core') {
+        listableAssets = makerData.nfts.filter(nft => nft.isCoreNft);
+    }
+    // 'all' shows all NFTs
 
     if (listableAssets.length === 0) {
-        assetSelect.innerHTML = '<option value="">-- No cNFTs available --</option>';
+        const filterLabel = typeFilter === 'all' ? 'NFTs' :
+                           typeFilter === 'cnft' ? 'cNFTs' :
+                           typeFilter === 'spl' ? 'SPL NFTs' : 'Core NFTs';
+        assetSelect.innerHTML = `<option value="">-- No ${filterLabel} available --</option>`;
         assetSelect.disabled = true;
         return;
     }
@@ -1870,7 +1904,8 @@ function populateAssetSelector() {
     listableAssets.forEach((nft, index) => {
         const option = document.createElement('option');
         option.value = nft.mint;
-        option.textContent = `${nft.name || 'Unknown'} (${nft.mint.substring(0, 8)}...)`;
+        const typeLabel = getNftTypeLabel(nft);
+        option.textContent = `${nft.name || 'Unknown'} [${typeLabel}] (${nft.mint.substring(0, 8)}...)`;
         option.dataset.index = index;
         assetSelect.appendChild(option);
     });
@@ -2104,6 +2139,19 @@ function renderActiveListings() {
         const expiresAt = new Date(listing.expiresAt);
         const createdAt = new Date(listing.createdAt);
 
+        // Determine NFT type from listing data or metadata
+        // Order matches getNftTypeLabel: check isCoreNft first, then isCompressed
+        let nftType = 'SPL NFT';
+        if (listing.assetType) {
+            nftType = listing.assetType === 'CNFT' ? 'cNFT' :
+                     listing.assetType === 'CORE' ? 'Core NFT' :
+                     listing.assetType === 'SPL' ? 'SPL NFT' : 'SPL NFT';
+        } else if (metadata.isCoreNft) {
+            nftType = 'Core NFT';
+        } else if (metadata.isCompressed) {
+            nftType = 'cNFT';
+        }
+
         // Determine status class
         let statusClass = listing.status.toLowerCase();
         if (listing.delegationStatus === 'PENDING') {
@@ -2123,7 +2171,7 @@ function renderActiveListings() {
                          data-asset-id="${listing.assetId}">
                     <div class="listing-card-info">
                         <div class="listing-card-name">${escapeHtml(name)}</div>
-                        <div class="listing-card-type">cNFT</div>
+                        <div class="listing-card-type">${nftType}</div>
                     </div>
                 </div>
 
@@ -2296,8 +2344,8 @@ function viewListingDetails(listingId) {
 
 // Quick list modal functions
 function showQuickListModal(nft) {
-    if (!nft || !nft.isCompressed) {
-        addLog('❌ Only cNFTs can be listed', 'error');
+    if (!nft) {
+        addLog('❌ No NFT selected', 'error');
         return;
     }
 
@@ -2590,12 +2638,25 @@ function renderMarketplaceListings() {
     container.innerHTML = filteredListings.map(listing => {
         const metadata = listing.metadata || {};
         const imageUrl = metadata.image || getPlaceholderImage(listing.assetId);
-        const name = metadata.name || 'Unknown cNFT';
+        const name = metadata.name || 'Unknown NFT';
         const priceSol = (parseInt(listing.priceLamports) / 1e9).toFixed(4);
         const priceUsd = solPriceUSD ? (parseInt(listing.priceLamports) / 1e9 * solPriceUSD).toFixed(2) : null;
         const seller = listing.seller;
         // Check if this listing belongs to the taker (buyer) - they can't buy their own listings
         const isOwnListing = TAKER_ADDRESS && seller === TAKER_ADDRESS;
+
+        // Determine NFT type from listing data or metadata
+        // Order matches getNftTypeLabel: check isCoreNft first, then isCompressed
+        let nftType = 'SPL NFT';
+        if (listing.assetType) {
+            nftType = listing.assetType === 'CNFT' ? 'cNFT' :
+                     listing.assetType === 'CORE' ? 'Core NFT' :
+                     listing.assetType === 'SPL' ? 'SPL NFT' : 'SPL NFT';
+        } else if (metadata.isCoreNft) {
+            nftType = 'Core NFT';
+        } else if (metadata.isCompressed) {
+            nftType = 'cNFT';
+        }
 
         // Truncate seller address
         const sellerDisplay = `${seller.substring(0, 4)}...${seller.substring(seller.length - 4)}`;
@@ -2607,7 +2668,7 @@ function renderMarketplaceListings() {
                          data-asset-id="${listing.assetId}">
                     <div class="marketplace-card-info">
                         <div class="marketplace-card-name">${escapeHtml(name)}</div>
-                        <div class="marketplace-card-type">cNFT</div>
+                        <div class="marketplace-card-type">${nftType}</div>
                         <div class="marketplace-card-seller">Seller: ${sellerDisplay}</div>
                     </div>
                 </div>
@@ -2676,7 +2737,7 @@ function showBuyModal(listingId) {
     // Populate modal
     const metadata = listing.metadata || {};
     const imageUrl = metadata.image || getPlaceholderImage(listing.assetId);
-    const name = metadata.name || 'Unknown cNFT';
+    const name = metadata.name || 'Unknown NFT';
     const priceLamports = parseInt(listing.priceLamports);
     const priceSol = priceLamports / 1e9;
     const feeBps = listing.feeBps || 100; // Default 1%
@@ -2744,7 +2805,7 @@ async function handleConfirmPurchase() {
 
         const listingId = selectedBuyListing.listingId;
         const metadata = selectedBuyListing.metadata || {};
-        const name = metadata.name || 'Unknown cNFT';
+        const name = metadata.name || 'Unknown NFT';
         const priceSol = (parseInt(selectedBuyListing.priceLamports) / 1e9).toFixed(4);
 
         addLog(`🛒 Initiating purchase of ${name}...`, 'info');
@@ -2949,7 +3010,7 @@ function showCancelListingModal(listingId) {
     // Populate modal
     const metadata = listing.metadata || {};
     const imageUrl = metadata.image || getPlaceholderImage(listing.assetId);
-    const name = metadata.name || 'Unknown cNFT';
+    const name = metadata.name || 'Unknown NFT';
     const priceSol = (parseInt(listing.priceLamports) / 1e9).toFixed(4);
 
     document.getElementById('cancel-listing-image').src = imageUrl;
@@ -3442,7 +3503,7 @@ showBuyModal = function(listingId) {
     // Populate modal
     const metadata = listing.metadata || {};
     const imageUrl = metadata.image || getPlaceholderImage(listing.assetId);
-    const name = metadata.name || 'Unknown cNFT';
+    const name = metadata.name || 'Unknown NFT';
     const priceLamports = parseInt(listing.priceLamports);
     const priceSol = priceLamports / 1e9;
     const feeBps = listing.feeBps || 100; // Default 1%
@@ -3537,7 +3598,7 @@ handleConfirmPurchase = async function() {
 
         const listingId = selectedBuyListing.listingId;
         const metadata = selectedBuyListing.metadata || {};
-        const name = metadata.name || 'Unknown cNFT';
+        const name = metadata.name || 'Unknown NFT';
         const priceSol = (parseInt(selectedBuyListing.priceLamports) / 1e9).toFixed(4);
 
         // Show waiting status
