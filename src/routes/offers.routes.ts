@@ -311,7 +311,7 @@ noncePoolManager.initialize().catch((error) => {
 });
 
 /**
- * POST /api/offers
+ * POST /api/swaps/offers
  * Create a new swap offer (unified endpoint)
  *
  * Supports three input formats with auto-detection:
@@ -322,7 +322,7 @@ noncePoolManager.initialize().catch((error) => {
  * @see Tasks 1-2: API Consolidation
  */
 router.post(
-  '/api/offers',
+  '/api/swaps/offers',
   strictRateLimiter,
   validateZeroFeeApiKey, // Check for zero-fee authorization
   requiredIdempotency, // Prevent duplicate offer creation on retry
@@ -455,7 +455,7 @@ router.post(
             executionStrategy: 'two-phase',
             requiresLockPhase: true,
             message: 'Bulk offer created. Waiting for acceptance.',
-            nextAction: 'Counterparty should call POST /api/offers/bulk/:id/accept',
+            nextAction: 'Counterparty should call POST /api/swaps/offers/bulk/:id/accept',
           },
           timestamp: new Date().toISOString(),
         });
@@ -561,14 +561,14 @@ router.post(
 
         // For two-phase guidance (when flow router recommends it)
         if (flowResult.requiresTwoPhase) {
-          responseData.swapFlow.nextAction = 'Use POST /api/offers/bulk/:id/accept for two-phase settlement';
-          responseData.swapFlow.twoPhaseEndpoint = `/api/offers/bulk/${offer.id}`;
+          responseData.swapFlow.nextAction = 'Use POST /api/swaps/offers/bulk/:id/accept for two-phase settlement';
+          responseData.swapFlow.twoPhaseEndpoint = `/api/swaps/offers/bulk/${offer.id}`;
         }
 
         // For cNFT delegation swaps
         if (flowResult.requiresDelegation && !flowResult.requiresTwoPhase) {
           responseData.swapFlow.nextAction =
-            'Taker accepts via POST /api/offers/:id/accept - delegation handled automatically';
+            'Taker accepts via POST /api/swaps/offers/:id/accept - delegation handled automatically';
         }
 
         res.status(201).json({
@@ -630,11 +630,11 @@ router.post(
 );
 
 /**
- * GET /api/offers
+ * GET /api/swaps/offers
  * List swap offers with optional filters
  */
 router.get(
-  '/api/offers',
+  '/api/swaps/offers',
   standardRateLimiter,
   async (req: Request, res: Response): Promise<void> => {
     try {
@@ -685,11 +685,11 @@ router.get(
 );
 
 /**
- * GET /api/offers/:id
+ * GET /api/swaps/offers/:id
  * Get detailed information about a specific offer
  */
 router.get(
-  '/api/offers/:id',
+  '/api/swaps/offers/:id',
   standardRateLimiter,
   async (req: Request, res: Response): Promise<void> => {
     try {
@@ -743,11 +743,11 @@ router.get(
 );
 
 /**
- * POST /api/offers/:id/counter
+ * POST /api/swaps/offers/:id/counter
  * Create a counter-offer for an existing offer
  */
 router.post(
-  '/api/offers/:id/counter',
+  '/api/swaps/offers/:id/counter',
   strictRateLimiter,
   requiredIdempotency, // Prevent duplicate counter-offer creation on retry
   async (req: Request, res: Response): Promise<void> => {
@@ -844,11 +844,11 @@ router.post(
 );
 
 /**
- * POST /api/offers/:id/accept
+ * POST /api/swaps/offers/:id/accept
  * Accept an offer and receive the serialized transaction to sign
  */
 router.post(
-  '/api/offers/:id/accept',
+  '/api/swaps/offers/:id/accept',
   standardRateLimiter,
   validateZeroFeeApiKey, // Check for zero-fee authorization
   requiredIdempotency, // CRITICAL: Prevent duplicate nonce consumption on retry
@@ -1027,12 +1027,12 @@ router.post(
 );
 
 /**
- * POST /api/offers/:id/rebuild-transaction
+ * POST /api/swaps/offers/:id/rebuild-transaction
  * Rebuild transaction for an already-accepted offer with fresh cNFT proofs
  * Used when cNFT proofs become stale between transaction building and execution
  */
 router.post(
-  '/api/offers/:id/rebuild-transaction',
+  '/api/swaps/offers/:id/rebuild-transaction',
   standardRateLimiter,
   validateZeroFeeApiKey, // Check for zero-fee authorization for rebuilds
   requiredIdempotency, // CRITICAL: Prevent duplicate rebuilds
@@ -1105,12 +1105,12 @@ router.post(
 );
 
 /**
- * GET /api/offers/:id/bundle-status
+ * GET /api/swaps/offers/:id/bundle-status
  * Get the bundle execution status for a bulk swap offer
  * Returns bundle status, transaction signatures, and retry info
  */
 router.get(
-  '/api/offers/:id/bundle-status',
+  '/api/swaps/offers/:id/bundle-status',
   standardRateLimiter,
   async (req: Request, res: Response): Promise<void> => {
     try {
@@ -1196,12 +1196,12 @@ router.get(
 );
 
 /**
- * POST /api/offers/:id/retry-bundle
+ * POST /api/swaps/offers/:id/retry-bundle
  * Retry a failed bundle execution with fresh proofs
  * Only works for offers with bundleStatus = 'Failed' or 'Timeout'
  */
 router.post(
-  '/api/offers/:id/retry-bundle',
+  '/api/swaps/offers/:id/retry-bundle',
   strictRateLimiter,
   requiredIdempotency,
   async (req: Request, res: Response): Promise<void> => {
@@ -1283,12 +1283,12 @@ router.post(
 );
 
 /**
- * PUT /api/offers/:id
+ * PUT /api/swaps/offers/:id
  * Update an existing offer (change SOL amounts or assets)
  * Only the maker can update, and only while offer is ACTIVE
  */
 router.put(
-  '/api/offers/:id',
+  '/api/swaps/offers/:id',
   strictRateLimiter,
   requiredIdempotency, // Prevent duplicate updates on retry
   async (req: Request, res: Response): Promise<void> => {
@@ -1416,12 +1416,12 @@ router.put(
 );
 
 /**
- * POST /api/offers/:id/cancel
+ * POST /api/swaps/offers/:id/cancel
  * Cancel an active/accepted offer (advances nonce to invalidate transaction)
  * Maker or Admin can cancel
  */
 router.post(
-  '/api/offers/:id/cancel',
+  '/api/swaps/offers/:id/cancel',
   standardRateLimiter,
   requiredIdempotency, // CRITICAL: Prevent multiple nonce advances on retry
   async (req: Request, res: Response): Promise<void> => {
@@ -1509,12 +1509,12 @@ router.post(
 );
 
 /**
- * DELETE /api/offers/:id
- * Cancel an offer (RESTful alias for POST /api/offers/:id/cancel)
+ * DELETE /api/swaps/offers/:id
+ * Cancel an offer (RESTful alias for POST /api/swaps/offers/:id/cancel)
  * Accepts walletAddress and isAdmin in query params or body
  */
 router.delete(
-  '/api/offers/:id',
+  '/api/swaps/offers/:id',
   standardRateLimiter,
   requiredIdempotency, // CRITICAL: Prevent multiple nonce advances on retry
   async (req: Request, res: Response): Promise<void> => {
@@ -1597,11 +1597,11 @@ router.delete(
 );
 
 /**
- * POST /api/offers/:id/confirm
+ * POST /api/swaps/offers/:id/confirm
  * Confirm that a swap transaction was successfully executed on-chain
  */
 router.post(
-  '/api/offers/:id/confirm',
+  '/api/swaps/offers/:id/confirm',
   standardRateLimiter,
   validateZeroFeeApiKey, // Check for zero-fee authorization for audit logging
   requiredIdempotency, // CRITICAL: Prevent double-marking offer as FILLED on retry
@@ -1742,12 +1742,12 @@ router.post(
 );
 
 /**
- * GET /api/offers/metrics/bundles
+ * GET /api/swaps/offers/metrics/bundles
  * Get bundle execution metrics for monitoring
  * Returns success rates, average times, and recent failures
  */
 router.get(
-  '/api/offers/metrics/bundles',
+  '/api/swaps/offers/metrics/bundles',
   standardRateLimiter,
   async (req: Request, res: Response): Promise<void> => {
     try {
@@ -1835,37 +1835,37 @@ router.get(
 // ==========================================
 // cNFT OFFER ESCROW ENDPOINTS
 // Routes for cNFT offers with SOL escrow
-// Uses /api/offers/cnft/* path structure
+// Uses /api/swaps/offers/cnft/* path structure
 // ==========================================
 
 /**
  * Helper to add deprecation headers to responses
- * @deprecated Use POST /api/offers with auto-detection instead
+ * @deprecated Use POST /api/swaps/offers with auto-detection instead
  */
 function addDeprecationHeaders(res: Response, endpoint: string): void {
   res.setHeader('Deprecation', 'true');
   res.setHeader('Sunset', 'Wed, 01 Jul 2025 00:00:00 GMT');
-  res.setHeader('Link', '</api/offers>; rel="successor-version"');
-  console.warn(`[OffersRoutes] DEPRECATED: ${endpoint} called - use POST /api/offers instead`);
+  res.setHeader('Link', '</api/swaps/offers>; rel="successor-version"');
+  console.warn(`[OffersRoutes] DEPRECATED: ${endpoint} called - use POST /api/swaps/offers instead`);
 }
 
 /**
- * POST /api/offers/cnft
+ * POST /api/swaps/offers/cnft
  * Create a new cNFT offer with SOL escrow
  *
- * @deprecated Use POST /api/offers with {bidderWallet, targetAssetId, offerLamports} instead.
+ * @deprecated Use POST /api/swaps/offers with {bidderWallet, targetAssetId, offerLamports} instead.
  * The unified endpoint auto-detects cNFT bid requests.
  *
  * Bidder deposits SOL to a PDA to make an offer on a cNFT.
  * The SOL is held in escrow until the offer is accepted, cancelled, rejected, or expired.
  */
 router.post(
-  '/api/offers/cnft',
+  '/api/swaps/offers/cnft',
   strictRateLimiter,
   requiredIdempotency,
   async (req: Request, res: Response): Promise<void> => {
     // Add deprecation notice
-    addDeprecationHeaders(res, 'POST /api/offers/cnft');
+    addDeprecationHeaders(res, 'POST /api/swaps/offers/cnft');
 
     try {
       const { bidderWallet, targetAssetId, offerLamports, durationSeconds, feeBps } = req.body;
@@ -1945,8 +1945,8 @@ router.post(
         success: true,
         data: result,
         _deprecated: true,
-        _deprecationMessage: 'This endpoint is deprecated. Use POST /api/offers with auto-detection instead.',
-        _successorEndpoint: '/api/offers',
+        _deprecationMessage: 'This endpoint is deprecated. Use POST /api/swaps/offers with auto-detection instead.',
+        _successorEndpoint: '/api/swaps/offers',
         timestamp: new Date().toISOString(),
       });
     } catch (error: any) {
@@ -1962,11 +1962,11 @@ router.post(
 );
 
 /**
- * GET /api/offers/cnft
+ * GET /api/swaps/offers/cnft
  * List cNFT offers with optional filters
  */
 router.get(
-  '/api/offers/cnft',
+  '/api/swaps/offers/cnft',
   standardRateLimiter,
   async (req: Request, res: Response): Promise<void> => {
     try {
@@ -2014,11 +2014,11 @@ router.get(
 );
 
 /**
- * GET /api/offers/cnft/asset/:assetId
+ * GET /api/swaps/offers/cnft/asset/:assetId
  * Get all offers on a specific cNFT
  */
 router.get(
-  '/api/offers/cnft/asset/:assetId',
+  '/api/swaps/offers/cnft/asset/:assetId',
   standardRateLimiter,
   async (req: Request, res: Response): Promise<void> => {
     try {
@@ -2051,11 +2051,11 @@ router.get(
 );
 
 /**
- * GET /api/offers/cnft/bidder/:wallet
+ * GET /api/swaps/offers/cnft/bidder/:wallet
  * Get all cNFT offers made by a bidder
  */
 router.get(
-  '/api/offers/cnft/bidder/:wallet',
+  '/api/swaps/offers/cnft/bidder/:wallet',
   standardRateLimiter,
   async (req: Request, res: Response): Promise<void> => {
     try {
@@ -2101,11 +2101,11 @@ router.get(
 );
 
 /**
- * GET /api/offers/cnft/owner/:wallet
+ * GET /api/swaps/offers/cnft/owner/:wallet
  * Get all cNFT offers received by an owner
  */
 router.get(
-  '/api/offers/cnft/owner/:wallet',
+  '/api/swaps/offers/cnft/owner/:wallet',
   standardRateLimiter,
   async (req: Request, res: Response): Promise<void> => {
     try {
@@ -2151,11 +2151,11 @@ router.get(
 );
 
 /**
- * GET /api/offers/cnft/:offerId
+ * GET /api/swaps/offers/cnft/:offerId
  * Get a specific cNFT offer by ID
  */
 router.get(
-  '/api/offers/cnft/:offerId',
+  '/api/swaps/offers/cnft/:offerId',
   standardRateLimiter,
   async (req: Request, res: Response): Promise<void> => {
     try {
@@ -2197,11 +2197,11 @@ router.get(
 );
 
 /**
- * POST /api/offers/cnft/:offerId/confirm
+ * POST /api/swaps/offers/cnft/:offerId/confirm
  * Confirm a cNFT offer after escrow transaction is confirmed on-chain
  */
 router.post(
-  '/api/offers/cnft/:offerId/confirm',
+  '/api/swaps/offers/cnft/:offerId/confirm',
   strictRateLimiter,
   async (req: Request, res: Response): Promise<void> => {
     try {
@@ -2245,11 +2245,11 @@ router.post(
 );
 
 /**
- * POST /api/offers/cnft/:offerId/accept
+ * POST /api/swaps/offers/cnft/:offerId/accept
  * Accept a cNFT offer (owner accepts, cNFT transfers to bidder, SOL to owner)
  */
 router.post(
-  '/api/offers/cnft/:offerId/accept',
+  '/api/swaps/offers/cnft/:offerId/accept',
   strictRateLimiter,
   requiredIdempotency,
   async (req: Request, res: Response): Promise<void> => {
@@ -2300,11 +2300,11 @@ router.post(
 );
 
 /**
- * POST /api/offers/cnft/:offerId/cancel
+ * POST /api/swaps/offers/cnft/:offerId/cancel
  * Cancel a cNFT offer (bidder cancels, SOL refunded)
  */
 router.post(
-  '/api/offers/cnft/:offerId/cancel',
+  '/api/swaps/offers/cnft/:offerId/cancel',
   strictRateLimiter,
   requiredIdempotency,
   async (req: Request, res: Response): Promise<void> => {
@@ -2355,11 +2355,11 @@ router.post(
 );
 
 /**
- * POST /api/offers/cnft/:offerId/reject
+ * POST /api/swaps/offers/cnft/:offerId/reject
  * Reject a cNFT offer (owner rejects, SOL refunded to bidder)
  */
 router.post(
-  '/api/offers/cnft/:offerId/reject',
+  '/api/swaps/offers/cnft/:offerId/reject',
   strictRateLimiter,
   async (req: Request, res: Response): Promise<void> => {
     try {
@@ -2468,10 +2468,10 @@ function determineExecutionStrategy(assetsA: any[], assetsB: any[]): 'atomic' | 
 }
 
 /**
- * POST /api/offers/bulk
+ * POST /api/swaps/offers/bulk
  * Create a bulk/complex swap offer (uses two-phase lock/settle)
  *
- * @deprecated Use POST /api/offers with partyA/assetsA/assetsB format instead.
+ * @deprecated Use POST /api/swaps/offers with partyA/assetsA/assetsB format instead.
  * The unified endpoint auto-detects bulk swaps (3+ cNFTs or 5+ total assets).
  *
  * Request body:
@@ -2483,12 +2483,12 @@ function determineExecutionStrategy(assetsA: any[], assetsB: any[]): 'atomic' | 
  * - solAmountB?: string - SOL from Party B (lamports)
  */
 router.post(
-  '/api/offers/bulk',
+  '/api/swaps/offers/bulk',
   strictRateLimiter,
   requiredIdempotency,
   async (req: Request, res: Response): Promise<void> => {
     // Add deprecation notice
-    addDeprecationHeaders(res, 'POST /api/offers/bulk');
+    addDeprecationHeaders(res, 'POST /api/swaps/offers/bulk');
 
     try {
       const {
@@ -2590,11 +2590,11 @@ router.post(
           executionStrategy: 'two-phase',
           requiresLockPhase: true,
           message: 'Bulk offer created. Waiting for acceptance.',
-          nextAction: 'Counterparty should call POST /api/offers/bulk/:id/accept',
+          nextAction: 'Counterparty should call POST /api/swaps/offers/bulk/:id/accept',
         },
         _deprecated: true,
-        _deprecationMessage: 'This endpoint is deprecated. Use POST /api/offers with auto-detection instead.',
-        _successorEndpoint: '/api/offers',
+        _deprecationMessage: 'This endpoint is deprecated. Use POST /api/swaps/offers with auto-detection instead.',
+        _successorEndpoint: '/api/swaps/offers',
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
@@ -2612,11 +2612,11 @@ router.post(
 );
 
 /**
- * GET /api/offers/bulk/:id
+ * GET /api/swaps/offers/bulk/:id
  * Get a bulk swap offer by ID
  */
 router.get(
-  '/api/offers/bulk/:id',
+  '/api/swaps/offers/bulk/:id',
   standardRateLimiter,
   async (req: Request, res: Response): Promise<void> => {
     try {
@@ -2667,14 +2667,14 @@ router.get(
 );
 
 /**
- * POST /api/offers/bulk/:id/accept
+ * POST /api/swaps/offers/bulk/:id/accept
  * Accept a bulk swap offer
  *
  * Request body:
  * - partyB: string - Wallet address of the accepting party
  */
 router.post(
-  '/api/offers/bulk/:id/accept',
+  '/api/swaps/offers/bulk/:id/accept',
   strictRateLimiter,
   requiredIdempotency,
   async (req: Request, res: Response): Promise<void> => {
@@ -2757,14 +2757,14 @@ router.post(
 );
 
 /**
- * POST /api/offers/bulk/:id/lock
+ * POST /api/swaps/offers/bulk/:id/lock
  * Build lock transaction for a bulk swap
  *
  * Request body:
  * - walletAddress: string - Wallet of the party locking assets
  */
 router.post(
-  '/api/offers/bulk/:id/lock',
+  '/api/swaps/offers/bulk/:id/lock',
   strictRateLimiter,
   requiredIdempotency,
   async (req: Request, res: Response): Promise<void> => {
@@ -2867,7 +2867,7 @@ router.post(
             solAmountEscrowed: lockTxResult.solAmountEscrowed.toString(),
           },
           message: `Lock transaction built for Party ${party}. Sign and submit.`,
-          nextAction: 'Sign and submit, then call POST /api/offers/bulk/:id/confirm-lock',
+          nextAction: 'Sign and submit, then call POST /api/swaps/offers/bulk/:id/confirm-lock',
         },
         timestamp: new Date().toISOString(),
       });
@@ -2886,7 +2886,7 @@ router.post(
 );
 
 /**
- * POST /api/offers/bulk/:id/confirm-lock
+ * POST /api/swaps/offers/bulk/:id/confirm-lock
  * Confirm a lock transaction was executed on-chain
  *
  * Request body:
@@ -2894,7 +2894,7 @@ router.post(
  * - signature: string - Transaction signature
  */
 router.post(
-  '/api/offers/bulk/:id/confirm-lock',
+  '/api/swaps/offers/bulk/:id/confirm-lock',
   strictRateLimiter,
   requiredIdempotency,
   async (req: Request, res: Response): Promise<void> => {
@@ -2985,7 +2985,7 @@ router.post(
         };
         responseData.nextAction = 'Party B signs and submits lock transaction';
       } else if (result.nextAction === 'READY_FOR_SETTLEMENT') {
-        responseData.nextAction = 'Call POST /api/offers/bulk/:id/settle';
+        responseData.nextAction = 'Call POST /api/swaps/offers/bulk/:id/settle';
       }
 
       res.status(200).json({
@@ -3008,7 +3008,7 @@ router.post(
 );
 
 /**
- * POST /api/offers/bulk/:id/cancel
+ * POST /api/swaps/offers/bulk/:id/cancel
  * Cancel a bulk swap offer
  *
  * Request body:
@@ -3016,7 +3016,7 @@ router.post(
  * - reason?: string - Optional cancellation reason
  */
 router.post(
-  '/api/offers/bulk/:id/cancel',
+  '/api/swaps/offers/bulk/:id/cancel',
   standardRateLimiter,
   requiredIdempotency,
   async (req: Request, res: Response): Promise<void> => {
@@ -3069,11 +3069,11 @@ router.post(
 );
 
 /**
- * GET /api/offers/bulk/:id/delegation-status
+ * GET /api/swaps/offers/bulk/:id/delegation-status
  * Check delegation status for cNFT assets in a bulk offer
  */
 router.get(
-  '/api/offers/bulk/:id/delegation-status',
+  '/api/swaps/offers/bulk/:id/delegation-status',
   standardRateLimiter,
   async (req: Request, res: Response): Promise<void> => {
     try {
@@ -3391,7 +3391,7 @@ router.get(
 // =============================================================================
 
 /**
- * GET /api/offers/bulk/:id/progress
+ * GET /api/swaps/offers/bulk/:id/progress
  * Get detailed progress information for a two-phase swap
  *
  * Response:
@@ -3419,7 +3419,7 @@ router.get(
  * }
  */
 router.get(
-  '/api/offers/bulk/:id/progress',
+  '/api/swaps/offers/bulk/:id/progress',
   progressRateLimiter,
   async (req: Request, res: Response): Promise<void> => {
     try {
@@ -3459,7 +3459,7 @@ router.get(
 
 /**
  * GET /api/swaps/:id/progress
- * Alias for /api/offers/bulk/:id/progress for cleaner API
+ * Alias for /api/swaps/offers/bulk/:id/progress for cleaner API
  */
 router.get(
   '/api/swaps/:id/progress',
@@ -3505,7 +3505,7 @@ router.get(
 // =============================================================================
 
 /**
- * POST /api/offers/bulk/:id/settle
+ * POST /api/swaps/offers/bulk/:id/settle
  * Start settlement for a fully-locked bulk swap
  *
  * This endpoint triggers the settlement phase for a swap that has
@@ -3515,7 +3515,7 @@ router.get(
  * - triggeredBy: string - Wallet address triggering settlement (or 'system')
  */
 router.post(
-  '/api/offers/bulk/:id/settle',
+  '/api/swaps/offers/bulk/:id/settle',
   standardRateLimiter,
   requiredIdempotency,
   async (req: Request, res: Response): Promise<void> => {
@@ -3603,13 +3603,13 @@ router.post(
 );
 
 /**
- * GET /api/offers/bulk/:id/settlement-progress
+ * GET /api/swaps/offers/bulk/:id/settlement-progress
  * Get current settlement progress for a swap
  *
  * Clients can poll this endpoint to track settlement progress.
  */
 router.get(
-  '/api/offers/bulk/:id/settlement-progress',
+  '/api/swaps/offers/bulk/:id/settlement-progress',
   standardRateLimiter,
   async (req: Request, res: Response): Promise<void> => {
     try {
@@ -3658,14 +3658,14 @@ router.get(
 );
 
 /**
- * GET /api/offers/bulk/:id/settlement-chunks
+ * GET /api/swaps/offers/bulk/:id/settlement-chunks
  * Preview settlement chunks for a swap (before settlement starts)
  *
  * This endpoint shows how the settlement will be chunked without
  * actually executing it. Useful for UI display and estimation.
  */
 router.get(
-  '/api/offers/bulk/:id/settlement-chunks',
+  '/api/swaps/offers/bulk/:id/settlement-chunks',
   standardRateLimiter,
   async (req: Request, res: Response): Promise<void> => {
     try {
@@ -3734,14 +3734,14 @@ router.get(
 );
 
 /**
- * GET /api/offers/bulk/ready-for-settlement
+ * GET /api/swaps/offers/bulk/ready-for-settlement
  * List swaps that are ready for settlement (FULLY_LOCKED status)
  *
  * Query params:
  * - limit: number - Maximum number of results (default 10, max 50)
  */
 router.get(
-  '/api/offers/bulk/ready-for-settlement',
+  '/api/swaps/offers/bulk/ready-for-settlement',
   standardRateLimiter,
   async (req: Request, res: Response): Promise<void> => {
     try {
@@ -3772,14 +3772,14 @@ router.get(
 );
 
 /**
- * GET /api/offers/bulk/in-settlement
+ * GET /api/swaps/offers/bulk/in-settlement
  * List swaps currently in settlement (SETTLING or PARTIAL_SETTLE status)
  *
  * Query params:
  * - limit: number - Maximum number of results (default 10, max 50)
  */
 router.get(
-  '/api/offers/bulk/in-settlement',
+  '/api/swaps/offers/bulk/in-settlement',
   standardRateLimiter,
   async (req: Request, res: Response): Promise<void> => {
     try {
@@ -3823,13 +3823,13 @@ router.get(
 // =============================================================================
 
 /**
- * GET /api/offers/admin/recovery/stuck
+ * GET /api/swaps/offers/admin/recovery/stuck
  * Get list of stuck two-phase swaps that may need recovery
  *
  * Authorization: Requires admin key (X-Admin-Key header)
  */
 router.get(
-  '/api/offers/admin/recovery/stuck',
+  '/api/swaps/offers/admin/recovery/stuck',
   strictRateLimiter,
   async (req: Request, res: Response): Promise<void> => {
     try {
@@ -3883,13 +3883,13 @@ router.get(
 );
 
 /**
- * POST /api/offers/admin/recovery/expired
+ * POST /api/swaps/offers/admin/recovery/expired
  * Process all expired swaps (revoke delegations, return assets)
  *
  * Authorization: Requires admin key (X-Admin-Key header)
  */
 router.post(
-  '/api/offers/admin/recovery/expired',
+  '/api/swaps/offers/admin/recovery/expired',
   strictRateLimiter,
   async (req: Request, res: Response): Promise<void> => {
     try {
@@ -3931,13 +3931,13 @@ router.post(
 );
 
 /**
- * POST /api/offers/admin/recovery/:swapId/retry
+ * POST /api/swaps/offers/admin/recovery/:swapId/retry
  * Retry settlement for a failed swap
  *
  * Authorization: Requires admin key (X-Admin-Key header)
  */
 router.post(
-  '/api/offers/admin/recovery/:swapId/retry',
+  '/api/swaps/offers/admin/recovery/:swapId/retry',
   strictRateLimiter,
   async (req: Request, res: Response): Promise<void> => {
     try {
@@ -4004,13 +4004,13 @@ router.post(
 );
 
 /**
- * POST /api/offers/admin/recovery/:swapId/rollback
+ * POST /api/swaps/offers/admin/recovery/:swapId/rollback
  * Rollback a failed swap (revoke all delegations, return all escrowed assets)
  *
  * Authorization: Requires admin key (X-Admin-Key header)
  */
 router.post(
-  '/api/offers/admin/recovery/:swapId/rollback',
+  '/api/swaps/offers/admin/recovery/:swapId/rollback',
   strictRateLimiter,
   async (req: Request, res: Response): Promise<void> => {
     try {
@@ -4076,13 +4076,13 @@ router.post(
 );
 
 /**
- * GET /api/offers/admin/recovery/:swapId
+ * GET /api/swaps/offers/admin/recovery/:swapId
  * Get recovery status and details for a specific swap
  *
  * Authorization: Requires admin key (X-Admin-Key header)
  */
 router.get(
-  '/api/offers/admin/recovery/:swapId',
+  '/api/swaps/offers/admin/recovery/:swapId',
   strictRateLimiter,
   async (req: Request, res: Response): Promise<void> => {
     try {

@@ -2,7 +2,7 @@
  * Unit Tests for Unified Offer Normalizer (Tasks 1 & 2)
  *
  * Tests the request normalization and offer type detection for the unified
- * POST /api/offers endpoint that consolidates atomic, cNFT bid, and bulk swap flows.
+ * POST /api/swaps/offers endpoint that consolidates atomic, cNFT bid, and bulk swap flows.
  *
  * @see src/utils/unifiedOfferNormalizer.ts
  */

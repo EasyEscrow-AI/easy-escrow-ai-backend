@@ -92,7 +92,7 @@ export class AtomicSwapApiClient {
 
     try {
       const response = await this.client.post<OfferResponse>(
-        '/api/offers',
+        '/api/swaps/offers',
         params,
         { headers }
       );
@@ -110,7 +110,7 @@ export class AtomicSwapApiClient {
    */
   async getOffer(offerId: string): Promise<any> {
     try {
-      const response = await this.client.get(`/api/offers/${offerId}`);
+      const response = await this.client.get(`/api/swaps/offers/${offerId}`);
       return response.data;
     } catch (error: any) {
       if (error.response) {
@@ -131,7 +131,7 @@ export class AtomicSwapApiClient {
     offset?: number;
   }): Promise<any> {
     try {
-      const response = await this.client.get('/api/offers', {
+      const response = await this.client.get('/api/swaps/offers', {
         params: filters,
       });
       return response.data;
@@ -154,7 +154,7 @@ export class AtomicSwapApiClient {
 
     try {
       const response = await this.client.post<AcceptOfferResponse>(
-        `/api/offers/${offerId}/accept`,
+        `/api/swaps/offers/${offerId}/accept`,
         { takerWallet },
         { headers }
       );
@@ -172,7 +172,7 @@ export class AtomicSwapApiClient {
    */
   async cancelOffer(offerId: string): Promise<any> {
     try {
-      const response = await this.client.post(`/api/offers/${offerId}/cancel`);
+      const response = await this.client.post(`/api/swaps/offers/${offerId}/cancel`);
       return response.data;
     } catch (error: any) {
       if (error.response) {
@@ -196,7 +196,7 @@ export class AtomicSwapApiClient {
     
     try {
       const response = await this.client.post<AcceptOfferResponse>(
-        `/api/offers/${offerId}/rebuild-transaction`,
+        `/api/swaps/offers/${offerId}/rebuild-transaction`,
         {},
         { headers }
       );
@@ -223,7 +223,7 @@ export class AtomicSwapApiClient {
     
     try {
       const response = await this.client.post(
-        `/api/offers/${offerId}/confirm`,
+        `/api/swaps/offers/${offerId}/confirm`,
         { signature },
         { headers }
       );

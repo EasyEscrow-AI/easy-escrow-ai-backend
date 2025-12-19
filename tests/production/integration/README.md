@@ -25,8 +25,8 @@ Production integration tests verify that:
 
 **Coverage:**
 - Health check endpoints (`/health`)
-- Offer management endpoints (`GET /api/offers`, `GET /api/offers/:id`)
-- Quote endpoint (`POST /api/offers/quote`)
+- Offer management endpoints (`GET /api/swaps/offers`, `GET /api/swaps/offers/:id`)
+- Quote endpoint (`POST /api/swaps/offers/quote`)
 - Error handling and validation
 - Response format consistency
 

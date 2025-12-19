@@ -56,7 +56,7 @@ describe('Offer Management - Integration Tests', () => {
       };
 
       const response = await request(baseUrl)
-        .post('/api/offers')
+        .post('/api/swaps/offers')
         .set('Content-Type', 'application/json')
         .set('Idempotency-Key', `test-private-${Date.now()}`)
         .send(offerData);
@@ -81,7 +81,7 @@ describe('Offer Management - Integration Tests', () => {
       };
 
       const createResponse = await request(baseUrl)
-        .post('/api/offers')
+        .post('/api/swaps/offers')
         .set('Content-Type', 'application/json')
         .set('Idempotency-Key', `test-private-create-${Date.now()}`)
         .send(offerData);
@@ -93,7 +93,7 @@ describe('Offer Management - Integration Tests', () => {
           // Try to accept with wrong wallet
           const unauthorizedWallet = Keypair.generate();
           const acceptResponse = await request(baseUrl)
-            .post(`/api/offers/${offerId}/accept`)
+            .post(`/api/swaps/offers/${offerId}/accept`)
             .set('Content-Type', 'application/json')
             .set('Idempotency-Key', `test-unauthorized-${Date.now()}`)
             .send({
@@ -121,7 +121,7 @@ describe('Offer Management - Integration Tests', () => {
       };
 
       const createResponse = await request(baseUrl)
-        .post('/api/offers')
+        .post('/api/swaps/offers')
         .set('Content-Type', 'application/json')
         .set('Idempotency-Key', `test-original-${Date.now()}`)
         .send(originalOffer);
@@ -143,7 +143,7 @@ describe('Offer Management - Integration Tests', () => {
           };
 
           const counterResponse = await request(baseUrl)
-            .post(`/api/offers/${originalOfferId}/counter-offer`)
+            .post(`/api/swaps/offers/${originalOfferId}/counter-offer`)
             .set('Content-Type', 'application/json')
             .set('Idempotency-Key', `test-counter-${Date.now()}`)
             .send(counterOffer);
@@ -169,7 +169,7 @@ describe('Offer Management - Integration Tests', () => {
       };
 
       const createResponse = await request(baseUrl)
-        .post('/api/offers')
+        .post('/api/swaps/offers')
         .set('Content-Type', 'application/json')
         .set('Idempotency-Key', `test-chain-${Date.now()}`)
         .send(originalOffer);
@@ -180,7 +180,7 @@ describe('Offer Management - Integration Tests', () => {
         if (offerId) {
           // Get offer details should show chain
           const getResponse = await request(baseUrl)
-            .get(`/api/offers/${offerId}`)
+            .get(`/api/swaps/offers/${offerId}`)
             .set('Content-Type', 'application/json');
 
           if (getResponse.status === 200) {
@@ -206,7 +206,7 @@ describe('Offer Management - Integration Tests', () => {
       };
 
       const createResponse = await request(baseUrl)
-        .post('/api/offers')
+        .post('/api/swaps/offers')
         .set('Content-Type', 'application/json')
         .set('Idempotency-Key', `test-cancel-create-${Date.now()}`)
         .send(offerData);
@@ -217,7 +217,7 @@ describe('Offer Management - Integration Tests', () => {
         if (offerId) {
           // Cancel as maker
           const cancelResponse = await request(baseUrl)
-            .delete(`/api/offers/${offerId}`)
+            .delete(`/api/swaps/offers/${offerId}`)
             .set('Content-Type', 'application/json')
             .set('Idempotency-Key', `test-cancel-${Date.now()}`)
             .send({
@@ -244,7 +244,7 @@ describe('Offer Management - Integration Tests', () => {
       };
 
       const createResponse = await request(baseUrl)
-        .post('/api/offers')
+        .post('/api/swaps/offers')
         .set('Content-Type', 'application/json')
         .set('Idempotency-Key', `test-admin-cancel-${Date.now()}`)
         .send(offerData);
@@ -255,7 +255,7 @@ describe('Offer Management - Integration Tests', () => {
         if (offerId) {
           // Cancel as admin (would need admin auth in real scenario)
           const cancelResponse = await request(baseUrl)
-            .delete(`/api/offers/${offerId}`)
+            .delete(`/api/swaps/offers/${offerId}`)
             .set('Content-Type', 'application/json')
             .set('X-Admin-Key', process.env.ADMIN_API_KEY || 'test-admin-key')
             .set('Idempotency-Key', `test-admin-cancel-${Date.now()}`)
@@ -281,7 +281,7 @@ describe('Offer Management - Integration Tests', () => {
       };
 
       const createResponse = await request(baseUrl)
-        .post('/api/offers')
+        .post('/api/swaps/offers')
         .set('Content-Type', 'application/json')
         .set('Idempotency-Key', `test-unauth-cancel-${Date.now()}`)
         .send(offerData);
@@ -293,7 +293,7 @@ describe('Offer Management - Integration Tests', () => {
           // Try to cancel with wrong wallet
           const unauthorizedWallet = Keypair.generate();
           const cancelResponse = await request(baseUrl)
-            .delete(`/api/offers/${offerId}`)
+            .delete(`/api/swaps/offers/${offerId}`)
             .set('Content-Type', 'application/json')
             .set('Idempotency-Key', `test-unauth-${Date.now()}`)
             .send({
@@ -320,7 +320,7 @@ describe('Offer Management - Integration Tests', () => {
       };
 
       const createResponse = await request(baseUrl)
-        .post('/api/offers')
+        .post('/api/swaps/offers')
         .set('Content-Type', 'application/json')
         .set('Idempotency-Key', `test-update-create-${Date.now()}`)
         .send(offerData);
@@ -331,7 +331,7 @@ describe('Offer Management - Integration Tests', () => {
         if (offerId) {
           // Update SOL amount
           const updateResponse = await request(baseUrl)
-            .put(`/api/offers/${offerId}`)
+            .put(`/api/swaps/offers/${offerId}`)
             .set('Content-Type', 'application/json')
             .set('Idempotency-Key', `test-update-${Date.now()}`)
             .send({
@@ -359,7 +359,7 @@ describe('Offer Management - Integration Tests', () => {
       };
 
       const createResponse = await request(baseUrl)
-        .post('/api/offers')
+        .post('/api/swaps/offers')
         .set('Content-Type', 'application/json')
         .set('Idempotency-Key', `test-update-assets-${Date.now()}`)
         .send(offerData);
@@ -370,7 +370,7 @@ describe('Offer Management - Integration Tests', () => {
         if (offerId) {
           // Update assets
           const updateResponse = await request(baseUrl)
-            .put(`/api/offers/${offerId}`)
+            .put(`/api/swaps/offers/${offerId}`)
             .set('Content-Type', 'application/json')
             .set('Idempotency-Key', `test-update-assets-${Date.now()}`)
             .send({
@@ -400,7 +400,7 @@ describe('Offer Management - Integration Tests', () => {
       };
 
       const createResponse = await request(baseUrl)
-        .post('/api/offers')
+        .post('/api/swaps/offers')
         .set('Content-Type', 'application/json')
         .set('Idempotency-Key', `test-unauth-update-${Date.now()}`)
         .send(offerData);
@@ -412,7 +412,7 @@ describe('Offer Management - Integration Tests', () => {
           // Try to update with wrong wallet
           const unauthorizedWallet = Keypair.generate();
           const updateResponse = await request(baseUrl)
-            .put(`/api/offers/${offerId}`)
+            .put(`/api/swaps/offers/${offerId}`)
             .set('Content-Type', 'application/json')
             .set('Idempotency-Key', `test-unauth-update-${Date.now()}`)
             .send({
@@ -440,7 +440,7 @@ describe('Offer Management - Integration Tests', () => {
       };
 
       const createResponse = await request(baseUrl)
-        .post('/api/offers')
+        .post('/api/swaps/offers')
         .set('Content-Type', 'application/json')
         .set('Idempotency-Key', `test-state-${Date.now()}`)
         .send(offerData);

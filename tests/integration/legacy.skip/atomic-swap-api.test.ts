@@ -40,10 +40,10 @@ describe('Atomic Swap API - Integration Tests', () => {
     await prisma.$disconnect();
   });
   
-  describe('POST /api/offers - Create Offer', () => {
+  describe('POST /api/swaps/offers - Create Offer', () => {
     it('should create a new direct offer', async () => {
       const response = await request(app)
-        .post('/api/offers')
+        .post('/api/swaps/offers')
         .send({
           makerWallet: testMakerWallet,
           takerWallet: testTakerWallet,
@@ -67,7 +67,7 @@ describe('Atomic Swap API - Integration Tests', () => {
     
     it('should create an open offer (no taker)', async () => {
       const response = await request(app)
-        .post('/api/offers')
+        .post('/api/swaps/offers')
         .send({
           makerWallet: testMakerWallet,
           // No takerWallet
@@ -85,7 +85,7 @@ describe('Atomic Swap API - Integration Tests', () => {
     
     it('should validate required fields', async () => {
       const response = await request(app)
-        .post('/api/offers')
+        .post('/api/swaps/offers')
         .send({
           // Missing makerWallet
           offeredAssets: [],
@@ -100,7 +100,7 @@ describe('Atomic Swap API - Integration Tests', () => {
     
     it('should validate wallet addresses', async () => {
       const response = await request(app)
-        .post('/api/offers')
+        .post('/api/swaps/offers')
         .send({
           makerWallet: 'invalid-address',
           offeredAssets: [],
@@ -116,7 +116,7 @@ describe('Atomic Swap API - Integration Tests', () => {
     
     it('should validate asset structure', async () => {
       const response = await request(app)
-        .post('/api/offers')
+        .post('/api/swaps/offers')
         .send({
           makerWallet: testMakerWallet,
           offeredAssets: [
@@ -135,10 +135,10 @@ describe('Atomic Swap API - Integration Tests', () => {
     });
   });
   
-  describe('GET /api/offers - List Offers', () => {
+  describe('GET /api/swaps/offers - List Offers', () => {
     it('should list all offers', async () => {
       const response = await request(app)
-        .get('/api/offers')
+        .get('/api/swaps/offers')
         .expect(200);
       
       expect(response.body).to.have.property('offers');
@@ -150,7 +150,7 @@ describe('Atomic Swap API - Integration Tests', () => {
     
     it('should filter by status', async () => {
       const response = await request(app)
-        .get('/api/offers')
+        .get('/api/swaps/offers')
         .query({ status: 'ACTIVE' })
         .expect(200);
       
@@ -162,7 +162,7 @@ describe('Atomic Swap API - Integration Tests', () => {
     
     it('should filter by maker wallet', async () => {
       const response = await request(app)
-        .get('/api/offers')
+        .get('/api/swaps/offers')
         .query({ makerWallet: testMakerWallet })
         .expect(200);
       
@@ -174,7 +174,7 @@ describe('Atomic Swap API - Integration Tests', () => {
     
     it('should support pagination', async () => {
       const response = await request(app)
-        .get('/api/offers')
+        .get('/api/swaps/offers')
         .query({ limit: 5, offset: 0 })
         .expect(200);
       
@@ -184,10 +184,10 @@ describe('Atomic Swap API - Integration Tests', () => {
     });
   });
   
-  describe('GET /api/offers/:id - Get Offer Details', () => {
+  describe('GET /api/swaps/offers/:id - Get Offer Details', () => {
     it('should get offer by ID', async () => {
       const response = await request(app)
-        .get(`/api/offers/${createdOfferId}`)
+        .get(`/api/swaps/offers/${createdOfferId}`)
         .expect(200);
       
       expect(response.body).to.have.property('id', createdOfferId);
@@ -199,20 +199,20 @@ describe('Atomic Swap API - Integration Tests', () => {
     
     it('should return 404 for non-existent offer', async () => {
       const response = await request(app)
-        .get('/api/offers/99999999')
+        .get('/api/swaps/offers/99999999')
         .expect(404);
       
       expect(response.body).to.have.property('error');
     });
   });
   
-  describe('POST /api/offers/:id/counter - Create Counter-Offer', () => {
+  describe('POST /api/swaps/offers/:id/counter - Create Counter-Offer', () => {
     let parentOfferId: number;
     
     before(async () => {
       // Create a parent offer
       const parentResponse = await request(app)
-        .post('/api/offers')
+        .post('/api/swaps/offers')
         .send({
           makerWallet: testMakerWallet,
           offeredAssets: [],
@@ -229,7 +229,7 @@ describe('Atomic Swap API - Integration Tests', () => {
       const counterMaker = Keypair.generate().publicKey.toBase58();
       
       const response = await request(app)
-        .post(`/api/offers/${parentOfferId}/counter`)
+        .post(`/api/swaps/offers/${parentOfferId}/counter`)
         .send({
           counterMakerWallet: counterMaker,
         })
@@ -243,7 +243,7 @@ describe('Atomic Swap API - Integration Tests', () => {
     
     it('should reject counter-offer for non-existent parent', async () => {
       const response = await request(app)
-        .post('/api/offers/99999999/counter')
+        .post('/api/swaps/offers/99999999/counter')
         .send({
           counterMakerWallet: Keypair.generate().publicKey.toBase58(),
         })
@@ -253,13 +253,13 @@ describe('Atomic Swap API - Integration Tests', () => {
     });
   });
   
-  describe('POST /api/offers/:id/accept - Accept Offer', () => {
+  describe('POST /api/swaps/offers/:id/accept - Accept Offer', () => {
     let openOfferId: number;
     
     before(async () => {
       // Create an open offer
       const openResponse = await request(app)
-        .post('/api/offers')
+        .post('/api/swaps/offers')
         .send({
           makerWallet: testMakerWallet,
           offeredAssets: [],
@@ -276,7 +276,7 @@ describe('Atomic Swap API - Integration Tests', () => {
       const newTaker = Keypair.generate().publicKey.toBase58();
       
       const response = await request(app)
-        .post(`/api/offers/${openOfferId}/accept`)
+        .post(`/api/swaps/offers/${openOfferId}/accept`)
         .send({
           takerWallet: newTaker,
         })
@@ -290,7 +290,7 @@ describe('Atomic Swap API - Integration Tests', () => {
       const wrongTaker = Keypair.generate().publicKey.toBase58();
       
       const response = await request(app)
-        .post(`/api/offers/${createdOfferId}/accept`)
+        .post(`/api/swaps/offers/${createdOfferId}/accept`)
         .send({
           takerWallet: wrongTaker, // Not the designated taker
         })
@@ -300,13 +300,13 @@ describe('Atomic Swap API - Integration Tests', () => {
     });
   });
   
-  describe('POST /api/offers/:id/cancel - Cancel Offer', () => {
+  describe('POST /api/swaps/offers/:id/cancel - Cancel Offer', () => {
     let cancelOfferId: number;
     
     before(async () => {
       // Create an offer to cancel
       const cancelResponse = await request(app)
-        .post('/api/offers')
+        .post('/api/swaps/offers')
         .send({
           makerWallet: testMakerWallet,
           offeredAssets: [],
@@ -321,7 +321,7 @@ describe('Atomic Swap API - Integration Tests', () => {
     
     it('should cancel an offer', async () => {
       const response = await request(app)
-        .post(`/api/offers/${cancelOfferId}/cancel`)
+        .post(`/api/swaps/offers/${cancelOfferId}/cancel`)
         .send({
           walletAddress: testMakerWallet,
         })
@@ -333,7 +333,7 @@ describe('Atomic Swap API - Integration Tests', () => {
     
     it('should reject cancellation by non-maker', async () => {
       const response = await request(app)
-        .post(`/api/offers/${createdOfferId}/cancel`)
+        .post(`/api/swaps/offers/${createdOfferId}/cancel`)
         .send({
           walletAddress: Keypair.generate().publicKey.toBase58(), // Not the maker
         })
@@ -344,7 +344,7 @@ describe('Atomic Swap API - Integration Tests', () => {
     
     it('should reject cancellation of already cancelled offer', async () => {
       const response = await request(app)
-        .post(`/api/offers/${cancelOfferId}/cancel`)
+        .post(`/api/swaps/offers/${cancelOfferId}/cancel`)
         .send({
           walletAddress: testMakerWallet,
         })
@@ -355,10 +355,10 @@ describe('Atomic Swap API - Integration Tests', () => {
     });
   });
   
-  describe('POST /api/offers/:id/confirm - Confirm Swap', () => {
+  describe('POST /api/swaps/offers/:id/confirm - Confirm Swap', () => {
     it('should require valid signature', async () => {
       const response = await request(app)
-        .post(`/api/offers/${createdOfferId}/confirm`)
+        .post(`/api/swaps/offers/${createdOfferId}/confirm`)
         .send({
           signature: 'invalid-signature',
         })
@@ -369,7 +369,7 @@ describe('Atomic Swap API - Integration Tests', () => {
     
     it('should reject confirmation for non-existent offer', async () => {
       const response = await request(app)
-        .post('/api/offers/99999999/confirm')
+        .post('/api/swaps/offers/99999999/confirm')
         .send({
           signature: 'valid-but-nonexistent-signature',
         })
@@ -382,7 +382,7 @@ describe('Atomic Swap API - Integration Tests', () => {
   describe('Error Handling', () => {
     it('should handle invalid JSON', async () => {
       const response = await request(app)
-        .post('/api/offers')
+        .post('/api/swaps/offers')
         .send('not valid json')
         .set('Content-Type', 'application/json')
         .expect(400);
@@ -393,7 +393,7 @@ describe('Atomic Swap API - Integration Tests', () => {
     it('should handle server errors gracefully', async () => {
       // Test with extremely large values that might cause overflow
       const response = await request(app)
-        .post('/api/offers')
+        .post('/api/swaps/offers')
         .send({
           makerWallet: testMakerWallet,
           offeredAssets: [],
@@ -414,7 +414,7 @@ describe('Atomic Swap API - Integration Tests', () => {
       // Make many requests quickly
       const requests = Array.from({ length: 100 }, () =>
         request(app)
-          .get('/api/offers')
+          .get('/api/swaps/offers')
           .then((res) => res.status)
       );
       

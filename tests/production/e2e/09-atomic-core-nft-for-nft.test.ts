@@ -156,7 +156,7 @@ describe('🚀 Production E2E: Core NFT ↔ SPL NFT (Mainnet)', () => {
     
     // Step 1: Create offer
     console.log('\n📤 Step 1: Creating offer via API...');
-    const createResponse = await apiClient.post('/api/offers', {
+    const createResponse = await apiClient.post('/api/swaps/offers', {
       makerWallet: sender.publicKey.toBase58(),
       takerWallet: receiver.publicKey.toBase58(),
       offeredAssets: [{
@@ -178,7 +178,7 @@ describe('🚀 Production E2E: Core NFT ↔ SPL NFT (Mainnet)', () => {
     
     // Step 2: Accept offer
     console.log('\n✅ Step 2: Accepting offer...');
-    const acceptResponse = await apiClient.post(`/api/offers/${offer.id}/accept`, {
+    const acceptResponse = await apiClient.post(`/api/swaps/offers/${offer.id}/accept`, {
       takerWallet: receiver.publicKey.toBase58(),
     }, {
       headers: { 'idempotency-key': `prod-accept-core-spl-${Date.now()}` },

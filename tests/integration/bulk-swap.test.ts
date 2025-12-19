@@ -49,7 +49,7 @@ describe('Bulk Swap API - Integration Tests', () => {
     await prisma.$disconnect();
   });
 
-  describe('POST /api/offers - Multi-Asset Support', () => {
+  describe('POST /api/swaps/offers - Multi-Asset Support', () => {
     it('should create offer with 2-5 assets per side', async () => {
       const offerData = {
         makerWallet: makerWallet.publicKey.toBase58(),
@@ -67,7 +67,7 @@ describe('Bulk Swap API - Integration Tests', () => {
       };
 
       const response = await request(baseUrl)
-        .post('/api/offers')
+        .post('/api/swaps/offers')
         .set('Content-Type', 'application/json')
         .set('Idempotency-Key', `test-${Date.now()}`)
         .send(offerData);
@@ -93,7 +93,7 @@ describe('Bulk Swap API - Integration Tests', () => {
       };
 
       const response = await request(baseUrl)
-        .post('/api/offers')
+        .post('/api/swaps/offers')
         .set('Content-Type', 'application/json')
         .set('Idempotency-Key', `test-mixed-${Date.now()}`)
         .send(offerData);
@@ -116,7 +116,7 @@ describe('Bulk Swap API - Integration Tests', () => {
       };
 
       const response = await request(baseUrl)
-        .post('/api/offers')
+        .post('/api/swaps/offers')
         .set('Content-Type', 'application/json')
         .set('Idempotency-Key', `test-too-many-${Date.now()}`)
         .send(offerData);
@@ -141,7 +141,7 @@ describe('Bulk Swap API - Integration Tests', () => {
       };
 
       const response = await request(baseUrl)
-        .post('/api/offers')
+        .post('/api/swaps/offers')
         .set('Content-Type', 'application/json')
         .set('Idempotency-Key', `test-group-${Date.now()}`)
         .send(offerData);
@@ -176,7 +176,7 @@ describe('Bulk Swap API - Integration Tests', () => {
       };
 
       const response = await request(baseUrl)
-        .post('/api/offers')
+        .post('/api/swaps/offers')
         .set('Content-Type', 'application/json')
         .set('Idempotency-Key', `test-mixed-group-${Date.now()}`)
         .send(offerData);
@@ -205,7 +205,7 @@ describe('Bulk Swap API - Integration Tests', () => {
       };
 
       const response = await request(baseUrl)
-        .post('/api/offers')
+        .post('/api/swaps/offers')
         .set('Content-Type', 'application/json')
         .set('Idempotency-Key', `test-jito-${Date.now()}`)
         .send(offerData);
@@ -236,7 +236,7 @@ describe('Bulk Swap API - Integration Tests', () => {
       };
 
       const response = await request(baseUrl)
-        .post('/api/offers')
+        .post('/api/swaps/offers')
         .set('Content-Type', 'application/json')
         .set('Idempotency-Key', `test-partial-${Date.now()}`)
         .send(offerData);
@@ -262,7 +262,7 @@ describe('Bulk Swap API - Integration Tests', () => {
       };
 
       const createResponse = await request(baseUrl)
-        .post('/api/offers')
+        .post('/api/swaps/offers')
         .set('Content-Type', 'application/json')
         .set('Idempotency-Key', `test-status-${Date.now()}`)
         .send(offerData);
@@ -273,7 +273,7 @@ describe('Bulk Swap API - Integration Tests', () => {
         if (offerId) {
           // Check bundle status endpoint
           const statusResponse = await request(baseUrl)
-            .get(`/api/offers/${offerId}/bundle-status`)
+            .get(`/api/swaps/offers/${offerId}/bundle-status`)
             .set('Content-Type', 'application/json');
 
           if (statusResponse.status === 200) {

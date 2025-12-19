@@ -103,9 +103,9 @@ npm run test:smoke:atomic-swap
       ✓ should have Solana RPC connectivity (128ms)
     API Endpoints
       ✓ GET / should return API info (15ms)
-      ✓ GET /api/offers should list offers (23ms)
-      ✓ POST /api/offers should validate required fields (8ms)
-      ✓ GET /api/offers/:id should handle not found (6ms)
+      ✓ GET /api/swaps/offers should list offers (23ms)
+      ✓ POST /api/swaps/offers should validate required fields (8ms)
+      ✓ GET /api/swaps/offers/:id should handle not found (6ms)
     Core Services
       ✓ should have nonce pool initialized (31ms)
       ✓ should have at least one available nonce (12ms)

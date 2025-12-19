@@ -112,7 +112,7 @@ describe('🔑 API Key Zero-Fee Authorization E2E Tests (Staging)', () => {
       
       try {
         const response = await apiClient.post(
-          '/api/offers',
+          '/api/swaps/offers',
           {
             makerWallet: makerWallet.publicKey.toBase58(),
             offeredAssets: [
@@ -157,7 +157,7 @@ describe('🔑 API Key Zero-Fee Authorization E2E Tests (Staging)', () => {
       
       try {
         const response = await apiClient.post(
-          '/api/offers',
+          '/api/swaps/offers',
           {
             makerWallet: makerWallet.publicKey.toBase58(),
             offeredAssets: [
@@ -201,7 +201,7 @@ describe('🔑 API Key Zero-Fee Authorization E2E Tests (Staging)', () => {
       
       try {
         const response = await apiClient.post(
-          '/api/offers',
+          '/api/swaps/offers',
           {
             makerWallet: makerWallet.publicKey.toBase58(),
             offeredAssets: [
@@ -248,7 +248,7 @@ describe('🔑 API Key Zero-Fee Authorization E2E Tests (Staging)', () => {
         // Step 1: Create offer with API key
         console.log('📝 Step 1: Create offer with valid API key...');
         const createResponse = await apiClient.post(
-          '/api/offers',
+          '/api/swaps/offers',
           {
             makerWallet: makerWallet.publicKey.toBase58(),
             offeredAssets: [
@@ -316,7 +316,7 @@ describe('🔑 API Key Zero-Fee Authorization E2E Tests (Staging)', () => {
       try {
         // Create offer WITHOUT API key
         const response = await apiClient.post(
-          '/api/offers',
+          '/api/swaps/offers',
           {
             makerWallet: makerWallet.publicKey.toBase58(),
             offeredAssets: [
@@ -401,7 +401,7 @@ describe('🔑 API Key Zero-Fee Authorization E2E Tests (Staging)', () => {
         // Create two identical offers, one with API key, one without
         console.log('📝 Creating offer WITHOUT API key...');
         const standardFeeResponse = await apiClient.post(
-          '/api/offers',
+          '/api/swaps/offers',
           {
             makerWallet: makerWallet.publicKey.toBase58(),
             offeredAssets: [
@@ -427,7 +427,7 @@ describe('🔑 API Key Zero-Fee Authorization E2E Tests (Staging)', () => {
         
         console.log('\n📝 Creating identical offer WITH API key...');
         const zeroFeeResponse = await apiClient.post(
-          '/api/offers',
+          '/api/swaps/offers',
           {
             makerWallet: makerWallet.publicKey.toBase58(),
             offeredAssets: [

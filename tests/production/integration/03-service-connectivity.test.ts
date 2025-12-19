@@ -78,7 +78,7 @@ describe('🔍 Production Integration: Service Connectivity', () => {
       // Actual DAS queries would require valid cNFT asset IDs
       // For integration test, we verify the endpoint exists and handles requests
       const response = await request(API_BASE_URL)
-        .get('/api/offers')
+        .get('/api/swaps/offers')
         .expect(200);
 
       expect(response.body.success).to.be.true;
@@ -92,7 +92,7 @@ describe('🔍 Production Integration: Service Connectivity', () => {
 
       // Database connectivity is verified by successful API responses
       const response = await request(API_BASE_URL)
-        .get('/api/offers')
+        .get('/api/swaps/offers')
         .expect(200);
 
       expect(response.body.success).to.be.true;
@@ -106,7 +106,7 @@ describe('🔍 Production Integration: Service Connectivity', () => {
 
       const startTime = Date.now();
       const response = await request(API_BASE_URL)
-        .get('/api/offers')
+        .get('/api/swaps/offers')
         .query({ limit: 10 })
         .expect(200);
 
@@ -135,7 +135,7 @@ describe('🔍 Production Integration: Service Connectivity', () => {
 
       const startTime = Date.now();
       await request(API_BASE_URL)
-        .get('/api/offers')
+        .get('/api/swaps/offers')
         .expect(200);
 
       const responseTime = Date.now() - startTime;
