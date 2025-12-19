@@ -8,21 +8,35 @@ import { connectDatabase, checkDatabaseHealth } from './config/database';
 import { connectRedis, checkRedisHealth, disconnectRedis } from './config/redis';
 // DISABLED: Agreement routes - migrated to atomic swap architecture
 // import { agreementRoutes } from './routes';
-import { expiryCancellationRoutes, webhookRoutes, receiptRoutes, transactionLogRoutes, healthRoutes, offersRoutes, metricsRoutes, testRoutes, testExecuteRoutes, authorizedAppsRoutes, noncePoolAdminRoutes } from './routes';
+import {
+  expiryCancellationRoutes,
+  webhookRoutes,
+  receiptRoutes,
+  transactionLogRoutes,
+  healthRoutes,
+  offersRoutes,
+  metricsRoutes,
+  testRoutes,
+  testExecuteRoutes,
+  authorizedAppsRoutes,
+  noncePoolAdminRoutes,
+  assetsRoutes,
+} from './routes';
 import { noncePoolManager, healthCheckService } from './routes/offers.routes';
+import { corsOptions, helmetConfig, sanitizeInput, securityHeaders } from './middleware';
 import {
-  corsOptions,
-  helmetConfig,
-  sanitizeInput,
-  securityHeaders,
-} from './middleware';
-import {
-  getMonitoringOrchestrator, 
+  getMonitoringOrchestrator,
   getExpiryCancellationOrchestrator,
-  getIdempotencyService 
+  getIdempotencyService,
 } from './services';
-import { getStuckAgreementMonitor, AlertSeverity } from './services/stuck-agreement-monitor.service';
-import { getNonceCleanupScheduler, getNonceReplenishmentScheduler } from './services/nonce-schedulers.service';
+import {
+  getStuckAgreementMonitor,
+  AlertSeverity,
+} from './services/stuck-agreement-monitor.service';
+import {
+  getNonceCleanupScheduler,
+  getNonceReplenishmentScheduler,
+} from './services/nonce-schedulers.service';
 import { OfferExpiryScheduler } from './services/offer-expiry-scheduler.service';
 // import { backupScheduler } from './services/backup-scheduler.service'; // DISABLED for BETA launch
 
@@ -111,7 +125,7 @@ app.get('/health', async (_req: Request, res: Response) => {
   try {
     const healthResult = await healthCheckService.check();
     const statusCode = healthCheckService.getStatusCode(healthResult);
-    
+
     res.status(statusCode).json(healthResult);
   } catch (error) {
     console.error('[Health Check] Unexpected error:', error);
@@ -133,40 +147,41 @@ let swaggerDocument: any = null;
 try {
   const swaggerFilePath = path.join(__dirname, '../docs/api/openapi.yaml');
   swaggerDocument = YAML.load(swaggerFilePath);
-  
+
   // 🔧 Environment-aware server configuration
   const isProd = process.env.NODE_ENV === 'production';
   const isStaging = process.env.NODE_ENV === 'staging';
-  
+
   if (isProd) {
     // Production: Only show production server
     swaggerDocument.servers = [
       {
         url: 'https://api.easyescrow.ai',
-        description: 'Production server'
-      }
+        description: 'Production server',
+      },
     ];
   } else if (isStaging) {
     // Staging: Only show staging server
     swaggerDocument.servers = [
       {
         url: 'https://staging-api.easyescrow.ai',
-        description: 'Staging server'
-      }
+        description: 'Staging server',
+      },
     ];
   } else {
     // Development: Show localhost
     swaggerDocument.servers = [
       {
         url: 'http://localhost:3000',
-        description: 'Development server'
-      }
+        description: 'Development server',
+      },
     ];
   }
-  
-  console.log(`✅ Swagger documentation loaded successfully from ${swaggerFilePath}`);
-  console.log(`🌐 Swagger servers configured for environment: ${process.env.NODE_ENV || 'development'}`);
 
+  console.log(`✅ Swagger documentation loaded successfully from ${swaggerFilePath}`);
+  console.log(
+    `🌐 Swagger servers configured for environment: ${process.env.NODE_ENV || 'development'}`
+  );
 } catch (error: any) {
   console.warn('⚠️  Warning: Failed to load Swagger documentation');
   console.warn(`   Error: ${error.message}`);
@@ -181,31 +196,36 @@ app.get('/', (_req: Request, res: Response) => {
     version: '1.0.0',
     endpoints: {
       health: '/health',
+      assets: '/api/assets',
       offers: '/api/swaps/offers',
       offersCnft: '/api/swaps/offers/cnft',
       offersBulk: '/api/swaps/offers/bulk',
       receipts: '/v1/receipts',
       transactions: '/v1/transactions',
       expiryCancellation: '/api/expiry-cancellation',
-      webhooks: '/api/webhooks'
-    }
+      webhooks: '/api/webhooks',
+    },
   };
-  
+
   // Only include documentation field if Swagger loaded successfully
   if (swaggerDocument) {
     response.documentation = swaggerPath;
   }
-  
+
   res.status(200).json(response);
 });
 
 // Swagger Documentation (only if successfully loaded)
 if (swaggerDocument) {
-  app.use(swaggerPath, swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
-    customCss: '.swagger-ui .topbar { display: none }',
-    customSiteTitle: 'EasyEscrow.ai API Documentation',
-    customfavIcon: '/favicon.ico'
-  }));
+  app.use(
+    swaggerPath,
+    swaggerUi.serve,
+    swaggerUi.setup(swaggerDocument, {
+      customCss: '.swagger-ui .topbar { display: none }',
+      customSiteTitle: 'EasyEscrow.ai API Documentation',
+      customfavIcon: '/favicon.ico',
+    })
+  );
   console.log(`📚 Swagger UI available at ${swaggerPath}`);
 } else {
   // Provide a helpful error page if someone tries to access the docs
@@ -213,7 +233,7 @@ if (swaggerDocument) {
     res.status(503).json({
       error: 'Documentation Unavailable',
       message: 'Swagger documentation could not be loaded. Please check server logs for details.',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   });
 }
@@ -223,6 +243,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // API Routes
 app.use(offersRoutes);
+app.use(assetsRoutes);
 app.use(receiptRoutes);
 app.use('/v1/transactions', transactionLogRoutes);
 app.use('/api/expiry-cancellation', expiryCancellationRoutes);
@@ -239,7 +260,7 @@ app.use((req: Request, res: Response) => {
   res.status(404).json({
     error: 'Not Found',
     message: `Cannot ${req.method} ${req.path}`,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 
@@ -249,23 +270,23 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   res.status(500).json({
     error: 'Internal Server Error',
     message: process.env.NODE_ENV === 'production' ? 'An error occurred' : err.message,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 
 // Graceful shutdown handler
 const gracefulShutdown = async (signal: string) => {
   console.log(`\n${signal} received. Starting graceful shutdown...`);
-  
+
   try {
     // Stop idempotency service
     console.log('Stopping idempotency service...');
     await idempotencyService.stop();
-    
+
     // Disconnect Redis
     console.log('Disconnecting Redis...');
     await disconnectRedis();
-    
+
     console.log('Graceful shutdown completed');
     process.exit(0);
   } catch (error) {
@@ -284,37 +305,37 @@ const startServer = async () => {
     // Connect to database
     await connectDatabase();
     console.log('✅ Database connected');
-    
+
     // Connect to Redis
     await connectRedis();
     console.log('✅ Redis connected');
-    
+
     // Start Express server FIRST to respond to health checks
     app.listen(PORT, () => {
       console.log(`\n🚀 Server is running on port ${PORT}`);
       console.log(`📍 Health check: http://localhost:${PORT}/health`);
       console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
       console.log(`💾 Redis caching: ACTIVE\n`);
-      
+
       // Start background services after server is listening
       (async () => {
         try {
           console.log('Starting background services...');
-          
+
           // Start idempotency service
           console.log('Starting idempotency service...');
           await idempotencyService.start();
           console.log('✅ Idempotency service started');
-          
+
           // Start offer expiry scheduler
           console.log('Starting offer expiry scheduler...');
           offerExpiryScheduler.start();
           console.log('✅ Offer expiry scheduler started (runs every 15 minutes)');
-          
+
           // DISABLED for BETA launch - Backup scheduler
           // Manual backups via CLI tools are sufficient for BETA phase
           console.log('⏭️  Backup scheduler disabled (BETA launch - using manual backups)');
-          
+
           console.log('✅ All background services started');
         } catch (error) {
           console.error('⚠️  Error starting background services:', error);

@@ -121,6 +121,8 @@ servers:
 tags:
   - name: Health
     description: Service health and status
+  - name: Assets
+    description: Supported assets and chains for atomic swaps
   - name: Quote
     description: Swap quote and fee estimation
   - name: Offers
@@ -181,6 +183,122 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
+
+  /api/assets:
+    get:
+      tags:
+        - Assets
+      summary: List supported assets
+      description: |
+        Returns a list of all supported assets and their chains for atomic swaps.
+
+        **Supported Asset Types:**
+        - **SPL NFT** - Solana SPL Token NFT (Metaplex standard)
+        - **Core NFT** - Solana Metaplex Core NFT
+        - **cNFT** - Solana Compressed NFT (Metaplex Bubblegum)
+        - **SOL** - Solana native token
+
+        All assets are currently on the Solana blockchain.
+      responses:
+        '200':
+          description: List of supported assets
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetsListResponse'
+              example:
+                success: true
+                timestamp: '2024-12-19T10:00:00.000Z'
+                data:
+                  assets:
+                    - id: spl-nft
+                      name: SPL NFT
+                      description: Solana SPL Token NFT (Metaplex standard)
+                      chain: Solana
+                      chainId: solana
+                      status: active
+                      type: nft
+                      standard: Metaplex Token Metadata
+                    - id: core-nft
+                      name: Core NFT
+                      description: Solana Metaplex Core NFT
+                      chain: Solana
+                      chainId: solana
+                      status: active
+                      type: nft
+                      standard: Metaplex Core
+                    - id: cnft
+                      name: cNFT
+                      description: Solana Compressed NFT (Metaplex Bubblegum)
+                      chain: Solana
+                      chainId: solana
+                      status: active
+                      type: nft
+                      standard: Metaplex Bubblegum
+                    - id: sol
+                      name: SOL
+                      description: Solana native token
+                      chain: Solana
+                      chainId: solana
+                      status: active
+                      type: token
+                  chains:
+                    - id: solana
+                      name: Solana
+                      status: active
+                  summary:
+                    totalAssets: 4
+                    activeAssets: 4
+                    supportedChains: 1
+
+  /api/assets/{assetId}:
+    get:
+      tags:
+        - Assets
+      summary: Get asset details
+      description: Returns detailed information about a specific supported asset type.
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          description: The unique identifier of the asset type
+          schema:
+            type: string
+            enum:
+              - spl-nft
+              - core-nft
+              - cnft
+              - sol
+          example: spl-nft
+      responses:
+        '200':
+          description: Asset details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetDetailResponse'
+              example:
+                success: true
+                timestamp: '2024-12-19T10:00:00.000Z'
+                data:
+                  id: spl-nft
+                  name: SPL NFT
+                  description: Solana SPL Token NFT (Metaplex standard)
+                  chain: Solana
+                  chainId: solana
+                  status: active
+                  type: nft
+                  standard: Metaplex Token Metadata
+        '404':
+          description: Asset not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: Asset not found
+                message: "Asset 'invalid-asset' is not supported. Available assets: spl-nft, core-nft, cnft, sol"
 
   /api/quote:
     post:
@@ -1186,6 +1304,136 @@ components:
             description: Sort order
 
   schemas:
+    # Asset schemas
+    SupportedAsset:
+      type: object
+      description: A supported asset type for atomic swaps
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the asset type
+          example: spl-nft
+        name:
+          type: string
+          description: Display name of the asset type
+          example: SPL NFT
+        description:
+          type: string
+          description: Detailed description of the asset type
+          example: Solana SPL Token NFT (Metaplex standard)
+        chain:
+          type: string
+          description: Name of the blockchain
+          example: Solana
+        chainId:
+          type: string
+          description: Unique identifier for the blockchain
+          example: solana
+        status:
+          type: string
+          enum:
+            - active
+            - coming_soon
+            - deprecated
+          description: Current support status
+          example: active
+        type:
+          type: string
+          enum:
+            - nft
+            - token
+          description: Asset category
+          example: nft
+        standard:
+          type: string
+          description: Technical standard (for NFTs)
+          example: Metaplex Token Metadata
+      required:
+        - id
+        - name
+        - description
+        - chain
+        - chainId
+        - status
+        - type
+
+    SupportedChain:
+      type: object
+      description: A supported blockchain
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the chain
+          example: solana
+        name:
+          type: string
+          description: Display name of the chain
+          example: Solana
+        status:
+          type: string
+          enum:
+            - active
+            - coming_soon
+            - deprecated
+          description: Current support status
+          example: active
+      required:
+        - id
+        - name
+        - status
+
+    AssetsListResponse:
+      type: object
+      description: Response containing all supported assets and chains
+      properties:
+        success:
+          type: boolean
+          example: true
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-12-19T10:00:00.000Z'
+        data:
+          type: object
+          properties:
+            assets:
+              type: array
+              items:
+                $ref: '#/components/schemas/SupportedAsset'
+            chains:
+              type: array
+              items:
+                $ref: '#/components/schemas/SupportedChain'
+            summary:
+              type: object
+              properties:
+                totalAssets:
+                  type: integer
+                  description: Total number of asset types
+                  example: 4
+                activeAssets:
+                  type: integer
+                  description: Number of active asset types
+                  example: 4
+                supportedChains:
+                  type: integer
+                  description: Number of supported blockchains
+                  example: 1
+
+    AssetDetailResponse:
+      type: object
+      description: Response containing details for a single asset
+      properties:
+        success:
+          type: boolean
+          example: true
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-12-19T10:00:00.000Z'
+        data:
+          $ref: '#/components/schemas/SupportedAsset'
+
     QuoteRequest:
       type: object
       properties:
