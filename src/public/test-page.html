@@ -1530,6 +1530,14 @@
             margin: 0;
         }
 
+        .settings-section-title {
+            font-size: 1.5rem;
+            color: #333;
+            margin: 30px 0 15px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
         .active-listings-container {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -2917,11 +2925,22 @@
         <div class="listing-section">
             <div class="listing-header">
                 <h2 class="listing-title">📋 List Asset for Sale</h2>
-                <p class="listing-subtitle">List your cNFTs for sale with delegation-based marketplace</p>
+                <p class="listing-subtitle">List your NFTs for sale with delegation-based marketplace</p>
             </div>
 
             <div class="listing-form-container">
                 <div class="listing-form">
+                    <!-- NFT Type Filter -->
+                    <div class="listing-form-group">
+                        <label class="listing-label">NFT Type</label>
+                        <select class="listing-select" id="listing-type-filter">
+                            <option value="all">All NFT Types</option>
+                            <option value="cnft">cNFT (Compressed)</option>
+                            <option value="spl">SPL NFT</option>
+                            <option value="core">Core NFT</option>
+                        </select>
+                    </div>
+
                     <!-- Asset Selection -->
                     <div class="listing-form-group">
                         <label class="listing-label">Select Asset to List</label>
@@ -2972,11 +2991,6 @@
                     <button class="listing-button" id="list-btn" disabled>
                         📝 Create Listing
                     </button>
-
-                    <div class="listing-info-note">
-                        <strong>How it works:</strong> Your cNFT remains in your wallet but is delegated to the marketplace.
-                        When someone buys it, the cNFT is automatically transferred and you receive SOL instantly.
-                    </div>
                 </div>
             </div>
         </div>
@@ -3020,6 +3034,9 @@
                 <div class="empty-state">No activity yet. Load wallets and execute a swap to see logs here.</div>
             </div>
         </div>
+
+        <!-- Settings Section -->
+        <h2 class="settings-section-title">⚙️ Settings</h2>
 
         <!-- Zero-Fee API Key (Optional) -->
         <div class="api-key-section">
