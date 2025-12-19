@@ -10,7 +10,12 @@ import crypto from 'crypto';
  * We rate limit per RPC endpoint to avoid slowing other providers unnecessarily.
  */
 export class DasHttpRateLimiter {
-  private static readonly DEFAULT_INTERVAL_MS = 650; // ~1.5 rps (safer than 2 rps under congestion)
+  // QuickNode free tier has 2 req/sec limit, but under load this can be problematic
+  // Use 750ms (~1.33 rps) as safer default to avoid 429 errors on high-activity trees
+  private static readonly DEFAULT_INTERVAL_MS = (() => {
+    const envVal = parseInt(process.env.DAS_RATE_LIMIT_INTERVAL_MS || '750', 10);
+    return Number.isFinite(envVal) && envVal > 0 ? envVal : 750;
+  })();
   private static readonly DEFAULT_KEY_PREFIX = 'rate_limit:das:http:';
 
   // In-memory fallback
