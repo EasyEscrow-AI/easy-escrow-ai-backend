@@ -58,7 +58,7 @@ import {
   SwapProgressService,
 } from '../services/swapProgress.service';
 import { CacheService } from '../services/cache.service';
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 // Unified offer normalizer for API consolidation (Tasks 1-2)
 import {
   normalizeOfferRequest,
@@ -262,10 +262,11 @@ const swapProgressService = createSwapProgressService(swapStateMachine, progress
 console.log('[OffersRoutes] Swap Progress Service initialized');
 
 // Create specialized rate limiter for progress endpoint (1 request per second per swap)
+// Uses ipKeyGenerator helper for proper IPv6 address normalization
 const progressRateLimiter = rateLimit({
   windowMs: 1000, // 1 second window
   max: process.env.ENABLE_E2E_TESTING === 'true' ? 100 : 1, // 1 request per second (100 for testing)
-  keyGenerator: (req: Request) => `progress:${req.params.id}:${req.ip}`,
+  keyGenerator: (req: Request) => `progress:${req.params.id}:${ipKeyGenerator(req.ip || 'unknown')}`,
   message: {
     success: false,
     error: 'Too Many Requests',
