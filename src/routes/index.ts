@@ -16,6 +16,7 @@ import testRoutes from './test.routes';
 import testExecuteRoutes from './test-execute.routes';
 import authorizedAppsRoutes from './admin/authorized-apps.routes';
 import noncePoolAdminRoutes from './admin/nonce-pool.routes';
+import assetsRoutes from './assets.routes';
 
 export {
   expiryCancellationRoutes,
@@ -29,4 +30,5 @@ export {
   testExecuteRoutes,
   authorizedAppsRoutes,
   noncePoolAdminRoutes,
+  assetsRoutes,
 };
