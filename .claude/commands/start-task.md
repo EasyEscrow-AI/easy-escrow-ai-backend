@@ -30,8 +30,8 @@ git fetch origin master && git log --oneline HEAD..origin/master | head -5
 
 1. Commit changes
 2. Set task status to `done`
-3. Create PR: `gh pr create --base master --title "feat: <Description>"`
-4. Report PR URL
+3. Create **DRAFT** PR: `gh pr create --base master --draft --title "feat: <Description>"`
+4. Report PR URL (user will mark ready for review when appropriate)
 
 ## Rules
 
