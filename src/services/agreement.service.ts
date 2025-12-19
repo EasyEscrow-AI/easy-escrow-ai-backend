@@ -184,7 +184,6 @@ export const createAgreement = async (
         expiry: bufferedExpiry,
         
         // Deposit addresses
-        usdcDepositAddr: null, // DEPRECATED: V2 uses SOL sent directly to escrowPda, not USDC token accounts
         nftDepositAddr: sellerNftAta.toString(),       // Seller's NFT A deposit address
         nftBDepositAddr: buyerNftBDepositAddr,         // Buyer's NFT B deposit address (for NFT<>NFT swaps)
         
@@ -446,8 +445,6 @@ const mapAgreementToDTO = (agreement: any): AgreementResponseDTO => {
     honorRoyalties: agreement.honorRoyalties,
     escrowPda: agreement.escrowPda,
     
-    // Deprecated USDC deposit address
-    usdcDepositAddr: agreement.usdcDepositAddr || undefined,
     nftDepositAddr: agreement.nftDepositAddr || undefined,
     nftBDepositAddr: agreement.nftBDepositAddr || undefined, // Escrow's NFT B token account for NFT<>NFT swaps
     
@@ -516,7 +513,6 @@ const mapAgreementToDetailDTO = (agreement: any): AgreementDetailResponseDTO => 
     isExpired &&
     (agreement.status === AgreementStatus.PENDING ||
       agreement.status === AgreementStatus.SOL_LOCKED ||
-      agreement.status === AgreementStatus.USDC_LOCKED || // Legacy V1
       agreement.status === AgreementStatus.NFT_LOCKED ||
       agreement.status === AgreementStatus.BOTH_LOCKED);
 
@@ -678,15 +674,14 @@ export const prepareDepositNftTransaction = async (
       throw new Error(`Agreement not found: ${agreementId}`);
     }
 
-    // 2. Validate status - allow NFT deposit when PENDING, SOL_LOCKED, or USDC_LOCKED
+    // 2. Validate status - allow NFT deposit when PENDING or SOL_LOCKED
     const allowedStatuses: AgreementStatus[] = [
       AgreementStatus.PENDING,
-      AgreementStatus.SOL_LOCKED,    // V2: Buyer's SOL already deposited
-      AgreementStatus.USDC_LOCKED,   // Legacy V1
+      AgreementStatus.SOL_LOCKED,
     ];
     if (!allowedStatuses.includes(agreement.status)) {
       throw new Error(
-        `Cannot deposit NFT: Agreement status is ${agreement.status}. Must be PENDING, SOL_LOCKED, or USDC_LOCKED.`
+        `Cannot deposit NFT: Agreement status is ${agreement.status}. Must be PENDING or SOL_LOCKED.`
       );
     }
 
@@ -793,15 +788,14 @@ export const depositNftToEscrow = async (
       throw new Error(`Agreement not found: ${agreementId}`);
     }
 
-    // 2. Validate status - allow NFT deposit when PENDING, SOL_LOCKED, or USDC_LOCKED
+    // 2. Validate status - allow NFT deposit when PENDING or SOL_LOCKED
     const allowedStatuses: AgreementStatus[] = [
       AgreementStatus.PENDING,
-      AgreementStatus.SOL_LOCKED,    // V2: Buyer's SOL already deposited
-      AgreementStatus.USDC_LOCKED,   // Legacy V1
+      AgreementStatus.SOL_LOCKED,
     ];
     if (!allowedStatuses.includes(agreement.status)) {
       throw new Error(
-        `Cannot deposit NFT: Agreement status is ${agreement.status}. Must be PENDING, SOL_LOCKED, or USDC_LOCKED.`
+        `Cannot deposit NFT: Agreement status is ${agreement.status}. Must be PENDING or SOL_LOCKED.`
       );
     }
 

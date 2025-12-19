@@ -38,8 +38,7 @@ info:
     - ✅ **Traditional NFTs** (Metaplex standard)
     - ✅ **Compressed NFTs (cNFTs)** (Metaplex Bubblegum)
     - ✅ **Metaplex Core NFTs**
-    - 🔜 **Additional blockchains** - Coming soon
-    
+
     ## Bulk Swap Support
     
     Bulk swaps of up to **10 assets per side** are supported. Any combination of NFT type (SPL NFT, Core NFT, cNFT) and SOL. Bulk swap atomicity provided by JITO Solana validator for swaps requiring multiple transactions (3+ total assets).
@@ -127,7 +126,6 @@ tags:
     description: Atomic swap offer lifecycle management
   - name: Bundle Monitoring
     description: Bundle status and recovery for bulk swaps (all NFT types)
-  # REMOVED: Listings tag - Easy Escrow is pure offer infrastructure
 
 paths:
   /:
@@ -1115,13 +1113,6 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-
-  # =============================================================================
-  # LISTINGS API - REMOVED
-  # =============================================================================
-  # Easy Escrow is now pure offer/swap infrastructure.
-  # Marketplace listing semantics are handled by a separate wrapper service.
 
 components:
   parameters:
@@ -2136,12 +2127,6 @@ components:
                 payload:
                   type: object
 
-
-    # ==========================================================================
-    # LISTINGS SCHEMAS - REMOVED
-    # ==========================================================================
-    # Easy Escrow is now pure offer/swap infrastructure.
-
     ErrorResponse:
       type: object
       properties:
@@ -2192,8 +2177,4 @@ components:
       type: apiKey
       in: header
       name: X-API-Key
-      description: API key for authentication (coming soon)
-
-# No security required yet (public MVP)
-# security:
-#   - ApiKeyAuth: []
+      description: API key for authentication

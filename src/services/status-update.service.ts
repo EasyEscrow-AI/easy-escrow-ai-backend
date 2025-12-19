@@ -49,7 +49,7 @@ interface StatusTransitionRule {
 interface StatusUpdateContext {
   agreement: any;
   deposits: any[];
-  hasUsdcDeposit: boolean;
+  hasSolDeposit: boolean;
   hasNftDeposit: boolean;
   isExpired: boolean;
   isCancelled: boolean;
@@ -85,33 +85,33 @@ export class StatusUpdateService {
         condition: (ctx) => ctx.deposits.length > 0,
         reason: 'First deposit received',
       },
-      // Funded/Pending -> USDC_LOCKED (when USDC deposit confirmed)
+      // Funded/Pending -> SOL_LOCKED (when SOL deposit confirmed)
       {
         from: [AgreementStatus.PENDING, AgreementStatus.FUNDED],
-        to: AgreementStatus.USDC_LOCKED,
-        condition: (ctx) => ctx.hasUsdcDeposit && !ctx.hasNftDeposit,
-        reason: 'USDC deposit confirmed',
+        to: AgreementStatus.SOL_LOCKED,
+        condition: (ctx) => ctx.hasSolDeposit && !ctx.hasNftDeposit,
+        reason: 'SOL deposit confirmed',
       },
       // Funded/Pending -> NFT_LOCKED (when NFT deposit confirmed)
       {
         from: [AgreementStatus.PENDING, AgreementStatus.FUNDED],
         to: AgreementStatus.NFT_LOCKED,
-        condition: (ctx) => ctx.hasNftDeposit && !ctx.hasUsdcDeposit,
+        condition: (ctx) => ctx.hasNftDeposit && !ctx.hasSolDeposit,
         reason: 'NFT deposit confirmed',
       },
       // Any single-asset locked -> BOTH_LOCKED (when both assets deposited)
       {
-        from: [AgreementStatus.USDC_LOCKED, AgreementStatus.NFT_LOCKED, AgreementStatus.FUNDED],
+        from: [AgreementStatus.SOL_LOCKED, AgreementStatus.NFT_LOCKED, AgreementStatus.FUNDED],
         to: AgreementStatus.BOTH_LOCKED,
-        condition: (ctx) => ctx.hasUsdcDeposit && ctx.hasNftDeposit,
-        reason: 'Both USDC and NFT deposited',
+        condition: (ctx) => ctx.hasSolDeposit && ctx.hasNftDeposit,
+        reason: 'Both SOL and NFT deposited',
       },
       // Active states -> EXPIRED (when expiry time passed)
       {
         from: [
           AgreementStatus.PENDING,
           AgreementStatus.FUNDED,
-          AgreementStatus.USDC_LOCKED,
+          AgreementStatus.SOL_LOCKED,
           AgreementStatus.NFT_LOCKED,
           AgreementStatus.BOTH_LOCKED,
         ],
@@ -192,7 +192,7 @@ export class StatusUpdateService {
    */
   private buildUpdateContext(agreement: any): StatusUpdateContext {
     const deposits = agreement.deposits || [];
-    const hasUsdcDeposit = deposits.some((d: any) => d.type === DepositType.USDC);
+    const hasSolDeposit = deposits.some((d: any) => d.type === DepositType.SOL);
     const hasNftDeposit = deposits.some((d: any) => d.type === DepositType.NFT);
     const isExpired = new Date() > new Date(agreement.expiry);
     const isCancelled = agreement.status === AgreementStatus.CANCELLED;
@@ -200,7 +200,7 @@ export class StatusUpdateService {
     return {
       agreement,
       deposits,
-      hasUsdcDeposit,
+      hasSolDeposit,
       hasNftDeposit,
       isExpired,
       isCancelled,
@@ -385,17 +385,17 @@ export class StatusUpdateService {
         });
         break;
 
-      case AgreementStatus.USDC_LOCKED:
-        // Publish asset locked event for USDC
-        const usdcDeposit = agreement.deposits.find(d => d.type === DepositType.USDC);
-        if (usdcDeposit) {
+      case AgreementStatus.SOL_LOCKED:
+        // Publish asset locked event for SOL
+        const solDeposit = agreement.deposits.find((d: any) => d.type === DepositType.SOL);
+        if (solDeposit) {
           await WebhookEventsService.publishAssetLocked({
             agreementId: agreement.agreementId,
-            assetType: 'USDC',
-            depositor: usdcDeposit.depositor,
-            amount: usdcDeposit.amount?.toString(),
-            tokenAccount: usdcDeposit.tokenAccount || undefined,
-            txId: usdcDeposit.txId || 'unknown',
+            assetType: 'SOL',
+            depositor: solDeposit.depositor,
+            amount: solDeposit.amount?.toString(),
+            tokenAccount: solDeposit.tokenAccount || undefined,
+            txId: solDeposit.txId || 'unknown',
           });
         }
         break;
@@ -420,7 +420,7 @@ export class StatusUpdateService {
         if (latestDeposit) {
           await WebhookEventsService.publishAssetLocked({
             agreementId: agreement.agreementId,
-            assetType: latestDeposit.type === DepositType.USDC ? 'USDC' : 'NFT',
+            assetType: latestDeposit.type === DepositType.SOL ? 'SOL' : 'NFT',
             depositor: latestDeposit.depositor,
             amount: latestDeposit.amount?.toString(),
             tokenAccount: latestDeposit.tokenAccount || undefined,
@@ -452,29 +452,21 @@ export class StatusUpdateService {
     const validTransitions: Record<AgreementStatus, AgreementStatus[]> = {
       [AgreementStatus.PENDING]: [
         AgreementStatus.FUNDED,
-        AgreementStatus.USDC_LOCKED,  // Legacy V1
-        AgreementStatus.SOL_LOCKED,   // V2: SOL deposited
+        AgreementStatus.SOL_LOCKED,
         AgreementStatus.NFT_LOCKED,
         AgreementStatus.EXPIRED,
         AgreementStatus.CANCELLED,
         AgreementStatus.ARCHIVED,
       ],
       [AgreementStatus.FUNDED]: [
-        AgreementStatus.USDC_LOCKED,  // Legacy V1
-        AgreementStatus.SOL_LOCKED,   // V2: SOL deposited
+        AgreementStatus.SOL_LOCKED,
         AgreementStatus.NFT_LOCKED,
         AgreementStatus.BOTH_LOCKED,
         AgreementStatus.EXPIRED,
         AgreementStatus.CANCELLED,
         AgreementStatus.ARCHIVED,
       ],
-      [AgreementStatus.USDC_LOCKED]: [
-        AgreementStatus.BOTH_LOCKED,
-        AgreementStatus.EXPIRED,
-        AgreementStatus.CANCELLED,
-        AgreementStatus.ARCHIVED,
-      ],
-      [AgreementStatus.SOL_LOCKED]: [  // V2: SOL deposited, waiting for NFT(s)
+      [AgreementStatus.SOL_LOCKED]: [
         AgreementStatus.BOTH_LOCKED,
         AgreementStatus.EXPIRED,
         AgreementStatus.CANCELLED,

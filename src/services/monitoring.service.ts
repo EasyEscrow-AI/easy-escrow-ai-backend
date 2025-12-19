@@ -3,14 +3,11 @@
  *
  * Orchestrates monitoring of Solana escrow accounts for deposits.
  * Coordinates NFT and SOL deposit detection, validation, and database updates.
- * 
- * NOTE: USDC monitoring is deprecated but kept for backwards compatibility (V1 only).
  */
 
 import { AccountInfo, Context, PublicKey } from '@solana/web3.js';
 import { getAssociatedTokenAddress } from '@solana/spl-token';
 import { getSolanaService } from './solana.service';
-import { getUsdcDepositService } from './usdc-deposit.service';
 import { getNftDepositService } from './nft-deposit.service';
 import { getSolDepositService } from './sol-deposit.service';
 import { prisma } from '../config/database';
@@ -30,7 +27,7 @@ interface MonitoringConfig {
 interface MonitoredAccount {
   publicKey: string;
   agreementId: string;
-  accountType: 'usdc' | 'nft' | 'sol';
+  accountType: 'nft' | 'sol';
   subscriptionId?: number;
 }
 
@@ -42,7 +39,6 @@ interface MonitoredAccount {
  */
 export class MonitoringService {
   private solanaService: ReturnType<typeof getSolanaService>;
-  private usdcDepositService: ReturnType<typeof getUsdcDepositService>;
   private nftDepositService: ReturnType<typeof getNftDepositService>;
   private solDepositService: ReturnType<typeof getSolDepositService>;
   private monitoredAccounts: Map<string, MonitoredAccount> = new Map();
@@ -53,7 +49,6 @@ export class MonitoringService {
 
   constructor(monitoringConfig?: MonitoringConfig) {
     this.solanaService = getSolanaService();
-    this.usdcDepositService = getUsdcDepositService();
     this.nftDepositService = getNftDepositService();
     this.solDepositService = getSolDepositService();
 
@@ -158,7 +153,7 @@ export class MonitoringService {
       // - Stale data: In non-production, exclude agreements older than 7 days (prevents E2E test pollution)
       const baseWhere: any = {
         status: {
-          in: ['PENDING', 'FUNDED', 'USDC_LOCKED', 'SOL_LOCKED', 'NFT_LOCKED'], // Include SOL_LOCKED for V2
+          in: ['PENDING', 'FUNDED', 'SOL_LOCKED', 'NFT_LOCKED'],
         },
         expiry: {
           gt: new Date(), // Not expired
@@ -186,7 +181,6 @@ export class MonitoringService {
         select: {
           id: true,
           agreementId: true,
-          usdcDepositAddr: true,
           nftDepositAddr: true,
           nftBDepositAddr: true, // Escrow's NFT B token account for NFT<>NFT swaps
           nftBMint: true,        // Needed for deriving NFT B address if not stored
@@ -212,7 +206,7 @@ export class MonitoringService {
       const BATCH_SIZE = 10;
       const BATCH_DELAY_MS = 250;
       
-      let accountsToMonitor: Array<{publicKey: string, agreementId: string, type: 'usdc' | 'nft' | 'sol'}> = [];
+      let accountsToMonitor: Array<{publicKey: string, agreementId: string, type: 'nft' | 'sol'}> = [];
       
       // Collect all accounts that need monitoring
       for (const agreement of agreements) {
@@ -304,30 +298,6 @@ export class MonitoringService {
               console.warn(`[MonitoringService] No NFT B deposit address available for ${agreement.agreementId}`);
             }
           }
-        } else {
-          // V1 (Legacy USDC): Monitor USDC deposit address if not yet locked
-          if (
-            agreement.usdcDepositAddr &&
-            !['USDC_LOCKED', 'BOTH_LOCKED'].includes(agreement.status)
-          ) {
-            accountsToMonitor.push({
-              publicKey: agreement.usdcDepositAddr,
-              agreementId: agreement.agreementId,
-              type: 'usdc'
-            });
-          }
-
-          // V1: Monitor NFT deposit address if not yet locked
-          if (
-            agreement.nftDepositAddr &&
-            !['NFT_LOCKED', 'BOTH_LOCKED'].includes(agreement.status)
-          ) {
-            accountsToMonitor.push({
-              publicKey: agreement.nftDepositAddr,
-              agreementId: agreement.agreementId,
-              type: 'nft'
-            });
-          }
         }
       }
       
@@ -368,7 +338,7 @@ export class MonitoringService {
   async monitorAccount(
     publicKey: string,
     agreementId: string,
-    accountType: 'usdc' | 'nft' | 'sol'
+    accountType: 'nft' | 'sol'
   ): Promise<void> {
     // Check if already monitoring
     if (this.monitoredAccounts.has(publicKey)) {
@@ -495,7 +465,7 @@ export class MonitoringService {
     publicKey: string,
     accountInfo: AccountInfo<Buffer> | null,
     context: Context,
-    accountType: 'usdc' | 'nft' | 'sol',
+    accountType: 'nft' | 'sol',
     agreementId: string
   ): Promise<void> {
     try {
@@ -510,9 +480,7 @@ export class MonitoringService {
       }
 
       // Process the account change based on type
-      if (accountType === 'usdc') {
-        await this.handleUsdcAccountChange(publicKey, accountInfo, context, agreementId);
-      } else if (accountType === 'nft') {
+      if (accountType === 'nft') {
         await this.handleNftAccountChange(publicKey, accountInfo, context, agreementId);
       } else if (accountType === 'sol') {
         await this.handleSolAccountChange(publicKey, accountInfo, context, agreementId);
@@ -523,51 +491,6 @@ export class MonitoringService {
         error
       );
       // Don't throw - we want to continue monitoring other accounts
-    }
-  }
-
-  /**
-   * Handle USDC account change
-   */
-  private async handleUsdcAccountChange(
-    publicKey: string,
-    accountInfo: AccountInfo<Buffer>,
-    context: Context,
-    agreementId: string
-  ): Promise<void> {
-    console.log(`[MonitoringService] Processing USDC account change`);
-    console.log(`[MonitoringService] Account: ${publicKey}, Agreement: ${agreementId}`);
-
-    try {
-      const result = await this.usdcDepositService.handleUsdcAccountChange(
-        publicKey,
-        accountInfo,
-        context,
-        agreementId
-      );
-
-      if (result.success) {
-        console.log(
-          `[MonitoringService] Successfully processed USDC deposit: ${result.amount} USDC`
-        );
-
-        // BUG FIX: Only stop monitoring when deposit is CONFIRMED, not just when depositId exists
-        // This ensures we continue tracking pending deposits until they are fully confirmed
-        if (result.depositId && result.status === 'CONFIRMED') {
-          console.log(
-            `[MonitoringService] Deposit confirmed, stopping monitoring of account: ${publicKey}`
-          );
-          await this.stopMonitoringAccount(publicKey);
-        } else if (result.depositId && result.status === 'PENDING') {
-          console.log(
-            `[MonitoringService] Deposit pending, continuing to monitor account: ${publicKey}`
-          );
-        }
-      } else {
-        console.error(`[MonitoringService] Failed to process USDC deposit: ${result.error}`);
-      }
-    } catch (error) {
-      console.error(`[MonitoringService] Error in USDC account change handler:`, error);
     }
   }
 

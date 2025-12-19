@@ -463,10 +463,9 @@ export class NftDepositService {
       }
 
       // Count confirmed deposits by type
-      const hasNftA = agreement.deposits.some(d => d.type === 'NFT');
-      const hasNftB = agreement.deposits.some(d => d.type === 'NFT_BUYER');
-      const hasSOL = agreement.deposits.some(d => d.type === 'SOL');
-      const hasUSDC = agreement.deposits.some(d => d.type === 'USDC');
+      const hasNftA = agreement.deposits.some((d: any) => d.type === 'NFT');
+      const hasNftB = agreement.deposits.some((d: any) => d.type === 'NFT_BUYER');
+      const hasSOL = agreement.deposits.some((d: any) => d.type === 'SOL');
 
       let newStatus: AgreementStatus | null = null;
 

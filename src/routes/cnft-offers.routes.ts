@@ -109,7 +109,7 @@ router.post(
     try {
       const { bidderWallet, targetAssetId, offerLamports, durationSeconds, feeBps } =
         req.body;
-      // REMOVED: listingId - Easy Escrow is pure offer infrastructure
+      
 
       // Validate required fields
       if (!bidderWallet) {
@@ -176,7 +176,7 @@ router.post(
         offerLamports: offerAmount,
         durationSeconds: durationSeconds ? parseInt(durationSeconds, 10) : undefined,
         feeBps: feeBps ? parseInt(feeBps, 10) : undefined,
-        // REMOVED: listingId - Easy Escrow is pure offer infrastructure
+        
       };
 
       const result = await offerManager.createOffer(params);
@@ -474,7 +474,7 @@ router.get(
     try {
       const { bidderWallet, ownerWallet, targetAssetId, status, includeExpired, limit, offset } =
         req.query;
-      // REMOVED: listingId - Easy Escrow is pure offer infrastructure
+      
 
       const filters: OfferFilters = {};
 
@@ -482,7 +482,7 @@ router.get(
       if (ownerWallet) filters.ownerWallet = ownerWallet as string;
       if (targetAssetId) filters.targetAssetId = targetAssetId as string;
       if (status) filters.status = status as any;
-      // REMOVED: listingId filter
+      
       if (includeExpired === 'true') filters.includeExpired = true;
       if (limit) filters.limit = parseInt(limit as string, 10);
       if (offset) filters.offset = parseInt(offset as string, 10);

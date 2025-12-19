@@ -15,9 +15,8 @@ datasource db {
 enum AgreementStatus {
   PENDING
   FUNDED
-  USDC_LOCKED // Legacy: V1 USDC-based escrows
-  SOL_LOCKED  // V2: Buyer's SOL deposited, waiting for NFT(s)
-  NFT_LOCKED  // NFT deposited, waiting for SOL/USDC
+  SOL_LOCKED  // Buyer's SOL deposited, waiting for NFT(s)
+  NFT_LOCKED  // NFT deposited, waiting for SOL
   BOTH_LOCKED // All deposits complete, ready for settlement
   SETTLED
   EXPIRED
@@ -41,7 +40,6 @@ enum FeePayer {
 
 // Enum for deposit type
 enum DepositType {
-  USDC // Legacy: USDC deposits
   NFT // NFT deposits (seller's NFT A or buyer's NFT B)
   SOL // SOL deposits from buyer
   NFT_BUYER // Buyer's NFT deposit (for NFT<>NFT swaps)
@@ -84,7 +82,6 @@ model Agreement {
   honorRoyalties  Boolean         @default(false) @map("honor_royalties")
   status          AgreementStatus @default(PENDING)
   expiry          DateTime
-  usdcDepositAddr String?         @map("usdc_deposit_addr")
   nftDepositAddr  String?         @map("nft_deposit_addr")  // Seller's NFT (NFT A) deposit address
   nftBDepositAddr String?         @map("nft_b_deposit_addr") // Buyer's NFT (NFT B) deposit address (for NFT<>NFT swaps)
   initTxId        String?         @map("init_tx_id")
@@ -574,8 +571,6 @@ model CnftOffer {
   parentOffer     CnftOffer?         @relation("ParentOffers", fields: [parentOfferId], references: [id])
   childOffers     CnftOffer[]        @relation("ParentOffers")
 
-  // REMOVED: listingId/listing - Easy Escrow is pure offer infrastructure
-
   @@index([offerId])
   @@index([bidderWallet])
   @@index([ownerWallet])
@@ -676,10 +671,3 @@ model TwoPhaseSwap {
   @@index([status, expiresAt], name: "idx_two_phase_status_expiry")
   @@map("two_phase_swaps")
 }
-
-// ============================================
-// CNFT LISTINGS - REMOVED
-// ============================================
-// Easy Escrow is now pure offer/swap infrastructure.
-// Marketplace listing semantics are handled by a separate wrapper service.
-// See: refactor/remove-listings-from-escrow branch

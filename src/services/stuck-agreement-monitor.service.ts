@@ -139,7 +139,7 @@ export class StuckAgreementMonitorService {
       );
 
       // Find agreements stuck in any status with deposits
-      // Includes partial deposits (NFT_LOCKED, SOL_LOCKED/USDC_LOCKED) and complete deposits (BOTH_LOCKED)
+      // Includes partial deposits (NFT_LOCKED, SOL_LOCKED) and complete deposits (BOTH_LOCKED)
       // ARCHIVED is included because agreements can be archived WITH deposits still in escrow
       // (e.g., test cleanup, failed settlement). We skip ARCHIVED without deposits (normal cleanup)
       // but alert CRITICAL for ARCHIVED with deposits (stuck funds!)
@@ -149,8 +149,7 @@ export class StuckAgreementMonitorService {
           status: {
             in: [
               AgreementStatus.NFT_LOCKED,    // Only NFT deposited
-              AgreementStatus.SOL_LOCKED,    // Only SOL deposited (V2)
-              AgreementStatus.USDC_LOCKED,   // Only USDC deposited (legacy V1)
+              AgreementStatus.SOL_LOCKED,    // Only SOL deposited
               AgreementStatus.BOTH_LOCKED,   // Both sides deposited
               AgreementStatus.ARCHIVED,      // Failed/cleanup agreements
             ],

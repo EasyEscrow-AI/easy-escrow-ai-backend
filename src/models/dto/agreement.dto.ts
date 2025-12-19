@@ -138,12 +138,7 @@ export interface AgreementResponseDTO {
   feeBps: number;
   honorRoyalties: boolean;
   escrowPda: string;
-  
-  /**
-   * @deprecated USDC deposit address. No longer used for SOL-based swaps.
-   */
-  usdcDepositAddr?: string;
-  
+
   /**
    * Seller's NFT (NFT A) deposit address (escrow's token account for NFT A).
    */

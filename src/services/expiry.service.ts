@@ -124,7 +124,7 @@ export class ExpiryService {
             in: [
               AgreementStatus.PENDING,
               AgreementStatus.FUNDED,
-              AgreementStatus.USDC_LOCKED,
+              AgreementStatus.SOL_LOCKED,
               AgreementStatus.NFT_LOCKED,
               AgreementStatus.BOTH_LOCKED,
             ],
@@ -190,8 +190,8 @@ export class ExpiryService {
 
       // Check if agreement has any confirmed deposits
       const hasDeposits = agreement.deposits.length > 0;
-      const hasUsdcDeposit = agreement.deposits.some(d => d.type === DepositType.USDC);
-      const hasNftDeposit = agreement.deposits.some(d => d.type === DepositType.NFT);
+      const hasSolDeposit = agreement.deposits.some((d: any) => d.type === DepositType.SOL);
+      const hasNftDeposit = agreement.deposits.some((d: any) => d.type === DepositType.NFT);
 
       // Determine appropriate status based on deposit state
       let newStatus: AgreementStatus;
@@ -239,7 +239,7 @@ export class ExpiryService {
           in: [
             AgreementStatus.PENDING,
             AgreementStatus.FUNDED,
-            AgreementStatus.USDC_LOCKED,
+            AgreementStatus.SOL_LOCKED,
             AgreementStatus.NFT_LOCKED,
             AgreementStatus.BOTH_LOCKED,
           ],

@@ -181,16 +181,13 @@ app.get('/', (_req: Request, res: Response) => {
     version: '1.0.0',
     endpoints: {
       health: '/health',
-      // agreements: '/v1/agreements', // DISABLED: Migrated to atomic swap - use /api/offers
-      offers: '/api/offers', // Standard swaps (NFT↔NFT, NFT↔SOL)
-      offersCnft: '/api/offers/cnft', // cNFT offers with SOL escrow
-      offersBulk: '/api/offers/bulk', // Bulk swaps (two-phase lock/settle)
-      // REMOVED: listings - Easy Escrow is pure offer infrastructure
+      offers: '/api/offers',
+      offersCnft: '/api/offers/cnft',
+      offersBulk: '/api/offers/bulk',
       receipts: '/v1/receipts',
       transactions: '/v1/transactions',
       expiryCancellation: '/api/expiry-cancellation',
       webhooks: '/api/webhooks'
-      // Note: Test endpoints are NOT documented publicly (internal use only)
     }
   };
   
@@ -225,12 +222,7 @@ if (swaggerDocument) {
 app.use(express.static(path.join(__dirname, 'public')));
 
 // API Routes
-// DISABLED: Agreement routes - migrated to atomic swap architecture (2025-12-02)
-// Agreement-based escrow has been superseded by atomic swaps via /api/offers
-// See docs/MIGRATION_FROM_LEGACY_ESCROW.md for details
-// app.use(agreementRoutes);
-app.use(offersRoutes); // Includes atomic swaps (/api/offers) and two-phase swaps (/api/offers/two-phase)
-// REMOVED: listingsRoutes - Easy Escrow is now pure offer infrastructure
+app.use(offersRoutes);
 app.use(receiptRoutes);
 app.use('/v1/transactions', transactionLogRoutes);
 app.use('/api/expiry-cancellation', expiryCancellationRoutes);

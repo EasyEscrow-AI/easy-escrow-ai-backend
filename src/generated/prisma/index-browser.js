@@ -132,7 +132,6 @@ exports.Prisma.AgreementScalarFieldEnum = {
   honorRoyalties: 'honorRoyalties',
   status: 'status',
   expiry: 'expiry',
-  usdcDepositAddr: 'usdcDepositAddr',
   nftDepositAddr: 'nftDepositAddr',
   nftBDepositAddr: 'nftBDepositAddr',
   initTxId: 'initTxId',
@@ -371,34 +370,40 @@ exports.Prisma.CnftOfferScalarFieldEnum = {
   expiredAt: 'expiredAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  metadata: 'metadata',
-  listingId: 'listingId'
+  metadata: 'metadata'
 };
 
-exports.Prisma.ListingScalarFieldEnum = {
+exports.Prisma.TwoPhaseSwapScalarFieldEnum = {
   id: 'id',
-  listingId: 'listingId',
-  seller: 'seller',
-  assetId: 'assetId',
-  merkleTree: 'merkleTree',
-  leafIndex: 'leafIndex',
-  priceLamports: 'priceLamports',
-  delegationStatus: 'delegationStatus',
-  delegatePda: 'delegatePda',
-  delegatedAt: 'delegatedAt',
-  isFrozen: 'isFrozen',
   status: 'status',
-  expiresAt: 'expiresAt',
-  delegateTxId: 'delegateTxId',
-  settleTxId: 'settleTxId',
-  revokeTxId: 'revokeTxId',
-  buyer: 'buyer',
-  soldAt: 'soldAt',
-  feeBps: 'feeBps',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
+  expiresAt: 'expiresAt',
+  partyA: 'partyA',
+  partyB: 'partyB',
+  assetsA: 'assetsA',
+  assetsB: 'assetsB',
+  solAmountA: 'solAmountA',
+  solAmountB: 'solAmountB',
+  lockTxA: 'lockTxA',
+  lockTxB: 'lockTxB',
+  lockConfirmedA: 'lockConfirmedA',
+  lockConfirmedB: 'lockConfirmedB',
+  settleTxs: 'settleTxs',
+  currentSettleIndex: 'currentSettleIndex',
+  totalSettleTxs: 'totalSettleTxs',
+  finalSettleTx: 'finalSettleTx',
+  settledAt: 'settledAt',
+  errorMessage: 'errorMessage',
+  errorCode: 'errorCode',
+  failedAt: 'failedAt',
+  cancelledBy: 'cancelledBy',
   cancelledAt: 'cancelledAt',
-  metadata: 'metadata'
+  cancelReason: 'cancelReason',
+  platformFeeLamports: 'platformFeeLamports',
+  swapOfferId: 'swapOfferId',
+  delegationStatus: 'delegationStatus',
+  stateHistory: 'stateHistory'
 };
 
 exports.Prisma.SortOrder = {
@@ -433,7 +438,6 @@ exports.Prisma.JsonNullValueFilter = {
 exports.AgreementStatus = exports.$Enums.AgreementStatus = {
   PENDING: 'PENDING',
   FUNDED: 'FUNDED',
-  USDC_LOCKED: 'USDC_LOCKED',
   SOL_LOCKED: 'SOL_LOCKED',
   NFT_LOCKED: 'NFT_LOCKED',
   BOTH_LOCKED: 'BOTH_LOCKED',
@@ -456,7 +460,6 @@ exports.FeePayer = exports.$Enums.FeePayer = {
 };
 
 exports.DepositType = exports.$Enums.DepositType = {
-  USDC: 'USDC',
   NFT: 'NFT',
   SOL: 'SOL',
   NFT_BUYER: 'NFT_BUYER'
@@ -501,7 +504,8 @@ exports.OfferStatus = exports.$Enums.OfferStatus = {
   ACCEPTED: 'ACCEPTED',
   FILLED: 'FILLED',
   CANCELLED: 'CANCELLED',
-  EXPIRED: 'EXPIRED'
+  EXPIRED: 'EXPIRED',
+  COUNTERED: 'COUNTERED'
 };
 
 exports.TransactionStatus = exports.$Enums.TransactionStatus = {
@@ -521,17 +525,17 @@ exports.OfferEscrowStatus = exports.$Enums.OfferEscrowStatus = {
   REJECTED: 'REJECTED'
 };
 
-exports.DelegationStatus = exports.$Enums.DelegationStatus = {
-  PENDING: 'PENDING',
-  DELEGATED: 'DELEGATED',
-  FROZEN: 'FROZEN',
-  REVOKED: 'REVOKED'
-};
-
-exports.ListingStatus = exports.$Enums.ListingStatus = {
-  PENDING: 'PENDING',
-  ACTIVE: 'ACTIVE',
-  SOLD: 'SOLD',
+exports.TwoPhaseSwapStatus = exports.$Enums.TwoPhaseSwapStatus = {
+  CREATED: 'CREATED',
+  ACCEPTED: 'ACCEPTED',
+  LOCKING_PARTY_A: 'LOCKING_PARTY_A',
+  PARTY_A_LOCKED: 'PARTY_A_LOCKED',
+  LOCKING_PARTY_B: 'LOCKING_PARTY_B',
+  FULLY_LOCKED: 'FULLY_LOCKED',
+  SETTLING: 'SETTLING',
+  PARTIAL_SETTLE: 'PARTIAL_SETTLE',
+  COMPLETED: 'COMPLETED',
+  FAILED: 'FAILED',
   CANCELLED: 'CANCELLED',
   EXPIRED: 'EXPIRED'
 };
@@ -551,7 +555,7 @@ exports.Prisma.ModelName = {
   AuthorizedApp: 'AuthorizedApp',
   ZeroFeeSwapLog: 'ZeroFeeSwapLog',
   CnftOffer: 'CnftOffer',
-  Listing: 'Listing'
+  TwoPhaseSwap: 'TwoPhaseSwap'
 };
 
 /**
