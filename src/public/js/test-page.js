@@ -2140,15 +2140,16 @@ function renderActiveListings() {
         const createdAt = new Date(listing.createdAt);
 
         // Determine NFT type from listing data or metadata
-        let nftType = 'NFT';
+        // Order matches getNftTypeLabel: check isCoreNft first, then isCompressed
+        let nftType = 'SPL NFT';
         if (listing.assetType) {
             nftType = listing.assetType === 'CNFT' ? 'cNFT' :
-                     listing.assetType === 'CORE' ? 'Core' :
-                     listing.assetType === 'SPL' ? 'SPL' : 'NFT';
+                     listing.assetType === 'CORE' ? 'Core NFT' :
+                     listing.assetType === 'SPL' ? 'SPL NFT' : 'SPL NFT';
+        } else if (metadata.isCoreNft) {
+            nftType = 'Core NFT';
         } else if (metadata.isCompressed) {
             nftType = 'cNFT';
-        } else if (metadata.isCoreNft) {
-            nftType = 'Core';
         }
 
         // Determine status class
@@ -2645,15 +2646,16 @@ function renderMarketplaceListings() {
         const isOwnListing = TAKER_ADDRESS && seller === TAKER_ADDRESS;
 
         // Determine NFT type from listing data or metadata
-        let nftType = 'NFT';
+        // Order matches getNftTypeLabel: check isCoreNft first, then isCompressed
+        let nftType = 'SPL NFT';
         if (listing.assetType) {
             nftType = listing.assetType === 'CNFT' ? 'cNFT' :
-                     listing.assetType === 'CORE' ? 'Core' :
-                     listing.assetType === 'SPL' ? 'SPL' : 'NFT';
+                     listing.assetType === 'CORE' ? 'Core NFT' :
+                     listing.assetType === 'SPL' ? 'SPL NFT' : 'SPL NFT';
+        } else if (metadata.isCoreNft) {
+            nftType = 'Core NFT';
         } else if (metadata.isCompressed) {
             nftType = 'cNFT';
-        } else if (metadata.isCoreNft) {
-            nftType = 'Core';
         }
 
         // Truncate seller address
