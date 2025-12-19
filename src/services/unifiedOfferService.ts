@@ -506,6 +506,10 @@ export class UnifiedOfferService {
     const limit = filters.limit || 50;
     const offset = filters.offset || 0;
 
+    // Calculate how many records we need to fetch from each source
+    // We need to fetch enough to cover offset + limit to properly paginate across sources
+    const fetchLimit = offset + limit;
+
     // Determine which types to query
     const types = Array.isArray(filters.type)
       ? filters.type
@@ -524,8 +528,8 @@ export class UnifiedOfferService {
         const listingResult = await this.listingManager.getListings({
           seller: filters.maker,
           includeExpired: filters.includeExpired,
-          limit,
-          offset,
+          limit: fetchLimit, // Fetch enough to cover offset + limit
+          offset: 0, // Don't apply offset to individual sources
         });
         offers.push(...listingResult.listings.map((l) => this.normalizeListingToOffer(l)));
       } catch {
@@ -549,12 +553,15 @@ export class UnifiedOfferService {
     // Query atomic offers if requested
     if (types.includes(UnifiedOfferType.ATOMIC) || types.includes(UnifiedOfferType.BULK_TWO_PHASE)) {
       try {
+        // Handle status filter - can be single value or array
+        const statusFilter = this.resolveStatusFilter(filters.status);
+
         const atomicResult = await this.offerManager.listOffers({
           makerWallet: filters.maker,
           takerWallet: filters.taker,
-          status: filters.status ? this.mapStatusToPrisma(filters.status as UnifiedOfferStatus) : undefined,
-          limit,
-          offset,
+          status: statusFilter,
+          limit: fetchLimit, // Fetch enough to cover offset + limit
+          offset: 0, // Don't apply offset to individual sources
         });
         offers.push(...atomicResult.offers.map((o: any) => this.normalizeAtomicOfferToUnified(o)));
       } catch {
@@ -562,8 +569,10 @@ export class UnifiedOfferService {
       }
     }
 
-    // Sort and paginate
+    // Sort all collected offers
     const sortedOffers = this.sortOffers(offers, filters.sortBy, filters.sortOrder);
+
+    // Apply pagination ONCE to the combined, sorted results
     const paginatedOffers = sortedOffers.slice(offset, offset + limit);
 
     return {
@@ -571,13 +580,35 @@ export class UnifiedOfferService {
       data: {
         offers: paginatedOffers,
         pagination: {
-          total: offers.length,
+          total: sortedOffers.length,
           limit,
           offset,
-          hasMore: offset + limit < offers.length,
+          hasMore: offset + limit < sortedOffers.length,
         },
       },
     };
+  }
+
+  /**
+   * Resolve status filter - handles both single values and arrays
+   * For arrays, returns the first mapped value (Prisma doesn't support OR on status directly)
+   */
+  private resolveStatusFilter(status: UnifiedOfferStatus | UnifiedOfferStatus[] | undefined): OfferStatus | undefined {
+    if (!status) return undefined;
+
+    // Handle array - map all values and filter out undefined
+    if (Array.isArray(status)) {
+      // For now, use the first valid status if multiple are provided
+      // A more complete solution would require Prisma OR queries
+      for (const s of status) {
+        const mapped = this.mapStatusToPrisma(s);
+        if (mapped) return mapped;
+      }
+      return undefined;
+    }
+
+    // Single value
+    return this.mapStatusToPrisma(status);
   }
 
   // ===========================================================================

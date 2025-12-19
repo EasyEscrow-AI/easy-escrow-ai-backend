@@ -375,6 +375,39 @@ exports.Prisma.CnftOfferScalarFieldEnum = {
   listingId: 'listingId'
 };
 
+exports.Prisma.TwoPhaseSwapScalarFieldEnum = {
+  id: 'id',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  expiresAt: 'expiresAt',
+  partyA: 'partyA',
+  partyB: 'partyB',
+  assetsA: 'assetsA',
+  assetsB: 'assetsB',
+  solAmountA: 'solAmountA',
+  solAmountB: 'solAmountB',
+  lockTxA: 'lockTxA',
+  lockTxB: 'lockTxB',
+  lockConfirmedA: 'lockConfirmedA',
+  lockConfirmedB: 'lockConfirmedB',
+  settleTxs: 'settleTxs',
+  currentSettleIndex: 'currentSettleIndex',
+  totalSettleTxs: 'totalSettleTxs',
+  finalSettleTx: 'finalSettleTx',
+  settledAt: 'settledAt',
+  errorMessage: 'errorMessage',
+  errorCode: 'errorCode',
+  failedAt: 'failedAt',
+  cancelledBy: 'cancelledBy',
+  cancelledAt: 'cancelledAt',
+  cancelReason: 'cancelReason',
+  platformFeeLamports: 'platformFeeLamports',
+  swapOfferId: 'swapOfferId',
+  delegationStatus: 'delegationStatus',
+  stateHistory: 'stateHistory'
+};
+
 exports.Prisma.ListingScalarFieldEnum = {
   id: 'id',
   listingId: 'listingId',
@@ -501,7 +534,8 @@ exports.OfferStatus = exports.$Enums.OfferStatus = {
   ACCEPTED: 'ACCEPTED',
   FILLED: 'FILLED',
   CANCELLED: 'CANCELLED',
-  EXPIRED: 'EXPIRED'
+  EXPIRED: 'EXPIRED',
+  COUNTERED: 'COUNTERED'
 };
 
 exports.TransactionStatus = exports.$Enums.TransactionStatus = {
@@ -519,6 +553,21 @@ exports.OfferEscrowStatus = exports.$Enums.OfferEscrowStatus = {
   CANCELLED: 'CANCELLED',
   EXPIRED: 'EXPIRED',
   REJECTED: 'REJECTED'
+};
+
+exports.TwoPhaseSwapStatus = exports.$Enums.TwoPhaseSwapStatus = {
+  CREATED: 'CREATED',
+  ACCEPTED: 'ACCEPTED',
+  LOCKING_PARTY_A: 'LOCKING_PARTY_A',
+  PARTY_A_LOCKED: 'PARTY_A_LOCKED',
+  LOCKING_PARTY_B: 'LOCKING_PARTY_B',
+  FULLY_LOCKED: 'FULLY_LOCKED',
+  SETTLING: 'SETTLING',
+  PARTIAL_SETTLE: 'PARTIAL_SETTLE',
+  COMPLETED: 'COMPLETED',
+  FAILED: 'FAILED',
+  CANCELLED: 'CANCELLED',
+  EXPIRED: 'EXPIRED'
 };
 
 exports.DelegationStatus = exports.$Enums.DelegationStatus = {
@@ -551,6 +600,7 @@ exports.Prisma.ModelName = {
   AuthorizedApp: 'AuthorizedApp',
   ZeroFeeSwapLog: 'ZeroFeeSwapLog',
   CnftOffer: 'CnftOffer',
+  TwoPhaseSwap: 'TwoPhaseSwap',
   Listing: 'Listing'
 };
 

@@ -352,14 +352,20 @@ router.post(
 /**
  * POST /api/swaps/offers/:id/cancel
  * Cancel an offer
+ * Note: Only the offer maker can cancel. Admin override requires proper authentication
+ * middleware (not implemented in unified API - use legacy endpoints for admin cancel).
  */
 router.post(
   '/api/swaps/offers/:id/cancel',
   strictRateLimiter,
+  requiredIdempotency, // CRITICAL: Prevent multiple nonce advances on retry
   async (req: Request, res: Response): Promise<void> => {
     try {
       const { id } = req.params;
-      const { wallet, isAdmin } = req.body;
+      const { wallet } = req.body;
+      // Note: isAdmin is intentionally NOT accepted from request body
+      // to prevent authorization bypass. Admin cancellation requires
+      // authenticated admin endpoints.
 
       if (!wallet) {
         res.status(400).json({
@@ -375,7 +381,7 @@ router.post(
       const result = await service.cancelOffer({
         offerId: id,
         wallet,
-        isAdmin: isAdmin === true,
+        isAdmin: false, // Always false - admin cancel requires authenticated endpoint
       });
 
       res.status(200).json({
