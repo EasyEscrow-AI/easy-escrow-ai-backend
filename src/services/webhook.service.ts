@@ -21,7 +21,7 @@ export interface EscrowFundedPayload extends BaseWebhookPayload {
 
 export interface EscrowAssetLockedPayload extends BaseWebhookPayload {
   eventType: 'ESCROW_ASSET_LOCKED';
-  assetType: 'USDC' | 'NFT';
+  assetType: 'SOL' | 'NFT';
   depositor: string;
   amount?: string;
   tokenAccount?: string;

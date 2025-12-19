@@ -495,7 +495,7 @@ export class CancellationService {
     const cancellableStatuses: AgreementStatus[] = [
       AgreementStatus.PENDING,
       AgreementStatus.FUNDED,
-      AgreementStatus.USDC_LOCKED,
+      AgreementStatus.SOL_LOCKED,
       AgreementStatus.NFT_LOCKED,
       AgreementStatus.BOTH_LOCKED,
     ];

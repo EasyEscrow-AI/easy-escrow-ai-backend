@@ -40,11 +40,11 @@ export class WebhookEventsService {
 
   /**
    * Publish asset locked event
-   * Triggered when USDC or NFT is locked in the escrow
+   * Triggered when SOL or NFT is locked in the escrow
    */
   public static async publishAssetLocked(params: {
     agreementId: string;
-    assetType: 'USDC' | 'NFT';
+    assetType: 'SOL' | 'NFT';
     depositor: string;
     amount?: string;
     tokenAccount?: string;

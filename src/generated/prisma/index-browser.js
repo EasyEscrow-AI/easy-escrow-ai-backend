@@ -132,7 +132,6 @@ exports.Prisma.AgreementScalarFieldEnum = {
   honorRoyalties: 'honorRoyalties',
   status: 'status',
   expiry: 'expiry',
-  usdcDepositAddr: 'usdcDepositAddr',
   nftDepositAddr: 'nftDepositAddr',
   nftBDepositAddr: 'nftBDepositAddr',
   initTxId: 'initTxId',
@@ -371,8 +370,7 @@ exports.Prisma.CnftOfferScalarFieldEnum = {
   expiredAt: 'expiredAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  metadata: 'metadata',
-  listingId: 'listingId'
+  metadata: 'metadata'
 };
 
 exports.Prisma.TwoPhaseSwapScalarFieldEnum = {
@@ -408,32 +406,6 @@ exports.Prisma.TwoPhaseSwapScalarFieldEnum = {
   stateHistory: 'stateHistory'
 };
 
-exports.Prisma.ListingScalarFieldEnum = {
-  id: 'id',
-  listingId: 'listingId',
-  seller: 'seller',
-  assetId: 'assetId',
-  merkleTree: 'merkleTree',
-  leafIndex: 'leafIndex',
-  priceLamports: 'priceLamports',
-  delegationStatus: 'delegationStatus',
-  delegatePda: 'delegatePda',
-  delegatedAt: 'delegatedAt',
-  isFrozen: 'isFrozen',
-  status: 'status',
-  expiresAt: 'expiresAt',
-  delegateTxId: 'delegateTxId',
-  settleTxId: 'settleTxId',
-  revokeTxId: 'revokeTxId',
-  buyer: 'buyer',
-  soldAt: 'soldAt',
-  feeBps: 'feeBps',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  cancelledAt: 'cancelledAt',
-  metadata: 'metadata'
-};
-
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -466,7 +438,6 @@ exports.Prisma.JsonNullValueFilter = {
 exports.AgreementStatus = exports.$Enums.AgreementStatus = {
   PENDING: 'PENDING',
   FUNDED: 'FUNDED',
-  USDC_LOCKED: 'USDC_LOCKED',
   SOL_LOCKED: 'SOL_LOCKED',
   NFT_LOCKED: 'NFT_LOCKED',
   BOTH_LOCKED: 'BOTH_LOCKED',
@@ -489,7 +460,6 @@ exports.FeePayer = exports.$Enums.FeePayer = {
 };
 
 exports.DepositType = exports.$Enums.DepositType = {
-  USDC: 'USDC',
   NFT: 'NFT',
   SOL: 'SOL',
   NFT_BUYER: 'NFT_BUYER'
@@ -570,21 +540,6 @@ exports.TwoPhaseSwapStatus = exports.$Enums.TwoPhaseSwapStatus = {
   EXPIRED: 'EXPIRED'
 };
 
-exports.DelegationStatus = exports.$Enums.DelegationStatus = {
-  PENDING: 'PENDING',
-  DELEGATED: 'DELEGATED',
-  FROZEN: 'FROZEN',
-  REVOKED: 'REVOKED'
-};
-
-exports.ListingStatus = exports.$Enums.ListingStatus = {
-  PENDING: 'PENDING',
-  ACTIVE: 'ACTIVE',
-  SOLD: 'SOLD',
-  CANCELLED: 'CANCELLED',
-  EXPIRED: 'EXPIRED'
-};
-
 exports.Prisma.ModelName = {
   Agreement: 'Agreement',
   Deposit: 'Deposit',
@@ -600,8 +555,7 @@ exports.Prisma.ModelName = {
   AuthorizedApp: 'AuthorizedApp',
   ZeroFeeSwapLog: 'ZeroFeeSwapLog',
   CnftOffer: 'CnftOffer',
-  TwoPhaseSwap: 'TwoPhaseSwap',
-  Listing: 'Listing'
+  TwoPhaseSwap: 'TwoPhaseSwap'
 };
 
 /**

@@ -2,14 +2,12 @@
  * Unified Offer Request Normalizer
  *
  * Normalizes request bodies from different API formats into a common internal format.
- * Supports four input styles:
+ * Supports three input styles:
  * 1. Atomic swap style: {makerWallet, offeredAssets, requestedAssets, ...}
  * 2. Bulk swap style: {partyA, assetsA, assetsB, ...}
  * 3. cNFT bid style: {bidderWallet, targetAssetId, offerLamports, ...}
- * 4. Listing style: {seller, assetId, priceLamports, ...}
  *
  * @see Tasks 1 & 2: API Consolidation
- * @see Tasks 9-12: /api/swaps/* API Restructuring
  */
 
 import { AssetType } from '../services/assetValidator';
@@ -28,8 +26,6 @@ export enum OfferType {
   CNFT_BID = 'CNFT_BID',
   /** Bulk two-phase swap (3+ cNFTs or 5+ total assets) */
   BULK_TWO_PHASE = 'BULK_TWO_PHASE',
-  /** Delegation-based listing (seller delegates cNFT to platform) */
-  LISTING = 'LISTING',
 }
 
 /**
@@ -61,11 +57,6 @@ export interface NormalizedAsset {
  * Raw unified offer request (accepts any format)
  */
 export interface UnifiedOfferRequest {
-  // === Listing style (delegation-based) ===
-  seller?: string;
-  assetId?: string;
-  priceLamports?: string | number;
-
   // === Maker/Taker style (atomic swaps) ===
   makerWallet?: string;
   takerWallet?: string;
@@ -91,7 +82,6 @@ export interface UnifiedOfferRequest {
   customFee?: string | number;
   durationSeconds?: string | number;
   feeBps?: string | number;
-  listingId?: string;
   lockTimeoutSeconds?: string | number;
   platformFeeLamports?: string | number;
 }
@@ -125,7 +115,6 @@ export interface NormalizedCnftBidRequest {
   offerLamports: bigint;
   durationSeconds?: number;
   feeBps?: number;
-  listingId?: string;
 }
 
 /**
@@ -143,22 +132,6 @@ export interface NormalizedBulkRequest {
 }
 
 /**
- * Normalized listing request (delegation-based)
- */
-export interface NormalizedListingRequest {
-  /** Seller wallet address */
-  seller: string;
-  /** cNFT asset ID (Metaplex DAS format) */
-  assetId: string;
-  /** Price in lamports (SOL) */
-  priceLamports: bigint;
-  /** Listing duration in seconds (default: 7 days) */
-  durationSeconds?: number;
-  /** Custom fee in basis points (default: 100 = 1%) */
-  feeBps?: number;
-}
-
-/**
  * Result of offer type detection and normalization
  */
 export interface NormalizationResult {
@@ -170,8 +143,6 @@ export interface NormalizationResult {
   cnftBidRequest?: NormalizedCnftBidRequest;
   /** Normalized request for bulk swaps */
   bulkRequest?: NormalizedBulkRequest;
-  /** Normalized request for listings */
-  listingRequest?: NormalizedListingRequest;
   /** Warnings about ambiguous or deprecated field usage */
   warnings: string[];
 }
@@ -195,18 +166,6 @@ export interface ValidationResult {
 // =============================================================================
 // Detection Functions
 // =============================================================================
-
-/**
- * Detect if the request is a listing (seller + assetId + price, without makerWallet)
- * Listing format: seller delegates cNFT to platform at a fixed price
- */
-export function isListingRequest(body: UnifiedOfferRequest): boolean {
-  // Must have seller, assetId, and price
-  const hasListingFields = !!(body.seller && body.assetId && body.priceLamports);
-  // Should NOT have atomic swap fields (prevents ambiguity)
-  const hasAtomicFields = !!(body.makerWallet || body.offeredAssets || body.requestedAssets);
-  return hasListingFields && !hasAtomicFields;
-}
 
 /**
  * Detect if the request is a cNFT bid (SOL offer on a specific cNFT)
@@ -319,22 +278,7 @@ export function normalizeOfferRequest(body: UnifiedOfferRequest): NormalizationR
 
   // === Detection Phase ===
 
-  // 1. Check for listing (seller + assetId + price, highest priority)
-  if (isListingRequest(body)) {
-    return {
-      offerType: OfferType.LISTING,
-      listingRequest: {
-        seller: body.seller!,
-        assetId: body.assetId!,
-        priceLamports: normalizeSolAmount(body.priceLamports)!,
-        durationSeconds: parseIntSafe(body.durationSeconds),
-        feeBps: parseIntSafe(body.feeBps),
-      },
-      warnings,
-    };
-  }
-
-  // 2. Check for cNFT bid (SOL offer on a specific cNFT)
+  // 1. Check for cNFT bid (SOL offer on a specific cNFT)
   if (isCnftBidRequest(body)) {
     return {
       offerType: OfferType.CNFT_BID,
@@ -344,7 +288,6 @@ export function normalizeOfferRequest(body: UnifiedOfferRequest): NormalizationR
         offerLamports: normalizeSolAmount(body.offerLamports)!,
         durationSeconds: parseIntSafe(body.durationSeconds),
         feeBps: parseIntSafe(body.feeBps),
-        listingId: body.listingId,
       },
       warnings,
     };
@@ -443,21 +386,6 @@ export function normalizeOfferRequest(body: UnifiedOfferRequest): NormalizationR
 export function validateUnifiedRequest(body: UnifiedOfferRequest): ValidationResult {
   const errors: ValidationError[] = [];
 
-  // Check for listing
-  if (isListingRequest(body)) {
-    // Listing validation
-    if (!body.seller) {
-      errors.push({ field: 'seller', message: 'seller is required for listings' });
-    }
-    if (!body.assetId) {
-      errors.push({ field: 'assetId', message: 'assetId is required for listings' });
-    }
-    if (!body.priceLamports) {
-      errors.push({ field: 'priceLamports', message: 'priceLamports is required for listings' });
-    }
-    return { isValid: errors.length === 0, errors };
-  }
-
   // Check for cNFT bid
   if (isCnftBidRequest(body)) {
     // cNFT bid validation
@@ -522,8 +450,6 @@ export function validateUnifiedRequest(body: UnifiedOfferRequest): ValidationRes
  */
 export function getOfferTypeDescription(offerType: OfferType): string {
   switch (offerType) {
-    case OfferType.LISTING:
-      return 'delegation-based listing';
     case OfferType.CNFT_BID:
       return 'cNFT bid with SOL escrow';
     case OfferType.BULK_TWO_PHASE:

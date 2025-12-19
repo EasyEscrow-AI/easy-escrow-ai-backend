@@ -26,10 +26,10 @@ export interface RefundCalculation {
   refunds: Array<{
     depositor: string;
     type: DepositType;
-    amount?: string; // For SOL/USDC (legacy)
+    amount?: string; // For SOL refunds
     tokenAccount?: string; // For NFT
   }>;
-  totalUsdcRefund: string; // DEPRECATED: Use totalSolRefund for V2
+  totalSolRefund: string;
   nftRefundCount: number;
   eligible: boolean;
   reason?: string;
@@ -101,7 +101,7 @@ export class RefundService {
         return {
           agreementId,
           refunds: [],
-          totalUsdcRefund: '0',
+          totalSolRefund: '0',
           nftRefundCount: 0,
           eligible: false,
           reason: eligibility.reason,
@@ -109,22 +109,22 @@ export class RefundService {
       }
 
       // Calculate refunds for each deposit
-      const refunds = agreement.deposits.map(deposit => ({
+      const refunds = agreement.deposits.map((deposit: any) => ({
         depositor: deposit.depositor,
         type: deposit.type,
-        amount: deposit.type === DepositType.USDC ? deposit.amount?.toString() : undefined,
+        amount: deposit.type === DepositType.SOL ? deposit.amount?.toString() : undefined,
         tokenAccount: deposit.type === DepositType.NFT ? deposit.tokenAccount! : undefined,
       }));
 
       // Calculate totals
-      const totalUsdcRefund = agreement.deposits
-        .filter(d => d.type === DepositType.USDC && d.amount)
-        .reduce((sum, d) => sum.add(d.amount!), new Decimal(0));
+      const totalSolRefund = agreement.deposits
+        .filter((d: any) => d.type === DepositType.SOL && d.amount)
+        .reduce((sum: Decimal, d: any) => sum.add(d.amount!), new Decimal(0));
 
-      const nftRefundCount = agreement.deposits.filter(d => d.type === DepositType.NFT).length;
+      const nftRefundCount = agreement.deposits.filter((d: any) => d.type === DepositType.NFT).length;
 
       console.log(`[RefundService] Refund calculation completed for ${agreementId}:`, {
-        totalUsdcRefund: totalUsdcRefund.toString(),
+        totalSolRefund: totalSolRefund.toString(),
         nftRefundCount,
         refundCount: refunds.length,
       });
@@ -132,7 +132,7 @@ export class RefundService {
       return {
         agreementId,
         refunds,
-        totalUsdcRefund: totalUsdcRefund.toString(),
+        totalSolRefund: totalSolRefund.toString(),
         nftRefundCount,
         eligible: true,
       };
@@ -175,7 +175,7 @@ export class RefundService {
         AgreementStatus.CANCELLED,
         AgreementStatus.PENDING,
         AgreementStatus.FUNDED,
-        AgreementStatus.USDC_LOCKED,
+        AgreementStatus.SOL_LOCKED,
         AgreementStatus.NFT_LOCKED,
         AgreementStatus.BOTH_LOCKED,
         AgreementStatus.ARCHIVED, // Allow refunds for archived agreements with stuck assets
