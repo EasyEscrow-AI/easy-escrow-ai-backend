@@ -1838,8 +1838,22 @@ router.get(
 // ==========================================
 
 /**
+ * Helper to add deprecation headers to responses
+ * @deprecated Use POST /api/offers with auto-detection instead
+ */
+function addDeprecationHeaders(res: Response, endpoint: string): void {
+  res.setHeader('Deprecation', 'true');
+  res.setHeader('Sunset', 'Wed, 01 Jul 2025 00:00:00 GMT');
+  res.setHeader('Link', '</api/offers>; rel="successor-version"');
+  console.warn(`[OffersRoutes] DEPRECATED: ${endpoint} called - use POST /api/offers instead`);
+}
+
+/**
  * POST /api/offers/cnft
  * Create a new cNFT offer with SOL escrow
+ *
+ * @deprecated Use POST /api/offers with {bidderWallet, targetAssetId, offerLamports} instead.
+ * The unified endpoint auto-detects cNFT bid requests.
  *
  * Bidder deposits SOL to a PDA to make an offer on a cNFT.
  * The SOL is held in escrow until the offer is accepted, cancelled, rejected, or expired.
@@ -1849,6 +1863,9 @@ router.post(
   strictRateLimiter,
   requiredIdempotency,
   async (req: Request, res: Response): Promise<void> => {
+    // Add deprecation notice
+    addDeprecationHeaders(res, 'POST /api/offers/cnft');
+
     try {
       const { bidderWallet, targetAssetId, offerLamports, durationSeconds, feeBps, listingId } = req.body;
 
@@ -1925,6 +1942,9 @@ router.post(
       res.status(201).json({
         success: true,
         data: result,
+        _deprecated: true,
+        _deprecationMessage: 'This endpoint is deprecated. Use POST /api/offers with auto-detection instead.',
+        _successorEndpoint: '/api/offers',
         timestamp: new Date().toISOString(),
       });
     } catch (error: any) {
@@ -2448,7 +2468,8 @@ function determineExecutionStrategy(assetsA: any[], assetsB: any[]): 'atomic' | 
  * POST /api/offers/bulk
  * Create a bulk/complex swap offer (uses two-phase lock/settle)
  *
- * For simpler swaps, use POST /api/offers which auto-detects strategy.
+ * @deprecated Use POST /api/offers with partyA/assetsA/assetsB format instead.
+ * The unified endpoint auto-detects bulk swaps (3+ cNFTs or 5+ total assets).
  *
  * Request body:
  * - partyA: string - Initiator wallet address
@@ -2463,6 +2484,9 @@ router.post(
   strictRateLimiter,
   requiredIdempotency,
   async (req: Request, res: Response): Promise<void> => {
+    // Add deprecation notice
+    addDeprecationHeaders(res, 'POST /api/offers/bulk');
+
     try {
       const {
         partyA,
@@ -2565,6 +2589,9 @@ router.post(
           message: 'Bulk offer created. Waiting for acceptance.',
           nextAction: 'Counterparty should call POST /api/offers/bulk/:id/accept',
         },
+        _deprecated: true,
+        _deprecationMessage: 'This endpoint is deprecated. Use POST /api/offers with auto-detection instead.',
+        _successorEndpoint: '/api/offers',
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
