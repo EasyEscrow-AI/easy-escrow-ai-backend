@@ -2118,10 +2118,11 @@ async function loadActiveListings() {
     } catch (error) {
         console.error('Load listings error:', error);
         // Show user-friendly message for database errors (table doesn't exist, etc.)
-        if (error.message?.includes('prisma') || error.message?.includes('database') || error.message?.includes('table')) {
+        const errorMsg = error.message?.toLowerCase() || '';
+        if (errorMsg.includes('prisma') || errorMsg.includes('database') || errorMsg.includes('table') || errorMsg.includes('does not exist')) {
             container.innerHTML = '<div class="empty-state">No active listings. List an asset to see it here.</div>';
         } else {
-            container.innerHTML = '<div class="empty-state">No active listings. List an asset to see it here.</div>';
+            container.innerHTML = '<div class="error-message">Unable to load listings. Please try again.</div>';
         }
     }
 }
@@ -2603,7 +2604,12 @@ async function loadMarketplaceListings() {
     } catch (error) {
         console.error('Load marketplace error:', error);
         // Show user-friendly message for database errors (table doesn't exist, etc.)
-        container.innerHTML = '<div class="empty-state">No listings available. Check back later!</div>';
+        const errorMsg = error.message?.toLowerCase() || '';
+        if (errorMsg.includes('prisma') || errorMsg.includes('database') || errorMsg.includes('table') || errorMsg.includes('does not exist')) {
+            container.innerHTML = '<div class="empty-state">No listings available. Check back later!</div>';
+        } else {
+            container.innerHTML = '<div class="error-message">Unable to load marketplace. Please try again.</div>';
+        }
     }
 }
 
