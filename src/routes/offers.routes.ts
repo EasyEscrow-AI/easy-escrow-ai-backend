@@ -940,6 +940,7 @@ router.post(
       if (result.isBulkSwap && result.transactionGroup) {
         responseData.bulkSwap = {
           isBulkSwap: true,
+          jitoEnabled: isJitoBundlesEnabled(),
           strategy: result.transactionGroup.strategy,
           transactionCount: result.transactionGroup.transactionCount,
           requiresJitoBundle: result.transactionGroup.requiresJitoBundle,

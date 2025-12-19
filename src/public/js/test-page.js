@@ -1632,20 +1632,21 @@ async function executeAtomicSwap(params) {
         }
       }
 
-      // Add Jito tip for bulk swaps (0.001 SOL = 1,000,000 lamports)
+      // Add Jito tip for bulk swaps only when Jito is enabled (0.001 SOL = 1,000,000 lamports)
       const JITO_TIP_LAMPORTS = 1_000_000; // 0.001 SOL
-      if (isBulkSwap) {
+      const jitoEnabled = bulkSwapInfo?.jitoEnabled ?? false;
+      if (isBulkSwap && jitoEnabled) {
         totalFee += JITO_TIP_LAMPORTS;
       }
 
       if (totalFee > 0) {
-        blockchainFee = totalFee; // Total fee in lamports (includes Jito tip for bulk swaps)
+        blockchainFee = totalFee; // Total fee in lamports (includes Jito tip if enabled)
         const feeSol = (blockchainFee / 1e9).toFixed(6);
         const feeUsd = solPriceUSD
           ? ` (~$${((blockchainFee / 1e9) * solPriceUSD).toFixed(4)} USD)`
           : '';
         const txCount = signatures.length > 1 ? ` (${signatures.length} txns)` : '';
-        const jitoTipNote = isBulkSwap ? ' (includes 0.001 SOL Jito tip)' : '';
+        const jitoTipNote = (isBulkSwap && jitoEnabled) ? ' (includes 0.001 SOL Jito tip)' : '';
         addLog(`💸 Total network fees: ${feeSol} SOL${feeUsd}${txCount}${jitoTipNote}`, 'info');
       }
     } catch (feeError) {
@@ -1724,21 +1725,24 @@ function showTransactionSummary(
     swapType,
   } = params;
 
-  // Format blockchain fee (includes Jito tip for bulk swaps)
+  // Format blockchain fee (includes Jito tip only when Jito is enabled)
+  const jitoEnabled = bulkSwapInfo?.jitoEnabled ?? false;
   let feeDisplay = 'Fetching...';
   if (blockchainFee !== null) {
     const feeSol = (blockchainFee / 1e9).toFixed(6);
     const feeUsd = solPriceUSD
       ? ` (~$${((blockchainFee / 1e9) * solPriceUSD).toFixed(4)} USD)`
       : '';
-    const jitoTipNote = isBulkSwap ? ' (includes 0.001 SOL Jito tip)' : '';
+    const jitoTipNote = (isBulkSwap && jitoEnabled) ? ' (includes 0.001 SOL Jito tip)' : '';
     feeDisplay = `💸 ${feeSol} SOL${feeUsd}${jitoTipNote}`;
   }
 
   // Determine swap type badge
   let swapTypeBadge = '⚡ Atomic Swap';
   if (isBulkSwap) {
-    swapTypeBadge = '🚀 cNFT Bulk Swap (Jito Bundle)';
+    swapTypeBadge = jitoEnabled
+      ? '🚀 cNFT Bulk Swap (Jito Bundle)'
+      : '🚀 cNFT Bulk Swap (Sequential)';
   } else if (swapType && swapType.type.startsWith('cnft')) {
     swapTypeBadge = '🌳 cNFT Swap';
   }
