@@ -855,28 +855,32 @@ function showConfirmationModal() {
   const swapTypeTitle = document.getElementById('modal-swap-type-title');
   const executionType = document.getElementById('modal-execution-type');
   const jitoInfo = document.getElementById('modal-jito-info');
+  const jitoStatusRow = document.getElementById('modal-jito-status-row');
+
+  // Set execution title consistently (no swap type badge)
+  swapTypeTitle.textContent = '⚙️ Execution';
 
   if (swapType.type === 'atomic') {
     modalTitle.innerHTML = '⚡ Confirm Atomic Swap';
     modalSubtitle.textContent = 'Review the swap details before executing';
-    swapTypeTitle.innerHTML = '<span class="atomic-swap-badge">⚡ Atomic Swap</span>';
     executionType.textContent = 'Single Transaction';
     jitoInfo.style.display = 'none';
+    jitoStatusRow.style.display = 'none';
   } else if (swapType.type === 'cnft-single') {
-    modalTitle.innerHTML = '🌳 Confirm cNFT Swap';
-    modalSubtitle.textContent = 'This swap involves compressed NFTs';
-    swapTypeTitle.innerHTML = '<span class="cnft-swap-badge">🌳 cNFT Swap</span>';
-    executionType.textContent = 'Single Transaction (with Merkle proofs)';
+    modalTitle.innerHTML = '⚡ Confirm Swap';
+    modalSubtitle.textContent = 'Review the swap details before executing';
+    executionType.textContent = 'Single Transaction';
     jitoInfo.style.display = 'none';
+    jitoStatusRow.style.display = 'none';
   } else if (swapType.type === 'cnft-bundle') {
     const totalCNFTs = countCNFTs(selectedMakerNFTs) + countCNFTs(selectedTakerNFTs);
     const estimatedTxCount = Math.ceil(totalCNFTs / 2) + 1; // +1 for payment/cleanup
 
-    modalTitle.innerHTML = '🚀 Confirm cNFT Bulk Swap';
-    modalSubtitle.textContent = 'This swap requires multiple transactions via Jito bundle';
-    swapTypeTitle.innerHTML = '<span class="cnft-swap-badge">🚀 cNFT Bulk Swap</span>';
-    executionType.textContent = `Jito Bundle (${estimatedTxCount} transactions)`;
+    modalTitle.innerHTML = '🚀 Confirm Bulk Swap';
+    modalSubtitle.textContent = 'This swap requires multiple transactions';
+    executionType.textContent = `Bundle (${estimatedTxCount} transactions)`;
     jitoInfo.style.display = 'block';
+    jitoStatusRow.style.display = 'none';
     document.getElementById('modal-jito-tx-count').textContent = `${estimatedTxCount} Transactions`;
     document.getElementById('modal-jito-tip').textContent = 'Calculating...';
     document.getElementById('modal-bundle-strategy').textContent =
@@ -1107,8 +1111,15 @@ async function fetchSwapQuote(makerNFTs, takerNFTs, offeredSol, requestedSol, ap
 
       // Update Jito bundle info if applicable
       const jitoInfo = document.getElementById('modal-jito-info');
-      if (quote.bulkSwap && quote.bulkSwap.isBulkSwap) {
+      const jitoStatusRow = document.getElementById('modal-jito-status-row');
+      const jitoStatus = document.getElementById('modal-jito-status');
+
+      // Get JITO enabled status from quote response
+      const jitoEnabled = quote.bulkSwap?.jitoEnabled ?? true;
+
+      if (quote.bulkSwap && quote.bulkSwap.isBulkSwap && jitoEnabled) {
         jitoInfo.style.display = 'block';
+        jitoStatusRow.style.display = 'none';
         document.getElementById(
           'modal-jito-tx-count'
         ).textContent = `${quote.bulkSwap.transactionCount} Transactions`;
@@ -1128,10 +1139,27 @@ async function fetchSwapQuote(makerNFTs, takerNFTs, offeredSol, requestedSol, ap
         const strategy = quote.bulkSwap.strategy || 'JITO_BUNDLE';
         document.getElementById('modal-bundle-strategy').textContent =
           strategy === 'JITO_BUNDLE' ? 'Atomic execution via Jito Block Engine' : strategy;
-      } else if (quote.isCnftSwap) {
-        // Single-transaction cNFT swap
+      } else if (quote.bulkSwap && quote.bulkSwap.isBulkSwap && !jitoEnabled) {
+        // Bulk swap with JITO disabled
+        jitoInfo.style.display = 'none';
+        jitoStatusRow.style.display = 'flex';
+        jitoStatus.textContent = 'Disabled (Sequential Execution)';
         document.getElementById('modal-execution-type').textContent =
-          'Single Transaction (with Merkle proofs)';
+          `Sequential (${quote.bulkSwap.transactionCount} txs)`;
+      } else if (quote.isCnftSwap) {
+        // Single-transaction cNFT swap - show JITO disabled if applicable
+        jitoInfo.style.display = 'none';
+        if (!jitoEnabled) {
+          jitoStatusRow.style.display = 'flex';
+          jitoStatus.textContent = 'Disabled';
+        } else {
+          jitoStatusRow.style.display = 'none';
+        }
+        document.getElementById('modal-execution-type').textContent = 'Single Transaction';
+      } else {
+        // Regular atomic swap - hide JITO status
+        jitoInfo.style.display = 'none';
+        jitoStatusRow.style.display = 'none';
       }
 
       // Update transaction size display
@@ -1209,64 +1237,6 @@ async function fetchSwapQuote(makerNFTs, takerNFTs, offeredSol, requestedSol, ap
                             ${b.cnftProofs > 0 ? `<span>cNFT Proofs: ${b.cnftProofs}B</span>` : ''}
                         </div>
                     `;
-        }
-
-        // Add cNFT proof details if available
-        if (txSize.cnftProofDetails && txSize.cnftProofDetails.length > 0) {
-          const proofDetails = txSize.cnftProofDetails;
-          const allFetched = proofDetails.every((d) => d.fetched);
-          const statusIcon = allFetched ? '✅' : '⚠️';
-          const statusLabel = allFetched ? 'Verified' : 'Estimated';
-
-          html += `
-                        <div class="cnft-proof-details" style="font-size: 0.75rem; color: #666; margin-top: 8px; padding: 8px; background: ${
-                          allFetched ? '#f0fdf4' : '#fefce8'
-                        }; border: 1px solid ${
-            allFetched ? '#86efac' : '#fde047'
-          }; border-radius: 6px;">
-                            <div style="font-weight: 600; margin-bottom: 4px; color: ${
-                              allFetched ? '#166534' : '#854d0e'
-                            };">
-                                ${statusIcon} cNFT Proof Data (${statusLabel})
-                            </div>
-                    `;
-
-          for (const detail of proofDetails) {
-            const side = detail.side === 'maker' ? '📤' : '📥';
-            const shortId = detail.assetId.slice(0, 8) + '...' + detail.assetId.slice(-4);
-            const canopyInfo =
-              detail.canopyDepth !== null ? ` (canopy: ${detail.canopyDepth})` : '';
-            const fetchIcon = detail.fetched ? '✓' : '?';
-
-            html += `
-                            <div style="display: flex; justify-content: space-between; padding: 2px 0;">
-                                <span>${side} ${shortId}</span>
-                                <span style="font-weight: 500;">${fetchIcon} ${detail.proofNodes} proof nodes${canopyInfo}</span>
-                            </div>
-                        `;
-          }
-
-          // Add explanation about proof nodes
-          const totalNodes = proofDetails.reduce((sum, d) => sum + d.proofNodes, 0);
-          if (totalNodes > 7) {
-            html += `
-                            <div style="margin-top: 6px; padding-top: 6px; border-top: 1px solid ${
-                              allFetched ? '#86efac' : '#fde047'
-                            }; color: #991b1b; font-size: 0.7rem;">
-                                ⚠️ ${totalNodes} total proof nodes exceeds the ~7 node limit for atomic swaps
-                            </div>
-                        `;
-          } else if (totalNodes > 5) {
-            html += `
-                            <div style="margin-top: 6px; padding-top: 6px; border-top: 1px solid ${
-                              allFetched ? '#86efac' : '#fde047'
-                            }; color: #b45309; font-size: 0.7rem;">
-                                ⚠️ ${totalNodes} proof nodes is near the limit (~7 max for atomic swaps)
-                            </div>
-                        `;
-          }
-
-          html += '</div>';
         }
 
         // Add NFT count details
@@ -1441,9 +1411,7 @@ async function executeAtomicSwap(params) {
   // Determine swap type for button text
   const { swapType } = params;
   if (swapType && swapType.type === 'cnft-bundle') {
-    swapBtn.innerHTML = '⏳ Jito Bundle In-Progress...';
-  } else if (swapType && swapType.type.startsWith('cnft')) {
-    swapBtn.innerHTML = '⏳ cNFT Swap In-Progress...';
+    swapBtn.innerHTML = '⏳ Bundle In-Progress...';
   } else {
     swapBtn.innerHTML = '⏳ Swap In-Progress...';
   }
@@ -1753,13 +1721,11 @@ function showTransactionSummary(
   }
 
   // Determine swap type badge
-  let swapTypeBadge = '⚡ Atomic Swap';
+  let swapTypeBadge = '⚡ Swap';
   if (isBulkSwap) {
     swapTypeBadge = jitoEnabled
-      ? '🚀 cNFT Bulk Swap (Jito Bundle)'
-      : '🚀 cNFT Bulk Swap (Sequential)';
-  } else if (swapType && swapType.type.startsWith('cnft')) {
-    swapTypeBadge = '🌳 cNFT Swap';
+      ? '🚀 Bulk Swap (Jito Bundle)'
+      : '🚀 Bulk Swap (Sequential)';
   }
 
   // Build summary HTML safely (XSS-protected)
