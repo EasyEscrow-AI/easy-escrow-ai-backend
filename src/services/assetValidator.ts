@@ -266,7 +266,9 @@ export class AssetValidator {
    */
   private async validateCNFT(walletAddress: string, assetId: string, retryCount = 0): Promise<ValidationResult> {
     // Get max retries from environment (default: 3, same as stale proof handling)
-    const maxOwnershipRetries = parseInt(process.env.CNFT_STALE_OWNERSHIP_MAX_RETRIES || '3', 10);
+    // Validate parsed value to handle invalid env values (e.g., "abc" → NaN)
+    const parsedMaxRetries = parseInt(process.env.CNFT_STALE_OWNERSHIP_MAX_RETRIES || '3', 10);
+    const maxOwnershipRetries = Number.isFinite(parsedMaxRetries) && parsedMaxRetries >= 0 ? parsedMaxRetries : 3;
     // Progressive delays: 500ms, 1000ms, 2000ms (similar to stale proof handling)
     const retryDelays = [500, 1000, 2000];
 
