@@ -123,47 +123,12 @@ tags:
     description: Service health and status
   - name: Assets
     description: Supported assets and chains for atomic swaps
-  - name: Quote
+  - name: Swap Quote
     description: Swap quote and fee estimation
-  - name: Offers
-    description: Atomic swap offer lifecycle management
-  - name: Bundle Monitoring
-    description: Bundle status and recovery for bulk swaps (all NFT types)
+  - name: Swaps
+    description: Atomic swap offer lifecycle management and bundle monitoring
 
 paths:
-  /:
-    get:
-      tags:
-        - Health
-      summary: API root
-      description: Returns API information and available endpoints
-      responses:
-        '200':
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: EasyEscrow.ai Backend API
-                  version:
-                    type: string
-                    example: 1.0.0
-                  endpoints:
-                    type: object
-                    properties:
-                      health:
-                        type: string
-                        example: /health
-                      offers:
-                        type: string
-                        example: /api/swaps/offers
-                  documentation:
-                    type: string
-                    example: /docs
-
   /health:
     get:
       tags:
@@ -251,59 +216,10 @@ paths:
                     activeAssets: 4
                     supportedChains: 1
 
-  /api/assets/{assetId}:
-    get:
-      tags:
-        - Assets
-      summary: Get asset details
-      description: Returns detailed information about a specific supported asset type.
-      parameters:
-        - name: assetId
-          in: path
-          required: true
-          description: The unique identifier of the asset type
-          schema:
-            type: string
-            enum:
-              - spl-nft
-              - core-nft
-              - cnft
-              - sol
-          example: spl-nft
-      responses:
-        '200':
-          description: Asset details
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AssetDetailResponse'
-              example:
-                success: true
-                timestamp: '2024-12-19T10:00:00.000Z'
-                data:
-                  id: spl-nft
-                  name: SPL NFT
-                  description: Solana SPL Token NFT (Metaplex standard)
-                  chain: Solana
-                  chainId: solana
-                  status: active
-                  type: nft
-                  standard: Metaplex Token Metadata
-        '404':
-          description: Asset not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                success: false
-                error: Asset not found
-                message: "Asset 'invalid-asset' is not supported. Available assets: spl-nft, core-nft, cnft, sol"
-
-  /api/quote:
+  /api/swaps/quote:
     post:
       tags:
-        - Quote
+        - Swap Quote
       summary: Get swap quote
       description: |
         Get a comprehensive quote for an atomic swap including:
@@ -387,7 +303,7 @@ paths:
   /api/swaps/offers:
     get:
       tags:
-        - Offers
+        - Swaps
       summary: List offers
       description: Retrieve swap offers with optional filters and pagination
       parameters:
@@ -453,7 +369,7 @@ paths:
     
     post:
       tags:
-        - Offers
+        - Swaps
       summary: Create offer (unified endpoint)
       description: |
         Create a new swap offer with automatic type detection.
@@ -615,7 +531,7 @@ paths:
   /api/swaps/offers/{offerId}:
     get:
       tags:
-        - Offers
+        - Swaps
       summary: Get offer details
       description: Retrieve full details for a specific offer
       parameters:
@@ -644,7 +560,7 @@ paths:
   /api/swaps/offers/{offerId}/counter:
     post:
       tags:
-        - Offers
+        - Swaps
       summary: Create counter-offer
       description: Create a counter-offer to an existing offer with different terms
       parameters:
@@ -700,7 +616,7 @@ paths:
   /api/swaps/offers/{offerId}/cancel:
     post:
       tags:
-        - Offers
+        - Swaps
       summary: Cancel offer
       description: |
         Cancel an active offer. This advances the durable nonce, invalidating any 
@@ -766,7 +682,7 @@ paths:
   /api/swaps/offers/{offerId}/accept:
     post:
       tags:
-        - Offers
+        - Swaps
       summary: Accept offer
       description: |
         Accept an active offer and receive the atomic swap transaction(s) to sign.
@@ -930,7 +846,7 @@ paths:
   /api/swaps/offers/{offerId}/confirm:
     post:
       tags:
-        - Offers
+        - Swaps
       summary: Confirm swap execution
       description: |
         Confirm that you've broadcast the swap transaction and provide its signature.
@@ -989,7 +905,7 @@ paths:
   /api/swaps/offers/{offerId}/bundle-status:
     get:
       tags:
-        - Bundle Monitoring
+        - Swaps
       summary: Get bundle execution status
       description: |
         Get the current status of a bulk swap bundle execution (for swaps with 3+ NFTs).
@@ -1049,7 +965,7 @@ paths:
   /api/swaps/offers/{offerId}/retry-bundle:
     post:
       tags:
-        - Bundle Monitoring
+        - Swaps
       summary: Retry failed bundle
       description: |
         Retry a failed or timed-out bulk swap bundle (for swaps with 3+ NFTs).
@@ -1101,7 +1017,7 @@ paths:
   /api/swaps/offers/metrics/bundles:
     get:
       tags:
-        - Bundle Monitoring
+        - Swaps
       summary: Get bundle metrics
       description: |
         Get aggregated metrics for cNFT bundle execution over the last 24 hours.
@@ -1180,7 +1096,7 @@ paths:
   /api/swaps/offers/{offerId}/rebuild-transaction:
     post:
       tags:
-        - Offers
+        - Swaps
       summary: Rebuild transaction with fresh proofs
       description: |
         Rebuild the swap transaction for an already-accepted offer with fresh cNFT Merkle proofs.
