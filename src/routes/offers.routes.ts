@@ -92,6 +92,18 @@ function parseOfferId(idStr: string): number | null {
   return id;
 }
 
+/**
+ * Check if a string is a valid UUID v4 format.
+ * Used to detect TwoPhaseSwap IDs which use UUID format.
+ */
+function isUuid(str: string): boolean {
+  if (!str) return false;
+  // UUID v4 format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
+  // Allow any version for flexibility (8-4-4-4-12 hex pattern)
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
+}
+
 // Initialize services
 const connection = new Connection(
   process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com',
@@ -867,6 +879,10 @@ router.post(
 /**
  * POST /api/swaps/offers/:id/accept
  * Accept an offer and receive the serialized transaction to sign
+ *
+ * Supports both:
+ * - Numeric IDs: Standard SwapOffer (atomic swaps)
+ * - UUID IDs: TwoPhaseSwap (bulk swaps with 3+ cNFTs)
  */
 router.post(
   '/api/swaps/offers/:id/accept',
@@ -875,20 +891,91 @@ router.post(
   requiredIdempotency, // CRITICAL: Prevent duplicate nonce consumption on retry
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const offerId = parseOfferId(req.params.id);
-      const { takerWallet } = req.body;
+      const idParam = req.params.id;
+      const { takerWallet, partyB } = req.body;
 
-      if (offerId === null) {
-        res.status(400).json({
-          success: false,
-          error: 'Validation Error',
-          message: 'Invalid offer ID - must be a positive integer',
+      // Accept either takerWallet (atomic format) or partyB (bulk format)
+      const acceptingWallet = takerWallet || partyB;
+
+      // Check if the ID is a UUID (TwoPhaseSwap) or numeric (SwapOffer)
+      if (isUuid(idParam)) {
+        // === Two-Phase Swap Accept Flow ===
+        // UUID indicates this is a TwoPhaseSwap created for bulk cNFT swaps
+        console.log(`[Offers Route] Detected UUID offer ID, routing to two-phase accept: ${idParam}`);
+
+        if (!acceptingWallet) {
+          res.status(400).json({
+            success: false,
+            error: 'Validation Error',
+            message: 'takerWallet (or partyB) is required',
+            timestamp: new Date().toISOString(),
+          });
+          return;
+        }
+
+        // Validate wallet address
+        try {
+          new PublicKey(acceptingWallet);
+        } catch (error) {
+          res.status(400).json({
+            success: false,
+            error: 'Validation Error',
+            message: 'Invalid wallet address format',
+            timestamp: new Date().toISOString(),
+          });
+          return;
+        }
+
+        // Accept the two-phase swap
+        const acceptResult = await twoPhaseSwapLockService.acceptSwap({
+          swapId: idParam,
+          partyB: acceptingWallet
+        });
+
+        // Build lock instructions for Party A
+        const lockTxResult = await twoPhaseSwapLockService.buildLockTransaction({
+          swapId: idParam,
+          walletAddress: acceptResult.swap.partyA,
+          party: 'A',
+        });
+
+        res.status(200).json({
+          success: true,
+          data: {
+            offer: serializeTwoPhaseSwap(acceptResult.swap),
+            offerId: idParam,
+            offerType: OfferType.BULK_TWO_PHASE,
+            executionStrategy: 'two-phase',
+            lockTransaction: {
+              serialized: lockTxResult.serializedTransaction,
+              requiredSigners: lockTxResult.requiredSigners,
+              delegatePDA: lockTxResult.delegatePDA.toBase58(),
+              solVaultPDA: lockTxResult.solVaultPDA.toBase58(),
+              lockedAssets: lockTxResult.lockedAssets,
+              solAmountEscrowed: lockTxResult.solAmountEscrowed.toString(),
+            },
+            message: 'Bulk offer accepted. Party A should now lock their assets.',
+            nextAction: 'Party A signs and submits the lock transaction',
+          },
           timestamp: new Date().toISOString(),
         });
         return;
       }
 
-      if (!takerWallet) {
+      // === Standard Atomic Swap Accept Flow ===
+      const offerId = parseOfferId(idParam);
+
+      if (offerId === null) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation Error',
+          message: 'Invalid offer ID - must be a positive integer or valid UUID',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      if (!acceptingWallet) {
         res.status(400).json({
           success: false,
           error: 'Validation Error',
@@ -900,7 +987,7 @@ router.post(
 
       // Validate wallet address
       try {
-        new PublicKey(takerWallet);
+        new PublicKey(acceptingWallet);
       } catch (error) {
         res.status(400).json({
           success: false,
@@ -913,11 +1000,11 @@ router.post(
 
       // Check if zero-fee is authorized and get platform authority public key
       const zeroFeeRequest = req as ZeroFeeAuthorizedRequest;
-      const authorizedAppId = zeroFeeRequest.isZeroFeeAuthorized 
+      const authorizedAppId = zeroFeeRequest.isZeroFeeAuthorized
         ? platformAuthority.publicKey.toBase58()
         : undefined;
 
-      const result = await offerManager.acceptOffer(offerId, takerWallet, authorizedAppId);
+      const result = await offerManager.acceptOffer(offerId, acceptingWallet, authorizedAppId);
 
       // Result now includes both serializedTransaction and updatedOffer
       if (!result.offer) {
@@ -938,7 +1025,7 @@ router.post(
           id: result.offer.id.toString(),
           status: result.offer.status,
           makerWallet: result.offer.makerWallet,
-          takerWallet: result.offer.takerWallet || takerWallet,
+          takerWallet: result.offer.takerWallet || acceptingWallet,
           offeredAssets: result.offer.offeredAssets,
           requestedAssets: result.offer.requestedAssets,
           offeredSol: result.offer.offeredSolLamports?.toString() || '0',
