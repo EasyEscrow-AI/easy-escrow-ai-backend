@@ -27,6 +27,13 @@ import { TwoPhaseSwapStatus } from '../../src/generated/prisma';
 import { SwapAsset } from '../../src/services/swapStateMachine';
 import bs58 from 'bs58';
 
+// Helper function to convert UUID to 16-byte buffer (mirrors service implementation)
+function uuidToBuffer(uuid: string): Buffer {
+  const hex = uuid.replace(/-/g, '');
+  return Buffer.from(hex, 'hex');
+}
+
+
 // Test keys
 const mockProgramId = Keypair.generate().publicKey;
 const mockFeeCollector = Keypair.generate().publicKey;
@@ -40,7 +47,7 @@ describe('TwoPhaseSwapLockService', () => {
     let connection: Connection;
     let mockPrisma: any;
     let lockService: TwoPhaseSwapLockService;
-    const testSwapId = 'test-swap-uuid-12345';
+    const testSwapId = '5d7f5458-839c-47e8-964f-12c80b59fde5';
 
     beforeEach(() => {
       connection = new Connection('https://api.devnet.solana.com');
@@ -72,8 +79,8 @@ describe('TwoPhaseSwapLockService', () => {
     });
 
     it('should derive different delegate PDAs for different swaps', () => {
-      const [pda1] = lockService.deriveDelegatePDA('swap-1');
-      const [pda2] = lockService.deriveDelegatePDA('swap-2');
+      const [pda1] = lockService.deriveDelegatePDA('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee');
+      const [pda2] = lockService.deriveDelegatePDA('11111111-2222-3333-4444-555555555555');
 
       expect(pda1.toBase58()).to.not.equal(pda2.toBase58());
     });
@@ -106,7 +113,7 @@ describe('TwoPhaseSwapLockService', () => {
       const [expectedDelegatePDA] = PublicKey.findProgramAddressSync(
         [
           Buffer.from(TWO_PHASE_SWAP_SEEDS.DELEGATE_AUTHORITY),
-          Buffer.from(testSwapId),
+          uuidToBuffer(testSwapId),
         ],
         mockProgramId
       );
@@ -117,7 +124,7 @@ describe('TwoPhaseSwapLockService', () => {
       const [expectedSolVaultA] = PublicKey.findProgramAddressSync(
         [
           Buffer.from(TWO_PHASE_SWAP_SEEDS.SOL_VAULT),
-          Buffer.from(testSwapId),
+          uuidToBuffer(testSwapId),
           Buffer.from('A'),
         ],
         mockProgramId
