@@ -158,7 +158,6 @@ export class FeeCalculator {
     }
     
     // Apply minimum fee floor
-    const beforeCap = feeLamports;
     if (feeLamports < this.config.minFeeLamports) {
       feeLamports = this.config.minFeeLamports;
     }
@@ -171,16 +170,7 @@ export class FeeCalculator {
     }
     
     const feeSol = this.lamportsToSol(feeLamports);
-    
-    console.log('[FeeCalculator] Fee calculation:', {
-      makerSol: this.lamportsToSol(makerSolLamports),
-      takerSol: this.lamportsToSol(takerSolLamports),
-      totalSwapValueSol,
-      feeType,
-      feeSol,
-      wasCapped,
-    });
-    
+
     return {
       feeLamports,
       feeSol,
