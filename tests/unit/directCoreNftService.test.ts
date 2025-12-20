@@ -73,13 +73,12 @@ describe('DirectCoreNftService', () => {
   });
   
   describe('Transfer instruction data', () => {
-    it('should use correct discriminator for TransferV1 instruction', () => {
-      // TransferV1 discriminator for mpl-core is a single u8 byte = 14
-      // From @metaplex-foundation/mpl-core TransferV1 instruction
+    it('should use correct discriminator for Transfer instruction', () => {
+      // mpl-core uses Shank-style single byte discriminators
+      // TransferV1 discriminator = 14 (0x0e)
       const TRANSFER_V1_DISCRIMINATOR = 14;
-
+      
       expect(TRANSFER_V1_DISCRIMINATOR).to.equal(14);
-      expect(typeof TRANSFER_V1_DISCRIMINATOR).to.equal('number');
     });
     
     it('should set compression_proof to None for non-compressed assets', () => {
@@ -102,12 +101,12 @@ describe('DirectCoreNftService', () => {
     });
     
     it('should calculate total estimated size', () => {
-      // Each Core NFT transfer is ~100 bytes
+      // Each Core NFT transfer is ~120 bytes (includes log wrapper)
       const transferCount = 3;
-      const baseSize = 100;
+      const baseSize = 120;
       const expectedSize = transferCount * baseSize;
       
-      expect(expectedSize).to.equal(300);
+      expect(expectedSize).to.equal(360);
     });
   });
   
@@ -137,8 +136,8 @@ describe('DirectCoreNftService', () => {
   });
   
   describe('Size estimation', () => {
-    it('should estimate ~100 bytes per Core NFT transfer', () => {
-      const estimatedSize = 100;
+    it('should estimate ~120 bytes per Core NFT transfer (includes log wrapper)', () => {
+      const estimatedSize = 120;
       expect(estimatedSize).to.be.lessThanOrEqual(150);
     });
   });

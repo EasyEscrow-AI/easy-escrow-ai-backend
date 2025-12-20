@@ -49,11 +49,18 @@ export interface DirectCoreNftTransferResult {
 }
 
 /**
- * Core NFT TransferV1 instruction discriminator
- * This is a single byte (u8) that identifies the TransferV1 instruction in mpl-core
- * Value: 14 (0x0E) - from @metaplex-foundation/mpl-core TransferV1 instruction
+ * Core NFT Transfer instruction discriminator
+ * mpl-core uses Shank-style single byte discriminators, not Anchor-style 8-byte hashes.
+ * TransferV1 discriminator = 14 (0x0e)
+ * See: https://github.com/metaplex-foundation/mpl-core/blob/main/clients/js/src/generated/instructions/transferV1.ts
  */
 const TRANSFER_V1_DISCRIMINATOR = 14;
+
+/**
+ * SPL Noop Program ID (for log wrapper)
+ * Required by mpl-core TransferV1 instruction
+ */
+const SPL_NOOP_PROGRAM_ID = new PublicKey('noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMmV');
 
 /**
  * Service for building direct Metaplex Core NFT transfer instructions
@@ -101,23 +108,21 @@ export class DirectCoreNftService {
     }
 
     // Build the transfer instruction data
-    // TransferV1 instruction format:
-    // - discriminator: u8 (1 byte) = 14
-    // - compressionProof: Option<CompressionProof> (1 byte for None = 0x00)
+    // TransferV1: discriminator (1 byte) + compression_proof (Option<CompressionProof>, None = 1 byte)
     const instructionData = Buffer.from([
-      TRANSFER_V1_DISCRIMINATOR, // u8 discriminator (1 byte)
-      0, // Option::None for compression_proof (not compressed)
+      TRANSFER_V1_DISCRIMINATOR,  // Single byte discriminator (14)
+      0,                          // None for compression_proof (not compressed)
     ]);
 
     // Build account metas for the transfer
-    // Accounts order for mpl-core Transfer:
-    // 1. asset (writable) - The Core NFT asset
-    // 2. collection (optional) - Collection if asset belongs to one
-    // 3. payer (signer) - Pays for any rent
-    // 4. authority (signer) - Current owner authorizing the transfer
-    // 5. new_owner - The new owner to transfer to
-    // 6. system_program (optional) - For any lamport transfers
-    // 7+ additional accounts for plugins (optional)
+    // Account order for mpl-core TransferV1:
+    // 0. asset (writable) - The Core NFT asset
+    // 1. collection (optional) - Collection if asset belongs to one
+    // 2. payer (signer, writable) - Pays for any rent
+    // 3. authority (signer, optional) - Current owner authorizing the transfer
+    // 4. new_owner - The new owner to transfer to
+    // 5. system_program (optional) - For any lamport transfers
+    // 6. log_wrapper (optional) - SPL Noop program for logging
 
     const keys = [
       { pubkey: assetPubkey, isSigner: false, isWritable: true }, // asset
@@ -132,8 +137,10 @@ export class DirectCoreNftService {
       console.log('[DirectCoreNftService] Added collection to transfer:', collection.toBase58());
     }
 
-    // Add system program (usually needed for rent)
+    // Add system program
     keys.push({ pubkey: SystemProgram.programId, isSigner: false, isWritable: false });
+    // Add log wrapper (SPL Noop program) - required by mpl-core
+    keys.push({ pubkey: SPL_NOOP_PROGRAM_ID, isSigner: false, isWritable: false });
 
     const instruction = new TransactionInstruction({
       programId: MPL_CORE_PROGRAM_ID,
@@ -141,13 +148,14 @@ export class DirectCoreNftService {
       data: instructionData,
     });
 
-    // Estimate size: ~100 bytes for Core NFT transfer
-    const estimatedSize = 100;
+    // Estimate size: ~120 bytes for Core NFT transfer (includes log wrapper)
+    const estimatedSize = 120;
 
     console.log('[DirectCoreNftService] Transfer instruction built:', {
       assetAddress: params.assetAddress,
       programId: MPL_CORE_PROGRAM_ID.toBase58(),
       accountCount: keys.length,
+      hasCollection: !!collection,
       estimatedSize,
     });
 
