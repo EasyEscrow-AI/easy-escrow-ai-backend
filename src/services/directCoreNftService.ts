@@ -49,10 +49,11 @@ export interface DirectCoreNftTransferResult {
 }
 
 /**
- * Core NFT Transfer instruction discriminator
- * This is the first 8 bytes that identify the Transfer instruction in mpl-core
+ * Core NFT TransferV1 instruction discriminator
+ * This is a single byte (u8) that identifies the TransferV1 instruction in mpl-core
+ * Value: 14 (0x0E) - from @metaplex-foundation/mpl-core TransferV1 instruction
  */
-const TRANSFER_DISCRIMINATOR = Buffer.from([163, 52, 200, 231, 140, 3, 69, 186]);
+const TRANSFER_V1_DISCRIMINATOR = 14;
 
 /**
  * Service for building direct Metaplex Core NFT transfer instructions
@@ -100,10 +101,12 @@ export class DirectCoreNftService {
     }
 
     // Build the transfer instruction data
-    // Transfer instruction: discriminator (8 bytes) + compression_proof (optional, None = 1 byte)
-    const instructionData = Buffer.concat([
-      TRANSFER_DISCRIMINATOR,
-      Buffer.from([0]), // None for compression_proof (not compressed)
+    // TransferV1 instruction format:
+    // - discriminator: u8 (1 byte) = 14
+    // - compressionProof: Option<CompressionProof> (1 byte for None = 0x00)
+    const instructionData = Buffer.from([
+      TRANSFER_V1_DISCRIMINATOR, // u8 discriminator (1 byte)
+      0, // Option::None for compression_proof (not compressed)
     ]);
 
     // Build account metas for the transfer
