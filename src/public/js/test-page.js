@@ -341,6 +341,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     resetWallet('taker');
   });
 
+  // Setup activity clear button
+  const clearBtn = document.getElementById('activity-clear-btn');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      const logContent = document.getElementById('activity-log-content');
+      if (logContent) {
+        logContent.innerHTML = '<div class="empty-state">No activity yet. Load wallets and execute a swap to see logs here.</div>';
+      }
+    });
+  }
+
   // Setup swap button event listener
   document.getElementById('swap-btn').addEventListener('click', showConfirmationModal);
 
