@@ -1589,6 +1589,58 @@ pub mod escrow {
         msg!("Closing offer escrow account, rent returned to bidder");
         Ok(())
     }
+    // ============================================================================
+    // TWO-PHASE SWAP INSTRUCTIONS (Bulk cNFT Swap Fallback)
+    // ============================================================================
+
+    /// Initialize a two-phase SOL vault PDA
+    ///
+    /// Creates a rent-exempt PDA to hold SOL during the lock phase.
+    /// Used when bulk cNFT swaps cannot fit in Jito bundles.
+    pub fn init_two_phase_sol_vault(
+        ctx: Context<InitTwoPhaseSolVault>,
+        swap_id: [u8; 16],
+        party: u8,
+    ) -> Result<()> {
+        instructions::init_two_phase_sol_vault_handler(ctx, swap_id, party)
+    }
+
+    /// Deposit SOL into an existing two-phase vault
+    pub fn deposit_two_phase_sol(
+        ctx: Context<DepositTwoPhaseSol>,
+        swap_id: [u8; 16],
+        party: u8,
+        amount: u64,
+    ) -> Result<()> {
+        instructions::deposit_two_phase_sol_handler(ctx, swap_id, party, amount)
+    }
+
+    /// Settle two-phase swap: transfer SOL to recipient and close vault
+    ///
+    /// Transfers SOL from the vault to the counterparty, collects platform fee,
+    /// then closes the vault PDA and recovers rent.
+    pub fn settle_two_phase_with_close(
+        ctx: Context<SettleTwoPhaseWithClose>,
+        swap_id: [u8; 16],
+        party: u8,
+        recipient_amount: u64,
+        platform_fee: u64,
+    ) -> Result<()> {
+        instructions::settle_two_phase_with_close_handler(ctx, swap_id, party, recipient_amount, platform_fee)
+    }
+
+    /// Cancel two-phase swap: return SOL to depositor and close vault
+    ///
+    /// Returns all SOL from the vault to the original depositor,
+    /// then closes the vault PDA and recovers rent.
+    pub fn cancel_two_phase_with_close(
+        ctx: Context<CancelTwoPhaseWithClose>,
+        swap_id: [u8; 16],
+        party: u8,
+    ) -> Result<()> {
+        instructions::cancel_two_phase_with_close_handler(ctx, swap_id, party)
+    }
+
 }
 
 // Account Structures
