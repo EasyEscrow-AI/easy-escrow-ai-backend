@@ -123,7 +123,7 @@ tags:
     description: Service health and status
   - name: Assets
     description: Supported assets and chains for atomic swaps
-  - name: Swap Quote
+  - name: Quotes
     description: Swap quote and fee estimation
   - name: Swaps
     description: Atomic swap offer lifecycle management and bundle monitoring
@@ -219,7 +219,7 @@ paths:
   /api/swaps/quote:
     post:
       tags:
-        - Swap Quote
+        - Quotes
       summary: Get swap quote
       description: |
         Get a comprehensive quote for an atomic swap including:

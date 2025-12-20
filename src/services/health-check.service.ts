@@ -15,6 +15,54 @@ import { NoncePoolManager } from './noncePoolManager';
 import { IdempotencyService } from './idempotency.service';
 import { alertingService } from './alerting.service';
 
+/**
+ * Mask RPC endpoint URL to hide API keys
+ * Handles various RPC URL formats:
+ * - QuickNode: https://xxx.solana-mainnet.quiknode.pro/API_KEY/
+ * - Helius: https://mainnet.helius-rpc.com/?api-key=API_KEY
+ * - Alchemy: https://solana-mainnet.g.alchemy.com/v2/API_KEY
+ *
+ * @param url - The RPC endpoint URL
+ * @returns Masked URL with API key partially hidden
+ */
+function maskRpcEndpoint(url: string): string {
+  try {
+    const urlObj = new URL(url);
+
+    // Check for API key in query params (e.g., Helius)
+    const apiKeyParam = urlObj.searchParams.get('api-key') || urlObj.searchParams.get('api_key');
+    if (apiKeyParam && apiKeyParam.length > 8) {
+      const masked = `${apiKeyParam.substring(0, 4)}...${apiKeyParam.substring(apiKeyParam.length - 4)}`;
+      if (urlObj.searchParams.has('api-key')) {
+        urlObj.searchParams.set('api-key', masked);
+      } else {
+        urlObj.searchParams.set('api_key', masked);
+      }
+      return urlObj.toString();
+    }
+
+    // Check for API key in path (e.g., QuickNode, Alchemy)
+    // Pattern: /API_KEY/ or /v2/API_KEY
+    const pathParts = urlObj.pathname.split('/').filter(Boolean);
+    if (pathParts.length > 0) {
+      const lastPart = pathParts[pathParts.length - 1];
+      // API keys are typically 32+ characters of hex/alphanumeric
+      if (lastPart.length >= 32 && /^[a-zA-Z0-9_-]+$/.test(lastPart)) {
+        const masked = `${lastPart.substring(0, 4)}...${lastPart.substring(lastPart.length - 4)}`;
+        pathParts[pathParts.length - 1] = masked;
+        urlObj.pathname = '/' + pathParts.join('/') + '/';
+        return urlObj.toString();
+      }
+    }
+
+    // No API key found in expected locations, return host only for safety
+    return `${urlObj.protocol}//${urlObj.host}/***`;
+  } catch {
+    // If URL parsing fails, mask everything after protocol
+    return url.replace(/(https?:\/\/[^/]+).*/, '$1/***');
+  }
+}
+
 export interface HealthCheckResult {
   status: 'healthy' | 'unhealthy' | 'degraded';
   timestamp: string;
@@ -159,7 +207,7 @@ export class HealthCheckService {
       })),
       this.checkRPC().catch((error) => ({
         status: 'disconnected' as const,
-        endpoint: this.connection.rpcEndpoint,
+        endpoint: maskRpcEndpoint(this.connection.rpcEndpoint),
         error: error instanceof Error ? error.message : 'Unknown error',
       })),
     ]);
@@ -397,16 +445,16 @@ export class HealthCheckService {
       
       return {
         status,
-        endpoint: this.connection.rpcEndpoint,
+        endpoint: maskRpcEndpoint(this.connection.rpcEndpoint),
         responseTime,
       };
     } catch (error) {
       const responseTime = Date.now() - startTime;
       console.error('[HealthCheckService] RPC check failed:', error);
-      
+
       return {
         status: 'disconnected' as const,
-        endpoint: this.connection.rpcEndpoint,
+        endpoint: maskRpcEndpoint(this.connection.rpcEndpoint),
         responseTime,
         error: error instanceof Error ? error.message : 'Unknown error',
       };
