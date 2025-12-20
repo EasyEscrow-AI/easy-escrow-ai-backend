@@ -2765,6 +2765,12 @@ function showQuickListModal(nft) {
   document.getElementById('quick-list-price').value = '';
   document.getElementById('quick-list-price-usd').textContent = '';
 
+  // Clear private wallet input
+  const privateWalletInput = document.getElementById('quick-list-private-wallet');
+  if (privateWalletInput) {
+    privateWalletInput.value = '';
+  }
+
   // Reset duration buttons
   const durationBtns = document.querySelectorAll(
     '#quick-list-duration-buttons .listing-duration-btn'
@@ -2849,6 +2855,7 @@ async function handleQuickListConfirm() {
       ],
       requestedAssets: [],
       requestedSol: priceLamports.toString(),
+      durationSeconds: quickListDuration,
     };
 
     // Add taker wallet if private sale
