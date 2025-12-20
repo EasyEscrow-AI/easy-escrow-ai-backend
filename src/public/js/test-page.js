@@ -457,8 +457,12 @@ async function loadWalletInfo(wallet) {
       });
     }
 
-    // Update balance
-    balanceDisplay.textContent = `${data.data.solBalance.toFixed(4)} SOL`;
+    // Update balance with USD equivalent
+    const solBalance = data.data.solBalance.toFixed(4);
+    const usdDisplay = solPriceUSD
+      ? `<span class="balance-usd">(~$${(data.data.solBalance * solPriceUSD).toFixed(2)} USD)</span>`
+      : '';
+    balanceDisplay.innerHTML = `${solBalance} SOL${usdDisplay}`;
 
     // Render NFTs
     renderNFTs(wallet, data.data.nfts);
