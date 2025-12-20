@@ -2947,7 +2947,7 @@
         <div class="listing-section">
             <div class="listing-header">
                 <h2 class="listing-title">📋 List Asset for Sale</h2>
-                <p class="listing-subtitle">List your NFTs for sale with delegation-based marketplace</p>
+                <p class="listing-subtitle">Create an offer to sell your NFT for SOL (open or private listing)</p>
             </div>
 
             <div class="listing-form-container">
@@ -2984,6 +2984,13 @@
                         <label class="listing-label">Price (SOL)</label>
                         <input type="number" class="listing-input" id="listing-price" placeholder="0.00" step="0.001" min="0.001">
                         <div class="listing-input-hint" id="listing-price-usd"></div>
+                    </div>
+
+                    <!-- Private Buyer Wallet (Optional) -->
+                    <div class="listing-form-group">
+                        <label class="listing-label">Private Buyer Wallet (Optional)</label>
+                        <input type="text" class="listing-input" id="listing-private-wallet" placeholder="Leave empty for open listing, or enter wallet address for private sale">
+                        <div class="listing-input-hint">Open listing: anyone can buy. Private: only specified wallet can buy.</div>
                     </div>
 
                     <!-- Expiry Duration -->
@@ -3375,6 +3382,45 @@
             <div class="cancel-listing-modal-actions" id="cancel-listing-actions">
                 <button class="cancel-listing-modal-btn keep" id="cancel-listing-keep">Keep Listed</button>
                 <button class="cancel-listing-modal-btn cancel" id="cancel-listing-confirm">Cancel Listing</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Counter Offer Modal -->
+    <div class="cancel-listing-modal" id="counter-offer-modal">
+        <div class="cancel-listing-modal-content">
+            <div class="cancel-listing-modal-header">
+                <h3>💰 Make Counter Offer</h3>
+                <p>Propose a different price for this listing</p>
+            </div>
+
+            <div class="cancel-listing-modal-preview">
+                <img class="cancel-listing-modal-image" id="counter-offer-image" src="" alt="">
+                <div class="cancel-listing-modal-details">
+                    <div class="cancel-listing-modal-name" id="counter-offer-name">--</div>
+                    <div class="cancel-listing-modal-price" id="counter-offer-original-price">Listed: -- SOL</div>
+                </div>
+            </div>
+
+            <div class="listing-form-group" style="margin-top: 20px;">
+                <label class="listing-label">Your Offer (SOL)</label>
+                <input type="number" class="listing-input" id="counter-offer-price" placeholder="0.00" step="0.001" min="0.001">
+                <div class="listing-input-hint" id="counter-offer-price-usd"></div>
+            </div>
+
+            <!-- Transaction Status (hidden by default) -->
+            <div class="modal-tx-status" id="counter-offer-tx-status" style="display: none;">
+                <div class="modal-tx-status-spinner"></div>
+                <div class="modal-tx-status-content">
+                    <div class="modal-tx-status-title" id="counter-offer-status-title">Processing...</div>
+                    <div class="modal-tx-status-message" id="counter-offer-status-message"></div>
+                    <div class="modal-tx-status-link" id="counter-offer-status-link"></div>
+                </div>
+            </div>
+
+            <div class="cancel-listing-modal-actions" id="counter-offer-actions">
+                <button class="cancel-listing-modal-btn keep" id="counter-offer-cancel">Cancel</button>
+                <button class="cancel-listing-modal-btn cancel" id="counter-offer-submit" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">Submit Offer</button>
             </div>
         </div>
     </div>

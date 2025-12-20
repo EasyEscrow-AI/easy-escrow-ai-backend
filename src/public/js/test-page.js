@@ -2114,7 +2114,7 @@ function updateListButtonState() {
   listBtn.disabled = !hasAsset || !hasPrice;
 }
 
-// Handle create listing
+// Handle create listing - now uses offers API
 async function handleCreateListing() {
   if (!selectedListingAsset) {
     addLog('❌ Please select an asset to list', 'error');
@@ -2136,24 +2136,50 @@ async function handleCreateListing() {
     listBtn.disabled = true;
     listBtn.innerHTML = '⏳ Creating listing...';
 
-    addLog(`📝 Creating listing for ${selectedListingAsset.name}...`, 'info');
+    // Get optional private wallet
+    const privateWalletInput = document.getElementById('listing-private-wallet');
+    const privateWallet = privateWalletInput ? privateWalletInput.value.trim() : '';
+
+    const listingType = privateWallet ? 'private' : 'open';
+    addLog(`📝 Creating ${listingType} listing for ${selectedListingAsset.name}...`, 'info');
 
     // Convert SOL to lamports
     const priceLamports = Math.floor(price * 1e9);
 
-    // Call create listing API
-    const response = await fetch('/api/listings', {
+    // Determine asset type
+    let assetType = 'NFT';
+    if (selectedListingAsset.isCompressed) {
+      assetType = 'CNFT';
+    } else if (selectedListingAsset.isCoreNft) {
+      assetType = 'CORE_NFT';
+    }
+
+    // Build offer request - NFT for SOL
+    const offerRequest = {
+      makerWallet: MAKER_ADDRESS,
+      offeredAssets: [
+        {
+          identifier: selectedListingAsset.mint,
+          type: assetType,
+        },
+      ],
+      requestedAssets: [],
+      requestedSol: priceLamports.toString(),
+    };
+
+    // Add taker wallet if private listing
+    if (privateWallet) {
+      offerRequest.takerWallet = privateWallet;
+    }
+
+    // Call create offer API
+    const response = await fetch('/api/swaps/offers', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'idempotency-key': `listing-${Date.now()}-${selectedListingAsset.mint.substring(0, 8)}`,
+        'idempotency-key': `offer-${Date.now()}-${selectedListingAsset.mint.substring(0, 8)}`,
       },
-      body: JSON.stringify({
-        seller: MAKER_ADDRESS,
-        assetId: selectedListingAsset.mint,
-        priceLamports: priceLamports.toString(),
-        durationSeconds: selectedListingDuration,
-      }),
+      body: JSON.stringify(offerRequest),
     });
 
     const result = await response.json();
@@ -2162,59 +2188,20 @@ async function handleCreateListing() {
       throw new Error(result.message || result.error || 'Failed to create listing');
     }
 
-    addLog(`✓ Listing created! ID: ${result.data.listing.listingId}`, 'success');
-    addLog('🔐 Signing delegation transaction...', 'info');
+    const offerId = result.data.offerId || result.data.offer?.id;
+    addLog(`✓ Listing created! Offer ID: ${offerId}`, 'success');
 
-    listBtn.innerHTML = '⏳ Signing delegation...';
-
-    // Execute the delegation transaction via test endpoint
-    const execResponse = await fetch('/api/test/execute-listing-delegation', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Test-Execution': 'true',
-      },
-      body: JSON.stringify({
-        listingId: result.data.listing.listingId,
-        serializedTransaction: result.data.transaction.serializedTransaction,
-      }),
-    });
-
-    const execResult = await execResponse.json();
-
-    if (!execResult.success) {
-      throw new Error(execResult.error || 'Failed to execute delegation transaction');
-    }
-
-    addLog(
-      `✓ Delegation confirmed! TX: ${execResult.data.signature.substring(0, 20)}...`,
-      'success'
-    );
-
-    // Confirm the listing
-    const confirmResponse = await fetch(`/api/listings/${result.data.listing.listingId}/confirm`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'idempotency-key': `confirm-${result.data.listing.listingId}-${Date.now()}`,
-      },
-      body: JSON.stringify({
-        signature: execResult.data.signature,
-      }),
-    });
-
-    const confirmResult = await confirmResponse.json();
-
-    if (!confirmResult.success) {
-      addLog(`⚠️ Listing created but confirmation pending: ${confirmResult.message}`, 'warning');
+    if (privateWallet) {
+      addLog(`🔒 Private listing - only ${privateWallet.substring(0, 8)}... can buy`, 'info');
     } else {
-      addLog(`✅ Listing is now ACTIVE!`, 'success');
+      addLog(`🌐 Open listing - anyone can buy or make counter offers`, 'info');
     }
 
     // Reset form
     document.getElementById('listing-asset-select').value = '';
     document.getElementById('listing-price').value = '';
     document.getElementById('listing-price-usd').textContent = '';
+    if (privateWalletInput) privateWalletInput.value = '';
     document.getElementById('listing-asset-preview').style.display = 'none';
     selectedListingAsset = null;
 
@@ -2232,7 +2219,7 @@ async function handleCreateListing() {
   }
 }
 
-// Load active listings
+// Load active listings - now uses offers API
 async function loadActiveListings() {
   const container = document.getElementById('active-listings-container');
   if (!container || !MAKER_ADDRESS) {
@@ -2242,14 +2229,22 @@ async function loadActiveListings() {
   container.innerHTML = '<div class="loading"><div class="spinner"></div>Loading listings...</div>';
 
   try {
-    const response = await fetch(`/api/listings/seller/${MAKER_ADDRESS}`);
+    // Fetch offers where the maker is the current user and status is PENDING (active offers)
+    const response = await fetch(`/api/swaps/offers?makerWallet=${MAKER_ADDRESS}&status=PENDING`);
     const result = await response.json();
 
     if (!result.success) {
       throw new Error(result.message || 'Failed to load listings');
     }
 
-    activeListings = result.data.listings || [];
+    // Filter to only show NFT-for-SOL offers (listings)
+    // A listing is an offer where maker offers NFT(s) and requests SOL
+    activeListings = (result.data.offers || []).filter((offer) => {
+      const hasOfferedAssets = offer.offeredAssets && offer.offeredAssets.length > 0;
+      const requestsSol = offer.requestedSol && BigInt(offer.requestedSol) > 0;
+      const noRequestedAssets = !offer.requestedAssets || offer.requestedAssets.length === 0;
+      return hasOfferedAssets && requestsSol && noRequestedAssets;
+    });
     renderActiveListings();
   } catch (error) {
     console.error('Load listings error:', error);
@@ -2270,7 +2265,7 @@ async function loadActiveListings() {
   }
 }
 
-// Render active listings
+// Render active listings - updated for offers API format
 function renderActiveListings() {
   const container = document.getElementById('active-listings-container');
   if (!container) return;
@@ -2282,52 +2277,41 @@ function renderActiveListings() {
   }
 
   container.innerHTML = activeListings
-    .map((listing) => {
-      const metadata = listing.metadata || {};
-      const imageUrl = metadata.image || getPlaceholderImage(listing.assetId);
-      const name = metadata.name || 'Unknown NFT';
-      const priceSol = (parseInt(listing.priceLamports) / 1e9).toFixed(4);
-      const expiresAt = new Date(listing.expiresAt);
-      const createdAt = new Date(listing.createdAt);
+    .map((offer) => {
+      // Get first offered asset (the NFT being listed)
+      const offeredAsset = offer.offeredAssets && offer.offeredAssets[0];
+      const assetId = offeredAsset ? offeredAsset.identifier : 'unknown';
+      const assetMetadata = offeredAsset?.metadata || {};
 
-      // Determine NFT type from listing data or metadata
-      // Order matches getNftTypeLabel: check isCoreNft first, then isCompressed
+      const imageUrl = assetMetadata.image || getPlaceholderImage(assetId);
+      const name = assetMetadata.name || offeredAsset?.name || 'Unknown NFT';
+      const priceSol = (parseInt(offer.requestedSol || '0') / 1e9).toFixed(4);
+      const createdAt = new Date(offer.createdAt);
+
+      // Determine NFT type from asset
       let nftType = 'SPL NFT';
-      if (listing.assetType) {
-        nftType =
-          listing.assetType === 'CNFT'
-            ? 'cNFT'
-            : listing.assetType === 'CORE'
-            ? 'Core NFT'
-            : listing.assetType === 'SPL'
-            ? 'SPL NFT'
-            : 'SPL NFT';
-      } else if (metadata.isCoreNft) {
-        nftType = 'Core NFT';
-      } else if (metadata.isCompressed) {
+      const assetType = offeredAsset?.type;
+      if (assetType === 'CNFT' || assetType === 'cNFT') {
         nftType = 'cNFT';
+      } else if (assetType === 'CORE_NFT' || assetType === 'Core') {
+        nftType = 'Core NFT';
       }
+
+      // Determine listing type (open or private)
+      const isPrivate = !!offer.takerWallet;
+      const listingTypeLabel = isPrivate ? '🔒 Private' : '🌐 Open';
 
       // Determine status class
-      let statusClass = listing.status.toLowerCase();
-      if (listing.delegationStatus === 'PENDING') {
-        statusClass = 'pending';
-      }
-
-      // Check if expired
-      const isExpired = expiresAt < new Date();
-      if (isExpired && listing.status === 'ACTIVE') {
-        statusClass = 'expired';
-      }
+      let statusClass = offer.status.toLowerCase();
 
       return `
-            <div class="listing-card" data-listing-id="${listing.listingId}">
+            <div class="listing-card" data-offer-id="${offer.id}">
                 <div class="listing-card-header">
                     <img class="listing-card-image" src="${imageUrl}" alt="${escapeHtml(name)}"
-                         data-asset-id="${listing.assetId}">
+                         data-asset-id="${assetId}">
                     <div class="listing-card-info">
                         <div class="listing-card-name">${escapeHtml(name)}</div>
-                        <div class="listing-card-type">${nftType}</div>
+                        <div class="listing-card-type">${nftType} ${listingTypeLabel}</div>
                     </div>
                 </div>
 
@@ -2338,14 +2322,14 @@ function renderActiveListings() {
                     </div>
                     <div class="listing-card-row">
                         <span class="listing-card-label">Status:</span>
-                        <span class="listing-status-badge ${statusClass}">${
-        isExpired ? 'EXPIRED' : listing.status
-      }</span>
+                        <span class="listing-status-badge ${statusClass}">${offer.status}</span>
                     </div>
+                    ${isPrivate ? `
                     <div class="listing-card-row">
-                        <span class="listing-card-label">Expires:</span>
-                        <span class="listing-card-value">${expiresAt.toLocaleDateString()}</span>
+                        <span class="listing-card-label">Buyer:</span>
+                        <span class="listing-card-value">${offer.takerWallet.substring(0, 8)}...</span>
                     </div>
+                    ` : ''}
                     <div class="listing-card-row">
                         <span class="listing-card-label">Created:</span>
                         <span class="listing-card-value">${createdAt.toLocaleDateString()}</span>
@@ -2354,17 +2338,15 @@ function renderActiveListings() {
 
                 <div class="listing-card-actions">
                     ${
-                      listing.status === 'ACTIVE' || listing.status === 'PENDING'
+                      offer.status === 'PENDING'
                         ? `
-                        <button class="listing-action-btn cancel" data-action="cancel" data-listing-id="${listing.listingId}">
+                        <button class="listing-action-btn cancel" data-action="cancel" data-offer-id="${offer.id}">
                             Cancel
                         </button>
                     `
                         : ''
                     }
-                    <button class="listing-action-btn view" data-action="view" data-listing-id="${
-                      listing.listingId
-                    }">
+                    <button class="listing-action-btn view" data-action="view" data-offer-id="${offer.id}">
                         View
                     </button>
                 </div>
@@ -2377,11 +2359,11 @@ function renderActiveListings() {
   container.querySelectorAll('.listing-action-btn').forEach((btn) => {
     btn.addEventListener('click', function () {
       const action = this.dataset.action;
-      const listingId = this.dataset.listingId;
+      const offerId = this.dataset.offerId;
       if (action === 'cancel') {
-        handleCancelListing(listingId);
+        handleCancelOffer(offerId);
       } else if (action === 'view') {
-        viewListingDetails(listingId);
+        viewOfferDetails(offerId);
       }
     });
   });
@@ -2511,6 +2493,237 @@ function viewListingDetails(listingId) {
   addLog(`   Status: ${listing.status}`, 'info');
   addLog(`   Delegation: ${listing.delegationStatus}`, 'info');
 }
+
+// Cancel an offer (listing) - uses offers API
+async function handleCancelOffer(offerId) {
+  if (!confirm('Are you sure you want to cancel this listing?')) {
+    return;
+  }
+
+  const card = document.querySelector(`[data-offer-id="${offerId}"]`);
+  const cancelBtn = card ? card.querySelector('.listing-action-btn.cancel') : null;
+
+  try {
+    if (cancelBtn) {
+      cancelBtn.disabled = true;
+      cancelBtn.textContent = 'Cancelling...';
+    }
+
+    addLog(`🔄 Cancelling offer ${offerId}...`, 'info');
+
+    // Call cancel offer API
+    const response = await fetch(`/api/swaps/offers/${offerId}/cancel`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'idempotency-key': `cancel-offer-${offerId}-${Date.now()}`,
+      },
+    });
+
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.message || 'Failed to cancel offer');
+    }
+
+    addLog(`✅ Listing cancelled successfully!`, 'success');
+
+    // Refresh listings
+    await loadActiveListings();
+
+    // Refresh maker wallet
+    await loadWalletInfo('maker');
+  } catch (error) {
+    console.error('Cancel offer error:', error);
+    addLog(`❌ Failed to cancel listing: ${error.message}`, 'error');
+
+    if (cancelBtn) {
+      cancelBtn.disabled = false;
+      cancelBtn.textContent = 'Cancel';
+    }
+  }
+}
+
+// View offer details
+function viewOfferDetails(offerId) {
+  const offer = activeListings.find((o) => o.id === parseInt(offerId) || o.id === offerId);
+  if (!offer) {
+    addLog('❌ Offer not found', 'error');
+    return;
+  }
+
+  const priceSol = (parseInt(offer.requestedSol || '0') / 1e9).toFixed(4);
+  const priceUsd = solPriceUSD
+    ? ` (~$${((parseInt(offer.requestedSol || '0') / 1e9) * solPriceUSD).toFixed(2)})`
+    : '';
+
+  const offeredAsset = offer.offeredAssets && offer.offeredAssets[0];
+  const assetId = offeredAsset ? offeredAsset.identifier : 'unknown';
+  const assetName = offeredAsset?.metadata?.name || 'Unknown NFT';
+
+  addLog(`📋 Offer Details:`, 'info');
+  addLog(`   Offer ID: ${offer.id}`, 'info');
+  addLog(`   Asset: ${assetName}`, 'info');
+  addLog(`   Asset ID: ${assetId}`, 'info');
+  addLog(`   Price: ${priceSol} SOL${priceUsd}`, 'info');
+  addLog(`   Status: ${offer.status}`, 'info');
+  addLog(`   Type: ${offer.takerWallet ? 'Private' : 'Open'}`, 'info');
+  if (offer.takerWallet) {
+    addLog(`   Buyer: ${offer.takerWallet}`, 'info');
+  }
+}
+
+// Counter offer state
+let counterOfferData = null;
+
+// Show counter offer modal
+function showCounterOfferModal(offerId, offerData) {
+  const modal = document.getElementById('counter-offer-modal');
+  if (!modal) return;
+
+  counterOfferData = { offerId, ...offerData };
+
+  // Update modal content
+  const imageEl = document.getElementById('counter-offer-image');
+  const nameEl = document.getElementById('counter-offer-name');
+  const priceEl = document.getElementById('counter-offer-original-price');
+  const priceInput = document.getElementById('counter-offer-price');
+
+  if (imageEl) imageEl.src = offerData.image || getPlaceholderImage(offerData.assetId);
+  if (nameEl) nameEl.textContent = offerData.name || 'Unknown NFT';
+  if (priceEl) priceEl.textContent = `Listed: ${offerData.priceSol} SOL`;
+  if (priceInput) priceInput.value = '';
+
+  modal.classList.add('show');
+}
+
+// Hide counter offer modal
+function hideCounterOfferModal() {
+  const modal = document.getElementById('counter-offer-modal');
+  if (modal) modal.classList.remove('show');
+  counterOfferData = null;
+}
+
+// Submit counter offer - creates a new offer with the desired price
+// The taker offers SOL in exchange for the NFT they want to buy
+async function handleSubmitCounterOffer() {
+  if (!counterOfferData) {
+    addLog('❌ No offer selected', 'error');
+    return;
+  }
+
+  if (!TAKER_ADDRESS) {
+    addLog('❌ Please load the Taker wallet first to make counter offers', 'error');
+    return;
+  }
+
+  const priceInput = document.getElementById('counter-offer-price');
+  const price = parseFloat(priceInput?.value || '0');
+
+  if (!price || price <= 0) {
+    addLog('❌ Please enter a valid price', 'error');
+    return;
+  }
+
+  const submitBtn = document.getElementById('counter-offer-submit');
+  const originalText = submitBtn ? submitBtn.innerHTML : '';
+
+  try {
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '⏳ Submitting...';
+    }
+
+    addLog(`💰 Creating counter offer of ${price} SOL for ${counterOfferData.name}...`, 'info');
+
+    // Convert SOL to lamports
+    const priceLamports = Math.floor(price * 1e9);
+
+    // Create a new offer where taker offers SOL for the NFT
+    // This is a "bid" - taker offers SOL, requests the NFT
+    const offerRequest = {
+      makerWallet: TAKER_ADDRESS, // Taker becomes the maker of this counter offer
+      offeredAssets: [], // Taker offers SOL, not assets
+      offeredSol: priceLamports.toString(),
+      requestedAssets: [
+        {
+          identifier: counterOfferData.assetId,
+          type: 'NFT', // Will be validated by the backend
+        },
+      ],
+      requestedSol: '0',
+    };
+
+    // Call create offer API to make a new bid
+    const response = await fetch('/api/swaps/offers', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'idempotency-key': `counter-${counterOfferData.offerId}-${Date.now()}`,
+      },
+      body: JSON.stringify(offerRequest),
+    });
+
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.message || result.error || 'Failed to submit counter offer');
+    }
+
+    const newOfferId = result.data.offerId || result.data.offer?.id;
+    addLog(`✅ Counter offer created! Offer ID: ${newOfferId}`, 'success');
+    addLog(`   You offered ${price} SOL for "${counterOfferData.name}"`, 'info');
+    addLog(`   The seller can now accept your offer`, 'info');
+    hideCounterOfferModal();
+
+    // Refresh marketplace
+    await loadMarketplaceListings();
+  } catch (error) {
+    console.error('Counter offer error:', error);
+    addLog(`❌ Failed to submit counter offer: ${error.message}`, 'error');
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalText;
+    }
+  }
+}
+
+// Initialize counter offer modal handlers
+function initCounterOfferModal() {
+  const cancelBtn = document.getElementById('counter-offer-cancel');
+  const submitBtn = document.getElementById('counter-offer-submit');
+  const priceInput = document.getElementById('counter-offer-price');
+  const priceUsdDisplay = document.getElementById('counter-offer-price-usd');
+
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', hideCounterOfferModal);
+  }
+
+  if (submitBtn) {
+    submitBtn.addEventListener('click', handleSubmitCounterOffer);
+  }
+
+  // Update USD display when price changes
+  if (priceInput && priceUsdDisplay) {
+    priceInput.addEventListener('input', function () {
+      const solValue = parseFloat(this.value);
+      if (solValue > 0 && solPriceUSD) {
+        const usdValue = (solValue * solPriceUSD).toFixed(2);
+        priceUsdDisplay.textContent = `≈ $${usdValue} USD`;
+      } else {
+        priceUsdDisplay.textContent = '';
+      }
+    });
+  }
+}
+
+// Export for global access
+window.handleCancelOffer = handleCancelOffer;
+window.viewOfferDetails = viewOfferDetails;
+window.showCounterOfferModal = showCounterOfferModal;
+window.hideCounterOfferModal = hideCounterOfferModal;
+window.handleSubmitCounterOffer = handleSubmitCounterOffer;
 
 // Quick list modal functions
 function showQuickListModal(nft) {
@@ -2742,6 +2955,9 @@ function initializeMarketplaceFeatures() {
     successCloseBtn.addEventListener('click', hidePurchaseSuccessModal);
   }
 
+  // Initialize counter offer modal
+  initCounterOfferModal();
+
   console.log('✅ Marketplace features initialized');
 }
 
@@ -2756,15 +2972,24 @@ async function loadMarketplaceListings() {
     '<div class="loading"><div class="spinner"></div>Loading marketplace...</div>';
 
   try {
-    // Fetch all active listings
-    const response = await fetch('/api/listings?status=ACTIVE');
+    // Fetch all pending offers (these are open listings)
+    const response = await fetch('/api/swaps/offers?status=PENDING');
     const result = await response.json();
 
     if (!result.success) {
       throw new Error(result.message || 'Failed to load marketplace');
     }
 
-    marketplaceListings = result.data.listings || [];
+    // Filter to only show NFT-for-SOL offers (listings) that are open (no takerWallet)
+    // Also exclude offers from the current user (maker)
+    marketplaceListings = (result.data.offers || []).filter((offer) => {
+      const hasOfferedAssets = offer.offeredAssets && offer.offeredAssets.length > 0;
+      const requestsSol = offer.requestedSol && BigInt(offer.requestedSol) > 0;
+      const noRequestedAssets = !offer.requestedAssets || offer.requestedAssets.length === 0;
+      const isOpenListing = !offer.takerWallet; // Open listings have no takerWallet
+      const notOwnListing = offer.makerWallet !== MAKER_ADDRESS; // Exclude own listings
+      return hasOfferedAssets && requestsSol && noRequestedAssets && isOpenListing && notOwnListing;
+    });
     console.log(`🛒 Loaded ${marketplaceListings.length} marketplace listings`);
     renderMarketplaceListings();
   } catch (error) {
@@ -2786,28 +3011,28 @@ async function loadMarketplaceListings() {
   }
 }
 
-// Render marketplace listings
+// Render marketplace listings - updated for offers API format
 function renderMarketplaceListings() {
   const container = document.getElementById('marketplace-grid');
   if (!container) return;
 
   // Apply filters
-  let filteredListings = marketplaceListings.filter((listing) => {
-    // Filter out expired listings
-    const expiresAt = new Date(listing.expiresAt);
-    if (expiresAt < new Date()) return false;
+  let filteredListings = marketplaceListings.filter((offer) => {
+    // Get asset info for filtering
+    const offeredAsset = offer.offeredAssets && offer.offeredAssets[0];
+    const assetMetadata = offeredAsset?.metadata || {};
+    const name = (assetMetadata.name || offeredAsset?.name || '').toLowerCase();
+    const assetId = (offeredAsset?.identifier || '').toLowerCase();
 
     // Search filter
     if (marketplaceSearchTerm) {
-      const name = (listing.metadata?.name || '').toLowerCase();
-      const assetId = (listing.assetId || '').toLowerCase();
       if (!name.includes(marketplaceSearchTerm) && !assetId.includes(marketplaceSearchTerm)) {
         return false;
       }
     }
 
     // Price filter
-    const priceSol = parseInt(listing.priceLamports) / 1e9;
+    const priceSol = parseInt(offer.requestedSol || '0') / 1e9;
     if (marketplacePriceFilter === 'low' && priceSol >= 0.1) return false;
     if (marketplacePriceFilter === 'mid' && (priceSol < 0.1 || priceSol > 1)) return false;
     if (marketplacePriceFilter === 'high' && priceSol <= 1) return false;
@@ -2821,44 +3046,37 @@ function renderMarketplaceListings() {
   }
 
   container.innerHTML = filteredListings
-    .map((listing) => {
-      const metadata = listing.metadata || {};
-      const imageUrl = metadata.image || getPlaceholderImage(listing.assetId);
-      const name = metadata.name || 'Unknown NFT';
-      const priceSol = (parseInt(listing.priceLamports) / 1e9).toFixed(4);
-      const priceUsd = solPriceUSD
-        ? ((parseInt(listing.priceLamports) / 1e9) * solPriceUSD).toFixed(2)
-        : null;
-      const seller = listing.seller;
-      // Check if this listing belongs to the taker (buyer) - they can't buy their own listings
-      const isOwnListing = TAKER_ADDRESS && seller === TAKER_ADDRESS;
+    .map((offer) => {
+      // Get first offered asset (the NFT being listed)
+      const offeredAsset = offer.offeredAssets && offer.offeredAssets[0];
+      const assetId = offeredAsset ? offeredAsset.identifier : 'unknown';
+      const assetMetadata = offeredAsset?.metadata || {};
 
-      // Determine NFT type from listing data or metadata
-      // Order matches getNftTypeLabel: check isCoreNft first, then isCompressed
+      const imageUrl = assetMetadata.image || getPlaceholderImage(assetId);
+      const name = assetMetadata.name || offeredAsset?.name || 'Unknown NFT';
+      const priceSol = (parseInt(offer.requestedSol || '0') / 1e9).toFixed(4);
+      const priceUsd = solPriceUSD
+        ? ((parseInt(offer.requestedSol || '0') / 1e9) * solPriceUSD).toFixed(2)
+        : null;
+      const seller = offer.makerWallet;
+
+      // Determine NFT type from asset
       let nftType = 'SPL NFT';
-      if (listing.assetType) {
-        nftType =
-          listing.assetType === 'CNFT'
-            ? 'cNFT'
-            : listing.assetType === 'CORE'
-            ? 'Core NFT'
-            : listing.assetType === 'SPL'
-            ? 'SPL NFT'
-            : 'SPL NFT';
-      } else if (metadata.isCoreNft) {
-        nftType = 'Core NFT';
-      } else if (metadata.isCompressed) {
+      const assetType = offeredAsset?.type;
+      if (assetType === 'CNFT' || assetType === 'cNFT') {
         nftType = 'cNFT';
+      } else if (assetType === 'CORE_NFT' || assetType === 'Core') {
+        nftType = 'Core NFT';
       }
 
       // Truncate seller address
-      const sellerDisplay = `${seller.substring(0, 4)}...${seller.substring(seller.length - 4)}`;
+      const sellerDisplay = seller ? `${seller.substring(0, 4)}...${seller.substring(seller.length - 4)}` : 'Unknown';
 
       return `
-            <div class="marketplace-card" data-listing-id="${listing.listingId}">
+            <div class="marketplace-card" data-offer-id="${offer.id}">
                 <div class="marketplace-card-header">
                     <img class="marketplace-card-image" src="${imageUrl}" alt="${escapeHtml(name)}"
-                         data-asset-id="${listing.assetId}">
+                         data-asset-id="${assetId}">
                     <div class="marketplace-card-info">
                         <div class="marketplace-card-name">${escapeHtml(name)}</div>
                         <div class="marketplace-card-type">${nftType}</div>
@@ -2883,29 +3101,40 @@ function renderMarketplaceListings() {
                     }
                 </div>
 
-                <div class="marketplace-card-actions">
-                    ${
-                      isOwnListing
-                        ? `
-                        <button class="buy-now-btn own-listing" disabled>Your Listing</button>
-                    `
-                        : `
-                        <button class="buy-now-btn" data-action="buy" data-listing-id="${listing.listingId}">
-                            🛒 Buy Now
-                        </button>
-                    `
-                    }
+                <div class="marketplace-card-actions" style="display: flex; gap: 8px;">
+                    <button class="buy-now-btn" data-action="accept" data-offer-id="${offer.id}" style="flex: 1;">
+                        🛒 Accept Offer
+                    </button>
+                    <button class="buy-now-btn counter-offer-btn" data-action="counter" data-offer-id="${offer.id}"
+                            data-name="${escapeHtml(name)}" data-image="${imageUrl}" data-asset-id="${assetId}"
+                            data-price="${priceSol}" style="flex: 1; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                        💰 Counter
+                    </button>
                 </div>
             </div>
         `;
     })
     .join('');
 
-  // Add CSP-compliant event handlers for buy buttons
-  container.querySelectorAll('.buy-now-btn[data-action="buy"]').forEach((btn) => {
+  // Add CSP-compliant event handlers for accept buttons
+  container.querySelectorAll('.buy-now-btn[data-action="accept"]').forEach((btn) => {
     btn.addEventListener('click', function () {
-      const listingId = this.dataset.listingId;
-      showBuyModal(listingId);
+      const offerId = this.dataset.offerId;
+      showAcceptOfferModal(offerId);
+    });
+  });
+
+  // Add CSP-compliant event handlers for counter offer buttons
+  container.querySelectorAll('.counter-offer-btn[data-action="counter"]').forEach((btn) => {
+    btn.addEventListener('click', function () {
+      const offerId = this.dataset.offerId;
+      const offerData = {
+        name: this.dataset.name,
+        image: this.dataset.image,
+        assetId: this.dataset.assetId,
+        priceSol: this.dataset.price,
+      };
+      showCounterOfferModal(offerId, offerData);
     });
   });
 
@@ -2922,6 +3151,117 @@ function renderMarketplaceListings() {
       { once: true }
     );
   });
+}
+
+// Accept offer state
+let selectedAcceptOffer = null;
+
+// Show accept offer modal and handle the accept flow
+async function showAcceptOfferModal(offerId) {
+  const offer = marketplaceListings.find((o) => o.id === parseInt(offerId) || o.id === offerId);
+  if (!offer) {
+    addLog('❌ Offer not found', 'error');
+    return;
+  }
+
+  // Check if taker wallet is loaded
+  if (!takerData) {
+    addLog('❌ Please load the Taker wallet first to accept offers', 'error');
+    return;
+  }
+
+  selectedAcceptOffer = offer;
+
+  const offeredAsset = offer.offeredAssets && offer.offeredAssets[0];
+  const assetId = offeredAsset ? offeredAsset.identifier : 'unknown';
+  const assetMetadata = offeredAsset?.metadata || {};
+  const name = assetMetadata.name || offeredAsset?.name || 'Unknown NFT';
+  const priceSol = (parseInt(offer.requestedSol || '0') / 1e9).toFixed(4);
+  const priceUsd = solPriceUSD ? ((parseInt(offer.requestedSol || '0') / 1e9) * solPriceUSD).toFixed(2) : null;
+
+  // Check if taker has enough SOL
+  const requiredLamports = parseInt(offer.requestedSol || '0');
+  const takerBalanceLamports = takerData.balance * 1e9;
+
+  if (takerBalanceLamports < requiredLamports) {
+    addLog(`❌ Insufficient SOL balance. Need ${priceSol} SOL, have ${takerData.balance.toFixed(4)} SOL`, 'error');
+    return;
+  }
+
+  // Confirm purchase
+  const confirmMessage = `Accept offer to buy "${name}" for ${priceSol} SOL${priceUsd ? ` (~$${priceUsd})` : ''}?`;
+  if (!confirm(confirmMessage)) {
+    return;
+  }
+
+  await handleAcceptOffer(offer);
+}
+
+// Handle accepting an offer
+async function handleAcceptOffer(offer) {
+  const offeredAsset = offer.offeredAssets && offer.offeredAssets[0];
+  const name = offeredAsset?.metadata?.name || offeredAsset?.name || 'Unknown NFT';
+  const priceSol = (parseInt(offer.requestedSol || '0') / 1e9).toFixed(4);
+
+  try {
+    addLog(`🛒 Accepting offer for ${name}...`, 'info');
+    addLog(`   Price: ${priceSol} SOL`, 'info');
+
+    // Step 1: Call accept offer API to get serialized transaction
+    addLog('📝 Building swap transaction...', 'info');
+
+    const acceptResponse = await fetch(`/api/swaps/offers/${offer.id}/accept`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'idempotency-key': `accept-${offer.id}-${Date.now()}`,
+      },
+      body: JSON.stringify({
+        takerWallet: TAKER_ADDRESS,
+      }),
+    });
+
+    const acceptResult = await acceptResponse.json();
+
+    if (!acceptResult.success) {
+      throw new Error(acceptResult.message || acceptResult.error || 'Failed to accept offer');
+    }
+
+    addLog('✓ Transaction built successfully', 'success');
+
+    // Step 2: Execute the transaction via test endpoint
+    addLog('🔐 Signing and executing swap transaction...', 'info');
+
+    const execResponse = await fetch('/api/test/execute-swap', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Test-Execution': 'true',
+      },
+      body: JSON.stringify({
+        offerId: offer.id,
+        serializedTransaction: acceptResult.data.transaction.serialized,
+      }),
+    });
+
+    const execResult = await execResponse.json();
+
+    if (!execResult.success) {
+      throw new Error(execResult.error || 'Failed to execute swap transaction');
+    }
+
+    addLog(`✅ Swap completed successfully!`, 'success');
+    addLog(`   TX: ${execResult.data.signature}`, 'success');
+
+    // Refresh marketplace and wallets
+    await loadMarketplaceListings();
+    await loadWalletInfo('taker');
+    await loadActiveListings();
+
+  } catch (error) {
+    console.error('Accept offer error:', error);
+    addLog(`❌ Failed to accept offer: ${error.message}`, 'error');
+  }
 }
 
 // Show buy confirmation modal
