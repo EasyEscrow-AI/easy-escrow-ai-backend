@@ -2214,13 +2214,23 @@ async function loadActiveListings() {
       throw new Error(result.message || 'Failed to load listings');
     }
 
-    // Filter to only show NFT-for-SOL offers (listings)
-    // A listing is an offer where maker offers NFT(s) and requests SOL
+    // Filter to show:
+    // 1. NFT-for-SOL offers (listings you created - you offer NFT, request SOL)
+    // 2. SOL-for-NFT offers (counter offers/bids you made - you offer SOL, request NFT)
     activeListings = (result.data.offers || []).filter((offer) => {
       const hasOfferedAssets = offer.offeredAssets && offer.offeredAssets.length > 0;
+      const hasOfferedSol = offer.offeredSol && BigInt(offer.offeredSol) > 0;
       const requestsSol = offer.requestedSol && BigInt(offer.requestedSol) > 0;
+      const requestsAssets = offer.requestedAssets && offer.requestedAssets.length > 0;
       const noRequestedAssets = !offer.requestedAssets || offer.requestedAssets.length === 0;
-      return hasOfferedAssets && requestsSol && noRequestedAssets;
+
+      // Listing: offers NFT, requests SOL
+      const isListing = hasOfferedAssets && requestsSol && noRequestedAssets;
+
+      // Bid/Counter offer: offers SOL, requests NFT
+      const isBid = hasOfferedSol && requestsAssets && !hasOfferedAssets;
+
+      return isListing || isBid;
     });
     renderActiveListings();
   } catch (error) {
@@ -2243,58 +2253,92 @@ async function loadActiveListings() {
 }
 
 // Render active listings - updated for offers API format
+// Supports both listings (NFT-for-SOL) and bids (SOL-for-NFT counter offers)
 function renderActiveListings() {
   const container = document.getElementById('active-listings-container');
   if (!container) return;
 
   if (activeListings.length === 0) {
     container.innerHTML =
-      '<div class="empty-state">No active listings. List an asset to see it here.</div>';
+      '<div class="empty-state">No active listings or bids. List an asset or make a counter offer to see it here.</div>';
     return;
   }
 
   container.innerHTML = activeListings
     .map((offer) => {
-      // Get first offered asset (the NFT being listed)
-      const offeredAsset = offer.offeredAssets && offer.offeredAssets[0];
-      const assetId = offeredAsset ? offeredAsset.identifier : 'unknown';
-      const assetMetadata = offeredAsset?.metadata || {};
+      // Determine if this is a listing (NFT-for-SOL) or a bid (SOL-for-NFT)
+      const hasOfferedAssets = offer.offeredAssets && offer.offeredAssets.length > 0;
+      const hasOfferedSol = offer.offeredSol && BigInt(offer.offeredSol) > 0;
+      const isBid = hasOfferedSol && !hasOfferedAssets;
 
-      const imageUrl = assetMetadata.image || getPlaceholderImage(assetId);
-      const name = assetMetadata.name || offeredAsset?.name || 'Unknown NFT';
-      const priceSol = (parseInt(offer.requestedSol || '0') / 1e9).toFixed(4);
-      const createdAt = new Date(offer.createdAt);
+      // For listings: get the offered NFT
+      // For bids: get the requested NFT
+      let assetId, assetMetadata, name, nftType, priceSol, offerTypeLabel, cardStyle;
 
-      // Determine NFT type from asset
-      let nftType = 'SPL NFT';
-      const assetType = offeredAsset?.type;
-      if (assetType === 'CNFT' || assetType === 'cNFT') {
-        nftType = 'cNFT';
-      } else if (assetType === 'CORE_NFT' || assetType === 'Core') {
-        nftType = 'Core NFT';
+      if (isBid) {
+        // This is a bid/counter offer - user offered SOL for an NFT
+        const requestedAsset = offer.requestedAssets && offer.requestedAssets[0];
+        assetId = requestedAsset ? requestedAsset.identifier : 'unknown';
+        assetMetadata = requestedAsset?.metadata || {};
+        name = assetMetadata.name || requestedAsset?.name || 'Unknown NFT';
+        priceSol = (parseInt(offer.offeredSol || '0') / 1e9).toFixed(4);
+        offerTypeLabel = '💰 Your Bid';
+        cardStyle = 'border-left: 4px solid #f59e0b;'; // Orange border for bids
+
+        // Determine NFT type
+        const assetType = requestedAsset?.type;
+        if (assetType === 'CNFT' || assetType === 'cNFT') {
+          nftType = 'cNFT';
+        } else if (assetType === 'CORE_NFT' || assetType === 'Core') {
+          nftType = 'Core NFT';
+        } else {
+          nftType = 'SPL NFT';
+        }
+      } else {
+        // This is a listing - user offered NFT for SOL
+        const offeredAsset = offer.offeredAssets && offer.offeredAssets[0];
+        assetId = offeredAsset ? offeredAsset.identifier : 'unknown';
+        assetMetadata = offeredAsset?.metadata || {};
+        name = assetMetadata.name || offeredAsset?.name || 'Unknown NFT';
+        priceSol = (parseInt(offer.requestedSol || '0') / 1e9).toFixed(4);
+        cardStyle = '';
+
+        // Determine NFT type
+        const assetType = offeredAsset?.type;
+        if (assetType === 'CNFT' || assetType === 'cNFT') {
+          nftType = 'cNFT';
+        } else if (assetType === 'CORE_NFT' || assetType === 'Core') {
+          nftType = 'Core NFT';
+        } else {
+          nftType = 'SPL NFT';
+        }
+
+        // Determine listing type (open or private)
+        const isPrivate = !!offer.takerWallet;
+        offerTypeLabel = isPrivate ? '🔒 Private' : '🌐 Open';
       }
 
-      // Determine listing type (open or private)
-      const isPrivate = !!offer.takerWallet;
-      const listingTypeLabel = isPrivate ? '🔒 Private' : '🌐 Open';
+      const imageUrl = assetMetadata.image || getPlaceholderImage(assetId);
+      const createdAt = new Date(offer.createdAt);
 
       // Determine status class
       let statusClass = offer.status.toLowerCase();
+      const isPrivate = !isBid && !!offer.takerWallet;
 
       return `
-            <div class="listing-card" data-offer-id="${offer.id}">
+            <div class="listing-card" data-offer-id="${offer.id}" style="${cardStyle}">
                 <div class="listing-card-header">
                     <img class="listing-card-image" src="${imageUrl}" alt="${escapeHtml(name)}"
                          data-asset-id="${assetId}">
                     <div class="listing-card-info">
                         <div class="listing-card-name">${escapeHtml(name)}</div>
-                        <div class="listing-card-type">${nftType} ${listingTypeLabel}</div>
+                        <div class="listing-card-type">${nftType} ${offerTypeLabel}</div>
                     </div>
                 </div>
 
                 <div class="listing-card-details">
                     <div class="listing-card-row">
-                        <span class="listing-card-label">Price:</span>
+                        <span class="listing-card-label">${isBid ? 'Your Offer:' : 'Price:'}</span>
                         <span class="listing-card-value price">${priceSol} SOL</span>
                     </div>
                     <div class="listing-card-row">
@@ -2721,6 +2765,12 @@ function showQuickListModal(nft) {
   document.getElementById('quick-list-price').value = '';
   document.getElementById('quick-list-price-usd').textContent = '';
 
+  // Clear private wallet input
+  const privateWalletInput = document.getElementById('quick-list-private-wallet');
+  if (privateWalletInput) {
+    privateWalletInput.value = '';
+  }
+
   // Reset duration buttons
   const durationBtns = document.querySelectorAll(
     '#quick-list-duration-buttons .listing-duration-btn'
@@ -2776,24 +2826,51 @@ async function handleQuickListConfirm() {
     confirmBtn.disabled = true;
     confirmBtn.innerHTML = 'Creating...';
 
-    addLog(`📝 Creating listing for ${quickListAsset.name}...`, 'info');
+    // Get optional private wallet for private sale
+    const privateWalletInput = document.getElementById('quick-list-private-wallet');
+    const privateWallet = privateWalletInput ? privateWalletInput.value.trim() : '';
+
+    const listingType = privateWallet ? 'private' : 'open';
+    addLog(`📝 Creating ${listingType} listing for ${quickListAsset.name}...`, 'info');
 
     // Convert SOL to lamports
     const priceLamports = Math.floor(price * 1e9);
 
-    // Call create listing API
-    const response = await fetch('/api/listings', {
+    // Determine asset type
+    let assetType = 'NFT';
+    if (quickListAsset.isCompressed) {
+      assetType = 'CNFT';
+    } else if (quickListAsset.isCoreNft) {
+      assetType = 'CORE_NFT';
+    }
+
+    // Build offer request - NFT for SOL (open swap offer)
+    const offerRequest = {
+      makerWallet: MAKER_ADDRESS,
+      offeredAssets: [
+        {
+          identifier: quickListAsset.mint,
+          type: assetType,
+        },
+      ],
+      requestedAssets: [],
+      requestedSol: priceLamports.toString(),
+      durationSeconds: quickListDuration,
+    };
+
+    // Add taker wallet if private sale
+    if (privateWallet) {
+      offerRequest.takerWallet = privateWallet;
+    }
+
+    // Call create offer API (open swap offer)
+    const response = await fetch('/api/swaps/offers', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'idempotency-key': `quick-listing-${Date.now()}-${quickListAsset.mint.substring(0, 8)}`,
       },
-      body: JSON.stringify({
-        seller: MAKER_ADDRESS,
-        assetId: quickListAsset.mint,
-        priceLamports: priceLamports.toString(),
-        durationSeconds: quickListDuration,
-      }),
+      body: JSON.stringify(offerRequest),
     });
 
     const result = await response.json();
@@ -2802,49 +2879,22 @@ async function handleQuickListConfirm() {
       throw new Error(result.message || result.error || 'Failed to create listing');
     }
 
-    addLog(`✓ Listing created! ID: ${result.data.listing.listingId}`, 'success');
+    const offerId = result.data.offerId || result.data.offer?.id;
+    addLog(`✓ Listing created! Offer ID: ${offerId}`, 'success');
 
-    confirmBtn.innerHTML = 'Signing...';
-
-    // Execute the delegation transaction
-    const execResponse = await fetch('/api/test/execute-listing-delegation', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Test-Execution': 'true',
-      },
-      body: JSON.stringify({
-        listingId: result.data.listing.listingId,
-        serializedTransaction: result.data.transaction.serializedTransaction,
-      }),
-    });
-
-    const execResult = await execResponse.json();
-
-    if (!execResult.success) {
-      throw new Error(execResult.error || 'Failed to execute delegation transaction');
+    if (privateWallet) {
+      addLog(`🔒 Private sale - only ${privateWallet.substring(0, 8)}... can buy`, 'info');
+    } else {
+      addLog(`🌐 Open listing - anyone can buy or make counter offers`, 'info');
     }
 
-    addLog(`✓ Delegation confirmed!`, 'success');
-
-    // Confirm the listing
-    await fetch(`/api/listings/${result.data.listing.listingId}/confirm`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'idempotency-key': `confirm-${result.data.listing.listingId}-${Date.now()}`,
-      },
-      body: JSON.stringify({
-        signature: execResult.data.signature,
-      }),
-    });
-
-    addLog(`✅ Listing is now ACTIVE!`, 'success');
+    addLog(`✅ NFT is now listed for sale!`, 'success');
 
     hideQuickListModal();
 
-    // Refresh listings and wallet
+    // Refresh listings, marketplace, and wallet
     await loadActiveListings();
+    await loadMarketplaceListings();
     await loadWalletInfo('maker');
   } catch (error) {
     console.error('Quick list error:', error);
