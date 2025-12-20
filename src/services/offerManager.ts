@@ -263,6 +263,8 @@ export class OfferManager {
   async rebuildTransaction(offerId: number, authorizedAppId?: string): Promise<{
     serializedTransaction: string;
     offer: any;
+    // Two-phase delegation flag (for bulk cNFT swaps when Jito unavailable)
+    requiresTwoPhase?: boolean;
   }> {
     // Defensive: Ensure offerId is a number (route params can sometimes be strings)
     const safeOfferId = typeof offerId === 'string' ? parseInt(offerId, 10) : offerId;
@@ -321,19 +323,22 @@ export class OfferManager {
     });
     
     console.log(`[OfferManager] Transaction rebuilt for offer ${offerId}`);
-    
+
     return {
       serializedTransaction: buildResult.serializedTransaction,
       offer: updatedOffer,
+      requiresTwoPhase: buildResult.requiresTwoPhase,
     };
   }
 
-  async acceptOffer(offerId: number, takerWallet: string, authorizedAppId?: string): Promise<{ 
+  async acceptOffer(offerId: number, takerWallet: string, authorizedAppId?: string): Promise<{
     serializedTransaction: string;
     offer: any; // SwapOffer from Prisma
     // Bulk swap fields (populated for 3+ cNFT swaps)
     isBulkSwap?: boolean;
     transactionGroup?: TransactionGroupResult;
+    // Two-phase delegation flag (for bulk cNFT swaps when Jito unavailable)
+    requiresTwoPhase?: boolean;
   }> {
     console.log('[OfferManager] Accepting offer:', { offerId, taker: takerWallet });
     
@@ -420,10 +425,11 @@ export class OfferManager {
       // - Just-in-time proof fetching (proofs fetched immediately before transaction building)
       // - Tree stability checks before retrying
       let buildResult: { 
-        serializedTransaction: string; 
+        serializedTransaction: string;
         nonceValue: string;
         isBulkSwap?: boolean;
         transactionGroup?: TransactionGroupResult;
+        requiresTwoPhase?: boolean;
       } | null = null;
       const maxAttempts = 5; // Increased from 2 to 5 for high-activity trees
       
@@ -515,6 +521,7 @@ export class OfferManager {
         offer: updatedOffer,
         isBulkSwap: buildResult.isBulkSwap,
         transactionGroup: buildResult.transactionGroup,
+        requiresTwoPhase: buildResult.requiresTwoPhase,
       };
     } catch (error) {
       console.error('[OfferManager] Failed to accept offer:', error);
@@ -634,6 +641,8 @@ export class OfferManager {
     // Bulk swap fields (populated for 3+ cNFT swaps)
     isBulkSwap?: boolean;
     transactionGroup?: TransactionGroupResult;
+    // Two-phase delegation flag (for bulk cNFT swaps when Jito unavailable)
+    requiresTwoPhase?: boolean;
   }> {
     console.log('[OfferManager] buildOfferTransaction params:', {
       makerWallet: params.makerWallet,
@@ -741,13 +750,27 @@ export class OfferManager {
         strategy: groupResult.strategy,
         transactionCount: groupResult.transactionCount,
         requiresJitoBundle: groupResult.requiresJitoBundle,
+        requiresTwoPhase: groupResult.requiresTwoPhase,
         totalSizeBytes: groupResult.totalSizeBytes,
       });
-      
+
       // For bulk swaps, we return the first transaction but include the full group
       // The API layer will handle Jito bundle submission
 
-      // Validate transaction group has transactions
+      // If two-phase delegation is required, return early with special flag
+      // The API layer will redirect to the two-phase lock/settle flow
+      if (groupResult.requiresTwoPhase || groupResult.strategy === SwapStrategy.TWO_PHASE_DELEGATION) {
+        console.log('[OfferManager] Two-phase delegation required - returning special response');
+        return {
+          serializedTransaction: '', // No immediate transaction - two-phase flow handles this
+          nonceValue: '',
+          isBulkSwap: true,
+          transactionGroup: groupResult,
+          requiresTwoPhase: true,
+        };
+      }
+
+      // Validate transaction group has transactions (for non-two-phase strategies)
       if (!groupResult.transactions || groupResult.transactions.length === 0) {
         throw new Error(
           `Transaction group is empty. Strategy: ${groupResult.strategy}, ` +
