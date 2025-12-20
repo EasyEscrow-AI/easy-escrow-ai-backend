@@ -36,9 +36,10 @@ import { DirectCoreNftService, createDirectCoreNftService } from './directCoreNf
 import { isJitoBundlesEnabled } from '../utils/featureFlags';
 
 // Conservative limits for transaction splitting
-// With full canopy trees (0 proof nodes), we can fit more cNFTs per transaction
-const MAX_CNFTS_PER_TRANSACTION_WITH_PROOFS = 1; // 1 cNFT when proofs are needed
-const MAX_CNFTS_PER_TRANSACTION_NO_PROOFS = 3; // 3 cNFTs when full canopy (0 proof nodes)
+// cNFT Merkle proofs are typically large (~350+ bytes per cNFT with proof nodes)
+// FIX: Always use 1 cNFT per transaction to avoid "Transaction too large" errors
+// The NO_PROOFS constant was causing cNFT x 1 <> cNFT x 3 swaps to fail with 1758 > 1232 bytes
+const MAX_CNFTS_PER_TRANSACTION = 1; // Always 1 cNFT per transaction (proofs are almost always needed)
 const MAX_SPL_NFTS_PER_TRANSACTION = 5; // SPL NFT transfers are small (~80 bytes each)
 const MAX_CORE_NFTS_PER_TRANSACTION = 4; // Core NFT transfers (~100 bytes each)
 const JITO_BUNDLE_THRESHOLD = 3; // Use Jito bundles for 3+ total NFTs
@@ -244,7 +245,7 @@ export class TransactionGroupBuilder {
     } else if (totalCnfts > 0) {
       // ANY swap with cNFTs needs bundle (proof nodes don't fit in single tx)
       // This handles mixed cases like 1 cNFT + 1 SPL NFT
-      const cnftsPerTx = MAX_CNFTS_PER_TRANSACTION_NO_PROOFS;
+      const cnftsPerTx = MAX_CNFTS_PER_TRANSACTION;
       const splPerTx = MAX_SPL_NFTS_PER_TRANSACTION;
       const corePerTx = MAX_CORE_NFTS_PER_TRANSACTION;
       
@@ -325,7 +326,7 @@ export class TransactionGroupBuilder {
     } else if (totalAllNfts >= JITO_BUNDLE_THRESHOLD) {
       // Mixed NFT types - use mixed bundle strategy
       // Calculate transactions needed for each type
-      const cnftsPerTx = MAX_CNFTS_PER_TRANSACTION_NO_PROOFS;
+      const cnftsPerTx = MAX_CNFTS_PER_TRANSACTION;
       const splPerTx = MAX_SPL_NFTS_PER_TRANSACTION;
       const corePerTx = MAX_CORE_NFTS_PER_TRANSACTION;
       
@@ -1359,7 +1360,7 @@ export class TransactionGroupBuilder {
       : new Map<string, any>();
     
     // === cNFT transfers (1 per transaction due to proof nodes) ===
-    const cnftsPerTx = MAX_CNFTS_PER_TRANSACTION_NO_PROOFS;
+    const cnftsPerTx = MAX_CNFTS_PER_TRANSACTION;
     const allCnfts = [
       ...makerCnfts.map(c => ({ asset: c, from: inputs.makerPubkey, to: inputs.takerPubkey, side: 'maker' as const })),
       ...takerCnfts.map(c => ({ asset: c, from: inputs.takerPubkey, to: inputs.makerPubkey, side: 'taker' as const })),
@@ -1859,14 +1860,14 @@ export class TransactionGroupBuilder {
     let remainingTakerSol = inputs.takerSolLamports;
     let remainingFee = inputs.platformFeeLamports;
     
-    // Group cNFTs (1-2 per transaction)
+    // Group cNFTs (1 per transaction due to Merkle proof size)
     const allCnfts: { asset: SwapAsset; side: 'maker' | 'taker' }[] = [
       ...makerCnfts.map(a => ({ asset: a, side: 'maker' as const })),
       ...takerCnfts.map(a => ({ asset: a, side: 'taker' as const })),
     ];
-    
-    // Create groups of cNFTs (batch multiple when using full canopy trees)
-    const cnftsPerTx = MAX_CNFTS_PER_TRANSACTION_NO_PROOFS;
+
+    // Each cNFT needs its own transaction (proof nodes are typically large)
+    const cnftsPerTx = MAX_CNFTS_PER_TRANSACTION;
     console.log(`[TransactionGroupBuilder] Batching ${allCnfts.length} cNFTs into groups of ${cnftsPerTx}`);
     
     for (let i = 0; i < allCnfts.length; i += cnftsPerTx) {
@@ -2120,7 +2121,7 @@ export function analyzeSwapStrategy(inputs: SwapAnalysisInput): SwapAnalysis {
     }
   } else if (totalCnfts > 0) {
     // ANY swap with cNFTs needs bundle
-    const cnftsPerTx = MAX_CNFTS_PER_TRANSACTION_NO_PROOFS;
+    const cnftsPerTx = MAX_CNFTS_PER_TRANSACTION;
     const splPerTx = MAX_SPL_NFTS_PER_TRANSACTION;
     const corePerTx = MAX_CORE_NFTS_PER_TRANSACTION;
     
