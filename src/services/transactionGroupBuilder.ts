@@ -928,7 +928,33 @@ export class TransactionGroupBuilder {
       takerCnfts: takerCnfts.length,
       useJitoNonces,
     });
-    
+
+    // Validate all transactions have proper structure
+    if (transactions.length === 0) {
+      throw new Error(
+        `No transactions built for Bubblegum bundle. ` +
+        `cNFTs: maker=${makerCnfts.length}, taker=${takerCnfts.length}`
+      );
+    }
+
+    // Verify each transaction has serialized data
+    for (let i = 0; i < transactions.length; i++) {
+      const tx = transactions[i];
+      if (!tx) {
+        throw new Error(`Transaction at index ${i} is undefined`);
+      }
+      if (!tx.transaction) {
+        throw new Error(
+          `Transaction at index ${i} (${tx.purpose}) has no transaction data`
+        );
+      }
+      if (!tx.transaction.serializedTransaction) {
+        throw new Error(
+          `Transaction at index ${i} (${tx.purpose}) has no serialized transaction`
+        );
+      }
+    }
+
     return {
       strategy: SwapStrategy.DIRECT_BUBBLEGUM_BUNDLE,
       analysis,
@@ -1284,7 +1310,34 @@ export class TransactionGroupBuilder {
       takerCoreNfts: takerCoreNfts.length,
       useJitoNonces,
     });
-    
+
+    // Validate all transactions have proper structure
+    if (transactions.length === 0) {
+      throw new Error(
+        `No transactions built for direct NFT bundle. ` +
+        `Assets: maker SPL=${makerSplNfts.length}, taker SPL=${takerSplNfts.length}, ` +
+        `maker Core=${makerCoreNfts.length}, taker Core=${takerCoreNfts.length}`
+      );
+    }
+
+    // Verify each transaction has serialized data
+    for (let i = 0; i < transactions.length; i++) {
+      const tx = transactions[i];
+      if (!tx) {
+        throw new Error(`Transaction at index ${i} is undefined`);
+      }
+      if (!tx.transaction) {
+        throw new Error(
+          `Transaction at index ${i} (${tx.purpose}) has no transaction data`
+        );
+      }
+      if (!tx.transaction.serializedTransaction) {
+        throw new Error(
+          `Transaction at index ${i} (${tx.purpose}) has no serialized transaction`
+        );
+      }
+    }
+
     return {
       strategy: SwapStrategy.DIRECT_NFT_BUNDLE,
       analysis,
@@ -1602,7 +1655,35 @@ export class TransactionGroupBuilder {
       coreNfts: makerCoreNfts.length + takerCoreNfts.length,
       useJitoNonces,
     });
-    
+
+    // Validate all transactions have proper structure
+    if (transactions.length === 0) {
+      throw new Error(
+        `No transactions built for mixed NFT bundle. ` +
+        `Assets: cNFTs=${makerCnfts.length + takerCnfts.length}, ` +
+        `SPL=${makerSplNfts.length + takerSplNfts.length}, ` +
+        `Core=${makerCoreNfts.length + takerCoreNfts.length}`
+      );
+    }
+
+    // Verify each transaction has serialized data
+    for (let i = 0; i < transactions.length; i++) {
+      const tx = transactions[i];
+      if (!tx) {
+        throw new Error(`Transaction at index ${i} is undefined`);
+      }
+      if (!tx.transaction) {
+        throw new Error(
+          `Transaction at index ${i} (${tx.purpose}) has no transaction data`
+        );
+      }
+      if (!tx.transaction.serializedTransaction) {
+        throw new Error(
+          `Transaction at index ${i} (${tx.purpose}) has no serialized transaction`
+        );
+      }
+    }
+
     return {
       strategy: SwapStrategy.MIXED_NFT_BUNDLE,
       analysis,

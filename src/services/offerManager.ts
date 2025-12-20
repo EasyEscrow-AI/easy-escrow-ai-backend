@@ -746,12 +746,36 @@ export class OfferManager {
       
       // For bulk swaps, we return the first transaction but include the full group
       // The API layer will handle Jito bundle submission
-      const firstTx = groupResult.transactions[0];
-      
-      if (!firstTx.transaction) {
-        throw new Error('Failed to build first transaction in group');
+
+      // Validate transaction group has transactions
+      if (!groupResult.transactions || groupResult.transactions.length === 0) {
+        throw new Error(
+          `Transaction group is empty. Strategy: ${groupResult.strategy}, ` +
+          `expected ${groupResult.transactionCount} transactions`
+        );
       }
-      
+
+      const firstTx = groupResult.transactions[0];
+
+      if (!firstTx) {
+        throw new Error(
+          `First transaction is undefined. ` +
+          `Transactions array length: ${groupResult.transactions.length}`
+        );
+      }
+
+      if (!firstTx.transaction) {
+        throw new Error(
+          `First transaction (${firstTx.purpose || 'unknown'}) has no transaction data`
+        );
+      }
+
+      if (!firstTx.transaction.serializedTransaction) {
+        throw new Error(
+          `First transaction (${firstTx.purpose || 'unknown'}) has no serialized transaction`
+        );
+      }
+
       return {
         serializedTransaction: firstTx.transaction.serializedTransaction,
         nonceValue: groupResult.nonceValue,
