@@ -16,29 +16,45 @@ import { IdempotencyService } from './idempotency.service';
 import { alertingService } from './alerting.service';
 
 /**
+ * Mask a sensitive string (API key) based on its length
+ * - Very short keys (< 8 chars): fully masked
+ * - Short keys (8-15 chars): show first 2 and last 2 only
+ * - Long keys (16+ chars): show first 4 and last 4
+ */
+function maskApiKey(key: string): string {
+  if (key.length < 8) {
+    return '****';
+  } else if (key.length < 16) {
+    return `${key.substring(0, 2)}...${key.substring(key.length - 2)}`;
+  } else {
+    return `${key.substring(0, 4)}...${key.substring(key.length - 4)}`;
+  }
+}
+
+/**
  * Mask RPC endpoint URL to hide API keys
  * Handles various RPC URL formats:
  * - QuickNode: https://xxx.solana-mainnet.quiknode.pro/API_KEY/
  * - Helius: https://mainnet.helius-rpc.com/?api-key=API_KEY
  * - Alchemy: https://solana-mainnet.g.alchemy.com/v2/API_KEY
  *
+ * Masks both query param and path-based API keys if both exist.
+ *
  * @param url - The RPC endpoint URL
- * @returns Masked URL with API key partially hidden
+ * @returns Masked URL with API key(s) hidden
  */
 function maskRpcEndpoint(url: string): string {
   try {
     const urlObj = new URL(url);
+    let foundApiKey = false;
 
     // Check for API key in query params (e.g., Helius)
-    const apiKeyParam = urlObj.searchParams.get('api-key') || urlObj.searchParams.get('api_key');
-    if (apiKeyParam && apiKeyParam.length > 8) {
-      const masked = `${apiKeyParam.substring(0, 4)}...${apiKeyParam.substring(apiKeyParam.length - 4)}`;
-      if (urlObj.searchParams.has('api-key')) {
-        urlObj.searchParams.set('api-key', masked);
-      } else {
-        urlObj.searchParams.set('api_key', masked);
+    for (const paramName of ['api-key', 'api_key']) {
+      const apiKeyParam = urlObj.searchParams.get(paramName);
+      if (apiKeyParam && apiKeyParam.length >= 8) {
+        urlObj.searchParams.set(paramName, maskApiKey(apiKeyParam));
+        foundApiKey = true;
       }
-      return urlObj.toString();
     }
 
     // Check for API key in path (e.g., QuickNode, Alchemy)
@@ -48,11 +64,14 @@ function maskRpcEndpoint(url: string): string {
       const lastPart = pathParts[pathParts.length - 1];
       // API keys are typically 32+ characters of hex/alphanumeric
       if (lastPart.length >= 32 && /^[a-zA-Z0-9_-]+$/.test(lastPart)) {
-        const masked = `${lastPart.substring(0, 4)}...${lastPart.substring(lastPart.length - 4)}`;
-        pathParts[pathParts.length - 1] = masked;
+        pathParts[pathParts.length - 1] = maskApiKey(lastPart);
         urlObj.pathname = '/' + pathParts.join('/') + '/';
-        return urlObj.toString();
+        foundApiKey = true;
       }
+    }
+
+    if (foundApiKey) {
+      return urlObj.toString();
     }
 
     // No API key found in expected locations, return host only for safety
