@@ -1662,7 +1662,7 @@ async function executeAtomicSwap(params) {
           : '';
         const txCount = signatures.length > 1 ? ` (${signatures.length} txns)` : '';
         const jitoTipNote = (isBulkSwap && jitoEnabled) ? ' (includes 0.001 SOL Jito tip)' : '';
-        addLog(`💸 Total network fees: ${feeSol} SOL${feeUsd}${txCount}${jitoTipNote}`, 'info');
+        addLog(`💸 Total network fees: ${feeSol} SOL${feeUsd}${txCount}${jitoTipNote}`, 'success');
       }
     } catch (feeError) {
       console.warn('Could not fetch transaction fee:', feeError);
