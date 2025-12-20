@@ -1358,6 +1358,14 @@ async function acceptOfferWithRetry(offerId, attempt = 1) {
 
 // Helper: Execute swap with retry for stale proofs
 async function executeSwapWithRetry(offerId, acceptData, isBulkSwap = false, bulkSwapInfo = null) {
+  // Validate accept data has required transaction structure
+  if (!acceptData?.data?.transaction?.serialized) {
+    throw new Error(
+      'Accept response missing transaction data. ' +
+      `Has data: ${!!acceptData?.data}, has transaction: ${!!acceptData?.data?.transaction}`
+    );
+  }
+
   // Build request body
   const requestBody = {
     serializedTransaction: acceptData.data.transaction.serialized,
@@ -1367,12 +1375,33 @@ async function executeSwapWithRetry(offerId, acceptData, isBulkSwap = false, bul
 
   // Add bulk swap info if available
   if (isBulkSwap && bulkSwapInfo) {
+    // Validate bulk swap transactions array
+    if (!bulkSwapInfo.transactions || !Array.isArray(bulkSwapInfo.transactions)) {
+      throw new Error(
+        `Bulk swap info missing transactions array. ` +
+        `Strategy: ${bulkSwapInfo.strategy}, expected ${bulkSwapInfo.transactionCount} transactions`
+      );
+    }
+
+    // Validate each transaction has required data
+    for (let i = 0; i < bulkSwapInfo.transactions.length; i++) {
+      const tx = bulkSwapInfo.transactions[i];
+      if (!tx) {
+        throw new Error(`Bulk swap transaction at index ${i} is undefined`);
+      }
+      if (!tx.serialized) {
+        throw new Error(
+          `Bulk swap transaction at index ${i} (${tx.purpose || 'unknown'}) missing serialized data`
+        );
+      }
+    }
+
     requestBody.isBulkSwap = true;
     requestBody.bulkSwapInfo = {
       transactionCount: bulkSwapInfo.transactionCount,
       strategy: bulkSwapInfo.strategy,
       requiresJitoBundle: bulkSwapInfo.requiresJitoBundle,
-      transactions: bulkSwapInfo.transactions?.map((tx) => ({
+      transactions: bulkSwapInfo.transactions.map((tx) => ({
         index: tx.index,
         purpose: tx.purpose,
         serialized: tx.serialized,
