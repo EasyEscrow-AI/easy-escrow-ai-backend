@@ -15,6 +15,73 @@ import { NoncePoolManager } from './noncePoolManager';
 import { IdempotencyService } from './idempotency.service';
 import { alertingService } from './alerting.service';
 
+/**
+ * Mask a sensitive string (API key) based on its length
+ * - Very short keys (< 8 chars): fully masked
+ * - Short keys (8-15 chars): show first 2 and last 2 only
+ * - Long keys (16+ chars): show first 4 and last 4
+ */
+function maskApiKey(key: string): string {
+  if (key.length < 8) {
+    return '****';
+  } else if (key.length < 16) {
+    return `${key.substring(0, 2)}...${key.substring(key.length - 2)}`;
+  } else {
+    return `${key.substring(0, 4)}...${key.substring(key.length - 4)}`;
+  }
+}
+
+/**
+ * Mask RPC endpoint URL to hide API keys
+ * Handles various RPC URL formats:
+ * - QuickNode: https://xxx.solana-mainnet.quiknode.pro/API_KEY/
+ * - Helius: https://mainnet.helius-rpc.com/?api-key=API_KEY
+ * - Alchemy: https://solana-mainnet.g.alchemy.com/v2/API_KEY
+ *
+ * Masks both query param and path-based API keys if both exist.
+ *
+ * @param url - The RPC endpoint URL
+ * @returns Masked URL with API key(s) hidden
+ */
+function maskRpcEndpoint(url: string): string {
+  try {
+    const urlObj = new URL(url);
+    let foundApiKey = false;
+
+    // Check for API key in query params (e.g., Helius)
+    for (const paramName of ['api-key', 'api_key']) {
+      const apiKeyParam = urlObj.searchParams.get(paramName);
+      if (apiKeyParam && apiKeyParam.length >= 8) {
+        urlObj.searchParams.set(paramName, maskApiKey(apiKeyParam));
+        foundApiKey = true;
+      }
+    }
+
+    // Check for API key in path (e.g., QuickNode, Alchemy)
+    // Pattern: /API_KEY/ or /v2/API_KEY
+    const pathParts = urlObj.pathname.split('/').filter(Boolean);
+    if (pathParts.length > 0) {
+      const lastPart = pathParts[pathParts.length - 1];
+      // API keys are typically 32+ characters of hex/alphanumeric
+      if (lastPart.length >= 32 && /^[a-zA-Z0-9_-]+$/.test(lastPart)) {
+        pathParts[pathParts.length - 1] = maskApiKey(lastPart);
+        urlObj.pathname = '/' + pathParts.join('/') + '/';
+        foundApiKey = true;
+      }
+    }
+
+    if (foundApiKey) {
+      return urlObj.toString();
+    }
+
+    // No API key found in expected locations, return host only for safety
+    return `${urlObj.protocol}//${urlObj.host}/***`;
+  } catch {
+    // If URL parsing fails, mask everything after protocol
+    return url.replace(/(https?:\/\/[^/]+).*/, '$1/***');
+  }
+}
+
 export interface HealthCheckResult {
   status: 'healthy' | 'unhealthy' | 'degraded';
   timestamp: string;
@@ -159,7 +226,7 @@ export class HealthCheckService {
       })),
       this.checkRPC().catch((error) => ({
         status: 'disconnected' as const,
-        endpoint: this.connection.rpcEndpoint,
+        endpoint: maskRpcEndpoint(this.connection.rpcEndpoint),
         error: error instanceof Error ? error.message : 'Unknown error',
       })),
     ]);
@@ -397,16 +464,16 @@ export class HealthCheckService {
       
       return {
         status,
-        endpoint: this.connection.rpcEndpoint,
+        endpoint: maskRpcEndpoint(this.connection.rpcEndpoint),
         responseTime,
       };
     } catch (error) {
       const responseTime = Date.now() - startTime;
       console.error('[HealthCheckService] RPC check failed:', error);
-      
+
       return {
         status: 'disconnected' as const,
-        endpoint: this.connection.rpcEndpoint,
+        endpoint: maskRpcEndpoint(this.connection.rpcEndpoint),
         responseTime,
         error: error instanceof Error ? error.message : 'Unknown error',
       };
