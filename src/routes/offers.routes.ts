@@ -44,7 +44,47 @@ import {
 import {
   createSwapStateMachine,
 } from '../services/swapStateMachine';
-import { TwoPhaseSwapStatus } from '../generated/prisma';
+import { TwoPhaseSwapStatus, OfferStatus } from '../generated/prisma';
+
+/**
+ * Valid OfferStatus values that can be passed to Prisma
+ */
+const VALID_OFFER_STATUSES = Object.values(OfferStatus);
+
+/**
+ * Status mapping for backward compatibility
+ * Maps frontend status strings to valid OfferStatus enum values
+ */
+const STATUS_MAPPING: Record<string, OfferStatus> = {
+  'PENDING': OfferStatus.ACTIVE, // Frontend uses PENDING, but Prisma uses ACTIVE
+};
+
+/**
+ * Validate and normalize status parameter for offer queries
+ * @param status - The status string from query params
+ * @returns Validated OfferStatus or undefined if not provided
+ * @throws Error if status is invalid
+ */
+function validateOfferStatus(status: string | undefined): OfferStatus | undefined {
+  if (!status) {
+    return undefined;
+  }
+
+  const upperStatus = status.toUpperCase();
+
+  // Check if it's a mapped status (e.g., PENDING -> ACTIVE)
+  if (STATUS_MAPPING[upperStatus]) {
+    return STATUS_MAPPING[upperStatus];
+  }
+
+  // Check if it's a valid OfferStatus
+  if (VALID_OFFER_STATUSES.includes(upperStatus as OfferStatus)) {
+    return upperStatus as OfferStatus;
+  }
+
+  throw new Error(`Invalid status '${status}'. Valid values are: ${VALID_OFFER_STATUSES.join(', ')} (or PENDING which maps to ACTIVE)`);
+}
+
 // Swap flow routing for Task 12 - API delegation flow
 import {
   determineSwapFlow,
@@ -679,8 +719,23 @@ router.get(
         offset = '0',
       } = req.query;
 
+      
+      // Validate and normalize status parameter (maps PENDING -> ACTIVE)
+      let validatedStatus: OfferStatus | undefined;
+      try {
+        validatedStatus = validateOfferStatus(status as string | undefined);
+      } catch (validationError) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation Error',
+          message: validationError instanceof Error ? validationError.message : 'Invalid status parameter',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
       const result = await offerManager.listOffers({
-        status: status as any,
+        status: validatedStatus,
         makerWallet: makerWallet as string | undefined,
         takerWallet: takerWallet as string | undefined,
         limit: parseInt(limit as string, 10),
