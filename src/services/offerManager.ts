@@ -711,14 +711,21 @@ export class OfferManager {
     const totalCnftCount = makerCnftCount + takerCnftCount;
     const hasCnfts = totalCnftCount > 0;
 
+    // Check if escrow program constraints are violated (max 1 NFT per side)
+    // This requires TransactionGroupBuilder even when JITO is disabled
+    const exceedsEscrowLimit = inputs.makerAssets.length > 1 || inputs.takerAssets.length > 1;
+    console.log(`[OfferManager] exceedsEscrowLimit: ${exceedsEscrowLimit} (maker assets: ${inputs.makerAssets.length}, taker assets: ${inputs.takerAssets.length})`);
+
     // Check if this is a bulk swap that needs JITO bundles (3+ cNFTs or JITO enabled with cNFTs)
     const requiresJitoBulkSwap = this.transactionGroupBuilder.requiresJitoBundle(inputs);
     console.log(`[OfferManager] hasCnfts: ${hasCnfts}, totalCnftCount: ${totalCnftCount}, requiresJitoBulkSwap: ${requiresJitoBulkSwap}`);
 
-    // Use TransactionGroupBuilder for ANY cNFT swap (even with JITO disabled)
-    // or when JITO bulk swap is required
-    const requiresBulkSwap = hasCnfts || requiresJitoBulkSwap;
-    console.log(`[OfferManager] requiresBulkSwap: ${requiresBulkSwap} (hasCnfts=${hasCnfts} || requiresJitoBulkSwap=${requiresJitoBulkSwap})`);
+    // Use TransactionGroupBuilder for:
+    // 1. ANY cNFT swap (even with JITO disabled) - Merkle proofs too large for single tx
+    // 2. Multi-NFT swaps (>1 NFT on either side) - Escrow program only supports 1 NFT per side
+    // 3. When JITO bulk swap is required (3+ NFTs total)
+    const requiresBulkSwap = hasCnfts || exceedsEscrowLimit || requiresJitoBulkSwap;
+    console.log(`[OfferManager] requiresBulkSwap: ${requiresBulkSwap} (hasCnfts=${hasCnfts} || exceedsEscrowLimit=${exceedsEscrowLimit} || requiresJitoBulkSwap=${requiresJitoBulkSwap})`);
 
     if (requiresBulkSwap) {
       // cNFT or bulk swap: use TransactionGroupBuilder for multi-transaction handling
