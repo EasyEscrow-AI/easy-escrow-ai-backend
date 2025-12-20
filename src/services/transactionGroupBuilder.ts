@@ -64,6 +64,8 @@ export enum SwapStrategy {
   JITO_BUNDLE = 'JITO_BUNDLE',
   /** Cannot fit even with splitting (rare edge case) */
   CANNOT_FIT = 'CANNOT_FIT',
+  /** Two-phase delegation flow for swaps exceeding Jito limits or when Jito disabled */
+  TWO_PHASE_DELEGATION = 'TWO_PHASE_DELEGATION',
 }
 
 /**
@@ -88,6 +90,8 @@ export interface SwapAnalysis {
   transactionCount: number;
   /** Reason for strategy selection */
   reason: string;
+  /** Whether this swap requires two-phase delegation flow */
+  requiresTwoPhase?: boolean;
 }
 
 /**
@@ -130,6 +134,8 @@ export interface TransactionGroupResult {
   totalSizeBytes: number;
   /** Nonce value used (same for all transactions in bundle) */
   nonceValue: string;
+  /** Whether this swap requires two-phase delegation flow */
+  requiresTwoPhase?: boolean;
 }
 
 /**
@@ -386,7 +392,45 @@ export class TransactionGroupBuilder {
     const analysis = this.analyzeSwap(inputs);
     
     if (analysis.strategy === SwapStrategy.CANNOT_FIT) {
-      throw new Error(`Swap cannot be executed: ${analysis.reason}`);
+      // When swap exceeds Jito limits, fall back to two-phase delegation flow
+      console.log(`[TransactionGroupBuilder] Swap exceeds Jito limits, routing to two-phase: ${analysis.reason}`);
+      const twoPhaseAnalysis = {
+        ...analysis,
+        strategy: SwapStrategy.TWO_PHASE_DELEGATION,
+        reason: `${analysis.reason}. Using two-phase delegation flow.`,
+        requiresTwoPhase: true,
+      };
+      return {
+        strategy: SwapStrategy.TWO_PHASE_DELEGATION,
+        analysis: twoPhaseAnalysis,
+        transactions: [], // No transactions built - two-phase flow handles this
+        transactionCount: analysis.transactionCount,
+        requiresJitoBundle: false,
+        totalSizeBytes: 0,
+        nonceValue: '',
+        requiresTwoPhase: true,
+      };
+    }
+
+    // If Jito is disabled and swap requires bundle, use two-phase
+    if (!isJitoBundlesEnabled() && analysis.transactionCount > 1) {
+      console.log('[TransactionGroupBuilder] Jito disabled, routing to two-phase for multi-tx swap');
+      const twoPhaseAnalysis = {
+        ...analysis,
+        strategy: SwapStrategy.TWO_PHASE_DELEGATION,
+        reason: 'Jito bundles disabled. Using two-phase delegation flow for atomicity.',
+        requiresTwoPhase: true,
+      };
+      return {
+        strategy: SwapStrategy.TWO_PHASE_DELEGATION,
+        analysis: twoPhaseAnalysis,
+        transactions: [], // No transactions built - two-phase flow handles this
+        transactionCount: analysis.transactionCount,
+        requiresJitoBundle: false,
+        totalSizeBytes: 0,
+        nonceValue: '',
+        requiresTwoPhase: true,
+      };
     }
     
     // Get nonce value (same for all transactions in the group)
