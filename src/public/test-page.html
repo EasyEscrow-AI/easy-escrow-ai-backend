@@ -1838,7 +1838,7 @@
             border-radius: 15px;
             padding: 25px;
             padding-bottom: 0;
-            max-width: 540px;
+            max-width: 585px; /* 30% wider */
             width: 90%;
             max-height: 90vh;
             display: flex;
@@ -2429,7 +2429,7 @@
             background: white;
             border-radius: 15px;
             padding: 30px;
-            max-width: 450px;
+            max-width: 585px; /* 30% wider */
             width: 90%;
             text-align: center;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
@@ -2764,7 +2764,7 @@
             background: white;
             border-radius: 15px;
             padding: 25px;
-            max-width: 450px;
+            max-width: 585px; /* 30% wider */
             width: 90%;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             animation: slideUp 0.3s ease-out;
@@ -3279,8 +3279,8 @@
     <div class="quick-list-modal" id="quick-list-modal">
         <div class="quick-list-modal-content">
             <div class="quick-list-modal-header">
-                <h3>📝 Confirm Listing</h3>
-                <p style="color: #666; font-size: 0.9rem; margin-top: 5px;">Review the details before listing your asset</p>
+                <h3>💰 Confirm NFT Sale</h3>
+                <p style="color: #666; font-size: 0.9rem; margin-top: 5px;">Review the details before listing your NFT for sale</p>
             </div>
 
             <div class="quick-list-modal-preview">
@@ -3297,6 +3297,12 @@
                     <label class="listing-label">Listing Price (SOL)</label>
                     <input type="number" class="listing-input" id="quick-list-price" placeholder="0.00" step="0.001" min="0.001">
                     <div class="listing-input-hint" id="quick-list-price-usd"></div>
+                </div>
+
+                <div class="listing-form-group">
+                    <label class="listing-label">Private Sale (Optional)</label>
+                    <input type="text" class="listing-input" id="quick-list-private-wallet" placeholder="Leave empty for open sale, or enter buyer wallet address">
+                    <div class="listing-input-hint">Open sale: anyone can buy. Private: only specified wallet can buy.</div>
                 </div>
 
                 <div class="listing-form-group">
@@ -3354,7 +3360,7 @@
 
             <div class="quick-list-modal-actions" id="quick-list-actions">
                 <button class="quick-list-modal-btn cancel" id="quick-list-cancel">Cancel</button>
-                <button class="quick-list-modal-btn confirm" id="quick-list-confirm">List Asset</button>
+                <button class="quick-list-modal-btn confirm" id="quick-list-confirm">List NFT for Sale</button>
             </div>
         </div>
     </div>
