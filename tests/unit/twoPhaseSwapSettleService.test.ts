@@ -28,6 +28,13 @@ import { TwoPhaseSwapStatus } from '../../src/generated/prisma';
 import { SwapAsset, TwoPhaseSwapData } from '../../src/services/swapStateMachine';
 import { TWO_PHASE_SWAP_SEEDS } from '../../src/services/twoPhaseSwapLockService';
 
+// Helper function to convert UUID to 16-byte buffer (mirrors service implementation)
+function uuidToBuffer(uuid: string): Buffer {
+  const hex = uuid.replace(/-/g, '');
+  return Buffer.from(hex, 'hex');
+}
+
+
 // Test keys
 const mockProgramId = Keypair.generate().publicKey;
 const mockFeeCollector = Keypair.generate().publicKey;
@@ -133,7 +140,7 @@ describe('TwoPhaseSwapSettleService', () => {
     let connection: Connection;
     let mockPrisma: any;
     let settleService: TwoPhaseSwapSettleService;
-    const testSwapId = 'test-swap-uuid-12345';
+    const testSwapId = '5d7f5458-839c-47e8-964f-12c80b59fde5';
 
     beforeEach(() => {
       connection = new Connection('https://api.devnet.solana.com');
@@ -194,7 +201,7 @@ describe('TwoPhaseSwapSettleService', () => {
       const [expectedDelegatePDA] = PublicKey.findProgramAddressSync(
         [
           Buffer.from(TWO_PHASE_SWAP_SEEDS.DELEGATE_AUTHORITY),
-          Buffer.from(testSwapId),
+          uuidToBuffer(testSwapId),
         ],
         mockProgramId
       );
