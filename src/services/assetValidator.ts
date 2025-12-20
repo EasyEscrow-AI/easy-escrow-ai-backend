@@ -255,14 +255,29 @@ export class AssetValidator {
   
   /**
    * Validate compressed NFT ownership
+   *
+   * @param walletAddress - Expected owner wallet address
+   * @param assetId - cNFT asset ID
+   * @param retryCount - Current retry attempt (0 = first attempt)
+   * @returns ValidationResult with ownership status
+   *
+   * Note: DAS API can return stale ownership data after recent transfers.
+   * This method retries with progressive delays when ownership mismatch is detected.
    */
-  private async validateCNFT(walletAddress: string, assetId: string): Promise<ValidationResult> {
+  private async validateCNFT(walletAddress: string, assetId: string, retryCount = 0): Promise<ValidationResult> {
+    // Get max retries from environment (default: 3, same as stale proof handling)
+    // Validate parsed value to handle invalid env values (e.g., "abc" → NaN)
+    const parsedMaxRetries = parseInt(process.env.CNFT_STALE_OWNERSHIP_MAX_RETRIES || '3', 10);
+    const maxOwnershipRetries = Number.isFinite(parsedMaxRetries) && parsedMaxRetries >= 0 ? parsedMaxRetries : 3;
+    // Progressive delays: 500ms, 1000ms, 2000ms (similar to stale proof handling)
+    const retryDelays = [500, 1000, 2000];
+
     try {
-      console.log(`[AssetValidator] Fetching cNFT data via DAS API for ${assetId}`);
-      
+      console.log(`[AssetValidator] Fetching cNFT data via DAS API for ${assetId}${retryCount > 0 ? ` (retry ${retryCount}/${maxOwnershipRetries})` : ''}`);
+
       // Fetch asset data via DAS API (works with QuickNode, Helius, etc.)
       const assetData = await this.fetchCNFTViaDAS(assetId);
-      
+
       // Check if ownership data exists
       if (!assetData.ownership) {
         console.error(`[AssetValidator] ❌ Missing ownership data for cNFT ${assetId}`);
@@ -270,12 +285,12 @@ export class AssetValidator {
         console.error(`  Interface:`, assetData.interface);
         console.error(`  Compression:`, assetData.compression);
         console.error(`  Asset data (truncated):`, JSON.stringify(assetData, null, 2).substring(0, 2000));
-        
+
         // Provide more helpful error message
-        const hint = assetData.interface 
-          ? ` (Interface: ${assetData.interface})` 
+        const hint = assetData.interface
+          ? ` (Interface: ${assetData.interface})`
           : '';
-        
+
         return {
           isValid: false,
           asset: {
@@ -288,20 +303,20 @@ export class AssetValidator {
           error: `cNFT ownership data not found in DAS API response${hint}. This may indicate the asset doesn't exist, was burned, or RPC provider doesn't support DAS API.`,
         };
       }
-      
+
       // Verify ownership with detailed logging
       const actualOwner = assetData.ownership.owner;
       const expectedOwner = walletAddress;
-      
+
       console.log(`[AssetValidator] Ownership check for cNFT ${assetId}:`);
       console.log(`  Expected owner: ${expectedOwner}`);
       console.log(`  Actual owner:   ${actualOwner}`);
       console.log(`  Match: ${actualOwner === expectedOwner}`);
-      
+
       if (!actualOwner) {
         console.error(`[AssetValidator] ❌ Owner field is undefined for cNFT ${assetId}`);
         console.error(`  Ownership object:`, assetData.ownership);
-        
+
         return {
           isValid: false,
           asset: {
@@ -314,12 +329,33 @@ export class AssetValidator {
           error: 'cNFT owner field is undefined in DAS API response',
         };
       }
-      
+
       if (actualOwner !== expectedOwner) {
-        console.error(`[AssetValidator] ❌ Ownership mismatch for cNFT ${assetId}`);
+        // Ownership mismatch detected - this could be stale DAS API data
+        // Retry with progressive delays to allow indexer to catch up
+        if (retryCount < maxOwnershipRetries) {
+          const delay = retryDelays[Math.min(retryCount, retryDelays.length - 1)];
+          console.warn(`[AssetValidator] ⚠️ Ownership mismatch for cNFT ${assetId} - DAS may have stale data`);
+          console.warn(`  Expected: ${expectedOwner}`);
+          console.warn(`  Got:      ${actualOwner}`);
+          console.warn(`  Retrying in ${delay}ms (attempt ${retryCount + 1}/${maxOwnershipRetries})...`);
+
+          // Clear cache for this asset before retry
+          this.removeFromCache(assetId);
+
+          // Wait before retry
+          await this.sleep(delay);
+
+          // Recursive retry with incremented count
+          return this.validateCNFT(walletAddress, assetId, retryCount + 1);
+        }
+
+        // Max retries exhausted
+        console.error(`[AssetValidator] ❌ Ownership mismatch for cNFT ${assetId} after ${maxOwnershipRetries} retries`);
         console.error(`  Wallet expected: ${expectedOwner}`);
         console.error(`  Wallet found:    ${actualOwner}`);
-        
+        console.error(`  This may indicate the wallet genuinely does not own this cNFT, or the DAS indexer is significantly delayed.`);
+
         return {
           isValid: false,
           asset: {
@@ -332,7 +368,7 @@ export class AssetValidator {
           error: `Wallet does not own this cNFT (owner: ${actualOwner})`,
         };
       }
-      
+
       // Check if burned
       if (assetData.burnt) {
         return {
@@ -347,7 +383,7 @@ export class AssetValidator {
           error: 'cNFT has been burned',
         };
       }
-      
+
       // Check if frozen
       if (assetData.frozen) {
         return {
@@ -362,12 +398,12 @@ export class AssetValidator {
           error: 'cNFT is frozen',
         };
       }
-      
+
       // Fetch Merkle proof
       const proofData = await this.fetchCNFTProof(assetId);
-      
-      console.log(`[AssetValidator] cNFT ${assetId} successfully validated for ${walletAddress}`);
-      
+
+      console.log(`[AssetValidator] cNFT ${assetId} successfully validated for ${walletAddress}${retryCount > 0 ? ` (after ${retryCount} retry/retries)` : ''}`);
+
       return {
         isValid: true,
         asset: {
