@@ -572,8 +572,8 @@ function renderNFTs(wallet, nfts) {
 
       // Store mint for fallback animal image generation
       // Add loading="lazy" and crossorigin="anonymous" for better image loading
-      // Add quick list button for cNFTs in maker wallet
-      const showListButton = wallet === 'maker' && nft.isCompressed;
+      // Add quick list button for ALL NFTs in maker wallet (SPL, CORE, cNFT)
+      const showListButton = wallet === 'maker';
 
       return `
             <div class="nft-card" data-index="${originalIndex}">
@@ -2433,7 +2433,7 @@ function renderActiveListings() {
   });
 }
 
-// Handle cancel listing
+// Handle cancel listing (uses swap offers cancel endpoint)
 async function handleCancelListing(listingId) {
   if (!confirm('Are you sure you want to cancel this listing?')) {
     return;
@@ -2450,15 +2450,15 @@ async function handleCancelListing(listingId) {
 
     addLog(`🔄 Cancelling listing ${listingId}...`, 'info');
 
-    // Call cancel API
-    const response = await fetch(`/api/listings/${listingId}/cancel`, {
+    // Call cancel offer API (swap offers endpoint)
+    const response = await fetch(`/api/swaps/offers/${listingId}/cancel`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'idempotency-key': `cancel-${listingId}-${Date.now()}`,
       },
       body: JSON.stringify({
-        seller: MAKER_ADDRESS,
+        walletAddress: MAKER_ADDRESS,
       }),
     });
 
@@ -2468,47 +2468,11 @@ async function handleCancelListing(listingId) {
       throw new Error(result.message || 'Failed to cancel listing');
     }
 
-    // If there's a revoke transaction, execute it
-    if (result.data.transaction) {
-      addLog('🔐 Signing revoke transaction...', 'info');
-
-      const execResponse = await fetch('/api/test/execute-listing-revoke', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Test-Execution': 'true',
-        },
-        body: JSON.stringify({
-          listingId: listingId,
-          serializedTransaction: result.data.transaction.serializedTransaction,
-        }),
-      });
-
-      const execResult = await execResponse.json();
-
-      if (!execResult.success) {
-        throw new Error(execResult.error || 'Failed to execute revoke transaction');
-      }
-
-      addLog(`✓ Revoke confirmed! TX: ${execResult.data.signature.substring(0, 20)}...`, 'success');
-
-      // Confirm revoke
-      await fetch(`/api/listings/${listingId}/confirm-revoke`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'idempotency-key': `confirm-revoke-${listingId}-${Date.now()}`,
-        },
-        body: JSON.stringify({
-          signature: execResult.data.signature,
-        }),
-      });
-    }
-
     addLog(`✅ Listing cancelled successfully!`, 'success');
 
-    // Refresh listings
+    // Refresh listings and marketplace
     await loadActiveListings();
+    await loadMarketplaceListings();
 
     // Refresh maker wallet
     await loadWalletInfo('maker');
@@ -3388,7 +3352,7 @@ function hideBuyModal() {
   selectedBuyListing = null;
 }
 
-// Handle confirm purchase
+// Handle confirm purchase (uses swap offers accept endpoint)
 async function handleConfirmPurchase() {
   if (!selectedBuyListing) {
     addLog('❌ No listing selected', 'error');
@@ -3414,48 +3378,56 @@ async function handleConfirmPurchase() {
 
     addLog(`🛒 Initiating purchase of ${name}...`, 'info');
 
-    // Step 1: Call buy endpoint to get transaction
-    addLog('Step 1: Building buy transaction...', 'info');
-    const buyResponse = await fetch(`/api/listings/${listingId}/buy`, {
+    // Step 1: Accept the offer to get transaction
+    addLog('Step 1: Accepting offer and building transaction...', 'info');
+    const acceptResponse = await fetch(`/api/swaps/offers/${listingId}/accept`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'idempotency-key': `buy-${listingId}-${Date.now()}`,
+        'idempotency-key': `accept-${listingId}-${Date.now()}`,
       },
       body: JSON.stringify({
-        buyer: TAKER_ADDRESS,
+        takerWallet: TAKER_ADDRESS,
       }),
     });
 
-    const buyResult = await buyResponse.json();
+    const acceptResult = await acceptResponse.json();
 
-    if (!buyResult.success) {
-      throw new Error(buyResult.message || buyResult.error || 'Failed to build buy transaction');
+    if (!acceptResult.success) {
+      throw new Error(acceptResult.message || acceptResult.error || 'Failed to accept offer');
     }
 
-    addLog('✓ Buy transaction built', 'success');
+    addLog('✓ Offer accepted, transaction built', 'success');
 
     // Step 2: Execute the transaction via test endpoint
     addLog('Step 2: Signing and executing transaction...', 'info');
     confirmBtn.innerHTML = '⏳ Signing...';
 
-    const execResponse = await fetch('/api/test/execute-buy-transaction', {
+    // Get serialized transaction (handle both formats)
+    const serializedTx = acceptResult.data.transaction?.serialized ||
+                         acceptResult.data.transaction?.serializedTransaction;
+
+    if (!serializedTx) {
+      throw new Error('No transaction returned from accept endpoint');
+    }
+
+    const execResponse = await fetch('/api/test/execute-swap', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-Test-Execution': 'true',
       },
       body: JSON.stringify({
-        listingId: listingId,
-        serializedTransaction: buyResult.data.transaction.serializedTransaction,
-        buyer: TAKER_ADDRESS,
+        offerId: listingId,
+        serializedTransaction: serializedTx,
+        requireSignatures: [MAKER_ADDRESS, TAKER_ADDRESS],
       }),
     });
 
     const execResult = await execResponse.json();
 
     if (!execResult.success) {
-      throw new Error(execResult.error || 'Failed to execute buy transaction');
+      throw new Error(execResult.error || 'Failed to execute swap transaction');
     }
 
     addLog(
@@ -3463,19 +3435,19 @@ async function handleConfirmPurchase() {
       'success'
     );
 
-    // Step 3: Confirm the purchase
-    addLog('Step 3: Confirming purchase...', 'info');
+    // Step 3: Confirm the swap
+    addLog('Step 3: Confirming swap...', 'info');
     confirmBtn.innerHTML = '⏳ Confirming...';
 
-    const confirmResponse = await fetch(`/api/listings/${listingId}/confirm-purchase`, {
+    const confirmResponse = await fetch(`/api/swaps/offers/${listingId}/confirm`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'idempotency-key': `confirm-purchase-${listingId}-${Date.now()}`,
+        'idempotency-key': `confirm-swap-${listingId}-${Date.now()}`,
       },
       body: JSON.stringify({
         signature: execResult.data.signature,
-        buyer: TAKER_ADDRESS,
+        takerWallet: TAKER_ADDRESS,
       }),
     });
 
@@ -3723,21 +3695,21 @@ async function handleConfirmCancelListing() {
     // Show waiting status
     updateCancelListingTxStatus(
       'waiting',
-      'Preparing Transaction',
-      'Building revoke transaction...'
+      'Cancelling Listing',
+      'Processing cancellation...'
     );
 
     addLog(`🔄 Cancelling listing ${listingId}...`, 'info');
 
-    // Call cancel API
-    const response = await fetch(`/api/listings/${listingId}/cancel`, {
+    // Call cancel offer API (swap offers endpoint)
+    const response = await fetch(`/api/swaps/offers/${listingId}/cancel`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'idempotency-key': `cancel-${listingId}-${Date.now()}`,
       },
       body: JSON.stringify({
-        seller: MAKER_ADDRESS,
+        walletAddress: MAKER_ADDRESS,
       }),
     });
 
@@ -3747,93 +3719,12 @@ async function handleConfirmCancelListing() {
       throw new Error(result.message || 'Failed to cancel listing');
     }
 
-    // If there's a revoke transaction, execute it
-    if (result.data.transaction) {
-      updateCancelListingTxStatus(
-        'processing',
-        'Signing Transaction',
-        'Please confirm in your wallet...'
-      );
-
-      const execResponse = await fetch('/api/test/execute-listing-revoke', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Test-Execution': 'true',
-        },
-        body: JSON.stringify({
-          listingId: listingId,
-          serializedTransaction: result.data.transaction.serializedTransaction,
-        }),
-      });
-
-      const execResult = await execResponse.json();
-
-      if (!execResult.success) {
-        throw new Error(execResult.error || 'Failed to execute revoke transaction');
-      }
-
-      updateCancelListingTxStatus(
-        'confirming',
-        'Confirming Transaction',
-        'Waiting for blockchain confirmation...'
-      );
-
-      // Confirm revoke
-      const confirmRevokeResponse = await fetch(`/api/listings/${listingId}/confirm-revoke`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'idempotency-key': `confirm-revoke-${listingId}-${Date.now()}`,
-        },
-        body: JSON.stringify({
-          signature: execResult.data.signature,
-        }),
-      });
-
-      const confirmRevokeResult = await confirmRevokeResponse.json();
-
-      // Build explorer URL
-      const isDevnet =
-        window.location.hostname.includes('staging') ||
-        window.location.hostname.includes('dev') ||
-        window.location.hostname === 'localhost' ||
-        window.location.hostname === '127.0.0.1';
-      const explorerUrl = `https://solscan.io/tx/${execResult.data.signature}${
-        isDevnet ? '?cluster=devnet' : ''
-      }`;
-
-      if (!confirmRevokeResult.success) {
-        // Revoke transaction succeeded but confirmation failed - warn but don't fail
-        addLog(
-          `⚠️ Revoke executed but confirmation pending: ${
-            confirmRevokeResult.message || 'Unknown'
-          }`,
-          'warning'
-        );
-        updateCancelListingTxStatus(
-          'success',
-          'Listing Cancelled!',
-          'Revoke executed (confirmation pending).',
-          explorerUrl
-        );
-      } else {
-        updateCancelListingTxStatus(
-          'success',
-          'Listing Cancelled!',
-          'Your asset delegation has been revoked.',
-          explorerUrl
-        );
-      }
-
-      addLog(`✓ Revoke confirmed! TX: ${execResult.data.signature.substring(0, 20)}...`, 'success');
-    } else {
-      updateCancelListingTxStatus(
-        'success',
-        'Listing Cancelled!',
-        'Your listing has been removed.'
-      );
-    }
+    // Show success
+    updateCancelListingTxStatus(
+      'success',
+      'Listing Cancelled!',
+      'Your listing has been removed.'
+    );
 
     addLog(`✅ Listing cancelled successfully!`, 'success');
 
@@ -3844,6 +3735,7 @@ async function handleConfirmCancelListing() {
     setTimeout(async () => {
       hideCancelListingModal();
       await loadActiveListings();
+      await loadMarketplaceListings();
       await loadWalletInfo('maker');
     }, 2000);
   } catch (error) {
@@ -3932,7 +3824,7 @@ function updateQuickListTxStatus(status, title, message, link = null) {
   txStatusEl.style.display = 'flex';
 }
 
-// Override handleQuickListConfirm with enhanced version
+// Override handleQuickListConfirm with enhanced version using swap offers API
 const originalHandleQuickListConfirm = handleQuickListConfirm;
 handleQuickListConfirm = async function () {
   if (!quickListAsset) {
@@ -3957,26 +3849,53 @@ handleQuickListConfirm = async function () {
     confirmBtn.innerHTML = 'Processing...';
 
     // Show waiting status
-    updateQuickListTxStatus('waiting', 'Creating Listing', 'Building delegation transaction...');
+    updateQuickListTxStatus('waiting', 'Creating Listing', 'Creating swap offer...');
 
-    addLog(`📝 Creating listing for ${quickListAsset.name}...`, 'info');
+    // Get optional private wallet for private sale
+    const privateWalletInput = document.getElementById('quick-list-private-wallet');
+    const privateWallet = privateWalletInput ? privateWalletInput.value.trim() : '';
+
+    const listingType = privateWallet ? 'private' : 'open';
+    addLog(`📝 Creating ${listingType} listing for ${quickListAsset.name}...`, 'info');
 
     // Convert SOL to lamports
     const priceLamports = Math.floor(price * 1e9);
 
-    // Call create listing API
-    const response = await fetch('/api/listings', {
+    // Determine asset type
+    let assetType = 'NFT';
+    if (quickListAsset.isCompressed) {
+      assetType = 'CNFT';
+    } else if (quickListAsset.isCoreNft) {
+      assetType = 'CORE_NFT';
+    }
+
+    // Build offer request - NFT for SOL (open swap offer)
+    const offerRequest = {
+      makerWallet: MAKER_ADDRESS,
+      offeredAssets: [
+        {
+          identifier: quickListAsset.mint,
+          type: assetType,
+        },
+      ],
+      requestedAssets: [],
+      requestedSol: priceLamports.toString(),
+      durationSeconds: quickListDuration,
+    };
+
+    // Add taker wallet if private sale
+    if (privateWallet) {
+      offerRequest.takerWallet = privateWallet;
+    }
+
+    // Call create offer API (swap offers endpoint)
+    const response = await fetch('/api/swaps/offers', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'idempotency-key': `quick-listing-${Date.now()}-${quickListAsset.mint.substring(0, 8)}`,
       },
-      body: JSON.stringify({
-        seller: MAKER_ADDRESS,
-        assetId: quickListAsset.mint,
-        priceLamports: priceLamports.toString(),
-        durationSeconds: quickListDuration,
-      }),
+      body: JSON.stringify(offerRequest),
     });
 
     const result = await response.json();
@@ -3985,89 +3904,22 @@ handleQuickListConfirm = async function () {
       throw new Error(result.message || result.error || 'Failed to create listing');
     }
 
-    addLog(`✓ Listing created! ID: ${result.data.listing.listingId}`, 'success');
+    const offerId = result.data.offer?.id || result.data.offerId;
+    addLog(`✓ Listing created! Offer ID: ${offerId}`, 'success');
 
-    updateQuickListTxStatus(
-      'processing',
-      'Signing Transaction',
-      'Please confirm delegation in your wallet...'
-    );
-
-    // Execute the delegation transaction
-    const execResponse = await fetch('/api/test/execute-listing-delegation', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Test-Execution': 'true',
-      },
-      body: JSON.stringify({
-        listingId: result.data.listing.listingId,
-        serializedTransaction: result.data.transaction.serializedTransaction,
-      }),
-    });
-
-    const execResult = await execResponse.json();
-
-    if (!execResult.success) {
-      throw new Error(execResult.error || 'Failed to execute delegation transaction');
-    }
-
-    updateQuickListTxStatus(
-      'confirming',
-      'Confirming Delegation',
-      'Waiting for blockchain confirmation...'
-    );
-
-    // Confirm the listing
-    const confirmListingResponse = await fetch(
-      `/api/listings/${result.data.listing.listingId}/confirm`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'idempotency-key': `confirm-${result.data.listing.listingId}-${Date.now()}`,
-        },
-        body: JSON.stringify({
-          signature: execResult.data.signature,
-        }),
-      }
-    );
-
-    const confirmListingResult = await confirmListingResponse.json();
-
-    // Build explorer URL
-    const isDevnet =
-      window.location.hostname.includes('staging') ||
-      window.location.hostname.includes('dev') ||
-      window.location.hostname === 'localhost' ||
-      window.location.hostname === '127.0.0.1';
-    const explorerUrl =
-      execResult.data.explorerUrl ||
-      `https://solscan.io/tx/${execResult.data.signature}${isDevnet ? '?cluster=devnet' : ''}`;
-
-    if (!confirmListingResult.success) {
-      // Delegation transaction succeeded but confirmation failed - warn but don't fail
-      addLog(
-        `⚠️ Delegation executed but confirmation pending: ${
-          confirmListingResult.message || 'Unknown'
-        }`,
-        'warning'
-      );
-      updateQuickListTxStatus(
-        'success',
-        'Listing Created!',
-        'Delegation executed (confirmation pending).',
-        explorerUrl
-      );
+    if (privateWallet) {
+      addLog(`🔒 Private sale - only ${privateWallet.substring(0, 8)}... can buy`, 'info');
     } else {
-      updateQuickListTxStatus(
-        'success',
-        'Listing Active!',
-        'Your asset is now listed for sale.',
-        explorerUrl
-      );
-      addLog(`✅ Listing is now ACTIVE!`, 'success');
+      addLog(`🌐 Open listing - anyone can buy or make counter offers`, 'info');
     }
+
+    // Show success status
+    updateQuickListTxStatus(
+      'success',
+      'Listing Active!',
+      'Your asset is now listed for sale.'
+    );
+    addLog(`✅ Listing is now ACTIVE!`, 'success');
 
     // Hide action buttons on success
     actions.style.display = 'none';
@@ -4076,6 +3928,7 @@ handleQuickListConfirm = async function () {
     setTimeout(async () => {
       hideQuickListModal();
       await loadActiveListings();
+      await loadMarketplaceListings();
       await loadWalletInfo('maker');
     }, 2000);
   } catch (error) {
@@ -4253,7 +4106,7 @@ showBuyModal = function (listingId) {
   document.getElementById('buy-modal').classList.add('show');
 };
 
-// Override handleConfirmPurchase with enhanced version
+// Override handleConfirmPurchase with enhanced version using swap offers API
 const originalHandleConfirmPurchase = handleConfirmPurchase;
 handleConfirmPurchase = async function () {
   if (!selectedBuyListing) {
@@ -4280,53 +4133,61 @@ handleConfirmPurchase = async function () {
     const priceSol = (parseInt(selectedBuyListing.priceLamports) / 1e9).toFixed(4);
 
     // Show waiting status
-    updateBuyTxStatus('waiting', 'Building Transaction', 'Preparing purchase transaction...');
+    updateBuyTxStatus('waiting', 'Accepting Offer', 'Building purchase transaction...');
 
     addLog(`🛒 Initiating purchase of ${name}...`, 'info');
 
-    // Step 1: Call buy endpoint to get transaction
-    addLog('Step 1: Building buy transaction...', 'info');
-    const buyResponse = await fetch(`/api/listings/${listingId}/buy`, {
+    // Step 1: Accept the offer to get transaction
+    addLog('Step 1: Accepting offer and building transaction...', 'info');
+    const acceptResponse = await fetch(`/api/swaps/offers/${listingId}/accept`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'idempotency-key': `buy-${listingId}-${Date.now()}`,
+        'idempotency-key': `accept-${listingId}-${Date.now()}`,
       },
       body: JSON.stringify({
-        buyer: TAKER_ADDRESS,
+        takerWallet: TAKER_ADDRESS,
       }),
     });
 
-    const buyResult = await buyResponse.json();
+    const acceptResult = await acceptResponse.json();
 
-    if (!buyResult.success) {
-      throw new Error(buyResult.message || buyResult.error || 'Failed to build buy transaction');
+    if (!acceptResult.success) {
+      throw new Error(acceptResult.message || acceptResult.error || 'Failed to accept offer');
     }
 
-    addLog('✓ Buy transaction built', 'success');
+    addLog('✓ Offer accepted, transaction built', 'success');
 
     // Step 2: Execute the transaction via test endpoint
     updateBuyTxStatus('processing', 'Signing Transaction', 'Please confirm in your wallet...');
 
     addLog('Step 2: Signing and executing transaction...', 'info');
 
-    const execResponse = await fetch('/api/test/execute-buy-transaction', {
+    // Get serialized transaction (handle both formats)
+    const serializedTx = acceptResult.data.transaction?.serialized ||
+                         acceptResult.data.transaction?.serializedTransaction;
+
+    if (!serializedTx) {
+      throw new Error('No transaction returned from accept endpoint');
+    }
+
+    const execResponse = await fetch('/api/test/execute-swap', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-Test-Execution': 'true',
       },
       body: JSON.stringify({
-        listingId: listingId,
-        serializedTransaction: buyResult.data.transaction.serializedTransaction,
-        buyer: TAKER_ADDRESS,
+        offerId: listingId,
+        serializedTransaction: serializedTx,
+        requireSignatures: [MAKER_ADDRESS, TAKER_ADDRESS],
       }),
     });
 
     const execResult = await execResponse.json();
 
     if (!execResult.success) {
-      throw new Error(execResult.error || 'Failed to execute buy transaction');
+      throw new Error(execResult.error || 'Failed to execute swap transaction');
     }
 
     addLog(
@@ -4334,20 +4195,20 @@ handleConfirmPurchase = async function () {
       'success'
     );
 
-    // Step 3: Confirm the purchase
-    updateBuyTxStatus('confirming', 'Confirming Purchase', 'Verifying asset transfer...');
+    // Step 3: Confirm the swap
+    updateBuyTxStatus('confirming', 'Confirming Swap', 'Verifying asset transfer...');
 
-    addLog('Step 3: Confirming purchase...', 'info');
+    addLog('Step 3: Confirming swap...', 'info');
 
-    const confirmResponse = await fetch(`/api/listings/${listingId}/confirm-purchase`, {
+    const confirmResponse = await fetch(`/api/swaps/offers/${listingId}/confirm`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'idempotency-key': `confirm-purchase-${listingId}-${Date.now()}`,
+        'idempotency-key': `confirm-swap-${listingId}-${Date.now()}`,
       },
       body: JSON.stringify({
         signature: execResult.data.signature,
-        buyer: TAKER_ADDRESS,
+        takerWallet: TAKER_ADDRESS,
       }),
     });
 
@@ -4375,7 +4236,7 @@ handleConfirmPurchase = async function () {
     updateBuyTxStatus(
       'success',
       'Purchase Complete!',
-      'The cNFT is now in your wallet.',
+      'The NFT is now in your wallet.',
       explorerUrl
     );
 
