@@ -2600,10 +2600,16 @@ function hideCounterOfferModal() {
   counterOfferData = null;
 }
 
-// Submit counter offer
+// Submit counter offer - creates a new offer with the desired price
+// The taker offers SOL in exchange for the NFT they want to buy
 async function handleSubmitCounterOffer() {
   if (!counterOfferData) {
     addLog('❌ No offer selected', 'error');
+    return;
+  }
+
+  if (!TAKER_ADDRESS) {
+    addLog('❌ Please load the Taker wallet first to make counter offers', 'error');
     return;
   }
 
@@ -2624,18 +2630,34 @@ async function handleSubmitCounterOffer() {
       submitBtn.innerHTML = '⏳ Submitting...';
     }
 
-    addLog(`💰 Submitting counter offer of ${price} SOL...`, 'info');
+    addLog(`💰 Creating counter offer of ${price} SOL for ${counterOfferData.name}...`, 'info');
 
-    // Call counter offer API
-    const response = await fetch(`/api/swaps/offers/${counterOfferData.offerId}/counter`, {
+    // Convert SOL to lamports
+    const priceLamports = Math.floor(price * 1e9);
+
+    // Create a new offer where taker offers SOL for the NFT
+    // This is a "bid" - taker offers SOL, requests the NFT
+    const offerRequest = {
+      makerWallet: TAKER_ADDRESS, // Taker becomes the maker of this counter offer
+      offeredAssets: [], // Taker offers SOL, not assets
+      offeredSol: priceLamports.toString(),
+      requestedAssets: [
+        {
+          identifier: counterOfferData.assetId,
+          type: 'NFT', // Will be validated by the backend
+        },
+      ],
+      requestedSol: '0',
+    };
+
+    // Call create offer API to make a new bid
+    const response = await fetch('/api/swaps/offers', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'idempotency-key': `counter-${counterOfferData.offerId}-${Date.now()}`,
       },
-      body: JSON.stringify({
-        counterMakerWallet: TAKER_ADDRESS, // The person making the counter offer
-      }),
+      body: JSON.stringify(offerRequest),
     });
 
     const result = await response.json();
@@ -2644,7 +2666,10 @@ async function handleSubmitCounterOffer() {
       throw new Error(result.message || result.error || 'Failed to submit counter offer');
     }
 
-    addLog(`✅ Counter offer submitted! New Offer ID: ${result.data.id}`, 'success');
+    const newOfferId = result.data.offerId || result.data.offer?.id;
+    addLog(`✅ Counter offer created! Offer ID: ${newOfferId}`, 'success');
+    addLog(`   You offered ${price} SOL for "${counterOfferData.name}"`, 'info');
+    addLog(`   The seller can now accept your offer`, 'info');
     hideCounterOfferModal();
 
     // Refresh marketplace
@@ -3124,8 +3149,11 @@ function renderMarketplaceListings() {
   });
 }
 
-// Show accept offer modal (similar to buy modal)
-function showAcceptOfferModal(offerId) {
+// Accept offer state
+let selectedAcceptOffer = null;
+
+// Show accept offer modal and handle the accept flow
+async function showAcceptOfferModal(offerId) {
   const offer = marketplaceListings.find((o) => o.id === parseInt(offerId) || o.id === offerId);
   if (!offer) {
     addLog('❌ Offer not found', 'error');
@@ -3138,19 +3166,98 @@ function showAcceptOfferModal(offerId) {
     return;
   }
 
+  selectedAcceptOffer = offer;
+
   const offeredAsset = offer.offeredAssets && offer.offeredAssets[0];
   const assetId = offeredAsset ? offeredAsset.identifier : 'unknown';
   const assetMetadata = offeredAsset?.metadata || {};
   const name = assetMetadata.name || offeredAsset?.name || 'Unknown NFT';
   const priceSol = (parseInt(offer.requestedSol || '0') / 1e9).toFixed(4);
+  const priceUsd = solPriceUSD ? ((parseInt(offer.requestedSol || '0') / 1e9) * solPriceUSD).toFixed(2) : null;
 
-  // For now, show details in log and provide instructions
-  addLog(`📋 Offer Details:`, 'info');
-  addLog(`   Offer ID: ${offer.id}`, 'info');
-  addLog(`   Asset: ${name}`, 'info');
-  addLog(`   Price: ${priceSol} SOL`, 'info');
-  addLog(`   To accept, use: POST /api/swaps/offers/${offer.id}/accept`, 'info');
-  addLog(`   with body: { "takerWallet": "${TAKER_ADDRESS}" }`, 'info');
+  // Check if taker has enough SOL
+  const requiredLamports = parseInt(offer.requestedSol || '0');
+  const takerBalanceLamports = takerData.balance * 1e9;
+
+  if (takerBalanceLamports < requiredLamports) {
+    addLog(`❌ Insufficient SOL balance. Need ${priceSol} SOL, have ${takerData.balance.toFixed(4)} SOL`, 'error');
+    return;
+  }
+
+  // Confirm purchase
+  const confirmMessage = `Accept offer to buy "${name}" for ${priceSol} SOL${priceUsd ? ` (~$${priceUsd})` : ''}?`;
+  if (!confirm(confirmMessage)) {
+    return;
+  }
+
+  await handleAcceptOffer(offer);
+}
+
+// Handle accepting an offer
+async function handleAcceptOffer(offer) {
+  const offeredAsset = offer.offeredAssets && offer.offeredAssets[0];
+  const name = offeredAsset?.metadata?.name || offeredAsset?.name || 'Unknown NFT';
+  const priceSol = (parseInt(offer.requestedSol || '0') / 1e9).toFixed(4);
+
+  try {
+    addLog(`🛒 Accepting offer for ${name}...`, 'info');
+    addLog(`   Price: ${priceSol} SOL`, 'info');
+
+    // Step 1: Call accept offer API to get serialized transaction
+    addLog('📝 Building swap transaction...', 'info');
+
+    const acceptResponse = await fetch(`/api/swaps/offers/${offer.id}/accept`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'idempotency-key': `accept-${offer.id}-${Date.now()}`,
+      },
+      body: JSON.stringify({
+        takerWallet: TAKER_ADDRESS,
+      }),
+    });
+
+    const acceptResult = await acceptResponse.json();
+
+    if (!acceptResult.success) {
+      throw new Error(acceptResult.message || acceptResult.error || 'Failed to accept offer');
+    }
+
+    addLog('✓ Transaction built successfully', 'success');
+
+    // Step 2: Execute the transaction via test endpoint
+    addLog('🔐 Signing and executing swap transaction...', 'info');
+
+    const execResponse = await fetch('/api/test/execute-swap', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Test-Execution': 'true',
+      },
+      body: JSON.stringify({
+        offerId: offer.id,
+        serializedTransaction: acceptResult.data.transaction.serialized,
+      }),
+    });
+
+    const execResult = await execResponse.json();
+
+    if (!execResult.success) {
+      throw new Error(execResult.error || 'Failed to execute swap transaction');
+    }
+
+    addLog(`✅ Swap completed successfully!`, 'success');
+    addLog(`   TX: ${execResult.data.signature}`, 'success');
+
+    // Refresh marketplace and wallets
+    await loadMarketplaceListings();
+    await loadWalletInfo('taker');
+    await loadActiveListings();
+
+  } catch (error) {
+    console.error('Accept offer error:', error);
+    addLog(`❌ Failed to accept offer: ${error.message}`, 'error');
+  }
 }
 
 // Show buy confirmation modal
