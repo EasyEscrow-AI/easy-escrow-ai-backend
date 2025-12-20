@@ -570,12 +570,31 @@
             background: white;
             border-radius: 20px;
             padding: 30px;
-            max-width: 750px;
+            padding-bottom: 0;
+            max-width: 900px;
             width: 90%;
-            max-height: 80vh;
-            overflow-y: auto;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             animation: slideUp 0.3s ease-out;
+        }
+
+        .modal-content {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 20px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            position: sticky;
+            bottom: 0;
+            background: white;
+            padding: 20px 0 30px 0;
+            border-top: 1px solid #e0e0e0;
+            margin-top: auto;
         }
 
         @keyframes fadeIn {
@@ -933,12 +952,6 @@
         .log-entry.bundle {
             border-left-color: #f59e0b;
             background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
-        }
-
-        .modal-actions {
-            display: flex;
-            gap: 15px;
-            margin-top: 25px;
         }
 
         .modal-btn {
@@ -1824,10 +1837,29 @@
             background: white;
             border-radius: 15px;
             padding: 25px;
-            max-width: 450px;
+            padding-bottom: 0;
+            max-width: 540px;
             width: 90%;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             animation: slideUp 0.3s ease-out;
+        }
+
+        .quick-list-modal-content > *:not(.quick-list-modal-actions) {
+            flex-shrink: 0;
+        }
+
+        .quick-list-modal-actions {
+            display: flex;
+            gap: 12px;
+            position: sticky;
+            bottom: 0;
+            background: white;
+            padding: 20px 0 25px 0;
+            border-top: 1px solid #e0e0e0;
+            margin-top: auto;
         }
 
         .quick-list-modal-header {
@@ -1860,11 +1892,6 @@
 
         .quick-list-modal-form {
             margin-bottom: 20px;
-        }
-
-        .quick-list-modal-actions {
-            display: flex;
-            gap: 12px;
         }
 
         .quick-list-modal-btn {
@@ -2217,10 +2244,29 @@
             background: white;
             border-radius: 15px;
             padding: 25px;
-            max-width: 500px;
+            padding-bottom: 0;
+            max-width: 600px;
             width: 90%;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             animation: slideUp 0.3s ease-out;
+        }
+
+        .buy-modal-content > *:not(.buy-modal-actions) {
+            flex-shrink: 0;
+        }
+
+        .buy-modal-actions {
+            display: flex;
+            gap: 12px;
+            position: sticky;
+            bottom: 0;
+            background: white;
+            padding: 20px 0 25px 0;
+            border-top: 1px solid #e0e0e0;
+            margin-top: auto;
         }
 
         .buy-modal-header {
@@ -2322,11 +2368,6 @@
 
         .buy-balance-warning.hidden {
             display: none;
-        }
-
-        .buy-modal-actions {
-            display: flex;
-            gap: 12px;
         }
 
         .buy-modal-btn {
@@ -3122,7 +3163,7 @@
         </div>
 
         <!-- Settings Section -->
-        <div class="api-key-section">
+        <div class="api-key-section" style="margin-top: 30px;">
             <div class="wallet-header">
                 <div class="wallet-title" style="color: #333;">⚙️ Settings</div>
             </div>
@@ -3151,75 +3192,82 @@
     <!-- Confirmation Modal -->
     <div class="modal-overlay" id="confirm-modal">
         <div class="modal">
-            <div class="modal-header">
-                <h2 id="modal-title">⚡ Confirm Atomic Swap</h2>
-                <p id="modal-subtitle">Review the swap details before executing</p>
-            </div>
-            
-            <div class="swap-preview">
-                <div class="swap-side maker">
-                    <h3>🟣 Maker Offers</h3>
-                    <div id="modal-maker-offers"></div>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="modal-title">⚡ Confirm Atomic Swap</h2>
+                    <p id="modal-subtitle">Review the swap details before executing</p>
                 </div>
-                
-                <div class="swap-arrow">⇄</div>
-                
-                <div class="swap-side taker">
-                    <h3>🟣 Taker Offers</h3>
-                    <div id="modal-taker-offers"></div>
+
+                <div class="swap-preview">
+                    <div class="swap-side maker">
+                        <h3>🟣 Maker Offers</h3>
+                        <div id="modal-maker-offers"></div>
+                    </div>
+
+                    <div class="swap-arrow">⇄</div>
+
+                    <div class="swap-side taker">
+                        <h3>🟣 Taker Offers</h3>
+                        <div id="modal-taker-offers"></div>
+                    </div>
                 </div>
-            </div>
-            
-            <hr class="modal-divider">
-            
-            <!-- Swap Type & Execution Strategy -->
-            <div class="modal-info-section" id="modal-swap-type-section">
-                <div class="modal-info-title" id="modal-swap-type-title">⚡ Atomic Swap</div>
-                <div id="modal-swap-type-details">
+
+                <hr class="modal-divider">
+
+                <!-- Execution Strategy -->
+                <div class="modal-info-section" id="modal-swap-type-section">
+                    <div class="modal-info-title" id="modal-swap-type-title">⚙️ Execution</div>
+                    <div id="modal-swap-type-details">
+                        <div class="modal-info-item">
+                            <span class="modal-info-label">Method:</span>
+                            <span class="modal-info-value highlight" id="modal-execution-type">Single Transaction</span>
+                        </div>
+                        <!-- JITO Status (shown when disabled) -->
+                        <div class="modal-info-item" id="modal-jito-status-row" style="display: none;">
+                            <span class="modal-info-label">Jito Bundles:</span>
+                            <span class="modal-info-value" id="modal-jito-status" style="color: #9ca3af;">Disabled</span>
+                        </div>
+                    </div>
+                    <!-- cNFT/Jito Bundle Info (hidden by default) -->
+                    <div id="modal-jito-info" style="display: none; margin-top: 12px; padding: 12px; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 8px; border: 1px solid #f59e0b;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                            <span style="background: #f59e0b; color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">🚀 JITO BUNDLE</span>
+                            <span style="font-size: 0.8rem; color: #92400e; font-weight: 500;" id="modal-jito-tx-count">2 Transactions</span>
+                        </div>
+                        <div class="modal-info-item" style="padding: 4px 0;">
+                            <span class="modal-info-label" style="color: #92400e;">Jito Tip:</span>
+                            <span class="modal-info-value" style="color: #b45309;" id="modal-jito-tip">~0.0001 SOL</span>
+                        </div>
+                        <div class="modal-info-item" style="padding: 4px 0;">
+                            <span class="modal-info-label" style="color: #92400e;">Bundle Strategy:</span>
+                            <span class="modal-info-value" style="color: #b45309;" id="modal-bundle-strategy">Atomic execution via Jito</span>
+                        </div>
+                        <div style="font-size: 0.75rem; color: #78350f; margin-top: 8px; padding-top: 8px; border-top: 1px solid #fbbf24;">
+                            ℹ️ cNFT swaps require multiple transactions bundled atomically via Jito Block Engine
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-info-section">
+                    <div class="modal-info-title">📊 Swap Breakdown</div>
                     <div class="modal-info-item">
-                        <span class="modal-info-label">Execution:</span>
-                        <span class="modal-info-value highlight" id="modal-execution-type">Single Transaction</span>
+                        <span class="modal-info-label">Estimated Time:</span>
+                        <span class="modal-info-value highlight" id="modal-est-time">~5-10 seconds</span>
                     </div>
-                </div>
-                <!-- cNFT/Jito Bundle Info (hidden by default) -->
-                <div id="modal-jito-info" style="display: none; margin-top: 12px; padding: 12px; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 8px; border: 1px solid #f59e0b;">
-                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                        <span style="background: #f59e0b; color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">🚀 JITO BUNDLE</span>
-                        <span style="font-size: 0.8rem; color: #92400e; font-weight: 500;" id="modal-jito-tx-count">2 Transactions</span>
+                    <div class="modal-info-item">
+                        <span class="modal-info-label">Network Fees:</span>
+                        <span class="modal-info-value" id="modal-network-fees">~0.00001 SOL</span>
                     </div>
-                    <div class="modal-info-item" style="padding: 4px 0;">
-                        <span class="modal-info-label" style="color: #92400e;">Jito Tip:</span>
-                        <span class="modal-info-value" style="color: #b45309;" id="modal-jito-tip">~0.0001 SOL</span>
+                    <div class="modal-info-item">
+                        <span class="modal-info-label" id="modal-platform-fee-label">Platform Fee:</span>
+                        <span class="modal-info-value" id="modal-platform-fee">1% (0.01 SOL min)</span>
                     </div>
-                    <div class="modal-info-item" style="padding: 4px 0;">
-                        <span class="modal-info-label" style="color: #92400e;">Bundle Strategy:</span>
-                        <span class="modal-info-value" style="color: #b45309;" id="modal-bundle-strategy">Atomic execution via Jito</span>
-                    </div>
-                    <div style="font-size: 0.75rem; color: #78350f; margin-top: 8px; padding-top: 8px; border-top: 1px solid #fbbf24;">
-                        ℹ️ cNFT swaps require multiple transactions bundled atomically via Jito Block Engine
-                    </div>
+
+                    <!-- Transaction Size Estimate -->
+                    <div id="modal-tx-size-container" class="modal-tx-size-container"></div>
                 </div>
             </div>
-            
-            <div class="modal-info-section">
-                <div class="modal-info-title">💰 Fee Breakdown</div>
-                <div class="modal-info-item">
-                    <span class="modal-info-label">Estimated Time:</span>
-                    <span class="modal-info-value highlight" id="modal-est-time">~5-10 seconds</span>
-                </div>
-                <div class="modal-info-item">
-                    <span class="modal-info-label">Network Fees:</span>
-                    <span class="modal-info-value" id="modal-network-fees">~0.00001 SOL</span>
-                </div>
-                <div class="modal-info-item">
-                    <span class="modal-info-label" id="modal-platform-fee-label">Platform Fee:</span>
-                    <span class="modal-info-value" id="modal-platform-fee">1% (0.01 SOL min)</span>
-                </div>
-                
-                <!-- Transaction Size Estimate -->
-                <div id="modal-tx-size-container" class="modal-tx-size-container"></div>
-            </div>
-            
+
             <div class="modal-actions">
                 <button class="modal-btn modal-btn-cancel" id="modal-cancel">Cancel</button>
                 <button class="modal-btn modal-btn-confirm" id="modal-confirm">Confirm Swap</button>
@@ -3262,9 +3310,9 @@
                 </div>
             </div>
 
-            <!-- Fee Breakdown -->
+            <!-- Swap Breakdown -->
             <div class="fee-breakdown" id="quick-list-fee-breakdown">
-                <div class="fee-breakdown-title">💰 Fee Breakdown</div>
+                <div class="fee-breakdown-title">📊 Swap Breakdown</div>
                 <div class="fee-breakdown-row">
                     <span class="fee-breakdown-label">Listing Price:</span>
                     <span class="fee-breakdown-value" id="quick-list-display-price">-- SOL</span>
