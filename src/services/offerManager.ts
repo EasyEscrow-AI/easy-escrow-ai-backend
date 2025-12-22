@@ -60,6 +60,8 @@ export interface OfferSummary {
   status: OfferStatus;
   offeredAssets: any[];
   requestedAssets: any[];
+  offeredSol?: string; // SOL offered in lamports (as string for BigInt compatibility)
+  requestedSol?: string; // SOL requested in lamports (as string for BigInt compatibility)
   platformFee: FeeBreakdown;
   nonceAccount: string;
   expiresAt: Date;
@@ -933,6 +935,8 @@ export class OfferManager {
         status: offer.status,
         offeredAssets: offer.offeredAssets as any[],
         requestedAssets: offer.requestedAssets as any[],
+        offeredSol: offeredSol > BigInt(0) ? offeredSol.toString() : undefined,
+        requestedSol: requestedSol > BigInt(0) ? requestedSol.toString() : undefined,
         platformFee: feeBreakdown,
         nonceAccount: offer.nonceAccount,
         expiresAt: offer.expiresAt,
