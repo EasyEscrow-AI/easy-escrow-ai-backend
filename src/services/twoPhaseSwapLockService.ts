@@ -34,6 +34,7 @@ import {
   SwapAsset,
   TwoPhaseSwapData,
 } from './swapStateMachine';
+import { uuidToBuffer } from '../utils/uuid-conversion';
 
 // =============================================================================
 // Constants
@@ -55,32 +56,6 @@ export const TWO_PHASE_SWAP_SEEDS = {
  * Default lock phase timeout in seconds (30 minutes)
  */
 export const DEFAULT_LOCK_TIMEOUT_SECONDS = 30 * 60;
-
-/**
- * Convert a UUID string to a 16-byte buffer for PDA seeds
- *
- * UUIDs are 36 characters with dashes (e.g., "5d7f5458-839c-47e8-964f-12c80b59fde5")
- * which is 32 hex characters = 16 bytes when parsed as binary.
- *
- * Solana PDA seeds have a max length of 32 bytes per seed, so we must convert
- * the UUID to its binary representation (16 bytes) rather than using the
- * string representation (36 bytes).
- *
- * @param uuid - UUID string with or without dashes
- * @returns 16-byte Buffer containing the binary representation of the UUID
- */
-function uuidToBuffer(uuid: string): Buffer {
-  // Remove dashes to get the 32 hex character representation
-  const hex = uuid.replace(/-/g, '');
-
-  // Validate we have exactly 32 hex characters
-  if (hex.length !== 32 || !/^[0-9a-fA-F]+$/.test(hex)) {
-    throw new Error(`Invalid UUID format: ${uuid}. Expected 32 hex characters (with or without dashes).`);
-  }
-
-  // Convert hex string to 16-byte buffer
-  return Buffer.from(hex, 'hex');
-}
 
 // =============================================================================
 // Types

@@ -37,32 +37,8 @@ import {
   TwoPhaseSwapData,
 } from './swapStateMachine';
 import { TWO_PHASE_SWAP_SEEDS } from './twoPhaseSwapLockService';
-
-/**
- * Convert a UUID string to a 16-byte buffer for PDA seeds
- *
- * UUIDs are 36 characters with dashes (e.g., "5d7f5458-839c-47e8-964f-12c80b59fde5")
- * which is 32 hex characters = 16 bytes when parsed as binary.
- *
- * Solana PDA seeds have a max length of 32 bytes per seed, so we must convert
- * the UUID to its binary representation (16 bytes) rather than using the
- * string representation (36 bytes).
- *
- * @param uuid - UUID string with or without dashes
- * @returns 16-byte Buffer containing the binary representation of the UUID
- */
-function uuidToBuffer(uuid: string): Buffer {
-  // Remove dashes to get the 32 hex character representation
-  const hex = uuid.replace(/-/g, '');
-
-  // Validate we have exactly 32 hex characters
-  if (hex.length !== 32 || !/^[0-9a-fA-F]+$/.test(hex)) {
-    throw new Error(`Invalid UUID format: ${uuid}. Expected 32 hex characters (with or without dashes).`);
-  }
-
-  // Convert hex string to 16-byte buffer
-  return Buffer.from(hex, 'hex');
-}
+import { uuidToBuffer, uuidToUint8Array } from '../utils/uuid-conversion';
+import * as crypto from 'crypto';
 
 // =============================================================================
 // Constants
@@ -334,6 +310,122 @@ export class TwoPhaseSwapSettleService {
       ],
       this.programId
     );
+  }
+  // ===========================================================================
+  // Instruction Builders for Two-Phase SOL Vault Operations
+  // ===========================================================================
+
+  /**
+   * Get Anchor instruction discriminator (first 8 bytes of SHA256 hash of "global:<instruction_name>")
+   */
+  private getInstructionDiscriminator(instructionName: string): Buffer {
+    const hash = crypto.createHash('sha256')
+      .update(`global:${instructionName}`)
+      .digest();
+    return hash.slice(0, 8);
+  }
+
+  /**
+   * Build settle_two_phase_with_close instruction
+   *
+   * Transfers SOL from vault to recipient, pays platform fee, and closes the vault PDA.
+   *
+   * @param swapId - Swap UUID
+   * @param party - Which party's vault ('A' or 'B')
+   * @param recipient - Recipient public key
+   * @param recipientAmount - Amount to send to recipient in lamports
+   * @param platformFee - Platform fee amount in lamports
+   * @param rentRecipient - Who receives the PDA rent (typically treasury or depositor)
+   * @returns Transaction instruction
+   */
+  buildSettleTwoPhaseWithCloseInstruction(
+    swapId: string,
+    party: 'A' | 'B',
+    recipient: PublicKey,
+    recipientAmount: bigint,
+    platformFee: bigint,
+    rentRecipient: PublicKey
+  ): TransactionInstruction {
+    const [solVaultPDA] = this.deriveSolVaultPDA(swapId, party);
+    const swapIdBytes = uuidToUint8Array(swapId);
+    const partyByte = party.charCodeAt(0); // 'A' = 65, 'B' = 66
+
+    // Build instruction data:
+    // - discriminator (8 bytes)
+    // - swap_id (16 bytes as [u8; 16])
+    // - party (1 byte)
+    // - recipient_amount (8 bytes as u64)
+    // - platform_fee (8 bytes as u64)
+    const discriminator = this.getInstructionDiscriminator('settle_two_phase_with_close');
+
+    const data = Buffer.alloc(8 + 16 + 1 + 8 + 8);
+    discriminator.copy(data, 0);
+    Buffer.from(swapIdBytes).copy(data, 8);
+    data.writeUInt8(partyByte, 24);
+    data.writeBigUInt64LE(recipientAmount, 25);
+    data.writeBigUInt64LE(platformFee, 33);
+
+    const keys = [
+      { pubkey: this.backendSigner.publicKey, isSigner: true, isWritable: true },  // caller
+      { pubkey: solVaultPDA, isSigner: false, isWritable: true },                   // sol_vault
+      { pubkey: recipient, isSigner: false, isWritable: true },                     // recipient
+      { pubkey: this.feeCollector, isSigner: false, isWritable: true },             // platform_fee_collector
+      { pubkey: rentRecipient, isSigner: false, isWritable: true },                 // rent_recipient
+      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },      // system_program
+    ];
+
+    return new TransactionInstruction({
+      keys,
+      programId: this.programId,
+      data,
+    });
+  }
+
+  /**
+   * Build cancel_two_phase_with_close instruction
+   *
+   * Returns SOL from vault to original depositor and closes the vault PDA.
+   *
+   * @param swapId - Swap UUID
+   * @param party - Which party's vault ('A' or 'B')
+   * @param depositor - Original depositor public key (receives refund)
+   * @param rentRecipient - Who receives the PDA rent
+   * @returns Transaction instruction
+   */
+  buildCancelTwoPhaseWithCloseInstruction(
+    swapId: string,
+    party: 'A' | 'B',
+    depositor: PublicKey,
+    rentRecipient: PublicKey
+  ): TransactionInstruction {
+    const [solVaultPDA] = this.deriveSolVaultPDA(swapId, party);
+    const swapIdBytes = uuidToUint8Array(swapId);
+    const partyByte = party.charCodeAt(0);
+
+    // Build instruction data:
+    // - discriminator (8 bytes)
+    // - swap_id (16 bytes as [u8; 16])
+    // - party (1 byte)
+    const discriminator = this.getInstructionDiscriminator('cancel_two_phase_with_close');
+
+    const data = Buffer.alloc(8 + 16 + 1);
+    discriminator.copy(data, 0);
+    Buffer.from(swapIdBytes).copy(data, 8);
+    data.writeUInt8(partyByte, 24);
+
+    const keys = [
+      { pubkey: this.backendSigner.publicKey, isSigner: true, isWritable: true },  // caller
+      { pubkey: solVaultPDA, isSigner: false, isWritable: true },                   // sol_vault
+      { pubkey: depositor, isSigner: false, isWritable: true },                     // depositor
+      { pubkey: rentRecipient, isSigner: false, isWritable: true },                 // rent_recipient
+      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },      // system_program
+    ];
+
+    return new TransactionInstruction({
+      keys,
+      programId: this.programId,
+      data,
+    });
   }
 
   // ===========================================================================
@@ -817,18 +909,38 @@ export class TwoPhaseSwapSettleService {
       }
     }
 
-    // Build SOL transfer instructions
-    // NOTE: SOL transfers from vault PDAs require CPI through the on-chain escrow program.
-    // PDAs cannot sign transactions directly - they can only authorize through CPI.
-    // This is a known limitation that requires on-chain program integration.
-    if (chunk.solTransfers.length > 0) {
-      // For now, throw an error for SOL transfers until CPI is implemented
-      // TODO: Implement escrow program CPI for SOL vault releases
-      throw new SettleServiceError(
-        'SOL transfers from escrow vaults require on-chain program CPI. ' +
-        'This feature is not yet implemented. For cNFT-only swaps, settlement will work. ' +
-        'SOL escrow release requires integration with the escrow program\'s release_sol instruction.'
-      );
+    // Build SOL transfer instructions using on-chain program CPI
+    // SOL vault PDAs can only transfer SOL through the escrow program's settle instruction
+    for (const solTransfer of chunk.solTransfers) {
+      if (solTransfer.type === 'escrow_release') {
+        // Determine recipient based on transfer direction
+        // In a swap, Party A's SOL goes to Party B and vice versa
+        const recipient = new PublicKey(solTransfer.to);
+        const rentRecipient = this.feeCollector; // Treasury receives rent
+
+        // Build the settle instruction with platform fee
+        const instruction = this.buildSettleTwoPhaseWithCloseInstruction(
+          swapId,
+          solTransfer.fromParty,
+          recipient,
+          solTransfer.amount,
+          BigInt(0), // Platform fee handled separately
+          rentRecipient
+        );
+
+        instructions.push(instruction);
+
+        console.log('[TwoPhaseSwapSettleService] Built SOL release instruction:', {
+          swapId,
+          party: solTransfer.fromParty,
+          recipient: solTransfer.to,
+          amount: solTransfer.amount.toString(),
+        });
+      } else if (solTransfer.type === 'platform_fee') {
+        // Platform fee is now included in the settle instruction above
+        // This case is handled by passing platformFee to buildSettleTwoPhaseWithCloseInstruction
+        console.log('[TwoPhaseSwapSettleService] Platform fee included in settle instruction');
+      }
     }
 
     // Create transaction

@@ -812,6 +812,75 @@
       ]
     },
     {
+      "name": "cancel_two_phase_with_close",
+      "docs": [
+        "Cancel two-phase swap: return SOL to depositor and close vault",
+        "",
+        "Returns all SOL from the vault to the original depositor,",
+        "then closes the vault PDA and recovers rent."
+      ],
+      "discriminator": [
+        18,
+        54,
+        133,
+        187,
+        47,
+        111,
+        83,
+        127
+      ],
+      "accounts": [
+        {
+          "name": "caller",
+          "docs": [
+            "Caller (backend authority or the original depositor)"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "sol_vault",
+          "docs": [
+            "SOL vault PDA to cancel and close"
+          ],
+          "writable": true
+        },
+        {
+          "name": "depositor",
+          "docs": [
+            "Original depositor (receives SOL refund)"
+          ],
+          "writable": true
+        },
+        {
+          "name": "rent_recipient",
+          "docs": [
+            "Rent recipient (receives the vault's rent-exempt reserve)"
+          ],
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "swap_id",
+          "type": {
+            "array": [
+              "u8",
+              16
+            ]
+          }
+        },
+        {
+          "name": "party",
+          "type": "u8"
+        }
+      ]
+    },
+    {
       "name": "close_escrow",
       "docs": [
         "Close escrow account and recover rent-exempt reserve",
@@ -1514,6 +1583,62 @@
       "args": []
     },
     {
+      "name": "deposit_two_phase_sol",
+      "docs": [
+        "Deposit SOL into an existing two-phase vault"
+      ],
+      "discriminator": [
+        189,
+        74,
+        249,
+        171,
+        146,
+        56,
+        35,
+        125
+      ],
+      "accounts": [
+        {
+          "name": "depositor",
+          "docs": [
+            "Depositor (the party locking SOL)"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "sol_vault",
+          "docs": [
+            "SOL vault PDA to deposit into"
+          ],
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "swap_id",
+          "type": {
+            "array": [
+              "u8",
+              16
+            ]
+          }
+        },
+        {
+          "name": "party",
+          "type": "u8"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
       "name": "emergency_pause",
       "docs": [
         "Emergency pause - stops all swaps and withdrawals",
@@ -1968,6 +2093,61 @@
       ]
     },
     {
+      "name": "init_two_phase_sol_vault",
+      "docs": [
+        "Initialize a two-phase SOL vault PDA",
+        "",
+        "Creates a rent-exempt PDA to hold SOL during the lock phase.",
+        "Used when bulk cNFT swaps cannot fit in Jito bundles."
+      ],
+      "discriminator": [
+        75,
+        231,
+        93,
+        160,
+        45,
+        78,
+        218,
+        183
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "docs": [
+            "Payer for rent (typically the party locking assets)"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "sol_vault",
+          "docs": [
+            "SOL vault PDA to create"
+          ],
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "swap_id",
+          "type": {
+            "array": [
+              "u8",
+              16
+            ]
+          }
+        },
+        {
+          "name": "party",
+          "type": "u8"
+        }
+      ]
+    },
+    {
       "name": "initialize_treasury",
       "docs": [
         "Initialize the Treasury PDA",
@@ -2386,6 +2566,90 @@
         }
       ],
       "args": []
+    },
+    {
+      "name": "settle_two_phase_with_close",
+      "docs": [
+        "Settle two-phase swap: transfer SOL to recipient and close vault",
+        "",
+        "Transfers SOL from the vault to the counterparty, collects platform fee,",
+        "then closes the vault PDA and recovers rent."
+      ],
+      "discriminator": [
+        46,
+        171,
+        132,
+        163,
+        209,
+        0,
+        135,
+        13
+      ],
+      "accounts": [
+        {
+          "name": "caller",
+          "docs": [
+            "Backend authority (must be authorized to call this)"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "sol_vault",
+          "docs": [
+            "SOL vault PDA to settle and close"
+          ],
+          "writable": true
+        },
+        {
+          "name": "recipient",
+          "docs": [
+            "Recipient of the SOL (counterparty)"
+          ],
+          "writable": true
+        },
+        {
+          "name": "platform_fee_collector",
+          "docs": [
+            "Platform fee collector"
+          ],
+          "writable": true
+        },
+        {
+          "name": "rent_recipient",
+          "docs": [
+            "Rent recipient (receives the vault's rent-exempt reserve)"
+          ],
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "swap_id",
+          "type": {
+            "array": [
+              "u8",
+              16
+            ]
+          }
+        },
+        {
+          "name": "party",
+          "type": "u8"
+        },
+        {
+          "name": "recipient_amount",
+          "type": "u64"
+        },
+        {
+          "name": "platform_fee",
+          "type": "u64"
+        }
+      ]
     },
     {
       "name": "unpause",

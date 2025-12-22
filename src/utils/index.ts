@@ -8,3 +8,4 @@
 export * from './idl-loader';
 export * from './metaplex-parser';
 export * from './featureFlags';
+export * from './uuid-conversion';

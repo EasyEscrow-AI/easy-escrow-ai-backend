@@ -15,7 +15,7 @@ import { FeeCalculator } from '../services/feeCalculator';
 import { AssetValidator } from '../services/assetValidator';
 import { TransactionBuilder } from '../services/transactionBuilder';
 import { HealthCheckService } from '../services/health-check.service';
-import { Connection, Keypair, PublicKey } from '@solana/web3.js';
+import { Connection, Keypair, PublicKey, Transaction, sendAndConfirmTransaction } from '@solana/web3.js';
 import { prisma, checkDatabaseHealth } from '../config/database';
 import { checkRedisHealth } from '../config/redis';
 import { getIdempotencyService } from '../services';
@@ -297,10 +297,55 @@ const swapRecoveryService = createSwapRecoveryService({
   },
   solReturner: {
     returnEscrowedSol: async (vaultPda: string, toWallet: string, amount: bigint) => {
-      // Use the settlement service to return SOL
-      // TODO: Implement actual SOL return via twoPhaseSwapSettleService when available
-      console.log(`[SwapRecovery] Return SOL requested: ${amount} lamports to ${toWallet}`);
-      return { success: true, signature: `return-sol-${toWallet}-${Date.now()}` };
+      // Parse vaultPda string to extract swapId and party
+      // Format: "sol-vault-{swapId}-A" or "sol-vault-{swapId}-B"
+      const match = vaultPda.match(/^sol-vault-(.+)-([AB])$/);
+      if (!match) {
+        console.error(`[SwapRecovery] Invalid vault PDA format: ${vaultPda}`);
+        return { success: false };
+      }
+
+      const [, swapId, partyStr] = match;
+      const party = partyStr as 'A' | 'B';
+      const depositor = new PublicKey(toWallet);
+
+      console.log(`[SwapRecovery] Returning SOL from vault:`, {
+        swapId,
+        party,
+        depositor: toWallet,
+        amount: amount.toString(),
+      });
+
+      try {
+        // Build cancel instruction using the settle service
+        const cancelInstruction = twoPhaseSwapSettleService.buildCancelTwoPhaseWithCloseInstruction(
+          swapId,
+          party,
+          depositor,
+          feeCollector // Rent goes to treasury
+        );
+
+        // Create and send transaction
+        const recentBlockhash = await connection.getLatestBlockhash();
+        const transaction = new Transaction({
+          recentBlockhash: recentBlockhash.blockhash,
+          feePayer: platformAuthority.publicKey,
+        });
+        transaction.add(cancelInstruction);
+
+        const signature = await sendAndConfirmTransaction(
+          connection,
+          transaction,
+          [platformAuthority],
+          { commitment: 'confirmed', maxRetries: 2 }
+        );
+
+        console.log(`[SwapRecovery] SOL return confirmed:`, { swapId, party, signature });
+        return { success: true, signature };
+      } catch (error) {
+        console.error(`[SwapRecovery] Failed to return SOL:`, error);
+        return { success: false };
+      }
     },
   },
   settlementExecutor: {

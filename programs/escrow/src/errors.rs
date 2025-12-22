@@ -82,5 +82,17 @@ pub enum AtomicSwapError {
     
     #[msg("Invalid mpl-core program: Program ID does not match expected")]
     InvalidMplCoreProgram,
+    // Two-phase swap errors
+    #[msg("Invalid amount: Amount must be greater than zero")]
+    InvalidAmount,
+
+    #[msg("Insufficient funds: Vault does not have enough balance")]
+    InsufficientFunds,
+
+    #[msg("Vault not initialized: Cannot deposit to non-existent vault PDA")]
+    VaultNotInitialized,
+
+    #[msg("Unauthorized caller: Only backend authority can call this instruction")]
+    UnauthorizedTwoPhase,
 }
 
