@@ -123,7 +123,7 @@ tags:
     description: Service health and status
   - name: Assets
     description: Supported assets and chains for atomic swaps
-  - name: Quotes
+  - name: Quote
     description: Swap quote and fee estimation
   - name: Swaps
     description: Atomic swap offer lifecycle management and bundle monitoring
@@ -219,7 +219,7 @@ paths:
   /api/swaps/quote:
     post:
       tags:
-        - Quotes
+        - Quote
       summary: Get swap quote
       description: |
         Get a comprehensive quote for an atomic swap including:
@@ -1638,6 +1638,239 @@ components:
               type: integer
               description: Proof nodes for taker's cNFT(s)
               example: 0
+
+    Asset:
+      type: object
+      description: An NFT or cNFT asset in a swap offer
+      required:
+        - mint
+      properties:
+        mint:
+          type: string
+          description: NFT mint address (asset ID for cNFTs)
+          example: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+        isCompressed:
+          type: boolean
+          description: Whether the NFT is a compressed NFT (cNFT)
+          default: false
+          example: false
+        isCoreNft:
+          type: boolean
+          description: Whether the NFT is a Metaplex Core NFT
+          default: false
+          example: false
+        name:
+          type: string
+          description: NFT name (optional)
+          example: "Cool NFT #123"
+        image:
+          type: string
+          description: NFT image URL (optional)
+        symbol:
+          type: string
+          description: NFT symbol (optional)
+
+    CreateOfferRequest:
+      type: object
+      description: Request body for creating a new swap offer
+      properties:
+        makerWallet:
+          type: string
+          description: Wallet address of the offer creator
+          example: "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"
+        takerWallet:
+          type: string
+          description: Optional specific taker wallet (for direct offers)
+          example: "8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ"
+        offeredAssets:
+          type: array
+          description: NFTs/cNFTs offered by the maker
+          items:
+            $ref: '#/components/schemas/Asset'
+        requestedAssets:
+          type: array
+          description: NFTs/cNFTs requested from the taker
+          items:
+            $ref: '#/components/schemas/Asset'
+        offeredSol:
+          type: string
+          description: SOL amount offered by maker (in lamports)
+          example: "0"
+        requestedSol:
+          type: string
+          description: SOL amount requested from taker (in lamports)
+          example: "1000000000"
+        expiryDurationHours:
+          type: number
+          description: Offer expiry duration in hours (1-720, default 168)
+          minimum: 1
+          maximum: 720
+          example: 168
+        bidderWallet:
+          type: string
+          description: For cNFT bids - bidder wallet address
+        targetAssetId:
+          type: string
+          description: For cNFT bids - target cNFT asset ID
+        offerLamports:
+          type: string
+          description: For cNFT bids - SOL offer amount in lamports
+        durationSeconds:
+          type: integer
+          description: For cNFT bids - bid duration in seconds
+        partyA:
+          type: string
+          description: Alias for makerWallet (bulk swaps)
+        partyB:
+          type: string
+          description: Alias for takerWallet (bulk swaps)
+        assetsA:
+          type: array
+          description: Alias for offeredAssets (bulk swaps)
+          items:
+            $ref: '#/components/schemas/Asset'
+        assetsB:
+          type: array
+          description: Alias for requestedAssets (bulk swaps)
+          items:
+            $ref: '#/components/schemas/Asset'
+        solAmountA:
+          type: string
+          description: Alias for offeredSol (bulk swaps)
+        solAmountB:
+          type: string
+          description: Alias for requestedSol (bulk swaps)
+
+    OfferSummary:
+      type: object
+      description: Summary of a swap offer for listing
+      properties:
+        id:
+          type: string
+          description: Unique offer ID
+          example: "1"
+        status:
+          $ref: '#/components/schemas/OfferStatus'
+        makerWallet:
+          type: string
+          description: Maker's wallet address
+        takerWallet:
+          type: string
+          nullable: true
+          description: Taker's wallet address (null for open offers)
+        offeredAssetCount:
+          type: integer
+          description: Number of assets offered by maker
+          example: 1
+        requestedAssetCount:
+          type: integer
+          description: Number of assets requested from taker
+          example: 0
+        offeredSol:
+          type: string
+          description: SOL offered by maker (in lamports)
+          example: "0"
+        requestedSol:
+          type: string
+          description: SOL requested from taker (in lamports)
+          example: "1000000000"
+        expiresAt:
+          type: string
+          format: date-time
+          description: Offer expiration time
+        createdAt:
+          type: string
+          format: date-time
+          description: Offer creation time
+
+    OfferDetail:
+      type: object
+      description: Full details of a swap offer
+      properties:
+        id:
+          type: string
+          description: Unique offer ID
+          example: "1"
+        status:
+          $ref: '#/components/schemas/OfferStatus'
+        makerWallet:
+          type: string
+          description: Maker's wallet address
+        takerWallet:
+          type: string
+          nullable: true
+          description: Taker's wallet address
+        offeredAssets:
+          type: array
+          items:
+            $ref: '#/components/schemas/Asset'
+        requestedAssets:
+          type: array
+          items:
+            $ref: '#/components/schemas/Asset'
+        offeredSol:
+          type: string
+          description: SOL offered by maker (in lamports)
+        requestedSol:
+          type: string
+          description: SOL requested from taker (in lamports)
+        platformFee:
+          type: string
+          description: Platform fee in lamports
+        nonceAccount:
+          type: string
+          description: Durable nonce account address
+        expiresAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        acceptedAt:
+          type: string
+          format: date-time
+          nullable: true
+        filledAt:
+          type: string
+          format: date-time
+          nullable: true
+        cancelledAt:
+          type: string
+          format: date-time
+          nullable: true
+        parentOfferId:
+          type: string
+          nullable: true
+          description: Parent offer ID for counter-offers
+
+    AgreementStatus:
+      type: string
+      enum:
+        - PENDING_INIT
+        - PENDING_DEPOSITS
+        - SOL_LOCKED
+        - NFT_A_LOCKED
+        - NFT_B_LOCKED
+        - BOTH_LOCKED
+        - ALL_LOCKED
+        - SETTLED
+        - EXPIRED
+        - CANCELLED
+      description: |
+        Status of an agreement:
+        - PENDING_INIT: Agreement is being initialized
+        - PENDING_DEPOSITS: Waiting for deposits
+        - SOL_LOCKED: SOL has been deposited
+        - NFT_A_LOCKED: Seller's NFT has been deposited
+        - NFT_B_LOCKED: Buyer's NFT has been deposited
+        - BOTH_LOCKED: Two assets are locked
+        - ALL_LOCKED: All assets locked, ready for settlement
+        - SETTLED: Successfully settled
+        - EXPIRED: Expired without settlement
+        - CANCELLED: Cancelled
 
     OfferStatus:
       type: string
