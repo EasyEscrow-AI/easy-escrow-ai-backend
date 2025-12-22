@@ -243,6 +243,8 @@ export class OfferManager {
         status: offer.status,
         offeredAssets: offer.offeredAssets as any[],
         requestedAssets: offer.requestedAssets as any[],
+        offeredSol: offeredSol > BigInt(0) ? offeredSol.toString() : undefined,
+        requestedSol: requestedSol > BigInt(0) ? requestedSol.toString() : undefined,
         platformFee: feeBreakdown,
         nonceAccount: offer.nonceAccount,
         expiresAt: offer.expiresAt,
@@ -254,7 +256,7 @@ export class OfferManager {
       throw error;
     }
   }
-  
+
   /**
    * Accept an offer and get transaction to sign
    */
@@ -881,6 +883,8 @@ export class OfferManager {
       status: offer.status,
       offeredAssets: offer.offeredAssets as any[],
       requestedAssets: offer.requestedAssets as any[],
+      offeredSol: offeredSol > BigInt(0) ? offeredSol.toString() : undefined,
+      requestedSol: requestedSol > BigInt(0) ? requestedSol.toString() : undefined,
       platformFee: feeBreakdown,
       nonceAccount: offer.nonceAccount,
       expiresAt: offer.expiresAt,
@@ -888,7 +892,7 @@ export class OfferManager {
       serializedTransaction: offer.serializedTransaction || undefined,
     };
   }
-  
+
   /**
    * List offers with filtering
    */
@@ -926,7 +930,7 @@ export class OfferManager {
       const offeredSol = offer.offeredSolLamports ? BigInt(offer.offeredSolLamports) : BigInt(0);
       const requestedSol = offer.requestedSolLamports ? BigInt(offer.requestedSolLamports) : BigInt(0);
       const feeBreakdown = this.feeCalculator.calculateFee(offeredSol, requestedSol);
-      
+
       return {
         id: offer.id,
         makerWallet: offer.makerWallet,
@@ -944,10 +948,10 @@ export class OfferManager {
         serializedTransaction: offer.serializedTransaction || undefined,
       };
     });
-    
+
     return { offers: summaries, total };
   }
-  
+
   /**
    * Create a counter-offer for an existing offer
    */
@@ -1094,6 +1098,8 @@ export class OfferManager {
         status: counterOffer.status,
         offeredAssets: counterOffer.offeredAssets as any[],
         requestedAssets: counterOffer.requestedAssets as any[],
+        offeredSol: offeredSol > BigInt(0) ? offeredSol.toString() : undefined,
+        requestedSol: requestedSol > BigInt(0) ? requestedSol.toString() : undefined,
         platformFee: feeBreakdown,
         nonceAccount: counterOffer.nonceAccount,
         expiresAt: counterOffer.expiresAt,
@@ -1105,7 +1111,7 @@ export class OfferManager {
       throw error;
     }
   }
-  
+
   /**
    * Update an existing offer (change SOL amounts or assets)
    * Only the maker can update their own offer, and only while it's ACTIVE
@@ -1288,6 +1294,8 @@ export class OfferManager {
         status: updatedOffer.status,
         offeredAssets: updatedOffer.offeredAssets as any[],
         requestedAssets: updatedOffer.requestedAssets as any[],
+        offeredSol: newOfferedSol > BigInt(0) ? newOfferedSol.toString() : undefined,
+        requestedSol: newRequestedSol > BigInt(0) ? newRequestedSol.toString() : undefined,
         platformFee: feeBreakdown,
         nonceAccount: updatedOffer.nonceAccount,
         expiresAt: updatedOffer.expiresAt,
@@ -1299,7 +1307,7 @@ export class OfferManager {
       throw error;
     }
   }
-  
+
   /**
    * Confirm that a swap was successfully executed on-chain
    */
