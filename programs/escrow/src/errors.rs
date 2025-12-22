@@ -88,5 +88,11 @@ pub enum AtomicSwapError {
 
     #[msg("Insufficient funds: Vault does not have enough balance")]
     InsufficientFunds,
+
+    #[msg("Vault not initialized: Cannot deposit to non-existent vault PDA")]
+    VaultNotInitialized,
+
+    #[msg("Unauthorized caller: Only backend authority can call this instruction")]
+    UnauthorizedTwoPhase,
 }
 

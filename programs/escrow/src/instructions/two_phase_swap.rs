@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_lang::system_program;
 use crate::errors::AtomicSwapError;
+use crate::get_authorized_admins;
 
 // ============================================================================
 // Two-Phase Swap Instructions
@@ -152,6 +153,15 @@ pub fn deposit_two_phase_sol_handler(
 ) -> Result<()> {
     require!(amount > 0, AtomicSwapError::InvalidAmount);
 
+    // SECURITY: Verify vault was initialized (has rent-exempt minimum)
+    // This prevents depositing to uninitialized PDAs where funds could get stuck
+    let rent = Rent::get()?;
+    let rent_exempt_min = rent.minimum_balance(0);
+    require!(
+        ctx.accounts.sol_vault.lamports() >= rent_exempt_min,
+        AtomicSwapError::VaultNotInitialized
+    );
+
     msg!("Depositing SOL into two-phase vault");
     msg!("  Amount: {} lamports", amount);
     msg!("  From: {}", ctx.accounts.depositor.key());
@@ -181,6 +191,13 @@ pub fn settle_two_phase_with_close_handler(
     recipient_amount: u64,
     platform_fee: u64,
 ) -> Result<()> {
+    // SECURITY: Verify caller is an authorized backend admin
+    let authorized_admins = get_authorized_admins();
+    require!(
+        authorized_admins.contains(&ctx.accounts.caller.key()),
+        AtomicSwapError::UnauthorizedTwoPhase
+    );
+
     let sol_vault = &ctx.accounts.sol_vault;
     let vault_balance = sol_vault.lamports();
 
@@ -235,6 +252,13 @@ pub fn cancel_two_phase_with_close_handler(
     swap_id: [u8; 16],
     party: u8,
 ) -> Result<()> {
+    // SECURITY: Verify caller is an authorized backend admin
+    let authorized_admins = get_authorized_admins();
+    require!(
+        authorized_admins.contains(&ctx.accounts.caller.key()),
+        AtomicSwapError::UnauthorizedTwoPhase
+    );
+
     let sol_vault = &ctx.accounts.sol_vault;
     let vault_balance = sol_vault.lamports();
 
