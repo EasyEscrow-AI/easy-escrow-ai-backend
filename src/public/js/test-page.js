@@ -2154,6 +2154,15 @@ function renderActiveListings() {
     });
   });
 
+  // Add CSP-compliant event handlers for action cancel buttons
+  container.querySelectorAll('.listing-action-btn.cancel').forEach((btn) => {
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation(); // Prevent card click events
+      const offerId = this.dataset.offerId;
+      handleCancelOffer(offerId);
+    });
+  });
+
   // Add CSP-compliant error handlers for listing card images
   container.querySelectorAll('.listing-card-image').forEach((img) => {
     img.addEventListener(
