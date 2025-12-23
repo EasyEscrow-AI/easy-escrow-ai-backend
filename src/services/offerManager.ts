@@ -177,7 +177,50 @@ export class OfferManager {
           `Duplicate assets in requested list: ${[...new Set(requestedDuplicates)].join(', ')}`
         );
       }
-      
+
+      // 2d. Check for duplicate public listings (private listings can have duplicates)
+      // Only check if this is a PUBLIC listing (no takerWallet specified)
+      const isPublicListing = !input.takerWallet;
+      if (isPublicListing && input.offeredAssets.length > 0) {
+        // Find existing PUBLIC offers from this maker (offers with no takerWallet)
+        const existingPublicOffers = await this.prisma.swapOffer.findMany({
+          where: {
+            makerWallet: input.makerWallet,
+            status: OfferStatus.ACTIVE,
+            takerWallet: null, // Only check against other public listings
+          },
+          select: {
+            id: true,
+            offeredAssets: true,
+          },
+        });
+
+        // Extract all asset identifiers from existing public offers
+        const existingPublicListedAssets = new Set<string>();
+        for (const offer of existingPublicOffers) {
+          const offeredAssets = offer.offeredAssets as Array<{ identifier: string }>;
+          if (offeredAssets && Array.isArray(offeredAssets)) {
+            for (const asset of offeredAssets) {
+              if (asset.identifier) {
+                existingPublicListedAssets.add(asset.identifier.toLowerCase());
+              }
+            }
+          }
+        }
+
+        // Check if any of the new offered assets are already in a public listing
+        const alreadyListedAssets = input.offeredAssets
+          .filter(a => existingPublicListedAssets.has(a.identifier.toLowerCase()))
+          .map(a => a.identifier);
+
+        if (alreadyListedAssets.length > 0) {
+          throw new Error(
+            `Asset(s) already listed in a public offer: ${alreadyListedAssets.join(', ')}. ` +
+            `Cancel the existing public listing first, or create a private listing instead.`
+          );
+        }
+      }
+
       // 3. Validate maker's asset ownership
       const offeredAssetsValidation = await this.assetValidator.validateAssets(
         input.makerWallet,

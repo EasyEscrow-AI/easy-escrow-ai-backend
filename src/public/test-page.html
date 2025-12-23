@@ -433,7 +433,7 @@
         #activity-log-content {
             flex: 1;
             overflow-y: auto;
-            max-height: 600px;
+            max-height: 740px;
         }
 
         .activity-header {
@@ -1652,12 +1652,58 @@
             margin-bottom: 12px;
         }
 
+        .listing-card-image-container {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            flex-shrink: 0;
+        }
+
         .listing-card-image {
             width: 60px;
             height: 60px;
             border-radius: 8px;
             object-fit: cover;
             background: #e0e0e0;
+        }
+
+        .listing-image-cancel-btn {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #dc3545;
+            color: white;
+            border: 2px solid white;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: all 0.2s;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .listing-image-cancel-btn:hover {
+            background: #c82333;
+            transform: scale(1.1);
+        }
+
+        .listing-card-value.asset-id {
+            font-family: 'Courier New', monospace;
+            font-size: 0.75rem;
+            color: #666;
+            cursor: pointer;
+        }
+
+        .listing-card-value.asset-id:hover {
+            color: #667eea;
+            text-decoration: underline;
         }
 
         .listing-card-info {
@@ -3048,87 +3094,6 @@
             </button>
         </div>
 
-        <!-- List for Sale Section -->
-        <div class="listing-section">
-            <div class="listing-header">
-                <h2 class="listing-title">📋 List Asset for Sale</h2>
-                <p class="listing-subtitle">Create an offer to sell your NFT for SOL (open or private listing)</p>
-            </div>
-
-            <div class="listing-form-container">
-                <div class="listing-form">
-                    <!-- NFT Type Filter -->
-                    <div class="listing-form-group">
-                        <label class="listing-label">NFT Type</label>
-                        <select class="listing-select" id="listing-type-filter">
-                            <option value="all">All NFT Types</option>
-                            <option value="cnft" selected>cNFT (Compressed)</option>
-                            <option value="spl">SPL NFT</option>
-                            <option value="core">Core NFT</option>
-                        </select>
-                    </div>
-
-                    <!-- Asset Selection -->
-                    <div class="listing-form-group">
-                        <label class="listing-label">Select Asset to List</label>
-                        <select class="listing-select" id="listing-asset-select" disabled>
-                            <option value="">-- Load Maker wallet first --</option>
-                        </select>
-                        <div class="listing-asset-preview" id="listing-asset-preview" style="display: none;">
-                            <img class="listing-preview-image" id="listing-preview-image" src="" alt="">
-                            <div class="listing-preview-details">
-                                <div class="listing-preview-name" id="listing-preview-name"></div>
-                                <div class="listing-preview-type" id="listing-preview-type"></div>
-                                <div class="listing-preview-mint" id="listing-preview-mint"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Price Input -->
-                    <div class="listing-form-group">
-                        <label class="listing-label">Price (SOL)</label>
-                        <input type="number" class="listing-input" id="listing-price" placeholder="0.00" step="0.001" min="0.001">
-                        <div class="listing-input-hint" id="listing-price-usd"></div>
-                    </div>
-
-                    <!-- Private Buyer Wallet (Optional) -->
-                    <div class="listing-form-group">
-                        <label class="listing-label">Private Buyer Wallet (Optional)</label>
-                        <input type="text" class="listing-input" id="listing-private-wallet" placeholder="Leave empty for open listing, or enter wallet address for private sale">
-                        <div class="listing-input-hint">Open listing: anyone can buy. Private: only specified wallet can buy.</div>
-                    </div>
-
-                    <!-- Expiry Duration -->
-                    <div class="listing-form-group">
-                        <label class="listing-label">Listing Duration</label>
-                        <div class="listing-duration-buttons">
-                            <button class="listing-duration-btn" data-duration="3600">1 Hour</button>
-                            <button class="listing-duration-btn" data-duration="86400">24 Hours</button>
-                            <button class="listing-duration-btn active" data-duration="604800">7 Days</button>
-                            <button class="listing-duration-btn" data-duration="2592000">30 Days</button>
-                        </div>
-                    </div>
-
-                    <!-- Fee Info -->
-                    <div class="listing-fee-info">
-                        <div class="listing-fee-row">
-                            <span>Platform Fee:</span>
-                            <span id="listing-fee-display">1% (calculated on sale)</span>
-                        </div>
-                        <div class="listing-fee-row">
-                            <span>You Receive:</span>
-                            <span id="listing-receive-display">99% of sale price</span>
-                        </div>
-                    </div>
-
-                    <!-- List Button -->
-                    <button class="listing-button" id="list-btn" disabled>
-                        📝 Create Listing
-                    </button>
-                </div>
-            </div>
-        </div>
-
         <!-- Active Listings Section -->
         <div class="active-listings-section">
             <div class="active-listings-header">
@@ -3147,6 +3112,11 @@
                 <h2 class="marketplace-title">🛒 Marketplace - Buy Listed Assets</h2>
                 <div class="marketplace-controls">
                     <input type="text" class="marketplace-search" id="marketplace-search" placeholder="Search by name...">
+                    <select class="marketplace-filter" id="marketplace-visibility-filter">
+                        <option value="all">All Listings</option>
+                        <option value="public">Public Only</option>
+                        <option value="private">Private Only</option>
+                    </select>
                     <select class="marketplace-filter" id="marketplace-price-filter">
                         <option value="all">All Prices</option>
                         <option value="low">Under 0.1 SOL</option>
