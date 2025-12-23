@@ -412,25 +412,36 @@ export class TransactionGroupBuilder {
       };
     }
 
-    // If Jito is disabled and swap requires bundle, use two-phase
+    // If Jito is disabled and swap requires bundle, check if we can use sequential RPC
+    // Small cNFT swaps (1-2 cNFTs, up to 3 assets) can use sequential RPC execution
+    // Larger swaps should use two-phase for safety
     if (!isJitoBundlesEnabled() && analysis.transactionCount > 1) {
-      console.log('[TransactionGroupBuilder] Jito disabled, routing to two-phase for multi-tx swap');
-      const twoPhaseAnalysis = {
-        ...analysis,
-        strategy: SwapStrategy.TWO_PHASE_DELEGATION,
-        reason: 'Jito bundles disabled. Using two-phase delegation flow for atomicity.',
-        requiresTwoPhase: true,
-      };
-      return {
-        strategy: SwapStrategy.TWO_PHASE_DELEGATION,
-        analysis: twoPhaseAnalysis,
-        transactions: [], // No transactions built - two-phase flow handles this
-        transactionCount: analysis.transactionCount,
-        requiresJitoBundle: false,
-        totalSizeBytes: 0,
-        nonceValue: '',
-        requiresTwoPhase: true,
-      };
+      const totalCnfts = analysis.makerCnfts + analysis.takerCnfts;
+      const totalAssets = inputs.makerAssets.length + inputs.takerAssets.length;
+      const canUseSequentialRpc = totalCnfts <= 2 && totalAssets <= 3;
+
+      if (!canUseSequentialRpc) {
+        console.log(`[TransactionGroupBuilder] Jito disabled, large swap (${totalCnfts} cNFTs, ${totalAssets} assets) - routing to two-phase`);
+        const twoPhaseAnalysis = {
+          ...analysis,
+          strategy: SwapStrategy.TWO_PHASE_DELEGATION,
+          reason: 'Jito bundles disabled. Using two-phase delegation flow for atomicity.',
+          requiresTwoPhase: true,
+        };
+        return {
+          strategy: SwapStrategy.TWO_PHASE_DELEGATION,
+          analysis: twoPhaseAnalysis,
+          transactions: [], // No transactions built - two-phase flow handles this
+          transactionCount: analysis.transactionCount,
+          requiresJitoBundle: false,
+          totalSizeBytes: 0,
+          nonceValue: '',
+          requiresTwoPhase: true,
+        };
+      }
+
+      console.log(`[TransactionGroupBuilder] Jito disabled, small cNFT swap (${totalCnfts} cNFTs) - using sequential RPC fallback`);
+      // Continue to build transactions for sequential RPC execution
     }
     
     // Get nonce value (same for all transactions in the group)

@@ -1358,18 +1358,27 @@ async function acceptOfferWithRetry(offerId, attempt = 1) {
 
 // Helper: Execute swap with retry for stale proofs
 async function executeSwapWithRetry(offerId, acceptData, isBulkSwap = false, bulkSwapInfo = null) {
-  // Check if this requires two-phase settlement (cNFT <> cNFT swaps)
   const swapFlow = acceptData?.data?.swapFlow;
-  if (swapFlow?.requiresTwoPhase) {
+
+  // Check if we have bulk swap transactions to execute
+  // This handles cNFT swaps that use sequential RPC execution (when Jito is disabled)
+  const hasBulkTransactions = bulkSwapInfo?.transactions?.length > 0;
+
+  // Only throw two-phase error if:
+  // 1. requiresTwoPhase is true AND
+  // 2. There are no bulk transactions to execute (true two-phase flow needed)
+  if (swapFlow?.requiresTwoPhase && !hasBulkTransactions) {
     throw new Error(
-      'This swap requires two-phase settlement (cNFT ↔ cNFT or complex bulk swap). ' +
+      'This swap requires two-phase settlement (bulk cNFT or complex swap). ' +
       'Two-phase swaps use a lock/settle flow with delegation. ' +
       'Use the bulk swap endpoints: POST /api/swaps/offers/bulk/:id/lock and /settle'
     );
   }
 
   // Validate accept data has required transaction structure
-  if (!acceptData?.data?.transaction?.serialized) {
+  // For bulk swaps with transactions, the main transaction.serialized may be empty
+  // but we have bulkSwapInfo.transactions to execute instead
+  if (!acceptData?.data?.transaction?.serialized && !hasBulkTransactions) {
     throw new Error(
       'Accept response missing transaction data. ' +
       `Has data: ${!!acceptData?.data}, has transaction: ${!!acceptData?.data?.transaction}`
@@ -1377,14 +1386,18 @@ async function executeSwapWithRetry(offerId, acceptData, isBulkSwap = false, bul
   }
 
   // Build request body
+  // For bulk swaps, the main serialized transaction may be empty - use first bulk tx if needed
+  const mainSerializedTx = acceptData.data?.transaction?.serialized ||
+                           (hasBulkTransactions ? bulkSwapInfo.transactions[0]?.serialized : null);
+
   const requestBody = {
-    serializedTransaction: acceptData.data.transaction.serialized,
+    serializedTransaction: mainSerializedTx,
     requireSignatures: [MAKER_ADDRESS, TAKER_ADDRESS],
     offerId: offerId, // Backend uses this for automatic retry with fresh proofs
   };
 
-  // Add bulk swap info if available
-  if (isBulkSwap && bulkSwapInfo) {
+  // Add bulk swap info if available (includes cNFT swaps with sequential RPC)
+  if ((isBulkSwap && bulkSwapInfo) || hasBulkTransactions) {
     // Validate bulk swap transactions array
     if (!bulkSwapInfo.transactions || !Array.isArray(bulkSwapInfo.transactions)) {
       throw new Error(
@@ -1597,6 +1610,8 @@ async function executeAtomicSwap(params) {
 
       if (bulkSwapInfo.requiresJitoBundle) {
         addJitoLog('Submitting bundle to Jito Block Engine...');
+      } else {
+        addLog('   📦 Executing transactions sequentially via RPC...', 'info');
       }
     } else {
       addLog('Step 3: Executing swap on-chain...', 'info');
