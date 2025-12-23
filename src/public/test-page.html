@@ -1827,6 +1827,96 @@
             background: #c7d2fe;
         }
 
+        /* Incoming Bids Section */
+        .incoming-bids-section {
+            margin-top: 12px;
+            padding: 10px;
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-radius: 8px;
+            border: 1px solid #f59e0b;
+        }
+
+        .incoming-bids-header {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #92400e;
+            margin-bottom: 8px;
+        }
+
+        .incoming-bid-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            background: white;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            border: 1px solid #fcd34d;
+        }
+
+        .incoming-bid-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .incoming-bid-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .incoming-bid-price {
+            font-weight: 600;
+            color: #b45309;
+            font-size: 0.95rem;
+        }
+
+        .incoming-bid-from {
+            font-size: 0.75rem;
+            color: #78716c;
+        }
+
+        .incoming-bid-actions {
+            display: flex;
+            gap: 4px;
+        }
+
+        .incoming-bid-btn {
+            padding: 4px 8px;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .incoming-bid-btn.accept {
+            background: #22c55e;
+            color: white;
+        }
+
+        .incoming-bid-btn.accept:hover {
+            background: #16a34a;
+        }
+
+        .incoming-bid-btn.counter {
+            background: #667eea;
+            color: white;
+        }
+
+        .incoming-bid-btn.counter:hover {
+            background: #5563d8;
+        }
+
+        .incoming-bid-btn.decline {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .incoming-bid-btn.decline:hover {
+            background: #fecaca;
+        }
+
         /* Quick List Button on NFT Cards */
         .nft-card-actions {
             display: flex;
@@ -3393,6 +3483,53 @@
             <div class="buy-modal-actions" id="buy-modal-actions">
                 <button class="buy-modal-btn cancel" id="buy-modal-cancel">Cancel</button>
                 <button class="buy-modal-btn confirm" id="buy-modal-confirm">Buy Now</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Accept Offer Confirmation Modal -->
+    <div class="buy-modal" id="accept-offer-modal">
+        <div class="buy-modal-content">
+            <div class="buy-modal-header">
+                <h3>🛒 Accept Offer</h3>
+                <p>Review the details before accepting this offer</p>
+            </div>
+
+            <div class="buy-modal-preview">
+                <img class="buy-modal-image" id="accept-offer-image" src="" alt="">
+                <div class="buy-modal-details">
+                    <div class="buy-modal-name" id="accept-offer-name"></div>
+                    <div class="buy-modal-seller" id="accept-offer-buyer"></div>
+                </div>
+            </div>
+
+            <div class="buy-price-breakdown" id="accept-offer-breakdown">
+                <div class="buy-price-row">
+                    <span class="buy-price-label">Offer Amount:</span>
+                    <span class="buy-price-value" id="accept-offer-price">-- SOL</span>
+                </div>
+                <div class="buy-price-row">
+                    <span class="buy-price-label">Platform Fee (1%):</span>
+                    <span class="buy-price-value" id="accept-offer-fee">-- SOL</span>
+                </div>
+                <div class="buy-price-row total">
+                    <span class="buy-price-label">You'll Receive:</span>
+                    <span class="buy-price-value highlight" id="accept-offer-receive">-- SOL</span>
+                </div>
+            </div>
+
+            <div class="modal-tx-status" id="accept-offer-tx-status" style="display: none;">
+                <div class="modal-tx-status-spinner"></div>
+                <div class="modal-tx-status-content">
+                    <div class="modal-tx-status-title" id="accept-offer-status-title">Processing...</div>
+                    <div class="modal-tx-status-message" id="accept-offer-status-message"></div>
+                    <div class="modal-tx-status-link" id="accept-offer-status-link"></div>
+                </div>
+            </div>
+
+            <div class="buy-modal-actions" id="accept-offer-actions">
+                <button class="buy-modal-btn cancel" id="accept-offer-cancel">Decline</button>
+                <button class="buy-modal-btn confirm" id="accept-offer-confirm">Accept Offer</button>
             </div>
         </div>
     </div>
