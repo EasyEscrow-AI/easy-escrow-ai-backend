@@ -1136,10 +1136,12 @@ router.post(
           nonceAccount: result.offer.nonceAccount,
         },
         // Task 12: Include swap flow information in accept response
+        // Use actual requiresTwoPhase from transactionGroupBuilder (via offerManager)
+        // if available, as it accounts for Jito being disabled
         swapFlow: {
           flowType: flowResult.flowType,
           requiresDelegation: flowResult.requiresDelegation,
-          requiresTwoPhase: flowResult.requiresTwoPhase,
+          requiresTwoPhase: result.requiresTwoPhase || flowResult.requiresTwoPhase,
           canUseJito: flowResult.canUseJito,
         },
       };
