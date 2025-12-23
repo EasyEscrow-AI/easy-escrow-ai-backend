@@ -39,9 +39,9 @@ info:
     - ✅ **Compressed NFTs (cNFTs)** (Metaplex Bubblegum)
     - ✅ **Metaplex Core NFTs**
 
-    ## Bulk Swap Support
-    
-    Bulk swaps of up to **10 assets per side** are supported. Any combination of NFT type (SPL NFT, Core NFT, cNFT) and SOL. Bulk swap atomicity provided by JITO Solana validator for swaps requiring multiple transactions (3+ total assets).
+    ## Bundle Swap Support
+
+    Bundle swaps of up to **10 assets per side** are supported. Any combination of NFT type (SPL NFT, Core NFT, cNFT) and SOL. Bundle swap atomicity provided by JITO Solana validator for swaps requiring multiple transactions (3+ total assets).
     
     ### cNFT-Specific Features
     
@@ -77,7 +77,7 @@ info:
     - ✅ **Compressed NFTs (cNFTs)** (Metaplex Bubblegum) - Up to 10 per side
     - ✅ **SOL** (Native Solana currency)
     - ✅ **Mixed swaps** (NFT ↔ SOL, NFT ↔ NFT, cNFT ↔ SOL, cNFT ↔ cNFT, etc.)
-    - ✅ **Bulk swaps** - Up to 10 assets on each side of the trade
+    - ✅ **Bundle swaps** - Up to 10 assets on each side of the trade
     
     ### Key Features
     
@@ -384,7 +384,7 @@ paths:
         Make a SOL bid on a specific cNFT.
         Use `bidderWallet`, `targetAssetId`, `offerLamports`.
 
-        ### 3. Bulk Two-Phase Swap (auto-detected for 3+ cNFTs or 5+ total assets)
+        ### 3. Bundle Two-Phase Swap (auto-detected for 3+ cNFTs or 5+ total assets)
         Complex multi-asset swaps using lock/settle pattern.
         Use `partyA`, `assetsA`, `assetsB`, or standard fields.
 
@@ -433,7 +433,7 @@ paths:
                   offerLamports: "1000000000"
                   durationSeconds: 86400
               bulkSwapPartyStyle:
-                summary: Bulk Swap (partyA/B style)
+                summary: Bundle Swap (partyA/B style)
                 value:
                   partyA: "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"
                   partyB: "8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ"
@@ -501,7 +501,7 @@ paths:
                           The detected offer type:
                           - `ATOMIC`: Standard swap (NFT↔NFT, NFT↔SOL, cNFT↔SOL)
                           - `CNFT_BID`: cNFT bid with SOL escrow
-                          - `BULK_TWO_PHASE`: Bulk swap using lock/settle pattern
+                          - `BULK_TWO_PHASE`: Bundle swap using lock/settle pattern
                         example: "ATOMIC"
                       transaction:
                         type: object
@@ -694,7 +694,7 @@ paths:
         3. Broadcast to Solana
         4. Call /confirm with the signature
         
-        **Multiple Transactions (Bulk swaps):**
+        **Multiple Transactions (Bundle swaps):**
         For swaps involving 3+ NFTs of any type, the API may return multiple transactions in a `bulkSwap` object:
         - Each transaction must be signed by the appropriate party (maker or taker)
         - Transactions should be sent sequentially or as a Jito bundle
@@ -770,20 +770,20 @@ paths:
                             description: Durable nonce account used in the transaction
                       bulkSwap:
                         type: object
-                        description: Multiple transactions (for bulk swaps with 3+ NFTs of any type)
+                        description: Multiple transactions (for bundle swaps with 3+ NFTs of any type)
                         properties:
                           isBulkSwap:
                             type: boolean
-                            description: Indicates this is a bulk swap with multiple transactions
+                            description: Indicates this is a bundle swap with multiple transactions
                             example: true
                           strategy:
                             type: string
                             description: |
                               Swap strategy:
                               - SINGLE_TRANSACTION: Simple swap via escrow program
-                              - DIRECT_BUBBLEGUM_BUNDLE: cNFT bulk swap
-                              - DIRECT_NFT_BUNDLE: SPL/Core NFT bulk swap
-                              - MIXED_NFT_BUNDLE: Mixed NFT types bulk swap
+                              - DIRECT_BUBBLEGUM_BUNDLE: cNFT bundle swap
+                              - DIRECT_NFT_BUNDLE: SPL/Core NFT bundle swap
+                              - MIXED_NFT_BUNDLE: Mixed NFT types bundle swap
                             enum:
                               - SINGLE_TRANSACTION
                               - DIRECT_BUBBLEGUM_BUNDLE
@@ -908,7 +908,7 @@ paths:
         - Swaps
       summary: Get bundle execution status
       description: |
-        Get the current status of a bulk swap bundle execution (for swaps with 3+ NFTs).
+        Get the current status of a bundle swap execution (for swaps with 3+ NFTs).
         
         Bundle statuses:
         - **PENDING**: Bundle created, not yet submitted
@@ -968,7 +968,7 @@ paths:
         - Swaps
       summary: Retry failed bundle
       description: |
-        Retry a failed or timed-out bulk swap bundle (for swaps with 3+ NFTs).
+        Retry a failed or timed-out bundle swap (for swaps with 3+ NFTs).
         
         This endpoint will:
         1. Fetch fresh Merkle proofs for all cNFTs
@@ -1720,26 +1720,26 @@ components:
           description: For cNFT bids - bid duration in seconds
         partyA:
           type: string
-          description: Alias for makerWallet (bulk swaps)
+          description: Alias for makerWallet (bundle swaps)
         partyB:
           type: string
-          description: Alias for takerWallet (bulk swaps)
+          description: Alias for takerWallet (bundle swaps)
         assetsA:
           type: array
-          description: Alias for offeredAssets (bulk swaps)
+          description: Alias for offeredAssets (bundle swaps)
           items:
             $ref: '#/components/schemas/Asset'
         assetsB:
           type: array
-          description: Alias for requestedAssets (bulk swaps)
+          description: Alias for requestedAssets (bundle swaps)
           items:
             $ref: '#/components/schemas/Asset'
         solAmountA:
           type: string
-          description: Alias for offeredSol (bulk swaps)
+          description: Alias for offeredSol (bundle swaps)
         solAmountB:
           type: string
-          description: Alias for requestedSol (bulk swaps)
+          description: Alias for requestedSol (bundle swaps)
 
     OfferSummary:
       type: object
