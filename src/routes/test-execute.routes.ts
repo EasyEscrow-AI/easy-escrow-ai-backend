@@ -1315,5 +1315,127 @@ router.post('/api/test/execute-listing-revoke', requireTestEnvironment, async (r
   }
 });
 
+/**
+ * Execute Lock Transaction (Two-Phase Swap)
+ *
+ * Signs and submits a lock transaction for two-phase swaps.
+ * Used by the test page to execute cNFT delegation transactions.
+ *
+ * POST /api/test/execute-lock
+ */
+router.post('/execute-lock', async (req: Request, res: Response) => {
+  console.log('\n========================================');
+  console.log('🔒 TEST LOCK TRANSACTION EXECUTION');
+  console.log('========================================');
+
+  try {
+    const { swapId, serializedTransaction, transactionIndex, totalTransactions, party } = req.body;
+
+    console.log(`📋 Swap ID: ${swapId}`);
+    console.log(`📝 Transaction: ${transactionIndex + 1}/${totalTransactions}`);
+    console.log(`👤 Party: ${party || 'A'}`);
+
+    if (!serializedTransaction) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing serializedTransaction',
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    // Load keypairs
+    let signerPrivateKey: string | undefined;
+
+    if (isMainnet) {
+      signerPrivateKey = party === 'B'
+        ? process.env.MAINNET_PROD_RECEIVER_PRIVATE_KEY
+        : process.env.MAINNET_PROD_SENDER_PRIVATE_KEY;
+    } else {
+      signerPrivateKey = party === 'B'
+        ? process.env.DEVNET_STAGING_RECEIVER_PRIVATE_KEY
+        : process.env.DEVNET_STAGING_SENDER_PRIVATE_KEY;
+    }
+
+    if (!signerPrivateKey) {
+      return res.status(500).json({
+        success: false,
+        error: `Missing ${isMainnet ? 'mainnet' : 'devnet'} ${party === 'B' ? 'receiver' : 'sender'} private key`,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    // Parse keypair
+    let signer: Keypair;
+    try {
+      const decoded = bs58.decode(signerPrivateKey);
+      signer = Keypair.fromSecretKey(decoded);
+      console.log(`   🔑 Signer: ${signer.publicKey.toBase58()}`);
+    } catch (e) {
+      return res.status(500).json({
+        success: false,
+        error: 'Invalid signer private key format',
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    // Deserialize and sign transaction
+    const txBuffer = Buffer.from(serializedTransaction, 'base64');
+    let signature: string;
+
+    if (isVersionedTransaction(txBuffer)) {
+      console.log('   📄 Versioned (V0) transaction detected');
+      const versionedTx = VersionedTransaction.deserialize(txBuffer);
+      versionedTx.sign([signer]);
+      signature = await connection.sendTransaction(versionedTx, {
+        skipPreflight: false,
+        preflightCommitment: 'confirmed',
+      });
+    } else {
+      console.log('   📄 Legacy transaction detected');
+      const transaction = Transaction.from(txBuffer);
+      transaction.partialSign(signer);
+      signature = await connection.sendRawTransaction(transaction.serialize(), {
+        skipPreflight: false,
+        preflightCommitment: 'confirmed',
+      });
+    }
+
+    console.log(`   ✅ Transaction sent: ${signature}`);
+
+    // Wait for confirmation
+    const confirmation = await connection.confirmTransaction(signature, 'confirmed');
+
+    if (confirmation.value.err) {
+      throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}`);
+    }
+
+    console.log('   ✅ Transaction confirmed!');
+
+    const explorerUrl = isMainnet
+      ? `https://solscan.io/tx/${signature}`
+      : `https://solscan.io/tx/${signature}?cluster=devnet`;
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        signature,
+        explorerUrl,
+        network: networkName,
+        swapId,
+        transactionIndex,
+      },
+      message: `Lock transaction ${transactionIndex + 1}/${totalTransactions} executed successfully`,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    console.error('❌ Lock execution error:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Lock transaction failed',
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
 export default router;
 

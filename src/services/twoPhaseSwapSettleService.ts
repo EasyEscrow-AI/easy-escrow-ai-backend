@@ -38,6 +38,8 @@ import {
 } from './swapStateMachine';
 import { TWO_PHASE_SWAP_SEEDS } from './twoPhaseSwapLockService';
 import { uuidToBuffer, uuidToUint8Array } from '../utils/uuid-conversion';
+import { isJitoBundlesEnabled } from '../utils/featureFlags';
+import { getEscrowProgramService, EscrowProgramService } from './escrow-program.service';
 import * as crypto from 'crypto';
 
 // =============================================================================
@@ -260,6 +262,7 @@ export class TwoPhaseSwapSettleService {
   private programId: PublicKey;
   private feeCollector: PublicKey;
   private backendSigner: Keypair;
+  private escrowProgramService: EscrowProgramService;
 
   constructor(
     connection: Connection,
@@ -275,10 +278,13 @@ export class TwoPhaseSwapSettleService {
     this.backendSigner = backendSigner;
     this.delegationService = createCnftDelegationService(connection);
     this.stateMachine = createSwapStateMachine(prisma);
+    this.escrowProgramService = getEscrowProgramService();
 
+    const jitoEnabled = isJitoBundlesEnabled();
     console.log('[TwoPhaseSwapSettleService] Initialized');
     console.log('[TwoPhaseSwapSettleService] Program ID:', programId.toBase58());
     console.log('[TwoPhaseSwapSettleService] Fee Collector:', feeCollector.toBase58());
+    console.log(`[TwoPhaseSwapSettleService] JITO bundles: ${jitoEnabled ? 'ENABLED' : 'DISABLED (will use sequential RPC)'}`);
   }
 
   // ===========================================================================
@@ -718,45 +724,75 @@ export class TwoPhaseSwapSettleService {
       );
     }
 
-    // Execute each chunk
+    // Determine execution strategy
+    const jitoEnabled = isJitoBundlesEnabled();
+    const useJitoBundle = jitoEnabled && chunkResult.totalChunks > 1;
+
+    console.log('[TwoPhaseSwapSettleService] Execution strategy:', {
+      jitoEnabled,
+      totalChunks: chunkResult.totalChunks,
+      strategy: useJitoBundle ? 'JITO_BUNDLE' : 'SEQUENTIAL_RPC',
+    });
+
+    // Execute chunks based on strategy
     let currentSwap = startResult.swap;
     let hasError = false;
     let errorMessage: string | undefined;
 
-    for (const chunk of chunkResult.chunks) {
-      try {
-        const result = await this.executeChunkWithRetry(
-          params.swapId,
-          chunk,
-          currentSwap,
-          params.triggeredBy
-        );
+    if (useJitoBundle) {
+      // Use JITO bundle with fallback to sequential RPC
+      const results = await this.executeSettlementWithFallback(
+        params.swapId,
+        chunkResult.chunks,
+        currentSwap,
+        params.triggeredBy
+      );
 
-        chunkResults.push(result);
+      chunkResults.push(...results);
 
-        if (!result.success) {
+      // Check for errors
+      const failedResult = results.find(r => !r.success);
+      if (failedResult) {
+        hasError = true;
+        errorMessage = failedResult.error;
+      }
+    } else {
+      // Sequential execution (single chunk or JITO disabled)
+      for (const chunk of chunkResult.chunks) {
+        try {
+          const result = await this.executeChunkWithRetry(
+            params.swapId,
+            chunk,
+            currentSwap,
+            params.triggeredBy
+          );
+
+          chunkResults.push(result);
+
+          if (!result.success) {
+            hasError = true;
+            errorMessage = result.error;
+            break;
+          }
+
+          // Update swap reference after recording
+          const updatedSwap = await this.stateMachine.getSwap(params.swapId);
+          if (updatedSwap) {
+            currentSwap = updatedSwap;
+          }
+        } catch (error) {
+          const err = error instanceof Error ? error : new Error(String(error));
           hasError = true;
-          errorMessage = result.error;
+          errorMessage = err.message;
+          chunkResults.push({
+            chunkIndex: chunk.index,
+            signature: '',
+            success: false,
+            error: err.message,
+            retryCount: RETRY_CONFIG.MAX_RETRIES,
+          });
           break;
         }
-
-        // Update swap reference after recording
-        const updatedSwap = await this.stateMachine.getSwap(params.swapId);
-        if (updatedSwap) {
-          currentSwap = updatedSwap;
-        }
-      } catch (error) {
-        const err = error instanceof Error ? error : new Error(String(error));
-        hasError = true;
-        errorMessage = err.message;
-        chunkResults.push({
-          chunkIndex: chunk.index,
-          signature: '',
-          success: false,
-          error: err.message,
-          retryCount: RETRY_CONFIG.MAX_RETRIES,
-        });
-        break;
       }
     }
 
@@ -998,6 +1034,225 @@ export class TwoPhaseSwapSettleService {
     );
 
     return signature;
+  }
+
+  // ===========================================================================
+  // JITO Bundle Execution
+  // ===========================================================================
+
+  /**
+   * Execute settlement using JITO bundle for atomicity
+   *
+   * This method:
+   * 1. Builds all chunk transactions
+   * 2. Serializes them for JITO submission
+   * 3. Submits as a single atomic bundle
+   * 4. Waits for confirmation
+   *
+   * @param swapId - Swap ID
+   * @param chunks - All settlement chunks
+   * @param swap - Current swap data
+   * @param triggeredBy - Who triggered the settlement
+   * @returns Array of chunk execution results
+   */
+  private async executeSettlementWithJitoBundle(
+    swapId: string,
+    chunks: SettlementChunk[],
+    swap: TwoPhaseSwapData,
+    triggeredBy: string
+  ): Promise<ChunkExecutionResult[]> {
+    console.log(`[TwoPhaseSwapSettleService] Executing settlement via JITO bundle (${chunks.length} transactions)`);
+
+    const chunkResults: ChunkExecutionResult[] = [];
+    const serializedTransactions: string[] = [];
+    const builtTransactions: Transaction[] = [];
+
+    try {
+      // Build all chunk transactions
+      for (const chunk of chunks) {
+        const transaction = await this.buildChunkTransaction(swapId, chunk, swap);
+
+        // Sign with backend signer
+        transaction.partialSign(this.backendSigner);
+
+        // Serialize for JITO
+        const serialized = transaction.serialize({
+          requireAllSignatures: false,
+          verifySignatures: false,
+        });
+
+        serializedTransactions.push(serialized.toString('base64'));
+        builtTransactions.push(transaction);
+
+        console.log(`[TwoPhaseSwapSettleService] Built chunk ${chunk.index} for JITO bundle`);
+      }
+
+      // Submit bundle to JITO
+      const bundleResult = await this.escrowProgramService.sendBundleViaJito(
+        serializedTransactions,
+        {
+          skipSimulation: true, // Settlement transactions are pre-validated
+          description: `Two-phase settlement for swap ${swapId}`,
+        }
+      );
+
+      if (!bundleResult.success) {
+        console.error('[TwoPhaseSwapSettleService] JITO bundle submission failed:', bundleResult.error);
+
+        // Return failure for all chunks
+        for (const chunk of chunks) {
+          chunkResults.push({
+            chunkIndex: chunk.index,
+            signature: '',
+            success: false,
+            error: `JITO bundle failed: ${bundleResult.error}`,
+            retryCount: 0,
+          });
+        }
+        return chunkResults;
+      }
+
+      console.log(`[TwoPhaseSwapSettleService] JITO bundle submitted: ${bundleResult.bundleId}`);
+
+      // Wait for bundle confirmation
+      const confirmation = await this.escrowProgramService.waitForBundleConfirmation(
+        bundleResult.bundleId!,
+        60, // 60 second timeout for settlement
+        bundleResult.signatures
+      );
+
+      if (confirmation.confirmed && confirmation.status === 'Landed') {
+        console.log(`[TwoPhaseSwapSettleService] JITO bundle landed successfully`);
+
+        // Record all signatures and return success
+        const signatures = bundleResult.signatures || [];
+        for (let i = 0; i < chunks.length; i++) {
+          const chunk = chunks[i];
+          const signature = signatures[i] || bundleResult.bundleId || '';
+
+          // Record successful transaction in state machine
+          await this.stateMachine.recordSettlementTx(swapId, signature, triggeredBy);
+
+          chunkResults.push({
+            chunkIndex: chunk.index,
+            signature,
+            success: true,
+            retryCount: 0,
+          });
+        }
+      } else {
+        console.error(`[TwoPhaseSwapSettleService] JITO bundle failed: ${confirmation.status}`);
+
+        // Return failure for all chunks
+        for (const chunk of chunks) {
+          chunkResults.push({
+            chunkIndex: chunk.index,
+            signature: '',
+            success: false,
+            error: `JITO bundle ${confirmation.status}: ${confirmation.error || 'Unknown error'}`,
+            retryCount: 0,
+          });
+        }
+      }
+
+      return chunkResults;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown JITO error';
+      console.error('[TwoPhaseSwapSettleService] JITO bundle execution error:', errorMessage);
+
+      // Return failure for all chunks
+      for (const chunk of chunks) {
+        chunkResults.push({
+          chunkIndex: chunk.index,
+          signature: '',
+          success: false,
+          error: errorMessage,
+          retryCount: 0,
+        });
+      }
+      return chunkResults;
+    }
+  }
+
+  /**
+   * Execute settlement with fallback from JITO to sequential RPC
+   *
+   * IMPORTANT: We do NOT retry JITO on failure. If JITO fails (network congestion,
+   * bundle dropped, etc.), we immediately fall back to sequential RPC.
+   * This is intentional - during network congestion, JITO retries won't help.
+   *
+   * @param swapId - Swap ID
+   * @param chunks - All settlement chunks
+   * @param swap - Current swap data
+   * @param triggeredBy - Who triggered the settlement
+   * @returns Array of chunk execution results
+   */
+  private async executeSettlementWithFallback(
+    swapId: string,
+    chunks: SettlementChunk[],
+    swap: TwoPhaseSwapData,
+    triggeredBy: string
+  ): Promise<ChunkExecutionResult[]> {
+    // Try JITO once (no retries - if congested, retrying won't help)
+    console.log('[TwoPhaseSwapSettleService] Attempting JITO bundle for settlement (single attempt, no retry)...');
+    const jitoResults = await this.executeSettlementWithJitoBundle(swapId, chunks, swap, triggeredBy);
+
+    // Check if JITO succeeded
+    const allSucceeded = jitoResults.every(r => r.success);
+    if (allSucceeded) {
+      console.log('[TwoPhaseSwapSettleService] JITO bundle succeeded for all chunks');
+      return jitoResults;
+    }
+
+    // Extract failure reason for logging
+    const failedResult = jitoResults.find(r => !r.success);
+    const failureReason = failedResult?.error || 'Unknown error';
+
+    // Check if any chunks succeeded (partial success - don't retry those)
+    const successfulChunks = jitoResults.filter(r => r.success);
+    if (successfulChunks.length > 0) {
+      console.warn(`[TwoPhaseSwapSettleService] JITO partially succeeded (${successfulChunks.length}/${chunks.length}). ` +
+        `Reason for failures: ${failureReason}. Cannot cleanly fallback - returning partial results.`);
+      // Return as-is - partial success means we can't cleanly fallback
+      return jitoResults;
+    }
+
+    // Full JITO failure - immediately fall back to sequential RPC (NO JITO RETRY)
+    console.warn(`[TwoPhaseSwapSettleService] JITO bundle FAILED: ${failureReason}`);
+    console.log('[TwoPhaseSwapSettleService] Immediately falling back to sequential RPC (no JITO retry - congestion recovery)');
+
+    const sequentialResults: ChunkExecutionResult[] = [];
+    let currentSwap = swap;
+
+    for (const chunk of chunks) {
+      try {
+        const result = await this.executeChunkWithRetry(swapId, chunk, currentSwap, triggeredBy);
+        sequentialResults.push(result);
+
+        if (!result.success) {
+          // Stop on first failure in sequential mode
+          break;
+        }
+
+        // Update swap reference after recording
+        const updatedSwap = await this.stateMachine.getSwap(swapId);
+        if (updatedSwap) {
+          currentSwap = updatedSwap;
+        }
+      } catch (error) {
+        const err = error instanceof Error ? error : new Error(String(error));
+        sequentialResults.push({
+          chunkIndex: chunk.index,
+          signature: '',
+          success: false,
+          error: err.message,
+          retryCount: RETRY_CONFIG.MAX_RETRIES,
+        });
+        break;
+      }
+    }
+
+    return sequentialResults;
   }
 
   // ===========================================================================
