@@ -2103,9 +2103,6 @@ function renderActiveListings() {
                     <div class="listing-card-image-container">
                         <img class="listing-card-image" src="${imageUrl}" alt="${escapeHtml(name)}"
                              data-asset-id="${assetId}">
-                        <button class="listing-image-cancel-btn" data-action="cancel" data-offer-id="${offer.id}" title="Cancel Listing">
-                            ✕
-                        </button>
                     </div>
                     <div class="listing-card-info">
                         <div class="listing-card-name">${escapeHtml(name)}</div>
@@ -2147,15 +2144,6 @@ function renderActiveListings() {
         `;
     })
     .join('');
-
-  // Add CSP-compliant event handlers for cancel buttons on NFT images
-  container.querySelectorAll('.listing-image-cancel-btn').forEach((btn) => {
-    btn.addEventListener('click', function (e) {
-      e.stopPropagation(); // Prevent card click events
-      const offerId = this.dataset.offerId;
-      handleCancelOffer(offerId);
-    });
-  });
 
   // Add CSP-compliant event handlers for action cancel buttons
   container.querySelectorAll('.listing-action-btn.cancel').forEach((btn) => {
@@ -2275,11 +2263,14 @@ async function handleCancelOffer(offerId) {
 
     // Call cancel offer API
     const response = await fetch(`/api/swaps/offers/${offerId}/cancel`, {
-      method: 'DELETE',
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'idempotency-key': `cancel-offer-${offerId}-${Date.now()}`,
       },
+      body: JSON.stringify({
+        walletAddress: MAKER_ADDRESS,
+      }),
     });
 
     const result = await response.json();
@@ -2762,13 +2753,12 @@ async function loadMarketplaceListings() {
 
     // Filter to only show NFT-for-SOL offers (listings)
     // Include both public (no takerWallet) and private (has takerWallet) listings
-    // Also exclude offers from the current user (maker)
+    // Show all listings including own listings for testing purposes
     marketplaceListings = (result.data.offers || []).filter((offer) => {
       const hasOfferedAssets = offer.offeredAssets && offer.offeredAssets.length > 0;
       const requestsSol = offer.requestedSol && BigInt(offer.requestedSol) > 0;
       const noRequestedAssets = !offer.requestedAssets || offer.requestedAssets.length === 0;
-      const notOwnListing = offer.makerWallet !== MAKER_ADDRESS; // Exclude own listings
-      return hasOfferedAssets && requestsSol && noRequestedAssets && notOwnListing;
+      return hasOfferedAssets && requestsSol && noRequestedAssets;
     });
     console.log(`🛒 Loaded ${marketplaceListings.length} marketplace listings`);
     renderMarketplaceListings();
