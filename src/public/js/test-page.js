@@ -2301,7 +2301,7 @@ async function handleCancelOffer(offerId) {
 
     if (cancelBtn) {
       cancelBtn.disabled = false;
-      cancelBtn.textContent = 'Cancel';
+      cancelBtn.textContent = 'Cancel Listing';
     }
   }
 }
