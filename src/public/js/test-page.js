@@ -2286,13 +2286,13 @@ function renderActiveListings() {
   container.querySelectorAll('.incoming-bid-btn.counter').forEach((btn) => {
     btn.addEventListener('click', function (e) {
       e.stopPropagation();
-      const { bidId, name, image, assetId, price } = this.dataset;
-      showCounterOfferModal(bidId, {
-        name,
-        image,
-        assetId,
-        priceSol: price
-      });
+      const { name, price } = this.dataset;
+      // Counter offer from seller perspective means updating listing price
+      // For now, show a message - in the future, could open a "Update Listing Price" modal
+      addLog(`💡 To counter the ${price} SOL bid on "${name}":`, 'info');
+      addLog(`   1. Cancel your current listing`, 'info');
+      addLog(`   2. Create a new listing at your desired price`, 'info');
+      addLog(`   The bidder will see your new price and can accept or counter again.`, 'info');
     });
   });
 
@@ -2319,6 +2319,9 @@ function renderActiveListings() {
   });
 }
 
+// Track if we're accepting an incoming bid (seller accepting) vs marketplace purchase (buyer accepting)
+let isAcceptingIncomingBid = false;
+
 // Handle accepting an incoming bid on your listing
 async function handleAcceptIncomingBid(bidId) {
   const bid = incomingBids.find((b) => b.id === parseInt(bidId) || b.id === bidId);
@@ -2337,8 +2340,9 @@ async function handleAcceptIncomingBid(bidId) {
   const receive = priceNum - fee;
   const imageUrl = assetMetadata.image || getPlaceholderImage(requestedAsset?.identifier || 'unknown');
 
-  // Store the bid for the accept handler
+  // Store the bid for the accept handler and mark as incoming bid
   selectedAcceptOffer = bid;
+  isAcceptingIncomingBid = true;
 
   // Populate accept offer modal
   document.getElementById('accept-offer-image').src = imageUrl;
@@ -3223,6 +3227,7 @@ async function showAcceptOfferModal(offerId) {
   }
 
   selectedAcceptOffer = offer;
+  isAcceptingIncomingBid = false; // This is a marketplace purchase, not accepting an incoming bid
 
   // Populate modal
   document.getElementById('accept-offer-image').src = imageUrl;
@@ -3232,8 +3237,18 @@ async function showAcceptOfferModal(offerId) {
   document.getElementById('accept-offer-fee').textContent = `${fee.toFixed(4)} SOL`;
   document.getElementById('accept-offer-receive').textContent = `You pay: ${priceSol} SOL`;
 
+  // Update modal for marketplace purchase (buyer perspective)
+  const headerTitle = document.querySelector('#accept-offer-modal .buy-modal-header h3');
+  const headerDesc = document.querySelector('#accept-offer-modal .buy-modal-header p');
+  if (headerTitle) headerTitle.textContent = '🛒 Accept Offer';
+  if (headerDesc) headerDesc.textContent = 'Review the details before accepting this offer';
+
   // Reset modal state
   resetAcceptOfferModalState();
+
+  // Update confirm button for marketplace purchase
+  const confirmBtn = document.getElementById('accept-offer-confirm');
+  if (confirmBtn) confirmBtn.textContent = 'Accept Offer';
 
   // Show modal
   document.getElementById('accept-offer-modal').classList.add('show');
@@ -3242,6 +3257,7 @@ async function showAcceptOfferModal(offerId) {
 function hideAcceptOfferModal() {
   document.getElementById('accept-offer-modal').classList.remove('show');
   selectedAcceptOffer = null;
+  isAcceptingIncomingBid = false;
   resetAcceptOfferModalState();
 }
 
@@ -3347,8 +3363,19 @@ async function handleAcceptOffer(offer) {
   const name = offeredAsset?.metadata?.name || offeredAsset?.name || 'Unknown NFT';
   const priceSol = (parseInt(offer.requestedSol || '0') / 1e9).toFixed(4);
 
+  // Determine the correct taker wallet based on context:
+  // - Marketplace purchase: TAKER_ADDRESS (buyer) accepts a seller's listing
+  // - Incoming bid: MAKER_ADDRESS (seller/NFT owner) accepts a buyer's bid
+  const takerWallet = isAcceptingIncomingBid ? MAKER_ADDRESS : TAKER_ADDRESS;
+  const roleLabel = isAcceptingIncomingBid ? 'seller' : 'buyer';
+
+  if (!takerWallet) {
+    addLog(`❌ Please load the ${isAcceptingIncomingBid ? 'Maker' : 'Taker'} wallet first`, 'error');
+    throw new Error(`${isAcceptingIncomingBid ? 'Maker' : 'Taker'} wallet not loaded`);
+  }
+
   try {
-    addLog(`🛒 Accepting offer for ${name}...`, 'info');
+    addLog(`🛒 Accepting offer for ${name} as ${roleLabel}...`, 'info');
     addLog(`   Price: ${priceSol} SOL`, 'info');
 
     // Step 1: Call accept offer API to get serialized transaction
@@ -3362,7 +3389,7 @@ async function handleAcceptOffer(offer) {
         'idempotency-key': `accept-${offer.id}-${Date.now()}`,
       },
       body: JSON.stringify({
-        takerWallet: TAKER_ADDRESS,
+        takerWallet: takerWallet,
       }),
     });
 
