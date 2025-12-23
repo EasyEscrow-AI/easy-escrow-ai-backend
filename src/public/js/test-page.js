@@ -1917,47 +1917,6 @@ document.addEventListener('DOMContentLoaded', () => {
 function initializeListingFeatures() {
   console.log('📋 Initializing listing features...');
 
-  // NFT Type filter change handler
-  const typeFilter = document.getElementById('listing-type-filter');
-  if (typeFilter) {
-    typeFilter.addEventListener('change', () => {
-      // Re-populate assets when filter changes
-      populateAssetSelector();
-      // Clear current selection
-      selectedListingAsset = null;
-      document.getElementById('listing-asset-preview').style.display = 'none';
-      updateListButtonState();
-    });
-  }
-
-  // Asset selector change handler
-  const assetSelect = document.getElementById('listing-asset-select');
-  if (assetSelect) {
-    assetSelect.addEventListener('change', handleAssetSelectChange);
-  }
-
-  // Price input handler for USD display
-  const priceInput = document.getElementById('listing-price');
-  if (priceInput) {
-    priceInput.addEventListener('input', updateListingPriceDisplay);
-  }
-
-  // Duration button handlers
-  const durationButtons = document.querySelectorAll('.listing-section .listing-duration-btn');
-  durationButtons.forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      durationButtons.forEach((b) => b.classList.remove('active'));
-      e.target.classList.add('active');
-      selectedListingDuration = parseInt(e.target.dataset.duration);
-    });
-  });
-
-  // List button handler
-  const listBtn = document.getElementById('list-btn');
-  if (listBtn) {
-    listBtn.addEventListener('click', handleCreateListing);
-  }
-
   // Refresh listings button
   const refreshListingsBtn = document.getElementById('refresh-listings-btn');
   if (refreshListingsBtn) {
@@ -1994,235 +1953,6 @@ function initializeListingFeatures() {
   }
 
   console.log('✅ Listing features initialized');
-}
-
-// Get the current listing type filter value
-function getListingTypeFilter() {
-  const filterSelect = document.getElementById('listing-type-filter');
-  return filterSelect ? filterSelect.value : 'all';
-}
-
-// Populate asset selector when maker wallet is loaded
-function populateAssetSelector() {
-  const assetSelect = document.getElementById('listing-asset-select');
-  if (!assetSelect || !makerData || !makerData.nfts) {
-    return;
-  }
-
-  // Clear existing options
-  assetSelect.innerHTML = '<option value="">-- Select an asset to list --</option>';
-
-  // Get the current type filter
-  const typeFilter = getListingTypeFilter();
-
-  // Filter assets based on selected type
-  let listableAssets = makerData.nfts;
-
-  if (typeFilter === 'cnft') {
-    listableAssets = makerData.nfts.filter((nft) => nft.isCompressed);
-  } else if (typeFilter === 'spl') {
-    listableAssets = makerData.nfts.filter((nft) => !nft.isCompressed && !nft.isCoreNft);
-  } else if (typeFilter === 'core') {
-    listableAssets = makerData.nfts.filter((nft) => nft.isCoreNft);
-  }
-  // 'all' shows all NFTs
-
-  if (listableAssets.length === 0) {
-    const filterLabel =
-      typeFilter === 'all'
-        ? 'NFTs'
-        : typeFilter === 'cnft'
-        ? 'cNFTs'
-        : typeFilter === 'spl'
-        ? 'SPL NFTs'
-        : 'Core NFTs';
-    assetSelect.innerHTML = `<option value="">-- No ${filterLabel} available --</option>`;
-    assetSelect.disabled = true;
-    return;
-  }
-
-  listableAssets.forEach((nft, index) => {
-    const option = document.createElement('option');
-    option.value = nft.mint;
-    const typeLabel = getNftTypeLabel(nft);
-    option.textContent = `${nft.name || 'Unknown'} [${typeLabel}] (${nft.mint.substring(0, 8)}...)`;
-    option.dataset.index = index;
-    assetSelect.appendChild(option);
-  });
-
-  assetSelect.disabled = false;
-
-  // Enable list button check
-  updateListButtonState();
-}
-
-// Handle asset select change
-function handleAssetSelectChange(e) {
-  const mint = e.target.value;
-  const preview = document.getElementById('listing-asset-preview');
-
-  if (!mint || !makerData) {
-    preview.style.display = 'none';
-    selectedListingAsset = null;
-    updateListButtonState();
-    return;
-  }
-
-  const nft = makerData.nfts.find((n) => n.mint === mint);
-  if (!nft) {
-    preview.style.display = 'none';
-    selectedListingAsset = null;
-    updateListButtonState();
-    return;
-  }
-
-  selectedListingAsset = nft;
-
-  // Update preview
-  document.getElementById('listing-preview-image').src =
-    getNftImage(nft) || getPlaceholderImage(nft.mint);
-  document.getElementById('listing-preview-name').textContent = nft.name || 'Unknown NFT';
-  document.getElementById('listing-preview-type').textContent = getNftTypeLabel(nft);
-  document.getElementById('listing-preview-mint').textContent = nft.mint;
-  preview.style.display = 'flex';
-
-  updateListButtonState();
-}
-
-// Update price display with USD
-function updateListingPriceDisplay() {
-  const priceInput = document.getElementById('listing-price');
-  const usdDisplay = document.getElementById('listing-price-usd');
-
-  if (!priceInput || !usdDisplay) return;
-
-  const solValue = parseFloat(priceInput.value);
-  if (solValue > 0 && solPriceUSD) {
-    const usdValue = (solValue * solPriceUSD).toFixed(2);
-    usdDisplay.textContent = `≈ $${usdValue} USD`;
-  } else {
-    usdDisplay.textContent = '';
-  }
-
-  updateListButtonState();
-}
-
-// Update list button state
-function updateListButtonState() {
-  const listBtn = document.getElementById('list-btn');
-  const priceInput = document.getElementById('listing-price');
-
-  if (!listBtn) return;
-
-  const hasAsset = selectedListingAsset !== null;
-  const hasPrice = priceInput && parseFloat(priceInput.value) > 0;
-
-  listBtn.disabled = !hasAsset || !hasPrice;
-}
-
-// Handle create listing - now uses offers API
-async function handleCreateListing() {
-  if (!selectedListingAsset) {
-    addLog('❌ Please select an asset to list', 'error');
-    return;
-  }
-
-  const priceInput = document.getElementById('listing-price');
-  const price = parseFloat(priceInput.value);
-
-  if (!price || price <= 0) {
-    addLog('❌ Please enter a valid price', 'error');
-    return;
-  }
-
-  const listBtn = document.getElementById('list-btn');
-  const originalText = listBtn.innerHTML;
-
-  try {
-    listBtn.disabled = true;
-    listBtn.innerHTML = '⏳ Creating listing...';
-
-    // Get optional private wallet
-    const privateWalletInput = document.getElementById('listing-private-wallet');
-    const privateWallet = privateWalletInput ? privateWalletInput.value.trim() : '';
-
-    const listingType = privateWallet ? 'private' : 'open';
-    addLog(`📝 Creating ${listingType} listing for ${selectedListingAsset.name}...`, 'info');
-
-    // Convert SOL to lamports
-    const priceLamports = Math.floor(price * 1e9);
-
-    // Determine asset type
-    let assetType = 'NFT';
-    if (selectedListingAsset.isCompressed) {
-      assetType = 'CNFT';
-    } else if (selectedListingAsset.isCoreNft) {
-      assetType = 'CORE_NFT';
-    }
-
-    // Build offer request - NFT for SOL
-    const offerRequest = {
-      makerWallet: MAKER_ADDRESS,
-      offeredAssets: [
-        {
-          identifier: selectedListingAsset.mint,
-          type: assetType,
-        },
-      ],
-      requestedAssets: [],
-      requestedSol: priceLamports.toString(),
-    };
-
-    // Add taker wallet if private listing
-    if (privateWallet) {
-      offerRequest.takerWallet = privateWallet;
-    }
-
-    // Call create offer API
-    const response = await fetch('/api/swaps/offers', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'idempotency-key': `offer-${Date.now()}-${selectedListingAsset.mint.substring(0, 8)}`,
-      },
-      body: JSON.stringify(offerRequest),
-    });
-
-    const result = await response.json();
-
-    if (!result.success) {
-      throw new Error(result.message || result.error || 'Failed to create listing');
-    }
-
-    const offerId = result.data.offerId || result.data.offer?.id;
-    addLog(`✓ Listing created! Offer ID: ${offerId}`, 'success');
-
-    if (privateWallet) {
-      addLog(`🔒 Private listing - only ${privateWallet.substring(0, 8)}... can buy`, 'info');
-    } else {
-      addLog(`🌐 Open listing - anyone can buy or make counter offers`, 'info');
-    }
-
-    // Reset form
-    document.getElementById('listing-asset-select').value = '';
-    document.getElementById('listing-price').value = '';
-    document.getElementById('listing-price-usd').textContent = '';
-    if (privateWalletInput) privateWalletInput.value = '';
-    document.getElementById('listing-asset-preview').style.display = 'none';
-    selectedListingAsset = null;
-
-    // Refresh listings
-    await loadActiveListings();
-
-    // Refresh maker wallet to update available assets
-    await loadWalletInfo('maker');
-  } catch (error) {
-    console.error('Create listing error:', error);
-    addLog(`❌ Failed to create listing: ${error.message}`, 'error');
-  } finally {
-    listBtn.innerHTML = originalText;
-    updateListButtonState();
-  }
 }
 
 // Load active listings - now uses offers API
@@ -2354,11 +2084,19 @@ function renderActiveListings() {
       let statusClass = offer.status.toLowerCase();
       const isPrivate = !isBid && !!offer.takerWallet;
 
+      // Truncate asset ID for display
+      const shortAssetId = assetId.length > 16 ? `${assetId.substring(0, 8)}...${assetId.substring(assetId.length - 4)}` : assetId;
+
       return `
             <div class="listing-card" data-offer-id="${offer.id}" style="${cardStyle}">
                 <div class="listing-card-header">
-                    <img class="listing-card-image" src="${imageUrl}" alt="${escapeHtml(name)}"
-                         data-asset-id="${assetId}">
+                    <div class="listing-card-image-container">
+                        <img class="listing-card-image" src="${imageUrl}" alt="${escapeHtml(name)}"
+                             data-asset-id="${assetId}">
+                        <button class="listing-image-cancel-btn" data-action="cancel" data-offer-id="${offer.id}" title="Cancel Listing">
+                            ✕
+                        </button>
+                    </div>
                     <div class="listing-card-info">
                         <div class="listing-card-name">${escapeHtml(name)}</div>
                         <div class="listing-card-type">${nftType} ${offerTypeLabel}</div>
@@ -2374,6 +2112,10 @@ function renderActiveListings() {
                         <span class="listing-card-label">Status:</span>
                         <span class="listing-status-badge ${statusClass}">${offer.status}</span>
                     </div>
+                    <div class="listing-card-row">
+                        <span class="listing-card-label">Asset ID:</span>
+                        <span class="listing-card-value asset-id" title="${assetId}">${shortAssetId}</span>
+                    </div>
                     ${isPrivate ? `
                     <div class="listing-card-row">
                         <span class="listing-card-label">Buyer:</span>
@@ -2385,36 +2127,17 @@ function renderActiveListings() {
                         <span class="listing-card-value">${createdAt.toLocaleDateString()}</span>
                     </div>
                 </div>
-
-                <div class="listing-card-actions">
-                    ${
-                      offer.status === 'PENDING'
-                        ? `
-                        <button class="listing-action-btn cancel" data-action="cancel" data-offer-id="${offer.id}">
-                            Cancel
-                        </button>
-                    `
-                        : ''
-                    }
-                    <button class="listing-action-btn view" data-action="view" data-offer-id="${offer.id}">
-                        View
-                    </button>
-                </div>
             </div>
         `;
     })
     .join('');
 
-  // Add CSP-compliant event handlers for listing action buttons
-  container.querySelectorAll('.listing-action-btn').forEach((btn) => {
-    btn.addEventListener('click', function () {
-      const action = this.dataset.action;
+  // Add CSP-compliant event handlers for cancel buttons on NFT images
+  container.querySelectorAll('.listing-image-cancel-btn').forEach((btn) => {
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation(); // Prevent card click events
       const offerId = this.dataset.offerId;
-      if (action === 'cancel') {
-        handleCancelOffer(offerId);
-      } else if (action === 'view') {
-        viewOfferDetails(offerId);
-      }
+      handleCancelOffer(offerId);
     });
   });
 
@@ -2903,9 +2626,8 @@ const originalLoadWalletInfo = loadWalletInfo;
 loadWalletInfo = async function (wallet) {
   await originalLoadWalletInfo.call(this, wallet);
 
-  // After maker wallet loads, populate asset selector
+  // After maker wallet loads, refresh active listings
   if (wallet === 'maker' && makerData) {
-    populateAssetSelector();
     loadActiveListings();
   }
 };
@@ -2923,6 +2645,7 @@ window.showQuickListModal = showQuickListModal;
 let marketplaceListings = [];
 let marketplaceSearchTerm = '';
 let marketplacePriceFilter = 'all';
+let marketplaceVisibilityFilter = 'all';
 let selectedBuyListing = null;
 
 // Initialize marketplace functionality after DOM is ready
@@ -2939,6 +2662,15 @@ function initializeMarketplaceFeatures() {
   if (searchInput) {
     searchInput.addEventListener('input', (e) => {
       marketplaceSearchTerm = e.target.value.toLowerCase();
+      renderMarketplaceListings();
+    });
+  }
+
+  // Visibility filter handler (Public/Private/All)
+  const visibilityFilter = document.getElementById('marketplace-visibility-filter');
+  if (visibilityFilter) {
+    visibilityFilter.addEventListener('change', (e) => {
+      marketplaceVisibilityFilter = e.target.value;
       renderMarketplaceListings();
     });
   }
@@ -2978,6 +2710,9 @@ function initializeMarketplaceFeatures() {
   // Initialize counter offer modal
   initCounterOfferModal();
 
+  // Load marketplace listings on init
+  loadMarketplaceListings();
+
   console.log('✅ Marketplace features initialized');
 }
 
@@ -3000,15 +2735,15 @@ async function loadMarketplaceListings() {
       throw new Error(result.message || 'Failed to load marketplace');
     }
 
-    // Filter to only show NFT-for-SOL offers (listings) that are open (no takerWallet)
+    // Filter to only show NFT-for-SOL offers (listings)
+    // Include both public (no takerWallet) and private (has takerWallet) listings
     // Also exclude offers from the current user (maker)
     marketplaceListings = (result.data.offers || []).filter((offer) => {
       const hasOfferedAssets = offer.offeredAssets && offer.offeredAssets.length > 0;
       const requestsSol = offer.requestedSol && BigInt(offer.requestedSol) > 0;
       const noRequestedAssets = !offer.requestedAssets || offer.requestedAssets.length === 0;
-      const isOpenListing = !offer.takerWallet; // Open listings have no takerWallet
       const notOwnListing = offer.makerWallet !== MAKER_ADDRESS; // Exclude own listings
-      return hasOfferedAssets && requestsSol && noRequestedAssets && isOpenListing && notOwnListing;
+      return hasOfferedAssets && requestsSol && noRequestedAssets && notOwnListing;
     });
     console.log(`🛒 Loaded ${marketplaceListings.length} marketplace listings`);
     renderMarketplaceListings();
@@ -3056,6 +2791,11 @@ function renderMarketplaceListings() {
     if (marketplacePriceFilter === 'low' && priceSol >= 0.1) return false;
     if (marketplacePriceFilter === 'mid' && (priceSol < 0.1 || priceSol > 1)) return false;
     if (marketplacePriceFilter === 'high' && priceSol <= 1) return false;
+
+    // Visibility filter (public/private/all)
+    const isPublicListing = !offer.takerWallet;
+    if (marketplaceVisibilityFilter === 'public' && !isPublicListing) return false;
+    if (marketplaceVisibilityFilter === 'private' && isPublicListing) return false;
 
     return true;
   });
