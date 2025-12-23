@@ -1054,7 +1054,7 @@ router.post(
               lockedAssets: lockTxResult.lockedAssets,
               solAmountEscrowed: lockTxResult.solAmountEscrowed.toString(),
               // Multi-transaction support for bulk cNFT locks
-              transactionCount: lockTxResult.transactionCount || 1,
+              transactionCount: lockTxResult.transactionCount ?? 1,
               transactions: lockTxResult.transactions?.map(tx => ({
                 index: tx.index,
                 purpose: tx.purpose,
@@ -1395,7 +1395,7 @@ router.get(
           isBulkSwap: offer.isBulkSwap || false,
           bundle: {
             status: offer.bundleStatus || 'N/A',
-            transactionCount: offer.transactionCount || 1,
+            transactionCount: offer.transactionCount ?? 1,
             signatures,
           },
           timing: {
@@ -2950,7 +2950,7 @@ router.post(
             lockedAssets: lockTxResult.lockedAssets,
             solAmountEscrowed: lockTxResult.solAmountEscrowed.toString(),
             // Multi-transaction support for bulk cNFT locks
-            transactionCount: lockTxResult.transactionCount || 1,
+            transactionCount: lockTxResult.transactionCount ?? 1,
             transactions: lockTxResult.transactions?.map(tx => ({
               index: tx.index,
               purpose: tx.purpose,
@@ -3101,7 +3101,7 @@ router.post(
             lockedAssets: lockTxResult.lockedAssets,
             solAmountEscrowed: lockTxResult.solAmountEscrowed.toString(),
             // Multi-transaction support for bulk cNFT locks
-            transactionCount: lockTxResult.transactionCount || 1,
+            transactionCount: lockTxResult.transactionCount ?? 1,
             transactions: lockTxResult.transactions?.map(tx => ({
               index: tx.index,
               purpose: tx.purpose,
@@ -3232,7 +3232,7 @@ router.post(
           lockedAssets: partyBLockTx.lockedAssets,
           solAmountEscrowed: partyBLockTx.solAmountEscrowed.toString(),
           // Multi-transaction support for bulk cNFT locks
-          transactionCount: partyBLockTx.transactionCount || 1,
+          transactionCount: partyBLockTx.transactionCount ?? 1,
           transactions: partyBLockTx.transactions?.map(tx => ({
             index: tx.index,
             purpose: tx.purpose,

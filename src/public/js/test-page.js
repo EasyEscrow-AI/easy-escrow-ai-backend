@@ -1453,9 +1453,14 @@ async function executeSwapWithRetry(offerId, acceptData, isBulkSwap = false, bul
 async function executeTwoPhaseSwap(offerId, acceptData, addLog) {
   const lockTx = acceptData.data.lockTransaction;
   const transactions = lockTx.transactions || [{ serialized: lockTx.serialized, purpose: 'Lock assets' }];
-  const transactionCount = lockTx.transactionCount || transactions.length;
+  const transactionCount = lockTx.transactionCount ?? transactions.length;
 
-  addLog(`📦 Two-phase swap: ${transactionCount} lock transaction(s) to execute`, 'info');
+  // Guard against empty transactions array
+  if (!transactions || transactions.length === 0) {
+    addLog('⚠️ No lock transactions to execute for Party A (may be SOL-only side)', 'warning');
+  } else {
+    addLog(`📦 Two-phase swap: ${transactionCount} lock transaction(s) to execute`, 'info');
+  }
 
   // Execute lock transactions for Party A
   const signatures = [];
@@ -1492,13 +1497,15 @@ async function executeTwoPhaseSwap(offerId, acceptData, addLog) {
 
   // Confirm Party A lock
   addLog('   📝 Confirming Party A lock...', 'info');
+  // Use last signature or 'no-lock-tx' if no transactions were executed
+  const lastSignatureA = signatures.length > 0 ? signatures[signatures.length - 1] : 'no-lock-tx';
   const confirmResponse = await fetch(`/api/swaps/offers/bulk/${offerId}/confirm-lock`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       party: 'A',
       walletAddress: acceptData.data.offer.partyA,
-      signature: signatures[signatures.length - 1],
+      signature: lastSignatureA,
     }),
   });
   const confirmResult = await confirmResponse.json();
@@ -1549,13 +1556,15 @@ async function executeTwoPhaseSwap(offerId, acceptData, addLog) {
 
     // Confirm Party B lock
     addLog('   📝 Confirming Party B lock...', 'info');
+    // Use last signature or 'no-lock-tx' if no transactions were executed
+    const lastSignatureB = partyBSignatures.length > 0 ? partyBSignatures[partyBSignatures.length - 1] : 'no-lock-tx';
     const confirmBResponse = await fetch(`/api/swaps/offers/bulk/${offerId}/confirm-lock`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         party: 'B',
         walletAddress: confirmResult.data.offer?.partyB || acceptData.data.offer.partyB,
-        signature: partyBSignatures[partyBSignatures.length - 1],
+        signature: lastSignatureB,
       }),
     });
     const confirmBResult = await confirmBResponse.json();
@@ -1581,14 +1590,21 @@ async function executeTwoPhaseSwap(offerId, acceptData, addLog) {
 
   addLog('✅ Two-phase swap settled successfully!', 'success');
 
+  // Get the best signature for display (prefer settlement tx, fallback to last lock tx)
+  const displaySignature = settleResult.data?.signature ||
+    settleResult.data?.chunkResults?.[0]?.signature ||
+    (signatures.length > 0 ? signatures[signatures.length - 1] : 'settlement-complete');
+
   return {
     success: true,
     data: {
       signatures,
-      signature: signatures[signatures.length - 1],
+      signature: displaySignature,
       network: settleResult.data?.network || 'mainnet-beta',
       isTwoPhase: true,
-      explorerUrl: `https://solscan.io/tx/${signatures[signatures.length - 1]}`,
+      explorerUrl: displaySignature && displaySignature !== 'settlement-complete'
+        ? `https://solscan.io/tx/${displaySignature}`
+        : null,
     },
   };
 }
