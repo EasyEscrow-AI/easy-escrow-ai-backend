@@ -2161,6 +2161,9 @@ function initializeListingFeatures() {
   console.log('✅ Listing features initialized');
 }
 
+// Store incoming bids on maker's listings
+let incomingBids = [];
+
 // Load active listings - now uses offers API
 async function loadActiveListings() {
   const container = document.getElementById('active-listings-container');
@@ -2197,6 +2200,11 @@ async function loadActiveListings() {
 
       return isListing || isBid;
     });
+
+    // Also fetch incoming bids on our listed NFTs
+    // Incoming bids are offers where someone else offers SOL and requests one of our NFTs
+    await loadIncomingBids();
+
     renderActiveListings();
   } catch (error) {
     console.error('Load listings error:', error);
@@ -2214,6 +2222,64 @@ async function loadActiveListings() {
       container.innerHTML =
         '<div class="error-message">Unable to load listings. Please try again.</div>';
     }
+  }
+}
+
+// Load incoming bids on maker's listed NFTs
+async function loadIncomingBids() {
+  if (!MAKER_ADDRESS) {
+    incomingBids = [];
+    return;
+  }
+
+  try {
+    // Fetch all pending offers to find bids targeting our NFTs
+    const response = await fetch('/api/swaps/offers?status=PENDING');
+    const result = await response.json();
+
+    if (!result.success) {
+      incomingBids = [];
+      return;
+    }
+
+    // Get the asset IDs of NFTs we have listed
+    const myListedAssetIds = new Set();
+    activeListings.forEach((listing) => {
+      const hasOfferedAssets = listing.offeredAssets && listing.offeredAssets.length > 0;
+      const hasOfferedSol = listing.offeredSol && BigInt(listing.offeredSol) > 0;
+      const isBid = hasOfferedSol && !hasOfferedAssets;
+
+      if (!isBid && hasOfferedAssets) {
+        listing.offeredAssets.forEach((asset) => {
+          if (asset.identifier) {
+            myListedAssetIds.add(asset.identifier.toLowerCase());
+          }
+        });
+      }
+    });
+
+    // Find incoming bids: offers from others that request our listed NFTs
+    incomingBids = (result.data.offers || []).filter((offer) => {
+      // Must not be from us
+      if (offer.makerWallet === MAKER_ADDRESS) return false;
+
+      // Must be a bid (offers SOL, requests NFT)
+      const hasOfferedSol = offer.offeredSol && BigInt(offer.offeredSol) > 0;
+      const hasOfferedAssets = offer.offeredAssets && offer.offeredAssets.length > 0;
+      const requestsAssets = offer.requestedAssets && offer.requestedAssets.length > 0;
+
+      if (!hasOfferedSol || hasOfferedAssets || !requestsAssets) return false;
+
+      // Check if any requested asset is one of our listings
+      return offer.requestedAssets.some((asset) =>
+        asset.identifier && myListedAssetIds.has(asset.identifier.toLowerCase())
+      );
+    });
+
+    console.log(`[ActiveListings] Found ${incomingBids.length} incoming bids on your listings`);
+  } catch (error) {
+    console.error('Load incoming bids error:', error);
+    incomingBids = [];
   }
 }
 
@@ -2293,6 +2359,43 @@ function renderActiveListings() {
       // Truncate asset ID for display
       const shortAssetId = assetId.length > 16 ? `${assetId.substring(0, 8)}...${assetId.substring(assetId.length - 4)}` : assetId;
 
+      // Find incoming bids for this listing (only for listings, not bids)
+      let incomingBidsHtml = '';
+      if (!isBid) {
+        const bidsForThisAsset = incomingBids.filter((bid) =>
+          bid.requestedAssets?.some((a) =>
+            a.identifier?.toLowerCase() === assetId.toLowerCase()
+          )
+        );
+
+        if (bidsForThisAsset.length > 0) {
+          incomingBidsHtml = `
+            <div class="incoming-bids-section">
+              <div class="incoming-bids-header">💰 Incoming Offers (${bidsForThisAsset.length})</div>
+              ${bidsForThisAsset.map((bid) => {
+                const bidPriceSol = (parseInt(bid.offeredSol || '0') / 1e9).toFixed(4);
+                const bidderShort = bid.makerWallet.substring(0, 8) + '...';
+                return `
+                  <div class="incoming-bid-item" data-bid-id="${bid.id}">
+                    <div class="incoming-bid-info">
+                      <span class="incoming-bid-price">${bidPriceSol} SOL</span>
+                      <span class="incoming-bid-from">from ${bidderShort}</span>
+                    </div>
+                    <div class="incoming-bid-actions">
+                      <button class="incoming-bid-btn accept" data-action="accept-bid" data-bid-id="${bid.id}">✓ Accept</button>
+                      <button class="incoming-bid-btn counter" data-action="counter-bid" data-bid-id="${bid.id}"
+                              data-name="${escapeHtml(name)}" data-image="${imageUrl}" data-asset-id="${assetId}"
+                              data-price="${bidPriceSol}">↔ Counter</button>
+                      <button class="incoming-bid-btn decline" data-action="decline-bid" data-bid-id="${bid.id}">✗</button>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          `;
+        }
+      }
+
       return `
             <div class="listing-card" data-offer-id="${offer.id}" style="${cardStyle}">
                 <div class="listing-card-header">
@@ -2331,6 +2434,8 @@ function renderActiveListings() {
                     </div>
                 </div>
 
+                ${incomingBidsHtml}
+
                 <div class="listing-card-actions">
                     <button class="listing-action-btn cancel" data-action="cancel" data-offer-id="${offer.id}">
                         Cancel Listing
@@ -2350,12 +2455,33 @@ function renderActiveListings() {
     });
   });
 
-  // Add CSP-compliant event handlers for action cancel buttons
-  container.querySelectorAll('.listing-action-btn.cancel').forEach((btn) => {
+  // Add event handlers for incoming bid buttons
+  container.querySelectorAll('.incoming-bid-btn.accept').forEach((btn) => {
     btn.addEventListener('click', function (e) {
-      e.stopPropagation(); // Prevent card click events
-      const offerId = this.dataset.offerId;
-      handleCancelOffer(offerId);
+      e.stopPropagation();
+      const bidId = this.dataset.bidId;
+      handleAcceptIncomingBid(bidId);
+    });
+  });
+
+  container.querySelectorAll('.incoming-bid-btn.counter').forEach((btn) => {
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      const { name, price } = this.dataset;
+      // Counter offer from seller perspective means updating listing price
+      // For now, show a message - in the future, could open a "Update Listing Price" modal
+      addLog(`💡 To counter the ${price} SOL bid on "${name}":`, 'info');
+      addLog(`   1. Cancel your current listing`, 'info');
+      addLog(`   2. Create a new listing at your desired price`, 'info');
+      addLog(`   The bidder will see your new price and can accept or counter again.`, 'info');
+    });
+  });
+
+  container.querySelectorAll('.incoming-bid-btn.decline').forEach((btn) => {
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      const bidId = this.dataset.bidId;
+      handleDeclineIncomingBid(bidId);
     });
   });
 
@@ -2372,6 +2498,76 @@ function renderActiveListings() {
       { once: true }
     );
   });
+}
+
+// Track if we're accepting an incoming bid (seller accepting) vs marketplace purchase (buyer accepting)
+let isAcceptingIncomingBid = false;
+
+// Handle accepting an incoming bid on your listing
+async function handleAcceptIncomingBid(bidId) {
+  const bid = incomingBids.find((b) => b.id === parseInt(bidId) || b.id === bidId);
+  if (!bid) {
+    addLog('❌ Bid not found', 'error');
+    return;
+  }
+
+  // Show accept offer modal for incoming bid
+  const requestedAsset = bid.requestedAssets && bid.requestedAssets[0];
+  const assetMetadata = requestedAsset?.metadata || {};
+  const name = assetMetadata.name || requestedAsset?.name || 'Unknown NFT';
+  const priceSol = (parseInt(bid.offeredSol || '0') / 1e9).toFixed(4);
+  const priceNum = parseFloat(priceSol);
+  const fee = priceNum * 0.01;
+  const receive = priceNum - fee;
+  const imageUrl = assetMetadata.image || getPlaceholderImage(requestedAsset?.identifier || 'unknown');
+
+  // Store the bid for the accept handler and mark as incoming bid
+  selectedAcceptOffer = bid;
+  isAcceptingIncomingBid = true;
+
+  // Populate accept offer modal
+  document.getElementById('accept-offer-image').src = imageUrl;
+  document.getElementById('accept-offer-name').textContent = name;
+  document.getElementById('accept-offer-buyer').textContent = `Bidder: ${bid.makerWallet.substring(0, 8)}...`;
+  document.getElementById('accept-offer-price').textContent = `${priceSol} SOL`;
+  document.getElementById('accept-offer-fee').textContent = `${fee.toFixed(4)} SOL`;
+  document.getElementById('accept-offer-receive').textContent = `${receive.toFixed(4)} SOL`;
+
+  // Update modal for accepting a bid (seller perspective)
+  const headerTitle = document.querySelector('#accept-offer-modal .buy-modal-header h3');
+  const headerDesc = document.querySelector('#accept-offer-modal .buy-modal-header p');
+  if (headerTitle) headerTitle.textContent = '✓ Accept Bid';
+  if (headerDesc) headerDesc.textContent = 'Review and accept this bid on your listing';
+
+  resetAcceptOfferModalState();
+
+  // Update confirm button
+  const confirmBtn = document.getElementById('accept-offer-confirm');
+  if (confirmBtn) confirmBtn.textContent = 'Accept Bid';
+
+  document.getElementById('accept-offer-modal').classList.add('show');
+}
+
+// Handle declining an incoming bid
+async function handleDeclineIncomingBid(bidId) {
+  if (!confirm('Are you sure you want to decline this bid?')) {
+    return;
+  }
+
+  try {
+    addLog(`🔄 Declining bid ${bidId}...`, 'info');
+
+    // Cancel the bid (as the NFT owner declining it)
+    // Note: This may need admin privileges or a different endpoint
+    // For now, we'll just refresh to show the user the bid is still there
+    addLog('💡 To decline a bid, the bidder must cancel it themselves', 'info');
+
+    // Refresh listings
+    await loadActiveListings();
+  } catch (error) {
+    console.error('Decline bid error:', error);
+    addLog(`❌ Failed to decline bid: ${error.message}`, 'error');
+  }
 }
 
 // Handle cancel listing (uses swap offers cancel endpoint)
@@ -2451,55 +2647,80 @@ function viewListingDetails(listingId) {
 
 // Cancel an offer (listing) - uses offers API
 async function handleCancelOffer(offerId) {
-  if (!confirm('Are you sure you want to cancel this listing?')) {
+  // Use the cancel listing modal instead of confirm()
+  showCancelOfferModal(offerId);
+}
+
+// Show cancel offer modal (uses same UI as cancel-listing-modal but with offer data)
+function showCancelOfferModal(offerId) {
+  const offer = activeListings.find((o) => o.id === parseInt(offerId) || o.id === offerId);
+  if (!offer) {
+    addLog('❌ Offer not found', 'error');
     return;
   }
 
-  const card = document.querySelector(`[data-offer-id="${offerId}"]`);
-  const cancelBtn = card ? card.querySelector('.listing-action-btn.cancel') : null;
+  // Determine if this is a listing (NFT-for-SOL) or a bid (SOL-for-NFT)
+  const hasOfferedAssets = offer.offeredAssets && offer.offeredAssets.length > 0;
+  const hasOfferedSol = offer.offeredSol && BigInt(offer.offeredSol) > 0;
+  const isBid = hasOfferedSol && !hasOfferedAssets;
 
-  try {
-    if (cancelBtn) {
-      cancelBtn.disabled = true;
-      cancelBtn.textContent = 'Cancelling...';
-    }
+  let assetId, assetMetadata, name, priceSol;
 
-    addLog(`🔄 Cancelling offer ${offerId}...`, 'info');
-
-    // Call cancel offer API
-    const response = await fetch(`/api/swaps/offers/${offerId}/cancel`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'idempotency-key': `cancel-offer-${offerId}-${Date.now()}`,
-      },
-      body: JSON.stringify({
-        walletAddress: MAKER_ADDRESS,
-      }),
-    });
-
-    const result = await response.json();
-
-    if (!result.success) {
-      throw new Error(result.message || 'Failed to cancel offer');
-    }
-
-    addLog(`✅ Listing cancelled successfully!`, 'success');
-
-    // Refresh listings
-    await loadActiveListings();
-
-    // Refresh maker wallet
-    await loadWalletInfo('maker');
-  } catch (error) {
-    console.error('Cancel offer error:', error);
-    addLog(`❌ Failed to cancel listing: ${error.message}`, 'error');
-
-    if (cancelBtn) {
-      cancelBtn.disabled = false;
-      cancelBtn.textContent = 'Cancel Listing';
-    }
+  if (isBid) {
+    // This is a bid - user offered SOL for an NFT
+    const requestedAsset = offer.requestedAssets && offer.requestedAssets[0];
+    assetId = requestedAsset ? requestedAsset.identifier : 'unknown';
+    assetMetadata = requestedAsset?.metadata || {};
+    name = assetMetadata.name || requestedAsset?.name || 'Unknown NFT';
+    priceSol = (parseInt(offer.offeredSol || '0') / 1e9).toFixed(4);
+  } else {
+    // This is a listing - user offered NFT for SOL
+    const offeredAsset = offer.offeredAssets && offer.offeredAssets[0];
+    assetId = offeredAsset ? offeredAsset.identifier : 'unknown';
+    assetMetadata = offeredAsset?.metadata || {};
+    name = assetMetadata.name || offeredAsset?.name || 'Unknown NFT';
+    priceSol = (parseInt(offer.requestedSol || '0') / 1e9).toFixed(4);
   }
+
+  const imageUrl = assetMetadata.image || getPlaceholderImage(assetId);
+
+  // Store offer data for the confirm handler
+  cancelListingData = {
+    listingId: offerId,
+    offerId: offerId,
+    name: name,
+    priceSol: priceSol,
+    isBid: isBid
+  };
+
+  // Populate modal
+  document.getElementById('cancel-listing-image').src = imageUrl;
+  document.getElementById('cancel-listing-name').textContent = name;
+  document.getElementById('cancel-listing-price').textContent = `${priceSol} SOL`;
+
+  // Update modal header based on type
+  const headerTitle = document.querySelector('#cancel-listing-modal .cancel-listing-modal-header h3');
+  const headerDesc = document.querySelector('#cancel-listing-modal .cancel-listing-modal-header p');
+  if (headerTitle) {
+    headerTitle.textContent = isBid ? '❌ Cancel Bid' : '❌ Cancel Listing';
+  }
+  if (headerDesc) {
+    headerDesc.textContent = isBid
+      ? 'Are you sure you want to cancel this bid?'
+      : 'Are you sure you want to cancel this listing?';
+  }
+
+  // Reset modal state
+  resetCancelListingModalState();
+
+  // Update button text
+  const confirmBtn = document.getElementById('cancel-listing-confirm');
+  if (confirmBtn) {
+    confirmBtn.textContent = isBid ? 'Cancel Bid' : 'Cancel Listing';
+  }
+
+  // Show modal
+  document.getElementById('cancel-listing-modal').classList.add('show');
 }
 
 // View offer details
@@ -2550,7 +2771,16 @@ function showCounterOfferModal(offerId, offerData) {
   if (imageEl) imageEl.src = offerData.image || getPlaceholderImage(offerData.assetId);
   if (nameEl) nameEl.textContent = offerData.name || 'Unknown NFT';
   if (priceEl) priceEl.textContent = `Listed: ${offerData.priceSol} SOL`;
-  if (priceInput) priceInput.value = '';
+  // Set default price to current listing price
+  if (priceInput) {
+    priceInput.value = offerData.priceSol || '';
+    // Trigger USD display update
+    const usdDisplay = document.getElementById('counter-offer-price-usd');
+    if (usdDisplay && offerData.priceSol && solPriceUSD) {
+      const usdValue = (parseFloat(offerData.priceSol) * solPriceUSD).toFixed(2);
+      usdDisplay.textContent = `≈ $${usdValue} USD`;
+    }
+  }
 
   modal.classList.add('show');
 }
@@ -2678,10 +2908,16 @@ function initCounterOfferModal() {
 
 // Export for global access
 window.handleCancelOffer = handleCancelOffer;
+window.showCancelOfferModal = showCancelOfferModal;
 window.viewOfferDetails = viewOfferDetails;
 window.showCounterOfferModal = showCounterOfferModal;
 window.hideCounterOfferModal = hideCounterOfferModal;
 window.handleSubmitCounterOffer = handleSubmitCounterOffer;
+window.handleAcceptIncomingBid = handleAcceptIncomingBid;
+window.handleDeclineIncomingBid = handleDeclineIncomingBid;
+window.showAcceptOfferModal = showAcceptOfferModal;
+window.hideAcceptOfferModal = hideAcceptOfferModal;
+window.handleConfirmAcceptOffer = handleConfirmAcceptOffer;
 
 // Quick list modal functions
 function showQuickListModal(nft) {
@@ -2931,6 +3167,9 @@ function initializeMarketplaceFeatures() {
   // Initialize counter offer modal
   initCounterOfferModal();
 
+  // Initialize accept offer modal
+  initAcceptOfferModal();
+
   // Load marketplace listings on init
   loadMarketplaceListings();
 
@@ -3136,7 +3375,7 @@ function renderMarketplaceListings() {
 // Accept offer state
 let selectedAcceptOffer = null;
 
-// Show accept offer modal and handle the accept flow
+// Show accept offer modal with proper confirmation
 async function showAcceptOfferModal(offerId) {
   const offer = marketplaceListings.find((o) => o.id === parseInt(offerId) || o.id === offerId);
   if (!offer) {
@@ -3150,14 +3389,14 @@ async function showAcceptOfferModal(offerId) {
     return;
   }
 
-  selectedAcceptOffer = offer;
-
   const offeredAsset = offer.offeredAssets && offer.offeredAssets[0];
   const assetId = offeredAsset ? offeredAsset.identifier : 'unknown';
   const assetMetadata = offeredAsset?.metadata || {};
   const name = assetMetadata.name || offeredAsset?.name || 'Unknown NFT';
   const priceSol = (parseInt(offer.requestedSol || '0') / 1e9).toFixed(4);
-  const priceUsd = solPriceUSD ? ((parseInt(offer.requestedSol || '0') / 1e9) * solPriceUSD).toFixed(2) : null;
+  const priceNum = parseFloat(priceSol);
+  const fee = priceNum * 0.01; // 1% fee
+  const imageUrl = assetMetadata.image || getPlaceholderImage(assetId);
 
   // Check if taker has enough SOL
   const requiredLamports = parseInt(offer.requestedSol || '0');
@@ -3168,13 +3407,135 @@ async function showAcceptOfferModal(offerId) {
     return;
   }
 
-  // Confirm purchase
-  const confirmMessage = `Accept offer to buy "${name}" for ${priceSol} SOL${priceUsd ? ` (~$${priceUsd})` : ''}?`;
-  if (!confirm(confirmMessage)) {
+  selectedAcceptOffer = offer;
+  isAcceptingIncomingBid = false; // This is a marketplace purchase, not accepting an incoming bid
+
+  // Populate modal
+  document.getElementById('accept-offer-image').src = imageUrl;
+  document.getElementById('accept-offer-name').textContent = name;
+  document.getElementById('accept-offer-buyer').textContent = `Seller: ${offer.makerWallet.substring(0, 8)}...`;
+  document.getElementById('accept-offer-price').textContent = `${priceSol} SOL`;
+  document.getElementById('accept-offer-fee').textContent = `${fee.toFixed(4)} SOL`;
+  document.getElementById('accept-offer-receive').textContent = `You pay: ${priceSol} SOL`;
+
+  // Update modal for marketplace purchase (buyer perspective)
+  const headerTitle = document.querySelector('#accept-offer-modal .buy-modal-header h3');
+  const headerDesc = document.querySelector('#accept-offer-modal .buy-modal-header p');
+  if (headerTitle) headerTitle.textContent = '🛒 Accept Offer';
+  if (headerDesc) headerDesc.textContent = 'Review the details before accepting this offer';
+
+  // Reset modal state
+  resetAcceptOfferModalState();
+
+  // Update confirm button for marketplace purchase
+  const confirmBtn = document.getElementById('accept-offer-confirm');
+  if (confirmBtn) confirmBtn.textContent = 'Accept Offer';
+
+  // Show modal
+  document.getElementById('accept-offer-modal').classList.add('show');
+}
+
+function hideAcceptOfferModal() {
+  document.getElementById('accept-offer-modal').classList.remove('show');
+  selectedAcceptOffer = null;
+  isAcceptingIncomingBid = false;
+  resetAcceptOfferModalState();
+}
+
+function resetAcceptOfferModalState() {
+  const txStatus = document.getElementById('accept-offer-tx-status');
+  if (txStatus) txStatus.style.display = 'none';
+
+  const actions = document.getElementById('accept-offer-actions');
+  if (actions) actions.style.display = 'flex';
+
+  const confirmBtn = document.getElementById('accept-offer-confirm');
+  if (confirmBtn) {
+    confirmBtn.disabled = false;
+    confirmBtn.textContent = 'Accept Offer';
+  }
+}
+
+function updateAcceptOfferTxStatus(status, title, message, link = null) {
+  const txStatusEl = document.getElementById('accept-offer-tx-status');
+  const titleEl = document.getElementById('accept-offer-status-title');
+  const messageEl = document.getElementById('accept-offer-status-message');
+  const linkEl = document.getElementById('accept-offer-status-link');
+
+  if (!txStatusEl) return;
+
+  txStatusEl.classList.remove('waiting', 'processing', 'confirming', 'success', 'error');
+  txStatusEl.classList.add(status);
+
+  const iconEl = txStatusEl.querySelector('.modal-tx-status-spinner, .modal-tx-status-icon');
+  if (iconEl) {
+    if (status === 'success') {
+      iconEl.className = 'modal-tx-status-icon';
+      iconEl.textContent = '✓';
+    } else if (status === 'error') {
+      iconEl.className = 'modal-tx-status-icon';
+      iconEl.textContent = '✗';
+    } else {
+      iconEl.className = 'modal-tx-status-spinner';
+      iconEl.textContent = '';
+    }
+  }
+
+  titleEl.textContent = title;
+  messageEl.textContent = message;
+
+  if (link) {
+    linkEl.innerHTML = `<a href="${link}" target="_blank" rel="noopener noreferrer">View Transaction</a>`;
+  } else {
+    linkEl.innerHTML = '';
+  }
+
+  txStatusEl.style.display = 'flex';
+}
+
+async function handleConfirmAcceptOffer() {
+  if (!selectedAcceptOffer) {
+    addLog('❌ No offer selected', 'error');
     return;
   }
 
-  await handleAcceptOffer(offer);
+  const confirmBtn = document.getElementById('accept-offer-confirm');
+  const actions = document.getElementById('accept-offer-actions');
+
+  try {
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = 'Processing...';
+
+    updateAcceptOfferTxStatus('waiting', 'Accepting Offer', 'Building swap transaction...');
+
+    await handleAcceptOffer(selectedAcceptOffer);
+
+  } catch (error) {
+    console.error('Accept offer error:', error);
+    updateAcceptOfferTxStatus('error', 'Accept Failed', error.message);
+
+    const linkEl = document.getElementById('accept-offer-status-link');
+    if (linkEl) {
+      linkEl.innerHTML = `<button class="modal-retry-btn" onclick="handleConfirmAcceptOffer()">Retry</button>`;
+    }
+
+    confirmBtn.disabled = false;
+    confirmBtn.textContent = 'Accept Offer';
+  }
+}
+
+// Initialize accept offer modal handlers
+function initAcceptOfferModal() {
+  const cancelBtn = document.getElementById('accept-offer-cancel');
+  const confirmBtn = document.getElementById('accept-offer-confirm');
+
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', hideAcceptOfferModal);
+  }
+
+  if (confirmBtn) {
+    confirmBtn.addEventListener('click', handleConfirmAcceptOffer);
+  }
 }
 
 // Handle accepting an offer
@@ -3183,12 +3544,24 @@ async function handleAcceptOffer(offer) {
   const name = offeredAsset?.metadata?.name || offeredAsset?.name || 'Unknown NFT';
   const priceSol = (parseInt(offer.requestedSol || '0') / 1e9).toFixed(4);
 
+  // Determine the correct taker wallet based on context:
+  // - Marketplace purchase: TAKER_ADDRESS (buyer) accepts a seller's listing
+  // - Incoming bid: MAKER_ADDRESS (seller/NFT owner) accepts a buyer's bid
+  const takerWallet = isAcceptingIncomingBid ? MAKER_ADDRESS : TAKER_ADDRESS;
+  const roleLabel = isAcceptingIncomingBid ? 'seller' : 'buyer';
+
+  if (!takerWallet) {
+    addLog(`❌ Please load the ${isAcceptingIncomingBid ? 'Maker' : 'Taker'} wallet first`, 'error');
+    throw new Error(`${isAcceptingIncomingBid ? 'Maker' : 'Taker'} wallet not loaded`);
+  }
+
   try {
-    addLog(`🛒 Accepting offer for ${name}...`, 'info');
+    addLog(`🛒 Accepting offer for ${name} as ${roleLabel}...`, 'info');
     addLog(`   Price: ${priceSol} SOL`, 'info');
 
     // Step 1: Call accept offer API to get serialized transaction
     addLog('📝 Building swap transaction...', 'info');
+    updateAcceptOfferTxStatus('processing', 'Building Transaction', 'Creating swap transaction...');
 
     const acceptResponse = await fetch(`/api/swaps/offers/${offer.id}/accept`, {
       method: 'POST',
@@ -3197,7 +3570,7 @@ async function handleAcceptOffer(offer) {
         'idempotency-key': `accept-${offer.id}-${Date.now()}`,
       },
       body: JSON.stringify({
-        takerWallet: TAKER_ADDRESS,
+        takerWallet: takerWallet,
       }),
     });
 
@@ -3211,6 +3584,7 @@ async function handleAcceptOffer(offer) {
 
     // Step 2: Execute the transaction via test endpoint
     addLog('🔐 Signing and executing swap transaction...', 'info');
+    updateAcceptOfferTxStatus('confirming', 'Executing Swap', 'Signing and submitting transaction...');
 
     const execResponse = await fetch('/api/test/execute-swap', {
       method: 'POST',
@@ -3233,14 +3607,26 @@ async function handleAcceptOffer(offer) {
     addLog(`✅ Swap completed successfully!`, 'success');
     addLog(`   TX: ${execResult.data.signature}`, 'success');
 
-    // Refresh marketplace and wallets
-    await loadMarketplaceListings();
-    await loadWalletInfo('taker');
-    await loadActiveListings();
+    // Show success in modal
+    const explorerUrl = `https://solscan.io/tx/${execResult.data.signature}`;
+    updateAcceptOfferTxStatus('success', 'Purchase Complete!', `You now own "${name}"`, explorerUrl);
+
+    // Hide action buttons on success
+    const actions = document.getElementById('accept-offer-actions');
+    if (actions) actions.style.display = 'none';
+
+    // Auto-close and refresh after delay
+    setTimeout(async () => {
+      hideAcceptOfferModal();
+      await loadMarketplaceListings();
+      await loadWalletInfo('taker');
+      await loadActiveListings();
+    }, 2000);
 
   } catch (error) {
     console.error('Accept offer error:', error);
     addLog(`❌ Failed to accept offer: ${error.message}`, 'error');
+    throw error; // Re-throw to let the modal handler catch it
   }
 }
 
@@ -3530,6 +3916,10 @@ function handleModalKeyboard(e) {
     // Close modals in order of z-index priority
     if (document.getElementById('cancel-listing-modal').classList.contains('show')) {
       hideCancelListingModal();
+    } else if (document.getElementById('accept-offer-modal').classList.contains('show')) {
+      hideAcceptOfferModal();
+    } else if (document.getElementById('counter-offer-modal').classList.contains('show')) {
+      hideCounterOfferModal();
     } else if (document.getElementById('purchase-success-modal').classList.contains('show')) {
       hidePurchaseSuccessModal();
     } else if (document.getElementById('buy-modal').classList.contains('show')) {
