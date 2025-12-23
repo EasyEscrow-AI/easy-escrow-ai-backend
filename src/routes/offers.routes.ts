@@ -1053,9 +1053,21 @@ router.post(
               solVaultPDA: lockTxResult.solVaultPDA.toBase58(),
               lockedAssets: lockTxResult.lockedAssets,
               solAmountEscrowed: lockTxResult.solAmountEscrowed.toString(),
+              // Multi-transaction support for bulk cNFT locks
+              transactionCount: lockTxResult.transactionCount || 1,
+              transactions: lockTxResult.transactions?.map(tx => ({
+                index: tx.index,
+                purpose: tx.purpose,
+                serialized: tx.serialized,
+                requiredSigners: tx.requiredSigners,
+                assets: tx.assets,
+                estimatedSize: tx.estimatedSize,
+              })),
             },
             message: 'Bulk offer accepted. Party A should now lock their assets.',
-            nextAction: 'Party A signs and submits the lock transaction',
+            nextAction: lockTxResult.transactionCount && lockTxResult.transactionCount > 1
+              ? `Party A signs and submits ${lockTxResult.transactionCount} lock transactions sequentially`
+              : 'Party A signs and submits the lock transaction',
           },
           timestamp: new Date().toISOString(),
         });
@@ -2937,9 +2949,21 @@ router.post(
             solVaultPDA: lockTxResult.solVaultPDA.toBase58(),
             lockedAssets: lockTxResult.lockedAssets,
             solAmountEscrowed: lockTxResult.solAmountEscrowed.toString(),
+            // Multi-transaction support for bulk cNFT locks
+            transactionCount: lockTxResult.transactionCount || 1,
+            transactions: lockTxResult.transactions?.map(tx => ({
+              index: tx.index,
+              purpose: tx.purpose,
+              serialized: tx.serialized,
+              requiredSigners: tx.requiredSigners,
+              assets: tx.assets,
+              estimatedSize: tx.estimatedSize,
+            })),
           },
           message: 'Offer accepted. Party A should now lock their assets.',
-          nextAction: 'Party A signs and submits the lock transaction',
+          nextAction: lockTxResult.transactionCount && lockTxResult.transactionCount > 1
+            ? `Party A signs and submits ${lockTxResult.transactionCount} lock transactions sequentially`
+            : 'Party A signs and submits the lock transaction',
         },
         timestamp: new Date().toISOString(),
       });
@@ -3076,9 +3100,23 @@ router.post(
             solVaultPDA: lockTxResult.solVaultPDA.toBase58(),
             lockedAssets: lockTxResult.lockedAssets,
             solAmountEscrowed: lockTxResult.solAmountEscrowed.toString(),
+            // Multi-transaction support for bulk cNFT locks
+            transactionCount: lockTxResult.transactionCount || 1,
+            transactions: lockTxResult.transactions?.map(tx => ({
+              index: tx.index,
+              purpose: tx.purpose,
+              serialized: tx.serialized,
+              requiredSigners: tx.requiredSigners,
+              assets: tx.assets,
+              estimatedSize: tx.estimatedSize,
+            })),
           },
-          message: `Lock transaction built for Party ${party}. Sign and submit.`,
-          nextAction: 'Sign and submit, then call POST /api/swaps/offers/bulk/:id/confirm-lock',
+          message: lockTxResult.transactionCount && lockTxResult.transactionCount > 1
+            ? `Lock transactions (${lockTxResult.transactionCount}) built for Party ${party}. Sign and submit sequentially.`
+            : `Lock transaction built for Party ${party}. Sign and submit.`,
+          nextAction: lockTxResult.transactionCount && lockTxResult.transactionCount > 1
+            ? `Sign and submit ${lockTxResult.transactionCount} transactions sequentially, then call POST /api/swaps/offers/bulk/:id/confirm-lock`
+            : 'Sign and submit, then call POST /api/swaps/offers/bulk/:id/confirm-lock',
         },
         timestamp: new Date().toISOString(),
       });
@@ -3193,8 +3231,20 @@ router.post(
           solVaultPDA: partyBLockTx.solVaultPDA.toBase58(),
           lockedAssets: partyBLockTx.lockedAssets,
           solAmountEscrowed: partyBLockTx.solAmountEscrowed.toString(),
+          // Multi-transaction support for bulk cNFT locks
+          transactionCount: partyBLockTx.transactionCount || 1,
+          transactions: partyBLockTx.transactions?.map(tx => ({
+            index: tx.index,
+            purpose: tx.purpose,
+            serialized: tx.serialized,
+            requiredSigners: tx.requiredSigners,
+            assets: tx.assets,
+            estimatedSize: tx.estimatedSize,
+          })),
         };
-        responseData.nextAction = 'Party B signs and submits lock transaction';
+        responseData.nextAction = partyBLockTx.transactionCount && partyBLockTx.transactionCount > 1
+          ? `Party B signs and submits ${partyBLockTx.transactionCount} lock transactions sequentially`
+          : 'Party B signs and submits lock transaction';
       } else if (result.nextAction === 'READY_FOR_SETTLEMENT') {
         responseData.nextAction = 'Call POST /api/swaps/offers/bulk/:id/settle';
       }

@@ -1449,6 +1449,150 @@ async function executeSwapWithRetry(offerId, acceptData, isBulkSwap = false, bul
   return data;
 }
 
+// Helper: Execute two-phase swap lock transactions sequentially
+async function executeTwoPhaseSwap(offerId, acceptData, addLog) {
+  const lockTx = acceptData.data.lockTransaction;
+  const transactions = lockTx.transactions || [{ serialized: lockTx.serialized, purpose: 'Lock assets' }];
+  const transactionCount = lockTx.transactionCount || transactions.length;
+
+  addLog(`📦 Two-phase swap: ${transactionCount} lock transaction(s) to execute`, 'info');
+
+  // Execute lock transactions for Party A
+  const signatures = [];
+  for (let i = 0; i < transactions.length; i++) {
+    const tx = transactions[i];
+    addLog(`   📝 TX ${i + 1}/${transactionCount}: ${tx.purpose || 'Lock transaction'}`, 'info');
+
+    const response = await fetch('/api/test/execute-lock', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Test-Execution': 'true',
+      },
+      body: JSON.stringify({
+        swapId: offerId,
+        serializedTransaction: tx.serialized,
+        transactionIndex: i,
+        totalTransactions: transactionCount,
+      }),
+    });
+
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(`Lock TX ${i + 1} failed: ${result.error}`);
+    }
+    signatures.push(result.data?.signature || 'success');
+    addLog(`   ✓ TX ${i + 1} confirmed`, 'success');
+
+    // Small delay between transactions
+    if (i < transactions.length - 1) {
+      await new Promise((r) => setTimeout(r, 200));
+    }
+  }
+
+  // Confirm Party A lock
+  addLog('   📝 Confirming Party A lock...', 'info');
+  const confirmResponse = await fetch(`/api/swaps/offers/bulk/${offerId}/confirm-lock`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      party: 'A',
+      walletAddress: acceptData.data.offer.partyA,
+      signature: signatures[signatures.length - 1],
+    }),
+  });
+  const confirmResult = await confirmResponse.json();
+
+  if (!confirmResult.success) {
+    throw new Error(`Confirm lock failed: ${confirmResult.error}`);
+  }
+  addLog('   ✓ Party A lock confirmed', 'success');
+
+  // Handle Party B lock if needed
+  if (confirmResult.data.lockTransaction) {
+    const partyBLock = confirmResult.data.lockTransaction;
+    const partyBTxs = partyBLock.transactions || [{ serialized: partyBLock.serialized, purpose: 'Lock assets' }];
+
+    addLog(`   📦 Party B: ${partyBTxs.length} lock transaction(s)`, 'info');
+
+    const partyBSignatures = [];
+    for (let i = 0; i < partyBTxs.length; i++) {
+      const tx = partyBTxs[i];
+      addLog(`   📝 Party B TX ${i + 1}/${partyBTxs.length}: ${tx.purpose || 'Lock transaction'}`, 'info');
+
+      const response = await fetch('/api/test/execute-lock', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Test-Execution': 'true',
+        },
+        body: JSON.stringify({
+          swapId: offerId,
+          serializedTransaction: tx.serialized,
+          transactionIndex: i,
+          totalTransactions: partyBTxs.length,
+          party: 'B',
+        }),
+      });
+
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(`Party B Lock TX ${i + 1} failed: ${result.error}`);
+      }
+      partyBSignatures.push(result.data?.signature || 'success');
+      addLog(`   ✓ Party B TX ${i + 1} confirmed`, 'success');
+
+      if (i < partyBTxs.length - 1) {
+        await new Promise((r) => setTimeout(r, 200));
+      }
+    }
+
+    // Confirm Party B lock
+    addLog('   📝 Confirming Party B lock...', 'info');
+    const confirmBResponse = await fetch(`/api/swaps/offers/bulk/${offerId}/confirm-lock`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        party: 'B',
+        walletAddress: confirmResult.data.offer?.partyB || acceptData.data.offer.partyB,
+        signature: partyBSignatures[partyBSignatures.length - 1],
+      }),
+    });
+    const confirmBResult = await confirmBResponse.json();
+
+    if (!confirmBResult.success) {
+      throw new Error(`Confirm Party B lock failed: ${confirmBResult.error}`);
+    }
+    addLog('   ✓ Party B lock confirmed', 'success');
+  }
+
+  // Settle the swap
+  addLog('   📝 Settling swap...', 'info');
+  const settleResponse = await fetch(`/api/swaps/offers/bulk/${offerId}/settle`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({}),
+  });
+  const settleResult = await settleResponse.json();
+
+  if (!settleResult.success) {
+    throw new Error(`Settlement failed: ${settleResult.error}`);
+  }
+
+  addLog('✅ Two-phase swap settled successfully!', 'success');
+
+  return {
+    success: true,
+    data: {
+      signatures,
+      signature: signatures[signatures.length - 1],
+      network: settleResult.data?.network || 'mainnet-beta',
+      isTwoPhase: true,
+      explorerUrl: `https://solscan.io/tx/${signatures[signatures.length - 1]}`,
+    },
+  };
+}
+
 // Execute atomic swap (uses confirmed parameters to prevent stale values)
 async function executeAtomicSwap(params) {
   const swapBtn = document.getElementById('swap-btn');
@@ -1570,11 +1714,19 @@ async function executeAtomicSwap(params) {
     let isBulkSwap = false;
     let bulkSwapInfo = null;
 
+    let isTwoPhaseSwap = false;
+
     try {
       acceptData = await acceptOfferWithRetry(offerId);
 
+      // Check if this is a two-phase swap (has lockTransaction instead of transaction)
+      if (acceptData.data && acceptData.data.lockTransaction && acceptData.data.executionStrategy === 'two-phase') {
+        isTwoPhaseSwap = true;
+        const lockTxCount = acceptData.data.lockTransaction.transactionCount || 1;
+        addLog(`🔐 Two-phase swap detected: ${lockTxCount} lock transaction(s)`, 'info');
+      }
       // Check if this is a bulk swap
-      if (acceptData.data && acceptData.data.bulkSwap) {
+      else if (acceptData.data && acceptData.data.bulkSwap) {
         isBulkSwap = acceptData.data.bulkSwap.isBulkSwap;
         bulkSwapInfo = acceptData.data.bulkSwap;
 
@@ -1596,7 +1748,17 @@ async function executeAtomicSwap(params) {
     addLog(`✓ Offer accepted [${timings.accept}s]`, 'success');
 
     // Step 3: Execute the swap on-chain using test wallets
-    if (isBulkSwap && bulkSwapInfo) {
+    let executeData;
+    const executeStartTime = performance.now();
+
+    // Handle two-phase swaps (lock/settle flow)
+    if (isTwoPhaseSwap) {
+      addLog('Step 3: Executing two-phase swap (lock/settle)...', 'info');
+      addLog('🔐 Signing with test wallet private keys...', 'info');
+      executeData = await executeTwoPhaseSwap(offerId, acceptData, addLog);
+    }
+    // Handle bulk swaps (Jito bundles or sequential)
+    else if (isBulkSwap && bulkSwapInfo) {
       addBundleLog(`Step 3: Executing ${bulkSwapInfo.transactionCount} transactions...`);
       addLog('🔐 Signing with test wallet private keys...', 'info');
 
@@ -1613,13 +1775,16 @@ async function executeAtomicSwap(params) {
       } else {
         addLog('   📦 Executing transactions sequentially via RPC...', 'info');
       }
-    } else {
+
+      executeData = await executeSwapWithRetry(offerId, acceptData, isBulkSwap, bulkSwapInfo);
+    }
+    // Handle atomic swaps (single transaction)
+    else {
       addLog('Step 3: Executing swap on-chain...', 'info');
       addLog('🔐 Signing with test wallet private keys...', 'info');
+      executeData = await executeSwapWithRetry(offerId, acceptData, isBulkSwap, bulkSwapInfo);
     }
 
-    const executeStartTime = performance.now();
-    const executeData = await executeSwapWithRetry(offerId, acceptData, isBulkSwap, bulkSwapInfo);
     timings.execute = ((performance.now() - executeStartTime) / 1000).toFixed(2);
 
     if (!executeData.success) {

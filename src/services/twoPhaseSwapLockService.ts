@@ -125,12 +125,32 @@ export interface BuildLockTransactionParams {
 }
 
 /**
+ * Individual lock transaction item (for multi-transaction lock sequences)
+ */
+export interface LockTransactionItem {
+  /** Transaction index (0-based) */
+  index: number;
+  /** Purpose of this transaction */
+  purpose: string;
+  /** Serialized transaction (base64) */
+  serialized: string;
+  /** Instructions included in the transaction */
+  instructions: TransactionInstruction[];
+  /** Required signers for the transaction */
+  requiredSigners: string[];
+  /** Assets being locked in this transaction */
+  assets: SwapAsset[];
+  /** Estimated transaction size in bytes */
+  estimatedSize: number;
+}
+
+/**
  * Result of building a lock transaction
  */
 export interface LockTransactionResult {
-  /** Serialized transaction (base64) */
+  /** Serialized transaction (base64) - first transaction for backwards compatibility */
   serializedTransaction: string;
-  /** Instructions included in the transaction */
+  /** Instructions included in the first transaction */
   instructions: TransactionInstruction[];
   /** Required signers for the transaction */
   requiredSigners: string[];
@@ -144,6 +164,10 @@ export interface LockTransactionResult {
   solVaultPDA: PublicKey;
   /** Estimated transaction size in bytes */
   estimatedSize: number;
+  /** All transactions (for multi-cNFT locks) */
+  transactions?: LockTransactionItem[];
+  /** Total number of transactions */
+  transactionCount?: number;
 }
 
 /**
@@ -553,37 +577,73 @@ export class TwoPhaseSwapLockService {
     const [delegatePDA] = this.deriveDelegatePDA(params.swapId);
     const [solVaultPDA] = this.deriveSolVaultPDA(params.swapId, params.party);
 
-    // Build instructions
-    const instructions: TransactionInstruction[] = [];
     const walletPubkey = new PublicKey(params.walletAddress);
-
-    // 1. Build delegation instructions for each cNFT
     const cnftAssets = assets.filter((a) => a.type === 'CNFT');
+    const solAmountEscrowed = solAmount || BigInt(0);
+
+    // Get blockhash for all transactions
+    const recentBlockhash = await this.connection.getLatestBlockhash();
+
+    // =========================================================================
+    // Split cNFT delegations across multiple transactions
+    // Each cNFT delegation is ~488 bytes, max transaction size is 1232 bytes
+    // Safe to put 1 cNFT delegation per transaction (with overhead for fee payer, etc.)
+    // =========================================================================
+    const MAX_CNFTS_PER_LOCK_TX = 1; // Conservative: 1 cNFT per transaction
+    const transactions: LockTransactionItem[] = [];
     let totalEstimatedSize = 0;
 
-    for (const asset of cnftAssets) {
-      console.log(
-        `[TwoPhaseSwapLockService] Building delegation for cNFT:`,
-        asset.identifier
-      );
+    // Build delegation transactions for each cNFT (1 per transaction)
+    for (let i = 0; i < cnftAssets.length; i += MAX_CNFTS_PER_LOCK_TX) {
+      const cnftBatch = cnftAssets.slice(i, i + MAX_CNFTS_PER_LOCK_TX);
+      const txInstructions: TransactionInstruction[] = [];
+      let txEstimatedSize = 0;
 
-      const delegationResult = await this.delegationService.buildDelegateInstruction(
-        {
-          assetId: asset.identifier,
-          ownerPubkey: walletPubkey,
-          delegatePDA,
-        }
-      );
+      for (const asset of cnftBatch) {
+        console.log(
+          `[TwoPhaseSwapLockService] Building delegation for cNFT (tx ${transactions.length + 1}):`,
+          asset.identifier
+        );
 
-      instructions.push(delegationResult.instruction);
-      totalEstimatedSize += delegationResult.estimatedSize;
+        const delegationResult = await this.delegationService.buildDelegateInstruction(
+          {
+            assetId: asset.identifier,
+            ownerPubkey: walletPubkey,
+            delegatePDA,
+          }
+        );
+
+        txInstructions.push(delegationResult.instruction);
+        txEstimatedSize += delegationResult.estimatedSize;
+        totalEstimatedSize += delegationResult.estimatedSize;
+      }
+
+      // Build transaction for this batch
+      const transaction = new Transaction({
+        recentBlockhash: recentBlockhash.blockhash,
+        feePayer: walletPubkey,
+      });
+
+      for (const ix of txInstructions) {
+        transaction.add(ix);
+      }
+
+      const serialized = transaction
+        .serialize({ requireAllSignatures: false })
+        .toString('base64');
+
+      transactions.push({
+        index: transactions.length,
+        purpose: `Delegate cNFT ${cnftBatch.map(a => a.identifier.slice(0, 8)).join(', ')}`,
+        serialized,
+        instructions: txInstructions,
+        requiredSigners: [params.walletAddress],
+        assets: cnftBatch,
+        estimatedSize: txEstimatedSize,
+      });
     }
 
-    // 2. Build SOL deposit instruction (if SOL is being offered)
-    // Uses the on-chain deposit_two_phase_sol instruction which initializes
-    // the vault PDA and deposits SOL. This ensures the vault is owned by
-    // the escrow program, enabling settlement to work correctly.
-    const solAmountEscrowed = solAmount || BigInt(0);
+    // Build SOL deposit transaction (if SOL is being offered)
     if (solAmountEscrowed > BigInt(0)) {
       console.log(
         `[TwoPhaseSwapLockService] Building SOL escrow deposit:`,
@@ -597,47 +657,55 @@ export class TwoPhaseSwapLockService {
         solAmountEscrowed
       );
 
-      instructions.push(depositInstruction);
-      totalEstimatedSize += 100; // Deposit instruction is ~100 bytes
+      const solTransaction = new Transaction({
+        recentBlockhash: recentBlockhash.blockhash,
+        feePayer: walletPubkey,
+      });
+      solTransaction.add(depositInstruction);
+
+      const serialized = solTransaction
+        .serialize({ requireAllSignatures: false })
+        .toString('base64');
+
+      const solTxSize = 100; // SOL deposit is ~100 bytes
+      totalEstimatedSize += solTxSize;
+
+      transactions.push({
+        index: transactions.length,
+        purpose: `Deposit ${(Number(solAmountEscrowed) / 1e9).toFixed(4)} SOL to escrow`,
+        serialized,
+        instructions: [depositInstruction],
+        requiredSigners: [params.walletAddress],
+        assets: [], // No assets, just SOL
+        estimatedSize: solTxSize,
+      });
     }
 
-    // Build transaction
-    const recentBlockhash = await this.connection.getLatestBlockhash();
-
-    // For now, use legacy transaction
-    // Can upgrade to versioned if needed for ALT support
-    const transaction = new Transaction({
-      recentBlockhash: recentBlockhash.blockhash,
-      feePayer: walletPubkey,
-    });
-
-    for (const ix of instructions) {
-      transaction.add(ix);
-    }
-
-    // Serialize transaction
-    const serializedTransaction = transaction
-      .serialize({ requireAllSignatures: false })
-      .toString('base64');
-
-    console.log('[TwoPhaseSwapLockService] Lock transaction built:', {
+    console.log('[TwoPhaseSwapLockService] Lock transactions built:', {
       swapId: params.swapId,
       party: params.party,
-      instructionCount: instructions.length,
+      transactionCount: transactions.length,
       cnftCount: cnftAssets.length,
       solAmount: solAmountEscrowed.toString(),
-      estimatedSize: totalEstimatedSize,
+      totalEstimatedSize,
     });
 
+    // For backwards compatibility, return first transaction as primary
+    const firstTx = transactions[0];
+
     return {
-      serializedTransaction,
-      instructions,
+      // Backwards compatible fields (first transaction)
+      serializedTransaction: firstTx?.serialized || '',
+      instructions: firstTx?.instructions || [],
       requiredSigners: [params.walletAddress],
       lockedAssets: assets,
       solAmountEscrowed,
       delegatePDA,
       solVaultPDA,
       estimatedSize: totalEstimatedSize,
+      // New fields for multi-transaction locks
+      transactions,
+      transactionCount: transactions.length,
     };
   }
 
