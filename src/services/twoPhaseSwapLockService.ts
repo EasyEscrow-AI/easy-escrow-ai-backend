@@ -34,7 +34,8 @@ import {
   SwapAsset,
   TwoPhaseSwapData,
 } from './swapStateMachine';
-import { uuidToBuffer } from '../utils/uuid-conversion';
+import { uuidToBuffer, uuidToUint8Array } from '../utils/uuid-conversion';
+import * as crypto from 'crypto';
 
 // =============================================================================
 // Constants
@@ -304,6 +305,76 @@ export class TwoPhaseSwapLockService {
   }
 
   // ===========================================================================
+  // Instruction Builders
+  // ===========================================================================
+
+  /**
+   * Get Anchor instruction discriminator (first 8 bytes of SHA256 hash of "global:<instruction_name>")
+   */
+  private getInstructionDiscriminator(instructionName: string): Buffer {
+    const hash = crypto.createHash('sha256')
+      .update(`global:${instructionName}`)
+      .digest();
+    return hash.slice(0, 8);
+  }
+
+  /**
+   * Build deposit_two_phase_sol instruction
+   *
+   * This instruction initializes the vault PDA (if needed) and deposits SOL to it.
+   * The vault will be owned by the escrow program, allowing later settlement.
+   *
+   * @param swapId - Swap UUID
+   * @param party - Which party ('A' or 'B')
+   * @param depositor - Depositor public key (signer)
+   * @param amount - Amount in lamports to deposit
+   * @returns Transaction instruction
+   */
+  buildDepositTwoPhaseInstruction(
+    swapId: string,
+    party: 'A' | 'B',
+    depositor: PublicKey,
+    amount: bigint
+  ): TransactionInstruction {
+    const [solVaultPDA] = this.deriveSolVaultPDA(swapId, party);
+    const swapIdBytes = uuidToUint8Array(swapId);
+    const partyByte = party.charCodeAt(0); // 'A' = 65, 'B' = 66
+
+    // Build instruction data:
+    // - discriminator (8 bytes)
+    // - swap_id (16 bytes as [u8; 16])
+    // - party (1 byte)
+    // - amount (8 bytes as u64)
+    const discriminator = this.getInstructionDiscriminator('deposit_two_phase_sol');
+
+    const data = Buffer.alloc(8 + 16 + 1 + 8);
+    discriminator.copy(data, 0);
+    Buffer.from(swapIdBytes).copy(data, 8);
+    data.writeUInt8(partyByte, 24);
+    data.writeBigUInt64LE(amount, 25);
+
+    const keys = [
+      { pubkey: depositor, isSigner: true, isWritable: true },        // depositor
+      { pubkey: solVaultPDA, isSigner: false, isWritable: true },     // sol_vault
+      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false }, // system_program
+    ];
+
+    console.log('[TwoPhaseSwapLockService] Built deposit instruction:', {
+      swapId,
+      party,
+      depositor: depositor.toBase58(),
+      amount: amount.toString(),
+      solVaultPDA: solVaultPDA.toBase58(),
+    });
+
+    return new TransactionInstruction({
+      keys,
+      programId: this.programId,
+      data,
+    });
+  }
+
+  // ===========================================================================
   // Swap Lifecycle: Create
   // ===========================================================================
 
@@ -508,22 +579,26 @@ export class TwoPhaseSwapLockService {
       totalEstimatedSize += delegationResult.estimatedSize;
     }
 
-    // 2. Build SOL transfer instruction (if SOL is being offered)
+    // 2. Build SOL deposit instruction (if SOL is being offered)
+    // Uses the on-chain deposit_two_phase_sol instruction which initializes
+    // the vault PDA and deposits SOL. This ensures the vault is owned by
+    // the escrow program, enabling settlement to work correctly.
     const solAmountEscrowed = solAmount || BigInt(0);
     if (solAmountEscrowed > BigInt(0)) {
       console.log(
-        `[TwoPhaseSwapLockService] Building SOL escrow transfer:`,
+        `[TwoPhaseSwapLockService] Building SOL escrow deposit:`,
         solAmountEscrowed.toString()
       );
 
-      const transferInstruction = SystemProgram.transfer({
-        fromPubkey: walletPubkey,
-        toPubkey: solVaultPDA,
-        lamports: BigInt(solAmountEscrowed),
-      });
+      const depositInstruction = this.buildDepositTwoPhaseInstruction(
+        params.swapId,
+        params.party,
+        walletPubkey,
+        solAmountEscrowed
+      );
 
-      instructions.push(transferInstruction);
-      totalEstimatedSize += 64; // SOL transfer is ~64 bytes
+      instructions.push(depositInstruction);
+      totalEstimatedSize += 100; // Deposit instruction is ~100 bytes
     }
 
     // Build transaction

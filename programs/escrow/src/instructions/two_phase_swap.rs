@@ -142,9 +142,10 @@ pub fn init_two_phase_sol_vault_handler(
     Ok(())
 }
 
-/// Deposit SOL into a two-phase vault
+/// Deposit SOL into a two-phase vault (creates if needed via init_if_needed)
 ///
-/// This is a separate instruction from init to allow deposits after creation.
+/// This instruction both creates the vault PDA (if it doesn't exist) and deposits SOL.
+/// The vault will be owned by the escrow program, enabling settlement.
 pub fn deposit_two_phase_sol_handler(
     ctx: Context<DepositTwoPhaseSol>,
     _swap_id: [u8; 16],
@@ -153,14 +154,7 @@ pub fn deposit_two_phase_sol_handler(
 ) -> Result<()> {
     require!(amount > 0, AtomicSwapError::InvalidAmount);
 
-    // SECURITY: Verify vault was initialized (has rent-exempt minimum)
-    // This prevents depositing to uninitialized PDAs where funds could get stuck
-    let rent = Rent::get()?;
-    let rent_exempt_min = rent.minimum_balance(0);
-    require!(
-        ctx.accounts.sol_vault.lamports() >= rent_exempt_min,
-        AtomicSwapError::VaultNotInitialized
-    );
+    // Note: init_if_needed handles vault creation, so no need to check if it exists
 
     msg!("Depositing SOL into two-phase vault");
     msg!("  Amount: {} lamports", amount);
@@ -211,13 +205,10 @@ pub fn settle_two_phase_with_close_handler(
     let total_transfer = recipient_amount.checked_add(platform_fee)
         .ok_or(AtomicSwapError::ArithmeticOverflow)?;
 
-    // Ensure vault has enough SOL (excluding rent)
-    let rent = Rent::get()?;
-    let rent_exempt_min = rent.minimum_balance(0);
-    let available = vault_balance.saturating_sub(rent_exempt_min);
-
+    // Since we're closing the vault immediately after transferring,
+    // all lamports in the vault are available (no need to reserve for rent).
     require!(
-        available >= total_transfer,
+        vault_balance >= total_transfer,
         AtomicSwapError::InsufficientFunds
     );
 
@@ -296,7 +287,7 @@ pub fn cancel_two_phase_with_close_handler(
 // Additional Account Structures
 // ============================================================================
 
-/// Deposit SOL into an existing two-phase vault
+/// Deposit SOL into a two-phase vault (creates if needed)
 #[derive(Accounts)]
 #[instruction(swap_id: [u8; 16], party: u8)]
 pub struct DepositTwoPhaseSol<'info> {
@@ -304,10 +295,12 @@ pub struct DepositTwoPhaseSol<'info> {
     #[account(mut)]
     pub depositor: Signer<'info>,
 
-    /// SOL vault PDA to deposit into
-    /// CHECK: Validated by seeds, must already exist
+    /// SOL vault PDA to deposit into (created if it doesn't exist)
+    /// CHECK: Validated by seeds, this is a zero-data PDA
     #[account(
-        mut,
+        init_if_needed,
+        payer = depositor,
+        space = 0,
         seeds = [TWO_PHASE_SOL_VAULT_SEED, swap_id.as_ref(), &[party]],
         bump
     )]
