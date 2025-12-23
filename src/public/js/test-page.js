@@ -1358,6 +1358,16 @@ async function acceptOfferWithRetry(offerId, attempt = 1) {
 
 // Helper: Execute swap with retry for stale proofs
 async function executeSwapWithRetry(offerId, acceptData, isBulkSwap = false, bulkSwapInfo = null) {
+  // Check if this requires two-phase settlement (cNFT <> cNFT swaps)
+  const swapFlow = acceptData?.data?.swapFlow;
+  if (swapFlow?.requiresTwoPhase) {
+    throw new Error(
+      'This swap requires two-phase settlement (cNFT ↔ cNFT or complex bulk swap). ' +
+      'Two-phase swaps use a lock/settle flow with delegation. ' +
+      'Use the bulk swap endpoints: POST /api/swaps/offers/bulk/:id/lock and /settle'
+    );
+  }
+
   // Validate accept data has required transaction structure
   if (!acceptData?.data?.transaction?.serialized) {
     throw new Error(
@@ -2127,6 +2137,12 @@ function renderActiveListings() {
                         <span class="listing-card-value">${createdAt.toLocaleDateString()}</span>
                     </div>
                 </div>
+
+                <div class="listing-card-actions">
+                    <button class="listing-action-btn cancel" data-action="cancel" data-offer-id="${offer.id}">
+                        Cancel Listing
+                    </button>
+                </div>
             </div>
         `;
     })
@@ -2134,6 +2150,15 @@ function renderActiveListings() {
 
   // Add CSP-compliant event handlers for cancel buttons on NFT images
   container.querySelectorAll('.listing-image-cancel-btn').forEach((btn) => {
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation(); // Prevent card click events
+      const offerId = this.dataset.offerId;
+      handleCancelOffer(offerId);
+    });
+  });
+
+  // Add CSP-compliant event handlers for action cancel buttons
+  container.querySelectorAll('.listing-action-btn.cancel').forEach((btn) => {
     btn.addEventListener('click', function (e) {
       e.stopPropagation(); // Prevent card click events
       const offerId = this.dataset.offerId;
@@ -2276,7 +2301,7 @@ async function handleCancelOffer(offerId) {
 
     if (cancelBtn) {
       cancelBtn.disabled = false;
-      cancelBtn.textContent = 'Cancel';
+      cancelBtn.textContent = 'Cancel Listing';
     }
   }
 }
