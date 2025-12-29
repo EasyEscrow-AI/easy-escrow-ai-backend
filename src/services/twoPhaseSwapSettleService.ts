@@ -288,20 +288,25 @@ export class TwoPhaseSwapSettleService {
   }
 
   // ===========================================================================
-  // PDA Derivation (same as lock service)
+  // Delegate Authority (matches lock service)
   // ===========================================================================
 
   /**
-   * Derive the marketplace delegate PDA for a swap
+   * Get the delegate authority for cNFT transfers
+   *
+   * IMPORTANT: This returns the backend signer's public key, NOT a PDA.
+   * PDAs cannot sign external transactions, but the backend keypair can.
+   * The backend signer will sign the transfer transaction during settlement.
+   *
+   * For backwards compatibility, this still returns [PublicKey, number] format.
+   *
+   * @param _swapId - The swap UUID (unused, kept for API compatibility)
+   * @returns [backendSigner.publicKey, 0]
    */
-  deriveDelegatePDA(swapId: string): [PublicKey, number] {
-    return PublicKey.findProgramAddressSync(
-      [
-        Buffer.from(TWO_PHASE_SWAP_SEEDS.DELEGATE_AUTHORITY),
-        uuidToBuffer(swapId),
-      ],
-      this.programId
-    );
+  deriveDelegatePDA(_swapId: string): [PublicKey, number] {
+    // Return backend signer's public key as delegate (not a PDA)
+    // This allows the backend to sign cNFT transfer transactions during settlement
+    return [this.backendSigner.publicKey, 0];
   }
 
   /**

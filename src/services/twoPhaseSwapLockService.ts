@@ -250,23 +250,27 @@ export class TwoPhaseSwapLockService {
   private stateMachine: SwapStateMachine;
   private programId: PublicKey;
   private feeCollector: PublicKey;
+  private delegateAuthority: PublicKey;
 
   constructor(
     connection: Connection,
     prisma: PrismaClient,
     programId: PublicKey,
-    feeCollector: PublicKey
+    feeCollector: PublicKey,
+    delegateAuthority: PublicKey
   ) {
     this.connection = connection;
     this.prisma = prisma;
     this.programId = programId;
     this.feeCollector = feeCollector;
+    this.delegateAuthority = delegateAuthority;
     this.delegationService = createCnftDelegationService(connection);
     this.stateMachine = createSwapStateMachine(prisma);
 
     console.log('[TwoPhaseSwapLockService] Initialized');
     console.log('[TwoPhaseSwapLockService] Program ID:', programId.toBase58());
     console.log('[TwoPhaseSwapLockService] Fee Collector:', feeCollector.toBase58());
+    console.log('[TwoPhaseSwapLockService] Delegate Authority:', delegateAuthority.toBase58());
   }
 
   // ===========================================================================
@@ -274,30 +278,26 @@ export class TwoPhaseSwapLockService {
   // ===========================================================================
 
   /**
-   * Derive the marketplace delegate PDA for a swap
+   * Get the delegate authority for cNFT assets
    *
-   * This PDA is granted delegation authority over cNFT assets.
-   * All cNFTs from both parties are delegated to this same PDA.
+   * IMPORTANT: This returns the backend signer's public key, NOT a PDA.
+   * PDAs cannot sign external transactions, but the backend keypair can.
+   * During settlement, the backend signer will sign the transfer transaction.
    *
-   * @param swapId - The swap UUID
-   * @returns [PDA, bump]
+   * For backwards compatibility, this still returns [PublicKey, number] format
+   * where the second value is always 0 (no bump seed for regular keypairs).
+   *
+   * @param _swapId - The swap UUID (unused, kept for API compatibility)
+   * @returns [delegateAuthority, 0]
    */
-  deriveDelegatePDA(swapId: string): [PublicKey, number] {
-    const [pda, bump] = PublicKey.findProgramAddressSync(
-      [
-        Buffer.from(TWO_PHASE_SWAP_SEEDS.DELEGATE_AUTHORITY),
-        uuidToBuffer(swapId),
-      ],
-      this.programId
-    );
-
-    console.log('[TwoPhaseSwapLockService] Derived delegate PDA:', {
-      swapId,
-      pda: pda.toBase58(),
-      bump,
+  deriveDelegatePDA(_swapId: string): [PublicKey, number] {
+    console.log('[TwoPhaseSwapLockService] Using delegate authority (backend signer):', {
+      delegateAuthority: this.delegateAuthority.toBase58(),
     });
 
-    return [pda, bump];
+    // Return backend signer's public key as delegate (not a PDA)
+    // This allows the backend to sign settlement transactions
+    return [this.delegateAuthority, 0];
   }
 
   /**
@@ -1114,12 +1114,19 @@ export class TwoPhaseSwapLockService {
 
 /**
  * Create a TwoPhaseSwapLockService instance
+ *
+ * @param connection - Solana connection
+ * @param prisma - Prisma client
+ * @param programId - Escrow program ID
+ * @param feeCollector - Fee collector public key
+ * @param delegateAuthority - Backend signer's public key for cNFT delegation
  */
 export function createTwoPhaseSwapLockService(
   connection: Connection,
   prisma: PrismaClient,
   programId: PublicKey,
-  feeCollector: PublicKey
+  feeCollector: PublicKey,
+  delegateAuthority: PublicKey
 ): TwoPhaseSwapLockService {
-  return new TwoPhaseSwapLockService(connection, prisma, programId, feeCollector);
+  return new TwoPhaseSwapLockService(connection, prisma, programId, feeCollector, delegateAuthority);
 }
