@@ -351,7 +351,7 @@ export class OfferManager {
     // Rebuild transaction with fresh proofs (no retry loop - caller handles retries)
     // Preserve zero-fee authorization if this was originally a zero-fee swap
     const buildResult = await this.buildOfferTransaction({
-      offerId,
+      offerId: safeOfferId,
       makerWallet: offer.makerWallet,
       takerWallet: offer.takerWallet,
       offeredAssets,
@@ -362,17 +362,17 @@ export class OfferManager {
       nonceAccount: offer.nonceAccount,
       authorizedAppId, // Pass through for zero-fee swaps
     });
-    
+
     // Update offer with new transaction
     const updatedOffer = await this.prisma.swapOffer.update({
-      where: { id: offerId },
+      where: { id: safeOfferId },
       data: {
         serializedTransaction: buildResult.serializedTransaction,
         currentNonceValue: buildResult.nonceValue,
       },
     });
-    
-    console.log(`[OfferManager] Transaction rebuilt for offer ${offerId}`, {
+
+    console.log(`[OfferManager] Transaction rebuilt for offer ${safeOfferId}`, {
       isBulkSwap: buildResult.isBulkSwap,
       transactionCount: buildResult.transactionGroup?.transactionCount,
     });

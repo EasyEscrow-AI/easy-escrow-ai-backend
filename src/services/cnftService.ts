@@ -841,6 +841,17 @@ export class CnftService {
     this.proofCache.delete(assetId);
     console.log(`[CnftService] Cleared cached proof for: ${assetId.substring(0, 12)}...`);
   }
+
+  /**
+   * Clear all cached proofs
+   * Use this when rebuilding transactions after a stale proof error
+   * to ensure all proofs are fetched fresh
+   */
+  clearAllCachedProofs(): void {
+    const count = this.proofCache.size;
+    this.proofCache.clear();
+    console.log(`[CnftService] Cleared all ${count} cached proofs`);
+  }
   
   /**
    * Derive tree authority PDA for a Merkle tree (Bubblegum standard)
