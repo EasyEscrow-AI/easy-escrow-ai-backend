@@ -12,10 +12,12 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { Connection, Keypair, Transaction, VersionedTransaction, sendAndConfirmTransaction, SystemProgram } from '@solana/web3.js';
+import { Connection, Keypair, Transaction, VersionedTransaction, sendAndConfirmTransaction, SystemProgram, PublicKey } from '@solana/web3.js';
 import bs58 from 'bs58';
+import { PrismaClient } from '../generated/prisma';
 import { offerManager } from './offers.routes';
 import { getEscrowProgramService } from '../services/escrow-program.service';
+import { createTwoPhaseSwapLockService } from '../services/twoPhaseSwapLockService';
 
 // Helper function to detect if transaction is versioned (V0)
 function isVersionedTransaction(buffer: Buffer): boolean {
@@ -41,36 +43,59 @@ const rpcUrl = process.env.SOLANA_RPC_URL || '';
 const isMainnet = nodeEnv === 'production' || network === 'mainnet-beta' || rpcUrl.includes('mainnet');
 const networkName = isMainnet ? 'mainnet-beta' : 'devnet';
 
+// Initialize Prisma and TwoPhaseSwapLockService for lock transaction rebuilding
+const prisma = new PrismaClient();
+const programId = new PublicKey(process.env.ESCROW_PROGRAM_ID || 'AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei');
+const feeCollector = new PublicKey(process.env.PLATFORM_FEE_COLLECTOR || 'Fyh6zX7qN5WoR3T22N8r9L3KSr6yB8J6wz2CQkhwGDWP');
+const twoPhaseSwapLockService = createTwoPhaseSwapLockService(connection, prisma, programId, feeCollector);
+console.log('[TestExecuteRoutes] TwoPhaseSwapLockService initialized for lock transaction rebuilding');
+
 /**
  * Check if error is caused by stale cNFT Merkle proof
- * 
+ *
  * Stale proofs can be detected in multiple ways:
  * 1. During preflight simulation: error.message or error.logs contain known indicators
  * 2. On-chain failure: error.errorCode === 21 (StaleProof from AtomicSwapError)
- * 3. Message contains the error code reference
+ * 3. Bubblegum program error 6001 (AssetOwnerMismatch or invalid proof)
+ * 4. Message contains the error code reference
+ *
+ * Bubblegum error codes relevant to stale proofs:
+ * - 6001: AssetOwnerMismatch / Invalid proof (most common for stale proofs after tree change)
+ * - 6002: PublicKeyMismatch
  */
 function isCnftProofStaleError(error: any): boolean {
   const message = error?.message || '';
   const logs = error?.logs || [];
   const errorCode = error?.errorCode;
-  
-  // Check for on-chain StaleProof error (error code 21)
+
+  // Check for on-chain StaleProof error (error code 21 from our escrow program)
   // This catches errors thrown from confirmation.value.err
   if (errorCode === 21) {
     return true;
   }
-  
-  // Also check if the error message mentions error code 21 (StaleProof)
+
+  // Check for Bubblegum program stale proof errors
+  // Error 6001 typically indicates the Merkle root has changed since proof generation
+  if (errorCode === 6001) {
+    return true;
+  }
+
+  // Also check if the error message mentions error codes (StaleProof or Bubblegum 6001)
   if (message.includes('error code 21') || message.includes('StaleProof')) {
     return true;
   }
-  
+  if (message.includes('error code 6001') || message.includes('custom error code 6001')) {
+    return true;
+  }
+
   const staleProofIndicators = [
     'Invalid root recomputed from proof',
     'Error using concurrent merkle tree',
     'Merkle proof verification failed',
+    'AssetOwnerMismatch',
+    'Custom(6001)',
   ];
-  
+
   return staleProofIndicators.some(indicator =>
     message.includes(indicator) ||
     logs.some((log: string) => log.includes(indicator))
@@ -1321,6 +1346,12 @@ router.post('/api/test/execute-listing-revoke', requireTestEnvironment, async (r
  * Signs and submits a lock transaction for two-phase swaps.
  * Used by the test page to execute cNFT delegation transactions.
  *
+ * Includes automatic retry logic for stale Merkle proof errors:
+ * - When a cNFT delegation changes the Merkle tree, subsequent transactions
+ *   may have stale proofs that fail with error 6001.
+ * - This endpoint automatically rebuilds the transaction with fresh proofs
+ *   from the DAS API and retries up to 3 times.
+ *
  * POST /api/test/execute-lock
  */
 router.post('/api/test/execute-lock', async (req: Request, res: Response) => {
@@ -1328,113 +1359,196 @@ router.post('/api/test/execute-lock', async (req: Request, res: Response) => {
   console.log('🔒 TEST LOCK TRANSACTION EXECUTION');
   console.log('========================================');
 
-  try {
-    const { swapId, serializedTransaction, transactionIndex, totalTransactions, party } = req.body;
+  const MAX_ATTEMPTS = 3;
+  let { swapId, serializedTransaction, transactionIndex, totalTransactions, party } = req.body;
 
-    console.log(`📋 Swap ID: ${swapId}`);
-    console.log(`📝 Transaction: ${transactionIndex + 1}/${totalTransactions}`);
-    console.log(`👤 Party: ${party || 'A'}`);
+  // Default party to 'A' if not provided
+  const partyValue: 'A' | 'B' = party === 'B' ? 'B' : 'A';
 
-    if (!serializedTransaction) {
-      return res.status(400).json({
-        success: false,
-        error: 'Missing serializedTransaction',
-        timestamp: new Date().toISOString(),
-      });
-    }
+  console.log(`📋 Swap ID: ${swapId}`);
+  console.log(`📝 Transaction: ${(transactionIndex ?? 0) + 1}/${totalTransactions ?? 1}`);
+  console.log(`👤 Party: ${partyValue}`);
 
-    // Load keypairs
-    let signerPrivateKey: string | undefined;
-
-    if (isMainnet) {
-      signerPrivateKey = party === 'B'
-        ? process.env.MAINNET_PROD_RECEIVER_PRIVATE_KEY
-        : process.env.MAINNET_PROD_SENDER_PRIVATE_KEY;
-    } else {
-      signerPrivateKey = party === 'B'
-        ? process.env.DEVNET_STAGING_RECEIVER_PRIVATE_KEY
-        : process.env.DEVNET_STAGING_SENDER_PRIVATE_KEY;
-    }
-
-    if (!signerPrivateKey) {
-      return res.status(500).json({
-        success: false,
-        error: `Missing ${isMainnet ? 'mainnet' : 'devnet'} ${party === 'B' ? 'receiver' : 'sender'} private key`,
-        timestamp: new Date().toISOString(),
-      });
-    }
-
-    // Parse keypair
-    let signer: Keypair;
-    try {
-      const decoded = bs58.decode(signerPrivateKey);
-      signer = Keypair.fromSecretKey(decoded);
-      console.log(`   🔑 Signer: ${signer.publicKey.toBase58()}`);
-    } catch (e) {
-      return res.status(500).json({
-        success: false,
-        error: 'Invalid signer private key format',
-        timestamp: new Date().toISOString(),
-      });
-    }
-
-    // Deserialize and sign transaction
-    const txBuffer = Buffer.from(serializedTransaction, 'base64');
-    let signature: string;
-
-    if (isVersionedTransaction(txBuffer)) {
-      console.log('   📄 Versioned (V0) transaction detected');
-      const versionedTx = VersionedTransaction.deserialize(txBuffer);
-      versionedTx.sign([signer]);
-      signature = await connection.sendTransaction(versionedTx, {
-        skipPreflight: false,
-        preflightCommitment: 'confirmed',
-      });
-    } else {
-      console.log('   📄 Legacy transaction detected');
-      const transaction = Transaction.from(txBuffer);
-      transaction.partialSign(signer);
-      signature = await connection.sendRawTransaction(transaction.serialize(), {
-        skipPreflight: false,
-        preflightCommitment: 'confirmed',
-      });
-    }
-
-    console.log(`   ✅ Transaction sent: ${signature}`);
-
-    // Wait for confirmation
-    const confirmation = await connection.confirmTransaction(signature, 'confirmed');
-
-    if (confirmation.value.err) {
-      throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}`);
-    }
-
-    console.log('   ✅ Transaction confirmed!');
-
-    const explorerUrl = isMainnet
-      ? `https://solscan.io/tx/${signature}`
-      : `https://solscan.io/tx/${signature}?cluster=devnet`;
-
-    return res.status(200).json({
-      success: true,
-      data: {
-        signature,
-        explorerUrl,
-        network: networkName,
-        swapId,
-        transactionIndex,
-      },
-      message: `Lock transaction ${transactionIndex + 1}/${totalTransactions} executed successfully`,
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error: any) {
-    console.error('❌ Lock execution error:', error);
-    return res.status(500).json({
+  if (!serializedTransaction) {
+    return res.status(400).json({
       success: false,
-      error: error.message || 'Lock transaction failed',
+      error: 'Missing serializedTransaction',
       timestamp: new Date().toISOString(),
     });
   }
+
+  // Load keypairs
+  let signerPrivateKey: string | undefined;
+
+  if (isMainnet) {
+    signerPrivateKey = partyValue === 'B'
+      ? process.env.MAINNET_PROD_RECEIVER_PRIVATE_KEY
+      : process.env.MAINNET_PROD_SENDER_PRIVATE_KEY;
+  } else {
+    signerPrivateKey = partyValue === 'B'
+      ? process.env.DEVNET_STAGING_RECEIVER_PRIVATE_KEY
+      : process.env.DEVNET_STAGING_SENDER_PRIVATE_KEY;
+  }
+
+  if (!signerPrivateKey) {
+    return res.status(500).json({
+      success: false,
+      error: `Missing ${isMainnet ? 'mainnet' : 'devnet'} ${partyValue === 'B' ? 'receiver' : 'sender'} private key`,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  // Parse keypair
+  let signer: Keypair;
+  try {
+    const decoded = bs58.decode(signerPrivateKey);
+    signer = Keypair.fromSecretKey(decoded);
+    console.log(`   🔑 Signer: ${signer.publicKey.toBase58()}`);
+  } catch (e) {
+    return res.status(500).json({
+      success: false,
+      error: 'Invalid signer private key format',
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  // Retry loop for stale proof handling
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      console.log(`\n   🔄 Attempt ${attempt}/${MAX_ATTEMPTS}`);
+
+      // Deserialize and sign transaction
+      const txBuffer = Buffer.from(serializedTransaction, 'base64');
+      let signature: string;
+
+      if (isVersionedTransaction(txBuffer)) {
+        console.log('   📄 Versioned (V0) transaction detected');
+        const versionedTx = VersionedTransaction.deserialize(txBuffer);
+        versionedTx.sign([signer]);
+        signature = await connection.sendTransaction(versionedTx, {
+          skipPreflight: false,
+          preflightCommitment: 'confirmed',
+        });
+      } else {
+        console.log('   📄 Legacy transaction detected');
+        const transaction = Transaction.from(txBuffer);
+        transaction.partialSign(signer);
+        signature = await connection.sendRawTransaction(transaction.serialize(), {
+          skipPreflight: false,
+          preflightCommitment: 'confirmed',
+        });
+      }
+
+      console.log(`   ✅ Transaction sent: ${signature}`);
+
+      // Wait for confirmation
+      const confirmation = await connection.confirmTransaction(signature, 'confirmed');
+
+      if (confirmation.value.err) {
+        // Parse custom error code from confirmation error
+        const err = confirmation.value.err as any;
+        let customErrorCode: number | undefined;
+
+        if (err.InstructionError) {
+          const [, errorDetail] = err.InstructionError;
+          if (errorDetail?.Custom !== undefined) {
+            customErrorCode = errorDetail.Custom as number;
+          }
+        }
+
+        const programError = new Error(
+          `Transaction failed: ${JSON.stringify(confirmation.value.err)}`
+        ) as any;
+        programError.errorCode = customErrorCode;
+
+        throw programError;
+      }
+
+      console.log('   ✅ Transaction confirmed!');
+
+      const explorerUrl = isMainnet
+        ? `https://solscan.io/tx/${signature}`
+        : `https://solscan.io/tx/${signature}?cluster=devnet`;
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          signature,
+          explorerUrl,
+          network: networkName,
+          swapId,
+          transactionIndex,
+          attempt,
+        },
+        message: `Lock transaction ${(transactionIndex ?? 0) + 1}/${totalTransactions ?? 1} executed successfully${attempt > 1 ? ` (after ${attempt} attempts)` : ''}`,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      const isStaleProof = isCnftProofStaleError(error);
+      const isLastAttempt = attempt === MAX_ATTEMPTS;
+
+      console.error(`   ❌ Attempt ${attempt} failed:`, error.message);
+
+      if (isStaleProof && !isLastAttempt && swapId && transactionIndex !== undefined) {
+        console.warn(`   ⚠️  Stale Merkle proof detected (error 6001) - rebuilding with fresh proof...`);
+
+        try {
+          // Rebuild the transaction with fresh Merkle proofs from DAS API
+          const rebuiltTx = await twoPhaseSwapLockService.rebuildSingleLockTransaction(
+            {
+              swapId,
+              walletAddress: signer.publicKey.toBase58(),
+              party: partyValue,
+            },
+            transactionIndex
+          );
+
+          // Update serializedTransaction for next attempt
+          serializedTransaction = rebuiltTx.serialized;
+          console.log(`   ✅ Transaction rebuilt with fresh proof for cNFT at index ${transactionIndex}`);
+
+          // Small delay before retry to allow DAS to propagate changes
+          await new Promise((resolve) => setTimeout(resolve, 500));
+
+          continue; // Retry with fresh transaction
+        } catch (rebuildError: any) {
+          console.error(`   ❌ Failed to rebuild transaction:`, rebuildError.message);
+          return res.status(500).json({
+            success: false,
+            error: `Lock transaction failed: ${error.message}. Rebuild also failed: ${rebuildError.message}`,
+            errorCode: 'STALE_PROOF_REBUILD_FAILED',
+            attempt,
+            timestamp: new Date().toISOString(),
+          });
+        }
+      }
+
+      // Non-stale-proof error or last attempt - return error
+      if (isLastAttempt && isStaleProof) {
+        return res.status(409).json({
+          success: false,
+          error: `Stale Merkle proof persisted after ${MAX_ATTEMPTS} attempts. The Merkle tree is experiencing high activity.`,
+          errorCode: 'STALE_PROOF_EXHAUSTED',
+          swapId,
+          transactionIndex,
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      return res.status(500).json({
+        success: false,
+        error: error.message || 'Lock transaction failed',
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  // Should not reach here, but just in case
+  return res.status(500).json({
+    success: false,
+    error: 'Unexpected error in retry loop',
+    timestamp: new Date().toISOString(),
+  });
 });
 
 export default router;

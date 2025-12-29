@@ -592,6 +592,103 @@ describe('CnftDelegationService', () => {
 
       expect(result.instruction).to.exist;
     });
+
+    it('should allow force re-delegation from stale swap when forceRedelegate is true', async () => {
+      const staleSwapDelegate = Keypair.generate().publicKey;
+      const newSwapDelegate = Keypair.generate().publicKey;
+
+      global.fetch = (async (url: string, options?: any) => {
+        const body = options?.body ? JSON.parse(options.body) : {};
+        if (body.method === 'getAsset') {
+          return {
+            ok: true,
+            status: 200,
+            text: async () =>
+              JSON.stringify({
+                jsonrpc: '2.0',
+                id: body.id,
+                result: {
+                  ...mockAssetDataNotDelegated,
+                  ownership: {
+                    owner: mockOwnerAddress.toBase58(),
+                    // Delegated to a stale swap's PDA
+                    delegate: staleSwapDelegate.toBase58(),
+                  },
+                },
+              }),
+          } as Response;
+        }
+        if (body.method === 'getAssetProof') {
+          return {
+            ok: true,
+            status: 200,
+            text: async () =>
+              JSON.stringify({
+                jsonrpc: '2.0',
+                id: body.id,
+                result: mockProofResponse,
+              }),
+          } as Response;
+        }
+        return mockFetch(url, options);
+      }) as typeof fetch;
+
+      // Should succeed with forceRedelegate: true
+      const result = await delegationService.buildDelegateInstruction({
+        assetId: mockAssetId,
+        ownerPubkey: mockOwnerAddress,
+        delegatePDA: newSwapDelegate,
+        forceRedelegate: true,
+      });
+
+      expect(result.instruction).to.exist;
+      // The previousLeafDelegate in the instruction should be the stale delegate
+      expect(result.instruction.keys.some(
+        (k: any) => k.pubkey.toBase58() === staleSwapDelegate.toBase58()
+      )).to.be.true;
+    });
+
+    it('should throw AlreadyDelegatedError when forceRedelegate is false (default)', async () => {
+      const staleSwapDelegate = Keypair.generate().publicKey;
+      const newSwapDelegate = Keypair.generate().publicKey;
+
+      global.fetch = (async (url: string, options?: any) => {
+        const body = options?.body ? JSON.parse(options.body) : {};
+        if (body.method === 'getAsset') {
+          return {
+            ok: true,
+            status: 200,
+            text: async () =>
+              JSON.stringify({
+                jsonrpc: '2.0',
+                id: body.id,
+                result: {
+                  ...mockAssetDataNotDelegated,
+                  ownership: {
+                    owner: mockOwnerAddress.toBase58(),
+                    delegate: staleSwapDelegate.toBase58(),
+                  },
+                },
+              }),
+          } as Response;
+        }
+        return mockFetch(url, options);
+      }) as typeof fetch;
+
+      // Should throw without forceRedelegate
+      try {
+        await delegationService.buildDelegateInstruction({
+          assetId: mockAssetId,
+          ownerPubkey: mockOwnerAddress,
+          delegatePDA: newSwapDelegate,
+          // forceRedelegate defaults to false
+        });
+        expect.fail('Should have thrown AlreadyDelegatedError');
+      } catch (error: any) {
+        expect(error).to.be.instanceOf(AlreadyDelegatedError);
+        expect(error.currentDelegate).to.equal(staleSwapDelegate.toBase58());
+      }
+    });
   });
 
   describe('buildRevokeInstruction', () => {

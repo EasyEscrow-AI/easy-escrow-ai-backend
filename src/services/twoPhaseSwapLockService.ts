@@ -611,6 +611,8 @@ export class TwoPhaseSwapLockService {
             assetId: asset.identifier,
             ownerPubkey: walletPubkey,
             delegatePDA,
+            // Force re-delegation if cNFT is delegated to a stale/failed swap
+            forceRedelegate: true,
           }
         );
 
@@ -714,6 +716,182 @@ export class TwoPhaseSwapLockService {
       // New fields for multi-transaction locks
       transactions,
       transactionCount: transactions.length,
+    };
+  }
+
+  /**
+   * Rebuild a single lock transaction at a specific index with fresh Merkle proofs.
+   *
+   * This is used when a lock transaction fails due to stale Merkle proof after
+   * a previous cNFT delegation modified the tree. The method fetches fresh proofs
+   * from the DAS API and rebuilds only the specific transaction.
+   *
+   * @param params - Lock transaction parameters (swapId, walletAddress, party)
+   * @param transactionIndex - Index of the transaction to rebuild (0-based)
+   * @returns Single rebuilt lock transaction item
+   */
+  async rebuildSingleLockTransaction(
+    params: BuildLockTransactionParams,
+    transactionIndex: number
+  ): Promise<LockTransactionItem> {
+    console.log('[TwoPhaseSwapLockService] Rebuilding single lock transaction:', {
+      swapId: params.swapId,
+      wallet: params.walletAddress,
+      party: params.party,
+      transactionIndex,
+    });
+
+    // Fetch swap data
+    const swap = await this.stateMachine.getSwap(params.swapId);
+    if (!swap) {
+      throw new SwapNotFoundError(params.swapId);
+    }
+
+    // Validate party - wallet must be a party to the swap
+    const isPartyA = swap.partyA === params.walletAddress;
+    const isPartyB = swap.partyB === params.walletAddress;
+
+    if (!isPartyA && !isPartyB) {
+      throw new InvalidPartyError(params.walletAddress, params.swapId);
+    }
+
+    // Verify party matches expected
+    if (params.party === 'A' && !isPartyA) {
+      throw new LockServiceError(
+        `Wallet ${params.walletAddress} is not Party A for swap ${params.swapId}`
+      );
+    }
+    if (params.party === 'B' && !isPartyB) {
+      throw new LockServiceError(
+        `Wallet ${params.walletAddress} is not Party B for swap ${params.swapId}`
+      );
+    }
+
+    // Validate swap state - rebuild is only valid during active lock phase
+    // Party A can rebuild during ACCEPTED or LOCKING_PARTY_A
+    // Party B can rebuild during PARTY_A_LOCKED or LOCKING_PARTY_B
+    const validStatesA: TwoPhaseSwapStatus[] = [TwoPhaseSwapStatus.ACCEPTED, TwoPhaseSwapStatus.LOCKING_PARTY_A];
+    const validStatesB: TwoPhaseSwapStatus[] = [TwoPhaseSwapStatus.PARTY_A_LOCKED, TwoPhaseSwapStatus.LOCKING_PARTY_B];
+    const validStates = params.party === 'A' ? validStatesA : validStatesB;
+
+    if (!validStates.includes(swap.status)) {
+      throw new InvalidStateError(
+        params.swapId,
+        swap.status,
+        validStates[0] // Expected initial state
+      );
+    }
+
+    // Get party's assets
+    const assets = params.party === 'A' ? swap.assetsA : swap.assetsB;
+    const solAmount = params.party === 'A' ? swap.solAmountA : swap.solAmountB;
+    const cnftAssets = assets.filter((a) => a.type === 'CNFT');
+    const solAmountEscrowed = solAmount || BigInt(0);
+
+    // Calculate max valid transaction index
+    // Layout: [cNFT delegations...] [optional SOL deposit]
+    const hasSolDeposit = solAmountEscrowed > BigInt(0);
+    const maxValidIndex = hasSolDeposit ? cnftAssets.length : cnftAssets.length - 1;
+    const isSolDeposit = transactionIndex === cnftAssets.length && hasSolDeposit;
+
+    if (transactionIndex < 0 || transactionIndex > maxValidIndex) {
+      const indexRange = hasSolDeposit
+        ? `0-${cnftAssets.length} (${cnftAssets.length} cNFTs + SOL deposit)`
+        : `0-${cnftAssets.length - 1} (${cnftAssets.length} cNFTs)`;
+      throw new LockServiceError(
+        `Invalid transaction index ${transactionIndex}. Valid range: ${indexRange}`
+      );
+    }
+
+    // Derive PDAs
+    const [delegatePDA] = this.deriveDelegatePDA(params.swapId);
+    const [solVaultPDA] = this.deriveSolVaultPDA(params.swapId, params.party);
+    const walletPubkey = new PublicKey(params.walletAddress);
+
+    // Get fresh blockhash
+    const recentBlockhash = await this.connection.getLatestBlockhash();
+
+    if (isSolDeposit) {
+      // Rebuild SOL deposit transaction
+      console.log('[TwoPhaseSwapLockService] Rebuilding SOL deposit transaction');
+
+      const depositInstruction = this.buildDepositTwoPhaseInstruction(
+        params.swapId,
+        params.party,
+        walletPubkey,
+        solAmountEscrowed
+      );
+
+      const solTransaction = new Transaction({
+        recentBlockhash: recentBlockhash.blockhash,
+        feePayer: walletPubkey,
+      });
+      solTransaction.add(depositInstruction);
+
+      const serialized = solTransaction
+        .serialize({ requireAllSignatures: false })
+        .toString('base64');
+
+      return {
+        index: transactionIndex,
+        purpose: `Deposit ${(Number(solAmountEscrowed) / 1e9).toFixed(4)} SOL to escrow`,
+        serialized,
+        instructions: [depositInstruction],
+        requiredSigners: [params.walletAddress],
+        assets: [],
+        estimatedSize: 100,
+      };
+    }
+
+    // Rebuild cNFT delegation transaction with fresh proof
+    const cnft = cnftAssets[transactionIndex];
+    if (!cnft) {
+      throw new LockServiceError(
+        `No cNFT found at index ${transactionIndex}. Total cNFTs: ${cnftAssets.length}`
+      );
+    }
+
+    console.log('[TwoPhaseSwapLockService] Rebuilding delegation with fresh proof for:', {
+      assetId: cnft.identifier,
+      transactionIndex,
+    });
+
+    // Build fresh delegation instruction (this fetches new Merkle proof from DAS)
+    const delegationResult = await this.delegationService.buildDelegateInstruction({
+      assetId: cnft.identifier,
+      ownerPubkey: walletPubkey,
+      delegatePDA,
+      // Force re-delegation if cNFT is delegated to a stale/failed swap
+      forceRedelegate: true,
+    });
+
+    // Build transaction
+    const transaction = new Transaction({
+      recentBlockhash: recentBlockhash.blockhash,
+      feePayer: walletPubkey,
+    });
+
+    // Add compute budget instructions for cNFT operations
+    transaction.add(
+      ComputeBudgetProgram.setComputeUnitLimit({ units: 300_000 }),
+      ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 50_000 })
+    );
+    transaction.add(delegationResult.instruction);
+
+    const serialized = transaction
+      .serialize({ requireAllSignatures: false })
+      .toString('base64');
+
+    console.log('[TwoPhaseSwapLockService] Single lock transaction rebuilt with fresh proof');
+
+    return {
+      index: transactionIndex,
+      purpose: `Delegate cNFT ${cnft.identifier.slice(0, 8)}`,
+      serialized,
+      instructions: [delegationResult.instruction],
+      requiredSigners: [params.walletAddress],
+      assets: [cnft],
+      estimatedSize: delegationResult.estimatedSize,
     };
   }
 
