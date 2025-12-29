@@ -1731,7 +1731,10 @@ async function executeTwoPhaseSwap(offerId, acceptData, addLog) {
   const lastSignatureA = signatures.length > 0 ? signatures[signatures.length - 1] : 'no-lock-tx';
   const confirmResponse = await fetch(`/api/swaps/offers/bulk/${offerId}/confirm-lock`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'idempotency-key': `confirm-lock-a-${offerId}-${Date.now()}`,
+    },
     body: JSON.stringify({
       party: 'A',
       walletAddress: acceptData.data.offer.partyA,
@@ -1790,7 +1793,10 @@ async function executeTwoPhaseSwap(offerId, acceptData, addLog) {
     const lastSignatureB = partyBSignatures.length > 0 ? partyBSignatures[partyBSignatures.length - 1] : 'no-lock-tx';
     const confirmBResponse = await fetch(`/api/swaps/offers/bulk/${offerId}/confirm-lock`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'idempotency-key': `confirm-lock-b-${offerId}-${Date.now()}`,
+      },
       body: JSON.stringify({
         party: 'B',
         walletAddress: confirmResult.data.offer?.partyB || acceptData.data.offer.partyB,
@@ -1809,7 +1815,10 @@ async function executeTwoPhaseSwap(offerId, acceptData, addLog) {
   addLog('   📝 Settling swap...', 'info');
   const settleResponse = await fetch(`/api/swaps/offers/bulk/${offerId}/settle`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'idempotency-key': `settle-${offerId}-${Date.now()}`,
+    },
     body: JSON.stringify({}),
   });
   const settleResult = await settleResponse.json();
