@@ -48,21 +48,23 @@ const prisma = new PrismaClient();
 const programId = new PublicKey(process.env.ESCROW_PROGRAM_ID || 'AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei');
 const feeCollector = new PublicKey(process.env.PLATFORM_FEE_COLLECTOR || 'Fyh6zX7qN5WoR3T22N8r9L3KSr6yB8J6wz2CQkhwGDWP');
 
-// Load platform authority for delegate - required for cNFT settlement
-const platformAuthorityKey = isMainnet
-  ? process.env.MAINNET_PROD_PLATFORM_PRIVATE_KEY
-  : process.env.DEVNET_STAGING_PLATFORM_PRIVATE_KEY;
+// Load platform admin keypair for delegate - required for cNFT settlement
+// MUST use same env vars as offers.routes.ts: DEVNET_STAGING_ADMIN_PRIVATE_KEY / MAINNET_PROD_ADMIN_PRIVATE_KEY
+const adminPrivateKey = isMainnet
+  ? process.env.MAINNET_PROD_ADMIN_PRIVATE_KEY
+  : process.env.DEVNET_STAGING_ADMIN_PRIVATE_KEY;
 let delegateAuthority: PublicKey;
-if (platformAuthorityKey) {
+if (adminPrivateKey) {
   try {
-    delegateAuthority = Keypair.fromSecretKey(bs58.decode(platformAuthorityKey)).publicKey;
+    delegateAuthority = Keypair.fromSecretKey(bs58.decode(adminPrivateKey)).publicKey;
   } catch {
-    console.warn('[TestExecuteRoutes] Invalid platform authority key, using fee collector as fallback');
-    delegateAuthority = feeCollector; // Fallback
+    throw new Error('[TestExecuteRoutes] Invalid admin private key format - cannot initialize delegate authority');
   }
 } else {
-  console.warn('[TestExecuteRoutes] No platform authority key configured, using fee collector as delegate');
-  delegateAuthority = feeCollector; // Fallback
+  throw new Error(
+    '[TestExecuteRoutes] Admin private key required for cNFT settlement. ' +
+    'Use DEVNET_STAGING_ADMIN_PRIVATE_KEY for staging or MAINNET_PROD_ADMIN_PRIVATE_KEY for production.'
+  );
 }
 
 const twoPhaseSwapLockService = createTwoPhaseSwapLockService(
