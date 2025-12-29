@@ -1530,22 +1530,28 @@ async function executeTwoPhaseSwap(offerId) {
     const progressData = await progressResponse.json();
 
     if (progressData.success && progressData.data) {
-      const { status, completedChunks, totalChunks, signatures } = progressData.data;
+      const { status, progress, completedTxs } = progressData.data;
+      const currentChunk = progress?.currentChunk || 0;
+      const totalChunks = progress?.totalChunks || 0;
+      const signatures = completedTxs || [];
 
       if (status === 'COMPLETED' || status === 'SETTLED') {
         settlementComplete = true;
+        const lastSignature = signatures[signatures.length - 1] || '';
         settlementResult = {
           success: true,
           data: {
             status: 'completed',
-            signatures: signatures || [],
+            signature: lastSignature,
+            signatures: signatures,
+            explorerUrl: lastSignature ? `https://solscan.io/tx/${lastSignature}` : '',
             message: 'Two-phase swap completed successfully',
           },
         };
       } else if (status === 'FAILED' || status === 'CANCELLED') {
         throw new Error(`Settlement failed with status: ${status}`);
       } else if (totalChunks > 0) {
-        addLog(`   Progress: ${completedChunks}/${totalChunks} chunks processed`, 'info');
+        addLog(`   Progress: ${currentChunk}/${totalChunks} chunks processed`, 'info');
       }
     }
   }
@@ -1560,7 +1566,9 @@ async function executeTwoPhaseSwap(offerId) {
         success: true,
         data: {
           status: 'completed',
-          signatures: finalData.data?.signatures || [],
+          signature: (finalData.data?.completedTxs || [])[finalData.data?.completedTxs?.length - 1] || '',
+          signatures: finalData.data?.completedTxs || [],
+          explorerUrl: (finalData.data?.completedTxs?.length > 0) ? `https://solscan.io/tx/${finalData.data.completedTxs[finalData.data.completedTxs.length - 1]}` : '',
           message: 'Two-phase swap completed successfully',
         },
       };
