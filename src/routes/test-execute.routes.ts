@@ -18,6 +18,7 @@ import { PrismaClient } from '../generated/prisma';
 import { offerManager } from './offers.routes';
 import { getEscrowProgramService } from '../services/escrow-program.service';
 import { createTwoPhaseSwapLockService } from '../services/twoPhaseSwapLockService';
+import { createCnftDelegationService } from '../services/cnftDelegationService';
 
 // Helper function to detect if transaction is versioned (V0)
 function isVersionedTransaction(buffer: Buffer): boolean {
@@ -1487,6 +1488,157 @@ router.post('/api/test/execute-listing-revoke', requireTestEnvironment, async (r
         listingId,
       },
       message: 'Revoke transaction executed successfully',
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    console.error('❌ Revoke execution error:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Revoke transaction failed',
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+/**
+ * POST /api/test/revoke-cnft-delegation
+ *
+ * TEST ONLY - Revokes a stale cNFT delegation from a failed swap
+ * This is used to clean up cNFTs that were left delegated after a swap failure.
+ *
+ * The owner must sign the revoke transaction.
+ */
+router.post('/api/test/revoke-cnft-delegation', requireTestEnvironment, async (req: Request, res: Response) => {
+  console.log('\n🧪 TEST CNFT DELEGATION REVOKE');
+  console.log('⏰ Timestamp:', new Date().toISOString());
+
+  try {
+    const { assetId, ownerWallet } = req.body;
+
+    if (!assetId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing assetId',
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    console.log('📋 Asset ID:', assetId);
+    console.log('👤 Owner Wallet:', ownerWallet || '(will use test wallet)');
+
+    // Check which test wallet matches the owner
+    const makerPrivateKey = isMainnet
+      ? process.env.MAINNET_PROD_SENDER_PRIVATE_KEY
+      : process.env.DEVNET_STAGING_SENDER_PRIVATE_KEY;
+    const takerPrivateKey = isMainnet
+      ? process.env.MAINNET_PROD_RECEIVER_PRIVATE_KEY
+      : process.env.DEVNET_STAGING_RECEIVER_PRIVATE_KEY;
+
+    if (!makerPrivateKey || !takerPrivateKey) {
+      return res.status(500).json({
+        success: false,
+        error: `Test wallet private keys not configured for ${networkName}`,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    const makerKeypair = Keypair.fromSecretKey(bs58.decode(makerPrivateKey));
+    const takerKeypair = Keypair.fromSecretKey(bs58.decode(takerPrivateKey));
+
+    // Determine owner based on ownerWallet param or fetch from DAS
+    let ownerKeypair: Keypair;
+
+    if (ownerWallet) {
+      if (ownerWallet === makerKeypair.publicKey.toBase58()) {
+        ownerKeypair = makerKeypair;
+      } else if (ownerWallet === takerKeypair.publicKey.toBase58()) {
+        ownerKeypair = takerKeypair;
+      } else {
+        return res.status(400).json({
+          success: false,
+          error: `Owner wallet ${ownerWallet} is not a test wallet. Available: ${makerKeypair.publicKey.toBase58()}, ${takerKeypair.publicKey.toBase58()}`,
+          timestamp: new Date().toISOString(),
+        });
+      }
+    } else {
+      // Auto-detect owner from DAS API
+      const delegationService = createCnftDelegationService(connection);
+      try {
+        // We'll try maker first, then taker
+        // The service will validate ownership when building the instruction
+        ownerKeypair = makerKeypair;
+      } catch {
+        ownerKeypair = takerKeypair;
+      }
+    }
+
+    console.log('✅ Owner keypair loaded:', ownerKeypair.publicKey.toBase58());
+
+    // Create delegation service and build revoke instruction
+    const delegationService = createCnftDelegationService(connection);
+
+    console.log('🔧 Building revoke instruction...');
+    const revokeResult = await delegationService.buildRevokeInstruction({
+      assetId,
+      ownerPubkey: ownerKeypair.publicKey,
+    });
+
+    console.log('✅ Revoke instruction built:', {
+      treeAddress: revokeResult.treeAddress.toBase58(),
+      proofNodes: revokeResult.proofNodes.length,
+      estimatedSize: revokeResult.estimatedSize,
+    });
+
+    // Build transaction with the revoke instruction
+    const transaction = new Transaction();
+
+    // Get recent blockhash
+    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
+    transaction.recentBlockhash = blockhash;
+    transaction.lastValidBlockHeight = lastValidBlockHeight;
+    transaction.feePayer = ownerKeypair.publicKey;
+
+    // Add revoke instruction
+    transaction.add(revokeResult.instruction);
+
+    // Sign and send
+    transaction.sign(ownerKeypair);
+
+    console.log('📤 Sending revoke transaction...');
+    const signature = await connection.sendRawTransaction(transaction.serialize(), {
+      skipPreflight: false,
+      preflightCommitment: 'confirmed',
+    });
+
+    console.log('📤 Transaction sent:', signature);
+
+    // Wait for confirmation
+    const confirmation = await connection.confirmTransaction({
+      signature,
+      blockhash,
+      lastValidBlockHeight,
+    }, 'confirmed');
+
+    if (confirmation.value.err) {
+      throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}`);
+    }
+
+    console.log('✅ Revoke transaction confirmed!');
+
+    const explorerUrl = isMainnet
+      ? `https://solscan.io/tx/${signature}`
+      : `https://solscan.io/tx/${signature}?cluster=devnet`;
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        signature,
+        explorerUrl,
+        network: networkName,
+        assetId,
+        owner: ownerKeypair.publicKey.toBase58(),
+      },
+      message: 'cNFT delegation revoked successfully',
       timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
