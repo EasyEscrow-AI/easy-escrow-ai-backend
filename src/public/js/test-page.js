@@ -1457,18 +1457,19 @@ async function executeTwoPhaseSwapWithAcceptData(twoPhaseData) {
     const tx = takerTransactions[i];
     addLog(`   Executing taker lock TX ${i + 1}/${takerTransactions.length}: ${tx.purpose || 'Lock transaction'}`, 'info');
 
-    const takerLockExecResponse = await fetch('/api/test/execute-swap', {
+    // Use /execute-lock endpoint (same as maker lock) with party='B' for taker
+    const takerLockExecResponse = await fetch('/api/test/execute-lock', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-Test-Execution': 'true',
       },
       body: JSON.stringify({
+        swapId: offerId,
         serializedTransaction: tx.serialized,
-        requireSignatures: [TAKER_ADDRESS],
-        offerId: offerId,
-        isTwoPhase: true,
-        phase: 'taker-lock',
+        transactionIndex: i,
+        totalTransactions: takerTransactions.length,
+        party: 'B', // Taker is Party B
       }),
     });
 
@@ -1678,19 +1679,19 @@ async function executeTwoPhaseSwap(offerId) {
 
   addLog('   Taker lock transaction built', 'info');
 
-  // Sign and submit taker lock transaction
-  const takerLockExecResponse = await fetch('/api/test/execute-swap', {
+  // Sign and submit taker lock transaction using /execute-lock endpoint with party='B'
+  const takerLockExecResponse = await fetch('/api/test/execute-lock', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'X-Test-Execution': 'true',
     },
     body: JSON.stringify({
+      swapId: offerId,
       serializedTransaction: takerLockData.data.lockTransaction.serialized,
-      requireSignatures: [TAKER_ADDRESS],
-      offerId: offerId,
-      isTwoPhase: true,
-      phase: 'taker-lock',
+      transactionIndex: 0,
+      totalTransactions: 1,
+      party: 'B', // Taker is Party B
     }),
   });
 
