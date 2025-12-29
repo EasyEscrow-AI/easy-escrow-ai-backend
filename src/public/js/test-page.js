@@ -1672,8 +1672,8 @@ async function executeSwapWithRetry(offerId, acceptData, isBulkSwap = false, bul
   return data;
 }
 
-// Helper: Execute two-phase swap lock transactions sequentially
-async function executeTwoPhaseSwap(offerId, acceptData, addLog) {
+// Helper: Execute two-phase swap lock transactions sequentially (with pre-fetched lock data)
+async function executeTwoPhaseSwapWithLockData(offerId, acceptData, addLog) {
   const lockTx = acceptData.data.lockTransaction;
   const transactions = lockTx.transactions || [{ serialized: lockTx.serialized, purpose: 'Lock assets' }];
   const transactionCount = lockTx.transactionCount ?? transactions.length;
@@ -1994,7 +1994,7 @@ async function executeAtomicSwap(params) {
     if (isTwoPhaseSwap) {
       addLog('Step 3: Executing two-phase swap (lock/settle)...', 'info');
       addLog('🔐 Signing with test wallet private keys...', 'info');
-      executeData = await executeTwoPhaseSwap(offerId, acceptData, addLog);
+      executeData = await executeTwoPhaseSwapWithLockData(offerId, acceptData, addLog);
     }
     // Handle bulk swaps (Jito bundles or sequential)
     else if (isBulkSwap && bulkSwapInfo) {
