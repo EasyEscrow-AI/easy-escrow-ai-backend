@@ -545,17 +545,122 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
           // Check if this is a stale proof error
           const isStaleProof = isCnftProofStaleError(txError);
 
-          if (isStaleProof) {
+          if (isStaleProof && offerId) {
             console.warn(`   ⚠️  Stale cNFT proof detected in TX ${i + 1}`);
-            console.warn('   The Merkle tree changed since the transaction was built.');
-            console.warn('   Please rebuild the swap transactions and retry.');
+            console.warn('   Attempting to rebuild transactions with fresh proofs...');
 
+            try {
+              // Rebuild all transactions with fresh proofs
+              const rebuildResult = await offerManager.rebuildTransaction(offerId);
+
+              if (rebuildResult.transactionGroup?.transactions) {
+                console.log(`   ✅ Transactions rebuilt. Retrying from TX ${i + 1}...`);
+
+                // Replace remaining transactions with fresh ones
+                const freshTransactions = rebuildResult.transactionGroup.transactions;
+
+                // Continue from the failed transaction with fresh data
+                for (let j = i; j < freshTransactions.length && j < bulkSwapInfo.transactions.length; j++) {
+                  const freshTxInfo = freshTransactions[j];
+                  console.log(`\n📝 Retrying TX ${j + 1}/${freshTransactions.length} with fresh proof: ${freshTxInfo.purpose}`);
+
+                  const freshTxBuffer = Buffer.from(freshTxInfo.serialized, 'base64');
+                  const isFreshVersioned = (freshTxBuffer[0] & 0x80) !== 0;
+
+                  // Determine signers for this transaction
+                  const freshTxRequiredSigners = freshTxInfo.requiredSigners || [];
+                  const freshSigners: Keypair[] = [];
+
+                  if (freshTxRequiredSigners.includes(makerAddress)) {
+                    freshSigners.push(makerKeypair);
+                  }
+                  if (freshTxRequiredSigners.includes(takerAddress)) {
+                    freshSigners.push(takerKeypair);
+                  }
+
+                  let freshSignature: string;
+
+                  if (isFreshVersioned) {
+                    const freshVersionedTx = VersionedTransaction.deserialize(freshTxBuffer);
+                    if (freshSigners.length > 0) {
+                      freshVersionedTx.sign(freshSigners);
+                    }
+                    freshSignature = await connection.sendRawTransaction(freshVersionedTx.serialize(), {
+                      skipPreflight: false,
+                      preflightCommitment: 'confirmed',
+                    });
+                  } else {
+                    const freshTx = Transaction.from(freshTxBuffer);
+                    if (freshSigners.length > 0) {
+                      freshTx.partialSign(...freshSigners);
+                    }
+                    freshSignature = await connection.sendRawTransaction(freshTx.serialize(), {
+                      skipPreflight: false,
+                      preflightCommitment: 'confirmed',
+                    });
+                  }
+
+                  console.log(`   📤 Fresh TX ${j + 1} sent: ${freshSignature}`);
+
+                  // Wait for confirmation
+                  const freshConfirmation = await connection.confirmTransaction(freshSignature, 'confirmed');
+
+                  if (freshConfirmation.value.err) {
+                    throw new Error(`Fresh TX ${j + 1} failed on-chain: ${JSON.stringify(freshConfirmation.value.err)}`);
+                  }
+
+                  console.log(`   ✅ Fresh TX ${j + 1} confirmed`);
+                  signatures.push(freshSignature);
+
+                  // Small delay between transactions
+                  if (j < freshTransactions.length - 1) {
+                    await new Promise(r => setTimeout(r, 200));
+                  }
+                }
+
+                // All remaining transactions completed successfully
+                console.log(`\n✅ BULK SWAP COMPLETE (after stale proof retry): ${signatures.length} transactions confirmed`);
+
+                return res.json({
+                  success: true,
+                  data: {
+                    signatures,
+                    signature: signatures[signatures.length - 1],
+                    network: networkName,
+                    isBulkSwap: true,
+                    transactionCount: signatures.length,
+                    retriedFromTx: i + 1,
+                  },
+                  timestamp: new Date().toISOString(),
+                });
+              } else {
+                console.warn('   ⚠️  Rebuild did not return bulk transactions, cannot retry');
+              }
+            } catch (rebuildError: any) {
+              console.error('   ❌ Failed to rebuild transactions:', rebuildError.message);
+            }
+
+            // If rebuild/retry failed, return the original error
+            return res.status(409).json({
+              success: false,
+              error: `Transaction ${i + 1} (${txInfo.purpose || 'unknown'}) failed: Stale Merkle proof`,
+              errorCode: 'STALE_CNFT_PROOF',
+              message: 'The cNFT Merkle tree changed since the transaction was built. Automatic retry failed.',
+              signatures: signatures,
+              failedTxIndex: i,
+              failedTxPurpose: txInfo.purpose,
+              timestamp: new Date().toISOString(),
+            });
+          }
+
+          if (isStaleProof) {
+            // No offerId available for rebuild
             return res.status(409).json({
               success: false,
               error: `Transaction ${i + 1} (${txInfo.purpose || 'unknown'}) failed: Stale Merkle proof`,
               errorCode: 'STALE_CNFT_PROOF',
               message: 'The cNFT Merkle tree changed since the transaction was built. Please rebuild the swap and retry.',
-              signatures: signatures, // Return any successful signatures
+              signatures: signatures,
               failedTxIndex: i,
               failedTxPurpose: txInfo.purpose,
               timestamp: new Date().toISOString(),
