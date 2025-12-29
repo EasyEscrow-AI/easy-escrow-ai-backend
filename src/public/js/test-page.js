@@ -1984,6 +1984,23 @@ async function executeTwoPhaseSwapWithLockData(offerId, acceptData, addLog) {
   // Handle Party B lock if needed
   if (confirmResult.data.lockTransaction) {
     const partyBLock = confirmResult.data.lockTransaction;
+
+    // Debug: Log the raw Party B lock data from confirm-lock response
+    console.log('[DEBUG] Party B lock response:', {
+      hasSerializedField: !!partyBLock.serialized,
+      serializedLength: partyBLock.serialized?.length,
+      serializedPreview: partyBLock.serialized?.substring(0, 80),
+      hasTransactionsArray: !!partyBLock.transactions,
+      transactionsArrayLength: partyBLock.transactions?.length,
+      transactionCount: partyBLock.transactionCount,
+      transactions: partyBLock.transactions?.map((tx, i) => ({
+        index: i,
+        purpose: tx.purpose,
+        serializedType: typeof tx.serialized,
+        serializedLength: tx.serialized?.length,
+      })),
+    });
+
     const partyBTxs = partyBLock.transactions || [{ serialized: partyBLock.serialized, purpose: 'Lock assets' }];
 
     addLog(`   📦 Party B: ${partyBTxs.length} lock transaction(s)`, 'info');
@@ -1992,6 +2009,18 @@ async function executeTwoPhaseSwapWithLockData(offerId, acceptData, addLog) {
     for (let i = 0; i < partyBTxs.length; i++) {
       const tx = partyBTxs[i];
       addLog(`   📝 Party B TX ${i + 1}/${partyBTxs.length}: ${tx.purpose || 'Lock transaction'}`, 'info');
+
+      // Debug: Log transaction data being sent
+      console.log('[DEBUG] Party B TX data:', {
+        index: i,
+        purpose: tx.purpose,
+        serializedType: typeof tx.serialized,
+        serializedLength: tx.serialized?.length,
+        serializedPreview: tx.serialized?.substring(0, 80),
+        hasTransactionsArray: !!partyBLock.transactions,
+        transactionsArrayLength: partyBLock.transactions?.length,
+        usedFallback: !partyBLock.transactions,
+      });
 
       const response = await fetch('/api/test/execute-lock', {
         method: 'POST',
