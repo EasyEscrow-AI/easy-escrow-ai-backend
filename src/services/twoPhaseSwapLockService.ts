@@ -21,6 +21,7 @@ import {
   Transaction,
   VersionedTransaction,
   TransactionMessage,
+  ComputeBudgetProgram,
 } from '@solana/web3.js';
 import { PrismaClient, TwoPhaseSwapStatus } from '../generated/prisma';
 import {
@@ -623,6 +624,13 @@ export class TwoPhaseSwapLockService {
         recentBlockhash: recentBlockhash.blockhash,
         feePayer: walletPubkey,
       });
+
+      // Add compute budget instructions for cNFT operations
+      // cNFT delegation with Merkle proofs requires more compute units
+      transaction.add(
+        ComputeBudgetProgram.setComputeUnitLimit({ units: 300_000 }),
+        ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 50_000 })
+      );
 
       for (const ix of txInstructions) {
         transaction.add(ix);
