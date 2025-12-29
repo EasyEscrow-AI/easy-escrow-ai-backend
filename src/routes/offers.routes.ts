@@ -3321,7 +3321,7 @@ router.post(
             index: i,
             purpose: tx.purpose,
             serializedLength: tx.serialized?.length,
-            serializedPreview: tx.serialized?.substring(0, 50) + '...',
+            serializedPreview: tx.serialized ? tx.serialized.substring(0, 50) + '...' : 'undefined',
           })),
         });
 

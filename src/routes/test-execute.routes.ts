@@ -553,11 +553,9 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
               // Rebuild all transactions with fresh proofs
               const rebuildResult = await offerManager.rebuildTransaction(offerId);
 
-              if (rebuildResult.transactionGroup?.transactions) {
-                console.log(`   ✅ Transactions rebuilt. Retrying from TX ${i + 1}...`);
-
-                // Replace remaining transactions with fresh ones
-                const freshTransactions = rebuildResult.transactionGroup.transactions;
+              const freshTransactions = rebuildResult.transactionGroup?.transactions;
+              if (freshTransactions && freshTransactions.length > i) {
+                console.log(`   ✅ Transactions rebuilt (${freshTransactions.length} total). Retrying from TX ${i + 1}...`);
 
                 // Continue from the failed transaction with fresh data
                 for (let j = i; j < freshTransactions.length && j < bulkSwapInfo.transactions.length; j++) {
