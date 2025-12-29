@@ -4554,6 +4554,13 @@ showQuickListModal = function (nft) {
     actions.style.display = 'flex';
   }
 
+  // Reset confirm button state (fixes button stuck on "Processing...")
+  const confirmBtn = document.getElementById('quick-list-confirm');
+  if (confirmBtn) {
+    confirmBtn.disabled = false;
+    confirmBtn.innerHTML = 'List NFT for Sale';
+  }
+
   // Update fee breakdown
   updateQuickListFeeBreakdown();
 };
