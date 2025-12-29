@@ -47,8 +47,35 @@ const networkName = isMainnet ? 'mainnet-beta' : 'devnet';
 const prisma = new PrismaClient();
 const programId = new PublicKey(process.env.ESCROW_PROGRAM_ID || 'AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei');
 const feeCollector = new PublicKey(process.env.PLATFORM_FEE_COLLECTOR || 'Fyh6zX7qN5WoR3T22N8r9L3KSr6yB8J6wz2CQkhwGDWP');
-const twoPhaseSwapLockService = createTwoPhaseSwapLockService(connection, prisma, programId, feeCollector);
+
+// Load platform admin keypair for delegate - required for cNFT settlement
+// MUST use same env vars as offers.routes.ts: DEVNET_STAGING_ADMIN_PRIVATE_KEY / MAINNET_PROD_ADMIN_PRIVATE_KEY
+const adminPrivateKey = isMainnet
+  ? process.env.MAINNET_PROD_ADMIN_PRIVATE_KEY
+  : process.env.DEVNET_STAGING_ADMIN_PRIVATE_KEY;
+let delegateAuthority: PublicKey;
+if (adminPrivateKey) {
+  try {
+    delegateAuthority = Keypair.fromSecretKey(bs58.decode(adminPrivateKey)).publicKey;
+  } catch {
+    throw new Error('[TestExecuteRoutes] Invalid admin private key format - cannot initialize delegate authority');
+  }
+} else {
+  throw new Error(
+    '[TestExecuteRoutes] Admin private key required for cNFT settlement. ' +
+    'Use DEVNET_STAGING_ADMIN_PRIVATE_KEY for staging or MAINNET_PROD_ADMIN_PRIVATE_KEY for production.'
+  );
+}
+
+const twoPhaseSwapLockService = createTwoPhaseSwapLockService(
+  connection,
+  prisma,
+  programId,
+  feeCollector,
+  delegateAuthority // Backend signer's public key for cNFT settlement
+);
 console.log('[TestExecuteRoutes] TwoPhaseSwapLockService initialized for lock transaction rebuilding');
+console.log('[TestExecuteRoutes] Delegate authority:', delegateAuthority.toBase58());
 
 /**
  * Check if error is caused by stale cNFT Merkle proof
@@ -514,6 +541,27 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
           
         } catch (txError: any) {
           console.error(`   ❌ TX ${i + 1} failed:`, txError.message);
+
+          // Check if this is a stale proof error
+          const isStaleProof = isCnftProofStaleError(txError);
+
+          if (isStaleProof) {
+            console.warn(`   ⚠️  Stale cNFT proof detected in TX ${i + 1}`);
+            console.warn('   The Merkle tree changed since the transaction was built.');
+            console.warn('   Please rebuild the swap transactions and retry.');
+
+            return res.status(409).json({
+              success: false,
+              error: `Transaction ${i + 1} (${txInfo.purpose || 'unknown'}) failed: Stale Merkle proof`,
+              errorCode: 'STALE_CNFT_PROOF',
+              message: 'The cNFT Merkle tree changed since the transaction was built. Please rebuild the swap and retry.',
+              signatures: signatures, // Return any successful signatures
+              failedTxIndex: i,
+              failedTxPurpose: txInfo.purpose,
+              timestamp: new Date().toISOString(),
+            });
+          }
+
           return res.status(500).json({
             success: false,
             error: `Transaction ${i + 1} (${txInfo.purpose || 'unknown'}) failed: ${txError.message}`,

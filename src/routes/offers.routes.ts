@@ -264,11 +264,14 @@ const cnftOfferManager = createCnftOfferEscrowManager(
 console.log('[OffersRoutes] cNFT Offer Escrow Manager initialized');
 
 // Initialize two-phase swap lock service for complex/bulk swaps
+// Pass platformAuthority.publicKey as delegate so backend can sign settlement transactions
+// (PDAs cannot sign external transactions, so we use the backend keypair instead)
 const twoPhaseSwapLockService = createTwoPhaseSwapLockService(
   connection,
   prisma,
   programId,
-  feeCollector
+  feeCollector,
+  platformAuthority.publicKey // Backend signer as delegate authority for cNFT settlement
 );
 console.log('[OffersRoutes] Two-Phase Swap Lock Service initialized');
 
