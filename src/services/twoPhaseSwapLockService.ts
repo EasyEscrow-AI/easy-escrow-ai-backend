@@ -628,9 +628,11 @@ export class TwoPhaseSwapLockService {
       });
 
       // Add compute budget instructions for cNFT operations
-      // cNFT delegation with Merkle proofs requires more compute units
+      // cNFT delegation with Merkle proofs requires significant compute units
+      // Deep trees (up to 24 proof nodes) can use 350k+ compute, so we use 400k
+      // to match transactionGroupBuilder.ts and avoid ProgramFailedToComplete
       transaction.add(
-        ComputeBudgetProgram.setComputeUnitLimit({ units: 300_000 }),
+        ComputeBudgetProgram.setComputeUnitLimit({ units: 400_000 }),
         ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 50_000 })
       );
 
@@ -872,8 +874,9 @@ export class TwoPhaseSwapLockService {
     });
 
     // Add compute budget instructions for cNFT operations
+    // Use 400k compute units to handle deep Merkle trees (up to 24 proof nodes)
     transaction.add(
-      ComputeBudgetProgram.setComputeUnitLimit({ units: 300_000 }),
+      ComputeBudgetProgram.setComputeUnitLimit({ units: 400_000 }),
       ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 50_000 })
     );
     transaction.add(delegationResult.instruction);
