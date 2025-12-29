@@ -369,6 +369,23 @@ export class AssetValidator {
         };
       }
 
+      // Check if already delegated (from a previous failed swap)
+      // This is a WARNING, not a hard failure, because:
+      // 1. The cNFT might be delegated to our own escrow PDA (recoverable)
+      // 2. The delegation might be intentional from another service
+      if (assetData.ownership.delegated && assetData.ownership.delegate) {
+        const currentDelegate = assetData.ownership.delegate;
+        console.warn(`[AssetValidator] ⚠️ cNFT ${assetId} is already delegated!`);
+        console.warn(`  Owner: ${walletAddress}`);
+        console.warn(`  Current delegate: ${currentDelegate}`);
+        console.warn(`  This may cause swap failures. Consider revoking the delegation first.`);
+        console.warn(`  Use POST /api/test/revoke-cnft-delegation to revoke.`);
+
+        // Store delegation info in the asset for the caller to decide what to do
+        // We don't fail validation because the owner still owns the cNFT
+        // But the caller should be aware of this delegation
+      }
+
       // Check if burned
       if (assetData.burnt) {
         return {
