@@ -3550,7 +3550,7 @@ loadWalletInfo = async function (wallet) {
 
   // After maker wallet loads, refresh active listings
   if (wallet === 'maker' && makerData) {
-    loadActiveListings();
+    await loadActiveListings();
   }
 };
 
