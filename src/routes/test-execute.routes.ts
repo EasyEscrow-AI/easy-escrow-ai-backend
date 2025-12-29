@@ -121,6 +121,8 @@ function isCnftProofStaleError(error: any): boolean {
     'Merkle proof verification failed',
     'AssetOwnerMismatch',
     'Custom(6001)',
+    '"Custom":6001',      // JSON format from on-chain error
+    '{"Custom":6001}',    // Full JSON object format
   ];
 
   return staleProofIndicators.some(indicator =>
@@ -544,6 +546,7 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
 
           // Check if this is a stale proof error
           const isStaleProof = isCnftProofStaleError(txError);
+          console.log(`   🔍 Stale proof check: isStaleProof=${isStaleProof}, offerId=${offerId}, errorMessage="${txError.message?.substring(0, 100)}..."`);
 
           if (isStaleProof && offerId) {
             console.warn(`   ⚠️  Stale cNFT proof detected in TX ${i + 1}`);
