@@ -4546,10 +4546,31 @@ async function handleConfirmCancelListing() {
     // Hide action buttons on success
     actions.style.display = 'none';
 
-    // Auto-close and refresh after delay
+    // Remove the cancelled listing from the local array and DOM (without clearing all listings)
+    const cancelledOfferId = cancelListingData.offerId || cancelListingData.listingId;
+    activeListings = activeListings.filter((offer) => {
+      const offerId = offer.id;
+      return offerId !== cancelledOfferId && offerId !== parseInt(cancelledOfferId);
+    });
+
+    // Remove just this listing's card from the DOM
+    const listingCard = document.querySelector(`.listing-card[data-offer-id="${cancelledOfferId}"]`);
+    if (listingCard) {
+      listingCard.remove();
+    }
+
+    // If no listings left, show empty state
+    if (activeListings.length === 0) {
+      const container = document.getElementById('active-listings-container');
+      if (container) {
+        container.innerHTML =
+          '<div class="empty-state">No active listings or bids. List an asset or make a counter offer to see it here.</div>';
+      }
+    }
+
+    // Auto-close and refresh marketplace/wallet after delay (but NOT loadActiveListings which clears all)
     setTimeout(async () => {
       hideCancelListingModal();
-      await loadActiveListings();
       await loadMarketplaceListings();
       await loadWalletInfo('maker');
     }, 2000);
