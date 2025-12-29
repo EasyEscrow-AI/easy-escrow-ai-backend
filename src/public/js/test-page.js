@@ -1356,6 +1356,237 @@ async function acceptOfferWithRetry(offerId, attempt = 1) {
   }
 }
 
+// Helper: Execute two-phase swap with pre-built lock data from accept response
+// This is used when an atomic swap is converted to two-phase flow during accept
+async function executeTwoPhaseSwapWithAcceptData(twoPhaseData) {
+  const offerId = twoPhaseData.swapId;
+  addLog('Starting two-phase swap flow (with pre-built lock data)...', 'info');
+  addBundleLog('Phase 1: Locking assets from both parties');
+
+  const idempotencyBase = `test-twophase-${offerId}-${Date.now()}`;
+  const lockTx = twoPhaseData.lockTransaction;
+
+  // Step 1: Execute maker lock transaction (already built in accept response)
+  addLog('   Step 1/4: Maker locking assets...', 'info');
+
+  // Handle multiple lock transactions if needed
+  const transactions = lockTx.transactions || [{ serialized: lockTx.serialized, purpose: 'Lock assets' }];
+  let makerLockSignature = null;
+
+  for (let i = 0; i < transactions.length; i++) {
+    const tx = transactions[i];
+    addLog(`   Executing lock TX ${i + 1}/${transactions.length}: ${tx.purpose || 'Lock transaction'}`, 'info');
+
+    const makerLockExecResponse = await fetch('/api/test/execute-swap', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Test-Execution': 'true',
+      },
+      body: JSON.stringify({
+        serializedTransaction: tx.serialized,
+        requireSignatures: [MAKER_ADDRESS],
+        offerId: offerId,
+        isTwoPhase: true,
+        phase: 'maker-lock',
+      }),
+    });
+
+    const makerLockExecData = await makerLockExecResponse.json();
+    if (!makerLockExecData.success) {
+      throw new Error(`Maker lock execution failed: ${makerLockExecData.error || 'Unknown error'}`);
+    }
+
+    makerLockSignature = makerLockExecData.data?.signature ||
+      (makerLockExecData.data?.signatures && makerLockExecData.data.signatures[0]);
+    addLog(`   Lock TX ${i + 1} confirmed (sig: ${makerLockSignature?.substring(0, 20)}...)`, 'success');
+
+    // Small delay between transactions
+    if (i < transactions.length - 1) {
+      await new Promise((r) => setTimeout(r, 200));
+    }
+  }
+
+  addLog(`   Maker assets locked`, 'success');
+
+  // Confirm maker lock
+  const makerConfirmResponse = await fetch(`/api/swaps/offers/bulk/${offerId}/confirm-lock`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'idempotency-key': `${idempotencyBase}-maker-confirm`,
+    },
+    body: JSON.stringify({
+      walletAddress: MAKER_ADDRESS,
+      signature: makerLockSignature,
+    }),
+  });
+
+  const makerConfirmData = await makerConfirmResponse.json();
+  if (!makerConfirmData.success) {
+    throw new Error(`Maker lock confirmation failed: ${makerConfirmData.message}`);
+  }
+
+  addLog('   Maker lock confirmed', 'success');
+
+  // Step 2: Taker locks assets (need to fetch lock transaction from API)
+  addLog('   Step 2/4: Taker locking assets...', 'info');
+
+  const takerLockResponse = await fetch(`/api/swaps/offers/bulk/${offerId}/lock`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'idempotency-key': `${idempotencyBase}-taker-lock`,
+    },
+    body: JSON.stringify({ walletAddress: TAKER_ADDRESS }),
+  });
+
+  const takerLockData = await takerLockResponse.json();
+  if (!takerLockData.success) {
+    throw new Error(`Taker lock failed: ${takerLockData.message}`);
+  }
+
+  addLog('   Taker lock transaction built', 'info');
+
+  // Execute taker lock transactions
+  const takerTransactions = takerLockData.data.lockTransaction.transactions ||
+    [{ serialized: takerLockData.data.lockTransaction.serialized, purpose: 'Lock assets' }];
+  let takerLockSignature = null;
+
+  for (let i = 0; i < takerTransactions.length; i++) {
+    const tx = takerTransactions[i];
+    addLog(`   Executing taker lock TX ${i + 1}/${takerTransactions.length}: ${tx.purpose || 'Lock transaction'}`, 'info');
+
+    const takerLockExecResponse = await fetch('/api/test/execute-swap', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Test-Execution': 'true',
+      },
+      body: JSON.stringify({
+        serializedTransaction: tx.serialized,
+        requireSignatures: [TAKER_ADDRESS],
+        offerId: offerId,
+        isTwoPhase: true,
+        phase: 'taker-lock',
+      }),
+    });
+
+    const takerLockExecData = await takerLockExecResponse.json();
+    if (!takerLockExecData.success) {
+      throw new Error(`Taker lock execution failed: ${takerLockExecData.error || 'Unknown error'}`);
+    }
+
+    takerLockSignature = takerLockExecData.data?.signature ||
+      (takerLockExecData.data?.signatures && takerLockExecData.data.signatures[0]);
+    addLog(`   Taker lock TX ${i + 1} confirmed (sig: ${takerLockSignature?.substring(0, 20)}...)`, 'success');
+
+    if (i < takerTransactions.length - 1) {
+      await new Promise((r) => setTimeout(r, 200));
+    }
+  }
+
+  addLog(`   Taker assets locked`, 'success');
+
+  // Confirm taker lock
+  const takerConfirmResponse = await fetch(`/api/swaps/offers/bulk/${offerId}/confirm-lock`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'idempotency-key': `${idempotencyBase}-taker-confirm`,
+    },
+    body: JSON.stringify({
+      walletAddress: TAKER_ADDRESS,
+      signature: takerLockSignature,
+    }),
+  });
+
+  const takerConfirmData = await takerConfirmResponse.json();
+  if (!takerConfirmData.success) {
+    throw new Error(`Taker lock confirmation failed: ${takerConfirmData.message}`);
+  }
+
+  addLog('   Taker lock confirmed', 'success');
+  addBundleLog('Phase 1 complete: All assets locked');
+
+  // Step 3: Trigger settlement
+  addLog('   Step 3/4: Triggering settlement...', 'info');
+  addBundleLog('Phase 2: Settling swap');
+
+  const settleResponse = await fetch(`/api/swaps/offers/bulk/${offerId}/settle`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'idempotency-key': `${idempotencyBase}-settle`,
+    },
+    body: JSON.stringify({}),
+  });
+
+  const settleData = await settleResponse.json();
+  if (!settleData.success) {
+    throw new Error(`Settlement trigger failed: ${settleData.message}`);
+  }
+
+  addLog('   Settlement triggered', 'info');
+
+  // Step 4: Poll for settlement completion
+  addLog('   Step 4/4: Waiting for settlement completion...', 'info');
+
+  let settlementResult = null;
+  const maxPolls = 30;
+  const pollInterval = 2000;
+
+  for (let i = 0; i < maxPolls; i++) {
+    await new Promise((r) => setTimeout(r, pollInterval));
+
+    const progressResponse = await fetch(`/api/swaps/offers/bulk/${offerId}/settlement-progress`);
+    const progressData = await progressResponse.json();
+
+    if (!progressData.success) {
+      addLog(`   Poll ${i + 1}: Error checking progress`, 'warning');
+      continue;
+    }
+
+    const progress = progressData.data.progress;
+    const status = progressData.data.status;
+
+    addLog(`   Progress: ${progress.currentChunk || 0}/${progress.totalChunks || '?'} chunks, ` +
+           `${progress.completedTxs || 0} txs completed`, 'info');
+
+    if (status === 'COMPLETED' || status === 'SETTLED') {
+      addLog('   Settlement completed!', 'success');
+      settlementResult = progressData.data;
+      break;
+    }
+
+    if (status === 'FAILED' || status === 'EXPIRED') {
+      throw new Error(`Settlement failed with status: ${status}`);
+    }
+  }
+
+  if (!settlementResult) {
+    throw new Error('Settlement timed out after polling');
+  }
+
+  addBundleLog('Phase 2 complete: Swap settled');
+  addLog('   Two-phase swap completed!', 'success');
+
+  // Extract signature for display
+  const displaySignature = settlementResult.chunkResults?.[0]?.signature ||
+    settlementResult.signature ||
+    makerLockSignature;
+
+  return {
+    success: true,
+    data: {
+      signature: displaySignature,
+      network: 'mainnet-beta',
+      isTwoPhase: true,
+      explorerUrl: displaySignature ? `https://solscan.io/tx/${displaySignature}` : null,
+    },
+  };
+}
+
 // Helper: Execute two-phase swap (lock/confirm-lock/settle flow)
 async function executeTwoPhaseSwap(offerId) {
   addLog('Starting two-phase swap flow...', 'info');
@@ -1586,16 +1817,27 @@ async function executeTwoPhaseSwap(offerId) {
 // Helper: Execute swap with retry for stale proofs
 async function executeSwapWithRetry(offerId, acceptData, isBulkSwap = false, bulkSwapInfo = null) {
   const swapFlow = acceptData?.data?.swapFlow;
+  const twoPhaseSwap = acceptData?.data?.twoPhaseSwap;
 
   // Check if we have bulk swap transactions to execute
   // This handles cNFT swaps that use sequential RPC execution (when Jito is disabled)
   const hasBulkTransactions = bulkSwapInfo?.transactions?.length > 0;
 
+  // If two-phase swap data is included in accept response, use the TwoPhaseSwap ID
+  // This happens when an atomic swap is converted to two-phase flow
+  if (twoPhaseSwap?.swapId) {
+    addLog('Using two-phase swap flow with converted offer', 'info');
+    addLog(`   TwoPhaseSwap ID: ${twoPhaseSwap.swapId}`, 'info');
+    return await executeTwoPhaseSwapWithAcceptData(twoPhaseSwap);
+  }
+
   // If two-phase is required and we don't have bulk transactions to execute,
-  // use the two-phase lock/settle flow
+  // use the two-phase lock/settle flow (legacy path for bulk-created swaps)
   if (swapFlow?.requiresTwoPhase && !hasBulkTransactions) {
+    // Check if offer has a twoPhaseSwapId (from accept response)
+    const twoPhaseId = acceptData?.data?.offer?.twoPhaseSwapId || offerId;
     addLog('Swap requires two-phase settlement - using lock/settle flow', 'info');
-    return await executeTwoPhaseSwap(offerId);
+    return await executeTwoPhaseSwap(twoPhaseId);
   }
 
   // Validate accept data has required transaction structure
