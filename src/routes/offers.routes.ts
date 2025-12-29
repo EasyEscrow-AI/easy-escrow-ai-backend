@@ -1192,6 +1192,79 @@ router.post(
         };
       }
 
+      // If two-phase is required but no bulk transactions exist, create a TwoPhaseSwap
+      // and return lock transaction info (fix for atomic swaps that need two-phase flow)
+      const requiresTwoPhase = result.requiresTwoPhase || flowResult.requiresTwoPhase;
+      const hasBulkTransactions = responseData.bulkSwap?.transactions?.some(
+        (tx: any) => tx.serialized || tx.serializedTransaction
+      );
+
+      if (requiresTwoPhase && !hasBulkTransactions) {
+        console.log('[OffersRoutes] Creating TwoPhaseSwap for atomic offer requiring two-phase flow');
+
+        // Transform assets to TwoPhaseSwap format (use AssetType enum for comparison)
+        const transformAssets = (assets: any[]) =>
+          assets.map((a) => ({
+            type: a.type === AssetType.CORE_NFT ? 'CORE_NFT' : a.type === AssetType.CNFT ? 'CNFT' : 'NFT',
+            identifier: a.identifier,
+            metadata: a.metadata || {},
+          }));
+
+        // Create TwoPhaseSwap from the accepted offer
+        const twoPhaseResult = await twoPhaseSwapLockService.createSwap({
+          partyA: result.offer.makerWallet,
+          partyB: acceptingWallet,
+          assetsA: transformAssets(result.offer.offeredAssets) as any,
+          assetsB: transformAssets(result.offer.requestedAssets) as any,
+          solAmountA: result.offer.offeredSolLamports ? BigInt(result.offer.offeredSolLamports) : undefined,
+          solAmountB: result.offer.requestedSolLamports ? BigInt(result.offer.requestedSolLamports) : undefined,
+        });
+
+        // Accept the TwoPhaseSwap
+        await twoPhaseSwapLockService.acceptSwap({
+          swapId: twoPhaseResult.swapId,
+          partyB: acceptingWallet,
+        });
+
+        // Build lock transaction for Party A (maker)
+        const lockTxResult = await twoPhaseSwapLockService.buildLockTransaction({
+          swapId: twoPhaseResult.swapId,
+          walletAddress: result.offer.makerWallet,
+          party: 'A',
+        });
+
+        // Update response with two-phase swap info
+        responseData.twoPhaseSwap = {
+          swapId: twoPhaseResult.swapId,
+          originalOfferId: result.offer.id.toString(),
+          executionStrategy: 'two-phase',
+          lockTransaction: {
+            serialized: lockTxResult.serializedTransaction,
+            requiredSigners: lockTxResult.requiredSigners,
+            delegatePDA: lockTxResult.delegatePDA.toBase58(),
+            solVaultPDA: lockTxResult.solVaultPDA.toBase58(),
+            lockedAssets: lockTxResult.lockedAssets,
+            solAmountEscrowed: lockTxResult.solAmountEscrowed.toString(),
+            transactionCount: lockTxResult.transactionCount ?? 1,
+            transactions: lockTxResult.transactions?.map((tx) => ({
+              index: tx.index,
+              purpose: tx.purpose,
+              serialized: tx.serialized,
+              requiredSigners: tx.requiredSigners,
+              assets: tx.assets,
+              estimatedSize: tx.estimatedSize,
+            })),
+          },
+          message: 'Atomic offer converted to two-phase flow. Party A should now lock their assets.',
+          nextAction: lockTxResult.transactionCount && lockTxResult.transactionCount > 1
+            ? `Party A signs and submits ${lockTxResult.transactionCount} lock transactions sequentially`
+            : 'Party A signs and submits the lock transaction',
+        };
+
+        // Update the offer ID in response to use the TwoPhaseSwap ID for subsequent operations
+        responseData.offer.twoPhaseSwapId = twoPhaseResult.swapId;
+      }
+
       res.status(200).json({
         success: true,
         data: responseData,
