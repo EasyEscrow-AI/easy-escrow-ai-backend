@@ -782,17 +782,17 @@ export class TransactionGroupBuilder {
         );
       }
 
-      // Priority fee + compute budget (recommended alongside Jito tip during congestion)
+      // Compute budget for cNFT operations (required for all networks)
+      // cNFT transfers with deep Merkle trees (up to 24 proof nodes) can use 350k+ compute
+      // We use 400k to avoid ProgramFailedToComplete errors
       // Note: For durable nonce transactions, nonceAdvance must be first. ComputeBudget can follow it safely.
-      if (useJitoNonces) {
-        cnftInstructions.push(
-          ComputeBudgetProgram.setComputeUnitLimit({ units: 400_000 }),
-          ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 50_000 })
-        );
-      }
-      
+      cnftInstructions.push(
+        ComputeBudgetProgram.setComputeUnitLimit({ units: 400_000 }),
+        ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 50_000 })
+      );
+
       cnftInstructions.push(transferResult.instruction);
-      
+
       // Add Jito tip as LAST instruction in LAST transaction (Jito requirement / best practice).
       if (useJitoNonces && isLastTransaction) {
         const JITO_TIP_ACCOUNTS = [
@@ -896,17 +896,17 @@ export class TransactionGroupBuilder {
         );
       }
 
-      // Priority fee + compute budget (recommended alongside Jito tip during congestion)
+      // Compute budget for cNFT operations (required for all networks)
+      // cNFT transfers with deep Merkle trees (up to 24 proof nodes) can use 350k+ compute
+      // We use 400k to avoid ProgramFailedToComplete errors
       // Note: For durable nonce transactions, nonceAdvance must be first. ComputeBudget can follow it safely.
-      if (useJitoNonces) {
-        cnftInstructions.push(
-          ComputeBudgetProgram.setComputeUnitLimit({ units: 400_000 }),
-          ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 50_000 })
-        );
-      }
-      
+      cnftInstructions.push(
+        ComputeBudgetProgram.setComputeUnitLimit({ units: 400_000 }),
+        ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 50_000 })
+      );
+
       cnftInstructions.push(transferResult.instruction);
-      
+
       // Add Jito tip as LAST instruction in LAST transaction (Jito requirement / best practice).
       if (useJitoNonces && isLastTransaction) {
         const JITO_TIP_ACCOUNTS = [
