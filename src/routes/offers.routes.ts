@@ -3272,6 +3272,17 @@ router.post(
         return;
       }
 
+      // Start lock if not already started
+      // This handles flows where lock transactions are pre-built (e.g., test page)
+      // and /build-lock endpoint was not called to transition to LOCKING_PARTY_X
+      if (party === 'A' && swap.status === TwoPhaseSwapStatus.ACCEPTED) {
+        console.log(`[OffersRoute] Starting lock for Party A (swap in ACCEPTED state)`);
+        await twoPhaseSwapLockService.startLock(id, party, walletAddress);
+      } else if (party === 'B' && swap.status === TwoPhaseSwapStatus.PARTY_A_LOCKED) {
+        console.log(`[OffersRoute] Starting lock for Party B (swap in PARTY_A_LOCKED state)`);
+        await twoPhaseSwapLockService.startLock(id, party, walletAddress);
+      }
+
       // Confirm lock
       const result = await twoPhaseSwapLockService.confirmLock({
         swapId: id,
