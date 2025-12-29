@@ -3311,6 +3311,20 @@ router.post(
           party: 'B',
         });
 
+        // Debug: Log Party B lock transaction details
+        console.log('[OffersRoutes] Party B lock transaction built:', {
+          swapId: id,
+          transactionCount: partyBLockTx.transactionCount,
+          serializedLength: partyBLockTx.serializedTransaction?.length,
+          transactionsCount: partyBLockTx.transactions?.length,
+          transactions: partyBLockTx.transactions?.map((tx, i) => ({
+            index: i,
+            purpose: tx.purpose,
+            serializedLength: tx.serialized?.length,
+            serializedPreview: tx.serialized ? tx.serialized.substring(0, 50) + '...' : 'undefined',
+          })),
+        });
+
         responseData.lockTransaction = {
           serialized: partyBLockTx.serializedTransaction,
           requiredSigners: partyBLockTx.requiredSigners,

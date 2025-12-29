@@ -312,6 +312,9 @@ export class OfferManager {
     offer: any;
     // Two-phase delegation flag (for bulk cNFT swaps when Jito unavailable)
     requiresTwoPhase?: boolean;
+    // Bulk swap fields (for stale proof retry)
+    isBulkSwap?: boolean;
+    transactionGroup?: TransactionGroupResult;
   }> {
     // Defensive: Ensure offerId is a number (route params can sometimes be strings)
     const safeOfferId = typeof offerId === 'string' ? parseInt(offerId, 10) : offerId;
@@ -369,12 +372,17 @@ export class OfferManager {
       },
     });
     
-    console.log(`[OfferManager] Transaction rebuilt for offer ${offerId}`);
+    console.log(`[OfferManager] Transaction rebuilt for offer ${offerId}`, {
+      isBulkSwap: buildResult.isBulkSwap,
+      transactionCount: buildResult.transactionGroup?.transactionCount,
+    });
 
     return {
       serializedTransaction: buildResult.serializedTransaction,
       offer: updatedOffer,
       requiresTwoPhase: buildResult.requiresTwoPhase,
+      isBulkSwap: buildResult.isBulkSwap,
+      transactionGroup: buildResult.transactionGroup,
     };
   }
 

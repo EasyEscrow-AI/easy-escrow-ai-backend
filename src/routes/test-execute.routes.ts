@@ -545,17 +545,120 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
           // Check if this is a stale proof error
           const isStaleProof = isCnftProofStaleError(txError);
 
-          if (isStaleProof) {
+          if (isStaleProof && offerId) {
             console.warn(`   ⚠️  Stale cNFT proof detected in TX ${i + 1}`);
-            console.warn('   The Merkle tree changed since the transaction was built.');
-            console.warn('   Please rebuild the swap transactions and retry.');
+            console.warn('   Attempting to rebuild transactions with fresh proofs...');
 
+            try {
+              // Rebuild all transactions with fresh proofs
+              const rebuildResult = await offerManager.rebuildTransaction(offerId);
+
+              const freshTransactions = rebuildResult.transactionGroup?.transactions;
+              if (freshTransactions && freshTransactions.length > i) {
+                console.log(`   ✅ Transactions rebuilt (${freshTransactions.length} total). Retrying from TX ${i + 1}...`);
+
+                // Continue from the failed transaction with fresh data
+                for (let j = i; j < freshTransactions.length && j < bulkSwapInfo.transactions.length; j++) {
+                  const freshTxInfo = freshTransactions[j];
+                  console.log(`\n📝 Retrying TX ${j + 1}/${freshTransactions.length} with fresh proof: ${freshTxInfo.purpose}`);
+
+                  const freshTxBuffer = Buffer.from(freshTxInfo.serialized, 'base64');
+                  const isFreshVersioned = (freshTxBuffer[0] & 0x80) !== 0;
+
+                  // Determine signers for this transaction
+                  const freshTxRequiredSigners = freshTxInfo.requiredSigners || [];
+                  const freshSigners: Keypair[] = [];
+
+                  if (freshTxRequiredSigners.includes(makerAddress)) {
+                    freshSigners.push(makerKeypair);
+                  }
+                  if (freshTxRequiredSigners.includes(takerAddress)) {
+                    freshSigners.push(takerKeypair);
+                  }
+
+                  let freshSignature: string;
+
+                  if (isFreshVersioned) {
+                    const freshVersionedTx = VersionedTransaction.deserialize(freshTxBuffer);
+                    if (freshSigners.length > 0) {
+                      freshVersionedTx.sign(freshSigners);
+                    }
+                    freshSignature = await connection.sendRawTransaction(freshVersionedTx.serialize(), {
+                      skipPreflight: false,
+                      preflightCommitment: 'confirmed',
+                    });
+                  } else {
+                    const freshTx = Transaction.from(freshTxBuffer);
+                    if (freshSigners.length > 0) {
+                      freshTx.partialSign(...freshSigners);
+                    }
+                    freshSignature = await connection.sendRawTransaction(freshTx.serialize(), {
+                      skipPreflight: false,
+                      preflightCommitment: 'confirmed',
+                    });
+                  }
+
+                  console.log(`   📤 Fresh TX ${j + 1} sent: ${freshSignature}`);
+
+                  // Wait for confirmation
+                  const freshConfirmation = await connection.confirmTransaction(freshSignature, 'confirmed');
+
+                  if (freshConfirmation.value.err) {
+                    throw new Error(`Fresh TX ${j + 1} failed on-chain: ${JSON.stringify(freshConfirmation.value.err)}`);
+                  }
+
+                  console.log(`   ✅ Fresh TX ${j + 1} confirmed`);
+                  signatures.push(freshSignature);
+
+                  // Small delay between transactions
+                  if (j < freshTransactions.length - 1) {
+                    await new Promise(r => setTimeout(r, 200));
+                  }
+                }
+
+                // All remaining transactions completed successfully
+                console.log(`\n✅ BULK SWAP COMPLETE (after stale proof retry): ${signatures.length} transactions confirmed`);
+
+                return res.json({
+                  success: true,
+                  data: {
+                    signatures,
+                    signature: signatures[signatures.length - 1],
+                    network: networkName,
+                    isBulkSwap: true,
+                    transactionCount: signatures.length,
+                    retriedFromTx: i + 1,
+                  },
+                  timestamp: new Date().toISOString(),
+                });
+              } else {
+                console.warn('   ⚠️  Rebuild did not return bulk transactions, cannot retry');
+              }
+            } catch (rebuildError: any) {
+              console.error('   ❌ Failed to rebuild transactions:', rebuildError.message);
+            }
+
+            // If rebuild/retry failed, return the original error
+            return res.status(409).json({
+              success: false,
+              error: `Transaction ${i + 1} (${txInfo.purpose || 'unknown'}) failed: Stale Merkle proof`,
+              errorCode: 'STALE_CNFT_PROOF',
+              message: 'The cNFT Merkle tree changed since the transaction was built. Automatic retry failed.',
+              signatures: signatures,
+              failedTxIndex: i,
+              failedTxPurpose: txInfo.purpose,
+              timestamp: new Date().toISOString(),
+            });
+          }
+
+          if (isStaleProof) {
+            // No offerId available for rebuild
             return res.status(409).json({
               success: false,
               error: `Transaction ${i + 1} (${txInfo.purpose || 'unknown'}) failed: Stale Merkle proof`,
               errorCode: 'STALE_CNFT_PROOF',
               message: 'The cNFT Merkle tree changed since the transaction was built. Please rebuild the swap and retry.',
-              signatures: signatures, // Return any successful signatures
+              signatures: signatures,
               failedTxIndex: i,
               failedTxPurpose: txInfo.purpose,
               timestamp: new Date().toISOString(),
@@ -1465,9 +1568,40 @@ router.post('/api/test/execute-lock', async (req: Request, res: Response) => {
     try {
       console.log(`\n   🔄 Attempt ${attempt}/${MAX_ATTEMPTS}`);
 
+      // Validate serializedTransaction is a non-empty string
+      if (typeof serializedTransaction !== 'string' || serializedTransaction.length === 0) {
+        console.error('   ❌ Invalid serializedTransaction:', {
+          type: typeof serializedTransaction,
+          value: serializedTransaction,
+        });
+        throw new Error(`Invalid serializedTransaction: expected non-empty string, got ${typeof serializedTransaction}`);
+      }
+
+      // Validate base64 format
+      const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
+      if (!base64Regex.test(serializedTransaction)) {
+        console.error('   ❌ Invalid base64 format:', {
+          length: serializedTransaction.length,
+          preview: serializedTransaction.substring(0, 100),
+          invalidChars: serializedTransaction.match(/[^A-Za-z0-9+/=]/g)?.slice(0, 10),
+        });
+        throw new Error(`Invalid base64 format in serializedTransaction`);
+      }
+
       // Deserialize and sign transaction
       const txBuffer = Buffer.from(serializedTransaction, 'base64');
       let signature: string;
+
+      // Debug: Log buffer details
+      console.log('   🔍 Transaction buffer info:', {
+        inputType: typeof serializedTransaction,
+        inputLength: serializedTransaction?.length,
+        bufferLength: txBuffer.length,
+        firstByte: txBuffer[0],
+        firstByteHex: '0x' + (txBuffer[0]?.toString(16) ?? 'undefined'),
+        lastBytes: txBuffer.length > 4 ? `[${txBuffer.slice(-4).join(', ')}]` : 'buffer too short',
+        base64Preview: serializedTransaction.substring(0, 50) + '...',
+      });
 
       if (isVersionedTransaction(txBuffer)) {
         console.log('   📄 Versioned (V0) transaction detected');
@@ -1479,7 +1613,38 @@ router.post('/api/test/execute-lock', async (req: Request, res: Response) => {
         });
       } else {
         console.log('   📄 Legacy transaction detected');
-        const transaction = Transaction.from(txBuffer);
+        // Wrap deserialization in try-catch for detailed error reporting
+        let transaction: Transaction;
+        try {
+          transaction = Transaction.from(txBuffer);
+        } catch (deserializeError: any) {
+          // Detailed buffer analysis for debugging
+          const signatureCount = txBuffer[0];
+          const expectedMinSize = 1 + (signatureCount * 64) + 3; // compact-u16 + signatures + min message header
+          const hasEnoughForSignatures = txBuffer.length >= 1 + (signatureCount * 64);
+
+          console.error('   ❌ Transaction deserialization failed:', {
+            error: deserializeError.message,
+            bufferLength: txBuffer.length,
+            signatureCount: signatureCount,
+            expectedMinSize: expectedMinSize,
+            hasEnoughForSignatures: hasEnoughForSignatures,
+            firstBytes: txBuffer.slice(0, Math.min(40, txBuffer.length)).toString('hex'),
+            lastBytes: txBuffer.slice(Math.max(0, txBuffer.length - 20)).toString('hex'),
+            isValidBase64: /^[A-Za-z0-9+/]*={0,2}$/.test(serializedTransaction || ''),
+            inputPreview: typeof serializedTransaction === 'string' ? serializedTransaction.substring(0, 80) : 'not a string',
+          });
+
+          // Check for common issues
+          if (signatureCount > 10) {
+            console.error('   ⚠️ Unusually high signature count - may indicate buffer corruption or wrong format');
+          }
+          if (!hasEnoughForSignatures) {
+            console.error(`   ⚠️ Buffer too short: need at least ${1 + signatureCount * 64} bytes for signatures, but only have ${txBuffer.length}`);
+          }
+
+          throw new Error(`Failed to deserialize legacy transaction: ${deserializeError.message}. Buffer length: ${txBuffer.length}, signature count: ${signatureCount}, first byte: 0x${txBuffer[0]?.toString(16)}`);
+        }
         transaction.partialSign(signer);
         signature = await connection.sendRawTransaction(transaction.serialize(), {
           skipPreflight: false,

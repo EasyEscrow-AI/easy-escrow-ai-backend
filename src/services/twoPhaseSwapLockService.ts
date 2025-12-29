@@ -640,9 +640,27 @@ export class TwoPhaseSwapLockService {
         transaction.add(ix);
       }
 
-      const serialized = transaction
-        .serialize({ requireAllSignatures: false })
-        .toString('base64');
+      const serializedBuffer = transaction.serialize({ requireAllSignatures: false });
+      const serialized = serializedBuffer.toString('base64');
+
+      // Validation: Verify the transaction can be deserialized (catch serialization bugs early)
+      try {
+        const verifyBuffer = Buffer.from(serialized, 'base64');
+        Transaction.from(verifyBuffer);
+        console.log(`[TwoPhaseSwapLockService] TX ${transactions.length + 1} serialization verified:`, {
+          party: params.party,
+          bufferLength: serializedBuffer.length,
+          base64Length: serialized.length,
+        });
+      } catch (verifyError: any) {
+        console.error(`[TwoPhaseSwapLockService] TX ${transactions.length + 1} SERIALIZATION FAILED:`, {
+          party: params.party,
+          error: verifyError.message,
+          bufferLength: serializedBuffer.length,
+          firstBytes: serializedBuffer.slice(0, 20).toString('hex'),
+        });
+        throw new Error(`Transaction serialization verification failed: ${verifyError.message}`);
+      }
 
       transactions.push({
         index: transactions.length,
@@ -675,9 +693,27 @@ export class TwoPhaseSwapLockService {
       });
       solTransaction.add(depositInstruction);
 
-      const serialized = solTransaction
-        .serialize({ requireAllSignatures: false })
-        .toString('base64');
+      const serializedBuffer = solTransaction.serialize({ requireAllSignatures: false });
+      const serialized = serializedBuffer.toString('base64');
+
+      // Validation: Verify the SOL transaction can be deserialized
+      try {
+        const verifyBuffer = Buffer.from(serialized, 'base64');
+        Transaction.from(verifyBuffer);
+        console.log(`[TwoPhaseSwapLockService] SOL TX serialization verified:`, {
+          party: params.party,
+          bufferLength: serializedBuffer.length,
+          base64Length: serialized.length,
+        });
+      } catch (verifyError: any) {
+        console.error(`[TwoPhaseSwapLockService] SOL TX SERIALIZATION FAILED:`, {
+          party: params.party,
+          error: verifyError.message,
+          bufferLength: serializedBuffer.length,
+          firstBytes: serializedBuffer.slice(0, 20).toString('hex'),
+        });
+        throw new Error(`SOL transaction serialization verification failed: ${verifyError.message}`);
+      }
 
       const solTxSize = 100; // SOL deposit is ~100 bytes
       totalEstimatedSize += solTxSize;
