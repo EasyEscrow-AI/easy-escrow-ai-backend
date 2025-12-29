@@ -19,6 +19,7 @@ import { offerManager } from './offers.routes';
 import { getEscrowProgramService } from '../services/escrow-program.service';
 import { createTwoPhaseSwapLockService } from '../services/twoPhaseSwapLockService';
 import { createCnftDelegationService } from '../services/cnftDelegationService';
+import { createSwapStateMachine } from '../services/swapStateMachine';
 
 // Helper function to detect if transaction is versioned (V0)
 function isVersionedTransaction(buffer: Buffer): boolean {
@@ -77,6 +78,102 @@ const twoPhaseSwapLockService = createTwoPhaseSwapLockService(
 );
 console.log('[TestExecuteRoutes] TwoPhaseSwapLockService initialized for lock transaction rebuilding');
 console.log('[TestExecuteRoutes] Delegate authority:', delegateAuthority.toBase58());
+
+// Initialize swap state machine for delegation cleanup
+const swapStateMachine = createSwapStateMachine(prisma);
+
+/**
+ * Cleanup delegations for a failed swap
+ *
+ * This function revokes all cNFT delegations that were made as part of a swap
+ * but not yet settled. Called when a swap fails to prevent stale delegations.
+ *
+ * @param swapId - The swap ID to cleanup
+ * @param testWallets - Map of wallet addresses to their keypairs (for signing revokes)
+ */
+async function cleanupFailedSwapDelegations(
+  swapId: string,
+  testWallets: Map<string, Keypair>
+): Promise<{ success: boolean; revokedCount: number; errors: string[] }> {
+  console.log(`\n🧹 CLEANING UP DELEGATIONS FOR FAILED SWAP ${swapId}`);
+
+  const errors: string[] = [];
+  let revokedCount = 0;
+
+  try {
+    // Get all delegated assets that need cleanup
+    const result = await swapStateMachine.getDelegatedAssetsForCleanup(swapId);
+
+    if (!result.success) {
+      console.warn(`   ⚠️ Could not get delegated assets: ${result.error}`);
+      return { success: false, revokedCount: 0, errors: [result.error || 'Unknown error'] };
+    }
+
+    if (result.assets.length === 0) {
+      console.log('   ✅ No delegated assets to clean up');
+      return { success: true, revokedCount: 0, errors: [] };
+    }
+
+    console.log(`   📋 Found ${result.assets.length} delegated asset(s) to revoke`);
+
+    const delegationService = createCnftDelegationService(connection);
+
+    for (const asset of result.assets) {
+      console.log(`   🔄 Revoking delegation for ${asset.assetId} (Party ${asset.party})`);
+
+      // Get the owner's keypair from test wallets
+      const ownerKeypair = testWallets.get(asset.owner);
+      if (!ownerKeypair) {
+        const error = `No keypair available for owner ${asset.owner}`;
+        console.warn(`   ⚠️ ${error}`);
+        errors.push(error);
+        continue;
+      }
+
+      try {
+        // Build revoke instruction
+        const revokeResult = await delegationService.buildRevokeInstruction({
+          assetId: asset.assetId,
+          ownerPubkey: ownerKeypair.publicKey,
+        });
+
+        // Build and send transaction
+        const transaction = new Transaction();
+        const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
+        transaction.recentBlockhash = blockhash;
+        transaction.lastValidBlockHeight = lastValidBlockHeight;
+        transaction.feePayer = ownerKeypair.publicKey;
+        transaction.add(revokeResult.instruction);
+        transaction.sign(ownerKeypair);
+
+        const signature = await connection.sendRawTransaction(transaction.serialize(), {
+          skipPreflight: false,
+          preflightCommitment: 'confirmed',
+        });
+
+        await connection.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, 'confirmed');
+
+        console.log(`   ✅ Revoked delegation for ${asset.assetId}: ${signature}`);
+        revokedCount++;
+      } catch (revokeError: any) {
+        const error = `Failed to revoke ${asset.assetId}: ${revokeError.message}`;
+        console.error(`   ❌ ${error}`);
+        errors.push(error);
+      }
+    }
+
+    console.log(`\n🧹 CLEANUP COMPLETE: ${revokedCount}/${result.assets.length} delegations revoked`);
+
+    return {
+      success: errors.length === 0,
+      revokedCount,
+      errors,
+    };
+  } catch (error: any) {
+    console.error('   ❌ Cleanup failed:', error.message);
+    return { success: false, revokedCount, errors: [error.message] };
+  }
+}
 
 /**
  * Check if error is caused by stale cNFT Merkle proof
@@ -1688,18 +1785,15 @@ router.post('/api/test/execute-lock', async (req: Request, res: Response) => {
     });
   }
 
-  // Load keypairs
-  let signerPrivateKey: string | undefined;
+  // Load keypairs - we need both for cleanup purposes
+  const makerPrivateKey = isMainnet
+    ? process.env.MAINNET_PROD_SENDER_PRIVATE_KEY
+    : process.env.DEVNET_STAGING_SENDER_PRIVATE_KEY;
+  const takerPrivateKey = isMainnet
+    ? process.env.MAINNET_PROD_RECEIVER_PRIVATE_KEY
+    : process.env.DEVNET_STAGING_RECEIVER_PRIVATE_KEY;
 
-  if (isMainnet) {
-    signerPrivateKey = partyValue === 'B'
-      ? process.env.MAINNET_PROD_RECEIVER_PRIVATE_KEY
-      : process.env.MAINNET_PROD_SENDER_PRIVATE_KEY;
-  } else {
-    signerPrivateKey = partyValue === 'B'
-      ? process.env.DEVNET_STAGING_RECEIVER_PRIVATE_KEY
-      : process.env.DEVNET_STAGING_SENDER_PRIVATE_KEY;
-  }
+  const signerPrivateKey = partyValue === 'B' ? takerPrivateKey : makerPrivateKey;
 
   if (!signerPrivateKey) {
     return res.status(500).json({
@@ -1709,12 +1803,25 @@ router.post('/api/test/execute-lock', async (req: Request, res: Response) => {
     });
   }
 
-  // Parse keypair
+  // Parse keypairs
   let signer: Keypair;
+  let makerKeypair: Keypair | undefined;
+  let takerKeypair: Keypair | undefined;
+  const testWallets = new Map<string, Keypair>();
+
   try {
-    const decoded = bs58.decode(signerPrivateKey);
-    signer = Keypair.fromSecretKey(decoded);
+    signer = Keypair.fromSecretKey(bs58.decode(signerPrivateKey));
     console.log(`   🔑 Signer: ${signer.publicKey.toBase58()}`);
+
+    // Load both keypairs for cleanup
+    if (makerPrivateKey) {
+      makerKeypair = Keypair.fromSecretKey(bs58.decode(makerPrivateKey));
+      testWallets.set(makerKeypair.publicKey.toBase58(), makerKeypair);
+    }
+    if (takerPrivateKey) {
+      takerKeypair = Keypair.fromSecretKey(bs58.decode(takerPrivateKey));
+      testWallets.set(takerKeypair.publicKey.toBase58(), takerKeypair);
+    }
   } catch (e) {
     return res.status(500).json({
       success: false,
@@ -1886,11 +1993,18 @@ router.post('/api/test/execute-lock', async (req: Request, res: Response) => {
           continue; // Retry with fresh transaction
         } catch (rebuildError: any) {
           console.error(`   ❌ Failed to rebuild transaction:`, rebuildError.message);
+
+          // Cleanup delegations before returning error
+          if (swapId) {
+            await cleanupFailedSwapDelegations(swapId, testWallets);
+          }
+
           return res.status(500).json({
             success: false,
             error: `Lock transaction failed: ${error.message}. Rebuild also failed: ${rebuildError.message}`,
             errorCode: 'STALE_PROOF_REBUILD_FAILED',
             attempt,
+            cleanupAttempted: !!swapId,
             timestamp: new Date().toISOString(),
           });
         }
@@ -1898,19 +2012,31 @@ router.post('/api/test/execute-lock', async (req: Request, res: Response) => {
 
       // Non-stale-proof error or last attempt - return error
       if (isLastAttempt && isStaleProof) {
+        // Cleanup delegations before returning error
+        if (swapId) {
+          await cleanupFailedSwapDelegations(swapId, testWallets);
+        }
+
         return res.status(409).json({
           success: false,
           error: `Stale Merkle proof persisted after ${MAX_ATTEMPTS} attempts. The Merkle tree is experiencing high activity.`,
           errorCode: 'STALE_PROOF_EXHAUSTED',
           swapId,
           transactionIndex,
+          cleanupAttempted: !!swapId,
           timestamp: new Date().toISOString(),
         });
+      }
+
+      // Cleanup delegations before returning error
+      if (swapId) {
+        await cleanupFailedSwapDelegations(swapId, testWallets);
       }
 
       return res.status(500).json({
         success: false,
         error: error.message || 'Lock transaction failed',
+        cleanupAttempted: !!swapId,
         timestamp: new Date().toISOString(),
       });
     }
