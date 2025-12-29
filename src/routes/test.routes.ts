@@ -438,6 +438,9 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
                 name: asset.content?.metadata?.name || 'Unknown cNFT',
                 image: imageUrl,
                 symbol: asset.content?.metadata?.symbol || '',
+                // Delegation status for warning display
+                delegated: asset.ownership?.delegated || false,
+                delegate: asset.ownership?.delegate || null,
               };
             }));
           

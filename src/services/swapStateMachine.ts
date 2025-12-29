@@ -1070,6 +1070,76 @@ export class SwapStateMachine {
       stateHistory: swap.stateHistory as StateHistoryEntry[],
     };
   }
+
+  /**
+   * Get all delegated cNFT assets for a swap that need cleanup
+   *
+   * Returns assets that have been delegated but not yet settled,
+   * along with their owner information for revocation.
+   */
+  async getDelegatedAssetsForCleanup(swapId: string): Promise<{
+    success: boolean;
+    assets: Array<{
+      assetId: string;
+      owner: string;
+      party: 'A' | 'B';
+      delegatePda?: string;
+    }>;
+    error?: string;
+  }> {
+    const swap = await this.prisma.twoPhaseSwap.findUnique({
+      where: { id: swapId },
+    });
+
+    if (!swap) {
+      return { success: false, assets: [], error: `Swap not found: ${swapId}` };
+    }
+
+    const delegationStatus = swap.delegationStatus as unknown as Record<string, AssetDelegationStatus>;
+    const assetsA = swap.assetsA as unknown as SwapAsset[];
+    const assetsB = swap.assetsB as unknown as SwapAsset[];
+
+    const delegatedAssets: Array<{
+      assetId: string;
+      owner: string;
+      party: 'A' | 'B';
+      delegatePda?: string;
+    }> = [];
+
+    // Check Party A's assets
+    for (const asset of assetsA) {
+      if (asset.type === 'CNFT') {
+        const status = delegationStatus[asset.identifier];
+        if (status?.delegated) {
+          delegatedAssets.push({
+            assetId: asset.identifier,
+            owner: swap.partyA,
+            party: 'A',
+            delegatePda: status.delegatePda,
+          });
+        }
+      }
+    }
+
+    // Check Party B's assets
+    for (const asset of assetsB) {
+      if (asset.type === 'CNFT' && swap.partyB) {
+        const status = delegationStatus[asset.identifier];
+        if (status?.delegated) {
+          delegatedAssets.push({
+            assetId: asset.identifier,
+            owner: swap.partyB,
+            party: 'B',
+            delegatePda: status.delegatePda,
+          });
+        }
+      }
+    }
+
+    console.log(`[SwapStateMachine] Found ${delegatedAssets.length} delegated assets for cleanup in swap ${swapId}`);
+
+    return { success: true, assets: delegatedAssets };
+  }
 }
 
 // =============================================================================
