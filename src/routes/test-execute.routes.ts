@@ -121,8 +121,7 @@ function isCnftProofStaleError(error: any): boolean {
     'Merkle proof verification failed',
     'AssetOwnerMismatch',
     'Custom(6001)',
-    '"Custom":6001',      // JSON format from on-chain error
-    '{"Custom":6001}',    // Full JSON object format
+    '{"Custom":6001}',    // JSON format from on-chain error (with delimiters to prevent false positives)
   ];
 
   return staleProofIndicators.some(indicator =>
