@@ -310,8 +310,10 @@ describe('Swap Flow Router - Integration Scenarios', () => {
       expect(flowResult.error).to.include('SOL-for-SOL');
     });
 
-    it('should handle large asset counts for two-phase triggering', () => {
-      // 5 NFTs (no cNFTs) should still trigger two-phase for bulk
+    it('should handle large SPL-only asset counts with atomic flow (not two-phase)', () => {
+      // 5 NFTs (no cNFTs) should use ATOMIC flow, NOT two-phase.
+      // Two-phase is ONLY for cNFT delegation.
+      // SPL-only bulk swaps use Jito bundles or sequential execution.
       const offeredAssets = [
         { type: AssetType.NFT, identifier: 'nft-1' },
         { type: AssetType.NFT, identifier: 'nft-2' },
@@ -329,11 +331,38 @@ describe('Swap Flow Router - Integration Scenarios', () => {
         undefined
       );
 
-      // 5+ assets triggers two-phase
-      expect(flowResult.flowType).to.equal(SwapFlowType.TWO_PHASE);
-      expect(flowResult.requiresTwoPhase).to.be.true;
+      // SPL-only bulk swaps use atomic flow, not two-phase
+      expect(flowResult.flowType).to.equal(SwapFlowType.ATOMIC);
+      expect(flowResult.requiresTwoPhase).to.be.false;
       expect(flowResult.requiresDelegation).to.be.false; // No cNFTs
       expect(flowResult.totalAssetCount).to.equal(5);
+    });
+
+    it('should trigger two-phase for large asset counts WITH cNFTs', () => {
+      // 5+ assets WITH at least one cNFT should trigger two-phase
+      const offeredAssets = [
+        { type: AssetType.NFT, identifier: 'nft-1' },
+        { type: AssetType.NFT, identifier: 'nft-2' },
+        { type: AssetType.CNFT, identifier: 'cnft-1' }, // cNFT present
+      ];
+      const requestedAssets = [
+        { type: AssetType.NFT, identifier: 'nft-3' },
+        { type: AssetType.NFT, identifier: 'nft-4' },
+      ];
+
+      const flowResult = determineSwapFlow(
+        offeredAssets,
+        requestedAssets,
+        undefined,
+        undefined
+      );
+
+      // 5 assets WITH cNFT triggers two-phase
+      expect(flowResult.flowType).to.equal(SwapFlowType.TWO_PHASE);
+      expect(flowResult.requiresTwoPhase).to.be.true;
+      expect(flowResult.requiresDelegation).to.be.true; // Has cNFT
+      expect(flowResult.totalAssetCount).to.equal(5);
+      expect(flowResult.cnftCount).to.equal(1);
     });
   });
 });
