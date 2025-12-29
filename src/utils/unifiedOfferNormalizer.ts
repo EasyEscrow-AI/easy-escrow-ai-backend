@@ -24,7 +24,7 @@ export enum OfferType {
   ATOMIC = 'ATOMIC',
   /** cNFT bid with SOL escrow (bidding on a specific cNFT) */
   CNFT_BID = 'CNFT_BID',
-  /** Bulk two-phase swap (3+ cNFTs or 5+ total assets) */
+  /** Bulk two-phase swap (cNFT delegation required: 3+ cNFTs or bulk with cNFTs) */
   BULK_TWO_PHASE = 'BULK_TWO_PHASE',
 }
 
@@ -331,11 +331,14 @@ export function normalizeOfferRequest(body: UnifiedOfferRequest): NormalizationR
     customFee,
   };
 
-  // 2. Determine if this should be a bulk swap
-  // Bulk swap triggers:
+  // 2. Determine if this should be a bulk TWO-PHASE swap
+  // Two-phase lock/settle is ONLY needed for cNFT delegation.
+  // SPL/Core NFT-only bulk swaps use Jito bundles or sequential execution instead.
+  //
+  // Two-phase triggers (all require cNFTs):
   // - 3+ cNFTs on either side
-  // - 5+ total assets
-  // - 4+ assets with any cNFT
+  // - 5+ total assets WITH at least one cNFT
+  // - 4+ total assets WITH at least one cNFT
   const offeredCnftCount = offeredAssets.filter((a) => a.type === AssetType.CNFT).length;
   const requestedCnftCount = requestedAssets.filter((a) => a.type === AssetType.CNFT).length;
   const totalAssetCount = offeredAssets.length + requestedAssets.length;
@@ -344,7 +347,7 @@ export function normalizeOfferRequest(body: UnifiedOfferRequest): NormalizationR
   const needsBulk =
     offeredCnftCount >= 3 ||
     requestedCnftCount >= 3 ||
-    totalAssetCount >= 5 ||
+    (totalAssetCount >= 5 && totalCnftCount > 0) ||
     (totalAssetCount >= 4 && totalCnftCount > 0);
 
   if (needsBulk) {
