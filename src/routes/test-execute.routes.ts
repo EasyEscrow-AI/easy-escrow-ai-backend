@@ -1323,7 +1323,7 @@ router.post('/api/test/execute-listing-revoke', requireTestEnvironment, async (r
  *
  * POST /api/test/execute-lock
  */
-router.post('/execute-lock', async (req: Request, res: Response) => {
+router.post('/api/test/execute-lock', async (req: Request, res: Response) => {
   console.log('\n========================================');
   console.log('🔒 TEST LOCK TRANSACTION EXECUTION');
   console.log('========================================');

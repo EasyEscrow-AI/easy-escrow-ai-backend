@@ -162,12 +162,15 @@ export function determineSwapFlow(
   }
 
   // Check for two-phase swap triggers
+  // Two-phase is ONLY needed for cNFT delegation - SPL/CORE NFTs use bulk transactions
+
   // Trigger 1: 3+ cNFTs on either side
   const needsTwoPhaseForCnfts = offeredCnftCount >= CNFT_TWO_PHASE_THRESHOLD ||
                                 requestedCnftCount >= CNFT_TWO_PHASE_THRESHOLD;
 
-  // Trigger 2: 5+ total assets
-  const needsTwoPhaseForBulk = totalAssetCount >= TOTAL_ASSET_TWO_PHASE_THRESHOLD;
+  // Trigger 2: 5+ total assets WITH cNFTs (cNFTs require delegation, others don't)
+  // SPL/CORE NFT-only bundles use bulk transaction execution instead
+  const needsTwoPhaseForBulk = totalAssetCount >= TOTAL_ASSET_TWO_PHASE_THRESHOLD && totalCnftCount > 0;
 
   // Trigger 3: 4+ assets with any cNFT (bulk swap with cNFT complexity)
   const needsTwoPhaseForMixedBulk = totalAssetCount >= 4 && totalCnftCount > 0;

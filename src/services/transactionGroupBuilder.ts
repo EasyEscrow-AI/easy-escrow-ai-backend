@@ -413,15 +413,19 @@ export class TransactionGroupBuilder {
     }
 
     // If Jito is disabled and swap requires bundle, check if we can use sequential RPC
-    // Small cNFT swaps (1-2 cNFTs, up to 3 assets) can use sequential RPC execution
-    // Larger swaps should use two-phase for safety
+    // Two-phase is ONLY needed for cNFT delegation - SPL/CORE NFTs use sequential RPC
+    // For cNFT swaps: small swaps (1-2 cNFTs, up to 3 assets) can use sequential RPC
     if (!isJitoBundlesEnabled() && analysis.transactionCount > 1) {
       const totalCnfts = analysis.makerCnfts + analysis.takerCnfts;
       const totalAssets = inputs.makerAssets.length + inputs.takerAssets.length;
-      const canUseSequentialRpc = totalCnfts <= 2 && totalAssets <= 3;
+
+      // SPL/CORE NFT-only swaps can always use sequential RPC (no delegation needed)
+      // cNFT swaps need two-phase if they're large (3+ cNFTs or 4+ total assets)
+      const isCnftSwap = totalCnfts > 0;
+      const canUseSequentialRpc = !isCnftSwap || (totalCnfts <= 2 && totalAssets <= 3);
 
       if (!canUseSequentialRpc) {
-        console.log(`[TransactionGroupBuilder] Jito disabled, large swap (${totalCnfts} cNFTs, ${totalAssets} assets) - routing to two-phase`);
+        console.log(`[TransactionGroupBuilder] Jito disabled, large cNFT swap (${totalCnfts} cNFTs, ${totalAssets} assets) - routing to two-phase`);
         const twoPhaseAnalysis = {
           ...analysis,
           strategy: SwapStrategy.TWO_PHASE_DELEGATION,
@@ -440,7 +444,7 @@ export class TransactionGroupBuilder {
         };
       }
 
-      console.log(`[TransactionGroupBuilder] Jito disabled, small cNFT swap (${totalCnfts} cNFTs) - using sequential RPC fallback`);
+      console.log(`[TransactionGroupBuilder] Jito disabled, ${isCnftSwap ? `small cNFT swap (${totalCnfts} cNFTs)` : `SPL/CORE NFT swap (${totalAssets} assets)`} - using sequential RPC fallback`);
       // Continue to build transactions for sequential RPC execution
     }
     
