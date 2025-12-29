@@ -747,19 +747,59 @@ export class TwoPhaseSwapLockService {
       throw new SwapNotFoundError(params.swapId);
     }
 
+    // Validate party - wallet must be a party to the swap
+    const isPartyA = swap.partyA === params.walletAddress;
+    const isPartyB = swap.partyB === params.walletAddress;
+
+    if (!isPartyA && !isPartyB) {
+      throw new InvalidPartyError(params.walletAddress, params.swapId);
+    }
+
+    // Verify party matches expected
+    if (params.party === 'A' && !isPartyA) {
+      throw new LockServiceError(
+        `Wallet ${params.walletAddress} is not Party A for swap ${params.swapId}`
+      );
+    }
+    if (params.party === 'B' && !isPartyB) {
+      throw new LockServiceError(
+        `Wallet ${params.walletAddress} is not Party B for swap ${params.swapId}`
+      );
+    }
+
+    // Validate swap state - rebuild is only valid during active lock phase
+    // Party A can rebuild during ACCEPTED or LOCKING_PARTY_A
+    // Party B can rebuild during PARTY_A_LOCKED or LOCKING_PARTY_B
+    const validStatesA: TwoPhaseSwapStatus[] = [TwoPhaseSwapStatus.ACCEPTED, TwoPhaseSwapStatus.LOCKING_PARTY_A];
+    const validStatesB: TwoPhaseSwapStatus[] = [TwoPhaseSwapStatus.PARTY_A_LOCKED, TwoPhaseSwapStatus.LOCKING_PARTY_B];
+    const validStates = params.party === 'A' ? validStatesA : validStatesB;
+
+    if (!validStates.includes(swap.status)) {
+      throw new InvalidStateError(
+        params.swapId,
+        swap.status,
+        validStates[0] // Expected initial state
+      );
+    }
+
     // Get party's assets
     const assets = params.party === 'A' ? swap.assetsA : swap.assetsB;
     const solAmount = params.party === 'A' ? swap.solAmountA : swap.solAmountB;
     const cnftAssets = assets.filter((a) => a.type === 'CNFT');
     const solAmountEscrowed = solAmount || BigInt(0);
 
-    // Determine what transaction this index corresponds to
+    // Calculate max valid transaction index
     // Layout: [cNFT delegations...] [optional SOL deposit]
-    const isSolDeposit = transactionIndex === cnftAssets.length && solAmountEscrowed > BigInt(0);
+    const hasSolDeposit = solAmountEscrowed > BigInt(0);
+    const maxValidIndex = hasSolDeposit ? cnftAssets.length : cnftAssets.length - 1;
+    const isSolDeposit = transactionIndex === cnftAssets.length && hasSolDeposit;
 
-    if (transactionIndex > cnftAssets.length || transactionIndex < 0) {
+    if (transactionIndex < 0 || transactionIndex > maxValidIndex) {
+      const indexRange = hasSolDeposit
+        ? `0-${cnftAssets.length} (${cnftAssets.length} cNFTs + SOL deposit)`
+        : `0-${cnftAssets.length - 1} (${cnftAssets.length} cNFTs)`;
       throw new LockServiceError(
-        `Invalid transaction index ${transactionIndex}. Valid range: 0-${cnftAssets.length}`
+        `Invalid transaction index ${transactionIndex}. Valid range: ${indexRange}`
       );
     }
 
