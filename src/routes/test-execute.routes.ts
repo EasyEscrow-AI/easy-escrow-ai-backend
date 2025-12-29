@@ -562,11 +562,17 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
                   const freshTxInfo = freshTransactions[j];
                   console.log(`\n📝 Retrying TX ${j + 1}/${freshTransactions.length} with fresh proof: ${freshTxInfo.purpose}`);
 
-                  const freshTxBuffer = Buffer.from(freshTxInfo.serialized, 'base64');
+                  // Access serialized transaction from the nested transaction object
+                  const serializedTx = freshTxInfo.transaction?.serializedTransaction;
+                  if (!serializedTx) {
+                    throw new Error(`Fresh transaction ${j + 1} has no serialized transaction data`);
+                  }
+
+                  const freshTxBuffer = Buffer.from(serializedTx, 'base64');
                   const isFreshVersioned = (freshTxBuffer[0] & 0x80) !== 0;
 
                   // Determine signers for this transaction
-                  const freshTxRequiredSigners = freshTxInfo.requiredSigners || [];
+                  const freshTxRequiredSigners = freshTxInfo.transaction?.requiredSigners || [];
                   const freshSigners: Keypair[] = [];
 
                   if (freshTxRequiredSigners.includes(makerAddress)) {
