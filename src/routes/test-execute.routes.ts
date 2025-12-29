@@ -1465,9 +1465,40 @@ router.post('/api/test/execute-lock', async (req: Request, res: Response) => {
     try {
       console.log(`\n   🔄 Attempt ${attempt}/${MAX_ATTEMPTS}`);
 
+      // Validate serializedTransaction is a non-empty string
+      if (typeof serializedTransaction !== 'string' || serializedTransaction.length === 0) {
+        console.error('   ❌ Invalid serializedTransaction:', {
+          type: typeof serializedTransaction,
+          value: serializedTransaction,
+        });
+        throw new Error(`Invalid serializedTransaction: expected non-empty string, got ${typeof serializedTransaction}`);
+      }
+
+      // Validate base64 format
+      const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
+      if (!base64Regex.test(serializedTransaction)) {
+        console.error('   ❌ Invalid base64 format:', {
+          length: serializedTransaction.length,
+          preview: serializedTransaction.substring(0, 100),
+          invalidChars: serializedTransaction.match(/[^A-Za-z0-9+/=]/g)?.slice(0, 10),
+        });
+        throw new Error(`Invalid base64 format in serializedTransaction`);
+      }
+
       // Deserialize and sign transaction
       const txBuffer = Buffer.from(serializedTransaction, 'base64');
       let signature: string;
+
+      // Debug: Log buffer details
+      console.log('   🔍 Transaction buffer info:', {
+        inputType: typeof serializedTransaction,
+        inputLength: serializedTransaction?.length,
+        bufferLength: txBuffer.length,
+        firstByte: txBuffer[0],
+        firstByteHex: '0x' + (txBuffer[0]?.toString(16) ?? 'undefined'),
+        lastBytes: txBuffer.length > 4 ? `[${txBuffer.slice(-4).join(', ')}]` : 'buffer too short',
+        base64Preview: serializedTransaction.substring(0, 50) + '...',
+      });
 
       if (isVersionedTransaction(txBuffer)) {
         console.log('   📄 Versioned (V0) transaction detected');
@@ -1479,7 +1510,38 @@ router.post('/api/test/execute-lock', async (req: Request, res: Response) => {
         });
       } else {
         console.log('   📄 Legacy transaction detected');
-        const transaction = Transaction.from(txBuffer);
+        // Wrap deserialization in try-catch for detailed error reporting
+        let transaction: Transaction;
+        try {
+          transaction = Transaction.from(txBuffer);
+        } catch (deserializeError: any) {
+          // Detailed buffer analysis for debugging
+          const signatureCount = txBuffer[0];
+          const expectedMinSize = 1 + (signatureCount * 64) + 3; // compact-u16 + signatures + min message header
+          const hasEnoughForSignatures = txBuffer.length >= 1 + (signatureCount * 64);
+
+          console.error('   ❌ Transaction deserialization failed:', {
+            error: deserializeError.message,
+            bufferLength: txBuffer.length,
+            signatureCount: signatureCount,
+            expectedMinSize: expectedMinSize,
+            hasEnoughForSignatures: hasEnoughForSignatures,
+            firstBytes: txBuffer.slice(0, Math.min(40, txBuffer.length)).toString('hex'),
+            lastBytes: txBuffer.slice(Math.max(0, txBuffer.length - 20)).toString('hex'),
+            isValidBase64: /^[A-Za-z0-9+/]*={0,2}$/.test(serializedTransaction || ''),
+            inputPreview: typeof serializedTransaction === 'string' ? serializedTransaction.substring(0, 80) : 'not a string',
+          });
+
+          // Check for common issues
+          if (signatureCount > 10) {
+            console.error('   ⚠️ Unusually high signature count - may indicate buffer corruption or wrong format');
+          }
+          if (!hasEnoughForSignatures) {
+            console.error(`   ⚠️ Buffer too short: need at least ${1 + signatureCount * 64} bytes for signatures, but only have ${txBuffer.length}`);
+          }
+
+          throw new Error(`Failed to deserialize legacy transaction: ${deserializeError.message}. Buffer length: ${txBuffer.length}, signature count: ${signatureCount}, first byte: 0x${txBuffer[0]?.toString(16)}`);
+        }
         transaction.partialSign(signer);
         signature = await connection.sendRawTransaction(transaction.serialize(), {
           skipPreflight: false,
