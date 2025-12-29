@@ -611,6 +611,8 @@ export class TwoPhaseSwapLockService {
             assetId: asset.identifier,
             ownerPubkey: walletPubkey,
             delegatePDA,
+            // Force re-delegation if cNFT is delegated to a stale/failed swap
+            forceRedelegate: true,
           }
         );
 
@@ -819,6 +821,8 @@ export class TwoPhaseSwapLockService {
       assetId: cnft.identifier,
       ownerPubkey: walletPubkey,
       delegatePDA,
+      // Force re-delegation if cNFT is delegated to a stale/failed swap
+      forceRedelegate: true,
     });
 
     // Build transaction

@@ -150,6 +150,13 @@ export interface DelegateCnftParams {
   delegatePDA: PublicKey;
   /** Previous delegate (defaults to owner if not set) */
   previousDelegate?: PublicKey;
+  /**
+   * Force re-delegation even if already delegated to another account.
+   * When true, skips the AlreadyDelegatedError check and uses the current
+   * delegate as previousDelegate, allowing re-delegation from stale swaps.
+   * @default false
+   */
+  forceRedelegate?: boolean;
 }
 
 /**
@@ -456,15 +463,25 @@ export class CnftDelegationService {
 
     // Check if already delegated to a different account
     // Exception: Allow delegation to owner (revocation) even if already delegated
+    // Exception: Allow force re-delegation from stale swaps
     const currentDelegate = assetData.ownership.delegate;
     const isRevocation = params.delegatePDA.toBase58() === assetData.ownership.owner;
-    if (
-      !isRevocation &&
+    const isDelegatedToOther =
       currentDelegate &&
       currentDelegate !== assetData.ownership.owner &&
-      currentDelegate !== params.delegatePDA.toBase58()
-    ) {
+      currentDelegate !== params.delegatePDA.toBase58();
+
+    if (isDelegatedToOther && !isRevocation && !params.forceRedelegate) {
       throw new AlreadyDelegatedError(params.assetId, currentDelegate);
+    }
+
+    // Log if we're force-redelegating from an existing delegation
+    if (isDelegatedToOther && params.forceRedelegate) {
+      console.log('[CnftDelegationService] Force re-delegating from stale delegation:', {
+        assetId: params.assetId,
+        currentDelegate,
+        newDelegate: params.delegatePDA.toBase58(),
+      });
     }
 
     // Fetch fresh proof (skip cache for critical operations)
