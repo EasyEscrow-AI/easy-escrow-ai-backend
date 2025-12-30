@@ -22,7 +22,8 @@ import {
   noncePoolAdminRoutes,
   assetsRoutes,
 } from './routes';
-import { noncePoolManager, healthCheckService } from './routes/offers.routes';
+import { noncePoolManager, healthCheckService, assetValidator } from './routes/offers.routes';
+import { StaleOfferCleanupScheduler } from './services/stale-offer-cleanup.service';
 import { corsOptions, helmetConfig, sanitizeInput, securityHeaders } from './middleware';
 import {
   getMonitoringOrchestrator,
@@ -99,6 +100,18 @@ const offerExpiryScheduler = OfferExpiryScheduler.getInstance(prisma, {
   batchSize: 200,
   timezone: process.env.TZ || 'America/Los_Angeles',
 });
+
+// Initialize stale offer cleanup scheduler
+const staleOfferCleanupScheduler = StaleOfferCleanupScheduler.getInstance(
+  prisma,
+  assetValidator,
+  noncePoolManager,
+  {
+    schedule: '*/30 * * * *', // Every 30 minutes
+    batchSize: 50, // Smaller batches due to DAS rate limits
+    timezone: process.env.TZ || 'America/Los_Angeles',
+  }
+);
 
 // Security Middleware (apply first)
 app.use(helmetConfig);
@@ -331,6 +344,11 @@ const startServer = async () => {
           console.log('Starting offer expiry scheduler...');
           offerExpiryScheduler.start();
           console.log('✅ Offer expiry scheduler started (runs every 15 minutes)');
+
+          // Start stale offer cleanup scheduler
+          console.log('Starting stale offer cleanup scheduler...');
+          staleOfferCleanupScheduler.start();
+          console.log('✅ Stale offer cleanup scheduler started (runs every 30 minutes)');
 
           // DISABLED for BETA launch - Backup scheduler
           // Manual backups via CLI tools are sufficient for BETA phase

@@ -4552,4 +4552,5 @@ export {
   twoPhaseSwapSettleService,
   swapRecoveryService,
   swapProgressService,
+  assetValidator,
 };
