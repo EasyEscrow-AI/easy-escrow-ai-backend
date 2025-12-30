@@ -1065,8 +1065,9 @@ export class OfferManager {
         );
       }
       
-      // 7. Reuse the parent's nonce account
-      const nonceAccount = parentOffer.nonceAccount;
+      // 7. Assign a unique nonce account for this counter-offer
+      // Each offer (including counter-offers) gets its own nonce for independent lifecycle
+      const nonceAccount = await this.noncePoolManager.assignNonceToOffer();
 
       // 8. Extract SOL amounts from parent offer (counter-offer reverses the roles)
       // Parent's requestedSol becomes counter's offeredSol (what counter-maker offers)
