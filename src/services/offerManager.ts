@@ -1501,51 +1501,65 @@ export class OfferManager {
         throw new Error('Cannot reject your own offer. Use cancel instead.');
       }
 
-      // 3. Verify the rejecter owns at least one of the requested assets
-      // Parse requestedAssets from JSON
-      const requestedAssets = offer.requestedAssets as any[];
-      if (!requestedAssets || requestedAssets.length === 0) {
-        throw new Error('Offer has no requested assets to validate ownership');
+      // 3. Verify the rejecter is authorized to reject this offer
+      // A wallet can reject if:
+      // a) They are the takerWallet (intended recipient of a targeted/private offer), OR
+      // b) They own at least one of the requested assets
+
+      let isAuthorizedToReject = false;
+
+      // Check if caller is the intended taker (for targeted/private offers)
+      if (offer.takerWallet && offer.takerWallet === walletAddress) {
+        console.log('[OfferManager] Caller is the targeted taker, allowing rejection');
+        isAuthorizedToReject = true;
       }
 
-      // Validate that the caller owns at least one of the requested assets
-      let ownsRequestedAsset = false;
-      for (const asset of requestedAssets) {
-        try {
-          // Use centralized asset type normalization
-          const assetType = this.normalizeAssetType(asset.type);
+      // If not the targeted taker, check asset ownership
+      if (!isAuthorizedToReject) {
+        // Parse requestedAssets from JSON
+        const requestedAssets = offer.requestedAssets as any[];
+        if (!requestedAssets || requestedAssets.length === 0) {
+          throw new Error('Offer has no requested assets to validate ownership');
+        }
 
-          console.log('[OfferManager] Validating ownership:', {
-            wallet: walletAddress.substring(0, 8) + '...',
-            assetId: asset.identifier,
-            assetType,
-            rawType: asset.type,
-          });
+        // Validate that the caller owns at least one of the requested assets
+        for (const asset of requestedAssets) {
+          try {
+            // Use centralized asset type normalization
+            const assetType = this.normalizeAssetType(asset.type);
 
-          const validationResult = await this.assetValidator.validateAsset(
-            walletAddress,
-            asset.identifier,
-            assetType
-          );
+            console.log('[OfferManager] Validating ownership:', {
+              wallet: walletAddress.substring(0, 8) + '...',
+              assetId: asset.identifier,
+              assetType,
+              rawType: asset.type,
+            });
 
-          console.log('[OfferManager] Validation result:', {
-            assetId: asset.identifier,
-            isValid: validationResult.isValid,
-            error: validationResult.error,
-          });
+            const validationResult = await this.assetValidator.validateAsset(
+              walletAddress,
+              asset.identifier,
+              assetType
+            );
 
-          if (validationResult.isValid) {
-            ownsRequestedAsset = true;
-            console.log('[OfferManager] Ownership verified for asset:', asset.identifier);
-            break;
+            console.log('[OfferManager] Validation result:', {
+              assetId: asset.identifier,
+              isValid: validationResult.isValid,
+              error: validationResult.error,
+            });
+
+            if (validationResult.isValid) {
+              isAuthorizedToReject = true;
+              console.log('[OfferManager] Ownership verified for asset:', asset.identifier);
+              break;
+            }
+          } catch (e) {
+            // Continue checking other assets
+            console.log('[OfferManager] Asset validation exception:', e);
           }
-        } catch (e) {
-          // Continue checking other assets
-          console.log('[OfferManager] Asset validation exception:', e);
         }
       }
 
-      if (!ownsRequestedAsset) {
+      if (!isAuthorizedToReject) {
         throw new Error('Only the owner of the requested assets can reject this offer');
       }
 
