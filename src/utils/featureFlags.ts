@@ -9,7 +9,17 @@
  * Check if JITO bundles are enabled.
  *
  * JITO bundles provide atomic multi-transaction execution on Solana mainnet.
- * When disabled, the system falls back to standard sequential transaction submission.
+ * When disabled, the system falls back to sequential RPC transaction submission
+ * with Just-In-Time (JIT) proof validation for cNFT swaps.
+ *
+ * **Recommended: Enable JITO bundles for mainnet cNFT swaps** to avoid stale
+ * Merkle proof issues. JITO bundles execute atomically, so all transactions
+ * share the same proof snapshot.
+ *
+ * When disabled (sequential RPC mode), each cNFT transaction validates its
+ * proof immediately before submission and rebuilds with fresh proof if stale.
+ * This adds latency but handles high-activity Merkle trees that change between
+ * transactions.
  *
  * @returns true if JITO bundles are enabled, false otherwise
  *
@@ -23,8 +33,8 @@
  * ```
  *
  * Environment variable: ENABLE_JITO_BUNDLES
- * - 'true' or '1': Enable JITO bundles (recommended for mainnet)
- * - 'false' or '0' or unset: Disable JITO bundles (default for staging)
+ * - 'true' or '1': Enable JITO bundles (recommended for mainnet cNFT swaps)
+ * - 'false' or '0' or unset: Disable JITO bundles, use sequential RPC with JIT
  */
 export function isJitoBundlesEnabled(): boolean {
   const value = process.env.ENABLE_JITO_BUNDLES?.toLowerCase();
