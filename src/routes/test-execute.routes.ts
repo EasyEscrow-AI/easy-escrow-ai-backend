@@ -469,6 +469,152 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
           }
           // ========== END PROACTIVE VALIDATION ==========
 
+          // ========== INJECT JITO TIP IF MISSING ==========
+          // Transactions built when ENABLE_JITO_BUNDLES=false won't have a JITO tip.
+          // When we force JITO mode for cNFT↔cNFT swaps, we need to add the tip.
+          // JITO requires at least one transaction to write-lock an official tip account.
+          // Official JITO tip accounts - https://jito-labs.gitbook.io/mev/searcher-resources/tip-accounts
+          const JITO_TIP_ACCOUNTS = new Set([
+            'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
+            'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
+            'HFqU5x63VTqvQss8hp11i4wVV8bD44PvwucfZ2bU7gRe', // Corrected address
+            '96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5',
+            '3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT',
+            'ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49',
+            'Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY',
+            'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
+          ]);
+          const JITO_TIP_AMOUNT = 1_000_000; // 0.001 SOL
+          const SOLANA_TX_SIZE_LIMIT = 1232; // Solana transaction size limit in bytes
+
+          // Check last transaction for JITO tip
+          const lastTxIndex = bulkSwapInfo.transactions.length - 1;
+          const lastTxInfo = bulkSwapInfo.transactions[lastTxIndex];
+
+          if (lastTxInfo?.serialized) {
+            const lastTxBuffer = Buffer.from(lastTxInfo.serialized, 'base64');
+            const isVersionedLastTx = (lastTxBuffer[0] & 0x80) !== 0;
+
+            if (!isVersionedLastTx) {
+              const lastTx = Transaction.from(lastTxBuffer);
+
+              // Check if any instruction writes to a JITO tip account
+              let hasTip = false;
+              for (const ix of lastTx.instructions) {
+                if (ix.programId.equals(SystemProgram.programId)) {
+                  // Check writable accounts for JITO tip accounts
+                  for (const key of ix.keys) {
+                    if (key.isWritable && JITO_TIP_ACCOUNTS.has(key.pubkey.toBase58())) {
+                      hasTip = true;
+                      console.log(`   ✅ JITO tip already present (to ${key.pubkey.toBase58().substring(0, 8)}...)`);
+                      break;
+                    }
+                  }
+                }
+                if (hasTip) break;
+              }
+
+              if (!hasTip) {
+                console.log('\n💰 Adding JITO tip to last transaction (not present in pre-built TX)...');
+
+                // Select a random tip account for load balancing
+                const tipAccountsArray = Array.from(JITO_TIP_ACCOUNTS);
+                const randomTipAccount = new PublicKey(
+                  tipAccountsArray[Math.floor(Math.random() * tipAccountsArray.length)]
+                );
+
+                // Add tip instruction
+                lastTx.add(
+                  SystemProgram.transfer({
+                    fromPubkey: platformAuthorityKeypair.publicKey,
+                    toPubkey: randomTipAccount,
+                    lamports: JITO_TIP_AMOUNT,
+                  })
+                );
+
+                console.log(`   💸 Added ${JITO_TIP_AMOUNT} lamports tip to ${randomTipAccount.toBase58().substring(0, 12)}...`);
+
+                // Re-sign with platform authority (transaction message changed)
+                // IMPORTANT: Adding an instruction changes the transaction message hash,
+                // which invalidates ALL existing signatures. We must clear them and re-sign.
+                // This is different from partialSign() elsewhere which preserves existing sigs.
+                lastTx.signatures = lastTx.signatures.map(sig => ({
+                  publicKey: sig.publicKey,
+                  signature: null, // Intentionally clear - message changed, old sigs invalid
+                }));
+                lastTx.partialSign(platformAuthorityKeypair);
+
+                // Update the serialized transaction
+                const newSerializedTx = lastTx.serialize({ requireAllSignatures: false });
+
+                // Validate transaction size after adding tip instruction
+                if (newSerializedTx.length > SOLANA_TX_SIZE_LIMIT) {
+                  console.error(`   ❌ Transaction size ${newSerializedTx.length} exceeds limit ${SOLANA_TX_SIZE_LIMIT} after adding JITO tip`);
+                  return res.status(400).json({
+                    success: false,
+                    error: `Transaction exceeds size limit (${newSerializedTx.length}/${SOLANA_TX_SIZE_LIMIT} bytes) after adding JITO tip. ` +
+                           'The cNFT Merkle proof may be too large. Try enabling ENABLE_JITO_BUNDLES=true before creating the offer.',
+                    errorCode: 'TX_SIZE_EXCEEDED_AFTER_TIP',
+                    txSize: newSerializedTx.length,
+                    limit: SOLANA_TX_SIZE_LIMIT,
+                    timestamp: new Date().toISOString(),
+                  });
+                }
+
+                bulkSwapInfo.transactions[lastTxIndex].serialized = newSerializedTx.toString('base64');
+                console.log(`   ✅ Last transaction updated with JITO tip (size: ${newSerializedTx.length}/${SOLANA_TX_SIZE_LIMIT} bytes)`);
+              }
+            } else {
+              // Versioned transaction - validate that it already contains a JITO tip
+              // We cannot easily inject tips into versioned transactions due to ALT complexity,
+              // so we verify the tip exists and fail if not.
+              console.log('   🔍 Checking versioned transaction for JITO tip...');
+
+              const versionedTx = VersionedTransaction.deserialize(lastTxBuffer);
+              const message = versionedTx.message;
+
+              // Collect all account keys (static + any from address lookup tables)
+              const allAccountKeys: string[] = [];
+
+              // Add static account keys
+              for (const key of message.staticAccountKeys) {
+                allAccountKeys.push(key.toBase58());
+              }
+
+              // For V0 messages, also check address lookup table entries
+              // The loaded addresses would be resolved at runtime, but we can check
+              // if the transaction is configured to use ALTs that might contain tip accounts
+              if ('addressTableLookups' in message && message.addressTableLookups) {
+                // Note: We can't resolve ALT addresses without fetching the ALT account data.
+                // For now, we only check static keys. If using ALTs, the tip should be in static keys.
+                console.log(`   📋 Transaction has ${message.addressTableLookups.length} address lookup table(s)`);
+              }
+
+              // Check if any static account key is a JITO tip account
+              let versionedHasTip = false;
+              for (const accountKey of allAccountKeys) {
+                if (JITO_TIP_ACCOUNTS.has(accountKey)) {
+                  versionedHasTip = true;
+                  console.log(`   ✅ JITO tip account found in versioned TX: ${accountKey.substring(0, 12)}...`);
+                  break;
+                }
+              }
+
+              if (!versionedHasTip) {
+                console.error('   ❌ Versioned transaction missing JITO tip account');
+                return res.status(400).json({
+                  success: false,
+                  error: 'JITO bundle requires a tip but versioned transaction has no tip account. ' +
+                         'Rebuild the transaction with ENABLE_JITO_BUNDLES=true to include the tip.',
+                  errorCode: 'VERSIONED_TX_MISSING_JITO_TIP',
+                  suggestion: 'Set ENABLE_JITO_BUNDLES=true and recreate the offer to include JITO tips in transactions.',
+                  timestamp: new Date().toISOString(),
+                });
+              }
+            }
+          }
+          // ========== END INJECT JITO TIP ==========
+
           // Collect and sign all transactions
           const signedTransactions: string[] = [];
 
