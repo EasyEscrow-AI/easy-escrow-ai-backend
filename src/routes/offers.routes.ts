@@ -1806,6 +1806,85 @@ router.post(
     }
   }
 );
+/**
+ * POST /api/swaps/offers/:id/reject
+ * Reject an offer (as the owner of the requested assets)
+ * Used when someone makes a bid on your NFT and you want to decline it
+ */
+router.post(
+  '/api/swaps/offers/:id/reject',
+  standardRateLimiter,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const offerId = parseOfferId(req.params.id);
+      const { walletAddress } = req.body;
+
+      if (offerId === null) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation Error',
+          message: 'Invalid offer ID - must be a positive integer',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      if (!walletAddress) {
+        res.status(400).json({
+          success: false,
+          error: 'Validation Error',
+          message: 'walletAddress is required',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      await offerManager.rejectOffer(offerId, walletAddress);
+
+      res.status(200).json({
+        success: true,
+        data: {
+          message: `Offer ${offerId} rejected successfully`,
+          rejectedBy: walletAddress,
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Error rejecting offer:', error);
+
+      const errorMessage = error instanceof Error ? error.message : 'Failed to reject offer';
+
+      // Check for authorization errors
+      if (errorMessage.includes('Only the owner') || errorMessage.includes('Cannot reject your own')) {
+        res.status(403).json({
+          success: false,
+          error: 'Forbidden',
+          message: errorMessage,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      // Check for invalid state errors
+      if (errorMessage.includes('cannot be rejected') || errorMessage.includes('not found')) {
+        res.status(400).json({
+          success: false,
+          error: 'Invalid Request',
+          message: errorMessage,
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
+
+      res.status(500).json({
+        success: false,
+        error: 'Internal Server Error',
+        message: errorMessage,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+);
 
 /**
  * DELETE /api/swaps/offers/:id

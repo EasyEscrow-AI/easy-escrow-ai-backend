@@ -298,6 +298,7 @@ enum OfferStatus {
   CANCELLED // Offer was cancelled by maker
   EXPIRED // Offer expired based on expires_at timestamp
   COUNTERED // Original offer received a counter-offer
+  REJECTED // Offer was rejected by the target (owner of requested assets)
 }
 
 // Enum for swap transaction status
@@ -377,8 +378,10 @@ model SwapOffer {
   bundleStatus     String? @map("bundle_status") // Pending, Landed, Failed, Timeout
 
   // Enhanced offer management fields
-  cancelledBy String? @map("cancelled_by") // Wallet address that cancelled the offer
-  updateCount Int     @default(0) @map("update_count") // Number of times offer was modified
+  cancelledBy String?   @map("cancelled_by") // Wallet address that cancelled the offer
+  rejectedAt  DateTime? @map("rejected_at") // When the offer was rejected
+  rejectedBy  String?   @map("rejected_by") // Wallet address that rejected the offer
+  updateCount Int       @default(0) @map("update_count") // Number of times offer was modified
 
   // Relations
   maker               User              @relation("MakerOffers", fields: [makerWallet], references: [walletAddress], onDelete: Cascade)

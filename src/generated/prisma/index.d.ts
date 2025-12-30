@@ -190,7 +190,8 @@ export const OfferStatus: {
   FILLED: 'FILLED',
   CANCELLED: 'CANCELLED',
   EXPIRED: 'EXPIRED',
-  COUNTERED: 'COUNTERED'
+  COUNTERED: 'COUNTERED',
+  REJECTED: 'REJECTED'
 };
 
 export type OfferStatus = (typeof OfferStatus)[keyof typeof OfferStatus]
@@ -13457,6 +13458,8 @@ export namespace Prisma {
     transactionCount: number | null
     bundleStatus: string | null
     cancelledBy: string | null
+    rejectedAt: Date | null
+    rejectedBy: string | null
     updateCount: number | null
   }
 
@@ -13484,6 +13487,8 @@ export namespace Prisma {
     transactionCount: number | null
     bundleStatus: string | null
     cancelledBy: string | null
+    rejectedAt: Date | null
+    rejectedBy: string | null
     updateCount: number | null
   }
 
@@ -13513,6 +13518,8 @@ export namespace Prisma {
     transactionCount: number
     bundleStatus: number
     cancelledBy: number
+    rejectedAt: number
+    rejectedBy: number
     updateCount: number
     _all: number
   }
@@ -13562,6 +13569,8 @@ export namespace Prisma {
     transactionCount?: true
     bundleStatus?: true
     cancelledBy?: true
+    rejectedAt?: true
+    rejectedBy?: true
     updateCount?: true
   }
 
@@ -13589,6 +13598,8 @@ export namespace Prisma {
     transactionCount?: true
     bundleStatus?: true
     cancelledBy?: true
+    rejectedAt?: true
+    rejectedBy?: true
     updateCount?: true
   }
 
@@ -13618,6 +13629,8 @@ export namespace Prisma {
     transactionCount?: true
     bundleStatus?: true
     cancelledBy?: true
+    rejectedAt?: true
+    rejectedBy?: true
     updateCount?: true
     _all?: true
   }
@@ -13734,6 +13747,8 @@ export namespace Prisma {
     transactionCount: number
     bundleStatus: string | null
     cancelledBy: string | null
+    rejectedAt: Date | null
+    rejectedBy: string | null
     updateCount: number
     _count: SwapOfferCountAggregateOutputType | null
     _avg: SwapOfferAvgAggregateOutputType | null
@@ -13782,6 +13797,8 @@ export namespace Prisma {
     transactionCount?: boolean
     bundleStatus?: boolean
     cancelledBy?: boolean
+    rejectedAt?: boolean
+    rejectedBy?: boolean
     updateCount?: boolean
     maker?: boolean | UserDefaultArgs<ExtArgs>
     nonce?: boolean | NoncePoolDefaultArgs<ExtArgs>
@@ -13819,6 +13836,8 @@ export namespace Prisma {
     transactionCount?: boolean
     bundleStatus?: boolean
     cancelledBy?: boolean
+    rejectedAt?: boolean
+    rejectedBy?: boolean
     updateCount?: boolean
     maker?: boolean | UserDefaultArgs<ExtArgs>
     nonce?: boolean | NoncePoolDefaultArgs<ExtArgs>
@@ -13851,6 +13870,8 @@ export namespace Prisma {
     transactionCount?: boolean
     bundleStatus?: boolean
     cancelledBy?: boolean
+    rejectedAt?: boolean
+    rejectedBy?: boolean
     updateCount?: boolean
     maker?: boolean | UserDefaultArgs<ExtArgs>
     nonce?: boolean | NoncePoolDefaultArgs<ExtArgs>
@@ -13883,10 +13904,12 @@ export namespace Prisma {
     transactionCount?: boolean
     bundleStatus?: boolean
     cancelledBy?: boolean
+    rejectedAt?: boolean
+    rejectedBy?: boolean
     updateCount?: boolean
   }
 
-  export type SwapOfferOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "makerWallet" | "takerWallet" | "offerType" | "parentOfferId" | "offeredAssets" | "requestedAssets" | "offeredSolLamports" | "requestedSolLamports" | "platformFeeLamports" | "status" | "expiresAt" | "nonceAccount" | "currentNonceValue" | "serializedTransaction" | "transactionSignature" | "filledAt" | "cancelledAt" | "createdAt" | "updatedAt" | "isBulkSwap" | "bundleId" | "transactionCount" | "bundleStatus" | "cancelledBy" | "updateCount", ExtArgs["result"]["swapOffer"]>
+  export type SwapOfferOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "makerWallet" | "takerWallet" | "offerType" | "parentOfferId" | "offeredAssets" | "requestedAssets" | "offeredSolLamports" | "requestedSolLamports" | "platformFeeLamports" | "status" | "expiresAt" | "nonceAccount" | "currentNonceValue" | "serializedTransaction" | "transactionSignature" | "filledAt" | "cancelledAt" | "createdAt" | "updatedAt" | "isBulkSwap" | "bundleId" | "transactionCount" | "bundleStatus" | "cancelledBy" | "rejectedAt" | "rejectedBy" | "updateCount", ExtArgs["result"]["swapOffer"]>
   export type SwapOfferInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     maker?: boolean | UserDefaultArgs<ExtArgs>
     nonce?: boolean | NoncePoolDefaultArgs<ExtArgs>
@@ -13945,6 +13968,8 @@ export namespace Prisma {
       transactionCount: number
       bundleStatus: string | null
       cancelledBy: string | null
+      rejectedAt: Date | null
+      rejectedBy: string | null
       updateCount: number
     }, ExtArgs["result"]["swapOffer"]>
     composites: {}
@@ -14401,6 +14426,8 @@ export namespace Prisma {
     readonly transactionCount: FieldRef<"SwapOffer", 'Int'>
     readonly bundleStatus: FieldRef<"SwapOffer", 'String'>
     readonly cancelledBy: FieldRef<"SwapOffer", 'String'>
+    readonly rejectedAt: FieldRef<"SwapOffer", 'DateTime'>
+    readonly rejectedBy: FieldRef<"SwapOffer", 'String'>
     readonly updateCount: FieldRef<"SwapOffer", 'Int'>
   }
     
@@ -21784,6 +21811,8 @@ export namespace Prisma {
     transactionCount: 'transactionCount',
     bundleStatus: 'bundleStatus',
     cancelledBy: 'cancelledBy',
+    rejectedAt: 'rejectedAt',
+    rejectedBy: 'rejectedBy',
     updateCount: 'updateCount'
   };
 
@@ -23168,6 +23197,8 @@ export namespace Prisma {
     transactionCount?: IntFilter<"SwapOffer"> | number
     bundleStatus?: StringNullableFilter<"SwapOffer"> | string | null
     cancelledBy?: StringNullableFilter<"SwapOffer"> | string | null
+    rejectedAt?: DateTimeNullableFilter<"SwapOffer"> | Date | string | null
+    rejectedBy?: StringNullableFilter<"SwapOffer"> | string | null
     updateCount?: IntFilter<"SwapOffer"> | number
     maker?: XOR<UserScalarRelationFilter, UserWhereInput>
     nonce?: XOR<NoncePoolScalarRelationFilter, NoncePoolWhereInput>
@@ -23204,6 +23235,8 @@ export namespace Prisma {
     transactionCount?: SortOrder
     bundleStatus?: SortOrderInput | SortOrder
     cancelledBy?: SortOrderInput | SortOrder
+    rejectedAt?: SortOrderInput | SortOrder
+    rejectedBy?: SortOrderInput | SortOrder
     updateCount?: SortOrder
     maker?: UserOrderByWithRelationInput
     nonce?: NoncePoolOrderByWithRelationInput
@@ -23243,6 +23276,8 @@ export namespace Prisma {
     transactionCount?: IntFilter<"SwapOffer"> | number
     bundleStatus?: StringNullableFilter<"SwapOffer"> | string | null
     cancelledBy?: StringNullableFilter<"SwapOffer"> | string | null
+    rejectedAt?: DateTimeNullableFilter<"SwapOffer"> | Date | string | null
+    rejectedBy?: StringNullableFilter<"SwapOffer"> | string | null
     updateCount?: IntFilter<"SwapOffer"> | number
     maker?: XOR<UserScalarRelationFilter, UserWhereInput>
     nonce?: XOR<NoncePoolScalarRelationFilter, NoncePoolWhereInput>
@@ -23279,6 +23314,8 @@ export namespace Prisma {
     transactionCount?: SortOrder
     bundleStatus?: SortOrderInput | SortOrder
     cancelledBy?: SortOrderInput | SortOrder
+    rejectedAt?: SortOrderInput | SortOrder
+    rejectedBy?: SortOrderInput | SortOrder
     updateCount?: SortOrder
     _count?: SwapOfferCountOrderByAggregateInput
     _avg?: SwapOfferAvgOrderByAggregateInput
@@ -23316,6 +23353,8 @@ export namespace Prisma {
     transactionCount?: IntWithAggregatesFilter<"SwapOffer"> | number
     bundleStatus?: StringNullableWithAggregatesFilter<"SwapOffer"> | string | null
     cancelledBy?: StringNullableWithAggregatesFilter<"SwapOffer"> | string | null
+    rejectedAt?: DateTimeNullableWithAggregatesFilter<"SwapOffer"> | Date | string | null
+    rejectedBy?: StringNullableWithAggregatesFilter<"SwapOffer"> | string | null
     updateCount?: IntWithAggregatesFilter<"SwapOffer"> | number
   }
 
@@ -25040,6 +25079,8 @@ export namespace Prisma {
     transactionCount?: number
     bundleStatus?: string | null
     cancelledBy?: string | null
+    rejectedAt?: Date | string | null
+    rejectedBy?: string | null
     updateCount?: number
     maker: UserCreateNestedOneWithoutMakerOffersInput
     nonce: NoncePoolCreateNestedOneWithoutOffersInput
@@ -25076,6 +25117,8 @@ export namespace Prisma {
     transactionCount?: number
     bundleStatus?: string | null
     cancelledBy?: string | null
+    rejectedAt?: Date | string | null
+    rejectedBy?: string | null
     updateCount?: number
     counterOffers?: SwapOfferUncheckedCreateNestedManyWithoutParentOfferInput
     transactions?: SwapTransactionUncheckedCreateNestedManyWithoutOfferInput
@@ -25105,6 +25148,8 @@ export namespace Prisma {
     transactionCount?: IntFieldUpdateOperationsInput | number
     bundleStatus?: NullableStringFieldUpdateOperationsInput | string | null
     cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedBy?: NullableStringFieldUpdateOperationsInput | string | null
     updateCount?: IntFieldUpdateOperationsInput | number
     maker?: UserUpdateOneRequiredWithoutMakerOffersNestedInput
     nonce?: NoncePoolUpdateOneRequiredWithoutOffersNestedInput
@@ -25141,6 +25186,8 @@ export namespace Prisma {
     transactionCount?: IntFieldUpdateOperationsInput | number
     bundleStatus?: NullableStringFieldUpdateOperationsInput | string | null
     cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedBy?: NullableStringFieldUpdateOperationsInput | string | null
     updateCount?: IntFieldUpdateOperationsInput | number
     counterOffers?: SwapOfferUncheckedUpdateManyWithoutParentOfferNestedInput
     transactions?: SwapTransactionUncheckedUpdateManyWithoutOfferNestedInput
@@ -25174,6 +25221,8 @@ export namespace Prisma {
     transactionCount?: number
     bundleStatus?: string | null
     cancelledBy?: string | null
+    rejectedAt?: Date | string | null
+    rejectedBy?: string | null
     updateCount?: number
   }
 
@@ -25199,6 +25248,8 @@ export namespace Prisma {
     transactionCount?: IntFieldUpdateOperationsInput | number
     bundleStatus?: NullableStringFieldUpdateOperationsInput | string | null
     cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedBy?: NullableStringFieldUpdateOperationsInput | string | null
     updateCount?: IntFieldUpdateOperationsInput | number
   }
 
@@ -25228,6 +25279,8 @@ export namespace Prisma {
     transactionCount?: IntFieldUpdateOperationsInput | number
     bundleStatus?: NullableStringFieldUpdateOperationsInput | string | null
     cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedBy?: NullableStringFieldUpdateOperationsInput | string | null
     updateCount?: IntFieldUpdateOperationsInput | number
   }
 
@@ -27194,6 +27247,8 @@ export namespace Prisma {
     transactionCount?: SortOrder
     bundleStatus?: SortOrder
     cancelledBy?: SortOrder
+    rejectedAt?: SortOrder
+    rejectedBy?: SortOrder
     updateCount?: SortOrder
   }
 
@@ -27231,6 +27286,8 @@ export namespace Prisma {
     transactionCount?: SortOrder
     bundleStatus?: SortOrder
     cancelledBy?: SortOrder
+    rejectedAt?: SortOrder
+    rejectedBy?: SortOrder
     updateCount?: SortOrder
   }
 
@@ -27258,6 +27315,8 @@ export namespace Prisma {
     transactionCount?: SortOrder
     bundleStatus?: SortOrder
     cancelledBy?: SortOrder
+    rejectedAt?: SortOrder
+    rejectedBy?: SortOrder
     updateCount?: SortOrder
   }
 
@@ -30222,6 +30281,8 @@ export namespace Prisma {
     transactionCount?: number
     bundleStatus?: string | null
     cancelledBy?: string | null
+    rejectedAt?: Date | string | null
+    rejectedBy?: string | null
     updateCount?: number
     nonce: NoncePoolCreateNestedOneWithoutOffersInput
     parentOffer?: SwapOfferCreateNestedOneWithoutCounterOffersInput
@@ -30256,6 +30317,8 @@ export namespace Prisma {
     transactionCount?: number
     bundleStatus?: string | null
     cancelledBy?: string | null
+    rejectedAt?: Date | string | null
+    rejectedBy?: string | null
     updateCount?: number
     counterOffers?: SwapOfferUncheckedCreateNestedManyWithoutParentOfferInput
     transactions?: SwapTransactionUncheckedCreateNestedManyWithoutOfferInput
@@ -30424,6 +30487,8 @@ export namespace Prisma {
     transactionCount?: IntFilter<"SwapOffer"> | number
     bundleStatus?: StringNullableFilter<"SwapOffer"> | string | null
     cancelledBy?: StringNullableFilter<"SwapOffer"> | string | null
+    rejectedAt?: DateTimeNullableFilter<"SwapOffer"> | Date | string | null
+    rejectedBy?: StringNullableFilter<"SwapOffer"> | string | null
     updateCount?: IntFilter<"SwapOffer"> | number
   }
 
@@ -30507,6 +30572,8 @@ export namespace Prisma {
     transactionCount?: number
     bundleStatus?: string | null
     cancelledBy?: string | null
+    rejectedAt?: Date | string | null
+    rejectedBy?: string | null
     updateCount?: number
     maker: UserCreateNestedOneWithoutMakerOffersInput
     parentOffer?: SwapOfferCreateNestedOneWithoutCounterOffersInput
@@ -30541,6 +30608,8 @@ export namespace Prisma {
     transactionCount?: number
     bundleStatus?: string | null
     cancelledBy?: string | null
+    rejectedAt?: Date | string | null
+    rejectedBy?: string | null
     updateCount?: number
     counterOffers?: SwapOfferUncheckedCreateNestedManyWithoutParentOfferInput
     transactions?: SwapTransactionUncheckedCreateNestedManyWithoutOfferInput
@@ -30651,6 +30720,8 @@ export namespace Prisma {
     transactionCount?: number
     bundleStatus?: string | null
     cancelledBy?: string | null
+    rejectedAt?: Date | string | null
+    rejectedBy?: string | null
     updateCount?: number
     maker: UserCreateNestedOneWithoutMakerOffersInput
     nonce: NoncePoolCreateNestedOneWithoutOffersInput
@@ -30686,6 +30757,8 @@ export namespace Prisma {
     transactionCount?: number
     bundleStatus?: string | null
     cancelledBy?: string | null
+    rejectedAt?: Date | string | null
+    rejectedBy?: string | null
     updateCount?: number
     transactions?: SwapTransactionUncheckedCreateNestedManyWithoutOfferInput
     counterTransactions?: SwapTransactionUncheckedCreateNestedManyWithoutCounterOfferInput
@@ -30719,6 +30792,8 @@ export namespace Prisma {
     transactionCount?: number
     bundleStatus?: string | null
     cancelledBy?: string | null
+    rejectedAt?: Date | string | null
+    rejectedBy?: string | null
     updateCount?: number
     maker: UserCreateNestedOneWithoutMakerOffersInput
     nonce: NoncePoolCreateNestedOneWithoutOffersInput
@@ -30753,6 +30828,8 @@ export namespace Prisma {
     transactionCount?: number
     bundleStatus?: string | null
     cancelledBy?: string | null
+    rejectedAt?: Date | string | null
+    rejectedBy?: string | null
     updateCount?: number
     counterOffers?: SwapOfferUncheckedCreateNestedManyWithoutParentOfferInput
     transactions?: SwapTransactionUncheckedCreateNestedManyWithoutOfferInput
@@ -31045,6 +31122,8 @@ export namespace Prisma {
     transactionCount?: IntFieldUpdateOperationsInput | number
     bundleStatus?: NullableStringFieldUpdateOperationsInput | string | null
     cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedBy?: NullableStringFieldUpdateOperationsInput | string | null
     updateCount?: IntFieldUpdateOperationsInput | number
     maker?: UserUpdateOneRequiredWithoutMakerOffersNestedInput
     nonce?: NoncePoolUpdateOneRequiredWithoutOffersNestedInput
@@ -31080,6 +31159,8 @@ export namespace Prisma {
     transactionCount?: IntFieldUpdateOperationsInput | number
     bundleStatus?: NullableStringFieldUpdateOperationsInput | string | null
     cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedBy?: NullableStringFieldUpdateOperationsInput | string | null
     updateCount?: IntFieldUpdateOperationsInput | number
     transactions?: SwapTransactionUncheckedUpdateManyWithoutOfferNestedInput
     counterTransactions?: SwapTransactionUncheckedUpdateManyWithoutCounterOfferNestedInput
@@ -31231,6 +31312,8 @@ export namespace Prisma {
     transactionCount?: number
     bundleStatus?: string | null
     cancelledBy?: string | null
+    rejectedAt?: Date | string | null
+    rejectedBy?: string | null
     updateCount?: number
     maker: UserCreateNestedOneWithoutMakerOffersInput
     nonce: NoncePoolCreateNestedOneWithoutOffersInput
@@ -31266,6 +31349,8 @@ export namespace Prisma {
     transactionCount?: number
     bundleStatus?: string | null
     cancelledBy?: string | null
+    rejectedAt?: Date | string | null
+    rejectedBy?: string | null
     updateCount?: number
     counterOffers?: SwapOfferUncheckedCreateNestedManyWithoutParentOfferInput
     counterTransactions?: SwapTransactionUncheckedCreateNestedManyWithoutCounterOfferInput
@@ -31299,6 +31384,8 @@ export namespace Prisma {
     transactionCount?: number
     bundleStatus?: string | null
     cancelledBy?: string | null
+    rejectedAt?: Date | string | null
+    rejectedBy?: string | null
     updateCount?: number
     maker: UserCreateNestedOneWithoutMakerOffersInput
     nonce: NoncePoolCreateNestedOneWithoutOffersInput
@@ -31334,6 +31421,8 @@ export namespace Prisma {
     transactionCount?: number
     bundleStatus?: string | null
     cancelledBy?: string | null
+    rejectedAt?: Date | string | null
+    rejectedBy?: string | null
     updateCount?: number
     counterOffers?: SwapOfferUncheckedCreateNestedManyWithoutParentOfferInput
     transactions?: SwapTransactionUncheckedCreateNestedManyWithoutOfferInput
@@ -31444,6 +31533,8 @@ export namespace Prisma {
     transactionCount?: IntFieldUpdateOperationsInput | number
     bundleStatus?: NullableStringFieldUpdateOperationsInput | string | null
     cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedBy?: NullableStringFieldUpdateOperationsInput | string | null
     updateCount?: IntFieldUpdateOperationsInput | number
     maker?: UserUpdateOneRequiredWithoutMakerOffersNestedInput
     nonce?: NoncePoolUpdateOneRequiredWithoutOffersNestedInput
@@ -31479,6 +31570,8 @@ export namespace Prisma {
     transactionCount?: IntFieldUpdateOperationsInput | number
     bundleStatus?: NullableStringFieldUpdateOperationsInput | string | null
     cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedBy?: NullableStringFieldUpdateOperationsInput | string | null
     updateCount?: IntFieldUpdateOperationsInput | number
     counterOffers?: SwapOfferUncheckedUpdateManyWithoutParentOfferNestedInput
     counterTransactions?: SwapTransactionUncheckedUpdateManyWithoutCounterOfferNestedInput
@@ -31518,6 +31611,8 @@ export namespace Prisma {
     transactionCount?: IntFieldUpdateOperationsInput | number
     bundleStatus?: NullableStringFieldUpdateOperationsInput | string | null
     cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedBy?: NullableStringFieldUpdateOperationsInput | string | null
     updateCount?: IntFieldUpdateOperationsInput | number
     maker?: UserUpdateOneRequiredWithoutMakerOffersNestedInput
     nonce?: NoncePoolUpdateOneRequiredWithoutOffersNestedInput
@@ -31553,6 +31648,8 @@ export namespace Prisma {
     transactionCount?: IntFieldUpdateOperationsInput | number
     bundleStatus?: NullableStringFieldUpdateOperationsInput | string | null
     cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedBy?: NullableStringFieldUpdateOperationsInput | string | null
     updateCount?: IntFieldUpdateOperationsInput | number
     counterOffers?: SwapOfferUncheckedUpdateManyWithoutParentOfferNestedInput
     transactions?: SwapTransactionUncheckedUpdateManyWithoutOfferNestedInput
@@ -32289,6 +32386,8 @@ export namespace Prisma {
     transactionCount?: number
     bundleStatus?: string | null
     cancelledBy?: string | null
+    rejectedAt?: Date | string | null
+    rejectedBy?: string | null
     updateCount?: number
     maker: UserCreateNestedOneWithoutMakerOffersInput
     nonce: NoncePoolCreateNestedOneWithoutOffersInput
@@ -32324,6 +32423,8 @@ export namespace Prisma {
     transactionCount?: number
     bundleStatus?: string | null
     cancelledBy?: string | null
+    rejectedAt?: Date | string | null
+    rejectedBy?: string | null
     updateCount?: number
     counterOffers?: SwapOfferUncheckedCreateNestedManyWithoutParentOfferInput
     transactions?: SwapTransactionUncheckedCreateNestedManyWithoutOfferInput
@@ -32368,6 +32469,8 @@ export namespace Prisma {
     transactionCount?: IntFieldUpdateOperationsInput | number
     bundleStatus?: NullableStringFieldUpdateOperationsInput | string | null
     cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedBy?: NullableStringFieldUpdateOperationsInput | string | null
     updateCount?: IntFieldUpdateOperationsInput | number
     maker?: UserUpdateOneRequiredWithoutMakerOffersNestedInput
     nonce?: NoncePoolUpdateOneRequiredWithoutOffersNestedInput
@@ -32403,6 +32506,8 @@ export namespace Prisma {
     transactionCount?: IntFieldUpdateOperationsInput | number
     bundleStatus?: NullableStringFieldUpdateOperationsInput | string | null
     cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedBy?: NullableStringFieldUpdateOperationsInput | string | null
     updateCount?: IntFieldUpdateOperationsInput | number
     counterOffers?: SwapOfferUncheckedUpdateManyWithoutParentOfferNestedInput
     transactions?: SwapTransactionUncheckedUpdateManyWithoutOfferNestedInput
@@ -32558,6 +32663,8 @@ export namespace Prisma {
     transactionCount?: number
     bundleStatus?: string | null
     cancelledBy?: string | null
+    rejectedAt?: Date | string | null
+    rejectedBy?: string | null
     updateCount?: number
   }
 
@@ -32627,6 +32734,8 @@ export namespace Prisma {
     transactionCount?: IntFieldUpdateOperationsInput | number
     bundleStatus?: NullableStringFieldUpdateOperationsInput | string | null
     cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedBy?: NullableStringFieldUpdateOperationsInput | string | null
     updateCount?: IntFieldUpdateOperationsInput | number
     nonce?: NoncePoolUpdateOneRequiredWithoutOffersNestedInput
     parentOffer?: SwapOfferUpdateOneWithoutCounterOffersNestedInput
@@ -32661,6 +32770,8 @@ export namespace Prisma {
     transactionCount?: IntFieldUpdateOperationsInput | number
     bundleStatus?: NullableStringFieldUpdateOperationsInput | string | null
     cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedBy?: NullableStringFieldUpdateOperationsInput | string | null
     updateCount?: IntFieldUpdateOperationsInput | number
     counterOffers?: SwapOfferUncheckedUpdateManyWithoutParentOfferNestedInput
     transactions?: SwapTransactionUncheckedUpdateManyWithoutOfferNestedInput
@@ -32693,6 +32804,8 @@ export namespace Prisma {
     transactionCount?: IntFieldUpdateOperationsInput | number
     bundleStatus?: NullableStringFieldUpdateOperationsInput | string | null
     cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedBy?: NullableStringFieldUpdateOperationsInput | string | null
     updateCount?: IntFieldUpdateOperationsInput | number
   }
 
@@ -32851,6 +32964,8 @@ export namespace Prisma {
     transactionCount?: number
     bundleStatus?: string | null
     cancelledBy?: string | null
+    rejectedAt?: Date | string | null
+    rejectedBy?: string | null
     updateCount?: number
   }
 
@@ -32876,6 +32991,8 @@ export namespace Prisma {
     transactionCount?: IntFieldUpdateOperationsInput | number
     bundleStatus?: NullableStringFieldUpdateOperationsInput | string | null
     cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedBy?: NullableStringFieldUpdateOperationsInput | string | null
     updateCount?: IntFieldUpdateOperationsInput | number
     maker?: UserUpdateOneRequiredWithoutMakerOffersNestedInput
     parentOffer?: SwapOfferUpdateOneWithoutCounterOffersNestedInput
@@ -32910,6 +33027,8 @@ export namespace Prisma {
     transactionCount?: IntFieldUpdateOperationsInput | number
     bundleStatus?: NullableStringFieldUpdateOperationsInput | string | null
     cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedBy?: NullableStringFieldUpdateOperationsInput | string | null
     updateCount?: IntFieldUpdateOperationsInput | number
     counterOffers?: SwapOfferUncheckedUpdateManyWithoutParentOfferNestedInput
     transactions?: SwapTransactionUncheckedUpdateManyWithoutOfferNestedInput
@@ -32942,6 +33061,8 @@ export namespace Prisma {
     transactionCount?: IntFieldUpdateOperationsInput | number
     bundleStatus?: NullableStringFieldUpdateOperationsInput | string | null
     cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedBy?: NullableStringFieldUpdateOperationsInput | string | null
     updateCount?: IntFieldUpdateOperationsInput | number
   }
 
@@ -32970,6 +33091,8 @@ export namespace Prisma {
     transactionCount?: number
     bundleStatus?: string | null
     cancelledBy?: string | null
+    rejectedAt?: Date | string | null
+    rejectedBy?: string | null
     updateCount?: number
   }
 
@@ -33039,6 +33162,8 @@ export namespace Prisma {
     transactionCount?: IntFieldUpdateOperationsInput | number
     bundleStatus?: NullableStringFieldUpdateOperationsInput | string | null
     cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedBy?: NullableStringFieldUpdateOperationsInput | string | null
     updateCount?: IntFieldUpdateOperationsInput | number
     maker?: UserUpdateOneRequiredWithoutMakerOffersNestedInput
     nonce?: NoncePoolUpdateOneRequiredWithoutOffersNestedInput
@@ -33073,6 +33198,8 @@ export namespace Prisma {
     transactionCount?: IntFieldUpdateOperationsInput | number
     bundleStatus?: NullableStringFieldUpdateOperationsInput | string | null
     cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedBy?: NullableStringFieldUpdateOperationsInput | string | null
     updateCount?: IntFieldUpdateOperationsInput | number
     counterOffers?: SwapOfferUncheckedUpdateManyWithoutParentOfferNestedInput
     transactions?: SwapTransactionUncheckedUpdateManyWithoutOfferNestedInput
@@ -33105,6 +33232,8 @@ export namespace Prisma {
     transactionCount?: IntFieldUpdateOperationsInput | number
     bundleStatus?: NullableStringFieldUpdateOperationsInput | string | null
     cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedBy?: NullableStringFieldUpdateOperationsInput | string | null
     updateCount?: IntFieldUpdateOperationsInput | number
   }
 

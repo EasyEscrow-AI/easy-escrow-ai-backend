@@ -2718,13 +2718,14 @@ function renderActiveListings() {
   container.querySelectorAll('.incoming-bid-btn.counter').forEach((btn) => {
     btn.addEventListener('click', function (e) {
       e.stopPropagation();
-      const { name, price } = this.dataset;
-      // Counter offer from seller perspective means updating listing price
-      // For now, show a message - in the future, could open a "Update Listing Price" modal
-      addLog(`💡 To counter the ${price} SOL bid on "${name}":`, 'info');
-      addLog(`   1. Cancel your current listing`, 'info');
-      addLog(`   2. Create a new listing at your desired price`, 'info');
-      addLog(`   The bidder will see your new price and can accept or counter again.`, 'info');
+      const { bidId, name, image, assetId, price } = this.dataset;
+      // Show counter offer modal for seller to enter a new price
+      showSellerCounterModal(bidId, {
+        name,
+        image,
+        assetId,
+        currentBidPrice: price,
+      });
     });
   });
 
@@ -2808,13 +2809,28 @@ async function handleDeclineIncomingBid(bidId) {
   try {
     addLog(`🔄 Declining bid ${bidId}...`, 'info');
 
-    // Cancel the bid (as the NFT owner declining it)
-    // Note: This may need admin privileges or a different endpoint
-    // For now, we'll just refresh to show the user the bid is still there
-    addLog('💡 To decline a bid, the bidder must cancel it themselves', 'info');
+    // Call the reject offer API
+    const response = await fetch(`/api/swaps/offers/${bidId}/reject`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        walletAddress: MAKER_ADDRESS,
+      }),
+    });
 
-    // Refresh listings
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.message || 'Failed to decline bid');
+    }
+
+    addLog(`✅ Bid declined successfully!`, 'success');
+
+    // Refresh listings and marketplace
     await loadActiveListings();
+    await loadMarketplaceListings();
   } catch (error) {
     console.error('Decline bid error:', error);
     addLog(`❌ Failed to decline bid: ${error.message}`, 'error');
@@ -3006,6 +3022,49 @@ function viewOfferDetails(offerId) {
 // Counter offer state
 let counterOfferData = null;
 
+// Seller counter offer state (when seller counters an incoming bid)
+let sellerCounterData = null;
+
+// Show seller counter modal (seller countering an incoming bid)
+function showSellerCounterModal(bidId, bidData) {
+  const modal = document.getElementById('counter-offer-modal');
+  if (!modal) return;
+
+  // Store seller counter data
+  sellerCounterData = { bidId, ...bidData, isSellerCounter: true };
+  counterOfferData = null; // Clear buyer counter data
+
+  // Update modal content
+  const headerEl = modal.querySelector('.cancel-listing-modal-header h3');
+  const headerDescEl = modal.querySelector('.cancel-listing-modal-header p');
+  const imageEl = document.getElementById('counter-offer-image');
+  const nameEl = document.getElementById('counter-offer-name');
+  const priceEl = document.getElementById('counter-offer-original-price');
+  const priceInput = document.getElementById('counter-offer-price');
+  const submitBtn = document.getElementById('counter-offer-submit');
+
+  if (headerEl) headerEl.textContent = '💰 Counter Bid';
+  if (headerDescEl) headerDescEl.textContent = 'Enter the price you want for this NFT';
+  if (imageEl) imageEl.src = bidData.image || getPlaceholderImage(bidData.assetId);
+  if (nameEl) nameEl.textContent = bidData.name || 'Unknown NFT';
+  if (priceEl) priceEl.textContent = `Current bid: ${bidData.currentBidPrice} SOL`;
+  if (submitBtn) submitBtn.textContent = 'Update Listing Price';
+
+  // Set default to slightly higher than current bid
+  if (priceInput) {
+    const suggestedPrice = (parseFloat(bidData.currentBidPrice) * 1.1).toFixed(4);
+    priceInput.value = suggestedPrice;
+    // Trigger USD display update
+    const usdDisplay = document.getElementById('counter-offer-price-usd');
+    if (usdDisplay && solPriceUSD) {
+      const usdValue = (parseFloat(suggestedPrice) * solPriceUSD).toFixed(2);
+      usdDisplay.textContent = `≈ ${usdValue} USD`;
+    }
+  }
+
+  modal.classList.add('show');
+}
+
 // Show counter offer modal
 function showCounterOfferModal(offerId, offerData) {
   const modal = document.getElementById('counter-offer-modal');
@@ -3041,11 +3100,89 @@ function hideCounterOfferModal() {
   const modal = document.getElementById('counter-offer-modal');
   if (modal) modal.classList.remove('show');
   counterOfferData = null;
+  sellerCounterData = null;
+}
+
+// Handle seller counter offer (reject bid and suggest new listing price)
+async function handleSellerCounter() {
+  if (!sellerCounterData) {
+    addLog('❌ No bid selected to counter', 'error');
+    return;
+  }
+
+  if (!MAKER_ADDRESS) {
+    addLog('❌ Please load the Maker wallet first', 'error');
+    return;
+  }
+
+  const priceInput = document.getElementById('counter-offer-price');
+  const newPrice = parseFloat(priceInput?.value || '0');
+
+  if (!newPrice || newPrice <= 0) {
+    addLog('❌ Please enter a valid price', 'error');
+    return;
+  }
+
+  const submitBtn = document.getElementById('counter-offer-submit');
+  const originalText = submitBtn ? submitBtn.innerHTML : '';
+
+  try {
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '⏳ Processing...';
+    }
+
+    addLog(`💰 Countering bid on "${sellerCounterData.name}" with ${newPrice} SOL...`, 'info');
+
+    // Step 1: Reject the incoming bid
+    const rejectResponse = await fetch(`/api/swaps/offers/${sellerCounterData.bidId}/reject`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        walletAddress: MAKER_ADDRESS,
+      }),
+    });
+
+    const rejectResult = await rejectResponse.json();
+
+    if (!rejectResult.success) {
+      throw new Error(rejectResult.message || 'Failed to reject bid');
+    }
+
+    addLog('✅ Incoming bid rejected!', 'success');
+    addLog(`💡 To complete your counter at ${newPrice} SOL:`, 'info');
+    addLog(`   1. Cancel your current listing`, 'info');
+    addLog(`   2. Create a new listing at ${newPrice} SOL`, 'info');
+    addLog(`   The bidder will see your new price.`, 'info');
+
+    hideCounterOfferModal();
+
+    // Refresh listings
+    await loadActiveListings();
+    await loadMarketplaceListings();
+  } catch (error) {
+    console.error('Seller counter error:', error);
+    addLog(`❌ Failed to counter: ${error.message}`, 'error');
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalText;
+    }
+  }
 }
 
 // Submit counter offer - creates a new offer with the desired price
 // The taker offers SOL in exchange for the NFT they want to buy
+// OR handles seller counter (rejecting bid and suggesting price update)
 async function handleSubmitCounterOffer() {
+  // Handle seller counter (when seller is countering an incoming bid)
+  if (sellerCounterData) {
+    await handleSellerCounter();
+    return;
+  }
+
   if (!counterOfferData) {
     addLog('❌ No offer selected', 'error');
     return;
@@ -3162,6 +3299,8 @@ window.handleCancelOffer = handleCancelOffer;
 window.showCancelOfferModal = showCancelOfferModal;
 window.viewOfferDetails = viewOfferDetails;
 window.showCounterOfferModal = showCounterOfferModal;
+window.showSellerCounterModal = showSellerCounterModal;
+window.handleSellerCounter = handleSellerCounter;
 window.hideCounterOfferModal = hideCounterOfferModal;
 window.handleSubmitCounterOffer = handleSubmitCounterOffer;
 window.handleAcceptIncomingBid = handleAcceptIncomingBid;
