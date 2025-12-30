@@ -807,47 +807,146 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
           });
         }
 
-        // ========== JIT REBUILD FOR cNFT TRANSACTIONS ==========
-        // For cNFT transactions (TX 2+), ALWAYS rebuild with fresh Merkle proof.
+        // ========== cNFT RAPID JIT RETRY LOOP ==========
+        // For cNFT transactions (TX 2+), use rapid JIT retry with fresh proof on each attempt.
+        // Hyperactive Merkle trees can change multiple times per second, so we need to:
+        // 1. JIT rebuild with fresh proof
+        // 2. Sign and send immediately
+        // 3. If stale proof error, immediately retry (up to MAX_JIT_ATTEMPTS)
         //
-        // CRITICAL: We cannot just validate the proof - the proof is EMBEDDED in the transaction
-        // at build time. Even if DAS returns a fresh proof now, the transaction still has the
-        // OLD proof baked in from when it was built. We MUST rebuild the entire transaction
-        // with a fresh proof immediately before submission.
-        //
-        // The TX 1 (SOL transfer) has no cNFT proof risk, so we skip i === 0.
+        // This is more aggressive than single JIT + slow rebuild fallback.
         if (txInfo.cnftAssetId && i > 0) {
-          console.log(`\n🔄 JIT: ALWAYS rebuilding cNFT TX ${i + 1} with fresh proof...`);
+          const MAX_JIT_ATTEMPTS = 5;
+          let jitSuccess = false;
+          let lastSignature = '';
+
+          console.log(`\n🔄 cNFT TX ${i + 1}: Starting rapid JIT retry loop (max ${MAX_JIT_ATTEMPTS} attempts)`);
           console.log(`   Asset: ${txInfo.cnftAssetId.substring(0, 12)}...`);
           console.log(`   From: ${txInfo.cnftFromWallet?.substring(0, 8)}... → To: ${txInfo.cnftToWallet?.substring(0, 8)}...`);
 
-          try {
-            // Rebuild this transaction with fresh proof and blockhash
-            const freshTxItem = await transactionGroupBuilder.buildSingleCnftTransactionJIT(
-              txInfo.cnftAssetId,
-              new PublicKey(txInfo.cnftFromWallet),
-              new PublicKey(txInfo.cnftToWallet),
-              txInfo.purpose
-            );
+          for (let attempt = 1; attempt <= MAX_JIT_ATTEMPTS && !jitSuccess; attempt++) {
+            console.log(`\n   🔄 JIT attempt ${attempt}/${MAX_JIT_ATTEMPTS}...`);
 
-            // Update txInfo with fresh transaction data
-            if (freshTxItem.transaction?.serializedTransaction) {
-              txInfo.serialized = freshTxItem.transaction.serializedTransaction;
-              txInfo.requiredSigners = freshTxItem.transaction.requiredSigners;
-              console.log(`   ✅ JIT: TX ${i + 1} rebuilt with fresh proof embedded`);
-            } else {
-              throw new Error('JIT rebuild returned empty transaction');
+            try {
+              // 1. JIT rebuild with fresh proof
+              const freshTxItem = await transactionGroupBuilder.buildSingleCnftTransactionJIT(
+                txInfo.cnftAssetId,
+                new PublicKey(txInfo.cnftFromWallet),
+                new PublicKey(txInfo.cnftToWallet),
+                `${txInfo.purpose} (attempt ${attempt})`
+              );
+
+              if (!freshTxItem.transaction?.serializedTransaction) {
+                throw new Error('JIT rebuild returned empty transaction');
+              }
+
+              // 2. Determine signers and sign
+              const freshRequiredSigners = freshTxItem.transaction.requiredSigners || [];
+              const freshSigners: Keypair[] = [];
+
+              if (freshRequiredSigners.includes(makerAddress)) {
+                freshSigners.push(makerKeypair);
+              }
+              if (freshRequiredSigners.includes(takerAddress)) {
+                freshSigners.push(takerKeypair);
+              }
+
+              const txBuffer = Buffer.from(freshTxItem.transaction.serializedTransaction, 'base64');
+              const tx = Transaction.from(txBuffer);
+              if (freshSigners.length > 0) {
+                tx.partialSign(...freshSigners);
+              }
+
+              // 3. Send immediately
+              const signature = await connection.sendRawTransaction(tx.serialize(), {
+                skipPreflight: false,
+                preflightCommitment: 'confirmed',
+              });
+              lastSignature = signature;
+              console.log(`      📤 Sent: ${signature.substring(0, 16)}...`);
+
+              // 4. Wait for confirmation (shorter timeout for rapid retry)
+              const confirmation = await Promise.race([
+                connection.confirmTransaction(signature, 'confirmed'),
+                new Promise((_, reject) =>
+                  setTimeout(() => reject(new Error('ConfirmationTimeout')), 15000)
+                ),
+              ]) as any;
+
+              if (confirmation.value.err) {
+                const errorStr = JSON.stringify(confirmation.value.err);
+                // Check if stale proof error (6001)
+                if (errorStr.includes('6001')) {
+                  console.log(`      ⚠️ Stale proof (attempt ${attempt}), retrying immediately...`);
+                  continue; // Retry with fresh JIT
+                }
+                throw new Error(`TX failed on-chain: ${errorStr}`);
+              }
+
+              // Success!
+              jitSuccess = true;
+              signatures.push(signature);
+              console.log(`   ✅ TX ${i + 1} confirmed after ${attempt} attempt(s)`);
+
+            } catch (attemptError: any) {
+              const errorMsg = attemptError.message || '';
+
+              // Check if this is a stale proof error we can retry
+              if (errorMsg.includes('6001') || isCnftProofStaleError(attemptError)) {
+                console.log(`      ⚠️ Stale proof error (attempt ${attempt}), retrying...`);
+                continue; // Retry with fresh JIT
+              }
+
+              // Check if confirmation timeout (might still have landed)
+              if (errorMsg.includes('ConfirmationTimeout') && lastSignature) {
+                console.log(`      ⏳ Confirmation timeout, checking if TX landed...`);
+                await new Promise(r => setTimeout(r, 2000));
+                const txStatus = await connection.getTransaction(lastSignature, {
+                  commitment: 'confirmed',
+                  maxSupportedTransactionVersion: 0,
+                });
+                if (txStatus && !txStatus.meta?.err) {
+                  jitSuccess = true;
+                  signatures.push(lastSignature);
+                  console.log(`   ✅ TX ${i + 1} confirmed (via fallback check) after ${attempt} attempt(s)`);
+                  break;
+                }
+                // TX didn't land or failed, retry
+                console.log(`      ⚠️ TX not found or failed, retrying...`);
+                continue;
+              }
+
+              // Non-recoverable error
+              console.error(`      ❌ Attempt ${attempt} failed with non-recoverable error: ${errorMsg}`);
+              throw attemptError;
             }
-          } catch (jitError: any) {
-            console.error(`   ❌ JIT rebuild failed: ${jitError.message}`);
-            // This is a critical failure - we cannot proceed with stale proof
-            throw new Error(`JIT rebuild failed for cNFT ${txInfo.cnftAssetId.substring(0, 12)}...: ${jitError.message}`);
           }
-        }
-        // ========== END JIT REBUILD ==========
 
+          if (!jitSuccess) {
+            const errorMsg = `TX ${i + 1} failed after ${MAX_JIT_ATTEMPTS} rapid JIT attempts. ` +
+              `The Merkle tree for this cNFT is too active for sequential RPC execution. ` +
+              `Enable JITO bundles (ENABLE_JITO_BUNDLES=true) for atomic cNFT swaps.`;
+            console.error(`   ❌ ${errorMsg}`);
+            return res.status(500).json({
+              success: false,
+              error: errorMsg,
+              errorCode: 'TREE_TOO_ACTIVE',
+              suggestion: 'Enable JITO bundles for mainnet cNFT swaps',
+              signatures,
+              timestamp: new Date().toISOString(),
+            });
+          }
+
+          // Small delay before next transaction
+          if (i < bulkSwapInfo.transactions.length - 1) {
+            await new Promise(r => setTimeout(r, 200));
+          }
+          continue; // Skip the non-cNFT flow below
+        }
+        // ========== END cNFT RAPID JIT RETRY LOOP ==========
+
+        // ========== NON-cNFT TRANSACTION FLOW (TX 1: SOL transfers) ==========
         // Determine signers for THIS specific transaction
-        // Use requiredSigners from the transaction if available, otherwise fall back to global
         const txRequiredSigners = txInfo.requiredSigners || requireSignatures || [];
         const signers: Keypair[] = [];
         
@@ -958,161 +1057,27 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
           
         } catch (txError: any) {
           console.error(`   ❌ TX ${i + 1} failed:`, txError.message);
-
-          // Check if this is a stale proof error
-          const isStaleProof = isCnftProofStaleError(txError);
-          console.log(`   🔍 Stale proof check: isStaleProof=${isStaleProof}, offerId=${offerId}, errorMessage="${txError.message?.substring(0, 100)}..."`);
-
-          if (isStaleProof && offerId) {
-            console.warn(`   ⚠️  Stale cNFT proof detected in TX ${i + 1}`);
-            console.warn('   Attempting to rebuild transactions with fresh proofs...');
-
-            try {
-              // Clear proof cache to ensure fresh proofs are fetched
-              cnftService.clearAllCachedProofs();
-
-              // Rebuild all transactions with fresh proofs
-              const rebuildResult = await offerManager.rebuildTransaction(offerId);
-
-              const freshTransactions = rebuildResult.transactionGroup?.transactions;
-              if (freshTransactions && freshTransactions.length > i) {
-                console.log(`   ✅ Transactions rebuilt (${freshTransactions.length} total). Retrying from TX ${i + 1}...`);
-
-                // Continue from the failed transaction with fresh data
-                for (let j = i; j < freshTransactions.length && j < bulkSwapInfo.transactions.length; j++) {
-                  const freshTxInfo = freshTransactions[j];
-                  console.log(`\n📝 Retrying TX ${j + 1}/${freshTransactions.length} with fresh proof: ${freshTxInfo.purpose}`);
-
-                  // Access serialized transaction from the nested transaction object
-                  const serializedTx = freshTxInfo.transaction?.serializedTransaction;
-                  if (!serializedTx) {
-                    throw new Error(`Fresh transaction ${j + 1} has no serialized transaction data`);
-                  }
-
-                  const freshTxBuffer = Buffer.from(serializedTx, 'base64');
-                  const isFreshVersioned = (freshTxBuffer[0] & 0x80) !== 0;
-
-                  // Determine signers for this transaction
-                  const freshTxRequiredSigners = freshTxInfo.transaction?.requiredSigners || [];
-                  const freshSigners: Keypair[] = [];
-
-                  if (freshTxRequiredSigners.includes(makerAddress)) {
-                    freshSigners.push(makerKeypair);
-                  }
-                  if (freshTxRequiredSigners.includes(takerAddress)) {
-                    freshSigners.push(takerKeypair);
-                  }
-
-                  let freshSignature: string;
-
-                  if (isFreshVersioned) {
-                    const freshVersionedTx = VersionedTransaction.deserialize(freshTxBuffer);
-                    if (freshSigners.length > 0) {
-                      freshVersionedTx.sign(freshSigners);
-                    }
-                    freshSignature = await connection.sendRawTransaction(freshVersionedTx.serialize(), {
-                      skipPreflight: false,
-                      preflightCommitment: 'confirmed',
-                    });
-                  } else {
-                    const freshTx = Transaction.from(freshTxBuffer);
-                    if (freshSigners.length > 0) {
-                      freshTx.partialSign(...freshSigners);
-                    }
-                    freshSignature = await connection.sendRawTransaction(freshTx.serialize(), {
-                      skipPreflight: false,
-                      preflightCommitment: 'confirmed',
-                    });
-                  }
-
-                  console.log(`   📤 Fresh TX ${j + 1} sent: ${freshSignature}`);
-
-                  // Wait for confirmation
-                  const freshConfirmation = await connection.confirmTransaction(freshSignature, 'confirmed');
-
-                  if (freshConfirmation.value.err) {
-                    throw new Error(`Fresh TX ${j + 1} failed on-chain: ${JSON.stringify(freshConfirmation.value.err)}`);
-                  }
-
-                  console.log(`   ✅ Fresh TX ${j + 1} confirmed`);
-                  signatures.push(freshSignature);
-
-                  // Small delay between transactions
-                  if (j < freshTransactions.length - 1) {
-                    await new Promise(r => setTimeout(r, 200));
-                  }
-                }
-
-                // All remaining transactions completed successfully
-                console.log(`\n✅ BULK SWAP COMPLETE (after stale proof retry): ${signatures.length} transactions confirmed`);
-
-                return res.json({
-                  success: true,
-                  data: {
-                    signatures,
-                    signature: signatures[signatures.length - 1],
-                    network: networkName,
-                    isBulkSwap: true,
-                    transactionCount: signatures.length,
-                    retriedFromTx: i + 1,
-                  },
-                  timestamp: new Date().toISOString(),
-                });
-              } else {
-                console.warn('   ⚠️  Rebuild did not return bulk transactions, cannot retry');
-              }
-            } catch (rebuildError: any) {
-              console.error('   ❌ Failed to rebuild transactions:', rebuildError.message);
-            }
-
-            // If rebuild/retry failed, return the original error
-            return res.status(409).json({
-              success: false,
-              error: `Transaction ${i + 1} (${txInfo.purpose || 'unknown'}) failed: Stale Merkle proof`,
-              errorCode: 'STALE_CNFT_PROOF',
-              message: 'The cNFT Merkle tree changed since the transaction was built. Automatic retry failed.',
-              signatures: signatures,
-              failedTxIndex: i,
-              failedTxPurpose: txInfo.purpose,
-              timestamp: new Date().toISOString(),
-            });
-          }
-
-          if (isStaleProof) {
-            // No offerId available for rebuild
-            return res.status(409).json({
-              success: false,
-              error: `Transaction ${i + 1} (${txInfo.purpose || 'unknown'}) failed: Stale Merkle proof`,
-              errorCode: 'STALE_CNFT_PROOF',
-              message: 'The cNFT Merkle tree changed since the transaction was built. Please rebuild the swap and retry.',
-              signatures: signatures,
-              failedTxIndex: i,
-              failedTxPurpose: txInfo.purpose,
-              timestamp: new Date().toISOString(),
-            });
-          }
-
+          // For non-cNFT transactions (TX 1: SOL transfers), just fail - no stale proof retry needed
+          // cNFT transactions use the rapid JIT retry loop above and won't reach here
           return res.status(500).json({
             success: false,
-            error: `Transaction ${i + 1} (${txInfo.purpose || 'unknown'}) failed: ${txError.message}`,
-            signatures: signatures, // Return any successful signatures
-            failedTxIndex: i,
+            error: `Transaction ${i + 1} (${txInfo.purpose}) failed: ${txError.message}`,
+            signatures,
             timestamp: new Date().toISOString(),
           });
         }
+        // ========== END NON-cNFT TRANSACTION FLOW ==========
       }
-      
-      console.log(`\n✅ BULK SWAP COMPLETE: ${signatures.length} transactions confirmed`);
-      
+
+      // All transactions completed successfully
+      console.log(`\n✅ All ${bulkSwapInfo.transactions.length} transactions completed successfully!`);
+      console.log('📝 Signatures:', signatures);
+
       return res.json({
         success: true,
-        data: {
-          signatures,
-          signature: signatures[signatures.length - 1], // Last signature for backwards compat
-          network: networkName,
-          isBulkSwap: true,
-          transactionCount: signatures.length,
-        },
+        signatures,
+        transactionCount: bulkSwapInfo.transactions.length,
+        strategy: bulkSwapInfo.strategy || 'DIRECT_BUBBLEGUM_BUNDLE',
         timestamp: new Date().toISOString(),
       });
     }
