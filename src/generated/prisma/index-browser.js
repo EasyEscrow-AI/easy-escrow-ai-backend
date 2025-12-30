@@ -289,6 +289,8 @@ exports.Prisma.SwapOfferScalarFieldEnum = {
   transactionCount: 'transactionCount',
   bundleStatus: 'bundleStatus',
   cancelledBy: 'cancelledBy',
+  rejectedAt: 'rejectedAt',
+  rejectedBy: 'rejectedBy',
   updateCount: 'updateCount'
 };
 
@@ -505,7 +507,8 @@ exports.OfferStatus = exports.$Enums.OfferStatus = {
   FILLED: 'FILLED',
   CANCELLED: 'CANCELLED',
   EXPIRED: 'EXPIRED',
-  COUNTERED: 'COUNTERED'
+  COUNTERED: 'COUNTERED',
+  REJECTED: 'REJECTED'
 };
 
 exports.TransactionStatus = exports.$Enums.TransactionStatus = {

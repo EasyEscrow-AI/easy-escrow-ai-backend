@@ -1470,9 +1470,97 @@ export class OfferManager {
       });
     } catch (error) {
       console.error('[OfferManager] Error confirming swap:', error);
+      throw error;    }
+  }
+
+  /**
+   * Reject an offer (as the owner of requested assets)
+   *
+   * Used when someone makes a bid on your NFT and you want to decline it.
+   * The rejecter must own at least one of the requested assets.
+   *
+   * @param offerId - The offer ID to reject
+   * @param walletAddress - The wallet of the person rejecting (must own requested assets)
+   */
+  async rejectOffer(offerId: number, walletAddress: string): Promise<void> {
+    console.log('[OfferManager] Rejecting offer:', { offerId, wallet: walletAddress });
+
+    try {
+      // 1. Load offer
+      const offer = await this.prisma.swapOffer.findUnique({
+        where: { id: offerId },
+      });
+
+      if (!offer) {
+        throw new Error('Offer not found');
+      }
+
+      // 2. Cannot reject your own offer (use cancel instead)
+      if (offer.makerWallet === walletAddress) {
+        throw new Error('Cannot reject your own offer. Use cancel instead.');
+      }
+
+      // 3. Verify the rejecter owns at least one of the requested assets
+      // Parse requestedAssets from JSON
+      const requestedAssets = offer.requestedAssets as any[];
+      if (!requestedAssets || requestedAssets.length === 0) {
+        throw new Error('Offer has no requested assets to validate ownership');
+      }
+
+      // Validate that the caller owns at least one of the requested assets
+      let ownsRequestedAsset = false;
+      for (const asset of requestedAssets) {
+        try {
+          // Normalize asset type
+          const assetType = (asset.type?.toUpperCase?.() || 'NFT') as AssetType;
+          const validationResult = await this.assetValidator.validateAsset(
+            walletAddress,
+            asset.identifier,
+            assetType
+          );
+          if (validationResult.isValid) {
+            ownsRequestedAsset = true;
+            console.log('[OfferManager] Ownership verified for asset:', asset.identifier);
+            break;
+          }
+        } catch (e) {
+          // Continue checking other assets
+          console.log('[OfferManager] Asset validation failed, trying next:', e);
+        }
+      }
+
+      if (!ownsRequestedAsset) {
+        throw new Error('Only the owner of the requested assets can reject this offer');
+      }
+
+      // 4. Verify offer is rejectable (only ACTIVE offers can be rejected)
+      if (offer.status !== OfferStatus.ACTIVE) {
+        throw new Error(`Offer cannot be rejected (status: ${offer.status})`);
+      }
+
+      // 5. Update offer as rejected
+      await this.prisma.swapOffer.update({
+        where: { id: offerId },
+        data: {
+          status: OfferStatus.REJECTED,
+          rejectedAt: new Date(),
+          rejectedBy: walletAddress,
+        },
+      });
+
+      // 6. Release nonce back to pool
+      await this.noncePoolManager.releaseNonce(offer.nonceAccount);
+
+      console.log('[OfferManager] Offer rejected:', {
+        offerId,
+        rejectedBy: walletAddress,
+      });
+    } catch (error) {
+      console.error('[OfferManager] Failed to reject offer:', error);
       throw error;
     }
   }
+
 }
 
 /**
