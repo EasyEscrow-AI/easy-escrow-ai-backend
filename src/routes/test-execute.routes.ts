@@ -325,28 +325,9 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
       console.log('   Maker:', makerAddress);
       console.log('   Taker:', takerAddress);
 
-      // ========== LEGACY: JITO FOR MULTI-CNFT SWAPS (DISABLED) ==========
-      // NOTE: cNFT-to-cNFT swaps now use TWO-PHASE DELEGATION flow instead of JITO bundles.
-      // New offers are routed to two-phase at accept time (see swapFlowRouter.ts).
-      // This code path only executes for legacy offers created before the routing change.
-      // For legacy offers, we use sequential RPC with JIT proof rebuilding instead of JITO.
-      //
-      // Old behavior (disabled): Force JITO bundles for atomic execution
-      // New behavior: Let sequential RPC handle with JIT proof rebuilding per transaction
-      const cnftTransactionCount = bulkSwapInfo.transactions.filter(
-        (tx: any) => tx.purpose && tx.purpose.includes('cNFT transfer')
-      ).length;
-
-      if (cnftTransactionCount >= 2 && isMainnet) {
-        console.log(`\n🔒 Multi-cNFT swap detected (${cnftTransactionCount} cNFT transfers)`);
-        console.log('   ℹ️  Legacy offer: Using sequential RPC with JIT proof rebuilding');
-        console.log('   ℹ️  Note: New cNFT↔cNFT offers use two-phase delegation (no JITO needed)');
-        // DISABLED: No longer forcing JITO - two-phase delegation handles this better
-        // bulkSwapInfo.requiresJitoBundle = true;
-      }
-      // ========== END LEGACY JITO BLOCK ==========
-
       // Check if Jito bundle is required (mainnet with requiresJitoBundle flag)
+      // Note: cNFT-to-cNFT swaps are routed to two-phase delegation at accept time,
+      // so they won't have requiresJitoBundle=true. This path is for SPL/Core NFT bundles.
       if (bulkSwapInfo.requiresJitoBundle && isMainnet) {
         console.log('\n📦 Using Jito Bundle for atomic execution...');
 
