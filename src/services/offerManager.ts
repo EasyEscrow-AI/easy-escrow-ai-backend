@@ -115,7 +115,28 @@ export class OfferManager {
     console.log('[OfferManager] Bulk swap support: enabled');
     console.log(`[OfferManager] JITO bundles: ${isJitoBundlesEnabled() ? 'ENABLED' : 'DISABLED'}`);
   }
-  
+
+  /**
+   * Normalize asset type from various formats to standard AssetType enum values.
+   * Handles database JSON variants and different casing.
+   *
+   * @param type - Raw asset type from database or API (e.g., 'NFT', 'cnft', 'compressed', 'core')
+   * @returns Normalized AssetType enum value
+   */
+  private normalizeAssetType(type: any): AssetType {
+    if (!type) {
+      return AssetType.NFT;
+    }
+    const typeStr = String(type).toLowerCase();
+    if (typeStr === 'cnft' || typeStr === 'compressed') {
+      return AssetType.CNFT;
+    }
+    if (typeStr === 'core_nft' || typeStr === 'core') {
+      return AssetType.CORE_NFT;
+    }
+    return AssetType.NFT;
+  }
+
   /**
    * Create a new swap offer
    */
@@ -694,36 +715,16 @@ export class OfferManager {
       authorizedAppId: params.authorizedAppId || 'none',
     });
     
-    // Helper to normalize asset types (database JSON might have different casing)
-    const normalizeAssetType = (type: any): AssetType => {
-      if (!type) {
-        console.log(`[OfferManager] normalizeAssetType: type is null/undefined, defaulting to NFT`);
-        return AssetType.NFT;
-      }
-      const typeStr = String(type).toLowerCase();
-      console.log(`[OfferManager] normalizeAssetType: input="${type}" (typeof ${typeof type}), normalized="${typeStr}"`);
-      if (typeStr === 'cnft' || typeStr === 'compressed') {
-        console.log(`[OfferManager] normalizeAssetType: returning CNFT`);
-        return AssetType.CNFT;
-      }
-      if (typeStr === 'core_nft' || typeStr === 'core') {
-        console.log(`[OfferManager] normalizeAssetType: returning CORE_NFT`);
-        return AssetType.CORE_NFT;
-      }
-      console.log(`[OfferManager] normalizeAssetType: returning NFT (default)`);
-      return AssetType.NFT;
-    };
-    
     const inputs: TransactionBuildInputs = {
       makerPubkey: new PublicKey(params.makerWallet),
       takerPubkey: new PublicKey(params.takerWallet),
       makerAssets: params.offeredAssets.map((a) => ({
-        type: normalizeAssetType(a.type),
+        type: this.normalizeAssetType(a.type),
         identifier: a.identifier,
       })),
       makerSolLamports: params.offeredSol,
       takerAssets: params.requestedAssets.map((a) => ({
-        type: normalizeAssetType(a.type),
+        type: this.normalizeAssetType(a.type),
         identifier: a.identifier,
       })),
       takerSolLamports: params.requestedSol,
@@ -1511,9 +1512,8 @@ export class OfferManager {
       let ownsRequestedAsset = false;
       for (const asset of requestedAssets) {
         try {
-          // Normalize asset type - AssetType enum uses lowercase values ('nft', 'cnft', 'core_nft')
-          const rawType = asset.type?.toLowerCase?.() || 'nft';
-          const assetType = rawType as AssetType;
+          // Use centralized asset type normalization
+          const assetType = this.normalizeAssetType(asset.type);
 
           console.log('[OfferManager] Validating ownership:', {
             wallet: walletAddress.substring(0, 8) + '...',
