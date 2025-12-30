@@ -1680,8 +1680,9 @@ async function executeSwapWithRetry(offerId, acceptData, isBulkSwap = false, bul
   return data;
 }
 
-// Helper: Execute two-phase swap lock transactions sequentially
-async function executeTwoPhaseSwap(offerId, acceptData, addLog) {
+// Helper: Execute two-phase swap with pre-built lock transactions from accept response
+// Used when atomic offers are converted to two-phase (cNFT-to-cNFT swaps)
+async function executeTwoPhaseSwapWithData(offerId, acceptData, addLog) {
   // Use twoPhaseSwapId if available (for converted atomic offers)
   const swapId = acceptData.data.twoPhaseSwapId || offerId;
   const lockTx = acceptData.data.lockTransaction;
@@ -2039,7 +2040,7 @@ async function executeAtomicSwap(params) {
     if (isTwoPhaseSwap) {
       addLog('Step 3: Executing two-phase swap (lock/settle)...', 'info');
       addLog('🔐 Signing with test wallet private keys...', 'info');
-      executeData = await executeTwoPhaseSwap(offerId, acceptData, addLog);
+      executeData = await executeTwoPhaseSwapWithData(offerId, acceptData, addLog);
     }
     // Handle bulk swaps (Jito bundles or sequential)
     else if (isBulkSwap && bulkSwapInfo) {
