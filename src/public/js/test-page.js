@@ -4348,11 +4348,12 @@ async function handleConfirmCancelListing() {
       }
     }
 
-    // Auto-close and refresh marketplace/wallet after delay (but NOT loadActiveListings which clears all)
+    // Auto-close and refresh marketplace after delay
+    // Note: Don't call loadWalletInfo('maker') as it triggers loadActiveListings() via override
+    // The wallet doesn't need refresh - the NFT is still there (just unlisted)
     setTimeout(async () => {
       hideCancelListingModal();
       await loadMarketplaceListings();
-      await loadWalletInfo('maker');
     }, 2000);
   } catch (error) {
     console.error('Cancel listing error:', error);
