@@ -1502,9 +1502,14 @@ export class OfferManager {
       }
 
       // 3. Verify the rejecter is authorized to reject this offer
-      // A wallet can reject if:
+      // Two-path authorization: A wallet can reject if either condition is met:
       // a) They are the takerWallet (intended recipient of a targeted/private offer), OR
       // b) They own at least one of the requested assets
+      //
+      // Why two paths? When someone makes a bid/counter-offer on a listing, the takerWallet
+      // is set to the listing owner. If that owner later sells/transfers the asset, they
+      // should still be able to reject stale bids targeting them. Without this, sold assets
+      // would leave orphaned offers that the original recipient cannot clean up.
 
       let isAuthorizedToReject = false;
 
@@ -1560,7 +1565,9 @@ export class OfferManager {
       }
 
       if (!isAuthorizedToReject) {
-        throw new Error('Only the owner of the requested assets can reject this offer');
+        throw new Error(
+          "Only the offer's intended recipient (takerWallet) or an owner of at least one requested asset can reject this offer"
+        );
       }
 
       // 4. Verify offer is rejectable (only ACTIVE offers can be rejected)
