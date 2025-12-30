@@ -215,7 +215,7 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
         const isOwnedNFT = amount === 1 && decimals === 0 && owner === address;
         
         if (!isOwnedNFT && decimals === 0) {
-          console.log(`[Test Route] Filtered out SPL token: ${account.account.data.parsed.info.mint} (amount: ${amount})`);
+          // console.log(`[Test Route] Filtered out SPL token: ${account.account.data.parsed.info.mint} (amount: ${amount})`);
         }
         
         return isOwnedNFT;
@@ -261,8 +261,8 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
           // DEDICATED TEST TREE - Only show cNFTs from our private tree
           // If not set, show all cNFTs (for backwards compatibility)
           const DEDICATED_TEST_TREE = process.env.STAGING_TEST_TREE;
-          console.log(`[Test Route] STAGING_TEST_TREE env var: ${DEDICATED_TEST_TREE || 'NOT SET (showing all trees)'}`);
-          console.log(`[Test Route] DAS API returned ${totalAssets} total assets for ${address}`);
+          // console.log(`[Test Route] STAGING_TEST_TREE env var: ${DEDICATED_TEST_TREE || 'NOT SET (showing all trees)'}`);
+          // console.log(`[Test Route] DAS API returned ${totalAssets} total assets for ${address}`);
           
           // Log all asset types for debugging
           const assetTypes = dasData.result.items.reduce((acc: any, asset: any) => {
@@ -270,7 +270,7 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
             acc[type] = (acc[type] || 0) + 1;
             return acc;
           }, {});
-          console.log(`[Test Route] Asset types found:`, assetTypes);
+          // console.log(`[Test Route] Asset types found:`, assetTypes);
           
           // Filter for cNFTs (compressed NFTs)
           const filteredCNfts = dasData.result.items
@@ -309,7 +309,7 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
               return isValid;
             });
           
-          console.log(`[Test Route] After cNFT filtering: ${filteredCNfts.length} valid cNFTs found`);
+          // console.log(`[Test Route] After cNFT filtering: ${filteredCNfts.length} valid cNFTs found`);
           
           // Filter for Metaplex Core NFTs (MplCoreAsset)
           // Note: Different RPC providers may use different interface names
@@ -355,7 +355,7 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
               return isValid;
             });
           
-          console.log(`[Test Route] Found ${coreNfts.length} valid Metaplex Core NFTs`);
+          // console.log(`[Test Route] Found ${coreNfts.length} valid Metaplex Core NFTs`);
           
           // Map cNFTs to our format
           let isFirstLog = true;
