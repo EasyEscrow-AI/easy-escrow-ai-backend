@@ -2555,11 +2555,11 @@ function renderActiveListings() {
         offerTypeLabel = '💰 Your Bid';
         cardStyle = 'border-left: 4px solid #f59e0b;'; // Orange border for bids
 
-        // Determine NFT type
-        const assetType = requestedAsset?.type;
-        if (assetType === 'CNFT' || assetType === 'cNFT') {
+        // Determine NFT type (backend stores lowercase: 'cnft', 'core_nft', 'nft')
+        const assetType = requestedAsset?.type?.toLowerCase();
+        if (assetType === 'cnft') {
           nftType = 'cNFT';
-        } else if (assetType === 'CORE_NFT' || assetType === 'Core') {
+        } else if (assetType === 'core_nft') {
           nftType = 'Core NFT';
         } else {
           nftType = 'SPL NFT';
@@ -2573,11 +2573,11 @@ function renderActiveListings() {
         priceSol = (parseInt(offer.requestedSol || '0') / 1e9).toFixed(4);
         cardStyle = '';
 
-        // Determine NFT type
-        const assetType = offeredAsset?.type;
-        if (assetType === 'CNFT' || assetType === 'cNFT') {
+        // Determine NFT type (backend stores lowercase: 'cnft', 'core_nft', 'nft')
+        const assetType = offeredAsset?.type?.toLowerCase();
+        if (assetType === 'cnft') {
           nftType = 'cNFT';
-        } else if (assetType === 'CORE_NFT' || assetType === 'Core') {
+        } else if (assetType === 'core_nft') {
           nftType = 'Core NFT';
         } else {
           nftType = 'SPL NFT';
@@ -3257,12 +3257,17 @@ async function handleQuickListConfirm() {
     }
 
     // Build offer request - NFT for SOL (open swap offer)
+    // Include metadata so it can be displayed in marketplace listings
     const offerRequest = {
       makerWallet: MAKER_ADDRESS,
       offeredAssets: [
         {
           identifier: quickListAsset.mint,
           type: assetType,
+          metadata: {
+            name: quickListAsset.name || 'Unknown NFT',
+            image: getNftImage(quickListAsset) || getPlaceholderImage(quickListAsset.mint),
+          },
         },
       ],
       requestedAssets: [],
@@ -3519,11 +3524,12 @@ function renderMarketplaceListings() {
       const seller = offer.makerWallet;
 
       // Determine NFT type from asset
+      // Note: Backend stores lowercase enum values ('cnft', 'core_nft', 'nft')
       let nftType = 'SPL NFT';
-      const assetType = offeredAsset?.type;
-      if (assetType === 'CNFT' || assetType === 'cNFT') {
+      const assetType = offeredAsset?.type?.toLowerCase();
+      if (assetType === 'cnft') {
         nftType = 'cNFT';
-      } else if (assetType === 'CORE_NFT' || assetType === 'Core') {
+      } else if (assetType === 'core_nft') {
         nftType = 'Core NFT';
       }
 
@@ -4459,12 +4465,17 @@ handleQuickListConfirm = async function () {
     }
 
     // Build offer request - NFT for SOL (open swap offer)
+    // Include metadata so it can be displayed in marketplace listings
     const offerRequest = {
       makerWallet: MAKER_ADDRESS,
       offeredAssets: [
         {
           identifier: quickListAsset.mint,
           type: assetType,
+          metadata: {
+            name: quickListAsset.name || 'Unknown NFT',
+            image: getNftImage(quickListAsset) || getPlaceholderImage(quickListAsset.mint),
+          },
         },
       ],
       requestedAssets: [],
