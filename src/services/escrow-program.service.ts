@@ -1355,7 +1355,10 @@ export class EscrowProgramService {
     
     const startTime = Date.now();
     const timeoutMs = timeoutSeconds * 1000;
-    const maxPolls = 2; // Max 2 polls - if it doesn't land quickly, it won't land at all
+    // Derive maxPolls from timeout - with exponential backoff (3s, 4.8s, 7.7s, 12.3s, 20s cap),
+    // we get roughly 1 poll per 5s average. Add buffer for multi-asset swaps under congestion.
+    // Minimum 10 polls to handle network delays, scale up with longer timeouts.
+    const maxPolls = Math.max(10, Math.ceil(timeoutSeconds / 3));
     let pollCount = 0;
 
     // Delay briefly before first poll to avoid immediate "not found" and reduce rate limits.
