@@ -352,6 +352,32 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
               }
             }
 
+            // Fallback: If no assets in transaction data, load from offer
+            if (assetIds.length === 0 && offerId) {
+              console.log('   📋 No assets in transaction data, loading from offer...');
+              try {
+                const offer = await offerManager.getOffer(offerId);
+                if (offer) {
+                  // OfferSummary uses offeredAssets/requestedAssets (maker's offered = makerAssets)
+                  for (const asset of (offer.offeredAssets || [])) {
+                    if ((asset.type === 'cnft' || asset.type === 'CNFT') && asset.identifier) {
+                      assetIds.push(asset.identifier);
+                    }
+                  }
+                  for (const asset of (offer.requestedAssets || [])) {
+                    if ((asset.type === 'cnft' || asset.type === 'CNFT') && asset.identifier) {
+                      assetIds.push(asset.identifier);
+                    }
+                  }
+                  if (assetIds.length > 0) {
+                    console.log(`   ✅ Loaded ${assetIds.length} cNFT asset ID(s) from offer`);
+                  }
+                }
+              } catch (offerError: any) {
+                console.warn('   ⚠️  Could not load offer for asset IDs:', offerError.message);
+              }
+            }
+
             if (assetIds.length > 0) {
               // Validate each proof against on-chain root
               let hasStaleProof = false;
@@ -631,6 +657,32 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
             if (asset?.identifier) {
               assetIdsSeq.push(asset.identifier);
             }
+          }
+        }
+
+        // Fallback: If no assets in transaction data, load from offer
+        if (assetIdsSeq.length === 0 && offerId) {
+          console.log('   📋 No assets in transaction data, loading from offer...');
+          try {
+            const offer = await offerManager.getOffer(offerId);
+            if (offer) {
+              // OfferSummary uses offeredAssets/requestedAssets (maker's offered = makerAssets)
+              for (const asset of (offer.offeredAssets || [])) {
+                if ((asset.type === 'cnft' || asset.type === 'CNFT') && asset.identifier) {
+                  assetIdsSeq.push(asset.identifier);
+                }
+              }
+              for (const asset of (offer.requestedAssets || [])) {
+                if ((asset.type === 'cnft' || asset.type === 'CNFT') && asset.identifier) {
+                  assetIdsSeq.push(asset.identifier);
+                }
+              }
+              if (assetIdsSeq.length > 0) {
+                console.log(`   ✅ Loaded ${assetIdsSeq.length} cNFT asset ID(s) from offer`);
+              }
+            }
+          } catch (offerError: any) {
+            console.warn('   ⚠️  Could not load offer for asset IDs:', offerError.message);
           }
         }
 
