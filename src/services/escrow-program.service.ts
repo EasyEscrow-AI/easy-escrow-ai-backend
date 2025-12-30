@@ -1355,13 +1355,14 @@ export class EscrowProgramService {
     
     const startTime = Date.now();
     const timeoutMs = timeoutSeconds * 1000;
+    const maxPolls = 2; // Max 2 polls - if it doesn't land quickly, it won't land at all
     let pollCount = 0;
 
     // Delay briefly before first poll to avoid immediate "not found" and reduce rate limits.
     const initialDelayMs = 2000 + Math.floor(Math.random() * 1000); // 2–3s
     await new Promise(resolve => setTimeout(resolve, initialDelayMs));
-    
-    while (Date.now() - startTime < timeoutMs) {
+
+    while (Date.now() - startTime < timeoutMs && pollCount < maxPolls) {
       pollCount++;
       
       const elapsed = (Date.now() - startTime) / 1000;
@@ -1448,8 +1449,9 @@ export class EscrowProgramService {
       await new Promise(resolve => setTimeout(resolve, pollInterval));
     }
     
-    // Timeout
-    console.warn(`[EscrowProgramService] Bundle ${bundleId} confirmation timeout after ${timeoutSeconds}s`);
+    // Timeout - either hit time limit or max polls
+    const reason = pollCount >= maxPolls ? `max polls reached (${maxPolls})` : `timeout after ${timeoutSeconds}s`;
+    console.warn(`[EscrowProgramService] Bundle ${bundleId} confirmation failed: ${reason}`);
     return {
       confirmed: false,
       status: 'Timeout',
