@@ -324,7 +324,83 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
       console.log('✅ Keypairs loaded for bulk swap');
       console.log('   Maker:', makerAddress);
       console.log('   Taker:', takerAddress);
-      
+
+      // ========== PROACTIVE TREE ACTIVITY CHECK ==========
+      // Check cNFT Merkle tree activity BEFORE building/submitting transactions.
+      // If any tree is hyperactive (changing multiple times per second), auto-escalate to JITO
+      // to prevent stale proof failures during sequential RPC execution.
+      const cnftTransactionsForTreeCheck = bulkSwapInfo.transactions.filter(
+        (tx: any) => tx.purpose && tx.purpose.includes('cNFT transfer')
+      );
+
+      if (cnftTransactionsForTreeCheck.length > 0 && offerId && isMainnet) {
+        console.log(`\n🔍 Proactive tree activity check for ${cnftTransactionsForTreeCheck.length} cNFT transaction(s)...`);
+
+        // Extract asset IDs from transactions or load from offer
+        const assetIdsForTreeCheck: string[] = [];
+        for (const tx of cnftTransactionsForTreeCheck) {
+          const makerCnfts = (tx.assets?.makerAssets || []).filter((a: any) =>
+            a.type === 'cnft' || a.type === 'CNFT'
+          );
+          const takerCnfts = (tx.assets?.takerAssets || []).filter((a: any) =>
+            a.type === 'cnft' || a.type === 'CNFT'
+          );
+          for (const asset of [...makerCnfts, ...takerCnfts]) {
+            if (asset?.identifier) {
+              assetIdsForTreeCheck.push(asset.identifier);
+            }
+          }
+        }
+
+        // Fallback: load from offer if not in transaction data
+        if (assetIdsForTreeCheck.length === 0 && offerId) {
+          try {
+            const offer = await offerManager.getOffer(offerId);
+            if (offer) {
+              for (const asset of (offer.offeredAssets || [])) {
+                if ((asset.type === 'cnft' || asset.type === 'CNFT') && asset.identifier) {
+                  assetIdsForTreeCheck.push(asset.identifier);
+                }
+              }
+              for (const asset of (offer.requestedAssets || [])) {
+                if ((asset.type === 'cnft' || asset.type === 'CNFT') && asset.identifier) {
+                  assetIdsForTreeCheck.push(asset.identifier);
+                }
+              }
+            }
+          } catch (offerError: any) {
+            console.warn('   ⚠️  Could not load offer for tree check:', offerError.message);
+          }
+        }
+
+        if (assetIdsForTreeCheck.length > 0) {
+          try {
+            const treeActivityResult = await cnftService.checkAssetsTreeActivity(assetIdsForTreeCheck);
+
+            if (treeActivityResult.overallRecommendation === 'jito') {
+              console.log(`   🔥 HYPERACTIVE TREE(S) DETECTED - Auto-escalating to JITO bundles`);
+              console.log(`   ${treeActivityResult.reason}`);
+
+              // Force JITO mode for this swap (even if originally sequential)
+              if (!bulkSwapInfo.requiresJitoBundle) {
+                console.log('   📦 Overriding: requiresJitoBundle → true');
+                bulkSwapInfo.requiresJitoBundle = true;
+              }
+            } else {
+              console.log('   ✅ All trees are stable - proceeding with original strategy');
+            }
+          } catch (treeCheckError: any) {
+            console.warn('   ⚠️  Tree activity check failed:', treeCheckError.message);
+            // On error, be conservative and use JITO if mainnet
+            if (isMainnet && !bulkSwapInfo.requiresJitoBundle) {
+              console.log('   📦 Defaulting to JITO bundles due to tree check error');
+              bulkSwapInfo.requiresJitoBundle = true;
+            }
+          }
+        }
+      }
+      // ========== END PROACTIVE TREE ACTIVITY CHECK ==========
+
       // Check if Jito bundle is required (mainnet with requiresJitoBundle flag)
       if (bulkSwapInfo.requiresJitoBundle && isMainnet) {
         console.log('\n📦 Using Jito Bundle for atomic execution...');
@@ -816,7 +892,7 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
         //
         // This is more aggressive than single JIT + slow rebuild fallback.
         if (txInfo.cnftAssetId && i > 0) {
-          const MAX_JIT_ATTEMPTS = 5;
+          const MAX_JIT_ATTEMPTS = 3;
           let jitSuccess = false;
           let lastSignature = '';
 
@@ -916,9 +992,17 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
                 continue;
               }
 
-              // Non-recoverable error
+              // Non-recoverable error - return immediately with partial signatures
               console.error(`      ❌ Attempt ${attempt} failed with non-recoverable error: ${errorMsg}`);
-              throw attemptError;
+              return res.status(500).json({
+                success: false,
+                error: `TX ${i + 1} (cNFT transfer) failed with non-recoverable error: ${errorMsg}`,
+                errorCode: 'CNFT_TX_FAILED',
+                partialSuccess: signatures.length > 0,
+                signatures,
+                failedTransactionIndex: i,
+                timestamp: new Date().toISOString(),
+              });
             }
           }
 
@@ -1075,9 +1159,16 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
 
       return res.json({
         success: true,
+        data: {
+          signatures,
+          signature: signatures[signatures.length - 1], // Last signature for backwards compatibility
+          transactionCount: bulkSwapInfo.transactions.length,
+          strategy: bulkSwapInfo.strategy || 'DIRECT_BUBBLEGUM_BUNDLE',
+          network: networkName,
+          isBulkSwap: true,
+        },
+        // Also include at top level for backwards compatibility
         signatures,
-        transactionCount: bulkSwapInfo.transactions.length,
-        strategy: bulkSwapInfo.strategy || 'DIRECT_BUBBLEGUM_BUNDLE',
         timestamp: new Date().toISOString(),
       });
     }
