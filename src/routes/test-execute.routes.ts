@@ -325,81 +325,23 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
       console.log('   Maker:', makerAddress);
       console.log('   Taker:', takerAddress);
 
-      // ========== PROACTIVE TREE ACTIVITY CHECK ==========
-      // Check cNFT Merkle tree activity BEFORE building/submitting transactions.
-      // If any tree is hyperactive (changing multiple times per second), auto-escalate to JITO
-      // to prevent stale proof failures during sequential RPC execution.
-      const cnftTransactionsForTreeCheck = bulkSwapInfo.transactions.filter(
+      // ========== FORCE JITO FOR MULTI-CNFT SWAPS ==========
+      // cNFT-to-cNFT swaps on mainnet MUST use JITO bundles.
+      // Sequential RPC cannot reliably handle shared/hyperactive Merkle trees because:
+      // 1. Tree activity is bursty and unpredictable
+      // 2. Proofs can become stale in the 5-15 seconds between TX 1 confirmation and TX 2 submission
+      // 3. Even with JIT retries, hyperactive trees can outpace our rebuilds
+      // JITO bundles solve this by executing all TXs atomically in the same slot.
+      const cnftTransactionCount = bulkSwapInfo.transactions.filter(
         (tx: any) => tx.purpose && tx.purpose.includes('cNFT transfer')
-      );
+      ).length;
 
-      if (cnftTransactionsForTreeCheck.length > 0 && offerId && isMainnet) {
-        console.log(`\n🔍 Proactive tree activity check for ${cnftTransactionsForTreeCheck.length} cNFT transaction(s)...`);
-
-        // Extract asset IDs from transactions or load from offer
-        const assetIdsForTreeCheck: string[] = [];
-        for (const tx of cnftTransactionsForTreeCheck) {
-          const makerCnfts = (tx.assets?.makerAssets || []).filter((a: any) =>
-            a.type === 'cnft' || a.type === 'CNFT'
-          );
-          const takerCnfts = (tx.assets?.takerAssets || []).filter((a: any) =>
-            a.type === 'cnft' || a.type === 'CNFT'
-          );
-          for (const asset of [...makerCnfts, ...takerCnfts]) {
-            if (asset?.identifier) {
-              assetIdsForTreeCheck.push(asset.identifier);
-            }
-          }
-        }
-
-        // Fallback: load from offer if not in transaction data
-        if (assetIdsForTreeCheck.length === 0 && offerId) {
-          try {
-            const offer = await offerManager.getOffer(offerId);
-            if (offer) {
-              for (const asset of (offer.offeredAssets || [])) {
-                if ((asset.type === 'cnft' || asset.type === 'CNFT') && asset.identifier) {
-                  assetIdsForTreeCheck.push(asset.identifier);
-                }
-              }
-              for (const asset of (offer.requestedAssets || [])) {
-                if ((asset.type === 'cnft' || asset.type === 'CNFT') && asset.identifier) {
-                  assetIdsForTreeCheck.push(asset.identifier);
-                }
-              }
-            }
-          } catch (offerError: any) {
-            console.warn('   ⚠️  Could not load offer for tree check:', offerError.message);
-          }
-        }
-
-        if (assetIdsForTreeCheck.length > 0) {
-          try {
-            const treeActivityResult = await cnftService.checkAssetsTreeActivity(assetIdsForTreeCheck);
-
-            if (treeActivityResult.overallRecommendation === 'jito') {
-              console.log(`   🔥 HYPERACTIVE TREE(S) DETECTED - Auto-escalating to JITO bundles`);
-              console.log(`   ${treeActivityResult.reason}`);
-
-              // Force JITO mode for this swap (even if originally sequential)
-              if (!bulkSwapInfo.requiresJitoBundle) {
-                console.log('   📦 Overriding: requiresJitoBundle → true');
-                bulkSwapInfo.requiresJitoBundle = true;
-              }
-            } else {
-              console.log('   ✅ All trees are stable - proceeding with original strategy');
-            }
-          } catch (treeCheckError: any) {
-            console.warn('   ⚠️  Tree activity check failed:', treeCheckError.message);
-            // On error, be conservative and use JITO if mainnet
-            if (isMainnet && !bulkSwapInfo.requiresJitoBundle) {
-              console.log('   📦 Defaulting to JITO bundles due to tree check error');
-              bulkSwapInfo.requiresJitoBundle = true;
-            }
-          }
-        }
+      if (cnftTransactionCount >= 2 && isMainnet) {
+        console.log(`\n🔒 Multi-cNFT swap detected (${cnftTransactionCount} cNFT transfers)`);
+        console.log('   ⚡ Forcing JITO bundles for atomic execution (required for cNFT↔cNFT swaps)');
+        bulkSwapInfo.requiresJitoBundle = true;
       }
-      // ========== END PROACTIVE TREE ACTIVITY CHECK ==========
+      // ========== END FORCE JITO FOR MULTI-CNFT SWAPS ==========
 
       // Check if Jito bundle is required (mainnet with requiresJitoBundle flag)
       if (bulkSwapInfo.requiresJitoBundle && isMainnet) {
