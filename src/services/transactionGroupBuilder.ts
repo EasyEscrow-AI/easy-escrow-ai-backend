@@ -114,6 +114,14 @@ export interface TransactionGroupItem {
   transaction?: BuiltTransaction;
   /** Whether this is a versioned transaction */
   isVersioned: boolean;
+
+  // === cNFT JIT rebuild metadata (for sequential RPC execution) ===
+  /** cNFT asset ID for JIT rebuild (only set for cNFT transfer transactions) */
+  cnftAssetId?: string;
+  /** Source wallet for JIT rebuild */
+  cnftFromWallet?: string;
+  /** Destination wallet for JIT rebuild */
+  cnftToWallet?: string;
 }
 
 /**
@@ -861,6 +869,10 @@ export class TransactionGroupBuilder {
           requiredSigners: [inputs.makerPubkey.toBase58()],
         },
         isVersioned: false,
+        // JIT rebuild metadata for sequential RPC execution
+        cnftAssetId: cnft.identifier,
+        cnftFromWallet: inputs.makerPubkey.toBase58(),
+        cnftToWallet: inputs.takerPubkey.toBase58(),
       });
       
       totalSizeBytes += cnftTxSize;
@@ -974,6 +986,10 @@ export class TransactionGroupBuilder {
           requiredSigners: [inputs.takerPubkey.toBase58()],
         },
         isVersioned: false,
+        // JIT rebuild metadata for sequential RPC execution
+        cnftAssetId: cnft.identifier,
+        cnftFromWallet: inputs.takerPubkey.toBase58(),
+        cnftToWallet: inputs.makerPubkey.toBase58(),
       });
       
       totalSizeBytes += cnftTxSize;
@@ -2436,6 +2452,92 @@ export class TransactionGroupBuilder {
     });
 
     return { staleTransactionIndices, validationResults };
+  }
+
+  /**
+   * Build a single cNFT transaction Just-In-Time (JIT) for sequential RPC execution.
+   * This fetches fresh proof and blockhash immediately before the transaction is needed,
+   * solving the stale proof issue that occurs when proofs are fetched upfront but the
+   * Merkle tree changes between transaction building and execution.
+   *
+   * @param cnftAssetId - The cNFT asset ID to transfer
+   * @param fromWallet - Source wallet public key
+   * @param toWallet - Destination wallet public key
+   * @param txPurpose - Description of the transaction purpose
+   * @returns A fresh TransactionGroupItem ready for signing and submission
+   */
+  async buildSingleCnftTransactionJIT(
+    cnftAssetId: string,
+    fromWallet: PublicKey,
+    toWallet: PublicKey,
+    txPurpose: string
+  ): Promise<TransactionGroupItem> {
+    console.log('[TransactionGroupBuilder] Building JIT cNFT transaction:', {
+      assetId: cnftAssetId.substring(0, 8) + '...',
+      from: fromWallet.toBase58().substring(0, 8) + '...',
+      to: toWallet.toBase58().substring(0, 8) + '...',
+    });
+
+    // Clear any cached proof for this asset to ensure fresh proof
+    this.directBubblegumService.getCnftService().clearCachedProof(cnftAssetId);
+
+    // Get fresh blockhash
+    const { blockhash } = await this.connection.getLatestBlockhash('confirmed');
+    console.log('[TransactionGroupBuilder] JIT fresh blockhash:', blockhash.substring(0, 16) + '...');
+
+    // Build transfer instruction with fresh proof (retryCount=0 forces validation)
+    const transferResult = await this.directBubblegumService.buildTransferInstruction({
+      assetId: cnftAssetId,
+      fromWallet: fromWallet,
+      toWallet: toWallet,
+    }, 0); // retryCount=0 forces proof validation
+
+    // Build transaction with compute budget
+    const instructions: TransactionInstruction[] = [
+      ComputeBudgetProgram.setComputeUnitLimit({ units: 400_000 }),
+      ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 50_000 }),
+      transferResult.instruction,
+    ];
+
+    const tx = new Transaction({
+      recentBlockhash: blockhash,
+      feePayer: this.platformAuthority.publicKey,
+    }).add(...instructions);
+
+    // Partial sign with platform authority
+    tx.partialSign(this.platformAuthority);
+
+    const serialized = tx.serialize({ requireAllSignatures: false });
+    const sizeBytes = serialized.length;
+
+    console.log('[TransactionGroupBuilder] JIT cNFT transaction built:', {
+      sizeBytes,
+      proofNodes: transferResult.proofNodes.length,
+    });
+
+    return {
+      index: 0, // Will be updated by caller if needed
+      purpose: txPurpose,
+      assets: {
+        makerAssets: [],
+        takerAssets: [],
+        makerSolLamports: BigInt(0),
+        takerSolLamports: BigInt(0),
+        platformFeeLamports: BigInt(0),
+      },
+      transaction: {
+        serializedTransaction: serialized.toString('base64'),
+        sizeBytes,
+        isVersioned: false,
+        nonceValue: blockhash,
+        estimatedComputeUnits: 200000,
+        requiredSigners: [fromWallet.toBase58()],
+      },
+      isVersioned: false,
+      cnftAssetId,
+      cnftFromWallet: fromWallet.toBase58(),
+      cnftToWallet: toWallet.toBase58(),
+    };
   }
 }
 

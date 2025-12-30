@@ -21,6 +21,7 @@ import { createTwoPhaseSwapLockService } from '../services/twoPhaseSwapLockServi
 import { createCnftDelegationService } from '../services/cnftDelegationService';
 import { createSwapStateMachine } from '../services/swapStateMachine';
 import { createCnftService } from '../services/cnftService';
+import { createTransactionGroupBuilder } from '../services/transactionGroupBuilder';
 
 // Helper function to detect if transaction is versioned (V0)
 function isVersionedTransaction(buffer: Buffer): boolean {
@@ -54,15 +55,17 @@ const prisma = new PrismaClient();
 const programId = new PublicKey(process.env.ESCROW_PROGRAM_ID || 'AvdX6LEkoAmP961QwNjAUNpiuDtiQjaiSw5wR5zb9Zei');
 const feeCollector = new PublicKey(process.env.PLATFORM_FEE_COLLECTOR || 'Fyh6zX7qN5WoR3T22N8r9L3KSr6yB8J6wz2CQkhwGDWP');
 
-// Load platform admin keypair for delegate - required for cNFT settlement
+// Load platform admin keypair for delegate - required for cNFT settlement and JIT rebuilding
 // MUST use same env vars as offers.routes.ts: DEVNET_STAGING_ADMIN_PRIVATE_KEY / MAINNET_PROD_ADMIN_PRIVATE_KEY
 const adminPrivateKey = isMainnet
   ? process.env.MAINNET_PROD_ADMIN_PRIVATE_KEY
   : process.env.DEVNET_STAGING_ADMIN_PRIVATE_KEY;
+let platformAuthorityKeypair: Keypair;
 let delegateAuthority: PublicKey;
 if (adminPrivateKey) {
   try {
-    delegateAuthority = Keypair.fromSecretKey(bs58.decode(adminPrivateKey)).publicKey;
+    platformAuthorityKeypair = Keypair.fromSecretKey(bs58.decode(adminPrivateKey));
+    delegateAuthority = platformAuthorityKeypair.publicKey;
   } catch {
     throw new Error('[TestExecuteRoutes] Invalid admin private key format - cannot initialize delegate authority');
   }
@@ -85,6 +88,15 @@ console.log('[TestExecuteRoutes] Delegate authority:', delegateAuthority.toBase5
 
 // Initialize swap state machine for delegation cleanup
 const swapStateMachine = createSwapStateMachine(prisma);
+
+// Initialize TransactionGroupBuilder for JIT cNFT transaction rebuilding
+// This is used when sequential RPC execution encounters stale proofs
+const transactionGroupBuilder = createTransactionGroupBuilder(
+  connection,
+  platformAuthorityKeypair,
+  feeCollector // Treasury PDA for platform fees
+);
+console.log('[TestExecuteRoutes] TransactionGroupBuilder initialized for JIT cNFT rebuilding');
 
 /**
  * Cleanup delegations for a failed swap
@@ -410,12 +422,16 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
                 if (rebuildResult.transactionGroup?.transactions) {
                   console.log(`   ✅ Transactions rebuilt (${rebuildResult.transactionGroup.transactions.length} total)`);
 
-                  // Replace bulkSwapInfo.transactions with fresh transactions
+                  // Replace bulkSwapInfo.transactions with fresh transactions (include cNFT JIT metadata)
                   bulkSwapInfo.transactions = rebuildResult.transactionGroup.transactions.map((tx: any) => ({
                     purpose: tx.purpose,
                     assets: tx.assets,
                     serialized: tx.transaction?.serializedTransaction,
                     requiredSigners: tx.transaction?.requiredSigners,
+                    // cNFT JIT rebuild metadata
+                    cnftAssetId: tx.cnftAssetId,
+                    cnftFromWallet: tx.cnftFromWallet,
+                    cnftToWallet: tx.cnftToWallet,
                   }));
 
                   console.log('   ✅ Using fresh transactions for bundle submission');
@@ -717,12 +733,16 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
             if (rebuildResult.transactionGroup?.transactions) {
               console.log(`   ✅ Transactions rebuilt (${rebuildResult.transactionGroup.transactions.length} total)`);
 
-              // Replace bulkSwapInfo.transactions with fresh transactions
+              // Replace bulkSwapInfo.transactions with fresh transactions (include cNFT JIT metadata)
               bulkSwapInfo.transactions = rebuildResult.transactionGroup.transactions.map((tx: any) => ({
                 purpose: tx.purpose,
                 assets: tx.assets,
                 serialized: tx.transaction?.serializedTransaction,
                 requiredSigners: tx.transaction?.requiredSigners,
+                // cNFT JIT rebuild metadata
+                cnftAssetId: tx.cnftAssetId,
+                cnftFromWallet: tx.cnftFromWallet,
+                cnftToWallet: tx.cnftToWallet,
               }));
 
               console.log('   ✅ Using fresh transactions for sequential execution');
@@ -742,8 +762,38 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
       }
       // ========== END PROACTIVE VALIDATION ==========
 
+      // ========== POPULATE cNFT JIT METADATA ==========
+      // Ensure all cNFT transactions have metadata for JIT rebuild (even if not rebuilt)
+      // This extracts cnftAssetId/cnftFromWallet/cnftToWallet from the assets field
+      for (const tx of bulkSwapInfo.transactions) {
+        if (tx.purpose && tx.purpose.includes('cNFT transfer') && !tx.cnftAssetId) {
+          // Extract cNFT asset from maker or taker assets
+          const makerCnft = (tx.assets?.makerAssets || []).find((a: any) =>
+            a.type === 'cnft' || a.type === 'CNFT'
+          );
+          const takerCnft = (tx.assets?.takerAssets || []).find((a: any) =>
+            a.type === 'cnft' || a.type === 'CNFT'
+          );
+
+          if (makerCnft) {
+            tx.cnftAssetId = makerCnft.identifier;
+            tx.cnftFromWallet = makerAddress; // Maker sends to taker
+            tx.cnftToWallet = takerAddress;
+          } else if (takerCnft) {
+            tx.cnftAssetId = takerCnft.identifier;
+            tx.cnftFromWallet = takerAddress; // Taker sends to maker
+            tx.cnftToWallet = makerAddress;
+          }
+
+          if (tx.cnftAssetId) {
+            console.log(`   📋 Populated JIT metadata for ${tx.cnftAssetId.substring(0, 8)}...`);
+          }
+        }
+      }
+      // ========== END POPULATE cNFT JIT METADATA ==========
+
       const signatures: string[] = [];
-      
+
       for (let i = 0; i < bulkSwapInfo.transactions.length; i++) {
         const txInfo = bulkSwapInfo.transactions[i];
         console.log(`\n📝 Processing TX ${i + 1}/${bulkSwapInfo.transactions.length}: ${txInfo.purpose}`);
@@ -756,7 +806,59 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
             timestamp: new Date().toISOString(),
           });
         }
-        
+
+        // ========== JIT PROOF VALIDATION FOR cNFT TRANSACTIONS ==========
+        // For cNFT transactions (TX 2+), validate proof freshness and rebuild if stale
+        // This solves the issue where proofs become stale between TX 1 confirmation and TX 2 submission
+        if (txInfo.cnftAssetId && i > 0) {
+          console.log(`   🔍 JIT: Validating cNFT proof for ${txInfo.cnftAssetId.substring(0, 8)}...`);
+
+          try {
+            // Get cached proof to validate against on-chain state
+            const cachedProof = await cnftService.getCnftProof(txInfo.cnftAssetId, false, 0);
+
+            if (cachedProof && cachedProof.root) {
+              // Validate proof root against on-chain Merkle root
+              const proofValidation = await cnftService.validateProofRoot(
+                txInfo.cnftAssetId,
+                cachedProof.root
+              );
+
+              if (!proofValidation.isValid) {
+                console.log(`   ⚠️  JIT: Stale proof detected! Rebuilding TX ${i + 1} with fresh proof...`);
+                console.log(`   📊 On-chain root: ${proofValidation.onChainRoot.substring(0, 16)}...`);
+
+                // Clear cached proof to force fresh fetch
+                cnftService.clearCachedProof(txInfo.cnftAssetId);
+
+                // Rebuild this single transaction with fresh proof and blockhash
+                const freshTxItem = await transactionGroupBuilder.buildSingleCnftTransactionJIT(
+                  txInfo.cnftAssetId,
+                  new PublicKey(txInfo.cnftFromWallet),
+                  new PublicKey(txInfo.cnftToWallet),
+                  txInfo.purpose
+                );
+
+                // Update txInfo with fresh transaction data
+                txInfo.serialized = freshTxItem.transaction?.serializedTransaction;
+                txInfo.requiredSigners = freshTxItem.transaction?.requiredSigners;
+
+                console.log(`   ✅ JIT: TX ${i + 1} rebuilt with fresh proof`);
+              } else {
+                console.log(`   ✅ JIT: Proof is fresh, using original transaction`);
+              }
+            } else {
+              console.log(`   ⚠️  JIT: No cached proof found, proceeding with original transaction`);
+            }
+          } catch (jitError: any) {
+            console.error(`   ❌ JIT rebuild failed: ${jitError.message}`);
+            // If JIT fails, continue with original transaction - it may still work
+            // or the error will be caught in the main try/catch block
+            console.log(`   ⚠️  Continuing with original transaction...`);
+          }
+        }
+        // ========== END JIT PROOF VALIDATION ==========
+
         // Determine signers for THIS specific transaction
         // Use requiredSigners from the transaction if available, otherwise fall back to global
         const txRequiredSigners = txInfo.requiredSigners || requireSignatures || [];
