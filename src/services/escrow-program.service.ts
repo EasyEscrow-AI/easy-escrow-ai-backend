@@ -1355,9 +1355,10 @@ export class EscrowProgramService {
     
     const startTime = Date.now();
     const timeoutMs = timeoutSeconds * 1000;
-    // Derive maxPolls from timeout - with exponential backoff (3s, 4.8s, 7.7s, 12.3s, 20s cap),
-    // we get roughly 1 poll per 5s average. Add buffer for multi-asset swaps under congestion.
-    // Minimum 10 polls to handle network delays, scale up with longer timeouts.
+    // maxPolls is a safety cap, but timeout usually terminates polling first.
+    // Backoff sequence: 3s → 4.8s → 7.7s → 12.3s → 20s (cap), so with typical
+    // 30s timeout only 2-3 polls occur before timeout. For longer timeouts (60s+),
+    // we get 4-5 polls. The minimum of 10 is a safety net for edge cases.
     const maxPolls = Math.max(10, Math.ceil(timeoutSeconds / 3));
     let pollCount = 0;
 
