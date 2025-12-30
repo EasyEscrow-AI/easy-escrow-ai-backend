@@ -1415,6 +1415,184 @@ export class CnftService {
 
     return results;
   }
+
+  /**
+   * Check tree activity level by monitoring sequence number changes.
+   * Used to proactively detect hyperactive trees before attempting swaps.
+   *
+   * @param treeAddress - Merkle tree address
+   * @param checkIntervalMs - Interval between sequence checks (default: 500ms)
+   * @returns Activity level: 'stable' | 'active' | 'hyperactive'
+   *
+   * - stable: Tree sequence didn't change during observation
+   * - active: Tree sequence changed once (normal activity)
+   * - hyperactive: Tree sequence changed multiple times (too active for sequential RPC)
+   */
+  async checkTreeActivity(
+    treeAddress: PublicKey,
+    checkIntervalMs: number = 500
+  ): Promise<{
+    activityLevel: 'stable' | 'active' | 'hyperactive';
+    sequenceChanges: number;
+    initialSeq: string;
+    finalSeq: string;
+    recommendJito: boolean;
+  }> {
+    console.log('[CnftService] Checking tree activity for:', treeAddress.toBase58().substring(0, 12) + '...');
+
+    try {
+      // Get initial sequence
+      const treeAccount1 = await ConcurrentMerkleTreeAccount.fromAccountAddress(
+        this.connection,
+        treeAddress
+      );
+      const seq1 = treeAccount1.getCurrentSeq().toString();
+
+      // Wait and check again
+      await new Promise(resolve => setTimeout(resolve, checkIntervalMs));
+
+      const treeAccount2 = await ConcurrentMerkleTreeAccount.fromAccountAddress(
+        this.connection,
+        treeAddress
+      );
+      const seq2 = treeAccount2.getCurrentSeq().toString();
+
+      // If stable so far, we're good
+      if (seq1 === seq2) {
+        console.log('[CnftService] ✅ Tree is stable (seq unchanged):', seq1);
+        return {
+          activityLevel: 'stable',
+          sequenceChanges: 0,
+          initialSeq: seq1,
+          finalSeq: seq2,
+          recommendJito: false,
+        };
+      }
+
+      // Tree changed once - check again to see if it's hyperactive
+      await new Promise(resolve => setTimeout(resolve, checkIntervalMs));
+
+      const treeAccount3 = await ConcurrentMerkleTreeAccount.fromAccountAddress(
+        this.connection,
+        treeAddress
+      );
+      const seq3 = treeAccount3.getCurrentSeq().toString();
+
+      if (seq2 === seq3) {
+        // Changed once then stabilized
+        console.log('[CnftService] ⚠️ Tree is active (1 change):', seq1, '→', seq2);
+        return {
+          activityLevel: 'active',
+          sequenceChanges: 1,
+          initialSeq: seq1,
+          finalSeq: seq3,
+          recommendJito: false, // Still okay for sequential with retry
+        };
+      }
+
+      // Changed multiple times - hyperactive
+      const changes = seq3 !== seq2 && seq2 !== seq1 ? 2 : 1;
+      console.log('[CnftService] 🔥 Tree is HYPERACTIVE (', changes, 'changes):', seq1, '→', seq2, '→', seq3);
+      return {
+        activityLevel: 'hyperactive',
+        sequenceChanges: changes,
+        initialSeq: seq1,
+        finalSeq: seq3,
+        recommendJito: true,
+      };
+    } catch (error: any) {
+      console.error('[CnftService] Failed to check tree activity:', error.message);
+      // On error, assume tree is active and recommend Jito to be safe
+      return {
+        activityLevel: 'active',
+        sequenceChanges: -1,
+        initialSeq: 'unknown',
+        finalSeq: 'unknown',
+        recommendJito: true,
+      };
+    }
+  }
+
+  /**
+   * Check tree activity for multiple cNFT assets.
+   * Groups assets by tree to minimize RPC calls.
+   * Returns recommendation on whether to use Jito bundles.
+   *
+   * @param assetIds - Array of cNFT asset IDs to check
+   * @returns Analysis result with per-tree activity and overall recommendation
+   */
+  async checkAssetsTreeActivity(assetIds: string[]): Promise<{
+    treeResults: Map<string, {
+      activityLevel: 'stable' | 'active' | 'hyperactive';
+      assetIds: string[];
+      recommendJito: boolean;
+    }>;
+    overallRecommendation: 'sequential' | 'jito';
+    hyperactiveCount: number;
+    reason: string;
+  }> {
+    console.log('[CnftService] Checking tree activity for', assetIds.length, 'cNFTs');
+
+    const treeResults = new Map<string, {
+      activityLevel: 'stable' | 'active' | 'hyperactive';
+      assetIds: string[];
+      recommendJito: boolean;
+    }>();
+
+    // Group assets by tree
+    const assetsByTree = new Map<string, string[]>();
+    for (const assetId of assetIds) {
+      try {
+        const assetData = await this.getCnftAsset(assetId);
+        const treeId = assetData.compression.tree;
+        if (!assetsByTree.has(treeId)) {
+          assetsByTree.set(treeId, []);
+        }
+        assetsByTree.get(treeId)!.push(assetId);
+      } catch (error: any) {
+        console.error('[CnftService] Failed to get tree for asset', assetId.substring(0, 12), ':', error.message);
+      }
+    }
+
+    console.log('[CnftService] Assets grouped into', assetsByTree.size, 'unique trees');
+
+    // Check each tree's activity
+    let hyperactiveCount = 0;
+    for (const [treeId, assets] of assetsByTree) {
+      const treeAddress = new PublicKey(treeId);
+      const activity = await this.checkTreeActivity(treeAddress);
+
+      treeResults.set(treeId, {
+        activityLevel: activity.activityLevel,
+        assetIds: assets,
+        recommendJito: activity.recommendJito,
+      });
+
+      if (activity.activityLevel === 'hyperactive') {
+        hyperactiveCount++;
+      }
+    }
+
+    // Determine overall recommendation
+    const hasHyperactive = hyperactiveCount > 0;
+    const recommendation = hasHyperactive ? 'jito' : 'sequential';
+    const reason = hasHyperactive
+      ? `${hyperactiveCount} tree(s) are hyperactive - Jito bundles recommended for atomic execution`
+      : 'All trees are stable or moderately active - sequential RPC is safe';
+
+    console.log('[CnftService] Tree activity check complete:', {
+      treesChecked: assetsByTree.size,
+      hyperactiveCount,
+      recommendation,
+    });
+
+    return {
+      treeResults,
+      overallRecommendation: recommendation,
+      hyperactiveCount,
+      reason,
+    };
+  }
 }
 
 /**
