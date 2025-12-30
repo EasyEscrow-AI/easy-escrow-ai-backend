@@ -1659,6 +1659,7 @@ async function executeSwapWithRetry(offerId, acceptData, isBulkSwap = false, bul
         purpose: tx.purpose,
         serialized: tx.serialized,
         requiredSigners: tx.requiredSigners || [], // Per-transaction signers
+        assets: tx.assets, // Pass assets for proactive stale proof validation
       })),
       tipInfo: bulkSwapInfo.tipInfo,
     };
