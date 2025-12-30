@@ -1206,9 +1206,9 @@ router.post('/api/quote', async (req: Request, res: Response) => {
     
     // Calculate Jito tip if bulk swap
     // Jito tip is per bundle (not per transaction)
-    // Default: 0.001 SOL (1,000,000 lamports) - above 50th percentile for reliable inclusion
-    // This matches DEFAULT_JITO_TIP_LAMPORTS in escrow-program.service.ts
-    const DEFAULT_JITO_TIP_LAMPORTS = 1_000_000; // 0.001 SOL per bundle
+    // Configurable via JITO_TIP_LAMPORTS env var (default: 1,000,000 = 0.001 SOL)
+    // Higher tips needed during network congestion for reliable bundle inclusion
+    const DEFAULT_JITO_TIP_LAMPORTS = parseInt(process.env.JITO_TIP_LAMPORTS || '1000000', 10);
     const estimatedJitoTipLamports = (isBulkSwap && jitoEnabled) ? DEFAULT_JITO_TIP_LAMPORTS : 0;
     const estimatedJitoTipSol = estimatedJitoTipLamports / LAMPORTS_PER_SOL;
     

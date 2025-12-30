@@ -491,10 +491,10 @@ export class EscrowProgramService {
   
   /**
    * Default Jito tip amount in lamports (fallback when tip API fails)
-   * 0.001 SOL = 1,000,000 lamports - based on legacy production testing
-   * This is above 50th percentile and provides reliable bundle inclusion
+   * Configurable via JITO_TIP_LAMPORTS env var
+   * Default: 1,000,000 (0.001 SOL) - reasonable for normal conditions
    */
-  private static readonly DEFAULT_JITO_TIP_LAMPORTS = 1_000_000;
+  private static readonly DEFAULT_JITO_TIP_LAMPORTS = parseInt(process.env.JITO_TIP_LAMPORTS || '1000000', 10);
   
   /**
    * Maximum transactions per Jito bundle
