@@ -608,6 +608,88 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
       
       // Fallback: Execute each transaction sequentially (for devnet or when Jito not required)
       console.log('\n📦 Executing transactions sequentially...');
+
+      // ========== PROACTIVE STALE PROOF VALIDATION FOR SEQUENTIAL EXECUTION ==========
+      // Validate all cNFT proofs BEFORE execution to prevent stale proof errors
+      const cnftTransactionsSeq = bulkSwapInfo.transactions.filter(
+        (tx: any) => tx.purpose && tx.purpose.includes('cNFT transfer')
+      );
+
+      if (cnftTransactionsSeq.length > 0 && offerId) {
+        console.log(`\n🔍 Proactively validating ${cnftTransactionsSeq.length} cNFT proof(s) before sequential execution...`);
+
+        // Extract asset IDs from cNFT transactions
+        const assetIdsSeq: string[] = [];
+        for (const tx of cnftTransactionsSeq) {
+          const makerCnfts = (tx.assets?.makerAssets || []).filter((a: any) =>
+            a.type === 'cnft' || a.type === 'CNFT'
+          );
+          const takerCnfts = (tx.assets?.takerAssets || []).filter((a: any) =>
+            a.type === 'cnft' || a.type === 'CNFT'
+          );
+          for (const asset of [...makerCnfts, ...takerCnfts]) {
+            if (asset?.identifier) {
+              assetIdsSeq.push(asset.identifier);
+            }
+          }
+        }
+
+        if (assetIdsSeq.length > 0) {
+          let hasStaleProofSeq = false;
+
+          for (const assetId of assetIdsSeq) {
+            try {
+              const cachedProof = await cnftService.getCnftProof(assetId, false, 0);
+              if (cachedProof) {
+                const validation = await cnftService.validateProofRoot(assetId, cachedProof.root);
+
+                if (!validation.isValid) {
+                  console.warn(`   ⚠️  Stale proof detected for asset ${assetId.substring(0, 12)}...`);
+                  hasStaleProofSeq = true;
+                } else {
+                  console.log(`   ✅ Proof valid for asset ${assetId.substring(0, 12)}...`);
+                }
+              }
+            } catch (validationError: any) {
+              console.warn(`   ⚠️  Could not validate proof for ${assetId.substring(0, 12)}...:`, validationError.message);
+            }
+          }
+
+          if (hasStaleProofSeq) {
+            console.log('\n🔄 Stale proofs detected! Rebuilding transactions with fresh proofs...');
+
+            // Clear proof cache and rebuild
+            cnftService.clearAllCachedProofs();
+            const rebuildResult = await offerManager.rebuildTransaction(offerId);
+
+            if (rebuildResult.transactionGroup?.transactions) {
+              console.log(`   ✅ Transactions rebuilt (${rebuildResult.transactionGroup.transactions.length} total)`);
+
+              // Replace bulkSwapInfo.transactions with fresh transactions
+              bulkSwapInfo.transactions = rebuildResult.transactionGroup.transactions.map((tx: any) => ({
+                purpose: tx.purpose,
+                assets: tx.assets,
+                serialized: tx.transaction?.serializedTransaction,
+                requiredSigners: tx.transaction?.requiredSigners,
+              }));
+
+              console.log('   ✅ Using fresh transactions for sequential execution');
+            } else {
+              console.error('   ❌ Rebuild did not return valid transactions');
+              return res.status(500).json({
+                success: false,
+                error: 'Failed to rebuild transactions with fresh proofs',
+                errorCode: 'STALE_PROOF_REBUILD_FAILED',
+                timestamp: new Date().toISOString(),
+              });
+            }
+          } else {
+            console.log('   ✅ All proofs are fresh, proceeding with original transactions');
+          }
+        }
+      }
+      // ========== END PROACTIVE VALIDATION ==========
+
       const signatures: string[] = [];
       
       for (let i = 0; i < bulkSwapInfo.transactions.length; i++) {
