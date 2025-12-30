@@ -2174,6 +2174,269 @@ export class TransactionGroupBuilder {
     const analysis = this.analyzeSwap(inputs);
     return analysis.transactionCount;
   }
+
+  /**
+   * Extract cNFT asset info from a transaction in the group
+   * Returns the cNFT identifier and transfer direction (maker/taker)
+   */
+  extractCnftFromTransaction(
+    txItem: TransactionGroupItem
+  ): { assetId: string; isMaker: boolean } | null {
+    // Check if this is a cNFT transfer transaction
+    if (!txItem.purpose.includes('cNFT transfer')) {
+      return null;
+    }
+
+    // Check maker assets first
+    const makerCnft = txItem.assets.makerAssets.find(
+      a => a.type === AssetType.CNFT || String(a.type).toLowerCase() === 'cnft'
+    );
+    if (makerCnft) {
+      return { assetId: makerCnft.identifier, isMaker: true };
+    }
+
+    // Check taker assets
+    const takerCnft = txItem.assets.takerAssets.find(
+      a => a.type === AssetType.CNFT || String(a.type).toLowerCase() === 'cnft'
+    );
+    if (takerCnft) {
+      return { assetId: takerCnft.identifier, isMaker: false };
+    }
+
+    return null;
+  }
+
+  /**
+   * Rebuild a single cNFT transaction in a group with fresh Merkle proof.
+   * Used when a transaction's proof became stale during client signing.
+   *
+   * @param originalGroup - The original transaction group
+   * @param transactionIndex - Index of transaction to rebuild
+   * @param inputs - Original build inputs
+   * @returns Updated transaction group item with fresh proof (requires new signature)
+   */
+  async rebuildCnftTransactionWithFreshProof(
+    originalGroup: TransactionGroupResult,
+    transactionIndex: number,
+    inputs: TransactionGroupInput
+  ): Promise<{
+    rebuiltTransaction: TransactionGroupItem;
+    requiresResigning: boolean;
+  }> {
+    const txItem = originalGroup.transactions[transactionIndex];
+    if (!txItem) {
+      throw new Error(`Transaction at index ${transactionIndex} not found in group`);
+    }
+
+    // Extract the cNFT from this transaction
+    const cnftInfo = this.extractCnftFromTransaction(txItem);
+    if (!cnftInfo) {
+      throw new Error(`Transaction at index ${transactionIndex} is not a cNFT transfer`);
+    }
+
+    console.log(`[TransactionGroupBuilder] Rebuilding transaction ${transactionIndex} with fresh proof for asset ${cnftInfo.assetId.substring(0, 12)}...`);
+
+    // Clear cached proof and fetch fresh
+    this.cnftService.clearCachedProof(cnftInfo.assetId);
+
+    // Determine transfer direction
+    const fromWallet = cnftInfo.isMaker ? inputs.makerPubkey : inputs.takerPubkey;
+    const toWallet = cnftInfo.isMaker ? inputs.takerPubkey : inputs.makerPubkey;
+
+    // Build fresh transfer instruction (no pre-fetched proof - forces validation)
+    const transferResult = await this.directBubblegumService.buildTransferInstruction(
+      {
+        assetId: cnftInfo.assetId,
+        fromWallet,
+        toWallet,
+      },
+      0,
+      undefined // No pre-fetched proof - this triggers validation in DirectBubblegumService
+    );
+
+    // Determine network mode
+    const isMainnet = process.env.SOLANA_NETWORK === 'mainnet-beta' ||
+                      process.env.NODE_ENV === 'production';
+    const useJitoNonces = isMainnet && isJitoBundlesEnabled();
+
+    // Build the transaction with fresh proof
+    const cnftInstructions: TransactionInstruction[] = [];
+
+    // Nonce advance for mainnet
+    if (useJitoNonces) {
+      cnftInstructions.push(
+        SystemProgram.nonceAdvance({
+          noncePubkey: inputs.nonceAccountPubkey,
+          authorizedPubkey: this.platformAuthority.publicKey,
+        })
+      );
+    }
+
+    // Compute budget
+    cnftInstructions.push(
+      ComputeBudgetProgram.setComputeUnitLimit({ units: 400_000 }),
+      ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 50_000 })
+    );
+
+    // Transfer instruction with fresh proof
+    cnftInstructions.push(transferResult.instruction);
+
+    // Check if this is the last cNFT transaction (needs Jito tip)
+    const isLastCnftTx = this.isLastCnftTransaction(originalGroup, transactionIndex);
+    if (useJitoNonces && isLastCnftTx) {
+      const JITO_TIP_ACCOUNTS = [
+        'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
+        'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
+        'HFqU5x63VTqvQss8hp11i4bVmkdzGHnsRRskfJ2J4ybE',
+        '96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5',
+        '3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT',
+        'ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49',
+        'Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY',
+        'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
+      ];
+
+      const jitoTipAccount = new PublicKey(
+        JITO_TIP_ACCOUNTS[Math.floor(Math.random() * JITO_TIP_ACCOUNTS.length)]
+      );
+      const tipAmount = 1_000_000; // 0.001 SOL
+
+      cnftInstructions.push(
+        SystemProgram.transfer({
+          fromPubkey: this.platformAuthority.publicKey,
+          toPubkey: jitoTipAccount,
+          lamports: tipAmount,
+        })
+      );
+    }
+
+    // Get blockhash (use nonce value for mainnet, fresh for devnet)
+    let cnftBlockhash: string;
+    if (useJitoNonces) {
+      cnftBlockhash = originalGroup.nonceValue;
+    } else {
+      const { blockhash } = await this.connection.getLatestBlockhash('confirmed');
+      cnftBlockhash = blockhash;
+    }
+
+    const cnftTx = new Transaction({
+      recentBlockhash: cnftBlockhash,
+      feePayer: this.platformAuthority.publicKey,
+    }).add(...cnftInstructions);
+
+    // Partial sign with platform authority
+    cnftTx.partialSign(this.platformAuthority);
+
+    const cnftTxSerialized = cnftTx.serialize({ requireAllSignatures: false });
+    const cnftTxSize = cnftTxSerialized.length;
+
+    const rebuiltTransaction: TransactionGroupItem = {
+      index: transactionIndex,
+      purpose: txItem.purpose + ' (rebuilt)',
+      assets: txItem.assets,
+      transaction: {
+        serializedTransaction: cnftTxSerialized.toString('base64'),
+        sizeBytes: cnftTxSize,
+        isVersioned: false,
+        nonceValue: cnftBlockhash,
+        estimatedComputeUnits: 200000,
+        requiredSigners: txItem.transaction?.requiredSigners || [fromWallet.toBase58()],
+      },
+      isVersioned: false,
+    };
+
+    console.log(`[TransactionGroupBuilder] ✅ Transaction ${transactionIndex} rebuilt with fresh proof: ${cnftTxSize} bytes`);
+
+    return {
+      rebuiltTransaction,
+      requiresResigning: true,
+    };
+  }
+
+  /**
+   * Check if a transaction is the last cNFT transaction in the group
+   */
+  private isLastCnftTransaction(group: TransactionGroupResult, txIndex: number): boolean {
+    // Find all cNFT transactions
+    const cnftTxIndices: number[] = [];
+    for (let i = 0; i < group.transactions.length; i++) {
+      if (group.transactions[i].purpose.includes('cNFT transfer')) {
+        cnftTxIndices.push(i);
+      }
+    }
+
+    // Check if this is the last one
+    return cnftTxIndices.length > 0 && cnftTxIndices[cnftTxIndices.length - 1] === txIndex;
+  }
+
+  /**
+   * Validate all cNFT proofs in a transaction group before bundle submission.
+   * Returns list of transaction indices that have stale proofs.
+   */
+  async validateCnftProofsInGroup(
+    group: TransactionGroupResult
+  ): Promise<{
+    staleTransactionIndices: number[];
+    validationResults: Map<number, { assetId: string; isValid: boolean; onChainRoot: string }>;
+  }> {
+    console.log('[TransactionGroupBuilder] Validating cNFT proofs in transaction group');
+
+    const staleTransactionIndices: number[] = [];
+    const validationResults = new Map<number, { assetId: string; isValid: boolean; onChainRoot: string }>();
+
+    // Collect all cNFT assets with their proofs
+    const proofsToValidate = new Map<string, { root: string; tree_id: string }>();
+    const assetToTxIndex = new Map<string, number>();
+
+    for (let i = 0; i < group.transactions.length; i++) {
+      const txItem = group.transactions[i];
+      const cnftInfo = this.extractCnftFromTransaction(txItem);
+
+      if (cnftInfo) {
+        // Get the cached proof for this asset
+        const cachedProof = await this.cnftService.getCnftProof(cnftInfo.assetId, false, 0);
+        if (cachedProof) {
+          const assetData = await this.cnftService.getCnftAsset(cnftInfo.assetId);
+          proofsToValidate.set(cnftInfo.assetId, {
+            root: cachedProof.root,
+            tree_id: assetData.compression.tree,
+          });
+          assetToTxIndex.set(cnftInfo.assetId, i);
+        }
+      }
+    }
+
+    if (proofsToValidate.size === 0) {
+      console.log('[TransactionGroupBuilder] No cNFT transactions found in group');
+      return { staleTransactionIndices, validationResults };
+    }
+
+    // Batch validate all proofs
+    const batchResults = await this.cnftService.validateProofRootsBatch(proofsToValidate);
+
+    // Process results
+    for (const [assetId, result] of batchResults) {
+      const txIndex = assetToTxIndex.get(assetId);
+      if (txIndex !== undefined) {
+        validationResults.set(txIndex, {
+          assetId,
+          isValid: result.isValid,
+          onChainRoot: result.onChainRoot,
+        });
+
+        if (!result.isValid) {
+          staleTransactionIndices.push(txIndex);
+        }
+      }
+    }
+
+    console.log('[TransactionGroupBuilder] Proof validation complete:', {
+      totalCnftTransactions: proofsToValidate.size,
+      staleCount: staleTransactionIndices.length,
+      staleIndices: staleTransactionIndices,
+    });
+
+    return { staleTransactionIndices, validationResults };
+  }
 }
 
 /**

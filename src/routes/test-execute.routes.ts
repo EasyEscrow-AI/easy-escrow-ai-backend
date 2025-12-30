@@ -316,11 +316,102 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
       // Check if Jito bundle is required (mainnet with requiresJitoBundle flag)
       if (bulkSwapInfo.requiresJitoBundle && isMainnet) {
         console.log('\n📦 Using Jito Bundle for atomic execution...');
-        
+
         try {
+          // ========== PROACTIVE STALE PROOF VALIDATION ==========
+          // Validate all cNFT proofs BEFORE signing to prevent stale proof errors
+          // This is critical because proofs can become stale during the 5+ second signing window
+          const cnftTransactions = bulkSwapInfo.transactions.filter(
+            (tx: any) => tx.purpose && tx.purpose.includes('cNFT transfer')
+          );
+
+          if (cnftTransactions.length > 0 && offerId) {
+            console.log(`\n🔍 Proactively validating ${cnftTransactions.length} cNFT proof(s) before submission...`);
+
+            // Create CnftService to validate proofs
+            const cnftService = createCnftService(connection);
+
+            // Extract asset IDs from cNFT transactions
+            // Note: We extract from tx.assets directly, not from purpose string regex
+            // This handles both single cNFT transfers and batch transfers correctly
+            const assetIds: string[] = [];
+            for (const tx of cnftTransactions) {
+              // Find cNFT assets in both maker and taker assets arrays
+              const makerCnfts = (tx.assets?.makerAssets || []).filter((a: any) =>
+                a.type === 'cnft' || a.type === 'CNFT'
+              );
+              const takerCnfts = (tx.assets?.takerAssets || []).filter((a: any) =>
+                a.type === 'cnft' || a.type === 'CNFT'
+              );
+
+              // Add all cNFT asset IDs (supports batch transfers with multiple cNFTs)
+              for (const asset of [...makerCnfts, ...takerCnfts]) {
+                if (asset?.identifier) {
+                  assetIds.push(asset.identifier);
+                }
+              }
+            }
+
+            if (assetIds.length > 0) {
+              // Validate each proof against on-chain root
+              let hasStaleProof = false;
+
+              for (const assetId of assetIds) {
+                try {
+                  // Get cached proof root
+                  const cachedProof = await cnftService.getCnftProof(assetId, false, 0);
+                  if (cachedProof) {
+                    const validation = await cnftService.validateProofRoot(assetId, cachedProof.root);
+
+                    if (!validation.isValid) {
+                      console.warn(`   ⚠️  Stale proof detected for asset ${assetId.substring(0, 12)}...`);
+                      hasStaleProof = true;
+                    } else {
+                      console.log(`   ✅ Proof valid for asset ${assetId.substring(0, 12)}...`);
+                    }
+                  }
+                } catch (validationError: any) {
+                  console.warn(`   ⚠️  Could not validate proof for ${assetId.substring(0, 12)}...:`, validationError.message);
+                }
+              }
+
+              if (hasStaleProof) {
+                console.log('\n🔄 Stale proofs detected! Rebuilding transactions with fresh proofs...');
+
+                // Rebuild all transactions with fresh proofs
+                const rebuildResult = await offerManager.rebuildTransaction(offerId);
+
+                if (rebuildResult.transactionGroup?.transactions) {
+                  console.log(`   ✅ Transactions rebuilt (${rebuildResult.transactionGroup.transactions.length} total)`);
+
+                  // Replace bulkSwapInfo.transactions with fresh transactions
+                  bulkSwapInfo.transactions = rebuildResult.transactionGroup.transactions.map((tx: any) => ({
+                    purpose: tx.purpose,
+                    assets: tx.assets,
+                    serialized: tx.transaction?.serializedTransaction,
+                    requiredSigners: tx.transaction?.requiredSigners,
+                  }));
+
+                  console.log('   ✅ Using fresh transactions for bundle submission');
+                } else {
+                  console.error('   ❌ Rebuild did not return valid transactions');
+                  return res.status(500).json({
+                    success: false,
+                    error: 'Failed to rebuild transactions with fresh proofs',
+                    errorCode: 'STALE_PROOF_REBUILD_FAILED',
+                    timestamp: new Date().toISOString(),
+                  });
+                }
+              } else {
+                console.log('   ✅ All proofs are fresh, proceeding with original transactions');
+              }
+            }
+          }
+          // ========== END PROACTIVE VALIDATION ==========
+
           // Collect and sign all transactions
           const signedTransactions: string[] = [];
-          
+
           for (let i = 0; i < bulkSwapInfo.transactions.length; i++) {
             const txInfo = bulkSwapInfo.transactions[i];
             console.log(`\n📝 Signing TX ${i + 1}/${bulkSwapInfo.transactions.length}: ${txInfo.purpose}`);
@@ -1839,6 +1930,84 @@ router.post('/api/test/execute-lock', async (req: Request, res: Response) => {
       timestamp: new Date().toISOString(),
     });
   }
+
+  // ========== PROACTIVE STALE PROOF VALIDATION FOR LOCK PHASE ==========
+  // Validate cNFT proofs BEFORE attempting submission to prevent stale proof errors
+  if (swapId) {
+    try {
+      console.log('\n   🔍 Proactively validating cNFT proofs before lock submission...');
+
+      // Load swap data to get cNFT assets
+      const swap = await prisma.twoPhaseSwap.findUnique({
+        where: { id: swapId },
+      });
+
+      if (swap) {
+        const assets = partyValue === 'A' ? swap.assetsA : swap.assetsB;
+        const cnftAssets = (assets as any[]).filter((a: any) => a.type === 'CNFT' || a.type === 'cnft');
+
+        if (cnftAssets.length > 0) {
+          const cnftService = createCnftService(connection);
+          let hasStaleProof = false;
+
+          for (const asset of cnftAssets) {
+            try {
+              const cachedProof = await cnftService.getCnftProof(asset.identifier, false, 0);
+              if (cachedProof) {
+                const validation = await cnftService.validateProofRoot(asset.identifier, cachedProof.root);
+
+                if (!validation.isValid) {
+                  console.warn(`   ⚠️  Stale proof detected for ${asset.identifier.substring(0, 12)}...`);
+                  hasStaleProof = true;
+                } else {
+                  console.log(`   ✅ Proof valid for ${asset.identifier.substring(0, 12)}...`);
+                }
+              }
+            } catch (validationError: any) {
+              console.warn(`   ⚠️  Could not validate ${asset.identifier.substring(0, 12)}...:`, validationError.message);
+            }
+          }
+
+          if (hasStaleProof) {
+            console.log('\n   🔄 Stale proofs detected! Rebuilding lock transaction...');
+
+            // Rebuild the lock transaction with fresh proofs
+            const lockService = createTwoPhaseSwapLockService(
+              connection,
+              prisma,
+              programId,
+              feeCollector,
+              delegateAuthority
+            );
+
+            const rebuildResult = await lockService.rebuildSingleLockTransaction({
+              swapId,
+              walletAddress: signer.publicKey.toBase58(),
+              party: partyValue,
+            }, transactionIndex || 0);
+
+            if (rebuildResult.serialized) {
+              serializedTransaction = rebuildResult.serialized;
+              console.log('   ✅ Lock transaction rebuilt with fresh proofs');
+            } else {
+              console.error('   ❌ Rebuild did not return valid transaction');
+              return res.status(500).json({
+                success: false,
+                error: 'Failed to rebuild lock transaction with fresh proofs',
+                errorCode: 'STALE_PROOF_REBUILD_FAILED',
+                timestamp: new Date().toISOString(),
+              });
+            }
+          } else {
+            console.log('   ✅ All proofs are fresh, proceeding with original transaction');
+          }
+        }
+      }
+    } catch (validationError: any) {
+      console.warn('   ⚠️  Proactive validation failed, proceeding with original transaction:', validationError.message);
+    }
+  }
+  // ========== END PROACTIVE VALIDATION ==========
 
   // Retry loop for stale proof handling
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {

@@ -10,6 +10,7 @@
 
 import { Connection, PublicKey } from '@solana/web3.js';
 import bs58 from 'bs58';
+import { ConcurrentMerkleTreeAccount } from '@solana/spl-account-compression';
 import {
   CnftAssetData,
   CnftProof,
@@ -1245,19 +1246,174 @@ export class CnftService {
     proofRoot: Uint8Array | number[]
   ): Promise<boolean> {
     console.log('[CnftService] Verifying proof freshness for tree:', treeAddress.toBase58());
-    
+
     try {
-      // Fetch on-chain tree account to get current root
-      // This requires parsing the Merkle tree account data
-      // For now, we'll return true and let the program validate
-      // TODO: Implement on-chain root verification
-      
-      console.log('[CnftService] Proof freshness check: Delegated to on-chain validation');
-      return true;
+      const treeAccount = await ConcurrentMerkleTreeAccount.fromAccountAddress(
+        this.connection,
+        treeAddress
+      );
+      const onChainRoot = Buffer.from(treeAccount.getCurrentRoot());
+      const proofRootBuffer = Buffer.from(proofRoot);
+
+      const isValid = onChainRoot.equals(proofRootBuffer);
+
+      console.log('[CnftService] Proof freshness check:', {
+        treeAddress: treeAddress.toBase58(),
+        isValid,
+        onChainRootPreview: onChainRoot.toString('hex').slice(0, 16) + '...',
+        proofRootPreview: proofRootBuffer.toString('hex').slice(0, 16) + '...',
+      });
+
+      return isValid;
     } catch (error: any) {
       console.error('[CnftService] Failed to verify proof freshness:', error.message);
       return false;
     }
+  }
+
+  /**
+   * Validate a single proof root against on-chain Merkle tree
+   * Returns detailed validation result including current on-chain root
+   */
+  async validateProofRoot(
+    assetId: string,
+    proofRoot: string
+  ): Promise<{
+    isValid: boolean;
+    onChainRoot: string;
+    treeAddress: string;
+    treeSequence: string;
+  }> {
+    console.log('[CnftService] Validating proof root for asset:', assetId.substring(0, 12) + '...');
+
+    try {
+      // Get asset data to find tree address
+      const assetData = await this.getCnftAsset(assetId);
+      const treeAddress = new PublicKey(assetData.compression.tree);
+
+      // Fetch on-chain tree account
+      const treeAccount = await ConcurrentMerkleTreeAccount.fromAccountAddress(
+        this.connection,
+        treeAddress
+      );
+
+      const onChainRoot = Buffer.from(treeAccount.getCurrentRoot());
+      const proofRootBuffer = Buffer.from(bs58.decode(proofRoot));
+      const isValid = onChainRoot.equals(proofRootBuffer);
+
+      const result = {
+        isValid,
+        onChainRoot: bs58.encode(onChainRoot),
+        treeAddress: treeAddress.toBase58(),
+        treeSequence: treeAccount.getCurrentSeq().toString(),
+      };
+
+      console.log('[CnftService] Proof validation result:', {
+        assetId: assetId.substring(0, 12) + '...',
+        isValid,
+        onChainRootPreview: result.onChainRoot.substring(0, 12) + '...',
+        proofRootPreview: proofRoot.substring(0, 12) + '...',
+        treeSequence: result.treeSequence,
+      });
+
+      return result;
+    } catch (error: any) {
+      console.error('[CnftService] Failed to validate proof root:', error.message);
+      throw new Error(`Failed to validate proof root for ${assetId}: ${error.message}`);
+    }
+  }
+
+  /**
+   * Validate multiple proof roots against on-chain Merkle trees in batch
+   * Groups proofs by tree to minimize RPC calls
+   * Returns map of assetId -> validation result
+   */
+  async validateProofRootsBatch(
+    proofs: Map<string, { root: string; tree_id: string }>
+  ): Promise<Map<string, { isValid: boolean; onChainRoot: string }>> {
+    console.log('[CnftService] Batch validating proof roots for', proofs.size, 'assets');
+
+    const results = new Map<string, { isValid: boolean; onChainRoot: string }>();
+
+    if (proofs.size === 0) {
+      return results;
+    }
+
+    // Group proofs by tree address to minimize RPC calls
+    const proofsByTree = new Map<string, Array<{ assetId: string; proofRoot: string }>>();
+    for (const [assetId, proof] of proofs) {
+      const treeId = proof.tree_id;
+      if (!proofsByTree.has(treeId)) {
+        proofsByTree.set(treeId, []);
+      }
+      proofsByTree.get(treeId)!.push({ assetId, proofRoot: proof.root });
+    }
+
+    console.log('[CnftService] Proofs grouped into', proofsByTree.size, 'unique trees');
+
+    // Fetch all tree accounts in parallel
+    const treeAddresses = Array.from(proofsByTree.keys());
+    const treeAccountPromises = treeAddresses.map(async (treeId) => {
+      try {
+        const treeAddress = new PublicKey(treeId);
+        const treeAccount = await ConcurrentMerkleTreeAccount.fromAccountAddress(
+          this.connection,
+          treeAddress
+        );
+        return { treeId, treeAccount, error: null };
+      } catch (error: any) {
+        return { treeId, treeAccount: null, error: error.message };
+      }
+    });
+
+    const treeResults = await Promise.all(treeAccountPromises);
+
+    // Build map of tree ID -> on-chain root
+    const onChainRoots = new Map<string, string>();
+    for (const { treeId, treeAccount, error } of treeResults) {
+      if (treeAccount) {
+        const onChainRoot = bs58.encode(Buffer.from(treeAccount.getCurrentRoot()));
+        onChainRoots.set(treeId, onChainRoot);
+      } else {
+        console.error('[CnftService] Failed to fetch tree account for', treeId, ':', error);
+      }
+    }
+
+    // Validate each proof against its tree's on-chain root
+    let validCount = 0;
+    let staleCount = 0;
+
+    for (const [assetId, proof] of proofs) {
+      const onChainRoot = onChainRoots.get(proof.tree_id);
+
+      if (!onChainRoot) {
+        // Tree fetch failed - mark as invalid to be safe
+        results.set(assetId, { isValid: false, onChainRoot: 'FETCH_FAILED' });
+        staleCount++;
+        continue;
+      }
+
+      const isValid = proof.root === onChainRoot;
+      results.set(assetId, { isValid, onChainRoot });
+
+      if (isValid) {
+        validCount++;
+      } else {
+        staleCount++;
+        console.warn('[CnftService] Stale proof detected for asset', assetId.substring(0, 12) + '...', {
+          proofRoot: proof.root.substring(0, 12) + '...',
+          onChainRoot: onChainRoot.substring(0, 12) + '...',
+        });
+      }
+    }
+
+    console.log('[CnftService] Batch validation complete:', {
+      total: proofs.size,
+      valid: validCount,
+      stale: staleCount,
+    });
+
+    return results;
   }
 }
 
