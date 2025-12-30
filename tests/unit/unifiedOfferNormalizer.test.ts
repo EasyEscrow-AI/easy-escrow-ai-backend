@@ -235,7 +235,6 @@ describe('Unified Offer Normalizer', () => {
           offerLamports: '1000000000',
           durationSeconds: '86400',
           feeBps: 250,
-          listingId: 'listing-123',
         };
 
         const result = normalizeOfferRequest(request);
@@ -253,7 +252,6 @@ describe('Unified Offer Normalizer', () => {
         );
         expect(result.cnftBidRequest!.durationSeconds).to.equal(86400);
         expect(result.cnftBidRequest!.feeBps).to.equal(250);
-        expect(result.cnftBidRequest!.listingId).to.equal('listing-123');
         expect(result.warnings).to.be.empty;
       });
     });
@@ -508,6 +506,110 @@ describe('Unified Offer Normalizer', () => {
           'bulk two-phase swap (lock/settle)'
         );
       });
+    });
+  });
+
+  describe('Asset Type Case Sensitivity (Bug Fix)', () => {
+    /**
+     * This test suite documents the case sensitivity behavior that caused a bug
+     * where cNFT and Core NFT listings displayed as "Unknown NFT SPL NFT".
+     *
+     * The bug occurred because:
+     * - Frontend sends uppercase: { type: 'CNFT' } or { type: 'CORE_NFT' }
+     * - Backend normalizes to lowercase enum: AssetType.CNFT = 'cnft'
+     * - Frontend was checking for uppercase when rendering, which didn't match
+     *
+     * The fix ensures frontend checks for lowercase values.
+     * These tests ensure the backend continues to normalize to lowercase.
+     */
+
+    it('should normalize CNFT type to lowercase enum value', () => {
+      const asset: AssetInput = { mint: 'asset', type: 'CNFT' };
+      const normalized = normalizeAsset(asset);
+
+      // Backend stores lowercase 'cnft', NOT 'CNFT'
+      expect(normalized.type).to.equal(AssetType.CNFT);
+      expect(normalized.type).to.equal('cnft');
+      expect(normalized.type).to.not.equal('CNFT');
+    });
+
+    it('should normalize CORE_NFT type to lowercase enum value', () => {
+      const asset: AssetInput = { mint: 'asset', type: 'CORE_NFT' };
+      const normalized = normalizeAsset(asset);
+
+      // Backend stores lowercase 'core_nft', NOT 'CORE_NFT'
+      expect(normalized.type).to.equal(AssetType.CORE_NFT);
+      expect(normalized.type).to.equal('core_nft');
+      expect(normalized.type).to.not.equal('CORE_NFT');
+    });
+
+    it('should normalize NFT type to lowercase enum value', () => {
+      const asset: AssetInput = { mint: 'asset', type: 'NFT' };
+      const normalized = normalizeAsset(asset);
+
+      // Backend stores lowercase 'nft', NOT 'NFT'
+      expect(normalized.type).to.equal(AssetType.NFT);
+      expect(normalized.type).to.equal('nft');
+      expect(normalized.type).to.not.equal('NFT');
+    });
+
+    it('should preserve metadata through normalization for marketplace display', () => {
+      // This test ensures metadata (name, image) survives normalization
+      // so listings don't show "Unknown NFT"
+      const asset: AssetInput = {
+        identifier: 'cnft-asset-id',
+        type: 'CNFT',
+        metadata: {
+          name: 'My Cool cNFT',
+          image: 'https://example.com/image.png',
+        },
+      };
+      const normalized = normalizeAsset(asset);
+
+      expect(normalized.metadata).to.exist;
+      expect(normalized.metadata.name).to.equal('My Cool cNFT');
+      expect(normalized.metadata.image).to.equal('https://example.com/image.png');
+    });
+
+    it('should preserve metadata in full offer normalization', () => {
+      const request: UnifiedOfferRequest = {
+        makerWallet: '498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R',
+        offeredAssets: [
+          {
+            identifier: 'cnft-1',
+            type: 'CNFT',
+            metadata: { name: 'Test cNFT', image: 'https://test.com/img.png' },
+          },
+        ],
+        requestedAssets: [],
+        requestedSol: '1000000000',
+      };
+
+      const result = normalizeOfferRequest(request);
+
+      expect(result.atomicRequest!.offeredAssets[0].type).to.equal('cnft');
+      expect(result.atomicRequest!.offeredAssets[0].metadata).to.exist;
+      expect(result.atomicRequest!.offeredAssets[0].metadata.name).to.equal('Test cNFT');
+    });
+
+    it('should handle mixed case asset types in a single request', () => {
+      const request: UnifiedOfferRequest = {
+        makerWallet: '498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R',
+        offeredAssets: [
+          { identifier: 'nft-1', type: 'NFT' },
+          { identifier: 'cnft-1', type: 'CNFT' },
+          { identifier: 'core-1', type: 'CORE_NFT' },
+        ],
+        requestedAssets: [],
+        requestedSol: '1000000000',
+      };
+
+      const result = normalizeOfferRequest(request);
+
+      const assets = result.atomicRequest!.offeredAssets;
+      expect(assets[0].type).to.equal('nft');
+      expect(assets[1].type).to.equal('cnft');
+      expect(assets[2].type).to.equal('core_nft');
     });
   });
 
