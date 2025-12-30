@@ -484,7 +484,9 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
             'Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY',
             'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
           ]);
-          const JITO_TIP_AMOUNT = 1_000_000; // 0.001 SOL
+          // JITO tip amount - configurable via env var for congestion periods
+          // Default: 1,000,000 lamports (0.001 SOL) - reasonable for normal conditions
+          const JITO_TIP_AMOUNT = parseInt(process.env.JITO_TIP_LAMPORTS || '1000000', 10);
           const SOLANA_TX_SIZE_LIMIT = 1232; // Solana transaction size limit in bytes
 
           // Check last transaction for JITO tip
@@ -532,7 +534,8 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
                   })
                 );
 
-                console.log(`   💸 Added ${JITO_TIP_AMOUNT} lamports tip to ${randomTipAccount.toBase58().substring(0, 12)}...`);
+                const tipSol = (JITO_TIP_AMOUNT / 1_000_000_000).toFixed(4);
+                console.log(`   💸 Added ${JITO_TIP_AMOUNT} lamports (${tipSol} SOL) tip to ${randomTipAccount.toBase58().substring(0, 12)}...`);
 
                 // Re-sign with platform authority (transaction message changed)
                 // IMPORTANT: Adding an instruction changes the transaction message hash,
