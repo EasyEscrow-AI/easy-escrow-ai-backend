@@ -234,8 +234,9 @@ export class OfferManager {
         );
       }
       
-      // 4. Assign or get nonce account for maker
-      const nonceAccount = await this.noncePoolManager.assignNonceToUser(input.makerWallet);
+      // 4. Assign a unique nonce account for this offer (each offer gets its own nonce)
+      // This allows independent cancellation without affecting other offers
+      const nonceAccount = await this.noncePoolManager.assignNonceToOffer();
       
       // 5. Calculate platform fee
       const offeredSol = input.offeredSol || BigInt(0);
@@ -618,10 +619,7 @@ export class OfferManager {
         throw new Error(`Offer cannot be cancelled (status: ${offer.status})`);
       }
       
-      // 4. Advance nonce to invalidate any pending transactions
-      await this.noncePoolManager.advanceNonce(offer.nonceAccount);
-      
-      // 5. Update this offer as cancelled with tracking info
+      // 4. Update this offer as cancelled with tracking info
       await this.prisma.swapOffer.update({
         where: { id: offerId },
         data: {
@@ -631,23 +629,11 @@ export class OfferManager {
         },
       });
 
-      // 6. Cancel all OTHER offers using this nonce account (including ACTIVE, ACCEPTED, and COUNTERED)
-      // ACCEPTED offers have pending transactions that would fail with consumed nonce
-      // COUNTERED offers should also be cancelled when the nonce is invalidated
-      await this.prisma.swapOffer.updateMany({
-        where: {
-          nonceAccount: offer.nonceAccount,
-          id: { not: offerId },
-          status: { in: [OfferStatus.ACTIVE, OfferStatus.ACCEPTED, OfferStatus.COUNTERED] },
-        },
-        data: {
-          status: OfferStatus.CANCELLED,
-          cancelledAt: new Date(),
-          cancelledBy: walletAddress,
-        },
-      });
+      // 5. Release nonce back to pool (advances nonce and marks as AVAILABLE)
+      // Each offer has its own nonce now, so this doesn't affect other offers
+      await this.noncePoolManager.releaseNonce(offer.nonceAccount);
 
-      // 7. Cancel any counter-offers linked to this offer
+      // 6. Cancel any counter-offers linked to this offer
       // This ensures counter-offers are cancelled when parent is cancelled
       // Include COUNTERED status for consistency (counter-offers can themselves be countered)
       await this.prisma.swapOffer.updateMany({
@@ -1079,8 +1065,9 @@ export class OfferManager {
         );
       }
       
-      // 7. Reuse the parent's nonce account
-      const nonceAccount = parentOffer.nonceAccount;
+      // 7. Assign a unique nonce account for this counter-offer
+      // Each offer (including counter-offers) gets its own nonce for independent lifecycle
+      const nonceAccount = await this.noncePoolManager.assignNonceToOffer();
 
       // 8. Extract SOL amounts from parent offer (counter-offer reverses the roles)
       // Parent's requestedSol becomes counter's offeredSol (what counter-maker offers)
@@ -1433,25 +1420,13 @@ export class OfferManager {
             filledAt: new Date(),
           },
         });
-        
-        // 3b. Cancel ALL offers using the same nonce account (ACTIVE and ACCEPTED)
-        // CRITICAL: ACCEPTED offers also have serialized transactions using this nonce
-        await tx.swapOffer.updateMany({
-          where: {
-            nonceAccount: offer.nonceAccount,
-            status: { in: [OfferStatus.ACTIVE, OfferStatus.ACCEPTED] },
-            id: { not: params.offerId },
-          },
-          data: {
-            status: OfferStatus.CANCELLED,
-            cancelledAt: new Date(),
-          },
-        });
-        
-        // 3c. Update user swap statistics
+
+        // Note: No cascade cancellation needed - each offer has its own unique nonce now
+
+        // 3b. Update user swap statistics
         const makerWallet = offer.makerWallet;
         const takerWallet = offer.takerWallet;
-        
+
         // Update maker stats
         await tx.user.update({
           where: { walletAddress: makerWallet },
@@ -1484,7 +1459,11 @@ export class OfferManager {
           },
         });
       });
-      
+
+      // 4. Release nonce back to pool (advances nonce and marks as AVAILABLE)
+      // This nonce is unique to this offer, so releasing it doesn't affect others
+      await this.noncePoolManager.releaseNonce(offer.nonceAccount);
+
       console.log('[OfferManager] Swap confirmed successfully:', {
         offerId: params.offerId,
         signature: params.signature,
