@@ -3224,7 +3224,7 @@ async function handleSubmitCounterOffer() {
       requestedAssets: [
         {
           identifier: counterOfferData.assetId,
-          type: 'NFT', // Will be validated by the backend
+          type: (counterOfferData.assetType || 'NFT').toUpperCase(), // Normalize to uppercase for API
         },
       ],
       requestedSol: '0',
@@ -3722,7 +3722,7 @@ function renderMarketplaceListings() {
                     </button>
                     <button class="buy-now-btn counter-offer-btn" data-action="counter" data-offer-id="${offer.id}"
                             data-name="${escapeHtml(name)}" data-image="${imageUrl}" data-asset-id="${assetId}"
-                            data-price="${priceSol}" style="flex: 1; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                            data-price="${priceSol}" data-asset-type="${offeredAsset?.type || 'NFT'}" style="flex: 1; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
                         💰 Counter
                     </button>
                 </div>
@@ -3748,6 +3748,7 @@ function renderMarketplaceListings() {
         image: this.dataset.image,
         assetId: this.dataset.assetId,
         priceSol: this.dataset.price,
+        assetType: this.dataset.assetType,
       };
       showCounterOfferModal(offerId, offerData);
     });
