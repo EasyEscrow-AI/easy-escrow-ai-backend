@@ -4371,11 +4371,14 @@ async function handleConfirmCancelListing() {
     // Note: Don't call loadWalletInfo('maker') as it triggers loadActiveListings() via override
     // The wallet doesn't need refresh - the NFT is still there (just unlisted)
     setTimeout(async () => {
-      hideCancelListingModal();
-      await loadMarketplaceListings();
-      // Reset the cancel flag after everything is done
-      cancelInProgress = false;
-      console.log('[DEBUG] Cancel complete, cancelInProgress reset to false');
+      try {
+        hideCancelListingModal();
+        await loadMarketplaceListings();
+      } finally {
+        // Always reset the cancel flag, even if errors occur
+        cancelInProgress = false;
+        console.log('[DEBUG] Cancel complete, cancelInProgress reset to false');
+      }
     }, 2000);
   } catch (error) {
     console.error('Cancel listing error:', error);
