@@ -100,9 +100,10 @@ export class CnftService {
   private batchProofSupported: boolean | null = null;
   // Some RPC providers implement a different batch proof method (e.g. getAssetProofs).
   private assetProofsSupported: boolean | null = null;
-  
-  // Proof cache with TTL
-  private proofCache: Map<string, ProofCacheEntry> = new Map();
+
+  // Proof cache with TTL - STATIC so it's shared across all CnftService instances
+  // This ensures clearAllCachedProofs() clears the cache for all instances
+  private static proofCache: Map<string, ProofCacheEntry> = new Map();
   
   // Rate limiting: active request count
   private activeRequests = 0;
@@ -176,9 +177,9 @@ export class CnftService {
     const now = Date.now();
     let cleaned = 0;
     
-    for (const [key, entry] of this.proofCache.entries()) {
+    for (const [key, entry] of CnftService.proofCache.entries()) {
       if (now >= entry.expiresAt) {
-        this.proofCache.delete(key);
+        CnftService.proofCache.delete(key);
         cleaned++;
       }
     }
@@ -192,11 +193,11 @@ export class CnftService {
    * Check if a cached proof is still fresh
    */
   private getCachedProof(assetId: string): DasProofResponse | null {
-    const entry = this.proofCache.get(assetId);
+    const entry = CnftService.proofCache.get(assetId);
     if (!entry) return null;
     
     if (Date.now() >= entry.expiresAt) {
-      this.proofCache.delete(assetId);
+      CnftService.proofCache.delete(assetId);
       return null;
     }
     
@@ -221,7 +222,7 @@ export class CnftService {
     // Use provided TTL override, or fall back to config value
     // Config defaults to 30s, but can be overridden per-call for critical freshness
     const ttl = ttlSeconds ?? this.config.proofCacheTtlSeconds;
-    this.proofCache.set(assetId, {
+    CnftService.proofCache.set(assetId, {
       proof,
       fetchedAt: now,
       expiresAt: now + (ttl * 1000),
@@ -751,7 +752,7 @@ export class CnftService {
     console.log('[CnftService] Fetching Merkle proof for:', assetId, {
       skipCache,
       retryCount,
-      cacheSize: this.proofCache.size,
+      cacheSize: CnftService.proofCache.size,
     });
     
     // Check cache first (unless skip requested)
@@ -760,7 +761,7 @@ export class CnftService {
     if (!skipCache) {
       const cached = this.getCachedProof(assetId);
       if (cached) {
-        const cacheEntry = this.proofCache.get(assetId);
+        const cacheEntry = CnftService.proofCache.get(assetId);
         const age = cacheEntry ? Date.now() - cacheEntry.fetchedAt : 0;
         console.log('[CnftService] Using cached proof for:', assetId.substring(0, 12) + '...', {
           ageMs: age,
@@ -838,8 +839,19 @@ export class CnftService {
    * Use this when you detect a stale proof and need to force a fresh fetch
    */
   clearCachedProof(assetId: string): void {
-    this.proofCache.delete(assetId);
+    CnftService.proofCache.delete(assetId);
     console.log(`[CnftService] Cleared cached proof for: ${assetId.substring(0, 12)}...`);
+  }
+
+  /**
+   * Clear all cached proofs
+   * Use this when rebuilding transactions after a stale proof error
+   * to ensure all proofs are fetched fresh
+   */
+  clearAllCachedProofs(): void {
+    const count = CnftService.proofCache.size;
+    CnftService.proofCache.clear();
+    console.log(`[CnftService] Cleared all ${count} cached proofs`);
   }
   
   /**

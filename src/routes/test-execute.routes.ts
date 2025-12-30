@@ -20,6 +20,7 @@ import { getEscrowProgramService } from '../services/escrow-program.service';
 import { createTwoPhaseSwapLockService } from '../services/twoPhaseSwapLockService';
 import { createCnftDelegationService } from '../services/cnftDelegationService';
 import { createSwapStateMachine } from '../services/swapStateMachine';
+import { createCnftService } from '../services/cnftService';
 
 // Helper function to detect if transaction is versioned (V0)
 function isVersionedTransaction(buffer: Buffer): boolean {
@@ -36,6 +37,9 @@ const connection = new Connection(
   process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com',
   'confirmed'
 );
+
+// Initialize CnftService for cache management during stale proof retry
+const cnftService = createCnftService(connection);
 
 // Determine network type - must match logic in test.routes.ts config endpoint
 const nodeEnv = process.env.NODE_ENV || 'development';
@@ -650,6 +654,9 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
             console.warn('   Attempting to rebuild transactions with fresh proofs...');
 
             try {
+              // Clear proof cache to ensure fresh proofs are fetched
+              cnftService.clearAllCachedProofs();
+
               // Rebuild all transactions with fresh proofs
               const rebuildResult = await offerManager.rebuildTransaction(offerId);
 
@@ -1119,8 +1126,11 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
         if (isStaleProof && !isLastAttempt && offerId) {
           console.warn(`⚠️  Stale cNFT proof detected on attempt ${attempt}/${MAX_ATTEMPTS}`);
           console.warn('   Rebuilding transaction with fresh proofs immediately...');
-          
+
           try {
+            // Clear proof cache to ensure fresh proofs are fetched
+            cnftService.clearAllCachedProofs();
+
             // Rebuild transaction with fresh proofs
             const rebuildResult = await offerManager.rebuildTransaction(offerId);
             
