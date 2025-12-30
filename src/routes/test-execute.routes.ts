@@ -710,8 +710,38 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
       }
       // ========== END PROACTIVE VALIDATION ==========
 
+      // ========== POPULATE cNFT JIT METADATA ==========
+      // Ensure all cNFT transactions have metadata for JIT rebuild (even if not rebuilt)
+      // This extracts cnftAssetId/cnftFromWallet/cnftToWallet from the assets field
+      for (const tx of bulkSwapInfo.transactions) {
+        if (tx.purpose && tx.purpose.includes('cNFT transfer') && !tx.cnftAssetId) {
+          // Extract cNFT asset from maker or taker assets
+          const makerCnft = (tx.assets?.makerAssets || []).find((a: any) =>
+            a.type === 'cnft' || a.type === 'CNFT'
+          );
+          const takerCnft = (tx.assets?.takerAssets || []).find((a: any) =>
+            a.type === 'cnft' || a.type === 'CNFT'
+          );
+
+          if (makerCnft) {
+            tx.cnftAssetId = makerCnft.identifier;
+            tx.cnftFromWallet = makerAddress; // Maker sends to taker
+            tx.cnftToWallet = takerAddress;
+          } else if (takerCnft) {
+            tx.cnftAssetId = takerCnft.identifier;
+            tx.cnftFromWallet = takerAddress; // Taker sends to maker
+            tx.cnftToWallet = makerAddress;
+          }
+
+          if (tx.cnftAssetId) {
+            console.log(`   📋 Populated JIT metadata for ${tx.cnftAssetId.substring(0, 8)}...`);
+          }
+        }
+      }
+      // ========== END POPULATE cNFT JIT METADATA ==========
+
       const signatures: string[] = [];
-      
+
       for (let i = 0; i < bulkSwapInfo.transactions.length; i++) {
         const txInfo = bulkSwapInfo.transactions[i];
         console.log(`\n📝 Processing TX ${i + 1}/${bulkSwapInfo.transactions.length}: ${txInfo.purpose}`);
