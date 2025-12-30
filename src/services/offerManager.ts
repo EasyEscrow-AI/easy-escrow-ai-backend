@@ -1511,13 +1511,29 @@ export class OfferManager {
       let ownsRequestedAsset = false;
       for (const asset of requestedAssets) {
         try {
-          // Normalize asset type
-          const assetType = (asset.type?.toUpperCase?.() || 'NFT') as AssetType;
+          // Normalize asset type - AssetType enum uses lowercase values ('nft', 'cnft', 'core_nft')
+          const rawType = asset.type?.toLowerCase?.() || 'nft';
+          const assetType = rawType as AssetType;
+
+          console.log('[OfferManager] Validating ownership:', {
+            wallet: walletAddress.substring(0, 8) + '...',
+            assetId: asset.identifier,
+            assetType,
+            rawType: asset.type,
+          });
+
           const validationResult = await this.assetValidator.validateAsset(
             walletAddress,
             asset.identifier,
             assetType
           );
+
+          console.log('[OfferManager] Validation result:', {
+            assetId: asset.identifier,
+            isValid: validationResult.isValid,
+            error: validationResult.error,
+          });
+
           if (validationResult.isValid) {
             ownsRequestedAsset = true;
             console.log('[OfferManager] Ownership verified for asset:', asset.identifier);
@@ -1525,7 +1541,7 @@ export class OfferManager {
           }
         } catch (e) {
           // Continue checking other assets
-          console.log('[OfferManager] Asset validation failed, trying next:', e);
+          console.log('[OfferManager] Asset validation exception:', e);
         }
       }
 
