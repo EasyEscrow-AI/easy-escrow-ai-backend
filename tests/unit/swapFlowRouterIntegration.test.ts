@@ -141,8 +141,136 @@ describe('Swap Flow Router - Integration Scenarios', () => {
     });
   });
 
+  describe('cNFT-to-cNFT Routing (Magic Eden Style)', () => {
+    it('should route 1 cNFT ↔ 1 cNFT swaps to two-phase delegation', () => {
+      // Simple cNFT-to-cNFT swap should use two-phase delegation
+      // This eliminates JITO bundle dependency
+      const offeredAssets = [
+        { type: AssetType.CNFT, identifier: 'cnft-1' },
+      ];
+      const requestedAssets = [
+        { type: AssetType.CNFT, identifier: 'cnft-2' },
+      ];
+
+      const flowResult = determineSwapFlow(
+        offeredAssets,
+        requestedAssets,
+        undefined,
+        undefined
+      );
+
+      // cNFT-to-cNFT ALWAYS uses two-phase for sequential settlement
+      expect(flowResult.flowType).to.equal(SwapFlowType.TWO_PHASE);
+      expect(flowResult.requiresDelegation).to.be.true;
+      expect(flowResult.requiresTwoPhase).to.be.true;
+      expect(flowResult.cnftCount).to.equal(2);
+      expect(flowResult.reason).to.include('cNFT-to-cNFT');
+    });
+
+    it('should route 2 cNFT ↔ 2 cNFT swaps to two-phase delegation', () => {
+      const offeredAssets = [
+        { type: AssetType.CNFT, identifier: 'cnft-1' },
+        { type: AssetType.CNFT, identifier: 'cnft-2' },
+      ];
+      const requestedAssets = [
+        { type: AssetType.CNFT, identifier: 'cnft-3' },
+        { type: AssetType.CNFT, identifier: 'cnft-4' },
+      ];
+
+      const flowResult = determineSwapFlow(
+        offeredAssets,
+        requestedAssets,
+        undefined,
+        undefined
+      );
+
+      expect(flowResult.flowType).to.equal(SwapFlowType.TWO_PHASE);
+      expect(flowResult.requiresTwoPhase).to.be.true;
+      expect(flowResult.cnftCount).to.equal(4);
+    });
+
+    it('should route cNFT-for-SOL to delegation flow (not two-phase)', () => {
+      // Single-side cNFT (cNFT-for-SOL) can use direct delegation
+      const offeredAssets = [
+        { type: AssetType.CNFT, identifier: 'cnft-1' },
+      ];
+      const requestedAssets: { type: AssetType; identifier: string }[] = [];
+      const requestedSol = BigInt(1_000_000_000); // 1 SOL
+
+      const flowResult = determineSwapFlow(
+        offeredAssets,
+        requestedAssets,
+        undefined,
+        requestedSol
+      );
+
+      // Single-side cNFT uses delegation flow (not two-phase)
+      expect(flowResult.flowType).to.equal(SwapFlowType.CNFT_DELEGATION);
+      expect(flowResult.requiresDelegation).to.be.true;
+      expect(flowResult.requiresTwoPhase).to.be.false;
+    });
+
+    it('should route cNFT-for-NFT to delegation flow (not two-phase)', () => {
+      // cNFT offered for regular NFT
+      const offeredAssets = [
+        { type: AssetType.CNFT, identifier: 'cnft-1' },
+      ];
+      const requestedAssets = [
+        { type: AssetType.NFT, identifier: 'nft-1' },
+      ];
+
+      const flowResult = determineSwapFlow(
+        offeredAssets,
+        requestedAssets,
+        undefined,
+        undefined
+      );
+
+      // cNFT-for-NFT uses delegation flow (cNFT only on one side)
+      expect(flowResult.flowType).to.equal(SwapFlowType.CNFT_DELEGATION);
+      expect(flowResult.requiresDelegation).to.be.true;
+      expect(flowResult.requiresTwoPhase).to.be.false;
+    });
+  });
+
   describe('JITO Flag Integration', () => {
-    it('should respect JITO enabled flag', () => {
+    it('should respect JITO enabled flag for single-side cNFT swaps', () => {
+      // cNFT-for-SOL (single-side cNFT) - uses delegation flow
+      const offeredAssets = [
+        { type: AssetType.CNFT, identifier: 'cnft-1' },
+      ];
+      const requestedAssets: { type: AssetType; identifier: string }[] = [];
+      const requestedSol = BigInt(1_000_000_000);
+
+      // With JITO enabled
+      const jitoEnabledResult = determineSwapFlow(
+        offeredAssets,
+        requestedAssets,
+        undefined,
+        requestedSol,
+        true // JITO enabled
+      );
+
+      // With JITO disabled
+      const jitoDisabledResult = determineSwapFlow(
+        offeredAssets,
+        requestedAssets,
+        undefined,
+        requestedSol,
+        false // JITO disabled
+      );
+
+      // Both should require delegation for cNFT
+      expect(jitoEnabledResult.requiresDelegation).to.be.true;
+      expect(jitoDisabledResult.requiresDelegation).to.be.true;
+
+      // But canUseJito should differ
+      expect(jitoEnabledResult.canUseJito).to.be.true;
+      expect(jitoDisabledResult.canUseJito).to.be.false;
+    });
+
+    it('should use two-phase for cNFT-to-cNFT regardless of JITO flag', () => {
+      // cNFT-to-cNFT ALWAYS uses two-phase, eliminating JITO dependency
       const offeredAssets = [
         { type: AssetType.CNFT, identifier: 'cnft-1' },
       ];
@@ -156,7 +284,7 @@ describe('Swap Flow Router - Integration Scenarios', () => {
         requestedAssets,
         undefined,
         undefined,
-        true // JITO enabled
+        true
       );
 
       // With JITO disabled
@@ -165,16 +293,14 @@ describe('Swap Flow Router - Integration Scenarios', () => {
         requestedAssets,
         undefined,
         undefined,
-        false // JITO disabled
+        false
       );
 
-      // Both should require delegation for cNFT
-      expect(jitoEnabledResult.requiresDelegation).to.be.true;
-      expect(jitoDisabledResult.requiresDelegation).to.be.true;
-
-      // But canUseJito should differ
-      expect(jitoEnabledResult.canUseJito).to.be.true;
-      expect(jitoDisabledResult.canUseJito).to.be.false;
+      // BOTH should use two-phase regardless of JITO flag
+      expect(jitoEnabledResult.flowType).to.equal(SwapFlowType.TWO_PHASE);
+      expect(jitoDisabledResult.flowType).to.equal(SwapFlowType.TWO_PHASE);
+      expect(jitoEnabledResult.requiresTwoPhase).to.be.true;
+      expect(jitoDisabledResult.requiresTwoPhase).to.be.true;
     });
   });
 

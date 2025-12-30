@@ -196,6 +196,22 @@ export function determineSwapFlow(
 
   // Check for cNFT delegation flow (any cNFT involved, but not bulk)
   if (totalCnftCount > 0) {
+    // cNFT-to-cNFT swaps ALWAYS use two-phase delegation (Magic Eden style)
+    // This eliminates JITO bundle dependency for cNFT swaps
+    const hasCnftOnBothSides = offeredCnftCount > 0 && requestedCnftCount > 0;
+
+    if (hasCnftOnBothSides) {
+      return {
+        ...baseResult,
+        flowType: SwapFlowType.TWO_PHASE,
+        requiresTwoPhase: true,
+        requiresDelegation: true,
+        reason: `Routing to two-phase delegation: cNFT-to-cNFT swap (${offeredCnftCount} ↔ ${requestedCnftCount} cNFTs). ` +
+                `Sequential settlement with fresh Merkle proofs, no JITO bundle needed.`,
+      };
+    }
+
+    // Single-side cNFT (cNFT-for-SOL or cNFT-for-NFT) - can use direct delegation
     let reason = `Routing to cNFT delegation flow: ${totalCnftCount} cNFT`;
     if (totalCnftCount > 1) {
       reason += 's';

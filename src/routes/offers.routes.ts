@@ -2828,7 +2828,11 @@ function serializeTwoPhaseSwap(swap: any): any {
 /**
  * Determine execution strategy based on swap parameters
  * - Atomic: Simple swaps (1-2 assets, single cNFT↔SOL)
- * - Two-phase: Complex swaps (3+ cNFTs, bulk assets)
+ * - Two-phase: Complex swaps (3+ cNFTs, bulk assets, cNFT↔cNFT)
+ *
+ * IMPORTANT: cNFT-to-cNFT swaps ALWAYS use two-phase delegation.
+ * This eliminates JITO bundle dependency and uses sequential settlement
+ * with fresh Merkle proofs fetched per transaction (Magic Eden style).
  */
 function determineExecutionStrategy(assetsA: any[], assetsB: any[]): 'atomic' | 'two-phase' {
   const cnftCountA = assetsA.filter((a: any) => a.isCompressed || a.type === 'CNFT').length;
@@ -2836,9 +2840,11 @@ function determineExecutionStrategy(assetsA: any[], assetsB: any[]): 'atomic' | 
   const totalAssets = assetsA.length + assetsB.length;
 
   // Use two-phase for:
+  // - cNFT-to-cNFT swaps (any cNFT on both sides)
   // - 3+ cNFTs on either side
   // - 5+ total assets
-  if (cnftCountA >= 3 || cnftCountB >= 3 || totalAssets >= 5) {
+  const hasCnftOnBothSides = cnftCountA > 0 && cnftCountB > 0;
+  if (hasCnftOnBothSides || cnftCountA >= 3 || cnftCountB >= 3 || totalAssets >= 5) {
     return 'two-phase';
   }
 
