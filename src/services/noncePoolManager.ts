@@ -390,7 +390,125 @@ export class NoncePoolManager {
       }
     });
   }
-  
+
+  /**
+   * Assign a unique nonce account to an offer (does NOT reuse user's existing nonce)
+   * This ensures each offer has its own nonce for independent cancellation
+   */
+  async assignNonceToOffer(): Promise<string> {
+    return this.poolMutex.runExclusive(async () => {
+      try {
+        console.log('[NoncePoolManager] Assigning fresh nonce account for new offer');
+
+        // Always get a new available nonce account (never reuse)
+        const availableNonce = await this.prisma.noncePool.findFirst({
+          where: { status: NonceStatus.AVAILABLE },
+          orderBy: { createdAt: 'asc' },
+        });
+
+        if (!availableNonce) {
+          console.log('[NoncePoolManager] No available nonce accounts, triggering replenishment');
+
+          // Trigger replenishment (non-blocking)
+          this.replenishPool().catch((err) => {
+            console.error('[NoncePoolManager] Background replenishment failed:', err);
+          });
+
+          // Wait for a nonce account with timeout
+          return this.waitForNonceAccountForOffer();
+        }
+
+        // Update nonce account status to IN_USE
+        await this.prisma.noncePool.update({
+          where: { nonceAccount: availableNonce.nonceAccount },
+          data: {
+            status: NonceStatus.IN_USE,
+            lastUsedAt: new Date(),
+          },
+        });
+
+        console.log(
+          `[NoncePoolManager] Assigned fresh nonce account ${availableNonce.nonceAccount} for offer`
+        );
+
+        // Check if pool needs replenishment
+        const stats = await this.getPoolStats();
+        if (stats.available < this.config.replenishmentThreshold) {
+          console.log(
+            `[NoncePoolManager] Pool below threshold (${stats.available}/${this.config.replenishmentThreshold}), triggering replenishment`
+          );
+          this.replenishPool().catch((err) => {
+            console.error('[NoncePoolManager] Background replenishment failed:', err);
+          });
+        }
+
+        return availableNonce.nonceAccount;
+      } catch (error) {
+        console.error('[NoncePoolManager] Failed to assign nonce account for offer:', error);
+        throw error;
+      }
+    });
+  }
+
+  /**
+   * Wait for a nonce account to become available for an offer (with timeout)
+   */
+  private waitForNonceAccountForOffer(): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const timeoutId = setTimeout(() => {
+        this.assignmentQueue = this.assignmentQueue.filter((item) => item.timeoutId !== timeoutId);
+        reject(new Error('Timeout waiting for available nonce account for offer'));
+      }, this.config.assignmentTimeoutMs);
+
+      this.assignmentQueue.push({
+        resolve: (nonceAccount: string) => {
+          clearTimeout(timeoutId);
+          resolve(nonceAccount);
+        },
+        reject: (error: Error) => {
+          clearTimeout(timeoutId);
+          reject(error);
+        },
+        timeoutId,
+      });
+
+      console.log(
+        `[NoncePoolManager] Added offer to assignment queue (queue size: ${this.assignmentQueue.length})`
+      );
+    });
+  }
+
+  /**
+   * Release a nonce account back to the pool after offer cancellation/completion
+   * Advances the nonce first to invalidate any pending transactions
+   */
+  async releaseNonce(nonceAccount: string): Promise<void> {
+    console.log(`[NoncePoolManager] Releasing nonce ${nonceAccount} back to pool`);
+
+    try {
+      // Advance nonce first to invalidate any pending transactions using old nonce value
+      await this.advanceNonce(nonceAccount);
+
+      // Return to available pool
+      await this.prisma.noncePool.update({
+        where: { nonceAccount },
+        data: {
+          status: NonceStatus.AVAILABLE,
+          lastUsedAt: new Date(),
+        },
+      });
+
+      // Clear from cache
+      this.nonceCache.delete(nonceAccount);
+
+      console.log(`[NoncePoolManager] Successfully released nonce ${nonceAccount} to pool`);
+    } catch (error) {
+      console.error(`[NoncePoolManager] Failed to release nonce ${nonceAccount}:`, error);
+      // Don't throw - we don't want to fail the cancel/complete operation
+      // The nonce will be reclaimed by the cleanup process eventually
+    }
+  }
+
   /**
    * Wait for a nonce account to become available (with timeout)
    */
