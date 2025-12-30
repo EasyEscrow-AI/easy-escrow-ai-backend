@@ -35,8 +35,14 @@ export interface BulkSwapExecutionResult {
   bundleStatus?: 'Pending' | 'Landed' | 'Failed' | 'Timeout';
   /** Error message if failed */
   error?: string;
+  /** Error code for programmatic handling */
+  errorCode?: 'STALE_PROOF_REBUILD_REQUIRED' | 'EXECUTION_FAILED' | 'BUILD_FAILED';
   /** Transaction group info for bulk swaps */
   transactionGroup?: TransactionGroupResult;
+  /** Indices of transactions with stale proofs (when errorCode is STALE_PROOF_REBUILD_REQUIRED) */
+  staleTransactionIndices?: number[];
+  /** Whether client needs to re-sign transactions */
+  requiresResigning?: boolean;
 }
 
 /**
@@ -274,6 +280,180 @@ export class BulkSwapExecutor {
    */
   analyzeSwap(inputs: TransactionGroupInput) {
     return this.transactionGroupBuilder.analyzeSwap(inputs);
+  }
+
+  /**
+   * Validate all cNFT proofs in a transaction group before bundle submission.
+   * This should be called just before submitting to Jito to ensure proofs are still fresh.
+   *
+   * @param groupResult - The built transaction group
+   * @returns Validation result with list of stale transaction indices
+   */
+  async validateProofsBeforeSubmission(
+    groupResult: TransactionGroupResult
+  ): Promise<{
+    allValid: boolean;
+    staleTransactionIndices: number[];
+    validationResults: Map<number, { assetId: string; isValid: boolean; onChainRoot: string }>;
+  }> {
+    console.log('[BulkSwapExecutor] Validating proofs before bundle submission...');
+
+    const result = await this.transactionGroupBuilder.validateCnftProofsInGroup(groupResult);
+
+    const allValid = result.staleTransactionIndices.length === 0;
+
+    console.log('[BulkSwapExecutor] Proof validation complete:', {
+      allValid,
+      staleCount: result.staleTransactionIndices.length,
+      staleIndices: result.staleTransactionIndices,
+    });
+
+    return {
+      allValid,
+      staleTransactionIndices: result.staleTransactionIndices,
+      validationResults: result.validationResults,
+    };
+  }
+
+  /**
+   * Rebuild stale transactions in a group with fresh proofs.
+   * Call this when validateProofsBeforeSubmission() returns stale transactions.
+   *
+   * @param groupResult - The original transaction group
+   * @param staleTransactionIndices - Indices of transactions to rebuild
+   * @param inputs - Original build inputs (needed to reconstruct transactions)
+   * @returns Updated transaction group with rebuilt transactions
+   */
+  async rebuildStaleTransactions(
+    groupResult: TransactionGroupResult,
+    staleTransactionIndices: number[],
+    inputs: TransactionGroupInput
+  ): Promise<{
+    updatedGroup: TransactionGroupResult;
+    rebuiltIndices: number[];
+    requiresResigning: boolean;
+  }> {
+    console.log('[BulkSwapExecutor] Rebuilding stale transactions:', staleTransactionIndices);
+
+    // Clone the group result
+    const updatedGroup: TransactionGroupResult = {
+      ...groupResult,
+      transactions: [...groupResult.transactions],
+    };
+
+    const rebuiltIndices: number[] = [];
+
+    // Rebuild each stale transaction
+    for (const txIndex of staleTransactionIndices) {
+      try {
+        const result = await this.transactionGroupBuilder.rebuildCnftTransactionWithFreshProof(
+          groupResult,
+          txIndex,
+          inputs
+        );
+
+        // Replace the transaction in the group
+        updatedGroup.transactions[txIndex] = result.rebuiltTransaction;
+        rebuiltIndices.push(txIndex);
+
+        console.log(`[BulkSwapExecutor] Successfully rebuilt transaction ${txIndex}`);
+      } catch (error) {
+        console.error(`[BulkSwapExecutor] Failed to rebuild transaction ${txIndex}:`, error);
+        throw new Error(`Failed to rebuild transaction ${txIndex}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    }
+
+    console.log('[BulkSwapExecutor] Rebuild complete:', {
+      rebuiltCount: rebuiltIndices.length,
+      rebuiltIndices,
+    });
+
+    return {
+      updatedGroup,
+      rebuiltIndices,
+      requiresResigning: rebuiltIndices.length > 0,
+    };
+  }
+
+  /**
+   * Execute a swap with automatic stale proof detection and rebuild.
+   * This is the recommended method for executing swaps that may have stale proofs.
+   *
+   * @param inputs - Transaction build inputs
+   * @param options - Execution options
+   * @param maxRetries - Maximum number of rebuild attempts (default: 3)
+   * @returns Execution result
+   */
+  async executeSwapWithProofValidation(
+    inputs: TransactionGroupInput,
+    options: BulkSwapExecutionOptions = {},
+    maxRetries: number = 3
+  ): Promise<BulkSwapExecutionResult> {
+    console.log('[BulkSwapExecutor] Executing swap with proof validation...');
+
+    let groupResult: TransactionGroupResult | null = null;
+    let retryCount = 0;
+
+    while (retryCount < maxRetries) {
+      try {
+        // Build or use existing group
+        if (!groupResult) {
+          groupResult = await this.transactionGroupBuilder.buildTransactionGroup(inputs);
+        }
+
+        // Validate proofs before submission
+        const validation = await this.validateProofsBeforeSubmission(groupResult);
+
+        if (!validation.allValid) {
+          console.log(`[BulkSwapExecutor] Stale proofs detected (attempt ${retryCount + 1}/${maxRetries}), rebuilding...`);
+
+          // Rebuild stale transactions
+          const rebuildResult = await this.rebuildStaleTransactions(
+            groupResult,
+            validation.staleTransactionIndices,
+            inputs
+          );
+
+          groupResult = rebuildResult.updatedGroup;
+          retryCount++;
+
+          // Continue to re-validate after rebuild
+          continue;
+        }
+
+        // All proofs are valid, proceed with execution
+        console.log('[BulkSwapExecutor] All proofs validated, proceeding with execution...');
+
+        if (groupResult.strategy === SwapStrategy.SINGLE_TRANSACTION) {
+          return this.executeSingleTransaction(groupResult, options.waitForConfirmation ?? true);
+        } else {
+          return this.executeJitoBundle(groupResult, {
+            waitForConfirmation: options.waitForConfirmation ?? true,
+            confirmationTimeoutSeconds: options.confirmationTimeoutSeconds ?? 30,
+            skipSimulation: options.skipSimulation ?? true,
+            description: options.description ?? 'Bulk swap with proof validation',
+          });
+        }
+      } catch (error) {
+        console.error('[BulkSwapExecutor] Execution error:', error);
+        return {
+          success: false,
+          strategy: groupResult?.strategy || SwapStrategy.CANNOT_FIT,
+          error: error instanceof Error ? error.message : 'Unknown execution error',
+          errorCode: 'EXECUTION_FAILED',
+          transactionGroup: groupResult || undefined,
+        };
+      }
+    }
+
+    // Max retries exhausted
+    return {
+      success: false,
+      strategy: groupResult?.strategy || SwapStrategy.CANNOT_FIT,
+      error: `Failed to obtain fresh proofs after ${maxRetries} attempts`,
+      errorCode: 'STALE_PROOF_REBUILD_REQUIRED',
+      transactionGroup: groupResult || undefined,
+    };
   }
 }
 
