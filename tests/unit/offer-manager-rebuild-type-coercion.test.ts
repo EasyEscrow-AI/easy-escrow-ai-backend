@@ -17,13 +17,27 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 import { OfferManager } from '../../src/services/offerManager';
 import { PrismaClient } from '@prisma/client';
-import { Connection, Keypair, PublicKey } from '@solana/web3.js';
+import { Connection, Keypair, PublicKey, SystemProgram } from '@solana/web3.js';
+
+// Helper to create proper nonce account data for NonceAccount.fromAccountData
+const createMockNonceAccountData = (authority: PublicKey, nonce: string): Buffer => {
+  const data = Buffer.alloc(80);
+  data.writeUInt32LE(0, 0);
+  data.writeUInt32LE(1, 4);
+  authority.toBuffer().copy(data, 8);
+  const nonceBuffer = Buffer.alloc(32);
+  Buffer.from(nonce.slice(0, 32)).copy(nonceBuffer);
+  nonceBuffer.copy(data, 40);
+  return data;
+};
 
 describe('OfferManager.rebuildTransaction - Type Coercion', () => {
   let sandbox: sinon.SinonSandbox;
   let offerManager: OfferManager;
   let prismaMock: any;
   let connectionMock: any;
+  let mockPlatformAuthority: Keypair;
+  let mockNonceAccountPubkey: PublicKey;
 
   beforeEach(() => {
     sandbox = sinon.createSandbox();
@@ -36,8 +50,19 @@ describe('OfferManager.rebuildTransaction - Type Coercion', () => {
       },
     };
 
-    // Mock Connection
-    connectionMock = sandbox.createStubInstance(Connection);
+    mockPlatformAuthority = Keypair.generate();
+    mockNonceAccountPubkey = new PublicKey('CPDz3pC5AnK7es3oEcP52HLhByPSAWG6f9QGP6j4jjEA');
+
+    // Create connection and mock getAccountInfo
+    connectionMock = new Connection('http://localhost:8899');
+    sandbox.stub(connectionMock, 'getLatestBlockhash').resolves({ blockhash: 'GH7ome3EiwEr7tu9JuTh2dpYWBJK3z69Xm1ZE3MEE6JC', lastValidBlockHeight: 1000 });
+    sandbox.stub(connectionMock, 'getAccountInfo').callsFake(async (pubkey: any) => {
+      if (pubkey.equals(mockNonceAccountPubkey)) {
+        const nonceData = createMockNonceAccountData(mockPlatformAuthority.publicKey, 'test-nonce-value-123456789012345678901234567890');
+        return { data: nonceData, executable: false, lamports: 1000000, owner: SystemProgram.programId, rentEpoch: 0 };
+      }
+      return null;
+    });
 
     // Create OfferManager instance with minimal mocks
     const mockNoncePoolManager: any = {};
@@ -51,7 +76,7 @@ describe('OfferManager.rebuildTransaction - Type Coercion', () => {
       validateInputs: sandbox.stub(),
       getALTService: sandbox.stub().returns(null), // Required by OfferManager constructor
     };
-    const mockPlatformAuthority = Keypair.generate();
+    
     const mockTreasuryPDA = Keypair.generate().publicKey;
     const mockProgramId = Keypair.generate().publicKey;
 
@@ -79,7 +104,7 @@ describe('OfferManager.rebuildTransaction - Type Coercion', () => {
       status: 'ACCEPTED',
       makerWallet: 'AoCpvu92duSVDNNiiQRnQVFrVgopNunx5pYuJp81Z99z',
       takerWallet: '5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4',
-      offeredAssets: [{ type: 'cnft', identifier: '7BC3X263a9N3BepgLa69LpTY2ZjwQr5ZeCCqEC7Xs1YM' }],
+      offeredAssets: [{ type: 'nft', identifier: '7BC3X263a9N3BepgLa69LpTY2ZjwQr5ZeCCqEC7Xs1YM' }],
       requestedAssets: [{ type: 'sol', identifier: '100000000' }],
       offeredSolLamports: '0',
       requestedSolLamports: '100000000',
@@ -225,7 +250,7 @@ describe('OfferManager.rebuildTransaction - Type Coercion', () => {
         takerWallet: '5VsKp5GWPqeCcgxhNUjC2jQu2UuH8HW6baTCQSvBktx4',
         offeredAssets: [
           {
-            type: 'cnft',
+            type: 'nft',
             identifier: '7BC3X263a9N3BepgLa69LpTY2ZjwQr5ZeCCqEC7Xs1YM',
           },
         ],
