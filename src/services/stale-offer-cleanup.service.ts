@@ -173,20 +173,22 @@ export class StaleOfferCleanupScheduler {
       let totalChecked = 0;
       let hasMore = true;
       let iterations = 0;
+      let lastProcessedId = 0; // Cursor for pagination - avoids skipping offers when some are cancelled
       const maxIterations = 20; // Safety limit (20 * 50 = 1000 offers max)
 
       while (hasMore && iterations < maxIterations) {
         iterations++;
 
-        // Find active offers in batches
+        // Find active offers in batches using cursor-based pagination
+        // This avoids the bug where offset pagination skips offers when cancellations modify the result set
         const activeOffers = await this.prisma.swapOffer.findMany({
           where: {
+            id: { gt: lastProcessedId }, // Cursor: get offers with ID > last processed
             status: {
               in: [OfferStatus.ACTIVE, OfferStatus.COUNTERED],
             },
           },
           take: this.config.batchSize,
-          skip: (iterations - 1) * this.config.batchSize,
           select: {
             id: true,
             makerWallet: true,
@@ -195,7 +197,7 @@ export class StaleOfferCleanupScheduler {
             status: true,
           },
           orderBy: {
-            createdAt: 'asc', // Process oldest first
+            id: 'asc', // Order by ID for consistent cursor pagination
           },
         });
 
@@ -204,7 +206,10 @@ export class StaleOfferCleanupScheduler {
           break;
         }
 
-        console.log(`\n📋 Batch ${iterations}: Checking ${activeOffers.length} offers`);
+        // Update cursor to last offer ID in this batch
+        lastProcessedId = activeOffers[activeOffers.length - 1].id;
+
+        console.log(`\n📋 Batch ${iterations}: Checking ${activeOffers.length} offers (cursor: ${lastProcessedId})`);
 
         let batchCleaned = 0;
 
@@ -292,12 +297,12 @@ export class StaleOfferCleanupScheduler {
 
         console.log(`   ✅ Batch ${iterations}: Cleaned ${batchCleaned} stale offers`);
 
-        // If we got less than batch size, we're done
+        // If we got fewer results than batch size, we've processed all offers
         if (activeOffers.length < this.config.batchSize) {
           hasMore = false;
         }
 
-        // Delay between batches
+        // Delay between batches to respect DAS rate limits
         if (hasMore) {
           await new Promise((resolve) => setTimeout(resolve, this.config.batchDelayMs));
         }
