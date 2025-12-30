@@ -2353,6 +2353,7 @@ let selectedListingAsset = null;
 let activeListings = [];
 let quickListAsset = null;
 let quickListDuration = 604800;
+let cancelInProgress = false; // Flag to prevent loadActiveListings during cancel
 
 // Initialize listing functionality after DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
@@ -2406,6 +2407,16 @@ let incomingBids = [];
 
 // Load active listings - now uses offers API
 async function loadActiveListings() {
+  // DEBUG: Track what's calling this function
+  console.log('[DEBUG] loadActiveListings() CALLED');
+  console.log('[DEBUG] Stack trace:', new Error().stack);
+
+  // Skip if cancel is in progress to prevent race conditions
+  if (cancelInProgress) {
+    console.log('[DEBUG] Skipping loadActiveListings - cancel in progress');
+    return;
+  }
+
   const container = document.getElementById('active-listings-container');
   if (!container || !MAKER_ADDRESS) {
     return;
@@ -4285,6 +4296,9 @@ async function handleConfirmCancelListing() {
   const actions = document.getElementById('cancel-listing-actions');
 
   try {
+    // Set flag to prevent loadActiveListings from running during cancel
+    cancelInProgress = true;
+
     confirmBtn.disabled = true;
     confirmBtn.textContent = 'Processing...';
 
@@ -4347,18 +4361,32 @@ async function handleConfirmCancelListing() {
         container.innerHTML =
           '<div class="empty-state">No active listings or bids. List an asset or make a counter offer to see it here.</div>';
       }
+    } else {
+      // DEFENSIVE: Re-render remaining listings to ensure DOM is in sync with activeListings array
+      // This prevents any race condition from overwriting our local changes
+      console.log('[DEBUG] Re-rendering active listings after cancel. Remaining:', activeListings.length);
+      renderActiveListings();
     }
 
     // Auto-close and refresh marketplace after delay
     // Note: Don't call loadWalletInfo('maker') as it triggers loadActiveListings() via override
     // The wallet doesn't need refresh - the NFT is still there (just unlisted)
     setTimeout(async () => {
-      hideCancelListingModal();
-      await loadMarketplaceListings();
+      try {
+        hideCancelListingModal();
+        await loadMarketplaceListings();
+      } finally {
+        // Always reset the cancel flag, even if errors occur
+        cancelInProgress = false;
+        console.log('[DEBUG] Cancel complete, cancelInProgress reset to false');
+      }
     }, 2000);
   } catch (error) {
     console.error('Cancel listing error:', error);
     addLog(`❌ Failed to cancel listing: ${error.message}`, 'error');
+
+    // Reset cancel flag on error
+    cancelInProgress = false;
 
     updateCancelListingTxStatus('error', 'Cancellation Failed', error.message);
 
