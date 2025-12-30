@@ -1682,9 +1682,15 @@ async function executeSwapWithRetry(offerId, acceptData, isBulkSwap = false, bul
 
 // Helper: Execute two-phase swap lock transactions sequentially
 async function executeTwoPhaseSwap(offerId, acceptData, addLog) {
+  // Use twoPhaseSwapId if available (for converted atomic offers)
+  const swapId = acceptData.data.twoPhaseSwapId || offerId;
   const lockTx = acceptData.data.lockTransaction;
   const transactions = lockTx.transactions || [{ serialized: lockTx.serialized, purpose: 'Lock assets' }];
   const transactionCount = lockTx.transactionCount ?? transactions.length;
+
+  if (swapId !== offerId) {
+    addLog(`   Using TwoPhaseSwap ID: ${swapId}`, 'info');
+  }
 
   // Guard against empty transactions array
   if (!transactions || transactions.length === 0) {
@@ -1706,7 +1712,7 @@ async function executeTwoPhaseSwap(offerId, acceptData, addLog) {
         'X-Test-Execution': 'true',
       },
       body: JSON.stringify({
-        swapId: offerId,
+        swapId: swapId,
         serializedTransaction: tx.serialized,
         transactionIndex: i,
         totalTransactions: transactionCount,
@@ -1730,15 +1736,17 @@ async function executeTwoPhaseSwap(offerId, acceptData, addLog) {
   addLog('   📝 Confirming Party A lock...', 'info');
   // Use last signature or 'no-lock-tx' if no transactions were executed
   const lastSignatureA = signatures.length > 0 ? signatures[signatures.length - 1] : 'no-lock-tx';
-  const confirmResponse = await fetch(`/api/swaps/offers/bulk/${offerId}/confirm-lock`, {
+  // Get partyA from offer or twoPhaseSwap (for converted atomic offers)
+  const partyA = acceptData.data.offer?.partyA || acceptData.data.offer?.makerWallet;
+  const confirmResponse = await fetch(`/api/swaps/offers/bulk/${swapId}/confirm-lock`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'idempotency-key': `confirm-lock-a-${offerId}-${Date.now()}`,
+      'idempotency-key': `confirm-lock-a-${swapId}-${Date.now()}`,
     },
     body: JSON.stringify({
       party: 'A',
-      walletAddress: acceptData.data.offer.partyA,
+      walletAddress: partyA,
       signature: lastSignatureA,
     }),
   });
@@ -1768,7 +1776,7 @@ async function executeTwoPhaseSwap(offerId, acceptData, addLog) {
           'X-Test-Execution': 'true',
         },
         body: JSON.stringify({
-          swapId: offerId,
+          swapId: swapId,
           serializedTransaction: tx.serialized,
           transactionIndex: i,
           totalTransactions: partyBTxs.length,
@@ -1792,15 +1800,17 @@ async function executeTwoPhaseSwap(offerId, acceptData, addLog) {
     addLog('   📝 Confirming Party B lock...', 'info');
     // Use last signature or 'no-lock-tx' if no transactions were executed
     const lastSignatureB = partyBSignatures.length > 0 ? partyBSignatures[partyBSignatures.length - 1] : 'no-lock-tx';
-    const confirmBResponse = await fetch(`/api/swaps/offers/bulk/${offerId}/confirm-lock`, {
+    // Get partyB from confirm result or accept data
+    const partyB = confirmResult.data.offer?.partyB || acceptData.data.offer?.partyB || acceptData.data.offer?.takerWallet;
+    const confirmBResponse = await fetch(`/api/swaps/offers/bulk/${swapId}/confirm-lock`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'idempotency-key': `confirm-lock-b-${offerId}-${Date.now()}`,
+        'idempotency-key': `confirm-lock-b-${swapId}-${Date.now()}`,
       },
       body: JSON.stringify({
         party: 'B',
-        walletAddress: confirmResult.data.offer?.partyB || acceptData.data.offer.partyB,
+        walletAddress: partyB,
         signature: lastSignatureB,
       }),
     });
@@ -1814,11 +1824,11 @@ async function executeTwoPhaseSwap(offerId, acceptData, addLog) {
 
   // Settle the swap
   addLog('   📝 Settling swap...', 'info');
-  const settleResponse = await fetch(`/api/swaps/offers/bulk/${offerId}/settle`, {
+  const settleResponse = await fetch(`/api/swaps/offers/bulk/${swapId}/settle`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'idempotency-key': `settle-${offerId}-${Date.now()}`,
+      'idempotency-key': `settle-${swapId}-${Date.now()}`,
     },
     body: JSON.stringify({}),
   });
@@ -1975,11 +1985,29 @@ async function executeAtomicSwap(params) {
     try {
       acceptData = await acceptOfferWithRetry(offerId);
 
-      // Check if this is a two-phase swap (has lockTransaction instead of transaction)
-      if (acceptData.data && acceptData.data.lockTransaction && acceptData.data.executionStrategy === 'two-phase') {
+      // Check if this is a two-phase swap
+      // - Direct two-phase: data.lockTransaction (bulk UUID offers)
+      // - Converted atomic: data.twoPhaseSwap.lockTransaction (cNFT-to-cNFT atomic offers)
+      const directTwoPhase = acceptData.data?.lockTransaction && acceptData.data?.executionStrategy === 'two-phase';
+      const convertedTwoPhase = acceptData.data?.twoPhaseSwap?.lockTransaction && acceptData.data?.twoPhaseSwap?.executionStrategy === 'two-phase';
+
+      if (directTwoPhase || convertedTwoPhase) {
         isTwoPhaseSwap = true;
-        const lockTxCount = acceptData.data.lockTransaction.transactionCount || 1;
+        // Normalize the lock transaction location for downstream processing
+        if (convertedTwoPhase && !acceptData.data.lockTransaction) {
+          // Copy twoPhaseSwap fields to top level for compatibility
+          acceptData.data.lockTransaction = acceptData.data.twoPhaseSwap.lockTransaction;
+          acceptData.data.executionStrategy = 'two-phase';
+          // Use the twoPhaseSwap ID for subsequent API calls
+          if (acceptData.data.twoPhaseSwap.swapId) {
+            acceptData.data.twoPhaseSwapId = acceptData.data.twoPhaseSwap.swapId;
+          }
+        }
+        const lockTxCount = acceptData.data.lockTransaction?.transactionCount || 1;
         addLog(`🔐 Two-phase swap detected: ${lockTxCount} lock transaction(s)`, 'info');
+        if (convertedTwoPhase) {
+          addLog('   (cNFT-to-cNFT swap → delegation-based settlement)', 'info');
+        }
       }
       // Check if this is a bulk swap
       else if (acceptData.data && acceptData.data.bulkSwap) {
