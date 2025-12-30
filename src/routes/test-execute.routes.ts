@@ -807,57 +807,44 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
           });
         }
 
-        // ========== JIT PROOF VALIDATION FOR cNFT TRANSACTIONS ==========
-        // For cNFT transactions (TX 2+), validate proof freshness and rebuild if stale
-        // This solves the issue where proofs become stale between TX 1 confirmation and TX 2 submission
+        // ========== JIT REBUILD FOR cNFT TRANSACTIONS ==========
+        // For cNFT transactions (TX 2+), ALWAYS rebuild with fresh Merkle proof.
+        //
+        // CRITICAL: We cannot just validate the proof - the proof is EMBEDDED in the transaction
+        // at build time. Even if DAS returns a fresh proof now, the transaction still has the
+        // OLD proof baked in from when it was built. We MUST rebuild the entire transaction
+        // with a fresh proof immediately before submission.
+        //
+        // The TX 1 (SOL transfer) has no cNFT proof risk, so we skip i === 0.
         if (txInfo.cnftAssetId && i > 0) {
-          console.log(`   🔍 JIT: Validating cNFT proof for ${txInfo.cnftAssetId.substring(0, 8)}...`);
+          console.log(`\n🔄 JIT: ALWAYS rebuilding cNFT TX ${i + 1} with fresh proof...`);
+          console.log(`   Asset: ${txInfo.cnftAssetId.substring(0, 12)}...`);
+          console.log(`   From: ${txInfo.cnftFromWallet?.substring(0, 8)}... → To: ${txInfo.cnftToWallet?.substring(0, 8)}...`);
 
           try {
-            // Get cached proof to validate against on-chain state
-            const cachedProof = await cnftService.getCnftProof(txInfo.cnftAssetId, false, 0);
+            // Rebuild this transaction with fresh proof and blockhash
+            const freshTxItem = await transactionGroupBuilder.buildSingleCnftTransactionJIT(
+              txInfo.cnftAssetId,
+              new PublicKey(txInfo.cnftFromWallet),
+              new PublicKey(txInfo.cnftToWallet),
+              txInfo.purpose
+            );
 
-            if (cachedProof && cachedProof.root) {
-              // Validate proof root against on-chain Merkle root
-              const proofValidation = await cnftService.validateProofRoot(
-                txInfo.cnftAssetId,
-                cachedProof.root
-              );
-
-              if (!proofValidation.isValid) {
-                console.log(`   ⚠️  JIT: Stale proof detected! Rebuilding TX ${i + 1} with fresh proof...`);
-                console.log(`   📊 On-chain root: ${proofValidation.onChainRoot.substring(0, 16)}...`);
-
-                // Clear cached proof to force fresh fetch
-                cnftService.clearCachedProof(txInfo.cnftAssetId);
-
-                // Rebuild this single transaction with fresh proof and blockhash
-                const freshTxItem = await transactionGroupBuilder.buildSingleCnftTransactionJIT(
-                  txInfo.cnftAssetId,
-                  new PublicKey(txInfo.cnftFromWallet),
-                  new PublicKey(txInfo.cnftToWallet),
-                  txInfo.purpose
-                );
-
-                // Update txInfo with fresh transaction data
-                txInfo.serialized = freshTxItem.transaction?.serializedTransaction;
-                txInfo.requiredSigners = freshTxItem.transaction?.requiredSigners;
-
-                console.log(`   ✅ JIT: TX ${i + 1} rebuilt with fresh proof`);
-              } else {
-                console.log(`   ✅ JIT: Proof is fresh, using original transaction`);
-              }
+            // Update txInfo with fresh transaction data
+            if (freshTxItem.transaction?.serializedTransaction) {
+              txInfo.serialized = freshTxItem.transaction.serializedTransaction;
+              txInfo.requiredSigners = freshTxItem.transaction.requiredSigners;
+              console.log(`   ✅ JIT: TX ${i + 1} rebuilt with fresh proof embedded`);
             } else {
-              console.log(`   ⚠️  JIT: No cached proof found, proceeding with original transaction`);
+              throw new Error('JIT rebuild returned empty transaction');
             }
           } catch (jitError: any) {
             console.error(`   ❌ JIT rebuild failed: ${jitError.message}`);
-            // If JIT fails, continue with original transaction - it may still work
-            // or the error will be caught in the main try/catch block
-            console.log(`   ⚠️  Continuing with original transaction...`);
+            // This is a critical failure - we cannot proceed with stale proof
+            throw new Error(`JIT rebuild failed for cNFT ${txInfo.cnftAssetId.substring(0, 12)}...: ${jitError.message}`);
           }
         }
-        // ========== END JIT PROOF VALIDATION ==========
+        // ========== END JIT REBUILD ==========
 
         // Determine signers for THIS specific transaction
         // Use requiredSigners from the transaction if available, otherwise fall back to global
