@@ -163,6 +163,8 @@ export class HealthCheckService {
     noncePool: 'healthy',
   };
   
+  // Track previous overall status to only log on status changes
+  private previousOverallStatus: 'healthy' | 'unhealthy' | 'degraded' | null = null;
   constructor(
     connection: Connection,
     noncePoolManager: NoncePoolManager,
@@ -200,11 +202,11 @@ export class HealthCheckService {
     
     // Return cached result if still valid
     if (!forceRefresh && this.cachedResult && now < this.cacheExpiry) {
-      console.log('[HealthCheckService] Returning cached result');
+      // No logging for cached results - reduces log noise
       return { ...this.cachedResult, cached: true };
     }
     
-    console.log('[HealthCheckService] Performing fresh health check');
+    // Removed to reduce log noise
     
     // Perform all checks in parallel for speed
     const [
@@ -273,14 +275,19 @@ export class HealthCheckService {
     this.cachedResult = result;
     this.cacheExpiry = now + (this.config.cacheTTL * 1000);
     
-    console.log('[HealthCheckService] Health check complete:', {
-      status: overallStatus,
-      database: dbHealthy,
-      redis: redisHealthy,
-      rpc: rpcResult.status,
-      feePayerWallet: feePayerResult.status,
-      noncePool: typeof noncePoolResult === 'object' && 'health' in noncePoolResult ? noncePoolResult.health : 'error',
-    });
+    // Only log when status changes (reduces log noise significantly)
+    if (overallStatus !== this.previousOverallStatus) {
+      console.log('[HealthCheckService] Health status changed:', {
+        previousStatus: this.previousOverallStatus || 'initial',
+        newStatus: overallStatus,
+        database: dbHealthy,
+        redis: redisHealthy,
+        rpc: rpcResult.status,
+        feePayerWallet: feePayerResult.status,
+        noncePool: typeof noncePoolResult === 'object' && 'health' in noncePoolResult ? noncePoolResult.health : 'error',
+      });
+      this.previousOverallStatus = overallStatus;
+    }
     
     return result;
   }
@@ -291,7 +298,7 @@ export class HealthCheckService {
   clearCache(): void {
     this.cachedResult = null;
     this.cacheExpiry = 0;
-    console.log('[HealthCheckService] Cache cleared');
+    // No logging for cache clear operations
   }
   
   /**
