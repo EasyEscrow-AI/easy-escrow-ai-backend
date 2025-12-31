@@ -257,24 +257,20 @@ export class DasParallelFetcher {
       data?: any;
     };
 
-    // Store results for metrics (populated as promises complete)
-    const allResults: ProviderResult[] = [];
-    let winnerName: string | null = null;
+    // Track which providers have had metrics updated to avoid duplicates
+    const metricsUpdated = new Set<string>();
 
-    // Create a single set of promises - each makes ONE request
-    // Returns ProviderResult on success, throws ProviderResult on failure (for Promise.any)
+    // Create promises that resolve/reject with ProviderResult
     const promises = enabledProviders.map(async (provider): Promise<ProviderResult> => {
       const providerStart = Date.now();
       try {
         const result = await this.makeRequest(provider, method, params);
-        const providerResult: ProviderResult = {
+        return {
           provider: provider.name,
           timeMs: result.timeMs,
           success: true,
           data: result.data.result || result.data,
         };
-        allResults.push(providerResult);
-        return providerResult;
       } catch (error: any) {
         const failResult: ProviderResult = {
           provider: provider.name,
@@ -282,35 +278,52 @@ export class DasParallelFetcher {
           success: false,
           error: error.message,
         };
-        allResults.push(failResult);
         throw failResult; // Throw for Promise.any to skip failures
       }
     });
 
+    // Keep reference to all promises for background metrics collection
+    const allPromisesSettled = Promise.allSettled(promises);
+
     try {
       // Use Promise.any to get the FIRST successful result immediately
       const winner = await Promise.any(promises);
-      winnerName = winner.provider;
 
       // Update winner metrics immediately
       this.updateMetrics(winner.provider, winner.timeMs, true, true);
+      metricsUpdated.add(winner.provider);
 
-      // Update metrics for already-completed non-winners (sync)
-      for (const r of allResults) {
-        if (r.provider !== winner.provider) {
-          this.updateMetrics(r.provider, r.timeMs, r.success, false);
+      // Collect remaining results in background for metrics (non-blocking)
+      allPromisesSettled.then((settledResults) => {
+        const allResults: ProviderResult[] = [];
+
+        for (const settled of settledResults) {
+          if (settled.status === 'fulfilled') {
+            allResults.push(settled.value);
+            // Update metrics for non-winners that succeeded
+            if (!metricsUpdated.has(settled.value.provider)) {
+              this.updateMetrics(settled.value.provider, settled.value.timeMs, true, false);
+              metricsUpdated.add(settled.value.provider);
+            }
+          } else if (settled.status === 'rejected' && settled.reason && typeof settled.reason === 'object') {
+            const failResult = settled.reason as ProviderResult;
+            allResults.push(failResult);
+            // Update metrics for failed providers
+            if (!metricsUpdated.has(failResult.provider)) {
+              this.updateMetrics(failResult.provider, failResult.timeMs, false, false);
+              metricsUpdated.add(failResult.provider);
+            }
+          }
         }
-      }
 
-      // Log comparison after a short delay to let other providers finish
-      if (options?.logComparison) {
-        setTimeout(() => {
+        // Log comparison with complete results from all providers
+        if (options?.logComparison) {
           const comparison = allResults.map(r =>
             `${r.provider}: ${r.timeMs}ms ${r.success ? '✓' : '✗'}`
           ).join(', ');
           console.log(`[DasParallelFetcher] ${method}: ${comparison} → Winner: ${winner.provider}`);
-        }, 100);
-      }
+        }
+      });
 
       return {
         data: winner.data,
@@ -325,7 +338,10 @@ export class DasParallelFetcher {
         for (const err of aggregateError.errors) {
           if (err && typeof err === 'object' && 'provider' in err) {
             const failResult = err as ProviderResult;
-            this.updateMetrics(failResult.provider, failResult.timeMs, false, false);
+            if (!metricsUpdated.has(failResult.provider)) {
+              this.updateMetrics(failResult.provider, failResult.timeMs, false, false);
+              metricsUpdated.add(failResult.provider);
+            }
             errors.push(`${failResult.provider}: ${failResult.error}`);
           } else {
             errors.push(String(err));

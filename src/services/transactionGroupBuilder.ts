@@ -230,7 +230,9 @@ export class TransactionGroupBuilder {
 
     // Create a global handler that disposes all registered instances
     const globalShutdownHandler = () => {
-      for (const instance of TransactionGroupBuilder.registeredInstances) {
+      // Create a snapshot copy to safely iterate (dispose() may modify the Set)
+      const instances = [...TransactionGroupBuilder.registeredInstances];
+      for (const instance of instances) {
         if (!instance.isDisposed) {
           instance.dispose();
         }

@@ -841,13 +841,13 @@ export class CnftService {
     this.metrics.individualProofFetches++;
 
     try {
-      let proofData: DasProofResponse;
+      // Initialize as undefined - TypeScript knows it will be assigned or we throw
+      let proofData: DasProofResponse | undefined;
 
       // Use parallel fetcher if available and enabled (races Helius + QuickNode)
       if (this.parallelFetcher && this.parallelFetcher.isParallelAvailable()) {
         // Retry logic for parallel fetcher (up to 3 attempts with progressive delays)
         const maxAttempts = 3;
-        let lastError: Error | null = null;
 
         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
           try {
@@ -861,7 +861,6 @@ export class CnftService {
             console.log(`[CnftService] Proof fetched via parallel provider race (winner: ${result.provider} in ${result.timeMs}ms)`);
             break; // Success - exit retry loop
           } catch (error: any) {
-            lastError = error;
             const isRateLimit = error.message?.includes('429') || error.message?.includes('-32007');
             const isTimeout = error.message?.includes('timeout') || error.message?.includes('abort');
 
@@ -879,9 +878,6 @@ export class CnftService {
             }
           }
         }
-
-        // proofData is guaranteed to be set if we get here (or we threw)
-        proofData = proofData!;
       } else {
         // Fallback to standard single-provider fetch with rate limiting
         // Capture retryCount in closure for use inside withRateLimit callback
@@ -900,6 +896,11 @@ export class CnftService {
 
           return data as DasProofResponse;
         });
+      }
+
+      // TypeScript guard: proofData is guaranteed to be set (success) or we threw
+      if (!proofData) {
+        throw new Error('Unexpected: proofData not set after fetch');
       }
 
       // Track fetch time
