@@ -172,6 +172,8 @@ export class TransactionGroupBuilder {
   private static readonly CACHE_CLEANUP_INTERVAL_MS = 30000; // Clean up every 30 seconds
   private static readonly CACHE_MAX_SIZE = 100; // Max entries before forced cleanup
   private cacheCleanupInterval: ReturnType<typeof setInterval> | null = null;
+  private isDisposed = false;
+  private shutdownHandler: (() => void) | null = null;
 
   constructor(
     connection: Connection,
@@ -201,6 +203,39 @@ export class TransactionGroupBuilder {
 
     // Start periodic cache cleanup
     this.startCacheCleanup();
+
+    // Register shutdown handlers for graceful cleanup
+    this.registerShutdownHandlers();
+  }
+
+  /**
+   * Register process shutdown handlers to ensure dispose() is called
+   */
+  private registerShutdownHandlers(): void {
+    // Create a bound handler that removes itself after running
+    this.shutdownHandler = () => {
+      if (!this.isDisposed) {
+        this.dispose();
+      }
+      this.removeShutdownHandlers();
+    };
+
+    // Register for common shutdown signals
+    process.on('SIGINT', this.shutdownHandler);
+    process.on('SIGTERM', this.shutdownHandler);
+    process.on('beforeExit', this.shutdownHandler);
+  }
+
+  /**
+   * Remove shutdown handlers (called after dispose or to prevent duplicate handlers)
+   */
+  private removeShutdownHandlers(): void {
+    if (this.shutdownHandler) {
+      process.removeListener('SIGINT', this.shutdownHandler);
+      process.removeListener('SIGTERM', this.shutdownHandler);
+      process.removeListener('beforeExit', this.shutdownHandler);
+      this.shutdownHandler = null;
+    }
   }
 
   /**
@@ -245,13 +280,20 @@ export class TransactionGroupBuilder {
 
   /**
    * Dispose of resources (call on shutdown)
+   * Safe to call multiple times - will only run cleanup once
    */
   dispose(): void {
+    if (this.isDisposed) {
+      return; // Already disposed
+    }
+    this.isDisposed = true;
+
     if (this.cacheCleanupInterval) {
       clearInterval(this.cacheCleanupInterval);
       this.cacheCleanupInterval = null;
     }
     this.swapAnalysisCache.clear();
+    this.removeShutdownHandlers();
     console.log('[TransactionGroupBuilder] Disposed - cache cleared and cleanup interval stopped');
   }
   

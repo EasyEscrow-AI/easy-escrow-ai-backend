@@ -98,6 +98,9 @@ const transactionGroupBuilder = createTransactionGroupBuilder(
 );
 console.log('[TestExecuteRoutes] TransactionGroupBuilder initialized for JIT cNFT rebuilding');
 
+// Export for explicit cleanup on shutdown
+export { transactionGroupBuilder };
+
 /**
  * Cleanup delegations for a failed swap
  *

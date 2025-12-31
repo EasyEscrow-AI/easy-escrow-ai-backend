@@ -23,6 +23,7 @@ import {
   assetsRoutes,
 } from './routes';
 import { noncePoolManager, healthCheckService, assetValidator } from './routes/offers.routes';
+import { transactionGroupBuilder } from './routes/test-execute.routes';
 import { StaleOfferCleanupScheduler } from './services/stale-offer-cleanup.service';
 import { corsOptions, helmetConfig, sanitizeInput, securityHeaders } from './middleware';
 import {
@@ -295,6 +296,10 @@ const gracefulShutdown = async (signal: string) => {
     // Stop idempotency service
     console.log('Stopping idempotency service...');
     await idempotencyService.stop();
+
+    // Dispose TransactionGroupBuilder (clears cache and intervals)
+    console.log('Disposing TransactionGroupBuilder...');
+    transactionGroupBuilder.dispose();
 
     // Disconnect Redis
     console.log('Disconnecting Redis...');
