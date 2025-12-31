@@ -169,6 +169,9 @@ export class TransactionGroupBuilder {
   // Key: hash of inputs, Value: { analysis, timestamp }
   private swapAnalysisCache: Map<string, { analysis: SwapAnalysis; timestamp: number }> = new Map();
   private static readonly CACHE_TTL_MS = 5000; // 5 second TTL
+  private static readonly CACHE_CLEANUP_INTERVAL_MS = 30000; // Clean up every 30 seconds
+  private static readonly CACHE_MAX_SIZE = 100; // Max entries before forced cleanup
+  private cacheCleanupInterval: ReturnType<typeof setInterval> | null = null;
 
   constructor(
     connection: Connection,
@@ -195,6 +198,61 @@ export class TransactionGroupBuilder {
     console.log('[TransactionGroupBuilder] Treasury PDA:', treasuryPda?.toBase58() || 'not set');
     console.log('[TransactionGroupBuilder] ALT Service:', altService ? 'enabled' : 'disabled');
     console.log('[TransactionGroupBuilder] Direct Services: Bubblegum, SPL Token, Core NFT');
+
+    // Start periodic cache cleanup
+    this.startCacheCleanup();
+  }
+
+  /**
+   * Start the periodic cache cleanup interval
+   */
+  private startCacheCleanup(): void {
+    if (this.cacheCleanupInterval) {
+      return; // Already running
+    }
+
+    this.cacheCleanupInterval = setInterval(() => {
+      this.cleanupExpiredCacheEntries();
+    }, TransactionGroupBuilder.CACHE_CLEANUP_INTERVAL_MS);
+
+    // Ensure interval doesn't prevent Node from exiting
+    if (this.cacheCleanupInterval.unref) {
+      this.cacheCleanupInterval.unref();
+    }
+  }
+
+  /**
+   * Remove expired entries from the cache
+   */
+  private cleanupExpiredCacheEntries(): void {
+    const now = Date.now();
+    const expiredKeys: string[] = [];
+
+    for (const [key, value] of this.swapAnalysisCache) {
+      if (now - value.timestamp > TransactionGroupBuilder.CACHE_TTL_MS) {
+        expiredKeys.push(key);
+      }
+    }
+
+    for (const key of expiredKeys) {
+      this.swapAnalysisCache.delete(key);
+    }
+
+    if (expiredKeys.length > 0) {
+      console.log(`[TransactionGroupBuilder] Cache cleanup: removed ${expiredKeys.length} expired entries, ${this.swapAnalysisCache.size} remaining`);
+    }
+  }
+
+  /**
+   * Dispose of resources (call on shutdown)
+   */
+  dispose(): void {
+    if (this.cacheCleanupInterval) {
+      clearInterval(this.cacheCleanupInterval);
+      this.cacheCleanupInterval = null;
+    }
+    this.swapAnalysisCache.clear();
+    console.log('[TransactionGroupBuilder] Disposed - cache cleared and cleanup interval stopped');
   }
   
   /**
@@ -412,7 +470,18 @@ export class TransactionGroupBuilder {
 
     console.log('[TransactionGroupBuilder] Swap analysis:', analysis);
 
-    // Cache the result
+    // Cache the result (with size limit enforcement)
+    if (this.swapAnalysisCache.size >= TransactionGroupBuilder.CACHE_MAX_SIZE) {
+      // Trigger cleanup when cache is full
+      this.cleanupExpiredCacheEntries();
+      // If still at max after cleanup, delete oldest entry
+      if (this.swapAnalysisCache.size >= TransactionGroupBuilder.CACHE_MAX_SIZE) {
+        const oldestKey = this.swapAnalysisCache.keys().next().value;
+        if (oldestKey) {
+          this.swapAnalysisCache.delete(oldestKey);
+        }
+      }
+    }
     this.swapAnalysisCache.set(cacheKey, { analysis, timestamp: Date.now() });
 
     return analysis;
