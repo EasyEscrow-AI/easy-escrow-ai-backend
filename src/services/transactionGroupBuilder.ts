@@ -164,7 +164,12 @@ export class TransactionGroupBuilder {
   private directSplTokenService: DirectSplTokenService;
   private directCoreNftService: DirectCoreNftService;
   private treasuryPda: PublicKey | null = null;
-  
+
+  // Cache for analyzeSwap results to avoid redundant computation
+  // Key: hash of inputs, Value: { analysis, timestamp }
+  private swapAnalysisCache: Map<string, { analysis: SwapAnalysis; timestamp: number }> = new Map();
+  private static readonly CACHE_TTL_MS = 5000; // 5 second TTL
+
   constructor(
     connection: Connection,
     platformAuthority: Keypair,
@@ -193,10 +198,36 @@ export class TransactionGroupBuilder {
   }
   
   /**
+   * Generate a cache key for swap analysis inputs
+   */
+  private getSwapAnalysisCacheKey(inputs: TransactionGroupInput): string {
+    // Create a stable key from the relevant input fields
+    const keyParts = [
+      inputs.swapId || '',
+      inputs.makerAssets.map(a => `${a.type}:${a.identifier}`).sort().join(','),
+      inputs.takerAssets.map(a => `${a.type}:${a.identifier}`).sort().join(','),
+      inputs.makerSolLamports.toString(),
+      inputs.takerSolLamports.toString(),
+      inputs.platformFeeLamports.toString(),
+      inputs.forceSingleTransaction ? '1' : '0',
+    ];
+    return keyParts.join('|');
+  }
+
+  /**
    * Analyze swap assets and determine the best execution strategy
    */
   analyzeSwap(inputs: TransactionGroupInput): SwapAnalysis {
-    // DEBUG: Log all asset types for troubleshooting
+    // Check cache first
+    const cacheKey = this.getSwapAnalysisCacheKey(inputs);
+    const cached = this.swapAnalysisCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < TransactionGroupBuilder.CACHE_TTL_MS) {
+      console.log('[TransactionGroupBuilder] analyzeSwap - cache hit');
+      return cached.analysis;
+    }
+
+    // DEBUG: Log all asset types for troubleshooting (only on cache miss)
+    console.log('[TransactionGroupBuilder] analyzeSwap - cache miss, computing...');
     console.log('[TransactionGroupBuilder] analyzeSwap - makerAssets:', JSON.stringify(inputs.makerAssets));
     console.log('[TransactionGroupBuilder] analyzeSwap - takerAssets:', JSON.stringify(inputs.takerAssets));
     console.log('[TransactionGroupBuilder] analyzeSwap - AssetType.CNFT value:', AssetType.CNFT);
@@ -378,9 +409,12 @@ export class TransactionGroupBuilder {
       transactionCount,
       reason,
     };
-    
+
     console.log('[TransactionGroupBuilder] Swap analysis:', analysis);
-    
+
+    // Cache the result
+    this.swapAnalysisCache.set(cacheKey, { analysis, timestamp: Date.now() });
+
     return analysis;
   }
   
