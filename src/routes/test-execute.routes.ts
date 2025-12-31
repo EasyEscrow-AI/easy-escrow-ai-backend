@@ -2506,7 +2506,13 @@ router.post('/api/test/execute-lock', async (req: Request, res: Response) => {
       console.error(`   ❌ Attempt ${attempt} failed:`, error.message);
 
       if (isStaleProof && !isLastAttempt && swapId && transactionIndex !== undefined) {
-        console.warn(`   ⚠️  Stale Merkle proof detected (error 6001) - rebuilding with fresh proof...`);
+        // Progressive delay: wait longer on each retry to give DAS indexers time to sync
+        // Attempt 1 failed → wait 1.5s, Attempt 2 failed → wait 3s
+        const retryDelayMs = 1500 * attempt;
+        console.warn(
+          `   ⚠️  Stale Merkle proof detected (error 6001) - waiting ${retryDelayMs}ms for DAS indexer sync...`
+        );
+        await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
 
         try {
           // Rebuild the transaction with fresh Merkle proofs from DAS API
@@ -2522,9 +2528,6 @@ router.post('/api/test/execute-lock', async (req: Request, res: Response) => {
           // Update serializedTransaction for next attempt
           serializedTransaction = rebuiltTx.serialized;
           console.log(`   ✅ Transaction rebuilt with fresh proof for cNFT at index ${transactionIndex}`);
-
-          // Small delay before retry to allow DAS to propagate changes
-          await new Promise((resolve) => setTimeout(resolve, 500));
 
           continue; // Retry with fresh transaction
         } catch (rebuildError: any) {
