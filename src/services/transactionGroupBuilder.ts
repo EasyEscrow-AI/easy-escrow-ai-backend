@@ -175,6 +175,11 @@ export class TransactionGroupBuilder {
   private isDisposed = false;
   private shutdownHandler: (() => void) | null = null;
 
+  // Static flag to ensure shutdown handlers are registered only once globally
+  // (prevents duplicate listeners if multiple instances are created)
+  private static handlersRegistered = false;
+  private static registeredInstances: Set<TransactionGroupBuilder> = new Set();
+
   constructor(
     connection: Connection,
     platformAuthority: Keypair,
@@ -209,33 +214,54 @@ export class TransactionGroupBuilder {
   }
 
   /**
-   * Register process shutdown handlers to ensure dispose() is called
+   * Register process shutdown handlers to ensure dispose() is called.
+   * Uses static tracking to ensure handlers are registered only once globally,
+   * preventing duplicate listeners if multiple instances are created.
    */
   private registerShutdownHandlers(): void {
-    // Create a bound handler that removes itself after running
-    this.shutdownHandler = () => {
-      if (!this.isDisposed) {
-        this.dispose();
+    // Track this instance for cleanup
+    TransactionGroupBuilder.registeredInstances.add(this);
+
+    // Only register global handlers once
+    if (TransactionGroupBuilder.handlersRegistered) {
+      return;
+    }
+    TransactionGroupBuilder.handlersRegistered = true;
+
+    // Create a global handler that disposes all registered instances
+    const globalShutdownHandler = () => {
+      // Create a snapshot copy to safely iterate (dispose() may modify the Set)
+      const instances = [...TransactionGroupBuilder.registeredInstances];
+      for (const instance of instances) {
+        if (!instance.isDisposed) {
+          instance.dispose();
+        }
       }
-      this.removeShutdownHandlers();
+      TransactionGroupBuilder.registeredInstances.clear();
+
+      // Remove listeners after handling
+      process.removeListener('SIGINT', globalShutdownHandler);
+      process.removeListener('SIGTERM', globalShutdownHandler);
+      process.removeListener('beforeExit', globalShutdownHandler);
+      TransactionGroupBuilder.handlersRegistered = false;
     };
 
+    // Store reference for potential manual removal
+    this.shutdownHandler = globalShutdownHandler;
+
     // Register for common shutdown signals
-    process.on('SIGINT', this.shutdownHandler);
-    process.on('SIGTERM', this.shutdownHandler);
-    process.on('beforeExit', this.shutdownHandler);
+    process.on('SIGINT', globalShutdownHandler);
+    process.on('SIGTERM', globalShutdownHandler);
+    process.on('beforeExit', globalShutdownHandler);
   }
 
   /**
-   * Remove shutdown handlers (called after dispose or to prevent duplicate handlers)
+   * Remove this instance from shutdown tracking
+   * (called after dispose to clean up references)
    */
   private removeShutdownHandlers(): void {
-    if (this.shutdownHandler) {
-      process.removeListener('SIGINT', this.shutdownHandler);
-      process.removeListener('SIGTERM', this.shutdownHandler);
-      process.removeListener('beforeExit', this.shutdownHandler);
-      this.shutdownHandler = null;
-    }
+    TransactionGroupBuilder.registeredInstances.delete(this);
+    this.shutdownHandler = null;
   }
 
   /**

@@ -19,6 +19,7 @@ import {
 } from '../types/cnft';
 import { BUBBLEGUM_PROGRAM_ID } from '../constants/bubblegum';
 import { DasHttpRateLimiter } from './das-http-rate-limiter';
+import { getDasParallelFetcher, DasParallelFetcher } from './das-parallel-fetcher';
 
 // Concurrent Merkle Tree account header size (before canopy data)
 // Based on SPL Account Compression v0.2: discriminator (8) + header (54) + changelog buffer + rightmost proof
@@ -54,27 +55,30 @@ function estimateHeaderSize(maxDepth: number): number {
 export interface CnftServiceConfig {
   /** RPC endpoint with DAS API support (e.g., Helius) */
   rpcEndpoint: string;
-  
+
   /** Optional separate RPC endpoint for batch operations (defaults to rpcEndpoint) */
   batchRpcEndpoint?: string;
-  
+
   /** Request timeout in milliseconds */
   requestTimeout: number;
-  
+
   /** Maximum retry attempts */
   maxRetries: number;
-  
+
   /** Rate limiting: max concurrent DAS requests */
   maxConcurrentRequests: number;
-  
+
   /** Rate limiting: delay between batches (ms) */
   batchDelayMs: number;
-  
+
   /** Proof cache TTL in seconds */
   proofCacheTtlSeconds: number;
-  
+
   /** Enable parallel fetching for individual proofs (reduces stale proof risk) */
   enableParallelProofFetching?: boolean;
+
+  /** Enable parallel DAS provider racing (Helius + QuickNode) for faster responses */
+  enableParallelDasProviders?: boolean;
 }
 
 /** Cached proof entry with expiration */
@@ -141,7 +145,11 @@ export class CnftService {
     batchDelayMs: 200, // Delay between batches
     proofCacheTtlSeconds: 5, // Cache proofs for 5 seconds (reduced from 30s for high-activity trees)
     enableParallelProofFetching: true, // Enable parallel fetching by default
+    enableParallelDasProviders: true, // Enable racing Helius + QuickNode by default
   };
+
+  // Parallel DAS fetcher for racing multiple providers
+  private parallelFetcher: DasParallelFetcher | null = null;
   
   constructor(connection: Connection, config?: Partial<CnftServiceConfig>) {
     this.connection = connection;
@@ -169,7 +177,18 @@ export class CnftService {
       cacheTtlSeconds: this.config.proofCacheTtlSeconds,
       parallelFetching: this.config.enableParallelProofFetching,
     });
-    
+
+    // Initialize parallel DAS fetcher if enabled and multiple providers available
+    if (this.config.enableParallelDasProviders) {
+      this.parallelFetcher = getDasParallelFetcher();
+      if (this.parallelFetcher.isParallelAvailable()) {
+        console.log('[CnftService] Parallel DAS providers enabled:',
+          this.parallelFetcher.getProviders().map(p => p.name).join(', '));
+      } else {
+        console.log('[CnftService] Parallel DAS: only one provider available, using single-provider mode');
+      }
+    }
+
     // Periodic cache cleanup (every 60 seconds)
     setInterval(() => this.cleanupProofCache(), 60000);
   }
@@ -712,33 +731,65 @@ export class CnftService {
   
   /**
    * Fetch cNFT asset data from DAS API
+   * Uses parallel provider racing (Helius + QuickNode) when available for faster responses
    */
   async getCnftAsset(assetId: string): Promise<CnftAssetData> {
     console.log('[CnftService] Fetching cNFT asset data:', assetId);
-    
+
     try {
-      const response = await this.makeDasRequest('getAsset', {
-        id: assetId,
-      });
-      
-      // Handle both wrapped and direct responses
-      const assetData = response.result || response;
-      
+      let assetData: any;
+
+      // Use parallel fetcher if available and enabled (races Helius + QuickNode)
+      if (this.parallelFetcher && this.parallelFetcher.isParallelAvailable()) {
+        // Retry logic for parallel fetcher (up to 3 attempts with progressive delays)
+        const maxAttempts = 3;
+
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+          try {
+            const result = await this.parallelFetcher.getAsset(assetId, true);
+            assetData = result.data;
+            console.log(`[CnftService] Asset fetched via parallel provider race (winner: ${result.provider} in ${result.timeMs}ms)`);
+            break; // Success - exit retry loop
+          } catch (error: any) {
+            const isRateLimit = error.message?.includes('429') || error.message?.includes('-32007');
+            const isTimeout = error.message?.includes('timeout') || error.message?.includes('abort');
+
+            if (attempt < maxAttempts && (isRateLimit || isTimeout)) {
+              const delay = 500 * Math.pow(2, attempt - 1);
+              console.warn(`[CnftService] Parallel asset fetch attempt ${attempt}/${maxAttempts} failed (${isRateLimit ? 'rate limit' : 'timeout'}), retrying in ${delay}ms...`);
+              await new Promise(resolve => setTimeout(resolve, delay));
+            } else if (attempt === maxAttempts) {
+              console.error(`[CnftService] All ${maxAttempts} parallel asset fetch attempts failed:`, error.message);
+              throw error;
+            } else {
+              throw error; // Non-retryable error
+            }
+          }
+        }
+      } else {
+        // Fallback to standard single-provider fetch
+        const response = await this.makeDasRequest('getAsset', {
+          id: assetId,
+        });
+        // Handle both wrapped and direct responses
+        assetData = response.result || response;
+      }
+
       if (!assetData) {
         throw new Error('No asset data returned from DAS API');
       }
-      
+
       // Validate it's a compressed NFT
       if (!assetData.compression?.compressed) {
         throw new Error(`Asset ${assetId} is not a compressed NFT`);
       }
-      
+
       console.log('[CnftService] cNFT asset data retrieved:', {
         tree: assetData.compression.tree,
         leafId: assetData.compression.leaf_id,
         owner: assetData.ownership?.owner,
       });
-      
+
       return assetData as CnftAssetData;
     } catch (error: any) {
       console.error('[CnftService] Failed to fetch cNFT asset:', error.message);
@@ -748,13 +799,14 @@ export class CnftService {
   
   /**
    * Fetch Merkle proof for cNFT transfer
-   * 
+   *
    * IMPROVEMENTS BASED ON RESEARCH:
    * - Very short cache TTL (5 seconds) for high-activity trees to ensure freshness
    * - Just-in-time fetching (skip cache on first attempt for critical operations)
    * - Unique request IDs to prevent DAS API caching
    * - Better logging for debugging stale proof issues
-   * 
+   * - Parallel provider racing (Helius + QuickNode) for faster responses
+   *
    * @param assetId - The cNFT asset ID
    * @param skipCache - Whether to bypass the cache (CRITICAL: always true for first attempt in transaction building)
    * @param retryCount - Number of retries (used for cache-busting on stale proof retries)
@@ -765,7 +817,7 @@ export class CnftService {
       retryCount,
       cacheSize: CnftService.proofCache.size,
     });
-    
+
     // Check cache first (unless skip requested)
     // CRITICAL: For high-activity trees, cache TTL is very short (5 seconds)
     // Research shows proofs can become stale in seconds on high-activity trees
@@ -783,40 +835,83 @@ export class CnftService {
       }
       this.metrics.proofCacheMisses++;
     }
-    
-      const startTime = Date.now();
-      this.metrics.totalProofFetches++;
-      this.metrics.individualProofFetches++;
-      
-      try {
-      // Use rate limiting for the actual fetch
-      // Pass retryCount to makeDasRequest for cache-busting on stale proof retries
-      // Capture retryCount in closure for use inside withRateLimit callback
-      const capturedRetryCount = retryCount;
-      const proofData = await this.withRateLimit(async () => {
-        const response = await this.makeDasRequest('getAssetProof', {
-          id: assetId,
-        }, capturedRetryCount);
-        
-        // Handle both wrapped and direct responses
-        const data = response.result || response;
-        
-        if (!data || !data.proof) {
-          throw new Error('No proof data returned from DAS API');
+
+    const startTime = Date.now();
+    this.metrics.totalProofFetches++;
+    this.metrics.individualProofFetches++;
+
+    try {
+      // Initialize as undefined - TypeScript knows it will be assigned or we throw
+      let proofData: DasProofResponse | undefined;
+
+      // Use parallel fetcher if available and enabled (races Helius + QuickNode)
+      if (this.parallelFetcher && this.parallelFetcher.isParallelAvailable()) {
+        // Retry logic for parallel fetcher (up to 3 attempts with progressive delays)
+        const maxAttempts = 3;
+
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+          try {
+            const result = await this.parallelFetcher.getAssetProof(assetId, true);
+            proofData = result.data;
+
+            if (!proofData || !proofData.proof) {
+              throw new Error('No proof data returned from parallel DAS fetch');
+            }
+
+            console.log(`[CnftService] Proof fetched via parallel provider race (winner: ${result.provider} in ${result.timeMs}ms)`);
+            break; // Success - exit retry loop
+          } catch (error: any) {
+            const isRateLimit = error.message?.includes('429') || error.message?.includes('-32007');
+            const isTimeout = error.message?.includes('timeout') || error.message?.includes('abort');
+
+            if (attempt < maxAttempts && (isRateLimit || isTimeout)) {
+              // Progressive delay: 500ms, 1000ms, 2000ms
+              const delay = 500 * Math.pow(2, attempt - 1);
+              console.warn(`[CnftService] Parallel fetch attempt ${attempt}/${maxAttempts} failed (${isRateLimit ? 'rate limit' : 'timeout'}), retrying in ${delay}ms...`);
+              await new Promise(resolve => setTimeout(resolve, delay));
+            } else if (attempt === maxAttempts) {
+              console.error(`[CnftService] All ${maxAttempts} parallel fetch attempts failed:`, error.message);
+              throw error;
+            } else {
+              // Non-retryable error
+              throw error;
+            }
+          }
         }
-        
-        return data as DasProofResponse;
-      });
-      
+      } else {
+        // Fallback to standard single-provider fetch with rate limiting
+        // Capture retryCount in closure for use inside withRateLimit callback
+        const capturedRetryCount = retryCount;
+        proofData = await this.withRateLimit(async () => {
+          const response = await this.makeDasRequest('getAssetProof', {
+            id: assetId,
+          }, capturedRetryCount);
+
+          // Handle both wrapped and direct responses
+          const data = response.result || response;
+
+          if (!data || !data.proof) {
+            throw new Error('No proof data returned from DAS API');
+          }
+
+          return data as DasProofResponse;
+        });
+      }
+
+      // TypeScript guard: proofData is guaranteed to be set (success) or we threw
+      if (!proofData) {
+        throw new Error('Unexpected: proofData not set after fetch');
+      }
+
       // Track fetch time
       const fetchTime = Date.now() - startTime;
       this.metrics.lastFetchTimes.push(fetchTime);
       if (this.metrics.lastFetchTimes.length > 100) {
         this.metrics.lastFetchTimes.shift();
       }
-      this.metrics.avgFetchTimeMs = 
+      this.metrics.avgFetchTimeMs =
         this.metrics.lastFetchTimes.reduce((a, b) => a + b, 0) / this.metrics.lastFetchTimes.length;
-      
+
       console.log('[CnftService] Merkle proof retrieved:', {
         treeId: proofData.tree_id,
         nodeIndex: proofData.node_index,
@@ -824,12 +919,12 @@ export class CnftService {
         fetchTimeMs: fetchTime,
         root: proofData.root ? proofData.root.substring(0, 16) + '...' : 'N/A',
       });
-      
+
       // Cache the result with configurable TTL (default 5s for high-activity trees)
       // Research shows: proofs can become stale in seconds on high-activity trees
       // Config defaults to 5s, but can be overridden via CnftServiceConfig
       this.cacheProof(assetId, proofData);
-      
+
       return proofData;
     } catch (error: any) {
       console.error('[CnftService] Failed to fetch Merkle proof:', error.message);

@@ -392,21 +392,18 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
                               null;
                   }
                 } catch (error: any) {
-                  // Silently fail - we'll use fallback
+                  // Log only the first metadata fetch failure to avoid log spam
+                  // (Promise.all runs in parallel, so "first" is whichever completes first)
                   if (isFirstLog) {
+                    isFirstLog = false;
                     console.warn(`[Test Route] Failed to fetch JSON metadata from ${jsonUri}:`, error.message);
                   }
                 }
               }
-              
+
               // Final fallback to URI if still no image
               if (!imageUrl) {
                 imageUrl = asset.uri || null;
-              }
-              
-              // Mark first log complete (verbose asset logging removed)
-              if (isFirstLog) {
-                isFirstLog = false;
               }
               
               return {

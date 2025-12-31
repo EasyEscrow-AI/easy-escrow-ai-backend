@@ -205,6 +205,25 @@ anchor idl build         # Generate IDL separately from project root
 - Git network: `git fetch`, `git pull`, `git push` (60s)
 - Blockchain: `solana airdrop`, `anchor deploy` (180s)
 
+### 7. Pull Request Rules
+
+**Always create PRs in draft mode:**
+```bash
+gh pr create --draft --title "..." --body "..."
+```
+
+**Automatically fix merge conflicts when updating PRs:**
+- Before pushing updates, always fetch and rebase on master
+- Resolve any conflicts automatically
+- Force push to update the PR branch
+
+```bash
+git fetch origin master
+git rebase origin/master
+# Resolve conflicts if any
+git push --force-with-lease
+```
+
 ---
 
 ## Architecture
