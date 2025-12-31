@@ -32,6 +32,12 @@ const CMT_HEADER_SIZES: { [key: number]: number } = {
   24: 81976, // Very large trees
 };
 
+/**
+ * Default canopy depth for standard Metaplex trees (maxDepth=14, canopy=11)
+ * This works for most common cNFT collections. Used as fallback when detection fails.
+ */
+const DEFAULT_CANOPY_DEPTH = 11;
+
 // Fallback: estimate header size based on typical maxBufferSize=64
 function estimateHeaderSize(maxDepth: number): number {
   const maxBufferSize = 64;
@@ -957,10 +963,6 @@ export class CnftService {
     }
 
     console.log('[CnftService] Fetching canopy depth for tree:', treeKey.substring(0, 12) + '...');
-
-    // Default canopy depth for standard Metaplex trees (maxDepth=14, canopy=11)
-    // This works for most common cNFT collections
-    const DEFAULT_CANOPY_DEPTH = 11;
 
     try {
       const accountInfo = await this.connection.getAccountInfo(treeAddress);

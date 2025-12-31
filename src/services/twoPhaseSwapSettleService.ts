@@ -500,7 +500,7 @@ export class TwoPhaseSwapSettleService {
 
     // Estimate proof sizes and group cNFTs
     for (const asset of cnftAssetsA) {
-      const proofSize = await this.estimateProofSize(asset.identifier);
+      const proofSize = this.estimateProofSize(asset.identifier);
       const transfer: SettlementTransfer = {
         assetId: asset.identifier,
         type: 'CNFT',
@@ -536,7 +536,7 @@ export class TwoPhaseSwapSettleService {
 
     // Process Party B's cNFTs
     for (const asset of cnftAssetsB) {
-      const proofSize = await this.estimateProofSize(asset.identifier);
+      const proofSize = this.estimateProofSize(asset.identifier);
       const transfer: SettlementTransfer = {
         assetId: asset.identifier,
         type: 'CNFT',
@@ -669,7 +669,7 @@ export class TwoPhaseSwapSettleService {
    * @param _assetId - cNFT asset ID (unused in heuristic mode)
    * @returns Estimated proof node count
    */
-  private async estimateProofSize(_assetId: string): Promise<number> {
+  private estimateProofSize(_assetId: string): number {
     // Use conservative heuristic - no RPC call needed
     // This creates smaller chunks (1-2 cNFT per tx) which is safe for all tree depths
     // Fresh proofs will be fetched at execution time
