@@ -404,30 +404,9 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
                 imageUrl = asset.uri || null;
               }
               
-              // Debug: Log the asset structure and image extraction for the first cNFT
+              // Mark first log complete (verbose asset logging removed)
               if (isFirstLog) {
-                console.log('Sample cNFT asset structure:', JSON.stringify({
-                  id: asset.id,
-                  uri: asset.uri,
-                  content: asset.content,
-                  interface: asset.interface,
-                }, null, 2));
-                
-                // Log image extraction for debugging
-                if (imageUrl) {
-                  const source = asset.content?.files?.[0]?.uri ? 'files[0].uri' :
-                                asset.content?.links?.image ? 'links.image' :
-                                asset.content?.metadata?.image ? 'metadata.image' :
-                                (asset.content?.json_uri || asset.content?.metadata?.uri || asset.uri) ? 'json_metadata' :
-                                'unknown';
-                  console.log('[Test Route] cNFT image extracted:', {
-                    assetId: asset.id.substring(0, 12) + '...',
-                    imageUrl: imageUrl.substring(0, 100) + (imageUrl.length > 100 ? '...' : ''),
-                    source,
-                  });
-                }
-                
-                isFirstLog = false; // Set to false after all first-log operations
+                isFirstLog = false;
               }
               
               return {
@@ -446,15 +425,8 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
           
           // Map Metaplex Core NFTs to our format
           const mappedCoreNfts = coreNfts.map((asset: any) => {
-              console.log('Metaplex Core NFT asset structure:', JSON.stringify({
-                id: asset.id,
-                uri: asset.uri,
-                content: asset.content,
-                interface: asset.interface,
-              }, null, 2));
-              
-              const imageUrl = asset.content?.files?.[0]?.uri || 
-                              asset.content?.links?.image || 
+              const imageUrl = asset.content?.files?.[0]?.uri ||
+                              asset.content?.links?.image ||
                               asset.content?.json_uri ||
                               asset.content?.metadata?.image ||
                               asset.uri ||
