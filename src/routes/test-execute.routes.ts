@@ -2306,6 +2306,8 @@ router.post('/api/test/execute-lock', async (req: Request, res: Response) => {
         if (cnftAssets.length > 0) {
           const cnftService = createCnftService(connection);
           let hasStaleProof = false;
+          let hasValidationError = false;
+          let validationErrorMessage = '';
 
           for (const asset of cnftAssets) {
             try {
@@ -2321,8 +2323,30 @@ router.post('/api/test/execute-lock', async (req: Request, res: Response) => {
                 }
               }
             } catch (validationError: any) {
-              console.warn(`   ⚠️  Could not validate ${asset.identifier.substring(0, 12)}...:`, validationError.message);
+              const errorMsg = validationError.message || 'Unknown error';
+              console.error(`   ❌ Validation failed for ${asset.identifier.substring(0, 12)}...:`, errorMsg);
+
+              // Check if this is a fatal "Asset Not Found" error
+              if (errorMsg.includes('Asset Not Found') || errorMsg.includes('RecordNotFound')) {
+                console.error(`   ❌ FATAL: cNFT ${asset.identifier.substring(0, 12)}... does not exist or was burned`);
+                hasValidationError = true;
+                validationErrorMessage = `cNFT ${asset.identifier} not found - may have been burned or transferred`;
+              } else {
+                // Other validation errors - treat as stale proof and try to rebuild
+                console.warn(`   ⚠️  Treating validation error as stale proof, will attempt rebuild`);
+                hasStaleProof = true;
+              }
             }
+          }
+
+          // Fatal error - asset doesn't exist, can't proceed
+          if (hasValidationError) {
+            return res.status(400).json({
+              success: false,
+              error: validationErrorMessage,
+              errorCode: 'CNFT_NOT_FOUND',
+              timestamp: new Date().toISOString(),
+            });
           }
 
           if (hasStaleProof) {
@@ -2587,6 +2611,74 @@ router.post('/api/test/execute-lock', async (req: Request, res: Response) => {
     error: 'Unexpected error in retry loop',
     timestamp: new Date().toISOString(),
   });
+});
+
+/**
+ * Diagnostic endpoint to check DAS vs on-chain state for a cNFT
+ * Helps debug stale proof issues by showing exact roots
+ */
+router.get('/api/test/diagnose-cnft/:assetId', async (req: Request, res: Response) => {
+  const { assetId } = req.params;
+
+  console.log(`\n🔍 DIAGNOSING cNFT: ${assetId}`);
+
+  try {
+    const diagService = createCnftService(connection);
+
+    // 1. Get asset data
+    console.log('   Fetching asset data from DAS...');
+    const asset = await diagService.getCnftAsset(assetId);
+    console.log('   Asset tree:', asset.compression.tree);
+
+    // 2. Get proof from DAS (skip cache)
+    console.log('   Fetching fresh proof from DAS...');
+    const proof = await diagService.getCnftProof(assetId, true, 0);
+    console.log('   DAS proof root:', proof.root);
+
+    // 3. Validate against on-chain
+    console.log('   Validating against on-chain state...');
+    const validation = await diagService.validateProofRoot(assetId, proof.root);
+
+    const result = {
+      assetId,
+      treeAddress: asset.compression.tree,
+      leafIndex: asset.compression.leaf_id,
+      owner: asset.ownership.owner,
+      delegate: asset.ownership.delegate,
+      dasProofRoot: proof.root,
+      onChainRoot: validation.onChainRoot,
+      treeSequence: validation.treeSequence,
+      isProofValid: validation.isValid,
+      diagnosis: validation.isValid
+        ? '✅ DAS and on-chain roots match - proof is fresh'
+        : '❌ DAS proof root does NOT match on-chain - indexer is stale',
+    };
+
+    console.log('   Diagnosis result:', JSON.stringify(result, null, 2));
+
+    return res.json({
+      success: true,
+      ...result,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    console.error('   Diagnosis failed:', error.message);
+
+    // Provide helpful error message
+    let diagnosis = 'Unknown error';
+    if (error.message.includes('Asset Not Found') || error.message.includes('RecordNotFound')) {
+      diagnosis = '❌ cNFT does not exist in DAS - may have been burned or never minted';
+    } else if (error.message.includes('CMT account data unexpectedly null')) {
+      diagnosis = '❌ Merkle tree account not found on-chain - tree may have been closed';
+    }
+
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+      diagnosis,
+      timestamp: new Date().toISOString(),
+    });
+  }
 });
 
 export default router;
