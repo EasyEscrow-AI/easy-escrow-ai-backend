@@ -1063,10 +1063,8 @@ export class CnftService {
     const proofSizeBytes = proof.length * 32;
     console.log(`[CnftService] Proof trimmed from ${maxDepth} to ${proof.length} nodes (canopy: ${canopyDepth}, ~${proofSizeBytes} bytes)`);
     
-    // Warn if proof is large (may cause transaction size issues)
-    if (proof.length > 5) {
-      console.warn(`[CnftService] ⚠️ Large proof detected (${proof.length} nodes, ~${proofSizeBytes} bytes). Transaction may exceed size limit.`);
-    }
+    // Note: With 1-cNFT-per-chunk chunking (FORCED_PROOF_SIZE_FOR_CHUNKING),
+    // large proofs are no longer a concern - each chunk handles one cNFT transfer safely.
     
     // CRITICAL: Calculate leaf_index from node_index
     // Research: "leaf_index = node_index - 2^maxDepth"
