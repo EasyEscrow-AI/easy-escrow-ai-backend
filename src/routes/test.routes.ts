@@ -8,7 +8,7 @@ import { Router, Request, Response } from 'express';
 import { Connection, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import path from 'path';
 import { analyzeSwapStrategy, AssetType, SwapStrategy } from '../services/transactionGroupBuilder';
-
+import { determineSwapFlow, SwapFlowType } from '../utils/swapFlowRouter';
 import { isJitoBundlesEnabled } from '../utils/featureFlags';
 const router = Router();
 
@@ -1169,23 +1169,42 @@ router.post('/api/quote', async (req: Request, res: Response) => {
     });
     
     // Determine if this is a bulk swap requiring Jito bundles
-    const isBulkSwap = swapAnalysis.strategy !== SwapStrategy.SINGLE_TRANSACTION && 
+    const isBulkSwap = swapAnalysis.strategy !== SwapStrategy.SINGLE_TRANSACTION &&
                        swapAnalysis.strategy !== SwapStrategy.CANNOT_FIT;
     const isCnftSwap = cNFTCount > 0;
 
     // Check if Jito bundles are actually enabled
     const jitoEnabled = isJitoBundlesEnabled();
+
+    // Check for two-phase delegation flow (cNFT-to-cNFT swaps)
+    const swapFlowAssets = makerAssetsForAnalysis.map(a => ({
+      type: a.type,
+      identifier: a.mint,
+    }));
+    const takerFlowAssets = takerAssetsForAnalysis.map(a => ({
+      type: a.type,
+      identifier: a.mint,
+    }));
+    const flowResult = determineSwapFlow(
+      swapFlowAssets,
+      takerFlowAssets,
+      BigInt(makerSolLamports),
+      BigInt(takerSolLamports)
+    );
+    const requiresTwoPhase = flowResult.flowType === SwapFlowType.TWO_PHASE;
+    const hasCnftOnBothSides = makerCnfts.length > 0 && takerCnfts.length > 0;
     
-    // Calculate Jito tip if bulk swap
+    // Calculate Jito tip if bulk swap (only for non-two-phase swaps)
+    // Two-phase swaps use sequential settlement and don't need JITO bundles
     // Jito tip is per bundle (not per transaction)
     // Configurable via JITO_TIP_LAMPORTS env var (default: 1,000,000 = 0.001 SOL)
     // Higher tips needed during network congestion for reliable bundle inclusion
     const DEFAULT_JITO_TIP_LAMPORTS = parseInt(process.env.JITO_TIP_LAMPORTS || '1000000', 10);
-    const estimatedJitoTipLamports = (isBulkSwap && jitoEnabled) ? DEFAULT_JITO_TIP_LAMPORTS : 0;
+    const estimatedJitoTipLamports = (isBulkSwap && jitoEnabled && !requiresTwoPhase) ? DEFAULT_JITO_TIP_LAMPORTS : 0;
     const estimatedJitoTipSol = estimatedJitoTipLamports / LAMPORTS_PER_SOL;
-    
-    // Add Jito tip to network fee estimate
-    if (isBulkSwap && jitoEnabled) {
+
+    // Add Jito tip to network fee estimate (not for two-phase swaps)
+    if (isBulkSwap && jitoEnabled && !requiresTwoPhase) {
       networkFeeSol += estimatedJitoTipSol;
     }
 
@@ -1252,9 +1271,14 @@ router.post('/api/quote', async (req: Request, res: Response) => {
 
     // Add swap strategy info
     if (isBulkSwap && transactionStatus !== 'too_large') {
-      const executionNote = jitoEnabled
-        ? 'Will use Jito bundle for atomic execution.'
-        : 'Will use sequential transactions (Jito disabled).';
+      let executionNote: string;
+      if (requiresTwoPhase) {
+        executionNote = 'Will use two-phase delegation with sequential settlement (no JITO needed).';
+      } else if (jitoEnabled) {
+        executionNote = 'Will use Jito bundle for atomic execution.';
+      } else {
+        executionNote = 'Will use sequential transactions (Jito disabled).';
+      }
       warnings.push(`ℹ️ Bulk swap detected: ${swapAnalysis.reason}. ${executionNote}`);
     }
 
@@ -1332,10 +1356,10 @@ router.post('/api/quote', async (req: Request, res: Response) => {
         // Fees
         networkFee: {
           ...formatSolWithUSD(networkFeeSol),
-          display: (isBulkSwap && jitoEnabled)
+          display: (isBulkSwap && jitoEnabled && !requiresTwoPhase)
             ? `~${formatSolWithUSD(networkFeeSol).display} (includes ${formatSolDisplay(estimatedJitoTipSol)} SOL Jito tip)`
             : `~${formatSolWithUSD(networkFeeSol).display}`,
-          jitoTip: (isBulkSwap && jitoEnabled) ? {
+          jitoTip: (isBulkSwap && jitoEnabled && !requiresTwoPhase) ? {
             lamports: estimatedJitoTipLamports,
             sol: estimatedJitoTipSol,
             display: formatSolDisplay(estimatedJitoTipSol),
@@ -1406,29 +1430,37 @@ router.post('/api/quote', async (req: Request, res: Response) => {
         bulkSwap: isBulkSwap ? {
           isBulkSwap: true,
           jitoEnabled,
+          requiresTwoPhase,
+          hasCnftOnBothSides,
           strategy: swapAnalysis.strategy,
           transactionCount: swapAnalysis.transactionCount,
-          estimatedTipLamports: estimatedJitoTipLamports,
-          estimatedTipSol: estimatedJitoTipLamports / LAMPORTS_PER_SOL,
-          executionMethod: !jitoEnabled
-            ? 'Sequential transactions (Jito disabled)'
-            : swapAnalysis.strategy === SwapStrategy.DIRECT_BUBBLEGUM_BUNDLE
-              ? 'Direct Bubblegum transfers via Jito bundle'
-              : swapAnalysis.strategy === SwapStrategy.DIRECT_NFT_BUNDLE
-                ? 'Direct SPL/Core transfers via Jito bundle'
-                : swapAnalysis.strategy === SwapStrategy.MIXED_NFT_BUNDLE
-                  ? 'Mixed NFT transfers via Jito bundle'
-                  : 'Jito bundle',
+          estimatedTipLamports: requiresTwoPhase ? 0 : estimatedJitoTipLamports,
+          estimatedTipSol: requiresTwoPhase ? 0 : estimatedJitoTipLamports / LAMPORTS_PER_SOL,
+          executionMethod: requiresTwoPhase
+            ? 'Two-phase delegation with sequential settlement'
+            : !jitoEnabled
+              ? 'Sequential transactions (Jito disabled)'
+              : swapAnalysis.strategy === SwapStrategy.DIRECT_BUBBLEGUM_BUNDLE
+                ? 'Direct Bubblegum transfers via Jito bundle'
+                : swapAnalysis.strategy === SwapStrategy.DIRECT_NFT_BUNDLE
+                  ? 'Direct SPL/Core transfers via Jito bundle'
+                  : swapAnalysis.strategy === SwapStrategy.MIXED_NFT_BUNDLE
+                    ? 'Mixed NFT transfers via Jito bundle'
+                    : 'Jito bundle',
         } : {
           isBulkSwap: false,
           jitoEnabled,
+          requiresTwoPhase,
+          hasCnftOnBothSides,
           strategy: swapAnalysis.strategy,
           transactionCount: swapAnalysis.transactionCount,
           executionMethod: swapAnalysis.strategy === SwapStrategy.CANNOT_FIT
             ? 'Swap cannot be executed (exceeds transaction limits)'
-            : isCnftSwap
-              ? 'Single transaction with cNFT (requires bundle)'
-              : 'Standard escrow transaction',
+            : requiresTwoPhase
+              ? 'Two-phase delegation with sequential settlement'
+              : isCnftSwap
+                ? 'Single transaction with cNFT (requires bundle)'
+                : 'Standard escrow transaction',
         },
 
         // cNFT swap indicator (for backward compatibility)

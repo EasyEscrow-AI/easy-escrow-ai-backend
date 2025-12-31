@@ -818,9 +818,13 @@ function getSwapType(makerNFTs, takerNFTs) {
   const makerCNFTs = countCNFTs(makerNFTs);
   const takerCNFTs = countCNFTs(takerNFTs);
   const totalCNFTs = makerCNFTs + takerCNFTs;
+  const hasCnftOnBothSides = makerCNFTs > 0 && takerCNFTs > 0;
 
   if (totalCNFTs === 0) {
     return { type: 'atomic', label: 'Atomic Swap', icon: '⚡' };
+  } else if (hasCnftOnBothSides) {
+    // cNFT-to-cNFT swaps use two-phase delegation (no JITO needed)
+    return { type: 'cnft-two-phase', label: 'cNFT Two-Phase Swap', icon: '🔄', requiresTwoPhase: true };
   } else if (totalCNFTs <= 2) {
     return { type: 'cnft-single', label: 'cNFT Swap', icon: '🌳' };
   } else {
@@ -879,6 +883,19 @@ function showConfirmationModal() {
     executionType.textContent = 'Single Transaction';
     jitoInfo.style.display = 'none';
     jitoStatusRow.style.display = 'none';
+  } else if (swapType.type === 'cnft-two-phase') {
+    const totalCNFTs = countCNFTs(selectedMakerNFTs) + countCNFTs(selectedTakerNFTs);
+    const estimatedTxCount = totalCNFTs + 1; // Each cNFT transfer + SOL/fee transaction
+
+    modalTitle.innerHTML = '🔄 Confirm Two-Phase Swap';
+    modalSubtitle.textContent = 'cNFT-to-cNFT swap with sequential settlement';
+    executionType.textContent = `Two-Phase (${estimatedTxCount} transactions)`;
+    jitoInfo.style.display = 'block';
+    jitoStatusRow.style.display = 'none';
+    document.getElementById('modal-jito-tx-count').textContent = `${estimatedTxCount} Transactions`;
+    document.getElementById('modal-jito-tip').textContent = 'N/A (no JITO)';
+    document.getElementById('modal-bundle-strategy').textContent =
+      'Sequential settlement with fresh Merkle proofs';
   } else if (swapType.type === 'cnft-bundle') {
     const totalCNFTs = countCNFTs(selectedMakerNFTs) + countCNFTs(selectedTakerNFTs);
     const estimatedTxCount = Math.ceil(totalCNFTs / 2) + 1; // +1 for payment/cleanup
@@ -1121,10 +1138,30 @@ async function fetchSwapQuote(makerNFTs, takerNFTs, offeredSol, requestedSol, ap
       const jitoStatusRow = document.getElementById('modal-jito-status-row');
       const jitoStatus = document.getElementById('modal-jito-status');
 
-      // Get JITO enabled status from quote response
+      // Get JITO enabled status and two-phase info from quote response
       const jitoEnabled = quote.bulkSwap?.jitoEnabled ?? true;
+      const requiresTwoPhase = quote.bulkSwap?.requiresTwoPhase ?? false;
 
-      if (quote.bulkSwap && quote.bulkSwap.isBulkSwap && jitoEnabled) {
+      if (quote.bulkSwap && requiresTwoPhase) {
+        // Two-phase delegation flow (cNFT-to-cNFT) - no JITO needed
+        jitoInfo.style.display = 'block';
+        jitoStatusRow.style.display = 'none';
+        document.getElementById(
+          'modal-jito-tx-count'
+        ).textContent = `${quote.bulkSwap.transactionCount} Transactions`;
+
+        // No JITO tip for two-phase
+        document.getElementById('modal-jito-tip').textContent = 'N/A (no JITO)';
+
+        // Update execution type
+        document.getElementById(
+          'modal-execution-type'
+        ).textContent = `Two-Phase Delegation (${quote.bulkSwap.transactionCount} txs)`;
+
+        // Update bundle strategy
+        document.getElementById('modal-bundle-strategy').textContent =
+          'Sequential settlement with fresh Merkle proofs';
+      } else if (quote.bulkSwap && quote.bulkSwap.isBulkSwap && jitoEnabled) {
         jitoInfo.style.display = 'block';
         jitoStatusRow.style.display = 'none';
         document.getElementById(
@@ -1839,7 +1876,7 @@ async function executeTwoPhaseSwapWithData(offerId, acceptData, addLog) {
     throw new Error(`Settlement failed: ${settleResult.error}`);
   }
 
-  addLog('✅ Two-phase swap settled successfully!', 'success');
+  // Note: Completion message handled by caller in executeAtomicSwap()
 
   // Get the best signature for display (prefer settlement tx, fallback to last lock tx)
   const displaySignature = settleResult.data?.signature ||
@@ -1873,7 +1910,9 @@ async function executeAtomicSwap(params) {
 
   // Determine swap type for button text
   const { swapType } = params;
-  if (swapType && swapType.type === 'cnft-bundle') {
+  if (swapType && swapType.type === 'cnft-two-phase') {
+    swapBtn.innerHTML = '⏳ Two-Phase Swap In-Progress...';
+  } else if (swapType && swapType.type === 'cnft-bundle') {
     swapBtn.innerHTML = '⏳ Bundle In-Progress...';
   } else {
     swapBtn.innerHTML = '⏳ Swap In-Progress...';
@@ -1895,7 +1934,9 @@ async function executeAtomicSwap(params) {
     console.log('   Taker NFTs:', confirmedTakerNFTs);
 
     // Log swap type
-    if (swapType && swapType.type === 'cnft-bundle') {
+    if (swapType && swapType.type === 'cnft-two-phase') {
+      addCnftLog('Starting cNFT-to-cNFT swap with two-phase delegation...');
+    } else if (swapType && swapType.type === 'cnft-bundle') {
       addJitoLog('Starting cNFT bulk swap with Jito bundle...');
     } else if (swapType && swapType.type.startsWith('cnft')) {
       addCnftLog('Starting cNFT swap...');
@@ -2077,7 +2118,21 @@ async function executeAtomicSwap(params) {
     }
 
     // Log success based on swap type
-    if (isBulkSwap) {
+    const txCount = executeData.data.signatures?.length || 1;
+    const isTwoPhase = executeData.data.isTwoPhase || false;
+
+    if (isTwoPhase) {
+      // Two-phase swap with sequential settlement
+      addCnftLog(`${txCount} transaction${txCount > 1 ? 's' : ''} confirmed on blockchain!`);
+      if (executeData.data.signatures && executeData.data.signatures.length > 1) {
+        executeData.data.signatures.forEach((sig, idx) => {
+          addLog(
+            `   🔗 TX ${idx + 1}: <a href="https://solscan.io/tx/${sig}" target="_blank" style="color: #22c55e;">${sig.substring(0, 20)}...</a>`,
+            'success'
+          );
+        });
+      }
+    } else if (isBulkSwap) {
       addJitoLog('Bundle confirmed on blockchain!');
       if (executeData.data.bundleId) {
         addBundleLog(`Bundle ID: ${executeData.data.bundleId}`);
@@ -2120,9 +2175,11 @@ async function executeAtomicSwap(params) {
       }
 
       // Add Jito tip for bulk swaps only when Jito is enabled (0.001 SOL = 1,000,000 lamports)
+      // Two-phase swaps don't use JITO, so no tip is needed
       const JITO_TIP_LAMPORTS = 1_000_000; // 0.001 SOL
       const jitoEnabled = bulkSwapInfo?.jitoEnabled ?? false;
-      if (isBulkSwap && jitoEnabled) {
+      const usedTwoPhase = executeData.data.isTwoPhase || false;
+      if (isBulkSwap && jitoEnabled && !usedTwoPhase) {
         totalFee += JITO_TIP_LAMPORTS;
       }
 
@@ -2166,9 +2223,13 @@ async function executeAtomicSwap(params) {
     // Network from backend response (mainnet-beta or devnet)
     const network = executeData.data.network || 'devnet';
     const networkDisplay = network === 'mainnet-beta' ? 'MAINNET' : 'devnet';
+    const isTwoPhaseResult = executeData.data.isTwoPhase || false;
+    const totalTxCount = executeData.data.signatures?.length || 1;
 
-    // Log completion based on swap type
-    if (isBulkSwap) {
+    // Log completion based on swap type (combined message with tx count)
+    if (isTwoPhaseResult) {
+      addCnftLog(`cNFT swap completed successfully on ${networkDisplay}! (${totalTxCount} transactions)`);
+    } else if (isBulkSwap) {
       addJitoLog(`cNFT bulk swap completed successfully on ${networkDisplay}!`);
     } else if (swapType && swapType.type.startsWith('cnft')) {
       addCnftLog(`cNFT swap completed successfully on ${networkDisplay}!`);
