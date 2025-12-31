@@ -56,10 +56,12 @@ export class DasParallelFetcher {
     const quicknodeUrl = process.env.QUICKNODE_RPC_URL;
     const defaultUrl = process.env.SOLANA_RPC_URL;
 
-    // Provider-specific rate limits (Helius is generally faster/higher limits)
-    // QUICKNODE_DAS_RATE_LIMIT_INTERVAL_MS defaults to 120ms (~8.3 TPS) for QuickNode DAS add-on
+    // Provider-specific rate limits
+    // QuickNode DAS add-on: ~8 req/s → 120ms interval
+    // Helius Free: 2 DAS req/s → 500ms interval
+    // Helius Professional: 100 DAS req/s → 10ms interval
     const quicknodeRateLimit = parseInt(process.env.QUICKNODE_DAS_RATE_LIMIT_INTERVAL_MS || '120', 10);
-    const heliusRateLimit = parseInt(process.env.HELIUS_DAS_RATE_LIMIT_INTERVAL_MS || '20', 10); // Helius has higher limits
+    const heliusRateLimit = parseInt(process.env.HELIUS_DAS_RATE_LIMIT_INTERVAL_MS || '500', 10); // Free tier: 2 req/s
 
     if (heliusUrl) {
       this.providers.push({
@@ -93,7 +95,11 @@ export class DasParallelFetcher {
     }
 
     console.log('[DasParallelFetcher] Initialized with providers:',
-      this.providers.map(p => `${p.name} (${p.endpoint.substring(0, 50)}...)`));
+      this.providers.map(p => `${p.name} (rate: ${p.rateLimitIntervalMs || 'default'}ms)`));
+
+    if (this.providers.length > 1) {
+      console.log('[DasParallelFetcher] Parallel racing enabled - fastest provider wins each call');
+    }
   }
 
   private initMetrics(provider: string): void {
