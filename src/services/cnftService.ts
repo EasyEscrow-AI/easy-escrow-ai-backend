@@ -741,9 +741,31 @@ export class CnftService {
 
       // Use parallel fetcher if available and enabled (races Helius + QuickNode)
       if (this.parallelFetcher && this.parallelFetcher.isParallelAvailable()) {
-        const result = await this.parallelFetcher.getAsset(assetId, true);
-        assetData = result.data;
-        console.log(`[CnftService] Asset fetched via parallel provider race (winner: ${result.provider} in ${result.timeMs}ms)`);
+        // Retry logic for parallel fetcher (up to 3 attempts with progressive delays)
+        const maxAttempts = 3;
+
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+          try {
+            const result = await this.parallelFetcher.getAsset(assetId, true);
+            assetData = result.data;
+            console.log(`[CnftService] Asset fetched via parallel provider race (winner: ${result.provider} in ${result.timeMs}ms)`);
+            break; // Success - exit retry loop
+          } catch (error: any) {
+            const isRateLimit = error.message?.includes('429') || error.message?.includes('-32007');
+            const isTimeout = error.message?.includes('timeout') || error.message?.includes('abort');
+
+            if (attempt < maxAttempts && (isRateLimit || isTimeout)) {
+              const delay = 500 * Math.pow(2, attempt - 1);
+              console.warn(`[CnftService] Parallel asset fetch attempt ${attempt}/${maxAttempts} failed (${isRateLimit ? 'rate limit' : 'timeout'}), retrying in ${delay}ms...`);
+              await new Promise(resolve => setTimeout(resolve, delay));
+            } else if (attempt === maxAttempts) {
+              console.error(`[CnftService] All ${maxAttempts} parallel asset fetch attempts failed:`, error.message);
+              throw error;
+            } else {
+              throw error; // Non-retryable error
+            }
+          }
+        }
       } else {
         // Fallback to standard single-provider fetch
         const response = await this.makeDasRequest('getAsset', {
@@ -823,14 +845,43 @@ export class CnftService {
 
       // Use parallel fetcher if available and enabled (races Helius + QuickNode)
       if (this.parallelFetcher && this.parallelFetcher.isParallelAvailable()) {
-        const result = await this.parallelFetcher.getAssetProof(assetId, true);
-        proofData = result.data;
+        // Retry logic for parallel fetcher (up to 3 attempts with progressive delays)
+        const maxAttempts = 3;
+        let lastError: Error | null = null;
 
-        if (!proofData || !proofData.proof) {
-          throw new Error('No proof data returned from parallel DAS fetch');
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+          try {
+            const result = await this.parallelFetcher.getAssetProof(assetId, true);
+            proofData = result.data;
+
+            if (!proofData || !proofData.proof) {
+              throw new Error('No proof data returned from parallel DAS fetch');
+            }
+
+            console.log(`[CnftService] Proof fetched via parallel provider race (winner: ${result.provider} in ${result.timeMs}ms)`);
+            break; // Success - exit retry loop
+          } catch (error: any) {
+            lastError = error;
+            const isRateLimit = error.message?.includes('429') || error.message?.includes('-32007');
+            const isTimeout = error.message?.includes('timeout') || error.message?.includes('abort');
+
+            if (attempt < maxAttempts && (isRateLimit || isTimeout)) {
+              // Progressive delay: 500ms, 1000ms, 2000ms
+              const delay = 500 * Math.pow(2, attempt - 1);
+              console.warn(`[CnftService] Parallel fetch attempt ${attempt}/${maxAttempts} failed (${isRateLimit ? 'rate limit' : 'timeout'}), retrying in ${delay}ms...`);
+              await new Promise(resolve => setTimeout(resolve, delay));
+            } else if (attempt === maxAttempts) {
+              console.error(`[CnftService] All ${maxAttempts} parallel fetch attempts failed:`, error.message);
+              throw error;
+            } else {
+              // Non-retryable error
+              throw error;
+            }
+          }
         }
 
-        console.log(`[CnftService] Proof fetched via parallel provider race (winner: ${result.provider} in ${result.timeMs}ms)`);
+        // proofData is guaranteed to be set if we get here (or we threw)
+        proofData = proofData!;
       } else {
         // Fallback to standard single-provider fetch with rate limiting
         // Capture retryCount in closure for use inside withRateLimit callback

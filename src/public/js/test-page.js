@@ -1156,7 +1156,7 @@ async function fetchSwapQuote(makerNFTs, takerNFTs, offeredSol, requestedSol, ap
         // Update execution type
         document.getElementById(
           'modal-execution-type'
-        ).textContent = `Two-Phase Delegation (${quote.bulkSwap.transactionCount} txs)`;
+        ).textContent = `Two-Phase Delegation (${quote.bulkSwap.transactionCount} transaction${quote.bulkSwap.transactionCount === 1 ? '' : 's'})`;
 
         // Update bundle strategy
         document.getElementById('modal-bundle-strategy').textContent =
@@ -1177,7 +1177,7 @@ async function fetchSwapQuote(makerNFTs, takerNFTs, offeredSol, requestedSol, ap
         // Update execution type
         document.getElementById(
           'modal-execution-type'
-        ).textContent = `Jito Bundle (${quote.bulkSwap.transactionCount} txs)`;
+        ).textContent = `Jito Bundle (${quote.bulkSwap.transactionCount} transaction${quote.bulkSwap.transactionCount === 1 ? '' : 's'})`;
 
         // Update bundle strategy based on response
         const strategy = quote.bulkSwap.strategy || 'JITO_BUNDLE';
@@ -1189,7 +1189,7 @@ async function fetchSwapQuote(makerNFTs, takerNFTs, offeredSol, requestedSol, ap
         jitoStatusRow.style.display = 'flex';
         jitoStatus.textContent = 'Disabled (Sequential Execution)';
         document.getElementById('modal-execution-type').textContent =
-          `Sequential (${quote.bulkSwap.transactionCount} txs)`;
+          `Sequential (${quote.bulkSwap.transactionCount} transaction${quote.bulkSwap.transactionCount === 1 ? '' : 's'})`;
       } else if (quote.isCnftSwap) {
         // Single-transaction cNFT swap - show JITO disabled if applicable
         jitoInfo.style.display = 'none';

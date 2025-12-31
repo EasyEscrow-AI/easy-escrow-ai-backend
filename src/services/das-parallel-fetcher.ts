@@ -60,8 +60,18 @@ export class DasParallelFetcher {
     // QuickNode DAS add-on: ~8 req/s → 120ms interval
     // Helius Free: 2 DAS req/s → 500ms interval
     // Helius Professional: 100 DAS req/s → 10ms interval
-    const quicknodeRateLimit = parseInt(process.env.QUICKNODE_DAS_RATE_LIMIT_INTERVAL_MS || '120', 10);
-    const heliusRateLimit = parseInt(process.env.HELIUS_DAS_RATE_LIMIT_INTERVAL_MS || '500', 10); // Free tier: 2 req/s
+    const DEFAULT_QUICKNODE_RATE_LIMIT = 120;
+    const DEFAULT_HELIUS_RATE_LIMIT = 500; // Free tier: 2 req/s
+
+    let quicknodeRateLimit = parseInt(process.env.QUICKNODE_DAS_RATE_LIMIT_INTERVAL_MS || '', 10);
+    if (!Number.isFinite(quicknodeRateLimit) || quicknodeRateLimit <= 0) {
+      quicknodeRateLimit = DEFAULT_QUICKNODE_RATE_LIMIT;
+    }
+
+    let heliusRateLimit = parseInt(process.env.HELIUS_DAS_RATE_LIMIT_INTERVAL_MS || '', 10);
+    if (!Number.isFinite(heliusRateLimit) || heliusRateLimit <= 0) {
+      heliusRateLimit = DEFAULT_HELIUS_RATE_LIMIT;
+    }
 
     if (heliusUrl) {
       this.providers.push({
@@ -160,6 +170,9 @@ export class DasParallelFetcher {
     method: string,
     params: Record<string, any>
   ): Promise<{ data: any; timeMs: number }> {
+    // NOTE: timeMs intentionally includes rate-limiter queue wait time.
+    // This is used for both winner selection (total time to get response)
+    // and metrics (reflects real-world latency including rate limiting).
     const startTime = Date.now();
 
     // Rate limit per provider endpoint (use provider-specific interval if set)
@@ -202,7 +215,9 @@ export class DasParallelFetcher {
   }
 
   /**
-   * Race multiple providers, return first successful result
+   * Race multiple providers, return first successful result immediately.
+   * Uses Promise.any to return as soon as ANY provider succeeds (true racing).
+   * Metrics are collected in the background after the winner is returned.
    */
   async race<T>(
     method: string,
@@ -233,80 +248,92 @@ export class DasParallelFetcher {
       }
     }
 
-    // Race all providers
-    const startTime = Date.now();
-    const allResults: Array<{
+    // Race all providers - return FIRST successful result immediately
+    type ProviderResult = {
       provider: string;
       timeMs: number;
       success: boolean;
       error?: string;
       data?: any;
-    }> = [];
+    };
 
-    // Create promises for all providers
-    const promises = enabledProviders.map(async (provider) => {
+    // Store results for metrics (populated as promises complete)
+    const allResults: ProviderResult[] = [];
+    let winnerName: string | null = null;
+
+    // Create a single set of promises - each makes ONE request
+    // Returns ProviderResult on success, throws ProviderResult on failure (for Promise.any)
+    const promises = enabledProviders.map(async (provider): Promise<ProviderResult> => {
       const providerStart = Date.now();
       try {
         const result = await this.makeRequest(provider, method, params);
-        return {
+        const providerResult: ProviderResult = {
           provider: provider.name,
           timeMs: result.timeMs,
           success: true,
           data: result.data.result || result.data,
         };
+        allResults.push(providerResult);
+        return providerResult;
       } catch (error: any) {
-        return {
+        const failResult: ProviderResult = {
           provider: provider.name,
           timeMs: Date.now() - providerStart,
           success: false,
           error: error.message,
         };
+        allResults.push(failResult);
+        throw failResult; // Throw for Promise.any to skip failures
       }
     });
 
-    // Wait for all to complete (we want comparison data)
-    const results = await Promise.all(promises);
-    allResults.push(...results);
+    try {
+      // Use Promise.any to get the FIRST successful result immediately
+      const winner = await Promise.any(promises);
+      winnerName = winner.provider;
 
-    // Find the first successful result (by completion time)
-    const successfulResults = results.filter(r => r.success);
+      // Update winner metrics immediately
+      this.updateMetrics(winner.provider, winner.timeMs, true, true);
 
-    if (successfulResults.length === 0) {
-      // All failed
-      for (const r of results) {
-        this.updateMetrics(r.provider, r.timeMs, false, false);
+      // Update metrics for already-completed non-winners (sync)
+      for (const r of allResults) {
+        if (r.provider !== winner.provider) {
+          this.updateMetrics(r.provider, r.timeMs, r.success, false);
+        }
       }
-      throw new Error(`All DAS providers failed: ${results.map(r => `${r.provider}: ${r.error}`).join(', ')}`);
+
+      // Log comparison after a short delay to let other providers finish
+      if (options?.logComparison) {
+        setTimeout(() => {
+          const comparison = allResults.map(r =>
+            `${r.provider}: ${r.timeMs}ms ${r.success ? '✓' : '✗'}`
+          ).join(', ');
+          console.log(`[DasParallelFetcher] ${method}: ${comparison} → Winner: ${winner.provider}`);
+        }, 100);
+      }
+
+      return {
+        data: winner.data,
+        provider: winner.provider,
+        timeMs: winner.timeMs,
+      };
+
+    } catch (aggregateError: any) {
+      // Promise.any rejects with AggregateError when ALL promises reject
+      const errors: string[] = [];
+      if (aggregateError.errors) {
+        for (const err of aggregateError.errors) {
+          if (err && typeof err === 'object' && 'provider' in err) {
+            const failResult = err as ProviderResult;
+            this.updateMetrics(failResult.provider, failResult.timeMs, false, false);
+            errors.push(`${failResult.provider}: ${failResult.error}`);
+          } else {
+            errors.push(String(err));
+          }
+        }
+      }
+      throw new Error(`All DAS providers failed: ${errors.join(', ')}`);
     }
-
-    // Sort by time to find winner
-    successfulResults.sort((a, b) => a.timeMs - b.timeMs);
-    const winner = successfulResults[0];
-
-    // Update metrics for all providers
-    for (const r of results) {
-      this.updateMetrics(r.provider, r.timeMs, r.success, r.provider === winner.provider);
-    }
-
-    // Log comparison if requested
-    if (options?.logComparison) {
-      const comparison = results.map(r =>
-        `${r.provider}: ${r.timeMs}ms ${r.success ? '✓' : '✗'}`
-      ).join(', ');
-      console.log(`[DasParallelFetcher] ${method}: ${comparison} → Winner: ${winner.provider}`);
-    }
-
-    return {
-      data: winner.data,
-      provider: winner.provider,
-      timeMs: winner.timeMs,
-      allResults: allResults.map(r => ({
-        provider: r.provider,
-        timeMs: r.timeMs,
-        success: r.success,
-        error: r.error,
-      })),
-    };
   }
 
   /**
@@ -349,4 +376,12 @@ export function getDasParallelFetcher(): DasParallelFetcher {
     parallelFetcherInstance = new DasParallelFetcher();
   }
   return parallelFetcherInstance;
+}
+
+/**
+ * Reset the singleton instance (for testing)
+ * This allows tests to create fresh instances with different configurations
+ */
+export function resetDasParallelFetcher(): void {
+  parallelFetcherInstance = null;
 }
