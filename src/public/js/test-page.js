@@ -2327,12 +2327,25 @@ function showTransactionSummary(
                 <span class="summary-label">Status:</span>
                 <span class="summary-value badge-success">EXECUTED ✅</span>
             </div>
+            ${
+              acceptData.transaction?.nonceAccount
+                ? `
             <div class="summary-item">
                 <span class="summary-label">Nonce Account:</span>
                 <span class="summary-value">${escapeHtml(
                   acceptData.transaction.nonceAccount
                 )}</span>
             </div>
+            `
+                : acceptData.executionStrategy === 'two-phase'
+                ? `
+            <div class="summary-item">
+                <span class="summary-label">Execution:</span>
+                <span class="summary-value">Two-Phase Delegation (Sequential)</span>
+            </div>
+            `
+                : ''
+            }
             ${
               isBulkSwap && bulkSwapInfo
                 ? `
