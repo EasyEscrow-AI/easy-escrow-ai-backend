@@ -67,6 +67,19 @@ export const CNFT_CHUNK_LIMITS = {
 export const TX_SIZE_LIMIT = 1200;
 
 /**
+ * Forced proof size for chunk calculation (always triggers 1 cNFT per chunk).
+ *
+ * We use a value > DEEP_TREE_THRESHOLD (20) to force single-cNFT chunking because:
+ * - Common trees (maxDepth=20, canopy=11) have 9 trimmed proof nodes
+ * - Each cNFT instruction is ~488 bytes (17 accounts + proof nodes)
+ * - Two cNFT transfers = ~1302 bytes, exceeding 1232 byte limit
+ * - By returning 21, we trigger `proofSize > 20` check → 1 cNFT per chunk
+ *
+ * This is safe because we fetch fresh proofs at execution time anyway.
+ */
+export const FORCED_PROOF_SIZE_FOR_CHUNKING = 21;
+
+/**
  * Default retry configuration
  */
 export const RETRY_CONFIG = {
@@ -498,9 +511,9 @@ export class TwoPhaseSwapSettleService {
     // Party B's assets go to Party A
     const cnftAssetsB = swap.assetsB.filter((a) => a.type === 'CNFT');
 
-    // Estimate proof sizes and group cNFTs
+    // Group cNFTs into chunks (1 cNFT per chunk for transaction size safety)
     for (const asset of cnftAssetsA) {
-      const proofSize = this.estimateProofSize(asset.identifier);
+      const proofSize = FORCED_PROOF_SIZE_FOR_CHUNKING;
       const transfer: SettlementTransfer = {
         assetId: asset.identifier,
         type: 'CNFT',
@@ -534,9 +547,9 @@ export class TwoPhaseSwapSettleService {
       currentChunk.estimatedSize += estimatedInstructionSize;
     }
 
-    // Process Party B's cNFTs
+    // Process Party B's cNFTs (1 cNFT per chunk for transaction size safety)
     for (const asset of cnftAssetsB) {
-      const proofSize = this.estimateProofSize(asset.identifier);
+      const proofSize = FORCED_PROOF_SIZE_FOR_CHUNKING;
       const transfer: SettlementTransfer = {
         assetId: asset.identifier,
         type: 'CNFT',
@@ -651,30 +664,6 @@ export class TwoPhaseSwapSettleService {
       totalAssets,
       strategy,
     };
-  }
-
-  /**
-   * Estimate proof size for a cNFT
-   *
-   * OPTIMIZATION: Use conservative heuristic instead of fetching proofs during chunk calculation.
-   * Reason: For two-phase settlement, we need FRESH proofs at execution time anyway (tree state
-   * changes between sequential transactions). Fetching proofs here wastes ~0.5-1s per cNFT
-   * and the proofs are immediately discarded.
-   *
-   * Conservative assumption: Return value > DEEP_TREE_THRESHOLD (20) to ALWAYS use 1 cNFT per chunk.
-   * This is critical because:
-   * - Common trees (maxDepth=20, canopy=11) have 9 trimmed proof nodes
-   * - Each instruction is ~488 bytes with 17 accounts
-   * - Two cNFT transfers = ~1302 bytes, exceeding 1232 byte limit
-   * - Returning 21 triggers `proofSize > 20` check → 1 cNFT per chunk
-   *
-   * @param _assetId - cNFT asset ID (unused in heuristic mode)
-   * @returns Estimated proof node count (always > 20 to force 1 cNFT per chunk)
-   */
-  private estimateProofSize(_assetId: string): number {
-    // Return value > DEEP_TREE_THRESHOLD (20) to always use 1 cNFT per chunk
-    // This ensures transactions fit within 1232 byte limit for deep trees
-    return 21;
   }
 
   // ===========================================================================
