@@ -465,14 +465,31 @@ export class OfferManager {
       // 5. Validate taker's asset ownership
       const requestedAssets = offer.requestedAssets as Array<{ type: AssetType; identifier: string }>;
       const takerAssetsValidation = await this.assetValidator.validateAssets(takerWallet, requestedAssets);
-      
-      const invalidAssets = takerAssetsValidation.filter((v) => !v.isValid);
-      if (invalidAssets.length > 0) {
+
+      const invalidTakerAssets = takerAssetsValidation.filter((v) => !v.isValid);
+      if (invalidTakerAssets.length > 0) {
         throw new Error(
-          `Taker does not own the following assets: ${invalidAssets.map((a) => a.error).join(', ')}`
+          `Taker does not own the following assets: ${invalidTakerAssets.map((a) => a.error).join(', ')}`
         );
       }
-      
+
+      // 5b. Re-validate maker's asset ownership (non-custodial: assets may have been traded elsewhere)
+      const offeredAssetsForValidation = offer.offeredAssets as Array<{ type: AssetType; identifier: string }>;
+      const makerAssetsValidation = await this.assetValidator.validateAssets(offer.makerWallet, offeredAssetsForValidation);
+
+      const invalidMakerAssets = makerAssetsValidation.filter((v) => !v.isValid);
+      if (invalidMakerAssets.length > 0) {
+        // Mark offer as cancelled since maker no longer owns the assets
+        await this.prisma.swapOffer.update({
+          where: { id: offerId },
+          data: { status: OfferStatus.CANCELLED },
+        });
+        throw new Error(
+          `Offer cancelled: Maker no longer owns the following assets: ${invalidMakerAssets.map((a) => a.error).join(', ')}. ` +
+          `The offer has been automatically cancelled.`
+        );
+      }
+
       // 6. Extract SOL amounts from offer
       // Note: requestedAssets already declared above for validation
       const offeredAssets = offer.offeredAssets as Array<{ type: AssetType; identifier: string }>;

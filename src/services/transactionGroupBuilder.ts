@@ -420,15 +420,40 @@ export class TransactionGroupBuilder {
       };
     }
 
+    // Check if this is a cNFT-to-cNFT swap (Magic Eden style)
+    // These ALWAYS use two-phase delegation, regardless of size or Jito status
+    const hasCnftOnBothSides = analysis.makerCnfts > 0 && analysis.takerCnfts > 0;
+    if (hasCnftOnBothSides) {
+      console.log(`[TransactionGroupBuilder] cNFT-to-cNFT swap detected (${analysis.makerCnfts} ↔ ${analysis.takerCnfts}) - routing to two-phase delegation`);
+      const twoPhaseAnalysis = {
+        ...analysis,
+        strategy: SwapStrategy.TWO_PHASE_DELEGATION,
+        reason: `cNFT-to-cNFT swap requires two-phase delegation. Sequential settlement with fresh Merkle proofs.`,
+        requiresTwoPhase: true,
+      };
+      return {
+        strategy: SwapStrategy.TWO_PHASE_DELEGATION,
+        analysis: twoPhaseAnalysis,
+        transactions: [], // No transactions built - two-phase flow handles this
+        transactionCount: analysis.transactionCount,
+        requiresJitoBundle: false,
+        totalSizeBytes: 0,
+        nonceValue: '',
+        requiresTwoPhase: true,
+      };
+    }
+
     // If Jito is disabled and swap requires bundle, check if we can use sequential RPC
     // Two-phase is ONLY needed for cNFT delegation - SPL/CORE NFTs use sequential RPC
-    // For cNFT swaps: small swaps (1-2 cNFTs, up to 3 assets) can use sequential RPC
     if (!isJitoBundlesEnabled() && analysis.transactionCount > 1) {
       const totalCnfts = analysis.makerCnfts + analysis.takerCnfts;
       const totalAssets = inputs.makerAssets.length + inputs.takerAssets.length;
 
       // SPL/CORE NFT-only swaps can always use sequential RPC (no delegation needed)
-      // cNFT swaps need two-phase if they're large (3+ cNFTs or 4+ total assets)
+      // Single-side cNFT swaps can use sequential RPC if BOTH conditions are met:
+      //   - 1-2 cNFTs (not 3+)
+      //   - AND ≤3 total assets (not 4+)
+      // Otherwise, two-phase delegation is required for atomicity
       const isCnftSwap = totalCnfts > 0;
       const canUseSequentialRpc = !isCnftSwap || (totalCnfts <= 2 && totalAssets <= 3);
 
