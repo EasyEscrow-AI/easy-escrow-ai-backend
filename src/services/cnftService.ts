@@ -105,6 +105,10 @@ export class CnftService {
   // Proof cache with TTL - STATIC so it's shared across all CnftService instances
   // This ensures clearAllCachedProofs() clears the cache for all instances
   private static proofCache: Map<string, ProofCacheEntry> = new Map();
+
+  // Canopy depth cache - STATIC and PERMANENT (canopy depth never changes for a tree)
+  // This saves ~0.5s per proof by avoiding redundant RPC calls to fetch tree account
+  private static canopyDepthCache: Map<string, number> = new Map();
   
   // Rate limiting: active request count
   private activeRequests = 0;
@@ -934,18 +938,30 @@ export class CnftService {
   /**
    * Fetch canopy depth from Merkle tree account
    * The canopy stores proof nodes on-chain to reduce transaction size
-   * 
+   *
    * IMPORTANT: Canopy depth detection is complex and tree-specific.
    * If detection fails, we use a DEFAULT_CANOPY_DEPTH that works for most standard trees.
    * If that fails, the transaction will fail with a size error and the user should use a different NFT.
+   *
+   * OPTIMIZATION: Canopy depth is a fixed property of a tree (set at creation), so we cache it permanently.
+   * This saves ~0.5s per proof by avoiding redundant RPC calls.
    */
   async getTreeCanopyDepth(treeAddress: PublicKey, maxDepthHint?: number): Promise<number> {
-    console.log('[CnftService] Fetching canopy depth for tree:', treeAddress.toBase58());
-    
+    const treeKey = treeAddress.toBase58();
+
+    // Check cache first - canopy depth never changes for a tree
+    const cachedDepth = CnftService.canopyDepthCache.get(treeKey);
+    if (cachedDepth !== undefined) {
+      console.log('[CnftService] Using cached canopy depth for tree:', treeKey.substring(0, 12) + '...', cachedDepth);
+      return cachedDepth;
+    }
+
+    console.log('[CnftService] Fetching canopy depth for tree:', treeKey.substring(0, 12) + '...');
+
     // Default canopy depth for standard Metaplex trees (maxDepth=14, canopy=11)
     // This works for most common cNFT collections
     const DEFAULT_CANOPY_DEPTH = 11;
-    
+
     try {
       const accountInfo = await this.connection.getAccountInfo(treeAddress);
       
@@ -982,18 +998,24 @@ export class CnftService {
         const expectedNodes = Math.pow(2, canopyDepth + 1) - 2;
         if (Math.abs(expectedNodes - canopyNodes) < 10) { // Allow small variance
           console.log(`[CnftService] Detected canopy depth: ${canopyDepth} (maxDepth=${maxDepth}, canopyNodes=${canopyNodes})`);
+          // Cache the result permanently - canopy depth never changes
+          CnftService.canopyDepthCache.set(treeKey, canopyDepth);
           return canopyDepth;
         }
       }
-      
+
       // Fallback: Use default canopy depth (safer than 0 which sends all nodes)
       console.warn('[CnftService] Could not determine canopy depth, using default:', DEFAULT_CANOPY_DEPTH);
+      // Cache default too to avoid repeated RPC calls for same tree
+      CnftService.canopyDepthCache.set(treeKey, DEFAULT_CANOPY_DEPTH);
       return DEFAULT_CANOPY_DEPTH;
-      
+
     } catch (error: any) {
       console.error('[CnftService] Failed to fetch tree canopy depth:', error.message);
       // Default to standard canopy - safer than 0
       console.warn('[CnftService] Using default canopy depth:', DEFAULT_CANOPY_DEPTH);
+      // Cache default too to avoid repeated RPC calls for same tree
+      CnftService.canopyDepthCache.set(treeKey, DEFAULT_CANOPY_DEPTH);
       return DEFAULT_CANOPY_DEPTH;
     }
   }
