@@ -661,19 +661,20 @@ export class TwoPhaseSwapSettleService {
    * changes between sequential transactions). Fetching proofs here wastes ~0.5-1s per cNFT
    * and the proofs are immediately discarded.
    *
-   * Conservative assumption: Most cNFT trees have maxDepth 14-20, with canopy depth 10-14.
-   * After canopy trimming, proof length is typically 3-5 nodes.
-   * We use 5 as the estimate (corresponds to ~maxDepth 16 with canopy 11).
-   * This is safe because it means we'll create 1-2 cNFT per chunk, which works for all trees.
+   * Conservative assumption: Return value > DEEP_TREE_THRESHOLD (20) to ALWAYS use 1 cNFT per chunk.
+   * This is critical because:
+   * - Common trees (maxDepth=20, canopy=11) have 9 trimmed proof nodes
+   * - Each instruction is ~488 bytes with 17 accounts
+   * - Two cNFT transfers = ~1302 bytes, exceeding 1232 byte limit
+   * - Returning 21 triggers `proofSize > 20` check → 1 cNFT per chunk
    *
    * @param _assetId - cNFT asset ID (unused in heuristic mode)
-   * @returns Estimated proof node count
+   * @returns Estimated proof node count (always > 20 to force 1 cNFT per chunk)
    */
   private estimateProofSize(_assetId: string): number {
-    // Use conservative heuristic - no RPC call needed
-    // This creates smaller chunks (1-2 cNFT per tx) which is safe for all tree depths
-    // Fresh proofs will be fetched at execution time
-    return 5; // Typical trimmed proof length for standard Metaplex trees
+    // Return value > DEEP_TREE_THRESHOLD (20) to always use 1 cNFT per chunk
+    // This ensures transactions fit within 1232 byte limit for deep trees
+    return 21;
   }
 
   // ===========================================================================
