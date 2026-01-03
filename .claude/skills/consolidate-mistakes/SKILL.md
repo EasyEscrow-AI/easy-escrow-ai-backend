@@ -1,36 +1,15 @@
 ---
 name: consolidate-mistakes
-description: Consolidate and clean up the common-mistakes.md file when it gets too long. Use when mistakes file exceeds 100 lines or has duplicate/similar patterns.
+description: Consolidate common-mistakes.md when it exceeds 100 lines or has duplicates. Auto-invoked when Stop hook detects file is full.
 ---
 
-# Consolidate Mistakes File
+# Consolidate Mistakes
 
-Review and optimize `.claude/rules/common-mistakes.md`:
+See `.claude/commands/consolidate-mistakes.md` for full procedure.
 
-## Tasks
-
-1. **Read current file** - Check line count and content
-
-2. **Identify consolidation opportunities:**
-   - Duplicate or near-duplicate patterns
-   - Similar mistakes that can be grouped under one heading
-   - Patterns that are now covered in CLAUDE.md (remove from mistakes)
-   - Overly verbose entries that can be shortened
-
-3. **Archive if needed** - Move old/resolved patterns to `.claude/rules/archived-mistakes.md`
-
-4. **Consolidate format:**
-   ```markdown
-   ### Category Name
-   | Wrong | Right |
-   |-------|-------|
-   | `bad command` | `good command` |
-   | `another bad` | `another good` |
-   ```
-
-5. **Target:** Keep under 100 lines while preserving all unique patterns
-
-6. **Update timestamp** at top of file
-
-## Output
-Report what was consolidated, archived, or removed.
+**Quick steps:**
+1. Read `.claude/rules/common-mistakes.md`, count lines
+2. Merge duplicates, archive old patterns to `archived-mistakes.md`
+3. Use table format: `| Mistake | Wrong | Right |`
+4. Target: < 100 lines
+5. Update timestamp, report changes
