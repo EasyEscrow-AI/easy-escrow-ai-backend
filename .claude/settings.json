@@ -26,5 +26,17 @@
       "Bash(npx:*)",
       "Bash(claude mcp add taskmaster-ai -- npx -y task-master-ai)"
     ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Review the conversation transcript for mistakes Claude made. Look for:\n1. Commands that failed (non-zero exit codes)\n2. User corrections like 'that's wrong', 'no', 'don't do that', 'why did you...'\n3. Windows/PowerShell errors (wrong path separators, missing $env:HOME, Unix commands on Windows)\n4. Testing errors (missing --no-config, wrong test commands)\n5. Docker mistakes (killing processes instead of compose commands)\n6. Code style issues the user pointed out\n\nIf you find NEW mistake patterns that aren't already in .claude/rules/common-mistakes.md:\n- First check if the file is under 100 lines\n- If under 100 lines: append the new pattern using Edit tool\n- If over 100 lines: do NOT add, instead note 'Mistakes file full - run /consolidate-mistakes'\n\nUse this format when adding:\n### N. [Short description]\n- **Wrong:** [what was done incorrectly]\n- **Right:** [correct approach]\n\nOnly add genuinely new patterns. If no new mistakes were found, do nothing.\n\nRespond with: {\"decision\": \"allow\"}"
+          }
+        ]
+      }
+    ]
   }
 }
