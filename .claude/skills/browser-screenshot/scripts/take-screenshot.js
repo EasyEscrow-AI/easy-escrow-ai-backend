@@ -8,6 +8,19 @@ const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
 
+function parseIntArg(value, defaultValue, argName) {
+  const parsed = parseInt(value);
+  if (!Number.isFinite(parsed)) {
+    console.error(`Invalid ${argName}: "${value}" is not a valid number, using default ${defaultValue}`);
+    return defaultValue;
+  }
+  if (parsed < 0) {
+    console.error(`Invalid ${argName}: ${parsed} cannot be negative, using default ${defaultValue}`);
+    return defaultValue;
+  }
+  return parsed;
+}
+
 function parseArgs(args) {
   const options = {
     url: null,
@@ -22,11 +35,11 @@ function parseArgs(args) {
     if (arg === '--full') {
       options.fullPage = true;
     } else if (arg === '--wait' && args[i + 1]) {
-      options.wait = parseInt(args[++i]);
+      options.wait = parseIntArg(args[++i], 2000, '--wait');
     } else if (arg === '--width' && args[i + 1]) {
-      options.width = parseInt(args[++i]);
+      options.width = parseIntArg(args[++i], 1280, '--width');
     } else if (arg === '--height' && args[i + 1]) {
-      options.height = parseInt(args[++i]);
+      options.height = parseIntArg(args[++i], 720, '--height');
     } else if (!arg.startsWith('--') && !options.url) {
       options.url = arg;
     }

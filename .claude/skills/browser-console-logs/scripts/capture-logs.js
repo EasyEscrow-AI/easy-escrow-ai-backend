@@ -106,7 +106,8 @@ async function captureLogs(url, waitTime = 5000) {
 
 // CLI
 const url = process.argv[2];
-const waitTime = parseInt(process.argv[3]) || 5000;
+const parsedWait = parseInt(process.argv[3]);
+const waitTime = Number.isFinite(parsedWait) ? parsedWait : 5000;
 
 if (!url) {
   console.error('Usage: node capture-logs.js <url> [wait-time-ms]');
