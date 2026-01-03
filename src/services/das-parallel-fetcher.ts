@@ -56,18 +56,15 @@ export class DasParallelFetcher {
     const quicknodeUrl = process.env.QUICKNODE_RPC_URL;
     const defaultUrl = process.env.SOLANA_RPC_URL;
 
-    // Provider-specific rate limits
-    // QuickNode DAS add-on: ~8 req/s → 120ms interval
-    // Helius Free: 2 DAS req/s → 500ms interval
-    // Helius Professional: 100 DAS req/s → 10ms interval
-    const DEFAULT_QUICKNODE_RATE_LIMIT = 120;
-    const DEFAULT_HELIUS_RATE_LIMIT = 500; // Free tier: 2 req/s
+    // Provider-specific rate limits (paid tier: 10 req/s = 100ms interval)
+    // Both Helius and QuickNode upgraded subscriptions support 10 req/s DAS API
+    const DEFAULT_QUICKNODE_RATE_LIMIT = 100; // 10 req/s
+    const DEFAULT_HELIUS_RATE_LIMIT = 100;    // 10 req/s
 
-    let quicknodeRateLimit = parseInt(process.env.QUICKNODE_DAS_RATE_LIMIT_INTERVAL_MS || '', 10);
-    if (!Number.isFinite(quicknodeRateLimit) || quicknodeRateLimit <= 0) {
-      quicknodeRateLimit = DEFAULT_QUICKNODE_RATE_LIMIT;
-    }
+    // QuickNode uses hardcoded rate limit (paid tier)
+    const quicknodeRateLimit = DEFAULT_QUICKNODE_RATE_LIMIT;
 
+    // Helius allows env override for flexibility (tier may vary)
     let heliusRateLimit = parseInt(process.env.HELIUS_DAS_RATE_LIMIT_INTERVAL_MS || '', 10);
     if (!Number.isFinite(heliusRateLimit) || heliusRateLimit <= 0) {
       heliusRateLimit = DEFAULT_HELIUS_RATE_LIMIT;
