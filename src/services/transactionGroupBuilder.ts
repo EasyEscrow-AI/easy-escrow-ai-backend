@@ -627,8 +627,13 @@ export class TransactionGroupBuilder {
     // If Jito is disabled and swap requires bundle, use sequential RPC for SPL/CORE NFTs
     // Note: cNFT swaps are already handled above and routed to two-phase
     if (!isJitoBundlesEnabled() && analysis.transactionCount > 1) {
-      const totalAssets = inputs.makerAssets.length + inputs.takerAssets.length;
-      console.log(`[TransactionGroupBuilder] Jito disabled, SPL/CORE NFT swap (${totalAssets} assets) - using sequential RPC fallback`);
+      const makerNfts = analysis.makerSplNfts + analysis.makerCoreNfts;
+      const takerNfts = analysis.takerSplNfts + analysis.takerCoreNfts;
+      const nftTypes = [
+        analysis.makerSplNfts > 0 || analysis.takerSplNfts > 0 ? 'SPL' : '',
+        analysis.makerCoreNfts > 0 || analysis.takerCoreNfts > 0 ? 'CORE' : '',
+      ].filter(Boolean).join('/') || 'NFT';
+      console.log(`[TransactionGroupBuilder] Jito disabled, ${nftTypes} swap (maker: ${makerNfts}, taker: ${takerNfts}) - using sequential RPC fallback`);
       // Continue to build transactions for sequential RPC execution
     }
     

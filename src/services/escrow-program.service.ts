@@ -1332,10 +1332,14 @@ export class EscrowProgramService {
 
   /**
    * Wait for bundle confirmation with polling
-   * 
+   *
+   * Uses fail-fast strategy: only 2 polls (initial + 1 retry) to avoid long waits.
+   * If Jito doesn't confirm quickly, callers should retry or use two-phase flow.
+   *
    * @param bundleId - Bundle ID to track
-   * @param timeoutSeconds - Timeout in seconds (default: 30)
-   * @returns Confirmation result
+   * @param timeoutSeconds - Timeout in seconds (default: EscrowProgramService.BUNDLE_CONFIRMATION_TIMEOUT_SECONDS = 15)
+   * @param txSignatures - Optional transaction signatures for on-chain fallback confirmation
+   * @returns Confirmation result with status and optional error details
    */
   async waitForBundleConfirmation(
     bundleId: string,
@@ -1451,12 +1455,15 @@ export class EscrowProgramService {
     }
     
     // Timeout - either hit time limit or max polls
-    const reason = pollCount >= maxPolls ? `max polls reached (${maxPolls})` : `timeout after ${timeoutSeconds}s`;
-    console.warn(`[EscrowProgramService] Bundle ${bundleId} confirmation failed: ${reason}`);
+    const actualElapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+    const reason = pollCount >= maxPolls
+      ? `max polls reached (${pollCount}/${maxPolls})`
+      : `time limit exceeded`;
+    console.warn(`[EscrowProgramService] Bundle ${bundleId} confirmation failed: ${reason} after ${actualElapsed}s`);
     return {
       confirmed: false,
       status: 'Timeout',
-      error: `Bundle confirmation timeout after ${timeoutSeconds} seconds`,
+      error: `Bundle confirmation timeout: ${reason} after ${actualElapsed}s (limit: ${timeoutSeconds}s)`,
     };
   }
 
