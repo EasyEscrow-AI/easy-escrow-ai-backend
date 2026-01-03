@@ -2713,23 +2713,31 @@ router.get('/api/test/nft-swap-history/:assetId', async (req: Request, res: Resp
       },
     });
 
-    // Filter swaps that involve this asset
-    const filteredSwaps = swaps.filter((swap) => {
-      const offeredAssets = swap.offeredAssets as Array<{ mint: string }> | null;
-      const requestedAssets = swap.requestedAssets as Array<{ mint: string }> | null;
+    // Asset type for filtering - assets may have mint or identifier property
+    type AssetEntry = { mint?: string; identifier?: string };
 
-      const inOffered = offeredAssets?.some((a) => a.mint === assetId);
-      const inRequested = requestedAssets?.some((a) => a.mint === assetId);
+    // Helper to check if an asset matches the requested assetId (check both mint and identifier)
+    const assetMatches = (asset: AssetEntry): boolean => {
+      return asset.mint === assetId || asset.identifier === assetId;
+    };
+
+    // Filter swaps that involve this asset (check both mint and identifier)
+    const filteredSwaps = swaps.filter((swap) => {
+      const offeredAssets = (swap.offeredAssets as AssetEntry[] | null) ?? [];
+      const requestedAssets = (swap.requestedAssets as AssetEntry[] | null) ?? [];
+
+      const inOffered = offeredAssets.some(assetMatches);
+      const inRequested = requestedAssets.some(assetMatches);
 
       return inOffered || inRequested;
     }).slice(0, 20); // Limit to 20 results
 
     // Transform into history format
     const history = filteredSwaps.map((swap) => {
-      // Determine if asset was offered or requested
-      const offeredAssets = swap.offeredAssets as Array<{ mint: string }> | null;
+      // Determine if asset was offered or requested (check both mint and identifier)
+      const offeredAssets = (swap.offeredAssets as AssetEntry[] | null) ?? [];
 
-      const wasOffered = offeredAssets?.some((a) => a.mint === assetId);
+      const wasOffered = offeredAssets.some(assetMatches);
       const from = wasOffered ? swap.makerWallet : swap.takerWallet;
       const to = wasOffered ? swap.takerWallet : swap.makerWallet;
 

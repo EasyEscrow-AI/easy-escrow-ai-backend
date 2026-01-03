@@ -3850,21 +3850,21 @@
                             <span class="modal-info-value" id="modal-jito-status" style="color: #9ca3af;">Disabled</span>
                         </div>
                     </div>
-                    <!-- cNFT/Jito Bundle Info (hidden by default) -->
-                    <div id="modal-jito-info" style="display: none; margin-top: 12px; padding: 12px; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 8px; border: 1px solid #f59e0b;">
+                    <!-- Multi-Transaction Execution Info (hidden by default) -->
+                    <div id="modal-jito-info" style="display: none; margin-top: 12px; padding: 12px; border-radius: 8px;">
                         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                            <span style="background: #f59e0b; color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">🚀 JITO BUNDLE</span>
-                            <span style="font-size: 0.8rem; color: #92400e; font-weight: 500;" id="modal-jito-tx-count">2 Transactions</span>
+                            <span id="modal-execution-badge" style="color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">🚀 JITO BUNDLE</span>
+                            <span style="font-size: 0.8rem; font-weight: 500;" id="modal-jito-tx-count">2 Transactions</span>
+                        </div>
+                        <div class="modal-info-item" style="padding: 4px 0;" id="modal-jito-tip-row">
+                            <span class="modal-info-label">Jito Tip:</span>
+                            <span class="modal-info-value" id="modal-jito-tip">~0.0001 SOL</span>
                         </div>
                         <div class="modal-info-item" style="padding: 4px 0;">
-                            <span class="modal-info-label" style="color: #92400e;">Jito Tip:</span>
-                            <span class="modal-info-value" style="color: #b45309;" id="modal-jito-tip">~0.0001 SOL</span>
+                            <span class="modal-info-label">Strategy:</span>
+                            <span class="modal-info-value" id="modal-bundle-strategy">Atomic execution via Jito</span>
                         </div>
-                        <div class="modal-info-item" style="padding: 4px 0;">
-                            <span class="modal-info-label" style="color: #92400e;">Bundle Strategy:</span>
-                            <span class="modal-info-value" style="color: #b45309;" id="modal-bundle-strategy">Atomic execution via Jito</span>
-                        </div>
-                        <div style="font-size: 0.75rem; color: #78350f; margin-top: 8px; padding-top: 8px; border-top: 1px solid #fbbf24;">
+                        <div id="modal-execution-info" style="font-size: 0.75rem; margin-top: 8px; padding-top: 8px;">
                             ℹ️ cNFT swaps require multiple transactions bundled atomically via Jito Block Engine
                         </div>
                     </div>
@@ -4290,7 +4290,7 @@
                         <div class="nft-details-item full-width">
                             <div class="nft-details-loading" id="nft-escrow-loading">
                                 <div class="spinner"></div>
-                                <div>Checking swap history...</div>
+                                <div>Checking active offers...</div>
                             </div>
                             <div id="nft-escrow-content" style="display: none;"></div>
                         </div>

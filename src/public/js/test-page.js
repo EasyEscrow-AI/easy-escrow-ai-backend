@@ -840,24 +840,51 @@ function resetSelectionsAfterSwap() {
   addLog('🔄 Selections reset for next swap', 'info');
 }
 
+// Configuration for wallet refresh after swap
+// Default 2s delay allows blockchain state to propagate on mainnet
+// Congested networks may need longer - can be overridden via URL param ?refreshDelay=3000
+const WALLET_REFRESH_CONFIG = {
+  initialDelayMs: parseInt(new URLSearchParams(window.location.search).get('refreshDelay') || '2000', 10),
+  maxRetries: 3,
+  retryDelayMs: 1500, // Delay between retries
+};
+
 // Refresh both wallets after a successful swap to show updated NFT ownership
+// Uses retry logic with exponential backoff for congested networks
 async function refreshBothWalletsAfterSwap() {
   addLog('🔄 Refreshing wallets to show updated NFT ownership...', 'info');
 
-  // Small delay to allow blockchain state to propagate
-  await new Promise((r) => setTimeout(r, 2000));
+  // Initial delay to allow blockchain state to propagate
+  // 2s default works for most mainnet conditions; increase via URL param for congested networks
+  await new Promise((r) => setTimeout(r, WALLET_REFRESH_CONFIG.initialDelayMs));
 
-  try {
-    // Refresh both wallets in parallel
-    await Promise.all([
-      loadWalletInfo('maker'),
-      loadWalletInfo('taker'),
-    ]);
-    addLog('✓ Wallets refreshed - NFT ownership updated', 'success');
-  } catch (error) {
-    console.error('Error refreshing wallets:', error);
-    addLog('⚠️ Could not refresh wallets automatically. Click "Load Wallet" to refresh manually.', 'warning');
+  let lastError = null;
+
+  for (let attempt = 1; attempt <= WALLET_REFRESH_CONFIG.maxRetries; attempt++) {
+    try {
+      // Refresh both wallets in parallel
+      await Promise.all([
+        loadWalletInfo('maker'),
+        loadWalletInfo('taker'),
+      ]);
+      addLog('✓ Wallets refreshed - NFT ownership updated', 'success');
+      return; // Success - exit early
+    } catch (error) {
+      lastError = error;
+      console.error(`Wallet refresh attempt ${attempt} failed:`, error);
+
+      if (attempt < WALLET_REFRESH_CONFIG.maxRetries) {
+        // Wait before retry with increasing delay
+        const delay = WALLET_REFRESH_CONFIG.retryDelayMs * attempt;
+        addLog(`⏳ Retry ${attempt}/${WALLET_REFRESH_CONFIG.maxRetries} in ${delay / 1000}s...`, 'info');
+        await new Promise((r) => setTimeout(r, delay));
+      }
+    }
   }
+
+  // All retries exhausted
+  console.error('All wallet refresh attempts failed:', lastError);
+  addLog('⚠️ Could not refresh wallets automatically. Click "Load Wallet" to refresh manually.', 'warning');
 }
 
 // Add log entry with support for cNFT/Jito log types
@@ -1250,16 +1277,47 @@ async function fetchSwapQuote(makerNFTs, takerNFTs, offeredSol, requestedSol, ap
       const jitoEnabled = quote.bulkSwap?.jitoEnabled ?? true;
       const requiresTwoPhase = quote.bulkSwap?.requiresTwoPhase ?? false;
 
+      // Helper to style the execution info box
+      const styleExecutionInfo = (useJito) => {
+        const badge = document.getElementById('modal-execution-badge');
+        const tipRow = document.getElementById('modal-jito-tip-row');
+        const infoText = document.getElementById('modal-execution-info');
+        const txCount = document.getElementById('modal-jito-tx-count');
+
+        if (useJito) {
+          // JITO Bundle - orange/amber styling
+          jitoInfo.style.background = 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)';
+          jitoInfo.style.border = '1px solid #f59e0b';
+          badge.style.background = '#f59e0b';
+          badge.textContent = '🚀 JITO BUNDLE';
+          txCount.style.color = '#92400e';
+          tipRow.style.display = 'block';
+          infoText.style.color = '#78350f';
+          infoText.style.borderTop = '1px solid #fbbf24';
+          infoText.textContent = 'ℹ️ Multiple transactions bundled atomically via Jito Block Engine';
+        } else {
+          // Two-Phase Delegation - purple/blue styling (no JITO)
+          jitoInfo.style.background = 'linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%)';
+          jitoInfo.style.border = '1px solid #8b5cf6';
+          badge.style.background = '#8b5cf6';
+          badge.textContent = '🔐 TWO-PHASE';
+          txCount.style.color = '#5b21b6';
+          tipRow.style.display = 'none'; // Hide Jito tip row
+          infoText.style.color = '#5b21b6';
+          infoText.style.borderTop = '1px solid #a78bfa';
+          infoText.textContent = 'ℹ️ Sequential delegation-based settlement - JITO not used';
+        }
+      };
+
       if (quote.bulkSwap && requiresTwoPhase) {
         // Two-phase delegation flow (cNFT-to-cNFT) - no JITO needed
         jitoInfo.style.display = 'block';
         jitoStatusRow.style.display = 'none';
+        styleExecutionInfo(false); // Style for two-phase (no JITO)
+
         document.getElementById(
           'modal-jito-tx-count'
         ).textContent = `${quote.bulkSwap.transactionCount} Transactions`;
-
-        // No JITO tip for two-phase
-        document.getElementById('modal-jito-tip').textContent = 'N/A (no JITO)';
 
         // Update execution type
         document.getElementById(
@@ -1272,6 +1330,8 @@ async function fetchSwapQuote(makerNFTs, takerNFTs, offeredSol, requestedSol, ap
       } else if (quote.bulkSwap && quote.bulkSwap.isBulkSwap && jitoEnabled) {
         jitoInfo.style.display = 'block';
         jitoStatusRow.style.display = 'none';
+        styleExecutionInfo(true); // Style for JITO
+
         document.getElementById(
           'modal-jito-tx-count'
         ).textContent = `${quote.bulkSwap.transactionCount} Transactions`;
@@ -1317,14 +1377,16 @@ async function fetchSwapQuote(makerNFTs, takerNFTs, offeredSol, requestedSol, ap
       // Update transaction size display
       if (txSizeContainer && quote.transactionSize) {
         const txSize = quote.transactionSize;
+        const isOverLimit = txSize.estimated > txSize.maxSize;
+        // Cap percentage at 100 for display, but show actual ratio
         const percentage = Math.min((txSize.estimated / txSize.maxSize) * 100, 100);
 
-        // Determine color based on status
+        // Determine color based on status - but ALWAYS show red if over limit
         let barColor = '#22c55e'; // green
         let statusText = '✅ OK';
-        if (txSize.status === 'too_large') {
+        if (isOverLimit || txSize.status === 'too_large') {
           barColor = '#ef4444'; // red
-          statusText = '❌ Too Large';
+          statusText = '❌ OVER LIMIT';
         } else if (txSize.status === 'alt_required') {
           barColor = '#f59e0b'; // amber
           statusText = '🔗 ALT Required';
@@ -2348,7 +2410,10 @@ async function executeAtomicSwap(params) {
     // Reset selections after successful swap
     resetSelectionsAfterSwap();
 
-    // Refresh both wallets to show updated NFT ownership
+    // Fire-and-forget: Refresh wallets in background to show updated NFT ownership.
+    // Intentionally not awaited to keep UI responsive - swap is complete and user can
+    // immediately see success. The refresh runs async with retry logic; if it fails,
+    // user sees a warning and can manually click "Load Wallet".
     refreshBothWalletsAfterSwap();
   } catch (error) {
     console.error('Swap error:', error);
@@ -3790,13 +3855,25 @@ async function loadNftSwapHistory(assetId) {
 
   try {
     const response = await fetch(`/api/test/nft-swap-history/${assetId}`);
+
+    // Handle HTTP errors with specific messages
+    if (!response.ok) {
+      if (response.status === 404) {
+        historyEl.innerHTML = '<div class="nft-details-empty">No swap history found for this NFT</div>';
+        return;
+      }
+      console.error(`Swap history request failed with status ${response.status}`);
+      historyEl.innerHTML = `<div class="nft-details-empty">Unable to load swap history (${response.status})</div>`;
+      return;
+    }
+
     const data = await response.json();
 
     if (data.success && data.data && data.data.history && data.data.history.length > 0) {
       const history = data.data.history;
       const historyHtml = history.map((swap) => {
         const date = new Date(swap.completedAt).toLocaleString();
-        const solAmount = swap.solAmount ? (swap.solAmount / 1e9).toFixed(4) : '0';
+        const solAmount = swap.solAmount ? (parseInt(swap.solAmount) / 1e9).toFixed(4) : '0';
 
         return `
           <div class="swap-history-item">
@@ -3819,8 +3896,14 @@ async function loadNftSwapHistory(assetId) {
     }
   } catch (error) {
     console.error('Error loading swap history:', error);
-    // Endpoint might not exist yet - show graceful fallback
-    historyEl.innerHTML = '<div class="nft-details-empty">Swap history not available</div>';
+
+    // Distinguish network errors from other issues
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      historyEl.innerHTML = '<div class="nft-details-empty">Network error: please check your connection</div>';
+    } else {
+      // Graceful fallback for expected issues (endpoint not deployed yet, etc)
+      historyEl.innerHTML = '<div class="nft-details-empty">Swap history not available</div>';
+    }
   }
 }
 
