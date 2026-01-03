@@ -2392,8 +2392,14 @@ router.post('/api/test/execute-lock', async (req: Request, res: Response) => {
         });
       }
 
-      if (hasStaleProof) {
-        console.log('\n   🔄 Stale proof detected! Rebuilding lock transaction...');
+      // For multi-cNFT swaps, TX index > 0 means previous TXs modified the tree
+      // We MUST rebuild to get fresh proof data, even if JIT validation passes
+      // because the original serialized TX has stale proof nodes baked in
+      const needsRebuild = hasStaleProof || (assetId && (transactionIndex || 0) > 0);
+
+      if (needsRebuild) {
+        const reason = hasStaleProof ? 'stale proof' : `TX index ${transactionIndex} > 0`;
+        console.log(`\n   🔄 Rebuilding lock transaction (${reason})...`);
 
         // Clear cached proof to ensure fresh proofs are fetched during rebuild
         if (assetId) {
@@ -2429,7 +2435,7 @@ router.post('/api/test/execute-lock', async (req: Request, res: Response) => {
           });
         }
       } else {
-        console.log('   ✅ Proof validation passed, proceeding with original transaction');
+        console.log('   ✅ TX index 0 with valid proof, using original transaction');
       }
     } catch (validationError: any) {
       console.warn('   ⚠️  Proactive validation failed, proceeding with original transaction:', validationError.message);
