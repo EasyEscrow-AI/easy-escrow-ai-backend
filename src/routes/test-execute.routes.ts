@@ -2395,6 +2395,12 @@ router.post('/api/test/execute-lock', async (req: Request, res: Response) => {
       if (hasStaleProof) {
         console.log('\n   🔄 Stale proof detected! Rebuilding lock transaction...');
 
+        // Clear cached proof to ensure fresh proofs are fetched during rebuild
+        if (assetId) {
+          cnftService.clearCachedProof(assetId);
+          console.log(`   🧹 Cleared cached proof for ${assetId.substring(0, 12)}...`);
+        }
+
         // Rebuild the lock transaction with fresh proofs
         const lockService = createTwoPhaseSwapLockService(
           connection,
