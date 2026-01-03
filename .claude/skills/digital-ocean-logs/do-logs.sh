@@ -44,7 +44,10 @@ get_cache_age_days() {
     fi
 
     # Convert ISO date to epoch and calculate age
-    local cache_epoch=$(date -d "$last_updated" +%s 2>/dev/null || date -j -f "%Y-%m-%dT%H:%M:%S" "${last_updated%%.*}" +%s 2>/dev/null || echo "0")
+    # Strip milliseconds (.xxx) and timezone (Z) for BSD date compatibility
+    local date_stripped="${last_updated%%.*}"  # Remove .xxx if present
+    date_stripped="${date_stripped%Z}"          # Remove trailing Z
+    local cache_epoch=$(date -d "$last_updated" +%s 2>/dev/null || date -j -f "%Y-%m-%dT%H:%M:%S" "$date_stripped" +%s 2>/dev/null || echo "0")
     local now_epoch=$(date +%s)
     local age_seconds=$((now_epoch - cache_epoch))
     local age_days=$((age_seconds / 86400))
@@ -189,7 +192,7 @@ get_app_info() {
         region: .app.region.slug,
         live_url: .app.live_url,
         last_deployment: .app.last_deployment_active_at,
-        components: [.app.spec.services[].name, .app.spec.static_sites[]?.name, .app.spec.jobs[]?.name] | map(select(. != null))
+        components: [.app.spec.services[]?.name, .app.spec.static_sites[]?.name, .app.spec.jobs[]?.name] | map(select(. != null))
     }'
 }
 
