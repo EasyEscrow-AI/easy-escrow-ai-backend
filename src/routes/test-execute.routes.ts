@@ -546,8 +546,8 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
           // ========== END PROACTIVE VALIDATION ==========
 
           // ========== INJECT JITO TIP IF MISSING ==========
-          // Transactions built when ENABLE_JITO_BUNDLES=false won't have a JITO tip.
-          // When we force JITO mode for cNFT↔cNFT swaps, we need to add the tip.
+          // Transactions built on devnet won't have a JITO tip.
+          // When we force JITO mode for bulk swaps, we need to add the tip.
           // JITO requires at least one transaction to write-lock an official tip account.
           // Official JITO tip accounts - https://jito-labs.gitbook.io/mev/searcher-resources/tip-accounts
           const JITO_TIP_ACCOUNTS = new Set([
@@ -632,7 +632,7 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
                   return res.status(400).json({
                     success: false,
                     error: `Transaction exceeds size limit (${newSerializedTx.length}/${SOLANA_TX_SIZE_LIMIT} bytes) after adding JITO tip. ` +
-                           'The cNFT Merkle proof may be too large. Try enabling ENABLE_JITO_BUNDLES=true before creating the offer.',
+                           'The cNFT Merkle proof may be too large. Consider using two-phase delegation instead.',
                     errorCode: 'TX_SIZE_EXCEEDED_AFTER_TIP',
                     txSize: newSerializedTx.length,
                     limit: SOLANA_TX_SIZE_LIMIT,
@@ -684,9 +684,9 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
                 return res.status(400).json({
                   success: false,
                   error: 'JITO bundle requires a tip but versioned transaction has no tip account. ' +
-                         'Rebuild the transaction with ENABLE_JITO_BUNDLES=true to include the tip.',
+                         'The transaction was likely built on devnet. Please recreate the offer on mainnet.',
                   errorCode: 'VERSIONED_TX_MISSING_JITO_TIP',
-                  suggestion: 'Set ENABLE_JITO_BUNDLES=true and recreate the offer to include JITO tips in transactions.',
+                  suggestion: 'Recreate the offer on mainnet to include JITO tips in transactions.',
                   timestamp: new Date().toISOString(),
                 });
               }
@@ -1176,13 +1176,13 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
           if (!jitSuccess) {
             const errorMsg = `TX ${i + 1} failed after ${MAX_JIT_ATTEMPTS} rapid JIT attempts. ` +
               `The Merkle tree for this cNFT is too active for sequential RPC execution. ` +
-              `Enable JITO bundles (ENABLE_JITO_BUNDLES=true) for atomic cNFT swaps.`;
+              `Try using two-phase delegation for reliable cNFT swaps.`;
             console.error(`   ❌ ${errorMsg}`);
             return res.status(500).json({
               success: false,
               error: errorMsg,
               errorCode: 'TREE_TOO_ACTIVE',
-              suggestion: 'Enable JITO bundles for mainnet cNFT swaps',
+              suggestion: 'Use two-phase delegation for cNFT swaps (now the default)',
               signatures,
               timestamp: new Date().toISOString(),
             });

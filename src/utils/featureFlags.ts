@@ -9,17 +9,10 @@
  * Check if JITO bundles are enabled.
  *
  * JITO bundles provide atomic multi-transaction execution on Solana mainnet.
- * When disabled, the system falls back to sequential RPC transaction submission
- * with Just-In-Time (JIT) proof validation for cNFT swaps.
+ * They are automatically enabled on mainnet for SPL/Core NFT bulk swaps.
  *
- * **Recommended: Enable JITO bundles for mainnet cNFT swaps** to avoid stale
- * Merkle proof issues. JITO bundles execute atomically, so all transactions
- * share the same proof snapshot.
- *
- * When disabled (sequential RPC mode), each cNFT transaction validates its
- * proof immediately before submission and rebuilds with fresh proof if stale.
- * This adds latency but handles high-activity Merkle trees that change between
- * transactions.
+ * **Note**: cNFT swaps now use two-phase delegation instead of Jito bundles
+ * for better reliability (avoids 429 rate limit errors during congestion).
  *
  * @returns true if JITO bundles are enabled, false otherwise
  *
@@ -32,13 +25,26 @@
  * }
  * ```
  *
- * Environment variable: ENABLE_JITO_BUNDLES
- * - 'true' or '1': Enable JITO bundles (recommended for mainnet cNFT swaps)
- * - 'false' or '0' or unset: Disable JITO bundles, use sequential RPC with JIT
+ * Auto-enabled on mainnet (NODE_ENV=production or SOLANA_NETWORK=mainnet-beta).
+ * Can be explicitly disabled via DISABLE_JITO_BUNDLES=true for testing.
  */
 export function isJitoBundlesEnabled(): boolean {
-  const value = process.env.ENABLE_JITO_BUNDLES?.toLowerCase();
-  return value === 'true' || value === '1';
+  // Allow explicit disable for testing
+  const disableValue = process.env.DISABLE_JITO_BUNDLES?.toLowerCase();
+  if (disableValue === 'true' || disableValue === '1') {
+    return false;
+  }
+
+  // Auto-enable on mainnet
+  const nodeEnv = process.env.NODE_ENV || 'development';
+  const network = process.env.SOLANA_NETWORK || 'devnet';
+  const rpcUrl = process.env.SOLANA_RPC_URL || '';
+
+  const isMainnet = nodeEnv === 'production' ||
+                    network === 'mainnet-beta' ||
+                    rpcUrl.includes('mainnet');
+
+  return isMainnet;
 }
 
 /**
@@ -47,6 +53,9 @@ export function isJitoBundlesEnabled(): boolean {
  */
 export function logJitoBundlesStatus(): void {
   const enabled = isJitoBundlesEnabled();
-  const envValue = process.env.ENABLE_JITO_BUNDLES;
-  console.log(`[FeatureFlags] JITO Bundles: ${enabled ? 'ENABLED' : 'DISABLED'} (ENABLE_JITO_BUNDLES=${envValue || 'not set'})`);
+  const nodeEnv = process.env.NODE_ENV || 'development';
+  const network = process.env.SOLANA_NETWORK || 'devnet';
+  const disableOverride = process.env.DISABLE_JITO_BUNDLES;
+
+  console.log(`[FeatureFlags] JITO Bundles: ${enabled ? 'ENABLED' : 'DISABLED'} (NODE_ENV=${nodeEnv}, SOLANA_NETWORK=${network}${disableOverride ? `, DISABLE_JITO_BUNDLES=${disableOverride}` : ''})`);
 }
