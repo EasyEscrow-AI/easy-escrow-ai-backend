@@ -2681,5 +2681,93 @@ router.get('/api/test/diagnose-cnft/:assetId', async (req: Request, res: Respons
   }
 });
 
+/**
+ * Get swap history for a specific NFT/cNFT
+ * Returns completed swaps involving this asset
+ */
+router.get('/api/test/nft-swap-history/:assetId', async (req: Request, res: Response) => {
+  const { assetId } = req.params;
+
+  try {
+    // Query filled swaps and filter by asset in application code
+    // (Prisma's JSON filtering is limited, so we fetch recent swaps and filter)
+    const swaps = await prisma.swapOffer.findMany({
+      where: {
+        status: 'FILLED',
+      },
+      orderBy: {
+        updatedAt: 'desc',
+      },
+      take: 100, // Fetch more, filter in-memory
+      select: {
+        id: true,
+        makerWallet: true,
+        takerWallet: true,
+        offeredAssets: true,
+        requestedAssets: true,
+        offeredSolLamports: true,
+        requestedSolLamports: true,
+        transactionSignature: true,
+        updatedAt: true,
+        createdAt: true,
+      },
+    });
+
+    // Filter swaps that involve this asset
+    const filteredSwaps = swaps.filter((swap) => {
+      const offeredAssets = swap.offeredAssets as Array<{ mint: string }> | null;
+      const requestedAssets = swap.requestedAssets as Array<{ mint: string }> | null;
+
+      const inOffered = offeredAssets?.some((a) => a.mint === assetId);
+      const inRequested = requestedAssets?.some((a) => a.mint === assetId);
+
+      return inOffered || inRequested;
+    }).slice(0, 20); // Limit to 20 results
+
+    // Transform into history format
+    const history = filteredSwaps.map((swap) => {
+      // Determine if asset was offered or requested
+      const offeredAssets = swap.offeredAssets as Array<{ mint: string }> | null;
+
+      const wasOffered = offeredAssets?.some((a) => a.mint === assetId);
+      const from = wasOffered ? swap.makerWallet : swap.takerWallet;
+      const to = wasOffered ? swap.takerWallet : swap.makerWallet;
+
+      // Get SOL amount (if any)
+      const solAmount = wasOffered
+        ? swap.requestedSolLamports
+          ? swap.requestedSolLamports
+          : BigInt(0)
+        : swap.offeredSolLamports
+          ? swap.offeredSolLamports
+          : BigInt(0);
+
+      return {
+        swapId: swap.id,
+        from,
+        to,
+        solAmount: solAmount.toString(),
+        signature: swap.transactionSignature,
+        completedAt: swap.updatedAt?.toISOString() || swap.createdAt.toISOString(),
+      };
+    });
+
+    return res.json({
+      success: true,
+      data: {
+        assetId,
+        history,
+        count: history.length,
+      },
+    });
+  } catch (error: any) {
+    console.error('Error fetching NFT swap history:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
 export default router;
 

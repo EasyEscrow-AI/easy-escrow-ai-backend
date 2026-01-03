@@ -382,19 +382,100 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // Setup NFT card click handling with event delegation
+  // + button = toggle selection, card/image click = show details popup
   document.getElementById('maker-nfts').addEventListener('click', (e) => {
+    // Check if clicked on quick-select button
+    const quickSelectBtn = e.target.closest('.nft-quick-select');
+    if (quickSelectBtn) {
+      e.stopPropagation();
+      const index = parseInt(quickSelectBtn.dataset.index);
+      toggleNFT('maker', index);
+      return;
+    }
+
+    // Check if clicked on quick-list button (existing functionality)
+    if (e.target.closest('.quick-list-btn')) {
+      return; // Already handled by separate listener
+    }
+
+    // Otherwise, show NFT details popup
     const card = e.target.closest('.nft-card');
     if (card) {
-      const index = parseInt(card.dataset.index);
-      toggleNFT('maker', index);
+      const mint = card.dataset.mint;
+      if (mint && makerData && makerData.nfts) {
+        const nft = makerData.nfts.find((n) => n.mint === mint);
+        if (nft) {
+          showNftDetailsModal(nft, 'maker');
+        }
+      }
     }
   });
 
   document.getElementById('taker-nfts').addEventListener('click', (e) => {
+    // Check if clicked on quick-select button
+    const quickSelectBtn = e.target.closest('.nft-quick-select');
+    if (quickSelectBtn) {
+      e.stopPropagation();
+      const index = parseInt(quickSelectBtn.dataset.index);
+      toggleNFT('taker', index);
+      return;
+    }
+
+    // Check if clicked on quick-list button (existing functionality)
+    if (e.target.closest('.quick-list-btn')) {
+      return; // Already handled by separate listener
+    }
+
+    // Otherwise, show NFT details popup
     const card = e.target.closest('.nft-card');
     if (card) {
-      const index = parseInt(card.dataset.index);
-      toggleNFT('taker', index);
+      const mint = card.dataset.mint;
+      if (mint && takerData && takerData.nfts) {
+        const nft = takerData.nfts.find((n) => n.mint === mint);
+        if (nft) {
+          showNftDetailsModal(nft, 'taker');
+        }
+      }
+    }
+  });
+
+  // Setup NFT details modal close handlers
+  const nftDetailsModal = document.getElementById('nft-details-modal');
+  const nftDetailsClose = document.getElementById('nft-details-close');
+  const nftDetailsCloseBtn = document.getElementById('nft-details-close-btn');
+  const nftDetailsSelectBtn = document.getElementById('nft-details-select-btn');
+
+  if (nftDetailsClose) {
+    nftDetailsClose.addEventListener('click', () => {
+      closeNftDetailsModal();
+    });
+  }
+
+  if (nftDetailsCloseBtn) {
+    nftDetailsCloseBtn.addEventListener('click', () => {
+      closeNftDetailsModal();
+    });
+  }
+
+  if (nftDetailsSelectBtn) {
+    nftDetailsSelectBtn.addEventListener('click', () => {
+      selectNftFromDetailsModal();
+    });
+  }
+
+  // Close modal when clicking outside
+  if (nftDetailsModal) {
+    nftDetailsModal.addEventListener('click', (e) => {
+      if (e.target === nftDetailsModal) {
+        closeNftDetailsModal();
+      }
+    });
+  }
+
+  // Close modal with Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && nftDetailsModal && nftDetailsModal.classList.contains('show')) {
+      closeNftDetailsModal();
     }
   });
 });
@@ -581,9 +662,16 @@ function renderNFTs(wallet, nfts) {
         ? `<div class="delegation-warning" title="This cNFT is delegated to: ${nft.delegate || 'unknown'}. It may be stuck from a failed swap. Use revoke endpoint to clean up.">⚠️ DELEGATED</div>`
         : '';
 
+      // Check if this NFT is already selected
+      const selectedArray = wallet === 'maker' ? selectedMakerNFTs : selectedTakerNFTs;
+      const isSelected = selectedArray.some((n) => n.mint === nft.mint);
+
       return `
-            <div class="nft-card ${isDelegated ? 'delegated-nft' : ''}" data-index="${originalIndex}">
+            <div class="nft-card ${isDelegated ? 'delegated-nft' : ''}${isSelected ? ' selected' : ''}" data-index="${originalIndex}" data-mint="${nft.mint}" data-wallet="${wallet}">
                 ${delegationWarning}
+                <button class="nft-quick-select ${isSelected ? 'selected' : ''}" data-mint="${nft.mint}" data-index="${originalIndex}" data-wallet="${wallet}" title="${isSelected ? 'Remove from swap' : 'Add to swap'}">
+                    ${isSelected ? '✓' : '+'}
+                </button>
                 <img class="nft-image"
                      src="${imageUrl}"
                      alt="${nft.name}"
@@ -3411,6 +3499,314 @@ window.handleDeclineIncomingBid = handleDeclineIncomingBid;
 window.showAcceptOfferModal = showAcceptOfferModal;
 window.hideAcceptOfferModal = hideAcceptOfferModal;
 window.handleConfirmAcceptOffer = handleConfirmAcceptOffer;
+
+// ============================================================
+// NFT Details Modal Functions
+// ============================================================
+
+// Currently displayed NFT in details modal
+let currentDetailsNft = null;
+let currentDetailsWallet = null;
+
+// Show NFT details modal with comprehensive information
+async function showNftDetailsModal(nft, wallet) {
+  if (!nft) {
+    console.error('showNftDetailsModal: No NFT provided');
+    return;
+  }
+
+  currentDetailsNft = nft;
+  currentDetailsWallet = wallet;
+
+  const modal = document.getElementById('nft-details-modal');
+  if (!modal) {
+    console.error('NFT details modal not found');
+    return;
+  }
+
+  // Populate basic info
+  const imageUrl = getNftImage(nft) || getPlaceholderImage(nft.mint);
+  document.getElementById('nft-details-image').src = imageUrl;
+  document.getElementById('nft-details-name').textContent = nft.name || 'Unknown NFT';
+  document.getElementById('nft-details-type').textContent = getNftTypeLabel(nft);
+  document.getElementById('nft-details-mint').textContent = nft.mint;
+  document.getElementById('nft-details-owner').textContent = nft.owner || 'Unknown';
+  document.getElementById('nft-details-symbol').textContent = nft.symbol || '--';
+
+  // Token account (only for SPL NFTs)
+  const tokenAccountContainer = document.getElementById('nft-details-token-account-container');
+  const tokenAccountEl = document.getElementById('nft-details-token-account');
+  if (nft.tokenAccount && !nft.isCompressed) {
+    tokenAccountContainer.style.display = 'block';
+    tokenAccountEl.textContent = nft.tokenAccount;
+  } else {
+    tokenAccountContainer.style.display = 'none';
+  }
+
+  // Delegate info (if delegated)
+  const delegateContainer = document.getElementById('nft-details-delegate-container');
+  const delegateEl = document.getElementById('nft-details-delegate');
+  if (nft.delegate) {
+    delegateContainer.style.display = 'block';
+    delegateEl.textContent = nft.delegate;
+  } else {
+    delegateContainer.style.display = 'none';
+  }
+
+  // Tree proof section - only show for cNFTs
+  const treeSection = document.getElementById('nft-details-tree-section');
+  if (nft.isCompressed) {
+    treeSection.style.display = 'block';
+
+    // Set initial values from NFT data
+    document.getElementById('nft-details-tree-address').textContent = nft.treeAddress || '--';
+    document.getElementById('nft-details-leaf-index').textContent =
+      nft.leafIndex !== undefined ? nft.leafIndex.toString() : '--';
+    document.getElementById('nft-details-das-root').textContent = '--';
+    document.getElementById('nft-details-onchain-root').textContent = '--';
+    document.getElementById('nft-details-tree-sequence').textContent = '--';
+    document.getElementById('nft-details-proof-status').textContent = 'Loading...';
+    document.getElementById('nft-details-proof-nodes').innerHTML = `
+      <div class="nft-details-loading">
+        <div class="spinner"></div>
+        <div>Fetching proof from DAS...</div>
+      </div>
+    `;
+
+    // Fetch detailed proof info from diagnose endpoint
+    loadCnftProofDetails(nft.mint);
+  } else {
+    treeSection.style.display = 'none';
+  }
+
+  // Reset escrow status section
+  document.getElementById('nft-escrow-loading').style.display = 'block';
+  document.getElementById('nft-escrow-content').style.display = 'none';
+
+  // Reset swap history
+  document.getElementById('nft-details-swap-history').innerHTML = `
+    <div class="nft-details-loading">
+      <div class="spinner"></div>
+      <div>Loading swap history...</div>
+    </div>
+  `;
+
+  // Update select button state
+  updateDetailsSelectButton();
+
+  // Show modal
+  modal.classList.add('show');
+
+  // Load escrow status and swap history
+  loadNftEscrowStatus(nft.mint);
+  loadNftSwapHistory(nft.mint);
+}
+
+// Close NFT details modal
+function closeNftDetailsModal() {
+  const modal = document.getElementById('nft-details-modal');
+  if (modal) {
+    modal.classList.remove('show');
+  }
+  currentDetailsNft = null;
+  currentDetailsWallet = null;
+}
+
+// Update the select button based on current selection state
+function updateDetailsSelectButton() {
+  const selectBtn = document.getElementById('nft-details-select-btn');
+  if (!selectBtn || !currentDetailsNft) return;
+
+  const selectedArray =
+    currentDetailsWallet === 'maker' ? selectedMakerNFTs : selectedTakerNFTs;
+  const isSelected = selectedArray.some((n) => n.mint === currentDetailsNft.mint);
+
+  if (isSelected) {
+    selectBtn.textContent = 'Remove from Swap';
+    selectBtn.classList.remove('nft-details-btn-primary');
+    selectBtn.classList.add('nft-details-btn-secondary');
+  } else {
+    selectBtn.textContent = 'Add to Swap';
+    selectBtn.classList.remove('nft-details-btn-secondary');
+    selectBtn.classList.add('nft-details-btn-primary');
+  }
+}
+
+// Handle select/deselect from modal
+function selectNftFromDetailsModal() {
+  if (!currentDetailsNft || !currentDetailsWallet) return;
+
+  const nfts =
+    currentDetailsWallet === 'maker' ? makerData.nfts : takerData.nfts;
+  const index = nfts.findIndex((n) => n.mint === currentDetailsNft.mint);
+
+  if (index >= 0) {
+    toggleNFT(currentDetailsWallet, index);
+    updateDetailsSelectButton();
+  }
+}
+
+// Load cNFT proof details from diagnose endpoint
+async function loadCnftProofDetails(assetId) {
+  try {
+    const response = await fetch(`/api/test/diagnose-cnft/${assetId}`);
+    const data = await response.json();
+
+    if (data.success && data.data) {
+      const diag = data.data;
+
+      // Update tree info
+      if (diag.treeAddress) {
+        document.getElementById('nft-details-tree-address').textContent = diag.treeAddress;
+      }
+      if (diag.leafIndex !== undefined) {
+        document.getElementById('nft-details-leaf-index').textContent = diag.leafIndex.toString();
+      }
+      if (diag.dasProofRoot) {
+        document.getElementById('nft-details-das-root').textContent = truncateHash(diag.dasProofRoot);
+      }
+      if (diag.onChainRoot) {
+        document.getElementById('nft-details-onchain-root').textContent = truncateHash(diag.onChainRoot);
+      }
+      if (diag.treeSeq !== undefined) {
+        document.getElementById('nft-details-tree-sequence').textContent = diag.treeSeq.toString();
+      }
+
+      // Proof status with color
+      const proofStatusEl = document.getElementById('nft-details-proof-status');
+      if (diag.proofValid) {
+        proofStatusEl.innerHTML = '<span style="color: #22c55e;">✓ Valid</span>';
+      } else if (diag.proofStatus) {
+        proofStatusEl.innerHTML = `<span style="color: #ef4444;">✗ ${diag.proofStatus}</span>`;
+      } else {
+        proofStatusEl.innerHTML = '<span style="color: #f59e0b;">Unknown</span>';
+      }
+
+      // Display proof nodes
+      const proofNodesEl = document.getElementById('nft-details-proof-nodes');
+      if (diag.proof && Array.isArray(diag.proof) && diag.proof.length > 0) {
+        const nodesHtml = diag.proof
+          .map((node, i) => `<div class="proof-node">${i + 1}. ${truncateHash(node)}</div>`)
+          .join('');
+        proofNodesEl.innerHTML = `<div class="proof-nodes-list">${nodesHtml}</div>`;
+      } else {
+        proofNodesEl.innerHTML = '<div class="nft-details-empty">No proof nodes available</div>';
+      }
+    } else {
+      // Error fetching
+      document.getElementById('nft-details-proof-status').innerHTML =
+        '<span style="color: #ef4444;">Failed to fetch</span>';
+      document.getElementById('nft-details-proof-nodes').innerHTML =
+        `<div class="nft-details-empty">${data.error || 'Could not load proof'}</div>`;
+    }
+  } catch (error) {
+    console.error('Error loading cNFT proof details:', error);
+    document.getElementById('nft-details-proof-status').innerHTML =
+      '<span style="color: #ef4444;">Error</span>';
+    document.getElementById('nft-details-proof-nodes').innerHTML =
+      `<div class="nft-details-empty">Error: ${error.message}</div>`;
+  }
+}
+
+// Load NFT escrow status (current offers)
+async function loadNftEscrowStatus(assetId) {
+  const loadingEl = document.getElementById('nft-escrow-loading');
+  const contentEl = document.getElementById('nft-escrow-content');
+
+  try {
+    const response = await fetch(`/api/swaps/offers/cnft/asset/${assetId}`);
+    const data = await response.json();
+
+    loadingEl.style.display = 'none';
+    contentEl.style.display = 'block';
+
+    if (data.success && data.data && data.data.offers && data.data.offers.length > 0) {
+      const offers = data.data.offers;
+      const offersHtml = offers.map((offer) => {
+        const statusClass = offer.status === 'pending' ? 'status-pending' :
+          offer.status === 'accepted' ? 'status-accepted' :
+            offer.status === 'completed' ? 'status-completed' : 'status-cancelled';
+
+        const createdDate = new Date(offer.createdAt).toLocaleDateString();
+        const role = offer.makerWallet === currentDetailsNft?.owner ? 'Selling' : 'Buying';
+
+        return `
+          <div class="escrow-offer-item">
+            <div class="escrow-offer-header">
+              <span class="escrow-offer-role">${role}</span>
+              <span class="escrow-offer-status ${statusClass}">${offer.status}</span>
+            </div>
+            <div class="escrow-offer-details">
+              <div>Offer ID: <span class="mono">${offer.id.substring(0, 8)}...</span></div>
+              <div>Created: ${createdDate}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      contentEl.innerHTML = `
+        <div class="escrow-offers-list">
+          <div class="escrow-offers-count">${offers.length} active offer(s) found</div>
+          ${offersHtml}
+        </div>
+      `;
+    } else {
+      contentEl.innerHTML = '<div class="nft-details-empty">No active offers for this NFT</div>';
+    }
+  } catch (error) {
+    console.error('Error loading escrow status:', error);
+    loadingEl.style.display = 'none';
+    contentEl.style.display = 'block';
+    contentEl.innerHTML = `<div class="nft-details-empty">Error loading status: ${error.message}</div>`;
+  }
+}
+
+// Load NFT swap history
+async function loadNftSwapHistory(assetId) {
+  const historyEl = document.getElementById('nft-details-swap-history');
+
+  try {
+    const response = await fetch(`/api/test/nft-swap-history/${assetId}`);
+    const data = await response.json();
+
+    if (data.success && data.data && data.data.history && data.data.history.length > 0) {
+      const history = data.data.history;
+      const historyHtml = history.map((swap) => {
+        const date = new Date(swap.completedAt).toLocaleString();
+        const solAmount = swap.solAmount ? (swap.solAmount / 1e9).toFixed(4) : '0';
+
+        return `
+          <div class="swap-history-item">
+            <div class="swap-history-date">${date}</div>
+            <div class="swap-history-details">
+              <div class="swap-history-parties">
+                <span class="mono">${swap.from?.substring(0, 6)}...</span>
+                → <span class="mono">${swap.to?.substring(0, 6)}...</span>
+              </div>
+              <div class="swap-history-amount">${solAmount} SOL</div>
+            </div>
+            ${swap.signature ? `<div class="swap-history-sig"><a href="https://solscan.io/tx/${swap.signature}" target="_blank" class="mono">${swap.signature.substring(0, 16)}...</a></div>` : ''}
+          </div>
+        `;
+      }).join('');
+
+      historyEl.innerHTML = historyHtml;
+    } else {
+      historyEl.innerHTML = '<div class="nft-details-empty">No swap history found for this NFT</div>';
+    }
+  } catch (error) {
+    console.error('Error loading swap history:', error);
+    // Endpoint might not exist yet - show graceful fallback
+    historyEl.innerHTML = '<div class="nft-details-empty">Swap history not available</div>';
+  }
+}
+
+// Helper to truncate long hashes for display
+function truncateHash(hash) {
+  if (!hash) return '--';
+  if (hash.length <= 20) return hash;
+  return `${hash.substring(0, 10)}...${hash.substring(hash.length - 10)}`;
+}
 
 // Quick list modal functions
 function showQuickListModal(nft) {
