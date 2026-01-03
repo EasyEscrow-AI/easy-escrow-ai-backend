@@ -970,11 +970,11 @@ export class TransactionGroupBuilder {
       }
 
       // Compute budget for cNFT operations (required for all networks)
-      // cNFT transfers with deep Merkle trees (up to 24 proof nodes) can use 350k+ compute
-      // We use 400k to avoid ProgramFailedToComplete errors
+      // Deep mainnet Merkle trees (30+ proof nodes) can use 500k+ compute
+      // We use 600k to handle the deepest trees and avoid ProgramFailedToComplete errors
       // Note: For durable nonce transactions, nonceAdvance must be first. ComputeBudget can follow it safely.
       cnftInstructions.push(
-        ComputeBudgetProgram.setComputeUnitLimit({ units: 400_000 }),
+        ComputeBudgetProgram.setComputeUnitLimit({ units: 600_000 }),
         ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 50_000 })
       );
 
@@ -1088,11 +1088,11 @@ export class TransactionGroupBuilder {
       }
 
       // Compute budget for cNFT operations (required for all networks)
-      // cNFT transfers with deep Merkle trees (up to 24 proof nodes) can use 350k+ compute
-      // We use 400k to avoid ProgramFailedToComplete errors
+      // Deep mainnet Merkle trees (30+ proof nodes) can use 500k+ compute
+      // We use 600k to handle the deepest trees and avoid ProgramFailedToComplete errors
       // Note: For durable nonce transactions, nonceAdvance must be first. ComputeBudget can follow it safely.
       cnftInstructions.push(
-        ComputeBudgetProgram.setComputeUnitLimit({ units: 400_000 }),
+        ComputeBudgetProgram.setComputeUnitLimit({ units: 600_000 }),
         ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 50_000 })
       );
 
@@ -2467,9 +2467,9 @@ export class TransactionGroupBuilder {
       );
     }
 
-    // Compute budget
+    // Compute budget - 600k CU for deep mainnet trees (30+ proof nodes)
     cnftInstructions.push(
-      ComputeBudgetProgram.setComputeUnitLimit({ units: 400_000 }),
+      ComputeBudgetProgram.setComputeUnitLimit({ units: 600_000 }),
       ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 50_000 })
     );
 
@@ -2671,9 +2671,9 @@ export class TransactionGroupBuilder {
       toWallet: toWallet,
     }, 0); // retryCount=0 forces proof validation
 
-    // Build transaction with compute budget
+    // Build transaction with compute budget - 600k CU for deep mainnet trees (30+ proof nodes)
     const instructions: TransactionInstruction[] = [
-      ComputeBudgetProgram.setComputeUnitLimit({ units: 400_000 }),
+      ComputeBudgetProgram.setComputeUnitLimit({ units: 600_000 }),
       ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 50_000 }),
       transferResult.instruction,
     ];
