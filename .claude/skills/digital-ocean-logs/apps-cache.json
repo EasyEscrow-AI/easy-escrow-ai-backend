@@ -1,0 +1,25 @@
+{
+  "lastUpdated": "2026-01-03T00:00:00Z",
+  "apps": {
+    "easyescrow-backend": {
+      "id": "a6e6452b-1ec6-4316-82fe-e4069d089b49",
+      "defaultComponent": "api"
+    },
+    "easyescrow-staging": {
+      "id": "ea13cdbb-c74e-40da-a0eb-6c05b0d0432d",
+      "defaultComponent": "api-staging"
+    },
+    "easyescrow-frontend": {
+      "id": "26b10833-0b7f-4c80-b4d6-be71c4513e79",
+      "defaultComponent": "easyescrow-api"
+    },
+    "nftswap-gg": {
+      "id": "77e46321-1661-4faa-b257-9c8db2d604fa",
+      "defaultComponent": "backend"
+    },
+    "datasales": {
+      "id": "038c152b-f1a8-421b-b97d-a3340ea19667",
+      "defaultComponent": "datasales-website"
+    }
+  }
+}

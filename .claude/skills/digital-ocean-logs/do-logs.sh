@@ -5,6 +5,11 @@
 
 set -e
 
+# Script location for finding cache file
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CACHE_FILE="$SCRIPT_DIR/apps-cache.json"
+CACHE_MAX_AGE_DAYS=7
+
 # Load API key from .env if not already set
 if [ -z "$DIGITAL_OCEAN_API_KEY" ]; then
     if [ -f ".env" ]; then
@@ -19,29 +24,77 @@ fi
 
 API_BASE="https://api.digitalocean.com/v2"
 
-# App ID mappings
-declare -A APPS=(
-    ["easyescrow-backend"]="a6e6452b-1ec6-4316-82fe-e4069d089b49"
-    ["easyescrow-staging"]="ea13cdbb-c74e-40da-a0eb-6c05b0d0432d"
-    ["easyescrow-frontend"]="26b10833-0b7f-4c80-b4d6-be71c4513e79"
-    ["nftswap-gg"]="77e46321-1661-4faa-b257-9c8db2d604fa"
-    ["datasales"]="038c152b-f1a8-421b-b97d-a3340ea19667"
-)
-
-# Default components for each app
-declare -A DEFAULT_COMPONENTS=(
-    ["easyescrow-backend"]="api"
-    ["easyescrow-staging"]="api-staging"
-    ["easyescrow-frontend"]="easyescrow-api"
-    ["nftswap-gg"]="backend"
-    ["datasales"]="datasales-website"
-)
-
 do_request() {
     local endpoint="$1"
     curl -s -X GET "${API_BASE}${endpoint}" \
         -H "Authorization: Bearer $DIGITAL_OCEAN_API_KEY" \
         -H "Content-Type: application/json"
+}
+
+get_cache_age_days() {
+    if [ ! -f "$CACHE_FILE" ]; then
+        echo "999999"
+        return
+    fi
+
+    local last_updated=$(jq -r '.lastUpdated // empty' "$CACHE_FILE" 2>/dev/null)
+    if [ -z "$last_updated" ]; then
+        echo "999999"
+        return
+    fi
+
+    # Convert ISO date to epoch and calculate age
+    local cache_epoch=$(date -d "$last_updated" +%s 2>/dev/null || date -j -f "%Y-%m-%dT%H:%M:%S" "${last_updated%%.*}" +%s 2>/dev/null || echo "0")
+    local now_epoch=$(date +%s)
+    local age_seconds=$((now_epoch - cache_epoch))
+    local age_days=$((age_seconds / 86400))
+    echo "$age_days"
+}
+
+update_app_cache() {
+    echo "Refreshing app cache from DigitalOcean..." >&2
+
+    local response=$(do_request "/apps")
+
+    # Build the cache JSON using jq
+    local cache=$(echo "$response" | jq '{
+        lastUpdated: (now | strftime("%Y-%m-%dT%H:%M:%SZ")),
+        apps: (
+            .apps | map({
+                key: (.spec.name | gsub("-production$"; "") | gsub("-staging$"; "-staging") | gsub("-prod-frontend$"; "")),
+                value: {
+                    id: .id,
+                    defaultComponent: ((.spec.services[0].name // .spec.static_sites[0].name // .spec.jobs[0].name) // null),
+                    fullName: .spec.name
+                }
+            }) | from_entries
+        )
+    }')
+
+    echo "$cache" > "$CACHE_FILE"
+    local app_count=$(echo "$cache" | jq '.apps | length')
+    echo "Cache updated with $app_count apps" >&2
+}
+
+load_apps_from_cache() {
+    local cache_age=$(get_cache_age_days)
+
+    if [ "$cache_age" -gt "$CACHE_MAX_AGE_DAYS" ]; then
+        echo "Cache is $cache_age days old (max: $CACHE_MAX_AGE_DAYS), refreshing..." >&2
+        update_app_cache
+    fi
+
+    # Load apps into associative arrays
+    declare -gA APPS
+    declare -gA DEFAULT_COMPONENTS
+
+    while IFS='=' read -r key value; do
+        APPS["$key"]="$value"
+    done < <(jq -r '.apps | to_entries[] | "\(.key)=\(.value.id)"' "$CACHE_FILE")
+
+    while IFS='=' read -r key value; do
+        DEFAULT_COMPONENTS["$key"]="$value"
+    done < <(jq -r '.apps | to_entries[] | "\(.key)=\(.value.defaultComponent // "")"' "$CACHE_FILE")
 }
 
 list_apps() {
@@ -53,6 +106,8 @@ get_logs() {
     local app_name="$1"
     local component="${2:-}"
     local lines="${3:-100}"
+
+    load_apps_from_cache
 
     local app_id="${APPS[$app_name]}"
     if [ -z "$app_id" ]; then
@@ -88,6 +143,8 @@ get_deploy_logs() {
     local app_name="$1"
     local component="${2:-}"
 
+    load_apps_from_cache
+
     local app_id="${APPS[$app_name]}"
     if [ -z "$app_id" ]; then
         echo "Error: Unknown app '$app_name'"
@@ -116,6 +173,9 @@ get_deploy_logs() {
 
 get_app_info() {
     local app_name="$1"
+
+    load_apps_from_cache
+
     local app_id="${APPS[$app_name]}"
 
     if [ -z "$app_id" ]; then
@@ -133,6 +193,30 @@ get_app_info() {
     }'
 }
 
+show_cache_status() {
+    if [ ! -f "$CACHE_FILE" ]; then
+        echo "No cache file found"
+        return
+    fi
+
+    local last_updated=$(jq -r '.lastUpdated' "$CACHE_FILE")
+    local age=$(get_cache_age_days)
+    local app_count=$(jq '.apps | length' "$CACHE_FILE")
+
+    echo "=== Cache Status ==="
+    echo "Last updated: $last_updated ($age days ago)"
+    echo "Apps cached: $app_count"
+    echo "Auto-refresh: after $CACHE_MAX_AGE_DAYS days"
+    echo ""
+    echo "Cached apps:"
+    jq -r '.apps | to_entries[] | "  \(.key) -> \(.value.id)"' "$CACHE_FILE"
+}
+
+show_available_apps() {
+    load_apps_from_cache
+    echo "${!APPS[*]}"
+}
+
 # Main command router
 case "$1" in
     list)
@@ -141,7 +225,7 @@ case "$1" in
     logs)
         if [ -z "$2" ]; then
             echo "Usage: $0 logs <app-name> [component] [lines]"
-            echo "Apps: ${!APPS[*]}"
+            echo "Apps: $(show_available_apps)"
             exit 1
         fi
         # Handle both "logs app lines" and "logs app component lines" formats
@@ -165,17 +249,28 @@ case "$1" in
         fi
         get_app_info "$2"
         ;;
+    refresh)
+        update_app_cache
+        ;;
+    cache-status)
+        show_cache_status
+        ;;
     *)
+        load_apps_from_cache
         echo "DigitalOcean App Platform Logs"
         echo ""
         echo "Usage: $0 <command> [args...]"
         echo ""
         echo "Commands:"
-        echo "  list                          List all apps"
+        echo "  list                          List all apps (live from API)"
         echo "  logs <app> [component] [n]    Get runtime logs (default 100 lines)"
         echo "  deploy-logs <app> [component] Get build/deploy logs"
         echo "  info <app>                    Get app info and components"
+        echo "  refresh                       Force refresh app cache"
+        echo "  cache-status                  Show cache info"
         echo ""
         echo "Apps: ${!APPS[*]}"
+        echo ""
+        echo "(Cache auto-refreshes after $CACHE_MAX_AGE_DAYS days)"
         ;;
 esac
