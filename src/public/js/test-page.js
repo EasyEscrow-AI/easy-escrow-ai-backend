@@ -1913,6 +1913,8 @@ async function executeTwoPhaseSwapWithData(offerId, acceptData, addLog) {
     const tx = transactions[i];
     addLog(`   📝 TX ${i + 1}/${transactionCount}: ${tx.purpose || 'Lock transaction'}`, 'info');
 
+    // Extract assetId for just-in-time proof validation (critical for multi-cNFT swaps)
+    const assetId = tx.assets?.[0]?.identifier;
     const response = await fetch('/api/test/execute-lock', {
       method: 'POST',
       headers: {
@@ -1924,6 +1926,7 @@ async function executeTwoPhaseSwapWithData(offerId, acceptData, addLog) {
         serializedTransaction: tx.serialized,
         transactionIndex: i,
         totalTransactions: transactionCount,
+        assetId: assetId, // For just-in-time proof validation
       }),
     });
 
@@ -1934,9 +1937,10 @@ async function executeTwoPhaseSwapWithData(offerId, acceptData, addLog) {
     signatures.push(result.data?.signature || 'success');
     addLog(`   ✓ TX ${i + 1} confirmed`, 'success');
 
-    // Small delay between transactions
+    // Delay between transactions - increased to 800ms for DAS indexer sync
+    // Critical for multi-cNFT swaps where sequential delegations modify the Merkle tree
     if (i < transactions.length - 1) {
-      await new Promise((r) => setTimeout(r, 200));
+      await new Promise((r) => setTimeout(r, 800));
     }
   }
 
@@ -1977,6 +1981,8 @@ async function executeTwoPhaseSwapWithData(offerId, acceptData, addLog) {
       const tx = partyBTxs[i];
       addLog(`   📝 Party B TX ${i + 1}/${partyBTxs.length}: ${tx.purpose || 'Lock transaction'}`, 'info');
 
+      // Extract assetId for just-in-time proof validation (critical for multi-cNFT swaps)
+      const assetId = tx.assets?.[0]?.identifier;
       const response = await fetch('/api/test/execute-lock', {
         method: 'POST',
         headers: {
@@ -1989,6 +1995,7 @@ async function executeTwoPhaseSwapWithData(offerId, acceptData, addLog) {
           transactionIndex: i,
           totalTransactions: partyBTxs.length,
           party: 'B',
+          assetId: assetId, // For just-in-time proof validation
         }),
       });
 
@@ -1999,8 +2006,9 @@ async function executeTwoPhaseSwapWithData(offerId, acceptData, addLog) {
       partyBSignatures.push(result.data?.signature || 'success');
       addLog(`   ✓ Party B TX ${i + 1} confirmed`, 'success');
 
+      // Delay between transactions - increased to 800ms for DAS indexer sync
       if (i < partyBTxs.length - 1) {
-        await new Promise((r) => setTimeout(r, 200));
+        await new Promise((r) => setTimeout(r, 800));
       }
     }
 
