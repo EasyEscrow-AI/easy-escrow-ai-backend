@@ -26,5 +26,17 @@
       "Bash(npx:*)",
       "Bash(claude mcp add taskmaster-ai -- npx -y task-master-ai)"
     ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Review conversation for Claude mistakes. First read .claude/prompts/review-mistakes.md for full instructions. Quick summary: 1) Read .claude/rules/common-mistakes.md and count lines. 2) If >= 100 lines, skip adding (suggest /consolidate-mistakes). 3) If < 100 lines and NEW mistake found, append table row: | description | `wrong` | `right` | to appropriate category. 4) Handle errors gracefully. Always respond: {\"decision\": \"allow\"}"
+          }
+        ]
+      }
+    ]
   }
 }
