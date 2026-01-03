@@ -107,6 +107,11 @@ export { transactionGroupBuilder };
  * This function revokes all cNFT delegations that were made as part of a swap
  * but not yet settled. Called when a swap fails to prevent stale delegations.
  *
+ * IMPORTANT: This function checks BOTH database records AND on-chain delegation status.
+ * This is necessary because in multi-TX Party B locks, individual TXs may succeed
+ * on-chain but the delegation status is only recorded in DB after ALL TXs complete.
+ * If a later TX fails, the earlier TXs' delegations are on-chain but not in DB.
+ *
  * @param swapId - The swap ID to cleanup
  * @param testWallets - Map of wallet addresses to their keypairs (for signing revokes)
  */
@@ -118,27 +123,111 @@ async function cleanupFailedSwapDelegations(
 
   const errors: string[] = [];
   let revokedCount = 0;
+  const delegationService = createCnftDelegationService(connection);
 
   try {
-    // Get all delegated assets that need cleanup
-    const result = await swapStateMachine.getDelegatedAssetsForCleanup(swapId);
+    // Step 1: Get delegated assets from database (may be incomplete for Party B)
+    const dbResult = await swapStateMachine.getDelegatedAssetsForCleanup(swapId);
+    const dbAssetIds = new Set(dbResult.assets.map((a) => a.assetId));
 
-    if (!result.success) {
-      console.warn(`   ⚠️ Could not get delegated assets: ${result.error}`);
-      return { success: false, revokedCount: 0, errors: [result.error || 'Unknown error'] };
+    console.log(`   📋 Found ${dbResult.assets.length} delegated asset(s) in database`);
+
+    // Step 2: Also get the swap to check ALL cNFT assets on-chain
+    // This catches assets that were delegated on-chain but not yet recorded in DB
+    const swap = await twoPhaseSwapLockService.getSwap(swapId);
+
+    if (!swap) {
+      console.warn(`   ⚠️ Could not find swap ${swapId} for on-chain verification`);
+      // Fall back to DB-only cleanup if swap not found
+      if (!dbResult.success || dbResult.assets.length === 0) {
+        console.log('   ✅ No delegated assets to clean up');
+        return { success: true, revokedCount: 0, errors: [] };
+      }
     }
 
-    if (result.assets.length === 0) {
-      console.log('   ✅ No delegated assets to clean up');
+    // Build comprehensive list of assets to check
+    const assetsToCheck: Array<{
+      assetId: string;
+      owner: string;
+      party: 'A' | 'B';
+      inDb: boolean;
+    }> = [];
+
+    // Add DB assets first
+    for (const asset of dbResult.assets) {
+      assetsToCheck.push({
+        assetId: asset.assetId,
+        owner: asset.owner,
+        party: asset.party,
+        inDb: true,
+      });
+    }
+
+    // Add on-chain check for ALL cNFT assets NOT already in DB list
+    if (swap) {
+      const [delegatePDA] = twoPhaseSwapLockService.deriveDelegatePDA(swapId);
+
+      // Check Party A cNFT assets
+      for (const asset of swap.assetsA) {
+        if (asset.type === 'CNFT' && !dbAssetIds.has(asset.identifier)) {
+          try {
+            const isDelegatedOnChain = await delegationService.isDelegatedToProgram(
+              asset.identifier,
+              delegatePDA
+            );
+            if (isDelegatedOnChain) {
+              console.log(`   🔍 Found on-chain delegation NOT in DB: ${asset.identifier.substring(0, 12)}... (Party A)`);
+              assetsToCheck.push({
+                assetId: asset.identifier,
+                owner: swap.partyA,
+                party: 'A',
+                inDb: false,
+              });
+            }
+          } catch (checkError: any) {
+            console.warn(`   ⚠️ Could not check on-chain status for ${asset.identifier.substring(0, 12)}...: ${checkError.message}`);
+          }
+        }
+      }
+
+      // Check Party B cNFT assets
+      if (swap.partyB) {
+        for (const asset of swap.assetsB) {
+          if (asset.type === 'CNFT' && !dbAssetIds.has(asset.identifier)) {
+            try {
+              const isDelegatedOnChain = await delegationService.isDelegatedToProgram(
+                asset.identifier,
+                delegatePDA
+              );
+              if (isDelegatedOnChain) {
+                console.log(`   🔍 Found on-chain delegation NOT in DB: ${asset.identifier.substring(0, 12)}... (Party B)`);
+                assetsToCheck.push({
+                  assetId: asset.identifier,
+                  owner: swap.partyB,
+                  party: 'B',
+                  inDb: false,
+                });
+              }
+            } catch (checkError: any) {
+              console.warn(`   ⚠️ Could not check on-chain status for ${asset.identifier.substring(0, 12)}...: ${checkError.message}`);
+            }
+          }
+        }
+      }
+    }
+
+    if (assetsToCheck.length === 0) {
+      console.log('   ✅ No delegated assets to clean up (checked DB and on-chain)');
       return { success: true, revokedCount: 0, errors: [] };
     }
 
-    console.log(`   📋 Found ${result.assets.length} delegated asset(s) to revoke`);
+    const dbCount = assetsToCheck.filter((a) => a.inDb).length;
+    const onChainOnlyCount = assetsToCheck.filter((a) => !a.inDb).length;
+    console.log(`   📋 Total assets to revoke: ${assetsToCheck.length} (${dbCount} from DB, ${onChainOnlyCount} on-chain only)`);
 
-    const delegationService = createCnftDelegationService(connection);
-
-    for (const asset of result.assets) {
-      console.log(`   🔄 Revoking delegation for ${asset.assetId} (Party ${asset.party})`);
+    // Revoke all delegations
+    for (const asset of assetsToCheck) {
+      console.log(`   🔄 Revoking delegation for ${asset.assetId.substring(0, 12)}... (Party ${asset.party}${asset.inDb ? '' : ', on-chain only'})`);
 
       // Get the owner's keypair from test wallets
       const ownerKeypair = testWallets.get(asset.owner);
@@ -172,16 +261,16 @@ async function cleanupFailedSwapDelegations(
 
         await connection.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, 'confirmed');
 
-        console.log(`   ✅ Revoked delegation for ${asset.assetId}: ${signature}`);
+        console.log(`   ✅ Revoked delegation for ${asset.assetId.substring(0, 12)}...: ${signature}`);
         revokedCount++;
       } catch (revokeError: any) {
-        const error = `Failed to revoke ${asset.assetId}: ${revokeError.message}`;
+        const error = `Failed to revoke ${asset.assetId.substring(0, 12)}...: ${revokeError.message}`;
         console.error(`   ❌ ${error}`);
         errors.push(error);
       }
     }
 
-    console.log(`\n🧹 CLEANUP COMPLETE: ${revokedCount}/${result.assets.length} delegations revoked`);
+    console.log(`\n🧹 CLEANUP COMPLETE: ${revokedCount}/${assetsToCheck.length} delegations revoked`);
 
     return {
       success: errors.length === 0,
@@ -2392,8 +2481,14 @@ router.post('/api/test/execute-lock', async (req: Request, res: Response) => {
         });
       }
 
-      if (hasStaleProof) {
-        console.log('\n   🔄 Stale proof detected! Rebuilding lock transaction...');
+      // For multi-cNFT swaps, TX index > 0 means previous TXs modified the tree
+      // We MUST rebuild to get fresh proof data, even if JIT validation passes
+      // because the original serialized TX has stale proof nodes baked in
+      const needsRebuild = hasStaleProof || (assetId && (transactionIndex || 0) > 0);
+
+      if (needsRebuild) {
+        const reason = hasStaleProof ? 'stale proof' : `TX index ${transactionIndex} > 0`;
+        console.log(`\n   🔄 Rebuilding lock transaction (${reason})...`);
 
         // Clear cached proof to ensure fresh proofs are fetched during rebuild
         if (assetId) {
@@ -2429,7 +2524,7 @@ router.post('/api/test/execute-lock', async (req: Request, res: Response) => {
           });
         }
       } else {
-        console.log('   ✅ Proof validation passed, proceeding with original transaction');
+        console.log('   ✅ TX index 0 with valid proof, using original transaction');
       }
     } catch (validationError: any) {
       console.warn('   ⚠️  Proactive validation failed, proceeding with original transaction:', validationError.message);
