@@ -23,6 +23,7 @@ import {
   Keypair,
   sendAndConfirmTransaction,
   TransactionSignature,
+  ComputeBudgetProgram,
 } from '@solana/web3.js';
 import { PrismaClient, TwoPhaseSwapStatus } from '../generated/prisma';
 import {
@@ -924,6 +925,13 @@ export class TwoPhaseSwapSettleService {
   ): Promise<Transaction> {
     const instructions: TransactionInstruction[] = [];
     const [delegatePDA] = this.deriveDelegatePDA(swapId);
+
+    // Add compute budget instructions for deep Merkle tree verification
+    // Use 400k CU to match lock service and avoid ProgramFailedToComplete
+    instructions.push(
+      ComputeBudgetProgram.setComputeUnitLimit({ units: 400_000 }),
+      ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 50_000 })
+    );
 
     // Build cNFT transfer instructions
     for (const transfer of chunk.assets) {
