@@ -17,6 +17,11 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+# Script location for finding cache file
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$CacheFile = Join-Path $ScriptDir "apps-cache.json"
+$CacheMaxAgeDays = 7
+
 # Load API key from .env if not already set
 if (-not $env:DIGITAL_OCEAN_API_KEY) {
     if (Test-Path ".env") {
@@ -34,24 +39,6 @@ if (-not $env:DIGITAL_OCEAN_API_KEY) {
 
 $ApiBase = "https://api.digitalocean.com/v2"
 
-# App ID mappings
-$Apps = @{
-    "easyescrow-backend" = "a6e6452b-1ec6-4316-82fe-e4069d089b49"
-    "easyescrow-staging" = "ea13cdbb-c74e-40da-a0eb-6c05b0d0432d"
-    "easyescrow-frontend" = "26b10833-0b7f-4c80-b4d6-be71c4513e79"
-    "nftswap-gg" = "77e46321-1661-4faa-b257-9c8db2d604fa"
-    "datasales" = "038c152b-f1a8-421b-b97d-a3340ea19667"
-}
-
-# Default components
-$DefaultComponents = @{
-    "easyescrow-backend" = "api"
-    "easyescrow-staging" = "api-staging"
-    "easyescrow-frontend" = "easyescrow-api"
-    "nftswap-gg" = "backend"
-    "datasales" = "datasales-website"
-}
-
 function Invoke-DORequest {
     param([string]$Endpoint)
 
@@ -61,6 +48,76 @@ function Invoke-DORequest {
     }
 
     Invoke-RestMethod -Uri "$ApiBase$Endpoint" -Headers $headers -Method Get
+}
+
+function Get-CacheAge {
+    if (-not (Test-Path $CacheFile)) {
+        return [int]::MaxValue
+    }
+    $cache = Get-Content $CacheFile | ConvertFrom-Json
+    if (-not $cache.lastUpdated) {
+        return [int]::MaxValue
+    }
+    $lastUpdated = [DateTime]::Parse($cache.lastUpdated)
+    return ((Get-Date) - $lastUpdated).Days
+}
+
+function Update-AppCache {
+    Write-Host "Refreshing app cache from DigitalOcean..." -ForegroundColor Yellow
+
+    $response = Invoke-DORequest "/apps"
+
+    $apps = @{}
+    foreach ($app in $response.apps) {
+        $shortName = $app.spec.name -replace '-production$', '' -replace '-staging$', '-staging' -replace '-prod-frontend$', ''
+
+        # Determine default component
+        $defaultComponent = $null
+        if ($app.spec.services -and $app.spec.services.Count -gt 0) {
+            $defaultComponent = $app.spec.services[0].name
+        } elseif ($app.spec.static_sites -and $app.spec.static_sites.Count -gt 0) {
+            $defaultComponent = $app.spec.static_sites[0].name
+        } elseif ($app.spec.jobs -and $app.spec.jobs.Count -gt 0) {
+            $defaultComponent = $app.spec.jobs[0].name
+        }
+
+        $apps[$shortName] = @{
+            id = $app.id
+            defaultComponent = $defaultComponent
+            fullName = $app.spec.name
+        }
+    }
+
+    $cache = @{
+        lastUpdated = (Get-Date).ToUniversalTime().ToString("o")
+        apps = $apps
+    }
+
+    $cache | ConvertTo-Json -Depth 3 | Set-Content $CacheFile -Encoding UTF8
+    Write-Host "Cache updated with $($apps.Count) apps" -ForegroundColor Green
+    return $apps
+}
+
+function Get-Apps {
+    $cacheAge = Get-CacheAge
+
+    if ($cacheAge -gt $CacheMaxAgeDays) {
+        Write-Host "Cache is $cacheAge days old (max: $CacheMaxAgeDays), refreshing..." -ForegroundColor Yellow
+        return Update-AppCache
+    }
+
+    $cache = Get-Content $CacheFile | ConvertFrom-Json
+
+    # Convert PSCustomObject to hashtable
+    $apps = @{}
+    foreach ($prop in $cache.apps.PSObject.Properties) {
+        $apps[$prop.Name] = @{
+            id = $prop.Value.id
+            defaultComponent = $prop.Value.defaultComponent
+            fullName = $prop.Value.fullName
+        }
+    }
+    return $apps
 }
 
 function Get-AppList {
@@ -79,14 +136,17 @@ function Get-AppLogs {
         [int]$Lines = 100
     )
 
-    $appId = $Apps[$AppName]
-    if (-not $appId) {
-        Write-Error "Unknown app '$AppName'. Available: $($Apps.Keys -join ', ')"
+    $apps = Get-Apps
+    $appInfo = $apps[$AppName]
+
+    if (-not $appInfo) {
+        Write-Error "Unknown app '$AppName'. Available: $($apps.Keys -join ', ')"
         return
     }
 
+    $appId = $appInfo.id
     if (-not $Component) {
-        $Component = $DefaultComponents[$AppName]
+        $Component = $appInfo.defaultComponent
     }
 
     Write-Host "=== Logs for $AppName / $Component (last $Lines lines) ===" -ForegroundColor Cyan
@@ -108,14 +168,17 @@ function Get-DeployLogs {
         [string]$Component
     )
 
-    $appId = $Apps[$AppName]
-    if (-not $appId) {
+    $apps = Get-Apps
+    $appInfo = $apps[$AppName]
+
+    if (-not $appInfo) {
         Write-Error "Unknown app '$AppName'"
         return
     }
 
+    $appId = $appInfo.id
     if (-not $Component) {
-        $Component = $DefaultComponents[$AppName]
+        $Component = $appInfo.defaultComponent
     }
 
     Write-Host "=== Deploy Logs for $AppName / $Component ===" -ForegroundColor Cyan
@@ -133,11 +196,15 @@ function Get-DeployLogs {
 function Get-AppInfo {
     param([string]$AppName)
 
-    $appId = $Apps[$AppName]
-    if (-not $appId) {
+    $apps = Get-Apps
+    $appInfo = $apps[$AppName]
+
+    if (-not $appInfo) {
         Write-Error "Unknown app '$AppName'"
         return
     }
+
+    $appId = $appInfo.id
 
     Write-Host "=== App Info: $AppName ===" -ForegroundColor Cyan
     $response = Invoke-DORequest "/apps/$appId"
@@ -151,6 +218,28 @@ function Get-AppInfo {
     } | ConvertTo-Json
 }
 
+function Show-CacheStatus {
+    if (-not (Test-Path $CacheFile)) {
+        Write-Host "No cache file found" -ForegroundColor Yellow
+        return
+    }
+
+    $cache = Get-Content $CacheFile | ConvertFrom-Json
+    $lastUpdated = [DateTime]::Parse($cache.lastUpdated)
+    $age = ((Get-Date) - $lastUpdated).Days
+    $appCount = ($cache.apps.PSObject.Properties | Measure-Object).Count
+
+    Write-Host "=== Cache Status ===" -ForegroundColor Cyan
+    Write-Host "Last updated: $($lastUpdated.ToString('yyyy-MM-dd HH:mm:ss')) ($age days ago)"
+    Write-Host "Apps cached: $appCount"
+    Write-Host "Auto-refresh: after $CacheMaxAgeDays days"
+    Write-Host ""
+    Write-Host "Cached apps:" -ForegroundColor Yellow
+    foreach ($prop in $cache.apps.PSObject.Properties) {
+        Write-Host "  $($prop.Name) -> $($prop.Value.id)"
+    }
+}
+
 # Main router
 switch ($Command) {
     "list" {
@@ -158,8 +247,9 @@ switch ($Command) {
     }
     "logs" {
         if (-not $AppName) {
+            $apps = Get-Apps
             Write-Host "Usage: .\do-logs.ps1 logs <app-name> [component] [lines]"
-            Write-Host "Apps: $($Apps.Keys -join ', ')"
+            Write-Host "Apps: $($apps.Keys -join ', ')"
             exit 1
         }
         # Handle numeric arg as lines count
@@ -184,17 +274,28 @@ switch ($Command) {
         }
         Get-AppInfo -AppName $AppName
     }
+    "refresh" {
+        Update-AppCache | Out-Null
+    }
+    "cache-status" {
+        Show-CacheStatus
+    }
     default {
+        $apps = Get-Apps
         Write-Host "DigitalOcean App Platform Logs" -ForegroundColor Cyan
         Write-Host ""
         Write-Host "Usage: .\do-logs.ps1 <command> [args...]"
         Write-Host ""
         Write-Host "Commands:"
-        Write-Host "  list                          List all apps"
+        Write-Host "  list                          List all apps (live from API)"
         Write-Host "  logs <app> [component] [n]    Get runtime logs (default 100)"
         Write-Host "  deploy-logs <app> [component] Get build/deploy logs"
         Write-Host "  info <app>                    Get app info"
+        Write-Host "  refresh                       Force refresh app cache"
+        Write-Host "  cache-status                  Show cache info"
         Write-Host ""
-        Write-Host "Apps: $($Apps.Keys -join ', ')"
+        Write-Host "Apps: $($apps.Keys -join ', ')"
+        Write-Host ""
+        Write-Host "(Cache auto-refreshes after $CacheMaxAgeDays days)"
     }
 }
