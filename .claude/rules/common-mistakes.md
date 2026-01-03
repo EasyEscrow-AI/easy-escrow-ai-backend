@@ -32,6 +32,12 @@ Last updated: 2026-01-03
 | Non-draft PRs | `gh pr create --title "..."` | `gh pr create --draft --title "..."` |
 | Push without rebase | Push with conflicts | `git fetch origin master && git rebase origin/master` |
 
+## TypeScript
+
+| Mistake | Wrong | Right |
+|---------|-------|-------|
+| Guessing interface props | `analysis.makerSplNfts` (doesn't exist) | Check interface definition first |
+
 ## Code Style
 
 | Mistake | Wrong | Right |
