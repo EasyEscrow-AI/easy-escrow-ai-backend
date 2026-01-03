@@ -840,6 +840,26 @@ function resetSelectionsAfterSwap() {
   addLog('🔄 Selections reset for next swap', 'info');
 }
 
+// Refresh both wallets after a successful swap to show updated NFT ownership
+async function refreshBothWalletsAfterSwap() {
+  addLog('🔄 Refreshing wallets to show updated NFT ownership...', 'info');
+
+  // Small delay to allow blockchain state to propagate
+  await new Promise((r) => setTimeout(r, 2000));
+
+  try {
+    // Refresh both wallets in parallel
+    await Promise.all([
+      loadWalletInfo('maker'),
+      loadWalletInfo('taker'),
+    ]);
+    addLog('✓ Wallets refreshed - NFT ownership updated', 'success');
+  } catch (error) {
+    console.error('Error refreshing wallets:', error);
+    addLog('⚠️ Could not refresh wallets automatically. Click "Load Wallet" to refresh manually.', 'warning');
+  }
+}
+
 // Add log entry with support for cNFT/Jito log types
 function addLog(message, type = 'info') {
   const logContent = document.getElementById('activity-log-content');
@@ -2327,6 +2347,9 @@ async function executeAtomicSwap(params) {
 
     // Reset selections after successful swap
     resetSelectionsAfterSwap();
+
+    // Refresh both wallets to show updated NFT ownership
+    refreshBothWalletsAfterSwap();
   } catch (error) {
     console.error('Swap error:', error);
     addLog(`❌ Swap failed: ${error.message}`, 'error');
@@ -4515,7 +4538,11 @@ async function handleAcceptOffer(offer) {
     setTimeout(async () => {
       hideAcceptOfferModal();
       await loadMarketplaceListings();
-      await loadWalletInfo('taker');
+      // Refresh both wallets to show updated NFT ownership
+      await Promise.all([
+        loadWalletInfo('maker'),
+        loadWalletInfo('taker'),
+      ]);
       await loadActiveListings();
     }, 2000);
 
