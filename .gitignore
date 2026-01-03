@@ -214,3 +214,6 @@ dev-debug.log
 # tasks/
 # PR body temporary files
 .pr-body.md
+
+# Claude Code debug output (screenshots, logs)
+.claude/debug/
