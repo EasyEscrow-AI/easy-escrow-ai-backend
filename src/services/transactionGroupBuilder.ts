@@ -591,15 +591,25 @@ export class TransactionGroupBuilder {
       };
     }
 
-    // Check if this is a cNFT-to-cNFT swap (Magic Eden style)
-    // These ALWAYS use two-phase delegation, regardless of size or Jito status
-    const hasCnftOnBothSides = analysis.makerCnfts > 0 && analysis.takerCnfts > 0;
-    if (hasCnftOnBothSides) {
-      console.log(`[TransactionGroupBuilder] cNFT-to-cNFT swap detected (${analysis.makerCnfts} ↔ ${analysis.takerCnfts}) - routing to two-phase delegation`);
+    // Route ALL cNFT swaps to two-phase delegation
+    // This provides better reliability than Jito bundles:
+    // - No rate limits (Jito can return 429 during congestion)
+    // - Simpler execution flow
+    // - Fresh Merkle proofs at settlement time
+    // - Proven reliable for cNFT-to-cNFT, now extended to cNFT-to-SOL and cNFT-to-NFT
+    const totalCnfts = analysis.makerCnfts + analysis.takerCnfts;
+    if (totalCnfts > 0) {
+      const swapType = analysis.makerCnfts > 0 && analysis.takerCnfts > 0
+        ? `cNFT-to-cNFT (${analysis.makerCnfts} ↔ ${analysis.takerCnfts})`
+        : analysis.makerCnfts > 0
+          ? `cNFT-to-other (${analysis.makerCnfts} cNFT → SOL/NFT)`
+          : `other-to-cNFT (SOL/NFT → ${analysis.takerCnfts} cNFT)`;
+
+      console.log(`[TransactionGroupBuilder] ${swapType} swap detected - routing to two-phase delegation`);
       const twoPhaseAnalysis = {
         ...analysis,
         strategy: SwapStrategy.TWO_PHASE_DELEGATION,
-        reason: `cNFT-to-cNFT swap requires two-phase delegation. Sequential settlement with fresh Merkle proofs.`,
+        reason: `cNFT swap uses two-phase delegation for reliability. Avoids Jito rate limits and ensures fresh Merkle proofs.`,
         requiresTwoPhase: true,
       };
       return {
@@ -614,41 +624,11 @@ export class TransactionGroupBuilder {
       };
     }
 
-    // If Jito is disabled and swap requires bundle, check if we can use sequential RPC
-    // Two-phase is ONLY needed for cNFT delegation - SPL/CORE NFTs use sequential RPC
+    // If Jito is disabled and swap requires bundle, use sequential RPC for SPL/CORE NFTs
+    // Note: cNFT swaps are already handled above and routed to two-phase
     if (!isJitoBundlesEnabled() && analysis.transactionCount > 1) {
-      const totalCnfts = analysis.makerCnfts + analysis.takerCnfts;
       const totalAssets = inputs.makerAssets.length + inputs.takerAssets.length;
-
-      // SPL/CORE NFT-only swaps can always use sequential RPC (no delegation needed)
-      // Single-side cNFT swaps can use sequential RPC if BOTH conditions are met:
-      //   - 1-2 cNFTs (not 3+)
-      //   - AND ≤3 total assets (not 4+)
-      // Otherwise, two-phase delegation is required for atomicity
-      const isCnftSwap = totalCnfts > 0;
-      const canUseSequentialRpc = !isCnftSwap || (totalCnfts <= 2 && totalAssets <= 3);
-
-      if (!canUseSequentialRpc) {
-        console.log(`[TransactionGroupBuilder] Jito disabled, large cNFT swap (${totalCnfts} cNFTs, ${totalAssets} assets) - routing to two-phase`);
-        const twoPhaseAnalysis = {
-          ...analysis,
-          strategy: SwapStrategy.TWO_PHASE_DELEGATION,
-          reason: 'Jito bundles disabled. Using two-phase delegation flow for atomicity.',
-          requiresTwoPhase: true,
-        };
-        return {
-          strategy: SwapStrategy.TWO_PHASE_DELEGATION,
-          analysis: twoPhaseAnalysis,
-          transactions: [], // No transactions built - two-phase flow handles this
-          transactionCount: analysis.transactionCount,
-          requiresJitoBundle: false,
-          totalSizeBytes: 0,
-          nonceValue: '',
-          requiresTwoPhase: true,
-        };
-      }
-
-      console.log(`[TransactionGroupBuilder] Jito disabled, ${isCnftSwap ? `small cNFT swap (${totalCnfts} cNFTs)` : `SPL/CORE NFT swap (${totalAssets} assets)`} - using sequential RPC fallback`);
+      console.log(`[TransactionGroupBuilder] Jito disabled, SPL/CORE NFT swap (${totalAssets} assets) - using sequential RPC fallback`);
       // Continue to build transactions for sequential RPC execution
     }
     
