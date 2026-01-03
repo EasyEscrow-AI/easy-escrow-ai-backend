@@ -849,6 +849,16 @@ const WALLET_REFRESH_CONFIG = {
   retryDelayMs: 1500, // Delay between retries
 };
 
+// Configuration for inter-transaction delay in multi-cNFT swaps
+// Default 800ms gives DAS indexers time to sync after each Merkle tree modification
+// Increase via URL param ?txDelayMs=1200 for congested trees or slow DAS indexers
+const TX_DELAY_MS = (() => {
+  const param = new URLSearchParams(window.location.search).get('txDelayMs');
+  const parsed = parseInt(param || '800', 10);
+  // Validate: must be non-negative integer, default to 800 on parse failure
+  return !isNaN(parsed) && parsed >= 0 ? parsed : 800;
+})();
+
 // Refresh both wallets after a successful swap to show updated NFT ownership
 // Uses retry logic with exponential backoff for congested networks
 async function refreshBothWalletsAfterSwap() {
@@ -1913,6 +1923,13 @@ async function executeTwoPhaseSwapWithData(offerId, acceptData, addLog) {
     const tx = transactions[i];
     addLog(`   📝 TX ${i + 1}/${transactionCount}: ${tx.purpose || 'Lock transaction'}`, 'info');
 
+    // Extract assetId for just-in-time proof validation (critical for multi-cNFT swaps)
+    const assetId = tx.assets?.[0]?.identifier;
+    if (assetId) {
+      addLog(`   🎯 JIT proof validation: ${assetId.substring(0, 8)}...`, 'info');
+    } else {
+      addLog(`   ⚠️ No assetId - using legacy validation`, 'warning');
+    }
     const response = await fetch('/api/test/execute-lock', {
       method: 'POST',
       headers: {
@@ -1924,6 +1941,7 @@ async function executeTwoPhaseSwapWithData(offerId, acceptData, addLog) {
         serializedTransaction: tx.serialized,
         transactionIndex: i,
         totalTransactions: transactionCount,
+        assetId: assetId, // For just-in-time proof validation
       }),
     });
 
@@ -1934,9 +1952,10 @@ async function executeTwoPhaseSwapWithData(offerId, acceptData, addLog) {
     signatures.push(result.data?.signature || 'success');
     addLog(`   ✓ TX ${i + 1} confirmed`, 'success');
 
-    // Small delay between transactions
+    // Delay between transactions for DAS indexer sync (configurable via ?txDelayMs=N)
+    // Critical for multi-cNFT swaps where sequential delegations modify the Merkle tree
     if (i < transactions.length - 1) {
-      await new Promise((r) => setTimeout(r, 200));
+      await new Promise((r) => setTimeout(r, TX_DELAY_MS));
     }
   }
 
@@ -1977,6 +1996,13 @@ async function executeTwoPhaseSwapWithData(offerId, acceptData, addLog) {
       const tx = partyBTxs[i];
       addLog(`   📝 Party B TX ${i + 1}/${partyBTxs.length}: ${tx.purpose || 'Lock transaction'}`, 'info');
 
+      // Extract assetId for just-in-time proof validation (critical for multi-cNFT swaps)
+      const assetId = tx.assets?.[0]?.identifier;
+      if (assetId) {
+        addLog(`   🎯 JIT proof validation: ${assetId.substring(0, 8)}...`, 'info');
+      } else {
+        addLog(`   ⚠️ No assetId - using legacy validation`, 'warning');
+      }
       const response = await fetch('/api/test/execute-lock', {
         method: 'POST',
         headers: {
@@ -1989,6 +2015,7 @@ async function executeTwoPhaseSwapWithData(offerId, acceptData, addLog) {
           transactionIndex: i,
           totalTransactions: partyBTxs.length,
           party: 'B',
+          assetId: assetId, // For just-in-time proof validation
         }),
       });
 
@@ -1999,8 +2026,9 @@ async function executeTwoPhaseSwapWithData(offerId, acceptData, addLog) {
       partyBSignatures.push(result.data?.signature || 'success');
       addLog(`   ✓ Party B TX ${i + 1} confirmed`, 'success');
 
+      // Delay between transactions for DAS indexer sync (configurable via ?txDelayMs=N)
       if (i < partyBTxs.length - 1) {
-        await new Promise((r) => setTimeout(r, 200));
+        await new Promise((r) => setTimeout(r, TX_DELAY_MS));
       }
     }
 

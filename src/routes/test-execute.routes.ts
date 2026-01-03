@@ -2226,7 +2226,7 @@ router.post('/api/test/execute-lock', async (req: Request, res: Response) => {
   console.log('========================================');
 
   const MAX_ATTEMPTS = 3;
-  let { swapId, serializedTransaction, transactionIndex, totalTransactions, party } = req.body;
+  let { swapId, serializedTransaction, transactionIndex, totalTransactions, party, assetId } = req.body;
 
   // Default party to 'A' if not provided
   const partyValue: 'A' | 'B' = party === 'B' ? 'B' : 'A';
@@ -2234,6 +2234,9 @@ router.post('/api/test/execute-lock', async (req: Request, res: Response) => {
   console.log(`📋 Swap ID: ${swapId}`);
   console.log(`📝 Transaction: ${(transactionIndex ?? 0) + 1}/${totalTransactions ?? 1}`);
   console.log(`👤 Party: ${partyValue}`);
+  if (assetId) {
+    console.log(`🎯 Asset ID: ${assetId.substring(0, 12)}...`);
+  }
 
   if (!serializedTransaction) {
     return res.status(400).json({
@@ -2290,99 +2293,143 @@ router.post('/api/test/execute-lock', async (req: Request, res: Response) => {
 
   // ========== PROACTIVE STALE PROOF VALIDATION FOR LOCK PHASE ==========
   // Validate cNFT proofs BEFORE attempting submission to prevent stale proof errors
+  // When assetId is provided, validate ONLY that specific asset (just-in-time validation)
+  // This is critical for sequential cNFT delegations where each TX modifies the Merkle tree
   if (swapId) {
     try {
-      console.log('\n   🔍 Proactively validating cNFT proofs before lock submission...');
+      const cnftService = createCnftService(connection);
+      let hasStaleProof = false;
+      let hasValidationError = false;
+      let validationErrorMessage = '';
 
-      // Load swap data to get cNFT assets
-      const swap = await prisma.twoPhaseSwap.findUnique({
-        where: { id: swapId },
-      });
+      // JUST-IN-TIME VALIDATION: If assetId is provided, validate ONLY that specific asset
+      // This is the fix for multi-cNFT swaps where sequential delegations modify the tree
+      if (assetId) {
+        console.log(`\n   🎯 Just-in-time proof validation for asset: ${assetId.substring(0, 12)}...`);
 
-      if (swap) {
-        const assets = partyValue === 'A' ? swap.assetsA : swap.assetsB;
-        const cnftAssets = (assets as any[]).filter((a: any) => a.type === 'CNFT' || a.type === 'cnft');
+        try {
+          // CRITICAL: Use skipCache=true to get fresh proof from DAS
+          const freshProof = await cnftService.getCnftProof(assetId, true, 0);
+          if (freshProof) {
+            const validation = await cnftService.validateProofRoot(assetId, freshProof.root);
 
-        if (cnftAssets.length > 0) {
-          const cnftService = createCnftService(connection);
-          let hasStaleProof = false;
-          let hasValidationError = false;
-          let validationErrorMessage = '';
-
-          for (const asset of cnftAssets) {
-            try {
-              const cachedProof = await cnftService.getCnftProof(asset.identifier, false, 0);
-              if (cachedProof) {
-                const validation = await cnftService.validateProofRoot(asset.identifier, cachedProof.root);
-
-                if (!validation.isValid) {
-                  console.warn(`   ⚠️  Stale proof detected for ${asset.identifier.substring(0, 12)}...`);
-                  hasStaleProof = true;
-                } else {
-                  console.log(`   ✅ Proof valid for ${asset.identifier.substring(0, 12)}...`);
-                }
-              }
-            } catch (validationError: any) {
-              const errorMsg = validationError.message || 'Unknown error';
-              console.error(`   ❌ Validation failed for ${asset.identifier.substring(0, 12)}...:`, errorMsg);
-
-              // Check if this is a fatal "Asset Not Found" error
-              if (errorMsg.includes('Asset Not Found') || errorMsg.includes('RecordNotFound')) {
-                console.error(`   ❌ FATAL: cNFT ${asset.identifier.substring(0, 12)}... does not exist or was burned`);
-                hasValidationError = true;
-                validationErrorMessage = `cNFT ${asset.identifier} not found - may have been burned or transferred`;
-              } else {
-                // Other validation errors - treat as stale proof and try to rebuild
-                console.warn(`   ⚠️  Treating validation error as stale proof, will attempt rebuild`);
-                hasStaleProof = true;
-              }
-            }
-          }
-
-          // Fatal error - asset doesn't exist, can't proceed
-          if (hasValidationError) {
-            return res.status(400).json({
-              success: false,
-              error: validationErrorMessage,
-              errorCode: 'CNFT_NOT_FOUND',
-              timestamp: new Date().toISOString(),
-            });
-          }
-
-          if (hasStaleProof) {
-            console.log('\n   🔄 Stale proofs detected! Rebuilding lock transaction...');
-
-            // Rebuild the lock transaction with fresh proofs
-            const lockService = createTwoPhaseSwapLockService(
-              connection,
-              prisma,
-              programId,
-              feeCollector,
-              delegateAuthority
-            );
-
-            const rebuildResult = await lockService.rebuildSingleLockTransaction({
-              swapId,
-              walletAddress: signer.publicKey.toBase58(),
-              party: partyValue,
-            }, transactionIndex || 0);
-
-            if (rebuildResult.serialized) {
-              serializedTransaction = rebuildResult.serialized;
-              console.log('   ✅ Lock transaction rebuilt with fresh proofs');
+            if (!validation.isValid) {
+              console.warn(`   ⚠️  Stale proof detected for ${assetId.substring(0, 12)}...`);
+              hasStaleProof = true;
             } else {
-              console.error('   ❌ Rebuild did not return valid transaction');
-              return res.status(500).json({
-                success: false,
-                error: 'Failed to rebuild lock transaction with fresh proofs',
-                errorCode: 'STALE_PROOF_REBUILD_FAILED',
-                timestamp: new Date().toISOString(),
-              });
+              console.log(`   ✅ Fresh proof is valid for ${assetId.substring(0, 12)}...`);
             }
+          }
+        } catch (validationError: any) {
+          const errorMsg = validationError.message || 'Unknown error';
+          console.error(`   ❌ Validation failed for ${assetId.substring(0, 12)}...:`, errorMsg);
+
+          // Check if this is a fatal "Asset Not Found" error
+          if (errorMsg.includes('Asset Not Found') || errorMsg.includes('RecordNotFound')) {
+            console.error(`   ❌ FATAL: cNFT ${assetId.substring(0, 12)}... does not exist or was burned`);
+            hasValidationError = true;
+            validationErrorMessage = `cNFT ${assetId} not found - may have been burned or transferred`;
           } else {
-            console.log('   ✅ All proofs are fresh, proceeding with original transaction');
+            // Other validation errors - treat as stale proof and try to rebuild
+            console.warn(`   ⚠️  Treating validation error as stale proof, will attempt rebuild`);
+            hasStaleProof = true;
           }
         }
+      } else {
+        // LEGACY VALIDATION: No assetId provided, validate all cNFT assets
+        console.log('\n   🔍 Proactively validating all cNFT proofs before lock submission...');
+
+        // Load swap data to get cNFT assets
+        const swap = await prisma.twoPhaseSwap.findUnique({
+          where: { id: swapId },
+        });
+
+        if (swap) {
+          const assets = partyValue === 'A' ? swap.assetsA : swap.assetsB;
+          const cnftAssets = (assets as any[]).filter((a: any) => a.type === 'CNFT' || a.type === 'cnft');
+
+          if (cnftAssets.length > 0) {
+            for (const asset of cnftAssets) {
+              try {
+                const cachedProof = await cnftService.getCnftProof(asset.identifier, false, 0);
+                if (cachedProof) {
+                  const validation = await cnftService.validateProofRoot(asset.identifier, cachedProof.root);
+
+                  if (!validation.isValid) {
+                    console.warn(`   ⚠️  Stale proof detected for ${asset.identifier.substring(0, 12)}...`);
+                    hasStaleProof = true;
+                  } else {
+                    console.log(`   ✅ Proof valid for ${asset.identifier.substring(0, 12)}...`);
+                  }
+                }
+              } catch (validationError: any) {
+                const errorMsg = validationError.message || 'Unknown error';
+                console.error(`   ❌ Validation failed for ${asset.identifier.substring(0, 12)}...:`, errorMsg);
+
+                // Check if this is a fatal "Asset Not Found" error
+                if (errorMsg.includes('Asset Not Found') || errorMsg.includes('RecordNotFound')) {
+                  console.error(`   ❌ FATAL: cNFT ${asset.identifier.substring(0, 12)}... does not exist or was burned`);
+                  hasValidationError = true;
+                  validationErrorMessage = `cNFT ${asset.identifier} not found - may have been burned or transferred`;
+                } else {
+                  // Other validation errors - treat as stale proof and try to rebuild
+                  console.warn(`   ⚠️  Treating validation error as stale proof, will attempt rebuild`);
+                  hasStaleProof = true;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // Fatal error - asset doesn't exist, can't proceed
+      if (hasValidationError) {
+        return res.status(400).json({
+          success: false,
+          error: validationErrorMessage,
+          errorCode: 'CNFT_NOT_FOUND',
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      if (hasStaleProof) {
+        console.log('\n   🔄 Stale proof detected! Rebuilding lock transaction...');
+
+        // Clear cached proof to ensure fresh proofs are fetched during rebuild
+        if (assetId) {
+          cnftService.clearCachedProof(assetId);
+          console.log(`   🧹 Cleared cached proof for ${assetId.substring(0, 12)}...`);
+        }
+
+        // Rebuild the lock transaction with fresh proofs
+        const lockService = createTwoPhaseSwapLockService(
+          connection,
+          prisma,
+          programId,
+          feeCollector,
+          delegateAuthority
+        );
+
+        const rebuildResult = await lockService.rebuildSingleLockTransaction({
+          swapId,
+          walletAddress: signer.publicKey.toBase58(),
+          party: partyValue,
+        }, transactionIndex || 0);
+
+        if (rebuildResult.serialized) {
+          serializedTransaction = rebuildResult.serialized;
+          console.log('   ✅ Lock transaction rebuilt with fresh proofs');
+        } else {
+          console.error('   ❌ Rebuild did not return valid transaction');
+          return res.status(500).json({
+            success: false,
+            error: 'Failed to rebuild lock transaction with fresh proofs',
+            errorCode: 'STALE_PROOF_REBUILD_FAILED',
+            timestamp: new Date().toISOString(),
+          });
+        }
+      } else {
+        console.log('   ✅ Proof validation passed, proceeding with original transaction');
       }
     } catch (validationError: any) {
       console.warn('   ⚠️  Proactive validation failed, proceeding with original transaction:', validationError.message);
