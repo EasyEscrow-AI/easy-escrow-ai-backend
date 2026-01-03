@@ -503,10 +503,11 @@ export class EscrowProgramService {
   
   /**
    * Bundle confirmation timeout in seconds
-   * Based on legacy code: Jito's multi-stage pipeline takes 1-3s normal, 5-10s congested
-   * 30s allows for blockhash retry recommendation (half of 60-90s lifetime)
+   * Reduced to fail fast - if Jito doesn't confirm quickly, let the user retry
+   * Normal confirmation: 1-3s, congested: 5-10s
+   * 15s is enough for 2 polls with backoff before timing out
    */
-  private static readonly BUNDLE_CONFIRMATION_TIMEOUT_SECONDS = 30;
+  private static readonly BUNDLE_CONFIRMATION_TIMEOUT_SECONDS = 15;
   
   /**
    * Delay between sequential bundle submissions in ms
@@ -1331,10 +1332,14 @@ export class EscrowProgramService {
 
   /**
    * Wait for bundle confirmation with polling
-   * 
+   *
+   * Uses fail-fast strategy: only 2 polls (initial + 1 retry) to avoid long waits.
+   * If Jito doesn't confirm quickly, callers should retry or use two-phase flow.
+   *
    * @param bundleId - Bundle ID to track
-   * @param timeoutSeconds - Timeout in seconds (default: 30)
-   * @returns Confirmation result
+   * @param timeoutSeconds - Timeout in seconds (default: EscrowProgramService.BUNDLE_CONFIRMATION_TIMEOUT_SECONDS = 15)
+   * @param txSignatures - Optional transaction signatures for on-chain fallback confirmation
+   * @returns Confirmation result with status and optional error details
    */
   async waitForBundleConfirmation(
     bundleId: string,
@@ -1355,11 +1360,9 @@ export class EscrowProgramService {
     
     const startTime = Date.now();
     const timeoutMs = timeoutSeconds * 1000;
-    // maxPolls is a safety cap, but timeout usually terminates polling first.
-    // Backoff sequence: 3s → 4.8s → 7.7s → 12.3s → 20s (cap), so with typical
-    // 30s timeout only 2-3 polls occur before timeout. For longer timeouts (60s+),
-    // we get 4-5 polls. The minimum of 10 is a safety net for edge cases.
-    const maxPolls = Math.max(10, Math.ceil(timeoutSeconds / 3));
+    // Fail fast: only 2 polls (initial + 1 retry) to avoid long waits during congestion
+    // If Jito doesn't confirm quickly, the user should retry or use two-phase flow
+    const maxPolls = 2;
     let pollCount = 0;
 
     // Delay briefly before first poll to avoid immediate "not found" and reduce rate limits.
@@ -1368,13 +1371,11 @@ export class EscrowProgramService {
 
     while (Date.now() - startTime < timeoutMs && pollCount < maxPolls) {
       pollCount++;
-      
+
       const elapsed = (Date.now() - startTime) / 1000;
 
-      // Backoff + jitter to avoid global 429s. Cap at ~20s.
-      const baseIntervalMs = Math.min(20000, Math.round(3000 * Math.pow(1.6, pollCount - 1))); // 3s, 4.8s, 7.7s, ...
-      const jitter = 0.8 + Math.random() * 0.4; // ±20%
-      const pollInterval = Math.round(baseIntervalMs * jitter);
+      // Simple backoff: 3s first poll, 5s second poll
+      const pollInterval = pollCount === 1 ? 3000 : 5000;
 
       // Prefer inflight status right after submission; fall back to getBundleStatuses when inflight is unsupported.
       let statusResult: { bundleId: string; status: 'Invalid' | 'Pending' | 'Failed' | 'Landed'; slot?: number; error?: string } | undefined;
@@ -1454,12 +1455,15 @@ export class EscrowProgramService {
     }
     
     // Timeout - either hit time limit or max polls
-    const reason = pollCount >= maxPolls ? `max polls reached (${maxPolls})` : `timeout after ${timeoutSeconds}s`;
-    console.warn(`[EscrowProgramService] Bundle ${bundleId} confirmation failed: ${reason}`);
+    const actualElapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+    const reason = pollCount >= maxPolls
+      ? `max polls reached (${pollCount}/${maxPolls})`
+      : `time limit exceeded`;
+    console.warn(`[EscrowProgramService] Bundle ${bundleId} confirmation failed: ${reason} after ${actualElapsed}s`);
     return {
       confirmed: false,
       status: 'Timeout',
-      error: `Bundle confirmation timeout after ${timeoutSeconds} seconds`,
+      error: `Bundle confirmation timeout: ${reason} after ${actualElapsed}s (limit: ${timeoutSeconds}s)`,
     };
   }
 
