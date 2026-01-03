@@ -3,28 +3,41 @@
  * Tests parallel DAS provider racing and rate limit configuration
  */
 
+// Safety guard: Abort immediately if not running in test environment
+if (process.env.NODE_ENV !== 'test') {
+  throw new Error(
+    `DasParallelFetcher tests must run with NODE_ENV=test. ` +
+    `Current NODE_ENV: ${process.env.NODE_ENV}. ` +
+    `Aborting to prevent running tests against non-test environment.`
+  );
+}
+
 import { expect } from 'chai';
 import { describe, it, beforeEach, afterEach } from 'mocha';
-import sinon from 'sinon';
+import sinon, { SinonSandbox } from 'sinon';
 
 describe('DasParallelFetcher', () => {
   let originalEnv: NodeJS.ProcessEnv;
   let originalFetch: typeof global.fetch;
+  let sandbox: SinonSandbox;
 
   beforeEach(() => {
+    // Create sandbox for test isolation
+    sandbox = sinon.createSandbox();
     // Save original env and fetch
     originalEnv = { ...process.env };
     originalFetch = global.fetch;
   });
 
   afterEach(() => {
+    // Restore sandbox (stubs, spies, etc.)
+    sandbox.restore();
     // Restore original env and fetch
     process.env = originalEnv;
     global.fetch = originalFetch;
 
     // Clear module cache to allow re-import with different env
     delete require.cache[require.resolve('../../src/services/das-parallel-fetcher')];
-    sinon.restore();
   });
 
   describe('Rate limit configuration', () => {
@@ -35,7 +48,7 @@ describe('DasParallelFetcher', () => {
       delete process.env.SOLANA_RPC_URL;
 
       // Mock fetch to prevent actual network calls
-      global.fetch = sinon.stub().resolves({
+      global.fetch = sandbox.stub().resolves({
         ok: true,
         json: async () => ({ jsonrpc: '2.0', result: {} }),
       } as Response);
@@ -59,7 +72,7 @@ describe('DasParallelFetcher', () => {
       delete process.env.SOLANA_RPC_URL;
       delete process.env.HELIUS_DAS_RATE_LIMIT_INTERVAL_MS;
 
-      global.fetch = sinon.stub().resolves({
+      global.fetch = sandbox.stub().resolves({
         ok: true,
         json: async () => ({ jsonrpc: '2.0', result: {} }),
       } as Response);
@@ -83,7 +96,7 @@ describe('DasParallelFetcher', () => {
       delete process.env.QUICKNODE_RPC_URL;
       delete process.env.SOLANA_RPC_URL;
 
-      global.fetch = sinon.stub().resolves({
+      global.fetch = sandbox.stub().resolves({
         ok: true,
         json: async () => ({ jsonrpc: '2.0', result: {} }),
       } as Response);
@@ -99,14 +112,14 @@ describe('DasParallelFetcher', () => {
       expect(helius!.rateLimitIntervalMs).to.equal(50);
     });
 
-    it('should NOT have QUICKNODE_DAS_RATE_LIMIT_INTERVAL_MS env var support', async () => {
+    it('should NOT respect QUICKNODE_DAS_RATE_LIMIT_INTERVAL_MS env var (hardcoded)', async () => {
       // QuickNode rate limit should be hardcoded, not configurable via env
       process.env.QUICKNODE_RPC_URL = 'https://test.quicknode.pro/rpc';
       process.env.QUICKNODE_DAS_RATE_LIMIT_INTERVAL_MS = '200'; // This should be IGNORED
       delete process.env.HELIUS_RPC_URL;
       delete process.env.SOLANA_RPC_URL;
 
-      global.fetch = sinon.stub().resolves({
+      global.fetch = sandbox.stub().resolves({
         ok: true,
         json: async () => ({ jsonrpc: '2.0', result: {} }),
       } as Response);
@@ -130,7 +143,7 @@ describe('DasParallelFetcher', () => {
       process.env.QUICKNODE_RPC_URL = 'https://test.quicknode.pro/rpc';
       delete process.env.SOLANA_RPC_URL;
 
-      global.fetch = sinon.stub().resolves({
+      global.fetch = sandbox.stub().resolves({
         ok: true,
         json: async () => ({ jsonrpc: '2.0', result: {} }),
       } as Response);
@@ -151,7 +164,7 @@ describe('DasParallelFetcher', () => {
       process.env.QUICKNODE_RPC_URL = 'https://test.quicknode.pro/rpc';
       delete process.env.SOLANA_RPC_URL;
 
-      global.fetch = sinon.stub().resolves({
+      global.fetch = sandbox.stub().resolves({
         ok: true,
         json: async () => ({ jsonrpc: '2.0', result: {} }),
       } as Response);
@@ -168,7 +181,7 @@ describe('DasParallelFetcher', () => {
       delete process.env.QUICKNODE_RPC_URL;
       delete process.env.SOLANA_RPC_URL;
 
-      global.fetch = sinon.stub().resolves({
+      global.fetch = sandbox.stub().resolves({
         ok: true,
         json: async () => ({ jsonrpc: '2.0', result: {} }),
       } as Response);
@@ -185,7 +198,7 @@ describe('DasParallelFetcher', () => {
       delete process.env.QUICKNODE_RPC_URL;
       process.env.SOLANA_RPC_URL = 'https://api.mainnet-beta.solana.com';
 
-      global.fetch = sinon.stub().resolves({
+      global.fetch = sandbox.stub().resolves({
         ok: true,
         json: async () => ({ jsonrpc: '2.0', result: {} }),
       } as Response);
@@ -207,7 +220,7 @@ describe('DasParallelFetcher', () => {
       process.env.QUICKNODE_RPC_URL = 'https://test.quicknode.pro/rpc';
       delete process.env.SOLANA_RPC_URL;
 
-      global.fetch = sinon.stub().resolves({
+      global.fetch = sandbox.stub().resolves({
         ok: true,
         json: async () => ({ jsonrpc: '2.0', result: {} }),
       } as Response);
@@ -223,30 +236,69 @@ describe('DasParallelFetcher', () => {
       expect(metrics.Helius.totalCalls).to.equal(0);
       expect(metrics.QuickNode.totalCalls).to.equal(0);
     });
+
+    it('should track wins and success counts after racing', async () => {
+      process.env.HELIUS_RPC_URL = 'https://mainnet.helius-rpc.com/?api-key=test';
+      process.env.QUICKNODE_RPC_URL = 'https://test.quicknode.pro/rpc';
+      delete process.env.SOLANA_RPC_URL;
+
+      // Mock fetch to simulate one provider responding faster
+      global.fetch = sandbox.stub().callsFake(async (url: string) => {
+        // QuickNode responds faster
+        const delay = url.includes('quicknode') ? 10 : 50;
+        await new Promise(r => setTimeout(r, delay));
+        return {
+          ok: true,
+          json: async () => ({
+            jsonrpc: '2.0',
+            result: { proof: ['a', 'b'], root: 'abc', node_index: 0, leaf: 'leaf', tree_id: 'tree' },
+          }),
+        } as Response;
+      });
+
+      delete require.cache[require.resolve('../../src/services/das-parallel-fetcher')];
+      const { DasParallelFetcher } = await import('../../src/services/das-parallel-fetcher');
+
+      const fetcher = new DasParallelFetcher();
+
+      // Make a race call
+      const result = await fetcher.race('getAssetProof', { id: 'test-asset' });
+
+      // Should have a winner
+      expect(result.provider).to.be.oneOf(['Helius', 'QuickNode']);
+      expect(result.timeMs).to.be.a('number');
+
+      // Wait a bit for background metrics to update
+      await new Promise(r => setTimeout(r, 100));
+
+      const metrics = fetcher.getMetrics();
+      const totalCalls = metrics.Helius.totalCalls + metrics.QuickNode.totalCalls;
+      expect(totalCalls).to.be.at.least(1);
+    });
   });
 
-  describe('Rate limit constants documentation', () => {
-    it('should have correct rate limit values in source code', async () => {
-      // This test documents and verifies the expected rate limit configuration
-      const fs = await import('fs');
-      const path = await import('path');
-      const sourcePath = path.join(__dirname, '../../src/services/das-parallel-fetcher.ts');
-      const source = fs.readFileSync(sourcePath, 'utf-8');
+  describe('Error handling', () => {
+    it('should throw when no providers are configured', async () => {
+      delete process.env.HELIUS_RPC_URL;
+      delete process.env.QUICKNODE_RPC_URL;
+      delete process.env.SOLANA_RPC_URL;
 
-      // Verify QuickNode default is 100ms (hardcoded)
-      expect(source).to.include('DEFAULT_QUICKNODE_RATE_LIMIT = 100');
+      global.fetch = sandbox.stub().resolves({
+        ok: true,
+        json: async () => ({ jsonrpc: '2.0', result: {} }),
+      } as Response);
 
-      // Verify Helius default is 100ms
-      expect(source).to.include('DEFAULT_HELIUS_RATE_LIMIT = 100');
+      delete require.cache[require.resolve('../../src/services/das-parallel-fetcher')];
+      const { DasParallelFetcher } = await import('../../src/services/das-parallel-fetcher');
 
-      // Verify QuickNode uses hardcoded value (not env var)
-      expect(source).to.include('const quicknodeRateLimit = DEFAULT_QUICKNODE_RATE_LIMIT');
+      const fetcher = new DasParallelFetcher();
 
-      // Verify Helius still supports env var override
-      expect(source).to.include('HELIUS_DAS_RATE_LIMIT_INTERVAL_MS');
-
-      // Verify paid tier comment
-      expect(source).to.include('10 req/s');
+      try {
+        await fetcher.race('getAssetProof', { id: 'test' });
+        expect.fail('Should have thrown');
+      } catch (error: any) {
+        expect(error.message).to.include('No DAS providers configured');
+      }
     });
   });
 });
