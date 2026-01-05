@@ -702,21 +702,53 @@ export class CnftDelegationService {
       usingPreFetchedProof: !!preFetchedProof,
     });
 
-    // Fetch asset data
-    const assetData = await this.cnftService.getCnftAsset(params.assetId);
+    // CRITICAL: Retry logic for DAS indexer sync
+    // After lock phase, the DAS API may not have synced the delegation change yet.
+    // Retry up to 3 times with exponential backoff to wait for DAS to sync.
+    const MAX_DELEGATION_RETRIES = 3;
+    const BASE_DELEGATION_DELAY_MS = 1000;
+    let assetData: CnftAssetData | undefined;
+    let delegationValidated = false;
 
-    // Validate ownership
-    if (assetData.ownership.owner !== params.fromOwner.toBase58()) {
-      throw new DelegationFailedError(
-        params.assetId,
-        `Ownership mismatch: expected ${params.fromOwner.toBase58()}, ` +
-          `actual ${assetData.ownership.owner}`
-      );
+    for (let delegationAttempt = 0; delegationAttempt < MAX_DELEGATION_RETRIES; delegationAttempt++) {
+      // Fetch fresh asset data (skip cache on retries)
+      assetData = await this.cnftService.getCnftAsset(params.assetId);
+
+      // Validate ownership
+      if (assetData.ownership.owner !== params.fromOwner.toBase58()) {
+        throw new DelegationFailedError(
+          params.assetId,
+          `Ownership mismatch: expected ${params.fromOwner.toBase58()}, ` +
+            `actual ${assetData.ownership.owner}`
+        );
+      }
+
+      // Validate delegation
+      const currentDelegate = assetData.ownership.delegate;
+      if (currentDelegate && currentDelegate === params.delegatePDA.toBase58()) {
+        delegationValidated = true;
+        break;
+      }
+
+      // Delegation not found yet - retry if we have attempts left
+      if (delegationAttempt < MAX_DELEGATION_RETRIES - 1) {
+        const delay = BASE_DELEGATION_DELAY_MS * Math.pow(2, delegationAttempt);
+        console.warn(
+          `[CnftDelegationService] Delegation not synced yet for ${params.assetId.substring(0, 12)}... ` +
+          `(attempt ${delegationAttempt + 1}/${MAX_DELEGATION_RETRIES}), waiting ${delay}ms for DAS sync`,
+          { currentDelegate, expectedDelegate: params.delegatePDA.toBase58() }
+        );
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
     }
 
-    // Validate delegation
-    const currentDelegate = assetData.ownership.delegate;
-    if (!currentDelegate || currentDelegate !== params.delegatePDA.toBase58()) {
+    // If delegation still not validated after all retries, throw error
+    if (!delegationValidated || !assetData) {
+      const finalDelegate = assetData?.ownership.delegate || 'none';
+      console.error(
+        `[CnftDelegationService] Delegation validation failed after ${MAX_DELEGATION_RETRIES} attempts`,
+        { assetId: params.assetId, currentDelegate: finalDelegate, expectedDelegate: params.delegatePDA.toBase58() }
+      );
       throw new NotDelegatedError(params.assetId, params.delegatePDA.toBase58());
     }
 

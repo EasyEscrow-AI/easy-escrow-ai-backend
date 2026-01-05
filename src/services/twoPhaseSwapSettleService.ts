@@ -99,6 +99,14 @@ export const RETRY_CONFIG = {
  */
 export const CNFT_CHUNK_DELAY_MS = 2000;
 
+/**
+ * Initial delay before settlement starts (ms).
+ * Required for DAS indexer to sync delegation changes from lock phase.
+ * After lock transactions confirm, the DAS API needs time to index the delegation
+ * change before we can successfully call transferAsDelegate().
+ */
+export const DAS_SYNC_DELAY_BEFORE_SETTLEMENT_MS = 3000;
+
 // =============================================================================
 // Types
 // =============================================================================
@@ -739,6 +747,18 @@ export class TwoPhaseSwapSettleService {
       totalChunks: chunkResult.totalChunks,
       reason: 'Two-phase delegation requires fresh Merkle proofs per transaction',
     });
+
+    // CRITICAL: Wait for DAS indexer to sync delegation changes from lock phase.
+    // The lock phase delegated cNFTs to the backend signer, but DAS API may not have
+    // indexed this change yet. Without this delay, transferAsDelegate() will fail
+    // with NotDelegatedError because getCnftAsset() returns stale delegation status.
+    const hasCnftAssets = swap.assetsA.some(a => a.type === 'CNFT') || swap.assetsB.some(a => a.type === 'CNFT');
+    if (hasCnftAssets) {
+      console.log(
+        `[TwoPhaseSwapSettleService] Waiting ${DAS_SYNC_DELAY_BEFORE_SETTLEMENT_MS}ms for DAS indexer to sync delegation changes from lock phase`
+      );
+      await this.sleep(DAS_SYNC_DELAY_BEFORE_SETTLEMENT_MS);
+    }
 
     // Execute chunks based on strategy
     let currentSwap = startResult.swap;
