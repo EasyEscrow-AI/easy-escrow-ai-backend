@@ -752,20 +752,88 @@ export class CnftDelegationService {
       throw new NotDelegatedError(params.assetId, params.delegatePDA.toBase58());
     }
 
-    // Get proof (use pre-fetched or fetch fresh)
-    let proofData: DasProofResponse;
-    if (preFetchedProof) {
-      proofData = preFetchedProof;
-    } else {
-      proofData = await this.cnftService.getCnftProof(
-        params.assetId,
-        true, // Skip cache
-        retryCount
-      );
+    // Get proof with on-chain validation and retry
+    // CRITICAL: After lock phase, the tree root has changed. DAS may return stale proofs.
+    // We must validate the proof root against on-chain and retry if stale.
+    const MAX_PROOF_RETRIES = 5;
+    const BASE_PROOF_DELAY_MS = 1500;
+    let proofData: DasProofResponse | undefined;
+    let proofValidated = false;
+    let lastValidation: { valid: string[]; stale: string[]; validationTimeMs: number } | undefined;
+    const treeAddress = new PublicKey(assetData.compression.tree);
+
+    for (let proofAttempt = 0; proofAttempt < MAX_PROOF_RETRIES; proofAttempt++) {
+      // Fetch proof (skip pre-fetched on retries since it's likely stale)
+      if (preFetchedProof && proofAttempt === 0) {
+        proofData = preFetchedProof;
+      } else {
+        proofData = await this.cnftService.getCnftProof(
+          params.assetId,
+          true, // Skip cache
+          proofAttempt // Use attempt count as retry hint
+        );
+      }
+
+      // Validate proof root against on-chain
+      const validationMap = new Map<string, DasProofResponse>();
+      validationMap.set(params.assetId, proofData);
+      lastValidation = await this.cnftService.validateProofsFreshness(validationMap);
+
+      if (lastValidation.valid.length > 0) {
+        proofValidated = true;
+        console.log(
+          `[CnftDelegationService] Proof validated for ${params.assetId.substring(0, 12)}... (attempt ${proofAttempt + 1})`
+        );
+        break;
+      }
+
+      // Proof is stale - retry if we have attempts left
+      if (proofAttempt < MAX_PROOF_RETRIES - 1) {
+        const delay = BASE_PROOF_DELAY_MS * Math.pow(1.5, proofAttempt);
+        console.warn(
+          `[CnftDelegationService] Stale proof for ${params.assetId.substring(0, 12)}... ` +
+          `(attempt ${proofAttempt + 1}/${MAX_PROOF_RETRIES}), waiting ${Math.round(delay)}ms for DAS sync`
+        );
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
     }
 
-    // Convert to CnftProof format
-    const treeAddress = new PublicKey(assetData.compression.tree);
+    // If proof still not validated after all retries, throw error with detailed diagnostics
+    if (!proofValidated || !proofData) {
+      console.error(
+        `[CnftDelegationService] Proof validation failed after ${MAX_PROOF_RETRIES} attempts - DETAILED DIAGNOSTICS:`,
+        {
+          assetId: params.assetId,
+          tree: treeAddress.toBase58(),
+          maxRetries: MAX_PROOF_RETRIES,
+          // Last validation results
+          lastValidation: lastValidation ? {
+            validCount: lastValidation.valid.length,
+            staleCount: lastValidation.stale.length,
+            staleAssets: lastValidation.stale,
+            validationTimeMs: lastValidation.validationTimeMs,
+          } : 'no validation performed',
+          // Proof metadata from last attempt
+          proofMetadata: proofData ? {
+            root: proofData.root,
+            treeId: proofData.tree_id,
+            nodeIndex: proofData.node_index,
+            proofLength: proofData.proof?.length || 0,
+            leaf: proofData.leaf,
+          } : 'no proof data',
+          // Transfer context
+          transferContext: {
+            from: params.fromOwner.toBase58(),
+            to: params.toRecipient.toBase58(),
+            delegate: params.delegatePDA.toBase58(),
+          },
+        }
+      );
+      throw new DelegationFailedError(
+        params.assetId,
+        `Merkle proof is stale after ${MAX_PROOF_RETRIES} attempts - tree may be hyperactive`
+      );
+    }
     const treeAuthority = this.cnftService.deriveTreeAuthority(treeAddress);
     const cnftProof = await this.cnftService.convertDasProofToCnftProofAsync(
       proofData,
