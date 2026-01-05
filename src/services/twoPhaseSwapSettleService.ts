@@ -927,9 +927,9 @@ export class TwoPhaseSwapSettleService {
     const [delegatePDA] = this.deriveDelegatePDA(swapId);
 
     // Add compute budget instructions for deep Merkle tree verification
-    // Use 400k CU to match lock service and avoid ProgramFailedToComplete
+    // Use 600k CU to handle deep mainnet trees (30+ proof nodes) and avoid ProgramFailedToComplete
     instructions.push(
-      ComputeBudgetProgram.setComputeUnitLimit({ units: 400_000 }),
+      ComputeBudgetProgram.setComputeUnitLimit({ units: 600_000 }),
       ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 50_000 })
     );
 

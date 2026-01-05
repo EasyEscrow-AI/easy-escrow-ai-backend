@@ -1453,8 +1453,38 @@ export class EscrowProgramService {
       
       await new Promise(resolve => setTimeout(resolve, pollInterval));
     }
-    
-    // Timeout - either hit time limit or max polls
+
+    // CRITICAL: Final on-chain signature check after polling loop exits.
+    // This catches cases where Jito status endpoints returned 429 rate limits
+    // but the bundle actually landed on-chain.
+    if (txSignatures && txSignatures.length > 0) {
+      console.log(`[EscrowProgramService] Polling exhausted, performing final on-chain signature check...`);
+      try {
+        const sigStatuses = await this.provider.connection.getSignatureStatuses(txSignatures);
+        const values = sigStatuses?.value || [];
+
+        // If any signature has an explicit error, consider the bundle failed.
+        const anyErr = values.some(v => v?.err);
+        if (anyErr) {
+          return {
+            confirmed: false,
+            status: 'Failed',
+            error: 'One or more transactions in the bundle failed on-chain (signature status error)',
+          };
+        }
+
+        // Consider landed once we see at least one signature confirmed/finalized.
+        const anyConfirmed = values.some(v => v && (v.confirmationStatus === 'confirmed' || v.confirmationStatus === 'finalized'));
+        if (anyConfirmed) {
+          console.log(`[EscrowProgramService] ✅ Bundle ${bundleId} confirmed via final on-chain signature check`);
+          return { confirmed: true, status: 'Landed' };
+        }
+      } catch (sigErr) {
+        console.warn(`[EscrowProgramService] Final signature check failed: ${sigErr}`);
+      }
+    }
+
+    // Timeout - either hit time limit or max polls, and on-chain check didn't confirm
     const actualElapsed = ((Date.now() - startTime) / 1000).toFixed(1);
     const reason = pollCount >= maxPolls
       ? `max polls reached (${pollCount}/${maxPolls})`
