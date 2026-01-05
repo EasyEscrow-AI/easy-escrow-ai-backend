@@ -834,12 +834,15 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
           console.log(`\n🔍 Pre-flight simulation of ${signedTransactions.length} transactions...`);
 
           let hasStaleProofInBundle = false;
+          let hasNonRecoverableError = false;
+          const simulationErrors: string[] = [];
           const MAX_SIMULATION_RETRIES = 3;
           let simulationAttempt = 0;
 
-          while (simulationAttempt < MAX_SIMULATION_RETRIES) {
+          while (simulationAttempt < MAX_SIMULATION_RETRIES && !hasNonRecoverableError) {
             simulationAttempt++;
             hasStaleProofInBundle = false;
+            let allSimulationsPassed = true;
 
             for (let simIdx = 0; simIdx < signedTransactions.length; simIdx++) {
               try {
@@ -859,26 +862,42 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
                 if (simResult.value.err) {
                   const errStr = JSON.stringify(simResult.value.err);
                   console.log(`   ⚠️ TX ${simIdx + 1} simulation failed: ${errStr}`);
+                  allSimulationsPassed = false;
 
-                  // Check for stale proof error (6001)
+                  // Check for stale proof error (6001) - this is recoverable via rebuild
                   if (errStr.includes('6001') || errStr.includes('Custom(6001)')) {
                     hasStaleProofInBundle = true;
                     console.log(`   🔄 Stale proof detected in TX ${simIdx + 1}, will rebuild...`);
+                  } else {
+                    // Non-stale-proof error - not recoverable, abort
+                    hasNonRecoverableError = true;
+                    simulationErrors.push(`TX ${simIdx + 1}: ${errStr}`);
+                    console.error(`   ❌ TX ${simIdx + 1} has non-recoverable simulation error: ${errStr}`);
                   }
                 } else {
                   console.log(`   ✅ TX ${simIdx + 1} simulation passed`);
                 }
               } catch (simErr: any) {
-                console.warn(`   ⚠️ TX ${simIdx + 1} simulation error: ${simErr.message}`);
+                console.error(`   ❌ TX ${simIdx + 1} simulation exception: ${simErr.message}`);
+                allSimulationsPassed = false;
+                hasNonRecoverableError = true;
+                simulationErrors.push(`TX ${simIdx + 1}: ${simErr.message}`);
               }
             }
 
-            if (!hasStaleProofInBundle) {
+            // If we have non-recoverable errors, abort immediately
+            if (hasNonRecoverableError) {
+              console.error(`❌ Pre-flight simulation failed with non-recoverable errors`);
+              break;
+            }
+
+            if (allSimulationsPassed) {
               console.log(`✅ All ${signedTransactions.length} simulations passed on attempt ${simulationAttempt}`);
               break;
             }
 
-            if (simulationAttempt < MAX_SIMULATION_RETRIES && offerId) {
+            // Only rebuild if we have stale proofs (recoverable) and more attempts left
+            if (hasStaleProofInBundle && simulationAttempt < MAX_SIMULATION_RETRIES && offerId) {
               console.log(`\n🔄 Stale proofs detected, rebuilding bundle (attempt ${simulationAttempt + 1})...`);
 
               // Clear proof cache and rebuild
@@ -906,10 +925,23 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
 
                 console.log(`   ✅ Rebuilt and re-signed ${signedTransactions.length} transactions`);
               } else {
-                console.error(`   ❌ Rebuild failed, proceeding with original transactions`);
+                console.error(`   ❌ Rebuild failed, aborting`);
+                hasNonRecoverableError = true;
+                simulationErrors.push('Transaction rebuild failed');
                 break;
               }
             }
+          }
+
+          // Abort if simulation failed with non-recoverable errors
+          if (hasNonRecoverableError) {
+            return res.status(400).json({
+              success: false,
+              error: `Pre-flight simulation failed: ${simulationErrors.join('; ')}`,
+              errorCode: 'SIMULATION_FAILED',
+              simulationErrors,
+              timestamp: new Date().toISOString(),
+            });
           }
           // ========== END PRE-FLIGHT SIMULATION ==========
 

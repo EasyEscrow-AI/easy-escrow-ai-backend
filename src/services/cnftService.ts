@@ -982,21 +982,12 @@ export class CnftService {
       return new Map();
     }
 
-    // Step 1: Clear cache for ALL assets to ensure fresh fetch
-    for (const assetId of assetIds) {
-      CnftService.proofCache.delete(assetId);
-    }
-    console.log(`[CnftService] Cleared cache for ${assetIds.length} assets before atomic fetch`);
-
-    // Step 2: Fetch ALL proofs in single batch call
-    // This minimizes the time window where proofs could become stale
+    // Fetch ALL proofs in single batch call with skipCache=true
+    // This bypasses cache and minimizes the time window where proofs could become stale
     const proofs = await this.getAssetProofBatch(assetIds, true); // skipCache=true
 
     const fetchTime = Date.now() - startTime;
     console.log(`[CnftService] Atomic proof fetch complete: ${proofs.size}/${assetIds.length} proofs in ${fetchTime}ms`);
-
-    // Note: We intentionally do NOT cache these proofs
-    // The caller should use them immediately and rebuild if needed
 
     return proofs;
   }
@@ -1433,9 +1424,9 @@ export class CnftService {
         // Faster recovery is critical for hyperactive trees where proofs can become stale in milliseconds
         let delay: number;
         if (isRateLimitError) {
-          // Rate limit: use faster delays (500ms, 1s, 2s) - minimize stale proof window
-          delay = Math.min(500 * Math.pow(2, retryCount), 4000);
-          console.warn(`[CnftService] Rate limit detected, using fast retry delay: ${delay}ms`);
+          // Rate limit: use aggressive fast delays (250ms, 500ms, 1s) - minimize stale proof window
+          delay = Math.min(250 * Math.pow(2, retryCount), 2000);
+          console.warn(`[CnftService] Rate limit detected, using aggressive retry delay: ${delay}ms`);
         } else {
           // Standard exponential backoff (500ms, 1s, 2s, 4s...)
           delay = Math.min(500 * Math.pow(2, retryCount), 4000);

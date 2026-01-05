@@ -2720,6 +2720,20 @@ export class TransactionGroupBuilder {
   }
 
   /**
+   * Check if an error string indicates a Bubblegum stale proof error.
+   *
+   * Bubblegum error 6001 (AssetOwnerMismatch) is returned when the Merkle proof
+   * is stale - meaning the tree was modified after the proof was fetched.
+   * This is recoverable by refetching proofs and rebuilding transactions.
+   *
+   * @param errorStr - JSON-stringified error from simulation or transaction
+   * @returns true if this is a stale proof error
+   */
+  private isBubblegumStaleProofError(errorStr: string): boolean {
+    return errorStr.includes('6001') || errorStr.includes('Custom(6001)');
+  }
+
+  /**
    * Build optimistic cNFT bundle with fresh proofs fetched atomically.
    *
    * This method minimizes the window between proof fetch and transaction execution:
@@ -2793,11 +2807,8 @@ export class TransactionGroupBuilder {
         throw new Error(`No proof available for asset ${asset.assetId.substring(0, 8)}...`);
       }
 
-      // Get asset data for building transfer params
-      const assetData = await this.cnftService.getCnftAsset(asset.assetId);
-      const cnftProof = await this.cnftService.convertDasProofToCnftProofAsync(proof, assetData);
-
       // Build transfer instruction using direct bubblegum service
+      // Note: directBubblegumService.buildTransferInstruction fetches asset data internally
       const transferResult = await this.directBubblegumService.buildTransferInstruction({
         assetId: asset.assetId,
         fromWallet: asset.from,
@@ -2903,13 +2914,13 @@ export class TransactionGroupBuilder {
             const errorStr = JSON.stringify(simResult.value.err);
             console.log(`[TransactionGroupBuilder] TX ${i + 1} simulation failed: ${errorStr}`);
 
-            // Check for stale proof error (Bubblegum error 6001)
-            if (errorStr.includes('6001') || errorStr.includes('Custom(6001)')) {
+            // Check for stale proof error (Bubblegum error 6001) - recoverable via rebuild
+            if (this.isBubblegumStaleProofError(errorStr)) {
               hasStaleProof = true;
               allPass = false;
               console.log(`[TransactionGroupBuilder] Stale proof detected in TX ${i + 1}`);
             } else {
-              // Non-stale-proof error - record it
+              // Non-stale-proof error - not recoverable, record it
               errors.push(`TX ${i + 1}: ${errorStr}`);
               allPass = false;
             }
