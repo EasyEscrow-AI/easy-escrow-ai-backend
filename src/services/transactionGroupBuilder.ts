@@ -2718,6 +2718,250 @@ export class TransactionGroupBuilder {
       cnftToWallet: toWallet.toBase58(),
     };
   }
+
+  /**
+   * Build optimistic cNFT bundle with fresh proofs fetched atomically.
+   *
+   * This method minimizes the window between proof fetch and transaction execution:
+   * 1. Fetches ALL proofs atomically in a single batch call
+   * 2. Validates all proofs against on-chain state
+   * 3. Builds ALL transactions in parallel
+   * 4. Returns timing metrics for monitoring
+   *
+   * @param cnftAssets - Array of cNFT transfer specifications
+   * @param options - Bundle options (priority fee, Jito tip)
+   * @returns Built transactions with timing metrics
+   */
+  async buildOptimisticCnftBundle(
+    cnftAssets: Array<{ assetId: string; from: PublicKey; to: PublicKey }>,
+    options: {
+      priorityFeeMicroLamports?: number;
+      jitoTip?: number;
+    } = {}
+  ): Promise<{
+    transactions: TransactionGroupItem[];
+    proofFetchTime: number;
+    validationTime: number;
+    buildTime: number;
+    totalTime: number;
+    staleProofsDetected: number;
+  }> {
+    const startTime = Date.now();
+    console.log(`[TransactionGroupBuilder] Building optimistic cNFT bundle for ${cnftAssets.length} assets`);
+
+    const assetIds = cnftAssets.map(a => a.assetId);
+    const priorityFee = options.priorityFeeMicroLamports ?? 50_000;
+
+    // Step 1: Fetch ALL proofs atomically
+    const proofFetchStart = Date.now();
+    const proofs = await this.cnftService.getProofsAtomically(assetIds);
+    const proofFetchTime = Date.now() - proofFetchStart;
+    console.log(`[TransactionGroupBuilder] Atomic proof fetch: ${proofs.size} proofs in ${proofFetchTime}ms`);
+
+    // Check if we got all proofs
+    if (proofs.size !== assetIds.length) {
+      const missing = assetIds.filter(id => !proofs.has(id));
+      throw new Error(`Failed to fetch proofs for ${missing.length} assets: ${missing.map(id => id.substring(0, 8)).join(', ')}`);
+    }
+
+    // Step 2: Validate all proofs against on-chain state
+    const validationStart = Date.now();
+    const validation = await this.cnftService.validateProofsFreshness(proofs);
+    const validationTime = Date.now() - validationStart;
+    console.log(`[TransactionGroupBuilder] Proof validation: ${validation.valid.length} valid, ${validation.stale.length} stale in ${validationTime}ms`);
+
+    let staleProofsDetected = validation.stale.length;
+
+    // If any proofs are stale, refetch only those
+    if (validation.stale.length > 0) {
+      console.log(`[TransactionGroupBuilder] Refetching ${validation.stale.length} stale proofs...`);
+      const freshProofs = await this.cnftService.getProofsAtomically(validation.stale);
+      for (const [assetId, proof] of freshProofs) {
+        proofs.set(assetId, proof);
+      }
+    }
+
+    // Step 3: Get fresh blockhash
+    const { blockhash } = await this.connection.getLatestBlockhash('confirmed');
+    console.log(`[TransactionGroupBuilder] Fresh blockhash: ${blockhash.substring(0, 16)}...`);
+
+    // Step 4: Build ALL transactions in parallel
+    const buildStart = Date.now();
+    const transactionPromises = cnftAssets.map(async (asset, index) => {
+      const proof = proofs.get(asset.assetId);
+      if (!proof) {
+        throw new Error(`No proof available for asset ${asset.assetId.substring(0, 8)}...`);
+      }
+
+      // Get asset data for building transfer params
+      const assetData = await this.cnftService.getCnftAsset(asset.assetId);
+      const cnftProof = await this.cnftService.convertDasProofToCnftProofAsync(proof, assetData);
+
+      // Build transfer instruction using direct bubblegum service
+      const transferResult = await this.directBubblegumService.buildTransferInstruction({
+        assetId: asset.assetId,
+        fromWallet: asset.from,
+        toWallet: asset.to,
+      }, 0);
+
+      // Build transaction with compute budget and priority fee
+      const instructions: TransactionInstruction[] = [
+        ComputeBudgetProgram.setComputeUnitLimit({ units: 600_000 }),
+        ComputeBudgetProgram.setComputeUnitPrice({ microLamports: priorityFee }),
+        transferResult.instruction,
+      ];
+
+      const tx = new Transaction({
+        recentBlockhash: blockhash,
+        feePayer: this.platformAuthority.publicKey,
+      }).add(...instructions);
+
+      // Partial sign with platform authority
+      tx.partialSign(this.platformAuthority);
+
+      const serialized = tx.serialize({ requireAllSignatures: false });
+
+      return {
+        index,
+        purpose: `cNFT transfer ${index + 1}/${cnftAssets.length}`,
+        assets: {
+          makerAssets: [],
+          takerAssets: [],
+          makerSolLamports: BigInt(0),
+          takerSolLamports: BigInt(0),
+          platformFeeLamports: BigInt(0),
+        },
+        transaction: {
+          serializedTransaction: serialized.toString('base64'),
+          sizeBytes: serialized.length,
+          isVersioned: false,
+          nonceValue: blockhash,
+          estimatedComputeUnits: 600_000,
+          requiredSigners: [asset.from.toBase58()],
+        },
+        isVersioned: false,
+        cnftAssetId: asset.assetId,
+        cnftFromWallet: asset.from.toBase58(),
+        cnftToWallet: asset.to.toBase58(),
+      } as TransactionGroupItem;
+    });
+
+    const transactions = await Promise.all(transactionPromises);
+    const buildTime = Date.now() - buildStart;
+    const totalTime = Date.now() - startTime;
+
+    console.log(`[TransactionGroupBuilder] Optimistic bundle built: ${transactions.length} TXs in ${totalTime}ms`);
+    console.log(`[TransactionGroupBuilder] Timing breakdown: proof=${proofFetchTime}ms, validate=${validationTime}ms, build=${buildTime}ms`);
+
+    return {
+      transactions,
+      proofFetchTime,
+      validationTime,
+      buildTime,
+      totalTime,
+      staleProofsDetected,
+    };
+  }
+
+  /**
+   * Simulate transactions and retry with fresh proofs if stale proof errors detected.
+   *
+   * @param transactions - Array of transactions to simulate
+   * @param maxAttempts - Maximum retry attempts (default: 5)
+   * @param rebuildFn - Function to rebuild transactions with fresh proofs
+   * @returns Simulation results
+   */
+  async simulateAndRetry(
+    transactions: Transaction[],
+    maxAttempts: number = 5,
+    rebuildFn: () => Promise<Transaction[]>
+  ): Promise<{
+    simulatedTransactions: Transaction[];
+    attemptCount: number;
+    allSimulationsPass: boolean;
+    staleProofRetries: number;
+    errors: string[];
+  }> {
+    let currentTransactions = transactions;
+    let staleProofRetries = 0;
+    const errors: string[] = [];
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      console.log(`[TransactionGroupBuilder] Simulation attempt ${attempt}/${maxAttempts}`);
+
+      let allPass = true;
+      let hasStaleProof = false;
+
+      for (let i = 0; i < currentTransactions.length; i++) {
+        const tx = currentTransactions[i];
+
+        try {
+          // Use legacy simulateTransaction overload for Transaction objects
+          const simResult = await this.connection.simulateTransaction(tx);
+
+          if (simResult.value.err) {
+            const errorStr = JSON.stringify(simResult.value.err);
+            console.log(`[TransactionGroupBuilder] TX ${i + 1} simulation failed: ${errorStr}`);
+
+            // Check for stale proof error (Bubblegum error 6001)
+            if (errorStr.includes('6001') || errorStr.includes('Custom(6001)')) {
+              hasStaleProof = true;
+              allPass = false;
+              console.log(`[TransactionGroupBuilder] Stale proof detected in TX ${i + 1}`);
+            } else {
+              // Non-stale-proof error - record it
+              errors.push(`TX ${i + 1}: ${errorStr}`);
+              allPass = false;
+            }
+          } else {
+            console.log(`[TransactionGroupBuilder] TX ${i + 1} simulation passed`);
+          }
+        } catch (simError: any) {
+          console.error(`[TransactionGroupBuilder] TX ${i + 1} simulation error: ${simError.message}`);
+          errors.push(`TX ${i + 1}: ${simError.message}`);
+          allPass = false;
+        }
+      }
+
+      if (allPass) {
+        console.log(`[TransactionGroupBuilder] All ${currentTransactions.length} simulations passed on attempt ${attempt}`);
+        return {
+          simulatedTransactions: currentTransactions,
+          attemptCount: attempt,
+          allSimulationsPass: true,
+          staleProofRetries,
+          errors: [],
+        };
+      }
+
+      if (hasStaleProof && attempt < maxAttempts) {
+        staleProofRetries++;
+        console.log(`[TransactionGroupBuilder] Stale proof detected, rebuilding transactions...`);
+
+        try {
+          currentTransactions = await rebuildFn();
+          console.log(`[TransactionGroupBuilder] Transactions rebuilt, retrying simulation...`);
+        } catch (rebuildError: any) {
+          console.error(`[TransactionGroupBuilder] Rebuild failed: ${rebuildError.message}`);
+          errors.push(`Rebuild failed: ${rebuildError.message}`);
+          break;
+        }
+      } else if (!hasStaleProof) {
+        // Non-stale-proof errors - don't retry
+        console.log(`[TransactionGroupBuilder] Non-stale-proof errors detected, stopping retry loop`);
+        break;
+      }
+    }
+
+    console.log(`[TransactionGroupBuilder] Simulation failed after ${maxAttempts} attempts`);
+    return {
+      simulatedTransactions: currentTransactions,
+      attemptCount: maxAttempts,
+      allSimulationsPass: false,
+      staleProofRetries,
+      errors,
+    };
+  }
 }
 
 /**

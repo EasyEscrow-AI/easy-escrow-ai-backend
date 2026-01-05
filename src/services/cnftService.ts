@@ -143,7 +143,7 @@ export class CnftService {
     maxRetries: 3,
     maxConcurrentRequests: 5, // Limit concurrent DAS API requests
     batchDelayMs: 200, // Delay between batches
-    proofCacheTtlSeconds: 5, // Cache proofs for 5 seconds (reduced from 30s for high-activity trees)
+    proofCacheTtlSeconds: 2, // Cache proofs for 2 seconds (hyperactive trees can change multiple times/sec)
     enableParallelProofFetching: true, // Enable parallel fetching by default
     enableParallelDasProviders: true, // Enable racing Helius + QuickNode by default
   };
@@ -959,7 +959,99 @@ export class CnftService {
     CnftService.proofCache.clear();
     console.log(`[CnftService] Cleared all ${count} cached proofs`);
   }
-  
+
+  /**
+   * Fetch proofs atomically for multiple cNFTs in a single batch call.
+   *
+   * CRITICAL for reliable multi-cNFT swaps:
+   * 1. Clears cache for ALL specified assets first
+   * 2. Fetches ALL proofs in a single batch call (minimizes time window)
+   * 3. Returns immediately - caller MUST use proofs without delay
+   *
+   * This method is designed to minimize the window between proof fetch and
+   * transaction execution, which is critical for hyperactive Merkle trees.
+   *
+   * @param assetIds - Array of cNFT asset IDs to fetch proofs for
+   * @returns Map of assetId -> DasProofResponse
+   */
+  async getProofsAtomically(assetIds: string[]): Promise<Map<string, DasProofResponse>> {
+    console.log(`[CnftService] Atomic proof fetch for ${assetIds.length} assets`);
+    const startTime = Date.now();
+
+    if (assetIds.length === 0) {
+      return new Map();
+    }
+
+    // Step 1: Clear cache for ALL assets to ensure fresh fetch
+    for (const assetId of assetIds) {
+      CnftService.proofCache.delete(assetId);
+    }
+    console.log(`[CnftService] Cleared cache for ${assetIds.length} assets before atomic fetch`);
+
+    // Step 2: Fetch ALL proofs in single batch call
+    // This minimizes the time window where proofs could become stale
+    const proofs = await this.getAssetProofBatch(assetIds, true); // skipCache=true
+
+    const fetchTime = Date.now() - startTime;
+    console.log(`[CnftService] Atomic proof fetch complete: ${proofs.size}/${assetIds.length} proofs in ${fetchTime}ms`);
+
+    // Note: We intentionally do NOT cache these proofs
+    // The caller should use them immediately and rebuild if needed
+
+    return proofs;
+  }
+
+  /**
+   * Validate multiple proof roots against on-chain state in batch.
+   * Returns which proofs are stale and need to be refetched.
+   *
+   * @param proofs - Map of assetId -> DasProofResponse to validate
+   * @returns Object with valid/stale asset lists
+   */
+  async validateProofsFreshness(
+    proofs: Map<string, DasProofResponse>
+  ): Promise<{
+    valid: string[];
+    stale: string[];
+    validationTimeMs: number;
+  }> {
+    console.log(`[CnftService] Validating freshness for ${proofs.size} proofs`);
+    const startTime = Date.now();
+
+    if (proofs.size === 0) {
+      return { valid: [], stale: [], validationTimeMs: 0 };
+    }
+
+    // Build map for batch validation
+    const proofsToValidate = new Map<string, { root: string; tree_id: string }>();
+    for (const [assetId, proof] of proofs) {
+      proofsToValidate.set(assetId, {
+        root: proof.root,
+        tree_id: proof.tree_id,
+      });
+    }
+
+    // Validate all proofs in batch
+    const validationResults = await this.validateProofRootsBatch(proofsToValidate);
+
+    const valid: string[] = [];
+    const stale: string[] = [];
+
+    for (const [assetId, result] of validationResults) {
+      if (result.isValid) {
+        valid.push(assetId);
+      } else {
+        stale.push(assetId);
+        console.warn(`[CnftService] Stale proof detected for ${assetId.substring(0, 12)}...`);
+      }
+    }
+
+    const validationTimeMs = Date.now() - startTime;
+    console.log(`[CnftService] Proof validation complete: ${valid.length} valid, ${stale.length} stale in ${validationTimeMs}ms`);
+
+    return { valid, stale, validationTimeMs };
+  }
+
   /**
    * Derive tree authority PDA for a Merkle tree (Bubblegum standard)
    * Tree authority is required for all Bubblegum operations
@@ -1337,16 +1429,16 @@ export class CnftService {
           error.message?.includes('-32007') ||
           error.message?.toLowerCase().includes('request limit');
 
-        // Use longer backoff for rate limit errors
-        // QuickNode free tier has 2 req/sec limit, so we need substantial delays
+        // Use faster backoff for rate limit errors to minimize stale proof window
+        // Faster recovery is critical for hyperactive trees where proofs can become stale in milliseconds
         let delay: number;
         if (isRateLimitError) {
-          // Rate limit: use much longer delays (3s, 6s, 12s, 24s...)
-          delay = Math.min(3000 * Math.pow(2, retryCount), 30000);
-          console.warn(`[CnftService] Rate limit detected, using extended delay: ${delay}ms`);
+          // Rate limit: use faster delays (500ms, 1s, 2s) - minimize stale proof window
+          delay = Math.min(500 * Math.pow(2, retryCount), 4000);
+          console.warn(`[CnftService] Rate limit detected, using fast retry delay: ${delay}ms`);
         } else {
-          // Standard exponential backoff (1s, 2s, 4s, 8s...)
-          delay = Math.min(1000 * Math.pow(2, retryCount), 10000);
+          // Standard exponential backoff (500ms, 1s, 2s, 4s...)
+          delay = Math.min(500 * Math.pow(2, retryCount), 4000);
         }
         await new Promise(resolve => setTimeout(resolve, delay));
 
