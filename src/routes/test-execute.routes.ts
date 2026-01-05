@@ -2481,13 +2481,15 @@ router.post('/api/test/execute-lock', async (req: Request, res: Response) => {
         });
       }
 
-      // For multi-cNFT swaps, TX index > 0 means previous TXs modified the tree
-      // We MUST rebuild to get fresh proof data, even if JIT validation passes
-      // because the original serialized TX has stale proof nodes baked in
-      const needsRebuild = hasStaleProof || (assetId && (transactionIndex || 0) > 0);
+      // ALWAYS rebuild cNFT transactions to ensure:
+      // 1. Fresh proof data (tree may have been modified by previous TXs)
+      // 2. Correct proof trimming (canopy depth detection may have improved since original build)
+      // 3. Valid serialization (proof nodes must match current on-chain state)
+      // The overhead is minimal (~200ms for proof fetch) and prevents hard-to-debug failures
+      const needsRebuild = assetId || hasStaleProof;
 
       if (needsRebuild) {
-        const reason = hasStaleProof ? 'stale proof' : `TX index ${transactionIndex} > 0`;
+        const reason = hasStaleProof ? 'stale proof' : 'cNFT transaction (ensuring fresh proof)';
         console.log(`\n   🔄 Rebuilding lock transaction (${reason})...`);
 
         // Clear cached proof to ensure fresh proofs are fetched during rebuild
@@ -2524,7 +2526,7 @@ router.post('/api/test/execute-lock', async (req: Request, res: Response) => {
           });
         }
       } else {
-        console.log('   ✅ TX index 0 with valid proof, using original transaction');
+        console.log('   ✅ Non-cNFT transaction with valid proof, using original transaction');
       }
     } catch (validationError: any) {
       console.warn('   ⚠️  Proactive validation failed, proceeding with original transaction:', validationError.message);
