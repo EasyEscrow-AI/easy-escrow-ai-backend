@@ -31,6 +31,17 @@ function isVersionedTransaction(buffer: Buffer): boolean {
   return buffer.length > 0 && (buffer[0] & 0x80) !== 0;
 }
 
+// Shared type for asset entries in JSON fields (used by swap history and offers endpoints)
+type AssetEntry = { mint?: string; identifier?: string };
+
+// Factory to create asset matcher predicate for a given assetId
+// Checks both mint and identifier fields since assets may use either
+function createAssetMatcher(assetId: string): (asset: AssetEntry) => boolean {
+  return (asset: AssetEntry): boolean => {
+    return asset.mint === assetId || asset.identifier === assetId;
+  };
+}
+
 const router = Router();
 
 // Initialize connection
@@ -2975,15 +2986,10 @@ router.get('/api/test/nft-swap-history/:assetId', async (req: Request, res: Resp
       },
     });
 
-    // Asset type for filtering - assets may have mint or identifier property
-    type AssetEntry = { mint?: string; identifier?: string };
+    // Create matcher for this assetId (checks both mint and identifier)
+    const assetMatches = createAssetMatcher(assetId);
 
-    // Helper to check if an asset matches the requested assetId (check both mint and identifier)
-    const assetMatches = (asset: AssetEntry): boolean => {
-      return asset.mint === assetId || asset.identifier === assetId;
-    };
-
-    // Filter swaps that involve this asset (check both mint and identifier)
+    // Filter swaps that involve this asset
     const filteredSwaps = swaps.filter((swap) => {
       const offeredAssets = (swap.offeredAssets as AssetEntry[] | null) ?? [];
       const requestedAssets = (swap.requestedAssets as AssetEntry[] | null) ?? [];
@@ -3032,6 +3038,82 @@ router.get('/api/test/nft-swap-history/:assetId', async (req: Request, res: Resp
     });
   } catch (error: any) {
     console.error('Error fetching NFT swap history:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+/**
+ * Get active offers for a specific NFT/cNFT
+ * Queries SwapOffer table for any offers involving this asset
+ */
+router.get('/api/test/nft-offers/:assetId', async (req: Request, res: Response) => {
+  const { assetId } = req.params;
+
+  try {
+    // Query active swap offers (ACTIVE, ACCEPTED) that involve this asset
+    // Note: We fetch all active offers without limit since Prisma's JSON filtering
+    // is limited. We filter in JavaScript to check if assetId is in the JSON arrays.
+    // This ensures we don't miss offers when there's high swap activity.
+    const swaps = await prisma.swapOffer.findMany({
+      where: {
+        status: {
+          in: ['ACTIVE', 'ACCEPTED'],
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      select: {
+        id: true,
+        makerWallet: true,
+        takerWallet: true,
+        offeredAssets: true,
+        requestedAssets: true,
+        offeredSolLamports: true,
+        requestedSolLamports: true,
+        status: true,
+        createdAt: true,
+      },
+    });
+
+    // Create matcher for this assetId (checks both mint and identifier)
+    const assetMatches = createAssetMatcher(assetId);
+
+    // Filter swaps that involve this asset
+    const filteredSwaps = swaps.filter((swap) => {
+      const offeredAssets = (swap.offeredAssets as AssetEntry[] | null) ?? [];
+      const requestedAssets = (swap.requestedAssets as AssetEntry[] | null) ?? [];
+
+      return offeredAssets.some(assetMatches) || requestedAssets.some(assetMatches);
+    });
+
+    // Transform into offer format
+    const offers = filteredSwaps.map((swap) => {
+      const offeredAssets = (swap.offeredAssets as AssetEntry[] | null) ?? [];
+      const isOffered = offeredAssets.some(assetMatches);
+
+      return {
+        id: swap.id,
+        makerWallet: swap.makerWallet,
+        takerWallet: swap.takerWallet,
+        status: swap.status.toLowerCase(),
+        role: isOffered ? 'selling' : 'buying',
+        createdAt: swap.createdAt.toISOString(),
+      };
+    });
+
+    return res.json({
+      success: true,
+      data: {
+        offers,
+        count: offers.length,
+      },
+    });
+  } catch (error: any) {
+    console.error('Error fetching NFT offers:', error);
     return res.status(500).json({
       success: false,
       error: error.message,

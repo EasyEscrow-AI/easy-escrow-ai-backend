@@ -669,9 +669,7 @@ function renderNFTs(wallet, nfts) {
       return `
             <div class="nft-card ${isDelegated ? 'delegated-nft' : ''}${isSelected ? ' selected' : ''}" data-index="${originalIndex}" data-mint="${nft.mint}" data-wallet="${wallet}">
                 ${delegationWarning}
-                <button class="nft-quick-select ${isSelected ? 'selected' : ''}" data-mint="${nft.mint}" data-index="${originalIndex}" data-wallet="${wallet}" title="${isSelected ? 'Remove from swap' : 'Add to swap'}">
-                    ${isSelected ? '✓' : '+'}
-                </button>
+                <button class="nft-quick-select ${isSelected ? 'selected' : ''}" data-mint="${nft.mint}" data-index="${originalIndex}" data-wallet="${wallet}" title="${isSelected ? 'Remove from swap' : 'Add to swap'}"></button>
                 <img class="nft-image"
                      src="${imageUrl}"
                      alt="${nft.name}"
@@ -3824,13 +3822,14 @@ async function loadCnftProofDetails(assetId) {
   }
 }
 
-// Load NFT escrow status (current offers)
+// Load NFT escrow status (current offers from SwapOffer table)
 async function loadNftEscrowStatus(assetId) {
   const loadingEl = document.getElementById('nft-escrow-loading');
   const contentEl = document.getElementById('nft-escrow-content');
 
   try {
-    const response = await fetch(`/api/swaps/offers/cnft/asset/${assetId}`);
+    // Use new endpoint that queries all NFT offers (not just cNFT offers)
+    const response = await fetch(`/api/test/nft-offers/${assetId}`);
     const data = await response.json();
 
     loadingEl.style.display = 'none';
@@ -3839,12 +3838,13 @@ async function loadNftEscrowStatus(assetId) {
     if (data.success && data.data && data.data.offers && data.data.offers.length > 0) {
       const offers = data.data.offers;
       const offersHtml = offers.map((offer) => {
-        const statusClass = offer.status === 'pending' ? 'status-pending' :
-          offer.status === 'accepted' ? 'status-accepted' :
-            offer.status === 'completed' ? 'status-completed' : 'status-cancelled';
+        // Map status to CSS class (status values: active, accepted, filled, cancelled, expired)
+        const statusClass = offer.status === 'active' ? 'status-pending' :
+          offer.status === 'accepted' ? 'status-accepted' : 'status-pending';
 
         const createdDate = new Date(offer.createdAt).toLocaleDateString();
-        const role = offer.makerWallet === currentDetailsNft?.owner ? 'Selling' : 'Buying';
+        // Use role from response (based on whether asset is offered or requested)
+        const role = offer.role === 'selling' ? 'Selling' : 'Buying';
 
         return `
           <div class="escrow-offer-item">
