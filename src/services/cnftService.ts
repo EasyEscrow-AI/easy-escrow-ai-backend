@@ -1092,9 +1092,12 @@ export class CnftService {
         const canopyDepth = Math.floor(canopyDepthFloat);
         
         // Validate: should be a power of 2 relationship
+        // Allow variance up to 1% of expected nodes OR 50 nodes, whichever is larger.
+        // Some trees have slight padding/alignment differences in account data.
         const expectedNodes = Math.pow(2, canopyDepth + 1) - 2;
-        if (Math.abs(expectedNodes - canopyNodes) < 10) { // Allow small variance
-          console.log(`[CnftService] Detected canopy depth: ${canopyDepth} (maxDepth=${maxDepth}, canopyNodes=${canopyNodes})`);
+        const allowedVariance = Math.max(50, Math.floor(expectedNodes * 0.01));
+        if (Math.abs(expectedNodes - canopyNodes) <= allowedVariance) {
+          console.log(`[CnftService] Detected canopy depth: ${canopyDepth} (maxDepth=${maxDepth}, canopyNodes=${canopyNodes}, variance=${Math.abs(expectedNodes - canopyNodes)})`);
           // Cache the result permanently - canopy depth never changes
           CnftService.canopyDepthCache.set(treeKey, canopyDepth);
           return canopyDepth;
