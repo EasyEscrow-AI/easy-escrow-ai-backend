@@ -2734,23 +2734,53 @@ export class TransactionGroupBuilder {
   }
 
   /**
+   * Helper to wrap a promise with a timeout.
+   * Rejects with a clear error message if the timeout is exceeded.
+   */
+  private async withTimeout<T>(
+    promise: Promise<T>,
+    timeoutMs: number,
+    operationName: string
+  ): Promise<T> {
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(() => {
+        reject(new Error(`${operationName} timed out after ${timeoutMs}ms`));
+      }, timeoutMs);
+    });
+
+    try {
+      const result = await Promise.race([promise, timeoutPromise]);
+      clearTimeout(timeoutId!);
+      return result;
+    } catch (error) {
+      clearTimeout(timeoutId!);
+      throw error;
+    }
+  }
+
+  /**
    * Build optimistic cNFT bundle with fresh proofs fetched atomically.
    *
    * This method minimizes the window between proof fetch and transaction execution:
    * 1. Fetches ALL proofs atomically in a single batch call
    * 2. Validates all proofs against on-chain state
    * 3. Builds ALL transactions in parallel
-   * 4. Returns timing metrics for monitoring
+   * 4. Optionally adds Jito tip to last transaction (mainnet only, 3+ assets)
+   * 5. Returns timing metrics for monitoring
    *
    * @param cnftAssets - Array of cNFT transfer specifications
-   * @param options - Bundle options (priority fee, Jito tip)
+   * @param options - Bundle options (priority fee, Jito tip, timeouts)
    * @returns Built transactions with timing metrics
    */
   async buildOptimisticCnftBundle(
     cnftAssets: Array<{ assetId: string; from: PublicKey; to: PublicKey }>,
     options: {
       priorityFeeMicroLamports?: number;
-      jitoTip?: number;
+      jitoTipLamports?: number;
+      proofFetchTimeoutMs?: number;
+      validationTimeoutMs?: number;
+      blockhashTimeoutMs?: number;
     } = {}
   ): Promise<{
     transactions: TransactionGroupItem[];
@@ -2759,16 +2789,48 @@ export class TransactionGroupBuilder {
     buildTime: number;
     totalTime: number;
     staleProofsDetected: number;
+    isMainnet: boolean;
+    jitoTipAdded: boolean;
   }> {
     const startTime = Date.now();
-    console.log(`[TransactionGroupBuilder] Building optimistic cNFT bundle for ${cnftAssets.length} assets`);
+
+    // Network detection
+    const isMainnet = process.env.SOLANA_NETWORK === 'mainnet-beta' ||
+      this.connection.rpcEndpoint.includes('mainnet');
+    console.log(`[TransactionGroupBuilder] Building optimistic cNFT bundle for ${cnftAssets.length} assets (${isMainnet ? 'mainnet' : 'devnet'})`);
 
     const assetIds = cnftAssets.map(a => a.assetId);
     const priorityFee = options.priorityFeeMicroLamports ?? 50_000;
+    const proofFetchTimeout = options.proofFetchTimeoutMs ?? 30_000;
+    const validationTimeout = options.validationTimeoutMs ?? 15_000;
+    const blockhashTimeout = options.blockhashTimeoutMs ?? 10_000;
 
-    // Step 1: Fetch ALL proofs atomically
+    // Jito tip configuration (only on mainnet with 3+ assets)
+    const JITO_TIP_ACCOUNTS = [
+      'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
+      'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
+      'HFqU5x63VTqvQss8hp11i4bVmkdzGHnsRRskfJ2J4ybE',
+      '96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5',
+      '3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT',
+      'ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49',
+      'Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY',
+      'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
+    ];
+    const shouldAddJitoTip = isMainnet && options.jitoTipLamports && cnftAssets.length >= 3;
+
+    // Step 1: Fetch ALL proofs atomically with timeout
     const proofFetchStart = Date.now();
-    const proofs = await this.cnftService.getProofsAtomically(assetIds);
+    let proofs: Map<string, any>;
+    try {
+      proofs = await this.withTimeout(
+        this.cnftService.getProofsAtomically(assetIds),
+        proofFetchTimeout,
+        'Proof fetch'
+      );
+    } catch (error: any) {
+      console.error(`[TransactionGroupBuilder] Proof fetch failed: ${error.message}`);
+      throw error;
+    }
     const proofFetchTime = Date.now() - proofFetchStart;
     console.log(`[TransactionGroupBuilder] Atomic proof fetch: ${proofs.size} proofs in ${proofFetchTime}ms`);
 
@@ -2778,9 +2840,19 @@ export class TransactionGroupBuilder {
       throw new Error(`Failed to fetch proofs for ${missing.length} assets: ${missing.map(id => id.substring(0, 8)).join(', ')}`);
     }
 
-    // Step 2: Validate all proofs against on-chain state
+    // Step 2: Validate all proofs against on-chain state with timeout
     const validationStart = Date.now();
-    const validation = await this.cnftService.validateProofsFreshness(proofs);
+    let validation: { valid: string[]; stale: string[]; validationTimeMs: number };
+    try {
+      validation = await this.withTimeout(
+        this.cnftService.validateProofsFreshness(proofs),
+        validationTimeout,
+        'Proof validation'
+      );
+    } catch (error: any) {
+      console.error(`[TransactionGroupBuilder] Proof validation failed: ${error.message}`);
+      throw error;
+    }
     const validationTime = Date.now() - validationStart;
     console.log(`[TransactionGroupBuilder] Proof validation: ${validation.valid.length} valid, ${validation.stale.length} stale in ${validationTime}ms`);
 
@@ -2789,14 +2861,34 @@ export class TransactionGroupBuilder {
     // If any proofs are stale, refetch only those
     if (validation.stale.length > 0) {
       console.log(`[TransactionGroupBuilder] Refetching ${validation.stale.length} stale proofs...`);
-      const freshProofs = await this.cnftService.getProofsAtomically(validation.stale);
-      for (const [assetId, proof] of freshProofs) {
-        proofs.set(assetId, proof);
+      try {
+        const freshProofs = await this.withTimeout(
+          this.cnftService.getProofsAtomically(validation.stale),
+          proofFetchTimeout,
+          'Stale proof refetch'
+        );
+        for (const [assetId, proof] of freshProofs) {
+          proofs.set(assetId, proof);
+        }
+      } catch (error: any) {
+        console.error(`[TransactionGroupBuilder] Stale proof refetch failed: ${error.message}`);
+        throw error;
       }
     }
 
-    // Step 3: Get fresh blockhash
-    const { blockhash } = await this.connection.getLatestBlockhash('confirmed');
+    // Step 3: Get fresh blockhash with timeout
+    let blockhash: string;
+    try {
+      const result = await this.withTimeout(
+        this.connection.getLatestBlockhash('confirmed'),
+        blockhashTimeout,
+        'Blockhash fetch'
+      );
+      blockhash = result.blockhash;
+    } catch (error: any) {
+      console.error(`[TransactionGroupBuilder] Blockhash fetch failed: ${error.message}`);
+      throw error;
+    }
     console.log(`[TransactionGroupBuilder] Fresh blockhash: ${blockhash.substring(0, 16)}...`);
 
     // Step 4: Build ALL transactions in parallel
@@ -2821,6 +2913,22 @@ export class TransactionGroupBuilder {
         ComputeBudgetProgram.setComputeUnitPrice({ microLamports: priorityFee }),
         transferResult.instruction,
       ];
+
+      // Add Jito tip to LAST transaction only (Jito requirement)
+      const isLastTransaction = index === cnftAssets.length - 1;
+      if (shouldAddJitoTip && isLastTransaction) {
+        const jitoTipAccount = new PublicKey(
+          JITO_TIP_ACCOUNTS[Math.floor(Math.random() * JITO_TIP_ACCOUNTS.length)]
+        );
+        console.log(`[TransactionGroupBuilder] Adding Jito tip: ${options.jitoTipLamports} lamports to ${jitoTipAccount.toBase58().substring(0, 12)}...`);
+        instructions.push(
+          SystemProgram.transfer({
+            fromPubkey: this.platformAuthority.publicKey,
+            toPubkey: jitoTipAccount,
+            lamports: options.jitoTipLamports!,
+          })
+        );
+      }
 
       const tx = new Transaction({
         recentBlockhash: blockhash,
@@ -2863,6 +2971,9 @@ export class TransactionGroupBuilder {
 
     console.log(`[TransactionGroupBuilder] Optimistic bundle built: ${transactions.length} TXs in ${totalTime}ms`);
     console.log(`[TransactionGroupBuilder] Timing breakdown: proof=${proofFetchTime}ms, validate=${validationTime}ms, build=${buildTime}ms`);
+    if (shouldAddJitoTip) {
+      console.log(`[TransactionGroupBuilder] Jito tip added: ${options.jitoTipLamports} lamports`);
+    }
 
     return {
       transactions,
@@ -2871,6 +2982,8 @@ export class TransactionGroupBuilder {
       buildTime,
       totalTime,
       staleProofsDetected,
+      isMainnet,
+      jitoTipAdded: !!shouldAddJitoTip,
     };
   }
 
