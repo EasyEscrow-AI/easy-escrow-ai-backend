@@ -92,6 +92,13 @@ export const RETRY_CONFIG = {
   BACKOFF_MULTIPLIER: 2,
 };
 
+/**
+ * Delay between sequential cNFT chunk executions (ms).
+ * Required for DAS indexer to sync Merkle tree changes after each transaction.
+ * Without this delay, subsequent cNFT transfers on the same tree will have stale proofs.
+ */
+export const CNFT_CHUNK_DELAY_MS = 2000;
+
 // =============================================================================
 // Types
 // =============================================================================
@@ -758,7 +765,8 @@ export class TwoPhaseSwapSettleService {
       }
     } else {
       // Sequential execution - fetch fresh proofs for each chunk
-      for (const chunk of chunkResult.chunks) {
+      for (let i = 0; i < chunkResult.chunks.length; i++) {
+        const chunk = chunkResult.chunks[i];
         try {
           const result = await this.executeChunkWithRetry(
             params.swapId,
@@ -779,6 +787,21 @@ export class TwoPhaseSwapSettleService {
           const updatedSwap = await this.stateMachine.getSwap(params.swapId);
           if (updatedSwap) {
             currentSwap = updatedSwap;
+          }
+
+          // CRITICAL: Add delay between cNFT chunks for DAS indexer sync.
+          // When chunk N modifies a Merkle tree, the next chunk needs time for
+          // DAS to index the change before fetching fresh proofs.
+          // This is especially important for cNFT <> cNFT swaps on the same tree.
+          const hasCnftAssets = chunk.assets.some(a => a.type === 'CNFT');
+          const nextChunk = chunkResult.chunks[i + 1];
+          const nextHasCnftAssets = nextChunk?.assets.some(a => a.type === 'CNFT');
+
+          if (hasCnftAssets && nextHasCnftAssets) {
+            console.log(
+              `[TwoPhaseSwapSettleService] Waiting ${CNFT_CHUNK_DELAY_MS}ms for DAS indexer sync before next cNFT chunk`
+            );
+            await this.sleep(CNFT_CHUNK_DELAY_MS);
           }
         } catch (error) {
           const err = error instanceof Error ? error : new Error(String(error));
