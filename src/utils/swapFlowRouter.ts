@@ -9,13 +9,13 @@
  *
  * Routing Logic:
  * 1. >4 NFTs total → INVALID (rejected due to Jito bundle transaction limit)
- * 2. Single NFT (1 per side, no cNFTs) → ATOMIC swap via escrow program
- * 3. cNFT-to-cNFT (any cNFT on both sides) → TWO_PHASE delegation
- * 4. cNFT single-side (cNFT-for-SOL, cNFT-for-NFT) → CNFT_DELEGATION flow
- * 5. Multi-NFT (2+ on one side) → Jito bundle via ATOMIC/CNFT_DELEGATION
+ * 2. cNFT-to-cNFT (cNFTs on BOTH sides) → TWO_PHASE delegation (for reliable Merkle proofs)
+ * 3. Single-side cNFT (cNFT → SOL, cNFT → NFT, etc.) → CNFT_DELEGATION with Jito bundle
+ * 4. SPL/Core NFT only → ATOMIC swap (single tx or Jito bundle for multi-NFT)
  *
- * Note: The actual execution method (Jito bundle vs sequential RPC vs escrow) is determined
- * by TransactionGroupBuilder based on the flow type returned here.
+ * Key insight: Two-Phase is ONLY needed when cNFTs are on BOTH sides, because both Merkle
+ * proofs must be valid at the same slot. Single-side cNFT swaps (including bulk sales like
+ * 4 cNFT → SOL) work fine with Jito bundles since only one proof needs to be valid.
  *
  * @see docs/architecture/SWAP_ROUTING.md
  */
@@ -82,25 +82,6 @@ export interface SwapFlowResult {
  * Jito bundles max 5 transactions: 1 for SOL/fee + 4 for NFT transfers
  */
 const MAX_NFTS_FOR_JITO = 4;
-
-/**
- * Threshold for triggering two-phase swap based on cNFT count per side
- * Per task spec: 3+ cNFTs on either side triggers two-phase
- * NOTE: Now only used for cNFT swaps - SPL/Core NFTs rejected if >4
- */
-const CNFT_TWO_PHASE_THRESHOLD = 3;
-
-/**
- * Threshold for triggering two-phase swap based on total asset count
- * @deprecated This threshold is now unreachable due to MAX_NFTS_FOR_JITO=4.
- * Kept for backwards compatibility but the condition at line ~193 (needsTwoPhaseForBulk)
- * will never trigger because swaps with 5+ NFTs are rejected as INVALID first.
- * Two-phase is now only triggered by:
- * - cNFT-to-cNFT swaps (hasCnftOnBothSides)
- * - 4+ assets with cNFTs (needsTwoPhaseForMixedBulk)
- * - 3+ cNFTs on one side (needsTwoPhaseForCnfts)
- */
-const TOTAL_ASSET_TWO_PHASE_THRESHOLD = 5;
 
 // =============================================================================
 // Main Function
@@ -193,40 +174,7 @@ export function determineSwapFlow(
     };
   }
 
-  // Check for two-phase swap triggers
-  // Two-phase is ONLY needed for cNFT delegation - SPL/CORE NFTs use bulk transactions
-
-  // Trigger 1: 3+ cNFTs on either side
-  const needsTwoPhaseForCnfts = offeredCnftCount >= CNFT_TWO_PHASE_THRESHOLD ||
-                                requestedCnftCount >= CNFT_TWO_PHASE_THRESHOLD;
-
-  // Trigger 2: 5+ total assets WITH cNFTs (cNFTs require delegation, others don't)
-  // SPL/CORE NFT-only bundles use bulk transaction execution instead
-  const needsTwoPhaseForBulk = totalAssetCount >= TOTAL_ASSET_TWO_PHASE_THRESHOLD && totalCnftCount > 0;
-
-  // Trigger 3: 4+ assets with any cNFT (bulk swap with cNFT complexity)
-  const needsTwoPhaseForMixedBulk = totalAssetCount >= 4 && totalCnftCount > 0;
-
-  if (needsTwoPhaseForCnfts || needsTwoPhaseForBulk || needsTwoPhaseForMixedBulk) {
-    let reason = 'Routing to two-phase swap: ';
-    if (needsTwoPhaseForCnfts) {
-      reason += `bulk cNFT swap (${Math.max(offeredCnftCount, requestedCnftCount)} cNFTs on one side)`;
-    } else if (needsTwoPhaseForMixedBulk) {
-      reason += `bulk swap with cNFTs (${totalAssetCount} assets, ${totalCnftCount} cNFTs)`;
-    } else {
-      reason += `bulk asset swap (${totalAssetCount} total assets)`;
-    }
-
-    return {
-      ...baseResult,
-      flowType: SwapFlowType.TWO_PHASE,
-      requiresTwoPhase: true,
-      requiresDelegation: totalCnftCount > 0,
-      reason,
-    };
-  }
-
-  // Check for cNFT delegation flow (any cNFT involved, but not bulk)
+  // Check for cNFT delegation flow (any cNFT involved)
   if (totalCnftCount > 0) {
     // cNFT-to-cNFT swaps ALWAYS use two-phase delegation (Magic Eden style)
     // This eliminates JITO bundle dependency for cNFT swaps
