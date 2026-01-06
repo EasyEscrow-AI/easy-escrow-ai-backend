@@ -32,12 +32,12 @@ export const standardRateLimiter = rateLimit({
 
 /**
  * Strict rate limiter for sensitive endpoints (e.g., agreement creation)
- * Production: 20 requests per 15 minutes per IP
+ * Production: 60 requests per 15 minutes per IP (4 per minute)
  * Testing: 500 requests per 15 minutes per IP (allows comprehensive E2E testing)
  */
 export const strictRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: process.env.ENABLE_E2E_TESTING === 'true' ? 500 : 20, // Significantly higher limit for E2E testing
+  max: process.env.ENABLE_E2E_TESTING === 'true' ? 500 : 60, // Increased from 20 to 60 for reasonable testing
   message: {
     error: 'Too Many Requests',
     message: 'Too many creation requests from this IP, please try again later',
