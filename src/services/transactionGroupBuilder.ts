@@ -761,14 +761,16 @@ export class TransactionGroupBuilder {
     const transactions: TransactionGroupItem[] = [];
     let totalSizeBytes = 0;
     
-    // Determine if we should use durable nonces or fresh blockhashes
-    // On devnet/staging, sequential sends don't work with shared nonces
-    // On mainnet, Jito bundles handle atomicity with durable nonces
-    const isMainnet = process.env.SOLANA_NETWORK === 'mainnet-beta' || 
+    // IMPORTANT: Jito bundles do NOT use durable nonces!
+    // Jito provides atomicity through the bundle mechanism - all transactions land together
+    // Durable nonces can only be advanced ONCE per slot, which breaks multi-tx bundles
+    // Each transaction would try to advance the same nonce → only first succeeds
+    // Use recent blockhash for all Jito bundle transactions instead
+    const useJitoNonces = false;
+    const isMainnet = process.env.SOLANA_NETWORK === 'mainnet-beta' ||
                       process.env.NODE_ENV === 'production';
-    const useJitoNonces = isMainnet && isJitoBundlesEnabled(); // Only use durable nonces when JITO bundles are enabled
-    
-    console.log(`[TransactionGroupBuilder] Network mode: ${isMainnet ? 'mainnet (Jito bundles)' : 'devnet (sequential sends)'}`);
+
+    console.log(`[TransactionGroupBuilder] Network mode: ${isMainnet ? 'mainnet' : 'devnet/staging'}, useJitoNonces: ${useJitoNonces}`);
     
     // Collect all cNFT assets
     const makerCnfts = inputs.makerAssets.filter(a => 
