@@ -126,7 +126,8 @@ describe('API Delegation Routing (Task 12)', () => {
         expect(result.cnftCount).to.equal(1);
       });
 
-      it('should route cNFT for cNFT to delegation flow', () => {
+      it('should route cNFT for cNFT to two-phase flow (cNFT-to-cNFT)', () => {
+        // cNFT-to-cNFT swaps use TWO_PHASE for reliable Merkle proof handling
         const result = determineSwapFlow(
           [createAsset(AssetType.CNFT)],
           [createAsset(AssetType.CNFT)],
@@ -134,8 +135,9 @@ describe('API Delegation Routing (Task 12)', () => {
           undefined
         );
 
-        expect(result.flowType).to.equal(SwapFlowType.CNFT_DELEGATION);
+        expect(result.flowType).to.equal(SwapFlowType.TWO_PHASE);
         expect(result.requiresDelegation).to.be.true;
+        expect(result.requiresTwoPhase).to.be.true;
         expect(result.cnftCount).to.equal(2);
       });
 
@@ -154,8 +156,9 @@ describe('API Delegation Routing (Task 12)', () => {
       });
     });
 
-    describe('Two-Phase Swap Routing (Bulk)', () => {
-      it('should route 3+ cNFTs on one side to two-phase swap', () => {
+    describe('Two-Phase and Bulk Swap Routing', () => {
+      it('should route 3 cNFTs on ONE side to delegation flow (Jito bundle)', () => {
+        // Single-side cNFT (even bulk like 3 cNFT → SOL) uses Jito bundle, NOT Two-Phase
         const result = determineSwapFlow(
           [
             createAsset(AssetType.CNFT, 'cnft-1'),
@@ -167,14 +170,14 @@ describe('API Delegation Routing (Task 12)', () => {
           BigInt(3_000_000_000) // 3 SOL
         );
 
-        expect(result.flowType).to.equal(SwapFlowType.TWO_PHASE);
+        expect(result.flowType).to.equal(SwapFlowType.CNFT_DELEGATION);
         expect(result.requiresDelegation).to.be.true;
-        expect(result.requiresTwoPhase).to.be.true;
+        expect(result.requiresTwoPhase).to.be.false; // NOT Two-Phase for single-side cNFT
         expect(result.cnftCount).to.equal(3);
-        expect(result.reason).to.include('bulk');
       });
 
-      it('should route 5+ total assets to two-phase swap', () => {
+      it('should reject 5+ total assets as INVALID (exceeds Jito limit)', () => {
+        // 5 NFTs exceeds the 4 NFT Jito bundle limit
         const result = determineSwapFlow(
           [
             createAsset(AssetType.NFT, 'nft-1'),
@@ -189,12 +192,13 @@ describe('API Delegation Routing (Task 12)', () => {
           undefined
         );
 
-        expect(result.flowType).to.equal(SwapFlowType.TWO_PHASE);
-        expect(result.requiresTwoPhase).to.be.true;
+        expect(result.flowType).to.equal(SwapFlowType.INVALID);
+        expect(result.error).to.include('Maximum 4 NFTs');
         expect(result.totalAssetCount).to.equal(5);
       });
 
-      it('should route mixed NFT and cNFT bulk to two-phase swap', () => {
+      it('should reject 5 mixed NFT and cNFT as INVALID (exceeds limit)', () => {
+        // 5 total assets exceeds the 4 NFT Jito bundle limit
         const result = determineSwapFlow(
           [
             createAsset(AssetType.NFT, 'nft-1'),
@@ -209,13 +213,13 @@ describe('API Delegation Routing (Task 12)', () => {
           undefined
         );
 
-        expect(result.flowType).to.equal(SwapFlowType.TWO_PHASE);
-        expect(result.requiresDelegation).to.be.true;
-        expect(result.requiresTwoPhase).to.be.true;
-        expect(result.cnftCount).to.equal(3);
+        expect(result.flowType).to.equal(SwapFlowType.INVALID);
+        expect(result.error).to.include('Maximum 4 NFTs');
+        expect(result.totalAssetCount).to.equal(5);
       });
 
-      it('should route 4+ assets with any cNFT to two-phase swap', () => {
+      it('should route 4 assets with cNFT on ONE side to delegation (Jito bundle)', () => {
+        // 4 assets with cNFT on ONE side only → CNFT_DELEGATION (Jito bundle)
         const result = determineSwapFlow(
           [createAsset(AssetType.NFT), createAsset(AssetType.NFT, 'nft-2')],
           [createAsset(AssetType.NFT, 'nft-3'), createAsset(AssetType.CNFT)],
@@ -223,8 +227,22 @@ describe('API Delegation Routing (Task 12)', () => {
           undefined
         );
 
-        // 4 assets but 1 cNFT, should check if this triggers two-phase
-        // Per task spec: bulk is >1 asset per side (2+2 = 4 total with cNFT)
+        // cNFT on ONE side only → uses Jito bundle, not Two-Phase
+        expect(result.flowType).to.equal(SwapFlowType.CNFT_DELEGATION);
+        expect(result.requiresDelegation).to.be.true;
+        expect(result.requiresTwoPhase).to.be.false;
+      });
+
+      it('should route 4 assets with cNFT on BOTH sides to two-phase', () => {
+        // 4 assets with cNFT on BOTH sides → TWO_PHASE
+        const result = determineSwapFlow(
+          [createAsset(AssetType.CNFT, 'cnft-1'), createAsset(AssetType.NFT, 'nft-1')],
+          [createAsset(AssetType.NFT, 'nft-2'), createAsset(AssetType.CNFT, 'cnft-2')],
+          undefined,
+          undefined
+        );
+
+        // cNFT on BOTH sides → uses Two-Phase for reliable Merkle proofs
         expect(result.flowType).to.equal(SwapFlowType.TWO_PHASE);
         expect(result.requiresDelegation).to.be.true;
         expect(result.requiresTwoPhase).to.be.true;

@@ -18,6 +18,7 @@ Last updated: 2026-01-03
 |---------|-------|-------|
 | Missing --no-config | `npm test -- tests/unit/foo.ts` | `mocha --no-config tests/unit/foo.ts` |
 | Missing cross-env | `mocha --no-config ...` | `cross-env NODE_ENV=test mocha --no-config ...` |
+| Not updating tests | Change logic without updating tests | Update related unit tests, ensure 100% green |
 
 ## Docker
 
