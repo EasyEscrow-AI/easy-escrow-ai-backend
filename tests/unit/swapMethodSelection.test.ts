@@ -108,15 +108,16 @@ function determineExecutionMethod(
 
 describe('Swap Method Selection Logic', () => {
   describe('swapFlowRouter - Initial Flow Determination', () => {
-    it('1:1 cNFT swap should return CNFT_DELEGATION (not two-phase)', () => {
+    it('1:1 cNFT swap should return TWO_PHASE (cNFT-to-cNFT routing)', () => {
       const offeredAssets = createCnftAssets(1, 'offered');
       const requestedAssets = createCnftAssets(1, 'requested');
 
       const result = determineSwapFlow(offeredAssets, requestedAssets);
 
-      expect(result.flowType).to.equal(SwapFlowType.CNFT_DELEGATION);
+      // cNFT-to-cNFT swaps use TWO_PHASE delegation (Magic Eden style)
+      expect(result.flowType).to.equal(SwapFlowType.TWO_PHASE);
       expect(result.requiresDelegation).to.be.true;
-      expect(result.requiresTwoPhase).to.be.false;
+      expect(result.requiresTwoPhase).to.be.true;
       expect(result.cnftCount).to.equal(2);
       expect(result.totalAssetCount).to.equal(2);
     });
@@ -146,40 +147,42 @@ describe('Swap Method Selection Logic', () => {
       expect(result.cnftCount).to.equal(4);
     });
 
-    it('3:3 cNFT swap should return TWO_PHASE (3+ cNFTs on both sides)', () => {
+    it('3:3 cNFT swap should return INVALID (exceeds 4 NFT limit)', () => {
       const offeredAssets = createCnftAssets(3, 'offered');
       const requestedAssets = createCnftAssets(3, 'requested');
 
       const result = determineSwapFlow(offeredAssets, requestedAssets);
 
-      expect(result.flowType).to.equal(SwapFlowType.TWO_PHASE);
-      expect(result.requiresDelegation).to.be.true;
-      expect(result.requiresTwoPhase).to.be.true;
+      // 6 total NFTs exceeds the 4 NFT Jito bundle limit
+      expect(result.flowType).to.equal(SwapFlowType.INVALID);
+      expect(result.error).to.include('Maximum 4 NFTs');
       expect(result.cnftCount).to.equal(6);
       expect(result.totalAssetCount).to.equal(6);
     });
 
-    it('2:1 cNFT swap should return CNFT_DELEGATION (under threshold)', () => {
+    it('2:1 cNFT swap should return TWO_PHASE (cNFT-to-cNFT routing)', () => {
       const offeredAssets = createCnftAssets(2, 'offered');
       const requestedAssets = createCnftAssets(1, 'requested');
 
       const result = determineSwapFlow(offeredAssets, requestedAssets);
 
-      // 3 cNFTs but none on one side >= 3, so CNFT_DELEGATION
-      // BUT 3 assets is still OK for CNFT_DELEGATION
-      expect(result.flowType).to.equal(SwapFlowType.CNFT_DELEGATION);
+      // cNFT-to-cNFT swaps use TWO_PHASE delegation (Magic Eden style)
+      expect(result.flowType).to.equal(SwapFlowType.TWO_PHASE);
       expect(result.requiresDelegation).to.be.true;
+      expect(result.requiresTwoPhase).to.be.true;
       expect(result.cnftCount).to.equal(3);
     });
 
-    it('1:2 cNFT swap should return CNFT_DELEGATION (under threshold)', () => {
+    it('1:2 cNFT swap should return TWO_PHASE (cNFT-to-cNFT routing)', () => {
       const offeredAssets = createCnftAssets(1, 'offered');
       const requestedAssets = createCnftAssets(2, 'requested');
 
       const result = determineSwapFlow(offeredAssets, requestedAssets);
 
-      expect(result.flowType).to.equal(SwapFlowType.CNFT_DELEGATION);
+      // cNFT-to-cNFT swaps use TWO_PHASE delegation (Magic Eden style)
+      expect(result.flowType).to.equal(SwapFlowType.TWO_PHASE);
       expect(result.requiresDelegation).to.be.true;
+      expect(result.requiresTwoPhase).to.be.true;
       expect(result.cnftCount).to.equal(3);
     });
 
@@ -492,8 +495,8 @@ describe('Swap Method Selection Logic', () => {
       expect(result3.requiresTwoPhase).to.be.true;
     });
 
-    it('TOTAL_ASSET_TWO_PHASE_THRESHOLD should be 5', () => {
-      // 4 NFTs should NOT trigger two-phase (no cNFTs)
+    it('MAX_NFTS_FOR_JITO should be 4 (rejects >4 NFTs)', () => {
+      // 4 NFTs should NOT trigger two-phase (no cNFTs) - uses atomic/jito bundle
       const result4 = determineSwapFlow(
         createNftAssets(2),
         createNftAssets(2),
@@ -501,15 +504,17 @@ describe('Swap Method Selection Logic', () => {
         undefined
       );
       expect(result4.requiresTwoPhase).to.be.false;
+      expect(result4.flowType).to.equal(SwapFlowType.ATOMIC);
 
-      // 5 NFTs SHOULD trigger two-phase
+      // 5 NFTs now returns INVALID (exceeds 4 NFT limit)
       const result5 = determineSwapFlow(
         createNftAssets(3),
         createNftAssets(2),
         undefined,
         undefined
       );
-      expect(result5.requiresTwoPhase).to.be.true;
+      expect(result5.flowType).to.equal(SwapFlowType.INVALID);
+      expect(result5.error).to.include('Maximum 4 NFTs');
     });
 
     it('4+ assets WITH cNFT should trigger two-phase (needsTwoPhaseForMixedBulk)', () => {

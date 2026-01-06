@@ -23,6 +23,11 @@ import { isJitoBundlesEnabled } from '../utils/featureFlags';
 // Bulk swaps with multiple assets are handled via transaction splitting (Task 44)
 const MAX_ASSETS_PER_SIDE = 10;
 
+// Maximum total NFTs for Jito bundle execution
+// Jito bundles max 5 transactions: 1 for SOL/fee tx + 4 for NFT transfers
+// Swaps exceeding this limit will be rejected (TwoPhase fallback removed)
+const MAX_NFTS_FOR_JITO = 4;
+
 // Minimum total assets required (at least one side must have assets or SOL)
 const MIN_TOTAL_VALUE = 1;
 
@@ -167,7 +172,18 @@ export class OfferManager {
           `Maximum is ${MAX_ASSETS_PER_SIDE} assets per side.`
         );
       }
-      
+
+      // 2c. Validate total NFT count for Jito bundle limit
+      // Jito bundles max 5 transactions, we need 1 for SOL/fee, leaving 4 for NFTs
+      const totalNfts = input.offeredAssets.length + input.requestedAssets.length;
+      if (totalNfts > MAX_NFTS_FOR_JITO) {
+        throw new Error(
+          `Too many NFTs in swap (${totalNfts}). ` +
+          `Maximum is ${MAX_NFTS_FOR_JITO} NFTs total per swap due to Jito bundle transaction limits. ` +
+          `Please reduce the number of NFTs on either side.`
+        );
+      }
+
       // 2b. Validate minimum offer value (must offer something)
       const hasOfferedAssets = input.offeredAssets.length > 0;
       const hasOfferedSol = (input.offeredSol || BigInt(0)) > BigInt(0);
@@ -1069,7 +1085,16 @@ export class OfferManager {
       // The assets are reversed: what parent maker offered, counter maker now requests
       const offeredAssets = parentOffer.requestedAssets as Array<{ type: AssetType; identifier: string }>;
       const requestedAssets = parentOffer.offeredAssets as Array<{ type: AssetType; identifier: string }>;
-      
+
+      // 5.5. Validate 4 NFT limit (Jito bundle constraint)
+      const totalNfts = offeredAssets.length + requestedAssets.length;
+      if (totalNfts > MAX_NFTS_FOR_JITO) {
+        throw new Error(
+          `Too many NFTs in counter-offer (${totalNfts}). ` +
+          `Maximum is ${MAX_NFTS_FOR_JITO} NFTs total per swap due to Jito bundle transaction limits.`
+        );
+      }
+
       // 6. Validate counter-maker owns the assets they're offering (which were parent's requested assets)
       const validation = await this.assetValidator.validateAssets(
         params.counterMakerWallet,
@@ -1261,7 +1286,17 @@ export class OfferManager {
       if (newRequestedAssets.length > MAX_ASSETS_PER_SIDE) {
         throw new Error(`Too many requested assets (${newRequestedAssets.length}). Maximum is ${MAX_ASSETS_PER_SIDE}`);
       }
-      
+
+      // 6.5. Validate 4 NFT total limit (Jito bundle constraint)
+      const totalNfts = newOfferedAssets.length + newRequestedAssets.length;
+      if (totalNfts > MAX_NFTS_FOR_JITO) {
+        throw new Error(
+          `Too many NFTs in updated offer (${totalNfts}). ` +
+          `Maximum is ${MAX_NFTS_FOR_JITO} NFTs total per swap due to Jito bundle transaction limits. ` +
+          `Please reduce the number of NFTs on either side.`
+        );
+      }
+
       // 7. Validate offer still has value
       const hasOfferedValue = newOfferedAssets.length > 0 || newOfferedSol > BigInt(0);
       const hasRequestedValue = newRequestedAssets.length > 0 || newRequestedSol > BigInt(0);

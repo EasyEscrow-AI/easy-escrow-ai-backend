@@ -597,6 +597,8 @@ export class TransactionGroupBuilder {
     // - Simpler execution flow
     // - Fresh Merkle proofs at settlement time
     // - Proven reliable for cNFT-to-cNFT, now extended to cNFT-to-SOL and cNFT-to-NFT
+    // cNFT swaps now use Jito bundles first (not two-phase by default)
+    // Two-phase is only triggered as a fallback on Jito failure
     const totalCnfts = analysis.makerCnfts + analysis.takerCnfts;
     if (totalCnfts > 0) {
       const swapType = analysis.makerCnfts > 0 && analysis.takerCnfts > 0
@@ -605,23 +607,10 @@ export class TransactionGroupBuilder {
           ? `cNFT-to-other (${analysis.makerCnfts} cNFT → SOL/NFT)`
           : `other-to-cNFT (SOL/NFT → ${analysis.takerCnfts} cNFT)`;
 
-      console.log(`[TransactionGroupBuilder] ${swapType} swap detected - routing to two-phase delegation`);
-      const twoPhaseAnalysis = {
-        ...analysis,
-        strategy: SwapStrategy.TWO_PHASE_DELEGATION,
-        reason: `cNFT swap uses two-phase delegation for reliability. Avoids Jito rate limits and ensures fresh Merkle proofs.`,
-        requiresTwoPhase: true,
-      };
-      return {
-        strategy: SwapStrategy.TWO_PHASE_DELEGATION,
-        analysis: twoPhaseAnalysis,
-        transactions: [], // No transactions built - two-phase flow handles this
-        transactionCount: analysis.transactionCount,
-        requiresJitoBundle: false,
-        totalSizeBytes: 0,
-        nonceValue: '',
-        requiresTwoPhase: true,
-      };
+      // Route cNFT swaps to Jito bundle (DIRECT_BUBBLEGUM_BUNDLE)
+      // Two-phase fallback happens at execution time if Jito fails
+      console.log(`[TransactionGroupBuilder] ${swapType} swap detected - routing to Jito bundle (DIRECT_BUBBLEGUM_BUNDLE)`);
+      // Continue to build Jito bundle - analysis.strategy should be DIRECT_BUBBLEGUM_BUNDLE
     }
 
     // If Jito is disabled and swap requires bundle, use sequential RPC for SPL/CORE NFTs
