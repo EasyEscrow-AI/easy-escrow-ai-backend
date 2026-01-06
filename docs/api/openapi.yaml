@@ -41,7 +41,7 @@ info:
 
     ## Bundle Swap Support
 
-    Bundle swaps of up to **4 NFTs total** are supported (Jito bundle transaction limit). Any combination of NFT type (SPL NFT, Core NFT, cNFT) and SOL. Bundle swap atomicity provided by JITO Solana validator for swaps requiring multiple transactions.
+    Bundle swaps of up to **4 NFTs total** (across both sides) are supported via Jito bundles. This limit exists because Jito bundles support a maximum of 5 transactions (1 for SOL/fee transfers + up to 4 for NFT transfers). Any combination of NFT types (SPL NFT, Core NFT, cNFT) and SOL is supported.
     
     ### cNFT-Specific Features
     
@@ -72,12 +72,12 @@ info:
     5. **Instant settlement** - NFTs/SOL/cNFTs transfer simultaneously
     
     ### Supported Asset Types
-    
-    - ✅ **SPL NFTs** (Metaplex standard) - Up to 10 per side
-    - ✅ **Compressed NFTs (cNFTs)** (Metaplex Bubblegum) - Up to 10 per side
+
+    - ✅ **SPL NFTs** (Metaplex standard)
+    - ✅ **Compressed NFTs (cNFTs)** (Metaplex Bubblegum)
     - ✅ **SOL** (Native Solana currency)
     - ✅ **Mixed swaps** (NFT ↔ SOL, NFT ↔ NFT, cNFT ↔ SOL, cNFT ↔ cNFT, etc.)
-    - ✅ **Bundle swaps** - Up to 10 assets on each side of the trade
+    - ✅ **Bundle swaps** - Up to 4 NFTs total (Jito bundle transaction limit)
     
     ### Key Features
     
