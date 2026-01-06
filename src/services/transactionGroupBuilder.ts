@@ -621,13 +621,16 @@ export class TransactionGroupBuilder {
         requiresTwoPhase: true,
       };
     } else if (totalCnfts > 0) {
-      // cNFT-to-SOL or cNFT-to-NFT: Use Jito (single cNFT side)
+      // Single-side cNFT swaps (cNFT-to-SOL, cNFT-to-NFT): Use Jito bundle
+      // Strategy depends on asset mix:
+      // - Pure cNFT (no SPL/Core NFTs): DIRECT_BUBBLEGUM_BUNDLE
+      // - Mixed (cNFT + SPL/Core): MIXED_NFT_BUNDLE (set by analyzeSwap)
       const swapType = analysis.makerCnfts > 0
         ? `cNFT-to-other (${analysis.makerCnfts} cNFT → SOL/NFT)`
         : `other-to-cNFT (SOL/NFT → ${analysis.takerCnfts} cNFT)`;
 
-      console.log(`[TransactionGroupBuilder] ${swapType} swap detected - routing to Jito bundle (DIRECT_BUBBLEGUM_BUNDLE)`);
-      // Continue to build Jito bundle - analysis.strategy should be DIRECT_BUBBLEGUM_BUNDLE
+      console.log(`[TransactionGroupBuilder] ${swapType} swap detected - routing to Jito bundle (${analysis.strategy})`);
+      // Continue to build Jito bundle using strategy from analyzeSwap
     }
 
     // If Jito is disabled and swap requires bundle, use sequential RPC for SPL/CORE NFTs
