@@ -1242,11 +1242,13 @@ export class TransactionGroupBuilder {
     let totalSizeBytes = 0;
     
     // Network mode detection
-    const isMainnet = process.env.SOLANA_NETWORK === 'mainnet-beta' || 
+    const isMainnet = process.env.SOLANA_NETWORK === 'mainnet-beta' ||
                       process.env.NODE_ENV === 'production';
-    const useJitoNonces = isMainnet && isJitoBundlesEnabled();
-    
-    console.log(`[TransactionGroupBuilder] Network mode: ${isMainnet ? 'mainnet (Jito bundles)' : 'devnet (sequential sends)'}`);
+    // IMPORTANT: Jito bundles do NOT use durable nonces!
+    // Durable nonces can only be advanced once per slot, breaking multi-tx bundles
+    const useJitoNonces = false;
+
+    console.log(`[TransactionGroupBuilder] Network mode: ${isMainnet ? 'mainnet' : 'devnet/staging'}, useJitoNonces: ${useJitoNonces}`);
     
     // Collect all SPL NFTs
     const makerSplNfts = inputs.makerAssets.filter(a => 
@@ -1624,10 +1626,11 @@ export class TransactionGroupBuilder {
     let totalSizeBytes = 0;
     
     // Network mode detection
-    const isMainnet = process.env.SOLANA_NETWORK === 'mainnet-beta' || 
+    const isMainnet = process.env.SOLANA_NETWORK === 'mainnet-beta' ||
                       process.env.NODE_ENV === 'production';
-    const useJitoNonces = isMainnet && isJitoBundlesEnabled();
-    
+    // IMPORTANT: Jito bundles do NOT use durable nonces!
+    const useJitoNonces = false;
+
     // Collect all NFT types
     const makerCnfts = inputs.makerAssets.filter(a => 
       a.type === AssetType.CNFT || String(a.type).toLowerCase() === 'cnft'
@@ -2454,7 +2457,8 @@ export class TransactionGroupBuilder {
     // Determine network mode
     const isMainnet = process.env.SOLANA_NETWORK === 'mainnet-beta' ||
                       process.env.NODE_ENV === 'production';
-    const useJitoNonces = isMainnet && isJitoBundlesEnabled();
+    // IMPORTANT: Jito bundles do NOT use durable nonces!
+    const useJitoNonces = false;
 
     // Build the transaction with fresh proof
     const cnftInstructions: TransactionInstruction[] = [];
