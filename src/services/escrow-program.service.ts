@@ -800,7 +800,14 @@ export class EscrowProgramService {
 
             // Best-effort: first signature is the transaction id
             if (versionedTx.signatures?.[0]?.length === 64) {
-              txSignatures.push(bs58.encode(Buffer.from(versionedTx.signatures[0])));
+              const sig = bs58.encode(Buffer.from(versionedTx.signatures[0]));
+              txSignatures.push(sig);
+              console.log(`[EscrowProgramService] Transaction ${i} signature extracted: ${sig.substring(0, 20)}...`);
+            } else {
+              console.warn(`[EscrowProgramService] Transaction ${i} (versioned) signature extraction failed:`, {
+                sigCount: versionedTx.signatures?.length,
+                firstSigLength: versionedTx.signatures?.[0]?.length,
+              });
             }
           } else {
             const legacyTx = Transaction.from(decoded);
@@ -819,7 +826,15 @@ export class EscrowProgramService {
             // Best-effort: first signature is the transaction id
             const firstSig = legacyTx.signatures?.[0]?.signature;
             if (firstSig && firstSig.length === 64 && !firstSig.every(byte => byte === 0)) {
-              txSignatures.push(bs58.encode(Buffer.from(firstSig)));
+              const sig = bs58.encode(Buffer.from(firstSig));
+              txSignatures.push(sig);
+              console.log(`[EscrowProgramService] Transaction ${i} signature extracted: ${sig.substring(0, 20)}...`);
+            } else {
+              console.warn(`[EscrowProgramService] Transaction ${i} signature extraction failed:`, {
+                hasFirstSig: !!firstSig,
+                sigLength: firstSig?.length,
+                isAllZeros: firstSig ? firstSig.every((byte: number) => byte === 0) : 'N/A',
+              });
             }
           }
         } catch (sigError: any) {
@@ -1040,11 +1055,18 @@ export class EscrowProgramService {
           }
           await JitoRegionRouter.rememberBundleRegion(bundleId, jitoBaseUrl);
           console.log(`[EscrowProgramService] ✅ Bundle submitted to Jito: ${bundleId}`);
-          
+
+          // Log signature extraction status
+          const signaturesExtracted = txSignatures.length === serializedTransactions.length;
+          console.log(`[EscrowProgramService] Signature extraction: ${txSignatures.length}/${serializedTransactions.length} (${signaturesExtracted ? 'complete' : 'incomplete'})`);
+          if (signaturesExtracted && txSignatures.length > 0) {
+            console.log(`[EscrowProgramService] First signature: ${txSignatures[0].substring(0, 20)}...`);
+          }
+
           return {
             success: true,
             bundleId,
-            signatures: txSignatures.length === serializedTransactions.length ? txSignatures : undefined,
+            signatures: signaturesExtracted ? txSignatures : undefined,
           };
           
         } catch (error) {

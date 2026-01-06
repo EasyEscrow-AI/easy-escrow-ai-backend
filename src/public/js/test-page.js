@@ -508,7 +508,6 @@ async function loadWalletInfo(wallet) {
   const nftsContainer = document.getElementById(`${wallet}-nfts`);
   const balanceDisplay = document.getElementById(`${wallet}-balance`);
 
-  addLog(`Loading ${wallet} wallet info...`, 'info');
   nftsContainer.innerHTML = '<div class="loading"><div class="spinner"></div>Loading NFTs...</div>';
 
   try {
@@ -558,8 +557,6 @@ async function loadWalletInfo(wallet) {
 
     // Render NFTs
     renderNFTs(wallet, data.data.nfts);
-
-    addLog(`✓ Loaded ${wallet} wallet: ${data.data.nftCount} NFTs found`, 'success');
 
     // Enable swap button if both wallets loaded
     if (makerData && takerData) {

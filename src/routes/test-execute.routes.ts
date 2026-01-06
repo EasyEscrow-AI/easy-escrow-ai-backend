@@ -995,7 +995,10 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
           }
           
           console.log(`✅ Bundle landed in slot ${confirmation.slot}`);
-          
+
+          // Get the first signature from the bundle for display
+          const primarySignature = bundleResult.signatures?.[0];
+
           return res.json({
             success: true,
             data: {
@@ -1005,6 +1008,8 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
               network: networkName,
               isBulkSwap: true,
               transactionCount: bulkSwapInfo.transactions.length,
+              signatures: bundleResult.signatures, // Include all transaction signatures
+              signature: primarySignature, // Primary signature for backwards compatibility
             },
             timestamp: new Date().toISOString(),
           });
