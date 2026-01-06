@@ -25,9 +25,9 @@ EasyEscrow.ai is a **100% Atomic Swap platform** enabling instant, trustless exc
 | **NFT ↔ NFT + SOL** | NFT for another NFT plus SOL | ✅ **LIVE** |
 | **cNFT ↔ SOL** | Compressed NFT for SOL | ✅ **LIVE** |
 | **NFT ↔ cNFT** | Standard NFT for compressed NFT | ✅ **LIVE** |
-| **Bulk Swaps** | Multiple NFTs (up to 10 per side) | ✅ **LIVE** |
+| **Bulk Swaps** | Multiple NFTs (up to 4 total) | ✅ **LIVE** |
 
-**Note:** Bulk swap functionality supports up to 10 assets per side (cNFTs, standard NFTs, Core NFTs, SOL). Swaps with 3+ NFTs automatically use Jito bundles for atomic execution. See [Bulk Swap Architecture](docs/BULK_CNFT_SWAP_ARCHITECTURE.md) for details.
+**Note:** Bulk swap functionality supports up to 4 NFTs total per swap (Jito bundle transaction limit). Any combination of cNFTs, standard NFTs, Core NFTs, and SOL. Multi-transaction swaps automatically use Jito bundles for atomic execution. See [Bulk Swap Architecture](docs/BULK_CNFT_SWAP_ARCHITECTURE.md) for details.
 
 ### cNFT & Bulk Swap Capabilities
 
@@ -39,8 +39,8 @@ EasyEscrow.ai is a **100% Atomic Swap platform** enabling instant, trustless exc
 - ✅ **Production Ready**: Deployed and tested on Solana mainnet
 
 #### Bulk Swap Features
-- ✅ **Multi-Asset Swaps**: Up to 10 assets per side (any combination of SPL NFT, Core NFT, cNFT, SOL)
-- ✅ **Jito Bundle Atomicity**: Swaps with 3+ assets automatically use Jito bundles for all-or-nothing execution
+- ✅ **Multi-Asset Swaps**: Up to 4 NFTs total per swap (any combination of SPL NFT, Core NFT, cNFT, SOL)
+- ✅ **Jito Bundle Atomicity**: Multi-transaction swaps automatically use Jito bundles for all-or-nothing execution
 - ✅ **Transaction Splitting**: Intelligent splitting based on asset types and transaction size limits
 - ✅ **Address Lookup Tables**: Automatic ALT usage for transaction size optimization
 - ✅ **Smart Ordering**: Optimal transaction sequencing (fee first, tip last)
@@ -71,7 +71,7 @@ EasyEscrow.ai is a production-ready atomic swap platform built on Solana blockch
 - **⚡ Atomic Swaps**: Instant, trustless peer-to-peer asset exchanges
 - **🔐 Nonce-Based Transactions**: Durable transactions with automatic retry logic
 - **🎨 NFT Support**: Standard NFTs (Metaplex), compressed NFTs (cNFTs), and Core NFTs
-- **📦 Bulk Swaps**: Up to 10 assets per side with automatic Jito bundle execution
+- **📦 Bulk Swaps**: Up to 4 NFTs total with automatic Jito bundle execution
 - **🌿 cNFT Features**: Full Merkle proof handling, stale proof retry, canopy optimization
 - **💸 SOL Integration**: Native SOL token transfers in swaps
 - **🌐 Multi-Environment**: Separate deployments for development, staging, and production

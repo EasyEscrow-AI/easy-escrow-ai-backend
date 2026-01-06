@@ -21,12 +21,12 @@
 
 ## Overview
 
-This guide provides comprehensive documentation for integrating bulk cNFT swap functionality into frontend applications. Bulk swaps support up to 10 assets per side and automatically use Jito bundles for atomic execution when 3+ NFTs are involved.
+This guide provides comprehensive documentation for integrating bulk cNFT swap functionality into frontend applications. Bulk swaps support up to 4 NFTs total per swap (Jito bundle transaction limit) and automatically use Jito bundles for atomic execution when multiple transactions are required.
 
 ### Key Features
 
-- ✅ **Multi-Asset Support**: Up to 10 assets per side (cNFTs, NFTs, Core NFTs, SOL)
-- ✅ **Automatic Bundle Management**: Jito bundles for 3+ NFTs
+- ✅ **Multi-Asset Support**: Up to 4 NFTs total per swap (cNFTs, NFTs, Core NFTs, SOL)
+- ✅ **Automatic Bundle Management**: Jito bundles for multi-transaction swaps
 - ✅ **Transaction Groups**: Multiple transactions for large swaps
 - ✅ **Status Polling**: Real-time bundle status updates
 - ✅ **Error Recovery**: Retry mechanisms for failed bundles
