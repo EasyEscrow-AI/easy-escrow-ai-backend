@@ -24,8 +24,8 @@ import {
 import { AssetType } from '../../src/services/assetValidator';
 
 // Constants matching the production code
-const CNFT_TWO_PHASE_THRESHOLD = 3; // 3+ cNFTs on either side
-const TOTAL_ASSET_TWO_PHASE_THRESHOLD = 5; // 5+ total assets
+// NOTE: Two-Phase is now ONLY triggered by cNFT-to-cNFT (cNFTs on BOTH sides)
+// Single-side cNFT swaps (even bulk like 4 cNFT → SOL) use Jito bundles
 const MAX_CNFTS_SEQUENTIAL_RPC = 2; // ≤2 cNFTs for sequential RPC
 const MAX_ASSETS_SEQUENTIAL_RPC = 3; // ≤3 assets for sequential RPC
 
@@ -60,6 +60,7 @@ function canUseSequentialRpc(makerCnfts: number, takerCnfts: number, totalAssets
 
 /**
  * Simulates the complete method selection logic
+ * Updated to match new routing: Two-Phase ONLY for cNFT-to-cNFT
  */
 function determineExecutionMethod(
   makerAssets: SwapAssetInput[],
@@ -71,28 +72,31 @@ function determineExecutionMethod(
   const totalCnfts = makerCnfts + takerCnfts;
   const totalAssets = makerAssets.length + takerAssets.length;
   const hasCnfts = totalCnfts > 0;
+  const hasCnftOnBothSides = makerCnfts > 0 && takerCnfts > 0;
 
   // No cNFTs = atomic swap (single transaction)
   if (!hasCnfts && totalAssets <= 2) {
     return 'ATOMIC';
   }
 
-  // cNFT swaps need multiple transactions (1 per cNFT)
-  const needsMultipleTx = hasCnfts;
-
-  if (!needsMultipleTx) {
-    // Bulk NFT swap (no cNFTs)
+  // Bulk NFT swap (no cNFTs) - uses Jito if enabled, else Two-Phase for large swaps
+  if (!hasCnfts) {
     if (jitoEnabled) {
       return 'JITO_BUNDLE';
     }
-    // Large bulk swap without Jito
-    if (totalAssets >= TOTAL_ASSET_TWO_PHASE_THRESHOLD) {
+    // Large bulk swap without Jito (>4 would be rejected, but test fallback)
+    if (totalAssets >= 5) {
       return 'TWO_PHASE';
     }
     return 'ATOMIC';
   }
 
-  // cNFT swap - needs bundle or two-phase
+  // cNFT-to-cNFT ALWAYS uses Two-Phase (for reliable Merkle proofs)
+  if (hasCnftOnBothSides) {
+    return 'TWO_PHASE';
+  }
+
+  // Single-side cNFT swap - uses bundle or sequential RPC
   if (jitoEnabled) {
     return 'JITO_BUNDLE';
   }
@@ -232,13 +236,14 @@ describe('Swap Method Selection Logic', () => {
   describe('Complete Method Selection - Jito Disabled', () => {
     const jitoEnabled = false;
 
-    it('1:1 cNFT swap → SEQUENTIAL_RPC (2 cNFTs, 2 assets)', () => {
+    it('1:1 cNFT swap → TWO_PHASE (cNFT-to-cNFT always uses Two-Phase)', () => {
+      // cNFT-to-cNFT swaps ALWAYS use Two-Phase, regardless of Jito flag
       const makerAssets = createCnftAssets(1, 'maker');
       const takerAssets = createCnftAssets(1, 'taker');
 
       const method = determineExecutionMethod(makerAssets, takerAssets, jitoEnabled);
 
-      expect(method).to.equal('SEQUENTIAL_RPC');
+      expect(method).to.equal('TWO_PHASE');
     });
 
     it('1:3 cNFT swap → TWO_PHASE (4 cNFTs, 4 assets)', () => {
@@ -317,45 +322,56 @@ describe('Swap Method Selection Logic', () => {
   describe('Complete Method Selection - Jito Enabled', () => {
     const jitoEnabled = true;
 
-    it('1:1 cNFT swap → JITO_BUNDLE', () => {
+    it('1:1 cNFT swap → TWO_PHASE (cNFT-to-cNFT always uses Two-Phase)', () => {
+      // cNFT-to-cNFT ALWAYS uses Two-Phase, even with Jito enabled
       const makerAssets = createCnftAssets(1, 'maker');
       const takerAssets = createCnftAssets(1, 'taker');
 
       const method = determineExecutionMethod(makerAssets, takerAssets, jitoEnabled);
 
-      expect(method).to.equal('JITO_BUNDLE');
+      expect(method).to.equal('TWO_PHASE');
     });
 
-    it('1:3 cNFT swap → JITO_BUNDLE', () => {
+    it('1:3 cNFT swap → TWO_PHASE (cNFT-to-cNFT)', () => {
       const makerAssets = createCnftAssets(1, 'maker');
       const takerAssets = createCnftAssets(3, 'taker');
 
       const method = determineExecutionMethod(makerAssets, takerAssets, jitoEnabled);
 
-      expect(method).to.equal('JITO_BUNDLE');
+      expect(method).to.equal('TWO_PHASE');
     });
 
-    it('3:1 cNFT swap → JITO_BUNDLE', () => {
+    it('3:1 cNFT swap → TWO_PHASE (cNFT-to-cNFT)', () => {
       const makerAssets = createCnftAssets(3, 'maker');
       const takerAssets = createCnftAssets(1, 'taker');
 
       const method = determineExecutionMethod(makerAssets, takerAssets, jitoEnabled);
 
-      expect(method).to.equal('JITO_BUNDLE');
+      expect(method).to.equal('TWO_PHASE');
     });
 
-    it('3:3 cNFT swap → JITO_BUNDLE', () => {
+    it('3:3 cNFT swap → TWO_PHASE (cNFT-to-cNFT)', () => {
       const makerAssets = createCnftAssets(3, 'maker');
       const takerAssets = createCnftAssets(3, 'taker');
 
       const method = determineExecutionMethod(makerAssets, takerAssets, jitoEnabled);
 
-      expect(method).to.equal('JITO_BUNDLE');
+      expect(method).to.equal('TWO_PHASE');
     });
 
-    it('2:1 cNFT swap → JITO_BUNDLE', () => {
+    it('2:1 cNFT swap → TWO_PHASE (cNFT-to-cNFT)', () => {
       const makerAssets = createCnftAssets(2, 'maker');
       const takerAssets = createCnftAssets(1, 'taker');
+
+      const method = determineExecutionMethod(makerAssets, takerAssets, jitoEnabled);
+
+      expect(method).to.equal('TWO_PHASE');
+    });
+
+    it('3 cNFT → SOL (single-side) → JITO_BUNDLE', () => {
+      // Single-side cNFT uses Jito bundle
+      const makerAssets = createCnftAssets(3, 'maker');
+      const takerAssets: SwapAssetInput[] = [];
 
       const method = determineExecutionMethod(makerAssets, takerAssets, jitoEnabled);
 
@@ -427,7 +443,8 @@ describe('Swap Method Selection Logic', () => {
   });
 
   describe('Threshold Boundary Tests', () => {
-    it('Exactly 2 cNFTs, 3 assets → SEQUENTIAL_RPC (at boundary)', () => {
+    it('Exactly 2 cNFTs on BOTH sides, 3 assets → TWO_PHASE (cNFT-to-cNFT)', () => {
+      // cNFT on BOTH maker and taker → TWO_PHASE (regardless of count)
       const makerAssets: SwapAssetInput[] = [
         { type: AssetType.CNFT, identifier: 'cnft-1' },
         { type: AssetType.NFT, identifier: 'nft-1' },
@@ -438,8 +455,8 @@ describe('Swap Method Selection Logic', () => {
 
       const method = determineExecutionMethod(makerAssets, takerAssets, false);
 
-      // 2 cNFTs = 2 (limit), 3 assets = 3 (limit) - exactly at boundary
-      expect(method).to.equal('SEQUENTIAL_RPC');
+      // cNFT on BOTH sides = TWO_PHASE (for reliable Merkle proofs)
+      expect(method).to.equal('TWO_PHASE');
     });
 
     it('Exactly 3 cNFTs, 3 assets → TWO_PHASE (over cNFT limit)', () => {
@@ -475,8 +492,8 @@ describe('Swap Method Selection Logic', () => {
   });
 
   describe('swapFlowRouter Threshold Constants Verification', () => {
-    it('CNFT_TWO_PHASE_THRESHOLD should be 3', () => {
-      // 2 cNFTs on one side should NOT trigger two-phase
+    it('Single-side cNFT swaps should NOT trigger two-phase (uses Jito bundle)', () => {
+      // 2 cNFTs on one side → CNFT_DELEGATION (Jito bundle)
       const result2 = determineSwapFlow(
         createCnftAssets(2),
         [],
@@ -484,15 +501,30 @@ describe('Swap Method Selection Logic', () => {
         BigInt(1e9) // Need SOL to make it valid
       );
       expect(result2.requiresTwoPhase).to.be.false;
+      expect(result2.flowType).to.equal(SwapFlowType.CNFT_DELEGATION);
 
-      // 3 cNFTs on one side SHOULD trigger two-phase
+      // 3 cNFTs on one side → still CNFT_DELEGATION (Jito bundle), NOT two-phase
+      // Two-phase is ONLY for cNFT-to-cNFT (cNFTs on BOTH sides)
       const result3 = determineSwapFlow(
         createCnftAssets(3),
         [],
         undefined,
         BigInt(1e9)
       );
-      expect(result3.requiresTwoPhase).to.be.true;
+      expect(result3.requiresTwoPhase).to.be.false;
+      expect(result3.flowType).to.equal(SwapFlowType.CNFT_DELEGATION);
+    });
+
+    it('cNFT-to-cNFT swaps SHOULD trigger two-phase', () => {
+      // 1 cNFT ↔ 1 cNFT → TWO_PHASE
+      const result = determineSwapFlow(
+        createCnftAssets(1),
+        createCnftAssets(1),
+        undefined,
+        undefined
+      );
+      expect(result.requiresTwoPhase).to.be.true;
+      expect(result.flowType).to.equal(SwapFlowType.TWO_PHASE);
     });
 
     it('MAX_NFTS_FOR_JITO should be 4 (rejects >4 NFTs)', () => {
@@ -517,8 +549,8 @@ describe('Swap Method Selection Logic', () => {
       expect(result5.error).to.include('Maximum 4 NFTs');
     });
 
-    it('4+ assets WITH cNFT should trigger two-phase (needsTwoPhaseForMixedBulk)', () => {
-      // 3 assets with cNFT should NOT trigger
+    it('4 assets with cNFT on ONE side should NOT trigger two-phase (uses Jito)', () => {
+      // 3 assets with cNFT on one side → CNFT_DELEGATION (Jito)
       const result3 = determineSwapFlow(
         [{ type: AssetType.CNFT, identifier: 'cnft-1' }],
         [{ type: AssetType.NFT, identifier: 'nft-1' }, { type: AssetType.NFT, identifier: 'nft-2' }],
@@ -526,15 +558,29 @@ describe('Swap Method Selection Logic', () => {
         undefined
       );
       expect(result3.requiresTwoPhase).to.be.false;
+      expect(result3.flowType).to.equal(SwapFlowType.CNFT_DELEGATION);
 
-      // 4 assets with cNFT SHOULD trigger
+      // 4 assets with cNFT on ONE side → still CNFT_DELEGATION (Jito), NOT two-phase
       const result4 = determineSwapFlow(
         [{ type: AssetType.CNFT, identifier: 'cnft-1' }, { type: AssetType.NFT, identifier: 'nft-1' }],
         [{ type: AssetType.NFT, identifier: 'nft-2' }, { type: AssetType.NFT, identifier: 'nft-3' }],
         undefined,
         undefined
       );
-      expect(result4.requiresTwoPhase).to.be.true;
+      expect(result4.requiresTwoPhase).to.be.false;
+      expect(result4.flowType).to.equal(SwapFlowType.CNFT_DELEGATION);
+    });
+
+    it('4 assets with cNFT on BOTH sides SHOULD trigger two-phase', () => {
+      // cNFT on BOTH sides → TWO_PHASE
+      const result = determineSwapFlow(
+        [{ type: AssetType.CNFT, identifier: 'cnft-1' }, { type: AssetType.NFT, identifier: 'nft-1' }],
+        [{ type: AssetType.NFT, identifier: 'nft-2' }, { type: AssetType.CNFT, identifier: 'cnft-2' }],
+        undefined,
+        undefined
+      );
+      expect(result.requiresTwoPhase).to.be.true;
+      expect(result.flowType).to.equal(SwapFlowType.TWO_PHASE);
     });
   });
 

@@ -2827,24 +2827,21 @@ function serializeTwoPhaseSwap(swap: any): any {
 
 /**
  * Determine execution strategy based on swap parameters
- * - Atomic: Simple swaps (1-2 assets, single cNFT↔SOL)
- * - Two-phase: Complex swaps (3+ cNFTs, bulk assets, cNFT↔cNFT)
+ * - Atomic: Simple swaps, or cNFT swaps with cNFTs on ONE side only
+ * - Two-phase: ONLY for cNFT-to-cNFT swaps (cNFTs on BOTH sides)
  *
- * IMPORTANT: cNFT-to-cNFT swaps ALWAYS use two-phase delegation.
- * This eliminates JITO bundle dependency and uses sequential settlement
- * with fresh Merkle proofs fetched per transaction (Magic Eden style).
+ * All other cNFT swaps (cNFT→SOL, cNFT→NFT, bulk cNFT sales) use Jito bundles,
+ * which are handled by TransactionGroupBuilder at accept time.
+ * This function is only used for the deprecated /bulk endpoint.
  */
 function determineExecutionStrategy(assetsA: any[], assetsB: any[]): 'atomic' | 'two-phase' {
   const cnftCountA = assetsA.filter((a: any) => a.isCompressed || a.type === 'CNFT').length;
   const cnftCountB = assetsB.filter((a: any) => a.isCompressed || a.type === 'CNFT').length;
-  const totalAssets = assetsA.length + assetsB.length;
 
-  // Use two-phase for:
-  // - cNFT-to-cNFT swaps (any cNFT on both sides)
-  // - 3+ cNFTs on either side
-  // - 5+ total assets
+  // Two-phase ONLY for cNFT-to-cNFT (cNFTs on BOTH sides)
+  // All other cases (including bulk cNFT sales like 4 cNFT → SOL) use Jito bundles
   const hasCnftOnBothSides = cnftCountA > 0 && cnftCountB > 0;
-  if (hasCnftOnBothSides || cnftCountA >= 3 || cnftCountB >= 3 || totalAssets >= 5) {
+  if (hasCnftOnBothSides) {
     return 'two-phase';
   }
 

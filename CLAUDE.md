@@ -137,6 +137,12 @@ Process killing causes data corruption in PostgreSQL/Redis, incomplete transacti
 
 ### 3. Testing Rules (CRITICAL)
 
+**ALWAYS update unit tests when changing logic:**
+- When modifying routing, validation, or business logic, find and update related unit tests
+- All tests must pass (100% green) before committing
+- Run affected tests: `npx cross-env NODE_ENV=test mocha --require ts-node/register --no-config tests/unit/AFFECTED_TEST.test.ts --timeout 30000`
+- Key test files for swap routing: `swapFlowRouterIntegration.test.ts`, `swapMethodSelection.test.ts`, `apiDelegationRouting.test.ts`
+
 **NEVER use:** `npm test -- path/to/test.ts` - this loads ALL tests due to glob patterns.
 
 **ALWAYS use `--no-config` flag for single tests:**

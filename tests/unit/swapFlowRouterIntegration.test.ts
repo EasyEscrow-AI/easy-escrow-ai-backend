@@ -78,8 +78,9 @@ describe('Swap Flow Router - Integration Scenarios', () => {
       expect(needsTwoPhase(offeredAssets, requestedAssets)).to.be.false;
     });
 
-    it('should correctly identify two-phase flow for bulk cNFT swap', () => {
-      // Simulates: POST /api/swaps/offers/bulk with 3+ cNFTs
+    it('should correctly identify delegation flow for bulk cNFT sale (single-side cNFT)', () => {
+      // Simulates: POST /api/swaps/offers with 3 cNFTs for SOL (bundle marketplace sale)
+      // Single-side cNFT (no cNFT on taker side) → uses Jito bundle, NOT Two-Phase
       const offeredAssets = [
         { type: AssetType.CNFT, identifier: 'cnft-1' },
         { type: AssetType.CNFT, identifier: 'cnft-2' },
@@ -95,15 +96,15 @@ describe('Swap Flow Router - Integration Scenarios', () => {
         requestedSol
       );
 
-      // Verify bulk cNFT triggers two-phase flow
-      expect(flowResult.flowType).to.equal(SwapFlowType.TWO_PHASE);
+      // Bulk cNFT sale (cNFTs on ONE side only) uses CNFT_DELEGATION with Jito bundle
+      expect(flowResult.flowType).to.equal(SwapFlowType.CNFT_DELEGATION);
       expect(flowResult.requiresDelegation).to.be.true;
-      expect(flowResult.requiresTwoPhase).to.be.true;
+      expect(flowResult.requiresTwoPhase).to.be.false; // NOT Two-Phase for single-side cNFT
       expect(flowResult.cnftCount).to.equal(3);
 
       // Verify helper functions
       expect(needsDelegation(offeredAssets, requestedAssets)).to.be.true;
-      expect(needsTwoPhase(offeredAssets, requestedAssets)).to.be.true;
+      expect(needsTwoPhase(offeredAssets, requestedAssets)).to.be.false;
     });
   });
 
@@ -398,8 +399,8 @@ describe('Swap Flow Router - Integration Scenarios', () => {
   });
 
   describe('Edge Cases and Error Handling', () => {
-    it('should handle mixed asset types with correct prioritization', () => {
-      // Mix of NFT, Core NFT, and cNFT
+    it('should handle mixed asset types with cNFT-to-cNFT correctly', () => {
+      // Mix of NFT, Core NFT, and cNFT - with cNFTs on BOTH sides
       const offeredAssets = [
         { type: AssetType.NFT, identifier: 'nft-1' },
         { type: AssetType.CORE_NFT, identifier: 'core-1' },
@@ -416,7 +417,7 @@ describe('Swap Flow Router - Integration Scenarios', () => {
         undefined
       );
 
-      // 4 assets with cNFT should trigger two-phase
+      // cNFT on BOTH sides (1 offered + 1 requested) → TWO_PHASE for reliable Merkle proofs
       expect(flowResult.flowType).to.equal(SwapFlowType.TWO_PHASE);
       expect(flowResult.requiresDelegation).to.be.true;
       expect(flowResult.requiresTwoPhase).to.be.true;
@@ -489,11 +490,11 @@ describe('Swap Flow Router - Integration Scenarios', () => {
       expect(flowResult.cnftCount).to.equal(1);
     });
 
-    it('should allow 4 NFTs with cNFTs (at the limit)', () => {
-      // 4 total assets WITH cNFT is at the limit - should work
+    it('should allow 4 NFTs with cNFT on one side (uses Jito bundle)', () => {
+      // 4 total assets WITH cNFT on ONE side only → uses Jito bundle, NOT Two-Phase
       const offeredAssets = [
         { type: AssetType.NFT, identifier: 'nft-1' },
-        { type: AssetType.CNFT, identifier: 'cnft-1' }, // cNFT present
+        { type: AssetType.CNFT, identifier: 'cnft-1' }, // cNFT present on offered side only
       ];
       const requestedAssets = [
         { type: AssetType.NFT, identifier: 'nft-2' },
@@ -507,9 +508,9 @@ describe('Swap Flow Router - Integration Scenarios', () => {
         undefined
       );
 
-      // 4 assets WITH cNFT triggers two-phase (at the limit, but allowed)
-      expect(flowResult.flowType).to.equal(SwapFlowType.TWO_PHASE);
-      expect(flowResult.requiresTwoPhase).to.be.true;
+      // cNFT on ONE side only → CNFT_DELEGATION with Jito bundle (not Two-Phase)
+      expect(flowResult.flowType).to.equal(SwapFlowType.CNFT_DELEGATION);
+      expect(flowResult.requiresTwoPhase).to.be.false;
       expect(flowResult.requiresDelegation).to.be.true; // Has cNFT
       expect(flowResult.totalAssetCount).to.equal(4);
       expect(flowResult.cnftCount).to.equal(1);
