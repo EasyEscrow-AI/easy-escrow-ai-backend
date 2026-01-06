@@ -1386,10 +1386,25 @@ async function fetchSwapQuote(makerNFTs, takerNFTs, offeredSol, requestedSol, ap
         // Cap percentage at 100 for display, but show actual ratio
         const percentage = Math.min((txSize.estimated / txSize.maxSize) * 100, 100);
 
-        // Determine color based on status - but ALWAYS show red if over limit
+        // Check if this is a multi-transaction strategy (Jito bundle or Two-Phase)
+        // For these strategies, OVER LIMIT is irrelevant since transactions are split
+        const strategy = quote.swapAnalysis?.strategy || '';
+        const isMultiTxStrategy = [
+          'DIRECT_BUBBLEGUM_BUNDLE',
+          'DIRECT_NFT_BUNDLE',
+          'MIXED_NFT_BUNDLE',
+          'TWO_PHASE_DELEGATION',
+        ].includes(strategy);
+        const txCount = quote.swapAnalysis?.transactionCount || 1;
+
+        // Determine color based on status - but skip OVER LIMIT for multi-tx strategies
         let barColor = '#22c55e'; // green
         let statusText = '✅ OK';
-        if (isOverLimit || txSize.status === 'too_large') {
+        if (isMultiTxStrategy && txCount > 1) {
+          // Multi-transaction: show bundle info instead of size warning
+          barColor = '#3b82f6'; // blue
+          statusText = `📦 ${txCount} TXs`;
+        } else if (isOverLimit || txSize.status === 'too_large') {
           barColor = '#ef4444'; // red
           statusText = '❌ OVER LIMIT';
         } else if (txSize.status === 'alt_required') {
@@ -1400,8 +1415,25 @@ async function fetchSwapQuote(makerNFTs, takerNFTs, offeredSol, requestedSol, ap
           statusText = '⚠️ Near Limit';
         }
 
-        // Build display HTML
-        let html = `
+        // Build display HTML - different content for multi-tx vs single-tx
+        let html;
+        if (isMultiTxStrategy && txCount > 1) {
+          // Multi-transaction strategy: show bundle info instead of size bar
+          const executionMethod = quote.bulkSwap?.executionMethod || strategy;
+          html = `
+                    <div class="tx-size-info">
+                        <div class="tx-size-header" style="margin-bottom: 8px;">
+                            <span class="tx-size-label">Execution:</span>
+                            <span class="tx-size-value" style="color: ${barColor}; font-weight: 600;">${txCount} Transactions</span>
+                            <span class="tx-size-status" style="color: ${barColor}">${statusText}</span>
+                        </div>
+                        <div style="font-size: 0.8rem; color: #64748b; margin-bottom: 4px;">
+                            ${executionMethod}
+                        </div>
+                `;
+        } else {
+          // Single transaction: show traditional size bar
+          html = `
                     <div class="tx-size-info">
                         <div class="tx-size-header">
                             <span class="tx-size-label">Transaction Size:</span>
@@ -1412,9 +1444,10 @@ async function fetchSwapQuote(makerNFTs, takerNFTs, offeredSol, requestedSol, ap
                             <div class="tx-size-bar" style="width: ${percentage}%; background-color: ${barColor}"></div>
                         </div>
                 `;
+        }
 
-        // Add warnings if present
-        if (quote.warnings && quote.warnings.length > 0) {
+        // Add warnings if present (skip for multi-tx strategies since size warnings are irrelevant)
+        if (!isMultiTxStrategy && quote.warnings && quote.warnings.length > 0) {
           quote.warnings.forEach((warning) => {
             html += `
                             <div class="tx-warning" style="background: #fef2f2; border: 1px solid #ef4444; padding: 8px; border-radius: 6px; margin-bottom: 10px; color: #991b1b; font-size: 0.8rem;">
@@ -1424,8 +1457,8 @@ async function fetchSwapQuote(makerNFTs, takerNFTs, offeredSol, requestedSol, ap
           });
         }
 
-        // Add ALT info if needed
-        if (txSize.useALT && txSize.estimatedWithALT) {
+        // Add ALT info if needed (skip for multi-tx strategies)
+        if (!isMultiTxStrategy && txSize.useALT && txSize.estimatedWithALT) {
           const altPercentage = Math.min((txSize.estimatedWithALT / txSize.maxSize) * 100, 100);
           const savings = txSize.altSavings || txSize.estimated - txSize.estimatedWithALT;
           html += `
