@@ -1212,14 +1212,17 @@ export class TransactionGroupBuilder {
       }
     }
 
+    // Determine if Jito bundles should be used (separate from nonce usage)
+    const shouldUseJitoBundle = isMainnet && isJitoBundlesEnabled();
+
     return {
       strategy: SwapStrategy.DIRECT_BUBBLEGUM_BUNDLE,
       analysis,
       transactions,
       transactionCount: transactions.length,
-      requiresJitoBundle: useJitoNonces, // Only require Jito on mainnet
+      requiresJitoBundle: shouldUseJitoBundle, // Jito bundles on mainnet, but NOT durable nonces
       totalSizeBytes,
-      nonceValue: useJitoNonces ? nonceValue : 'fresh-blockhash', // Indicate blockhash strategy
+      nonceValue: 'fresh-blockhash', // Always use recent blockhash for Jito bundles
     };
   }
   
@@ -1597,17 +1600,20 @@ export class TransactionGroupBuilder {
       }
     }
 
+    // Determine if Jito bundles should be used (separate from nonce usage)
+    const shouldUseJitoBundle = isMainnet && isJitoBundlesEnabled();
+
     return {
       strategy: SwapStrategy.DIRECT_NFT_BUNDLE,
       analysis,
       transactions,
       transactionCount: transactions.length,
-      requiresJitoBundle: useJitoNonces,
+      requiresJitoBundle: shouldUseJitoBundle, // Jito bundles on mainnet, but NOT durable nonces
       totalSizeBytes,
-      nonceValue: useJitoNonces ? nonceValue : 'fresh-blockhash',
+      nonceValue: 'fresh-blockhash', // Always use recent blockhash for Jito bundles
     };
   }
-  
+
   /**
    * Build mixed NFT bundle for swaps with combinations of cNFTs, SPL NFTs, and Core NFTs
    */
@@ -1944,17 +1950,20 @@ export class TransactionGroupBuilder {
       }
     }
 
+    // Determine if Jito bundles should be used (separate from nonce usage)
+    const shouldUseJitoBundle = isMainnet && isJitoBundlesEnabled();
+
     return {
       strategy: SwapStrategy.MIXED_NFT_BUNDLE,
       analysis,
       transactions,
       transactionCount: transactions.length,
-      requiresJitoBundle: useJitoNonces,
+      requiresJitoBundle: shouldUseJitoBundle, // Jito bundles on mainnet, but NOT durable nonces
       totalSizeBytes,
-      nonceValue: useJitoNonces ? nonceValue : 'fresh-blockhash',
+      nonceValue: 'fresh-blockhash', // Always use recent blockhash for Jito bundles
     };
   }
-  
+
   /**
    * Helper: Build SOL transfer transaction for bundles
    */
