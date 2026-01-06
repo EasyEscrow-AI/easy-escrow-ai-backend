@@ -591,24 +591,41 @@ export class TransactionGroupBuilder {
       };
     }
 
-    // Route ALL cNFT swaps to two-phase delegation
-    // This provides better reliability than Jito bundles:
-    // - No rate limits (Jito can return 429 during congestion)
-    // - Simpler execution flow
-    // - Fresh Merkle proofs at settlement time
-    // - Proven reliable for cNFT-to-cNFT, now extended to cNFT-to-SOL and cNFT-to-NFT
-    // cNFT swaps now use Jito bundles first (not two-phase by default)
-    // Two-phase is only triggered as a fallback on Jito failure
+    // Route cNFT swaps based on whether cNFTs are on one or both sides:
+    // - cNFT-to-cNFT: Use Two-Phase (both proofs must be fresh, higher failure rate with Jito)
+    // - cNFT-to-SOL/NFT: Use Jito (single proof to manage, Jito works well)
     const totalCnfts = analysis.makerCnfts + analysis.takerCnfts;
-    if (totalCnfts > 0) {
-      const swapType = analysis.makerCnfts > 0 && analysis.takerCnfts > 0
-        ? `cNFT-to-cNFT (${analysis.makerCnfts} ↔ ${analysis.takerCnfts})`
-        : analysis.makerCnfts > 0
-          ? `cNFT-to-other (${analysis.makerCnfts} cNFT → SOL/NFT)`
-          : `other-to-cNFT (SOL/NFT → ${analysis.takerCnfts} cNFT)`;
+    const hasCnftOnBothSides = analysis.makerCnfts > 0 && analysis.takerCnfts > 0;
 
-      // Route cNFT swaps to Jito bundle (DIRECT_BUBBLEGUM_BUNDLE)
-      // Two-phase fallback happens at execution time if Jito fails
+    if (hasCnftOnBothSides) {
+      // cNFT-to-cNFT: Route to Two-Phase for better reliability
+      // Reason: Both proofs must be valid at same slot with Jito, causing frequent failures
+      // Two-Phase fetches fresh proofs at settlement time and can retry if needed
+      console.log(`[TransactionGroupBuilder] cNFT-to-cNFT (${analysis.makerCnfts} ↔ ${analysis.takerCnfts}) - routing to Two-Phase for reliability`);
+
+      const twoPhaseAnalysis = {
+        ...analysis,
+        strategy: SwapStrategy.TWO_PHASE_DELEGATION,
+        reason: `cNFT-to-cNFT swap requires Two-Phase delegation for reliable proof handling`,
+        requiresTwoPhase: true,
+      };
+
+      return {
+        strategy: SwapStrategy.TWO_PHASE_DELEGATION,
+        analysis: twoPhaseAnalysis,
+        transactions: [], // No transactions built - two-phase flow handles this
+        transactionCount: analysis.transactionCount,
+        requiresJitoBundle: false,
+        totalSizeBytes: 0,
+        nonceValue: '',
+        requiresTwoPhase: true,
+      };
+    } else if (totalCnfts > 0) {
+      // cNFT-to-SOL or cNFT-to-NFT: Use Jito (single cNFT side)
+      const swapType = analysis.makerCnfts > 0
+        ? `cNFT-to-other (${analysis.makerCnfts} cNFT → SOL/NFT)`
+        : `other-to-cNFT (SOL/NFT → ${analysis.takerCnfts} cNFT)`;
+
       console.log(`[TransactionGroupBuilder] ${swapType} swap detected - routing to Jito bundle (DIRECT_BUBBLEGUM_BUNDLE)`);
       // Continue to build Jito bundle - analysis.strategy should be DIRECT_BUBBLEGUM_BUNDLE
     }
