@@ -769,8 +769,10 @@ export class TransactionGroupBuilder {
     const useJitoNonces = false;
     const isMainnet = process.env.SOLANA_NETWORK === 'mainnet-beta' ||
                       process.env.NODE_ENV === 'production';
+    // Determine if Jito bundles should be used (separate from nonce usage)
+    const shouldUseJitoBundle = isMainnet && isJitoBundlesEnabled();
 
-    console.log(`[TransactionGroupBuilder] Network mode: ${isMainnet ? 'mainnet' : 'devnet/staging'}, useJitoNonces: ${useJitoNonces}`);
+    console.log(`[TransactionGroupBuilder] Network mode: ${isMainnet ? 'mainnet' : 'devnet/staging'}, useJitoNonces: ${useJitoNonces}, shouldUseJitoBundle: ${shouldUseJitoBundle}`);
     
     // Collect all cNFT assets
     const makerCnfts = inputs.makerAssets.filter(a => 
@@ -983,7 +985,8 @@ export class TransactionGroupBuilder {
       cnftInstructions.push(transferResult.instruction);
 
       // Add Jito tip as LAST instruction in LAST transaction (Jito requirement / best practice).
-      if (useJitoNonces && isLastTransaction) {
+      // Note: Use shouldUseJitoBundle, NOT useJitoNonces (nonces are disabled but Jito bundles still need tips)
+      if (shouldUseJitoBundle && isLastTransaction) {
         const JITO_TIP_ACCOUNTS = [
           'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
           'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
@@ -1101,7 +1104,8 @@ export class TransactionGroupBuilder {
       cnftInstructions.push(transferResult.instruction);
 
       // Add Jito tip as LAST instruction in LAST transaction (Jito requirement / best practice).
-      if (useJitoNonces && isLastTransaction) {
+      // Note: Use shouldUseJitoBundle, NOT useJitoNonces (nonces are disabled but Jito bundles still need tips)
+      if (shouldUseJitoBundle && isLastTransaction) {
         const JITO_TIP_ACCOUNTS = [
           'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
           'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
@@ -1212,9 +1216,6 @@ export class TransactionGroupBuilder {
       }
     }
 
-    // Determine if Jito bundles should be used (separate from nonce usage)
-    const shouldUseJitoBundle = isMainnet && isJitoBundlesEnabled();
-
     return {
       strategy: SwapStrategy.DIRECT_BUBBLEGUM_BUNDLE,
       analysis,
@@ -1262,13 +1263,29 @@ export class TransactionGroupBuilder {
     );
     
     // Collect all Core NFTs
-    const makerCoreNfts = inputs.makerAssets.filter(a => 
+    const makerCoreNfts = inputs.makerAssets.filter(a =>
       a.type === AssetType.CORE_NFT || String(a.type).toLowerCase() === 'core_nft'
     );
-    const takerCoreNfts = inputs.takerAssets.filter(a => 
+    const takerCoreNfts = inputs.takerAssets.filter(a =>
       a.type === AssetType.CORE_NFT || String(a.type).toLowerCase() === 'core_nft'
     );
-    
+
+    // Determine if Jito bundles should be used (separate from nonce usage)
+    const shouldUseJitoBundle = isMainnet && isJitoBundlesEnabled();
+
+    // Calculate total transactions upfront to know which is last (for Jito tip)
+    const splPerTx = MAX_SPL_NFTS_PER_TRANSACTION;
+    const corePerTx = MAX_CORE_NFTS_PER_TRANSACTION;
+    const hasSolTx = analysis.hasSolTransfer || inputs.platformFeeLamports > BigInt(0);
+    const numSolTxs = hasSolTx ? 1 : 0;
+    const numMakerSplTxs = Math.ceil(makerSplNfts.length / splPerTx) || 0;
+    const numTakerSplTxs = Math.ceil(takerSplNfts.length / splPerTx) || 0;
+    const numMakerCoreTxs = Math.ceil(makerCoreNfts.length / corePerTx) || 0;
+    const numTakerCoreTxs = Math.ceil(takerCoreNfts.length / corePerTx) || 0;
+    const totalExpectedTransactions = numSolTxs + numMakerSplTxs + numTakerSplTxs + numMakerCoreTxs + numTakerCoreTxs;
+
+    console.log(`[TransactionGroupBuilder] Expected transactions: ${totalExpectedTransactions} (SOL: ${numSolTxs}, Maker SPL: ${numMakerSplTxs}, Taker SPL: ${numTakerSplTxs}, Maker Core: ${numMakerCoreTxs}, Taker Core: ${numTakerCoreTxs})`);
+
     // === Transaction 1: SOL transfers (if any) ===
     if (analysis.hasSolTransfer || inputs.platformFeeLamports > BigInt(0)) {
       const solTx = await this.buildSolTransferTransaction(inputs, nonceValue, useJitoNonces);
@@ -1278,10 +1295,7 @@ export class TransactionGroupBuilder {
     
     // === Transaction 2+: SPL NFT transfers ===
     let txIndex = transactions.length;
-    
-    // Batch SPL NFTs efficiently (multiple per transaction)
-    const splPerTx = MAX_SPL_NFTS_PER_TRANSACTION;
-    
+
     // Maker SPL NFTs → Taker
     for (let i = 0; i < makerSplNfts.length; i += splPerTx) {
       const batch = makerSplNfts.slice(i, i + splPerTx);
@@ -1307,7 +1321,34 @@ export class TransactionGroupBuilder {
         });
         splInstructions.push(...result.instructions);
       }
-      
+
+      // Add Jito tip if this is the LAST transaction in the bundle
+      const isLastTransaction = txIndex === totalExpectedTransactions - 1;
+      if (shouldUseJitoBundle && isLastTransaction) {
+        const JITO_TIP_ACCOUNTS = [
+          'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
+          'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
+          'HFqU5x63VTqvQss8hp11i4bVmkdzGHnsRRskfJ2J4ybE',
+          '96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5',
+          '3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT',
+          'ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49',
+          'Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY',
+          'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
+        ];
+        const jitoTipAccount = new PublicKey(
+          JITO_TIP_ACCOUNTS[Math.floor(Math.random() * JITO_TIP_ACCOUNTS.length)]
+        );
+        const tipAmount = 1_000_000; // 0.001 SOL (default Jito tip)
+        console.log(`[TransactionGroupBuilder] Adding Jito tip to Maker SPL tx: ${tipAmount} lamports to ${jitoTipAccount.toString()}`);
+        splInstructions.push(
+          SystemProgram.transfer({
+            fromPubkey: this.platformAuthority.publicKey,
+            toPubkey: jitoTipAccount,
+            lamports: tipAmount,
+          })
+        );
+      }
+
       // Build transaction
       let blockHash: string;
       if (useJitoNonces) {
@@ -1316,20 +1357,20 @@ export class TransactionGroupBuilder {
         const { blockhash } = await this.connection.getLatestBlockhash('confirmed');
         blockHash = blockhash;
       }
-      
+
       const splTx = new Transaction({
         recentBlockhash: blockHash,
         feePayer: this.platformAuthority.publicKey,
       }).add(...splInstructions);
-      
+
       splTx.partialSign(this.platformAuthority);
-      
+
       const splTxSerialized = splTx.serialize({ requireAllSignatures: false });
       const splTxSize = splTxSerialized.length;
-      
+
       transactions.push({
         index: txIndex,
-        purpose: `Maker SPL NFT transfers (${batch.length} NFTs)`,
+        purpose: `Maker SPL NFT transfers (${batch.length} NFTs)${isLastTransaction && shouldUseJitoBundle ? ' + Jito tip' : ''}`,
         assets: {
           makerAssets: batch,
           takerAssets: [],
@@ -1377,7 +1418,34 @@ export class TransactionGroupBuilder {
         });
         splInstructions.push(...result.instructions);
       }
-      
+
+      // Add Jito tip if this is the LAST transaction in the bundle
+      const isLastTransaction = txIndex === totalExpectedTransactions - 1;
+      if (shouldUseJitoBundle && isLastTransaction) {
+        const JITO_TIP_ACCOUNTS = [
+          'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
+          'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
+          'HFqU5x63VTqvQss8hp11i4bVmkdzGHnsRRskfJ2J4ybE',
+          '96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5',
+          '3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT',
+          'ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49',
+          'Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY',
+          'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
+        ];
+        const jitoTipAccount = new PublicKey(
+          JITO_TIP_ACCOUNTS[Math.floor(Math.random() * JITO_TIP_ACCOUNTS.length)]
+        );
+        const tipAmount = 1_000_000; // 0.001 SOL (default Jito tip)
+        console.log(`[TransactionGroupBuilder] Adding Jito tip to Taker SPL tx: ${tipAmount} lamports to ${jitoTipAccount.toString()}`);
+        splInstructions.push(
+          SystemProgram.transfer({
+            fromPubkey: this.platformAuthority.publicKey,
+            toPubkey: jitoTipAccount,
+            lamports: tipAmount,
+          })
+        );
+      }
+
       let blockHash: string;
       if (useJitoNonces) {
         blockHash = nonceValue;
@@ -1385,20 +1453,20 @@ export class TransactionGroupBuilder {
         const { blockhash } = await this.connection.getLatestBlockhash('confirmed');
         blockHash = blockhash;
       }
-      
+
       const splTx = new Transaction({
         recentBlockhash: blockHash,
         feePayer: this.platformAuthority.publicKey,
       }).add(...splInstructions);
-      
+
       splTx.partialSign(this.platformAuthority);
-      
+
       const splTxSerialized = splTx.serialize({ requireAllSignatures: false });
       const splTxSize = splTxSerialized.length;
-      
+
       transactions.push({
         index: txIndex,
-        purpose: `Taker SPL NFT transfers (${batch.length} NFTs)`,
+        purpose: `Taker SPL NFT transfers (${batch.length} NFTs)${isLastTransaction && shouldUseJitoBundle ? ' + Jito tip' : ''}`,
         assets: {
           makerAssets: [],
           takerAssets: batch,
@@ -1421,10 +1489,9 @@ export class TransactionGroupBuilder {
       txIndex++;
       console.log(`[TransactionGroupBuilder] SPL NFT tx built: ${splTxSize} bytes, ${batch.length} transfers`);
     }
-    
+
     // === Core NFT transfers ===
-    const corePerTx = MAX_CORE_NFTS_PER_TRANSACTION;
-    
+
     // Maker Core NFTs → Taker
     for (let i = 0; i < makerCoreNfts.length; i += corePerTx) {
       const batch = makerCoreNfts.slice(i, i + corePerTx);
@@ -1449,7 +1516,34 @@ export class TransactionGroupBuilder {
         });
         coreInstructions.push(result.instruction);
       }
-      
+
+      // Add Jito tip if this is the LAST transaction in the bundle
+      const isLastTransaction = txIndex === totalExpectedTransactions - 1;
+      if (shouldUseJitoBundle && isLastTransaction) {
+        const JITO_TIP_ACCOUNTS = [
+          'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
+          'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
+          'HFqU5x63VTqvQss8hp11i4bVmkdzGHnsRRskfJ2J4ybE',
+          '96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5',
+          '3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT',
+          'ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49',
+          'Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY',
+          'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
+        ];
+        const jitoTipAccount = new PublicKey(
+          JITO_TIP_ACCOUNTS[Math.floor(Math.random() * JITO_TIP_ACCOUNTS.length)]
+        );
+        const tipAmount = 1_000_000; // 0.001 SOL (default Jito tip)
+        console.log(`[TransactionGroupBuilder] Adding Jito tip to Maker Core tx: ${tipAmount} lamports to ${jitoTipAccount.toString()}`);
+        coreInstructions.push(
+          SystemProgram.transfer({
+            fromPubkey: this.platformAuthority.publicKey,
+            toPubkey: jitoTipAccount,
+            lamports: tipAmount,
+          })
+        );
+      }
+
       let blockHash: string;
       if (useJitoNonces) {
         blockHash = nonceValue;
@@ -1457,20 +1551,20 @@ export class TransactionGroupBuilder {
         const { blockhash } = await this.connection.getLatestBlockhash('confirmed');
         blockHash = blockhash;
       }
-      
+
       const coreTx = new Transaction({
         recentBlockhash: blockHash,
         feePayer: this.platformAuthority.publicKey,
       }).add(...coreInstructions);
-      
+
       coreTx.partialSign(this.platformAuthority);
-      
+
       const coreTxSerialized = coreTx.serialize({ requireAllSignatures: false });
       const coreTxSize = coreTxSerialized.length;
-      
+
       transactions.push({
         index: txIndex,
-        purpose: `Maker Core NFT transfers (${batch.length} NFTs)`,
+        purpose: `Maker Core NFT transfers (${batch.length} NFTs)${isLastTransaction && shouldUseJitoBundle ? ' + Jito tip' : ''}`,
         assets: {
           makerAssets: batch,
           takerAssets: [],
@@ -1518,7 +1612,34 @@ export class TransactionGroupBuilder {
         });
         coreInstructions.push(result.instruction);
       }
-      
+
+      // Add Jito tip if this is the LAST transaction in the bundle
+      const isLastTransaction = txIndex === totalExpectedTransactions - 1;
+      if (shouldUseJitoBundle && isLastTransaction) {
+        const JITO_TIP_ACCOUNTS = [
+          'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
+          'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
+          'HFqU5x63VTqvQss8hp11i4bVmkdzGHnsRRskfJ2J4ybE',
+          '96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5',
+          '3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT',
+          'ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49',
+          'Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY',
+          'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
+        ];
+        const jitoTipAccount = new PublicKey(
+          JITO_TIP_ACCOUNTS[Math.floor(Math.random() * JITO_TIP_ACCOUNTS.length)]
+        );
+        const tipAmount = 1_000_000; // 0.001 SOL (default Jito tip)
+        console.log(`[TransactionGroupBuilder] Adding Jito tip to Taker Core tx: ${tipAmount} lamports to ${jitoTipAccount.toString()}`);
+        coreInstructions.push(
+          SystemProgram.transfer({
+            fromPubkey: this.platformAuthority.publicKey,
+            toPubkey: jitoTipAccount,
+            lamports: tipAmount,
+          })
+        );
+      }
+
       let blockHash: string;
       if (useJitoNonces) {
         blockHash = nonceValue;
@@ -1526,20 +1647,20 @@ export class TransactionGroupBuilder {
         const { blockhash } = await this.connection.getLatestBlockhash('confirmed');
         blockHash = blockhash;
       }
-      
+
       const coreTx = new Transaction({
         recentBlockhash: blockHash,
         feePayer: this.platformAuthority.publicKey,
       }).add(...coreInstructions);
-      
+
       coreTx.partialSign(this.platformAuthority);
-      
+
       const coreTxSerialized = coreTx.serialize({ requireAllSignatures: false });
       const coreTxSize = coreTxSerialized.length;
-      
+
       transactions.push({
         index: txIndex,
-        purpose: `Taker Core NFT transfers (${batch.length} NFTs)`,
+        purpose: `Taker Core NFT transfers (${batch.length} NFTs)${isLastTransaction && shouldUseJitoBundle ? ' + Jito tip' : ''}`,
         assets: {
           makerAssets: [],
           takerAssets: batch,
@@ -1599,9 +1720,6 @@ export class TransactionGroupBuilder {
         );
       }
     }
-
-    // Determine if Jito bundles should be used (separate from nonce usage)
-    const shouldUseJitoBundle = isMainnet && isJitoBundlesEnabled();
 
     return {
       strategy: SwapStrategy.DIRECT_NFT_BUNDLE,
