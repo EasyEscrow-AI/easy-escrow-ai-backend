@@ -301,16 +301,18 @@ export class BulkSwapExecutor {
         strategy: groupResult.strategy,
         bundleId: bundleResult.bundleId,
         bundleStatus: confirmation.status,
+        signatures: bundleResult.signatures, // Include signatures for frontend display
         transactionGroup: groupResult,
       };
     }
-    
+
     // Return without waiting for confirmation
     return {
       success: true,
       strategy: groupResult.strategy,
       bundleId: bundleResult.bundleId,
       bundleStatus: 'Pending',
+      signatures: bundleResult.signatures, // Include signatures for frontend display
       transactionGroup: groupResult,
     };
   }
