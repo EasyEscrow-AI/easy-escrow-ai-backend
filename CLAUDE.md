@@ -12,10 +12,11 @@ EasyEscrow.ai is a **production-ready Solana atomic swap platform** enabling tru
 - Do not add USDC/SPL token payment functionality
 
 **Key capabilities:**
-- Atomic swaps: NFT↔SOL, NFT↔NFT, cNFT↔SOL, bulk swaps (up to 10 assets per side)
+- Atomic swaps: NFT↔SOL, NFT↔NFT, cNFT↔SOL, bulk swaps (up to 4 NFTs total)
 - Compressed NFT (cNFT) support with Merkle proof handling via DAS API
-- Jito bundles for multi-asset swaps (3+ assets)
-- Durable nonce-based transactions
+- Jito bundles for multi-transaction swaps (2+ NFTs on one side, or any cNFT) with TwoPhase fallback
+- Maximum 4 NFTs per swap (Jito bundle limit: 5 transactions = 1 fee tx + 4 NFT transfers)
+- Simple 1-for-1 NFT swaps use escrow-based atomic transactions (no Jito)
 
 ## Common Commands
 
@@ -235,7 +236,7 @@ git push --force-with-lease
 | `offerManager.ts` | Atomic swap offer lifecycle (create/accept/cancel) |
 | `transactionBuilder.ts` | Builds swap transaction instructions |
 | `transactionGroupBuilder.ts` | Multi-transaction bundles for bulk swaps |
-| `bulkSwapExecutor.ts` | Executes Jito bundles for 3+ asset swaps |
+| `bulkSwapExecutor.ts` | Executes Jito bundles for multi-transaction swaps with TwoPhase fallback |
 | `assetValidator.ts` | Validates NFT/cNFT/SOL ownership and metadata |
 | `cnftService.ts` | DAS API integration for cNFT Merkle proofs |
 | `directBubblegumService.ts` | Bubblegum program cNFT transfers |
@@ -272,9 +273,13 @@ Environment-specific IDL files in `src/generated/anchor/`:
 - Rate limiting via `das-http-rate-limiter.ts`
 
 ### Jito Integration
-- Bundles used for swaps with 3+ cNFTs
+- **Jito-first**: Multi-transaction swaps (2+ NFTs on one side, or any cNFT) use Jito bundles
+- **Max 4 NFTs**: Jito bundles max 5 transactions (1 fee tx + 4 NFT transfers)
+- **1-for-1 exception**: Simple 1 NFT ↔ 1 NFT swaps (no cNFTs) use escrow-based atomic transactions
+- **TwoPhase fallback**: On Jito failure (rate limit, simulation error), falls back to TwoPhase delegation
 - Regional routing via `jito-region-router.ts`
-- Rate limiting via `jito-http-rate-limiter.ts`
+- Rate limiting via `jito-http-rate-limiter.ts` (1 rps without UUID, 5 rps with JITO_AUTH_UUID)
+- See `docs/architecture/SWAP_ROUTING.md` for detailed routing logic
 
 ### Transaction Flow
 1. Offer created via `offerManager.ts`
@@ -293,3 +298,5 @@ Key variables (see `.env.example` for full list):
 - `ESCROW_PROGRAM_ID` - On-chain program address
 - `REDIS_URL` - Redis for caching
 - `NODE_ENV` - production/staging/development
+- `JITO_BUNDLES_ENABLED` - Enable Jito bundles (default: true on mainnet)
+- `JITO_AUTH_UUID` - Optional UUID for 5 rps rate limit (default: 1 rps)

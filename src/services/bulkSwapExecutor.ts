@@ -23,6 +23,22 @@ import { isJitoBundlesEnabled } from '../utils/featureFlags';
 /**
  * Result of bulk swap execution
  */
+/**
+ * Error codes for programmatic handling of swap failures
+ */
+export type BulkSwapErrorCode =
+  | 'STALE_PROOF_REBUILD_REQUIRED'  // cNFT Merkle proof outdated
+  | 'EXECUTION_FAILED'              // Generic execution failure
+  | 'BUILD_FAILED'                  // Transaction build failed
+  | 'JITO_RATE_LIMITED'             // Jito returned 429
+  | 'JITO_SIMULATION_FAILED'        // Jito bundle simulation failed
+  | 'JITO_TIMEOUT'                  // Bundle didn't land in time
+  | 'JITO_BUNDLE_DROPPED'           // Bundle was dropped
+  | 'TWO_PHASE_FALLBACK_AVAILABLE'; // Jito failed, TwoPhase fallback possible
+
+/**
+ * Result of bulk swap execution
+ */
 export interface BulkSwapExecutionResult {
   /** Whether the execution was successful */
   success: boolean;
@@ -36,13 +52,15 @@ export interface BulkSwapExecutionResult {
   /** Error message if failed */
   error?: string;
   /** Error code for programmatic handling */
-  errorCode?: 'STALE_PROOF_REBUILD_REQUIRED' | 'EXECUTION_FAILED' | 'BUILD_FAILED';
+  errorCode?: BulkSwapErrorCode;
   /** Transaction group info for bulk swaps */
   transactionGroup?: TransactionGroupResult;
   /** Indices of transactions with stale proofs (when errorCode is STALE_PROOF_REBUILD_REQUIRED) */
   staleTransactionIndices?: number[];
   /** Whether client needs to re-sign transactions */
   requiresResigning?: boolean;
+  /** Whether TwoPhase fallback should be attempted */
+  shouldFallbackToTwoPhase?: boolean;
 }
 
 /**
@@ -223,13 +241,25 @@ export class BulkSwapExecutor {
         description: options.description,
       }
     );
-    
+
     if (!bundleResult.success) {
+      // Categorize Jito errors for potential TwoPhase fallback
+      const errorCode = this.categorizeJitoError(bundleResult.error || '');
+      const shouldFallback = this.shouldFallbackToTwoPhase(errorCode);
+
+      console.log(`[BulkSwapExecutor] Jito bundle failed:`, {
+        error: bundleResult.error,
+        errorCode,
+        shouldFallback,
+      });
+
       return {
         success: false,
         strategy: groupResult.strategy,
         error: bundleResult.error,
+        errorCode,
         transactionGroup: groupResult,
+        shouldFallbackToTwoPhase: shouldFallback,
       };
     }
     
@@ -240,13 +270,37 @@ export class BulkSwapExecutor {
         options.confirmationTimeoutSeconds,
         bundleResult.signatures
       );
-      
+
+      // If confirmation failed, categorize error for potential TwoPhase fallback
+      if (!confirmation.confirmed) {
+        const errorCode = this.categorizeConfirmationError(confirmation.status, confirmation.error);
+        const shouldFallback = this.shouldFallbackToTwoPhase(errorCode);
+
+        console.log(`[BulkSwapExecutor] Jito bundle confirmation failed:`, {
+          bundleId: bundleResult.bundleId,
+          status: confirmation.status,
+          error: confirmation.error,
+          errorCode,
+          shouldFallback,
+        });
+
+        return {
+          success: false,
+          strategy: groupResult.strategy,
+          bundleId: bundleResult.bundleId,
+          bundleStatus: confirmation.status,
+          error: confirmation.error,
+          errorCode,
+          transactionGroup: groupResult,
+          shouldFallbackToTwoPhase: shouldFallback,
+        };
+      }
+
       return {
-        success: confirmation.confirmed,
+        success: true,
         strategy: groupResult.strategy,
         bundleId: bundleResult.bundleId,
         bundleStatus: confirmation.status,
-        error: confirmation.error,
         transactionGroup: groupResult,
       };
     }
@@ -454,6 +508,93 @@ export class BulkSwapExecutor {
       errorCode: 'STALE_PROOF_REBUILD_REQUIRED',
       transactionGroup: groupResult || undefined,
     };
+  }
+
+  /**
+   * Categorize Jito errors for programmatic handling
+   * @param errorMessage - Error message from Jito
+   * @returns Error code for the failure type
+   */
+  private categorizeJitoError(errorMessage: string): BulkSwapErrorCode {
+    const lowerError = errorMessage.toLowerCase();
+
+    // Rate limiting
+    if (lowerError.includes('429') || lowerError.includes('rate limit') || lowerError.includes('too many requests')) {
+      return 'JITO_RATE_LIMITED';
+    }
+
+    // Simulation failures
+    if (lowerError.includes('simulation') || lowerError.includes('simulate')) {
+      return 'JITO_SIMULATION_FAILED';
+    }
+
+    // Timeout
+    if (lowerError.includes('timeout') || lowerError.includes('timed out')) {
+      return 'JITO_TIMEOUT';
+    }
+
+    // Bundle dropped
+    if (lowerError.includes('dropped') || lowerError.includes('not landed')) {
+      return 'JITO_BUNDLE_DROPPED';
+    }
+
+    // Stale proof
+    if (lowerError.includes('proof') || lowerError.includes('merkle') || lowerError.includes('root mismatch')) {
+      return 'STALE_PROOF_REBUILD_REQUIRED';
+    }
+
+    // Generic execution failure
+    return 'EXECUTION_FAILED';
+  }
+
+  /**
+   * Categorize Jito confirmation errors for programmatic handling
+   * Maps bundle confirmation status to error codes for TwoPhase fallback decisions
+   * @param status - Bundle confirmation status (e.g., 'Failed', 'Timeout', 'Unknown')
+   * @param errorMessage - Optional error message
+   * @returns Error code for the failure type
+   */
+  private categorizeConfirmationError(status: string, errorMessage?: string): BulkSwapErrorCode {
+    const lowerStatus = status.toLowerCase();
+
+    // Timeout during confirmation
+    if (lowerStatus === 'timeout' || lowerStatus.includes('timeout')) {
+      return 'JITO_TIMEOUT';
+    }
+
+    // Bundle failed/dropped - didn't land on chain
+    if (lowerStatus === 'failed' || lowerStatus === 'dropped' || lowerStatus.includes('not landed')) {
+      return 'JITO_BUNDLE_DROPPED';
+    }
+
+    // Check error message for additional context
+    if (errorMessage) {
+      return this.categorizeJitoError(errorMessage);
+    }
+
+    // Generic execution failure for unknown status
+    return 'EXECUTION_FAILED';
+  }
+
+  /**
+   * Determine if TwoPhase fallback should be attempted based on error code
+   * @param errorCode - The categorized error code
+   * @returns true if TwoPhase fallback is recommended
+   */
+  private shouldFallbackToTwoPhase(errorCode: BulkSwapErrorCode): boolean {
+    // TwoPhase fallback is recommended for:
+    // - Rate limiting (Jito overloaded)
+    // - Simulation failures (transaction issues)
+    // - Timeouts (bundle not landing)
+    // - Bundle dropped
+    const fallbackErrorCodes: BulkSwapErrorCode[] = [
+      'JITO_RATE_LIMITED',
+      'JITO_SIMULATION_FAILED',
+      'JITO_TIMEOUT',
+      'JITO_BUNDLE_DROPPED',
+    ];
+
+    return fallbackErrorCodes.includes(errorCode);
   }
 }
 

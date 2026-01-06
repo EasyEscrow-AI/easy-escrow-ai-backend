@@ -4,13 +4,20 @@
  * Determines the appropriate execution flow for swap offers based on asset types.
  * Routes to atomic swaps, cNFT delegation, or two-phase settlement as needed.
  *
- * Routing Logic:
- * 1. Single NFT/SPL for NFT/SPL → Existing atomic swap
- * 2. Any cNFT involved → Delegation-based flow (Tasks 4-7)
- * 3. Bulk (3+ cNFTs or 5+ total assets) → Two-phase swap (Tasks 8-11)
- * 4. cNFT-for-SOL only → Single-tx delegate transfer
+ * IMPORTANT: Maximum 4 NFTs total per swap (Jito bundle limit: 5 transactions = 1 fee tx + 4 NFT transfers)
+ * Swaps with >4 NFTs are rejected as INVALID at the routing level.
  *
- * @see .taskmaster/tasks/task_012_cnft-delegation-swap.txt
+ * Routing Logic:
+ * 1. >4 NFTs total → INVALID (rejected due to Jito bundle transaction limit)
+ * 2. Single NFT (1 per side, no cNFTs) → ATOMIC swap via escrow program
+ * 3. cNFT-to-cNFT (any cNFT on both sides) → TWO_PHASE delegation
+ * 4. cNFT single-side (cNFT-for-SOL, cNFT-for-NFT) → CNFT_DELEGATION flow
+ * 5. Multi-NFT (2+ on one side) → Jito bundle via ATOMIC/CNFT_DELEGATION
+ *
+ * Note: The actual execution method (Jito bundle vs sequential RPC vs escrow) is determined
+ * by TransactionGroupBuilder based on the flow type returned here.
+ *
+ * @see docs/architecture/SWAP_ROUTING.md
  */
 
 import { AssetType } from '../services/assetValidator';
@@ -71,14 +78,27 @@ export interface SwapFlowResult {
 // =============================================================================
 
 /**
+ * Maximum total NFTs allowed per swap (Jito bundle limit)
+ * Jito bundles max 5 transactions: 1 for SOL/fee + 4 for NFT transfers
+ */
+const MAX_NFTS_FOR_JITO = 4;
+
+/**
  * Threshold for triggering two-phase swap based on cNFT count per side
  * Per task spec: 3+ cNFTs on either side triggers two-phase
+ * NOTE: Now only used for cNFT swaps - SPL/Core NFTs rejected if >4
  */
 const CNFT_TWO_PHASE_THRESHOLD = 3;
 
 /**
  * Threshold for triggering two-phase swap based on total asset count
- * Per task spec: 5+ total assets triggers two-phase
+ * @deprecated This threshold is now unreachable due to MAX_NFTS_FOR_JITO=4.
+ * Kept for backwards compatibility but the condition at line ~193 (needsTwoPhaseForBulk)
+ * will never trigger because swaps with 5+ NFTs are rejected as INVALID first.
+ * Two-phase is now only triggered by:
+ * - cNFT-to-cNFT swaps (hasCnftOnBothSides)
+ * - 4+ assets with cNFTs (needsTwoPhaseForMixedBulk)
+ * - 3+ cNFTs on one side (needsTwoPhaseForCnfts)
  */
 const TOTAL_ASSET_TWO_PHASE_THRESHOLD = 5;
 
@@ -158,6 +178,18 @@ export function determineSwapFlow(
       flowType: SwapFlowType.INVALID,
       reason: 'Invalid swap: no assets provided',
       error: 'At least one side must include assets or SOL.',
+    };
+  }
+
+  // Validation: Maximum 4 NFTs total (Jito bundle limit)
+  // Jito bundles max 5 transactions: 1 for SOL/fee tx + 4 for NFT transfers
+  if (totalAssetCount > MAX_NFTS_FOR_JITO) {
+    return {
+      ...baseResult,
+      flowType: SwapFlowType.INVALID,
+      reason: `Invalid swap: too many NFTs (${totalAssetCount})`,
+      error: `Maximum ${MAX_NFTS_FOR_JITO} NFTs total per swap due to Jito bundle transaction limits. ` +
+             `Please reduce the number of NFTs on either side.`,
     };
   }
 

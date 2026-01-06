@@ -436,10 +436,9 @@ describe('Swap Flow Router - Integration Scenarios', () => {
       expect(flowResult.error).to.include('SOL-for-SOL');
     });
 
-    it('should handle large SPL-only asset counts with atomic flow (not two-phase)', () => {
-      // 5 NFTs (no cNFTs) should use ATOMIC flow, NOT two-phase.
-      // Two-phase is ONLY for cNFT delegation.
-      // SPL-only bulk swaps use Jito bundles or sequential execution.
+    it('should reject swaps with >4 total NFTs (Jito bundle limit)', () => {
+      // 5 NFTs exceeds the 4 NFT limit (Jito bundles max 5 transactions: 1 for SOL/fee + 4 for NFT transfers)
+      // This should now return INVALID, not ATOMIC
       const offeredAssets = [
         { type: AssetType.NFT, identifier: 'nft-1' },
         { type: AssetType.NFT, identifier: 'nft-2' },
@@ -457,15 +456,15 @@ describe('Swap Flow Router - Integration Scenarios', () => {
         undefined
       );
 
-      // SPL-only bulk swaps use atomic flow, not two-phase
-      expect(flowResult.flowType).to.equal(SwapFlowType.ATOMIC);
-      expect(flowResult.requiresTwoPhase).to.be.false;
-      expect(flowResult.requiresDelegation).to.be.false; // No cNFTs
+      // >4 NFTs is now rejected as INVALID
+      expect(flowResult.flowType).to.equal(SwapFlowType.INVALID);
+      expect(flowResult.error).to.include('Maximum 4 NFTs');
       expect(flowResult.totalAssetCount).to.equal(5);
     });
 
-    it('should trigger two-phase for large asset counts WITH cNFTs', () => {
-      // 5+ assets WITH at least one cNFT should trigger two-phase
+    it('should reject swaps with >4 total NFTs even WITH cNFTs (Jito bundle limit)', () => {
+      // 5+ assets exceeds the 4 NFT limit, even with cNFTs
+      // Previously this would trigger two-phase, now it's rejected
       const offeredAssets = [
         { type: AssetType.NFT, identifier: 'nft-1' },
         { type: AssetType.NFT, identifier: 'nft-2' },
@@ -483,11 +482,36 @@ describe('Swap Flow Router - Integration Scenarios', () => {
         undefined
       );
 
-      // 5 assets WITH cNFT triggers two-phase
+      // >4 NFTs is now rejected as INVALID (even with cNFTs)
+      expect(flowResult.flowType).to.equal(SwapFlowType.INVALID);
+      expect(flowResult.error).to.include('Maximum 4 NFTs');
+      expect(flowResult.totalAssetCount).to.equal(5);
+      expect(flowResult.cnftCount).to.equal(1);
+    });
+
+    it('should allow 4 NFTs with cNFTs (at the limit)', () => {
+      // 4 total assets WITH cNFT is at the limit - should work
+      const offeredAssets = [
+        { type: AssetType.NFT, identifier: 'nft-1' },
+        { type: AssetType.CNFT, identifier: 'cnft-1' }, // cNFT present
+      ];
+      const requestedAssets = [
+        { type: AssetType.NFT, identifier: 'nft-2' },
+        { type: AssetType.NFT, identifier: 'nft-3' },
+      ];
+
+      const flowResult = determineSwapFlow(
+        offeredAssets,
+        requestedAssets,
+        undefined,
+        undefined
+      );
+
+      // 4 assets WITH cNFT triggers two-phase (at the limit, but allowed)
       expect(flowResult.flowType).to.equal(SwapFlowType.TWO_PHASE);
       expect(flowResult.requiresTwoPhase).to.be.true;
       expect(flowResult.requiresDelegation).to.be.true; // Has cNFT
-      expect(flowResult.totalAssetCount).to.equal(5);
+      expect(flowResult.totalAssetCount).to.equal(4);
       expect(flowResult.cnftCount).to.equal(1);
     });
   });
