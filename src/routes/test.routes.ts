@@ -230,7 +230,7 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
       });
 
     // Get compressed NFTs (cNFTs) using DAS API
-    let cNfts: any[] = [];
+    let dasNfts: any[] = [];
     const rpcUrl = process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com';
     
     // Check if using QuickNode or Helius (both support DAS API)
@@ -312,13 +312,14 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
           // console.log(`[Test Route] After cNFT filtering: ${filteredCNfts.length} valid cNFTs found`);
           
           // Helper function to determine NFT type from DAS API interface field
+          // Uses consistent case-insensitive matching via lowercased interfaceName
           const getNftType = (asset: any): 'cnft' | 'core' | 'pnft' | 'xnft' | 'other' => {
             // cNFT check first (compression.compressed = true)
             if (asset.compression?.compressed === true) {
               return 'cnft';
             }
 
-            const interfaceName = asset.interface?.toLowerCase() || '';
+            const interfaceName = (asset.interface || '').toLowerCase();
 
             // Metaplex Core NFTs
             if (interfaceName === 'mplcoreasset' || interfaceName === 'mplcorecollection') {
@@ -326,13 +327,12 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
             }
 
             // Programmable NFTs (pNFTs) - Metaplex Token Metadata with programmable config
-            if (interfaceName === 'programmablenfT' || interfaceName === 'pnft' ||
-                asset.interface === 'ProgrammableNFT' || asset.interface === 'ProgrammableNonFungible') {
+            if (interfaceName === 'programmablenft' || interfaceName === 'pnft' || interfaceName === 'programmablenonfungible') {
               return 'pnft';
             }
 
             // Executable NFTs (xNFTs) - Backpack xNFT standard
-            if (interfaceName.includes('xnft') || asset.interface === 'xNFT') {
+            if (interfaceName === 'xnft') {
               return 'xnft';
             }
 
@@ -587,7 +587,7 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
             });
 
           // Combine all DAS-sourced NFTs (cNFT, Core, pNFT, xNFT, other)
-          cNfts = [...mappedCNfts, ...mappedCoreNfts, ...mappedPNfts, ...mappedXNfts, ...mappedOtherDasNfts];
+          dasNfts = [...mappedCNfts, ...mappedCoreNfts, ...mappedPNfts, ...mappedXNfts, ...mappedOtherDasNfts];
 
           console.log(`[Test Route] Total DAS assets for ${address}:`, {
             totalFromDAS: totalAssets,
@@ -596,7 +596,7 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
             pNfts: mappedPNfts.length,
             xNfts: mappedXNfts.length,
             otherDasNfts: mappedOtherDasNfts.length,
-            total: cNfts.length,
+            total: dasNfts.length,
           });
         }
       } catch (error) {
@@ -604,10 +604,19 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
       }
     }
 
-    // Combine SPL NFTs and cNFTs
-    const nfts = [...splNfts, ...cNfts];
+    // Combine SPL NFTs and DAS NFTs, then deduplicate by mint address
+    // DAS API may return NFTs that are also found via getParsedTokenAccountsByOwner
+    const combinedNfts = [...splNfts, ...dasNfts];
+    const seenMints = new Set<string>();
+    const nfts = combinedNfts.filter(nft => {
+      if (seenMints.has(nft.mint)) {
+        return false; // Skip duplicates (prefer first occurrence from splNfts)
+      }
+      seenMints.add(nft.mint);
+      return true;
+    });
 
-    // Enrich SPL NFTs with metadata (cNFTs already have metadata from DAS API)
+    // Enrich SPL NFTs with metadata (DAS NFTs already have metadata from DAS API)
     let nftsWithMetadata = nfts;
     
     const splNftsToEnrich = nfts.filter(nft => !nft.isCompressed && !nft.name);
@@ -654,6 +663,15 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
       }
     }
 
+    // Helper to determine nftType from boolean flags (for NFTs without nftType set)
+    const deriveNftType = (nft: any): 'cnft' | 'core' | 'pnft' | 'xnft' | 'other' => {
+      if (nft.isCompressed) return 'cnft';
+      if (nft.isCoreNft) return 'core';
+      if (nft.isProgrammable) return 'pnft';
+      if (nft.isExecutable) return 'xnft';
+      return 'other';
+    };
+
     // Ensure all NFTs have required fields (preserve all type flags!)
     const finalNfts = nftsWithMetadata.map(nft => ({
       mint: nft.mint,
@@ -665,8 +683,8 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
       isCoreNft: nft.isCoreNft || false,
       isProgrammable: nft.isProgrammable || false,
       isExecutable: nft.isExecutable || false,
-      // Determine nftType: SPL NFTs from token accounts don't have nftType set
-      nftType: nft.nftType || (nft.isCompressed ? 'cnft' : nft.isCoreNft ? 'core' : nft.isProgrammable ? 'pnft' : nft.isExecutable ? 'xnft' : 'other'),
+      // Determine nftType: use existing value or derive from boolean flags
+      nftType: nft.nftType || deriveNftType(nft),
     }));
 
     // Calculate counts for each NFT type
@@ -676,6 +694,9 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
     const xNftCount = finalNfts.filter(n => n.isExecutable).length;
     // OTHER: NFTs that are not cNFT, Core, pNFT, or xNFT
     const otherNftCount = finalNfts.filter(n => !n.isCompressed && !n.isCoreNft && !n.isProgrammable && !n.isExecutable).length;
+    // splNftCount: Original count from SPL token accounts (getParsedTokenAccountsByOwner)
+    // This is the legacy field that counts NFTs from SPL token program, not DAS API
+    const splNftCount = splNfts.length;
 
     res.json({
       success: true,
@@ -685,14 +706,14 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
         solBalanceLamports: balance,
         nfts: finalNfts,
         nftCount: finalNfts.length,
-        // NFT type counts
+        // NFT type counts (new fields)
         cNftCount,
         coreNftCount,
         pNftCount,
         xNftCount,
         otherNftCount,
-        // Legacy field for backwards compatibility
-        splNftCount: otherNftCount,
+        // Legacy field: count from SPL token accounts (getParsedTokenAccountsByOwner)
+        splNftCount,
       },
       timestamp: new Date().toISOString(),
     });
