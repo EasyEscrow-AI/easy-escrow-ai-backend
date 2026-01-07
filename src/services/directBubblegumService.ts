@@ -125,7 +125,7 @@ export class DirectBubblegumService {
           owner: assetData.ownership.owner,
           delegate: assetData.ownership.delegate || 'none',
           frozen: assetData.ownership.frozen,
-          delegated: assetData.ownership.delegated,
+          isDelegated: !!assetData.ownership.delegate,
         });
 
         // Validate ownership
