@@ -162,6 +162,7 @@ export class DirectBubblegumService {
       treeAddress,
       treeAuthorityAddress,
       proof,
+      delegateAddress,
     } = transferParams;
 
     // Determine canopy type FIRST (needed for validation error handling)
@@ -320,11 +321,14 @@ export class DirectBubblegumService {
     // Build the transfer instruction using mpl-bubblegum
     // The instruction accounts are: treeAuthority, leafOwner, leafDelegate, newLeafOwner,
     // merkleTree, logWrapper, compressionProgram, systemProgram
+    // CRITICAL: leafDelegate must match on-chain delegate (from DAS API) or be the owner if no delegate
+    // Using the wrong delegate causes Bubblegum error 6001 (PublicKeyMismatch)
+    const effectiveDelegate = delegateAddress || params.delegate || params.fromWallet;
     const instruction = createTransferInstruction(
       {
         treeAuthority: treeAuthorityAddress,
         leafOwner: params.fromWallet,
-        leafDelegate: params.delegate || params.fromWallet,
+        leafDelegate: effectiveDelegate,
         newLeafOwner: params.toWallet,
         merkleTree: treeAddress,
         logWrapper: SPL_NOOP_PROGRAM_ID,
@@ -344,7 +348,8 @@ export class DirectBubblegumService {
     // CRITICAL FIX: mpl-bubblegum library incorrectly sets leafOwner.isSigner = false
     // Bubblegum actually requires the leafOwner (or leafDelegate if different) to sign
     // Find and fix the signer account
-    const signerPubkey = params.delegate || params.fromWallet;
+    // If delegate exists, delegate must sign; otherwise owner must sign
+    const signerPubkey = delegateAddress || params.fromWallet;
     const signerIndex = instruction.keys.findIndex(
       key => key.pubkey.equals(signerPubkey)
     );
@@ -374,6 +379,9 @@ export class DirectBubblegumService {
       dataSize: instruction.data.length,
       proofNodes: proofNodes.length,
       estimatedSize,
+      leafOwner: params.fromWallet.toBase58(),
+      leafDelegate: effectiveDelegate.toBase58(),
+      hasOnChainDelegate: !!delegateAddress,
     });
 
     return {

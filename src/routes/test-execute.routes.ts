@@ -300,12 +300,16 @@ async function cleanupFailedSwapDelegations(
  * Stale proofs can be detected in multiple ways:
  * 1. During preflight simulation: error.message or error.logs contain known indicators
  * 2. On-chain failure: error.errorCode === 21 (StaleProof from AtomicSwapError)
- * 3. Bubblegum program error 6001 (AssetOwnerMismatch or invalid proof)
- * 4. Message contains the error code reference
+ * 3. Bubblegum program error 6000 (AssetOwnerMismatch - owner changed since proof)
+ * 4. Bubblegum program error 6002 (HashingMismatch - leaf data changed)
  *
- * Bubblegum error codes relevant to stale proofs:
- * - 6001: AssetOwnerMismatch / Invalid proof (most common for stale proofs after tree change)
- * - 6002: PublicKeyMismatch
+ * Bubblegum error codes (https://github.com/metaplex-foundation/mpl-bubblegum):
+ * - 6000: AssetOwnerMismatch - "Asset Owner Does not match" (stale proof if owner changed)
+ * - 6001: PublicKeyMismatch - Wrong account passed (NOT a stale proof, bug in tx construction)
+ * - 6002: HashingMismatch - "Hashing Mismatch Within Leaf Schema" (stale proof if leaf changed)
+ *
+ * IMPORTANT: 6001 (PublicKeyMismatch) is NOT recoverable via proof rebuild - it indicates
+ * the wrong public key was passed (e.g., leafOwner or leafDelegate mismatch).
  */
 function isCnftProofStaleError(error: any): boolean {
   const message = error?.message || '';
@@ -313,22 +317,33 @@ function isCnftProofStaleError(error: any): boolean {
   const errorCode = error?.errorCode;
 
   // Check for on-chain StaleProof error (error code 21 from our escrow program)
-  // This catches errors thrown from confirmation.value.err
   if (errorCode === 21) {
     return true;
   }
 
-  // Check for Bubblegum program stale proof errors
-  // Error 6001 typically indicates the Merkle root has changed since proof generation
-  if (errorCode === 6001) {
+  // Check for Bubblegum AssetOwnerMismatch (6000) - can happen if owner changed
+  if (errorCode === 6000) {
     return true;
   }
 
-  // Also check if the error message mentions error codes (StaleProof or Bubblegum 6001)
+  // Check for Bubblegum HashingMismatch (6002) - can happen if leaf data changed
+  if (errorCode === 6002) {
+    return true;
+  }
+
+  // NOTE: Error 6001 (PublicKeyMismatch) is NOT a stale proof error.
+  // It means wrong accounts were passed - this is a bug, not recoverable via rebuild.
+
+  // Check if the error message mentions StaleProof
   if (message.includes('error code 21') || message.includes('StaleProof')) {
     return true;
   }
-  if (message.includes('error code 6001') || message.includes('custom error code 6001')) {
+
+  // Check for AssetOwnerMismatch (6000) or HashingMismatch (6002) in message
+  if (message.includes('error code 6000') || message.includes('custom error code 6000')) {
+    return true;
+  }
+  if (message.includes('error code 6002') || message.includes('custom error code 6002')) {
     return true;
   }
 
@@ -337,8 +352,11 @@ function isCnftProofStaleError(error: any): boolean {
     'Error using concurrent merkle tree',
     'Merkle proof verification failed',
     'AssetOwnerMismatch',
-    'Custom(6001)',
-    '{"Custom":6001}',    // JSON format from on-chain error (with delimiters to prevent false positives)
+    'HashingMismatch',
+    'Custom(6000)',       // AssetOwnerMismatch
+    '{"Custom":6000}',    // JSON format
+    'Custom(6002)',       // HashingMismatch
+    '{"Custom":6002}',    // JSON format
   ];
 
   return staleProofIndicators.some(indicator =>
@@ -875,12 +893,21 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
                   console.log(`   ⚠️ TX ${simIdx + 1} simulation failed: ${errStr}`);
                   allSimulationsPassed = false;
 
-                  // Check for stale proof error (6001) - this is recoverable via rebuild
-                  if (errStr.includes('6001') || errStr.includes('Custom(6001)')) {
+                  // Check for recoverable stale proof errors:
+                  // - 6000 (AssetOwnerMismatch) - owner may have changed since proof was generated
+                  // - 6002 (HashingMismatch) - leaf data may have changed
+                  // NOTE: 6001 (PublicKeyMismatch) is NOT recoverable - it means wrong accounts were passed
+                  const isRecoverableStaleProof =
+                    errStr.includes('6000') ||
+                    errStr.includes('Custom(6000)') ||
+                    errStr.includes('6002') ||
+                    errStr.includes('Custom(6002)');
+
+                  if (isRecoverableStaleProof) {
                     hasStaleProofInBundle = true;
                     console.log(`   🔄 Stale proof detected in TX ${simIdx + 1}, will rebuild...`);
                   } else {
-                    // Non-stale-proof error - not recoverable, abort
+                    // Non-stale-proof error (including 6001 PublicKeyMismatch) - not recoverable, abort
                     hasNonRecoverableError = true;
                     simulationErrors.push(`TX ${simIdx + 1}: ${errStr}`);
                     console.error(`   ❌ TX ${simIdx + 1} has non-recoverable simulation error: ${errStr}`);
@@ -951,6 +978,19 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
               error: `Pre-flight simulation failed: ${simulationErrors.join('; ')}`,
               errorCode: 'SIMULATION_FAILED',
               simulationErrors,
+              timestamp: new Date().toISOString(),
+            });
+          }
+
+          // Also abort if we exhausted retries without all simulations passing
+          // This catches the case where stale proofs kept failing after max rebuilds
+          if (hasStaleProofInBundle && simulationAttempt >= MAX_SIMULATION_RETRIES) {
+            console.error(`❌ Exhausted ${MAX_SIMULATION_RETRIES} simulation retries, stale proofs persist`);
+            return res.status(400).json({
+              success: false,
+              error: `Pre-flight simulation failed after ${MAX_SIMULATION_RETRIES} attempts: stale Merkle proofs persist`,
+              errorCode: 'STALE_PROOF_EXHAUSTED',
+              simulationErrors: simulationErrors.length > 0 ? simulationErrors : ['Stale proof errors persisted after max retries'],
               timestamp: new Date().toISOString(),
             });
           }
@@ -1252,8 +1292,9 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
 
               if (confirmation.value.err) {
                 const errorStr = JSON.stringify(confirmation.value.err);
-                // Check if stale proof error (6001)
-                if (errorStr.includes('6001')) {
+                // Check if recoverable stale proof error (6000 or 6002)
+                // NOTE: 6001 (PublicKeyMismatch) is NOT recoverable
+                if (errorStr.includes('6000') || errorStr.includes('6002')) {
                   console.log(`      ⚠️ Stale proof (attempt ${attempt}), retrying immediately...`);
                   continue; // Retry with fresh JIT
                 }
@@ -1268,8 +1309,13 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
             } catch (attemptError: any) {
               const errorMsg = attemptError.message || '';
 
-              // Check if this is a stale proof error we can retry
-              if (errorMsg.includes('6001') || isCnftProofStaleError(attemptError)) {
+              // Check if this is a recoverable stale proof error (6000 or 6002)
+              // NOTE: 6001 (PublicKeyMismatch) is NOT recoverable
+              const hasRecoverableError =
+                errorMsg.includes('6000') ||
+                errorMsg.includes('6002') ||
+                isCnftProofStaleError(attemptError);
+              if (hasRecoverableError) {
                 console.log(`      ⚠️ Stale proof error (attempt ${attempt}), retrying...`);
                 continue; // Retry with fresh JIT
               }
