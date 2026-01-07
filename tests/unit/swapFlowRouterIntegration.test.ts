@@ -234,6 +234,118 @@ describe('Swap Flow Router - Integration Scenarios', () => {
     });
   });
 
+  describe('pNFT Routing (Programmable NFTs)', () => {
+    it('should route pNFT-for-SOL to PNFT_DIRECT flow', () => {
+      // pNFT offered for SOL - single-side pNFT uses direct Jito bundle
+      const offeredAssets = [
+        { type: AssetType.PNFT, identifier: 'pnft-mint-1' },
+      ];
+      const requestedAssets: { type: AssetType; identifier: string }[] = [];
+      const requestedSol = BigInt(1_000_000_000); // 1 SOL
+
+      const flowResult = determineSwapFlow(
+        offeredAssets,
+        requestedAssets,
+        undefined,
+        requestedSol
+      );
+
+      expect(flowResult.flowType).to.equal(SwapFlowType.PNFT_DIRECT);
+      expect(flowResult.requiresDelegation).to.be.false; // pNFTs don't use delegation
+      expect(flowResult.requiresTwoPhase).to.be.false;
+      expect(flowResult.pnftCount).to.equal(1);
+    });
+
+    it('should route pNFT-for-NFT to PNFT_DIRECT flow', () => {
+      // pNFT offered for regular NFT
+      const offeredAssets = [
+        { type: AssetType.PNFT, identifier: 'pnft-mint-1' },
+      ];
+      const requestedAssets = [
+        { type: AssetType.NFT, identifier: 'nft-mint-1' },
+      ];
+
+      const flowResult = determineSwapFlow(
+        offeredAssets,
+        requestedAssets,
+        undefined,
+        undefined
+      );
+
+      expect(flowResult.flowType).to.equal(SwapFlowType.PNFT_DIRECT);
+      expect(flowResult.requiresDelegation).to.be.false;
+      expect(flowResult.requiresTwoPhase).to.be.false;
+      expect(flowResult.pnftCount).to.equal(1);
+    });
+
+    it('should route pNFT-to-pNFT swaps to TWO_PHASE', () => {
+      // pNFT on both sides requires two-phase for sequential execution
+      const offeredAssets = [
+        { type: AssetType.PNFT, identifier: 'pnft-1' },
+      ];
+      const requestedAssets = [
+        { type: AssetType.PNFT, identifier: 'pnft-2' },
+      ];
+
+      const flowResult = determineSwapFlow(
+        offeredAssets,
+        requestedAssets,
+        undefined,
+        undefined
+      );
+
+      expect(flowResult.flowType).to.equal(SwapFlowType.TWO_PHASE);
+      expect(flowResult.requiresTwoPhase).to.be.true;
+      expect(flowResult.pnftCount).to.equal(2);
+      expect(flowResult.reason).to.include('pNFT-to-pNFT');
+    });
+
+    it('should route multiple pNFTs on one side to PNFT_DIRECT', () => {
+      // Bulk pNFT sale (multiple pNFTs for SOL)
+      const offeredAssets = [
+        { type: AssetType.PNFT, identifier: 'pnft-1' },
+        { type: AssetType.PNFT, identifier: 'pnft-2' },
+      ];
+      const requestedAssets: { type: AssetType; identifier: string }[] = [];
+      const requestedSol = BigInt(5_000_000_000); // 5 SOL
+
+      const flowResult = determineSwapFlow(
+        offeredAssets,
+        requestedAssets,
+        undefined,
+        requestedSol
+      );
+
+      expect(flowResult.flowType).to.equal(SwapFlowType.PNFT_DIRECT);
+      expect(flowResult.requiresTwoPhase).to.be.false;
+      expect(flowResult.pnftCount).to.equal(2);
+    });
+
+    it('should correctly count pNFTs in mixed asset swaps', () => {
+      // Mix of NFT and pNFT
+      const offeredAssets = [
+        { type: AssetType.NFT, identifier: 'nft-1' },
+        { type: AssetType.PNFT, identifier: 'pnft-1' },
+      ];
+      const requestedAssets = [
+        { type: AssetType.NFT, identifier: 'nft-2' },
+      ];
+
+      const flowResult = determineSwapFlow(
+        offeredAssets,
+        requestedAssets,
+        undefined,
+        undefined
+      );
+
+      // pNFT on one side → PNFT_DIRECT
+      expect(flowResult.flowType).to.equal(SwapFlowType.PNFT_DIRECT);
+      expect(flowResult.pnftCount).to.equal(1);
+      expect(flowResult.cnftCount).to.equal(0);
+      expect(flowResult.totalAssetCount).to.equal(3);
+    });
+  });
+
   describe('JITO Flag Integration', () => {
     it('should respect JITO enabled flag for single-side cNFT swaps', () => {
       // cNFT-for-SOL (single-side cNFT) - uses delegation flow
@@ -329,6 +441,7 @@ describe('Swap Flow Router - Integration Scenarios', () => {
         'requiresTwoPhase',
         'canUseJito',
         'cnftCount',
+        'pnftCount',
         'totalAssetCount',
         'reason',
       ]);

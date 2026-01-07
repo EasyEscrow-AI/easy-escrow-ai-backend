@@ -33,6 +33,7 @@ import { CnftService, createCnftService } from './cnftService';
 import { DirectBubblegumService, createDirectBubblegumService } from './directBubblegumService';
 import { DirectSplTokenService, createDirectSplTokenService } from './directSplTokenService';
 import { DirectCoreNftService, createDirectCoreNftService } from './directCoreNftService';
+import { DirectPnftService, createDirectPnftService } from './directPnftService';
 import { isJitoBundlesEnabled } from '../utils/featureFlags';
 
 // Conservative limits for transaction splitting
@@ -42,6 +43,7 @@ import { isJitoBundlesEnabled } from '../utils/featureFlags';
 const MAX_CNFTS_PER_TRANSACTION = 1; // Always 1 cNFT per transaction (proofs are almost always needed)
 const MAX_SPL_NFTS_PER_TRANSACTION = 5; // SPL NFT transfers are small (~80 bytes each)
 const MAX_CORE_NFTS_PER_TRANSACTION = 4; // Core NFT transfers (~100 bytes each)
+const MAX_PNFTS_PER_TRANSACTION = 2; // pNFT transfers have large account footprint (~250-300 bytes each)
 const JITO_BUNDLE_THRESHOLD = 3; // Use Jito bundles for 3+ total NFTs
 const MAX_TRANSACTIONS_PER_BUNDLE = 5; // Jito limit
 
@@ -58,7 +60,9 @@ export enum SwapStrategy {
   DIRECT_BUBBLEGUM_BUNDLE = 'DIRECT_BUBBLEGUM_BUNDLE',
   /** Direct NFT bundle - bypasses escrow program for bulk SPL/Core NFT swaps */
   DIRECT_NFT_BUNDLE = 'DIRECT_NFT_BUNDLE',
-  /** Mixed bundle - handles combination of cNFTs, SPL NFTs, and Core NFTs */
+  /** Direct pNFT bundle - uses Token Metadata TransferV1 for pNFT swaps */
+  DIRECT_PNFT_BUNDLE = 'DIRECT_PNFT_BUNDLE',
+  /** Mixed bundle - handles combination of cNFTs, SPL NFTs, Core NFTs, and pNFTs */
   MIXED_NFT_BUNDLE = 'MIXED_NFT_BUNDLE',
   /** Multiple transactions with Jito bundle for atomicity (legacy) */
   JITO_BUNDLE = 'JITO_BUNDLE',
@@ -82,6 +86,8 @@ export interface SwapAnalysis {
   totalNfts: number;
   /** Total Core NFTs */
   totalCoreNfts: number;
+  /** Total pNFTs in the swap */
+  totalPnfts: number;
   /** Whether SOL is involved */
   hasSolTransfer: boolean;
   /** Recommended strategy */
@@ -163,6 +169,7 @@ export class TransactionGroupBuilder {
   private directBubblegumService: DirectBubblegumService;
   private directSplTokenService: DirectSplTokenService;
   private directCoreNftService: DirectCoreNftService;
+  private directPnftService: DirectPnftService;
   private treasuryPda: PublicKey | null = null;
 
   // Cache for analyzeSwap results to avoid redundant computation
@@ -193,6 +200,7 @@ export class TransactionGroupBuilder {
     this.directBubblegumService = createDirectBubblegumService(connection);
     this.directSplTokenService = createDirectSplTokenService(connection);
     this.directCoreNftService = createDirectCoreNftService(connection);
+    this.directPnftService = createDirectPnftService(connection);
     this.treasuryPda = treasuryPda || null;
     
     if (altService) {
@@ -204,7 +212,7 @@ export class TransactionGroupBuilder {
     console.log('[TransactionGroupBuilder] Platform Authority:', platformAuthority.publicKey.toBase58());
     console.log('[TransactionGroupBuilder] Treasury PDA:', treasuryPda?.toBase58() || 'not set');
     console.log('[TransactionGroupBuilder] ALT Service:', altService ? 'enabled' : 'disabled');
-    console.log('[TransactionGroupBuilder] Direct Services: Bubblegum, SPL Token, Core NFT');
+    console.log('[TransactionGroupBuilder] Direct Services: Bubblegum, SPL Token, Core NFT, pNFT');
 
     // Start periodic cache cleanup
     this.startCacheCleanup();
@@ -379,17 +387,24 @@ export class TransactionGroupBuilder {
       a.type === AssetType.NFT || String(a.type).toLowerCase() === 'nft'
     ).length;
     
-    const totalCoreNfts = inputs.makerAssets.filter(a => 
+    const totalCoreNfts = inputs.makerAssets.filter(a =>
       a.type === AssetType.CORE_NFT || String(a.type).toLowerCase() === 'core_nft'
-    ).length + inputs.takerAssets.filter(a => 
+    ).length + inputs.takerAssets.filter(a =>
       a.type === AssetType.CORE_NFT || String(a.type).toLowerCase() === 'core_nft'
     ).length;
-    
+
+    // Count pNFTs (Programmable NFTs - use Token Metadata TransferV1)
+    const totalPnfts = inputs.makerAssets.filter(a =>
+      a.type === AssetType.PNFT || String(a.type).toLowerCase() === 'pnft'
+    ).length + inputs.takerAssets.filter(a =>
+      a.type === AssetType.PNFT || String(a.type).toLowerCase() === 'pnft'
+    ).length;
+
     const hasSolTransfer = inputs.makerSolLamports > BigInt(0) || inputs.takerSolLamports > BigInt(0);
-    
+
     // Calculate total NFTs of all types
-    const totalAllNfts = totalCnfts + totalNfts + totalCoreNfts;
-    console.log(`[TransactionGroupBuilder] Total NFTs: ${totalAllNfts} (cNFTs: ${totalCnfts}, SPL: ${totalNfts}, Core: ${totalCoreNfts})`);
+    const totalAllNfts = totalCnfts + totalNfts + totalCoreNfts + totalPnfts;
+    console.log(`[TransactionGroupBuilder] Total NFTs: ${totalAllNfts} (cNFTs: ${totalCnfts}, SPL: ${totalNfts}, Core: ${totalCoreNfts}, pNFTs: ${totalPnfts})`);
     
     // Determine strategy
     let strategy: SwapStrategy;
@@ -530,6 +545,7 @@ export class TransactionGroupBuilder {
       takerCnfts,
       totalNfts,
       totalCoreNfts,
+      totalPnfts,
       hasSolTransfer,
       strategy,
       transactionCount,
@@ -3409,6 +3425,7 @@ export function analyzeSwapStrategy(inputs: SwapAnalysisInput): SwapAnalysis {
     takerCnfts,
     totalNfts,
     totalCoreNfts,
+    totalPnfts: 0, // pNFTs handled through separate routing
     hasSolTransfer,
     strategy,
     transactionCount,

@@ -21,9 +21,9 @@ import { PrismaClient, TwoPhaseSwapStatus } from '../generated/prisma';
  * Asset information for a two-phase swap
  */
 export interface SwapAsset {
-  /** Asset type: NFT, CNFT, or CORE_NFT */
-  type: 'NFT' | 'CNFT' | 'CORE_NFT';
-  /** Asset identifier (mint address for NFT/CORE_NFT, asset ID for CNFT) */
+  /** Asset type: NFT, CNFT, CORE_NFT, or PNFT */
+  type: 'NFT' | 'CNFT' | 'CORE_NFT' | 'PNFT';
+  /** Asset identifier (mint address for NFT/CORE_NFT/PNFT, asset ID for CNFT) */
   identifier: string;
   /** Optional metadata for display purposes */
   metadata?: {

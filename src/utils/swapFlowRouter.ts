@@ -35,6 +35,8 @@ export enum SwapFlowType {
   ATOMIC = 'ATOMIC',
   /** cNFT delegation-based swap (delegation instruction + transfer) */
   CNFT_DELEGATION = 'CNFT_DELEGATION',
+  /** pNFT direct transfer via Jito bundle (Token Metadata TransferV1) */
+  PNFT_DIRECT = 'PNFT_DIRECT',
   /** Two-phase swap with lock/settle pattern for bulk assets */
   TWO_PHASE = 'TWO_PHASE',
   /** Invalid swap configuration */
@@ -65,6 +67,8 @@ export interface SwapFlowResult {
   canUseJito: boolean;
   /** Number of cNFTs in the swap */
   cnftCount: number;
+  /** Number of pNFTs in the swap */
+  pnftCount: number;
   /** Total number of assets in the swap */
   totalAssetCount: number;
   /** Human-readable reason for the routing decision */
@@ -126,6 +130,11 @@ export function determineSwapFlow(
   const requestedCnftCount = requestedAssets.filter((a) => a.type === AssetType.CNFT).length;
   const totalCnftCount = offeredCnftCount + requestedCnftCount;
 
+  // Count pNFTs
+  const offeredPnftCount = offeredAssets.filter((a) => a.type === AssetType.PNFT).length;
+  const requestedPnftCount = requestedAssets.filter((a) => a.type === AssetType.PNFT).length;
+  const totalPnftCount = offeredPnftCount + requestedPnftCount;
+
   const totalOfferedAssets = offeredAssets.length;
   const totalRequestedAssets = requestedAssets.length;
   const totalAssetCount = totalOfferedAssets + totalRequestedAssets;
@@ -140,6 +149,7 @@ export function determineSwapFlow(
     requiresTwoPhase: false,
     canUseJito,
     cnftCount: totalCnftCount,
+    pnftCount: totalPnftCount,
     totalAssetCount,
   };
 
@@ -215,7 +225,40 @@ export function determineSwapFlow(
     };
   }
 
-  // Standard atomic swap (NFT/Core NFT only, no cNFTs)
+  // Check for pNFT flow (any pNFT involved)
+  // pNFTs need Jito bundles because they use Token Metadata TransferV1
+  // which requires different instruction building than standard SPL transfers
+  if (totalPnftCount > 0) {
+    const hasPnftOnBothSides = offeredPnftCount > 0 && requestedPnftCount > 0;
+
+    if (hasPnftOnBothSides) {
+      // pNFT-to-pNFT swaps use two-phase for reliability
+      return {
+        ...baseResult,
+        flowType: SwapFlowType.TWO_PHASE,
+        requiresTwoPhase: true,
+        requiresDelegation: false,
+        reason: `Routing to two-phase: pNFT-to-pNFT swap (${offeredPnftCount} ↔ ${requestedPnftCount} pNFTs). ` +
+                `Sequential execution ensures both transfers complete.`,
+      };
+    }
+
+    // Single-side pNFT - use direct Jito bundle
+    let reason = `Routing to pNFT direct flow: ${totalPnftCount} pNFT`;
+    if (totalPnftCount > 1) {
+      reason += 's';
+    }
+    reason += ' using Token Metadata TransferV1';
+
+    return {
+      ...baseResult,
+      flowType: SwapFlowType.PNFT_DIRECT,
+      requiresDelegation: false,
+      reason,
+    };
+  }
+
+  // Standard atomic swap (NFT/Core NFT only, no cNFTs or pNFTs)
   return {
     ...baseResult,
     flowType: SwapFlowType.ATOMIC,

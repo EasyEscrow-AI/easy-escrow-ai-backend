@@ -550,7 +550,9 @@ router.post(
         // Transform assets to service format
         const transformToServiceFormat = (assets: typeof bulkReq.assetsA) =>
           assets.map((a) => ({
-            type: a.type === AssetType.CORE_NFT ? 'CORE_NFT' : a.type === AssetType.CNFT ? 'CNFT' : 'NFT',
+            type: a.type === AssetType.PNFT ? 'PNFT' :
+                  a.type === AssetType.CORE_NFT ? 'CORE_NFT' :
+                  a.type === AssetType.CNFT ? 'CNFT' : 'NFT',
             identifier: a.identifier,
             metadata: a.metadata,
           }));
@@ -1208,7 +1210,9 @@ router.post(
         // Transform assets to TwoPhaseSwap format (use AssetType enum for comparison)
         const transformAssets = (assets: any[]) =>
           assets.map((a) => ({
-            type: a.type === AssetType.CORE_NFT ? 'CORE_NFT' : a.type === AssetType.CNFT ? 'CNFT' : 'NFT',
+            type: a.type === AssetType.PNFT ? 'PNFT' :
+                  a.type === AssetType.CORE_NFT ? 'CORE_NFT' :
+                  a.type === AssetType.CNFT ? 'CNFT' : 'NFT',
             identifier: a.identifier,
             metadata: a.metadata || {},
           }));
@@ -1638,7 +1642,8 @@ router.put(
       const transformAssets = (assets: any[]): Array<{ type: AssetType; identifier: string }> => {
         return assets.map((asset) => ({
           identifier: asset.mint,
-          type: asset.isCoreNft ? AssetType.CORE_NFT : 
+          type: asset.isPnft ? AssetType.PNFT :
+                asset.isCoreNft ? AssetType.CORE_NFT :
                 asset.isCompressed ? AssetType.CNFT : AssetType.NFT,
         }));
       };
@@ -2827,21 +2832,24 @@ function serializeTwoPhaseSwap(swap: any): any {
 
 /**
  * Determine execution strategy based on swap parameters
- * - Atomic: Simple swaps, or cNFT swaps with cNFTs on ONE side only
- * - Two-phase: ONLY for cNFT-to-cNFT swaps (cNFTs on BOTH sides)
+ * - Atomic: Simple swaps, or cNFT/pNFT swaps with cNFTs/pNFTs on ONE side only
+ * - Two-phase: For cNFT-to-cNFT or pNFT-to-pNFT swaps (same type on BOTH sides)
  *
- * All other cNFT swaps (cNFT→SOL, cNFT→NFT, bulk cNFT sales) use Jito bundles,
+ * All other cNFT/pNFT swaps (cNFT→SOL, pNFT→NFT, bulk sales) use Jito bundles,
  * which are handled by TransactionGroupBuilder at accept time.
  * This function is only used for the deprecated /bulk endpoint.
  */
 function determineExecutionStrategy(assetsA: any[], assetsB: any[]): 'atomic' | 'two-phase' {
   const cnftCountA = assetsA.filter((a: any) => a.isCompressed || a.type === 'CNFT').length;
   const cnftCountB = assetsB.filter((a: any) => a.isCompressed || a.type === 'CNFT').length;
+  const pnftCountA = assetsA.filter((a: any) => a.isPnft || a.type === 'PNFT').length;
+  const pnftCountB = assetsB.filter((a: any) => a.isPnft || a.type === 'PNFT').length;
 
-  // Two-phase ONLY for cNFT-to-cNFT (cNFTs on BOTH sides)
-  // All other cases (including bulk cNFT sales like 4 cNFT → SOL) use Jito bundles
+  // Two-phase for cNFT-to-cNFT or pNFT-to-pNFT (same type on BOTH sides)
+  // All other cases (including bulk sales like 4 cNFT → SOL) use Jito bundles
   const hasCnftOnBothSides = cnftCountA > 0 && cnftCountB > 0;
-  if (hasCnftOnBothSides) {
+  const hasPnftOnBothSides = pnftCountA > 0 && pnftCountB > 0;
+  if (hasCnftOnBothSides || hasPnftOnBothSides) {
     return 'two-phase';
   }
 
@@ -2858,8 +2866,8 @@ function determineExecutionStrategy(assetsA: any[], assetsB: any[]): 'atomic' | 
  * Request body:
  * - partyA: string - Initiator wallet address
  * - partyB?: string - Counterparty wallet (optional for open offers)
- * - assetsA: Array<{mint, isCompressed?, isCoreNft?}> - Party A's assets
- * - assetsB: Array<{mint, isCompressed?, isCoreNft?}> - Party B's assets
+ * - assetsA: Array<{mint, isCompressed?, isCoreNft?, isPnft?}> - Party A's assets
+ * - assetsB: Array<{mint, isCompressed?, isCoreNft?, isPnft?}> - Party B's assets
  * - solAmountA?: string - SOL from Party A (lamports)
  * - solAmountB?: string - SOL from Party B (lamports)
  */
@@ -2934,8 +2942,10 @@ router.post(
       // Transform assets to internal format
       const transformAssets = (assets: any[]) =>
         assets.map((asset: any) => {
-          let type: 'NFT' | 'CNFT' | 'CORE_NFT' = 'NFT';
-          if (asset.isCoreNft || asset.type === 'CORE_NFT') {
+          let type: 'NFT' | 'CNFT' | 'CORE_NFT' | 'PNFT' = 'NFT';
+          if (asset.isPnft || asset.type === 'PNFT') {
+            type = 'PNFT';
+          } else if (asset.isCoreNft || asset.type === 'CORE_NFT') {
             type = 'CORE_NFT';
           } else if (asset.isCompressed || asset.type === 'CNFT') {
             type = 'CNFT';
