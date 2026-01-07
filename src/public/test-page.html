@@ -350,6 +350,35 @@
             cursor: help;
         }
 
+        /* Frozen token warning styles */
+        .nft-card.frozen-nft {
+            border-color: #60a5fa;
+            background: #eff6ff;
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .nft-card.frozen-nft:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .nft-card.frozen-nft .nft-quick-select {
+            display: none;
+        }
+
+        .frozen-warning {
+            background: #3b82f6;
+            color: white;
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 3px 6px;
+            border-radius: 4px;
+            text-align: center;
+            margin-bottom: 5px;
+            cursor: help;
+        }
+
         /* NFT Card Container - for positioning the quick-select button */
         .nft-card {
             position: relative;

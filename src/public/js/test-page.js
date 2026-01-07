@@ -668,14 +668,27 @@ function renderNFTs(wallet, nfts) {
         ? `<div class="delegation-warning" title="This cNFT is delegated to: ${nft.delegate || 'unknown'}. It may be stuck from a failed swap. Use revoke endpoint to clean up.">⚠️ DELEGATED</div>`
         : '';
 
+      // Check if token account is frozen (cannot be transferred)
+      const isFrozen = nft.frozen === true;
+      const frozenWarning = isFrozen
+        ? `<div class="frozen-warning" title="This token account is frozen by the token's freeze authority. It cannot be transferred until unfrozen.">🧊 FROZEN</div>`
+        : '';
+
       // Check if this NFT is already selected
       const selectedArray = wallet === 'maker' ? selectedMakerNFTs : selectedTakerNFTs;
       const isSelected = selectedArray.some((n) => n.mint === nft.mint);
 
+      // Build card classes
+      let cardClasses = 'nft-card';
+      if (isDelegated) cardClasses += ' delegated-nft';
+      if (isFrozen) cardClasses += ' frozen-nft';
+      if (isSelected && !isFrozen) cardClasses += ' selected';
+
       return `
-            <div class="nft-card ${isDelegated ? 'delegated-nft' : ''}${isSelected ? ' selected' : ''}" data-index="${originalIndex}" data-mint="${nft.mint}" data-wallet="${wallet}">
+            <div class="${cardClasses}" data-index="${originalIndex}" data-mint="${nft.mint}" data-wallet="${wallet}" data-frozen="${isFrozen}">
+                ${frozenWarning}
                 ${delegationWarning}
-                <button class="nft-quick-select ${isSelected ? 'selected' : ''}" data-mint="${nft.mint}" data-index="${originalIndex}" data-wallet="${wallet}" title="${isSelected ? 'Remove from swap' : 'Add to swap'}"></button>
+                <button class="nft-quick-select ${isSelected && !isFrozen ? 'selected' : ''}" data-mint="${nft.mint}" data-index="${originalIndex}" data-wallet="${wallet}" title="${isFrozen ? 'Cannot select - token is frozen' : isSelected ? 'Remove from swap' : 'Add to swap'}"></button>
                 <img class="nft-image"
                      src="${imageUrl}"
                      alt="${nft.name}"
@@ -741,6 +754,12 @@ function toggleNFT(wallet, index) {
   const nfts = wallet === 'maker' ? makerData.nfts : takerData.nfts;
   const selectedArray = wallet === 'maker' ? selectedMakerNFTs : selectedTakerNFTs;
   const nft = nfts[index];
+
+  // Block selection of frozen tokens
+  if (nft.frozen) {
+    console.log(`[toggleNFT] Cannot select frozen token: ${nft.mint}`);
+    return;
+  }
 
   const selectedIndex = selectedArray.findIndex((n) => n.mint === nft.mint);
 
