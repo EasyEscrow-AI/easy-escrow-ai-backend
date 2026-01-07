@@ -348,8 +348,8 @@ export class DirectBubblegumService {
     // CRITICAL FIX: mpl-bubblegum library incorrectly sets leafOwner.isSigner = false
     // Bubblegum actually requires the leafOwner (or leafDelegate if different) to sign
     // Find and fix the signer account
-    // If delegate exists, delegate must sign; otherwise owner must sign
-    const signerPubkey = delegateAddress || params.fromWallet;
+    // The signer must match effectiveDelegate (the account used as leafDelegate in the instruction)
+    const signerPubkey = effectiveDelegate;
     const signerIndex = instruction.keys.findIndex(
       key => key.pubkey.equals(signerPubkey)
     );
