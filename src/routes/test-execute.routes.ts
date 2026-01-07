@@ -304,12 +304,17 @@ async function cleanupFailedSwapDelegations(
  * 4. Bubblegum program error 6002 (HashingMismatch - leaf data changed)
  *
  * Bubblegum error codes (https://github.com/metaplex-foundation/mpl-bubblegum):
- * - 6000: AssetOwnerMismatch - "Asset Owner Does not match" (stale proof if owner changed)
+ * - 6000: AssetOwnerMismatch - "Asset Owner Does not match"
+ *         STALE PROOF: Owner changed on-chain since proof was generated
+ *         STRUCTURAL BUG: Wrong owner passed in the instruction (not recoverable)
  * - 6001: PublicKeyMismatch - Wrong account passed (NOT a stale proof, bug in tx construction)
- * - 6002: HashingMismatch - "Hashing Mismatch Within Leaf Schema" (stale proof if leaf changed)
+ * - 6002: HashingMismatch - "Hashing Mismatch Within Leaf Schema"
+ *         STALE PROOF: Leaf data changed on-chain since proof was generated
+ *         STRUCTURAL BUG: Wrong leaf data computed in transaction (not recoverable)
  *
- * IMPORTANT: 6001 (PublicKeyMismatch) is NOT recoverable via proof rebuild - it indicates
- * the wrong public key was passed (e.g., leafOwner or leafDelegate mismatch).
+ * IMPORTANT: Errors 6000 and 6002 can be EITHER stale proofs OR structural bugs.
+ * If rebuilding the proof doesn't fix the error, it's a structural bug (wrong data passed).
+ * Error 6001 (PublicKeyMismatch) is ALWAYS structural (not recoverable via rebuild).
  */
 function isCnftProofStaleError(error: any): boolean {
   const message = error?.message || '';
@@ -860,6 +865,12 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
           // ========== PRE-FLIGHT SIMULATION ==========
           // Simulate each transaction before Jito submission to catch stale proofs early.
           // This is more reliable than discovering errors after bundle submission.
+          //
+          // IMPORTANT: Errors 6000/6002 can be EITHER stale proofs OR structural bugs.
+          // - Stale proof: On-chain state changed since proof was generated (recoverable via rebuild)
+          // - Structural bug: Wrong data passed in the transaction (NOT recoverable)
+          //
+          // Detection: If the SAME error persists after rebuilding, it's structural (abort immediately).
           console.log(`\n🔍 Pre-flight simulation of ${signedTransactions.length} transactions...`);
 
           let hasStaleProofInBundle = false;
@@ -867,6 +878,10 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
           const simulationErrors: string[] = [];
           const MAX_SIMULATION_RETRIES = 3;
           let simulationAttempt = 0;
+
+          // Track error codes per transaction to detect structural bugs (same error after rebuild)
+          // Key: transaction index, Value: Set of error codes seen in previous attempts
+          const previousErrorCodes: Map<number, Set<string>> = new Map();
 
           while (simulationAttempt < MAX_SIMULATION_RETRIES && !hasNonRecoverableError) {
             simulationAttempt++;
@@ -898,21 +913,51 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
                   }
                   allSimulationsPassed = false;
 
-                  // Check for recoverable stale proof errors:
-                  // - 6000 (AssetOwnerMismatch) - owner may have changed since proof was generated
-                  // - 6002 (HashingMismatch) - leaf data may have changed
-                  // NOTE: 6001 (PublicKeyMismatch) is NOT recoverable - it means wrong accounts were passed
-                  const isRecoverableStaleProof =
-                    errStr.includes('6000') ||
-                    errStr.includes('Custom(6000)') ||
-                    errStr.includes('6002') ||
-                    errStr.includes('Custom(6002)');
+                  // Extract Bubblegum error codes from error string
+                  const has6000 = errStr.includes('6000') || errStr.includes('Custom(6000)');
+                  const has6002 = errStr.includes('6002') || errStr.includes('Custom(6002)');
+                  const has6001 = errStr.includes('6001') || errStr.includes('Custom(6001)');
 
-                  if (isRecoverableStaleProof) {
+                  // Error 6001 (PublicKeyMismatch) is ALWAYS structural - not recoverable
+                  if (has6001) {
+                    hasNonRecoverableError = true;
+                    simulationErrors.push(`TX ${simIdx + 1}: ${errStr} (PublicKeyMismatch - structural bug, wrong account passed)`);
+                    console.error(`   ❌ TX ${simIdx + 1} has PublicKeyMismatch (6001) - structural bug, aborting`);
+                    continue;
+                  }
+
+                  // Check if this error code was seen in a previous attempt (after rebuild)
+                  // If so, it's a structural bug, not a stale proof
+                  const prevCodes = previousErrorCodes.get(simIdx) || new Set();
+                  const currentCodes: string[] = [];
+                  if (has6000) currentCodes.push('6000');
+                  if (has6002) currentCodes.push('6002');
+
+                  const isRepeatedError = currentCodes.some((code) => prevCodes.has(code));
+                  if (isRepeatedError && simulationAttempt > 1) {
+                    // Same error after rebuild = structural bug (wrong data passed)
+                    hasNonRecoverableError = true;
+                    const repeatedCodes = currentCodes.filter((c) => prevCodes.has(c)).join(', ');
+                    simulationErrors.push(
+                      `TX ${simIdx + 1}: ${errStr} (Error ${repeatedCodes} persisted after rebuild - structural bug, not stale proof)`
+                    );
+                    console.error(
+                      `   ❌ TX ${simIdx + 1} has error ${repeatedCodes} AGAIN after rebuild - structural bug (wrong data passed), aborting`
+                    );
+                    continue;
+                  }
+
+                  // First occurrence of 6000/6002 - could be stale proof, try rebuild
+                  if (has6000 || has6002) {
                     hasStaleProofInBundle = true;
-                    console.log(`   🔄 Stale proof detected in TX ${simIdx + 1}, will rebuild...`);
+                    // Track this error code for future attempts
+                    if (!previousErrorCodes.has(simIdx)) {
+                      previousErrorCodes.set(simIdx, new Set());
+                    }
+                    currentCodes.forEach((code) => previousErrorCodes.get(simIdx)!.add(code));
+                    console.log(`   🔄 Potential stale proof in TX ${simIdx + 1} (${currentCodes.join(', ')}), will rebuild...`);
                   } else {
-                    // Non-stale-proof error (including 6001 PublicKeyMismatch) - not recoverable, abort
+                    // Non-stale-proof error - not recoverable, abort
                     hasNonRecoverableError = true;
                     simulationErrors.push(`TX ${simIdx + 1}: ${errStr}`);
                     console.error(`   ❌ TX ${simIdx + 1} has non-recoverable simulation error: ${errStr}`);
@@ -939,9 +984,11 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
               break;
             }
 
-            // Only rebuild if we have stale proofs (recoverable) and more attempts left
+            // Only rebuild if we have potential stale proofs and more attempts left
+            // NOTE: If rebuild doesn't fix it, next simulation will detect it as structural bug
             if (hasStaleProofInBundle && simulationAttempt < MAX_SIMULATION_RETRIES && offerId) {
-              console.log(`\n🔄 Stale proofs detected, rebuilding bundle (attempt ${simulationAttempt + 1})...`);
+              console.log(`\n🔄 Potential stale proofs detected, rebuilding bundle (attempt ${simulationAttempt + 1}/${MAX_SIMULATION_RETRIES})...`);
+              console.log(`   ℹ️  If error persists after rebuild, it will be flagged as structural bug (wrong data passed)`);
 
               // Clear proof cache and rebuild
               cnftService.clearAllCachedProofs();
@@ -988,14 +1035,15 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
           }
 
           // Also abort if we exhausted retries without all simulations passing
-          // This catches the case where stale proofs kept failing after max rebuilds
+          // This should rarely happen since structural bugs are detected on second attempt
           if (hasStaleProofInBundle && simulationAttempt >= MAX_SIMULATION_RETRIES) {
-            console.error(`❌ Exhausted ${MAX_SIMULATION_RETRIES} simulation retries, stale proofs persist`);
+            console.error(`❌ Exhausted ${MAX_SIMULATION_RETRIES} simulation retries, errors persist`);
             return res.status(400).json({
               success: false,
-              error: `Pre-flight simulation failed after ${MAX_SIMULATION_RETRIES} attempts: stale Merkle proofs persist`,
+              error: `Pre-flight simulation failed after ${MAX_SIMULATION_RETRIES} attempts. ` +
+                     `This may indicate on-chain state is actively changing or a structural bug in transaction construction.`,
               errorCode: 'STALE_PROOF_EXHAUSTED',
-              simulationErrors: simulationErrors.length > 0 ? simulationErrors : ['Stale proof errors persisted after max retries'],
+              simulationErrors: simulationErrors.length > 0 ? simulationErrors : ['Errors persisted after max retries'],
               timestamp: new Date().toISOString(),
             });
           }
