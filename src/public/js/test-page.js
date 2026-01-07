@@ -2218,11 +2218,13 @@ async function executeAtomicSwap(params) {
         mint: nft.mint,
         isCompressed: nft.isCompressed || false,
         isCoreNft: nft.isCoreNft || false,
+        isPnft: nft.isProgrammable || false, // Backend uses isPnft
       })),
       requestedAssets: confirmedTakerNFTs.map((nft) => ({
         mint: nft.mint,
         isCompressed: nft.isCompressed || false,
         isCoreNft: nft.isCoreNft || false,
+        isPnft: nft.isProgrammable || false, // Backend uses isPnft
       })),
       offeredSol: offeredSol ? Math.round(parseFloat(offeredSol) * 1e9).toString() : undefined,
       requestedSol: requestedSol
@@ -2234,7 +2236,7 @@ async function executeAtomicSwap(params) {
     console.log('📤 [Swap] Sending to backend:', requestPayload);
     console.log('📤 [Swap] Offered assets details:');
     requestPayload.offeredAssets.forEach((asset, i) => {
-      const typeLabel = asset.isCoreNft ? 'Core' : asset.isCompressed ? 'cNFT' : 'SPL';
+      const typeLabel = asset.isCoreNft ? 'Core' : asset.isCompressed ? 'cNFT' : asset.isProgrammable ? 'pNFT' : 'SPL';
       console.log(`   ${i + 1}. ${typeLabel}: ${asset.mint}`);
     });
 
@@ -4090,12 +4092,14 @@ async function handleQuickListConfirm() {
     // Convert SOL to lamports
     const priceLamports = Math.floor(price * 1e9);
 
-    // Determine asset type
+    // Determine asset type (pNFTs have frozen accounts by design, must be identified)
     let assetType = 'NFT';
     if (quickListAsset.isCompressed) {
       assetType = 'CNFT';
     } else if (quickListAsset.isCoreNft) {
       assetType = 'CORE_NFT';
+    } else if (quickListAsset.isProgrammable) {
+      assetType = 'PNFT';
     }
 
     // Build offer request - NFT for SOL (open swap offer)
@@ -5342,12 +5346,14 @@ handleQuickListConfirm = async function () {
     // Convert SOL to lamports
     const priceLamports = Math.floor(price * 1e9);
 
-    // Determine asset type
+    // Determine asset type (pNFTs have frozen accounts by design, must be identified)
     let assetType = 'NFT';
     if (quickListAsset.isCompressed) {
       assetType = 'CNFT';
     } else if (quickListAsset.isCoreNft) {
       assetType = 'CORE_NFT';
+    } else if (quickListAsset.isProgrammable) {
+      assetType = 'PNFT';
     }
 
     // Build offer request - NFT for SOL (open swap offer)
