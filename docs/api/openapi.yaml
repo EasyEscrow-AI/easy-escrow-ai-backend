@@ -73,11 +73,19 @@ info:
     
     ### Supported Asset Types
 
-    - ✅ **SPL NFTs** (Metaplex standard)
-    - ✅ **Compressed NFTs (cNFTs)** (Metaplex Bubblegum)
     - ✅ **SOL** (Native Solana currency)
     - ✅ **Mixed swaps** (NFT ↔ SOL, NFT ↔ NFT, cNFT ↔ SOL, cNFT ↔ cNFT, etc.)
     - ✅ **Bundle swaps** - Up to 4 NFTs total (Jito bundle transaction limit)
+
+    ### NFT Types Reference
+
+    | Type | Full Name | Description | Status |
+    |------|-----------|-------------|--------|
+    | **cNFT** | Compressed Non-Fungible Token | Metaplex Bubblegum compressed NFTs stored in Merkle trees. Significantly cheaper to mint at scale. | ✅ Supported |
+    | **CORE** | Metaplex CORE Token | Metaplex Core standard NFTs with improved functionality and lower costs than SPL. | ✅ Supported |
+    | **pNFT** | Programmable Non-Fungible Token | Metaplex programmable NFTs with on-chain royalty enforcement and custom rules. | ✅ Supported |
+    | **xNFT** | Executable Non-Fungible Token | Backpack executable NFTs that can contain embedded applications. | ⏳ Coming Soon |
+    | **OTHER** | Other Non-Fungible Tokens | Standard SPL NFTs, Semi-Fungible Tokens (SFT), and legacy formats. | ✅ Supported |
     
     ### Key Features
     

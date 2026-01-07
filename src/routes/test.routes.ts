@@ -311,6 +311,35 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
           
           // console.log(`[Test Route] After cNFT filtering: ${filteredCNfts.length} valid cNFTs found`);
           
+          // Helper function to determine NFT type from DAS API interface field
+          const getNftType = (asset: any): 'cnft' | 'core' | 'pnft' | 'xnft' | 'other' => {
+            // cNFT check first (compression.compressed = true)
+            if (asset.compression?.compressed === true) {
+              return 'cnft';
+            }
+
+            const interfaceName = asset.interface?.toLowerCase() || '';
+
+            // Metaplex Core NFTs
+            if (interfaceName === 'mplcoreasset' || interfaceName === 'mplcorecollection') {
+              return 'core';
+            }
+
+            // Programmable NFTs (pNFTs) - Metaplex Token Metadata with programmable config
+            if (interfaceName === 'programmablenfT' || interfaceName === 'pnft' ||
+                asset.interface === 'ProgrammableNFT' || asset.interface === 'ProgrammableNonFungible') {
+              return 'pnft';
+            }
+
+            // Executable NFTs (xNFTs) - Backpack xNFT standard
+            if (interfaceName.includes('xnft') || asset.interface === 'xNFT') {
+              return 'xnft';
+            }
+
+            // All other NFT types (V1_NFT, Legacy, FungibleAsset, etc.)
+            return 'other';
+          };
+
           // Filter for Metaplex Core NFTs (MplCoreAsset)
           // Note: Different RPC providers may use different interface names
           // IMPORTANT: cNFTs must be explicitly excluded - they have compression.compressed = true
@@ -321,23 +350,23 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
               if (isCompressed) {
                 return false; // This is a cNFT, not a Core NFT
               }
-              
+
               // Metaplex Core NFTs have specific interface names
               const interfaceName = asset.interface?.toLowerCase() || '';
               // Be more specific - only match exact Metaplex Core interface names
               const isCoreNft = interfaceName === 'mplcoreasset' ||
                                interfaceName === 'mplcorecollection' ||
-                               asset.interface === 'MplCoreAsset' || 
+                               asset.interface === 'MplCoreAsset' ||
                                asset.interface === 'MplCoreCollection';
               // Note: Removed 'includes("core")' check as it was too broad and caught non-Core NFTs
               // Also removed V1_NFT check as that's typically standard SPL NFTs
-              
+
               const isOwned = asset.ownership?.owner === address;
               const notBurnt = !asset.burnt;
               const notFrozen = !asset.frozen;
-              
+
               const isValid = isCoreNft && isOwned && notBurnt && notFrozen;
-              
+
               // Log Core NFT detection for debugging
               if (isCoreNft || (asset.interface && isValid)) {
                 console.log(`[Test Route] Asset ${asset.id} Core NFT check:`, {
@@ -351,8 +380,50 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
                   isValid,
                 });
               }
-              
+
               return isValid;
+            });
+
+          // Filter for Programmable NFTs (pNFTs)
+          const pNfts = dasData.result.items
+            .filter((asset: any) => {
+              const isCompressed = asset.compression?.compressed === true;
+              if (isCompressed) return false;
+
+              const nftType = getNftType(asset);
+              const isOwned = asset.ownership?.owner === address;
+              const notBurnt = !asset.burnt;
+              const notFrozen = !asset.frozen;
+
+              return nftType === 'pnft' && isOwned && notBurnt && notFrozen;
+            });
+
+          // Filter for Executable NFTs (xNFTs)
+          const xNfts = dasData.result.items
+            .filter((asset: any) => {
+              const isCompressed = asset.compression?.compressed === true;
+              if (isCompressed) return false;
+
+              const nftType = getNftType(asset);
+              const isOwned = asset.ownership?.owner === address;
+              const notBurnt = !asset.burnt;
+              const notFrozen = !asset.frozen;
+
+              return nftType === 'xnft' && isOwned && notBurnt && notFrozen;
+            });
+
+          // Filter for Other NFT types (V1_NFT, Legacy, etc. - but NOT from SPL token accounts)
+          const otherDasNfts = dasData.result.items
+            .filter((asset: any) => {
+              const isCompressed = asset.compression?.compressed === true;
+              if (isCompressed) return false;
+
+              const nftType = getNftType(asset);
+              const isOwned = asset.ownership?.owner === address;
+              const notBurnt = !asset.burnt;
+              const notFrozen = !asset.frozen;
+
+              return nftType === 'other' && isOwned && notBurnt && notFrozen;
             });
           
           // console.log(`[Test Route] Found ${coreNfts.length} valid Metaplex Core NFTs`);
@@ -411,6 +482,9 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
                 tokenAccount: null, // cNFTs don't have token accounts
                 isCompressed: true,
                 isCoreNft: false,
+                isProgrammable: false,
+                isExecutable: false,
+                nftType: 'cnft' as const,
                 name: asset.content?.metadata?.name || 'Unknown cNFT',
                 image: imageUrl,
                 symbol: asset.content?.metadata?.symbol || '',
@@ -428,47 +502,100 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
                               asset.content?.metadata?.image ||
                               asset.uri ||
                               null;
-              
+
               return {
                 mint: asset.id,
                 tokenAccount: null, // Core NFTs don't have token accounts like SPL tokens
                 isCompressed: false,
                 isCoreNft: true,
+                isProgrammable: false,
+                isExecutable: false,
+                nftType: 'core' as const,
                 name: asset.content?.metadata?.name || 'Unknown Core NFT',
                 image: imageUrl,
                 symbol: asset.content?.metadata?.symbol || '',
               };
             });
-          
-          // Combine cNFTs and Core NFTs
-          cNfts = [...mappedCNfts, ...mappedCoreNfts];
-          
-          // Log any unclassified assets (for debugging)
-          const classifiedIds = new Set([
-            ...filteredCNfts.map((a: any) => a.id),
-            ...coreNfts.map((a: any) => a.id),
-          ]);
-          const unclassified = dasData.result.items.filter((asset: any) => {
-            const isOwned = asset.ownership?.owner === address;
-            return isOwned && !asset.burnt && !asset.frozen && !classifiedIds.has(asset.id);
-          });
-          
-          if (unclassified.length > 0) {
-            console.log(`[Test Route] ⚠️ Unclassified DAS assets (not cNFT or Core):`, 
-              unclassified.map((a: any) => ({
-                id: a.id,
-                interface: a.interface,
-                compressed: a.compression?.compressed,
-                name: a.content?.metadata?.name,
-              }))
-            );
-          }
-          
+
+          // Map Programmable NFTs (pNFTs) to our format
+          const mappedPNfts = pNfts.map((asset: any) => {
+              const imageUrl = asset.content?.files?.[0]?.uri ||
+                              asset.content?.links?.image ||
+                              asset.content?.json_uri ||
+                              asset.content?.metadata?.image ||
+                              asset.uri ||
+                              null;
+
+              return {
+                mint: asset.id,
+                tokenAccount: null,
+                isCompressed: false,
+                isCoreNft: false,
+                isProgrammable: true,
+                isExecutable: false,
+                nftType: 'pnft' as const,
+                name: asset.content?.metadata?.name || 'Unknown pNFT',
+                image: imageUrl,
+                symbol: asset.content?.metadata?.symbol || '',
+              };
+            });
+
+          // Map Executable NFTs (xNFTs) to our format
+          const mappedXNfts = xNfts.map((asset: any) => {
+              const imageUrl = asset.content?.files?.[0]?.uri ||
+                              asset.content?.links?.image ||
+                              asset.content?.json_uri ||
+                              asset.content?.metadata?.image ||
+                              asset.uri ||
+                              null;
+
+              return {
+                mint: asset.id,
+                tokenAccount: null,
+                isCompressed: false,
+                isCoreNft: false,
+                isProgrammable: false,
+                isExecutable: true,
+                nftType: 'xnft' as const,
+                name: asset.content?.metadata?.name || 'Unknown xNFT',
+                image: imageUrl,
+                symbol: asset.content?.metadata?.symbol || '',
+              };
+            });
+
+          // Map Other DAS NFTs to our format
+          const mappedOtherDasNfts = otherDasNfts.map((asset: any) => {
+              const imageUrl = asset.content?.files?.[0]?.uri ||
+                              asset.content?.links?.image ||
+                              asset.content?.json_uri ||
+                              asset.content?.metadata?.image ||
+                              asset.uri ||
+                              null;
+
+              return {
+                mint: asset.id,
+                tokenAccount: null,
+                isCompressed: false,
+                isCoreNft: false,
+                isProgrammable: false,
+                isExecutable: false,
+                nftType: 'other' as const,
+                name: asset.content?.metadata?.name || 'Unknown NFT',
+                image: imageUrl,
+                symbol: asset.content?.metadata?.symbol || '',
+              };
+            });
+
+          // Combine all DAS-sourced NFTs (cNFT, Core, pNFT, xNFT, other)
+          cNfts = [...mappedCNfts, ...mappedCoreNfts, ...mappedPNfts, ...mappedXNfts, ...mappedOtherDasNfts];
+
           console.log(`[Test Route] Total DAS assets for ${address}:`, {
             totalFromDAS: totalAssets,
             cNfts: mappedCNfts.length,
             coreNfts: mappedCoreNfts.length,
-            unclassified: unclassified.length,
+            pNfts: mappedPNfts.length,
+            xNfts: mappedXNfts.length,
+            otherDasNfts: mappedOtherDasNfts.length,
             total: cNfts.length,
           });
         }
@@ -527,7 +654,7 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
       }
     }
 
-    // Ensure all NFTs have required fields (preserve isCoreNft flag!)
+    // Ensure all NFTs have required fields (preserve all type flags!)
     const finalNfts = nftsWithMetadata.map(nft => ({
       mint: nft.mint,
       tokenAccount: nft.tokenAccount,
@@ -535,13 +662,20 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
       image: nft.image || null,
       symbol: nft.symbol || '',
       isCompressed: nft.isCompressed || false,
-      isCoreNft: nft.isCoreNft || false, // IMPORTANT: Preserve Core NFT flag
+      isCoreNft: nft.isCoreNft || false,
+      isProgrammable: nft.isProgrammable || false,
+      isExecutable: nft.isExecutable || false,
+      // Determine nftType: SPL NFTs from token accounts don't have nftType set
+      nftType: nft.nftType || (nft.isCompressed ? 'cnft' : nft.isCoreNft ? 'core' : nft.isProgrammable ? 'pnft' : nft.isExecutable ? 'xnft' : 'other'),
     }));
 
     // Calculate counts for each NFT type
-    const splNftCount = finalNfts.filter(n => !n.isCompressed && !n.isCoreNft).length;
     const cNftCount = finalNfts.filter(n => n.isCompressed).length;
     const coreNftCount = finalNfts.filter(n => n.isCoreNft).length;
+    const pNftCount = finalNfts.filter(n => n.isProgrammable).length;
+    const xNftCount = finalNfts.filter(n => n.isExecutable).length;
+    // OTHER: NFTs that are not cNFT, Core, pNFT, or xNFT
+    const otherNftCount = finalNfts.filter(n => !n.isCompressed && !n.isCoreNft && !n.isProgrammable && !n.isExecutable).length;
 
     res.json({
       success: true,
@@ -551,9 +685,14 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
         solBalanceLamports: balance,
         nfts: finalNfts,
         nftCount: finalNfts.length,
-        splNftCount,
+        // NFT type counts
         cNftCount,
-        coreNftCount, // Add Core NFT count
+        coreNftCount,
+        pNftCount,
+        xNftCount,
+        otherNftCount,
+        // Legacy field for backwards compatibility
+        splNftCount: otherNftCount,
       },
       timestamp: new Date().toISOString(),
     });
