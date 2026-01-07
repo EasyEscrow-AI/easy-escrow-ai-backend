@@ -302,8 +302,15 @@ async function cleanupFailedSwapDelegations(
  * 2. On-chain failure: error.errorCode === 21 (StaleProof from AtomicSwapError)
  * 3. Bubblegum program error 6000 (AssetOwnerMismatch - owner changed since proof)
  * 4. Bubblegum program error 6002 (HashingMismatch - leaf data changed)
+ * 5. Account-compression program error 6001 (ConcurrentMerkleTreeError - tree modified)
  *
- * Bubblegum error codes (https://github.com/metaplex-foundation/mpl-bubblegum):
+ * IMPORTANT: Error code 6001 has DIFFERENT meanings in different programs:
+ *
+ * spl-account-compression error codes:
+ * - 6001: ConcurrentMerkleTreeError - "Concurrent merkle tree error"
+ *         STALE PROOF: Tree was modified since proof was generated (RECOVERABLE via rebuild)
+ *
+ * mpl-bubblegum error codes (https://github.com/metaplex-foundation/mpl-bubblegum):
  * - 6000: AssetOwnerMismatch - "Asset Owner Does not match"
  *         STALE PROOF: Owner changed on-chain since proof was generated
  *         STRUCTURAL BUG: Wrong owner passed in the instruction (not recoverable)
@@ -312,9 +319,9 @@ async function cleanupFailedSwapDelegations(
  *         STALE PROOF: Leaf data changed on-chain since proof was generated
  *         STRUCTURAL BUG: Wrong leaf data computed in transaction (not recoverable)
  *
- * IMPORTANT: Errors 6000 and 6002 can be EITHER stale proofs OR structural bugs.
- * If rebuilding the proof doesn't fix the error, it's a structural bug (wrong data passed).
- * Error 6001 (PublicKeyMismatch) is ALWAYS structural (not recoverable via rebuild).
+ * To distinguish 6001 errors, check the simulation logs:
+ * - "account-compression" or "ConcurrentMerkleTreeError" → stale proof (recoverable)
+ * - "bubblegum" or "PublicKeyMismatch" → structural bug (not recoverable)
  */
 function isCnftProofStaleError(error: any): boolean {
   const message = error?.message || '';
@@ -913,17 +920,41 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
                   }
                   allSimulationsPassed = false;
 
-                  // Extract Bubblegum error codes from error string
+                  // Extract error codes from error string
                   const has6000 = errStr.includes('6000') || errStr.includes('Custom(6000)');
                   const has6002 = errStr.includes('6002') || errStr.includes('Custom(6002)');
                   const has6001 = errStr.includes('6001') || errStr.includes('Custom(6001)');
 
-                  // Error 6001 (PublicKeyMismatch) is ALWAYS structural - not recoverable
+                  // Check logs to determine error source for 6001
+                  // IMPORTANT: Error 6001 has different meanings in different programs:
+                  // - spl-account-compression: 6001 = ConcurrentMerkleTreeError (stale proof, RECOVERABLE)
+                  // - mpl-bubblegum: 6001 = PublicKeyMismatch (wrong account, NOT recoverable)
+                  const logsStr = (simResult.value.logs || []).join(' ');
+                  const isAccountCompressionError = logsStr.includes('account-compression') ||
+                                                     logsStr.includes('ConcurrentMerkleTreeError') ||
+                                                     logsStr.includes('concurrent_tree_wrapper');
+                  const isBubblegumError = logsStr.includes('bubblegum') ||
+                                            logsStr.includes('PublicKeyMismatch');
+
+                  // Handle error 6001 based on which program emitted it
                   if (has6001) {
-                    hasNonRecoverableError = true;
-                    simulationErrors.push(`TX ${simIdx + 1}: ${errStr} (PublicKeyMismatch - structural bug, wrong account passed)`);
-                    console.error(`   ❌ TX ${simIdx + 1} has PublicKeyMismatch (6001) - structural bug, aborting`);
-                    continue;
+                    if (isAccountCompressionError && !isBubblegumError) {
+                      // spl-account-compression 6001 = ConcurrentMerkleTreeError (stale proof)
+                      // This IS recoverable via proof rebuild
+                      hasStaleProofInBundle = true;
+                      if (!previousErrorCodes.has(simIdx)) {
+                        previousErrorCodes.set(simIdx, new Set());
+                      }
+                      previousErrorCodes.get(simIdx)!.add('6001-compression');
+                      console.log(`   🔄 ConcurrentMerkleTreeError (6001) in TX ${simIdx + 1} - stale proof, will rebuild...`);
+                      continue;
+                    } else {
+                      // mpl-bubblegum 6001 = PublicKeyMismatch (structural bug)
+                      hasNonRecoverableError = true;
+                      simulationErrors.push(`TX ${simIdx + 1}: ${errStr} (PublicKeyMismatch - structural bug, wrong account passed)`);
+                      console.error(`   ❌ TX ${simIdx + 1} has PublicKeyMismatch (6001) - structural bug, aborting`);
+                      continue;
+                    }
                   }
 
                   // Check if this error code was seen in a previous attempt (after rebuild)
