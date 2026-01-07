@@ -12,6 +12,7 @@ export enum AssetType {
   NFT = 'nft',
   CNFT = 'cnft',
   CORE_NFT = 'core_nft', // Metaplex Core NFTs (mpl-core program)
+  PNFT = 'pnft', // Programmable NFTs (Token Metadata with frozen accounts)
 }
 
 export enum AssetStatus {
@@ -152,6 +153,8 @@ export class AssetValidator {
         result = await this.validateCNFT(walletAddress, assetIdentifier);
       } else if (assetType === AssetType.CORE_NFT) {
         result = await this.validateCoreNFT(walletAddress, assetIdentifier);
+      } else if (assetType === AssetType.PNFT) {
+        result = await this.validatePNFT(walletAddress, assetIdentifier);
       } else {
         result = { isValid: false, error: `Unknown asset type: ${assetType}` };
       }
@@ -530,7 +533,7 @@ export class AssetValidator {
       }
       
       console.log(`[AssetValidator] Core NFT ${assetId} successfully validated for ${walletAddress}`);
-      
+
       return {
         isValid: true,
         asset: {
@@ -550,7 +553,125 @@ export class AssetValidator {
       };
     }
   }
-  
+
+  /**
+   * Validate Programmable NFT (pNFT) ownership via DAS API
+   *
+   * pNFTs are identified by tokenStandard === 'ProgrammableNonFungible' or
+   * interface === 'ProgrammableNFT'. They have permanently frozen token accounts
+   * and require Token Metadata program's TransferV1 for transfers.
+   */
+  private async validatePNFT(walletAddress: string, mintAddress: string): Promise<ValidationResult> {
+    try {
+      console.log(`[AssetValidator] Validating pNFT ${mintAddress} for ${walletAddress}`);
+
+      // Fetch asset data via DAS API
+      const assetData = await this.fetchCNFTViaDAS(mintAddress);
+
+      // Verify this is actually a pNFT by checking tokenStandard
+      const tokenStandard = assetData.content?.metadata?.token_standard ||
+                            assetData.token_standard ||
+                            assetData.interface;
+
+      const isPnft = tokenStandard === 'ProgrammableNonFungible' ||
+                     tokenStandard === 'ProgrammableNFT' ||
+                     tokenStandard === 4 || // Numeric enum value
+                     assetData.interface === 'ProgrammableNFT';
+
+      if (!isPnft) {
+        console.warn(`[AssetValidator] Asset ${mintAddress} is not a pNFT (tokenStandard: ${tokenStandard}, interface: ${assetData.interface})`);
+        // Don't fail - treat as a standard NFT if the caller insists it's a pNFT
+        // The caller should use proper detection
+      }
+
+      // Check ownership
+      const expectedOwner = walletAddress;
+      const actualOwner = assetData.ownership?.owner;
+
+      console.log(`[AssetValidator] pNFT ownership check for ${mintAddress}:`);
+      console.log(`  Token Standard: ${tokenStandard}`);
+      console.log(`  Interface: ${assetData.interface}`);
+      console.log(`  Expected owner: ${expectedOwner}`);
+      console.log(`  Actual owner:   ${actualOwner}`);
+
+      if (!actualOwner) {
+        return {
+          isValid: false,
+          asset: {
+            type: AssetType.PNFT,
+            identifier: mintAddress,
+            owner: '',
+            status: AssetStatus.NOT_OWNED,
+            validatedAt: new Date(),
+          },
+          error: 'pNFT owner field not found in DAS API response',
+        };
+      }
+
+      if (actualOwner !== expectedOwner) {
+        return {
+          isValid: false,
+          asset: {
+            type: AssetType.PNFT,
+            identifier: mintAddress,
+            owner: actualOwner,
+            status: AssetStatus.NOT_OWNED,
+            validatedAt: new Date(),
+          },
+          error: `Wallet does not own this pNFT (owner: ${actualOwner})`,
+        };
+      }
+
+      // Check if burned
+      if (assetData.burnt) {
+        return {
+          isValid: false,
+          asset: {
+            type: AssetType.PNFT,
+            identifier: mintAddress,
+            owner: walletAddress,
+            status: AssetStatus.BURNED,
+            validatedAt: new Date(),
+          },
+          error: 'pNFT has been burned',
+        };
+      }
+
+      // Note: pNFTs have frozen token accounts by design, so we don't check isFrozen
+      // The frozen state is managed by the Token Metadata program
+
+      // Extract authorization rules info if present
+      const authorizationRules = assetData.programmable_config?.rule_set ||
+                                  assetData.programmableConfig?.ruleSet;
+
+      console.log(`[AssetValidator] pNFT ${mintAddress} successfully validated for ${walletAddress}`);
+      if (authorizationRules) {
+        console.log(`  Authorization Rules: ${authorizationRules}`);
+      }
+
+      return {
+        isValid: true,
+        asset: {
+          type: AssetType.PNFT,
+          identifier: mintAddress,
+          owner: walletAddress,
+          metadata: {
+            ...assetData.content?.metadata,
+            authorizationRules, // Include auth rules for transfer instruction
+          },
+          status: AssetStatus.VALID,
+          validatedAt: new Date(),
+        },
+      };
+    } catch (error) {
+      console.error(`[AssetValidator] pNFT validation failed:`, error);
+      return {
+        isValid: false,
+        error: error instanceof Error ? error.message : 'pNFT validation error',
+      };
+    }
+  }
+
   /**
    * Fetch cNFT data via DAS API (Digital Asset Standard)
    * Works with QuickNode, Helius, and other RPC providers that support DAS
