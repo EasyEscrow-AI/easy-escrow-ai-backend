@@ -201,35 +201,36 @@ router.get('/api/test/wallet-info', async (req: Request, res: Response) => {
       programId: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'),
     });
 
-    // Filter for SPL NFTs (amount = 1, decimals = 0, not frozen)
+    // Filter for SPL NFTs (amount = 1, decimals = 0)
+    // Include frozen tokens with a flag so UI can show them with a warning
     const splNfts = tokenAccounts.value
       .filter((account) => {
         const info = account.account.data.parsed.info;
         const amount = info.tokenAmount.uiAmount;
         const decimals = info.tokenAmount.decimals;
         const owner = info.owner;
-        const state = info.state; // 'initialized', 'frozen', or 'uninitialized'
 
         // Only include NFTs that:
         // 1. Have exactly 1 token (not 0)
         // 2. Have 0 decimals (NFT standard)
         // 3. Are owned by the specified address
-        // 4. Token account is NOT frozen
-        const isOwnedNFT = amount === 1 && decimals === 0 && owner === address;
-        const isFrozen = state === 'frozen';
-
-        if (isFrozen && isOwnedNFT) {
-          console.log(`[Test Route] Filtered out frozen SPL NFT: ${info.mint}`);
-        }
-
-        return isOwnedNFT && !isFrozen;
+        // Note: Include frozen tokens - UI will show warning and block selection
+        return amount === 1 && decimals === 0 && owner === address;
       })
       .map((account) => {
         const info = account.account.data.parsed.info;
+        const state = info.state; // 'initialized', 'frozen', or 'uninitialized'
+        const isFrozen = state === 'frozen';
+
+        if (isFrozen) {
+          console.log(`[Test Route] Including frozen SPL NFT with warning: ${info.mint}`);
+        }
+
         return {
           mint: info.mint,
           tokenAccount: account.pubkey.toBase58(),
           isCompressed: false,
+          frozen: isFrozen, // UI will show ice icon and block selection
         };
       });
 
