@@ -891,6 +891,11 @@ router.post('/api/test/execute-swap', requireTestEnvironment, async (req: Reques
                 if (simResult.value.err) {
                   const errStr = JSON.stringify(simResult.value.err);
                   console.log(`   ⚠️ TX ${simIdx + 1} simulation failed: ${errStr}`);
+                  // Log simulation logs for debugging
+                  if (simResult.value.logs && simResult.value.logs.length > 0) {
+                    console.log(`   📋 TX ${simIdx + 1} simulation logs:`);
+                    simResult.value.logs.slice(-10).forEach((log: string) => console.log(`      ${log}`));
+                  }
                   allSimulationsPassed = false;
 
                   // Check for recoverable stale proof errors:
