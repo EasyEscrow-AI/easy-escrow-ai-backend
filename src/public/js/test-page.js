@@ -571,9 +571,11 @@ async function loadWalletInfo(wallet) {
 
 // Get NFT type label for display
 function getNftTypeLabel(nft) {
-  if (nft.isCoreNft) return 'Core NFT';
   if (nft.isCompressed) return 'cNFT';
-  return 'SPL NFT';
+  if (nft.isCoreNft) return 'CORE';
+  if (nft.isProgrammable) return 'pNFT';
+  if (nft.isExecutable) return 'xNFT';
+  return 'OTHER';
 }
 
 // Check if NFT type is supported for swaps
@@ -596,14 +598,21 @@ function renderNFTs(wallet, nfts) {
 
   // Apply type filter
   let filteredNfts = nfts;
-  if (filter === 'spl') {
-    filteredNfts = nfts.filter((nft) => !nft.isCompressed && !nft.isCoreNft);
-  } else if (filter === 'cnft') {
-    // Only show compressed NFTs (cNFTs)
+  if (filter === 'cnft') {
+    // cNFT - Compressed Non-Fungible Token
     filteredNfts = nfts.filter((nft) => nft.isCompressed);
   } else if (filter === 'core') {
-    // Only show Metaplex Core NFTs
+    // CORE - Metaplex CORE Token
     filteredNfts = nfts.filter((nft) => nft.isCoreNft);
+  } else if (filter === 'pnft') {
+    // pNFT - Programmable Non-Fungible Token
+    filteredNfts = nfts.filter((nft) => nft.isProgrammable);
+  } else if (filter === 'xnft') {
+    // xNFT - Executable Non-Fungible Token
+    filteredNfts = nfts.filter((nft) => nft.isExecutable);
+  } else if (filter === 'other') {
+    // OTHER - Non-Fungible Tokens Other (SPL, SA, SFT etc)
+    filteredNfts = nfts.filter((nft) => !nft.isCompressed && !nft.isCoreNft && !nft.isProgrammable && !nft.isExecutable);
   }
 
   // Apply search filter
@@ -623,7 +632,7 @@ function renderNFTs(wallet, nfts) {
     } else if (filter === 'all') {
       message = 'No NFTs found in this wallet';
     } else {
-      const filterLabels = { spl: 'SPL NFTs', cnft: 'cNFTs', core: 'Core NFTs' };
+      const filterLabels = { cnft: 'cNFTs', core: 'CORE NFTs', pnft: 'pNFTs', xnft: 'xNFTs', other: 'Other NFTs' };
       message = `No ${filterLabels[filter] || 'NFTs'} found in this wallet`;
     }
     container.innerHTML = `<div class="empty-state">${message}</div>`;
