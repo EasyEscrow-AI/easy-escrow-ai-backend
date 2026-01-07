@@ -192,6 +192,7 @@ export class DirectPnftService {
       destinationTokenRecord,
       hasAuthorizationRules: hasAuthRules,
       estimatedSize,
+      needsDestinationAta: needsAtaCreation,
     };
   }
 

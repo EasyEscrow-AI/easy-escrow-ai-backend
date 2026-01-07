@@ -27,6 +27,7 @@ import {
   LAMPORTS_PER_SOL,
 } from '@solana/web3.js';
 import { AssetType } from './assetValidator';
+import { createAssociatedTokenAccountInstruction, getAssociatedTokenAddress } from '@solana/spl-token';
 import { TransactionBuilder, SwapAsset, TransactionBuildInputs, BuiltTransaction } from './transactionBuilder';
 import { ALTService, TransactionSizeEstimate } from './altService';
 import { CnftService, createCnftService } from './cnftService';
@@ -434,16 +435,16 @@ export class TransactionGroupBuilder {
       const cnftsPerTx = MAX_CNFTS_PER_TRANSACTION;
       const splPerTx = MAX_SPL_NFTS_PER_TRANSACTION;
       const corePerTx = MAX_CORE_NFTS_PER_TRANSACTION;
-      
+
       const cnftTxCount = Math.ceil(totalCnfts / cnftsPerTx);
       const splTxCount = totalNfts > 0 ? Math.ceil(totalNfts / splPerTx) : 0;
       const coreTxCount = totalCoreNfts > 0 ? Math.ceil(totalCoreNfts / corePerTx) : 0;
       const needsSolTx = hasSolTransfer || inputs.platformFeeLamports > BigInt(0);
-      
+
       transactionCount = cnftTxCount + splTxCount + coreTxCount + (needsSolTx ? 1 : 0);
-      
+
       console.log(`[TransactionGroupBuilder] cNFT swap batching: cNFT txs=${cnftTxCount}, SPL txs=${splTxCount}, Core txs=${coreTxCount}, SOL tx=${needsSolTx ? 1 : 0}, total=${transactionCount}`);
-      
+
       if (transactionCount > MAX_TRANSACTIONS_PER_BUNDLE) {
         strategy = SwapStrategy.CANNOT_FIT;
         reason = `Swap would require ${transactionCount} transactions, exceeding Jito's ${MAX_TRANSACTIONS_PER_BUNDLE} limit`;
@@ -453,6 +454,31 @@ export class TransactionGroupBuilder {
       } else {
         strategy = SwapStrategy.MIXED_NFT_BUNDLE;
         reason = `Mixed swap with cNFTs: ${totalCnfts} cNFTs + ${totalNfts} SPL + ${totalCoreNfts} Core (${transactionCount} transactions)`;
+      }
+    } else if (totalPnfts > 0) {
+      // pNFT swap - uses Token Metadata TransferV1 via Jito bundle
+      const pnftsPerTx = MAX_PNFTS_PER_TRANSACTION;
+      const splPerTx = MAX_SPL_NFTS_PER_TRANSACTION;
+      const corePerTx = MAX_CORE_NFTS_PER_TRANSACTION;
+
+      const pnftTxCount = Math.ceil(totalPnfts / pnftsPerTx);
+      const splTxCount = totalNfts > 0 ? Math.ceil(totalNfts / splPerTx) : 0;
+      const coreTxCount = totalCoreNfts > 0 ? Math.ceil(totalCoreNfts / corePerTx) : 0;
+      const needsSolTx = hasSolTransfer || inputs.platformFeeLamports > BigInt(0);
+
+      transactionCount = pnftTxCount + splTxCount + coreTxCount + (needsSolTx ? 1 : 0);
+
+      console.log(`[TransactionGroupBuilder] pNFT swap batching: pNFT txs=${pnftTxCount}, SPL txs=${splTxCount}, Core txs=${coreTxCount}, SOL tx=${needsSolTx ? 1 : 0}, total=${transactionCount}`);
+
+      if (transactionCount > MAX_TRANSACTIONS_PER_BUNDLE) {
+        strategy = SwapStrategy.CANNOT_FIT;
+        reason = `pNFT swap would require ${transactionCount} transactions, exceeding Jito's ${MAX_TRANSACTIONS_PER_BUNDLE} limit`;
+      } else if (totalNfts === 0 && totalCoreNfts === 0) {
+        strategy = SwapStrategy.DIRECT_PNFT_BUNDLE;
+        reason = `${totalPnfts} pNFT(s) using direct Token Metadata bundle (${transactionCount} transactions)`;
+      } else {
+        strategy = SwapStrategy.MIXED_NFT_BUNDLE;
+        reason = `Mixed swap with pNFTs: ${totalPnfts} pNFTs + ${totalNfts} SPL + ${totalCoreNfts} Core (${transactionCount} transactions)`;
       }
     } else if (totalAllNfts <= 2) {
       // Simple swap: 1-2 SPL/Core NFTs total, no cNFTs
@@ -675,7 +701,11 @@ export class TransactionGroupBuilder {
       case SwapStrategy.DIRECT_NFT_BUNDLE:
         // Direct NFT bundle - bypasses escrow program for bulk SPL/Core NFT swaps
         return this.buildDirectNftBundle(inputs, analysis, nonceValue);
-        
+
+      case SwapStrategy.DIRECT_PNFT_BUNDLE:
+        // Direct pNFT bundle - uses Token Metadata TransferV1 for pNFT swaps
+        return this.buildDirectPnftBundle(inputs, analysis, nonceValue);
+
       case SwapStrategy.MIXED_NFT_BUNDLE:
         // Mixed bundle - handles combination of cNFTs, SPL NFTs, and Core NFTs
         return this.buildMixedNftBundle(inputs, analysis, nonceValue);
@@ -1752,6 +1782,266 @@ export class TransactionGroupBuilder {
       transactions,
       transactionCount: transactions.length,
       requiresJitoBundle: shouldUseJitoBundle, // Jito bundles on mainnet, but NOT durable nonces
+      totalSizeBytes,
+      nonceValue: 'fresh-blockhash', // Always use recent blockhash for Jito bundles
+    };
+  }
+
+  /**
+   * Build direct pNFT bundle for pNFT swaps using Token Metadata TransferV1
+   * Bypasses escrow program by using direct Token Metadata transfers via Jito bundles
+   */
+  private async buildDirectPnftBundle(
+    inputs: TransactionGroupInput,
+    analysis: SwapAnalysis,
+    nonceValue: string
+  ): Promise<TransactionGroupResult> {
+    console.log('[TransactionGroupBuilder] Building direct pNFT bundle for pNFT swap');
+
+    if (!this.treasuryPda) {
+      throw new Error('Treasury PDA required for direct pNFT bundles');
+    }
+
+    const transactions: TransactionGroupItem[] = [];
+    let totalSizeBytes = 0;
+
+    // Network mode detection
+    const isMainnet = process.env.SOLANA_NETWORK === 'mainnet-beta' ||
+                      process.env.NODE_ENV === 'production';
+    // IMPORTANT: Jito bundles do NOT use durable nonces!
+    const useJitoNonces = false;
+
+    console.log(`[TransactionGroupBuilder] Network mode: ${isMainnet ? 'mainnet' : 'devnet/staging'}, useJitoNonces: ${useJitoNonces}`);
+
+    // Collect all pNFTs
+    const makerPnfts = inputs.makerAssets.filter(a =>
+      a.type === AssetType.PNFT || String(a.type).toLowerCase() === 'pnft'
+    );
+    const takerPnfts = inputs.takerAssets.filter(a =>
+      a.type === AssetType.PNFT || String(a.type).toLowerCase() === 'pnft'
+    );
+
+    // Determine if Jito bundles should be used
+    const shouldUseJitoBundle = isMainnet && isJitoBundlesEnabled();
+
+    // Calculate total transactions upfront to know which is last (for Jito tip)
+    const pnftsPerTx = MAX_PNFTS_PER_TRANSACTION;
+    const hasSolTx = analysis.hasSolTransfer || inputs.platformFeeLamports > BigInt(0);
+    const numSolTxs = hasSolTx ? 1 : 0;
+    const numMakerPnftTxs = Math.ceil(makerPnfts.length / pnftsPerTx) || 0;
+    const numTakerPnftTxs = Math.ceil(takerPnfts.length / pnftsPerTx) || 0;
+    const totalExpectedTransactions = numSolTxs + numMakerPnftTxs + numTakerPnftTxs;
+
+    console.log(`[TransactionGroupBuilder] Expected pNFT transactions: ${totalExpectedTransactions} (SOL: ${numSolTxs}, Maker pNFT: ${numMakerPnftTxs}, Taker pNFT: ${numTakerPnftTxs})`);
+
+    // === Transaction 1: SOL transfers (if any) ===
+    if (analysis.hasSolTransfer || inputs.platformFeeLamports > BigInt(0)) {
+      const solTx = await this.buildSolTransferTransaction(inputs, nonceValue, useJitoNonces);
+      transactions.push(solTx);
+      totalSizeBytes += solTx.transaction?.sizeBytes || 0;
+    }
+
+    // === Transaction 2+: pNFT transfers ===
+    let txIndex = transactions.length;
+
+    // Maker pNFTs → Taker
+    for (let i = 0; i < makerPnfts.length; i += pnftsPerTx) {
+      const batch = makerPnfts.slice(i, i + pnftsPerTx);
+      console.log(`[TransactionGroupBuilder] Building Tx${txIndex + 1}: Maker pNFT batch (${batch.length} pNFTs)`);
+
+      const pnftInstructions: TransactionInstruction[] = [];
+
+      // Build transfer instructions for each pNFT in batch
+      for (const pnft of batch) {
+        const result = await this.directPnftService.buildTransferInstruction({
+          mint: pnft.identifier,
+          fromWallet: inputs.makerPubkey,
+          toWallet: inputs.takerPubkey,
+        });
+
+        // Add ATA creation instruction if destination doesn't exist
+        if (result.needsDestinationAta) {
+          console.log(`[TransactionGroupBuilder] Adding ATA creation for pNFT ${pnft.identifier}`);
+          const createAtaIx = createAssociatedTokenAccountInstruction(
+            this.platformAuthority.publicKey, // payer
+            result.destinationAta,
+            inputs.takerPubkey, // owner
+            new PublicKey(pnft.identifier) // mint
+          );
+          pnftInstructions.push(createAtaIx);
+        }
+
+        pnftInstructions.push(result.instruction);
+      }
+
+      // Add Jito tip if this is the LAST transaction in the bundle
+      const isLastTransaction = txIndex === totalExpectedTransactions - 1;
+      if (shouldUseJitoBundle && isLastTransaction) {
+        const JITO_TIP_ACCOUNTS = [
+          'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
+          'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
+          'HFqU5x63VTqvQss8hp11i4bVmkdzGHnsRRskfJ2J4ybE',
+          '96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5',
+          '3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT',
+          'ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49',
+          'Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY',
+          'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
+        ];
+        const jitoTipAccount = new PublicKey(
+          JITO_TIP_ACCOUNTS[Math.floor(Math.random() * JITO_TIP_ACCOUNTS.length)]
+        );
+        const tipAmount = 1_000_000; // 0.001 SOL
+        console.log(`[TransactionGroupBuilder] Adding Jito tip to Maker pNFT tx: ${tipAmount} lamports`);
+        pnftInstructions.push(
+          SystemProgram.transfer({
+            fromPubkey: this.platformAuthority.publicKey,
+            toPubkey: jitoTipAccount,
+            lamports: tipAmount,
+          })
+        );
+      }
+
+      // Build transaction
+      const { blockhash } = await this.connection.getLatestBlockhash('confirmed');
+
+      const pnftTx = new Transaction({
+        recentBlockhash: blockhash,
+        feePayer: this.platformAuthority.publicKey,
+      }).add(...pnftInstructions);
+
+      pnftTx.partialSign(this.platformAuthority);
+
+      const pnftTxSerialized = pnftTx.serialize({ requireAllSignatures: false });
+      const pnftTxSize = pnftTxSerialized.length;
+
+      transactions.push({
+        index: txIndex,
+        purpose: `Maker pNFT transfers (${batch.length} pNFTs)${isLastTransaction && shouldUseJitoBundle ? ' + Jito tip' : ''}`,
+        assets: {
+          makerAssets: batch,
+          takerAssets: [],
+          makerSolLamports: BigInt(0),
+          takerSolLamports: BigInt(0),
+          platformFeeLamports: BigInt(0),
+        },
+        transaction: {
+          serializedTransaction: pnftTxSerialized.toString('base64'),
+          sizeBytes: pnftTxSize,
+          isVersioned: false,
+          nonceValue: blockhash,
+          estimatedComputeUnits: 200000 * batch.length, // pNFT transfers are compute-heavy
+          requiredSigners: [inputs.makerPubkey.toBase58()],
+        },
+        isVersioned: false,
+      });
+
+      totalSizeBytes += pnftTxSize;
+      txIndex++;
+    }
+
+    // Taker pNFTs → Maker
+    for (let i = 0; i < takerPnfts.length; i += pnftsPerTx) {
+      const batch = takerPnfts.slice(i, i + pnftsPerTx);
+      console.log(`[TransactionGroupBuilder] Building Tx${txIndex + 1}: Taker pNFT batch (${batch.length} pNFTs)`);
+
+      const pnftInstructions: TransactionInstruction[] = [];
+
+      // Build transfer instructions for each pNFT in batch
+      for (const pnft of batch) {
+        const result = await this.directPnftService.buildTransferInstruction({
+          mint: pnft.identifier,
+          fromWallet: inputs.takerPubkey,
+          toWallet: inputs.makerPubkey,
+        });
+
+        // Add ATA creation instruction if destination doesn't exist
+        if (result.needsDestinationAta) {
+          console.log(`[TransactionGroupBuilder] Adding ATA creation for pNFT ${pnft.identifier}`);
+          const createAtaIx = createAssociatedTokenAccountInstruction(
+            this.platformAuthority.publicKey, // payer
+            result.destinationAta,
+            inputs.makerPubkey, // owner
+            new PublicKey(pnft.identifier) // mint
+          );
+          pnftInstructions.push(createAtaIx);
+        }
+
+        pnftInstructions.push(result.instruction);
+      }
+
+      // Add Jito tip if this is the LAST transaction in the bundle
+      const isLastTransaction = txIndex === totalExpectedTransactions - 1;
+      if (shouldUseJitoBundle && isLastTransaction) {
+        const JITO_TIP_ACCOUNTS = [
+          'DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL',
+          'ADuUkR4vqLUMWXxW9gh6D6L8pMSawimctcNZ5pGwDcEt',
+          'HFqU5x63VTqvQss8hp11i4bVmkdzGHnsRRskfJ2J4ybE',
+          '96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5',
+          '3AVi9Tg9Uo68tJfuvoKvqKNWKkC5wPdSSdeBnizKZ6jT',
+          'ADaUMid9yfUytqMBgopwjb2DTLSokTSzL1zt6iGPaS49',
+          'Cw8CFyM9FkoMi7K7Crf6HNQqf4uEMzpKw6QNghXLvLkY',
+          'DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh',
+        ];
+        const jitoTipAccount = new PublicKey(
+          JITO_TIP_ACCOUNTS[Math.floor(Math.random() * JITO_TIP_ACCOUNTS.length)]
+        );
+        const tipAmount = 1_000_000; // 0.001 SOL
+        console.log(`[TransactionGroupBuilder] Adding Jito tip to Taker pNFT tx: ${tipAmount} lamports`);
+        pnftInstructions.push(
+          SystemProgram.transfer({
+            fromPubkey: this.platformAuthority.publicKey,
+            toPubkey: jitoTipAccount,
+            lamports: tipAmount,
+          })
+        );
+      }
+
+      // Build transaction
+      const { blockhash } = await this.connection.getLatestBlockhash('confirmed');
+
+      const pnftTx = new Transaction({
+        recentBlockhash: blockhash,
+        feePayer: this.platformAuthority.publicKey,
+      }).add(...pnftInstructions);
+
+      pnftTx.partialSign(this.platformAuthority);
+
+      const pnftTxSerialized = pnftTx.serialize({ requireAllSignatures: false });
+      const pnftTxSize = pnftTxSerialized.length;
+
+      transactions.push({
+        index: txIndex,
+        purpose: `Taker pNFT transfers (${batch.length} pNFTs)${isLastTransaction && shouldUseJitoBundle ? ' + Jito tip' : ''}`,
+        assets: {
+          makerAssets: [],
+          takerAssets: batch,
+          makerSolLamports: BigInt(0),
+          takerSolLamports: BigInt(0),
+          platformFeeLamports: BigInt(0),
+        },
+        transaction: {
+          serializedTransaction: pnftTxSerialized.toString('base64'),
+          sizeBytes: pnftTxSize,
+          isVersioned: false,
+          nonceValue: blockhash,
+          estimatedComputeUnits: 200000 * batch.length, // pNFT transfers are compute-heavy
+          requiredSigners: [inputs.takerPubkey.toBase58()],
+        },
+        isVersioned: false,
+      });
+
+      totalSizeBytes += pnftTxSize;
+      txIndex++;
+    }
+
+    console.log(`[TransactionGroupBuilder] pNFT bundle complete: ${transactions.length} transactions, ${totalSizeBytes} bytes total`);
+
+    return {
+      strategy: SwapStrategy.DIRECT_PNFT_BUNDLE,
+      analysis,
+      transactions,
+      transactionCount: transactions.length,
+      requiresJitoBundle: shouldUseJitoBundle,
       totalSizeBytes,
       nonceValue: 'fresh-blockhash', // Always use recent blockhash for Jito bundles
     };

@@ -123,6 +123,8 @@ export interface PnftTransferResult {
   hasAuthorizationRules: boolean;
   /** Estimated instruction size in bytes */
   estimatedSize: number;
+  /** Whether destination ATA needs to be created */
+  needsDestinationAta: boolean;
 }
 
 /**
