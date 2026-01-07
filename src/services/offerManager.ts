@@ -125,7 +125,7 @@ export class OfferManager {
    * Normalize asset type from various formats to standard AssetType enum values.
    * Handles database JSON variants and different casing.
    *
-   * @param type - Raw asset type from database or API (e.g., 'NFT', 'cnft', 'compressed', 'core')
+   * @param type - Raw asset type from database or API (e.g., 'NFT', 'cnft', 'compressed', 'core', 'pnft')
    * @returns Normalized AssetType enum value
    */
   private normalizeAssetType(type: any): AssetType {
@@ -138,6 +138,11 @@ export class OfferManager {
     }
     if (typeStr === 'core_nft' || typeStr === 'core') {
       return AssetType.CORE_NFT;
+    }
+    // pNFTs (Programmable NFTs) have frozen token accounts by design
+    // They must use validatePNFT() which doesn't check frozen state
+    if (typeStr === 'pnft' || typeStr === 'programmablenft' || typeStr === 'programmable') {
+      return AssetType.PNFT;
     }
     return AssetType.NFT;
   }
