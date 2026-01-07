@@ -118,28 +118,37 @@ export class DirectBubblegumService {
       } else {
         // Use pre-fetched proof - still need to fetch asset data for tree/authority
         const assetData = await this.cnftService.getCnftAsset(params.assetId);
-        
+
+        // Log DAS ownership info for debugging
+        console.log('[DirectBubblegumService] DAS ownership info:', {
+          assetId: params.assetId.substring(0, 12) + '...',
+          owner: assetData.ownership.owner,
+          delegate: assetData.ownership.delegate || 'none',
+          frozen: assetData.ownership.frozen,
+          delegated: assetData.ownership.delegated,
+        });
+
         // Validate ownership
         if (assetData.ownership.owner !== params.fromWallet.toBase58()) {
           throw new Error(
             `Ownership mismatch: Asset owned by ${assetData.ownership.owner}, expected ${params.fromWallet.toBase58()}`
           );
         }
-        
+
         const treeAddress = new PublicKey(assetData.compression.tree);
         const treeAuthorityAddress = this.cnftService.deriveTreeAuthority(treeAddress);
-        
+
         // Convert pre-fetched proof to CnftProof format
         const cnftProof = await this.cnftService.convertDasProofToCnftProofAsync(preFetchedProof, assetData);
-        
+
         transferParams = {
           treeAddress,
           treeAuthorityAddress,
           fromAddress: params.fromWallet,
           toAddress: params.toWallet,
           proof: cnftProof,
-          delegateAddress: assetData.ownership.delegate 
-            ? new PublicKey(assetData.ownership.delegate) 
+          delegateAddress: assetData.ownership.delegate
+            ? new PublicKey(assetData.ownership.delegate)
             : undefined,
         };
       }
@@ -382,6 +391,14 @@ export class DirectBubblegumService {
       leafOwner: params.fromWallet.toBase58(),
       leafDelegate: effectiveDelegate.toBase58(),
       hasOnChainDelegate: !!delegateAddress,
+      // Additional debug info for ProgramFailedToComplete diagnosis
+      treeAddress: treeAddress.toBase58(),
+      treeAuthority: treeAuthorityAddress.toBase58(),
+      leafIndex: proof.index,
+      nonce: proof.nonce,
+      rootHex: Buffer.from(proof.root).toString('hex').substring(0, 16) + '...',
+      dataHashHex: Buffer.from(proof.dataHash).toString('hex').substring(0, 16) + '...',
+      creatorHashHex: Buffer.from(proof.creatorHash).toString('hex').substring(0, 16) + '...',
     });
 
     return {
