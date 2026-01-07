@@ -633,50 +633,51 @@ export class TransactionGroupBuilder {
       };
     }
 
-    // Route cNFT swaps based on whether cNFTs are on one or both sides:
-    // - cNFT-to-cNFT: Use Two-Phase (both proofs must be fresh, higher failure rate with Jito)
-    // - cNFT-to-SOL/NFT: Use Jito (single proof to manage, Jito works well)
+    // Route cNFT swaps to Jito bundle for atomic execution
+    // Jito bundles execute all transactions in the same slot, preventing stale proof issues
+    // that occur with Two-Phase sequential execution (where TX 1 modifies tree before TX 2)
     const totalCnfts = analysis.makerCnfts + analysis.takerCnfts;
+    const totalNftsAllTypes = analysis.totalNfts + analysis.totalCoreNfts + analysis.totalPnfts + totalCnfts;
     const hasCnftOnBothSides = analysis.makerCnfts > 0 && analysis.takerCnfts > 0;
 
-    if (hasCnftOnBothSides) {
-      // cNFT-to-cNFT: Route to Two-Phase for better reliability
-      // Reason: Both proofs must be valid at same slot with Jito, causing frequent failures
-      // Two-Phase fetches fresh proofs at settlement time and can retry if needed
-      console.log(`[TransactionGroupBuilder] cNFT-to-cNFT (${analysis.makerCnfts} ↔ ${analysis.takerCnfts}) - routing to Two-Phase for reliability`);
+    // Max 4 NFTs for Jito path (Jito has 5 TX limit: 4 NFT transfers + 1 fee TX)
+    const MAX_NFTS_FOR_JITO = 4;
 
-      const twoPhaseAnalysis = {
-        ...analysis,
-        strategy: SwapStrategy.TWO_PHASE_DELEGATION,
-        reason: `cNFT-to-cNFT swap requires Two-Phase delegation for reliable proof handling`,
-        requiresTwoPhase: true,
-      };
+    if (totalCnfts > 0) {
+      // All cNFT swaps should use Jito bundles for atomic execution
+      // This prevents stale proof errors that occur with Two-Phase sequential execution
+      const swapType = hasCnftOnBothSides
+        ? `cNFT-to-cNFT (${analysis.makerCnfts} ↔ ${analysis.takerCnfts})`
+        : analysis.makerCnfts > 0
+          ? `cNFT-to-other (${analysis.makerCnfts} cNFT → SOL/NFT)`
+          : `other-to-cNFT (SOL/NFT → ${analysis.takerCnfts} cNFT)`;
 
-      return {
-        strategy: SwapStrategy.TWO_PHASE_DELEGATION,
-        analysis: twoPhaseAnalysis,
-        transactions: [], // No transactions built - two-phase flow handles this
-        transactionCount: analysis.transactionCount,
-        requiresJitoBundle: false,
-        totalSizeBytes: 0,
-        nonceValue: '',
-        requiresTwoPhase: true,
-      };
-    } else if (totalCnfts > 0) {
-      // Single-side cNFT swaps (cNFT-to-SOL, cNFT-to-NFT): Use Jito bundle
-      // Strategy depends on asset mix:
-      // - Pure cNFT (no SPL/Core NFTs): DIRECT_BUBBLEGUM_BUNDLE
-      // - Mixed (cNFT + SPL/Core): MIXED_NFT_BUNDLE (set by analyzeSwap)
-      const swapType = analysis.makerCnfts > 0
-        ? `cNFT-to-other (${analysis.makerCnfts} cNFT → SOL/NFT)`
-        : `other-to-cNFT (SOL/NFT → ${analysis.takerCnfts} cNFT)`;
+      if (totalNftsAllTypes > MAX_NFTS_FOR_JITO) {
+        // Too many NFTs for Jito bundle - reject with clear error
+        // Two-Phase has stale proof issues, so we don't fallback to it
+        console.log(`[TransactionGroupBuilder] ${swapType} exceeds Jito limit (${totalNftsAllTypes} > ${MAX_NFTS_FOR_JITO}) - rejecting`);
+        return {
+          strategy: SwapStrategy.CANNOT_FIT,
+          analysis: {
+            ...analysis,
+            strategy: SwapStrategy.CANNOT_FIT,
+            reason: `Swap has ${totalNftsAllTypes} NFTs but Jito bundles support max ${MAX_NFTS_FOR_JITO}. Please reduce the number of assets.`,
+          },
+          transactions: [],
+          transactionCount: 0,
+          requiresJitoBundle: false,
+          totalSizeBytes: 0,
+          nonceValue: '',
+          requiresTwoPhase: false,
+        };
+      }
 
-      console.log(`[TransactionGroupBuilder] ${swapType} swap detected - routing to Jito bundle (${analysis.strategy})`);
+      console.log(`[TransactionGroupBuilder] ${swapType} swap - routing to Jito bundle for atomic execution (${analysis.strategy})`);
       // Continue to build Jito bundle using strategy from analyzeSwap
     }
 
-    // If Jito is disabled and swap requires bundle, use sequential RPC for SPL/CORE NFTs
-    // Note: cNFT swaps are already handled above and routed to two-phase
+    // If Jito is disabled and swap requires bundle, use sequential RPC
+    // WARNING: Sequential RPC for cNFTs will have stale proof issues on TX 2+
     if (!isJitoBundlesEnabled() && analysis.transactionCount > 1) {
       const nftTypes = [
         analysis.totalNfts > 0 ? `${analysis.totalNfts} SPL` : '',
