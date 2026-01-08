@@ -8,8 +8,9 @@ Set these in DigitalOcean App Platform for the production backend:
 # DataSales Feature Flag
 DATASALES_ENABLED=true
 
-# DataSales API Key (generated)
-DATASALES_API_KEY=1af6b4a10d723f3e9d15623d46290c7a915a4ed820fc026d26077ebe017d4f18
+# DataSales API Key (generate a new key and set in DigitalOcean)
+# To generate: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+DATASALES_API_KEY=REPLACE_WITH_PRODUCTION_KEY
 
 # AWS S3 Configuration (reuse staging credentials or create production-specific)
 AWS_ACCESS_KEY_ID=<your-aws-access-key>
@@ -59,7 +60,7 @@ All DataSales endpoints are under `/api/datasales/*`:
 |------|-------|
 | Production API Base URL | `https://api.easyescrow.ai` |
 | API Key Header | `X-DataSales-API-Key` |
-| API Key Value | `1af6b4a10d723f3e9d15623d46290c7a915a4ed820fc026d26077ebe017d4f18` |
+| API Key Value | *(Share securely via 1Password, encrypted channel, etc.)* |
 | Documentation | `docs/api/DATASALES_API.md` |
 
 ## Verification Checklist
@@ -72,7 +73,7 @@ After configuration:
 4. [ ] Health check passes: `curl https://api.easyescrow.ai/health`
 5. [ ] Test API key authentication:
    ```bash
-   curl -H "X-DataSales-API-Key: 1af6b4a10d723f3e9d15623d46290c7a915a4ed820fc026d26077ebe017d4f18" \
+   curl -H "X-DataSales-API-Key: $DATASALES_API_KEY" \
      https://api.easyescrow.ai/api/datasales/agreements
    ```
 

@@ -135,7 +135,7 @@ router.post(
       res.status(500).json({
         success: false,
         error: 'Internal Server Error',
-        message: error.message,
+        message: 'Failed to create agreement. Please try again.',
         timestamp: new Date().toISOString(),
       });
     }
@@ -184,7 +184,7 @@ router.get(
       res.status(500).json({
         success: false,
         error: 'Internal Server Error',
-        message: error.message,
+        message: 'Failed to retrieve agreement. Please try again.',
         timestamp: new Date().toISOString(),
       });
     }
@@ -755,7 +755,7 @@ router.get(
       res.status(500).json({
         success: false,
         error: 'Internal Server Error',
-        message: error.message,
+        message: 'Failed to list agreements. Please try again.',
         timestamp: new Date().toISOString(),
       });
     }

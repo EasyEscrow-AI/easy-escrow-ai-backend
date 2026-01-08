@@ -77,10 +77,17 @@ export class S3Service {
   private static instance: S3Service | null = null;
 
   constructor(config?: Partial<S3Config>) {
+    const accessKeyId = config?.accessKeyId || process.env.AWS_ACCESS_KEY_ID;
+    const secretAccessKey = config?.secretAccessKey || process.env.AWS_SECRET_ACCESS_KEY;
+
+    if (!accessKeyId || !secretAccessKey) {
+      logger.warn('S3Service: AWS credentials not configured. S3 operations will fail.');
+    }
+
     this.config = {
       region: config?.region || process.env.AWS_S3_REGION || 'us-east-1',
-      accessKeyId: config?.accessKeyId || process.env.AWS_ACCESS_KEY_ID || '',
-      secretAccessKey: config?.secretAccessKey || process.env.AWS_SECRET_ACCESS_KEY || '',
+      accessKeyId: accessKeyId || '',
+      secretAccessKey: secretAccessKey || '',
       bucketPrefix: config?.bucketPrefix || process.env.AWS_S3_BUCKET_PREFIX || 'datasales-',
     };
 
@@ -174,26 +181,28 @@ export class S3Service {
     files: FileUploadRequest[],
     expiresIn: number = 3600 // 1 hour default
   ): Promise<PresignedUrl[]> {
-    const urls: PresignedUrl[] = [];
     const expiresAt = new Date(Date.now() + expiresIn * 1000);
 
-    for (const file of files) {
-      const command = new PutObjectCommand({
-        Bucket: bucketName,
-        Key: file.key,
-        ContentType: file.contentType || 'application/octet-stream',
-        ServerSideEncryption: 'AES256', // SSE-S3 encryption
-      });
+    // Generate URLs in parallel for better performance
+    const urls = await Promise.all(
+      files.map(async (file) => {
+        const command = new PutObjectCommand({
+          Bucket: bucketName,
+          Key: file.key,
+          ContentType: file.contentType || 'application/octet-stream',
+          ServerSideEncryption: 'AES256', // SSE-S3 encryption
+        });
 
-      const url = await getSignedUrl(this.client, command, { expiresIn });
+        const url = await getSignedUrl(this.client, command, { expiresIn });
 
-      urls.push({
-        url,
-        key: file.key,
-        expiresAt,
-        method: 'PUT',
-      });
-    }
+        return {
+          url,
+          key: file.key,
+          expiresAt,
+          method: 'PUT' as const,
+        };
+      })
+    );
 
     logger.debug(`Generated ${urls.length} upload URLs for bucket: ${bucketName}`);
     return urls;
@@ -207,24 +216,26 @@ export class S3Service {
     keys: string[],
     expiresIn: number = 86400 // 24 hours default
   ): Promise<PresignedUrl[]> {
-    const urls: PresignedUrl[] = [];
     const expiresAt = new Date(Date.now() + expiresIn * 1000);
 
-    for (const key of keys) {
-      const command = new GetObjectCommand({
-        Bucket: bucketName,
-        Key: key,
-      });
+    // Generate URLs in parallel for better performance
+    const urls = await Promise.all(
+      keys.map(async (key) => {
+        const command = new GetObjectCommand({
+          Bucket: bucketName,
+          Key: key,
+        });
 
-      const url = await getSignedUrl(this.client, command, { expiresIn });
+        const url = await getSignedUrl(this.client, command, { expiresIn });
 
-      urls.push({
-        url,
-        key,
-        expiresAt,
-        method: 'GET',
-      });
-    }
+        return {
+          url,
+          key,
+          expiresAt,
+          method: 'GET' as const,
+        };
+      })
+    );
 
     logger.debug(`Generated ${urls.length} download URLs for bucket: ${bucketName}`);
     return urls;
