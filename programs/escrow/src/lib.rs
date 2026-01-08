@@ -22,6 +22,19 @@ pub use instructions::offer_escrow::{
     expire_offer_escrow as offer_escrow_expire,
 };
 
+// Re-export datasales escrow types for use in program module
+pub use instructions::datasales_escrow::{
+    CreateDataSalesEscrow, DataSalesDepositSol, ConfirmSellerDeposit,
+    ApproveDataSales, SettleDataSales, CancelDataSales, CloseDataSalesEscrow,
+    create_datasales_escrow as datasales_escrow_create,
+    deposit_sol as datasales_deposit_sol,
+    confirm_seller_deposit as datasales_confirm_seller,
+    approve_datasales as datasales_approve,
+    settle_datasales as datasales_settle,
+    cancel_datasales as datasales_cancel,
+    close_datasales_escrow as datasales_close,
+};
+
 // Environment-specific Program IDs
 // Automatically selected based on build features
 // Build with: anchor build --features <environment>
@@ -1641,6 +1654,95 @@ pub mod escrow {
         instructions::cancel_two_phase_with_close_handler(ctx, swap_id, party)
     }
 
+    // ============================================================================
+    // DATASALES ESCROW INSTRUCTIONS (Data Buy/Sell Marketplace)
+    // ============================================================================
+
+    /// Create a DataSales escrow for data buy/sell agreement
+    ///
+    /// Called by backend after DataSales creates an agreement.
+    /// Initializes the escrow state PDA and SOL vault.
+    pub fn create_datasales_escrow(
+        ctx: Context<CreateDataSalesEscrow>,
+        agreement_id: [u8; 32],
+        price_lamports: u64,
+        platform_fee_lamports: u64,
+        deposit_window_end: i64,
+        access_duration_seconds: i64,
+    ) -> Result<()> {
+        datasales_escrow_create(
+            ctx, agreement_id, price_lamports, platform_fee_lamports,
+            deposit_window_end, access_duration_seconds
+        )
+    }
+
+    /// Buyer deposits SOL to DataSales escrow vault
+    ///
+    /// Buyer deposits the price + platform fee to the vault PDA.
+    /// Updates status to SolLocked (or BothLocked if seller already deposited).
+    pub fn deposit_datasales_sol(
+        ctx: Context<DataSalesDepositSol>,
+        agreement_id: [u8; 32],
+    ) -> Result<()> {
+        datasales_deposit_sol(ctx, agreement_id)
+    }
+
+    /// Confirm seller has uploaded data to S3
+    ///
+    /// Backend-only instruction called after seller uploads data.
+    /// Updates status to DataLocked (or BothLocked if buyer already paid).
+    pub fn confirm_datasales_seller_deposit(
+        ctx: Context<ConfirmSellerDeposit>,
+        agreement_id: [u8; 32],
+    ) -> Result<()> {
+        datasales_confirm_seller(ctx, agreement_id)
+    }
+
+    /// Approve data quality after DataSales verification
+    ///
+    /// Backend-only instruction called after DataSales verifies data.
+    /// Updates status to Approved, enabling settlement.
+    pub fn approve_datasales_data(
+        ctx: Context<ApproveDataSales>,
+        agreement_id: [u8; 32],
+    ) -> Result<()> {
+        datasales_approve(ctx, agreement_id)
+    }
+
+    /// Settle DataSales escrow - release SOL to seller
+    ///
+    /// Executes settlement after data is approved:
+    /// - Platform fee → fee collector (treasury)
+    /// - Price → seller wallet
+    /// - Sets access expiry timestamp
+    pub fn settle_datasales_escrow(
+        ctx: Context<SettleDataSales>,
+        agreement_id: [u8; 32],
+    ) -> Result<()> {
+        datasales_settle(ctx, agreement_id)
+    }
+
+    /// Cancel DataSales escrow
+    ///
+    /// Cancels the agreement and refunds buyer if they deposited.
+    /// Called on timeout or manual cancellation.
+    pub fn cancel_datasales_escrow(
+        ctx: Context<CancelDataSales>,
+        agreement_id: [u8; 32],
+    ) -> Result<()> {
+        datasales_cancel(ctx, agreement_id)
+    }
+
+    /// Close DataSales escrow account
+    ///
+    /// Closes the escrow PDA after settlement/cancellation to reclaim rent.
+    pub fn close_datasales_escrow(
+        ctx: Context<CloseDataSalesEscrow>,
+        agreement_id: [u8; 32],
+    ) -> Result<()> {
+        datasales_close(ctx, agreement_id)
+    }
+
 }
 
 // Account Structures
@@ -1763,6 +1865,46 @@ pub enum EscrowError {
 
     #[msg("Offer is still active - cannot close")]
     OfferStillActive,
+
+    // DataSales Escrow errors
+    #[msg("DataSales price below minimum (0.01 SOL)")]
+    DataSalesPriceTooLow,
+
+    #[msg("DataSales price exceeds maximum (100,000 SOL)")]
+    DataSalesPriceTooHigh,
+
+    #[msg("DataSales deposit window too short (minimum 1 hour)")]
+    DataSalesDepositWindowTooShort,
+
+    #[msg("DataSales deposit window too long (maximum 30 days)")]
+    DataSalesDepositWindowTooLong,
+
+    #[msg("DataSales access duration too short (minimum 1 hour)")]
+    DataSalesAccessDurationTooShort,
+
+    #[msg("DataSales access duration too long (maximum 365 days)")]
+    DataSalesAccessDurationTooLong,
+
+    #[msg("DataSales deposit window has expired")]
+    DataSalesDepositWindowExpired,
+
+    #[msg("Invalid DataSales status for this operation")]
+    InvalidDataSalesStatus,
+
+    #[msg("DataSales escrow not in resolved state (settled, cancelled, or expired)")]
+    DataSalesNotResolved,
+
+    #[msg("Data has not been approved yet")]
+    DataNotApproved,
+
+    #[msg("Invalid seller address")]
+    InvalidSeller,
+
+    #[msg("Invalid buyer address")]
+    InvalidBuyer,
+
+    #[msg("Unauthorized buyer for this DataSales agreement")]
+    UnauthorizedBuyer,
 }
 
 // ============================================================================

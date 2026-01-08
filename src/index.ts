@@ -21,6 +21,7 @@ import {
   authorizedAppsRoutes,
   noncePoolAdminRoutes,
   assetsRoutes,
+  dataSalesRoutes,
 } from './routes';
 import { noncePoolManager, healthCheckService, assetValidator } from './routes/offers.routes';
 import { transactionGroupBuilder } from './routes/test-execute.routes';
@@ -268,6 +269,7 @@ app.use(authorizedAppsRoutes); // Admin endpoints for zero-fee API key managemen
 app.use('/admin/nonce-pool', noncePoolAdminRoutes); // Admin endpoints for nonce pool management
 app.use(testRoutes);
 app.use(testExecuteRoutes); // ⚠️ TEST ONLY - Real swap execution with private keys
+app.use(dataSalesRoutes); // DataSales.ai settlement layer
 
 // 404 handler
 app.use((req: Request, res: Response) => {
