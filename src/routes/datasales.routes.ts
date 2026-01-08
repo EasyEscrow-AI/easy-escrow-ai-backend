@@ -27,15 +27,27 @@ import { logger } from '../services/logger.service';
 
 const router = Router();
 
-// Initialize services
-const connection = new Connection(
-  process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com',
-  'confirmed'
-);
+// Lazy initialization - only create manager when DATASALES_ENABLED=true and first request comes in
+let dataSalesManager: DataSalesManager | null = null;
 
-const dataSalesManager = new DataSalesManager(prisma, connection);
+function getDataSalesManager(): DataSalesManager {
+  if (!dataSalesManager) {
+    const connection = new Connection(
+      process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com',
+      'confirmed'
+    );
+    dataSalesManager = new DataSalesManager(prisma, connection);
+    logger.info('[DataSales Routes] Manager initialized on first request');
+  }
+  return dataSalesManager;
+}
 
-logger.info('[DataSales Routes] Initialized');
+// Only log if DataSales is enabled
+if (process.env.DATASALES_ENABLED === 'true') {
+  logger.info('[DataSales Routes] Registered (lazy initialization)');
+} else {
+  logger.info('[DataSales Routes] Registered but DATASALES_ENABLED=false - requests will be rejected');
+}
 
 // ============================================
 // Agreement Lifecycle Endpoints
@@ -123,7 +135,7 @@ router.post(
         files: files as FileUploadRequest[],
       };
 
-      const result = await dataSalesManager.createAgreement(input);
+      const result = await getDataSalesManager().createAgreement(input);
 
       res.status(201).json({
         success: true,
@@ -157,7 +169,7 @@ router.get(
     try {
       const { id } = req.params;
 
-      const agreement = await dataSalesManager.getAgreement(id);
+      const agreement = await getDataSalesManager().getAgreement(id);
 
       if (!agreement) {
         res.status(404).json({
@@ -207,7 +219,7 @@ router.post(
     try {
       const { id } = req.params;
 
-      await dataSalesManager.cancelAgreement(id);
+      await getDataSalesManager().cancelAgreement(id);
 
       res.json({
         success: true,
@@ -269,7 +281,7 @@ router.get(
         return;
       }
 
-      const urls = await dataSalesManager.getUploadUrls(id, parsedFiles);
+      const urls = await getDataSalesManager().getUploadUrls(id, parsedFiles);
 
       res.json({
         success: true,
@@ -316,7 +328,7 @@ router.post(
 
       // TODO: Verify sellerWallet matches agreement and has valid signature
 
-      await dataSalesManager.confirmUpload(id, files);
+      await getDataSalesManager().confirmUpload(id, files);
 
       res.json({
         success: true,
@@ -378,7 +390,7 @@ router.post(
         return;
       }
 
-      const result = await dataSalesManager.buildDepositTransaction(id, buyerWallet);
+      const result = await getDataSalesManager().buildDepositTransaction(id, buyerWallet);
 
       res.json({
         success: true,
@@ -427,7 +439,7 @@ router.post(
 
       // TODO: Verify buyerWallet matches agreement (for specific buyer listings)
 
-      await dataSalesManager.confirmDeposit(id, txSignature);
+      await getDataSalesManager().confirmDeposit(id, txSignature);
 
       res.json({
         success: true,
@@ -472,7 +484,7 @@ router.get(
         return;
       }
 
-      const urls = await dataSalesManager.getDownloadUrls(id, buyerWallet);
+      const urls = await getDataSalesManager().getDownloadUrls(id, buyerWallet);
 
       res.json({
         success: true,
@@ -521,7 +533,7 @@ router.get(
     try {
       const { id } = req.params;
 
-      const files = await dataSalesManager.getFilesForVerification(id);
+      const files = await getDataSalesManager().getFilesForVerification(id);
 
       res.json({
         success: true,
@@ -560,7 +572,7 @@ router.post(
       const { id } = req.params;
       const { verifierAddress } = req.body;
 
-      await dataSalesManager.approve(id, verifierAddress || 'datasales-service');
+      await getDataSalesManager().approve(id, verifierAddress || 'datasales-service');
 
       res.json({
         success: true,
@@ -616,7 +628,7 @@ router.post(
         return;
       }
 
-      await dataSalesManager.reject(id, reason);
+      await getDataSalesManager().reject(id, reason);
 
       res.json({
         success: true,
@@ -665,7 +677,7 @@ router.post(
     try {
       const { id } = req.params;
 
-      const result = await dataSalesManager.settle(id);
+      const result = await getDataSalesManager().settle(id);
 
       res.json({
         success: true,
@@ -724,13 +736,13 @@ router.get(
 
       let agreements;
       if (seller) {
-        agreements = await dataSalesManager.listBySeller(seller as string, {
+        agreements = await getDataSalesManager().listBySeller(seller as string, {
           status: status as any,
           limit: limit ? parseInt(limit as string) : undefined,
           offset: offset ? parseInt(offset as string) : undefined,
         });
       } else {
-        agreements = await dataSalesManager.listByBuyer(buyer as string, {
+        agreements = await getDataSalesManager().listByBuyer(buyer as string, {
           status: status as any,
           limit: limit ? parseInt(limit as string) : undefined,
           offset: offset ? parseInt(offset as string) : undefined,
