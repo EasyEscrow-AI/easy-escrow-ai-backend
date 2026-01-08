@@ -12,22 +12,25 @@ export * from './constants';
 export * from './atomicSwap.config';
 export * from './noncePool.config';
 
+// Helper to determine if running in development
+const isDevelopment = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
+
 // Environment configuration
 export const config = {
   // Server
   nodeEnv: process.env.NODE_ENV || 'development',
   port: parseInt(process.env.PORT || '3000', 10),
-  
+
   // Database
   databaseUrl: process.env.DATABASE_URL || '',
-  
-  // Solana
+
+  // Solana - localhost fallback only in development/test
   solana: {
-    rpcUrl: process.env.SOLANA_RPC_URL || 'http://localhost:8899',
-    rpcUrlFallback: process.env.SOLANA_RPC_URL_FALLBACK || process.env.SOLANA_RPC_URL_2 || 'https://api.devnet.solana.com',
+    rpcUrl: process.env.SOLANA_RPC_URL || (isDevelopment ? 'http://localhost:8899' : ''),
+    rpcUrlFallback: process.env.SOLANA_RPC_URL_FALLBACK || process.env.SOLANA_RPC_URL_2 || (isDevelopment ? 'https://api.devnet.solana.com' : ''),
     // Batch operations RPC (defaults to primary, but can be overridden for better batch performance)
-    rpcUrlBatch: process.env.SOLANA_RPC_URL_BATCH || process.env.SOLANA_RPC_URL || 'http://localhost:8899',
-    network: process.env.SOLANA_NETWORK || 'localnet',
+    rpcUrlBatch: process.env.SOLANA_RPC_URL_BATCH || process.env.SOLANA_RPC_URL || (isDevelopment ? 'http://localhost:8899' : ''),
+    network: process.env.SOLANA_NETWORK || (isDevelopment ? 'localnet' : ''),
     escrowProgramId: process.env.ESCROW_PROGRAM_ID || '',
     rpcTimeout: parseInt(process.env.SOLANA_RPC_TIMEOUT || '30000', 10),
     rpcRetries: parseInt(process.env.SOLANA_RPC_RETRIES || '3', 10),

@@ -65,7 +65,7 @@ export class DataSalesScheduler {
       ...config,
     };
 
-    const connection = new Connection(appConfig.solana?.rpcUrl || 'http://localhost:8899', 'confirmed');
+    const connection = new Connection(appConfig.solana.rpcUrl, 'confirmed');
     this.s3Service = S3Service.getInstance();
     this.manager = new DataSalesManager(prisma, connection, this.s3Service);
 
