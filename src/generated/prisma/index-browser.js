@@ -408,6 +408,41 @@ exports.Prisma.TwoPhaseSwapScalarFieldEnum = {
   stateHistory: 'stateHistory'
 };
 
+exports.Prisma.DataSalesAgreementScalarFieldEnum = {
+  id: 'id',
+  agreementId: 'agreementId',
+  sellerWallet: 'sellerWallet',
+  buyerWallet: 'buyerWallet',
+  priceLamports: 'priceLamports',
+  platformFeeLamports: 'platformFeeLamports',
+  platformFeeBps: 'platformFeeBps',
+  depositWindowEndsAt: 'depositWindowEndsAt',
+  accessDurationHours: 'accessDurationHours',
+  accessExpiresAt: 'accessExpiresAt',
+  s3BucketName: 's3BucketName',
+  s3Region: 's3Region',
+  files: 'files',
+  totalSizeBytes: 'totalSizeBytes',
+  escrowPda: 'escrowPda',
+  escrowBump: 'escrowBump',
+  solVaultPda: 'solVaultPda',
+  sellerDepositedAt: 'sellerDepositedAt',
+  sellerDepositTxId: 'sellerDepositTxId',
+  buyerDepositedAt: 'buyerDepositedAt',
+  buyerDepositTxId: 'buyerDepositTxId',
+  verifiedAt: 'verifiedAt',
+  verifiedBy: 'verifiedBy',
+  rejectionReason: 'rejectionReason',
+  rejectionCount: 'rejectionCount',
+  status: 'status',
+  settleTxSignature: 'settleTxSignature',
+  settledAt: 'settledAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  cancelledAt: 'cancelledAt',
+  archivedAt: 'archivedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -543,6 +578,18 @@ exports.TwoPhaseSwapStatus = exports.$Enums.TwoPhaseSwapStatus = {
   EXPIRED: 'EXPIRED'
 };
 
+exports.DataSalesStatus = exports.$Enums.DataSalesStatus = {
+  PENDING_DEPOSITS: 'PENDING_DEPOSITS',
+  DATA_LOCKED: 'DATA_LOCKED',
+  SOL_LOCKED: 'SOL_LOCKED',
+  BOTH_LOCKED: 'BOTH_LOCKED',
+  APPROVED: 'APPROVED',
+  SETTLED: 'SETTLED',
+  EXPIRED: 'EXPIRED',
+  CANCELLED: 'CANCELLED',
+  ARCHIVED: 'ARCHIVED'
+};
+
 exports.Prisma.ModelName = {
   Agreement: 'Agreement',
   Deposit: 'Deposit',
@@ -558,7 +605,8 @@ exports.Prisma.ModelName = {
   AuthorizedApp: 'AuthorizedApp',
   ZeroFeeSwapLog: 'ZeroFeeSwapLog',
   CnftOffer: 'CnftOffer',
-  TwoPhaseSwap: 'TwoPhaseSwap'
+  TwoPhaseSwap: 'TwoPhaseSwap',
+  DataSalesAgreement: 'DataSalesAgreement'
 };
 
 /**

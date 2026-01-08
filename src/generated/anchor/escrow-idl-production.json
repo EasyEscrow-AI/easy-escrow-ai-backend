@@ -318,6 +318,82 @@
       ]
     },
     {
+      "name": "approve_datasales_data",
+      "docs": [
+        "Approve data quality after DataSales verification",
+        "",
+        "Backend-only instruction called after DataSales verifies data.",
+        "Updates status to Approved, enabling settlement."
+      ],
+      "discriminator": [
+        175,
+        36,
+        180,
+        140,
+        18,
+        93,
+        207,
+        40
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "docs": [
+            "Backend authority"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "datasales_escrow",
+          "docs": [
+            "DataSales escrow state PDA"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  97,
+                  116,
+                  97,
+                  115,
+                  97,
+                  108,
+                  101,
+                  115,
+                  95,
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "agreement_id"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "agreement_id",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
       "name": "atomic_swap_with_fee",
       "docs": [
         "Execute an atomic swap with platform fee collection",
@@ -575,6 +651,131 @@
             "defined": {
               "name": "SwapParams"
             }
+          }
+        }
+      ]
+    },
+    {
+      "name": "cancel_datasales_escrow",
+      "docs": [
+        "Cancel DataSales escrow",
+        "",
+        "Cancels the agreement and refunds buyer if they deposited.",
+        "Called on timeout or manual cancellation."
+      ],
+      "discriminator": [
+        81,
+        46,
+        219,
+        42,
+        12,
+        82,
+        107,
+        14
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "docs": [
+            "Authority triggering cancellation (backend or seller before buyer deposits)"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "buyer",
+          "docs": [
+            "Buyer wallet (receives refund if deposited)"
+          ],
+          "writable": true
+        },
+        {
+          "name": "datasales_escrow",
+          "docs": [
+            "DataSales escrow state PDA"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  97,
+                  116,
+                  97,
+                  115,
+                  97,
+                  108,
+                  101,
+                  115,
+                  95,
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "agreement_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "sol_vault",
+          "docs": [
+            "SOL vault PDA"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  97,
+                  116,
+                  97,
+                  115,
+                  97,
+                  108,
+                  101,
+                  115,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "agreement_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "docs": [
+            "System program for SOL transfers"
+          ],
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "agreement_id",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
           }
         }
       ]
@@ -881,6 +1082,88 @@
       ]
     },
     {
+      "name": "close_datasales_escrow",
+      "docs": [
+        "Close DataSales escrow account",
+        "",
+        "Closes the escrow PDA after settlement/cancellation to reclaim rent."
+      ],
+      "discriminator": [
+        182,
+        107,
+        135,
+        112,
+        105,
+        37,
+        83,
+        252
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "docs": [
+            "Authority (receives rent refund)"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "datasales_escrow",
+          "docs": [
+            "DataSales escrow state PDA to close"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  97,
+                  116,
+                  97,
+                  115,
+                  97,
+                  108,
+                  101,
+                  115,
+                  95,
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "agreement_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "docs": [
+            "System program"
+          ],
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "agreement_id",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
       "name": "close_escrow",
       "docs": [
         "Close escrow account and recover rent-exempt reserve",
@@ -1097,6 +1380,235 @@
         }
       ],
       "args": []
+    },
+    {
+      "name": "confirm_datasales_seller_deposit",
+      "docs": [
+        "Confirm seller has uploaded data to S3",
+        "",
+        "Backend-only instruction called after seller uploads data.",
+        "Updates status to DataLocked (or BothLocked if buyer already paid)."
+      ],
+      "discriminator": [
+        236,
+        111,
+        129,
+        17,
+        129,
+        159,
+        128,
+        188
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "docs": [
+            "Backend authority"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "datasales_escrow",
+          "docs": [
+            "DataSales escrow state PDA"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  97,
+                  116,
+                  97,
+                  115,
+                  97,
+                  108,
+                  101,
+                  115,
+                  95,
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "agreement_id"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "agreement_id",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "create_datasales_escrow",
+      "docs": [
+        "Create a DataSales escrow for data buy/sell agreement",
+        "",
+        "Called by backend after DataSales creates an agreement.",
+        "Initializes the escrow state PDA and SOL vault."
+      ],
+      "discriminator": [
+        210,
+        227,
+        145,
+        243,
+        137,
+        57,
+        12,
+        246
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "docs": [
+            "Backend authority creating the escrow (signer, pays for account creation)"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "seller",
+          "docs": [
+            "Seller wallet address"
+          ]
+        },
+        {
+          "name": "buyer",
+          "docs": [
+            "Buyer wallet address (optional for open listings)"
+          ],
+          "optional": true
+        },
+        {
+          "name": "fee_collector",
+          "docs": [
+            "Platform fee collector wallet (treasury)"
+          ]
+        },
+        {
+          "name": "datasales_escrow",
+          "docs": [
+            "DataSales escrow state PDA"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  97,
+                  116,
+                  97,
+                  115,
+                  97,
+                  108,
+                  101,
+                  115,
+                  95,
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "agreement_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "sol_vault",
+          "docs": [
+            "SOL vault PDA - will hold buyer's SOL"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  97,
+                  116,
+                  97,
+                  115,
+                  97,
+                  108,
+                  101,
+                  115,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "agreement_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "docs": [
+            "System program for account creation"
+          ],
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "agreement_id",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "price_lamports",
+          "type": "u64"
+        },
+        {
+          "name": "platform_fee_lamports",
+          "type": "u64"
+        },
+        {
+          "name": "deposit_window_end",
+          "type": "i64"
+        },
+        {
+          "name": "access_duration_seconds",
+          "type": "i64"
+        }
+      ]
     },
     {
       "name": "create_offer_escrow",
@@ -1339,6 +1851,124 @@
         }
       ],
       "args": []
+    },
+    {
+      "name": "deposit_datasales_sol",
+      "docs": [
+        "Buyer deposits SOL to DataSales escrow vault",
+        "",
+        "Buyer deposits the price + platform fee to the vault PDA.",
+        "Updates status to SolLocked (or BothLocked if seller already deposited)."
+      ],
+      "discriminator": [
+        178,
+        101,
+        154,
+        94,
+        210,
+        152,
+        112,
+        98
+      ],
+      "accounts": [
+        {
+          "name": "buyer",
+          "docs": [
+            "Buyer depositing SOL"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "datasales_escrow",
+          "docs": [
+            "DataSales escrow state PDA"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  97,
+                  116,
+                  97,
+                  115,
+                  97,
+                  108,
+                  101,
+                  115,
+                  95,
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "agreement_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "sol_vault",
+          "docs": [
+            "SOL vault PDA"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  97,
+                  116,
+                  97,
+                  115,
+                  97,
+                  108,
+                  101,
+                  115,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "agreement_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "docs": [
+            "System program for SOL transfer"
+          ],
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "agreement_id",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
     },
     {
       "name": "deposit_seller_nft",
@@ -1609,7 +2239,7 @@
         {
           "name": "sol_vault",
           "docs": [
-            "SOL vault PDA to deposit into"
+            "SOL vault PDA to deposit into (created if it doesn't exist)"
           ],
           "writable": true
         },
@@ -2568,6 +3198,140 @@
       "args": []
     },
     {
+      "name": "settle_datasales_escrow",
+      "docs": [
+        "Settle DataSales escrow - release SOL to seller",
+        "",
+        "Executes settlement after data is approved:",
+        "- Platform fee → fee collector (treasury)",
+        "- Price → seller wallet",
+        "- Sets access expiry timestamp"
+      ],
+      "discriminator": [
+        62,
+        222,
+        138,
+        214,
+        175,
+        27,
+        157,
+        160
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "docs": [
+            "Backend authority triggering settlement"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "seller",
+          "docs": [
+            "Seller wallet (receives payment)"
+          ],
+          "writable": true
+        },
+        {
+          "name": "datasales_escrow",
+          "docs": [
+            "DataSales escrow state PDA"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  97,
+                  116,
+                  97,
+                  115,
+                  97,
+                  108,
+                  101,
+                  115,
+                  95,
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "agreement_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "sol_vault",
+          "docs": [
+            "SOL vault PDA"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  97,
+                  116,
+                  97,
+                  115,
+                  97,
+                  108,
+                  101,
+                  115,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "agreement_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "fee_collector",
+          "docs": [
+            "Platform fee collector wallet"
+          ],
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "docs": [
+            "System program for SOL transfers"
+          ],
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "agreement_id",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
       "name": "settle_two_phase_with_close",
       "docs": [
         "Settle two-phase swap: transfer SOL to recipient and close vault",
@@ -2830,6 +3594,19 @@
   ],
   "accounts": [
     {
+      "name": "DataSalesEscrow",
+      "discriminator": [
+        125,
+        146,
+        48,
+        118,
+        179,
+        139,
+        126,
+        111
+      ]
+    },
+    {
       "name": "EscrowState",
       "discriminator": [
         19,
@@ -3044,6 +3821,71 @@
       "code": 6034,
       "name": "OfferStillActive",
       "msg": "Offer is still active - cannot close"
+    },
+    {
+      "code": 6035,
+      "name": "DataSalesPriceTooLow",
+      "msg": "DataSales price below minimum (0.01 SOL)"
+    },
+    {
+      "code": 6036,
+      "name": "DataSalesPriceTooHigh",
+      "msg": "DataSales price exceeds maximum (100,000 SOL)"
+    },
+    {
+      "code": 6037,
+      "name": "DataSalesDepositWindowTooShort",
+      "msg": "DataSales deposit window too short (minimum 1 hour)"
+    },
+    {
+      "code": 6038,
+      "name": "DataSalesDepositWindowTooLong",
+      "msg": "DataSales deposit window too long (maximum 30 days)"
+    },
+    {
+      "code": 6039,
+      "name": "DataSalesAccessDurationTooShort",
+      "msg": "DataSales access duration too short (minimum 1 hour)"
+    },
+    {
+      "code": 6040,
+      "name": "DataSalesAccessDurationTooLong",
+      "msg": "DataSales access duration too long (maximum 365 days)"
+    },
+    {
+      "code": 6041,
+      "name": "DataSalesDepositWindowExpired",
+      "msg": "DataSales deposit window has expired"
+    },
+    {
+      "code": 6042,
+      "name": "InvalidDataSalesStatus",
+      "msg": "Invalid DataSales status for this operation"
+    },
+    {
+      "code": 6043,
+      "name": "DataSalesNotResolved",
+      "msg": "DataSales escrow not in resolved state (settled, cancelled, or expired)"
+    },
+    {
+      "code": 6044,
+      "name": "DataNotApproved",
+      "msg": "Data has not been approved yet"
+    },
+    {
+      "code": 6045,
+      "name": "InvalidSeller",
+      "msg": "Invalid seller address"
+    },
+    {
+      "code": 6046,
+      "name": "InvalidBuyer",
+      "msg": "Invalid buyer address"
+    },
+    {
+      "code": 6047,
+      "name": "UnauthorizedBuyer",
+      "msg": "Unauthorized buyer for this DataSales agreement"
     }
   ],
   "types": [
@@ -3119,6 +3961,191 @@
                 ]
               }
             }
+          }
+        ]
+      }
+    },
+    {
+      "name": "DataSalesEscrow",
+      "docs": [
+        "DataSales Escrow PDA account for data buy/sell agreements",
+        "",
+        "Seeds: [\"datasales_escrow\", agreement_id]",
+        "This PDA tracks the state of a DataSales agreement, with a separate vault holding SOL.",
+        "",
+        "Flow:",
+        "1. Agreement created (PENDING_DEPOSITS)",
+        "2. Seller uploads data to S3 → DATA_LOCKED",
+        "3. Buyer deposits SOL → SOL_LOCKED",
+        "4. Both complete → BOTH_LOCKED",
+        "5. DataSales verifies → APPROVED",
+        "6. Settlement executed → SETTLED",
+        "7. Access expires → EXPIRED → ARCHIVED"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "agreement_id",
+            "docs": [
+              "Unique agreement identifier (UUID bytes, matches database agreement_id)"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "seller",
+            "docs": [
+              "Seller wallet address (data provider)"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "buyer",
+            "docs": [
+              "Buyer wallet address (None for open listings)"
+            ],
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "price_lamports",
+            "docs": [
+              "Price in lamports (what seller receives)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "platform_fee_lamports",
+            "docs": [
+              "Platform fee in lamports (sent to treasury)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "fee_collector",
+            "docs": [
+              "Fee collector wallet address (treasury PDA or designated address)"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "deposit_window_end",
+            "docs": [
+              "Deposit window end timestamp (Unix timestamp)",
+              "Both parties must deposit before this time"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "access_duration_seconds",
+            "docs": [
+              "Access duration in seconds after settlement"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "seller_deposited",
+            "docs": [
+              "Whether seller has confirmed data upload"
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "buyer_deposited",
+            "docs": [
+              "Whether buyer has deposited SOL"
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "data_approved",
+            "docs": [
+              "Whether DataSales has approved the data"
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "status",
+            "docs": [
+              "Agreement status"
+            ],
+            "type": {
+              "defined": {
+                "name": "DataSalesStatus"
+              }
+            }
+          },
+          {
+            "name": "created_at",
+            "docs": [
+              "Timestamp when agreement was created"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "settled_at",
+            "docs": [
+              "Timestamp when settlement was executed"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "access_expires_at",
+            "docs": [
+              "Timestamp when access expires (set at settlement)"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "docs": [
+              "PDA bump seed"
+            ],
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DataSalesStatus",
+      "docs": [
+        "DataSales agreement status enum matching the Prisma DataSalesStatus"
+      ],
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "PendingDeposits"
+          },
+          {
+            "name": "DataLocked"
+          },
+          {
+            "name": "SolLocked"
+          },
+          {
+            "name": "BothLocked"
+          },
+          {
+            "name": "Approved"
+          },
+          {
+            "name": "Settled"
+          },
+          {
+            "name": "Expired"
+          },
+          {
+            "name": "Cancelled"
+          },
+          {
+            "name": "Archived"
           }
         ]
       }

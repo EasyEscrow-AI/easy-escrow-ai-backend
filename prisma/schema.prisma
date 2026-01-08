@@ -674,3 +674,88 @@ model TwoPhaseSwap {
   @@index([status, expiresAt], name: "idx_two_phase_status_expiry")
   @@map("two_phase_swaps")
 }
+
+// ============================================
+// DATASALES SETTLEMENT LAYER (Digital Asset Escrow)
+// ============================================
+
+// Enum for DataSales agreement status
+enum DataSalesStatus {
+  PENDING_DEPOSITS  // Waiting for seller upload and/or buyer SOL
+  DATA_LOCKED       // Seller uploaded, waiting for buyer SOL
+  SOL_LOCKED        // Buyer paid, waiting for seller upload
+  BOTH_LOCKED       // Both deposited, awaiting DataSales verification
+  APPROVED          // DataSales approved, ready to settle
+  SETTLED           // SOL released, buyer has access
+  EXPIRED           // Access period ended
+  CANCELLED         // Timeout or manual cancel
+  ARCHIVED          // Cleanup complete
+}
+
+// DataSales Agreement - Digital asset escrow for DataSales.ai
+model DataSalesAgreement {
+  id                    String            @id @default(uuid())
+  agreementId           String            @unique @map("agreement_id") // External ID (for API/PDA seeds)
+
+  // Parties
+  sellerWallet          String            @map("seller_wallet")
+  buyerWallet           String?           @map("buyer_wallet") // Optional for open listings
+
+  // Pricing
+  priceLamports         BigInt            @map("price_lamports")
+  platformFeeLamports   BigInt            @map("platform_fee_lamports")
+  platformFeeBps        Int               @default(250) @map("platform_fee_bps") // 2.5%
+
+  // Time windows
+  depositWindowEndsAt   DateTime          @map("deposit_window_ends_at") // Both must deposit by this time
+  accessDurationHours   Int               @default(168) @map("access_duration_hours") // 7 days default
+  accessExpiresAt       DateTime?         @map("access_expires_at") // Set when settled
+
+  // S3 Storage
+  s3BucketName          String            @unique @map("s3_bucket_name")
+  s3Region              String            @default("us-east-1") @map("s3_region")
+
+  // File metadata (set when seller confirms upload)
+  files                 Json?             // [{name, size, contentType, s3Key, sha256}]
+  totalSizeBytes        BigInt?           @map("total_size_bytes")
+
+  // On-chain references
+  escrowPda             String?           @map("escrow_pda")
+  escrowBump            Int?              @map("escrow_bump")
+  solVaultPda           String?           @map("sol_vault_pda")
+
+  // Deposit tracking
+  sellerDepositedAt     DateTime?         @map("seller_deposited_at")
+  sellerDepositTxId     String?           @map("seller_deposit_tx_id")
+  buyerDepositedAt      DateTime?         @map("buyer_deposited_at")
+  buyerDepositTxId      String?           @map("buyer_deposit_tx_id")
+
+  // Verification (by DataSales)
+  verifiedAt            DateTime?         @map("verified_at")
+  verifiedBy            String?           @map("verified_by") // DataSales service account
+  rejectionReason       String?           @map("rejection_reason")
+  rejectionCount        Int               @default(0) @map("rejection_count")
+
+  // Status
+  status                DataSalesStatus   @default(PENDING_DEPOSITS)
+
+  // Settlement
+  settleTxSignature     String?           @map("settle_tx_signature")
+  settledAt             DateTime?         @map("settled_at")
+
+  // Timestamps
+  createdAt             DateTime          @default(now()) @map("created_at")
+  updatedAt             DateTime          @updatedAt @map("updated_at")
+  cancelledAt           DateTime?         @map("cancelled_at")
+  archivedAt            DateTime?         @map("archived_at")
+
+  @@index([sellerWallet])
+  @@index([buyerWallet])
+  @@index([status])
+  @@index([depositWindowEndsAt])
+  @@index([accessExpiresAt])
+  @@index([createdAt])
+  @@index([status, depositWindowEndsAt], name: "idx_datasales_status_window")
+  @@index([status, accessExpiresAt], name: "idx_datasales_status_access")
+  @@map("datasales_agreements")
+}
