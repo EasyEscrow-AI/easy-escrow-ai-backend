@@ -14,7 +14,7 @@ import { S3Service } from './s3Service';
 import { getDataSalesProgramService } from './datasales-program.service';
 import { logger } from './logger.service';
 import { Connection } from '@solana/web3.js';
-import { config } from '../config';
+import { config as appConfig } from '../config';
 
 export interface DataSalesSchedulerConfig {
   /** Timeout check schedule (default: every 5 minutes) */
@@ -65,7 +65,7 @@ export class DataSalesScheduler {
       ...config,
     };
 
-    const connection = new Connection(config.solana?.rpcUrl || 'http://localhost:8899', 'confirmed');
+    const connection = new Connection(appConfig.solana.rpcUrl, 'confirmed');
     this.s3Service = S3Service.getInstance();
     this.manager = new DataSalesManager(prisma, connection, this.s3Service);
 
