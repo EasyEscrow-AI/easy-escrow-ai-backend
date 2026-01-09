@@ -14,84 +14,10 @@ import {
   Keypair,
 } from '@solana/web3.js';
 import * as anchor from '@coral-xyz/anchor';
-import bs58 from 'bs58';
 import { config } from '../config';
 import { getProgramConfig, getCurrentNetwork } from '../config/constants';
 import { logger } from './logger.service';
-
-/**
- * Load admin keypair from environment based on NODE_ENV
- * Uses the same pattern as escrow-program.service.ts
- */
-function loadAdminKeypair(): Keypair {
-  const nodeEnv = process.env.NODE_ENV || 'development';
-
-  let envName: string;
-  let envValue: string | undefined;
-
-  switch (nodeEnv) {
-    case 'staging':
-      envName = 'DEVNET_STAGING_ADMIN_PRIVATE_KEY';
-      envValue = process.env.DEVNET_STAGING_ADMIN_PRIVATE_KEY;
-      break;
-    case 'production':
-      envName = 'MAINNET_ADMIN_PRIVATE_KEY';
-      envValue = process.env.MAINNET_ADMIN_PRIVATE_KEY;
-      break;
-    case 'development':
-    case 'test':
-    default:
-      envName = 'DEVNET_ADMIN_PRIVATE_KEY';
-      envValue = process.env.DEVNET_ADMIN_PRIVATE_KEY;
-      break;
-  }
-
-  if (!envValue) {
-    throw new Error(
-      `[DataSalesProgramService] Admin keypair not configured for ${nodeEnv}. Set ${envName}`
-    );
-  }
-
-  try {
-    // Try JSON array format [1, 2, 3, ..., 64]
-    if (envValue.startsWith('[')) {
-      const secretKey = Uint8Array.from(JSON.parse(envValue));
-      const keypair = Keypair.fromSecretKey(secretKey);
-      logger.info(
-        `[DataSalesProgramService] Loaded admin keypair from ${envName} (${nodeEnv}): ${keypair.publicKey.toString()}`
-      );
-      return keypair;
-    }
-
-    // Try Base58 format (Solana standard)
-    const secretKey = bs58.decode(envValue);
-    if (secretKey.length === 64) {
-      const keypair = Keypair.fromSecretKey(secretKey);
-      logger.info(
-        `[DataSalesProgramService] Loaded admin keypair from ${envName} (${nodeEnv}): ${keypair.publicKey.toString()}`
-      );
-      return keypair;
-    }
-
-    // Try Base64 format
-    const base64Key = Buffer.from(envValue, 'base64');
-    if (base64Key.length === 64) {
-      const keypair = Keypair.fromSecretKey(base64Key);
-      logger.info(
-        `[DataSalesProgramService] Loaded admin keypair from ${envName} (${nodeEnv}): ${keypair.publicKey.toString()}`
-      );
-      return keypair;
-    }
-
-    throw new Error('Unsupported keypair format (expected Base58, JSON array, or Base64)');
-  } catch (error) {
-    throw new Error(
-      `[DataSalesProgramService] Failed to load admin keypair from ${envName}: ${
-        error instanceof Error ? error.message : 'Unknown error'
-      }`
-    );
-  }
-}
+import { loadAdminKeypair } from '../utils/loadAdminKeypair';
 
 // PDA Seeds (must match Rust program)
 const DATASALES_ESCROW_SEED = Buffer.from('datasales_escrow');
@@ -176,7 +102,7 @@ export class DataSalesProgramService {
     this.feeCollector = programConfig.treasuryAddress; // Use treasury as fee collector
 
     // Load platform authority keypair from environment (same as atomic swaps)
-    this.platformAuthority = loadAdminKeypair();
+    this.platformAuthority = loadAdminKeypair('DataSalesProgramService');
 
     logger.info('[DataSales Program] Initialized', {
       programId: this.programId.toBase58(),
