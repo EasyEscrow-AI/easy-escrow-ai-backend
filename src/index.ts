@@ -2,7 +2,7 @@ import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
-import swaggerUi from 'swagger-ui-express';
+import redoc from 'redoc-express';
 import YAML from 'yamljs';
 import { connectDatabase, checkDatabaseHealth } from './config/database';
 import { connectRedis, checkRedisHealth, disconnectRedis } from './config/redis';
@@ -155,37 +155,34 @@ app.get('/health', async (_req: Request, res: Response) => {
   }
 });
 
-// Swagger Configuration
-const swaggerPath = process.env.SWAGGER_PATH || '/docs';
-let swaggerDocument: any = null;
+// API Documentation Configuration (Redoc)
+const docsPath = process.env.SWAGGER_PATH || '/docs';
+let openApiDocument: any = null;
 
 try {
-  const swaggerFilePath = path.join(__dirname, '../docs/api/openapi.yaml');
-  swaggerDocument = YAML.load(swaggerFilePath);
+  const openApiFilePath = path.join(__dirname, '../docs/api/openapi.yaml');
+  openApiDocument = YAML.load(openApiFilePath);
 
   // 🔧 Environment-aware server configuration
   const isProd = process.env.NODE_ENV === 'production';
   const isStaging = process.env.NODE_ENV === 'staging';
 
   if (isProd) {
-    // Production: Only show production server
-    swaggerDocument.servers = [
+    openApiDocument.servers = [
       {
         url: 'https://api.easyescrow.ai',
         description: 'Production server',
       },
     ];
   } else if (isStaging) {
-    // Staging: Only show staging server
-    swaggerDocument.servers = [
+    openApiDocument.servers = [
       {
         url: 'https://staging-api.easyescrow.ai',
         description: 'Staging server',
       },
     ];
   } else {
-    // Development: Show localhost
-    swaggerDocument.servers = [
+    openApiDocument.servers = [
       {
         url: 'http://localhost:3000',
         description: 'Development server',
@@ -193,14 +190,14 @@ try {
     ];
   }
 
-  console.log(`✅ Swagger documentation loaded successfully from ${swaggerFilePath}`);
+  console.log(`✅ API documentation loaded successfully from ${openApiFilePath}`);
   console.log(
-    `🌐 Swagger servers configured for environment: ${process.env.NODE_ENV || 'development'}`
+    `🌐 API servers configured for environment: ${process.env.NODE_ENV || 'development'}`
   );
 } catch (error: any) {
-  console.warn('⚠️  Warning: Failed to load Swagger documentation');
+  console.warn('⚠️  Warning: Failed to load API documentation');
   console.warn(`   Error: ${error.message}`);
-  console.warn(`   Swagger UI will not be available at ${swaggerPath}`);
+  console.warn(`   Redoc will not be available at ${docsPath}`);
   console.warn('   The API will continue to function normally.');
 }
 
@@ -222,32 +219,59 @@ app.get('/', (_req: Request, res: Response) => {
     },
   };
 
-  // Only include documentation field if Swagger loaded successfully
-  if (swaggerDocument) {
-    response.documentation = swaggerPath;
+  // Only include documentation field if OpenAPI spec loaded successfully
+  if (openApiDocument) {
+    response.documentation = docsPath;
   }
 
   res.status(200).json(response);
 });
 
-// Swagger Documentation (only if successfully loaded)
-if (swaggerDocument) {
-  app.use(
-    swaggerPath,
-    swaggerUi.serve,
-    swaggerUi.setup(swaggerDocument, {
-      customCss: '.swagger-ui .topbar { display: none }',
-      customSiteTitle: 'EasyEscrow.ai API Documentation',
-      customfavIcon: '/favicon.ico',
+// API Documentation with Redoc (only if successfully loaded)
+if (openApiDocument) {
+  // Serve the OpenAPI spec as JSON for Redoc to consume
+  app.get('/openapi.json', (_req: Request, res: Response) => {
+    res.json(openApiDocument);
+  });
+
+  // Serve Redoc documentation
+  app.get(
+    docsPath,
+    redoc({
+      title: 'EasyEscrow.ai API Documentation',
+      specUrl: '/openapi.json',
+      redocOptions: {
+        theme: {
+          colors: {
+            primary: {
+              main: '#6366f1', // Indigo
+            },
+          },
+          typography: {
+            fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
+            headings: {
+              fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
+            },
+          },
+          sidebar: {
+            width: '280px',
+          },
+        },
+        hideDownloadButton: false,
+        expandResponses: '200,201',
+        pathInMiddlePanel: true,
+        sortPropsAlphabetically: false,
+        jsonSampleExpandLevel: 2,
+      },
     })
   );
-  console.log(`📚 Swagger UI available at ${swaggerPath}`);
+  console.log(`📚 Redoc documentation available at ${docsPath}`);
 } else {
   // Provide a helpful error page if someone tries to access the docs
-  app.get(swaggerPath, (_req: Request, res: Response) => {
+  app.get(docsPath, (_req: Request, res: Response) => {
     res.status(503).json({
       error: 'Documentation Unavailable',
-      message: 'Swagger documentation could not be loaded. Please check server logs for details.',
+      message: 'API documentation could not be loaded. Please check server logs for details.',
       timestamp: new Date().toISOString(),
     });
   });
