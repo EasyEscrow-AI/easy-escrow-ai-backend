@@ -219,9 +219,11 @@ const retryConfig = {
 };
 ```
 
-### Error Recovery Endpoints
+### Error Recovery
 
-- `POST /api/offers/:id/retry-bundle`: Retry failed bundle with fresh proofs
+Bundle failures are handled automatically by the backend with up to 3 retry attempts.
+The backend fetches fresh Merkle proofs on each retry and falls back to TwoPhase delegation if Jito fails.
+
 - `GET /api/offers/:id/bundle-status`: Check current bundle status
 
 ---

@@ -421,39 +421,22 @@ function useBundleStatus(offerId: string | null) {
 
 ### Error Recovery Patterns
 
+Bundle failures and stale proofs are **handled automatically by the backend**. The backend will:
+1. Retry failed bundles up to 3 times with fresh Merkle proofs
+2. Fall back to TwoPhase delegation if Jito fails
+3. Return a final error only if all retry mechanisms are exhausted
+
 ```typescript
 async function handleSwapError(
   error: ErrorResponse,
   offerId: string
 ): Promise<void> {
-  if (error.details?.retryable) {
-    // Retry the operation
-    if (error.details.recoveryAction === 'retry-bundle') {
-      await retryBundle(offerId);
-    } else if (error.details.recoveryAction === 'rebuild-transaction') {
-      await rebuildTransaction(offerId);
-    }
-  } else {
-    // Non-retryable error - show to user
-    showErrorToUser(error.message);
-  }
-}
+  // All retryable errors are handled automatically by the backend
+  // If we receive an error here, it means automatic recovery failed
+  showErrorToUser(error.message);
 
-async function retryBundle(offerId: string): Promise<void> {
-  const response = await fetch(
-    `${API_BASE_URL}/api/offers/${offerId}/retry-bundle`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Idempotency-Key': generateUUID(),
-      },
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error('Failed to retry bundle');
-  }
+  // For persistent issues, contact support with the offer ID
+  console.error(`Swap failed for offer ${offerId}:`, error);
 }
 ```
 
@@ -568,9 +551,9 @@ function BulkSwapComponent() {
 
 | Code | Description | Retryable | Recovery Action |
 |------|-------------|-----------|-----------------|
-| `BUNDLE_FAILED` | Bundle failed to land | ✅ Yes | `retry-bundle` |
-| `BUNDLE_TIMEOUT` | Bundle confirmation timeout | ✅ Yes | `retry-bundle` |
-| `STALE_PROOF` | Merkle proof is stale | ✅ Yes | `rebuild-transaction` |
+| `BUNDLE_FAILED` | Bundle failed to land | ✅ Auto | Handled by backend |
+| `BUNDLE_TIMEOUT` | Bundle confirmation timeout | ✅ Auto | Handled by backend |
+| `STALE_PROOF` | Merkle proof is stale | ✅ Auto | Handled by backend |
 | `TRANSACTION_TOO_LARGE` | Transaction exceeds size limit | ❌ No | Split into smaller transactions |
 | `INSUFFICIENT_FUNDS` | Wallet lacks sufficient SOL | ❌ No | User must add funds |
 | `ASSET_NOT_OWNED` | Asset not owned by wallet | ❌ No | Verify asset ownership |
