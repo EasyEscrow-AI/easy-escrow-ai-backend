@@ -129,18 +129,10 @@ servers:
 tags:
   - name: Health
     description: Service health and status
-  - name: Assets
-    description: Supported assets and chains for atomic swaps
-  - name: Quote
-    description: Swap quote and fee estimation
-  - name: Swaps
-    description: Atomic swap offer lifecycle management and bundle monitoring
+  - name: Atomic Swaps
+    description: Atomic swap offer lifecycle management, supported assets, quotes, and bundle monitoring
   - name: DataSales
-    description: |
-      DataSales.ai settlement layer for digital asset escrow.
-
-      **Note:** These endpoints require `DATASALES_ENABLED=true` on the server.
-      Most endpoints require the `X-DataSales-API-Key` header for authentication.
+    description: DataSales.ai settlement layer for digital asset escrow.
 
 paths:
   /health:
@@ -163,10 +155,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
 
-  /api/assets:
+  /api/swaps/assets:
     get:
       tags:
-        - Assets
+        - Atomic Swaps
       summary: List supported assets
       description: |
         Returns a list of all supported assets and their chains for atomic swaps.
@@ -233,7 +225,7 @@ paths:
   /api/swaps/quote:
     post:
       tags:
-        - Quote
+        - Atomic Swaps
       summary: Get swap quote
       description: |
         Get a comprehensive quote for an atomic swap including:
@@ -317,7 +309,7 @@ paths:
   /api/swaps/offers:
     get:
       tags:
-        - Swaps
+        - Atomic Swaps
       summary: List offers
       description: Retrieve swap offers with optional filters and pagination
       parameters:
@@ -383,7 +375,7 @@ paths:
     
     post:
       tags:
-        - Swaps
+        - Atomic Swaps
       summary: Create offer (unified endpoint)
       description: |
         Create a new swap offer with automatic type detection.
@@ -545,7 +537,7 @@ paths:
   /api/swaps/offers/{offerId}:
     get:
       tags:
-        - Swaps
+        - Atomic Swaps
       summary: Get offer details
       description: Retrieve full details for a specific offer
       parameters:
@@ -574,7 +566,7 @@ paths:
   /api/swaps/offers/{offerId}/counter:
     post:
       tags:
-        - Swaps
+        - Atomic Swaps
       summary: Create counter-offer
       description: Create a counter-offer to an existing offer with different terms
       parameters:
@@ -630,7 +622,7 @@ paths:
   /api/swaps/offers/{offerId}/cancel:
     post:
       tags:
-        - Swaps
+        - Atomic Swaps
       summary: Cancel offer
       description: |
         Cancel an active offer. This advances the durable nonce, invalidating any 
@@ -696,7 +688,7 @@ paths:
   /api/swaps/offers/{offerId}/accept:
     post:
       tags:
-        - Swaps
+        - Atomic Swaps
       summary: Accept offer
       description: |
         Accept an active offer and receive the atomic swap transaction(s) to sign.
@@ -860,7 +852,7 @@ paths:
   /api/swaps/offers/{offerId}/confirm:
     post:
       tags:
-        - Swaps
+        - Atomic Swaps
       summary: Confirm swap execution
       description: |
         Confirm that you've broadcast the swap transaction and provide its signature.
@@ -919,7 +911,7 @@ paths:
   /api/swaps/offers/{offerId}/bundle-status:
     get:
       tags:
-        - Swaps
+        - Atomic Swaps
       summary: Get bundle execution status
       description: |
         Get the current status of a bundle swap execution (for swaps with 3+ NFTs).
