@@ -17,7 +17,7 @@ import * as anchor from '@coral-xyz/anchor';
 import { config } from '../config';
 import { getProgramConfig, getCurrentNetwork } from '../config/constants';
 import { logger } from './logger.service';
-import fs from 'fs';
+import { loadAdminKeypair } from '../utils/loadAdminKeypair';
 
 // PDA Seeds (must match Rust program)
 const DATASALES_ESCROW_SEED = Buffer.from('datasales_escrow');
@@ -101,13 +101,8 @@ export class DataSalesProgramService {
     this.programId = programConfig.programId;
     this.feeCollector = programConfig.treasuryAddress; // Use treasury as fee collector
 
-    // Load platform authority keypair
-    const authorityPath = programConfig.authorityKeypairPath;
-    if (!authorityPath || !fs.existsSync(authorityPath)) {
-      throw new Error(`Platform authority keypair not found at: ${authorityPath}`);
-    }
-    const keypairData = JSON.parse(fs.readFileSync(authorityPath, 'utf-8'));
-    this.platformAuthority = Keypair.fromSecretKey(new Uint8Array(keypairData));
+    // Load platform authority keypair from environment (same as atomic swaps)
+    this.platformAuthority = loadAdminKeypair('DataSalesProgramService');
 
     logger.info('[DataSales Program] Initialized', {
       programId: this.programId.toBase58(),

@@ -16,6 +16,7 @@ import { PriorityFeeService } from './priority-fee.service';
 import { JitoHttpRateLimiter } from './jito-http-rate-limiter';
 import { JitoRegionRouter } from './jito-region-router';
 import { isJitoBundlesEnabled, logJitoBundlesStatus } from '../utils/featureFlags';
+import { loadAdminKeypair } from '../utils/loadAdminKeypair';
 
 /**
  * Detect Solana network from RPC URL
@@ -53,85 +54,6 @@ function isMainnetNetwork(connection: Connection): boolean {
   );
   
   return isMainnet;
-}
-
-/**
- * Load admin keypair from environment based on NODE_ENV
- *
- * Environment-specific variables:
- * - development/test: DEVNET_ADMIN_PRIVATE_KEY
- * - staging: DEVNET_STAGING_ADMIN_PRIVATE_KEY
- * - production: MAINNET_ADMIN_PRIVATE_KEY (future)
- */
-function loadAdminKeypair(): Keypair {
-  const nodeEnv = process.env.NODE_ENV || 'development';
-
-  // Determine which environment variable to use based on NODE_ENV
-  let envName: string;
-  let envValue: string | undefined;
-
-  switch (nodeEnv) {
-    case 'staging':
-      envName = 'DEVNET_STAGING_ADMIN_PRIVATE_KEY';
-      envValue = process.env.DEVNET_STAGING_ADMIN_PRIVATE_KEY;
-      break;
-    case 'production':
-      envName = 'MAINNET_ADMIN_PRIVATE_KEY';
-      envValue = process.env.MAINNET_ADMIN_PRIVATE_KEY;
-      break;
-    case 'development':
-    case 'test':
-    default:
-      envName = 'DEVNET_ADMIN_PRIVATE_KEY';
-      envValue = process.env.DEVNET_ADMIN_PRIVATE_KEY;
-      break;
-  }
-
-  if (!envValue) {
-    throw new Error(
-      `[EscrowProgramService] Admin keypair not configured for ${nodeEnv}. Set ${envName}`
-    );
-  }
-
-  try {
-    // Try JSON array format [1, 2, 3, ..., 64]
-    if (envValue.startsWith('[')) {
-      const secretKey = Uint8Array.from(JSON.parse(envValue));
-      const keypair = Keypair.fromSecretKey(secretKey);
-      console.log(
-        `[EscrowProgramService] Loaded admin keypair from ${envName} (${nodeEnv}): ${keypair.publicKey.toString()}`
-      );
-      return keypair;
-    }
-
-    // Try Base58 format (Solana standard)
-    const secretKey = bs58.decode(envValue);
-    if (secretKey.length === 64) {
-      const keypair = Keypair.fromSecretKey(secretKey);
-      console.log(
-        `[EscrowProgramService] Loaded admin keypair from ${envName} (${nodeEnv}): ${keypair.publicKey.toString()}`
-      );
-      return keypair;
-    }
-
-    // Try Base64 format
-    const base64Key = Buffer.from(envValue, 'base64');
-    if (base64Key.length === 64) {
-      const keypair = Keypair.fromSecretKey(base64Key);
-      console.log(
-        `[EscrowProgramService] Loaded admin keypair from ${envName} (${nodeEnv}): ${keypair.publicKey.toString()}`
-      );
-      return keypair;
-    }
-
-    throw new Error('Unsupported keypair format (expected Base58, JSON array, or Base64)');
-  } catch (error) {
-    throw new Error(
-      `[EscrowProgramService] Failed to load admin keypair from ${envName}: ${
-        error instanceof Error ? error.message : 'Unknown error'
-      }`
-    );
-  }
 }
 
 /**
@@ -198,7 +120,7 @@ export class EscrowProgramService {
 
   constructor() {
     // Load admin keypair from environment
-    this.adminKeypair = loadAdminKeypair();
+    this.adminKeypair = loadAdminKeypair('EscrowProgramService');
 
     // Get RPC URL
     if (!config?.solana?.rpcUrl) {
