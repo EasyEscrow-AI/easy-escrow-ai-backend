@@ -2,116 +2,7 @@ openapi: 3.0.3
 info:
   title: EasyEscrow.ai Atomic Swap API
   version: 1.0.0
-  description: |
-    Backend API service for EasyEscrow.ai - Non-custodial atomic swap platform for NFTs and SOL on Solana.
-    
-    ## Supported Swap Types
-    
-    EasyEscrow.ai currently supports **three types of escrow swaps** on the **Solana blockchain**:
-    
-    ### 1. NFT <> SOL
-    Direct exchange of an NFT for SOL payment.
-    - **Seller provides:** NFT (Traditional NFT)
-    - **Buyer provides:** SOL
-    - **Platform fee:** 1% (100 basis points) - deducted from seller's proceeds
-    - **Blockchain fees:** Covered by EasyEscrow (no additional cost to users)
-    - **Min/Max:** 0.1 SOL minimum, 15 SOL maximum (up to $5,000 AUD limit)
-    
-    ### 2. NFT <> NFT (with SOL fee)
-    Exchange of two NFTs with a flat SOL platform fee.
-    - **Seller provides:** NFT A (Traditional NFT)
-    - **Buyer provides:** NFT B (Traditional NFT) + 0.005 SOL platform fee
-    - **Platform fee:** 0.005 SOL flat fee (paid by taker/buyer by default)
-    - **Blockchain fees:** Covered by EasyEscrow (no additional cost to users)
-    - **Min/Max:** 0.1 SOL minimum, 15 SOL maximum (up to $5,000 AUD limit)
-    
-    ### 3. NFT + SOL <> NFT
-    Exchange of an NFT plus SOL payment for another NFT.
-    - **Seller provides:** NFT A (Traditional NFT) + SOL
-    - **Buyer provides:** NFT B (Traditional NFT)
-    - **Platform fee:** 1% (100 basis points) - deducted from SOL amount
-    - **Blockchain fees:** Covered by EasyEscrow (no additional cost to users)
-    - **Min/Max:** 0.1 SOL minimum, 15 SOL maximum (up to $5,000 AUD limit)
-    
-    ## Blockchain Support
-    - ✅ **Solana blockchain** (Devnet, Mainnet)
-    - ✅ **Traditional NFTs** (Metaplex standard)
-    - ✅ **Compressed NFTs (cNFTs)** (Metaplex Bubblegum)
-    - ✅ **Metaplex Core NFTs**
-
-    ## Bundle Swap Support
-
-    Bundle swaps of up to **4 NFTs total** (across both sides) are supported via Jito bundles. This limit exists because Jito bundles support a maximum of 5 transactions (1 for SOL/fee transfers + up to 4 for NFT transfers). Any combination of NFT types (SPL NFT, Core NFT, cNFT) and SOL is supported.
-    
-    ### cNFT-Specific Features
-    
-    - **Direct Bubblegum transfers** - cNFTs transfer directly without escrow custody
-    - **Merkle proof handling** - Automatic proof fetching from DAS API
-    - **Full canopy tree support** - Eliminates stale proof issues
-    - **Rate-limited DAS API** - Built-in rate limiting, batching, and caching
-    
-    ## Additional Features
-    - **Custom expiry times** - Offers can be set to expire between 1 hour and 30 days (default: 7 days)
-    - **On-chain non-custodial functionality** - Assets secured by Smart Contract, never held in escrow
-    - **Automatic atomic settlement** - Swaps execute atomically when both parties sign the transaction
-    - **Automatic offer expiry** - Expired offers are automatically marked as expired
-    - **Comprehensive webhook notifications** - Real-time updates for all swap lifecycle events
-    - **Transaction logging and monitoring** - Complete audit trail of all swap transactions
-    - **Rate Limiting** - Standard endpoints: 100 requests per 15 minutes per IP; Strict endpoints: 20 requests per 15 minutes per IP
-    - **Idempotency** - Offer creation endpoints support idempotency keys to prevent duplicate offers
-    
-    EasyEscrow.ai uses **atomic swaps** - instant, non-custodial exchanges that execute in a single transaction.
-    Your assets are NEVER held in escrow. The swap happens atomically or not at all.
-    
-    ### How It Works
-    
-    1. **Maker creates offer** - Specifies what they offer and what they want
-    2. **Taker accepts offer** - Gets a pre-built transaction to sign
-    3. **Taker signs & broadcasts** - The swap executes atomically on Solana
-    4. **Taker confirms** - Submits the transaction signature for verification
-    5. **Instant settlement** - NFTs/SOL/cNFTs transfer simultaneously
-    
-    ### Supported Asset Types
-
-    - ✅ **SOL** (Native Solana currency)
-    - ✅ **Mixed swaps** (NFT ↔ SOL, NFT ↔ NFT, cNFT ↔ SOL, cNFT ↔ cNFT, etc.)
-    - ✅ **Bundle swaps** - Up to 4 NFTs total (Jito bundle transaction limit)
-
-    ### NFT Types Reference
-
-    | Type | Full Name | Description | Status |
-    |------|-----------|-------------|--------|
-    | **cNFT** | Compressed Non-Fungible Token | Metaplex Bubblegum compressed NFTs stored in Merkle trees. Significantly cheaper to mint at scale. | ✅ Supported |
-    | **CORE** | Metaplex CORE Token | Metaplex Core standard NFTs with improved functionality and lower costs than SPL. | ✅ Supported |
-    | **pNFT** | Programmable Non-Fungible Token | Metaplex programmable NFTs with on-chain royalty enforcement and custom rules. | ✅ Supported |
-    | **xNFT** | Executable Non-Fungible Token | Backpack executable NFTs that can contain embedded applications. | ⏳ Coming Soon |
-    | **OTHER** | Other Non-Fungible Tokens | Standard SPL NFTs, Semi-Fungible Tokens (SFT), and legacy formats. | ✅ Supported |
-    
-    ### Key Features
-    
-    - **Non-custodial**: Assets never leave your wallet until the swap executes
-    - **Atomic**: All transfers happen in one transaction or none at all
-    - **Durable nonces**: Offers don't expire due to blockhash expiration
-    - **Low fees**: 1% platform fee on SOL swaps, 0.005 SOL flat fee for NFT-only swaps
-    - **Instant settlement**: No waiting for confirmations or multi-step processes
-    - **Cancel anytime**: Cancel offers instantly by advancing the durable nonce
-
-
-    ### Platform Fees
-    
-    - **NFT-only swaps**: 0.005 SOL flat fee (paid by taker)
-    - **Swaps with SOL**: 1% of total SOL amount (paid by taker)
-    - **Minimum fee**: 0.001 SOL
-    - **Maximum fee**: 0.5 SOL (fee cap)
-    
-    ### Security
-    
-    - **Durable nonces** prevent transaction replay attacks
-    - **Asset validation** ensures you own what you're trading
-    - **Rate limiting** prevents API abuse
-    - **Input validation** protects against malicious inputs
-    - **Idempotency keys** prevent duplicate operations
-    
+  description: Non-custodial atomic swap platform for NFTs and SOL on Solana. Browse the Documentation section for guides, or jump to API Reference for endpoint details.
   contact:
     name: EasyEscrow.ai Support
     email: support@easyescrow.ai
@@ -127,12 +18,95 @@ servers:
     description: Production (Mainnet)
 
 tags:
+  - name: Introduction
+    description: |
+      Backend API service for EasyEscrow.ai - Non-custodial atomic swap platform for NFTs and SOL on Solana.
+
+      EasyEscrow.ai uses **atomic swaps** - instant, non-custodial exchanges that execute in a single transaction.
+      Your assets are NEVER held in escrow. The swap happens atomically or not at all.
+  - name: Supported Swap Types
+    x-displayName: Swap Types
+    description: |
+      EasyEscrow.ai currently supports **three types of escrow swaps** on the **Solana blockchain**:
+
+      ### 1. NFT ↔ SOL
+      Direct exchange of an NFT for SOL payment.
+      - **Seller provides:** NFT (Traditional NFT)
+      - **Buyer provides:** SOL
+      - **Platform fee:** 1% (100 basis points) - deducted from seller's proceeds
+      - **Blockchain fees:** Covered by EasyEscrow (no additional cost to users)
+
+      ### 2. NFT ↔ NFT (with SOL fee)
+      Exchange of two NFTs with a flat SOL platform fee.
+      - **Seller provides:** NFT A (Traditional NFT)
+      - **Buyer provides:** NFT B (Traditional NFT) + 0.005 SOL platform fee
+      - **Platform fee:** 0.005 SOL flat fee (paid by taker/buyer by default)
+
+      ### 3. NFT + SOL ↔ NFT
+      Exchange of an NFT plus SOL payment for another NFT.
+      - **Seller provides:** NFT A (Traditional NFT) + SOL
+      - **Buyer provides:** NFT B (Traditional NFT)
+      - **Platform fee:** 1% (100 basis points) - deducted from SOL amount
+  - name: Blockchain Support
+    description: |
+      - ✅ **Solana blockchain** (Devnet, Mainnet)
+      - ✅ **Traditional NFTs** (Metaplex standard)
+      - ✅ **Compressed NFTs (cNFTs)** (Metaplex Bubblegum)
+      - ✅ **Metaplex Core NFTs**
+      - ✅ **Programmable NFTs (pNFTs)**
+
+      ### NFT Types Reference
+
+      | Type | Full Name | Description | Status |
+      |------|-----------|-------------|--------|
+      | **cNFT** | Compressed NFT | Metaplex Bubblegum compressed NFTs stored in Merkle trees | ✅ Supported |
+      | **CORE** | Metaplex CORE | Metaplex Core standard NFTs with improved functionality | ✅ Supported |
+      | **pNFT** | Programmable NFT | Metaplex programmable NFTs with on-chain royalty enforcement | ✅ Supported |
+      | **OTHER** | Other NFTs | Standard SPL NFTs, Semi-Fungible Tokens (SFT), and legacy formats | ✅ Supported |
+  - name: Bundle Swaps
+    description: |
+      Bundle swaps of up to **4 NFTs total** (across both sides) are supported via Jito bundles.
+
+      This limit exists because Jito bundles support a maximum of 5 transactions (1 for SOL/fee transfers + up to 4 for NFT transfers).
+
+      ### cNFT-Specific Features
+      - **Direct Bubblegum transfers** - cNFTs transfer directly without escrow custody
+      - **Merkle proof handling** - Automatic proof fetching from DAS API
+      - **Full canopy tree support** - Eliminates stale proof issues
+      - **Rate-limited DAS API** - Built-in rate limiting, batching, and caching
+  - name: Fees & Limits
+    description: |
+      ### Platform Fees
+      - **NFT-only swaps**: 0.005 SOL flat fee (paid by taker)
+      - **Swaps with SOL**: 1% of total SOL amount (paid by taker)
+      - **Minimum fee**: 0.001 SOL
+      - **Maximum fee**: 0.5 SOL (fee cap)
+
+      ### Limits
+      - **Min SOL**: 0.1 SOL minimum
+      - **Max SOL**: 15 SOL maximum (up to $5,000 AUD limit)
+      - **Max NFTs**: 4 NFTs total per swap (Jito bundle limit)
+      - **Offer expiry**: 1 hour to 30 days (default: 7 days)
   - name: Health
-    description: Service health and status
+    description: Service health and status endpoints
   - name: Atomic Swaps
     description: Atomic swap offer lifecycle management, supported assets, quotes, and bundle monitoring
   - name: DataSales
     description: DataSales.ai settlement layer for digital asset escrow.
+
+x-tagGroups:
+  - name: Documentation
+    tags:
+      - Introduction
+      - Supported Swap Types
+      - Blockchain Support
+      - Bundle Swaps
+      - Fees & Limits
+  - name: API Reference
+    tags:
+      - Health
+      - Atomic Swaps
+      - DataSales
 
 paths:
   /health:

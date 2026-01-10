@@ -244,24 +244,62 @@ if (openApiDocument) {
         theme: {
           colors: {
             primary: {
-              main: '#6366f1', // Indigo
+              main: '#818cf8',
+            },
+            background: {
+              dark: '#0f172a',
+              light: '#1e293b',
+            },
+            text: {
+              primary: '#e2e8f0',
+              secondary: '#94a3b8',
+            },
+            http: {
+              get: '#22c55e',
+              post: '#3b82f6',
+              put: '#f59e0b',
+              delete: '#ef4444',
+            },
+            tonalOffset: 0.2,
+            border: {
+              dark: '#334155',
+              light: '#475569',
             },
           },
           typography: {
             fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
+            fontSize: '15px',
             headings: {
               fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
+            },
+            code: {
+              backgroundColor: '#1e293b',
             },
           },
           sidebar: {
             width: '280px',
+            backgroundColor: '#0f172a',
+            textColor: '#e2e8f0',
+            activeTextColor: '#818cf8',
+          },
+          rightPanel: {
+            backgroundColor: '#1e293b',
+            textColor: '#e2e8f0',
+          },
+          schema: {
+            nestedBackground: '#1e293b',
+          },
+          spacing: {
+            sectionVertical: 16,
           },
         },
-        hideDownloadButton: false,
+        hideDownloadButton: true,
         expandResponses: '200,201',
         pathInMiddlePanel: true,
         sortPropsAlphabetically: false,
         jsonSampleExpandLevel: 2,
+        nativeScrollbars: true,
+        hideHostname: true,
       },
     })
   );
