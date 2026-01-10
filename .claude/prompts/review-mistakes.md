@@ -17,7 +17,7 @@ Look for:
 1. **Check file size first:**
    - Read `.claude/rules/common-mistakes.md`
    - Count the lines
-   - If >= 100 lines: respond with `{"decision": "allow", "note": "Mistakes file at limit - run /consolidate-mistakes"}`
+   - If >= 100 lines: respond with `{"ok": true}`
    - If < 100 lines: proceed to step 2
 
 2. **Check for new patterns:**
@@ -29,13 +29,15 @@ Look for:
    - Use Edit tool to append a new row to that table
    - Format: `| Short description | \`wrong example\` | \`right example\` |`
 
-4. **Response:**
-   - Always respond with: `{"decision": "allow"}`
-   - If error occurs (file missing, Edit fails): `{"decision": "allow", "error": "description"}`
+4. **Response (single line output):**
+   - No new mistakes found: `No new mistakes`
+   - Added a mistake: `Added: [short description of mistake]`
+   - File too large: `Skipped: file >= 100 lines`
+   - Error occurred: `No new mistakes`
 
 ## Error Handling
 
-- **File missing:** Create it with header and empty tables
-- **Edit tool fails:** Log error, continue with `{"decision": "allow"}`
-- **File >= 100 lines:** Do not append, suggest consolidation
-- **No new mistakes found:** Do nothing, return allow
+- **File missing:** Output `No new mistakes`
+- **Edit tool fails:** Output `No new mistakes`
+- **File >= 100 lines:** Output `Skipped: file >= 100 lines`
+- **No new mistakes found:** Output `No new mistakes`
