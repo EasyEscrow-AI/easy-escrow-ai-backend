@@ -71,9 +71,6 @@ describe('CloseEscrow Functionality', () => {
   });
 
   describe('Terminal State Validation', () => {
-    // TODO: These tests require complex Transaction mocking and would be better as integration tests
-    // They test the full transaction flow including signing and serialization
-    // Consider moving to tests/integration/close-escrow.test.ts
     it.skip('should successfully close escrow in Completed status', async () => {
       const escrowPda = new PublicKey('9EDki2GWuetAiuJAqPxsdRhT2WycZSXLp9Mz7jjqukZP');
 

@@ -138,7 +138,6 @@ This ensures:
 ```typescript
 } else if (asset.type === AssetType.CNFT) {
   // Compressed NFT transfer (placeholder - requires Bubblegum program integration)
-  // TODO: Implement actual cNFT transfer using Metaplex Bubblegum
   console.warn('[TransactionBuilder] cNFT transfer not yet implemented:', asset.identifier);
   
   // For now, throw error to indicate unsupported

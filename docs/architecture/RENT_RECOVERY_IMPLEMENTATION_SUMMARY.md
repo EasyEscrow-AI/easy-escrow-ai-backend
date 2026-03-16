@@ -183,20 +183,20 @@ Need to build scripts to:
 - [x] Compile successfully
 - [x] Generate updated IDL
 
-### Off-Chain Tooling ⏳ TODO
+### Off-Chain Tooling
 - [ ] Build asset tracing script
 - [ ] Build recipient mapping generator
 - [ ] Build transaction builder
 - [ ] Build batch execution script
 - [ ] Test on devnet clones
 
-### Deployment ⏳ TODO
+### Deployment
 - [ ] Deploy to devnet
 - [ ] Test with sample accounts
 - [ ] Deploy to mainnet
 - [ ] Upload IDL
 
-### Execution ⏳ TODO
+### Execution
 - [ ] Dry run (5 accounts)
 - [ ] Verify manually
 - [ ] Execute batches

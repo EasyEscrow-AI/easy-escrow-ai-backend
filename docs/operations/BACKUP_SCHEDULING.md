@@ -401,7 +401,6 @@ export class BackupScheduler {
         }
       } catch (error) {
         console.error('❌ Backup failed:', error);
-        // TODO: Send alert notification
       }
     }, {
       scheduled: true,

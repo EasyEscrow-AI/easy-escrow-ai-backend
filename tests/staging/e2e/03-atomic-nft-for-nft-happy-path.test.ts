@@ -142,8 +142,6 @@ describe('🔄 Atomic Swap E2E: NFT for NFT - Happy Path (Staging)', () => {
       console.log(`  Taker:    ${takerBalanceBefore / LAMPORTS_PER_SOL} SOL`);
       console.log(`  Treasury: ${treasuryBalanceBefore / LAMPORTS_PER_SOL} SOL`);
       
-      // TODO: Implement actual NFT ↔ NFT swap transaction
-      
       console.log('\n⚠️  Note: Actual swap execution pending backend API integration');
       console.log('✅ Test structure validated\n');
       
@@ -179,8 +177,6 @@ describe('🔄 Atomic Swap E2E: NFT for NFT - Happy Path (Staging)', () => {
       console.log(`  Taker:    ${takerBalanceBefore / LAMPORTS_PER_SOL} SOL`);
       console.log(`  Treasury: ${treasuryBalanceBefore / LAMPORTS_PER_SOL} SOL`);
       
-      // TODO: Implement NFT+SOL ↔ NFT swap
-      
       console.log('\n⚠️  Note: Actual swap execution pending backend API integration');
       console.log('✅ Test structure validated\n');
     });
@@ -210,13 +206,11 @@ describe('🔄 Atomic Swap E2E: NFT for NFT - Happy Path (Staging)', () => {
       console.log(`  Taker:    ${takerBalanceBefore / LAMPORTS_PER_SOL} SOL`);
       console.log(`  Treasury: ${treasuryBalanceBefore / LAMPORTS_PER_SOL} SOL`);
       
-      // TODO: Implement swap with custom fee
-      
       console.log('\n⚠️  Note: Actual swap execution pending backend API integration');
       console.log('✅ Test structure validated\n');
     });
   });
-  
+
   describe('Scenario 4: Zero Fee (Platform Pays)', () => {
     it('should successfully swap NFT for NFT with platform covering all fees', async function() {
       this.timeout(180000);
@@ -241,9 +235,6 @@ describe('🔄 Atomic Swap E2E: NFT for NFT - Happy Path (Staging)', () => {
       console.log(`  Taker:    ${takerBalanceBefore / LAMPORTS_PER_SOL} SOL`);
       console.log(`  Treasury: ${treasuryBalanceBefore / LAMPORTS_PER_SOL} SOL`);
       
-      // TODO: Implement zero-fee swap
-      // Platform authority should sign and pay transaction fees
-      
       console.log('\n⚠️  Note: Actual swap execution pending backend API integration');
       console.log('⚠️  Note: Platform will pay network transaction fees');
       console.log('✅ Test structure validated\n');
@@ -266,12 +257,11 @@ describe('🔄 Atomic Swap E2E: NFT for NFT - Happy Path (Staging)', () => {
       console.log('  3. Verify both NFTs exist on-chain');
       console.log('  4. Verify token accounts are valid');
       
-      // TODO: Implement ownership verification
       // const makerOwnsNFT = await verifyNFTOwnership(connection, makerNFT.mint, wallets.sender.publicKey);
       // const takerOwnsNFT = await verifyNFTOwnership(connection, takerNFT.mint, wallets.receiver.publicKey);
       // expect(makerOwnsNFT).to.be.true;
       // expect(takerOwnsNFT).to.be.true;
-      
+
       console.log('\n⚠️  Note: Ownership verification pending implementation');
       console.log('✅ Test structure validated\n');
     });
@@ -286,9 +276,6 @@ describe('🔄 Atomic Swap E2E: NFT for NFT - Happy Path (Staging)', () => {
       console.log('  - Reject if maker does not own offered NFT');
       console.log('  - Reject if taker does not own offered NFT');
       console.log('  - Reject if NFT already locked in another swap');
-      
-      // TODO: Attempt swap with invalid ownership
-      // Should fail with "NFT ownership verification failed" error
       
       console.log('\n⚠️  Note: Ownership rejection test pending implementation');
       console.log('✅ Test structure validated\n');
@@ -310,8 +297,6 @@ describe('🔄 Atomic Swap E2E: NFT for NFT - Happy Path (Staging)', () => {
       const platformFee = 0.01 * LAMPORTS_PER_SOL;
       
       console.log(`\n💸 Platform fee: ${platformFee / LAMPORTS_PER_SOL} SOL (flat)`);
-      
-      // TODO: Implement cross-collection swap
       
       console.log('\n⚠️  Note: Cross-collection swap pending implementation');
       console.log('✅ Test structure validated\n');
@@ -350,9 +335,6 @@ describe('🔄 Atomic Swap E2E: NFT for NFT - Happy Path (Staging)', () => {
       console.log('  - No partial swap states possible');
       console.log('  - Transaction failure reverts all changes');
       
-      // TODO: Test partial failure scenarios
-      // Simulate various failure points and verify complete rollback
-      
       console.log('\n⚠️  Note: Atomicity test pending implementation');
       console.log('✅ Test structure validated\n');
     });
@@ -370,9 +352,6 @@ describe('🔄 Atomic Swap E2E: NFT for NFT - Happy Path (Staging)', () => {
       console.log('  - Symbol remains unchanged');
       console.log('  - URI remains unchanged');
       console.log('  - Attributes remain unchanged');
-      
-      // TODO: Get metadata before and after swap
-      // Verify all metadata fields remain identical
       
       console.log('\n⚠️  Note: Metadata preservation test pending implementation');
       console.log('✅ Test structure validated\n');

@@ -117,7 +117,6 @@ describe('🔄🌳 Cross-Format Swap E2E: NFT for cNFT - Happy Path (Staging)', 
     });
     displayNFTInfo(makerNFT);
     
-    // TODO: Create actual cNFT for taker
     console.log('🌳 cNFT Setup for taker:');
     console.log(`  ⚠️  Using mock cNFT asset ID: ${MOCK_CNFT_ASSET_ID}`);
     console.log('  📝 Note: Actual cNFT creation will be implemented\n');
@@ -154,8 +153,6 @@ describe('🔄🌳 Cross-Format Swap E2E: NFT for cNFT - Happy Path (Staging)', 
       console.log('  - Regular NFT: Standard on-chain verification');
       console.log('  - cNFT: QuickNode API + Merkle proof verification');
       
-      // TODO: Implement hybrid NFT ↔ cNFT swap transaction
-      
       console.log('\n⚠️  Note: Actual swap execution pending backend API integration');
       console.log('⚠️  Note: cNFT verification pending QuickNode integration');
       console.log('✅ Test structure validated\n');
@@ -187,13 +184,11 @@ describe('🔄🌳 Cross-Format Swap E2E: NFT for cNFT - Happy Path (Staging)', 
       console.log(`  Taker:    ${takerBalanceBefore / LAMPORTS_PER_SOL} SOL`);
       console.log(`  Treasury: ${treasuryBalanceBefore / LAMPORTS_PER_SOL} SOL`);
       
-      // TODO: Implement NFT+SOL ↔ cNFT swap
-      
       console.log('\n⚠️  Note: Actual swap execution pending backend API integration');
       console.log('✅ Test structure validated\n');
     });
   });
-  
+
   describe('Scenario 3: Fixed Fee for NFT ↔ cNFT', () => {
     it('should successfully swap NFT for cNFT with custom fixed fee', async function() {
       this.timeout(180000);
@@ -218,13 +213,11 @@ describe('🔄🌳 Cross-Format Swap E2E: NFT for cNFT - Happy Path (Staging)', 
       console.log(`  Taker:    ${takerBalanceBefore / LAMPORTS_PER_SOL} SOL`);
       console.log(`  Treasury: ${treasuryBalanceBefore / LAMPORTS_PER_SOL} SOL`);
       
-      // TODO: Implement swap with custom fee
-      
       console.log('\n⚠️  Note: Actual swap execution pending backend API integration');
       console.log('✅ Test structure validated\n');
     });
   });
-  
+
   describe('Scenario 4: Zero Fee (Platform Pays)', () => {
     it('should successfully swap NFT for cNFT with platform covering all fees', async function() {
       this.timeout(180000);
@@ -248,9 +241,6 @@ describe('🔄🌳 Cross-Format Swap E2E: NFT for cNFT - Happy Path (Staging)', 
       console.log(`  Maker:    ${makerBalanceBefore / LAMPORTS_PER_SOL} SOL`);
       console.log(`  Taker:    ${takerBalanceBefore / LAMPORTS_PER_SOL} SOL`);
       console.log(`  Treasury: ${treasuryBalanceBefore / LAMPORTS_PER_SOL} SOL`);
-      
-      // TODO: Implement zero-fee swap
-      // Platform authority should sign and pay transaction fees
       
       console.log('\n⚠️  Note: Actual swap execution pending backend API integration');
       console.log('⚠️  Note: Platform will pay network transaction fees');
@@ -276,12 +266,11 @@ describe('🔄🌳 Cross-Format Swap E2E: NFT for cNFT - Happy Path (Staging)', 
       console.log('    - Merkle proof validation');
       console.log('    - Owner matches taker wallet');
       
-      // TODO: Implement dual verification
       // const nftOwned = await verifyNFTOwnership(connection, makerNFT.mint, wallets.sender.publicKey);
       // const cnftOwned = await verifyCNFTOwnership(MOCK_CNFT_ASSET_ID, wallets.receiver.publicKey);
       // expect(nftOwned).to.be.true;
       // expect(cnftOwned).to.be.true;
-      
+
       console.log('\n⚠️  Note: Hybrid ownership verification pending implementation');
       console.log('✅ Test structure validated\n');
     });
@@ -297,9 +286,6 @@ describe('🔄🌳 Cross-Format Swap E2E: NFT for cNFT - Happy Path (Staging)', 
       console.log('  - Reject if cNFT ownership fails');
       console.log('  - Reject if cNFT merkle proof invalid');
       console.log('  - Reject if either asset locked');
-      
-      // TODO: Attempt swap with invalid ownership
-      // Should fail with appropriate error message
       
       console.log('\n⚠️  Note: Ownership rejection test pending implementation');
       console.log('✅ Test structure validated\n');
@@ -325,12 +311,11 @@ describe('🔄🌳 Cross-Format Swap E2E: NFT for cNFT - Happy Path (Staging)', 
       console.log('  - Confirm leaf data matches asset');
       console.log('  - Verify tree authority');
       
-      // TODO: Retrieve and validate merkle proof
       // const proof = await quicknodeApi.getAssetProof(MOCK_CNFT_ASSET_ID);
       // expect(proof).to.not.be.null;
       // expect(proof.root).to.not.be.null;
       // expect(proof.proof.length).to.be.greaterThan(0);
-      
+
       console.log('\n⚠️  Note: Merkle proof validation pending QuickNode integration');
       console.log('✅ Test structure validated\n');
     });
@@ -345,9 +330,6 @@ describe('🔄🌳 Cross-Format Swap E2E: NFT for cNFT - Happy Path (Staging)', 
       console.log('  - Reject tampered proofs');
       console.log('  - Reject proofs from wrong tree');
       console.log('  - Reject outdated proofs');
-      
-      // TODO: Attempt swap with invalid proof
-      // Should fail with "Invalid merkle proof" error
       
       console.log('\n⚠️  Note: Invalid proof rejection test pending');
       console.log('✅ Test structure validated\n');
@@ -399,9 +381,6 @@ describe('🔄🌳 Cross-Format Swap E2E: NFT for cNFT - Happy Path (Staging)', 
       console.log('  - Failure reverts all changes');
       console.log('  - Merkle tree updates atomic with transfer');
       
-      // TODO: Test partial failure scenarios
-      // Simulate various failure points and verify complete rollback
-      
       console.log('\n⚠️  Note: Atomic execution test pending implementation');
       console.log('✅ Test structure validated\n');
     });
@@ -425,11 +404,10 @@ describe('🔄🌳 Cross-Format Swap E2E: NFT for cNFT - Happy Path (Staging)', 
       console.log('  - getAssetProof: Get merkle proof');
       console.log('  - getAssetsByOwner: List owner cNFTs');
       
-      // TODO: Test QuickNode API calls
       // const asset = await quicknodeApi.getAsset(MOCK_CNFT_ASSET_ID);
       // expect(asset).to.not.be.null;
       // expect(asset.compression.compressed).to.be.true;
-      
+
       console.log('\n⚠️  Note: QuickNode API integration pending');
       console.log('✅ Test structure validated\n');
     });

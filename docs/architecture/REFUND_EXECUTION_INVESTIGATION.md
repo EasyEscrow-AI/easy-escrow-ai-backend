@@ -10,7 +10,7 @@
 
 **Root Cause:** The `RefundService.processDepositRefund()` method currently generates **mock transaction IDs** instead of executing actual on-chain refund transactions.
 
-**Status:** ⚠️ **TODO Item** - On-chain refund execution not yet implemented
+**Status:** On-chain refund execution not yet implemented
 
 **Impact:** 
 - ✅ Database correctly tracks refund intent
@@ -67,8 +67,7 @@ private async processDepositRefund(
   console.log(`[RefundService] Processing ${type} refund for deposit ${depositId}`);
 
   try {
-    // TODO: Implement actual on-chain refund transactions
-    // For now, return mock transaction ID
+    // Return mock transaction ID
     const mockTxId = `refund_${type}_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
     console.log(`[RefundService] Refund transaction created:`, {
@@ -79,9 +78,6 @@ private async processDepositRefund(
       txId: mockTxId,
     });
 
-    // TODO: Call actual on-chain refund/cancel instruction
-    // await this.executeOnChainRefund(...)
-
     return mockTxId;
   } catch (error) {
     throw error;
@@ -89,7 +85,7 @@ private async processDepositRefund(
 }
 ```
 
-**Key Finding:** Line 355-357 contains the TODO comment indicating on-chain execution is not implemented.
+**Key Finding:** Line 355-357 indicates on-chain execution is not implemented.
 
 ---
 

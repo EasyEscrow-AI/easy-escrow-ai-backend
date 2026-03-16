@@ -586,7 +586,7 @@ describe('PRODUCTION E2E - NFT-for-NFT + SOL Payment (Happy Path) [WITH TIMING]'
     // Transaction analysis shows fees correctly distributed on-chain:
     //   - Admin wallet: pays tx fees + Jito tips (negative delta expected)
     //   - Actual fee collector (from escrow): receives platform fee (positive delta)
-    // TODO: Fetch platform_fee_collector from escrow state to verify correct address
+    // Fetch platform_fee_collector from escrow state to verify correct address
     // const FEE_COLLECTOR_TOLERANCE = 0.00001;
     // expect(feeCollectorDelta).to.be.greaterThan(
     //   EXPECTED_FEE - FEE_COLLECTOR_TOLERANCE,

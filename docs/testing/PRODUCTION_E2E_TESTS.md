@@ -74,7 +74,6 @@ curl https://api.easyescrow.ai/health
 ### 3. Check Wallet Balances
 
 ```bash
-# TODO: Create balance check script
 # npm run production:verify-balances
 ```
 

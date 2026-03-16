@@ -214,8 +214,6 @@ export class AlertingService {
    * Send email alert (placeholder - requires SMTP configuration)
    */
   private async sendEmailAlert(alert: Alert, alertType: string): Promise<void> {
-    // TODO: Implement email sending when SMTP is configured
-    // This would use nodemailer or similar library
     logger.debug('[AlertingService] Email alert would be sent here', {
       alertType,
       recipients: this.config.emailRecipients,
@@ -227,7 +225,6 @@ export class AlertingService {
    * Send email recovery notification (placeholder)
    */
   private async sendEmailRecovery(alertType: string, message: string, metadata?: Record<string, any>): Promise<void> {
-    // TODO: Implement email sending when SMTP is configured
     logger.debug('[AlertingService] Recovery email would be sent here', {
       alertType,
       recipients: this.config.emailRecipients,

@@ -265,10 +265,10 @@ mocha --no-config --require ts-node/register \
 
 ### Current Implementation
 - ✅ **Scenario 1:** NFT for SOL with 1% percentage fee (COMPLETE)
-- ⏳ **Scenario 2:** NFT for SOL with fixed 0.01 SOL fee (TODO)
-- ⏳ **Scenario 3:** NFT for SOL with zero fee (platform pays) (TODO)
-- ⏳ **Scenario 4:** Nonce validation edge cases (TODO)
-- ⏳ **Scenario 5:** Balance edge cases (TODO)
+- **Scenario 2:** NFT for SOL with fixed 0.01 SOL fee
+- **Scenario 3:** NFT for SOL with zero fee (platform pays)
+- **Scenario 4:** Nonce validation edge cases
+- **Scenario 5:** Balance edge cases
 
 ### What Scenario 1 Tests
 ✅ API endpoint integration  

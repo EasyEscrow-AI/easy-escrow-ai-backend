@@ -94,10 +94,6 @@ describe('PRODUCTION E2E: Agreement Expiry and Refund', function () {
     console.log('');
   });
 
-  // ==========================================================================
-  // CLEANUP
-  // ==========================================================================
-
   after(async function () {
     await cleanupAgreements(createdAgreementIds);
   });

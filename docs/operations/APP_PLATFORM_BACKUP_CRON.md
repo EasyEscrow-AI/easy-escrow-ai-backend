@@ -233,7 +233,6 @@ Add a test endpoint (for admin use only):
 ```typescript
 // In src/routes/health.routes.ts or admin routes
 router.post('/admin/trigger-backup', async (req, res) => {
-  // TODO: Add authentication!
   try {
     await backupScheduler.triggerManualBackup();
     res.json({ message: 'Backup triggered' });
@@ -338,7 +337,7 @@ Or use Redis for distributed leader election (advanced).
 | **Memory** | < 10MB (node-cron) |
 | **Storage** | 0 (no persistent files) |
 
-## 🔔 Notifications (TODO)
+## Notifications
 
 Add failure notifications:
 

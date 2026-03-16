@@ -71,10 +71,6 @@ describe('PRODUCTION E2E: Zero-Fee Transactions', function () {
     console.log('');
   });
 
-  // ==========================================================================
-  // CLEANUP
-  // ==========================================================================
-
   after(async function () {
     await cleanupAgreements(createdAgreementIds);
   });

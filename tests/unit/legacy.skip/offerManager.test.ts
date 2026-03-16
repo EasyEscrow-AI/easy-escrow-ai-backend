@@ -555,7 +555,6 @@ describe('OfferManager', () => {
     });
     
     it.skip('should enforce taker restriction for direct offers', async () => {
-      // TODO: Implement taker wallet validation in acceptOffer
       const offerId = 5;
       const designatedTaker = Keypair.generate().publicKey.toBase58();
       const wrongTaker = Keypair.generate().publicKey.toBase58();
