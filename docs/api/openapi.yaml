@@ -1,8 +1,8 @@
 openapi: 3.0.3
 info:
-  title: EasyEscrow.ai Atomic Swap API
+  title: EasyEscrow.ai API
   version: 1.0.0
-  description: Non-custodial atomic swap platform for NFTs and SOL on Solana. Browse the Documentation section for guides, or jump to API Reference for endpoint details.
+  description: Non-custodial atomic swap platform for NFTs and SOL on Solana, plus institutional cross-border USDC escrow payments. Browse the Documentation section for guides, or jump to API Reference for endpoint details.
   contact:
     name: EasyEscrow.ai Support
     email: support@easyescrow.ai
@@ -91,6 +91,42 @@ tags:
     description: Service health and status endpoints
   - name: Atomic Swaps
     description: Atomic swap offer lifecycle management, supported assets, quotes, and bundle monitoring
+  - name: Institution Overview
+    description: |
+      ## Cross-Border Institutional Escrow
+
+      The Institution Escrow system enables **cross-border stablecoin (USDC) payments on Solana** for
+      institutional clients.
+
+      ### Key Features
+      - **Authenticated accounts** via email + password with JWT tokens
+      - **Compliance checks** with allowlists and corridor-based limits
+      - **AI-powered document analysis** for risk assessment
+      - **Multi-step escrow lifecycle**: create → deposit → release/cancel
+
+      ### How It Works
+      1. **Register** an institution client account
+      2. **Configure** wallets and API keys via settings
+      3. **Create** an escrow with payer/recipient wallets, amount, and corridor
+      4. **Deposit** USDC on-chain and record the transaction signature
+      5. **Release** funds (requires settlement authority) or **cancel** the escrow
+      6. Optionally **analyze** uploaded documents with AI for risk scoring
+
+      ### Feature Gate
+      This feature is gated by the `INSTITUTION_ESCROW_ENABLED` environment variable.
+      When disabled, all institution escrow endpoints return `503 Service Unavailable`.
+  - name: Institution Auth
+    description: Authentication for institution escrow clients (email/password, JWT)
+  - name: Institution Settings
+    description: Client settings, wallets, and API key management
+  - name: Institution Files
+    description: Document uploads for compliance (PDF, images)
+  - name: Institution Escrow
+    description: Cross-border USDC escrow payment lifecycle
+  - name: AI Analysis
+    description: AI-powered document risk analysis
+  - name: Institution Admin
+    description: Admin operations for allowlist and corridor management
 
 x-tagGroups:
   - name: Documentation
@@ -104,6 +140,15 @@ x-tagGroups:
     tags:
       - Health
       - Atomic Swaps
+  - name: Institution Escrow
+    tags:
+      - Institution Overview
+      - Institution Auth
+      - Institution Settings
+      - Institution Files
+      - Institution Escrow
+      - AI Analysis
+      - Institution Admin
 
 paths:
   /health:
@@ -936,6 +981,1383 @@ paths:
                     format: date-time
         '404':
           $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # ── Institution Auth ──────────────────────────────────────────────────
+
+  /api/v1/institution/auth/register:
+    post:
+      tags:
+        - Institution Auth
+      summary: Register institution client
+      description: |
+        Register a new institution client account with email, password, and company name.
+
+        **Rate Limited**: 5 requests per 15 minutes.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstitutionRegisterRequest'
+            example:
+              email: "finance@acmecorp.com"
+              password: "SecureP@ssw0rd!"
+              companyName: "Acme Corporation"
+      responses:
+        '201':
+          description: Client registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/InstitutionAuthTokens'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Email already registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
+
+  /api/v1/institution/auth/login:
+    post:
+      tags:
+        - Institution Auth
+      summary: Login institution client
+      description: |
+        Authenticate with email and password to receive JWT access and refresh tokens.
+
+        **Rate Limited**: 5 requests per 15 minutes.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstitutionLoginRequest'
+            example:
+              email: "finance@acmecorp.com"
+              password: "SecureP@ssw0rd!"
+      responses:
+        '200':
+          description: Authenticated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/InstitutionAuthTokens'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
+
+  /api/v1/institution/auth/refresh:
+    post:
+      tags:
+        - Institution Auth
+      summary: Refresh access token
+      description: Exchange a valid refresh token for a new access token pair.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refreshToken
+              properties:
+                refreshToken:
+                  type: string
+                  description: Refresh token from login or previous refresh
+            example:
+              refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6..."
+      responses:
+        '200':
+          description: Tokens refreshed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/InstitutionAuthTokens'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '401':
+          description: Invalid or expired refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/institution/auth/logout:
+    post:
+      tags:
+        - Institution Auth
+      summary: Logout institution client
+      description: Invalidate a refresh token, effectively logging the client out.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refreshToken
+              properties:
+                refreshToken:
+                  type: string
+                  description: Refresh token to invalidate
+            example:
+              refreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6..."
+      responses:
+        '200':
+          description: Logged out successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Logged out successfully"
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/institution/auth/me:
+    get:
+      tags:
+        - Institution Auth
+      summary: Get current profile
+      description: Retrieve the authenticated institution client's profile.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Profile retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/InstitutionProfile'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/institution/auth/password:
+    put:
+      tags:
+        - Institution Auth
+      summary: Change password
+      description: Change the authenticated client's password. Requires the current password.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstitutionChangePasswordRequest'
+            example:
+              oldPassword: "SecureP@ssw0rd!"
+              newPassword: "EvenM0reSecure#2025"
+      responses:
+        '200':
+          description: Password changed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Password changed successfully"
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ── Institution Settings ───────────────────────────────────────────────
+
+  /api/v1/institution/settings:
+    get:
+      tags:
+        - Institution Settings
+      summary: Get client settings
+      description: Retrieve the authenticated client's settings including wallets and configuration.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Settings retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/InstitutionSettings'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      tags:
+        - Institution Settings
+      summary: Update client settings
+      description: Update general settings for the authenticated client (e.g., company name, webhook URL).
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstitutionSettingsUpdate'
+            example:
+              companyName: "Acme Corporation Pty Ltd"
+              webhookUrl: "https://acmecorp.com/webhooks/escrow"
+      responses:
+        '200':
+          description: Settings updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/InstitutionSettings'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/institution/settings/wallets:
+    put:
+      tags:
+        - Institution Settings
+      summary: Update wallet addresses
+      description: Update the Solana wallet addresses associated with the authenticated client.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstitutionWalletsUpdate'
+            example:
+              payerWallet: "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"
+              recipientWallet: "8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ"
+      responses:
+        '200':
+          description: Wallets updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    description: Updated wallet configuration
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/institution/api-keys:
+    post:
+      tags:
+        - Institution Settings
+      summary: Generate API key
+      description: |
+        Generate a new API key for programmatic access. The full key is returned **only once** in
+        the response -- store it securely.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstitutionApiKeyCreate'
+            example:
+              name: "Production API Key"
+              permissions:
+                - "escrow:create"
+                - "escrow:read"
+      responses:
+        '201':
+          description: API key generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/InstitutionApiKeyFull'
+                  message:
+                    type: string
+                    example: "Store the key securely. It will not be shown again."
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      tags:
+        - Institution Settings
+      summary: List API keys
+      description: List all API keys for the authenticated client (keys are masked).
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: API keys listed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/InstitutionApiKeySummary'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/institution/api-keys/{id}:
+    delete:
+      tags:
+        - Institution Settings
+      summary: Revoke API key
+      description: Permanently revoke an API key. This action cannot be undone.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: API key ID to revoke
+      responses:
+        '200':
+          description: API key revoked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "API key revoked"
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ── Institution Files ──────────────────────────────────────────────────
+
+  /api/v1/institution/files:
+    post:
+      tags:
+        - Institution Files
+      summary: Upload document
+      description: |
+        Upload a document for compliance or escrow purposes.
+
+        **Accepted formats:** PDF, PNG, JPG, JPEG
+        **Max file size:** 10 MB
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Document file (PDF, PNG, JPG, JPEG; max 10 MB)
+                documentType:
+                  type: string
+                  enum: [INVOICE, PURCHASE_ORDER, BILL_OF_LADING, CERTIFICATE, OTHER]
+                  default: OTHER
+                  description: Classification of the uploaded document
+                escrowId:
+                  type: string
+                  format: uuid
+                  description: Optional escrow ID to associate the file with
+      responses:
+        '201':
+          description: File uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/InstitutionFile'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '415':
+          description: Unsupported file type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      tags:
+        - Institution Files
+      summary: List files
+      description: List all uploaded files for the authenticated client. Optionally filter by escrow ID.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: escrowId
+          schema:
+            type: string
+            format: uuid
+          description: Filter files by associated escrow ID
+      responses:
+        '200':
+          description: Files listed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/InstitutionFile'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/institution/files/{id}:
+    get:
+      tags:
+        - Institution Files
+      summary: Get file download URL
+      description: Get a pre-signed download URL for a specific file.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: File ID
+      responses:
+        '200':
+          description: Download URL generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/InstitutionFileUrl'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - Institution Files
+      summary: Delete file
+      description: Permanently delete an uploaded file.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: File ID to delete
+      responses:
+        '200':
+          description: File deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "File deleted"
+                  timestamp:
+                    type: string
+                    format: date-time
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ── Institution Escrow ─────────────────────────────────────────────────
+
+  /api/v1/institution-escrow:
+    post:
+      tags:
+        - Institution Escrow
+      summary: Create escrow
+      description: |
+        Create a new USDC escrow between a payer and recipient wallet.
+
+        The escrow is created in `CREATED` status. The payer must then send USDC to the
+        escrow address and call the deposit endpoint with the transaction signature.
+
+        **Compliance checks** are performed automatically based on the corridor configuration,
+        allowlist status, and daily/monthly limits.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstitutionEscrowCreateRequest'
+            example:
+              payerWallet: "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"
+              recipientWallet: "8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ"
+              amount: 50000
+              corridor: "SG-CH"
+              conditionType: "ADMIN_RELEASE"
+              expiryHours: 72
+              settlementAuthority: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+      responses:
+        '201':
+          description: Escrow created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/InstitutionEscrowDetail'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Compliance check failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
+    get:
+      tags:
+        - Institution Escrow
+      summary: List escrows
+      description: List escrows for the authenticated client with optional filters and pagination.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [CREATED, FUNDED, COMPLIANCE_HOLD, RELEASING, RELEASED, CANCELLING, CANCELLED, EXPIRED, FAILED]
+          description: Filter by escrow status
+        - in: query
+          name: corridor
+          schema:
+            type: string
+            pattern: '^[A-Z]{2}-[A-Z]{2}$'
+          description: Filter by corridor (e.g., SG-CH)
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Items per page
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Pagination offset
+      responses:
+        '200':
+          description: Escrows listed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      escrows:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/InstitutionEscrowDetail'
+                      total:
+                        type: integer
+                      limit:
+                        type: integer
+                      offset:
+                        type: integer
+                  timestamp:
+                    type: string
+                    format: date-time
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/institution-escrow/{id}:
+    get:
+      tags:
+        - Institution Escrow
+      summary: Get escrow details
+      description: Retrieve full details for a specific escrow.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Escrow ID
+      responses:
+        '200':
+          description: Escrow details retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/InstitutionEscrowDetail'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Access denied - escrow belongs to another client
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/institution-escrow/{id}/deposit:
+    post:
+      tags:
+        - Institution Escrow
+      summary: Record deposit
+      description: |
+        Record an on-chain USDC deposit for an escrow. The payer sends USDC to the escrow
+        address independently, then calls this endpoint with the transaction signature.
+
+        The API verifies the transaction on-chain and updates the escrow status to `FUNDED`.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Escrow ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - txSignature
+              properties:
+                txSignature:
+                  type: string
+                  description: Solana transaction signature (base58)
+                  example: "5KqZ9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9Z9"
+      responses:
+        '200':
+          description: Deposit recorded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/InstitutionEscrowDetail'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '410':
+          description: Escrow has expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/institution-escrow/{id}/release:
+    post:
+      tags:
+        - Institution Escrow
+      summary: Release funds
+      description: |
+        Release escrowed USDC to the recipient wallet. This endpoint requires **both**
+        a valid JWT token and a settlement authority API key (`X-Settlement-Authority-Key` header).
+
+        **Rate Limited**: 10 requests per minute.
+      security:
+        - BearerAuth: []
+        - SettlementAuthority: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Escrow ID
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                notes:
+                  type: string
+                  maxLength: 500
+                  description: Optional release notes
+            example:
+              notes: "Invoice verified, releasing payment"
+      responses:
+        '200':
+          description: Funds released
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/InstitutionEscrowDetail'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Missing or invalid settlement authority key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
+
+  /api/v1/institution-escrow/{id}/cancel:
+    post:
+      tags:
+        - Institution Escrow
+      summary: Cancel escrow
+      description: |
+        Cancel an escrow and initiate a refund of any deposited USDC back to the payer wallet.
+        Only escrows in `CREATED` or `FUNDED` status can be cancelled.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Escrow ID
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  maxLength: 500
+                  description: Optional cancellation reason
+            example:
+              reason: "Trade terms changed"
+      responses:
+        '200':
+          description: Escrow cancelled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/InstitutionEscrowDetail'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ── AI Analysis ────────────────────────────────────────────────────────
+
+  /api/v1/ai/analyze/{escrow_id}:
+    post:
+      tags:
+        - AI Analysis
+      summary: Analyze document
+      description: |
+        Trigger AI-powered analysis on an uploaded document associated with an escrow.
+        The analysis evaluates document authenticity, risk indicators, and compliance factors.
+
+        **Rate Limited**: 10 requests per minute.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: escrow_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Escrow ID the document belongs to
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiAnalyzeRequest'
+            example:
+              fileId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+              context:
+                expectedAmount: 50000
+                poNumber: "PO-2025-0042"
+      responses:
+        '200':
+          description: Analysis completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/AiAnalysisResult'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
+        '503':
+          description: AI analysis service not configured
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/ai/analysis/{escrow_id}:
+    get:
+      tags:
+        - AI Analysis
+      summary: Get analysis results
+      description: Retrieve all AI analysis results for a specific escrow.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: escrow_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Escrow ID
+      responses:
+        '200':
+          description: Analysis results retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AiAnalysisResult'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ── Institution Admin ──────────────────────────────────────────────────
+
+  /api/admin/institution-escrow/allowlist:
+    post:
+      tags:
+        - Institution Admin
+      summary: Add wallet to allowlist
+      description: Add a Solana wallet address to the institution escrow allowlist, associating it with a client.
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminAllowlistAdd'
+            example:
+              wallet: "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"
+              clientId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+      responses:
+        '201':
+          description: Wallet added to allowlist
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Wallet 498GVi... added to allowlist"
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Missing or invalid admin API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      tags:
+        - Institution Admin
+      summary: List allowlist
+      description: Retrieve all wallets on the institution escrow allowlist.
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Allowlist retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AdminAllowlistEntry'
+                  count:
+                    type: integer
+                    example: 5
+                  timestamp:
+                    type: string
+                    format: date-time
+        '401':
+          description: Missing or invalid admin API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/admin/institution-escrow/allowlist/{wallet}:
+    delete:
+      tags:
+        - Institution Admin
+      summary: Remove wallet from allowlist
+      description: Remove a Solana wallet address from the institution escrow allowlist.
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: path
+          name: wallet
+          required: true
+          schema:
+            type: string
+          description: Solana wallet address to remove
+      responses:
+        '200':
+          description: Wallet removed from allowlist
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Wallet 498GVi... removed from allowlist"
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Missing or invalid admin API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/admin/institution-escrow/corridors:
+    post:
+      tags:
+        - Institution Admin
+      summary: Configure corridor
+      description: |
+        Create or update a payment corridor between two countries. If a corridor with the
+        same source/destination already exists, it will be updated (upsert).
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCorridorConfig'
+            example:
+              sourceCountry: "SG"
+              destCountry: "CH"
+              minAmount: 100
+              maxAmount: 1000000
+              dailyLimit: 500000
+              monthlyLimit: 5000000
+              riskLevel: "LOW"
+              requiredDocuments:
+                - "INVOICE"
+                - "PURCHASE_ORDER"
+      responses:
+        '201':
+          description: Corridor configured
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/AdminCorridor'
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Missing or invalid admin API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      tags:
+        - Institution Admin
+      summary: List corridors
+      description: Retrieve all configured payment corridors.
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Corridors listed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AdminCorridor'
+                  count:
+                    type: integer
+                    example: 3
+                  timestamp:
+                    type: string
+                    format: date-time
+        '401':
+          description: Missing or invalid admin API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
@@ -2315,6 +3737,565 @@ components:
                 payload:
                   type: object
 
+    # ── Institution Auth Schemas ───────────────────────────────────────
+
+    InstitutionRegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+        - companyName
+      properties:
+        email:
+          type: string
+          format: email
+          description: Business email address
+          example: "finance@acmecorp.com"
+        password:
+          type: string
+          minLength: 8
+          description: Password (minimum 8 characters)
+          example: "SecureP@ssw0rd!"
+        companyName:
+          type: string
+          description: Company or organization name
+          example: "Acme Corporation"
+
+    InstitutionLoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: "finance@acmecorp.com"
+        password:
+          type: string
+          example: "SecureP@ssw0rd!"
+
+    InstitutionChangePasswordRequest:
+      type: object
+      required:
+        - oldPassword
+        - newPassword
+      properties:
+        oldPassword:
+          type: string
+          description: Current password
+        newPassword:
+          type: string
+          minLength: 8
+          description: New password (minimum 8 characters)
+
+    InstitutionAuthTokens:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          description: JWT access token (short-lived)
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        refreshToken:
+          type: string
+          description: JWT refresh token (long-lived)
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        expiresIn:
+          type: integer
+          description: Access token lifetime in seconds
+          example: 3600
+        clientId:
+          type: string
+          format: uuid
+          description: Institution client ID
+
+    InstitutionProfile:
+      type: object
+      properties:
+        clientId:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        companyName:
+          type: string
+        status:
+          type: string
+          enum: [ACTIVE, SUSPENDED, PENDING]
+        createdAt:
+          type: string
+          format: date-time
+
+    # ── Institution Settings Schemas ────────────────────────────────────
+
+    InstitutionSettings:
+      type: object
+      properties:
+        clientId:
+          type: string
+          format: uuid
+        companyName:
+          type: string
+        webhookUrl:
+          type: string
+          nullable: true
+        wallets:
+          type: object
+          properties:
+            payerWallet:
+              type: string
+              nullable: true
+            recipientWallet:
+              type: string
+              nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    InstitutionSettingsUpdate:
+      type: object
+      properties:
+        companyName:
+          type: string
+          description: Updated company name
+        webhookUrl:
+          type: string
+          description: Webhook URL for escrow status notifications
+
+    InstitutionWalletsUpdate:
+      type: object
+      properties:
+        payerWallet:
+          type: string
+          description: Solana wallet address for sending payments
+          example: "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"
+        recipientWallet:
+          type: string
+          description: Solana wallet address for receiving payments
+          example: "8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ"
+
+    InstitutionApiKeyCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Human-readable name for the API key
+          example: "Production API Key"
+        permissions:
+          type: array
+          items:
+            type: string
+          description: List of permissions granted to this key
+          example: ["escrow:create", "escrow:read"]
+
+    InstitutionApiKeyFull:
+      type: object
+      description: API key object returned on creation (includes the full key)
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        key:
+          type: string
+          description: The full API key (only shown once at creation time)
+        permissions:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    InstitutionApiKeySummary:
+      type: object
+      description: API key summary (key is masked)
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        keyPrefix:
+          type: string
+          description: First characters of the key for identification
+          example: "iek_a1b2..."
+        permissions:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+        lastUsedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    # ── Institution Files Schemas ───────────────────────────────────────
+
+    InstitutionFile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        clientId:
+          type: string
+          format: uuid
+        fileName:
+          type: string
+          example: "invoice-2025-042.pdf"
+        documentType:
+          type: string
+          enum: [INVOICE, PURCHASE_ORDER, BILL_OF_LADING, CERTIFICATE, OTHER]
+        mimeType:
+          type: string
+          example: "application/pdf"
+        fileSize:
+          type: integer
+          description: File size in bytes
+          example: 245760
+        escrowId:
+          type: string
+          format: uuid
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    InstitutionFileUrl:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        fileName:
+          type: string
+        url:
+          type: string
+          description: Pre-signed download URL (expires in 15 minutes)
+        expiresAt:
+          type: string
+          format: date-time
+
+    # ── Institution Escrow Schemas ──────────────────────────────────────
+
+    InstitutionEscrowCreateRequest:
+      type: object
+      required:
+        - payerWallet
+        - recipientWallet
+        - amount
+        - corridor
+        - conditionType
+      properties:
+        payerWallet:
+          type: string
+          description: Solana wallet address of the payer (base58, 32-44 chars)
+          example: "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"
+        recipientWallet:
+          type: string
+          description: Solana wallet address of the recipient
+          example: "8LL197pziojWHtS3zeyJonrh1swKvMZpumfesVmDgUcZ"
+        amount:
+          type: number
+          minimum: 1
+          maximum: 10000000
+          description: USDC amount (1 to 10,000,000)
+          example: 50000
+        corridor:
+          type: string
+          pattern: '^[A-Z]{2}-[A-Z]{2}$'
+          description: Payment corridor in ISO country code format (e.g., SG-CH)
+          example: "SG-CH"
+        conditionType:
+          type: string
+          enum: [ADMIN_RELEASE, TIME_LOCK, COMPLIANCE_CHECK]
+          description: |
+            Release condition type:
+            - **ADMIN_RELEASE**: Manual release by settlement authority
+            - **TIME_LOCK**: Automatic release after time period
+            - **COMPLIANCE_CHECK**: Release after compliance verification
+          example: "ADMIN_RELEASE"
+        expiryHours:
+          type: integer
+          minimum: 1
+          maximum: 2160
+          description: Escrow expiry in hours (1 to 2160 / 90 days). Default varies by corridor.
+          example: 72
+        settlementAuthority:
+          type: string
+          description: Optional Solana wallet address of the settlement authority
+          example: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"
+
+    InstitutionEscrowDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        clientId:
+          type: string
+          format: uuid
+        payerWallet:
+          type: string
+        recipientWallet:
+          type: string
+        amount:
+          type: number
+          description: USDC amount
+          example: 50000
+        corridor:
+          type: string
+          example: "SG-CH"
+        conditionType:
+          type: string
+          enum: [ADMIN_RELEASE, TIME_LOCK, COMPLIANCE_CHECK]
+        status:
+          type: string
+          enum: [CREATED, FUNDED, COMPLIANCE_HOLD, RELEASING, RELEASED, CANCELLING, CANCELLED, EXPIRED, FAILED]
+          description: |
+            Escrow lifecycle status:
+            - **CREATED**: Escrow created, awaiting deposit
+            - **FUNDED**: USDC deposited and verified
+            - **COMPLIANCE_HOLD**: Held for compliance review
+            - **RELEASING**: Release in progress
+            - **RELEASED**: Funds released to recipient
+            - **CANCELLING**: Cancellation in progress
+            - **CANCELLED**: Escrow cancelled, funds refunded
+            - **EXPIRED**: Escrow expired without completion
+            - **FAILED**: Escrow failed due to an error
+        escrowAddress:
+          type: string
+          description: On-chain escrow USDC address
+        depositTxSignature:
+          type: string
+          nullable: true
+          description: Deposit transaction signature
+        releaseTxSignature:
+          type: string
+          nullable: true
+          description: Release transaction signature
+        settlementAuthority:
+          type: string
+          nullable: true
+        expiresAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # ── AI Analysis Schemas ─────────────────────────────────────────────
+
+    AiAnalyzeRequest:
+      type: object
+      required:
+        - fileId
+      properties:
+        fileId:
+          type: string
+          format: uuid
+          description: ID of the uploaded file to analyze
+        context:
+          type: object
+          description: Optional context to improve analysis accuracy
+          properties:
+            expectedAmount:
+              type: number
+              minimum: 0
+              description: Expected payment amount for cross-referencing
+              example: 50000
+            poNumber:
+              type: string
+              maxLength: 100
+              description: Purchase order number for verification
+              example: "PO-2025-0042"
+
+    AiAnalysisResult:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        escrowId:
+          type: string
+          format: uuid
+        fileId:
+          type: string
+          format: uuid
+        riskScore:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Risk score from 0 (low risk) to 100 (high risk)
+          example: 15
+        riskLevel:
+          type: string
+          enum: [LOW, MEDIUM, HIGH]
+          description: Categorized risk level
+          example: "LOW"
+        findings:
+          type: array
+          items:
+            type: object
+            properties:
+              category:
+                type: string
+                example: "DOCUMENT_AUTHENTICITY"
+              severity:
+                type: string
+                enum: [INFO, WARNING, CRITICAL]
+              message:
+                type: string
+                example: "Document appears authentic with consistent formatting"
+          description: Individual analysis findings
+        summary:
+          type: string
+          description: Human-readable summary of the analysis
+          example: "Document passes all checks with low risk indicators"
+        analyzedAt:
+          type: string
+          format: date-time
+
+    # ── Institution Admin Schemas ───────────────────────────────────────
+
+    AdminAllowlistAdd:
+      type: object
+      required:
+        - wallet
+        - clientId
+      properties:
+        wallet:
+          type: string
+          description: Solana wallet address to add (base58)
+          example: "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"
+        clientId:
+          type: string
+          format: uuid
+          description: Institution client ID to associate with the wallet
+
+    AdminAllowlistEntry:
+      type: object
+      properties:
+        wallet:
+          type: string
+          example: "498GViCLvzbGnRoByJCAj7skXkAe3NBpCY2Wghcd2e4R"
+        clientId:
+          type: string
+          format: uuid
+        addedAt:
+          type: string
+          format: date-time
+
+    AdminCorridorConfig:
+      type: object
+      required:
+        - sourceCountry
+        - destCountry
+        - minAmount
+        - maxAmount
+        - dailyLimit
+        - monthlyLimit
+        - riskLevel
+      properties:
+        sourceCountry:
+          type: string
+          minLength: 2
+          maxLength: 2
+          description: ISO 3166-1 alpha-2 source country code
+          example: "SG"
+        destCountry:
+          type: string
+          minLength: 2
+          maxLength: 2
+          description: ISO 3166-1 alpha-2 destination country code
+          example: "CH"
+        minAmount:
+          type: number
+          minimum: 0
+          description: Minimum transaction amount (USDC)
+          example: 100
+        maxAmount:
+          type: number
+          minimum: 1
+          description: Maximum transaction amount (USDC)
+          example: 1000000
+        dailyLimit:
+          type: number
+          minimum: 1
+          description: Daily transaction limit per client (USDC)
+          example: 500000
+        monthlyLimit:
+          type: number
+          minimum: 1
+          description: Monthly transaction limit per client (USDC)
+          example: 5000000
+        riskLevel:
+          type: string
+          enum: [LOW, MEDIUM, HIGH]
+          description: Risk classification for the corridor
+          example: "LOW"
+        requiredDocuments:
+          type: array
+          items:
+            type: string
+          description: Document types required for this corridor
+          example: ["INVOICE", "PURCHASE_ORDER"]
+
+    AdminCorridor:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+          description: Corridor code (source-dest)
+          example: "SG-CH"
+        sourceCountry:
+          type: string
+          example: "SG"
+        destCountry:
+          type: string
+          example: "CH"
+        minAmount:
+          type: number
+          example: 100
+        maxAmount:
+          type: number
+          example: 1000000
+        dailyLimit:
+          type: number
+          example: 500000
+        monthlyLimit:
+          type: number
+          example: 5000000
+        riskLevel:
+          type: string
+          enum: [LOW, MEDIUM, HIGH]
+        requiredDocuments:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
     ErrorResponse:
       type: object
       properties:
@@ -2378,4 +4359,14 @@ components:
       type: apiKey
       in: header
       name: X-API-Key
-      description: API key for authentication
+      description: API key for admin authentication
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT access token from /api/v1/institution/auth/login
+    SettlementAuthority:
+      type: apiKey
+      in: header
+      name: X-Settlement-Authority-Key
+      description: Settlement authority API key for release operations

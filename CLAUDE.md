@@ -6,13 +6,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 EasyEscrow.ai is a **production-ready Solana atomic swap platform** enabling trustless peer-to-peer NFT/cNFT/SOL exchanges. The backend is a Node.js/Express/TypeScript API with PostgreSQL/Prisma, deployed on DigitalOcean.
 
-**⚠️ IMPORTANT: This platform uses SOL only - NO USDC support.**
-- All swaps use native SOL for payments and fees
-- Legacy USDC code has been removed
-- Do not add USDC/SPL token payment functionality
+**⚠️ IMPORTANT: Two distinct systems with different token models:**
+- **Atomic Swaps** use native SOL only for payments and fees - do NOT add USDC to the swap system
+- **Institution Escrow** uses USDC (SPL tokens) for cross-border payments between institutions
 
 **Key capabilities:**
 - Atomic swaps: NFT↔SOL, NFT↔NFT, cNFT↔SOL, bulk swaps (up to 4 NFTs total)
+- Institution escrow: USDC-based cross-border payment escrow with AI-powered compliance analysis
 - Compressed NFT (cNFT) support with Merkle proof handling via DAS API
 - Jito bundles for multi-transaction swaps (2+ NFTs on one side, or any cNFT) with TwoPhase fallback
 - Maximum 4 NFTs per swap (Jito bundle limit: 5 transactions = 1 fee tx + 4 NFT transfers)
@@ -106,17 +106,24 @@ cd ../escrow-19dec-task6-cnft-fix && npm install
 
 ## Critical Rules
 
-### 1. SOL Only - No USDC (CRITICAL)
+### 1. Token Usage Rules (CRITICAL)
 
-**This platform uses native SOL exclusively. USDC is NOT supported.**
+**Two systems, two token models. Do NOT mix them.**
 
-- ✅ All payments: Native SOL transfers via System Program
-- ✅ All fees: Collected in SOL
+**Atomic Swaps (SOL only):**
+- ✅ All swap payments: Native SOL transfers via System Program
+- ✅ All swap fees: Collected in SOL
 - ✅ NFT↔SOL, NFT↔NFT (with SOL fee), cNFT↔SOL
-- ❌ NO USDC deposits, payments, or SPL token escrow
-- ❌ Do not reference or add USDC functionality
+- ❌ Do NOT add USDC/SPL tokens to the atomic swap system
 
-Legacy USDC code was removed during SOL migration. Archived task files in `.taskmaster/tasks/legacy-usdc-archived/` contain historical USDC references - do not use these as implementation guides.
+**Institution Escrow (USDC only):**
+- ✅ Cross-border payment escrow using USDC (SPL token)
+- ✅ AI-powered compliance analysis for transaction review
+- ✅ Institution authentication with JWT and allowlist
+- ✅ File uploads for supporting documents
+- ❌ Do NOT use SOL for institution escrow payments
+
+Legacy atomic-swap USDC code was removed during SOL migration. Archived task files in `.taskmaster/tasks/legacy-usdc-archived/` contain historical USDC swap references - do not use these as implementation guides for either system.
 
 ### 2. Docker Graceful Restart (CRITICAL)
 
@@ -250,12 +257,24 @@ git push --force-with-lease
 | `feeCalculator.ts` | Dynamic platform fee calculation |
 | `escrow-program.service.ts` | Anchor program interaction |
 
+### Institution Escrow Services (`src/services/institution/`)
+
+| Service | Purpose |
+|---------|---------|
+| `institutionAuth.service.ts` | JWT-based authentication for institution users |
+| `institutionEscrow.service.ts` | USDC escrow lifecycle (create/fund/release/dispute/settle) |
+| `aiAnalysis.service.ts` | AI-powered compliance and risk analysis via Claude API |
+| `allowlist.service.ts` | Institution allowlist management and verification |
+| `compliance.service.ts` | Regulatory compliance checks and reporting |
+| `fileUpload.service.ts` | Document upload to DO Spaces for escrow supporting docs |
+
 ### Database
 
 - **PostgreSQL** with Prisma ORM
 - Schema: `prisma/schema.prisma`
 - Generated client: `src/generated/prisma/`
 - Key models: `Agreement`, `SwapOffer`, `NoncePoolEntry`, `Receipt`
+- Institution escrow models: `Institution`, `InstitutionUser`, `InstitutionEscrow`, `EscrowDocument`, `ComplianceCheck`
 
 ### IDL Files
 
@@ -287,6 +306,17 @@ Environment-specific IDL files in `src/generated/anchor/`:
 - Rate limiting via `jito-http-rate-limiter.ts` (1 rps without UUID, 5 rps with JITO_AUTH_UUID)
 - See `docs/architecture/SWAP_ROUTING.md` for detailed routing logic
 
+### Institution Escrow
+- Feature-flagged via `INSTITUTION_ESCROW_ENABLED` (disabled by default)
+- USDC escrow with configurable min/max amounts ($100 - $1M default)
+- JWT authentication (access + refresh tokens) for institution users
+- Allowlist-based institution registration (not open signup)
+- AI compliance analysis via Claude API before escrow release
+- Document uploads stored in DigitalOcean Spaces (S3-compatible)
+- Settlement authority pattern: separate API key for release operations
+- Default escrow expiry: 72 hours (configurable)
+- Config validated at startup only when feature is enabled
+
 ### Transaction Flow
 1. Offer created via `offerManager.ts`
 2. Assets validated via `assetValidator.ts`
@@ -306,3 +336,13 @@ Key variables (see `.env.example` for full list):
 - `NODE_ENV` - production/staging/development
 - `JITO_BUNDLES_ENABLED` - Enable Jito bundles (default: true on mainnet)
 - `JITO_AUTH_UUID` - Optional UUID for 5 rps rate limit (default: 1 rps)
+
+**Institution Escrow variables (only required when `INSTITUTION_ESCROW_ENABLED=true`):**
+- `INSTITUTION_ESCROW_ENABLED` - Feature flag (default: false)
+- `USDC_MINT_ADDRESS` - USDC SPL token mint address
+- `INSTITUTION_ESCROW_MIN_USDC` / `MAX_USDC` - Amount limits
+- `JWT_SECRET` - Secret for institution JWT tokens (min 32 chars)
+- `ANTHROPIC_API_KEY` - Claude API key for AI compliance analysis
+- `AI_ANALYSIS_MODEL` - Claude model for analysis (default: claude-sonnet-4-20250514)
+- `DO_SPACES_*` - DigitalOcean Spaces config for document uploads
+- `SETTLEMENT_AUTHORITY_API_KEY` - API key for settlement operations

@@ -11,6 +11,7 @@ export * from './validation';
 export * from './constants';
 export * from './atomicSwap.config';
 export * from './noncePool.config';
+export * from './institution-escrow.config';
 
 // Helper to determine if running in development
 const isDevelopment = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';

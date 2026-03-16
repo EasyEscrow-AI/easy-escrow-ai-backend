@@ -19,7 +19,13 @@ import {
   testExecuteRoutes,
   authorizedAppsRoutes,
   noncePoolAdminRoutes,
+  institutionEscrowAdminRoutes,
   assetsRoutes,
+  institutionAuthRoutes,
+  institutionSettingsRoutes,
+  institutionFilesRoutes,
+  institutionEscrowRoutes,
+  aiAnalysisRoutes,
 } from './routes';
 import { noncePoolManager, healthCheckService, assetValidator } from './routes/offers.routes';
 import { transactionGroupBuilder } from './routes/test-execute.routes';
@@ -217,6 +223,15 @@ app.get('/', (_req: Request, res: Response) => {
     },
   };
 
+  // Add institution escrow endpoints if enabled
+  if (process.env.INSTITUTION_ESCROW_ENABLED === 'true') {
+    response.endpoints.institutionAuth = '/api/v1/institution/auth';
+    response.endpoints.institutionSettings = '/api/v1/institution/settings';
+    response.endpoints.institutionFiles = '/api/v1/institution/files';
+    response.endpoints.institutionEscrow = '/api/v1/institution-escrow';
+    response.endpoints.aiAnalysis = '/api/v1/ai';
+  }
+
   // Only include documentation field if OpenAPI spec loaded successfully
   if (openApiDocument) {
     response.documentation = docsPath;
@@ -366,6 +381,40 @@ app.use(authorizedAppsRoutes); // Admin endpoints for zero-fee API key managemen
 app.use('/admin/nonce-pool', noncePoolAdminRoutes); // Admin endpoints for nonce pool management
 app.use(testRoutes);
 app.use(testExecuteRoutes); // ⚠️ TEST ONLY - Real swap execution with private keys
+
+// Institution Escrow Routes (gated by feature flag)
+if (process.env.INSTITUTION_ESCROW_ENABLED === 'true') {
+  app.use(institutionAuthRoutes);
+  app.use(institutionSettingsRoutes);
+  app.use(institutionFilesRoutes);
+  app.use(institutionEscrowRoutes);
+  app.use(aiAnalysisRoutes);
+  app.use(institutionEscrowAdminRoutes);
+  console.log('✅ Institution escrow routes enabled');
+} else {
+  // Return 503 for institution endpoints when disabled
+  app.use('/api/v1/institution', (_req, res) => {
+    res.status(503).json({
+      error: 'Service Unavailable',
+      message: 'Institution escrow is not enabled on this server',
+      timestamp: new Date().toISOString(),
+    });
+  });
+  app.use('/api/v1/institution-escrow', (_req, res) => {
+    res.status(503).json({
+      error: 'Service Unavailable',
+      message: 'Institution escrow is not enabled on this server',
+      timestamp: new Date().toISOString(),
+    });
+  });
+  app.use('/api/v1/ai', (_req, res) => {
+    res.status(503).json({
+      error: 'Service Unavailable',
+      message: 'Institution escrow is not enabled on this server',
+      timestamp: new Date().toISOString(),
+    });
+  });
+}
 
 // 404 handler
 app.use((req: Request, res: Response) => {

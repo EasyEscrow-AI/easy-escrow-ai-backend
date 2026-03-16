@@ -12,4 +12,6 @@ export * from './auth.middleware';
 export * from './security.middleware';
 export * from './idempotency.middleware';
 export * from './zero-fee-auth.middleware';
+export * from './institution-jwt.middleware';
+export * from './institution-escrow-validation.middleware';
 

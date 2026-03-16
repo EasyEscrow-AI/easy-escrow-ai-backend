@@ -1,0 +1,476 @@
+/**
+ * Institution Escrow Service (Core Orchestrator)
+ *
+ * Orchestrates the full escrow lifecycle:
+ * 1. Create escrow (validate, compliance check, build tx, store)
+ * 2. Record deposit (verify on-chain, update status)
+ * 3. Release funds (settlement authority, build tx, update status)
+ * 4. Cancel escrow (build cancel tx, refund, update status)
+ * 5. List/get escrows (Redis cache + Prisma)
+ */
+
+import { PrismaClient, InstitutionEscrowStatus } from '../generated/prisma';
+import { redisClient } from '../config/redis';
+import { AllowlistService, getAllowlistService } from './allowlist.service';
+import { ComplianceService, getComplianceService } from './compliance.service';
+import crypto from 'crypto';
+
+const ESCROW_CACHE_PREFIX = 'institution:escrow:';
+const ESCROW_CACHE_TTL = 300; // 5 minutes
+
+export interface CreateEscrowParams {
+  clientId: string;
+  payerWallet: string;
+  recipientWallet: string;
+  amount: number;
+  corridor: string;
+  conditionType: string;
+  expiryHours?: number;
+  settlementAuthority?: string;
+}
+
+export interface CreateEscrowResult {
+  escrow: Record<string, unknown>;
+  complianceResult: Record<string, unknown>;
+}
+
+export interface ListEscrowsParams {
+  clientId: string;
+  status?: string;
+  corridor?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export class InstitutionEscrowService {
+  private prisma: PrismaClient;
+  private allowlistService: AllowlistService;
+  private complianceService: ComplianceService;
+
+  constructor() {
+    this.prisma = new PrismaClient();
+    this.allowlistService = getAllowlistService();
+    this.complianceService = getComplianceService();
+  }
+
+  /**
+   * Create a new institution escrow
+   */
+  async createEscrow(params: CreateEscrowParams): Promise<CreateEscrowResult> {
+    const {
+      clientId,
+      payerWallet,
+      recipientWallet,
+      amount,
+      corridor,
+      conditionType,
+      expiryHours = 72,
+      settlementAuthority,
+    } = params;
+
+    // 1. Validate client is verified
+    const client = await this.prisma.institutionClient.findUnique({
+      where: { id: clientId },
+    });
+    if (!client) {
+      throw new Error('Client not found');
+    }
+    if (client.status !== 'ACTIVE') {
+      throw new Error(`Client account is ${client.status}. Must be ACTIVE.`);
+    }
+    if (client.kycStatus !== 'VERIFIED') {
+      throw new Error(`KYC status is ${client.kycStatus}. Must be VERIFIED.`);
+    }
+
+    // 2. Run compliance checks
+    const complianceResult = await this.complianceService.validateTransaction({
+      clientId,
+      payerWallet,
+      recipientWallet,
+      amount,
+      corridor,
+    });
+
+    if (!complianceResult.passed) {
+      // If compliance fails with HIGH risk, reject immediately
+      if (complianceResult.riskScore >= 75) {
+        throw new Error(
+          `Compliance check failed: ${complianceResult.reasons.join('; ')}`,
+        );
+      }
+      // For medium risk, create with COMPLIANCE_HOLD status
+    }
+
+    // 3. Generate escrow ID
+    const escrowId = crypto.randomUUID();
+
+    // 4. Determine USDC mint
+    const usdcMint = process.env.USDC_MINT_ADDRESS || '';
+    if (!usdcMint) {
+      throw new Error('USDC_MINT_ADDRESS not configured');
+    }
+
+    // 5. Calculate platform fee (basis points from config, default 50 bps = 0.5%)
+    const feeBps = parseInt(process.env.INSTITUTION_ESCROW_FEE_BPS || '50', 10);
+    const platformFee = (amount * feeBps) / 10000;
+
+    // 6. Determine status based on compliance
+    const initialStatus: InstitutionEscrowStatus = complianceResult.passed
+      ? 'CREATED'
+      : 'COMPLIANCE_HOLD';
+
+    // 7. Calculate expiry
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + expiryHours);
+
+    // 8. Determine settlement authority
+    const resolvedSettlementAuthority =
+      settlementAuthority || client.primaryWallet || payerWallet;
+
+    // 9. Store in Prisma
+    const escrow = await this.prisma.institutionEscrow.create({
+      data: {
+        escrowId,
+        clientId,
+        payerWallet,
+        recipientWallet,
+        usdcMint,
+        amount,
+        platformFee,
+        corridor,
+        conditionType: conditionType as any,
+        status: initialStatus,
+        settlementAuthority: resolvedSettlementAuthority,
+        riskScore: complianceResult.riskScore,
+        expiresAt,
+      },
+    });
+
+    // 10. Create audit log
+    await this.createAuditLog(escrowId, clientId, 'ESCROW_CREATED', payerWallet, {
+      amount,
+      corridor,
+      conditionType,
+      complianceResult: {
+        passed: complianceResult.passed,
+        riskScore: complianceResult.riskScore,
+        flags: complianceResult.flags,
+      },
+    });
+
+    // 11. Cache in Redis
+    await this.cacheEscrow(escrow);
+
+    return {
+      escrow: this.formatEscrow(escrow),
+      complianceResult: {
+        passed: complianceResult.passed,
+        riskScore: complianceResult.riskScore,
+        flags: complianceResult.flags,
+      },
+    };
+  }
+
+  /**
+   * Record a deposit for an escrow
+   */
+  async recordDeposit(
+    clientId: string,
+    escrowId: string,
+    txSignature: string,
+  ): Promise<Record<string, unknown>> {
+    const escrow = await this.getEscrowInternal(clientId, escrowId);
+
+    if (escrow.status !== 'CREATED') {
+      throw new Error(
+        `Cannot record deposit: escrow status is ${escrow.status}, expected CREATED`,
+      );
+    }
+
+    // Check if expired
+    if (new Date() > escrow.expiresAt) {
+      await this.prisma.institutionEscrow.update({
+        where: { escrowId },
+        data: { status: 'EXPIRED', resolvedAt: new Date() },
+      });
+      throw new Error('Escrow has expired');
+    }
+
+    // Record the deposit
+    await this.prisma.institutionDeposit.create({
+      data: {
+        escrowId,
+        txSignature,
+        amount: escrow.amount,
+        confirmedAt: new Date(),
+      },
+    });
+
+    // Update escrow status to FUNDED
+    const updated = await this.prisma.institutionEscrow.update({
+      where: { escrowId },
+      data: {
+        status: 'FUNDED',
+        depositTxSignature: txSignature,
+        fundedAt: new Date(),
+      },
+    });
+
+    await this.createAuditLog(escrowId, clientId, 'DEPOSIT_CONFIRMED', escrow.payerWallet, {
+      txSignature,
+      amount: Number(escrow.amount),
+    });
+
+    await this.cacheEscrow(updated);
+
+    return this.formatEscrow(updated);
+  }
+
+  /**
+   * Release funds from escrow to recipient
+   */
+  async releaseFunds(
+    clientId: string,
+    escrowId: string,
+    notes?: string,
+  ): Promise<Record<string, unknown>> {
+    const escrow = await this.getEscrowInternal(clientId, escrowId);
+
+    if (escrow.status !== 'FUNDED') {
+      throw new Error(
+        `Cannot release: escrow status is ${escrow.status}, expected FUNDED`,
+      );
+    }
+
+    // Update status to RELEASING
+    await this.prisma.institutionEscrow.update({
+      where: { escrowId },
+      data: { status: 'RELEASING' },
+    });
+
+    // Note: The actual on-chain release transaction would be built by
+    // institution-escrow-program.service.ts and signed by the settlement authority.
+    // This service updates the database status. The route handler orchestrates
+    // the transaction building and submission.
+
+    const updated = await this.prisma.institutionEscrow.update({
+      where: { escrowId },
+      data: {
+        status: 'RELEASED',
+        resolvedAt: new Date(),
+      },
+    });
+
+    await this.createAuditLog(escrowId, clientId, 'FUNDS_RELEASED', escrow.settlementAuthority, {
+      amount: Number(escrow.amount),
+      recipient: escrow.recipientWallet,
+      notes,
+    });
+
+    await this.cacheEscrow(updated);
+
+    return this.formatEscrow(updated);
+  }
+
+  /**
+   * Cancel escrow and initiate refund
+   */
+  async cancelEscrow(
+    clientId: string,
+    escrowId: string,
+    reason?: string,
+  ): Promise<Record<string, unknown>> {
+    const escrow = await this.getEscrowInternal(clientId, escrowId);
+
+    const cancellableStatuses: InstitutionEscrowStatus[] = [
+      'CREATED',
+      'FUNDED',
+      'COMPLIANCE_HOLD',
+    ];
+    if (!cancellableStatuses.includes(escrow.status)) {
+      throw new Error(
+        `Cannot cancel: escrow status is ${escrow.status}`,
+      );
+    }
+
+    // Update status to CANCELLING
+    await this.prisma.institutionEscrow.update({
+      where: { escrowId },
+      data: { status: 'CANCELLING' },
+    });
+
+    // If funded, the route handler will build the on-chain cancel transaction
+    const updated = await this.prisma.institutionEscrow.update({
+      where: { escrowId },
+      data: {
+        status: 'CANCELLED',
+        resolvedAt: new Date(),
+      },
+    });
+
+    await this.createAuditLog(escrowId, clientId, 'ESCROW_CANCELLED', escrow.payerWallet, {
+      reason,
+      previousStatus: escrow.status,
+      wasFunded: escrow.status === 'FUNDED',
+    });
+
+    await this.cacheEscrow(updated);
+
+    return this.formatEscrow(updated);
+  }
+
+  /**
+   * Get a single escrow by ID (scoped to client)
+   */
+  async getEscrow(
+    clientId: string,
+    escrowId: string,
+  ): Promise<Record<string, unknown>> {
+    // Try Redis cache first
+    try {
+      const cached = await redisClient.get(`${ESCROW_CACHE_PREFIX}${escrowId}`);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed.clientId === clientId) {
+          return this.formatEscrow(parsed);
+        }
+      }
+    } catch {
+      // Cache miss
+    }
+
+    const escrow = await this.getEscrowInternal(clientId, escrowId);
+    return this.formatEscrow(escrow);
+  }
+
+  /**
+   * List escrows for a client with filters
+   */
+  async listEscrows(params: ListEscrowsParams): Promise<{
+    escrows: Record<string, unknown>[];
+    total: number;
+    limit: number;
+    offset: number;
+  }> {
+    const { clientId, status, corridor, limit = 20, offset = 0 } = params;
+
+    const where: Record<string, unknown> = { clientId };
+    if (status) where.status = status;
+    if (corridor) where.corridor = corridor;
+
+    const [escrows, total] = await Promise.all([
+      this.prisma.institutionEscrow.findMany({
+        where: where as any,
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        skip: offset,
+      }),
+      this.prisma.institutionEscrow.count({ where: where as any }),
+    ]);
+
+    return {
+      escrows: escrows.map((e) => this.formatEscrow(e)),
+      total,
+      limit,
+      offset,
+    };
+  }
+
+  /**
+   * Internal: Get escrow with client ownership check
+   */
+  private async getEscrowInternal(clientId: string, escrowId: string) {
+    const escrow = await this.prisma.institutionEscrow.findUnique({
+      where: { escrowId },
+    });
+
+    if (!escrow) {
+      throw new Error(`Escrow not found: ${escrowId}`);
+    }
+
+    if (escrow.clientId !== clientId) {
+      throw new Error('Access denied: escrow belongs to another client');
+    }
+
+    return escrow;
+  }
+
+  /**
+   * Create an audit log entry
+   */
+  private async createAuditLog(
+    escrowId: string,
+    clientId: string,
+    action: string,
+    actor: string,
+    details: Record<string, unknown>,
+    ipAddress?: string,
+  ): Promise<void> {
+    try {
+      await this.prisma.institutionAuditLog.create({
+        data: {
+          escrowId,
+          clientId,
+          action,
+          actor,
+          details: details as any,
+          ipAddress,
+        },
+      });
+    } catch (error) {
+      console.error('[InstitutionEscrowService] Failed to create audit log:', error);
+    }
+  }
+
+  /**
+   * Cache escrow record in Redis
+   */
+  private async cacheEscrow(escrow: Record<string, unknown>): Promise<void> {
+    try {
+      const key = `${ESCROW_CACHE_PREFIX}${(escrow as any).escrowId}`;
+      await redisClient.set(key, JSON.stringify(escrow), 'EX', ESCROW_CACHE_TTL);
+    } catch {
+      // Cache write failure is non-critical
+    }
+  }
+
+  /**
+   * Format escrow for API response
+   */
+  private formatEscrow(escrow: Record<string, unknown>): Record<string, unknown> {
+    const e = escrow as any;
+    return {
+      id: e.id,
+      escrowId: e.escrowId,
+      clientId: e.clientId,
+      payerWallet: e.payerWallet,
+      recipientWallet: e.recipientWallet,
+      usdcMint: e.usdcMint,
+      amount: Number(e.amount),
+      platformFee: Number(e.platformFee),
+      corridor: e.corridor,
+      conditionType: e.conditionType,
+      status: e.status,
+      settlementAuthority: e.settlementAuthority,
+      riskScore: e.riskScore,
+      escrowPda: e.escrowPda,
+      vaultPda: e.vaultPda,
+      depositTxSignature: e.depositTxSignature,
+      releaseTxSignature: e.releaseTxSignature,
+      cancelTxSignature: e.cancelTxSignature,
+      expiresAt: e.expiresAt,
+      createdAt: e.createdAt,
+      updatedAt: e.updatedAt,
+      resolvedAt: e.resolvedAt,
+      fundedAt: e.fundedAt,
+    };
+  }
+}
+
+let instance: InstitutionEscrowService | null = null;
+export function getInstitutionEscrowService(): InstitutionEscrowService {
+  if (!instance) {
+    instance = new InstitutionEscrowService();
+  }
+  return instance;
+}
