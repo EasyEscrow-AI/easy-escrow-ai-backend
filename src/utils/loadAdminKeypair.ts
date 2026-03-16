@@ -2,7 +2,7 @@
  * Shared Admin Keypair Loader
  *
  * Loads the platform admin keypair from environment variables based on NODE_ENV.
- * Used by both escrow-program.service.ts and datasales-program.service.ts.
+ * Used by escrow-program.service.ts.
  */
 
 import { Keypair } from '@solana/web3.js';

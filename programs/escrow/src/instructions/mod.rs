@@ -5,7 +5,6 @@ pub mod pause;
 pub mod close;
 pub mod offer_escrow;
 pub mod two_phase_swap;
-pub mod datasales_escrow;
 
 pub use initialize::*;
 pub use atomic_swap::*;
@@ -14,4 +13,3 @@ pub use pause::*;
 pub use close::*;
 pub use offer_escrow::*;
 pub use two_phase_swap::*;
-pub use datasales_escrow::*;

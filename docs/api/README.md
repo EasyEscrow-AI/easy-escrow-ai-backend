@@ -8,7 +8,6 @@ Welcome to the EasyEscrow.ai API documentation. This comprehensive guide covers 
 - **[Integration Guide](./INTEGRATION_GUIDE.md)** - Step-by-step integration guide with code examples
 - **[Webhook Events](./WEBHOOK_EVENTS.md)** - Real-time webhook event documentation
 - **[Error Codes](./ERROR_CODES.md)** - Complete error reference and troubleshooting
-- **[DataSales Settlement API](./DATASALES_API.md)** - Digital asset escrow for DataSales.ai
 
 ## Overview
 
@@ -70,23 +69,6 @@ Use the devnet environment to test your integration before going live.
 - `GET /api/webhooks/status/{webhookId}` - Get webhook delivery status
 - `POST /api/webhooks/retry/{webhookId}` - Retry webhook delivery
 - `GET /api/webhooks/config` - Get webhook configurations
-
-#### DataSales Settlement (Digital Asset Escrow)
-- `POST /api/datasales/agreements` - Create DataSales agreement
-- `GET /api/datasales/agreements` - List agreements by seller/buyer
-- `GET /api/datasales/agreements/{id}` - Get agreement details
-- `POST /api/datasales/agreements/{id}/cancel` - Cancel agreement
-- `GET /api/datasales/agreements/{id}/upload-urls` - Get presigned upload URLs
-- `POST /api/datasales/agreements/{id}/confirm-upload` - Confirm seller upload
-- `POST /api/datasales/agreements/{id}/deposit` - Build buyer deposit tx
-- `POST /api/datasales/agreements/{id}/confirm-deposit` - Confirm buyer deposit
-- `GET /api/datasales/agreements/{id}/download-urls` - Get download URLs
-- `GET /api/datasales/agreements/{id}/files` - Get files for verification
-- `POST /api/datasales/agreements/{id}/approve` - Approve data quality
-- `POST /api/datasales/agreements/{id}/reject` - Reject data quality
-- `POST /api/datasales/agreements/{id}/settle` - Execute settlement
-
-See **[DataSales Settlement API](./DATASALES_API.md)** for complete documentation.
 
 ## Quick Start
 
